@@ -26,12 +26,7 @@ export default async(dataset: DatasetSource, ctx: Context) => {
   const isSubmitter = ctx.user.id === ds.ds_submitter_id
   const isInSameGroup = ds.ds_group_id != null && (await ctx.user.getMemberOfGroupIds()).includes(ds.ds_group_id)
   if (isSubmitter || isInSameGroup) {
-    const isPublished = ds.ds_project_ids != null && ds.ds_project_ids.length > 0
-      && await isDatasetInPublicationStatus(ctx, ds.ds_id, [PSO.PUBLISHED])
-
-    if (!isPublished) {
-      return true
-    }
+    return true
   }
 
   return false
