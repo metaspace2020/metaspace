@@ -276,7 +276,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       return (
         <div class='dataset-comparison-page w-full flex flex-wrap flex-row'>
           <FilterPanel class='w-full' level='annotation' hiddenFilters={['datasetIds']}/>
-          <div class='dataset-comparison-wrapper w-full md:w-5/12 relative'>
+          <div class='dataset-comparison-wrapper w-full md:w-6/12 relative'>
             {
               state.annotations
               && <DatasetComparisonAnnotationTable
@@ -285,6 +285,7 @@ export default defineComponent<DatasetComparisonPageProps>({
                   return {
                     ...ion.annotations[0],
                     msmScore: Math.max(...ion.annotations.map((annot: any) => annot.msmScore)),
+                    fdrlevel: Math.min(...ion.annotations.map((annot: any) => annot.fdrlevel)),
                     datasetCount: (ion.datasetIds || []).length,
                   }
                 })}
@@ -300,7 +301,7 @@ export default defineComponent<DatasetComparisonPageProps>({
               </div>
             }
           </div>
-          <div class='dataset-comparison-wrapper  w-full  md:w-7/12'>
+          <div class='dataset-comparison-wrapper  w-full  md:w-6/12'>
             <Collapse
               value={state.collapse}
               id="annot-content"

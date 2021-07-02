@@ -13,13 +13,13 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
       <div></div>
     </div>
     <div class="el-table__header-wrapper">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 390px;">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 480px;">
         <colgroup>
           <col name="el-table_1_column_1" width="120">
-          <col name="el-table_1_column_2" width="60">
+          <col name="el-table_1_column_2" width="100">
           <col name="el-table_1_column_3" width="60">
-          <col name="el-table_1_column_4" width="110">
-          <col name="el-table_1_column_5" width="40">
+          <col name="el-table_1_column_4" width="100">
+          <col name="el-table_1_column_5" width="100">
         </colgroup>
         <thead class="">
           <tr class="">
@@ -28,7 +28,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
             </th>
             <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf is-sortable">
               <div class="cell">
-                <div class="msm-header">MSM<mock-el-popover trigger="hover" placement="right">
+                <div class="msm-header">Best MSM<mock-el-popover trigger="hover" placement="right">
                     <div slot-key="default">Highest MSM among the datasets.</div>
                     <div slot-key="reference"><i class="el-icon-question metadata-help-icon ml-1"></i></div>
                   </mock-el-popover>
@@ -42,20 +42,26 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
               <div class="cell"># of datasets<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
             <th colspan="1" rowspan="1" class="el-table_1_column_5 ascending  fdr-cell  is-leaf is-sortable">
-              <div class="cell">FDR<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+              <div class="cell">
+                <div class="msm-header">Best FDR<mock-el-popover trigger="hover" placement="right">
+                    <div slot-key="default">Lowest FDR among the datasets.</div>
+                    <div slot-key="reference"><i class="el-icon-question metadata-help-icon ml-1"></i></div>
+                  </mock-el-popover>
+                </div><span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span>
+              </div>
             </th>
           </tr>
         </thead>
       </table>
     </div>
     <div class="el-table__body-wrapper is-scrolling-left">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 390px;">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 480px;">
         <colgroup>
           <col name="el-table_1_column_1" width="120">
-          <col name="el-table_1_column_2" width="60">
+          <col name="el-table_1_column_2" width="100">
           <col name="el-table_1_column_3" width="60">
-          <col name="el-table_1_column_4" width="110">
-          <col name="el-table_1_column_5" width="40">
+          <col name="el-table_1_column_4" width="100">
+          <col name="el-table_1_column_5" width="100">
         </colgroup>
         <tbody>
           <tr class="el-table__row fdr-5 ">

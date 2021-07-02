@@ -362,9 +362,9 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       handleCurrentRowChange(state.selectedRow)
     }
 
-    const renderMSMHeader = (info: any) => {
+    const renderMSMHeader = () => {
       return <div class="msm-header">
-        MSM
+        Best MSM
         <Popover
           trigger="hover"
           placement="right"
@@ -374,6 +374,21 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             class="el-icon-question metadata-help-icon ml-1"
           />
           Highest MSM among the datasets.
+        </Popover>
+      </div>
+    }
+    const renderFDRHeader = () => {
+      return <div class="msm-header">
+        Best FDR
+        <Popover
+          trigger="hover"
+          placement="right"
+        >
+          <i
+            slot="reference"
+            class="el-icon-question metadata-help-icon ml-1"
+          />
+          Lowest FDR among the datasets.
         </Popover>
       </div>
     }
@@ -556,9 +571,9 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             <TableColumn
               key="msmScore"
               property="msmscore"
-              label="MSM"
+              label="Best MSM"
               sortable="custom"
-              minWidth="60"
+              minWidth="100"
               renderHeader={renderMSMHeader}
               formatter={(row: any) => formatMSM(row)}
             />
@@ -575,15 +590,16 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
               property="datasetCount"
               label="# of datasets"
               sortable="custom"
-              minWidth="110"
+              minWidth="100"
             />
             <TableColumn
               key="fdrLevel"
               property="fdrlevel"
-              label="FDR"
+              label="Best FDR"
               className="fdr-cell"
               sortable="custom"
-              minWidth="40"
+              minWidth="100"
+              renderHeader={renderFDRHeader}
               formatter={(row: any) => formatFDR(row)}
             />
           </Table>

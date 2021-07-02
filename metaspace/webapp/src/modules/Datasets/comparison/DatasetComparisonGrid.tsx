@@ -458,6 +458,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return value.toFixed(3)
     }
 
+    const formatFDR = (value: number) => {
+      return value ? `${Math.round(value * 100)}%` : '-'
+    }
+
     const handleImageMove = ({ zoom, xOffset, yOffset }: any, imageFit: any, key: string) => {
       Vue.set(state.gridState, key, {
         ...state.gridState[key],
@@ -617,6 +621,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
             && <div class="dataset-comparison-extra dom-to-image-hidden">
               <div class="dataset-comparison-msm-badge">
                 <b>MSM</b> {formatMSM(state.annotationData[`${row}-${col}`].msmScore)}
+              </div>
+              <div class="dataset-comparison-fdr-badge">
+                <b>FDR</b> {formatFDR(state.annotationData[`${row}-${col}`].fdrLevel)}
               </div>
               <Popover
                 trigger="hover"
