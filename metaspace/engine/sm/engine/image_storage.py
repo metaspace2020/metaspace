@@ -11,6 +11,8 @@ from botocore.exceptions import ClientError
 from scipy.ndimage import zoom
 import PIL.Image
 
+from sm.engine.config import SMConfig
+from sm.engine.storage import get_s3_resource, create_bucket, get_s3_client
 from sm.engine.utils.retry_on_exception import retry_on_exception
 
 try:
@@ -20,8 +22,6 @@ except ImportError:
     S3ServiceResource = object
     S3Client = object
 
-from sm.engine.config import SMConfig
-from sm.engine.storage import get_s3_resource, create_bucket, get_s3_client
 
 logger = logging.getLogger('engine')
 
