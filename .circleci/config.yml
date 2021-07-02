@@ -34,6 +34,7 @@ jobs:
       - save_cache:
           key: graphql-yarn-cache-{{checksum "yarn.lock"}}
           paths:
+            - ~/metaspace/metaspace/graphql/node_modules
             - /usr/local/share/.cache/yarn
       - run:
           name: Run tests
@@ -201,6 +202,7 @@ jobs:
       - save_cache:
           key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
           paths:
+            - ~/metaspace/metaspace/webapp/node_modules
             - /usr/local/share/.cache/yarn
       - run:
           name: Build webapp
