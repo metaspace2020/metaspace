@@ -11,6 +11,7 @@ module.exports = {
     disableHostCheck: true, // For running behind nginx
     port: 8082,
     sockPort: 8888,
+    progress: false, // To avoid spamming the docker logs with CLI progress updates
   },
   /**
    *
