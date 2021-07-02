@@ -17,8 +17,6 @@ import _ = require('lodash')
 import {
   allScenarioTestCases,
   getTestUserForScenario,
-  TestUserScenario,
-  TestUserScenarioOptions,
 } from '../../../tests/getTestUserForScenario'
 jest.mock('../../../utils/smApi/datasets')
 const mockSmApiDatasets = _smApiDatasets as jest.Mocked<typeof _smApiDatasets>
