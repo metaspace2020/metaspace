@@ -45,7 +45,7 @@ def populate_aws_env_vars(aws_config):
 
 
 def on_startup(config_path: str) -> Dict:
-    from sm.engine import image_storage  # pylint: disable=import-outside-toplevel
+    from sm.engine import image_storage  # pylint: disable=import-outside-toplevel,cyclic-import
 
     SMConfig.set_path(config_path)
     sm_config = SMConfig.get_conf()
