@@ -15,10 +15,12 @@ import {
   createTestProject,
   createTestProjectMember,
   createTestUser,
+  createTestUserGroup,
 } from './tests/testDataCreation'
 import getContext, { getContextForTest } from './getContext'
 import { MersenneTwister19937, pick } from 'random-js'
 import { MolecularDB } from './modules/moldb/model'
+import { UserGroupRoleOptions as UGRO } from './modules/group/model'
 
 describe('getContext', () => {
   let userId: string
@@ -157,7 +159,7 @@ describe('getContext', () => {
         const user = await createTestProjectMember(proj1, UPRO.MANAGER)
 
         const req = { session: { reviewTokens: ['abc'] } } as any
-        const context = getContext({ id: user.id, role: 'user', groupIds: [] }, testEntityManager, req, null as any)
+        const context = getContext({ id: user.id, role: 'user' }, testEntityManager, req, null as any)
 
         const projectRoles = await context.user.getProjectRoles()
 
@@ -194,8 +196,9 @@ describe('getContext', () => {
     })
 
     test('Should return all databases for admin', async() => {
+      const user = await createTestUser({ role: 'admin' })
       const context = getContext(
-        { id: 'abc', groupIds: [], role: 'admin' }, testEntityManager, null as any, null as any
+        { id: user.id, role: user.role }, testEntityManager, null as any, null as any
       )
       const databaseIds = await context.user.getVisibleDatabaseIds()
 
@@ -205,8 +208,12 @@ describe('getContext', () => {
     })
 
     test('Should return all public and databases that belong to user group', async() => {
+      const user = await createTestUser()
+      const group = await createTestGroup({ id: groupId })
+      await createTestUserGroup(user.id, group.id, UGRO.MEMBER, true)
+
       const context = getContext(
-        { id: 'abc', groupIds: [groupId], role: 'user' }, testEntityManager, null as any, null as any
+        { id: user.id, role: 'user' }, testEntityManager, null as any, null as any
       )
       const databaseIds = await context.user.getVisibleDatabaseIds()
 

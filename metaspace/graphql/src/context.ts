@@ -21,8 +21,8 @@ export interface ContextUser {
   authMethod: AuthMethod;
   id?: string; // id is undefined when not logged in
   email?: string;
-  groupIds?: string[]; // used in esConnector for ES visibility filters
   getProjectRoles: () => Promise<UserProjectRoles>;
+  getMemberOfGroupIds: () => Promise<string[]>; // only groups where user has UGRO.MEMBER, UGRO.GROUP_ADMIN role
   getMemberOfProjectIds: () => Promise<string[]>; // only projects where user has UPRO.MEMBER, UPRO.MANAGER role
   getVisibleDatabaseIds: () => Promise<number[]>; // only databases user has access to
 }

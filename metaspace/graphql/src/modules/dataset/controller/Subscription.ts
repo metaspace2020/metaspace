@@ -32,6 +32,7 @@ const dummyContextUser: ContextUser = {
   role: 'guest',
   authMethod: AuthMethodOptions.UNKNOWN,
   getProjectRoles: () => { return Promise.resolve({}) },
+  getMemberOfGroupIds: () => { return Promise.resolve([]) },
   getMemberOfProjectIds: () => { return Promise.resolve([]) },
   getVisibleDatabaseIds: () => { return Promise.resolve([]) },
 }

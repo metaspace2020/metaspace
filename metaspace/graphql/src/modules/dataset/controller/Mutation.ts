@@ -228,7 +228,7 @@ const assertUserCanUseMolecularDBs = async(ctx: Context, databaseIds: number[]|u
       .findDatabaseById(ctx, databaseId)
 
     if (database.groupId != null) {
-      assertUserBelongsToGroup(ctx, database.groupId)
+      await assertUserBelongsToGroup(ctx, database.groupId)
     }
   }
 }
