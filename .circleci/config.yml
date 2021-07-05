@@ -145,6 +145,10 @@ jobs:
           command: |
             cp ci/clientConfig.json src/
       - run:
+          name: Generate metadata schema
+          command: |
+            yarn run deref-schema
+      - run:
           name: Lint code
           when: always
           command: yarn run lint --max-warnings 0 --no-fix
