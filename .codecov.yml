@@ -11,7 +11,7 @@ coverage:
   status:
     project:
       engine:
-        target: 70%
+        target: 69%
         threshold: 0.2
         flags: ["engine"]
       webapp:
