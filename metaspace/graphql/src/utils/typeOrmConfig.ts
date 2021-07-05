@@ -35,7 +35,8 @@ const typeOrmConfig: ConnectionOptions = {
   synchronize: false,
   migrations: ['src/migrations/*.ts'],
   migrationsRun: true,
-  logging: ['error', 'warn', 'info', 'log'],
+  logging: ['error', 'warn'], // "query"|"schema"|"error"|"warn"|"info"|"log"|"migration"
+  maxQueryExecutionTime: 1000, // Threshold for logging slow queries, not a timeout
   cli: {
     migrationsDir: 'src/migrations',
   },

@@ -19,7 +19,7 @@ export class User {
   notVerifiedEmail: string | null;
 
   @Column({ type: 'text', default: 'user' })
-  role: string;
+  role: 'admin' | 'user';
 
   @Column({ type: 'text' })
   credentialsId: string;
