@@ -30,7 +30,6 @@ import {
 import { AuthMethodOptions } from '../../context'
 import { UserError } from 'graphql-errors'
 import NoisyJwtStrategy from './NoisyJwtStrategy'
-import { UserGroupRoleOptions as UGRO } from '../group/model'
 
 const Uuid = superstruct.define<string>('Uuid', value => typeof value === 'string' && uuid.validate(value))
 
