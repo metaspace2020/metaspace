@@ -7,6 +7,8 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey'
 
 import * as jsonwebtoken from 'jsonwebtoken'
+import * as superstruct from 'superstruct'
+import * as uuid from 'uuid'
 import { EntityManager } from 'typeorm'
 import 'express-session'
 
@@ -28,6 +30,8 @@ import {
 import { AuthMethodOptions } from '../../context'
 import { UserError } from 'graphql-errors'
 import NoisyJwtStrategy from './NoisyJwtStrategy'
+
+const Uuid = superstruct.define<string>('Uuid', value => typeof value === 'string' && uuid.validate(value))
 
 const preventCache = (req: Request, res: Response, next: NextFunction) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate')
@@ -217,10 +221,15 @@ const configureLocalAuth = (router: IRouter<any>) => {
 }
 
 const configureReviewerAuth = (router: IRouter<any>, entityManager: EntityManager) => {
+  const ReviewQuery = superstruct.type({
+    prj: Uuid,
+    token: superstruct.string(),
+  })
+
   router.get('/review', async(req, res, next) => {
     try {
       const session = req.session
-      const { prj: projectId, token } = req.query
+      const { prj: projectId, token } = ReviewQuery.mask(req.query)
       if (session && projectId && token) {
         const project = await entityManager.getRepository(Project).findOne({ id: projectId })
         if (project) {
@@ -293,16 +302,20 @@ const configureGoogleAuth = (router: IRouter<any>) => {
 }
 
 const configureImpersonation = (router: IRouter<any>) => {
+  const ImpersonationQuery = superstruct.type({
+    email: superstruct.optional(superstruct.string()),
+    id: superstruct.optional(superstruct.string()),
+  })
   if (config.features.impersonation) {
     router.get('/impersonate', preventCache, async(req, res, next) => {
       try {
+        const { email, id } = ImpersonationQuery.mask(req.query)
         const currentUser = getUserFromRequest(req)
         if (currentUser == null || currentUser.role !== 'admin') {
           return res.status(403).send('Unauthenticated')
         }
 
         let user: User | null = null
-        const { email, id } = req.query
         if (email) {
           user = await findUserByEmail(email) || await findUserByEmail(email, 'not_verified_email')
         } else if (id) {
@@ -330,9 +343,14 @@ const configureImpersonation = (router: IRouter<any>) => {
 }
 
 const configureCreateAccount = (router: IRouter<any>) => {
+  const CreateAccountBody = superstruct.type({
+    name: superstruct.string(),
+    email: superstruct.string(),
+    password: superstruct.string(),
+  })
   router.post('/createaccount', async(req, res, next) => {
     try {
-      const { name, email, password } = req.body
+      const { name, email, password } = CreateAccountBody.mask(req.body)
       await createUserCredentials({ name, email, password })
       res.send(true)
     } catch (err) {
@@ -340,29 +358,40 @@ const configureCreateAccount = (router: IRouter<any>) => {
     }
   })
 
+  const VerifyEmailQuery = superstruct.object({
+    email: superstruct.string(),
+    token: superstruct.string(),
+  })
   router.get('/verifyemail', preventCache, async(req, res, next) => {
-    const { email, token } = req.query
-    const user = await verifyEmail(email, token)
-    if (user) {
-      req.login(user, (err) => {
-        if (err) {
-          next(err)
-        } else {
-          res.cookie('flashMessage', JSON.stringify({ type: 'verify_email_success' }), { maxAge: 10 * 60 * 1000 })
-          res.redirect('/')
-        }
-      })
-    } else {
-      res.cookie('flashMessage', JSON.stringify({ type: 'verify_email_failure' }), { maxAge: 10 * 60 * 1000 })
-      res.redirect('/')
+    try {
+      const { email, token } = VerifyEmailQuery.mask(req.query)
+      const user = await verifyEmail(email, token)
+      if (user) {
+        req.login(user, (err) => {
+          if (err) {
+            next(err)
+          } else {
+            res.cookie('flashMessage', JSON.stringify({ type: 'verify_email_success' }), { maxAge: 10 * 60 * 1000 })
+            res.redirect('/')
+          }
+        })
+      } else {
+        res.cookie('flashMessage', JSON.stringify({ type: 'verify_email_failure' }), { maxAge: 10 * 60 * 1000 })
+        res.redirect('/')
+      }
+    } catch (err) {
+      next(err)
     }
   })
 }
 
 const configureResetPassword = (router: IRouter<any>) => {
+  const SendPasswordResetTokenBody = superstruct.object({
+    email: superstruct.string(),
+  })
   router.post('/sendpasswordresettoken', async(req, res, next) => {
     try {
-      const { email } = req.body
+      const { email } = SendPasswordResetTokenBody.mask(req.body)
       await sendResetPasswordToken(email)
       res.send(true)
     } catch (err) {
@@ -370,9 +399,13 @@ const configureResetPassword = (router: IRouter<any>) => {
     }
   })
 
+  const ValidatePasswordResetTokenBody = superstruct.object({
+    email: superstruct.string(),
+    token: superstruct.string(),
+  })
   router.post('/validatepasswordresettoken', async(req, res, next) => {
     try {
-      const { email, token } = req.body
+      const { email, token } = ValidatePasswordResetTokenBody.mask(req.body)
       if (await validateResetPasswordToken(email, token)) {
         res.send(true)
       } else {
@@ -383,9 +416,14 @@ const configureResetPassword = (router: IRouter<any>) => {
     }
   })
 
+  const ResetPasswordBody = superstruct.object({
+    email: superstruct.string(),
+    token: superstruct.string(),
+    password: superstruct.string(),
+  })
   router.post('/resetpassword', async(req, res, next) => {
     try {
-      const { email, token, password } = req.body
+      const { email, token, password } = ResetPasswordBody.mask(req.body)
       const user = await resetPassword(email, password, token)
       if (user) {
         req.login(user, (err) => {

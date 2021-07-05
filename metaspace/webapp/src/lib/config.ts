@@ -65,7 +65,7 @@ const defaultConfig: ClientConfig = {
     all_adducts: false,
     neutral_losses: false,
     neutral_losses_new_ds: true,
-    chem_mods: false,
+    chem_mods: true,
     advanced_ds_config: false,
     isomers: true,
     isobars: true,

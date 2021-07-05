@@ -310,7 +310,9 @@ jobs:
           name: Run linter
           # Limit number of CPUs to prevent silent OOMs in background processes
           # https://github.com/PyCQA/pylint/issues/3899
-          command: pylint -j1 sm scripts
+          command: |
+            pylint --version
+            pylint -j1 sm scripts
       - run:
          name: Run code formatter
          command: black --check .

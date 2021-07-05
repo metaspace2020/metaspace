@@ -7,8 +7,13 @@ from enum import Enum
 from typing import List, Tuple, Callable, Dict
 
 import numpy as np
+from botocore.exceptions import ClientError
 from scipy.ndimage import zoom
 import PIL.Image
+
+from sm.engine.config import SMConfig
+from sm.engine.storage import get_s3_resource, create_bucket, get_s3_client
+from sm.engine.utils.retry_on_exception import retry_on_exception
 
 try:
     from mypy_boto3_s3.service_resource import S3ServiceResource
@@ -17,8 +22,6 @@ except ImportError:
     S3ServiceResource = object
     S3Client = object
 
-from sm.engine.config import SMConfig
-from sm.engine.storage import get_s3_resource, create_bucket, get_s3_client
 
 logger = logging.getLogger('engine')
 
@@ -179,6 +182,7 @@ get_image_url: Callable[[ImageType, str, str], str]
 get_ion_images_for_analysis = None
 
 
+@retry_on_exception(ClientError)
 def _configure_bucket(sm_config: Dict):
     bucket_name = sm_config['image_storage']['bucket']
     logger.info(f'Configuring image storage bucket: {bucket_name}')

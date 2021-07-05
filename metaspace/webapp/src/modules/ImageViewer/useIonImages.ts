@@ -45,7 +45,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
   if (rawImageCache[layer.id].value === null) {
     const annotation = annotationCache[layer.id]
     const [isotopeImage] = annotation.isotopeImages
-    if (isotopeImage) {
+    if (isotopeImage && isotopeImage.url) {
       loadPngFromUrl(isotopeImage.url)
         .then(img => {
           rawImageCache[layer.id].value = img

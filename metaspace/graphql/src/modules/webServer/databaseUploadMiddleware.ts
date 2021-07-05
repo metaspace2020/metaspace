@@ -1,7 +1,7 @@
 import * as http from 'http'
 import * as express from 'express'
 import * as companion from '@uppy/companion'
-import * as genUuid from 'uuid'
+import * as uuid from 'uuid'
 import config from '../../utils/config'
 import * as bodyParser from 'body-parser'
 
@@ -11,7 +11,7 @@ export default function(httpServer: http.Server) {
   const options = getCompanionOptions(
     '/database_upload',
     (req: express.Request, filename: string) => {
-      return `${config.upload.moldb_prefix}/${genUuid()}/${encodeURIComponent(filename)}`
+      return `${config.upload.moldb_prefix}/${uuid.v4()}/${encodeURIComponent(filename)}`
     },
   )
 

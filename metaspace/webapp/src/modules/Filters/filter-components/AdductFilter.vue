@@ -6,6 +6,21 @@
   >
     <div slot="edit">
       <el-select
+        :value="filterValues.adduct"
+        placeholder="Select ionising adduct"
+        filterable
+        clearable
+        remote
+        @change="val => onChange('adduct', val)"
+      >
+        <el-option
+          v-for="item in adductOptions"
+          :key="item.adduct"
+          :label="item.name"
+          :value="item.adduct"
+        />
+      </el-select>
+      <el-select
         v-if="showChemMods"
         :value="filterValues.chemMod"
         :remote-method="updateChemModQuery"
@@ -41,21 +56,6 @@
           :key="item.neutralLoss"
           :label="item.name"
           :value="item.neutralLoss"
-        />
-      </el-select>
-      <el-select
-        :value="filterValues.adduct"
-        placeholder="Select ionising adduct"
-        filterable
-        clearable
-        remote
-        @change="val => onChange('adduct', val)"
-      >
-        <el-option
-          v-for="item in adductOptions"
-          :key="item.adduct"
-          :label="item.name"
-          :value="item.adduct"
         />
       </el-select>
     </div>
@@ -148,20 +148,20 @@ export default class AdductFilter extends Vue {
 
     formatValue() {
       const { chemMod, neutralLoss, adduct } = this.filterValues
-      let innerPart = 'M'
+      let suffix = ''
       if (chemMod && chemMod !== 'none') {
-        innerPart += chemMod
+        suffix += chemMod
       }
       if (neutralLoss && neutralLoss !== 'none') {
-        innerPart += neutralLoss
+        suffix += neutralLoss
       }
-      innerPart = innerPart.replace(/([+-])/g, ' $1 ')
+      suffix = suffix.replace(/([+-])/g, ' $1 ')
 
       if (adduct) {
         const adductInfo = this.filterLists.adducts.find((a:any) => a.adduct === adduct)
-        return (adductInfo && adductInfo.name || adduct).replace('M', innerPart)
+        return (adductInfo && adductInfo.name || adduct).replace(']', suffix + ']')
       } else if ((chemMod && chemMod !== 'none') || (neutralLoss && neutralLoss !== 'none')) {
-        return `[${innerPart} + ?]`
+        return `[M + ?${suffix}]`
       } else if (chemMod === 'none' && neutralLoss === 'none') {
         return 'Only ionising adducts'
       } else if (chemMod === 'none') {

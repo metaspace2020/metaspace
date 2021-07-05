@@ -1,4 +1,4 @@
-import { zipObject } from 'lodash-es'
+import { orderBy, zipObject } from 'lodash-es'
 
 type JWT = string;
 
@@ -9,12 +9,26 @@ export function superscript(s: string): string {
   return s.replace(NORMAL_TO_SUPERSCRIPT_RE, c => NORMAL_TO_SUPERSCRIPT[c])
 }
 
+export function reorderAdducts(formula: string): string {
+  // WORKAROUND: Scientists prefer if the ionizing adduct is shown before any neutral losses, chemical
+  // modifications, etc. but the `annotation.ion` field puts those things between the base formula and adduct.
+  // Split out the components of the formula and shift any adducts to the front
+  const KNOWN_IONIZING_ADDUCTS = ['+H', '+K', '+Na', '+NH4', '-H', '+Cl']
+  const [baseFormula, ...components] = formula.split(/(?=[+-])/g)
+  const reordered = [
+    baseFormula,
+    ...orderBy(components, component => KNOWN_IONIZING_ADDUCTS.includes(component) ? 0 : 1),
+  ]
+
+  return reordered.join('')
+}
+
 export function renderMolFormula(ion: string): string {
   const match = /^(.*?)([+-]\d*)?$/.exec(ion)
   const formula = match && match[1] || ion
   const charge = match && match[2] || undefined
   const formattedCharge = charge ? superscript(charge) : ''
-  const formattedFormula = formula.replace(/-/g, ' - ').replace(/\+/g, ' + ')
+  const formattedFormula = reorderAdducts(formula).replace(/([+-])/g, ' $1 ')
 
   return `[${formattedFormula}]${formattedCharge}`
 }
