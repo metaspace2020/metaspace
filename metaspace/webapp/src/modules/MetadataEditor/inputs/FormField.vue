@@ -101,6 +101,32 @@
       </slot>
     </el-select>
 
+    <el-select
+      v-else-if="type === 'selectMultiWithCreate'"
+      popper-class="el-select-popper__with-create"
+      no-data-text="Invalid value"
+      :value="value"
+      :required="required"
+      multiple
+      filterable
+      default-first-option
+      remote
+      :remote-method="onCreateItemInput"
+      :loading="false"
+      v-bind="$attrs"
+      @remove-tag="onRemoveTag"
+      @input="onInput"
+    >
+      <slot name="options">
+        <el-option
+          v-for="opt in createItemPreviewOptions"
+          :key="createOptionsAreStrings ? opt : opt.value"
+          :value="createOptionsAreStrings ? opt : opt.value"
+          :label="createOptionsAreStrings ? opt : opt.label"
+        />
+      </slot>
+    </el-select>
+
     <table-input
       v-else-if="type === 'table'"
       :value="value"
@@ -158,7 +184,7 @@ import PixelSizeInput from './PixelSizeInput.vue'
 import { Component, Prop } from 'vue-property-decorator'
 import { FetchSuggestions, FetchSuggestionsCallback } from 'element-ui/types/autocomplete'
 import CustomNumberInput from './CustomNumberInput.vue'
-import { throttle } from 'lodash-es'
+import { throttle, uniq } from 'lodash-es'
 
   @Component({
     inheritAttrs: false,
@@ -201,7 +227,11 @@ export default class FormField extends Vue {
     @Prop(Function)
     fetchSuggestions!: FetchSuggestions;
 
+    @Prop(Function)
+    normalizeInput?: (value: string) => string | null;
+
     wideAutocomplete = false;
+    createItemPreviewOptions: string[] = []
 
     created() {
       // WORKAROUND: Currently there's a delay that causes the autocomplete box to stutter when opening on focus.
@@ -215,16 +245,42 @@ export default class FormField extends Vue {
       return this.options && this.options.length > 0 && typeof this.options[0] === 'string'
     }
 
+    get createOptionsAreStrings() {
+      return this.createItemPreviewOptions.length > 0 && typeof this.createItemPreviewOptions[0] === 'string'
+    }
+
     onSelect(val: any) {
       this.$emit('select', val)
     }
 
     onInput(val: any) {
-      this.$emit('input', val)
+      if (this.type === 'selectMultiWithCreate') {
+        const valArray = val as string[]
+        const normalizedVals = valArray.flatMap(newVal => {
+          if (valArray.includes(newVal) || !this.normalizeInput) {
+            // Don't change existing values, don't normalize if no normalization function
+            return [newVal]
+          }
+          const normalizedVal = this.normalizeInput(newVal)
+          return normalizedVal != null ? [normalizedVal] : []
+        })
+
+        this.$emit('input', uniq(normalizedVals))
+      } else {
+        this.$emit('input', val)
+      }
     }
 
     onRemoveTag(val: any) {
       this.$emit('remove-tag', val)
+    }
+
+    onCreateItemInput(val: any) {
+      // WORKAROUND: This uses ElSelect's remote search interface to show the validated, normalized form of the
+      // user's input. If the input is null after normalization, the options list is empty and
+      // ElSelect shows the no-data-text instead.
+      const normalizedVal = this.normalizeInput != null ? this.normalizeInput(val) : val
+      this.createItemPreviewOptions = normalizedVal != null ? [normalizedVal] : []
     }
 
     fetchSuggestionsAndTestWidth(queryString: string, callback: FetchSuggestionsCallback) {
@@ -290,5 +346,14 @@ export default class FormField extends Vue {
 
   .el-input__inner {
     width: 100%;
+  }
+
+  .el-select-popper__with-create .el-select-dropdown__list::after {
+    @apply pt-2 px-5 text-center;
+    display: list-item;
+    content: 'Press enter to confirm';
+    // Style to match the no-data-text
+    font-size: 14px;
+    color: #999;
   }
 </style>

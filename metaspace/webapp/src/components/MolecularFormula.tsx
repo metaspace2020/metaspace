@@ -1,6 +1,6 @@
 import { defineComponent, computed } from '@vue/composition-api'
 
-import { superscript } from '../lib/util'
+import { reorderAdducts, superscript } from '../lib/util'
 
 const MolecularFormula = defineComponent({
   props: {
@@ -24,7 +24,7 @@ const MolecularFormula = defineComponent({
 
     const parts = computed<string[]>(() => {
       const { formula } = formulaAndCharge.value
-      const fmtFormula = formula.replace(/-/g, ' - ').replace(/\+/g, ' + ')
+      const fmtFormula = reorderAdducts(formula).replace(/([+-])/g, ' $1 ')
       return fmtFormula.split(/(\d+)/g)
     })
 
