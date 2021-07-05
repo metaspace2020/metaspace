@@ -369,7 +369,7 @@ export default Vue.extend({
         colocalizationCoeffFilter,
         orderBy: this.orderBy,
         sortingOrder: this.sortingOrder,
-        offset: (this.currentPage - 1) * this.recordsPerPage,
+        offset: Math.max(0, (this.currentPage - 1) * this.recordsPerPage),
         limit: this.recordsPerPage,
         countIsomerCompounds: config.features.isomers,
       }

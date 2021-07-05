@@ -5,42 +5,27 @@ import reportError from '../../lib/reportError'
 import { restoreImageViewerState } from './state'
 import { restoreIonImageState } from './ionImageState'
 import store from '../../store'
-import safeJsonParse from '../../lib/safeJsonParse'
+import { annotationDetailItemFragment } from '../../api/annotation'
 
 export default async($apollo: any, id: string, datasetId: string) => {
   try {
     const result: any = await $apollo.query({
-      query: gql`query fetchImageViewerSnapshot($id: String!, $datasetId: String!) {
+      query: gql`query fetchImageViewerSnapshot(
+        $id: String!,
+        $datasetId: String!,
+        $colocalizationCoeffFilter: ColocalizationCoeffFilter,
+        $countIsomerCompounds: Boolean,
+        $type: OpticalImageType
+      ) {
         imageViewerSnapshot(id: $id, datasetId: $datasetId) {
           version
           snapshot
           annotations {
-            id
-            ion
-            mz
-            dataset {
-              id
-              submitter { id name email }
-              principalInvestigator { name email }
-              group { id name shortName }
-              groupApproved
-              projects { id name }
-              name
-              polarity
-              metadataJson
-              isPublic
-            }
-            isotopeImages {
-              minIntensity,
-              maxIntensity,
-              url
-            }
-            possibleCompounds {
-              name
-            }
+            ...AnnotationDetailItem
           }
         }
-      }`,
+      }
+      ${annotationDetailItemFragment}`,
       variables: {
         id,
         datasetId,

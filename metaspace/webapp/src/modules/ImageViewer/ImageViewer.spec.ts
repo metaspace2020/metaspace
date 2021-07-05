@@ -53,7 +53,7 @@ describe('ImageViewer', () => {
 
   const mockAnnotationData = {
     ion: 'H2O',
-    isotopeImages: [{}],
+    isotopeImages: [{ url: 'fake://url' }],
     possibleCompounds: [
       { name: 'water' },
     ],

@@ -214,7 +214,11 @@ const quantizeScaleBar = (minIntensity: number, maxIntensity: number,
 export const loadPngFromUrl = async(url: string) => {
   const response = await fetch(url, { credentials: 'omit' })
   if (response.status !== 200) {
-    throw new Error(`Invalid response fetching image: ${response.status} ${response.statusText}`)
+    throw Object.assign(
+      new Error(`Invalid response fetching image: ${response.status} ${response.statusText}`),
+      // Don't report 403s/404s to Sentry - they're virtually always caused by deleted datasets
+      { isHandled: response.status === 403 || response.status === 404 },
+    )
   }
   const buffer = await response.arrayBuffer()
   return decode(buffer)

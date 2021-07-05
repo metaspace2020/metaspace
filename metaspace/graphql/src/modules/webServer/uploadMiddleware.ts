@@ -1,7 +1,7 @@
 import * as http from 'http'
 import * as express from 'express'
 import * as companion from '@uppy/companion'
-import * as genUuid from 'uuid'
+import * as uuid from 'uuid'
 import * as bodyParser from 'body-parser'
 
 import getCompanionOptions from './getCompanionOptions'
@@ -10,7 +10,7 @@ export default function(path: string, s3_prefix: string, httpServer?: http.Serve
   const options = getCompanionOptions(
     path,
     (req: express.Request, filename: string) => {
-      return `${s3_prefix}/${genUuid()}/${encodeURIComponent(filename)}`
+      return `${s3_prefix}/${uuid.v4()}/${encodeURIComponent(filename)}`
     },
   )
 

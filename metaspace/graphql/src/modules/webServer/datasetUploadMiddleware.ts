@@ -24,7 +24,7 @@ function signUuid(uuid: string) {
  * @param next
  */
 function generateUuidForUpload(req: Request, res: Response) {
-  const uuid = genUuid()
+  const uuid = genUuid.v4()
   const uuidSignature = signUuid(uuid)
   res.json({ uuid, uuidSignature })
 }
