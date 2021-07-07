@@ -1,5 +1,5 @@
 import { defineComponent } from '@vue/composition-api'
-import { Dialog, Button } from '../../lib/element-ui'
+import { Dialog } from '../../lib/element-ui'
 import './RequestedAccessDialog.scss'
 
 interface RequestedAccessDialogProps {
