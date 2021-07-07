@@ -5,13 +5,11 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 from lithops.storage import Storage
-from pyimzml.ImzMLParser import PortableSpectrumReader
 
-from sm.engine.annotation_lithops.annotate import make_sample_area_mask
+from sm.engine.annotation.imzml_parser import LithopsImzMLParserWrapper
 from sm.engine.annotation_lithops.build_moldb import InputMolDb
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
-from sm.engine.annotation_lithops.utils import ds_dims
 from sm.engine.annotation.png_generator import PngGenerator
 
 logger = logging.getLogger('annotation-pipeline')
@@ -56,7 +54,7 @@ def filter_results_and_make_pngs(
     moldbs: List[InputMolDb],
     fdrs: Dict[int, pd.DataFrame],
     images_df: pd.DataFrame,
-    imzml_reader: PortableSpectrumReader,
+    imzml_wrapper: LithopsImzMLParserWrapper,
 ):
     results_dfs = {}
     all_formula_is = set()
@@ -71,9 +69,8 @@ def filter_results_and_make_pngs(
         all_formula_is.update(results_dfs[moldb_id].index)
 
     image_tasks_df = images_df[images_df.index.isin(all_formula_is)].copy()
-    w, h = ds_dims(imzml_reader.coordinates)
-    jobs = _split_png_jobs(image_tasks_df, w, h)
-    png_generator = PngGenerator(make_sample_area_mask(imzml_reader.coordinates))
+    jobs = _split_png_jobs(image_tasks_df, imzml_wrapper.w, imzml_wrapper.h)
+    png_generator = PngGenerator(imzml_wrapper.mask)
 
     def save_png_chunk(df: pd.DataFrame, *, storage: Storage):
         pngs = []

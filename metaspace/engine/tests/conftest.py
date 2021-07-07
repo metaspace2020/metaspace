@@ -1,10 +1,13 @@
 import json
 import logging
 from copy import deepcopy
+from itertools import product
 from random import randint
 from pathlib import Path
 import uuid
+from unittest.mock import patch
 
+import numpy as np
 import pytest
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
@@ -213,3 +216,22 @@ def executor(sm_config):
         keys = executor.storage.list_keys(bucket, prefix)
         if keys:
             executor.storage.delete_objects(bucket, keys)
+
+
+def make_imzml_wrapper_mock(coordinates=None, spectra=None):
+    from sm.engine.annotation.imzml_parser import FSImzMLParserWrapper
+
+    if coordinates is None:
+        coordinates = list(product(range(1, 11), range(1, 11), [1]))
+    if spectra is None:
+        spectra = (np.linspace(1, 100, 100), np.ones(100))
+    if isinstance(spectra, tuple):
+        spectra = [spectra] * len(coordinates)
+
+    with patch('sm.engine.annotation.imzml_parser.find_file_by_ext') as find_file_mock:
+        with patch('sm.engine.annotation.imzml_parser.ImzMLParser') as imzml_parser_mock:
+            find_file_mock.return_value = 'test_dataset.imzml'
+            imzml_parser_mock().coordinates = coordinates
+            imzml_parser_mock().getspectrum.side_effect = lambda i: spectra[i]
+            imzml_parser_mock().mzPrecision = 'f'
+            return FSImzMLParserWrapper(Path('mock_input_path'))

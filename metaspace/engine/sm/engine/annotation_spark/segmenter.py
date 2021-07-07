@@ -6,8 +6,8 @@ from shutil import rmtree
 import numpy as np
 import pandas as pd
 
+from sm.engine.annotation.imzml_parser import ImzMLParserWrapper, FSImzMLParserWrapper
 from sm.engine.errors import SMError
-from sm.engine.annotation_spark.formula_imager import get_pixel_indices
 
 MAX_MZ_VALUE = 10 ** 5
 MAX_INTENS_VALUE = 10 ** 12
@@ -42,19 +42,17 @@ def check_spectra_quality(mz_arr, int_arr):
         raise SMError(' '.join(err_msgs))
 
 
-def spectra_sample_gen(imzml_parser, sample_size):
-    sp_n = len(imzml_parser.coordinates)
-    sample_sp_inds = np.random.choice(np.arange(sp_n), sample_size, replace=False)
-    for sp_idx in sample_sp_inds:
-        mzs, ints = imzml_parser.get_spectrum(sp_idx)
+def spectra_sample_gen(imzml_wrapper, sample_size):
+    sample_sp_inds = np.random.choice(imzml_wrapper.n_spectra, sample_size, replace=False)
+    for sp_idx, mzs, ints in imzml_wrapper.iter_spectra(sample_sp_inds):
         yield sp_idx, mzs, ints
 
 
-def define_ds_segments(sample_mzs, sample_ratio, imzml_parser, ds_segm_size_mb=5):
+def define_ds_segments(sample_mzs, sample_ratio, imzml_wrapper, ds_segm_size_mb=5):
     logger.info('Defining dataset segment bounds')
     sp_arr_row_size_b = (
         np.dtype(SpIdxDType).itemsize
-        + np.dtype(imzml_parser.mz_precision).itemsize
+        + np.dtype(imzml_wrapper.mz_precision).itemsize
         + np.dtype(IntensityDType).itemsize
     )
     total_mz_n = sample_mzs.shape[0] / sample_ratio  # pylint: disable=unsubscriptable-object
@@ -94,12 +92,10 @@ def calculate_chunk_sp_n(sample_mzs_bytes, sample_sp_n, max_chunk_size_mb=500):
     return max(1, chunk_sp_n)
 
 
-def fetch_chunk_spectra_data(sp_ids, imzml_parser, sp_id_to_idx):
+def fetch_chunk_spectra_data(sp_ids, imzml_wrapper):
     sp_idxs_list, mzs_list, ints_list = [], [], []
-    for sp_id in sp_ids:
-        mzs_, ints_ = imzml_parser.get_spectrum(sp_id)
-        mzs_, ints_ = map(np.array, [mzs_, ints_])
-        sp_idx = sp_id_to_idx[sp_id]
+    for sp_id, mzs_, ints_ in imzml_wrapper.iter_spectra(sp_ids):
+        sp_idx = imzml_wrapper.pixel_indexes[sp_id]
         sp_idxs_list.append(np.ones_like(mzs_) * sp_idx)
         mzs_list.append(mzs_)
         ints_list.append(ints_)
@@ -109,7 +105,7 @@ def fetch_chunk_spectra_data(sp_ids, imzml_parser, sp_id_to_idx):
     sp_chunk_df = pd.DataFrame(
         {
             'sp_idx': np.concatenate(sp_idxs_list)[by_mz].astype(SpIdxDType),
-            'mz': mzs[by_mz].astype(imzml_parser.mz_precision),
+            'mz': mzs[by_mz].astype(imzml_wrapper.mz_precision),
             'int': np.concatenate(ints_list)[by_mz].astype(IntensityDType),
         }
     )
@@ -131,18 +127,19 @@ def extend_ds_segment_bounds(ds_segments):
     return mz_segments
 
 
-def segment_ds(imzml_parser, spectra_per_chunk_n, ds_segments, ds_segments_path):
+def segment_ds(
+    imzml_wrapper: FSImzMLParserWrapper, spectra_per_chunk_n, ds_segments, ds_segments_path
+):
     logger.info(f'Segmenting dataset into {len(ds_segments)} segments')
 
     rmtree(ds_segments_path, ignore_errors=True)
     ds_segments_path.mkdir(parents=True)
 
-    sp_id_to_idx = get_pixel_indices(imzml_parser.coordinates)
     mz_segments = extend_ds_segment_bounds(ds_segments)
-    sp_id_chunks = chunk_list(xs=range(len(imzml_parser.coordinates)), size=spectra_per_chunk_n)
+    sp_id_chunks = chunk_list(xs=range(imzml_wrapper.n_spectra), size=spectra_per_chunk_n)
     for chunk_i, sp_ids in enumerate(sp_id_chunks, 1):
         logger.debug(f'Segmenting spectra chunk {chunk_i}')
-        sp_chunk_df = fetch_chunk_spectra_data(sp_ids, imzml_parser, sp_id_to_idx)
+        sp_chunk_df = fetch_chunk_spectra_data(sp_ids, imzml_wrapper)
         segment_spectra_chunk(sp_chunk_df, mz_segments, ds_segments_path)
 
 

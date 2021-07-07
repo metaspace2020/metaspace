@@ -6,7 +6,6 @@ from typing import List, Dict, Tuple, Optional
 import numpy as np
 import pandas as pd
 from lithops.storage import Storage
-from pyimzml.ImzMLParser import PortableSpectrumReader
 from scipy.sparse import coo_matrix
 
 from sm.engine.annotation.formula_validator import (
@@ -15,9 +14,9 @@ from sm.engine.annotation.formula_validator import (
     MetricsDict,
     METRICS,
 )
+from sm.engine.annotation.imzml_parser import LithopsImzMLParserWrapper
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj, load_cobjs
-from sm.engine.annotation_lithops.utils import ds_dims, get_pixel_indices
 from sm.engine.ds_config import DSConfig
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.utils.perf_profile import Profiler
@@ -195,14 +194,6 @@ def read_ds_segments(
     return sp_df
 
 
-def make_sample_area_mask(coordinates):
-    pixel_indices = get_pixel_indices(coordinates)
-    nrows, ncols = ds_dims(coordinates)
-    sample_area_mask = np.zeros(ncols * nrows, dtype=bool)
-    sample_area_mask[pixel_indices] = True
-    return sample_area_mask.reshape(nrows, ncols)
-
-
 def choose_ds_segments(ds_segments_bounds, centr_df, isocalc_wrapper):
     centr_segm_min_mz, centr_segm_max_mz = centr_df.mz.agg([np.min, np.max])
     centr_segm_min_mz, _ = isocalc_wrapper.mass_accuracy_bounds(centr_segm_min_mz)
@@ -224,18 +215,19 @@ def process_centr_segments(
     ds_segments_bounds,
     ds_segm_lens: np.ndarray,
     db_segms_cobjs: List[CObj[pd.DataFrame]],
-    imzml_reader: PortableSpectrumReader,
+    imzml_wrapper: LithopsImzMLParserWrapper,
     ds_config: DSConfig,
     ds_segm_size_mb: float,
     is_intensive_dataset: bool,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # pylint: disable=too-many-locals
-    ds_segm_dtype = imzml_reader.mzPrecision
-    sample_area_mask = make_sample_area_mask(imzml_reader.coordinates)
-    nrows, ncols = ds_dims(imzml_reader.coordinates)
+    # Copy needed fields out of imzml_wrapper so that the other unneeded fields aren't pulled into
+    # the pickled `process_centr_segment` function
+    ds_segm_dtype = imzml_wrapper.mz_precision
+    nrows, ncols = imzml_wrapper.h, imzml_wrapper.w
     isocalc_wrapper = IsocalcWrapper(ds_config)
     image_gen_config = ds_config['image_generation']
-    compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, image_gen_config)
+    compute_metrics = make_compute_image_metrics(imzml_wrapper.mask, nrows, ncols, image_gen_config)
     min_px = image_gen_config['min_px']
     # TODO: Get available memory from Lithops somehow so it updates if memory is increased on retry
     pw_mem_mb = 2048 if is_intensive_dataset else 1024
