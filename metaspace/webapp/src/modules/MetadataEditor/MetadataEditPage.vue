@@ -60,6 +60,7 @@ import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/
 import { isArray, isEqual, get } from 'lodash-es'
 import { currentUserRoleQuery } from '../../api/user'
 import config from '../../lib/config'
+import { getDatasetStatusQuery } from '@/api/dataset'
 
 export default {
   name: 'MetadataEditPage',
@@ -74,6 +75,7 @@ export default {
       isSubmitting: false,
       systemHealth: null,
       currentUser: null,
+      datasetStatus: null,
     }
   },
   apollo: {
@@ -85,6 +87,16 @@ export default {
     currentUser: {
       query: currentUserRoleQuery,
       fetchPolicy: 'cache-first',
+    },
+    datasetStatus: {
+      query: getDatasetStatusQuery,
+      fetchPolicy: 'cache-first',
+      variables() {
+        return { id: this.datasetId }
+      },
+      update(data) {
+        return data.dataset.status
+      },
     },
   },
   computed: {
@@ -167,6 +179,15 @@ export default {
              dataset processing has been temporarily suspended so that we can safely update the website.\n\n
              Please wait a few hours and try again.`,
             'Dataset processing suspended',
+            { type: 'warning' })
+              .catch(() => { /* Ignore exception raised when alert is closed */ })
+            return false
+          } else if (this.currentUser?.role !== 'admin'
+            && (this.datasetStatus === 'QUEUED' || this.datasetStatus === 'ANNOTATING')) {
+            this.$alert(`Changes to the analysis options require that this dataset be reprocessed; however,
+            this dataset is currently annotating or queued for annotation.
+            Please wait until annotation has finished before submitting it for reprocessing.`,
+            'Dataset busy',
             { type: 'warning' })
               .catch(() => { /* Ignore exception raised when alert is closed */ })
             return false

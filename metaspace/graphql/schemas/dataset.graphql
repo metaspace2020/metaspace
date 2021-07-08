@@ -49,6 +49,8 @@ type Dataset {
   ionThumbnailUrl: String
   externalLinks: [ExternalLink!]!
 
+  canEdit: Boolean!
+  canDelete: Boolean!
   canDownload: Boolean!
   # JSON string containing:
   # a list of authors,

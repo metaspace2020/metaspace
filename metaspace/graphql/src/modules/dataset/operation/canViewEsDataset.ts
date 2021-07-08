@@ -2,6 +2,10 @@ import { DatasetSource } from '../../../bindingTypes'
 import { ContextUser } from '../../../context'
 import { UserProjectRoleOptions as UPRO } from '../../project/model'
 
+/**
+ * Dataset visibility permissions logic extracted from esConnector.
+ * These rules should be kept in sync with the rules in constructDatasetAuthFilters.
+ */
 export default async(dataset: DatasetSource, user: ContextUser) => {
   const ds = dataset._source
   if (ds.ds_is_public) {

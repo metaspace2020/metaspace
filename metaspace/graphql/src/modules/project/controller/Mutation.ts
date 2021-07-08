@@ -29,7 +29,7 @@ import generateRandomToken from '../../../utils/generateRandomToken'
 import { addExternalLink, removeExternalLink, ExternalLinkProviderOptions as ELPO } from '../ExternalLink'
 import { validateUrlSlugChange } from '../../groupOrProject/urlSlug'
 import { validateTiptapJson } from '../../../utils/tiptap'
-import { getDatasetFromProjectForEditing } from '../../dataset/operation/getDatasetFromProjectForEditing'
+import { getDatasetForEditing } from '../../dataset/operation/getDatasetForEditing'
 import moment = require('moment')
 
 const asyncAssertCanEditProject = async(ctx: Context, projectId: string) => {
@@ -227,14 +227,12 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     ) {
       // Verify user is allowed to edit the datasets
       await Promise.all((datasetIds || []).map(async(dsId: string) => {
-        await getDatasetFromProjectForEditing(ctx.entityManager, ctx.user, dsId,
-          projectId, userProjectRole, false)
+        await getDatasetForEditing(ctx.entityManager, ctx.user, dsId)
       }))
 
       // Verify user is allowed to edit the datasets to ber removed
       await Promise.all((removedDatasetIds || []).map(async(dsId: string) => {
-        await getDatasetFromProjectForEditing(ctx.entityManager, ctx.user, dsId,
-          projectId, userProjectRole, true)
+        await getDatasetForEditing(ctx.entityManager, ctx.user, dsId, { removeFromProjectId: projectId })
       }))
 
       const approved = ([UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole) || ctx.isAdmin)

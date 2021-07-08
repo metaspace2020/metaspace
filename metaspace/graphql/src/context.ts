@@ -4,7 +4,7 @@ import { UserProjectRole } from './binding'
 
 export type UserProjectRoles = {[projectId: string]: UserProjectRole}
 
-export type ContextCacheKeyArg = string | number | boolean | null | undefined;
+export type ContextCacheKeyArg = string | number | boolean | null | undefined | string[];
 
 export type ContextUserRole = 'guest' | 'user' | 'admin';
 

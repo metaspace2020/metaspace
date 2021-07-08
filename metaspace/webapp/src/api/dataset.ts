@@ -66,6 +66,8 @@ export interface DatasetDetailItem {
     counts: number[];
   };
   rawOpticalImageUrl: string;
+  canEdit: boolean;
+  canDelete: boolean;
   canDownload: boolean;
   uploadDT: string;
 }
@@ -122,6 +124,8 @@ export const datasetDetailItemFragment =
     }
     thumbnailOpticalImageUrl
     ionThumbnailUrl
+    canEdit
+    canDelete
     canDownload
     uploadDT
   }`
@@ -307,3 +311,14 @@ export const getDatasetByIdQuery =
   }
   ${datasetDetailItemFragment}
 `
+
+export interface GetDatabaseStatusQuery {
+  dataset: {
+    id: string
+    status: GqlJobStatus | null
+  }
+}
+export const getDatasetStatusQuery =
+  gql`query getDatasetStatusQuery($id: String!) {
+    dataset(id: $id) { id status }
+  }`
