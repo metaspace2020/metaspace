@@ -23,11 +23,14 @@ const fetchDatasetProjectsInStatusUncached = async(
 const fetchDatasetProjectsInStatus = async(
   ctx: Context, datasetId: string, statuses: PublicationStatus[]
 ): Promise<DatasetProjectModel[]> => {
-  const dataLoader = ctx.contextCacheGet('fetchDatasetProjectsInStatusDataLoader', [], () => {
-    return new DataLoader(
-      async(datasetIds: string[]) => fetchDatasetProjectsInStatusUncached(ctx.entityManager, datasetIds, statuses)
-    )
-  })
+  const statusCacheKey = statuses.join(',')
+  const dataLoader = ctx.contextCacheGet('fetchDatasetProjectsInStatusDataLoader', [statusCacheKey],
+    (statusCacheKey) => {
+      const statuses = statusCacheKey.split(',') as PublicationStatus[]
+      return new DataLoader(
+        (datasetIds: string[]) => fetchDatasetProjectsInStatusUncached(ctx.entityManager, datasetIds, statuses)
+      )
+    })
   return dataLoader.load(datasetId)
 }
 
