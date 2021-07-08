@@ -11,16 +11,16 @@ coverage:
   status:
     project:
       engine:
-        range: 70...100
+        target: 69%
         threshold: 0.2
-        flags: engine
+        flags: ["engine"]
       webapp:
-        range: 50...100
+        target: 51%
         threshold: 0.5
-        flags: webapp
+        flags: ["webapp"]
       graphql:
-        range: 55...100
+        target: 60%
         threshold: 0.5
-        flags: graphql
+        flags: ["graphql"]
     patch: no
     changes: no

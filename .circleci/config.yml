@@ -145,23 +145,26 @@ jobs:
           command: |
             cp ci/clientConfig.json src/
       - run:
-          name: Compile
+          name: Generate metadata schema
           command: |
-            yarn run build-ci
-      - run:
-          name: Run tests
-          command: |
-            cp ~/workspace/graphql-schema.json ./tests/utils/graphql-schema.json
-            yarn run test-ci
-      - run:
-          name: Upload coverage
-          command: |
-            yarn run test-ci --coverage --maxWorkers=1
-            npx codecov -p ../.. -F webapp
+            yarn run deref-schema
       - run:
           name: Lint code
           when: always
           command: yarn run lint --max-warnings 0 --no-fix
+      - run:
+          name: Run tests
+          command: |
+            cp ~/workspace/graphql-schema.json ./tests/utils/graphql-schema.json
+            yarn run test-ci --coverage --maxWorkers=2
+      - run:
+          name: Upload coverage
+          command: |
+            npx codecov -p ../.. -F webapp
+      - run:
+          name: Test compilation
+          command: |
+            yarn run build-ci
 
   test-webapp-e2e:
     docker:
