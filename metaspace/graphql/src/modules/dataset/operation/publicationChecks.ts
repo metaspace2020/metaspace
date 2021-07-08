@@ -23,7 +23,7 @@ const fetchDatasetProjectsInStatusUncached = async(
 const fetchDatasetProjectsInStatus = async(
   ctx: Context, datasetId: string, statuses: PublicationStatus[]
 ): Promise<DatasetProjectModel[]> => {
-  const dataLoader = ctx.contextCacheGet('findProjectsByDatasetIdDataLoader', [], () => {
+  const dataLoader = ctx.contextCacheGet('fetchDatasetProjectsInStatusDataLoader', [], () => {
     return new DataLoader(
       async(datasetIds: string[]) => fetchDatasetProjectsInStatusUncached(ctx.entityManager, datasetIds, statuses)
     )
@@ -31,9 +31,7 @@ const fetchDatasetProjectsInStatus = async(
   return dataLoader.load(datasetId)
 }
 
-export const isDatasetInPublicationStatus = async(
-  ctx: Context, datasetId: string, statuses: PublicationStatus[]
-) => {
+export const isDatasetInPublicationStatus = async(ctx: Context, datasetId: string, statuses: PublicationStatus[]) => {
   return (await fetchDatasetProjectsInStatus(ctx, datasetId, statuses)).length > 0
 }
 
