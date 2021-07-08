@@ -56,7 +56,7 @@ export const RequestedAccessDialog = defineComponent<RequestedAccessDialogProps>
             },
             )
           }
-          to approve your request within metaspace, so you can visualize the group datasets!
+          to approve your request within METASPACE, so you can visualize the group datasets!
         </Dialog>
       )
     }
