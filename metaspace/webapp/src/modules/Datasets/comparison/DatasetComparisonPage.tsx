@@ -19,6 +19,14 @@ import { DatasetListItem, datasetListItemsQuery } from '../../../api/dataset'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
 import Vue from 'vue'
 
+interface GlobalImageSettings {
+  resetViewPort: boolean
+  scaleBarColor: string
+  scaleType: string
+  colormap: string
+  showOpticalImage: boolean
+}
+
 interface DatasetComparisonPageProps {
   className: string
   defaultImagePosition: any
@@ -29,7 +37,7 @@ interface DatasetComparisonPageState {
   gridState: any
   annotations: any
   datasets: any
-  globalImageSettings: any
+  globalImageSettings: GlobalImageSettings
   grid: any
   nCols: number
   nRows: number
@@ -72,7 +80,13 @@ export default defineComponent<DatasetComparisonPageProps>({
     const state = reactive<DatasetComparisonPageState>({
       selectedAnnotation: -1,
       gridState: {},
-      globalImageSettings: {},
+      globalImageSettings: {
+        resetViewPort: false,
+        scaleBarColor: '#000000',
+        scaleType: 'linear',
+        colormap: 'Viridis',
+        showOpticalImage: false,
+      },
       annotations: [],
       datasets: [],
       collapse: ['images'],
@@ -154,12 +168,6 @@ export default defineComponent<DatasetComparisonPageProps>({
         state.nRows = auxSettings.nRows
         state.grid = auxSettings.grid
         await requestAnnotations()
-        state.globalImageSettings = {
-          scaleBarColor: '#000000',
-          scaleType: 'linear',
-          colormap: 'Viridis',
-          showOpticalImage: false,
-        }
       }
     })
 
@@ -167,19 +175,19 @@ export default defineComponent<DatasetComparisonPageProps>({
       if (event) {
         event.stopPropagation()
       }
-      Vue.set(state.globalImageSettings, 'resetViewPort', !state.globalImageSettings.resetViewPort)
+      state.globalImageSettings.resetViewPort = !state.globalImageSettings.resetViewPort
     }
 
     const handleScaleBarColorChange = (scaleBarColor: string) => {
-      Vue.set(state.globalImageSettings, 'scaleBarColor', scaleBarColor)
+      state.globalImageSettings.scaleBarColor = scaleBarColor
     }
 
-    const handleScaleTypeChange = async(scaleType: string) => {
-      Vue.set(state.globalImageSettings, 'scaleType', scaleType)
+    const handleScaleTypeChange = (scaleType: string) => {
+      state.globalImageSettings.scaleType = scaleType
     }
 
-    const handleColormapChange = async(colormap: string) => {
-      Vue.set(state.globalImageSettings, 'colormap', colormap)
+    const handleColormapChange = (colormap: string) => {
+      state.globalImageSettings.colormap = colormap
     }
 
     const handleRowChange = (idx: number) => {
@@ -224,11 +232,11 @@ export default defineComponent<DatasetComparisonPageProps>({
                 ref={imageGrid}
                 nCols={nCols}
                 nRows={nRows}
-                resetViewPort={state.globalImageSettings?.resetViewPort}
+                resetViewPort={state.globalImageSettings.resetViewPort}
                 onResetViewPort={resetViewPort}
-                scaleBarColor={state.globalImageSettings?.scaleBarColor}
-                scaleType={state.globalImageSettings?.scaleType}
-                colormap={state.globalImageSettings?.colormap}
+                scaleBarColor={state.globalImageSettings.scaleBarColor}
+                scaleType={state.globalImageSettings.scaleType}
+                colormap={state.globalImageSettings.colormap}
                 settings={gridSettings}
                 annotations={state.annotations || []}
                 datasets={state.datasets || []}
