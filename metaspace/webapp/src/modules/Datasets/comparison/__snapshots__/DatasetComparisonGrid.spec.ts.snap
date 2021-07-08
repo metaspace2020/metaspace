@@ -1,48 +1,879 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
-<div class="dataset-comparison-grid" ncols="2" nrows="1" settings="[object Object]" selectedannotation="0" annotations="[object Object]">
-  <div class="dataset-comparison-grid-row">
-    <div class="dataset-comparison-grid-col overflow-hidden relative"><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"><!----> <div class="flex items-center pr-4 cursor-default"><mock-el-popover placement="bottom" trigger="click"><span id="ion-image-settings"><form class="el-form el-form--label-top"><div class="el-form-item" data-feature-anchor="ion-image-color-scale"><label class="el-form-item__label">Intensity scaling</label><div class="el-form-item__content"><mock-el-select value="linear" style="width: 300px;"><mock-el-option value="linear" label="Linear"></mock-el-option> <mock-el-option value="linear-full" label="Linear (without hot-spot removal)"></mock-el-option> <mock-el-option value="log" label="Logarithmic"></mock-el-option> <mock-el-option value="log-full" label="Logarithmic (without outlier clipping)"></mock-el-option> <mock-el-option value="hist" label="Equalized histogram"></mock-el-option></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div> <div class="el-form-item"><label class="el-form-item__label">Colormap</label><div class="el-form-item__content"><mock-el-select value="Viridis" style="width: 150px;"><ul class="el-select-group__wrap"><li class="el-select-group__title"></li><li><ul class="el-select-group"><mock-el-option value="Viridis" label="Viridis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Cividis" label="Cividis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Hot" label="Hot" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="YlGnBu" label="YlGnBu" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Portland" label="Portland" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Greys" label="Greys" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Inferno" label="Inferno" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Turbo" label="Turbo" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option></ul></li></ul> <ul class="el-select-group__wrap"><li class="el-select-group__title">Inverted</li><li><ul class="el-select-group"><mock-el-option value="-Viridis" label="Viridis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Cividis" label="Cividis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Hot" label="Hot" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-YlGnBu" label="YlGnBu" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Portland" label="Portland" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Greys" label="Greys" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Inferno" label="Inferno" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Turbo" label="Turbo" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option></ul></li></ul></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div> <div class="el-form-item"><label class="el-form-item__label">Scale bar color</label><div class="el-form-item__content"><mock-el-select value="#000000" style="width: 150px;"><mock-el-option value="#000000" label="Black"><div style="position: relative; background: transparent; height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(0, 0, 0); border-color: #000000; width: 62.5px;"><div class="scale-bar-x-text">
+<div
+  annotations="[object Object]"
+  class="dataset-comparison-grid"
+  ncols="2"
+  nrows="1"
+  selectedannotation="0"
+  settings="[object Object]"
+>
+  <div
+    class="dataset-comparison-grid-row"
+  >
+    <div
+      class="dataset-comparison-grid-col overflow-hidden relative"
+    >
+      <span
+        class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"
+        slot="title"
+      >
+        <!---->
+         
+        <div
+          class="flex items-center pr-4 cursor-default"
+        >
+          <mock-el-popover
+            placement="bottom"
+            trigger="click"
+          >
+            <span
+              id="ion-image-settings"
+            >
+              <form
+                class="el-form el-form--label-top"
+              >
+                <div
+                  class="el-form-item"
+                  data-feature-anchor="ion-image-color-scale"
+                >
+                  <label
+                    class="el-form-item__label"
+                  >
+                    Intensity scaling
+                  </label>
+                  <div
+                    class="el-form-item__content"
+                  >
+                    <mock-el-select
+                      style="width: 300px;"
+                      value="linear"
+                    >
+                      <mock-el-option
+                        label="Linear"
+                        value="linear"
+                      />
+                       
+                      <mock-el-option
+                        label="Linear (without hot-spot removal)"
+                        value="linear-full"
+                      />
+                       
+                      <mock-el-option
+                        label="Logarithmic"
+                        value="log"
+                      />
+                       
+                      <mock-el-option
+                        label="Logarithmic (without outlier clipping)"
+                        value="log-full"
+                      />
+                       
+                      <mock-el-option
+                        label="Equalized histogram"
+                        value="hist"
+                      />
+                    </mock-el-select>
+                    <transition-stub
+                      name="el-zoom-in-top"
+                    >
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+                 
+                <div
+                  class="el-form-item"
+                >
+                  <label
+                    class="el-form-item__label"
+                  >
+                    Colormap
+                  </label>
+                  <div
+                    class="el-form-item__content"
+                  >
+                    <mock-el-select
+                      style="width: 150px;"
+                      value="Viridis"
+                    >
+                      <ul
+                        class="el-select-group__wrap"
+                      >
+                        <li
+                          class="el-select-group__title"
+                        >
+                          
+                        </li>
+                        <li>
+                          <ul
+                            class="el-select-group"
+                          >
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Viridis"
+                              value="Viridis"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Cividis"
+                              value="Cividis"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Hot"
+                              value="Hot"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="YlGnBu"
+                              value="YlGnBu"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Portland"
+                              value="Portland"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Greys"
+                              value="Greys"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Inferno"
+                              value="Inferno"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Turbo"
+                              value="Turbo"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                          </ul>
+                        </li>
+                      </ul>
+                       
+                      <ul
+                        class="el-select-group__wrap"
+                      >
+                        <li
+                          class="el-select-group__title"
+                        >
+                          Inverted
+                        </li>
+                        <li>
+                          <ul
+                            class="el-select-group"
+                          >
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Viridis"
+                              value="-Viridis"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Cividis"
+                              value="-Cividis"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Hot"
+                              value="-Hot"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="YlGnBu"
+                              value="-YlGnBu"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Portland"
+                              value="-Portland"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Greys"
+                              value="-Greys"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Inferno"
+                              value="-Inferno"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Turbo"
+                              value="-Turbo"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                          </ul>
+                        </li>
+                      </ul>
+                    </mock-el-select>
+                    <transition-stub
+                      name="el-zoom-in-top"
+                    >
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+                 
+                <div
+                  class="el-form-item"
+                >
+                  <label
+                    class="el-form-item__label"
+                  >
+                    Scale bar color
+                  </label>
+                  <div
+                    class="el-form-item__content"
+                  >
+                    <mock-el-select
+                      style="width: 150px;"
+                      value="#000000"
+                    >
+                      <mock-el-option
+                        label="Black"
+                        value="#000000"
+                      >
+                        <div
+                          style="position: relative; background: transparent; height: 50px;"
+                        >
+                          <div
+                            class="scale-bar"
+                          >
+                            <div
+                              class="scale-bar-x"
+                              style="color: rgb(0, 0, 0); border-color: #000000; width: 62.5px;"
+                            >
+                              <div
+                                class="scale-bar-x-text"
+                              >
+                                
       500 µm
-    </div></div> <!----></div></div></mock-el-option><mock-el-option value="#999999" label="Gray"><div style="position: relative; background: transparent; height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(153, 153, 153); border-color: #999999; width: 62.5px;"><div class="scale-bar-x-text">
+    
+                              </div>
+                            </div>
+                             
+                            <!---->
+                          </div>
+                        </div>
+                      </mock-el-option>
+                      <mock-el-option
+                        label="Gray"
+                        value="#999999"
+                      >
+                        <div
+                          style="position: relative; background: transparent; height: 50px;"
+                        >
+                          <div
+                            class="scale-bar"
+                          >
+                            <div
+                              class="scale-bar-x"
+                              style="color: rgb(153, 153, 153); border-color: #999999; width: 62.5px;"
+                            >
+                              <div
+                                class="scale-bar-x-text"
+                              >
+                                
       500 µm
-    </div></div> <!----></div></div></mock-el-option><mock-el-option value="#FFFFFF" label="White"><div style="position: relative; background: rgb(204, 204, 204); height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(255, 255, 255); border-color: #ffffff; width: 62.5px;"><div class="scale-bar-x-text">
+    
+                              </div>
+                            </div>
+                             
+                            <!---->
+                          </div>
+                        </div>
+                      </mock-el-option>
+                      <mock-el-option
+                        label="White"
+                        value="#FFFFFF"
+                      >
+                        <div
+                          style="position: relative; background: rgb(204, 204, 204); height: 50px;"
+                        >
+                          <div
+                            class="scale-bar"
+                          >
+                            <div
+                              class="scale-bar-x"
+                              style="color: rgb(255, 255, 255); border-color: #ffffff; width: 62.5px;"
+                            >
+                              <div
+                                class="scale-bar-x-text"
+                              >
+                                
       500 µm
-    </div></div> <!----></div></div></mock-el-option> <mock-el-option value="hidden" label="Hidden"></mock-el-option></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div></form></span>
-      <!---->
-      </mock-el-popover>
-      <!---->
-      <!---->
+    
+                              </div>
+                            </div>
+                             
+                            <!---->
+                          </div>
+                        </div>
+                      </mock-el-option>
+                       
+                      <mock-el-option
+                        label="Hidden"
+                        value="hidden"
+                      />
+                    </mock-el-select>
+                    <transition-stub
+                      name="el-zoom-in-top"
+                    >
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </form>
+            </span>
+             
+            <!---->
+          </mock-el-popover>
+           
+          <!---->
+           
+          <!---->
+        </div>
+         
+        <transition-stub
+          enteractiveclass="duration-150 transition-opacity ease-in-out"
+          enterclass="opacity-0"
+          leaveactiveclass="duration-150 transition-opacity ease-in-out"
+          leavetoclass="opacity-0"
+          mode="out-in"
+        />
+      </span>
+      <div
+        class="ds-wrapper relative"
+      >
+        <div
+          class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar"
+        >
+          <transition-stub
+            class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden"
+            enteractiveclass="duration-150 transition-opacity ease-in-out"
+            enterclass="opacity-0"
+            leaveactiveclass="duration-150 transition-opacity ease-in-out"
+            leavetoclass="opacity-0"
+            mode="out-in"
+          />
+          <transition-stub
+            class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden"
+            enteractiveclass="duration-150 transition-opacity ease-in-out"
+            enterclass="opacity-0"
+            leaveactiveclass="duration-150 transition-opacity ease-in-out"
+            leavetoclass="opacity-0"
+            mode="out-in"
+          />
+        </div>
+        <button
+          class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
+          title="Export image"
+        >
+          <i
+            class="el-icon-download text-xl"
+          />
+        </button>
+      </div>
     </div>
-    <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub></span>
-    <div class="ds-wrapper relative">
-      <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
-        <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
-        <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
-      </div><button title="Export image" class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"><i class="el-icon-download text-xl"></i></button>
+    <div
+      class="dataset-comparison-grid-col overflow-hidden relative"
+    >
+      <span
+        class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"
+        slot="title"
+      >
+        <!---->
+         
+        <div
+          class="flex items-center pr-4 cursor-default"
+        >
+          <mock-el-popover
+            placement="bottom"
+            trigger="click"
+          >
+            <span
+              id="ion-image-settings"
+            >
+              <form
+                class="el-form el-form--label-top"
+              >
+                <div
+                  class="el-form-item"
+                  data-feature-anchor="ion-image-color-scale"
+                >
+                  <label
+                    class="el-form-item__label"
+                  >
+                    Intensity scaling
+                  </label>
+                  <div
+                    class="el-form-item__content"
+                  >
+                    <mock-el-select
+                      style="width: 300px;"
+                      value="linear"
+                    >
+                      <mock-el-option
+                        label="Linear"
+                        value="linear"
+                      />
+                       
+                      <mock-el-option
+                        label="Linear (without hot-spot removal)"
+                        value="linear-full"
+                      />
+                       
+                      <mock-el-option
+                        label="Logarithmic"
+                        value="log"
+                      />
+                       
+                      <mock-el-option
+                        label="Logarithmic (without outlier clipping)"
+                        value="log-full"
+                      />
+                       
+                      <mock-el-option
+                        label="Equalized histogram"
+                        value="hist"
+                      />
+                    </mock-el-select>
+                    <transition-stub
+                      name="el-zoom-in-top"
+                    >
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+                 
+                <div
+                  class="el-form-item"
+                >
+                  <label
+                    class="el-form-item__label"
+                  >
+                    Colormap
+                  </label>
+                  <div
+                    class="el-form-item__content"
+                  >
+                    <mock-el-select
+                      style="width: 150px;"
+                      value="Viridis"
+                    >
+                      <ul
+                        class="el-select-group__wrap"
+                      >
+                        <li
+                          class="el-select-group__title"
+                        >
+                          
+                        </li>
+                        <li>
+                          <ul
+                            class="el-select-group"
+                          >
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Viridis"
+                              value="Viridis"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Cividis"
+                              value="Cividis"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Hot"
+                              value="Hot"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="YlGnBu"
+                              value="YlGnBu"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Portland"
+                              value="Portland"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Greys"
+                              value="Greys"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Inferno"
+                              value="Inferno"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Turbo"
+                              value="Turbo"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                          </ul>
+                        </li>
+                      </ul>
+                       
+                      <ul
+                        class="el-select-group__wrap"
+                      >
+                        <li
+                          class="el-select-group__title"
+                        >
+                          Inverted
+                        </li>
+                        <li>
+                          <ul
+                            class="el-select-group"
+                          >
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Viridis"
+                              value="-Viridis"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Cividis"
+                              value="-Cividis"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Hot"
+                              value="-Hot"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="YlGnBu"
+                              value="-YlGnBu"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Portland"
+                              value="-Portland"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Greys"
+                              value="-Greys"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Inferno"
+                              value="-Inferno"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                            <mock-el-option
+                              class="flex items-center pr-5 py-2"
+                              label="Turbo"
+                              value="-Turbo"
+                            >
+                              <div
+                                class="h-full w-full"
+                              />
+                            </mock-el-option>
+                          </ul>
+                        </li>
+                      </ul>
+                    </mock-el-select>
+                    <transition-stub
+                      name="el-zoom-in-top"
+                    >
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+                 
+                <div
+                  class="el-form-item"
+                >
+                  <label
+                    class="el-form-item__label"
+                  >
+                    Scale bar color
+                  </label>
+                  <div
+                    class="el-form-item__content"
+                  >
+                    <mock-el-select
+                      style="width: 150px;"
+                      value="#000000"
+                    >
+                      <mock-el-option
+                        label="Black"
+                        value="#000000"
+                      >
+                        <div
+                          style="position: relative; background: transparent; height: 50px;"
+                        >
+                          <div
+                            class="scale-bar"
+                          >
+                            <div
+                              class="scale-bar-x"
+                              style="color: rgb(0, 0, 0); border-color: #000000; width: 62.5px;"
+                            >
+                              <div
+                                class="scale-bar-x-text"
+                              >
+                                
+      500 µm
+    
+                              </div>
+                            </div>
+                             
+                            <!---->
+                          </div>
+                        </div>
+                      </mock-el-option>
+                      <mock-el-option
+                        label="Gray"
+                        value="#999999"
+                      >
+                        <div
+                          style="position: relative; background: transparent; height: 50px;"
+                        >
+                          <div
+                            class="scale-bar"
+                          >
+                            <div
+                              class="scale-bar-x"
+                              style="color: rgb(153, 153, 153); border-color: #999999; width: 62.5px;"
+                            >
+                              <div
+                                class="scale-bar-x-text"
+                              >
+                                
+      500 µm
+    
+                              </div>
+                            </div>
+                             
+                            <!---->
+                          </div>
+                        </div>
+                      </mock-el-option>
+                      <mock-el-option
+                        label="White"
+                        value="#FFFFFF"
+                      >
+                        <div
+                          style="position: relative; background: rgb(204, 204, 204); height: 50px;"
+                        >
+                          <div
+                            class="scale-bar"
+                          >
+                            <div
+                              class="scale-bar-x"
+                              style="color: rgb(255, 255, 255); border-color: #ffffff; width: 62.5px;"
+                            >
+                              <div
+                                class="scale-bar-x-text"
+                              >
+                                
+      500 µm
+    
+                              </div>
+                            </div>
+                             
+                            <!---->
+                          </div>
+                        </div>
+                      </mock-el-option>
+                       
+                      <mock-el-option
+                        label="Hidden"
+                        value="hidden"
+                      />
+                    </mock-el-select>
+                    <transition-stub
+                      name="el-zoom-in-top"
+                    >
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </form>
+            </span>
+             
+            <!---->
+          </mock-el-popover>
+           
+          <!---->
+           
+          <!---->
+        </div>
+         
+        <transition-stub
+          enteractiveclass="duration-150 transition-opacity ease-in-out"
+          enterclass="opacity-0"
+          leaveactiveclass="duration-150 transition-opacity ease-in-out"
+          leavetoclass="opacity-0"
+          mode="out-in"
+        />
+      </span>
+      <div
+        class="ds-wrapper relative"
+      >
+        <div
+          class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar"
+        >
+          <transition-stub
+            class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden"
+            enteractiveclass="duration-150 transition-opacity ease-in-out"
+            enterclass="opacity-0"
+            leaveactiveclass="duration-150 transition-opacity ease-in-out"
+            leavetoclass="opacity-0"
+            mode="out-in"
+          />
+          <transition-stub
+            class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden"
+            enteractiveclass="duration-150 transition-opacity ease-in-out"
+            enterclass="opacity-0"
+            leaveactiveclass="duration-150 transition-opacity ease-in-out"
+            leavetoclass="opacity-0"
+            mode="out-in"
+          />
+        </div>
+        <button
+          class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
+          title="Export image"
+        >
+          <i
+            class="el-icon-download text-xl"
+          />
+        </button>
+      </div>
     </div>
   </div>
-  <div class="dataset-comparison-grid-col overflow-hidden relative"><span slot="title" class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"><!----> <div class="flex items-center pr-4 cursor-default"><mock-el-popover placement="bottom" trigger="click"><span id="ion-image-settings"><form class="el-form el-form--label-top"><div class="el-form-item" data-feature-anchor="ion-image-color-scale"><label class="el-form-item__label">Intensity scaling</label><div class="el-form-item__content"><mock-el-select value="linear" style="width: 300px;"><mock-el-option value="linear" label="Linear"></mock-el-option> <mock-el-option value="linear-full" label="Linear (without hot-spot removal)"></mock-el-option> <mock-el-option value="log" label="Logarithmic"></mock-el-option> <mock-el-option value="log-full" label="Logarithmic (without outlier clipping)"></mock-el-option> <mock-el-option value="hist" label="Equalized histogram"></mock-el-option></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div> <div class="el-form-item"><label class="el-form-item__label">Colormap</label><div class="el-form-item__content"><mock-el-select value="Viridis" style="width: 150px;"><ul class="el-select-group__wrap"><li class="el-select-group__title"></li><li><ul class="el-select-group"><mock-el-option value="Viridis" label="Viridis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Cividis" label="Cividis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Hot" label="Hot" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="YlGnBu" label="YlGnBu" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Portland" label="Portland" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Greys" label="Greys" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Inferno" label="Inferno" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="Turbo" label="Turbo" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option></ul></li></ul> <ul class="el-select-group__wrap"><li class="el-select-group__title">Inverted</li><li><ul class="el-select-group"><mock-el-option value="-Viridis" label="Viridis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Cividis" label="Cividis" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Hot" label="Hot" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-YlGnBu" label="YlGnBu" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Portland" label="Portland" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Greys" label="Greys" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Inferno" label="Inferno" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option><mock-el-option value="-Turbo" label="Turbo" class="flex items-center pr-5 py-2"><div class="h-full w-full"></div></mock-el-option></ul></li></ul></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div> <div class="el-form-item"><label class="el-form-item__label">Scale bar color</label><div class="el-form-item__content"><mock-el-select value="#000000" style="width: 150px;"><mock-el-option value="#000000" label="Black"><div style="position: relative; background: transparent; height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(0, 0, 0); border-color: #000000; width: 62.5px;"><div class="scale-bar-x-text">
-      500 µm
-    </div></div> <!----></div></div></mock-el-option><mock-el-option value="#999999" label="Gray"><div style="position: relative; background: transparent; height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(153, 153, 153); border-color: #999999; width: 62.5px;"><div class="scale-bar-x-text">
-      500 µm
-    </div></div> <!----></div></div></mock-el-option><mock-el-option value="#FFFFFF" label="White"><div style="position: relative; background: rgb(204, 204, 204); height: 50px;"><div class="scale-bar"><div class="scale-bar-x" style="color: rgb(255, 255, 255); border-color: #ffffff; width: 62.5px;"><div class="scale-bar-x-text">
-      500 µm
-    </div></div> <!----></div></div></mock-el-option> <mock-el-option value="hidden" label="Hidden"></mock-el-option></mock-el-select><transition-stub name="el-zoom-in-top"><!----></transition-stub></div></div></form></span>
-    <!---->
-    </mock-el-popover>
-    <!---->
-    <!---->
-  </div>
-  <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub></span>
-  <div class="ds-wrapper relative">
-    <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
-      <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
-      <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden"></transition-stub>
-    </div><button title="Export image" class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"><i class="el-icon-download text-xl"></i></button>
-  </div>
-</div>
-</div>
 </div>
 `;

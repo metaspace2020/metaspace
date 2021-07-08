@@ -599,15 +599,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
             slot="title"
             isActive={false}
             hideOptions={true}
-            scaleBarColor={state.gridState[`${row}-${col}`]?.scaleBarColor}
-            onScaleBarColorChange={(scaleBarColor: string) =>
-              handleScaleBarColorChange(scaleBarColor, `${row}-${col}`)}
-            scaleType={state.gridState[`${row}-${col}`]?.scaleType}
-            onScaleTypeChange={(scaletype: string) =>
-              handleScaleTypeChange(scaletype, `${row}-${col}`)}
-            colormap={state.gridState[`${row}-${col}`]?.colormap}
-            onColormapChange={(colormap: string) =>
-              handleColormapChange(colormap, `${row}-${col}`)}
             showOpticalImage={!!state.gridState[`${row}-${col}`]?.showOpticalImage}
             toggleOpticalImage={(e: any) => toggleOpticalImage(e, `${row}-${col}`)}
             resetViewport={(e: any) => resetViewPort(e, `${row}-${col}`)}
