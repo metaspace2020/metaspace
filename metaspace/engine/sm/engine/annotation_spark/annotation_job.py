@@ -8,7 +8,7 @@ from typing import Optional, Dict
 from pyspark import SparkContext, SparkConf
 
 from sm.engine.annotation.acq_geometry import make_acq_geometry
-from sm.engine.annotation.imzml_parser import ImzMLParserWrapper, FSImzMLParserWrapper
+from sm.engine.annotation.imzml_reader import ImzMLReader, FSImzMLReader
 from sm.engine.annotation.job import (
     del_jobs,
     insert_running_job,
@@ -74,11 +74,11 @@ class AnnotationJob:
             master=self._sm_config['spark']['master'], conf=sconf, appName='SM engine'
         )
 
-    def create_imzml_wrapper(self):
+    def create_imzml_reader(self):
         logger.info('Parsing imzml')
-        return FSImzMLParserWrapper(self._ds_data_path)
+        return FSImzMLReader(self._ds_data_path)
 
-    def _run_annotation_jobs(self, imzml_wrapper, moldbs):
+    def _run_annotation_jobs(self, imzml_reader, moldbs):
         if moldbs:
             logger.info(
                 f"Running new job ds_id: {self._ds.id}, ds_name: {self._ds.name}, mol dbs: {moldbs}"
@@ -89,7 +89,7 @@ class AnnotationJob:
 
             search_alg = MSMSearch(
                 spark_context=self._sc,
-                imzml_wrapper=imzml_wrapper,
+                imzml_reader=imzml_reader,
                 moldbs=moldbs,
                 ds_config=self._ds.config,
                 ds_data_path=self._ds_data_path,
@@ -111,16 +111,16 @@ class AnnotationJob:
                         charge=self._ds.config['isotope_generation']['charge'],
                     )
                     search_results.store(
-                        moldb_ion_metrics_df, moldb_ion_images_rdd, imzml_wrapper.mask, self._db
+                        moldb_ion_metrics_df, moldb_ion_images_rdd, imzml_reader.mask, self._db
                     )
                     job_status = JobStatus.FINISHED
                 finally:
                     update_finished_job(job_id, job_status)
 
-    def _save_data_from_raw_ms_file(self, imzml_wrapper: FSImzMLParserWrapper):
-        ms_file_path = imzml_wrapper.filename
+    def _save_data_from_raw_ms_file(self, imzml_reader: FSImzMLReader):
+        ms_file_path = imzml_reader.filename
         ms_file_type_config = SMConfig.get_ms_file_handler(ms_file_path)
-        dims = (imzml_wrapper.h, imzml_wrapper.w)
+        dims = (imzml_reader.h, imzml_reader.w)
         acq_geometry = make_acq_geometry(
             ms_file_type_config['type'], ms_file_path, self._ds.metadata, dims
         )
@@ -168,9 +168,9 @@ class AnnotationJob:
             self._perf.record_entry('configured spark')
             self._copy_input_data(self._ds)
             self._perf.record_entry('copied input data')
-            imzml_wrapper = self.create_imzml_wrapper()
+            imzml_reader = self.create_imzml_reader()
             self._perf.record_entry('parsed imzml file')
-            self._save_data_from_raw_ms_file(imzml_wrapper)
+            self._save_data_from_raw_ms_file(imzml_reader)
 
             logger.info(f'Dataset config:\n{pformat(self._ds.config)}')
 
@@ -182,7 +182,7 @@ class AnnotationJob:
 
             if removed_moldb_ids:
                 del_jobs(self._ds, removed_moldb_ids)
-            self._run_annotation_jobs(imzml_wrapper, molecular_db.find_by_ids(added_moldb_ids))
+            self._run_annotation_jobs(imzml_reader, molecular_db.find_by_ids(added_moldb_ids))
             self._perf.record_entry('annotated')
 
             logger.info("All done!")

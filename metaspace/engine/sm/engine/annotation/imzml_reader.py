@@ -20,7 +20,7 @@ TIC_ACCESSION = 'MS:1000285'
 METADATA_FIELDS = [TIC_ACCESSION]
 
 
-class ImzMLParserWrapper:
+class ImzMLReader:
     """This class bundles the ability to somehow access ImzML data (implemented in subclasses)
     with some commonly-used pre-computed data such as the mask image and the mapping between
     spectrum index and pixel index.  Additionally, it provides a central place to efficiently
@@ -88,7 +88,7 @@ class ImzMLParserWrapper:
         return idx, mzs, ints
 
 
-class FSImzMLParserWrapper(ImzMLParserWrapper):
+class FSImzMLReader(ImzMLReader):
     def __init__(self, path: Path):
         self.filename = find_file_by_ext(path, 'imzml')
         try:
@@ -109,7 +109,7 @@ class FSImzMLParserWrapper(ImzMLParserWrapper):
             yield sp_idx, mzs, ints
 
 
-class LithopsImzMLParserWrapper(ImzMLParserWrapper):
+class LithopsImzMLReader(ImzMLReader):
     def __init__(self, storage: Storage, imzml_cobject: CloudObject, ibd_cobject: CloudObject):
         imzml_parser = ImzMLParser(
             storage.get_cloudobject(imzml_cobject, stream=True),

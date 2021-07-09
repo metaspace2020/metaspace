@@ -218,8 +218,8 @@ def executor(sm_config):
             executor.storage.delete_objects(bucket, keys)
 
 
-def make_imzml_wrapper_mock(coordinates=None, spectra=None):
-    from sm.engine.annotation.imzml_parser import FSImzMLParserWrapper
+def make_imzml_reader_mock(coordinates=None, spectra=None):
+    from sm.engine.annotation.imzml_reader import FSImzMLReader
 
     if coordinates is None:
         coordinates = list(product(range(1, 11), range(1, 11), [1]))
@@ -228,10 +228,10 @@ def make_imzml_wrapper_mock(coordinates=None, spectra=None):
     if isinstance(spectra, tuple):
         spectra = [spectra] * len(coordinates)
 
-    with patch('sm.engine.annotation.imzml_parser.find_file_by_ext') as find_file_mock:
-        with patch('sm.engine.annotation.imzml_parser.ImzMLParser') as imzml_parser_mock:
+    with patch('sm.engine.annotation.imzml_reader.find_file_by_ext') as find_file_mock:
+        with patch('sm.engine.annotation.imzml_reader.ImzMLParser') as imzml_parser_mock:
             find_file_mock.return_value = 'test_dataset.imzml'
             imzml_parser_mock().coordinates = coordinates
             imzml_parser_mock().getspectrum.side_effect = lambda i: spectra[i]
             imzml_parser_mock().mzPrecision = 'f'
-            return FSImzMLParserWrapper(Path('mock_input_path'))
+            return FSImzMLReader(Path('mock_input_path'))

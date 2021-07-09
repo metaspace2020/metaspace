@@ -8,7 +8,7 @@ import pandas as pd
 from lithops.storage.utils import CloudObject
 from pyimzml.ImzMLParser import PortableSpectrumReader
 
-from sm.engine.annotation.imzml_parser import LithopsImzMLParserWrapper
+from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.annotate import process_centr_segments
 from sm.engine.annotation_lithops.build_moldb import InputMolDb, DbFDRData
 from sm.engine.annotation_lithops.cache import PipelineCacher, use_pipeline_cache
@@ -35,7 +35,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     formula_cobjs: List[CObj[pd.DataFrame]]
     db_data_cobjs: List[CObj[DbFDRData]]
     peaks_cobjs: List[CObj[pd.DataFrame]]
-    imzml_wrapper: LithopsImzMLParserWrapper
+    imzml_reader: LithopsImzMLReader
     ds_segments_bounds: np.ndarray
     ds_segms_cobjs: List[CObj[pd.DataFrame]]
     ds_segm_lens: np.ndarray
@@ -122,7 +122,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     @use_pipeline_cache
     def load_ds(self):
         (
-            self.imzml_wrapper,
+            self.imzml_reader,
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
@@ -133,7 +133,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     def validate_load_ds(self):
         validate_ds_segments(
             self.executor,
-            self.imzml_wrapper,
+            self.imzml_reader,
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
@@ -168,7 +168,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segments_bounds,
             self.ds_segm_lens,
             self.db_segms_cobjs,
-            self.imzml_wrapper,
+            self.imzml_reader,
             self.ds_config,
             self.ds_segm_size_mb,
             self.is_intensive_dataset,
@@ -187,7 +187,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.moldbs,
             self.fdrs,
             self.images_df,
-            self.imzml_wrapper,
+            self.imzml_reader,
         )
 
     def clean(self, all_caches=False):

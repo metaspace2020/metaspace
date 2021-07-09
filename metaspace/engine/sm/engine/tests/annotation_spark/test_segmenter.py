@@ -5,7 +5,7 @@ import pandas as pd
 from itertools import product
 from numpy.testing import assert_array_almost_equal
 
-from sm.engine.annotation.imzml_parser import FSImzMLParserWrapper
+from sm.engine.annotation.imzml_reader import FSImzMLReader
 from sm.engine.annotation_spark.segmenter import (
     segment_centroids,
     define_ds_segments,
@@ -13,7 +13,7 @@ from sm.engine.annotation_spark.segmenter import (
     calculate_chunk_sp_n,
     fetch_chunk_spectra_data,
 )
-from tests.conftest import make_imzml_wrapper_mock
+from tests.conftest import make_imzml_reader_mock
 
 
 def test_calculate_chunk_sp_n():
@@ -28,11 +28,11 @@ def test_calculate_chunk_sp_n():
 
 def test_fetch_chunk_spectra_data():
     mz_n = 10
-    imzml_wrapper = make_imzml_wrapper_mock(
+    imzml_reader = make_imzml_reader_mock(
         [(1, 1, 1), (2, 1, 1)], (np.linspace(0, 90, num=mz_n), np.ones(mz_n))
     )
 
-    sp_chunk_df = fetch_chunk_spectra_data(sp_ids=[0, 1], imzml_wrapper=imzml_wrapper)
+    sp_chunk_df = fetch_chunk_spectra_data(sp_ids=[0, 1], imzml_reader=imzml_reader)
 
     exp_mzs, exp_ints = [
         np.sort([mz for mz in np.linspace(0, 90, num=mz_n) for _ in range(2)]),
@@ -45,14 +45,14 @@ def test_fetch_chunk_spectra_data():
 
 
 def test_define_ds_segments():
-    imzml_wrapper = make_imzml_wrapper_mock()
-    imzml_wrapper.mz_precision = 'd'
+    imzml_reader = make_imzml_reader_mock()
+    imzml_reader.mz_precision = 'd'
 
     mz_max = 100
     sample_mzs = np.linspace(0, mz_max, 100)
     ds_segm_size_mb = 800 / (2 ** 20)  # 1600 b total data size / 2 segments, converted to MB
     ds_segments = define_ds_segments(
-        sample_mzs, sample_ratio=1, imzml_wrapper=imzml_wrapper, ds_segm_size_mb=ds_segm_size_mb
+        sample_mzs, sample_ratio=1, imzml_reader=imzml_reader, ds_segm_size_mb=ds_segm_size_mb
     )
 
     exp_ds_segm_n = 8
@@ -64,13 +64,13 @@ def test_define_ds_segments():
 
 @patch('sm.engine.annotation_spark.segmenter.pickle.dump')
 def test_segment_ds(dump_mock):
-    imzml_wrapper = make_imzml_wrapper_mock(
+    imzml_reader = make_imzml_reader_mock(
         list(product([0], range(10))), (np.linspace(0, 90, num=10), np.ones(10))
     )
     ds_segments = np.array([[0, 50], [50, 90.0]])
 
     chunk_sp_n = 1000
-    segment_ds(imzml_wrapper, chunk_sp_n, ds_segments, Path('/tmp/abc'))
+    segment_ds(imzml_reader, chunk_sp_n, ds_segments, Path('/tmp/abc'))
 
     for segm_i, ((sp_chunk_df, f), _) in enumerate(dump_mock.call_args_list):
         min_mz, max_mz = ds_segments[segm_i]

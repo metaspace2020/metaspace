@@ -14,7 +14,7 @@ from sm.engine.annotation.formula_validator import (
     MetricsDict,
     METRICS,
 )
-from sm.engine.annotation.imzml_parser import LithopsImzMLParserWrapper
+from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj, load_cobjs
 from sm.engine.ds_config import DSConfig
@@ -215,19 +215,19 @@ def process_centr_segments(
     ds_segments_bounds,
     ds_segm_lens: np.ndarray,
     db_segms_cobjs: List[CObj[pd.DataFrame]],
-    imzml_wrapper: LithopsImzMLParserWrapper,
+    imzml_reader: LithopsImzMLReader,
     ds_config: DSConfig,
     ds_segm_size_mb: float,
     is_intensive_dataset: bool,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # pylint: disable=too-many-locals
-    # Copy needed fields out of imzml_wrapper so that the other unneeded fields aren't pulled into
+    # Copy needed fields out of imzml_reader so that the other unneeded fields aren't pulled into
     # the pickled `process_centr_segment` function
-    ds_segm_dtype = imzml_wrapper.mz_precision
-    nrows, ncols = imzml_wrapper.h, imzml_wrapper.w
+    ds_segm_dtype = imzml_reader.mz_precision
+    nrows, ncols = imzml_reader.h, imzml_reader.w
     isocalc_wrapper = IsocalcWrapper(ds_config)
     image_gen_config = ds_config['image_generation']
-    compute_metrics = make_compute_image_metrics(imzml_wrapper.mask, nrows, ncols, image_gen_config)
+    compute_metrics = make_compute_image_metrics(imzml_reader.mask, nrows, ncols, image_gen_config)
     min_px = image_gen_config['min_px']
     # TODO: Get available memory from Lithops somehow so it updates if memory is increased on retry
     pw_mem_mb = 2048 if is_intensive_dataset else 1024

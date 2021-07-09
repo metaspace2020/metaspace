@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from lithops.storage import Storage
 
-from sm.engine.annotation.imzml_parser import LithopsImzMLParserWrapper
+from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.build_moldb import InputMolDb
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
@@ -54,7 +54,7 @@ def filter_results_and_make_pngs(
     moldbs: List[InputMolDb],
     fdrs: Dict[int, pd.DataFrame],
     images_df: pd.DataFrame,
-    imzml_wrapper: LithopsImzMLParserWrapper,
+    imzml_reader: LithopsImzMLReader,
 ):
     results_dfs = {}
     all_formula_is = set()
@@ -69,8 +69,8 @@ def filter_results_and_make_pngs(
         all_formula_is.update(results_dfs[moldb_id].index)
 
     image_tasks_df = images_df[images_df.index.isin(all_formula_is)].copy()
-    jobs = _split_png_jobs(image_tasks_df, imzml_wrapper.w, imzml_wrapper.h)
-    png_generator = PngGenerator(imzml_wrapper.mask)
+    jobs = _split_png_jobs(image_tasks_df, imzml_reader.w, imzml_reader.h)
+    png_generator = PngGenerator(imzml_reader.mask)
 
     def save_png_chunk(df: pd.DataFrame, *, storage: Storage):
         pngs = []
