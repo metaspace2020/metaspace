@@ -1,6 +1,5 @@
 import json
 from datetime import datetime
-import time
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -16,11 +15,11 @@ from sm.engine.molecular_db import MolecularDB
 from .utils import create_test_molecular_db
 
 
-def wait_for_es(sec: float = 1):
-    time.sleep(sec)
+def wait_for_es(es, index):
+    es.indices.refresh(index=index)
 
 
-def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, metadata):
+def test_index_ds_works(sm_config, test_db, es, es_dsl_search, sm_index, ds_config, metadata):
     ds_id = '2000-01-01_00h00m'
     upload_dt = datetime.now().isoformat()
     last_finished = '2017-01-01 00:00:00'
@@ -103,7 +102,7 @@ def test_index_ds_works(sm_config, test_db, es_dsl_search, sm_index, ds_config, 
             isocalc=isocalc_mock,
         )
 
-    wait_for_es(sec=1.5)
+    wait_for_es(es, sm_config['elasticsearch']['index'])
 
     ds_d = (
         es_dsl_search.filter('term', _type='dataset')
@@ -359,13 +358,13 @@ def test_delete_ds__one_db_ann_only(sm_config, test_db, es, sm_index):
         },
     )
 
-    wait_for_es(sec=1)
+    wait_for_es(es, index)
 
     db_mock = MagicMock(spec=DB)
     es_exporter = ESExporter(db_mock, sm_config)
     es_exporter.delete_ds(ds_id='dataset1', moldb=moldb)
 
-    wait_for_es(sec=1)
+    wait_for_es(es, index)
 
     body = {'query': {'bool': {'filter': []}}}
     body['query']['bool']['filter'] = [
@@ -440,14 +439,14 @@ def test_delete_ds__completely(sm_config, test_db, es, sm_index):
         },
     )
 
-    wait_for_es(sec=1)
+    wait_for_es(es, index)
 
     db_mock = MagicMock(spec=DB)
 
     es_exporter = ESExporter(db_mock, sm_config)
     es_exporter.delete_ds(ds_id='dataset1')
 
-    wait_for_es(sec=1)
+    wait_for_es(es, index)
 
     body = {'query': {'bool': {'filter': []}}}
     body['query']['bool']['filter'] = [
@@ -508,7 +507,7 @@ def test_update_ds_works_for_all_fields(sm_config, test_db, es, sm_index, es_dsl
             'ds_is_public': False,
         },
     )
-    wait_for_es(sec=1)
+    wait_for_es(es, index)
 
     db_mock = MagicMock(spec=DB)
     db_mock.select_with_fields.return_value = [
@@ -528,7 +527,7 @@ def test_update_ds_works_for_all_fields(sm_config, test_db, es, sm_index, es_dsl
 
     es_exporter = ESExporter(db_mock, sm_config)
     es_exporter.update_ds('dataset1', fields=list(update.keys()))
-    wait_for_es(sec=1)
+    wait_for_es(es, index)
 
     ds_doc = (
         es_dsl_search.filter('term', _type='dataset')
