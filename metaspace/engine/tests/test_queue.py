@@ -40,16 +40,6 @@ def run_queue_consumer_thread(config, callback, output_q, wait=0.1):
     queue_consumer.join()
 
 
-def queue_is_empty(config):
-    prefix = config.get('prefix', '')
-    resp = requests.get(
-        url=f'http://localhost:15672/api/queues/%2F/{prefix}{QDESC["name"]}',
-        auth=(config['user'], config['password']),
-        timeout=1,
-    )
-    return resp.json()['messages'] == 0
-
-
 def test_queue_msg_published_consumed_on_success_called(sm_config, delete_queue):
     config = sm_config['rabbitmq']
     queue_pub = QueuePublisher(config, QDESC)
@@ -61,15 +51,14 @@ def test_queue_msg_published_consumed_on_success_called(sm_config, delete_queue)
         config, callback=lambda *args: output_q.put('callback'), output_q=output_q
     )
 
+    assert not output_q.empty()
     assert output_q.get(block=False) == 'callback'
     assert output_q.get(block=False) == 'on_success'
+
     assert output_q.empty()
 
-    time.sleep(5)
-    assert queue_is_empty(config)
 
-
-def test_queue_msg_published_consumed_on_failure_called(sm_config):
+def test_queue_msg_published_consumed_on_failure_called(sm_config, delete_queue):
     config = sm_config['rabbitmq']
     queue_pub = QueuePublisher(config, QDESC)
     msg = {'test': 'message'}
@@ -83,8 +72,7 @@ def test_queue_msg_published_consumed_on_failure_called(sm_config):
 
     run_queue_consumer_thread(config, callback=raise_exception, output_q=output_q)
 
+    assert not output_q.empty()
     assert output_q.get(block=False) == 'callback'
     assert output_q.get(block=False) == 'on_failure'
-
-    time.sleep(5)
-    assert queue_is_empty(config)
+    assert output_q.empty()
