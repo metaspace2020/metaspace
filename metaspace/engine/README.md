@@ -31,6 +31,19 @@ There are two modules of pytest tests:
 It's recommended to use the `-vv -n auto` command line options when calling pytest to get sufficient debug information
 and utilize all available CPU cores.
 
+Additionally, there is a "Scientific test" that processes an entire dataset and compares the result against reference
+results. It can be run on both the Lithops and Spark (default) pipelines:
+
+* `python tests/sci_test/spheroid.py -r --mock-image-storage --lithops --config=conf/scitest_config.json`
+* `python tests/sci_test/spheroid.py -r --mock-image-storage --config=conf/scitest_config.json`
+
+NOTE: the Spark pipeline intermittently fails due to a bug in segment generation. This is a known issue that won't be
+fixed due to deprecation of the Spark pipeline. It manifests as a single item appearing in the "DIFFERENCES IN METRICS"
+output. The underlying bug is that when reconstructing ion images, if the last image for an annotation spans multiple 
+dataset segments, only the peaks from the first segment will be used. This causes that annotation's score to drop.
+As segmentation is based on a random sampling of spectra, the segment boundaries change every run, so it only happens
+in some runs.
+
 ## Troubleshooting/testing sm-engine CI
 
 Install [CircleCI CLI tool](https://circleci.com/docs/2.0/local-jobs/) and run `circleci build` from the project root.
