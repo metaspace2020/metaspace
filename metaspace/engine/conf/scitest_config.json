@@ -5,12 +5,6 @@
     "debug": false,
     "server": "cherrypy"
   },
-  "defaults": {
-    "adducts": {
-      "+": ["+H", "+Na", "+K"],
-      "-": ["-H", "+Cl"]
-    }
-  },
   "db": {
     "host": "localhost",
     "database": "sm_test",
@@ -66,38 +60,10 @@
       "pipeline_cache": ["metaspace-sci-test", "pipeline_cache"]
     }
   },
-  "aws": {
-    "aws_access_key_id": "",
-    "aws_secret_access_key": "",
-    "aws_default_region": "eu-west-1"
-  },
   "slack": {
     "channel": "",
     "webhook_url": ""
   },
-  "ms_file_handlers": [{
-      "type": "ims",
-      "extensions": ["imzml", "ibd"],
-      "parser_factory": {
-        "name": "ImzMLParser",
-        "path": "pyimzml.ImzMLParser"
-      },
-      "acq_geometry_factory": {
-        "name": "ImsGeometryFactory",
-        "path": "sm.engine.ims_geometry_factory"
-      }
-    }, {
-      "type": "lcms",
-      "extensions": ["mzml"],
-      "parser_factory": {
-        "name": "MzMLParser",
-        "path": "sm.engine.mzml_parser"
-      },
-      "acq_geometry_factory": {
-        "name": "LcmsGeometryFactory",
-        "path": "sm.engine.lcms_geometry_factory"
-      }
-  }],
   "isotope_storage": {
     "path": "/tmp/isotope_storage"
   },
@@ -109,53 +75,63 @@
       }
     },
     "handlers": {
-        "console_debug": {
-            "class": "logging.StreamHandler",
-            "formatter": "sm",
-            "level": "DEBUG"
-        },
-        "context_logger": {
-            "class": "sm.engine.utils.log_capture.ContextLogHandler",
-            "formatter": "sm",
-            "level": "INFO"
-        }
+      "console_debug": {
+        "class": "logging.StreamHandler",
+        "formatter": "sm",
+        "level": "DEBUG"
+      },
+      "context_logger": {
+        "class": "sm.engine.utils.log_capture.ContextLogHandler",
+        "formatter": "sm",
+        "level": "INFO"
+      }
     },
     "root": {
-      "handlers": ["console_debug", "context_logger"],
-      "level": "WARNING"
+      "handlers": [
+        "console_debug",
+        "context_logger"
+      ],
+      "level": "INFO"
     },
     "loggers": {
-        "engine": {
-            "level": "DEBUG"
-        },
-        "engine.db": {
-            "level": "INFO"
-        },
-        "engine.lithops-wrapper": {
-            "level": "DEBUG"
-        },
-        "api": {
-            "level": "INFO"
-        },
-        "annotate-daemon": {
-            "level": "INFO"
-        },
-        "update-daemon": {
-            "level": "INFO"
-        },
-        "lithops-daemon": {
-            "level": "INFO"
-        },
-        "lithops": {
-            "level": "INFO"
-        }
+      "engine": {
+        "level": "DEBUG"
+      },
+      "engine.db": {
+        "level": "INFO"
+      },
+      "engine.lithops-wrapper": {
+        "level": "INFO"
+      },
+      "api": {
+        "level": "INFO"
+      },
+      "annotate-daemon": {
+        "level": "INFO"
+      },
+      "lithops-daemon": {
+        "level": "INFO"
+      },
+      "update-daemon": {
+        "level": "INFO"
+      },
+      "lithops": {
+        "level": "INFO"
+      }
     }
   },
   "ds_config_defaults": {
     "adducts": {
       "+": ["+H", "+Na", "+K"],
       "-": ["-H", "+Cl" ]
-    },
-    "moldb_names": ["HMDB-v2.5"]
+    }
+  },
+  "storage": {
+    "endpoint_url": "http://storage:9000",
+    "access_key_id": "minioadmin",
+    "secret_access_key": "minioadmin"
+  },
+  "image_storage": {
+    "bucket": "sm-image-storage-sci-test"
   }
 }

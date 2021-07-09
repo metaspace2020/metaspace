@@ -1,17 +1,4 @@
 {
-  "defaults": {
-    "adducts": {
-      "+": [
-        "+H",
-        "+Na",
-        "+K"
-      ],
-      "-": [
-        "-H",
-        "+Cl"
-      ]
-    }
-  },
   "db": {
     "host": "localhost",
     "database": "sm_test",
@@ -80,29 +67,6 @@
     }
   },
   "slack": {},
-  "ms_file_handlers": [
-    {
-      "type": "ims",
-      "extensions": [
-        "imzml",
-        "ibd"
-      ],
-      "parser_factory": {
-        "name": "ImzMLParser",
-        "path": "pyimzml.ImzMLParser"
-      }
-    },
-    {
-      "type": "lcms",
-      "extensions": [
-        "mzml"
-      ],
-      "parser_factory": {
-        "name": "MzMLParser",
-        "path": "sm.engine.mzml_parser"
-      }
-    }
-  ],
   "isotope_storage": {
     "path": "/tmp/isotope_storage"
   },
