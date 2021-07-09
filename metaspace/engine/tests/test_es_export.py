@@ -554,6 +554,7 @@ def test_rename_index_works(sm_config, test_db):
     yang_index = f'{alias}-yang'
     es_man = ESIndexManager(es_config)
     # Clean up previous test runs if needed
+    es_man.delete_index(alias)
     es_man.delete_index(yin_index)
     es_man.delete_index(yang_index)
 
@@ -572,6 +573,7 @@ def test_rename_index_works(sm_config, test_db):
         assert es_man.exists_index(yang_index)
         assert es_man.exists_index(yin_index)
     finally:
+        es_man.delete_index(alias)
         es_man.delete_index(yin_index)
         es_man.delete_index(yang_index)
 
