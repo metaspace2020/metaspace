@@ -29,7 +29,7 @@ TEST_CONFIG_PATH = 'conf/test_config.json'
 def sm_config():
     SMConfig.set_path(Path(proj_root()) / TEST_CONFIG_PATH)
     SMConfig.get_conf(update=True)  # Force reload in case previous tests modified it
-    worker_id = os.environ.get('PYTEST_XDIST_WORKER', '0')
+    worker_id = os.environ.get('PYTEST_XDIST_WORKER', 'gw0')
 
     test_id = f'sm_test_{worker_id}'
     # Update the internal cached copy of the config, so independent calls to SMConfig.get_conf()
