@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from copy import deepcopy
 from random import randint
 from pathlib import Path
@@ -9,6 +10,7 @@ import pytest
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 import psycopg2
+from fasteners import InterProcessLock
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from pysparkling import Context
 
@@ -26,14 +28,20 @@ TEST_CONFIG_PATH = 'conf/test_config.json'
 @pytest.fixture(scope='session')
 def sm_config():
     SMConfig.set_path(Path(proj_root()) / TEST_CONFIG_PATH)
-    sm_config = SMConfig.get_conf()
-    test_id = f'sm_test_{hex(randint(0, 0xFFFFFFFF))[2:]}'
-    sm_config['db']['database'] = test_id
-    for path in sm_config['lithops']['sm_storage'].values():
+    SMConfig.get_conf(update=True)  # Force reload in case previous tests modified it
+    worker_id = os.environ.get('PYTEST_XDIST_WORKER', '0')
+
+    test_id = f'sm_test_{worker_id}'
+    # Update the internal cached copy of the config, so independent calls to SMConfig.get_conf()
+    # also get the updated config
+    SMConfig._config_dict['db']['database'] = test_id
+    SMConfig._config_dict['elasticsearch']['index'] = test_id
+    SMConfig._config_dict['rabbitmq']['prefix'] = f'test_{worker_id}__'
+    for path in SMConfig._config_dict['lithops']['sm_storage'].values():
         # prefix keys with test ID so they can be cleaned up later
         path[1] = f'{test_id}/{path[1]}'
 
-    return sm_config
+    return SMConfig.get_conf()
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -67,9 +75,11 @@ def spark_context(request):
     import os
 
     os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
-    sc = SparkContext(master='local[2]')
-    request.addfinalizer(lambda: sc.stop())
-    return sc
+
+    # Prevent parallel tests from trying to launch more Spark contexts, as they get port conflicts
+    with InterProcessLock('spark-context.lock'):
+        with SparkContext(master='local[2]') as sc:
+            yield sc
 
 
 def _autocommit_execute(db_config, *sqls):

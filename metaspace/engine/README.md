@@ -24,6 +24,15 @@ Please visit the help page of our web application running on AWS:
 
 ## Running sm-engine tests
 
+There are two modules of pytest tests:
+* `sm.engine.tests` - unit tests that don't involve the DB, etc.
+* `tests` - integration tests
+
+It's recommended to use the `-vv -n auto` command line options when calling pytest to get sufficient debug information
+and utilize all available CPU cores.
+
+## Troubleshooting/testing sm-engine CI
+
 Install [CircleCI CLI tool](https://circleci.com/docs/2.0/local-jobs/) and run `circleci build` from the project root.
 
 ## Acknowledgements and license

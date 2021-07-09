@@ -550,21 +550,30 @@ def test_update_ds_works_for_all_fields(sm_config, test_db, es, sm_index, es_dsl
 def test_rename_index_works(sm_config, test_db):
     es_config = sm_config['elasticsearch']
     alias = es_config['index']
+    yin_index = f'{alias}-yin'
+    yang_index = f'{alias}-yang'
     es_man = ESIndexManager(es_config)
+    # Clean up previous test runs if needed
+    es_man.delete_index(yin_index)
+    es_man.delete_index(yang_index)
 
-    es_man.create_index('{}-yin'.format(alias))
-    es_man.remap_alias('{}-yin'.format(alias), alias=alias)
+    try:
+        es_man.create_index(yin_index)
+        es_man.remap_alias(yin_index, alias=alias)
 
-    assert es_man.exists_index(alias)
-    assert es_man.exists_index('{}-yin'.format(alias))
-    assert not es_man.exists_index('{}-yang'.format(alias))
+        assert es_man.exists_index(alias)
+        assert es_man.exists_index(yin_index)
+        assert not es_man.exists_index(yang_index)
 
-    es_man.create_index('{}-yang'.format(alias))
-    es_man.remap_alias('{}-yang'.format(alias), alias=alias)
+        es_man.create_index(yang_index)
+        es_man.remap_alias(yang_index, alias=alias)
 
-    assert es_man.exists_index(alias)
-    assert es_man.exists_index('{}-yang'.format(alias))
-    assert es_man.exists_index('{}-yin'.format(alias))
+        assert es_man.exists_index(alias)
+        assert es_man.exists_index(yang_index)
+        assert es_man.exists_index(yin_index)
+    finally:
+        es_man.delete_index(yin_index)
+        es_man.delete_index(yang_index)
 
 
 def test_internal_index_name_return_valid_values(sm_config):

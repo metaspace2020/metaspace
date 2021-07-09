@@ -41,8 +41,9 @@ def run_queue_consumer_thread(config, callback, output_q, wait=0.1):
 
 
 def queue_is_empty(config):
+    prefix = config.get('prefix', '')
     resp = requests.get(
-        url='http://localhost:15672/api/queues/%2F/{}'.format(QDESC['name']),
+        url=f'http://localhost:15672/api/queues/%2F/{prefix}{QDESC["name"]}',
         auth=(config['user'], config['password']),
         timeout=1,
     )
