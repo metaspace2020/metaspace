@@ -160,7 +160,7 @@ class SciTester:
             lithops_executor.RUNTIME_DOCKER_IMAGE = 'python'
 
             executor = Executor(self.sm_config['lithops'], perf)
-            ServerAnnotationJob(executor, None, ds, perf, self.sm_config).run(debug_validate=True)
+            ServerAnnotationJob(executor, ds, perf, self.sm_config).run(debug_validate=True)
         else:
             AnnotationJob(ds, perf).run()
 
