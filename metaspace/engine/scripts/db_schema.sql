@@ -80,7 +80,7 @@ CREATE TABLE "graphql"."project" (
   "project_description" text, 
   "review_token" text, 
   "review_token_created_dt" TIMESTAMP, 
-  "publish_notifications_sent" integer NOT NULL DEFAULT 0, 
+  "publish_notifications_sent" integer NOT NULL DEFAULT '0', 
   "publication_status" text NOT NULL DEFAULT 'UNPUBLISHED', 
   "published_dt" TIMESTAMP, 
   "external_links" json, 
@@ -98,37 +98,6 @@ CREATE TABLE "graphql"."user_project" (
 CREATE INDEX "IDX_d99bb7781b0c98876331d19387" ON "graphql"."user_project" (
   "project_id"
 ) ;
-
-CREATE TABLE "graphql"."dataset" (
-  "id" text NOT NULL, 
-  "user_id" uuid NOT NULL, 
-  "description" text, 
-  "group_id" uuid, 
-  "group_approved" boolean NOT NULL DEFAULT false, 
-  "pi_name" text, 
-  "pi_email" text, 
-  "external_links" json, 
-  CONSTRAINT "PK_64fe57c57282f8de5caf4adb72f" PRIMARY KEY ("id")
-);
-
-CREATE TABLE "graphql"."dataset_project" (
-  "dataset_id" text NOT NULL, 
-  "project_id" uuid NOT NULL, 
-  "approved" boolean NOT NULL, 
-  CONSTRAINT "PK_9511b6cda2f4d4299812106cdd4" PRIMARY KEY ("dataset_id", 
-  "project_id")
-);
-
-CREATE TABLE "graphql"."user" (
-  "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
-  "name" text, 
-  "email" text, 
-  "not_verified_email" text, 
-  "role" text NOT NULL DEFAULT 'user', 
-  "credentials_id" uuid NOT NULL, 
-  CONSTRAINT "REL_1b5eb1327a74d679537bdc1fa5" UNIQUE ("credentials_id"), 
-  CONSTRAINT "PK_ea80e4e2bf12ab8b8b6fca858d7" PRIMARY KEY ("id")
-);
 
 CREATE TABLE "graphql"."coloc_job" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
@@ -271,6 +240,60 @@ CREATE TABLE "public"."perf_profile_entry" (
   CONSTRAINT "PK_729ef8c877e7facd61d75e754e9" PRIMARY KEY ("id")
 );
 
+CREATE TABLE "graphql"."dataset" (
+  "id" text NOT NULL, 
+  "user_id" uuid NOT NULL, 
+  "description" text, 
+  "group_id" uuid, 
+  "group_approved" boolean NOT NULL DEFAULT false, 
+  "pi_name" text, 
+  "pi_email" text, 
+  "external_links" json, 
+  CONSTRAINT "PK_64fe57c57282f8de5caf4adb72f" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "graphql"."dataset_project" (
+  "dataset_id" text NOT NULL, 
+  "project_id" uuid NOT NULL, 
+  "approved" boolean NOT NULL, 
+  CONSTRAINT "PK_9511b6cda2f4d4299812106cdd4" PRIMARY KEY ("dataset_id", 
+  "project_id")
+);
+
+CREATE TABLE "graphql"."dataset_diagnostic" (
+  "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
+  "type" text NOT NULL, 
+  "ds_id" text NOT NULL, 
+  "job_id" integer, 
+  "updated_dt" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), 
+  "data" json, 
+  "error" text, 
+  "images" text array NOT NULL, 
+  CONSTRAINT "PK_604d02805f10893127e79ef1250" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX "IDX_810c0fd2cbcfcb4395f7f120ef" ON "graphql"."dataset_diagnostic" (
+  "ds_id", 
+  "type"
+) WHERE jobId IS NULL;
+
+CREATE UNIQUE INDEX "IDX_f3da139561a67f5656bcf6f786" ON "graphql"."dataset_diagnostic" (
+  "ds_id", 
+  "type", 
+  "job_id"
+) WHERE jobId IS NOT NULL;
+
+CREATE TABLE "graphql"."user" (
+  "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
+  "name" text, 
+  "email" text, 
+  "not_verified_email" text, 
+  "role" text NOT NULL DEFAULT 'user', 
+  "credentials_id" uuid NOT NULL, 
+  CONSTRAINT "REL_1b5eb1327a74d679537bdc1fa5" UNIQUE ("credentials_id"), 
+  CONSTRAINT "PK_ea80e4e2bf12ab8b8b6fca858d7" PRIMARY KEY ("id")
+);
+
 CREATE TABLE "graphql"."image_viewer_snapshot" (
   "id" text NOT NULL, 
   "dataset_id" text NOT NULL, 
@@ -309,26 +332,6 @@ ALTER TABLE "graphql"."user_project" ADD CONSTRAINT "FK_d99bb7781b0c98876331d193
   "project_id") REFERENCES "graphql"."project"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-ALTER TABLE "graphql"."dataset" ADD CONSTRAINT "FK_d890658f7d5c8961e0a0cbdbe41" FOREIGN KEY (
-  "user_id") REFERENCES "graphql"."user"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
-ALTER TABLE "graphql"."dataset" ADD CONSTRAINT "FK_9e18e306ae85131c312e538ca1d" FOREIGN KEY (
-  "group_id") REFERENCES "graphql"."group"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
-ALTER TABLE "graphql"."dataset_project" ADD CONSTRAINT "FK_8bb698a02c945dc2a67a2be2e35" FOREIGN KEY (
-  "dataset_id") REFERENCES "graphql"."dataset"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
-ALTER TABLE "graphql"."dataset_project" ADD CONSTRAINT "FK_e192464449c2ac136fd4f00b439" FOREIGN KEY (
-  "project_id") REFERENCES "graphql"."project"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
-ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOREIGN KEY (
-  "credentials_id") REFERENCES "graphql"."credentials"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
 ALTER TABLE "graphql"."coloc_job" ADD CONSTRAINT "FK_b0adf5ffef6529f187f48231e38" FOREIGN KEY (
   "moldb_id") REFERENCES "public"."molecular_db"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -364,5 +367,33 @@ ALTER TABLE "public"."perf_profile" ADD CONSTRAINT "FK_cea05d4819bacc949a4236b4a
 ALTER TABLE "public"."perf_profile_entry" ADD CONSTRAINT "FK_67cf1a415a181173f111690c70a" FOREIGN KEY (
   "profile_id") REFERENCES "public"."perf_profile"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."dataset" ADD CONSTRAINT "FK_d890658f7d5c8961e0a0cbdbe41" FOREIGN KEY (
+  "user_id") REFERENCES "graphql"."user"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."dataset" ADD CONSTRAINT "FK_9e18e306ae85131c312e538ca1d" FOREIGN KEY (
+  "group_id") REFERENCES "graphql"."group"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."dataset_project" ADD CONSTRAINT "FK_8bb698a02c945dc2a67a2be2e35" FOREIGN KEY (
+  "dataset_id") REFERENCES "graphql"."dataset"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."dataset_project" ADD CONSTRAINT "FK_e192464449c2ac136fd4f00b439" FOREIGN KEY (
+  "project_id") REFERENCES "graphql"."project"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."dataset_diagnostic" ADD CONSTRAINT "FK_c43b99d980f560e82f711562c73" FOREIGN KEY (
+  "ds_id") REFERENCES "public"."dataset"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."dataset_diagnostic" ADD CONSTRAINT "FK_1b73cd1c238b2e78080031618e6" FOREIGN KEY (
+  "job_id") REFERENCES "public"."job"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOREIGN KEY (
+  "credentials_id") REFERENCES "graphql"."credentials"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 

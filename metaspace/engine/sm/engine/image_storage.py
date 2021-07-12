@@ -30,12 +30,14 @@ class ImageType(str, Enum):
     ISO = 'iso'
     OPTICAL = 'optical'
     THUMB = 'thumb'
+    DIAG = 'diag'
 
 
 class ImageStorage:
     ISO = ImageType.ISO
     OPTICAL = ImageType.OPTICAL
     THUMB = ImageType.THUMB
+    DIAG = ImageType.DIAG
 
     def __init__(self, sm_config: Dict = None):
         sm_config = sm_config or SMConfig.get_conf()
@@ -174,6 +176,7 @@ _instance: ImageStorage
 ISO = ImageType.ISO
 OPTICAL = ImageType.OPTICAL
 THUMB = ImageType.THUMB
+DIAG = ImageType.DIAG
 
 get_image: Callable[[ImageType, str, str], bytes]
 post_image: Callable[[ImageType, str, bytes], str]

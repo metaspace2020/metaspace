@@ -94,7 +94,7 @@
     "subscriptions-transport-ws": "^0.9.16",
     "superstruct": "^0.15.2",
     "ts-node": "^10.0.0",
-    "typeorm": "0.2.25",
+    "typeorm": "0.2.31",
     "typescript": "^3.9.2",
     "uuid": "^8.3.2",
     "winston": "^2.4.5"
