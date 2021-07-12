@@ -45,8 +45,7 @@ def test_fetch_chunk_spectra_data():
 
 
 def test_define_ds_segments():
-    imzml_reader = make_imzml_reader_mock()
-    imzml_reader.mz_precision = 'd'
+    imzml_reader = make_imzml_reader_mock(mz_precision='d')
 
     mz_max = 100
     sample_mzs = np.linspace(0, mz_max, 100)

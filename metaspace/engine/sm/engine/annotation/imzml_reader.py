@@ -19,6 +19,10 @@ if TYPE_CHECKING:
 TIC_ACCESSION = 'MS:1000285'
 METADATA_FIELDS = [TIC_ACCESSION]
 
+# Lock for LithopsImzMLReader.iter_spectra (which is called from many threads) to access
+# _process_spectrum (not thread-safe). This can't be included in the class as it's not pickleable
+_process_spectrum_lock = Lock()
+
 
 class ImzMLReader:
     """This class bundles the ability to somehow access ImzML data (implemented in subclasses)
@@ -57,16 +61,21 @@ class ImzMLReader:
         self.mz_precision = imzml_parser.mzPrecision
 
         tic_metadata = imzml_parser.spectrum_metadata_fields[TIC_ACCESSION]
-        self._sp_tic_from_metadata = all(tic_metadata)
+
+        self._sp_tic_from_metadata = all(tic is not None for tic in tic_metadata)
         if self._sp_tic_from_metadata:
             self._sp_tic = np.array(tic_metadata, dtype='f')
         else:
             self._sp_tic = np.full(self.n_spectra, np.nan, dtype='f')
 
     def spectrum_vals_to_image(self, values):
-        return coo_matrix((values, (self.ys, self.xs)), shape=(self.h, self.w)).toarray()
+        image = coo_matrix((values, (self.ys, self.xs)), shape=(self.h, self.w)).toarray()
+        image[~self.mask] = np.nan
+        return image
 
     def tic_image(self):
+        if not self._sp_tic_from_metadata:
+            assert (~np.isnan(self._sp_tic)).all(), 'Read all spectra before calling tic_image'
         return self.spectrum_vals_to_image(self._sp_tic)
 
     def _process_spectrum(self, idx, mzs, ints):
@@ -78,7 +87,7 @@ class ImzMLReader:
 
         # Populate TIC
         if not self._sp_tic_from_metadata:
-            self._sp_tic[idx] = np.nan_to_num(self._sp_tic[idx]) + np.sum(ints)
+            self._sp_tic[idx] = np.sum(ints)
 
         # Populate min/max m/zs
         if len(mzs):
@@ -86,6 +95,9 @@ class ImzMLReader:
             self.max_mz = min(self.max_mz, np.max(mzs))
 
         return idx, mzs, ints
+
+    # iter_spectra method has an intentionally implementation-dependent signature,
+    # as the Lithops implementation needs an external reference to Storage to remain pickleable
 
 
 class FSImzMLReader(ImzMLReader):
@@ -120,7 +132,6 @@ class LithopsImzMLReader(ImzMLReader):
 
         self._ibd_cobject = ibd_cobject
         self.imzml_reader = imzml_parser.portable_spectrum_reader()
-        self._process_spectrum_lock = Lock()
 
         super().__init__(imzml_parser)
 
@@ -156,7 +167,7 @@ class LithopsImzMLReader(ImzMLReader):
             int_data[i] = None  # type: ignore
 
             # _process_spectrum isn't thread-safe, so only access it in a mutex
-            with self._process_spectrum_lock:
+            with _process_spectrum_lock:
                 sp_idx, mzs, ints = self._process_spectrum(sp_idx, mzs, ints)
 
             yield sp_idx, mzs, ints
