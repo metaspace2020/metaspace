@@ -21,6 +21,8 @@ from sm.engine.annotation_lithops.io import (
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
+MIN_CENTR_SEGMS = 32
+
 logger = logging.getLogger('annotation-pipeline')
 MAX_MZ_VALUE = 10 ** 5
 
@@ -77,7 +79,7 @@ def define_centr_segments(
     data_per_centr_segm_mb = 50
     peaks_per_centr_segm = 10000
     centr_segm_n = int(
-        max(ds_size_mb // data_per_centr_segm_mb, centr_n // peaks_per_centr_segm, 32)
+        max(ds_size_mb // data_per_centr_segm_mb, centr_n // peaks_per_centr_segm, MIN_CENTR_SEGMS)
     )
 
     segm_bounds_q = [i * 1 / centr_segm_n for i in range(0, centr_segm_n)]

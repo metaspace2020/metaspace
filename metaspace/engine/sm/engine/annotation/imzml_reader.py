@@ -53,6 +53,12 @@ class ImzMLReader:
         sample_area_mask[self.pixel_indexes] = True
         self.mask = sample_area_mask.reshape(self.h, self.w)
 
+        # raw_coord_bounds is the RAW min/max coordinates, purely for diagnostics
+        self.raw_coord_bounds = (
+            np.min(imzml_parser.coordinates, axis=0),
+            np.max(imzml_parser.coordinates, axis=0),
+        )
+
         self.metadata_summary = imzml_parser.metadata.pretty()
 
         self.min_mz = np.inf
@@ -62,8 +68,8 @@ class ImzMLReader:
 
         tic_metadata = imzml_parser.spectrum_metadata_fields[TIC_ACCESSION]
 
-        self._sp_tic_from_metadata = all(tic is not None for tic in tic_metadata)
-        if self._sp_tic_from_metadata:
+        self.is_tic_from_metadata = all(tic is not None for tic in tic_metadata)
+        if self.is_tic_from_metadata:
             self._sp_tic = np.array(tic_metadata, dtype='f')
         else:
             self._sp_tic = np.full(self.n_spectra, np.nan, dtype='f')
@@ -74,7 +80,7 @@ class ImzMLReader:
         return image
 
     def tic_image(self):
-        if not self._sp_tic_from_metadata:
+        if not self.is_tic_from_metadata:
             assert (~np.isnan(self._sp_tic)).all(), 'Read all spectra before calling tic_image'
         return self.spectrum_vals_to_image(self._sp_tic)
 
@@ -86,13 +92,13 @@ class ImzMLReader:
             mzs, ints = mzs[nonzero_ints_mask], ints[nonzero_ints_mask]
 
         # Populate TIC
-        if not self._sp_tic_from_metadata:
+        if not self.is_tic_from_metadata:
             self._sp_tic[idx] = np.sum(ints)
 
         # Populate min/max m/zs
         if len(mzs):
             self.min_mz = min(self.min_mz, np.min(mzs))
-            self.max_mz = min(self.max_mz, np.max(mzs))
+            self.max_mz = max(self.max_mz, np.max(mzs))
 
         return idx, mzs, ints
 
@@ -136,6 +142,7 @@ class LithopsImzMLReader(ImzMLReader):
         super().__init__(imzml_parser)
 
     def iter_spectra(self, storage: Storage, sp_inds: Sequence[int]):
+        # pylint: disable=import-outside-toplevel # avoid pulling Lithops into Spark pipeline
         from sm.engine.annotation_lithops.io import get_ranges_from_cobject
 
         mz_starts = np.array(self.imzml_reader.mzOffsets)[sp_inds]

@@ -8,7 +8,8 @@ from typing import Optional, Dict
 from pyspark import SparkContext, SparkConf
 
 from sm.engine.annotation.acq_geometry import make_acq_geometry
-from sm.engine.annotation.imzml_reader import ImzMLReader, FSImzMLReader
+from sm.engine.annotation.diagnostics import add_diagnostics, extract_dataset_diagnostics
+from sm.engine.annotation.imzml_reader import FSImzMLReader
 from sm.engine.annotation.job import (
     del_jobs,
     insert_running_job,
@@ -28,11 +29,6 @@ from sm.engine import molecular_db, storage
 from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')
-
-JOB_ID_MOLDB_ID_SEL = "SELECT id, moldb_id FROM job WHERE ds_id = %s AND status='FINISHED'"
-TARGET_DECOY_ADD_DEL = (
-    'DELETE FROM target_decoy_add tda WHERE tda.job_id IN (SELECT id FROM job WHERE ds_id = %s)'
-)
 
 
 class AnnotationJob:
@@ -96,6 +92,10 @@ class AnnotationJob:
                 perf=self._perf,
             )
             search_results_it = search_alg.search()
+
+            # Save non-job-related diagnostics
+            diagnostics = extract_dataset_diagnostics(self._ds.id, imzml_reader)
+            add_diagnostics(diagnostics)
 
             for job_id, (moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(
                 job_ids, search_results_it

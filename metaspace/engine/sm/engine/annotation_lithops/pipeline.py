@@ -6,7 +6,6 @@ from typing import List, Tuple, Optional, Dict
 import numpy as np
 import pandas as pd
 from lithops.storage.utils import CloudObject
-from pyimzml.ImzMLParser import PortableSpectrumReader
 
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.annotate import process_centr_segments

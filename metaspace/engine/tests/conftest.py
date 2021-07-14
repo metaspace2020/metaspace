@@ -97,6 +97,7 @@ def _autocommit_execute(db_config, *sqls):
                 curs.execute(sql)
     except Exception as e:
         logging.getLogger('engine').error(e)
+        raise
     finally:
         if conn:
             conn.close()

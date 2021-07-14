@@ -21,8 +21,6 @@ from sm.engine.ds_config import DSConfig
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.utils.perf_profile import Profiler
 
-ISOTOPIC_PEAK_N = 4
-
 ImagesRow = Tuple[int, int, List[coo_matrix]]
 logger = logging.getLogger('annotation-pipeline')
 
@@ -103,12 +101,12 @@ class ImagesManager:
         return formula_metrics_df, images_df
 
 
-def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc_wrapper):
+def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc_wrapper, n_peaks):
     # pylint: disable=too-many-locals
     # assume sp data is sorted by mz order ascending
 
     def yield_buffer(buffer):
-        while len(buffer) < ISOTOPIC_PEAK_N:
+        while len(buffer) < n_peaks:
             buffer.append((buffer[0][0], len(buffer) - 1, 0, None))
         buffer = np.array(buffer)
         buffer = buffer[buffer[:, 1].argsort()]  # sort order by peak ascending
@@ -227,6 +225,7 @@ def process_centr_segments(
     nrows, ncols = imzml_reader.h, imzml_reader.w
     isocalc_wrapper = IsocalcWrapper(ds_config)
     image_gen_config = ds_config['image_generation']
+    n_peaks = ds_config['isotope_generation']['n_peaks']
     compute_metrics = make_compute_image_metrics(imzml_reader.mask, nrows, ncols, image_gen_config)
     min_px = image_gen_config['min_px']
     # TODO: Get available memory from Lithops somehow so it updates if memory is increased on retry
@@ -264,6 +263,7 @@ def process_centr_segments(
             nrows=nrows,
             ncols=ncols,
             isocalc_wrapper=isocalc_wrapper,
+            n_peaks=n_peaks,
         )
 
         images_manager = ImagesManager(storage)

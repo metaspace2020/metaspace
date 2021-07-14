@@ -11,6 +11,7 @@ from ibm_boto3.s3.transfer import TransferConfig, MB
 from lithops.storage import Storage
 from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
 
+from sm.engine.annotation.diagnostics import extract_dataset_diagnostics, add_diagnostics
 from sm.engine.annotation.formula_validator import METRICS
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
 from sm.engine.annotation_lithops.executor import Executor
@@ -313,6 +314,10 @@ class ServerAnnotationJob:
                 pd.concat(list(self.results_dfs.values())),
                 iter_cobjs_with_prefetch(self.storage, self.png_cobjs),
             )
+
+            # Save non-job-related diagnostics
+            diagnostics = extract_dataset_diagnostics(self.ds.id, self.pipe.imzml_reader)
+            add_diagnostics(diagnostics)
 
             for moldb_id, job_id in moldb_to_job_map.items():
                 results_df = self.results_dfs[moldb_id]

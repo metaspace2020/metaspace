@@ -6,7 +6,7 @@ from shutil import rmtree
 import numpy as np
 import pandas as pd
 
-from sm.engine.annotation.imzml_reader import ImzMLReader, FSImzMLReader
+from sm.engine.annotation.imzml_reader import FSImzMLReader
 from sm.engine.errors import SMError
 
 MAX_MZ_VALUE = 10 ** 5
