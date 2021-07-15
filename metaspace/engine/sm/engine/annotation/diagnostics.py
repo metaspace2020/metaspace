@@ -2,6 +2,7 @@ import json
 import logging
 from collections import defaultdict
 from datetime import datetime
+from enum import Enum
 from io import BytesIO
 from traceback import format_exc
 from typing import Literal, Optional, Any, Union, List, TypedDict
@@ -14,19 +15,17 @@ from sm.engine.db import DB
 
 logger = logging.getLogger('engine')
 
-# Should match the enum in metaspace/graphql/src/modules/dataset/model.ts
-DiagnosticType = Literal['TIC', 'IMZML_METADATA']
-DiagnosticImageFormat = Literal['PNG', 'NPY']
+
+class DiagnosticType(str, Enum):
+    """Should match the enum in metaspace/graphql/src/modules/dataset/model.ts"""
+
+    TIC = 'TIC'
+    IMZML_METADATA = 'IMZML_METADATA'
 
 
-class DiagnosticTypes:
-    TIC: DiagnosticType = 'TIC'
-    IMZML_METADATA: DiagnosticType = 'IMZML_METADATA'
-
-
-class DiagnosticImageFormats:
-    PNG: DiagnosticImageFormat = 'PNG'
-    NPY: DiagnosticImageFormat = 'NPY'
+class DiagnosticImageFormat(str, Enum):
+    PNG = 'PNG'
+    NPY = 'NPY'
 
 
 class DiagnosticImage(TypedDict, total=False):
@@ -59,7 +58,7 @@ def add_diagnostics(diagnostics: List[DatasetDiagnostic]):
 
     db = DB()
     # Find all diagnostics that should be replaced by the new diagnostics
-    existing = db.select(
+    existing = db.select_with_fields(
         """
         WITH new_diagnostic AS (
             SELECT UNNEST(%s::text[]) as ds_id, UNNEST(%s::int[]) as job_id,
@@ -85,7 +84,8 @@ def add_diagnostics(diagnostics: List[DatasetDiagnostic]):
 
         # Delete existing DB rows
         db.alter(
-            'DELETE FROM dataset_diagnostic WHERE id = ANY(%s)', [row['id'] for row in existing]
+            'DELETE FROM dataset_diagnostic WHERE id = ANY(%s::uuid[])',
+            ([row['id'] for row in existing],),
         )
 
     db.insert(
@@ -109,12 +109,12 @@ def add_diagnostics(diagnostics: List[DatasetDiagnostic]):
 def del_diagnostics(ds_id: str, job_ids: Optional[List[int]] = None):
     db = DB()
     if job_ids is None:
-        existing = db.select(
+        existing = db.select_with_fields(
             'SELECT id, images FROM dataset_diagnostic dd WHERE dd.ds_id = %s',
             [ds_id],
         )
     else:
-        existing = db.select(
+        existing = db.select_with_fields(
             'SELECT id, images FROM dataset_diagnostic dd '
             'WHERE dd.ds_id = %s AND dd.job_id = ANY(%s)',
             [ds_id, job_ids],
@@ -142,8 +142,18 @@ def save_npy_image(ds_id: str, arr: np.ndarray):
     buf = BytesIO()
     np.save(buf, arr, allow_pickle=False)
     buf.seek(0)
-
     return image_storage.post_image(image_storage.DIAG, ds_id, buf)
+
+
+def save_diagnostic_image(ds_id: str, arr: np.ndarray, key=None, index=None) -> DiagnosticImage:
+    image = {}
+    if key is not None:
+        image['key'] = key
+    if index is not None:
+        image['index'] = index
+    image['image_id'] = save_npy_image(ds_id, arr)
+    image['format'] = DiagnosticImageFormat.NPY
+    return image
 
 
 def load_npy_image(ds_id: str, image_id: str):
@@ -152,40 +162,42 @@ def load_npy_image(ds_id: str, image_id: str):
 
 
 def extract_dataset_diagnostics(ds_id: str, imzml_reader: ImzMLReader):
-    mask_image_id = save_npy_image(ds_id, imzml_reader.mask)
+    mask_image = save_diagnostic_image(ds_id, imzml_reader.mask, key='mask')
     diagnostics: List[DatasetDiagnostic] = [
         {
             'ds_id': ds_id,
-            'type': DiagnosticTypes.IMZML_METADATA,
+            'type': DiagnosticType.IMZML_METADATA,
             'data': {
                 'n_spectra': imzml_reader.n_spectra,
                 'min_coords': imzml_reader.raw_coord_bounds[0].tolist(),
                 'max_coords': imzml_reader.raw_coord_bounds[1].tolist(),
-                'min_mz': imzml_reader.min_mz,
-                'max_mz': imzml_reader.max_mz,
+                'min_mz': np.asscalar(imzml_reader.min_mz)
+                if np.isfinite(imzml_reader.min_mz)
+                else 0,
+                'max_mz': np.asscalar(imzml_reader.max_mz)
+                if np.isfinite(imzml_reader.max_mz)
+                else 0,
                 'metadata': imzml_reader.metadata_summary,
             },
-            'images': [
-                {'key': 'mask', 'image_id': mask_image_id, 'format': DiagnosticImageFormats.NPY}
-            ],
+            'images': [mask_image],
         }
     ]
     try:
-        tic_image = imzml_reader.tic_image()
-        tic_vals = tic_image[~np.isnan(tic_image)]
-        tic_image_id = save_npy_image(ds_id, tic_image)
+        tic = imzml_reader.tic_image()
+        tic_vals = tic[~np.isnan(tic)]
+        tic_image = save_diagnostic_image(ds_id, tic)
 
         diagnostics.append(
             {
                 'ds_id': ds_id,
-                'type': DiagnosticTypes.TIC,
+                'type': DiagnosticType.TIC,
                 'data': {
                     'min_tic': np.min(tic_vals).item() if len(tic_vals) else 0,
                     'max_tic': np.max(tic_vals).item() if len(tic_vals) else 0,
                     'sum_tic': np.sum(tic_vals).item() if len(tic_vals) else 0,
                     'is_from_metadata': imzml_reader.is_tic_from_metadata,
                 },
-                'images': [{'image_id': tic_image_id, 'format': DiagnosticImageFormats.NPY}],
+                'images': [tic_image],
             }
         )
     except Exception:
@@ -193,7 +205,7 @@ def extract_dataset_diagnostics(ds_id: str, imzml_reader: ImzMLReader):
         diagnostics.append(
             {
                 'ds_id': ds_id,
-                'type': DiagnosticTypes.TIC,
+                'type': DiagnosticType.TIC,
                 'error': format_exc(),
             }
         )

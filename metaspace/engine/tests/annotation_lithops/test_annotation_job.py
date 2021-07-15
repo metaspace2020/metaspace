@@ -10,7 +10,7 @@ from pyimzml.ImzMLWriter import ImzMLWriter
 
 from sm.engine import molecular_db, image_storage
 from sm.engine.annotation import fdr
-from sm.engine.annotation.diagnostics import DiagnosticTypes, load_npy_image
+from sm.engine.annotation.diagnostics import DiagnosticType, load_npy_image
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.io import load_cobjs
@@ -188,8 +188,8 @@ def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config
     assert np.count_nonzero(images) == len(anns) * len(MOCK_COORDS)
 
     # Validate diagnostics
-    metadata_diag = diags[diags.type == DiagnosticTypes.IMZML_METADATA].iloc[0]
-    tic_diag = diags[diags.type == DiagnosticTypes.TIC].iloc[0]
+    metadata_diag = diags[diags.type == DiagnosticType.IMZML_METADATA].iloc[0]
+    tic_diag = diags[diags.type == DiagnosticType.TIC].iloc[0]
 
     assert metadata_diag.error is None
     assert metadata_diag.data['n_spectra'] == len(MOCK_COORDS)
@@ -207,3 +207,5 @@ def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config
     # Validate perf profile
     assert len(profiles) == 1
     assert len(profile_entries) > 10
+
+    print(diags)

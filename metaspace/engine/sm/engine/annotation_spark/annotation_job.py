@@ -93,10 +93,6 @@ class AnnotationJob:
             )
             search_results_it = search_alg.search()
 
-            # Save non-job-related diagnostics
-            diagnostics = extract_dataset_diagnostics(self._ds.id, imzml_reader)
-            add_diagnostics(diagnostics)
-
             for job_id, (moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(
                 job_ids, search_results_it
             ):
@@ -116,6 +112,10 @@ class AnnotationJob:
                     job_status = JobStatus.FINISHED
                 finally:
                     update_finished_job(job_id, job_status)
+
+            # Save non-job-related diagnostics
+            diagnostics = extract_dataset_diagnostics(self._ds.id, imzml_reader)
+            add_diagnostics(diagnostics)
 
     def _save_data_from_raw_ms_file(self, imzml_reader: FSImzMLReader):
         ms_file_path = imzml_reader.filename

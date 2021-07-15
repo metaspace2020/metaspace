@@ -17,7 +17,9 @@ if TYPE_CHECKING:
     from lithops.storage.utils import CloudObject
 
 TIC_ACCESSION = 'MS:1000285'
-METADATA_FIELDS = [TIC_ACCESSION]
+MIN_MZ_ACCESSION = 'MS:1000528'
+MAX_MZ_ACCESSION = 'MS:1000527'
+METADATA_FIELDS = [TIC_ACCESSION, MIN_MZ_ACCESSION, MAX_MZ_ACCESSION]
 
 # Lock for LithopsImzMLReader.iter_spectra (which is called from many threads) to access
 # _process_spectrum (not thread-safe). This can't be included in the class as it's not pickleable
@@ -61,13 +63,17 @@ class ImzMLReader:
 
         self.metadata_summary = imzml_parser.metadata.pretty()
 
-        self.min_mz = np.inf
-        self.max_mz = -np.inf
+        min_mz_metadata = imzml_parser.spectrum_metadata_fields[MIN_MZ_ACCESSION]
+        max_mz_metadata = imzml_parser.spectrum_metadata_fields[MAX_MZ_ACCESSION]
+        self.is_mz_from_metadata = all(
+            mz is not None for arr in [min_mz_metadata, max_mz_metadata] for mz in arr
+        )
+        self.min_mz = np.min(min_mz_metadata) if self.is_mz_from_metadata else np.inf
+        self.max_mz = np.max(max_mz_metadata) if self.is_mz_from_metadata else -np.inf
 
         self.mz_precision = imzml_parser.mzPrecision
 
         tic_metadata = imzml_parser.spectrum_metadata_fields[TIC_ACCESSION]
-
         self.is_tic_from_metadata = all(tic is not None for tic in tic_metadata)
         if self.is_tic_from_metadata:
             self._sp_tic = np.array(tic_metadata, dtype='f')
@@ -96,7 +102,7 @@ class ImzMLReader:
             self._sp_tic[idx] = np.sum(ints)
 
         # Populate min/max m/zs
-        if len(mzs):
+        if len(mzs) and not self.is_mz_from_metadata:
             self.min_mz = min(self.min_mz, np.min(mzs))
             self.max_mz = max(self.max_mz, np.max(mzs))
 
