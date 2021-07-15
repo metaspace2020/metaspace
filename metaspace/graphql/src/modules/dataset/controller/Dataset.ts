@@ -33,7 +33,7 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
   const dataloader = ctx.contextCacheGet('getDbDatasetByIdDataLoader', [], () => {
     return new DataLoader(async(datasetIds: string[]): Promise<any[]> => {
       const results = await ctx.entityManager.query(`
-      SELECT ds.id, ds.thumbnail, ds.thumbnail_url, ds.ion_thumbnail, ds.ion_thumbnail_url, 
+      SELECT ds.id, ds.thumbnail_url, ds.ion_thumbnail_url, 
              ds.transform, gds.external_links
       FROM public.dataset ds
       JOIN graphql.dataset gds on ds.id = gds.id
@@ -48,16 +48,7 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
 
 export const thumbnailOpticalImageUrl = async(ctx: Context, datasetId: string) => {
   const result = await getDbDatasetById(ctx, datasetId)
-  if (result != null) {
-    if (result.thumbnail_url != null) {
-      return result.thumbnail_url
-    }
-    // FIXME: remove after data migration
-    if (result.thumbnail != null) {
-      return `/fs/optical_images/${result.thumbnail}`
-    }
-  }
-  return null
+  return result?.thumbnail_url ?? null
 }
 
 const getOpticalImagesByDsId = async(ctx: Context, id: string): Promise<OpticalImage[]> => {
@@ -65,10 +56,8 @@ const getOpticalImagesByDsId = async(ctx: Context, id: string): Promise<OpticalI
     return new DataLoader(async(datasetIds: string[]): Promise<OpticalImage[][]> => {
       const rawResults: OpticalImageModel[] = await ctx.entityManager.query(
         'SELECT * from public.optical_image WHERE ds_id = ANY($1)', [datasetIds])
-      const results = rawResults.map(({ id, type, url, ...rest }) => ({
+      const results = rawResults.map(({ type, ...rest }) => ({
         ...rest,
-        id,
-        url: url || `/fs/optical_images/${id}`, // FIXME: remove after data migration
         type: type.toUpperCase() as OpticalImageType,
       }))
       const groupedResults = _.groupBy(results, 'ds_id')
@@ -366,16 +355,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async ionThumbnailUrl(ds, args, ctx) {
     const result = await getDbDatasetById(ctx, ds._source.ds_id)
-    if (result != null) {
-      if (result.ion_thumbnail_url != null) {
-        return result.ion_thumbnail_url
-      }
-      // FIXME: remove after data migration
-      if (result.ion_thumbnail != null) {
-        return `/fs/ion_thumbnails/${result.ion_thumbnail}`
-      }
-    }
-    return null
+    return result?.ion_thumbnail_url ?? null
   },
 
   async externalLinks(ds, args, ctx) {
