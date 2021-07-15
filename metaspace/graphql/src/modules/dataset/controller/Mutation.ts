@@ -140,13 +140,16 @@ const saveDataset = async(entityManager: EntityManager, args: SaveDatasetArgs, r
     : principalInvestigator === null
       ? { piName: null, piEmail: null }
       : { piName: principalInvestigator.name, piEmail: principalInvestigator.email }
-  const dsDescriptionUpdate = description === undefined ? null : description
   const dsUpdate = {
     id: datasetId,
     userId: submitterId,
-    description: dsDescriptionUpdate,
+    description,
     ...groupUpdate,
     ...piUpdate,
+  }
+
+  if (description === undefined) {
+    delete dsUpdate.description
   }
 
   if (requireInsert) {
@@ -326,7 +329,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       }
     }
 
-    let description
+    let description : string | null | undefined = update.description === null ? null : undefined
     if (update.description) {
       if (!skipValidation || !ctx.isAdmin) {
         description = update.description
