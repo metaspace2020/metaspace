@@ -23,6 +23,13 @@ class DiagnosticType(str, Enum):
     IMZML_METADATA = 'IMZML_METADATA'
 
 
+class DiagnosticImageKey(str, Enum):
+    # if type == DiagnosticType.TIC:
+    TIC = 'TIC'
+    # if type == DiagnosticType.IMZML_METADATA
+    MASK = 'MASK'
+
+
 class DiagnosticImageFormat(str, Enum):
     PNG = 'PNG'
     NPY = 'NPY'
@@ -47,13 +54,15 @@ class DatasetDiagnostic(TypedDict, total=False):
 
 def add_diagnostics(diagnostics: List[DatasetDiagnostic]):
     """Upserts dataset diagnostics, overwriting existing values with the same ds_id, job_id, type"""
-    # Validate input
+    # Validate input, as postgres can't enforce the JSON columns have the correct schema,
+    # and many places (graphql, python client, etc.) rely on these structures.
     for diagnostic in diagnostics:
         assert 'ds_id' in diagnostic
         assert 'type' in diagnostic
         images = diagnostic.get('images', [])
+        assert all(image['key'] in DiagnosticImageKey for image in images)
+        assert all(image['format'] in DiagnosticImageFormat for image in images)
         assert all(image['image_id'] in image['url'] for image in images)
-        assert all('format' in image for image in images)
         image_keys = set((image.get('key'), image.get('index')) for image in images)
         assert len(image_keys) == len(images), 'diagnostic image keys should be unique'
 
@@ -146,15 +155,18 @@ def save_npy_image(ds_id: str, arr: np.ndarray):
     return image_storage.post_image(image_storage.DIAG, ds_id, buf)
 
 
-def save_diagnostic_image(ds_id: str, arr: np.ndarray, key=None, index=None) -> DiagnosticImage:
-    image = {}
-    if key is not None:
-        image['key'] = key
+def save_diagnostic_image(ds_id: str, arr: np.ndarray, key, index=None) -> DiagnosticImage:
+    assert key in DiagnosticImageKey
+    image_id = save_npy_image(ds_id, arr)
+    image = {
+        'key': key,
+        'image_id': image_id,
+        'url': image_storage.get_image_url(image_storage.DIAG, ds_id, image_id),
+        'format': DiagnosticImageFormat.NPY,
+    }
+
     if index is not None:
         image['index'] = index
-    image['image_id'] = save_npy_image(ds_id, arr)
-    image['url'] = image_storage.get_image_url(image_storage.DIAG, ds_id, image['image_id'])
-    image['format'] = DiagnosticImageFormat.NPY
     return image
 
 
@@ -164,7 +176,7 @@ def load_npy_image(ds_id: str, image_id: str):
 
 
 def extract_dataset_diagnostics(ds_id: str, imzml_reader: ImzMLReader):
-    mask_image = save_diagnostic_image(ds_id, imzml_reader.mask, key='mask')
+    mask_image = save_diagnostic_image(ds_id, imzml_reader.mask, DiagnosticImageKey.MASK)
     diagnostics: List[DatasetDiagnostic] = [
         {
             'ds_id': ds_id,
@@ -187,7 +199,7 @@ def extract_dataset_diagnostics(ds_id: str, imzml_reader: ImzMLReader):
     try:
         tic = imzml_reader.tic_image()
         tic_vals = tic[~np.isnan(tic)]
-        tic_image = save_diagnostic_image(ds_id, tic)
+        tic_image = save_diagnostic_image(ds_id, tic, key=DiagnosticImageKey.TIC)
 
         diagnostics.append(
             {

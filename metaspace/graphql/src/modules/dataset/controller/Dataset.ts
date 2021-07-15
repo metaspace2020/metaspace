@@ -433,12 +433,12 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
             datasetId: In(datasetIds),
             error: IsNull(),
           },
-          relations: ['job'],
+          relations: ['job', 'job.molecularDB'],
         })
         const formattedResults = results.map(diag => ({
           ...diag,
           data: JSON.stringify(diag.data),
-          databaseId: diag.job?.moldbId ?? null,
+          database: diag.job?.molecularDB ?? null,
         }))
         const keyedResults = _.groupBy(formattedResults, 'datasetId')
         return datasetIds.map(id => keyedResults[id] || [])

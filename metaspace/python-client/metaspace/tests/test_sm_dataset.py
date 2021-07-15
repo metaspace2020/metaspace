@@ -194,6 +194,20 @@ def test_all_annotation_images(dataset: SMDataset):
     assert isinstance(image_list[0][0], np.ndarray)
 
 
+def test_all_annotation_images_tic(dataset: SMDataset):
+    image_list = dataset.all_annotation_images(
+        only_first_isotope=True, scale_intensity='TIC', fdr=0.5
+    )
+
+    all_images = np.stack(images[0] for images in image_list if images[0] is not None)
+    pixel_sums = np.sum(all_images, axis=0)
+    pixel_sums = pixel_sums[~np.isnan(all_images[0])]
+    # The sum of annotations generally shouldn't substantially exceed the TIC
+    assert (pixel_sums < 1.5).all()
+    assert (pixel_sums >= 0).all()  # There should be no negative values
+    assert (pixel_sums > 0).any()  # There should be positive values
+
+
 def test_all_annotation_images_advanced(advanced_dataset: SMDataset):
     image_list = advanced_dataset.all_annotation_images(only_first_isotope=True)
 
@@ -298,3 +312,15 @@ def test_dataset_info_fields(dataset: SMDataset):
     assert isinstance(dataset.group['shortName'], str)
 
     assert isinstance(dataset.principal_investigator, (str, type(None)))
+
+
+def test_diagnostics(dataset: SMDataset):
+    diagnostics = dataset.diagnostics()
+    tic_diag = dataset.diagnostic('TIC')
+    imzml_diag = dataset.diagnostic('IMZML_METADATA')
+    tic_image = dataset.tic_image()
+
+    assert any(diag['type'] == 'TIC' for diag in diagnostics)
+    assert isinstance(tic_diag['images'][0]['image'], np.ndarray)
+    assert imzml_diag is not None
+    assert isinstance(tic_image, np.ndarray)

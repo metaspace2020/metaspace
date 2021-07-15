@@ -116,7 +116,7 @@ enum DiagnosticImageFormat {
 }
 
 type DiagnosticImage {
-  key: String  # Optional identifier for type of image
+  key: String!
   index: Int   # Optional index, if there are multiple images with the same `key`
   url: String!
   format: DiagnosticImageFormat!
@@ -125,8 +125,8 @@ type DiagnosticImage {
 type DatasetDiagnostic {
   id: String!
   type: String!
-  jobId: Int
-  databaseId: Int
+  jobId: Int  # Only present for diagnostics associated with a database, currently unused
+  database: MolecularDB  # Only present for diagnostics associated with a database, currently unused
   updatedDT: String!
   data: String! # JSON-serialized. Structure depends on `type`
   images: [DiagnosticImage!]!

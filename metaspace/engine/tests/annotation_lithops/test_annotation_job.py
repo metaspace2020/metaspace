@@ -10,7 +10,7 @@ from pyimzml.ImzMLWriter import ImzMLWriter
 
 from sm.engine import molecular_db, image_storage
 from sm.engine.annotation import fdr
-from sm.engine.annotation.diagnostics import DiagnosticType, load_npy_image
+from sm.engine.annotation.diagnostics import DiagnosticType, load_npy_image, DiagnosticImageKey
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.io import load_cobjs
@@ -193,11 +193,13 @@ def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config
 
     assert metadata_diag.error is None
     assert metadata_diag.data['n_spectra'] == len(MOCK_COORDS)
+    assert metadata_diag.images[0]['key'] == DiagnosticImageKey.MASK
     mask_image = load_npy_image(ds.id, metadata_diag.images[0]['image_id'])
     assert np.count_nonzero(mask_image) == len(MOCK_COORDS)
 
     assert tic_diag.error is None
     assert tic_diag.data['min_tic'] > 0
+    assert tic_diag.images[0]['key'] == DiagnosticImageKey.TIC
     tic_image = load_npy_image(ds.id, tic_diag.images[0]['image_id'])
     assert tic_image.dtype == np.float32
     assert tic_image.shape == (4, 4)

@@ -137,7 +137,7 @@ export const DiagnosticTypeOptions: {[k in DiagnosticType]: k} = {
 
 export type DiagnosticImageFormat = 'PNG' | 'NPY'
 export interface DiagnosticImage {
-  key?: string;
+  key: string;
   index?: number;
   image_id: string;
   url: string;
