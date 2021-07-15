@@ -140,6 +140,7 @@ export interface DiagnosticImage {
   key?: string;
   index?: number;
   image_id: string;
+  url: string;
   format: DiagnosticImageFormat;
 }
 
@@ -161,8 +162,8 @@ export class DatasetDiagnostic {
   @Column({ name: 'ds_id', type: 'text' })
   datasetId: string;
 
-  @Column({ type: 'text', nullable: true })
-  jobId: string | null;
+  @Column({ type: 'int', nullable: true })
+  jobId: number | null;
 
   @Column({
     type: 'timestamp without time zone',

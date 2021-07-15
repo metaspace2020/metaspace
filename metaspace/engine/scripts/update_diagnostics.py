@@ -21,73 +21,78 @@ from sm.engine.util import GlobalInit, split_cos_path, split_s3_path
 logger = logging.getLogger('engine')
 
 
-def run_diagnostics(sm_config, ds_id, sql_where, missing, failed, succeeded, del_first, jobs):
-    def parse_input_path_for_lithops(input_path):
-        if input_path.startswith('s3://') or input_path.startswith('s3a://'):
-            backend = 'aws_s3'
-            bucket, prefix = split_s3_path(input_path)
+def parse_input_path_for_lithops(sm_config, input_path):
+    if input_path.startswith('s3://') or input_path.startswith('s3a://'):
+        backend = 'aws_s3'
+        bucket, prefix = split_s3_path(input_path)
+    else:
+        backend = 'ibm_cos'
+        bucket, prefix = split_cos_path(input_path)
+
+    storage = Storage(sm_config['lithops'], backend)
+    if backend == 'aws_s3' and sm_config['lithops']['aws_s3']['endpoint'].startswith('http://'):
+        # WORKAROUND for local Minio access
+        # Lithops forces the url to HTTPS, so overwrite the S3 client with a fixed client
+        storage.storage_handler.s3_client = get_s3_client()
+
+    keys_in_path = storage.list_keys(bucket, prefix)
+    imzml_keys = [key for key in keys_in_path if key.lower().endswith('.imzml')]
+    ibd_keys = [key for key in keys_in_path if key.lower().endswith('.ibd')]
+
+    debug_info = f'Path {input_path} had keys: {keys_in_path}'
+    assert len(imzml_keys) == 1, f'Couldn\'t determine imzML file. {debug_info}'
+    assert len(ibd_keys) == 1, f'Couldn\'t determine ibd file. {debug_info}'
+
+    imzml_cobject = CloudObject(storage.backend, bucket, imzml_keys[0])
+    ibd_cobject = CloudObject(storage.backend, bucket, ibd_keys[0])
+    return storage, imzml_cobject, ibd_cobject
+
+
+def process_dataset(sm_config, del_first, ds_id):
+    logger.info(f'Processing {ds_id}')
+    try:
+        if del_first:
+            del_diagnostics(ds_id)
+
+        ds = DB().select_one_with_fields('SELECT * FROM dataset WHERE id = %s', (ds_id,))
+        input_path = ds['input_path']
+
+        if input_path.startswith('/'):
+            imzml_reader = FSImzMLReader(input_path)
+            if not imzml_reader.is_mz_from_metadata or not imzml_reader.is_tic_from_metadata:
+                logger.info(f'{ds_id} missing metadata, reading spectra...')
+                for _ in imzml_reader.iter_spectra(np.arange(imzml_reader.n_spectra)):
+                    # Read all spectra so that mz/tic data is populated
+                    pass
         else:
-            backend = 'ibm_cos'
-            bucket, prefix = split_cos_path(input_path)
+            storage, imzml_cobject, ibd_cobject = parse_input_path_for_lithops(
+                sm_config, input_path
+            )
+            imzml_reader = LithopsImzMLReader(
+                storage,
+                imzml_cobject=imzml_cobject,
+                ibd_cobject=ibd_cobject,
+            )
 
-        storage = Storage(sm_config['lithops'], backend)
-        if backend == 'aws_s3' and sm_config['lithops']['aws_s3']['endpoint'].startswith('http://'):
-            # WORKAROUND for local Minio access
-            # Lithops forces the url to HTTPS, so overwrite the S3 client with a fixed client
-            storage.storage_handler.s3_client = get_s3_client()
-
-        keys_in_path = storage.list_keys(bucket, prefix)
-        imzml_keys = [key for key in keys_in_path if key.lower().endswith('.imzml')]
-        ibd_keys = [key for key in keys_in_path if key.lower().endswith('.ibd')]
-
-        debug_info = f'Path {input_path} had keys: {keys_in_path}'
-        assert len(imzml_keys) == 1, f'Couldn\'t determine imzML file. {debug_info}'
-        assert len(ibd_keys) == 1, f'Couldn\'t determine ibd file. {debug_info}'
-
-        imzml_cobject = CloudObject(storage.backend, bucket, imzml_keys[0])
-        ibd_cobject = CloudObject(storage.backend, bucket, ibd_keys[0])
-        return storage, imzml_cobject, ibd_cobject
-
-    def process_dataset(ds_id):
-        logger.info(f'Processing {ds_id}')
-        try:
-            if del_first:
-                del_diagnostics(ds_id)
-
-            ds = DB().select_one_with_fields('SELECT * FROM dataset WHERE id = %s', (ds_id,))
-            input_path = ds['input_path']
-
-            if input_path.startswith('/'):
-                imzml_reader = FSImzMLReader(input_path)
-                if not imzml_reader.is_mz_from_metadata or not imzml_reader.is_tic_from_metadata:
-                    logger.info(f'{ds_id} missing metadata, reading spectra...')
-                    for _ in imzml_reader.iter_spectra(np.arange(imzml_reader.n_spectra)):
+            if not imzml_reader.is_mz_from_metadata or not imzml_reader.is_tic_from_metadata:
+                logger.info(f'{ds_id} missing metadata, reading spectra...')
+                chunk_size = 1000
+                for chunk_start in range(0, imzml_reader.n_spectra, chunk_size):
+                    chunk_end = min(imzml_reader.n_spectra, chunk_start + chunk_size)
+                    chunk = np.arange(chunk_start, chunk_end)
+                    for _ in imzml_reader.iter_spectra(storage, chunk):
                         # Read all spectra so that mz/tic data is populated
                         pass
-            else:
-                storage, imzml_cobject, ibd_cobject = parse_input_path_for_lithops(input_path)
-                imzml_reader = LithopsImzMLReader(
-                    storage,
-                    imzml_cobject=imzml_cobject,
-                    ibd_cobject=ibd_cobject,
-                )
 
-                if not imzml_reader.is_mz_from_metadata or not imzml_reader.is_tic_from_metadata:
-                    logger.info(f'{ds_id} missing metadata, reading spectra...')
-                    chunk_size = 1000
-                    for chunk_start in range(0, imzml_reader.n_spectra, chunk_size):
-                        chunk_end = min(imzml_reader.n_spectra, chunk_start + chunk_size)
-                        chunk = np.arange(chunk_start, chunk_end)
-                        for _ in imzml_reader.iter_spectra(storage, chunk):
-                            # Read all spectra so that mz/tic data is populated
-                            pass
+        diagnostics = extract_dataset_diagnostics(ds_id, imzml_reader)
+        add_diagnostics(diagnostics)
+        return ds_id, True
+    except Exception:
+        logger.error(f'Failed to process {ds_id}', exc_info=True)
+        return ds_id, False
 
-            diagnostics = extract_dataset_diagnostics(ds_id, imzml_reader)
-            add_diagnostics(diagnostics)
-            return ds_id, True
-        except:
-            logger.error(f'Failed to process {ds_id}', exc_info=True)
-            return ds_id, False
+
+def run_diagnostics(sm_config, ds_id, sql_where, missing, failed, succeeded, del_first, jobs):
 
     db = DB()
 
@@ -131,8 +136,11 @@ def run_diagnostics(sm_config, ds_id, sql_where, missing, failed, succeeded, del
     assert ds_ids, 'No datasets found'
 
     failed_ds_ids = []
-    with ThreadPoolExecutor(jobs) as executor:
-        for i, (ds_id, success) in enumerate(executor.map(process_dataset, ds_ids)):
+    with ThreadPoolExecutor(jobs or None) as executor:
+        map_func = executor.map if jobs != 1 else map
+        for i, (ds_id, success) in enumerate(
+            map_func(lambda ds_id: process_dataset(sm_config, del_first, ds_id), ds_ids)
+        ):
             logger.info(f'Completed {ds_id} ({i}/{len(ds_ids)})')
             if not success:
                 failed_ds_ids.append(ds_id)

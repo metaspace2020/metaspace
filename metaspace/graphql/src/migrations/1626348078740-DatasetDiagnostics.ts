@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class DatasetDiagnostics1626189727821 implements MigrationInterface {
-    name = 'DatasetDiagnostics1626189727821'
+export class DatasetDiagnostics1626348078740 implements MigrationInterface {
+    name = 'DatasetDiagnostics1626348078740'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "public"."dataset_diagnostic" ("id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), "type" text NOT NULL, "ds_id" text NOT NULL, "job_id" integer, "updated_dt" TIMESTAMP NOT NULL DEFAULT (now() at time zone 'utc'), "data" json, "error" text, "images" json NOT NULL, CONSTRAINT "PK_2ddb635004b2e08782649e0c638" PRIMARY KEY ("id"))`);

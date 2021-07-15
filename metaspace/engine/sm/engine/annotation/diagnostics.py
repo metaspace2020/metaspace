@@ -5,7 +5,7 @@ from datetime import datetime
 from enum import Enum
 from io import BytesIO
 from traceback import format_exc
-from typing import Literal, Optional, Any, Union, List, TypedDict
+from typing import Optional, Any, Union, List, TypedDict
 
 import numpy as np
 
@@ -32,6 +32,7 @@ class DiagnosticImage(TypedDict, total=False):
     key: Optional[str]
     index: Optional[int]
     image_id: str  # required
+    url: str  # required
     format: DiagnosticImageFormat  # required
 
 
@@ -51,7 +52,7 @@ def add_diagnostics(diagnostics: List[DatasetDiagnostic]):
         assert 'ds_id' in diagnostic
         assert 'type' in diagnostic
         images = diagnostic.get('images', [])
-        assert all('image_id' in image for image in images)
+        assert all(image['image_id'] in image['url'] for image in images)
         assert all('format' in image for image in images)
         image_keys = set((image.get('key'), image.get('index')) for image in images)
         assert len(image_keys) == len(images), 'diagnostic image keys should be unique'
@@ -152,6 +153,7 @@ def save_diagnostic_image(ds_id: str, arr: np.ndarray, key=None, index=None) -> 
     if index is not None:
         image['index'] = index
     image['image_id'] = save_npy_image(ds_id, arr)
+    image['url'] = image_storage.get_image_url(image_storage.DIAG, ds_id, image['image_id'])
     image['format'] = DiagnosticImageFormat.NPY
     return image
 

@@ -3,7 +3,7 @@ import { dsField } from '../../../../datasetFilters'
 import { DatasetSource, FieldResolversFor } from '../../../bindingTypes'
 import { ProjectSourceRepository } from '../../project/ProjectSourceRepository'
 import { Dataset as DatasetModel } from '../model'
-import { EngineDataset, OpticalImage as OpticalImageModel } from '../../engine/model'
+import { DatasetDiagnostic as DatasetDiagnosticModel, EngineDataset, OpticalImage as OpticalImageModel } from '../../engine/model'
 import { Dataset, OpticalImage, OpticalImageType } from '../../../binding'
 import getScopeRoleForEsDataset from '../operation/getScopeRoleForEsDataset'
 import logger from '../../../utils/logger'
@@ -17,6 +17,7 @@ import canViewEsDataset from '../operation/canViewEsDataset'
 import { MolecularDB } from '../../moldb/model'
 import { MolecularDbRepository } from '../../moldb/MolecularDbRepository'
 import { getS3Client } from '../../../utils/awsClient'
+import { In, IsNull } from 'typeorm'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import canDeleteEsDataset from '../operation/canDeleteEsDataset'
 
@@ -422,6 +423,28 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     } else {
       return null
     }
+  },
+
+  async diagnostics(ds: DatasetSource, args: any, ctx: Context) {
+    const dataloader = ctx.contextCacheGet('Dataset.diagnosticsDataLoader', [], () => {
+      return new DataLoader(async(datasetIds: string[]) => {
+        const results = await ctx.entityManager.find(DatasetDiagnosticModel, {
+          where: {
+            datasetId: In(datasetIds),
+            error: IsNull(),
+          },
+          relations: ['job'],
+        })
+        const formattedResults = results.map(diag => ({
+          ...diag,
+          data: JSON.stringify(diag.data),
+          databaseId: diag.job?.moldbId ?? null,
+        }))
+        const keyedResults = _.groupBy(formattedResults, 'datasetId')
+        return datasetIds.map(id => keyedResults[id] || [])
+      })
+    })
+    return await dataloader.load(ds._source.ds_id)
   },
 }
 
