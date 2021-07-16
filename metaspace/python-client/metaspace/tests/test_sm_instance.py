@@ -74,6 +74,7 @@ def test_datasets_by_all_fields(sm: SMInstance):
     )
 
 
+@pytest.mark.skip('This test triggers processing and should only be run manually')
 def test_submit_dataset(sm: SMInstance, metadata):
     time.sleep(1)  # Ensure no more than 1 DS per second is submitted to prevent errors
 
@@ -91,6 +92,7 @@ def test_submit_dataset(sm: SMInstance, metadata):
     assert set(new_ds.adducts) == {'+H', '+Na', '+K'}  # Ensure defaults were added
 
 
+@pytest.mark.skip('This test triggers processing and should only be run manually')
 def test_submit_dataset_clone(sm: SMInstance, my_ds_id, metadata):
     time.sleep(1)  # Ensure no more than 1 DS per second is submitted to prevent errors
 

@@ -32,6 +32,14 @@ describe.only('datasetUploadMiddleware', () => {
     app = express()
     app.use(datasetUploadMiddleware())
 
+    // Suppress Uppy logging the client version every call
+    const oldLog = console.log
+    jest.spyOn(console, 'log').mockImplementation((...args) => {
+      if (!/companion.client.version/.test(args[0])) {
+        oldLog(...args)
+      }
+    })
+
     const uuidResponse = await supertest(app)
       .get('/s3/uuid')
       .expect('Content-Type', /json/)

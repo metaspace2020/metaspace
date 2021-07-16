@@ -181,8 +181,7 @@ export default {
       return this.possibleAdducts[polarity].map(({ adduct, name, ...ad }) => ({
         ...ad,
         value: adduct,
-        // Without the feature flag, keep old-style names e.g. +H instead of [M+H]⁺
-        label: config.features.all_adducts ? name : adduct,
+        label: name,
       }))
     },
   },

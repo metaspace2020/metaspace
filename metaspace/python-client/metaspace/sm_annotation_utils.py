@@ -20,12 +20,14 @@ from PIL import Image
 from metaspace.image_processing import clip_hotspots
 from metaspace.types import (
     Metadata,
-    DatabaseDetails,
     DSConfig,
     make_metadata,
     Polarity,
     DatasetDownloadFile,
     DatasetDownload,
+    DatasetUser,
+    DatasetGroup,
+    DatasetProject,
 )
 
 try:
@@ -357,6 +359,7 @@ class GraphQLClient(object):
         name
         uploadDT
         submitter {
+          id
           name
         }
         group {
@@ -368,7 +371,9 @@ class GraphQLClient(object):
           name
         }
         projects {
-            name
+          id
+          name
+          publicationStatus
         }
         polarity
         ionisationSource
@@ -834,6 +839,7 @@ class SMDataset(object):
         self._config = json.loads(self._info['configJson'])
         self._metadata = make_metadata(self._info['metadataJson'])
         self._session = requests.session()
+        self._databases = [MolecularDB(db) for db in self._info['databases']]
 
     @property
     def id(self):
@@ -845,6 +851,8 @@ class SMDataset(object):
 
     @property
     def s3dir(self):
+        """The location of the uploaded imzML file. Not publicly accessible, but this can be used
+        in the `input_path` parameter to `SMInstance.submit_dataset` to clone a dataset."""
         return self._info['inputPath']
 
     def __repr__(self):
@@ -987,8 +995,9 @@ class SMDataset(object):
         return 'Negative'
 
     @property
-    def database_details(self) -> List[DatabaseDetails]:
-        return self._info['databases']
+    def database_details(self) -> List['MolecularDB']:
+        """A list of all databases that have been used to annotate this dataset"""
+        return self._databases
 
     @property
     def databases(self):
@@ -996,7 +1005,7 @@ class SMDataset(object):
 
         :meta private:
         """
-        return [d['name'] for d in self.database_details]
+        return [d.name for d in self.database_details]
 
     @property
     def database(self):
@@ -1008,7 +1017,29 @@ class SMDataset(object):
 
     @property
     def status(self):
+        """'QUEUED', 'ANNOTATING', 'FINISHED', or 'FAILED'"""
         return self._info['status']
+
+    @property
+    def submitter(self) -> DatasetUser:
+        """Details about the submitter of the dataset"""
+        return self._info['submitter']
+
+    @property
+    def group(self) -> Optional[DatasetGroup]:
+        """The group (lab/institute/team/etc.) that this dataset belongs to"""
+        return self._info['group']
+
+    @property
+    def projects(self) -> List[DatasetProject]:
+        """The list of projects that include this project"""
+        return self._info['projects']
+
+    @property
+    def principal_investigator(self) -> Optional[str]:
+        """This field is usually only used for attributing the submitter's PI when the submitter
+        is not associated with any group"""
+        return (self._info['principalInvestigator'] or {}).get('name')
 
     @property
     def _baseurl(self):
@@ -1221,9 +1252,8 @@ class SMDataset(object):
 
 
 class MolecularDB:
-    def __init__(self, info, gqclient):
+    def __init__(self, info):
         self._info = info
-        self._gqclient = gqclient
 
     @property
     def id(self) -> int:
@@ -1247,6 +1277,12 @@ class MolecularDB:
 
     def __repr__(self):
         return f'<{self.id}:{self.name}:{self.version}>'
+
+    def __getitem__(self, item):
+        """Compatibility shim for accessing properties as dictionary entries, to keep compatibility
+        with the TypedDict implementation in `DatabaseDetails`. New code should use the
+        class properties directly instead of accessing this like a dict."""
+        return self._info[item]
 
 
 class SMInstance(object):
@@ -1499,7 +1535,8 @@ class SMInstance(object):
         :param decoy_sample_size: Number of implausible adducts to use for generating the decoy
             search database (default 20)
         :param analysis_version:
-        :param input_path: Only use this if making a clone of an existing dataset.
+        :param input_path: To clone an existing dataset, specify input_path using the value of the
+            existing dataset's "s3dir".
             When input_path is suppled, imzml_fn and ibd_fn can be set to none None.
         :param description: Optional text to describe the dataset
 
@@ -1684,11 +1721,11 @@ class SMInstance(object):
                 if db['name'] == name and db['version'] == version:
                     db_match = db
 
-        return db_match and MolecularDB(db_match, self._gqclient)
+        return db_match and MolecularDB(db_match)
 
     def databases(self) -> List[MolecularDB]:
         dbs = sorted(self._gqclient.get_visible_databases(), key=lambda db: db['id'])
-        return [MolecularDB(db, self._gqclient) for db in dbs]
+        return [MolecularDB(db) for db in dbs]
 
     def create_database(
         self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False

@@ -872,12 +872,36 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 </div>
                 <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
                   <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Adducts</span><span style="color: red;">*</span>
-                      <!----></span></label>
+                      <mock-el-popover trigger="hover" placement="right">
+                        <div slot-key="default">
+                          <div class="adducts-help">
+                            <p>
+                              Each selected adduct is applied to every molecule in the selected database.
+                              Only adducts that commonly form with the chosen ionization source or MALDI matrix should be selected,
+                              as searching for improbable adducts is likely to generate spurious annotations.
+                            </p>
+                            <p>
+                              We recommend selecting <span class="example-input">[M+H]⁺</span>, <span class="example-input">[M+Na]⁺</span>,
+                              <span class="example-input">[M+K]⁺</span> in positive mode,
+                              and <span class="example-input">[M-H]⁻</span>,&nbsp;<span class="example-input">[M+Cl]⁻</span> in negative mode.
+                            </p>
+                            <p>
+                              For ESI-based sources <span class="example-input">[M+NH₄]⁺</span> should also be selected in positive mode.
+                            </p>
+                            <p><span class="example-input">[M]⁺</span> and <span class="example-input">[M]⁻</span> should generally only be
+                              selected when annotating custom databases that have had adducts merged into their molecular formulas, or
+                              in cases when a derivatization agent causes molecules to become permanently charged.
+                            </p>
+                          </div>
+                        </div>
+                        <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+                      </mock-el-popover>
+                      </span></label>
                     <div class="el-form-item__content">
                       <mock-el-select value="+H,+Na,+K" required="true" multiple="">
-                        <mock-el-option value="+H" label="+H"></mock-el-option>
-                        <mock-el-option value="+Na" label="+Na"></mock-el-option>
-                        <mock-el-option value="+K" label="+K"></mock-el-option>
+                        <mock-el-option value="+H" label="[M + H]⁺"></mock-el-option>
+                        <mock-el-option value="+Na" label="[M + Na]⁺"></mock-el-option>
+                        <mock-el-option value="+K" label="[M + K]⁺"></mock-el-option>
                       </mock-el-select>
                       <transition-stub name="el-zoom-in-top">
                         <!---->
@@ -903,7 +927,53 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </div>
                 </div>
               </div>
-              <!---->
+              <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+                <!---->
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Chemical modifications</span>
+                      <!---->
+                      <mock-el-popover trigger="hover" placement="right">
+                        <div slot-key="default">
+                          <div style="max-width: 500px;">
+                            <p>
+                              This setting is intended for use in samples that have been treated with a derivatization agent.
+                              Chemical modifications add and remove elements from every formula in the selected database.
+                              Unmodified formulas will also be annotated, and each modification will have an independent FDR ranking.
+                            </p>
+                            <p>
+                              Extra scrutiny must be given to the results annotated with chemical modifications,
+                              as modified formulas are often isomeric to other unmodified molecules in the database.
+                            </p>
+                            <p>
+                              Modifications should be entered as a series of formulas being removed
+                              with <span class="example-input">-</span> and added with <span class="example-input">+</span>.
+                              For example, derivatization with Girard's Reagent T would be
+                              entered as <span class="example-input">-O+C5H12N3O</span>.
+                            </p>
+                            <p>
+                              In cases where a derivatization agent adds a permanent charge, such as with the
+                              quaternary ammonium moiety in the above example, additional steps are needed to ensure that
+                              METASPACE searches for the correct mass. Either
+                              the <span class="example-input">[M]⁺</span> or <span class="example-input">[M]⁻</span> adduct
+                              should be selected, or the number of hydrogens in the chemical modification formula should be adjusted
+                              so that the correct mass is calculated after
+                              the <span class="example-input">[M+H]⁺</span> or <span class="example-input">[M-H]⁻</span> adduct is applied.
+                            </p>
+                          </div>
+                        </div>
+                        <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+                      </mock-el-popover>
+                      </span></label>
+                    <div class="el-form-item__content">
+                      <mock-el-select popper-class="el-select-popper__with-create" no-data-text="Invalid value" multiple="" filterable="" default-first-option="" remote="" remote-method="function () { [native code] }" multiple-limit="3"></mock-el-select>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+                <!---->
+              </div>
               <!---->
             </div>
           </div>

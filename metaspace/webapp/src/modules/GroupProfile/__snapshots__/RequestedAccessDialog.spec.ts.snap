@@ -1,0 +1,25 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RequestedAccessDialog it should match dataset processing snapshot 1`] = `
+<transition-stub name="dialog-fade" class="requested-access-dialog" group="[object Object]" visible="true" dssubmission="true" style="z-index: 2003;">
+  <div class="el-dialog__wrapper">
+    <div role="dialog" aria-modal="true" aria-label="TEST_GROUP Access Request" class="el-dialog" style="margin-top: 15vh;">
+      <div class="el-dialog__header"><span class="el-dialog__title">TEST_GROUP Access Request</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+      <div class="el-dialog__body">Your dataset was sent to processing. Please contact<span class="ml-1"><a href="mailto:jdoe@mail.com">John Doe</a>,</span><span class="ml-1"><a href="mailto:jdoe2@mail.com">John Doe 2</a> or</span><span class="ml-1"><a href="mailto:jdoe3@mail.com">John Doe 3</a> </span>to approve your request within METASPACE, so you can visualize the group datasets!</div>
+      <!---->
+    </div>
+  </div>
+</transition-stub>
+`;
+
+exports[`RequestedAccessDialog it should match snapshot 1`] = `
+<transition-stub name="dialog-fade" class="requested-access-dialog" style="z-index: 2001;">
+  <div class="el-dialog__wrapper">
+    <div role="dialog" aria-modal="true" aria-label="undefined Access Request" class="el-dialog" style="margin-top: 15vh;">
+      <div class="el-dialog__header"><span class="el-dialog__title">undefined Access Request</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+      <div class="el-dialog__body">Your request was sent. Please contactto approve your request within METASPACE, so you can visualize the group datasets!</div>
+      <!---->
+    </div>
+  </div>
+</transition-stub>
+`;

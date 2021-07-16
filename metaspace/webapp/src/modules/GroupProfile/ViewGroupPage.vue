@@ -14,6 +14,11 @@
         @accept="handleAcceptTransferDatasets"
         @close="handleCloseTransferDatasetsDialog"
       />
+      <requested-access-dialog
+        :visible="showRequestedDialog"
+        :group="group"
+        @close="handleCloseRequestedAccessDialog"
+      />
       <div class="header-row">
         <div class="header-names">
           <h1>{{ group.name }}</h1>
@@ -189,11 +194,11 @@ import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import GroupDescription from './GroupDescription.vue'
 import MolecularDatabases from '../MolecularDatabases'
-import { MolecularDB } from '../../api/moldb'
 import config from '../../lib/config'
 import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
+import { RequestedAccessDialog } from './RequestedAccessDialog'
 
-  interface ViewGroupProfileData {
+interface ViewGroupProfileData {
     allDatasets: DatasetDetailItem[];
     countDatasets: number;
   }
@@ -208,6 +213,7 @@ import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
       GroupDescription,
       MolecularDatabases,
       PopupAnchor,
+      RequestedAccessDialog,
     },
     filters: {
       optionalSuffixInParens,
@@ -284,6 +290,7 @@ export default class ViewGroupPage extends Vue {
     groupLoading = 0;
     loaded = false;
     showTransferDatasetsDialog: boolean = false;
+    showRequestedDialog: boolean = false;
     showUploadDatabaseDialog: boolean = false;
     currentUser: CurrentUserRoleResult | null = null;
     group: ViewGroupResult | null = null;
@@ -291,6 +298,7 @@ export default class ViewGroupPage extends Vue {
 
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInGroup(): UserGroupRole | null { return this.group && this.group.currentUserRole }
+
     get groupDatasets(): DatasetDetailItem[] {
       return (this.data && this.data.allDatasets || []).filter(ds => ds.status !== 'FAILED')
     }
@@ -426,11 +434,16 @@ export default class ViewGroupPage extends Vue {
         reportError(err)
       } finally {
         this.showTransferDatasetsDialog = false
+        this.showRequestedDialog = true
       }
     }
 
     handleCloseTransferDatasetsDialog() {
       this.showTransferDatasetsDialog = false
+    }
+
+    handleCloseRequestedAccessDialog() {
+      this.showRequestedDialog = false
     }
 
     handleFilterUpdate(newFilter: any) {

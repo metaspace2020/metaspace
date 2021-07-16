@@ -25,6 +25,7 @@ import {
   Project as ProjectModel,
   UserProjectRoleOptions as UPRO,
 } from './src/modules/project/model'
+import { StructError } from 'superstruct'
 
 const env = process.env.NODE_ENV || 'development'
 
@@ -56,7 +57,17 @@ const configureSentryRequestHandler = (app) => {
 const configureSentryErrorHandler = (app) => {
   if (env !== 'development' && config.sentry.dsn) {
     // Raven.errorHandler should go after all normal handlers/middleware, but before any other error handlers
-    app.use(Sentry.Handlers.errorHandler())
+    app.use(Sentry.Handlers.errorHandler({
+      shouldHandleError(error) {
+        if (error instanceof StructError || error[IsUserError] === true) {
+          return false
+        }
+        // Default sentry behavior
+        const statusCode = error?.status ?? error?.statusCode ?? error?.status_code ?? error?.output?.statusCode
+        const status = statusCode ? parseInt(statusCode, 10) : 500
+        return status >= 500
+      },
+    }))
   }
 }
 

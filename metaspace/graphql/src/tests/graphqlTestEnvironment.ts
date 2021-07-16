@@ -56,6 +56,7 @@ export interface TestEnvironmentOptions {
 
 export let testEntityManager: EntityManager
 export let testUser: User
+export let adminUser: User
 export let userContext: Context
 export let anonContext: Context
 export let adminContext: Context
@@ -83,8 +84,9 @@ export const onBeforeEach = async() => {
 
 export const setupTestUsers = async(groupIds?: string[]) => {
   testUser = await createTestUser()
+  adminUser = await createTestUser({ role: 'admin' })
   userContext = getContextForTest({ ...testUser, groupIds } as any, testEntityManager)
-  adminContext = getContextForTest({ ...testUser, role: 'admin' } as any, testEntityManager)
+  adminContext = getContextForTest(adminUser, testEntityManager)
 }
 
 export const onAfterEach = async() => {

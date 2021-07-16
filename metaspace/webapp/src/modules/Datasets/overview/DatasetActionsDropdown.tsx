@@ -146,20 +146,8 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
         actionLabel, currentUser, dataset, editActionLabel, deleteActionLabel,
         downloadActionLabel, reprocessActionLabel, compareActionLabel,
       } = props
-      const { role, id: currentUserId } = currentUser || {}
-      const { submitter, status, canDownload, id, name } = dataset || {}
-      const publicationStatus = computed(() => {
-        if (dataset?.projects?.some(({ publicationStatus }) => publicationStatus === 'PUBLISHED')) {
-          return 'Published'
-        }
-        if (dataset?.projects?.some(({ publicationStatus }) => publicationStatus === 'UNDER_REVIEW')) {
-          return 'Under review'
-        }
-        return null
-      })
-      const canEdit = (role === 'admin' || (currentUserId === submitter?.id
-        && (status !== 'QUEUED' && status !== 'ANNOTATING')))
-      const canDelete = (role === 'admin' || (canEdit && publicationStatus.value === null))
+      const { role } = currentUser || {}
+      const { canEdit, canDelete, canDownload, id, name } = dataset || {}
       const canReprocess = (role === 'admin')
 
       return (

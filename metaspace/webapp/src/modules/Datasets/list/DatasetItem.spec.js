@@ -45,7 +45,9 @@ describe('DatasetItem', () => {
       type: 'type'
     },
     projects: [],
-    uploadDT: '2020-04-17T11:37:50.318667'
+    canEdit: true,
+    canDelete: true,
+    uploadDT: '2020-04-17T11:37:50.318667',
   }
   const unpublished = { name: 'project', publicationStatus: 'UNPUBLISHED' }
   const underReview = { name: 'project', publicationStatus: 'UNDER_REVIEW' }
@@ -83,6 +85,7 @@ describe('DatasetItem', () => {
       currentUser: user,
       dataset: {
         ...dataset,
+        canEdit: false,
         projects: [published]
       },
     }

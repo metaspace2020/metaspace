@@ -4,6 +4,12 @@
       :visible="helpDialog"
       @close="helpDialog = false"
     />
+    <requested-access-dialog
+      :visible="showRequestedDialog"
+      :ds-submission="true"
+      :group="group"
+      @close="showRequestedDialog = false"
+    />
     <div class="upload-page-wrapper">
       <div
         v-if="!enableUploads"
@@ -116,6 +122,9 @@ import { currentUserIdQuery } from '../../api/user'
 import reportError from '../../lib/reportError'
 import { parseS3Url } from '../../lib/util'
 import config from '../../lib/config'
+import gql from 'graphql-tag'
+import { ViewGroupFragment } from '@/api/group'
+import { RequestedAccessDialog } from '../../modules/GroupProfile/RequestedAccessDialog'
 
 const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
@@ -124,6 +133,10 @@ const createInputPath = (url, uuid) => {
 }
 
 const basename = fname => fname.split('.').slice(0, -1).join('.')
+const groupRoleQuery = gql`query GroupProfileById($groupIdOrSlug: ID!) {
+              group(groupId: $groupIdOrSlug) { ...ViewGroupFragment hasPendingRequest }
+            }
+            ${ViewGroupFragment}`
 const uppyOptions = {
   debug: true,
   autoProceed: true,
@@ -182,10 +195,12 @@ export default {
     MetadataEditor,
     HelpDialog,
     FadeTransition,
+    RequestedAccessDialog,
   },
   data() {
     return {
       status: 'INIT',
+      showRequestedDialog: false,
       validationErrors: [],
       storageKey: {
         uuid: null,
@@ -197,6 +212,7 @@ export default {
       },
       autoSubmit: false,
       helpDialog: false,
+      group: null,
       systemHealth: null,
       currentUser: null,
       inputPath: null,
@@ -394,6 +410,16 @@ export default {
       } finally {
         if (this.status === 'SUBMITTING') { // i.e. if unsuccessful
           this.status = 'UPLOADED'
+        }
+
+        // check if group approval is pending
+        if (metaspaceOptions.groupId) {
+          const resp = await this.$apollo.query({
+            query: groupRoleQuery,
+            variables: { groupIdOrSlug: metaspaceOptions.groupId },
+          })
+          this.group = resp.data.group
+          this.showRequestedDialog = resp.data?.group?.currentUserRole === 'PENDING'
         }
       }
     },

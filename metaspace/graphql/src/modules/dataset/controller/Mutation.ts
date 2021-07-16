@@ -10,7 +10,6 @@ import * as _ from 'lodash'
 import { smApiDatasetRequest } from '../../../utils'
 import { UserProjectRoleOptions as UPRO } from '../../project/model'
 import { PublicationStatusOptions as PSO } from '../../project/Publishing'
-import { UserGroup as UserGroupModel, UserGroupRoleOptions } from '../../group/model'
 import { Dataset as DatasetModel, DatasetProject as DatasetProjectModel } from '../model'
 import { DatasetCreateInput, DatasetUpdateInput, Int, Mutation } from '../../../binding'
 import { Context, ContextUser } from '../../../context'
@@ -19,10 +18,7 @@ import { getUserProjectRoles } from '../../../utils/db'
 import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
 import { deleteDataset } from '../operation/deleteDataset'
-import {
-  checkProjectsPublicationStatus,
-  checkNoPublishedProjectRemoved,
-} from '../operation/publicationChecks'
+import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
 import { EngineDataset } from '../../engine/model'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
@@ -31,6 +27,7 @@ import { MolecularDbRepository } from '../../moldb/MolecularDbRepository'
 import { assertUserBelongsToGroup } from '../../moldb/util/assertUserBelongsToGroup'
 import { smApiUpdateDataset } from '../../../utils/smApi/datasets'
 import { validateTiptapJson } from '../../../utils/tiptap'
+import { isMemberOfGroup } from '../operation/isMemberOfGroup'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -122,19 +119,6 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
   return { newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff }
 }
 
-const isMemberOf = async(entityManager: EntityManager, userId: string, groupId: string) => {
-  const userGroup = await entityManager.findOne(UserGroupModel, {
-    userId,
-    groupId,
-  })
-  let isMember = false
-  if (userGroup) {
-    isMember = [UserGroupRoleOptions.MEMBER,
-      UserGroupRoleOptions.GROUP_ADMIN].includes(userGroup.role)
-  }
-  return isMember
-}
-
 interface SaveDatasetArgs {
   datasetId?: string;
   submitterId: string;
@@ -150,7 +134,7 @@ const saveDataset = async(entityManager: EntityManager, args: SaveDatasetArgs, r
     ? {}
     : groupId === null
       ? { groupId: null, groupApproved: false }
-      : { groupId, groupApproved: await isMemberOf(entityManager, submitterId, groupId) }
+      : { groupId, groupApproved: await isMemberOfGroup(entityManager, submitterId, groupId) }
   const piUpdate = principalInvestigator === undefined
     ? {}
     : principalInvestigator === null
@@ -228,7 +212,7 @@ const assertUserCanUseMolecularDBs = async(ctx: Context, databaseIds: number[]|u
       .findDatabaseById(ctx, databaseId)
 
     if (database.groupId != null) {
-      assertUserBelongsToGroup(ctx, database.groupId)
+      await assertUserBelongsToGroup(ctx, database.groupId)
     }
   }
 }
@@ -414,9 +398,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (ctx.user.id == null) {
       throw new UserError('Unauthorized')
     }
-    await checkProjectsPublicationStatus(
-      ctx.entityManager, datasetId, [PSO.UNDER_REVIEW, PSO.PUBLISHED]
-    )
+    // Authorization handled in deleteDataset
     const resp = await deleteDataset(ctx.entityManager, ctx.user, datasetId, { force })
     return JSON.stringify(resp)
   },

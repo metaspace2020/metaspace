@@ -5,9 +5,14 @@ from pathlib import Path
 from typing import Dict
 
 from sm.engine.config import init_loggers, SMConfig
-from sm.engine import image_storage
 
 logger = logging.getLogger('engine')
+
+
+####################################################################################################
+############################### DON'T ADD NEW FUNCTIONS TO THIS FILE ###############################
+#### It's a frequent source of unwanted & circular imports. Create a new file in utils/ instead. ###
+####################################################################################################
 
 
 def split_s3_path(path):
@@ -40,6 +45,8 @@ def populate_aws_env_vars(aws_config):
 
 
 def on_startup(config_path: str) -> Dict:
+    from sm.engine import image_storage  # pylint: disable=import-outside-toplevel,cyclic-import
+
     SMConfig.set_path(config_path)
     sm_config = SMConfig.get_conf()
 

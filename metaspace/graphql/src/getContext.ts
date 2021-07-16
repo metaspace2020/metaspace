@@ -10,6 +10,7 @@ import * as _ from 'lodash'
 import * as DataLoader from 'dataloader'
 import { MolecularDbRepository } from './modules/moldb/MolecularDbRepository'
 import { UserProjectRole } from './binding'
+import { UserGroup, UserGroupRoleOptions as UGRO } from './modules/group/model'
 
 const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManager: EntityManager,
   req?: Request, res?: Response) => {
@@ -56,6 +57,16 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
       .map(([id]) => id)
   }
 
+  const getMemberOfGroupIds = () => contextCacheGet('getMemberOfGroupIds', [], async() => {
+    if (user == null) {
+      return []
+    }
+    const userGroups = await entityManager.find(UserGroup, { userId: user.id })
+    return userGroups
+      .filter(ug => [UGRO.MEMBER, UGRO.GROUP_ADMIN].includes(ug.role))
+      .map(ug => ug.groupId)
+  })
+
   const getVisibleDatabaseIds = async(): Promise<number[]> => {
     const databases = await entityManager.getCustomRepository(MolecularDbRepository).findDatabases(contextUser)
     return databases.map(db => db.id)
@@ -101,6 +112,7 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
     role: 'guest',
     authMethod: req && req.authInfo || AuthMethodOptions.UNKNOWN,
     getProjectRoles,
+    getMemberOfGroupIds,
     getMemberOfProjectIds,
     getVisibleDatabaseIds,
   }
@@ -108,13 +120,6 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
     contextUser.id = user.id
     contextUser.role = user.role as ContextUserRole
     contextUser.email = user.email || undefined
-    if ('groupIds' in user) {
-      contextUser.groupIds = user.groupIds
-    } else if ('groups' in user && user.groups != null) {
-      contextUser.groupIds = user.groups.map(group => group.groupId)
-    } else {
-      throw new Error('User supplied to getBaseContext is missing group information')
-    }
   }
 
   return {
@@ -149,9 +154,5 @@ export default getContext
 export const getContextForTest = (jwtUser: JwtUser | UserModel | null, entityManager: EntityManager): Context => {
   // TODO: Add mocks for req & res if/when needed
   const reqMock = { session: null, authInfo: AuthMethodOptions.JWT } as any as Request
-  // Add group info if missing, so that tests don't have to care about where they get UserModel instances
-  if (jwtUser != null && !('groupIds' in jwtUser) && !('groups' in jwtUser)) {
-    (jwtUser as any).groupIds = []
-  }
   return getBaseContext(jwtUser, entityManager, reqMock, {} as Response) as Context
 }
