@@ -35,7 +35,12 @@ TEST_DS_CONFIG = {
 
 
 def create_test_molecular_db(
-    name='HMDB', version='v4', group_id=None, created_dt=None, archived=False, **kwargs,
+    name='HMDB',
+    version='v4',
+    group_id=None,
+    created_dt=None,
+    archived=False,
+    **kwargs,
 ) -> MolecularDB:
     if not created_dt:
         created_dt = datetime.utcnow()

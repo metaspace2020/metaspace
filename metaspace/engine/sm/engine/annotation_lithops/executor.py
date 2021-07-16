@@ -161,7 +161,8 @@ class Executor:
                     config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE
                 ),
                 'ibm_vpc': lithops.StandaloneExecutor(
-                    config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE,
+                    config=lithops_config,
+                    runtime=RUNTIME_DOCKER_IMAGE,
                 ),
             }
 

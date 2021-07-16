@@ -170,7 +170,9 @@ if __name__ == '__main__':
         help='Re-run colocalization jobs even if they have already successfully run',
     )
     parser.add_argument(
-        '--lithops', action='store_true', help='Use Lithops implementation',
+        '--lithops',
+        action='store_true',
+        help='Use Lithops implementation',
     )
     args = parser.parse_args()
     logger = logging.getLogger('engine')

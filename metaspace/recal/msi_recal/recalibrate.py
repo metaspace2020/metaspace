@@ -81,10 +81,11 @@ def build_pipeline(sample_peaks_df: pd.DataFrame, params: RecalParams):
     for stage_name, stage_df in stages:
         eval.collect_peaks(stage_df, stage_name)
 
-    logger.debug(pd.DataFrame({
-        stage_name: eval.get_stats(stage_name).abs().mean()
-        for stage_name, stage_df in stages
-    }))
+    logger.debug(
+        pd.DataFrame(
+            {stage_name: eval.get_stats(stage_name).abs().mean() for stage_name, stage_df in stages}
+        )
+    )
 
     eval.reset()
 

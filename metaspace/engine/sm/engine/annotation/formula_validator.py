@@ -201,8 +201,7 @@ def compute_and_filter_metrics(
 def collect_metrics_as_df(
     metrics_it: Iterable[FormulaMetricSet],
 ) -> Tuple[pd.DataFrame, Dict[int, List[Optional[coo_matrix]]]]:
-    """Collects metrics and images into a single dataframe and dict of images
-    """
+    """Collects metrics and images into a single dataframe and dict of images"""
     formula_metrics = {}
     formula_images = {}
 

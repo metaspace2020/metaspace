@@ -146,9 +146,7 @@ def _load_ds(
     *,
     storage: Storage,
     perf: SubtaskProfiler,
-) -> Tuple[
-    PortableSpectrumReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,
-]:
+) -> Tuple[PortableSpectrumReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
     logger.info('Loading .imzML file...')
     imzml_reader = load_portable_spectrum_reader(storage, imzml_cobject)
     perf.record_entry(
@@ -196,7 +194,9 @@ def load_ds(
         runtime_memory = 32768
 
     imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens = executor.call(
-        _load_ds, (imzml_cobject, ibd_cobject, ds_segm_size_mb), runtime_memory=runtime_memory,
+        _load_ds,
+        (imzml_cobject, ibd_cobject, ds_segm_size_mb),
+        runtime_memory=runtime_memory,
     )
 
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
@@ -228,7 +228,10 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs
 
     n_segms = len(ds_segms_cobjs)
     assert n_segms == len(ds_segm_lens), (n_segms, len(ds_segm_lens))
-    assert ds_segments_bounds.shape == (n_segms, 2,), (ds_segments_bounds.shape, (n_segms, 2))
+    assert ds_segments_bounds.shape == (
+        n_segms,
+        2,
+    ), (ds_segments_bounds.shape, (n_segms, 2))
 
     results = fexec.map(get_segm_stats, ds_segms_cobjs)
 

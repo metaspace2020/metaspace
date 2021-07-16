@@ -20,7 +20,7 @@ BASE_MZ = 200.0
 
 
 class IsocalcWrapper:
-    """ Wrapper around pyMSpec.pyisocalc.pyisocalc used for getting theoretical isotope peaks'
+    """Wrapper around pyMSpec.pyisocalc.pyisocalc used for getting theoretical isotope peaks'
     centroids and profiles for a sum formula.
     """
 
@@ -28,8 +28,8 @@ class IsocalcWrapper:
 
     @classmethod
     def set_centroids_cache_enabled(cls, enabled):
-        """ Turns on/off the centroids cache. This cache can become a massive memory leak
-        if permanently left active. It should only be used for batch processing jobs """
+        """Turns on/off the centroids cache. This cache can become a massive memory leak
+        if permanently left active. It should only be used for batch processing jobs"""
         if enabled and not cls._all_centroids_caches:
             cls._all_centroids_caches = defaultdict(dict)
         else:
@@ -54,8 +54,7 @@ class IsocalcWrapper:
 
     @staticmethod
     def _trim(mzs, ints, k):
-        """ Only keep top k peaks
-        """
+        """Only keep top k peaks"""
         int_order = np.argsort(ints)[::-1]
         mzs = mzs[int_order][:k]
         ints = ints[int_order][:k]

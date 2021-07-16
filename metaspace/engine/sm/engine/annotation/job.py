@@ -77,5 +77,6 @@ def update_finished_job(job_id: int, job_status: str):
     finish = datetime.now()
 
     DB().alter(
-        'UPDATE job set status=%s, finish=%s where id=%s', params=(job_status, finish, job_id),
+        'UPDATE job set status=%s, finish=%s where id=%s',
+        params=(job_status, finish, job_id),
     )

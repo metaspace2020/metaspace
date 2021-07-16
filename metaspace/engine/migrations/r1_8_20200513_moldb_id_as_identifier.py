@@ -260,7 +260,8 @@ def migrate_moldbs(where: str = None, ds_ids: List[str] = None):
         datasets = DB().select_with_fields(f"SELECT id, config FROM dataset {where}")
     elif ds_ids:
         datasets = DB().select_with_fields(
-            "SELECT id, config FROM dataset WHERE id = ANY(%s)", params=(ds_ids,),
+            "SELECT id, config FROM dataset WHERE id = ANY(%s)",
+            params=(ds_ids,),
         )
     else:
         datasets = DB().select_with_fields(

@@ -146,7 +146,12 @@ def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc
 
 
 def read_ds_segments(
-    ds_segms_cobjs, ds_segm_lens, pw_mem_mb, ds_segm_size_mb, ds_segm_dtype, storage,
+    ds_segms_cobjs,
+    ds_segm_lens,
+    pw_mem_mb,
+    ds_segm_size_mb,
+    ds_segm_dtype,
+    storage,
 ):
 
     ds_segms_mb = len(ds_segms_cobjs) * ds_segm_size_mb

@@ -24,14 +24,15 @@ class EvalPeaksCollector:
         )
         eval_peaks = sample_across_mass_range(eval_peaks, eval_peaks.weight, 4, 25)
         eval_peaks = (
-            eval_peaks
-                .drop(columns={'mz', 'mz_stddev', 'mz_mx', 'ints', 'ints_stddev', 'ints_mx'})
-                .reset_index(drop=True)
-                .rename_axis(index='mol_idx')
+            eval_peaks.drop(columns={'mz', 'mz_stddev', 'mz_mx', 'ints', 'ints_stddev', 'ints_mx'})
+            .reset_index(drop=True)
+            .rename_axis(index='mol_idx')
         )
 
         self.eval_peaks = eval_peaks
-        self._mz_lo, self._mz_hi = mass_accuracy_bounds(self.eval_peaks.db_mz, params.analyzer, params.jitter_sigma_1)
+        self._mz_lo, self._mz_hi = mass_accuracy_bounds(
+            self.eval_peaks.db_mz, params.analyzer, params.jitter_sigma_1
+        )
         self.ppm_sigma_1 = ppm_to_sigma_1(1, params.analyzer, params.base_mz)
         self.collected_peak_sets = defaultdict(lambda: defaultdict(list))
 
@@ -61,17 +62,19 @@ class EvalPeaksCollector:
             width = peak_width(peak_df.mz.iloc[0], self.params.analyzer, self.ppm_sigma_1)
             avg_ppm_offset = avg_mz_offset / width
             mz_lo, mz_hi = np.percentile(mz_offset, [5, 95])
-            stats.append({
-                'mol_idx': mol_idx,
-                'mz_offset': avg_mz_offset,
-                'ppm_offset': avg_ppm_offset,
-                'mz_spread': mz_hi - mz_lo,
-                'ppm_spread': (mz_hi - mz_lo) / width,
-                'in_1ppm': np.count_nonzero(np.abs(mz_offset) <= 1 * width) / len(peak_df),
-                'in_2ppm': np.count_nonzero(np.abs(mz_offset) <= 2 * width) / len(peak_df),
-                'in_3ppm': np.count_nonzero(np.abs(mz_offset) <= 3 * width) / len(peak_df),
-                'n_spectra': len(peak_df),
-            })
+            stats.append(
+                {
+                    'mol_idx': mol_idx,
+                    'mz_offset': avg_mz_offset,
+                    'ppm_offset': avg_ppm_offset,
+                    'mz_spread': mz_hi - mz_lo,
+                    'ppm_spread': (mz_hi - mz_lo) / width,
+                    'in_1ppm': np.count_nonzero(np.abs(mz_offset) <= 1 * width) / len(peak_df),
+                    'in_2ppm': np.count_nonzero(np.abs(mz_offset) <= 2 * width) / len(peak_df),
+                    'in_3ppm': np.count_nonzero(np.abs(mz_offset) <= 3 * width) / len(peak_df),
+                    'n_spectra': len(peak_df),
+                }
+            )
 
         return pd.DataFrame(stats).set_index('mol_idx')
 
