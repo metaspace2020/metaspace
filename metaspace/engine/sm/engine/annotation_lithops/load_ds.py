@@ -178,7 +178,8 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs
         2,
     ), (ds_segments_bounds.shape, (n_segms, 2))
 
-    results = fexec.map(get_segm_stats, ds_segms_cobjs)
+    args = [(cobj,) for cobj in ds_segms_cobjs]
+    results = fexec.map(get_segm_stats, args)
 
     segms_df = pd.DataFrame(results)
     segms_df['min_bound'] = np.concatenate([[0], ds_segments_bounds[1:, 0]])

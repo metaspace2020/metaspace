@@ -137,7 +137,7 @@ def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config
     with perf_profile(db, 'test_lithops_annotate', ds.id) as perf:
         executor._perf = perf
         job = ServerAnnotationJob(executor=executor, ds=ds, perf=perf)
-        job.run()
+        job.run(debug_validate=True)
 
     def db_df(sql, args):
         return pd.DataFrame(db.select_with_fields(sql, args))

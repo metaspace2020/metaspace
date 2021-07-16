@@ -233,7 +233,7 @@ def validate_centroid_segments(fexec, db_segms_cobjs, ds_segms_bounds, isocalc_w
         if df:
             logger.warning(df)
 
-    def get_segm_stats(storage, segm_cobject):
+    def get_segm_stats(segm_cobject, *, storage):
         segm = load_cobj(storage, segm_cobject)
         mzs = np.sort(segm.mz.values)
         ds_segm_lo, ds_segm_hi = choose_ds_segments(ds_segms_bounds, segm, isocalc_wrapper)
@@ -263,7 +263,8 @@ def validate_centroid_segments(fexec, db_segms_cobjs, ds_segms_bounds, isocalc_w
 
     warnings = []
 
-    segm_formula_is, stats = fexec.map_unpack(get_segm_stats, db_segms_cobjs, runtime_memory=1024)
+    args = [(cobj,) for cobj in db_segms_cobjs]
+    segm_formula_is, stats = fexec.map_unpack(get_segm_stats, args, runtime_memory=1024)
     stats_df = pd.DataFrame(stats)
 
     with pd.option_context(
