@@ -1,5 +1,26 @@
 .dataset-comparison-page{
 
+  .dataset-comparison-item-header{
+    background: #F1F5F8;
+    padding: 4px 8px;
+    width: calc(100% - 16px);
+    span{
+      @apply mr-1;
+    }
+
+    .av-icon-button {
+      svg {
+        display: block;
+      }
+    }
+
+    .setting-icon{
+      height: 20px;
+      width: 20px;
+      color: black;
+    }
+  }
+
   .ds-intensities-wrapper{
     @apply flex justify-between items-start h-6 leading-6 tracking-wide relative z-10;
   }

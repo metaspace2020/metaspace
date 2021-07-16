@@ -365,7 +365,7 @@ describe('DatasetComparisonAnnotationTable', () => {
   it('it should match snapshot', async() => {
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.element).toMatchSnapshot()
   })
 
   it('it should match the number of cols and rows passed via props', async() => {

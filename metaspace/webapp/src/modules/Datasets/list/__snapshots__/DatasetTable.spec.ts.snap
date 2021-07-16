@@ -338,32 +338,26 @@ exports[`DatasetTable should match snapshot 1`] = `
           >
             allDatasets.1.name
           </span>
-          <span
+          <mock-el-popover
             class="ml-1"
+            placement="top"
+            trigger="hover"
           >
-            <transition-stub
-              name="fade-in-linear"
+            <div
+              slot-key="default"
             >
               <div
-                aria-hidden="true"
-                class="el-popover el-popper"
-                id="el-popover-123"
-                role="tooltip"
-                style="display: none;"
-                tabindex="0"
-              >
-                <!---->
-                <div
-                  mock-v-loading="true"
-                />
-              </div>
-            </transition-stub>
-            <i
-              aria-describedby="el-popover-123"
-              class="el-icon-lock el-popover__reference"
-              tabindex="0"
-            />
-          </span>
+                mock-v-loading="true"
+              />
+            </div>
+            <div
+              slot-key="reference"
+            >
+              <i
+                class="el-icon-lock"
+              />
+            </div>
+          </mock-el-popover>
         </div>
         <div
           class="ds-item-line text-gray-700"
