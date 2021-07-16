@@ -46,7 +46,6 @@ def test_imzml_reader_tic_image_from_spectra():
     # Ensure all spectra have been read before getting the TIC image
     for _ in imzml_reader.iter_spectra(np.arange(4)):
         pass
-    print(imzml_reader.is_tic_from_metadata, imzml_reader._sp_tic)
 
     assert np.array_equal(imzml_reader.tic_image(), EXPECTED_TIC, equal_nan=True)
 

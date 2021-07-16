@@ -20,7 +20,6 @@ class SMAnnotateDaemon:
 
     def __init__(self, manager, annot_qdesc, upd_qdesc, poll_interval=1):
         self._sm_config = SMConfig.get_conf()
-        print('annot daemon', self._sm_config['rabbitmq'], annot_qdesc, upd_qdesc)
         self._stopped = False
         self._manager = manager
         self._annot_queue_consumer = QueueConsumer(
