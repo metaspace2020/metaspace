@@ -92,21 +92,18 @@ def process_dataset(sm_config, del_first, ds_id):
         return ds_id, False
 
 
-def run_diagnostics(sm_config, ds_id, sql_where, missing, failed, succeeded, del_first, jobs):
-
+def find_dataset_ids(ds_ids_param, sql_where, missing, failed, succeeded):
     db = DB()
 
-    if ds_id:
-        specified_ds_ids = ds_id.split(',')
+    if ds_ids_param:
+        specified_ds_ids = ds_ids_param.split(',')
     elif sql_where:
         specified_ds_ids = db.select_onecol(f"SELECT id FROM dataset WHERE {sql_where}")
     else:
         specified_ds_ids = None
-
     if not missing:
         # Default to processing all datasets missing diagnostics
         missing = specified_ds_ids is None and not failed and not succeeded
-
     ds_type_counts = db.select(
         'SELECT d.id, COUNT(DISTINCT dd.type), COUNT(dd.error) '
         'FROM dataset d LEFT JOIN dataset_diagnostic dd on d.id = dd.ds_id '
@@ -132,9 +129,11 @@ def run_diagnostics(sm_config, ds_id, sql_where, missing, failed, succeeded, del
             ds_ids = sorted(status_ds_ids, reverse=True)
     else:
         ds_ids = specified_ds_ids
-
     assert ds_ids, 'No datasets found'
+    return ds_ids
 
+
+def run_diagnostics(sm_config, ds_ids, del_first, jobs):
     failed_ds_ids = []
     with ThreadPoolExecutor(jobs or None) as executor:
         map_func = executor.map if jobs != 1 else map
@@ -149,7 +148,7 @@ def run_diagnostics(sm_config, ds_id, sql_where, missing, failed, succeeded, del
         logger.error(f'Failed datasets ({len(failed_ds_ids)}): {failed_ds_ids}')
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Reindex or update dataset results')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
     parser.add_argument('--ds-id', help='DS id (or comma-separated list of ids)')
@@ -180,13 +179,20 @@ if __name__ == '__main__':
             logging.getLogger('lithops.storage.backends').setLevel(logging.WARNING)
             warnings.filterwarnings('ignore', module='pyimzml')
 
-        run_diagnostics(
-            sm_config=sm_config,
-            ds_id=args.ds_id,
+        ds_ids = find_dataset_ids(
+            ds_ids_param=args.ds_id,
             sql_where=args.sql_where,
             missing=args.missing,
             failed=args.failed,
             succeeded=args.succeeded,
+        )
+        run_diagnostics(
+            sm_config=sm_config,
+            ds_ids=ds_ids,
             del_first=args.del_first,
             jobs=args.jobs,
         )
+
+
+if __name__ == '__main__':
+    main()

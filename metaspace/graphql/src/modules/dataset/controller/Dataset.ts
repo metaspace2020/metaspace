@@ -3,7 +3,11 @@ import { dsField } from '../../../../datasetFilters'
 import { DatasetSource, FieldResolversFor } from '../../../bindingTypes'
 import { ProjectSourceRepository } from '../../project/ProjectSourceRepository'
 import { Dataset as DatasetModel } from '../model'
-import { DatasetDiagnostic as DatasetDiagnosticModel, EngineDataset, OpticalImage as OpticalImageModel } from '../../engine/model'
+import {
+  DatasetDiagnostic as DatasetDiagnosticModel,
+  EngineDataset,
+  OpticalImage as OpticalImageModel,
+} from '../../engine/model'
 import { Dataset, OpticalImage, OpticalImageType } from '../../../binding'
 import getScopeRoleForEsDataset from '../operation/getScopeRoleForEsDataset'
 import logger from '../../../utils/logger'
