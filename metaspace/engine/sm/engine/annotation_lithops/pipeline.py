@@ -56,6 +56,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         lithops_config=None,
         cache_key=None,
         use_db_cache=True,
+        use_db_mutex=True,
     ):
         lithops_config = lithops_config or SMConfig.get_conf()['lithops']
         self.lithops_config = lithops_config
@@ -77,6 +78,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.cacher = None
 
         self.use_db_cache = use_db_cache
+        self.use_db_mutex = use_db_mutex
         self.ds_segm_size_mb = 128
 
     def __call__(
@@ -107,6 +109,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             moldbs=self.moldbs,
             debug_validate=debug_validate,
             use_cache=self.use_db_cache,
+            use_db_mutex=self.use_db_mutex,
         )
 
     @use_pipeline_cache

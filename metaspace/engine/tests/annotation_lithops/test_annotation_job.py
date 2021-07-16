@@ -1,5 +1,7 @@
+from contextlib import contextmanager
 from datetime import datetime
 from itertools import product
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
@@ -12,8 +14,7 @@ from sm.engine import molecular_db, image_storage
 from sm.engine.annotation import fdr
 from sm.engine.annotation.diagnostics import DiagnosticType, load_npy_image, DiagnosticImageKey
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
-from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
-from sm.engine.annotation_lithops.io import load_cobjs
+from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob, LocalAnnotationJob
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
 from sm.engine.utils.perf_profile import perf_profile
@@ -65,8 +66,8 @@ def make_mock_spectrum(ds_config):
     # return mzs, ints
 
 
-def make_test_imzml(storage: Storage, sm_config, ds_config):
-    """Create an ImzML file, upload it into storage, and return an imzml_reader for it"""
+@contextmanager
+def make_test_imzml(ds_config):
     mzs, ints = make_mock_spectrum(ds_config)
     with TemporaryDirectory() as tmpdir:
         with ImzMLWriter(f'{tmpdir}/test.imzML', polarity='positive') as writer:
@@ -75,16 +76,22 @@ def make_test_imzml(storage: Storage, sm_config, ds_config):
                 # return 0 on completely uniform images
                 writer.addSpectrum(mzs, ints * x * y, (x, y, 1))
 
-        imzml_content = open(f'{tmpdir}/test.imzML', 'rb').read()
-        ibd_content = open(f'{tmpdir}/test.ibd', 'rb').read()
+        yield f'{tmpdir}/test.imzML', f'{tmpdir}/test.ibd'
+
+
+def upload_test_imzml(storage: Storage, sm_config, ds_config):
+    """Create an ImzML file, upload it into storage, and return an imzml_reader for it"""
+    with make_test_imzml(ds_config) as (imzml_path, ibd_path):
+        imzml_content = open(imzml_path, 'rb').read()
+        ibd_content = open(ibd_path, 'rb').read()
 
     bucket, prefix = sm_config['lithops']['sm_storage']['imzml']
     storage.put_cloudobject(imzml_content, bucket, f'{prefix}/test_ds/test.imzML')
     storage.put_cloudobject(ibd_content, bucket, f'{prefix}/test_ds/test.ibd')
-    input_path = f'cos://{bucket}/{prefix}/test_ds'
-    return input_path
+    return f'cos://{bucket}/{prefix}/test_ds'
 
 
+@contextmanager
 def make_test_molecular_db():
     with TemporaryDirectory() as tmpdir:
         fname = f'{tmpdir}/db.tsv'
@@ -95,6 +102,11 @@ def make_test_molecular_db():
                 'formula': MOCK_FORMULAS,
             }
         ).to_csv(fname, sep='\t', index=False)
+        yield fname
+
+
+def import_test_molecular_db():
+    with make_test_molecular_db() as fname:
         moldb = molecular_db.create(name='test db', version='v0.9a-final', file_path=fname)
 
     # Make it untargeted so that FDR is emitted
@@ -107,13 +119,13 @@ def make_test_molecular_db():
 @patch('sm.engine.annotation_lithops.segment_centroids.MIN_CENTR_SEGMS', 2)  # Reduce log spam
 def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config, metadata):
     db = DB()
-    moldb_id = make_test_molecular_db()
+    moldb_id = import_test_molecular_db()
     ds_config['database_ids'] = [moldb_id]
     ds_config['isotope_generation']['adducts'] = ['[M]+']  # test spectrum was made with no adduct
     # ds_config['isotope_generation']['n_peaks'] = 2  # minimize overlap between decoys and targets
     ds_config['image_generation']['ppm'] = 0.001  # minimize overlap between decoys and targets
     ds_config['fdr']['decoy_sample_size'] = len(MOCK_DECOY_ADDUCTS)
-    input_path = make_test_imzml(executor.storage, sm_config, ds_config)
+    input_path = upload_test_imzml(executor.storage, sm_config, ds_config)
 
     ds = Dataset(
         id=datetime.now().strftime('%Y-%m-%d_%Hh%Mm%Ss'),
@@ -128,6 +140,7 @@ def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config
     ds.save(db, None, allow_insert=True)
 
     with perf_profile(db, 'test_lithops_annotate', ds.id) as perf:
+        # Overwrite executor's NullProfiler with a real profiler
         executor._perf = perf
         job = ServerAnnotationJob(executor=executor, ds=ds, perf=perf)
         job.run(debug_validate=True)
@@ -145,6 +158,8 @@ def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config
         'SELECT * FROM perf_profile_entry WHERE profile_id = ANY(%s)', (profiles.id.tolist(),)
     )
     # For debugging annotations / FDR-related issues
+    debug_data = job.pipe.debug_get_annotation_data(MOCK_FORMULAS[0], '')
+    # print(debug_data)
     # db_data = load_cobjs(executor.storage, job.pipe.db_data_cobjs)[0]
     # print(db_data)
     # print(load_cobjs(executor.storage, job.pipe.ds_segms_cobjs))
@@ -202,3 +217,32 @@ def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config
     # Validate perf profile
     assert len(profiles) == 1
     assert len(profile_entries) > 10
+
+
+@patch('sm.engine.annotation.fdr.DECOY_ADDUCTS', MOCK_DECOY_ADDUCTS)
+@patch('sm.engine.annotation_lithops.segment_centroids.MIN_CENTR_SEGMS', 2)  # Reduce log spam
+def test_local_annotation_job(executor: Executor, sm_config, ds_config):
+    print('0')
+    ds_config['database_ids'] = [1]
+    ds_config['isotope_generation']['adducts'] = ['[M]+']  # test spectrum was made with no adduct
+    ds_config['image_generation']['ppm'] = 0.001  # minimize overlap between decoys and targets
+    ds_config['fdr']['decoy_sample_size'] = len(MOCK_DECOY_ADDUCTS)
+    with make_test_imzml(ds_config) as (imzml_path, ibd_path):
+        with make_test_molecular_db() as moldb_path:
+            with TemporaryDirectory() as out_dir:
+                job = LocalAnnotationJob(
+                    imzml_file=imzml_path,
+                    ibd_file=ibd_path,
+                    moldb_files=[moldb_path],
+                    ds_config=ds_config,
+                    executor=executor,
+                    out_dir=out_dir,
+                )
+
+                job.run(debug_validate=True)
+
+                output_files = list(Path(out_dir).glob('*.png'))
+                assert len(output_files) == len(MOCK_FORMULAS) * 4
+                print(list(Path(out_dir).glob('*.csv')))
+                results_csv = pd.read_csv(Path(out_dir) / 'results_db.csv')
+                assert len(results_csv) == len(MOCK_FORMULAS)

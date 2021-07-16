@@ -175,6 +175,8 @@ class LocalAnnotationJob:
         ds_config: DSConfig,
         sm_config: Optional[Dict] = None,
         use_cache=True,
+        out_dir: Optional[str] = None,
+        executor: Optional[Executor] = None,
     ):
         sm_config = sm_config or SMConfig.get_conf()
         self.storage = Storage(config=sm_config['lithops'])
@@ -187,6 +189,7 @@ class LocalAnnotationJob:
         else:
             self.moldb_defs = _upload_moldbs_from_files(moldb_files, self.storage, sm_storage)
         self.ds_config = ds_config
+        self.out_dir = Path(out_dir) if out_dir else Path('./result_pngs')
 
         if use_cache:
             cache_key: Optional[str] = jsonhash(
@@ -196,14 +199,20 @@ class LocalAnnotationJob:
             cache_key = None
 
         self.pipe = Pipeline(
-            self.imzml_cobj, self.ibd_cobj, self.moldb_defs, self.ds_config, cache_key=cache_key
+            self.imzml_cobj,
+            self.ibd_cobj,
+            self.moldb_defs,
+            self.ds_config,
+            executor=executor,
+            cache_key=cache_key,
+            use_db_mutex=False,
         )
 
     def run(self, save=True, **kwargs):
         results_dfs, png_cobjs = self.pipe(**kwargs)
         if save:
             for moldb_id, results_df in results_dfs.items():
-                results_df.to_csv(f'./results_{moldb_id}.csv')
+                results_df.to_csv(self.out_dir / f'results_{moldb_id}.csv')
             all_results = pd.concat(list(results_dfs.values()))
             all_results = all_results[~all_results.index.duplicated()]
             image_names = (
@@ -212,13 +221,14 @@ class LocalAnnotationJob:
                 + all_results.neutral_loss.fillna('')
                 + all_results.adduct
             )
-            out_dir = Path('./result_pngs')
-            out_dir.mkdir(exist_ok=True)
+
+            self.out_dir.mkdir(exist_ok=True)
             for imageset in iter_cobjs_with_prefetch(self.storage, png_cobjs):
                 for formula_i, imgs in imageset:
                     for i, img in enumerate(imgs, 1):
                         if img:
-                            (out_dir / f'{image_names[formula_i]}_{i}.png').open('wb').write(img)
+                            out_file = self.out_dir / f'{image_names[formula_i]}_{i}.png'
+                            out_file.open('wb').write(img)
 
 
 class ServerAnnotationJob:
