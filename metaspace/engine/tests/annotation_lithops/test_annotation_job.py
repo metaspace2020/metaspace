@@ -38,13 +38,6 @@ MOCK_FORMULAS = [
 # 4x4 image missing the lower-right quarter
 MOCK_COORDS = list(zip([2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 2, 3], [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5]))
 
-# NOCOMMIT
-pd.set_option('max_colwidth', 1000)
-pd.set_option('display.max_rows', 103)
-pd.set_option('display.max_columns', 20)
-pd.set_option('display.width', 1000)
-np.set_printoptions(suppress=True)
-
 
 def make_mock_spectrum(ds_config):
     isocalc_wrapper = IsocalcWrapper(ds_config)
@@ -209,5 +202,3 @@ def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config
     # Validate perf profile
     assert len(profiles) == 1
     assert len(profile_entries) > 10
-
-    print(diags)

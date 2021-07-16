@@ -88,7 +88,7 @@ def _save_subtask_perf(
         exec_times = [f.stats.get('worker_func_exec_time', -1) for f in futures]
     else:
         # debug_run_locally=True doesn't make futures
-        exec_times = [-1] * len(subtask_perfs)
+        exec_times = [sum(perf.entries.values()) for perf in subtask_perfs]
     inner_times = subtask_data.pop('inner time', [-1])
     mem_befores = subtask_data.pop('mem before', [-1])
     mem_afters = subtask_data.pop('mem after', [-1])
