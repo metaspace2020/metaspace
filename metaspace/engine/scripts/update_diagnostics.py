@@ -33,6 +33,7 @@ def parse_input_path_for_lithops(sm_config, input_path):
     if backend == 'aws_s3' and sm_config['lithops']['aws_s3']['endpoint'].startswith('http://'):
         # WORKAROUND for local Minio access
         # Lithops forces the url to HTTPS, so overwrite the S3 client with a fixed client
+        # https://github.com/lithops-cloud/lithops/issues/708
         storage.storage_handler.s3_client = get_s3_client()
 
     keys_in_path = storage.list_keys(bucket, prefix)
