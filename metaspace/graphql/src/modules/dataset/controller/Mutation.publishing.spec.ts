@@ -9,7 +9,7 @@ import {
 import { PublicationStatusOptions as PSO } from '../../project/Publishing'
 import {
   createTestDataset,
-  createTestDatasetProject,
+  createTestDatasetAndProject,
   createTestProject,
 } from '../../../tests/testDataCreation'
 import { Dataset as DatasetType } from '../../../binding'
@@ -38,7 +38,7 @@ describe('Operations on datasets in publishing process', () => {
 
   it.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
     'Not allowed to delete dataset in project in %s status', async(status) => {
-      const datasetProject = await createTestDatasetProject(status)
+      const datasetProject = await createTestDatasetAndProject(status)
 
       const promise = doQuery<DatasetType>(deleteDataset, { datasetId: datasetProject.datasetId })
 
@@ -47,7 +47,7 @@ describe('Operations on datasets in publishing process', () => {
     })
 
   it('Not allowed to make published dataset private', async() => {
-    const datasetProject = await createTestDatasetProject(PSO.PUBLISHED)
+    const datasetProject = await createTestDatasetAndProject(PSO.PUBLISHED)
 
     const promise = doQuery<DatasetType>(
       updateDataset, { datasetId: datasetProject.datasetId, input: { isPublic: false } }
@@ -77,7 +77,7 @@ describe('Operations on datasets in publishing process', () => {
 
   it.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
     'Not allowed to remove datasets from project in %s status', async(status) => {
-      const datasetProject = await createTestDatasetProject(status)
+      const datasetProject = await createTestDatasetAndProject(status)
 
       const promise = doQuery<DatasetType>(
         updateDataset, { datasetId: datasetProject.datasetId, input: { projectIds: [] } }
@@ -92,7 +92,7 @@ describe('Operations on datasets in publishing process', () => {
 
   it.each([PSO.UNDER_REVIEW, PSO.PUBLISHED])(
     'Admins allowed to remove datasets from project in %s status', async(status) => {
-      const datasetProject = await createTestDatasetProject(status)
+      const datasetProject = await createTestDatasetAndProject(status)
 
       mockSmApiDatasets.smApiDatasetRequest.mockReturnValue('')
 

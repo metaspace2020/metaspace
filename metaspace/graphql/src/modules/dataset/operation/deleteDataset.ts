@@ -10,13 +10,13 @@ export const deleteDataset = async(entityManager: EntityManager, user: ContextUs
   logger.info(`User '${user.id}' deleting '${datasetId}' dataset...`)
   if (user.role !== 'admin') {
     // Skip this for admins so that datasets that are missing their graphql.dataset record can still be deleted
-    await getDatasetForEditing(entityManager, user, datasetId)
+    await getDatasetForEditing(entityManager, user, datasetId, { delete: true })
   }
 
   await entityManager.getRepository(DatasetProjectModel).delete({ datasetId: datasetId })
   await entityManager.getRepository(DatasetModel).delete(datasetId)
   const resp = await smApiDeleteDataset(datasetId, args)
 
-  logger.info(`Dataset '${datasetId}' was deleted`)
+  logger.info(`Dataset '${datasetId}' was deleted (sm-api returned ${JSON.stringify(resp)})`)
   return resp
 }

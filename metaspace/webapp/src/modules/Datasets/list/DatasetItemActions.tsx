@@ -24,11 +24,14 @@ const DatasetItemActions = defineComponent({
 
     const openDeleteDialog = async(e: Event) => {
       e.preventDefault()
-      const force = props.currentUser != null
-        && props.currentUser.role === 'admin'
-        && props.dataset.status !== 'FINISHED'
+      const force = props.dataset.status === 'QUEUED' || props.dataset.status === 'ANNOTATING'
       try {
-        const msg = `Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${props.dataset.name}?`
+        let msg = `Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${props.dataset.name}?`
+        if (props.dataset.status !== 'FINISHED' && props.dataset.status !== 'FAILED') {
+          msg += '\nAs this dataset is currently processing, you may receive an annotation failure email - this can be'
+            + 'safely ignored.'
+        }
+
         await $confirm(msg, {
           type: force ? 'warning' : undefined,
           lockScroll: false,
@@ -101,22 +104,11 @@ const DatasetItemActions = defineComponent({
       return null
     })
 
-    const canEdit = computed(() =>
-      props.currentUser?.role === 'admin'
-      || (props.currentUser?.id === props.dataset.submitter.id
-      && (props.dataset.status !== 'QUEUED' && props.dataset.status !== 'ANNOTATING')),
-    )
-
-    const canDelete = computed(() =>
-      props.currentUser?.role === 'admin'
-      || (canEdit.value && publicationStatus.value === null),
-    )
-
     const canReprocess = computed(() => props.currentUser?.role === 'admin')
 
     const canViewPublicationStatus = computed(() =>
       props.dataset.status === 'FINISHED'
-      && canEdit.value
+      && props.dataset.canEdit
       && publicationStatus.value != null,
     )
 
@@ -190,7 +182,7 @@ const DatasetItemActions = defineComponent({
             >Show full metadata</a>
           </div>
 
-          {canEdit.value
+          {dataset.canEdit
           && <div>
             <i class="el-icon-edit" />
             <router-link to={{
@@ -212,7 +204,7 @@ const DatasetItemActions = defineComponent({
           </div>}
 
           {
-            !props.showOverview && canDelete.value
+            !props.showOverview && dataset.canDelete
           && <div class="ds-delete">
             <i class="el-icon-delete" />
             <a

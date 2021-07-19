@@ -5,7 +5,7 @@ import {
   onMounted, reactive,
   ref, watchEffect,
 } from '@vue/composition-api'
-import { useQuery, useMutation } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import { comparisonAnnotationListQuery } from '../../../api/annotation'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import RelatedMolecules from '../../Annotations/annotation-widgets/RelatedMolecules.vue'
@@ -14,9 +14,18 @@ import { DatasetComparisonAnnotationTable } from './DatasetComparisonAnnotationT
 import { DatasetComparisonGrid } from './DatasetComparisonGrid'
 import gql from 'graphql-tag'
 import FilterPanel from '../../Filters/FilterPanel.vue'
-import { uniqBy } from 'lodash'
 import config from '../../../lib/config'
-import { cloneDeep } from 'lodash-es'
+import { DatasetListItem, datasetListItemsQuery } from '../../../api/dataset'
+import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
+import Vue from 'vue'
+
+interface GlobalImageSettings {
+  resetViewPort: boolean
+  scaleBarColor: string
+  scaleType: string
+  colormap: string
+  showOpticalImage: boolean
+}
 
 interface DatasetComparisonPageProps {
   className: string
@@ -27,6 +36,8 @@ interface DatasetComparisonPageState {
   selectedAnnotation: number
   gridState: any
   annotations: any
+  datasets: any
+  globalImageSettings: GlobalImageSettings
   grid: any
   nCols: number
   nRows: number
@@ -65,10 +76,19 @@ export default defineComponent<DatasetComparisonPageProps>({
     }`
     const { $route, $store } = root
     const gridNode = ref(null)
+    const imageGrid = ref(null)
     const state = reactive<DatasetComparisonPageState>({
       selectedAnnotation: -1,
       gridState: {},
+      globalImageSettings: {
+        resetViewPort: false,
+        scaleBarColor: '#000000',
+        scaleType: 'linear',
+        colormap: 'Viridis',
+        showOpticalImage: false,
+      },
       annotations: [],
+      datasets: [],
       collapse: ['images'],
       grid: undefined,
       nCols: 0,
@@ -114,10 +134,18 @@ export default defineComponent<DatasetComparisonPageProps>({
       dFilter: { ...queryVariables().dFilter, ids: Object.values(state.grid || {}).join('|') },
     }))
     const annotationsQuery = useQuery<any>(comparisonAnnotationListQuery, queryVars, queryOptions)
+    const datasetsQuery = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery,
+      queryVars, queryOptions)
     const loadAnnotations = () => { queryOptions.enabled = true }
     state.annotations = computed(() => {
       if (annotationsQuery.result.value) {
         return annotationsQuery.result.value.allAggregatedAnnotations
+      }
+      return null
+    })
+    state.datasets = computed(() => {
+      if (datasetsQuery.result.value) {
+        return datasetsQuery.result.value.allDatasets
       }
       return null
     })
@@ -143,6 +171,25 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
     })
 
+    const resetViewPort = (event: any) => {
+      if (event) {
+        event.stopPropagation()
+      }
+      state.globalImageSettings.resetViewPort = !state.globalImageSettings.resetViewPort
+    }
+
+    const handleScaleBarColorChange = (scaleBarColor: string) => {
+      state.globalImageSettings.scaleBarColor = scaleBarColor
+    }
+
+    const handleScaleTypeChange = (scaleType: string) => {
+      state.globalImageSettings.scaleType = scaleType
+    }
+
+    const handleColormapChange = (colormap: string) => {
+      state.globalImageSettings.colormap = colormap
+    }
+
     const handleRowChange = (idx: number) => {
       if (idx !== -1) {
         state.isLoading = true
@@ -158,8 +205,22 @@ export default defineComponent<DatasetComparisonPageProps>({
         <CollapseItem
           id="annot-img-collapse"
           name="images"
-          title="Image viewer"
           class="ds-collapse el-collapse-item--no-padding relative">
+          <MainImageHeader
+            class='dataset-comparison-item-header dom-to-image-hidden'
+            slot="title"
+            isActive={false}
+            scaleBarColor={state.globalImageSettings?.scaleBarColor}
+            onScaleBarColorChange={handleScaleBarColorChange}
+            scaleType={state.globalImageSettings?.scaleType}
+            onScaleTypeChange={handleScaleTypeChange}
+            colormap={state.globalImageSettings?.colormap}
+            onColormapChange={handleColormapChange}
+            showOpticalImage={false}
+            hasOpticalImage={false}
+            resetViewport={resetViewPort}
+            toggleOpticalImage={() => {}}
+          />
           <ImageSaver
             class="absolute top-0 right-0 mt-2 mr-2 dom-to-image-hidden"
             domNode={gridNode.value}
@@ -168,10 +229,17 @@ export default defineComponent<DatasetComparisonPageProps>({
             {
               state.collapse.includes('images')
               && <DatasetComparisonGrid
+                ref={imageGrid}
                 nCols={nCols}
                 nRows={nRows}
+                resetViewPort={state.globalImageSettings.resetViewPort}
+                onResetViewPort={resetViewPort}
+                scaleBarColor={state.globalImageSettings.scaleBarColor}
+                scaleType={state.globalImageSettings.scaleType}
+                colormap={state.globalImageSettings.colormap}
                 settings={gridSettings}
                 annotations={state.annotations || []}
+                datasets={state.datasets || []}
                 selectedAnnotation={state.selectedAnnotation}
                 isLoading={state.isLoading || annotationsQuery.loading.value}
               />
@@ -206,6 +274,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     return () => {
       const nCols = state.nCols
       const nRows = state.nRows
+
       if (!snapshotId) {
         return (
           <div class='dataset-comparison-page w-full flex flex-wrap flex-row items-center justify-center'>
@@ -215,7 +284,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       return (
         <div class='dataset-comparison-page w-full flex flex-wrap flex-row'>
           <FilterPanel class='w-full' level='annotation' hiddenFilters={['datasetIds']}/>
-          <div class='dataset-comparison-wrapper w-full md:w-5/12 relative'>
+          <div class='dataset-comparison-wrapper w-full md:w-6/12 relative'>
             {
               state.annotations
               && <DatasetComparisonAnnotationTable
@@ -223,7 +292,10 @@ export default defineComponent<DatasetComparisonPageProps>({
                 annotations={state.annotations.map((ion: any) => {
                   return {
                     ...ion.annotations[0],
+                    msmScore: Math.max(...ion.annotations.map((annot: any) => annot.msmScore)),
+                    fdrlevel: Math.min(...ion.annotations.map((annot: any) => annot.fdrlevel)),
                     datasetCount: (ion.datasetIds || []).length,
+                    rawAnnotations: ion.annotations,
                   }
                 })}
                 onRowChange={handleRowChange}
@@ -238,7 +310,7 @@ export default defineComponent<DatasetComparisonPageProps>({
               </div>
             }
           </div>
-          <div class='dataset-comparison-wrapper  w-full  md:w-7/12'>
+          <div class='dataset-comparison-wrapper  w-full  md:w-6/12'>
             <Collapse
               value={state.collapse}
               id="annot-content"

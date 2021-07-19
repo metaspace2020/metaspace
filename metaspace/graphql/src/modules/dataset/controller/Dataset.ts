@@ -17,6 +17,8 @@ import canViewEsDataset from '../operation/canViewEsDataset'
 import { MolecularDB } from '../../moldb/model'
 import { MolecularDbRepository } from '../../moldb/MolecularDbRepository'
 import { getS3Client } from '../../../utils/awsClient'
+import canEditEsDataset from '../operation/canEditEsDataset'
+import canDeleteEsDataset from '../operation/canDeleteEsDataset'
 
 interface DbDataset {
   id: string;
@@ -379,6 +381,14 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   async externalLinks(ds, args, ctx) {
     const dbDs = await getDbDatasetById(ctx, ds._source.ds_id)
     return dbDs && dbDs.external_links || []
+  },
+
+  async canEdit(ds, args, ctx) {
+    return await canEditEsDataset(ds, ctx)
+  },
+
+  async canDelete(ds, args, ctx) {
+    return await canDeleteEsDataset(ds, ctx)
   },
 
   async canDownload(ds, args, ctx) {

@@ -18,13 +18,13 @@ Vue.use(VueRouter)
 registerMockComponent('el-collapse', { path: 'element-ui/lib/collapse' })
 registerMockComponent('el-collapse-item', { path: 'element-ui/lib/collapse-item' })
 registerMockComponent('el-pagination', { path: 'element-ui/lib/pagination' })
+registerMockComponent('el-popover', { path: 'element-ui/lib/popover' })
 
 Vue.use(require('../../src/lib/element-ui').default)
 Vue.use(VueCompositionApi)
 
 // Mock problematic ElementUI components
 registerMockComponent('el-dialog')
-registerMockComponent('el-popover')
 registerMockComponent('el-tooltip', { methods: { updatePopper() {} } })
 registerMockComponent('el-autocomplete')
 registerMockComponent('el-select')

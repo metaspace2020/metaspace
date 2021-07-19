@@ -11,7 +11,7 @@ export class MolecularDbRepository {
   constructor(private manager: EntityManager) {
   }
 
-  private queryWhere(user: ContextUser, andWhereClauses: Brackets[]) {
+  private async queryWhere(user: ContextUser, andWhereClauses: Brackets[]) {
     let qb = this.manager.createQueryBuilder(MolecularDB, 'moldb')
       .leftJoinAndSelect('moldb.group', 'moldb_group')
       .orderBy('moldb.name')
@@ -20,10 +20,11 @@ export class MolecularDbRepository {
     if (user.id && user.role === 'admin') {
       qb = qb.where('true') // For consistency, in case `andWhere` is called without first calling `where`
     } else {
+      const userGroupIds = await user.getMemberOfGroupIds()
       qb = qb.where(new Brackets(
         qb => qb.where('moldb.is_public = True').orWhere(
           'moldb.group_id = ANY(:userGroupIds)',
-          { userGroupIds: user.groupIds ?? [] }
+          { userGroupIds }
         )
       )
       )
@@ -40,12 +41,13 @@ export class MolecularDbRepository {
     return qb
   }
 
-  private queryWhereFiltered(user: ContextUser, usable?: boolean, groupId?: string|null) {
+  private async queryWhereFiltered(user: ContextUser, usable?: boolean, groupId?: string|null) {
     const andWhereClauses: any = []
     if (usable === true) {
+      const usableGroupIds = await user.getMemberOfGroupIds()
       const groupIdClause = new Brackets(
         qb => !qb.where('moldb.group_id is NULL').orWhere('moldb.group_id = ANY(:usableGroupIds)',
-          { usableGroupIds: user.groupIds ?? [] })
+          { usableGroupIds })
       )
       const usableClause = new Brackets(qb => qb.where('moldb.archived = false').andWhere(groupIdClause))
       andWhereClauses.push(usableClause)
@@ -66,7 +68,7 @@ export class MolecularDbRepository {
         const databaseIdsClause = new Brackets(
           qb => qb.where('moldb.id = ANY(:databaseIds)', { databaseIds })
         )
-        const query = this.queryWhere(ctx.user, [databaseIdsClause])
+        const query = await this.queryWhere(ctx.user, [databaseIdsClause])
         const results = await query.getMany()
         const keyedResults = _.keyBy(results, 'id')
         return databaseIds.map(id => keyedResults[id])
@@ -89,11 +91,11 @@ export class MolecularDbRepository {
     return databases.filter(db => db != null)
   }
 
-  findDatabases(user: ContextUser, usable?: boolean, groupId?: string|null): Promise<MolecularDB[]> {
-    return this.queryWhereFiltered(user, usable, groupId).getMany()
+  async findDatabases(user: ContextUser, usable?: boolean, groupId?: string|null): Promise<MolecularDB[]> {
+    return (await this.queryWhereFiltered(user, usable, groupId)).getMany()
   }
 
-  countDatabases(user: ContextUser, usable?: boolean, groupId?: string|null): Promise<number> {
-    return this.queryWhereFiltered(user, usable, groupId).getCount()
+  async countDatabases(user: ContextUser, usable?: boolean, groupId?: string|null): Promise<number> {
+    return (await this.queryWhereFiltered(user, usable, groupId)).getCount()
   }
 }

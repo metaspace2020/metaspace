@@ -26,12 +26,15 @@ export const relationshipToDataset = async(
       name: ds.ds_submitter_name || '',
     })
   }
-  if (user.groupIds != null && ds.ds_group_id != null && user.groupIds.includes(ds.ds_group_id)) {
-    relationships.push({
-      type: 'group',
-      id: ds.ds_group_id,
-      name: ds.ds_group_name || '',
-    })
+  if (ds.ds_group_id != null) {
+    const groupIds = await user.getMemberOfGroupIds()
+    if (groupIds.includes(ds.ds_group_id)) {
+      relationships.push({
+        type: 'group',
+        id: ds.ds_group_id,
+        name: ds.ds_group_name || '',
+      })
+    }
   }
   if (ds.ds_project_ids != null && ds.ds_project_ids.length > 0) {
     const projectRoles = await user.getProjectRoles()
