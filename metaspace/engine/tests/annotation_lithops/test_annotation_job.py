@@ -222,7 +222,6 @@ def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config
 @patch('sm.engine.annotation.fdr.DECOY_ADDUCTS', MOCK_DECOY_ADDUCTS)
 @patch('sm.engine.annotation_lithops.segment_centroids.MIN_CENTR_SEGMS', 2)  # Reduce log spam
 def test_local_annotation_job(executor: Executor, sm_config, ds_config):
-    print('0')
     ds_config['database_ids'] = [1]
     ds_config['isotope_generation']['adducts'] = ['[M]+']  # test spectrum was made with no adduct
     ds_config['image_generation']['ppm'] = 0.001  # minimize overlap between decoys and targets
@@ -243,6 +242,6 @@ def test_local_annotation_job(executor: Executor, sm_config, ds_config):
 
                 output_files = list(Path(out_dir).glob('*.png'))
                 assert len(output_files) == len(MOCK_FORMULAS) * 4
-                print(list(Path(out_dir).glob('*.csv')))
+
                 results_csv = pd.read_csv(Path(out_dir) / 'results_db.csv')
                 assert len(results_csv) == len(MOCK_FORMULAS)
