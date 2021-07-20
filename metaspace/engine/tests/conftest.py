@@ -13,6 +13,7 @@ import pytest
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 import psycopg2
+from fasteners import InterProcessLock
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from pysparkling import Context
 
@@ -82,9 +83,11 @@ def spark_context(request):
     import os
 
     os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
-    sc = SparkContext(master='local[2]')
-    request.addfinalizer(lambda: sc.stop())
-    return sc
+
+    # Prevent parallel tests from trying to launch more Spark contexts, as they get port conflicts
+    with InterProcessLock('spark-context.lock'):
+        with SparkContext(master='local[2]') as sc:
+            yield sc
 
 
 def _autocommit_execute(db_config, *sqls):

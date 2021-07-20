@@ -1,9 +1,9 @@
 import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watchEffect } from '@vue/composition-api'
 import './DatasetComparisonAnnotationTable.scss'
-import { Table, TableColumn, Pagination, Button } from '../../../lib/element-ui'
+import { Table, TableColumn, Pagination, Button, Popover } from '../../../lib/element-ui'
 import ProgressButton from '../../Annotations/ProgressButton.vue'
 import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue'
-import { cloneDeep, findIndex } from 'lodash-es'
+import { findIndex } from 'lodash-es'
 import config from '../../../lib/config'
 import FileSaver from 'file-saver'
 
@@ -40,6 +40,7 @@ const KEY_TO_ACTION = {
 }
 
 const SORT_ORDER_TO_COLUMN = {
+  ORDER_BY_MZ: 'mz',
   ORDER_BY_MSM: 'msmscore',
   ORDER_BY_FDR_MSM: 'fdrlevel',
   ORDER_BY_FORMULA: 'sumformula',
@@ -147,7 +148,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     onMounted(() => {
       const { sort, row, page } = $route.query
       const order = sort?.indexOf('-') === 0 ? 'descending' : 'ascending'
-      const prop = sort ? sort.replace('-', '') : 'msmscore'
+      const prop = sort ? sort.replace('-', '') : SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM
       handleSortChange({ order, prop })
       state.selectedRow = row ? props.annotations[parseInt(row, 10)]
         : state.processedAnnotations[0]
@@ -227,7 +228,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       const { sort } = $route.query
 
       return {
-        prop: sort ? sort.replace('-', '') : 'msmscore',
+        prop: sort ? sort.replace('-', '') : SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM,
         order: sort?.indexOf('-') === 0 ? 'descending' : 'ascending',
       }
     }
@@ -296,6 +297,11 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         sortMolecule(a, b, order === 'ascending' ? 1 : -1)))
     }
 
+    const handleSortMZ = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.mz - b.mz)))
+    }
+
     const handleSortMSM = (order: string) => {
       state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
         (order === 'ascending' ? 1 : -1) * (a.msmScore - b.msmScore)))
@@ -324,6 +330,8 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         handleSortFdr(order)
       } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_DS_COUNT) {
         handleSortDsCount(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_MZ) {
+        handleSortMZ(order)
       }
 
       $store.commit('setSortOrder', {
@@ -354,12 +362,47 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       handleCurrentRowChange(state.selectedRow)
     }
 
+    const renderMSMHeader = () => {
+      return <div class="msm-header">
+        Best MSM
+        <Popover
+          trigger="hover"
+          placement="right"
+        >
+          <i
+            slot="reference"
+            class="el-icon-question metadata-help-icon ml-1"
+          />
+          Highest MSM among the datasets.
+        </Popover>
+      </div>
+    }
+    const renderFDRHeader = () => {
+      return <div class="msm-header">
+        Best FDR
+        <Popover
+          trigger="hover"
+          placement="right"
+        >
+          <i
+            slot="reference"
+            class="el-icon-question metadata-help-icon ml-1"
+          />
+          Lowest FDR among the datasets.
+        </Popover>
+      </div>
+    }
+
     const formatAnnotation = (row: any) => {
       return <AnnotationTableMolName annotation={row}/>
     }
 
     const formatMSM = (row: any) => {
       return row.msmScore.toFixed(3)
+    }
+
+    const formatMZ = (row: any) => {
+      return row.mz.toFixed(4)
     }
 
     const formatFDR = (row: any) => {
@@ -463,7 +506,9 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
       state.isExporting = true
 
-      csv += state.processedAnnotations.map(formatRow).join('')
+      state.processedAnnotations.forEach((annotation: any) => {
+        csv += annotation.rawAnnotations.map(formatRow).join('')
+      })
 
       if (state.isExporting) {
         state.isExporting = false
@@ -528,25 +573,35 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             <TableColumn
               key="msmScore"
               property="msmscore"
-              label="MSM"
+              label="Best MSM"
+              sortable="custom"
+              minWidth="100"
+              renderHeader={renderMSMHeader}
+              formatter={(row: any) => formatMSM(row)}
+            />
+            <TableColumn
+              key="mz"
+              property="mz"
+              label="m/z"
               sortable="custom"
               minWidth="60"
-              formatter={(row: any) => formatMSM(row)}
+              formatter={(row: any) => formatMZ(row)}
             />
             <TableColumn
               key="datasetCount"
               property="datasetCount"
               label="# of datasets"
               sortable="custom"
-              minWidth="60"
+              minWidth="100"
             />
             <TableColumn
               key="fdrLevel"
               property="fdrlevel"
-              label="FDR"
+              label="Best FDR"
               className="fdr-cell"
               sortable="custom"
-              minWidth="40"
+              minWidth="100"
+              renderHeader={renderFDRHeader}
               formatter={(row: any) => formatFDR(row)}
             />
           </Table>
