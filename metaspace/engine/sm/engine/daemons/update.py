@@ -42,7 +42,10 @@ class SMUpdateDaemon:
             )
 
         if msg.get('email'):
-            self._manager.send_success_email(msg)
+            if msg.get('warning') and msg['warning'] == 'polarity':
+                self._manager.send_success_email_with_polarity_warn(msg)
+            else:
+                self._manager.send_success_email(msg)
 
     def _on_failure(self, msg, e):
         self._manager.ds_failure_handler(msg, e)

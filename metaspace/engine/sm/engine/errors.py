@@ -41,3 +41,7 @@ class DSIDExists(DSError):
 class DSIsBusy(DSError):
     def __init__(self, ds_id):
         super().__init__(ds_id, f'Dataset {ds_id} is busy')
+
+
+class PolarityWarning(UserWarning):
+    pass

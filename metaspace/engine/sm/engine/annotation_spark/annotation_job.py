@@ -1,4 +1,5 @@
 import time
+import warnings
 from pathlib import Path
 from pprint import pformat
 from shutil import copytree, rmtree
@@ -27,6 +28,7 @@ from sm.engine.config import SMConfig
 from sm.engine.es_export import ESExporter
 from sm.engine import molecular_db, storage
 from sm.engine.utils.perf_profile import Profiler
+from sm.engine.errors import PolarityWarning
 
 logger = logging.getLogger('engine')
 
@@ -78,6 +80,19 @@ class AnnotationJob:
     def create_imzml_parser(self):
         logger.info('Parsing imzml')
         return ImzMLParserWrapper(self._ds_data_path)
+
+    def _check_polarity(self, imzml_parser):
+        """
+        Check polarity between imzml and config
+
+        For different polarity - add an warning, in case the polarity
+        is specified in the imzml file (equal to +1 or -1).
+        """
+        if imzml_parser.polarity in (-1, 1):
+            if imzml_parser.polarity != self._ds.config['isotope_generation']['charge']:
+                warnings.warn(
+                    'Wrong polarity between imzml file and metadata.', category=PolarityWarning
+                )
 
     def _run_annotation_jobs(self, imzml_parser, moldbs):
         if moldbs:
@@ -172,6 +187,7 @@ class AnnotationJob:
             self._perf.record_entry('copied input data')
             imzml_parser = self.create_imzml_parser()
             self._perf.record_entry('parsed imzml file')
+            self._check_polarity(imzml_parser)
             self._save_data_from_raw_ms_file(imzml_parser)
 
             logger.info(f'Dataset config:\n{pformat(self._ds.config)}')
