@@ -1,22 +1,29 @@
 import json
-from typing import Optional, cast, List
+import numpy as np
+from typing import TYPE_CHECKING, Optional, cast, List, Any
 
 # NOTE: Python-client needs to support Python versions as low as Python 3.6.
 # Make sure to run PyCharm's "Code Compatibility" inspection when touching any imports from typing
+if TYPE_CHECKING:
+    from metaspace.sm_annotation_utils import MolecularDB
+
 try:
     from typing import TypedDict, Literal  # Python 3.8+
 
     Polarity = Literal['Positive', 'Negative']
     MetadataDataType = Literal['Imaging MS']
+    DiagnosticImageFormat = Literal['PNG', 'NPY']
 except ImportError:
     try:
         from typing_extensions import TypedDict, Literal
 
         Polarity = Literal['Positive', 'Negative']
         MetadataDataType = Literal['Imaging MS']
+        DiagnosticImageFormat = Literal['PNG', 'NPY']
     except ImportError:
         Polarity = str
         MetadataDataType = str
+        DiagnosticImageFormat = str
         TypedDict = dict
 
 
@@ -173,3 +180,41 @@ class DatasetProject(TypedDict):
     id: str
     name: str
     publicationStatus: str
+
+
+class DiagnosticImage(TypedDict):
+    """Represents one image associated with a category of diagnostics/metadata.
+
+    The `key` field indicates the content.
+
+    The `image` field is only present when :py:attr:`sm_annotation_utils.SMDataset.diagnostics`
+        is called with include_images=True
+
+    """
+
+    key: Optional[str]
+    index: Optional[int]
+    url: str
+    format: DiagnosticImageFormat
+    image: Optional[np.ndarray]
+
+
+class DatasetDiagnostic(TypedDict):
+    """
+    Represents the results of one category of diagnostics/metadata for the dataset.
+    The `type` field indicates the content:
+      * type==TIC
+        - `data` contains information about the Total Ion Current across the dataset
+        - `images` contains an image with the TIC for each spectrum
+      * type==IMZML_METADATA
+        - `data` contains a summary of metadata from the ImzML file header
+        - `images` contains a boolean image of which pixels had spectra in the input data.
+            Useful for non-square acquisition areas.
+    """
+
+    id: str
+    type: str
+    jobId: Optional[int]
+    database: Optional['MolecularDB']
+    data: Any
+    images: List[DiagnosticImage]

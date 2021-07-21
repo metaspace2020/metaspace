@@ -28,24 +28,9 @@ module.exports = {
   img_upload: {
     iso_img_fs_path: '/opt/data/metaspace/public/',
     categories: {
-      iso_image: {
-        type: 'image/png',
-        path: '/iso_images/',
-        storage_types: ['fs'],
-      },
-      optical_image: {
-        type: 'image/jpeg',
-        path: '/optical_images/',
-        storage_types: ['fs'],
-      },
       raw_optical_image: {
         type: 'image/jpeg',
         path: '/raw_optical_images/',
-        storage_types: ['fs'],
-      },
-      ion_thumbnail: {
-        type: 'image/png',
-        path: '/ion_thumbnails',
         storage_types: ['fs'],
       },
     },

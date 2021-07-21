@@ -12,6 +12,8 @@ import {
 import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
 import { Ion } from '../annotation/model'
 import { MolecularDB } from '../moldb/model'
+import { Dataset } from '../dataset/model'
+import { Moment } from 'moment'
 
 export type DatasetStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
 
@@ -53,6 +55,12 @@ export class EngineDataset {
   @Column({ type: 'text', nullable: true })
   ionThumbnailUrl: string | null;
 
+  // sm-engine and sm-graphql create & manage the public.dataset (EngineDataset) and graphql.dataset (Dataset) tables
+  // independently, so this relationship doesn't enforce an FK.
+  @ManyToOne(() => Dataset, { createForeignKeyConstraints: false })
+  @JoinColumn({ name: 'id' })
+  dataset: Dataset;
+
   @OneToMany(() => OpticalImage, opticalImage => opticalImage.dataset)
   opticalImages: OpticalImage[];
 
@@ -61,6 +69,9 @@ export class EngineDataset {
 
   @OneToMany(() => PerfProfile, pipelineStats => pipelineStats.dataset)
   pipelineStats: PerfProfile[];
+
+  @OneToMany(() => DatasetDiagnostic, datasetDiagnostic => datasetDiagnostic.engineDataset)
+  datasetDiagnostics: DatasetDiagnostic[];
 }
 
 @Entity({ schema: 'public' })
@@ -112,6 +123,80 @@ export class Job {
 
   @OneToMany(() => Annotation, annotation => annotation.job)
   annotations: Annotation[];
+
+  @OneToMany(() => DatasetDiagnostic, datasetDiagnostic => datasetDiagnostic.job)
+  datasetDiagnostics: DatasetDiagnostic[];
+}
+
+// Should match the literal in metaspace/engine/sm/engine/annotation/diagnostics.py
+export type DiagnosticType = 'TIC' | 'IMZML_METADATA'
+export const DiagnosticTypeOptions: {[k in DiagnosticType]: k} = {
+  TIC: 'TIC',
+  IMZML_METADATA: 'IMZML_METADATA',
+}
+
+export type DiagnosticImageFormat = 'PNG' | 'NPY'
+export interface DiagnosticImage {
+  key: string;
+  index?: number;
+  image_id: string;
+  url: string;
+  format: DiagnosticImageFormat;
+}
+
+@Entity({ schema: 'public' })
+// This is the main index for lookup performance. It enforces uniqueness when jobId is non-null, however because
+// NULL != NULL in postgres, this index doesn't enforce uniqueness of (datasetId, type) when jobId is NULL.
+// (i.e. counterintuitively, this index won't prevent inserting ('2001-01-01_00h00m00s', 'TIC', NULL) even if an
+// identical row already exists, because NULL != NULL, so NULL is always considered a unique value)
+// Therefore a second index is used for enforcing uniqueness when jobId is null.
+@Index(['datasetId', 'type', 'jobId'], { unique: true })
+@Index(['datasetId', 'type'], { unique: true, where: 'job_id IS NULL' })
+export class DatasetDiagnostic {
+  @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v1mc()' })
+  id: string;
+
+  @Column({ type: 'text', enum: Object.values(DiagnosticTypeOptions) })
+  type: DiagnosticType;
+
+  @Column({ name: 'ds_id', type: 'text' })
+  datasetId: string;
+
+  @Column({ type: 'int', nullable: true })
+  jobId: number | null;
+
+  @Column({
+    type: 'timestamp without time zone',
+    default: () => "(now() at time zone 'utc')",
+    transformer: new MomentValueTransformer(),
+  })
+  updatedDT: Moment;
+
+  @Column({ type: 'json', nullable: true })
+  data: any;
+
+  @Column({ type: 'text', nullable: true })
+  error: any;
+
+  // images are stored separately in an array with a defined structure so that it's easy for all images to be cleaned
+  // up when a dataset is deleted, without needing to understand any of the structure in `data`.
+  // All created Image IDs MUST be included in this column. Additionally, they MAY be referenced in `data`
+  // (preferably by `key` instead of `image_id`).
+  @Column({ type: 'json' })
+  images: DiagnosticImage[];
+
+  // This table is a child table of public.dataset, not graphql.dataset, so avoid making an FK
+  @ManyToOne(() => Dataset, { createForeignKeyConstraints: false })
+  @JoinColumn({ name: 'ds_id' })
+  dataset: Dataset;
+
+  @ManyToOne(() => EngineDataset, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'ds_id' })
+  engineDataset: EngineDataset;
+
+  @ManyToOne(() => Job, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'job_id' })
+  job: Job;
 }
 
 interface AnnotationStats {
@@ -234,6 +319,7 @@ export const ENGINE_ENTITIES = [
   EngineDataset,
   OpticalImage,
   Job,
+  DatasetDiagnostic,
   Annotation,
   PerfProfile,
   PerfProfileEntry,

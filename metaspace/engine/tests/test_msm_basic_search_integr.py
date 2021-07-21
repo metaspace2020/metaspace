@@ -1,8 +1,7 @@
-from itertools import product
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import pytest
-from unittest.mock import patch, Mock, MagicMock
+from unittest.mock import patch, MagicMock
 
 import numpy as np
 import pandas as pd
@@ -18,14 +17,7 @@ from sm.engine.annotation_spark.msm_basic_search import (
     compute_fdr_and_filter_results,
 )
 from sm.engine.utils.perf_profile import NullProfiler
-
-
-def make_imzml_parser_mock(sp_n=100):
-    imzml_parser_mock = Mock()
-    imzml_parser_mock.coordinates = list(product([0], range(sp_n)))
-    imzml_parser_mock.get_spectrum.return_value = (np.linspace(0, 100, num=sp_n), np.ones(sp_n))
-    imzml_parser_mock.mz_precision = 'f'
-    return imzml_parser_mock
+from tests.conftest import make_imzml_reader_mock
 
 
 def make_fetch_formula_centroids_mock():
@@ -129,7 +121,7 @@ def test_search(formula_image_metrics_mock, spark_context, ds_config):
         print(ds_data_path)
         msm_search = MSMSearch(
             spark_context,
-            make_imzml_parser_mock(),
+            make_imzml_reader_mock(),
             [MolecularDB(0, 'tests_db', 'version')],
             ds_config,
             ds_data_path,
@@ -188,7 +180,7 @@ def test_ambiguous_modifiers(
         ]  # Formulae selected to create isobars with the above modifiers
         msm_search = MSMSearch(
             spark_context,
-            make_imzml_parser_mock(),
+            make_imzml_reader_mock(),
             [MolecularDB(0, 'test_db', 'version')],
             ds_config,
             ds_data_path,

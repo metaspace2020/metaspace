@@ -299,7 +299,7 @@ class PngGenerator:
             image = rgba
         return image
 
-    def generate_png(self, array: np.array) -> bytes:
+    def generate_png(self, array: np.ndarray) -> bytes:
         img = self._to_image(array)
         fp = BytesIO()
         png_writer = png.Writer(

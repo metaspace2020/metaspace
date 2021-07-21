@@ -21,6 +21,8 @@ from sm.engine.annotation_lithops.io import (
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
+MIN_CENTR_SEGMS = 32
+
 logger = logging.getLogger('annotation-pipeline')
 MAX_MZ_VALUE = 10 ** 5
 
@@ -77,7 +79,7 @@ def define_centr_segments(
     data_per_centr_segm_mb = 50
     peaks_per_centr_segm = 10000
     centr_segm_n = int(
-        max(ds_size_mb // data_per_centr_segm_mb, centr_n // peaks_per_centr_segm, 32)
+        max(ds_size_mb // data_per_centr_segm_mb, centr_n // peaks_per_centr_segm, MIN_CENTR_SEGMS)
     )
 
     segm_bounds_q = [i * 1 / centr_segm_n for i in range(0, centr_segm_n)]
@@ -231,7 +233,7 @@ def validate_centroid_segments(fexec, db_segms_cobjs, ds_segms_bounds, isocalc_w
         if df:
             logger.warning(df)
 
-    def get_segm_stats(storage, segm_cobject):
+    def get_segm_stats(segm_cobject, *, storage):
         segm = load_cobj(storage, segm_cobject)
         mzs = np.sort(segm.mz.values)
         ds_segm_lo, ds_segm_hi = choose_ds_segments(ds_segms_bounds, segm, isocalc_wrapper)
@@ -261,7 +263,8 @@ def validate_centroid_segments(fexec, db_segms_cobjs, ds_segms_bounds, isocalc_w
 
     warnings = []
 
-    segm_formula_is, stats = fexec.map_unpack(get_segm_stats, db_segms_cobjs, runtime_memory=1024)
+    args = [(cobj,) for cobj in db_segms_cobjs]
+    segm_formula_is, stats = fexec.map_unpack(get_segm_stats, args, runtime_memory=1024)
     stats_df = pd.DataFrame(stats)
 
     with pd.option_context(

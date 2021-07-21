@@ -32,7 +32,7 @@ def split_cos_path(path):
         tuple[string, string]
     Returns a pair of (bucket, key)
     """
-    return re.sub(r'^cos?://', '', path).split(sep='/', maxsplit=1)
+    return re.sub(r'^cos://', '', path).split(sep='/', maxsplit=1)
 
 
 def find_file_by_ext(path, ext):

@@ -95,6 +95,14 @@
       "access_key": "",
       "secret_key": ""
     },
+    "aws": {
+      "access_key_id": "minioadmin",
+      "secret_access_key": "minioadmin"
+    },
+    "aws_s3": {
+      "__comment__": "Lithops overrides this to be HTTPS (https://github.com/lithops-cloud/lithops/issues/708). A workaround is needed to access MinIO through Lithops Storage - see update_diagnostics.py for an example",
+      "endpoint": "http://storage:9000"
+    },
     "sm_storage": {
       "imzml": [
         "DATA_BUCKET",

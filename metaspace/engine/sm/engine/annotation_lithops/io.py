@@ -49,7 +49,7 @@ def serialize(obj):
 def deserialize(data):
     try:
         return pa.deserialize(data)
-    except pa.lib.ArrowInvalid:
+    except (pa.lib.ArrowInvalid, OSError):
         return pickle.loads(data)
 
 

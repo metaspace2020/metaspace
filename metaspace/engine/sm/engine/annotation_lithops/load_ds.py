@@ -8,85 +8,31 @@ import numpy as np
 import pandas as pd
 from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
-from pyimzml.ImzMLParser import ImzMLParser, PortableSpectrumReader
 
+from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.executor import Executor
-from sm.engine.annotation_lithops.io import (
-    save_cobj,
-    CObj,
-    get_ranges_from_cobject,
-    load_cobj,
-)
-from sm.engine.annotation_lithops.utils import get_pixel_indices
+from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
 logger = logging.getLogger('annotation-pipeline')
 
 
-def load_portable_spectrum_reader(storage: Storage, imzml_cobject: CloudObject):
-    stream = storage.get_cloudobject(imzml_cobject, stream=True)
-
-    imzml_parser = ImzMLParser(stream, parse_lib='ElementTree', ibd_file=None)
-    return imzml_parser.portable_spectrum_reader()
-
-
-def get_spectra(
-    storage: Storage,
-    imzml_reader: PortableSpectrumReader,
-    ibd_cobj: CloudObject,
-    sp_inds: List[int],
-):
-    mz_starts = np.array(imzml_reader.mzOffsets)[sp_inds]
-    mz_ends = (
-        mz_starts
-        + np.array(imzml_reader.mzLengths)[sp_inds] * np.dtype(imzml_reader.mzPrecision).itemsize
-    )
-    mz_ranges = np.stack([mz_starts, mz_ends], axis=1)
-    int_starts = np.array(imzml_reader.intensityOffsets)[sp_inds]
-    int_ends = (
-        int_starts
-        + np.array(imzml_reader.intensityLengths)[sp_inds]
-        * np.dtype(imzml_reader.intensityPrecision).itemsize
-    )
-    int_ranges = np.stack([int_starts, int_ends], axis=1)
-    ranges_to_read = np.vstack([mz_ranges, int_ranges])
-    data_ranges = get_ranges_from_cobject(storage, ibd_cobj, ranges_to_read)
-    mz_data = data_ranges[: len(sp_inds)]
-    int_data = data_ranges[len(sp_inds) :]
-    del data_ranges
-
-    for i, sp_idx in enumerate(sp_inds):
-        mzs = np.frombuffer(mz_data[i], dtype=imzml_reader.mzPrecision)
-        ints = np.frombuffer(int_data[i], dtype=imzml_reader.intensityPrecision)
-        if (ints == 0).any():
-            # One imzml exporter includes all m/z values for all spectra, even if intensities are
-            # zero. Zero-intensity peaks are useless, so exclude them.
-            mzs = mzs[ints != 0]
-            ints = ints[ints != 0]
-
-        mz_data[i] = None  # type: ignore # Avoid holding memory longer than necessary
-        int_data[i] = None  # type: ignore
-        yield sp_idx, mzs.copy(), ints.copy()
-
-
-def _load_spectra(storage, imzml_reader, ibd_cobject):
+def _load_spectra(storage, imzml_reader):
     # Pre-allocate lists of mz & int arrays
-    n_spectra = len(imzml_reader.coordinates)
-    mz_arrays = [np.array([], dtype=imzml_reader.mzPrecision)] * n_spectra
-    int_arrays = [np.array([], dtype=np.float32)] * n_spectra
-    sp_lens = np.empty(n_spectra, np.int64)
+    mz_arrays = [np.array([], dtype=imzml_reader.mz_precision)] * imzml_reader.n_spectra
+    int_arrays = [np.array([], dtype=np.float32)] * imzml_reader.n_spectra
+    sp_lens = np.empty(imzml_reader.n_spectra, np.int64)
 
     def read_spectrum_chunk(start_end):
-        spectra = get_spectra(storage, imzml_reader, ibd_cobject, list(range(*start_end)))
-        for sp_i, mzs, ints in spectra:
+        for sp_i, mzs, ints in imzml_reader.iter_spectra(storage, list(range(*start_end))):
             mz_arrays[sp_i] = mzs
             int_arrays[sp_i] = ints.astype(np.float32)
             sp_lens[sp_i] = len(ints)
 
     # Break into approx. 100MB chunks to read in parallel
-    n_peaks = np.sum(imzml_reader.mzLengths)
-    n_chunks = min(int(np.ceil(n_peaks / (10 * 2 ** 20))), n_spectra)
-    chunk_bounds = np.linspace(0, n_spectra, n_chunks + 1, dtype=np.int64)
+    n_peaks = np.sum(imzml_reader.imzml_reader.mzLengths)
+    n_chunks = min(int(np.ceil(n_peaks / (10 * 2 ** 20))), imzml_reader.n_spectra)
+    chunk_bounds = np.linspace(0, imzml_reader.n_spectra, n_chunks + 1, dtype=np.int64)
     spectrum_chunks = zip(chunk_bounds, chunk_bounds[1:])
 
     with ThreadPoolExecutor(4) as executor:
@@ -107,10 +53,9 @@ def _sort_spectra(imzml_reader, mzs, ints, sp_lens):
     ints[:] = ints[by_mz]
     # Build sp_idxs after sorting mzs. Sorting mzs uses the most memory, so it's best to keep
     # sp_idxs in a compacted form with sp_lens until the last minute.
-    sp_id_to_idx = get_pixel_indices(imzml_reader.coordinates)
     sp_idxs = np.empty(len(ints), np.uint32)
     sp_lens = np.insert(np.cumsum(sp_lens), 0, 0)
-    for sp_idx, start, end in zip(sp_id_to_idx, sp_lens[:-1], sp_lens[1:]):
+    for sp_idx, start, end in zip(imzml_reader.pixel_indexes, sp_lens[:-1], sp_lens[1:]):
         sp_idxs[start:end] = sp_idx
     sp_idxs = sp_idxs[by_mz]
     return mzs, ints, sp_idxs
@@ -119,7 +64,7 @@ def _sort_spectra(imzml_reader, mzs, ints, sp_lens):
 def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs):
     # Split into segments no larger than ds_segm_size_mb
     total_n_mz = len(sp_idxs)
-    row_size = (4 if imzml_reader.mzPrecision == 'f' else 8) + 4 + 4
+    row_size = (4 if imzml_reader.mz_precision == 'f' else 8) + 4 + 4
     segm_n = int(np.ceil(total_n_mz * row_size / (ds_segm_size_mb * 2 ** 20)))
     segm_bounds = np.linspace(0, total_n_mz, segm_n + 1, dtype=np.int64)
     segm_ranges = list(zip(segm_bounds[:-1], segm_bounds[1:]))
@@ -146,18 +91,18 @@ def _load_ds(
     *,
     storage: Storage,
     perf: SubtaskProfiler,
-) -> Tuple[PortableSpectrumReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
+) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
     logger.info('Loading .imzML file...')
-    imzml_reader = load_portable_spectrum_reader(storage, imzml_cobject)
+    imzml_reader = LithopsImzMLReader(storage, imzml_cobject, ibd_cobject)
     perf.record_entry(
         'loaded imzml',
-        n_peaks=np.sum(imzml_reader.intensityLengths),
-        mz_dtype=imzml_reader.mzPrecision,
-        int_dtype=imzml_reader.intensityPrecision,
+        n_peaks=np.sum(imzml_reader.imzml_reader.intensityLengths),
+        mz_dtype=imzml_reader.imzml_reader.mzPrecision,
+        int_dtype=imzml_reader.imzml_reader.intensityPrecision,
     )
 
     logger.info('Reading spectra')
-    mzs, ints, sp_lens = _load_spectra(storage, imzml_reader, ibd_cobject)
+    mzs, ints, sp_lens = _load_spectra(storage, imzml_reader)
     perf.record_entry('read spectra', n_peaks=len(mzs))
 
     logger.info('Sorting spectra')
@@ -175,7 +120,7 @@ def _load_ds(
 
 def load_ds(
     executor: Executor, imzml_cobject: CloudObject, ibd_cobject: CloudObject, ds_segm_size_mb: int
-):
+) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
     try:
         ibd_head = executor.storage.head_object(ibd_cobject.bucket, ibd_cobject.key)
         ibd_size_mb = int(ibd_head['content-length']) / 1024 // 1024
@@ -233,7 +178,8 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs
         2,
     ), (ds_segments_bounds.shape, (n_segms, 2))
 
-    results = fexec.map(get_segm_stats, ds_segms_cobjs)
+    args = [(cobj,) for cobj in ds_segms_cobjs]
+    results = fexec.map(get_segm_stats, args)
 
     segms_df = pd.DataFrame(results)
     segms_df['min_bound'] = np.concatenate([[0], ds_segments_bounds[1:, 0]])
@@ -261,7 +207,7 @@ def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs
             logger.warning(unsorted)
 
         total_len = segms_df.n_rows.sum()
-        expected_total_len = np.sum(imzml_reader.mzLengths)
+        expected_total_len = np.sum(imzml_reader.imzml_reader.mzLengths)
         if total_len != expected_total_len:
             logger.warning(
                 f'segment_spectra output {total_len} peaks, '
