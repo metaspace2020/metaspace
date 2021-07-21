@@ -6,9 +6,6 @@
     "server": "cherrypy"
   },
   "redis": {{ sm_redis | to_json }},
-  "defaults": {
-    "adducts": {{ sm_default_adducts | to_json }}
-  },
   "db": {
     "host": "{{ sm_postgres_host }}",
     "database": "sm",
@@ -118,24 +115,6 @@ The Prefix is necessary and should not have a leading or trailing slash
     "channel": "{{ slack_channel }}",
     "webhook_url": "{{ slack_webhook_url }}"
   },
-  "ms_file_handlers": [
-    {
-      "type": "ims",
-      "extensions": ["imzml", "ibd"],
-      "parser_factory": {
-        "name": "ImzMLParser",
-        "path": "pyimzml.ImzMLParser"
-      }
-    },
-    {
-      "type": "lcms",
-      "extensions": ["mzml"],
-      "parser_factory": {
-        "name": "MzMLParser",
-        "path": "sm.engine.mzml_parser"
-      }
-    }
-  ],
   "isotope_storage": {
     "path": "{{ sm_isotope_storage_path }}"
   },

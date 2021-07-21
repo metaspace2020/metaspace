@@ -387,7 +387,7 @@ class QueueConsumer(Thread):
         self._config = config
         self._heartbeat = 3 * 60 * 60  # 3h
         self._qdesc = qdesc
-        self._qname = self._qdesc['name']
+        self._qname = config.get('prefix', '') + self._qdesc['name']
         self._connection = None
         self._channel = None
         self._poll_interval = poll_interval
@@ -493,7 +493,7 @@ class QueuePublisher:
     def __init__(self, config, qdesc, logger=None):
         creds = pika.PlainCredentials(config['user'], config['password'])
         self.qdesc = qdesc
-        self.qname = qdesc['name']
+        self.qname = config.get('prefix', '') + qdesc['name']
         self.conn_params = pika.ConnectionParameters(
             host=config['host'], credentials=creds, heartbeat=0
         )

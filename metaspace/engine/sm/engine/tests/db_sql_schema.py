@@ -1,7 +1,6 @@
 from pathlib import Path
 
 SCHEMA_PATH = (Path(__file__) / '../../../../scripts/db_schema.sql').resolve()
-print(SCHEMA_PATH)
 
 PATCH = """
 ALTER TABLE "graphql"."user" ALTER COLUMN credentials_id DROP NOT NULL;
