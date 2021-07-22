@@ -49,12 +49,17 @@ type Dataset {
   ionThumbnailUrl: String
   externalLinks: [ExternalLink!]!
 
+  canEdit: Boolean!
+  canDelete: Boolean!
   canDownload: Boolean!
   # JSON string containing:
   # a list of authors,
   # the licence (if any) the authors allow the dataset to be used under,
   # time-limited download links to the dataset files
   downloadLinkJson: String
+
+  # Additional metadata and output data generated during processing
+  diagnostics: [DatasetDiagnostic!]!
 }
 
 type FdrCounts {
@@ -103,6 +108,28 @@ type DatasetProject {
   publicationStatus: String!
   isPublic: Boolean  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
   urlSlug: String  # @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+}
+
+enum DiagnosticImageFormat {
+  PNG
+  NPY # N-Dimensional Array in NumPy's .npy serialization format
+}
+
+type DiagnosticImage {
+  key: String!
+  index: Int   # Optional index, if there are multiple images with the same `key`
+  url: String!
+  format: DiagnosticImageFormat!
+}
+
+type DatasetDiagnostic {
+  id: String!
+  type: String!
+  jobId: Int  # Only present for diagnostics associated with a database, currently unused
+  database: MolecularDB  # Only present for diagnostics associated with a database, currently unused
+  updatedDT: String!
+  data: String! # JSON-serialized. Structure depends on `type`
+  images: [DiagnosticImage!]!
 }
 
 enum DatasetOrderBy {
@@ -318,7 +345,7 @@ type Mutation {
     id: String,
     input: DatasetCreateInput!,
     priority: Int=0,
-    useLithops: Boolean=false
+    useLithops: Boolean=true
   ): String!
 
   # Throws errors of types: "under_review_or_published", "reprocessing_needed", "failed_validation"
@@ -330,7 +357,7 @@ type Mutation {
     skipValidation: Boolean=false, # ignored for non-admins
     force: Boolean=false,
     priority: Int=0,
-    useLithops: Boolean=false
+    useLithops: Boolean=true
   ): String!
 
   # Throws errors of types: "under_review_or_published"
@@ -341,7 +368,7 @@ type Mutation {
     id: String,
     priority: Int=0,
     delFirst: Boolean=false,
-    useLithops: Boolean=false
+    useLithops: Boolean=true
   ): String!
 
   addOpticalImage(input: AddOpticalImageInput!): String!

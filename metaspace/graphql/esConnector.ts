@@ -215,11 +215,12 @@ const constructDatasetAuthFilters = async(user: ContextUser) => {
       datasetOrConditions.push({ term: { ds_submitter_id: user.id } })
     }
     // User's group
-    if (user.groupIds) {
+    const groupIds = await user.getMemberOfGroupIds()
+    if (groupIds.length > 0) {
       datasetOrConditions.push({
         bool: {
           filter: [
-            { terms: { ds_group_id: user.groupIds } },
+            { terms: { ds_group_id: groupIds } },
             { term: { ds_group_approved: true } },
           ],
         },
@@ -257,13 +258,13 @@ const constructDatasetFilters = (filter: DatasetFilter) => {
 }
 
 interface ExtraAnnotationFilters {
-  annId?: string;
+  annotationId?: string;
 }
 
 const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFilters) => {
   const {
     databaseId, datasetName, mzFilter, msmScoreFilter, fdrLevel,
-    sumFormula, chemMod, neutralLoss, adduct, ion, ionFormula, offSample, compoundQuery, annId,
+    sumFormula, chemMod, neutralLoss, adduct, ion, ionFormula, offSample, compoundQuery, annotationId,
     isobaricWith, hasNeutralLoss, hasChemMod, hasHiddenAdduct,
   } = filter
   const filters = []
@@ -283,7 +284,7 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
     filters.push(constructRangeFilter('fdr', { min: null, max: fdrLevel + 1e-3 }))
   }
 
-  if (annId) { filters.push({ term: { _id: annId } }) }
+  if (annotationId) { filters.push({ terms: { _id: annotationId.split('|') } }) }
   if (databaseId) { filters.push({ term: { db_id: databaseId } }) }
   if (sumFormula) { filters.push({ term: { formula: sumFormula } }) }
   if (chemMod != null) { filters.push({ term: { chem_mod: chemMod } }) }
@@ -370,7 +371,6 @@ export const esSearchResults = async(args: any, docType: DocType,
     from: args.offset,
     size: args.limit,
   }
-
   const resp = await es.search(request)
   return resp.hits.hits
 }
@@ -454,6 +454,73 @@ export const esCountGroupedResults = async(args: any, docType: DocType, user: Co
   return flattenAggResponse(args.groupingFields, resp.aggregations, 0)
 }
 
+export const esRawAggregationResults = async(args: any, docType: DocType,
+  user: ContextUser): Promise<any> => {
+  const body = await constructESQuery(args, docType, user)
+
+  const aggRequest = {
+    body: {
+      ...body,
+      aggs: {
+        unique_formulas: {
+          terms: {
+            field: 'ion',
+            size: 1000000, // given ES agg pagination lacking, here we need a big number to return everything
+          },
+          aggs: {
+            unique_db_ids: {
+              terms: {
+                field: 'db_id',
+              },
+              aggs: {
+                unique_ds_ids: {
+                  terms: {
+                    field: 'ds_id',
+                  },
+                  aggs: {
+                    include_source: {
+                      top_hits: {
+                        _source: {},
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    index: esIndex,
+    size: 0,
+  }
+  const resp = await es.search(aggRequest)
+  const aggAnnotations : any[] = []
+
+  if (resp.aggregations) {
+    resp.aggregations.unique_formulas.buckets.forEach((agg:any) => {
+      agg.unique_db_ids.buckets.forEach((db: any) => {
+        const item : {
+          ion : string
+          dbId: number
+          datasetIds: string[]
+          annotations: any[]
+        } | any = {}
+        item.ion = agg.key
+        item.dbId = db.key
+        item.datasetIds = []
+        item.annotations = []
+        db.unique_ds_ids.buckets.forEach((ds: any) => {
+          item.datasetIds.push(ds.key)
+          item.annotations.push(ds.include_source.hits.hits[0])
+        })
+        aggAnnotations.push(item)
+      })
+    })
+  }
+  return aggAnnotations
+}
+
 export const esCountMatchingAnnotationsPerDataset = async(
   args: any, user: ContextUser
 ): Promise<Record<string, number>> => {
@@ -512,7 +579,17 @@ const getFirst = async(args: any, docType: DocType, user: ContextUser, bypassAut
 
 export const esAnnotationByID = async(id: string, user: ContextUser): Promise<ESAnnotationSource | null> => {
   if (id) {
-    return getFirst({ filter: { annId: id } }, 'annotation', user)
+    return getFirst({ filter: { annotationId: id } }, 'annotation', user)
+  }
+  return null
+}
+
+export const esAnnotationByIon = async(ion: string, datasetId: string,
+  databaseId: string,
+  user: ContextUser): Promise<ESAnnotationSource | null> => {
+  if (ion) {
+    return getFirst({ datasetFilter: { ids: datasetId }, filter: { ion, databaseId } },
+      'annotation', user)
   }
   return null
 }

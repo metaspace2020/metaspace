@@ -43,7 +43,8 @@ def run_fdr(
         return db_data['id'], results_df
 
     logger.info('Estimating FDRs...')
-    results = executor.map(_run_fdr_for_db, db_data_cobjs, runtime_memory=1024)
+    args = [(db_data_cobj,) for db_data_cobj in db_data_cobjs]
+    results = executor.map(_run_fdr_for_db, args, runtime_memory=1024)
 
     for moldb_id, moldb_fdrs in results:
         logger.info(f'DB {moldb_id} number of annotations with FDR less than:')

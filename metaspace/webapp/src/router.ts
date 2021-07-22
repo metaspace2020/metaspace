@@ -17,6 +17,7 @@ const asyncPagesFreelyTyped = {
   ImageAlignmentPage: () => import(/* webpackPrefetch: true, webpackChunkName: "ImageAlignmentPage" */ './modules/ImageAlignment/ImageAlignmentPage.vue'),
   UploadPage: () => import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ './modules/MetadataEditor/UploadPage.vue'),
   DatasetOverviewPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ './modules/Datasets/overview/DatasetOverviewPage.vue'),
+  DatasetComparisonPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ './modules/Datasets/comparison/DatasetComparisonPage.vue'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Datasets/list/DatasetTable.vue'),
@@ -61,7 +62,7 @@ const router = new VueRouter({
   mode: 'history',
   routes: [
     { path: '/(about)?', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
-    { path: '/annotations', component: asyncPages.AnnotationsPage },
+    { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
     {
       path: '/datasets',
       component: DatasetsPage,
@@ -69,6 +70,11 @@ const router = new VueRouter({
         { path: '', component: asyncPages.DatasetTable },
         { path: 'summary', component: asyncPages.DatasetSummary },
       ],
+    },
+    {
+      path: '/datasets/:dataset_id/comparison',
+      name: 'datasets-comparison',
+      component: asyncPages.DatasetComparisonPage,
     },
     { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
     { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.ImageAlignmentPage },

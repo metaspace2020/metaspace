@@ -31,6 +31,8 @@
 <script>
 import { FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS } from './filterSpecs'
 import { isFunction, pick, get, uniq } from 'lodash-es'
+import { setLocalStorage } from '../../lib/localStorage'
+import { computed } from '@vue/composition-api'
 
 const orderedFilterKeys = [
   'database',
@@ -79,7 +81,7 @@ Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
 /** @type {ComponentOptions<Vue> & Vue} */
 const FilterPanel = {
   name: 'filter-panel',
-  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions'],
+  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters'],
   components: filterComponents,
   mounted() {
     this.$store.dispatch('initFilterLists')
@@ -161,6 +163,9 @@ const FilterPanel = {
       if (this.level === 'dataset-annotation' && dsAnnotationHiddenFilters.includes(filterKey)) {
         return false
       }
+      if (this.hiddenFilters && this.hiddenFilters.includes(filterKey)) {
+        return false
+      }
       if (filterKey === 'datasetOwner') {
         return this.setDatasetOwnerOptions != null
       }
@@ -210,10 +215,28 @@ const FilterPanel = {
               extraUpdatesAux.submitter = undefined
             }
 
+            // update datasetOwner settings
+            if (filterKey === 'datasetOwner' || ('datasetOwner' in extraUpdatesAux)) {
+              const dsValue = ('datasetOwner' in extraUpdatesAux)
+                ? extraUpdatesAux.datasetOwner : val
+              setLocalStorage(filterKey, dsValue)
+            }
+
+            // update simpleFilter settings
+            if (filterKey === 'simpleFilter') {
+              setLocalStorage(filterKey, val)
+            }
+
             this.$store.commit('updateFilter',
               Object.assign(this.filter, { [filterKey]: val, ...extraUpdatesAux }))
           },
           onDestroy: () => {
+            if (filterKey === 'annotationIds') {
+              this.$store.commit('setFilterLists', {
+                ...this.$store.state.filterLists,
+                annotationIds: computed(() => undefined),
+              })
+            }
             this.$store.commit('removeFilter', filterKey)
           },
           attrs: {

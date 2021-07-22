@@ -3,7 +3,11 @@ import { dsField } from '../../../../datasetFilters'
 import { DatasetSource, FieldResolversFor } from '../../../bindingTypes'
 import { ProjectSourceRepository } from '../../project/ProjectSourceRepository'
 import { Dataset as DatasetModel } from '../model'
-import { EngineDataset, OpticalImage as OpticalImageModel } from '../../engine/model'
+import {
+  DatasetDiagnostic as DatasetDiagnosticModel,
+  EngineDataset,
+  OpticalImage as OpticalImageModel,
+} from '../../engine/model'
 import { Dataset, OpticalImage, OpticalImageType } from '../../../binding'
 import getScopeRoleForEsDataset from '../operation/getScopeRoleForEsDataset'
 import logger from '../../../utils/logger'
@@ -17,6 +21,9 @@ import canViewEsDataset from '../operation/canViewEsDataset'
 import { MolecularDB } from '../../moldb/model'
 import { MolecularDbRepository } from '../../moldb/MolecularDbRepository'
 import { getS3Client } from '../../../utils/awsClient'
+import { In, IsNull } from 'typeorm'
+import canEditEsDataset from '../operation/canEditEsDataset'
+import canDeleteEsDataset from '../operation/canDeleteEsDataset'
 
 interface DbDataset {
   id: string;
@@ -31,7 +38,7 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
   const dataloader = ctx.contextCacheGet('getDbDatasetByIdDataLoader', [], () => {
     return new DataLoader(async(datasetIds: string[]): Promise<any[]> => {
       const results = await ctx.entityManager.query(`
-      SELECT ds.id, ds.thumbnail, ds.thumbnail_url, ds.ion_thumbnail, ds.ion_thumbnail_url, 
+      SELECT ds.id, ds.thumbnail_url, ds.ion_thumbnail_url, 
              ds.transform, gds.external_links
       FROM public.dataset ds
       JOIN graphql.dataset gds on ds.id = gds.id
@@ -46,16 +53,7 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
 
 export const thumbnailOpticalImageUrl = async(ctx: Context, datasetId: string) => {
   const result = await getDbDatasetById(ctx, datasetId)
-  if (result != null) {
-    if (result.thumbnail_url != null) {
-      return result.thumbnail_url
-    }
-    // FIXME: remove after data migration
-    if (result.thumbnail != null) {
-      return `/fs/optical_images/${result.thumbnail}`
-    }
-  }
-  return null
+  return result?.thumbnail_url ?? null
 }
 
 const getOpticalImagesByDsId = async(ctx: Context, id: string): Promise<OpticalImage[]> => {
@@ -63,10 +61,8 @@ const getOpticalImagesByDsId = async(ctx: Context, id: string): Promise<OpticalI
     return new DataLoader(async(datasetIds: string[]): Promise<OpticalImage[][]> => {
       const rawResults: OpticalImageModel[] = await ctx.entityManager.query(
         'SELECT * from public.optical_image WHERE ds_id = ANY($1)', [datasetIds])
-      const results = rawResults.map(({ id, type, url, ...rest }) => ({
+      const results = rawResults.map(({ type, ...rest }) => ({
         ...rest,
-        id,
-        url: url || `/fs/optical_images/${id}`, // FIXME: remove after data migration
         type: type.toUpperCase() as OpticalImageType,
       }))
       const groupedResults = _.groupBy(results, 'ds_id')
@@ -364,21 +360,20 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async ionThumbnailUrl(ds, args, ctx) {
     const result = await getDbDatasetById(ctx, ds._source.ds_id)
-    if (result != null) {
-      if (result.ion_thumbnail_url != null) {
-        return result.ion_thumbnail_url
-      }
-      // FIXME: remove after data migration
-      if (result.ion_thumbnail != null) {
-        return `/fs/ion_thumbnails/${result.ion_thumbnail}`
-      }
-    }
-    return null
+    return result?.ion_thumbnail_url ?? null
   },
 
   async externalLinks(ds, args, ctx) {
     const dbDs = await getDbDatasetById(ctx, ds._source.ds_id)
     return dbDs && dbDs.external_links || []
+  },
+
+  async canEdit(ds, args, ctx) {
+    return await canEditEsDataset(ds, ctx)
+  },
+
+  async canDelete(ds, args, ctx) {
+    return await canDeleteEsDataset(ds, ctx)
   },
 
   async canDownload(ds, args, ctx) {
@@ -432,6 +427,28 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     } else {
       return null
     }
+  },
+
+  async diagnostics(ds: DatasetSource, args: any, ctx: Context) {
+    const dataloader = ctx.contextCacheGet('Dataset.diagnosticsDataLoader', [], () => {
+      return new DataLoader(async(datasetIds: string[]) => {
+        const results = await ctx.entityManager.find(DatasetDiagnosticModel, {
+          where: {
+            datasetId: In(datasetIds),
+            error: IsNull(),
+          },
+          relations: ['job', 'job.molecularDB'],
+        })
+        const formattedResults = results.map(diag => ({
+          ...diag,
+          data: JSON.stringify(diag.data),
+          database: diag.job?.molecularDB ?? null,
+        }))
+        const keyedResults = _.groupBy(formattedResults, 'datasetId')
+        return datasetIds.map(id => keyedResults[id] || [])
+      })
+    })
+    return await dataloader.load(ds._source.ds_id)
   },
 }
 

@@ -11,7 +11,7 @@ export function setErrorNotifier(_$notify: ElNotification) {
 
 function isHandled(err: any) {
   try {
-    return err && err.graphQLErrors && every(err.graphQLErrors, e => e && e.isHandled)
+    return !!((err?.graphQLErrors && every(err.graphQLErrors, e => e && e.isHandled)) || err?.isHandled)
   } catch {
     return false
   }

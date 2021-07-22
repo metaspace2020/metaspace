@@ -13,9 +13,12 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectByUrlSlug(ctx.user, urlSlug)
   },
-  async allProjects(source, { query, offset, limit }, ctx): Promise<ProjectSource[]> {
+  async allProjects(source, {
+    orderBy, sortingOrder,
+    query, offset, limit,
+  }, ctx): Promise<ProjectSource[]> {
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
-      .findProjectsByQuery(ctx.user, query, offset, limit)
+      .findProjectsByQuery(ctx.user, query, offset, limit, orderBy, sortingOrder)
   },
   async projectsCount(source, { query }, ctx): Promise<number> {
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)

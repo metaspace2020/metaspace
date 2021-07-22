@@ -110,6 +110,7 @@ import updateApolloCache, { removeDatasetFromAllDatasetsQuery } from '../../../l
 import { merge, orderBy, pick } from 'lodash-es'
 import { formatDatabaseLabel } from '../../MolecularDatabases//formatting'
 import { datasetOwnerOptions } from '../../../lib/filterTypes'
+import { getLocalStorage } from '../../../lib/localStorage'
 
 const extractGroupedStatusCounts = (data) => {
   const counts = {
@@ -146,7 +147,6 @@ export default Vue.extend({
       sortingOrder: 'DESCENDING',
     }
   },
-
   computed: {
     currentPage: {
       get() {
@@ -169,14 +169,17 @@ export default Vue.extend({
       return true
     },
     setDatasetOwnerOptions() {
+      if (!this.currentUser) {
+        return null
+      }
+
       if (this.currentUser && Array.isArray(this.currentUser.groups)) {
         const groups = this.currentUser.groups
           .map((userGroup) => { return { isGroup: true, ...userGroup.group } })
         return datasetOwnerOptions.concat(groups)
-      } else if (this.currentUser) {
-        return datasetOwnerOptions
       }
-      return null
+
+      return datasetOwnerOptions
     },
     queryVariables() {
       return {
@@ -209,6 +212,15 @@ export default Vue.extend({
     canSeeFailed() {
       return this.currentUser != null && this.currentUser.role === 'admin'
     },
+  },
+  mounted() {
+    if (this.$store.getters.currentUser) {
+      // due to some misbehaviour from setting initial value from getLocalstorage with null values
+      // on filterSpecs, the filter is being initialized here if user is logged
+      const localDsOwner = this.$store.getters.filter.datasetOwner
+        ? this.$store.getters.filter.datasetOwner : (getLocalStorage('datasetOwner') || null)
+      this.$store.commit('updateFilter', { ...this.$store.getters.filter, datasetOwner: localDsOwner })
+    }
   },
 
   apollo: {
@@ -290,7 +302,6 @@ export default Vue.extend({
       },
     },
   },
-
   methods: {
     formatSubmitter: (row, col) =>
       row.submitter.name,

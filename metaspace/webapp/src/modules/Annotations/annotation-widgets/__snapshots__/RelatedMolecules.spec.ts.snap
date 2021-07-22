@@ -8,7 +8,7 @@ exports[`RelatedMolecules should match snapshot 1`] = `
         <div class="ion-heading">
           <div class="ion-link">
             <div>
-              <!----> <span class="ion-formula">[C<sub>10</sub>H<sub>11</sub>NO + Na]⁺</span></div>
+              <!----> <span class="ion-formula">[C<sub>10</sub>H<sub>11</sub>NO + Na]⁺</span></div>
             <div class="fdr-badge fdr-badge-10">
               10% FDR
             </div>
@@ -44,7 +44,7 @@ exports[`RelatedMolecules should match snapshot 1`] = `
     <div class="el-divider el-divider--horizontal">
       <div class="el-divider__text is-center">
         <div class="ion-heading"><a href="/?ds=2019-02-12_15h55m06s&amp;mol=allAnnotations.0.sumFormula&amp;chem_mod=allAnnotations.0.chemMod&amp;nl=allAnnotations.0.neutralLoss&amp;add=allAnnotations.0.adduct&amp;fdr=0.2" class="ion-link">
-            <div><span>Isomer:</span> <span class="ion-formula">[C<sub>10</sub>H<sub>13</sub>NO<sub>2</sub> - H<sub>2</sub>O + Na]⁺</span></div>
+            <div><span>Isomer:</span> <span class="ion-formula">[C<sub>10</sub>H<sub>13</sub>NO<sub>2</sub> + Na - H<sub>2</sub>O]⁺</span></div>
             <div class="fdr-badge fdr-badge-20">
               20% FDR
             </div>

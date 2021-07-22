@@ -4,6 +4,15 @@ exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
+    <transition-stub name="dialog-fade" class="requested-access-dialog">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="group name Access Request" class="el-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">group name Access Request</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
@@ -61,6 +70,15 @@ exports[`ViewGroupPage members tab should match snapshot (invited) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
+    <transition-stub name="dialog-fade" class="requested-access-dialog">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="group name Access Request" class="el-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">group name Access Request</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
@@ -133,6 +151,15 @@ exports[`ViewGroupPage members tab should match snapshot (manager, including tab
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
+    <transition-stub name="dialog-fade" class="requested-access-dialog">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="group name Access Request" class="el-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">group name Access Request</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
@@ -385,6 +412,15 @@ exports[`ViewGroupPage members tab should match snapshot (member) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
+    <transition-stub name="dialog-fade" class="requested-access-dialog">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="group name Access Request" class="el-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">group name Access Request</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
@@ -435,6 +471,15 @@ exports[`ViewGroupPage members tab should match snapshot (non-member) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
+    <transition-stub name="dialog-fade" class="requested-access-dialog">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="group name Access Request" class="el-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">group name Access Request</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>
@@ -487,6 +532,15 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
+    <transition-stub name="dialog-fade" class="requested-access-dialog">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="group name Access Request" class="el-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">group name Access Request</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
     <div class="header-row">
       <div class="header-names">
         <h1>group name</h1>

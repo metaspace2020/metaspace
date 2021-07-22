@@ -4,17 +4,22 @@ import os
 import sys
 from pathlib import Path
 from pprint import pprint
+from tempfile import TemporaryDirectory
+from urllib.request import urlretrieve
 
 import numpy as np
+import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-from sm.engine import image_storage
+from sm.engine import image_storage, molecular_db
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
 import sm.engine.annotation_lithops.executor as lithops_executor
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.db import DB
+from sm.engine.tests.db_sql_schema import DB_SQL_SCHEMA
 from sm.engine.util import GlobalInit
-from sm.engine.config import proj_root
+from sm.engine.config import proj_root, SMConfig
 from sm.engine.utils.create_ds_from_files import create_ds_from_files
 from sm.engine.utils.perf_profile import NullProfiler
 
@@ -155,7 +160,7 @@ class SciTester:
             lithops_executor.RUNTIME_DOCKER_IMAGE = 'python'
 
             executor = Executor(self.sm_config['lithops'], perf)
-            ServerAnnotationJob(executor, None, ds, perf, self.sm_config).run(debug_validate=True)
+            ServerAnnotationJob(executor, ds, perf, self.sm_config).run(debug_validate=True)
         else:
             AnnotationJob(ds, perf).run()
 
@@ -187,6 +192,44 @@ def save(sm_config, *args):
         SciTester(sm_config).save_sci_test_report()
 
 
+def ensure_db_exists(sm_config):
+    db_config = sm_config['db']
+    try:
+        with psycopg2.connect(**db_config):
+            pass
+    except psycopg2.OperationalError as ex:
+        if 'does not exist' in str(ex):
+            db_name = db_config['database']
+            db_owner = db_config['user']
+
+            print(f'Creating database {db_name}')
+            # Connect to postgres database so that the configured DB can be created
+            with psycopg2.connect(**{**db_config, 'database': 'postgres'}) as conn:
+                conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+                with conn.cursor() as curs:
+                    curs.execute(f'CREATE DATABASE {db_name} OWNER {db_owner}')
+
+
+def ensure_db_populated():
+    db = DB()
+    # Install DB schema if needed
+    query = "SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public' AND tablename = 'dataset'"
+    tables_exist = db.select_one(query)[0] >= 1
+    if not tables_exist:
+        print('Installing DB schema')
+        db.alter(DB_SQL_SCHEMA)
+
+    # Import HMDB if needed
+    query = "SELECT COUNT(*) FROM molecular_db WHERE name = 'HMDB' AND version = 'v4'"
+    hmdb_exists = db.select_one(query)[0] >= 1
+    if not hmdb_exists:
+        print('Importing HMDB')
+        with TemporaryDirectory() as tmp:
+            hmdb_url = 'https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_4.tsv'
+            urlretrieve(hmdb_url, f'{tmp}/hmdb-v4.tsv')
+            molecular_db.create('HMDB', 'v4', f'{tmp}/hmdb-v4.tsv')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scientific tests runner')
     parser.add_argument(
@@ -207,7 +250,12 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
+    # Need to ensure test DB exists before GlobalInit is called
+    SMConfig.set_path(args.sm_config_path)
+    ensure_db_exists(SMConfig.get_conf())
+
     with GlobalInit(config_path=args.sm_config_path) as sm_config:
+        ensure_db_populated()
         if args.run:
             run(
                 sm_config=sm_config,

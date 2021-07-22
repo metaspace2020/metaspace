@@ -9,7 +9,7 @@
     </p>
     <ul class="v-rhythm-3 max-w-measure-4">
       <li>
-        <b>Brassica Napus database (BraChemDB):</b>
+        <b>Brassica Napus Database (BraChemDB):</b>
         A curated rapeseed database from LC-MS/MS measurements.
         <div>
           <el-popover
@@ -47,6 +47,45 @@
         </div>
       </li>
       <li>
+        <b>Core Metabolome Database (CoreMetabolome):</b>
+        METASPACE database of core mammalian metabolites and lipids.
+        <p class="m-0 text-sm">
+          <span class="text-gray-700 font-medium">
+            Citation TBC
+          </span>
+          <a
+            href="https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/core_metabolome/core_metabolome_v3.csv"
+            class="ml-3"
+            target="_blank"
+            rel="noopener"
+          >
+            Download metabolite list
+          </a>
+        </p>
+      </li>
+      <li>
+        <b><a href="http://ecmdb.ca/about">E. coli Metabolome Database (ECMDB)</a>:</b>
+        An expertly curated database containing extensive metabolomic data and metabolic pathway diagrams about
+        Escherichia coli (strain K12, MG1655).
+        <div>
+          <el-popover
+            trigger="hover"
+            placement="bottom"
+          >
+            <div class="desc-cite-popover">
+              Sajed, T., Marcu, A., Ramirez, M., Pon, A., Guo, A., Knox, C., Wilson, M., Grant, J., Djoumbou,
+              Y. and Wishart, D. (2015). ECMDB 2.0: A richer resource for understanding the biochemistry of
+              E. coli. Nucleic Acids Res, p.gkv1060
+              <a href="https://www.ncbi.nlm.nih.gov/pubmed/26481353">https://www.ncbi.nlm.nih.gov/pubmed/26481353</a>
+            </div>
+            <span
+              slot="reference"
+              class="desc-cite"
+            >Citation</span>
+          </el-popover>
+        </div>
+      </li>
+      <li>
         <b><a href="http://www.hmdb.ca/about">Human Metabolome Database (HMDB)</a>:</b>
         Database containing small molecule metabolites known to be in the human body.
         <b>HMDB-endogenous</b> is a filtered version of HMDB that contains only molecules labelled in the database as endogenously produced.
@@ -60,6 +99,27 @@
               HMDB 4.0 &mdash; The Human Metabolome Database for 2018.
               Nucleic Acids Res. 2018. Jan 4;46(D1):D608-17.
               <a href="http://www.ncbi.nlm.nih.gov/pubmed/29140435">29140435</a>
+            </div>
+            <span
+              slot="reference"
+              class="desc-cite"
+            >Citation</span>
+          </el-popover>
+        </div>
+      </li>
+      <li>
+        <b><a href="https://www.genome.jp/kegg/compound/">Kyoto Encyclopedia of Genes and Genomes (KEGG)</a>:</b>
+        Database containing COMPOUND collection of small molecules from KEGG.
+        <div>
+          <el-popover
+            trigger="hover"
+            placement="bottom"
+          >
+            <div class="desc-cite-popover">
+              Minoru Kanehisa, Miho Furumichi, Mao Tanabe, Yoko Sato, Kanae Morishima.
+              KEGG: new perspectives on genomes, pathways, diseases and drugs,
+              Nucleic Acids Research 45, D353–D361 (2017).
+              <a href="https://doi.org/10.1093/nar/gkw1092">10.1093/nar/gkw1092</a>
             </div>
             <span
               slot="reference"
@@ -87,6 +147,55 @@
             >Citation</span>
           </el-popover>
         </div>
+      </li>
+      <li>
+        <b>Natural Products Atlas (NPA):</b>
+        Taken from the NPA homepage: "The Natural Products Atlas provides open access coverage of bacterial
+        and fungal natural products, giving researchers the power to visualize the chemical diversity
+        of the natural world."
+        <div>
+          <el-popover
+            trigger="hover"
+            placement="bottom"
+          >
+            <div class="desc-cite-popover">
+              van Santen, J. A.; Jacob, G.; Leen Singh, A.; Aniebok, V.; Balunas, M. J.; Bunsko, D.;
+              Carnevale Neto, F.; Castaño-Espriu, L.; Chang, C.; Clark, T. N.; Cleary Little, J. L.;
+              Delgadillo, D. A.; Dorrestein, P. C.; Duncan, K. R.; Egan, J. M.; Galey, M. M.;
+              Haeckl, F. P. J.; Hua, A.; Hughes, A. H.; Iskakova, D.; Khadilkar, A.; Lee, J.-H.;
+              Lee, S.; LeGrow, N.; Liu, D. Y.; Macho, J. M.; McCaughey, C. S.; Medema, M. H.; Neupane,
+              R. P.; O’Donnell, T. J.; Paula, J. S.; Sanchez, L. M.; Shaikh, A. F.; Soldatou, S.;
+              Terlouw, B. R.; Tran, T. A.; Valentine, M.; van der Hooft, J. J. J.; Vo, D. A.;
+              Wang, M.; Wilson, D.; Zink, K. E.; Linington, R. G.
+              "The Natural Products Atlas: An Open Access Knowledge Base for Microbial Natural Products Discovery”,
+              ACS Central Science, 2019, 5, 11, 1824-1833.
+              <a href="https://doi.org/10.1021/acscentsci.9b00806">10.1021/acscentsci.9b00806</a>
+            </div>
+            <span
+              slot="reference"
+              class="desc-cite"
+            >Citation</span>
+          </el-popover>
+        </div>
+      </li>
+      <li>
+        <b>NGlycDB:</b>
+        Database containing naturally occurring N-linked glycans. This DB is based on glycans reported in the
+        GlyConnect platform and is filtered to include only N-linked glycans.
+        We recommend selecting only +Na adduct when using this database.
+        <p class="m-0 text-sm">
+          <span class="text-gray-700 font-medium">
+            Citation TBC
+          </span>
+          <a
+            href="https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/nglyc/nglyc_v1.tsv"
+            class="ml-3"
+            target="_blank"
+            rel="noopener"
+          >
+            Download N-linked glycan list
+          </a>
+        </p>
       </li>
       <li>
         <b><a href="http://pseudomonas.umaryland.edu/PAMDB">Pseudomonas aeruginosa Metabolome Database (PAMDB)</a>:</b>
@@ -132,45 +241,6 @@
             >Citation</span>
           </el-popover>
         </div>
-      </li>
-      <li>
-        <b><a href="http://ecmdb.ca/about">E. coli Metabolome Database (ECMDB)</a>:</b>
-        An expertly curated database containing extensive metabolomic data and metabolic pathway diagrams about
-        Escherichia coli (strain K12, MG1655).
-        <div>
-          <el-popover
-            trigger="hover"
-            placement="bottom"
-          >
-            <div class="desc-cite-popover">
-              Sajed, T., Marcu, A., Ramirez, M., Pon, A., Guo, A., Knox, C., Wilson, M., Grant, J., Djoumbou,
-              Y. and Wishart, D. (2015). ECMDB 2.0: A richer resource for understanding the biochemistry of
-              E. coli. Nucleic Acids Res, p.gkv1060
-              <a href="https://www.ncbi.nlm.nih.gov/pubmed/26481353">https://www.ncbi.nlm.nih.gov/pubmed/26481353</a>
-            </div>
-            <span
-              slot="reference"
-              class="desc-cite"
-            >Citation</span>
-          </el-popover>
-        </div>
-      </li>
-      <li>
-        <b>Core Metabolome Database (CoreMetabolome):</b>
-        METASPACE database of core mammalian metabolites and lipids.
-        <p class="m-0 text-sm">
-          <span class="text-gray-700 font-medium">
-            Citation TBC
-          </span>
-          <a
-            href="https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/core_metabolome/core_metabolome_v3.csv"
-            class="ml-3"
-            target="_blank"
-            rel="noopener"
-          >
-            Download metabolite list
-          </a>
-        </p>
       </li>
     </ul>
   </div>

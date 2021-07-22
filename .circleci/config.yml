@@ -34,6 +34,7 @@ jobs:
       - save_cache:
           key: graphql-yarn-cache-{{checksum "yarn.lock"}}
           paths:
+            - ~/metaspace/metaspace/graphql/node_modules
             - /usr/local/share/.cache/yarn
       - run:
           name: Run tests
@@ -45,12 +46,10 @@ jobs:
             psql -h localhost -U sm -d sm_test -c "CREATE SCHEMA graphql;"
             yarn run gen-binding
             yarn run deref-schema
-            NODE_ENV=test yarn run test-ci --verbose --detectOpenHandles --forceExit
+            NODE_ENV=test yarn run test-ci --verbose --detectOpenHandles --forceExit --coverage
       - run:
           name: Upload coverage
-          command: |
-            yarn run test-ci --coverage
-            npx codecov -p ../.. -F graphql
+          command: npx codecov -p ../.. -F graphql
       - run:
           name: Lint code
           when: always
@@ -144,23 +143,26 @@ jobs:
           command: |
             cp ci/clientConfig.json src/
       - run:
-          name: Compile
+          name: Generate metadata schema
           command: |
-            yarn run build-ci
-      - run:
-          name: Run tests
-          command: |
-            cp ~/workspace/graphql-schema.json ./tests/utils/graphql-schema.json
-            yarn run test-ci
-      - run:
-          name: Upload coverage
-          command: |
-            yarn run test-ci --coverage --maxWorkers=1
-            npx codecov -p ../.. -F webapp
+            yarn run deref-schema
       - run:
           name: Lint code
           when: always
           command: yarn run lint --max-warnings 0 --no-fix
+      - run:
+          name: Run tests
+          command: |
+            cp ~/workspace/graphql-schema.json ./tests/utils/graphql-schema.json
+            yarn run test-ci --coverage --maxWorkers=2
+      - run:
+          name: Upload coverage
+          command: |
+            npx codecov -p ../.. -F webapp
+      - run:
+          name: Test compilation
+          command: |
+            yarn run build-ci
 
   test-webapp-e2e:
     docker:
@@ -201,6 +203,7 @@ jobs:
       - save_cache:
           key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
           paths:
+            - ~/metaspace/metaspace/webapp/node_modules
             - /usr/local/share/.cache/yarn
       - run:
           name: Build webapp
@@ -242,6 +245,10 @@ jobs:
             # files (mainly files in the config directories) when switching branches.
             git clean -fdX
             git checkout -- ~/metaspace
+      - run:
+          name: Install dependencies
+          command: |
+            pip install -r metaspace/engine/requirements-dev.txt
       - run:
           name: Code format check for .py files in ansible and metaspace directories
           command: |
@@ -286,7 +293,7 @@ jobs:
       - run:
           name: Test engine dependencies
           command: |
-            pip install --upgrade -r requirements.txt
+            pip install --upgrade -r requirements.txt -r requirements-dev.txt
       - attach_workspace:
           at: ~/workspace
       - run:
@@ -304,7 +311,9 @@ jobs:
           name: Run linter
           # Limit number of CPUs to prevent silent OOMs in background processes
           # https://github.com/PyCQA/pylint/issues/3899
-          command: pylint -j1 sm scripts
+          command: |
+            pylint --version
+            pylint -j1 sm scripts
       - run:
          name: Run code formatter
          command: black --check .
@@ -346,7 +355,7 @@ jobs:
       - run:
           name: Test setup
           command: |
-            pip install --upgrade -r requirements.txt
+            pip install --upgrade -r requirements.txt -r requirements-dev.txt
             pip install -e .
       - run:
           name: Create engine database

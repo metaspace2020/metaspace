@@ -4,6 +4,7 @@ import { CurrentUserRoleResult } from '../../../api/user'
 import { Dropdown, DropdownItem, DropdownMenu, Button } from '../../../lib/element-ui'
 import reportError from '../../../lib/reportError'
 import DownloadDialog from '../list/DownloadDialog'
+import { DatasetComparisonDialog } from '../comparison/DatasetComparisonDialog'
 import config from '../../../lib/config'
 
 interface DatasetActionsDropdownProps {
@@ -12,8 +13,16 @@ interface DatasetActionsDropdownProps {
   deleteActionLabel: string
   reprocessActionLabel: string
   downloadActionLabel: string
+  compareActionLabel: string
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
+}
+
+interface DatasetActionsDropdownState{
+  disabled: boolean
+  showMetadataDialog: boolean
+  showCompareDialog: boolean
+  showDownloadDialog: boolean
 }
 
 export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProps>({
@@ -22,6 +31,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     actionLabel: { type: String, default: 'Actions' },
     deleteActionLabel: { type: String, default: 'Delete' },
     editActionLabel: { type: String, default: 'Edit metadata' },
+    compareActionLabel: { type: String, default: 'Compare with other datasets...' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
@@ -30,9 +40,10 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
   setup(props, ctx) {
     const { emit, root } = ctx
     const { $router, $confirm, $apollo, $notify } = root
-    const state = reactive({
+    const state = reactive<DatasetActionsDropdownState>({
       disabled: false,
       showMetadataDialog: false,
+      showCompareDialog: false,
       showDownloadDialog: false,
     })
 
@@ -77,6 +88,14 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       state.showDownloadDialog = false
     }
 
+    const openCompareDialog = () => {
+      state.showCompareDialog = true
+    }
+
+    const closeCompareDialog = () => {
+      state.showCompareDialog = false
+    }
+
     const handleReprocess = async() => {
       try {
         state.disabled = true
@@ -97,8 +116,6 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     }
 
     const handleCommand = (command: string) => {
-      console.log('handleCommand', command)
-
       switch (command) {
         case 'edit':
           $router.push({
@@ -108,6 +125,9 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           break
         case 'delete':
           openDeleteDialog()
+          break
+        case 'compare':
+          openCompareDialog()
           break
         case 'download':
           openDownloadDialog()
@@ -124,22 +144,10 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     return () => {
       const {
         actionLabel, currentUser, dataset, editActionLabel, deleteActionLabel,
-        downloadActionLabel, reprocessActionLabel,
+        downloadActionLabel, reprocessActionLabel, compareActionLabel,
       } = props
-      const { role, id: currentUserId } = currentUser || {}
-      const { submitter, status, canDownload, id, name } = dataset || {}
-      const publicationStatus = computed(() => {
-        if (dataset?.projects?.some(({ publicationStatus }) => publicationStatus === 'PUBLISHED')) {
-          return 'Published'
-        }
-        if (dataset?.projects?.some(({ publicationStatus }) => publicationStatus === 'UNDER_REVIEW')) {
-          return 'Under review'
-        }
-        return null
-      })
-      const canEdit = (role === 'admin' || (currentUserId === submitter?.id
-        && (status !== 'QUEUED' && status !== 'ANNOTATING')))
-      const canDelete = (role === 'admin' || (canEdit && publicationStatus.value === null))
+      const { role } = currentUser || {}
+      const { canEdit, canDelete, canDownload, id, name } = dataset || {}
       const canReprocess = (role === 'admin')
 
       return (
@@ -158,6 +166,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
               canDownload
               && <DropdownItem command="download">{downloadActionLabel}</DropdownItem>
             }
+            <DropdownItem command="compare" >{compareActionLabel}</DropdownItem>
             {
               canDelete
               && <DropdownItem class='text-red-500' command="delete">{deleteActionLabel}</DropdownItem>
@@ -173,6 +182,13 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
               datasetId={id}
               datasetName={name}
               onClose={closeDownloadDialog}
+            />
+          }
+          {
+            state.showCompareDialog
+            && <DatasetComparisonDialog
+              selectedDatasetIds={[id]}
+              onClose={closeCompareDialog}
             />
           }
         </Dropdown>

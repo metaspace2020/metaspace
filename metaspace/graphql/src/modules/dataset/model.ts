@@ -1,8 +1,9 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn } from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryColumn } from 'typeorm'
 import { Group } from '../group/model'
 import { User } from '../user/model'
 import { Project } from '../project/model'
 import { ExternalLink } from '../project/ExternalLink'
+import { DatasetDiagnostic, EngineDataset } from '../engine/model'
 
 @Entity()
 export class Dataset {
@@ -36,11 +37,20 @@ export class Dataset {
   @Column({ type: 'text', nullable: true })
   piEmail: string | null;
 
+  // sm-engine and sm-graphql create & manage the public.dataset (EngineDataset) and graphql.dataset (Dataset) tables
+  // independently, so this relationship doesn't enforce an FK.
+  @OneToOne(() => EngineDataset, { createForeignKeyConstraints: false })
+  @JoinColumn({ name: 'id' })
+  engineDataset: EngineDataset;
+
   @OneToMany(() => DatasetProject, datasetProject => datasetProject.dataset)
   datasetProjects: DatasetProject[];
 
   @Column({ type: 'json', nullable: true })
   externalLinks: ExternalLink[] | null;
+
+  @OneToMany(() => DatasetDiagnostic, datasetDiagnostic => datasetDiagnostic.dataset)
+  datasetDiagnostics: DatasetDiagnostic[];
 }
 
 @Entity({ name: 'dataset_project' })

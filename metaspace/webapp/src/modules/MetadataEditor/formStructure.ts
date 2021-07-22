@@ -47,15 +47,22 @@ export interface FormSchema extends JsonSchemaProperty {
 }
 
 export interface MetaspaceOptions {
+  name: string;
   isPublic: boolean;
-  databases: number[];
+  databaseIds: number[];
   adducts: string[];
+  neutralLosses: string[];
+  chemMods: string[];
   groupId: string | null;
   projectIds: string[];
   principalInvestigator: {
     name: string;
     email: string;
   } | null;
+  analysisVersion: number;
+  ppm: number;
+  numPeaks: number;
+  decoySampleSize: number;
 }
 
 const FIELD_WIDTH: Record<string, number> = {

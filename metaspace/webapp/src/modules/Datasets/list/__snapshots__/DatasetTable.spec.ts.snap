@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`DatasetTable should be able to export a CSV 1`] = `
-"# URL: http://localhost/
+"# URL: http://localhost/?ds_owner
 \\"datasetId\\",\\"datasetName\\",\\"group\\",\\"submitter\\",\\"PI\\",\\"organism\\",\\"organismPart\\",\\"condition\\",\\"growthConditions\\",\\"ionisationSource\\",\\"maldiMatrix\\",\\"analyzer\\",\\"resPower400\\",\\"polarity\\",\\"uploadDateTime\\",\\"FDR@10%\\",\\"database\\",\\"opticalImage\\"
 \\"FINISHED1\\",\\"datasets.0.name\\",\\"datasets.0.group.shortName\\",\\"datasets.0.submitter.name\\",\\"datasets.0.group.adminNames, datasets.0.group.adminNames\\",\\"datasets.0.organism\\",\\"datasets.0.organismPart\\",\\"datasets.0.condition\\",\\"datasets.0.growthConditions\\",\\"datasets.0.ionisationSource\\",\\"datasets.0.maldiMatrix\\",\\"datasets.0.analyzer.type\\",\\"13\\",\\"positive\\",\\"datasets.0.uploadDateTime\\",\\"20\\",\\"HMDB - v2.5\\",\\"http://localhostdatasets.0.rawOpticalImageUrl\\"
 \\"FINISHED2\\",\\"datasets.1.name\\",\\"\\",\\"datasets.1.submitter.name\\",\\"\\",\\"datasets.1.organism\\",\\"datasets.1.organismPart\\",\\"datasets.1.condition\\",\\"datasets.1.growthConditions\\",\\"datasets.1.ionisationSource\\",\\"datasets.1.maldiMatrix\\",\\"datasets.1.analyzer.type\\",\\"13\\",\\"positive\\",\\"datasets.1.uploadDateTime\\",\\"20\\",\\"HMDB - v2.5\\",\\"http://localhostdatasets.1.rawOpticalImageUrl\\"
@@ -338,32 +338,26 @@ exports[`DatasetTable should match snapshot 1`] = `
           >
             allDatasets.1.name
           </span>
-          <span
+          <mock-el-popover
             class="ml-1"
+            placement="top"
+            trigger="hover"
           >
-            <transition-stub
-              name="fade-in-linear"
+            <div
+              slot-key="default"
             >
               <div
-                aria-hidden="true"
-                class="el-popover el-popper"
-                id="el-popover-123"
-                role="tooltip"
-                style="display: none;"
-                tabindex="0"
-              >
-                <!---->
-                <div
-                  mock-v-loading="true"
-                />
-              </div>
-            </transition-stub>
-            <i
-              aria-describedby="el-popover-123"
-              class="el-icon-lock el-popover__reference"
-              tabindex="0"
-            />
-          </span>
+                mock-v-loading="true"
+              />
+            </div>
+            <div
+              slot-key="reference"
+            >
+              <i
+                class="el-icon-lock"
+              />
+            </div>
+          </mock-el-popover>
         </div>
         <div
           class="ds-item-line text-gray-700"

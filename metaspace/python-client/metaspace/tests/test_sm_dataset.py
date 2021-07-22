@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -10,10 +11,9 @@ from metaspace.sm_annotation_utils import (
     SMDataset,
     GraphQLClient,
     SMInstance,
-    GraphQLException,
+    MolecularDB,
 )
 from metaspace.tests.utils import sm, my_ds_id, advanced_ds_id
-
 
 EXPECTED_RESULTS_COLS = [
     'msm',
@@ -81,17 +81,15 @@ def test_results_with_int_database_id(dataset: SMDataset):
 
 
 def test_results_with_str_database_id(dataset: SMDataset):
-    try:
-        annotations = dataset.results('22', fdr=0.5)
-        # If the above code succeeds, it's time to start coercing the databaseId type to fit the API.
-        # See the comment in GraphQLClient.map_database_to_id for context.
-        assert False
-    except GraphQLException:
-        assert True
+    # The type of database IDs was up in the air for a while. Both ints and int-strings are accepted
+    # and are converted to the correct form internally
+    annotations = dataset.results('22', fdr=0.5)
+
+    assert len(annotations) > 0
 
 
 @patch(
-    'metaspace.sm_annotation_utils.GraphQLClient.get_databases',
+    'metaspace.sm_annotation_utils.GraphQLClient.get_visible_databases',
     return_value=[{'id': '22', 'name': 'HMDB', 'version': 'v4'}],
 )
 @patch('metaspace.sm_annotation_utils.GraphQLClient.getAnnotations', return_value=[])
@@ -196,6 +194,20 @@ def test_all_annotation_images(dataset: SMDataset):
     assert isinstance(image_list[0][0], np.ndarray)
 
 
+def test_all_annotation_images_tic(dataset: SMDataset):
+    image_list = dataset.all_annotation_images(
+        only_first_isotope=True, scale_intensity='TIC', fdr=0.5
+    )
+
+    all_images = np.stack(images[0] for images in image_list if images[0] is not None)
+    pixel_sums = np.sum(all_images, axis=0)
+    pixel_sums = pixel_sums[~np.isnan(all_images[0])]
+    # The sum of annotations generally shouldn't substantially exceed the TIC
+    assert (pixel_sums < 1.5).all()
+    assert (pixel_sums >= 0).all()  # There should be no negative values
+    assert (pixel_sums > 0).any()  # There should be positive values
+
+
 def test_all_annotation_images_advanced(advanced_dataset: SMDataset):
     image_list = advanced_dataset.all_annotation_images(only_first_isotope=True)
 
@@ -217,3 +229,98 @@ def test_download(sm: SMInstance, downloadable_dataset_id: str):
         files = [f.name for f in Path(tmpdir).iterdir()]
         assert 'base_name.imzML' in files
         assert 'base_name.ibd' in files
+
+
+def test_metadata(dataset: SMDataset):
+    metadata = dataset.metadata
+
+    # Make sure it behaves like a Dict
+    assert 'Sample_Information' in metadata
+    assert 'Sample_Preparation' in metadata
+    assert 'MS_Analysis' in metadata
+
+    assert len(metadata) > 0
+    assert len(list(metadata.keys())) > 0
+
+    # Make sure nested items work
+    assert 'Organism' in metadata['Sample_Information']
+    assert 'Xaxis' in metadata['MS_Analysis']['Pixel_Size']
+
+    # Make sure it re-serializes in a way that matches the original JSON.
+    # Use sort_keys to ensure they're both ordered the same way
+    serialized = json.dumps(dataset.metadata, sort_keys=True)
+    original_json = dataset.metadata.json  # type: ignore
+    sorted_json = json.dumps(json.loads(original_json), sort_keys=True)
+
+    assert serialized == sorted_json
+
+
+def test_dataset_info_fields(dataset: SMDataset):
+    # Ensures that the graphql query includes all fields required for these properties,
+    # and that the TypedDicts have the right keys
+
+    assert isinstance(dataset.id, str)
+    assert isinstance(dataset.name, str)
+    assert isinstance(dataset.s3dir, str)
+
+    assert isinstance(dataset.config['database_ids'][0], int)
+    assert isinstance(dataset.config['analysis_version'], int)
+    assert isinstance(dataset.config['isotope_generation']['adducts'][0], str)
+    assert isinstance(dataset.config['isotope_generation']['charge'], int)
+    assert isinstance(dataset.config['isotope_generation']['isocalc_sigma'], float)
+    assert isinstance(dataset.config['isotope_generation']['instrument'], str)
+    assert isinstance(dataset.config['isotope_generation']['n_peaks'], int)
+    assert isinstance(dataset.config['isotope_generation']['neutral_losses'], list)
+    assert isinstance(dataset.config['isotope_generation']['chem_mods'], list)
+    assert isinstance(dataset.config['fdr']['decoy_sample_size'], int)
+    assert isinstance(dataset.config['image_generation']['ppm'], (int, float))
+    assert isinstance(dataset.config['image_generation']['n_levels'], int)
+    assert isinstance(dataset.config['image_generation']['min_px'], int)
+
+    assert isinstance(dataset.adducts[0], str)
+
+    assert dataset.polarity in ('Positive', 'Negative')
+
+    assert isinstance(dataset.submitter['id'], str)
+    assert isinstance(dataset.submitter['name'], str)
+
+    assert isinstance(dataset.database_details[0], MolecularDB)
+    assert isinstance(dataset.database_details[0].id, int)
+    assert isinstance(dataset.database_details[0].name, str)
+    assert isinstance(dataset.database_details[0].version, str)
+    assert isinstance(dataset.database_details[0].is_public, bool)
+    assert isinstance(dataset.database_details[0].archived, bool)
+
+    # Accessing by the dict interface is deprecated, but still probably relied upon
+    assert isinstance(dataset.database_details[0]['id'], int)
+    assert isinstance(dataset.database_details[0]['name'], str)
+    assert isinstance(dataset.database_details[0]['version'], str)
+    assert isinstance(dataset.database_details[0]['isPublic'], bool)
+    assert isinstance(dataset.database_details[0]['archived'], bool)
+
+    assert isinstance(dataset.status, str)
+
+    if len(dataset.projects) > 0:
+        assert isinstance(dataset.projects[0]['id'], str)
+        assert isinstance(dataset.projects[0]['name'], str)
+        assert isinstance(dataset.projects[0]['publicationStatus'], str)
+    else:
+        print('Skipping check for dataset.projects fields as dataset has no projects')
+
+    assert isinstance(dataset.group['id'], str)
+    assert isinstance(dataset.group['name'], str)
+    assert isinstance(dataset.group['shortName'], str)
+
+    assert isinstance(dataset.principal_investigator, (str, type(None)))
+
+
+def test_diagnostics(dataset: SMDataset):
+    diagnostics = dataset.diagnostics()
+    tic_diag = dataset.diagnostic('TIC')
+    imzml_diag = dataset.diagnostic('IMZML_METADATA')
+    tic_image = dataset.tic_image()
+
+    assert any(diag['type'] == 'TIC' for diag in diagnostics)
+    assert isinstance(tic_diag['images'][0]['image'], np.ndarray)
+    assert imzml_diag is not None
+    assert isinstance(tic_image, np.ndarray)

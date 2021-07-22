@@ -14,6 +14,10 @@ export default {
     return decodeParams(state.route, state.filterLists);
   },
 
+  currentUser(state) {
+    return state.currentUser;
+  },
+
   settings(state) {
     return decodeSettings(state.route);
   },
@@ -31,6 +35,7 @@ export default {
       chemMod: noneToEmptyString(filter.chemMod),
       neutralLoss: noneToEmptyString(filter.neutralLoss),
       adduct: filter.adduct,
+      annotationId: filter.annotationIds ? filter.annotationIds.join('|') : undefined,
       fdrLevel: filter.fdrLevel,
       colocalizedWith: filter.colocalizedWith,
       // Only include colocalizationAlgo if there is another filter that uses it. Otherwise the annotations list

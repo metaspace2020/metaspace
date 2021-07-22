@@ -2,17 +2,14 @@ import * as moment from 'moment'
 import { User } from '../modules/user/model'
 import { Credentials } from '../modules/auth/model'
 import { testEntityManager, userContext } from './graphqlTestEnvironment'
-import {
-  Project,
-  UserProject as UserProjectModel,
-  UserProjectRoleOptions as UPRO,
-} from '../modules/project/model'
+import { Project, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO } from '../modules/project/model'
 import { PublicationStatusOptions as PSO } from '../modules/project/Publishing'
 import { PublicationStatus, UserGroupRole, UserProjectRole } from '../binding'
 import { Dataset, DatasetProject } from '../modules/dataset/model'
 import { EngineDataset } from '../modules/engine/model'
 import { Group, UserGroup as UserGroupModel } from '../modules/group/model'
 import { MolecularDB } from '../modules/moldb/model'
+import { isMemberOfGroup } from '../modules/dataset/operation/isMemberOfGroup'
 
 export const createTestUser = async(user?: Partial<User>): Promise<User> => {
   return (await createTestUserWithCredentials(user))[0]
@@ -90,39 +87,81 @@ const genDatasetId = () => {
     .replace(/([\d-]+)T(\d+):(\d+):(\d+).*/, '$1_$2h$3m$4s')
 }
 
-export const createTestDataset = async(
+const TEST_METADATA = {
+  Data_Type: 'Imaging MS',
+  Sample_Information: {
+    Organism: 'Species',
+    Organism_Part: 'Organ or organism part',
+    Condition: 'E.g. wildtype, diseased',
+    Sample_Growth_Conditions: 'E.g. intervention, treatment',
+  },
+  Sample_Preparation: {
+    Sample_Stabilisation: 'Preservation method',
+    Tissue_Modification: 'E.g. chemical modification',
+    MALDI_Matrix: '2,5-dihydroxybenzoic acid (DHB)',
+    MALDI_Matrix_Application: 'ImagePrep',
+    Solvent: 'none',
+  },
+  MS_Analysis: {
+    Polarity: 'Positive',
+    Ionisation_Source: 'MALDI',
+    Analyzer: 'Orbitrap',
+    Detector_Resolving_Power: { mz: 400, Resolving_Power: 130000 },
+    Pixel_Size: { Xaxis: 20, Yaxis: 40 },
+  },
+}
+
+const TEST_DESCRIPTION = JSON.stringify({
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Test description 123' }] }],
+})
+
+export const createTestDatasetWithEngineDataset = async(
   dataset: Partial<Dataset> = {}, engineDataset: Partial<EngineDataset> = {}
-): Promise<Dataset> => {
+): Promise<{dataset: Dataset, engineDataset: EngineDataset}> => {
   const datasetId = engineDataset.id || genDatasetId()
+  const userId = 'userId' in dataset ? dataset.userId : userContext.getUserIdOrFail()
+  const groupApproved = dataset.groupId && userId && !('groupApproved' in dataset)
+    ? await isMemberOfGroup(testEntityManager, userId, dataset.groupId)
+    : false
+
   const datasetPromise = testEntityManager.save(Dataset, {
     id: datasetId,
-    userId: userContext.getUserIdOrFail(),
+    userId,
+    description: TEST_DESCRIPTION,
+    groupApproved,
     ...dataset,
   })
 
-  await testEntityManager.save(EngineDataset, {
+  const engineDsModel = await testEntityManager.save(EngineDataset, {
     id: datasetId,
     name: 'test dataset',
     uploadDt: moment.utc(),
     statusUpdateDt: moment.utc(),
-    metadata: {},
+    metadata: TEST_METADATA,
     status: 'FINISHED',
     isPublic: true,
     ...engineDataset,
-  })
+  }) as EngineDataset
 
-  return (await datasetPromise) as Dataset
+  return { dataset: (await datasetPromise) as Dataset, engineDataset: engineDsModel }
 }
 
-export const createTestDatasetProject = async(publicationStatus: PublicationStatus): Promise<DatasetProject> => {
+export const createTestDataset = async(
+  dataset: Partial<Dataset> = {}, engineDataset: Partial<EngineDataset> = {}
+): Promise<Dataset> => {
+  return (await createTestDatasetWithEngineDataset(dataset, engineDataset)).dataset
+}
+export const createTestDatasetProject = async(
+  projectId: string, datasetId: string, approved = true
+): Promise<DatasetProject> => {
+  return await testEntityManager.save(DatasetProject, { projectId, datasetId, approved }) as DatasetProject
+}
+
+export const createTestDatasetAndProject = async(publicationStatus: PublicationStatus): Promise<DatasetProject> => {
   const dataset = await createTestDataset()
   const project = await createTestProject({ publicationStatus })
-  const datasetProjectPromise = testEntityManager.save(DatasetProject, {
-    projectId: project.id,
-    datasetId: dataset.id,
-    approved: true,
-  } as Partial<DatasetProject>)
-  return (await datasetProjectPromise) as DatasetProject
+  return await createTestDatasetProject(project.id, dataset.id)
 }
 
 export const createTestMolecularDB = async(molecularDb: Partial<MolecularDB> = {}): Promise<MolecularDB> => {

@@ -6,19 +6,6 @@
     "debug": false,
     "server": "cherrypy"
   },
-  "defaults": {
-    "adducts": {
-      "+": [
-        "+H",
-        "+Na",
-        "+K"
-      ],
-      "-": [
-        "-H",
-        "+Cl"
-      ]
-    }
-  },
   "db": {
     "host": "postgres",
     "database": "sm",
@@ -108,6 +95,14 @@
       "access_key": "",
       "secret_key": ""
     },
+    "aws": {
+      "access_key_id": "minioadmin",
+      "secret_access_key": "minioadmin"
+    },
+    "aws_s3": {
+      "__comment__": "Lithops overrides this to be HTTPS (https://github.com/lithops-cloud/lithops/issues/708). A workaround is needed to access MinIO through Lithops Storage - see update_diagnostics.py for an example",
+      "endpoint": "http://storage:9000"
+    },
     "sm_storage": {
       "imzml": [
         "DATA_BUCKET",
@@ -131,37 +126,6 @@
     "channel": "",
     "webhook_url": ""
   },
-  "ms_file_handlers": [
-    {
-      "type": "ims",
-      "extensions": [
-        "imzml",
-        "ibd"
-      ],
-      "parser_factory": {
-        "name": "ImzMLParser",
-        "path": "pyimzml.ImzMLParser"
-      },
-      "acq_geometry_factory": {
-        "name": "ImsGeometryFactory",
-        "path": "sm.engine.ims_geometry_factory"
-      }
-    },
-    {
-      "type": "lcms",
-      "extensions": [
-        "mzml"
-      ],
-      "parser_factory": {
-        "name": "MzMLParser",
-        "path": "sm.engine.mzml_parser"
-      },
-      "acq_geometry_factory": {
-        "name": "LcmsGeometryFactory",
-        "path": "sm.engine.lcms_geometry_factory"
-      }
-    }
-  ],
   "isotope_storage": {
     "path": "/opt/data/metaspace/isotope_storage"
   },
@@ -234,5 +198,8 @@
     "endpoint_url": "http://storage:9000",
     "access_key_id": "minioadmin",
     "secret_access_key": "minioadmin"
+  },
+  "image_storage": {
+    "bucket": "sm-image-storage-dev"
   }
 }

@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 from requests.api import post
 
 from sm.engine import molecular_db
+from sm.engine.annotation.diagnostics import del_diagnostics
 from sm.engine.annotation.job import del_jobs
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
@@ -152,6 +153,7 @@ class DatasetManager:
         """Delete all dataset related data."""
 
         self.logger.info(f'Deleting dataset: {ds.id}')
+        del_diagnostics(ds.id)
         del_jobs(ds)
         del_optical_image(self._db, ds.id)
         delete_ion_thumbnail(self._db, ds)

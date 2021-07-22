@@ -13,7 +13,7 @@ import config from '../../lib/config'
 import AdductFilter from './filter-components/AdductFilter.vue'
 import DatabaseFilter from './filter-components/DatabaseFilter.vue'
 import { SingleSelectFilterType } from '../../lib/filterTypes'
-import store from '../../store'
+import isSnapshot from '../../lib/isSnapshot'
 
 function formatFDR(fdr: number) {
   return fdr ? Math.round(fdr * 100) + '%' : ''
@@ -21,7 +21,7 @@ function formatFDR(fdr: number) {
 
 export type Level = 'annotation' | 'dataset' | 'upload' | 'projects' | 'dataset-annotation';
 
-export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName'
+export type FilterKey = 'annotationIds' | 'database' | 'datasetIds' | 'minMSM' | 'compoundName'
   | 'chemMod' | 'neutralLoss' | 'adduct' | 'mz' | 'fdrLevel'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
   | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
@@ -97,6 +97,7 @@ export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
   'debounce',
 ]
 
+// @ts-ignore
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   database: {
     type: DatabaseFilter,
@@ -105,8 +106,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation', 'dataset-annotation'],
     defaultInLevels: ['annotation'],
     initialValue: lists =>
-      lists.molecularDatabases
-        .filter(d => d.default)[0]?.id,
+      lists.molecularDatabases?.filter(d => d.default)[0]?.id,
     encoding: 'number',
     convertValueForComponent: (v) => v?.toString(),
   },
@@ -117,6 +117,19 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Select dataset',
     levels: ['annotation', 'dataset', 'dataset-annotation'],
     initialValue: undefined,
+    multiple: true,
+    encoding: 'list',
+  },
+
+  annotationIds: {
+    type: SearchableFilter,
+    name: 'Annotation',
+    description: 'Select annotation',
+    levels: ['annotation'],
+    defaultInLevels: ['annotation'],
+    hidden: () => !isSnapshot(),
+    initialValue: lists =>// @ts-ignore
+      lists.annotationIds?.value?.length > 1 ? lists.annotationIds.value : undefined,
     multiple: true,
     encoding: 'list',
   },
@@ -381,7 +394,7 @@ export const DATASET_FILTERS: FilterKey[] = [
 ]
 /** = all annotation-affecting filters - dataset-affecting filters */
 export const ANNOTATION_FILTERS: FilterKey[] = [
-  'database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample',
+  'annotationIds', 'database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample',
 ]
 /** Filters that are very specific to particular annotations and should be cleared when navigating to other annotations */
 export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = [

@@ -70,9 +70,8 @@ export default defineComponent<Props>({
     return () => {
       const {
         name, submitter, group, projects, annotationCounts, metadataJson, id,
-        isPublic, description,
+        isPublic, description, canEdit,
       } = dataset?.value || {} as any
-      const { role, id: currentUserId } = currentUser?.value || {} as CurrentUserRoleResult
       const { annotationLabel, detailLabel, projectLabel, inpFdrLvls } = props
       const showImageViewer = false
       const metadata = safeJsonParse(metadataJson) || {}
@@ -92,8 +91,6 @@ export default defineComponent<Props>({
       })
       const dsDescription = isValidTiptapJson(safeJsonParse(description))
         ? safeJsonParse(description) : null
-      const canEdit = (role === 'admin' || (currentUserId === submitter?.id
-        && (status !== 'QUEUED' && status !== 'ANNOTATING')))
       const canViewPublicationStatus = (status === 'FINISHED' && canEdit && publicationStatus?.value != null)
       const diagnosticData = reactive([
         {

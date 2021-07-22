@@ -75,9 +75,7 @@ def queue_pub(local_sm_config):
     from sm.engine import queue
 
     qname = 'annotate'
-
-    queue.SM_ANNOTATE['name'] = queue.SM_ANNOTATE['name'] + '_test'
-    queue.SM_UPDATE['name'] = queue.SM_UPDATE['name'] + '_test'
+    # Queue names are given a per-test-worker prefix in the sm_config fixture
     if qname == 'annotate':
         qdesc = queue.SM_ANNOTATE
     elif qname == 'update':

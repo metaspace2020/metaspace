@@ -37,9 +37,19 @@ type Annotation {
   offSampleProb: Float  # 0.0 = probably on-sample, 1.0 = probably off-sample
 }
 
+
+type AggregatedAnnotation {
+  ion: String!
+  dbId: Int!
+  datasetIds: [String]
+  annotations: [Annotation]
+}
+
 type CompoundInfoEntry {
   database: String!
   url: String
+  # NOTE: CompoundInfoEntry.databaseId is the molecule's ID from the database (e.g. HMDB0000001). It is not the
+  # METASPACE-assigned ID of the database. To get the ID of the database itself, see `Annotation.databaseId`.
   databaseId: String!
 }
 
@@ -118,6 +128,7 @@ input AnnotationFilter {
   hasChemMod: Boolean # @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports is-null/non-null queries is built")
   hasHiddenAdduct: Boolean # @deprecated(reason: "Do not depend on this filter - it is intended to only be a temporary measure until a more flexible filter API that supports multi-value queries is built")
   isobaricWith: String            # Should be an ionFormula
+  annotationId: String
 }
 
 input ColocalizationCoeffFilter {
@@ -135,6 +146,12 @@ type Query {
                  filter: AnnotationFilter = {},
                  datasetFilter: DatasetFilter = {},
                  simpleQuery: String): [Annotation]
+
+  allAggregatedAnnotations(orderBy: AnnotationOrderBy = ORDER_BY_MSM,
+                 sortingOrder: SortingOrder = DESCENDING,
+                 filter: AnnotationFilter = {},
+                 datasetFilter: DatasetFilter = {},
+                 simpleQuery: String): [AggregatedAnnotation]
 
   countAnnotations(filter: AnnotationFilter = {},
                    datasetFilter: DatasetFilter = {},

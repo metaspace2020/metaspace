@@ -1,14 +1,19 @@
-import io
+from io import BytesIO
 import json
 import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
-from typing import List, Tuple, Callable, Dict
+from typing import List, Tuple, Callable, Dict, Protocol, Union
 
 import numpy as np
+from botocore.exceptions import ClientError
 from scipy.ndimage import zoom
 import PIL.Image
+
+from sm.engine.config import SMConfig
+from sm.engine.storage import get_s3_resource, create_bucket, get_s3_client
+from sm.engine.utils.retry_on_exception import retry_on_exception
 
 try:
     from mypy_boto3_s3.service_resource import S3ServiceResource
@@ -17,8 +22,6 @@ except ImportError:
     S3ServiceResource = object
     S3Client = object
 
-from sm.engine.config import SMConfig
-from sm.engine.storage import get_s3_resource, create_bucket, get_s3_client
 
 logger = logging.getLogger('engine')
 
@@ -27,12 +30,14 @@ class ImageType(str, Enum):
     ISO = 'iso'
     OPTICAL = 'optical'
     THUMB = 'thumb'
+    DIAG = 'diag'
 
 
 class ImageStorage:
     ISO = ImageType.ISO
     OPTICAL = ImageType.OPTICAL
     THUMB = ImageType.THUMB
+    DIAG = ImageType.DIAG
 
     def __init__(self, sm_config: Dict = None):
         sm_config = sm_config or SMConfig.get_conf()
@@ -53,7 +58,9 @@ class ImageStorage:
     def _gen_id() -> str:
         return uuid.uuid4().hex
 
-    def post_image(self, image_type: ImageType, ds_id: str, image_bytes: bytes) -> str:
+    def post_image(
+        self, image_type: ImageType, ds_id: str, image_bytes: Union[bytes, BytesIO]
+    ) -> str:
         img_id = self._gen_id()
         obj = self._get_object(image_type, ds_id, img_id)
         obj.put(Body=image_bytes)
@@ -66,6 +73,13 @@ class ImageStorage:
     def delete_image(self, image_type: ImageType, ds_id: str, image_id: str):
         obj = self._get_object(image_type, ds_id, image_id)
         obj.delete()
+
+    def delete_images(self, image_type: ImageType, ds_id: str, image_ids: List[str]):
+        with ThreadPoolExecutor() as executor:
+            for _ in executor.map(
+                lambda image_id: self.delete_image(image_type, ds_id, image_id), image_ids
+            ):
+                pass
 
     def get_image_url(self, image_type: ImageType, ds_id: str, image_id: str) -> str:
         endpoint = self.s3_client.meta.endpoint_url
@@ -133,7 +147,7 @@ class ImageStorage:
 
         def process_img(img_id: str, idx, do_setup=False):
             img_bytes = self.get_image(self.ISO, ds_id, img_id)
-            img = PIL.Image.open(io.BytesIO(img_bytes))
+            img = PIL.Image.open(BytesIO(img_bytes))
             if do_setup:
                 setup_shared_vals(img)
 
@@ -165,20 +179,35 @@ class ImageStorage:
         return value, mask, (h, w)
 
 
+class _GetIonImagesForAnalysis(Protocol):
+    def __call__(
+        self,
+        ds_id: str,
+        image_ids: List[str],
+        hotspot_percentile: int = 99,
+        max_size: Tuple[int, int] = None,
+        max_mem_mb: int = 2048,
+    ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int]]:
+        ...
+
+
 # pylint: disable=invalid-name
 _instance: ImageStorage
 
 ISO = ImageType.ISO
 OPTICAL = ImageType.OPTICAL
 THUMB = ImageType.THUMB
+DIAG = ImageType.DIAG
 
 get_image: Callable[[ImageType, str, str], bytes]
-post_image: Callable[[ImageType, str, bytes], str]
+post_image: Callable[[ImageType, str, Union[bytes, BytesIO]], str]
 delete_image: Callable[[ImageType, str, str], None]
+delete_images: Callable[[ImageType, str, List[str]], None]
 get_image_url: Callable[[ImageType, str, str], str]
-get_ion_images_for_analysis = None
+get_ion_images_for_analysis: _GetIonImagesForAnalysis
 
 
+@retry_on_exception(ClientError)
 def _configure_bucket(sm_config: Dict):
     bucket_name = sm_config['image_storage']['bucket']
     logger.info(f'Configuring image storage bucket: {bucket_name}')
@@ -218,11 +247,12 @@ def init(sm_config: Dict):
     _configure_bucket(sm_config)
 
     # pylint: disable=global-statement
-    global _instance, get_image, post_image, delete_image, get_image_url
+    global _instance, get_image, post_image, delete_image, delete_images, get_image_url
     global get_ion_images_for_analysis
     _instance = ImageStorage(sm_config)
     get_image = _instance.get_image
     post_image = _instance.post_image
     delete_image = _instance.delete_image
+    delete_images = _instance.delete_images
     get_image_url = _instance.get_image_url
     get_ion_images_for_analysis = _instance.get_ion_images_for_analysis

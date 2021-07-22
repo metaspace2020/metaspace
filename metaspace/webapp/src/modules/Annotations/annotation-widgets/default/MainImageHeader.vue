@@ -3,7 +3,7 @@
     slot="title"
     class="w-full"
   >
-    <span>
+    <span v-if="!hideOptions">
       Image viewer
     </span>
     <div
@@ -14,8 +14,15 @@
         placement="bottom"
         trigger="click"
       >
-        <ion-image-settings @scaleBarColorChange="onScaleBarColorChange" />
+        <ion-image-settings
+          :default-colormap="colormap"
+          :default-scale-type="scaleType"
+          @colormapChange="onColormapChange"
+          @scaleTypeChange="onScaleTypeChange"
+          @scaleBarColorChange="onScaleBarColorChange"
+        />
         <button
+          v-if="!hideOptions"
           slot="reference"
           class="button-reset av-icon-button"
           @click="$event.stopPropagation()"
@@ -29,6 +36,7 @@
       </el-popover>
 
       <button
+        v-if="!hideOptions"
         class="button-reset av-icon-button"
         title="Reset image zoom and offsets"
         @click="resetViewport"
@@ -42,7 +50,10 @@
         title="Show/hide optical image"
         @click="toggleOpticalImage"
       >
-        <img src="../../../../assets/microscope-icon.png">
+        <img
+          class="setting-icon"
+          src="../../../../assets/microscope-icon.png"
+        >
       </button>
     </div>
     <fade-transition v-if="multiImageFlag">
@@ -85,6 +96,12 @@ export default class MainImageHeader extends Vue {
     @Prop({ required: true, type: Boolean })
     showOpticalImage!: boolean;
 
+    @Prop({ type: String })
+    colormap: string | undefined;
+
+    @Prop({ type: String })
+    scaleType: string | undefined;
+
     @Prop({ required: true, type: Function })
     resetViewport!: Function;
 
@@ -94,12 +111,23 @@ export default class MainImageHeader extends Vue {
     @Prop({ required: true, type: Boolean })
     isActive!: boolean
 
+    @Prop({ type: Boolean })
+    hideOptions: boolean | undefined
+
     get multiImageFlag() {
       return config.features.multiple_ion_images
     }
 
     onScaleBarColorChange(color: string | null) {
       this.$emit('scaleBarColorChange', color)
+    }
+
+    onColormapChange(color: string | null) {
+      this.$emit('colormapChange', color)
+    }
+
+    onScaleTypeChange(scaleType: string | null) {
+      this.$emit('scaleTypeChange', scaleType)
     }
 }
 </script>

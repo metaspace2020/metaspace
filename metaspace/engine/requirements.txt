@@ -13,7 +13,7 @@ pyyaml>=5.1
 elasticsearch-dsl>=5.0.0,<6.0.0
 pika==0.13.1
 bottle
-Pillow==8.1.1
+Pillow==8.2.0
 numpy>=1.19.2
 scipy>=1.5.2
 pandas>=1.1.3

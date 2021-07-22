@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from typing import List, Dict
 
 import pandas as pd
@@ -113,10 +113,14 @@ def get_moldb_centroids(
     moldbs: List[InputMolDb],
     debug_validate=False,
     use_cache=True,
+    use_db_mutex=True,
 ):
     moldb_cache = CentroidsCacheEntry(executor, sm_storage, ds_config, moldbs)
 
-    with moldb_cache.lock():
+    with ExitStack() as stack:
+        if use_db_mutex:
+            stack.enter_context(moldb_cache.lock())
+
         if use_cache:
             cached_val = moldb_cache.load()
         else:

@@ -9,7 +9,7 @@ from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from shutil import copyfileobj
-from typing import Optional, List, Iterable, Union, Tuple
+from typing import Optional, List, Iterable, Union, Tuple, Any, TYPE_CHECKING
 from urllib.parse import urlparse
 
 import numpy as np
@@ -18,41 +18,37 @@ import requests
 from PIL import Image
 
 from metaspace.image_processing import clip_hotspots
+from metaspace.types import (
+    Metadata,
+    DSConfig,
+    make_metadata,
+    Polarity,
+    DatasetDownloadFile,
+    DatasetDownload,
+    DatasetUser,
+    DatasetGroup,
+    DatasetProject,
+    DatasetDiagnostic,
+)
 
 try:
-    from typing import TypedDict  # Requires Python 3.8
+    from typing import TypedDict, Literal  # Requires Python 3.8
+
+    _TIC_Literal = Literal['TIC']
 except ImportError:
     TypedDict = dict
+    _TIC_Literal = str
 
 try:
     from pandas import json_normalize  # Only in Pandas 1.0.0+
 except ImportError:
     from pandas.io.json import json_normalize  # Logs DeprecationWarning if used in Pandas 1.0.0+
 
+if TYPE_CHECKING:
+    # Cannot import directly due to circular imports
+    from metaspace.projects_client import ProjectsClient
 
 DEFAULT_DATABASE = ('HMDB', 'v4')
-
-
-class DatasetDownloadLicense(TypedDict):
-    code: str
-    name: str
-    link: Optional[str]
-
-
-class DatasetDownloadContributor(TypedDict):
-    name: Optional[str]
-    institution: Optional[str]
-
-
-class DatasetDownloadFile(TypedDict):
-    filename: str
-    link: str
-
-
-class DatasetDownload(TypedDict):
-    license: DatasetDownloadLicense
-    contributors: List[DatasetDownloadContributor]
-    files: List[DatasetDownloadFile]
 
 
 class MetaspaceException(Exception):
@@ -60,10 +56,11 @@ class MetaspaceException(Exception):
 
 
 class GraphQLException(MetaspaceException):
-    def __init__(self, json, message):
-        super().__init__(message)
+    def __init__(self, json, message, type=None):
+        super().__init__(f"{type}: {message}" if type is not None else message)
         self.json = json
         self.message = message
+        self.type = type
 
 
 class BadRequestException(MetaspaceException):
@@ -92,6 +89,16 @@ def _extract_data(res):
         return res_json['data']
     else:
         if 'errors' in res_json:
+            try:
+                # Some operations raise user-correctable errors with JSON messages that have a
+                # user-friendly 'message' field and a 'type' field for programmatic recognition.
+                json_error = json.loads(res_json['errors'][0]['message'])
+            except json.JSONDecodeError:
+                json_error = None
+
+            if json_error is not None and 'type' in json_error and 'message' in json_error:
+                raise GraphQLException(res_json, json_error['message'], json_error['type'])
+
             pprint.pprint(res_json['errors'])
             raise GraphQLException(res_json, res_json['errors'][0]['message'])
         elif 'message' in res_json:
@@ -195,8 +202,15 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
         url = f'{companion_url}/s3/multipart/{upload_id}/complete?{query}'
         data = {'parts': [{'PartNumber': part, 'ETag': etag} for part, etag in etags]}
         resp_data = send_request(url, 'POST', json=data, headers=headers)
+        # Decode bucket from returned URL
         location = urllib.parse.unquote(resp_data['location'])
-        (bucket,) = re.findall(r'https://([^.]+)', location)
+        dest_url = urllib.parse.urlparse(location)
+        if '.' in dest_url.hostname:
+            # S3 URL e.g. https://sm-engine-upload.s3.eu-west-1.amazonaws.com/
+            bucket = dest_url.hostname.split('.')[0]
+        else:
+            # Minio URL e.g. http://storage:9000/sm-engine-dev/
+            bucket = dest_url.path[1:].split('/')[0]
         return bucket
 
     key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers)
@@ -220,7 +234,47 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
     return bucket, key
 
 
+def _dataset_upload(imzml_fn, ibd_fn, companion_url):
+    assert Path(imzml_fn).exists(), f'Could not find .imzML file: {imzml_fn}'
+    assert Path(ibd_fn).exists(), f'Could not find .ibd file: {ibd_fn}'
+    # Get UUID for upload
+    url = f'{companion_url}/s3/uuid'
+    resp = requests.get(url)
+    resp.raise_for_status()
+    headers = resp.json()
+
+    for fn in [imzml_fn, ibd_fn]:
+        bucket, key = multipart_upload(
+            fn,
+            companion_url,
+            'application/octet-stream',
+            headers=headers,
+        )
+    input_path = f's3a://{bucket}/{key.rsplit("/", 1)[0]}'
+    return input_path
+
+
+def _str_to_tiptap_markup(text):
+    """Convert a plain text string into a TipTap-compatible markup structure"""
+    return json.dumps(
+        {
+            'type': 'doc',
+            'content': [
+                {'type': 'paragraph', 'content': [{'type': 'text', 'text': paragraph}]}
+                for paragraph in text.split('\n\n')
+            ],
+        }
+    )
+
+
 class GraphQLClient(object):
+    """Client for low-level access to the METASPACE API, for advanced operations that aren't
+    supported by :py:class:`metaspace.sm_annotation_utils.SMInstance`.
+
+    Use :py:attr:`query` for calling GraphQL directly.
+    An editor for composing GraphQL API queries can be found at https://metaspace2020.eu/graphql
+    """
+
     def __init__(self, config):
         self._config = config
         self.host = self._config['host']
@@ -263,16 +317,6 @@ class GraphQLClient(object):
         )
         res.raise_for_status()
         return res.text
-
-    def get_submitter_id(self):
-        query = """
-        query {
-          currentUser {
-            id
-          }
-        }
-        """
-        return self.query(query)['currentUser']['id']
 
     def get_primary_group_id(self):
         query = """
@@ -319,6 +363,7 @@ class GraphQLClient(object):
         name
         uploadDT
         submitter {
+          id
           name
         }
         group {
@@ -330,7 +375,9 @@ class GraphQLClient(object):
           name
         }
         projects {
-            name
+          id
+          name
+          publicationStatus
         }
         polarity
         ionisationSource
@@ -373,6 +420,8 @@ class GraphQLClient(object):
         possibleCompounds { name information { url databaseId } }
         isotopeImages { mz url minIntensity maxIntensity totalIntensity }
     """
+
+    MOLECULAR_DB_FIELDS = "id name version isPublic archived default"
 
     def getDataset(self, datasetId):
         query = f"""
@@ -521,13 +570,7 @@ class GraphQLClient(object):
         return self.query(query, variables)
 
     def get_visible_databases(self):
-        query = """
-            {
-              allMolecularDBs {
-                id name version isPublic archived default
-              }
-            }
-        """
+        query = f"query allMolecularDBs {{ allMolecularDBs {{ {self.MOLECULAR_DB_FIELDS} }} }}"
         result = self.query(query)
         return result['allMolecularDBs']
 
@@ -591,33 +634,7 @@ class GraphQLClient(object):
         resp.raise_for_status()
         return resp.json()
 
-    def create_dataset(
-        self,
-        imzml_fn,
-        ibd_fn,
-        dataset_name,
-        metadata,
-        is_public,
-        databases,
-        projects,
-        adducts,
-        ppm=None,
-        ds_id=None,
-    ):
-        headers = self._get_dataset_upload_uuid()
-        submitter_id = self.get_submitter_id()
-        primary_group_id = self.get_primary_group_id()
-        database_ids = databases and [self.map_database_to_id(db) for db in databases]
-
-        for fn in [imzml_fn, ibd_fn]:
-            bucket, key = multipart_upload(
-                fn,
-                self._config['dataset_upload_url'],
-                'application/octet-stream',
-                headers=headers,
-            )
-        data_path = f's3a://{bucket}/{key.rsplit("/", 1)[0]}'
-
+    def create_dataset(self, input_params, ds_id=None):
         query = """
             mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int, $useLithops: Boolean) {
                 createDataset(
@@ -630,21 +647,10 @@ class GraphQLClient(object):
         """
         variables = {
             'id': ds_id,
-            'input': {
-                'name': dataset_name,
-                'inputPath': data_path,
-                'isPublic': is_public,
-                'databaseIds': database_ids,
-                'adducts': adducts,
-                'ppm': ppm,
-                'submitterId': submitter_id,
-                'groupId': primary_group_id,
-                'projectIds': projects,
-                'metadataJson': metadata,
-            },
+            'input': input_params,
             'useLithops': True,
         }
-        return self.query(query, variables)
+        return self.query(query, variables)['createDataset']
 
     def delete_dataset(self, ds_id, force=False):
         query = """
@@ -661,10 +667,7 @@ class GraphQLClient(object):
     def update_dataset(
         self,
         ds_id,
-        name=None,
-        databases=None,
-        adducts=None,
-        ppm=None,
+        input=None,
         reprocess=False,
         force=False,
         priority=1,
@@ -681,26 +684,16 @@ class GraphQLClient(object):
                     )
             }
         """
-        input_field = {}
-        if name:
-            input_field['name'] = name
 
-        if databases:
-            input_field['databaseIds'] = [self.map_database_to_id(db) for db in databases]
-
-        if adducts:
-            input_field['adducts'] = adducts
-        if ppm:
-            input_field['ppm'] = ppm
         variables = {
             'id': ds_id,
-            'input': input_field,
+            'input': input,
             'priority': priority,
             'reprocess': reprocess,
             'force': force,
         }
 
-        return self.query(query, variables)
+        self.query(query, variables)
 
     def create_database(
         self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
@@ -750,11 +743,21 @@ class GraphQLClient(object):
         variables = {"databaseId": id}
         return self.query(query, variables)['deleteMolecularDB']
 
+    def get_dataset_diagnostics(self, ds_id):
+        results = self.query(
+            f"""query getDatasetDiagnostics($datasetId: String!) {{
+          dataset(id: $datasetId) {{ 
+            diagnostics {{
+              id type jobId data
+              database {{ {self.MOLECULAR_DB_FIELDS} }}
+              images {{ key index url format }}
+            }}
+          }}
+        }}""",
+            {'datasetId': ds_id},
+        )
 
-def ion(r):
-    from pyMSpec.pyisocalc.tools import normalise_sf
-
-    return (r.ds_id, normalise_sf(r.sf), r.adduct, 1)
+        return results['dataset'].get('diagnostics')
 
 
 class IsotopeImages(object):
@@ -845,25 +848,16 @@ class OpticalImage(object):
         )
 
 
-class Metadata(object):
-    def __init__(self, json_metadata):
-        self._json = json_metadata
-
-    @property
-    def json(self):
-        return self._json
-
-
-NYI = Exception('NOT IMPLEMENTED YET')
-
-
 class SMDataset(object):
     def __init__(self, _info, gqclient):
         self._info = _info
         self._gqclient: GraphQLClient = gqclient
         self._config = json.loads(self._info['configJson'])
-        self._metadata = Metadata(self._info['metadataJson'])
+        self._metadata = make_metadata(self._info['metadataJson'])
         self._session = requests.session()
+        self._databases = [MolecularDB(db) for db in self._info['databases']]
+        self._diagnostics = None
+        self._diagnostic_images = {}
 
     @property
     def id(self):
@@ -875,6 +869,8 @@ class SMDataset(object):
 
     @property
     def s3dir(self):
+        """The location of the uploaded imzML file. Not publicly accessible, but this can be used
+        in the `input_path` parameter to `SMInstance.submit_dataset` to clone a dataset."""
         return self._info['inputPath']
 
     def __repr__(self):
@@ -999,38 +995,69 @@ class SMDataset(object):
         )
 
     @property
-    def metadata(self):
+    def metadata(self) -> Metadata:
         return self._metadata
 
     @property
-    def config(self):
+    def config(self) -> DSConfig:
         return self._config
 
     @property
-    def adducts(self):
+    def adducts(self) -> List[str]:
         return self._config['isotope_generation']['adducts']
 
     @property
-    def polarity(self):
-        return 'Positive' if self._config['isotope_generation']['charge'] > 0 else 'Negative'
+    def polarity(self) -> Polarity:
+        if self._config['isotope_generation']['charge'] > 0:
+            return 'Positive'
+        return 'Negative'
 
     @property
-    def database_details(self):
-        return self._info['databases']
+    def database_details(self) -> List['MolecularDB']:
+        """A list of all databases that have been used to annotate this dataset"""
+        return self._databases
 
     @property
     def databases(self):
-        """DEPRECATED. Use 'databases_details' instead."""
-        return [d['name'] for d in self.database_details]
+        """DEPRECATED. Use 'databases_details' instead.
+
+        :meta private:
+        """
+        return [d.name for d in self.database_details]
 
     @property
     def database(self):
-        """DEPRECATED. Use 'databases_details' instead."""
+        """DEPRECATED. Use 'databases_details' instead.
+
+        :meta private:
+        """
         return self.databases[0]
 
     @property
     def status(self):
+        """'QUEUED', 'ANNOTATING', 'FINISHED', or 'FAILED'"""
         return self._info['status']
+
+    @property
+    def submitter(self) -> DatasetUser:
+        """Details about the submitter of the dataset"""
+        return self._info['submitter']
+
+    @property
+    def group(self) -> Optional[DatasetGroup]:
+        """The group (lab/institute/team/etc.) that this dataset belongs to"""
+        return self._info['group']
+
+    @property
+    def projects(self) -> List[DatasetProject]:
+        """The list of projects that include this project"""
+        return self._info['projects']
+
+    @property
+    def principal_investigator(self) -> Optional[str]:
+        """This field is usually only used for attributing the submitter's PI when the submitter
+        is not associated with any group"""
+        return (self._info['principalInvestigator'] or {}).get('name')
 
     @property
     def _baseurl(self):
@@ -1055,6 +1082,7 @@ class SMDataset(object):
                                          are usually lower quality copies of the first isotopic ion image.
         :param bool  scale_intensity:    When True, the output values will be scaled to the intensity range of the original data.
                                          When False, the output values will be in the 0.0 to 1.0 range.
+                                         When 'TIC', the output values will be scaled by the TIC and will be in the 0.0 to 1.0 range.
         :param bool  hotspot_clipping:   When True, apply hotspot clipping. Recommended if the images will be used for visualisation.
                                          This is required to get ion images that match the METASPACE website
         :param str   neutral_loss:
@@ -1104,7 +1132,16 @@ class SMDataset(object):
         image_mzs = [r['mz'] for r in image_metadata]
         image_urls = [r['url'] for r in image_metadata]
 
-        if scale_intensity:
+        if isinstance(scale_intensity, np.ndarray):
+            scale_image = scale_intensity
+            scale_intensity = True
+        elif scale_intensity == 'TIC':
+            scale_image = self.tic_image()
+            scale_intensity = True
+        else:
+            scale_image = None
+
+        if scale_intensity is True:
             non_empty_images = [i for i in images if i is not None]
             if non_empty_images:
                 shape = non_empty_images[0].shape
@@ -1115,6 +1152,13 @@ class SMDataset(object):
                         lo = float(image_metadata[i]['minIntensity'])
                         hi = float(image_metadata[i]['maxIntensity'])
                         images[i] = lo + images[i] * (hi - lo)
+
+        if scale_image is not None:
+            for i in range(len(images)):
+                if images[i] is not None:
+                    nonzero = scale_image > 0  # Handle NaNs and div-by-zero warnings
+                    images[i] = np.divide(images[i], scale_image, where=nonzero)
+                    images[i][~nonzero] = 0
 
         if hotspot_clipping:
             for i in range(len(images)):
@@ -1131,7 +1175,7 @@ class SMDataset(object):
         fdr: float = 0.1,
         database: Union[int, str, Tuple[str, str]] = DEFAULT_DATABASE,
         only_first_isotope: bool = False,
-        scale_intensity: bool = True,
+        scale_intensity: Union[bool, _TIC_Literal, np.ndarray] = True,
         hotspot_clipping: bool = False,
         **annotation_filter,
     ) -> List[IsotopeImages]:
@@ -1145,6 +1189,8 @@ class SMDataset(object):
                 isotopes are usually lower quality copies of the first isotopic ion image.
             scale_intensity: When True, the output values will be scaled to the intensity range of
                 the original data. When False, the output values will be in the 0.0 to 1.0 range.
+                When 'TIC', the output values will be scaled by the TIC and will be in the
+                0.0 to 1.0 range.
             hotspot_clipping:   When True, apply hotspot clipping. Recommended if the images will
                 be used for visualisation. This is required to get ion images that match the
                 METASPACE website
@@ -1152,6 +1198,9 @@ class SMDataset(object):
         Returns:
             list of isotope images
         """
+        if not isinstance(scale_intensity, np.ndarray) and scale_intensity == 'TIC':
+            scale_intensity = self.tic_image()
+
         with ThreadPoolExecutor() as pool:
 
             def get_annotation_images(row):
@@ -1241,34 +1290,119 @@ class SMDataset(object):
             with ThreadPoolExecutor() as ex:
                 ex.map(download_link, link['files'])
 
+    def _get_diagnostic_image(self, image):
+        key = (image['url'], image['format'])
+        if key not in self._diagnostic_images:
+            try:
+                raw = BytesIO(self._session.get(image['url']).content)
+            except Exception:
+                # Retry once in case of network error due to excessive parallelism
+                raw = BytesIO(self._session.get(image['url']).content)
+
+            if format == 'PNG':
+                import matplotlib.image as mpimg
+
+                image_content = mpimg.imread(raw)
+            else:
+                image_content = np.load(raw, allow_pickle=False)  # type: ignore
+
+            self._diagnostic_images[key] = image_content
+        return self._diagnostic_images[key]
+
+    def _mixin_diagnostic_images(self, images):
+        """Update `images` to include the image content"""
+        with ThreadPoolExecutor() as ex:
+            for image, image_content in zip(images, ex.map(self._get_diagnostic_image, images)):
+                image['image'] = image_content
+
+    def diagnostics(self, include_images=True) -> List[DatasetDiagnostic]:
+        """Retrieves all diagnostic information and additional metadata for the dataset.
+
+        :param include_images: (default True) whether to download and include images in the results
+        """
+        if self._diagnostics is None:
+            self._diagnostics = self._gqclient.get_dataset_diagnostics(self.id)
+            assert self._diagnostics is not None, 'Dataset not found'
+            # Convert databases to MolecularDB instances
+            for diag in self._diagnostics:
+                if diag['database'] is not None:
+                    diag['database'] = MolecularDB(diag['database'])
+
+        diagnostics = deepcopy(self._diagnostics)
+
+        if include_images:
+            self._mixin_diagnostic_images(image for diag in diagnostics for image in diag['images'])
+
+        return diagnostics
+
+    def diagnostic(self, type: str, database=None, include_images=True) -> DatasetDiagnostic:
+        """Retrieves a specific item from the dataset's diagnostic information / additional metadata
+        or raises an exception if it wasn't found
+        :param type: The type of diagnostic/metadata. Valid values:
+        type='TIC'
+            `data` contains information about the Total Ion Current across the dataset
+            `images` contains an image with the TIC for each spectrum
+        type='IMZML_METADATA'
+            `data` contains a summary of metadata from the ImzML file header
+            `images` contains a boolean image of which pixels had spectra in the input data.
+            Useful for non-square acquisition areas.
+        :param database: The ID or (name, version) of the database. Needed for database-specific
+            metadata types (currently not used)
+        :param include_images: (default True) whether to download and include images in the results
+        """
+
+        database_id = database and self._gqclient.map_database_to_id(database)
+        for diag in self.diagnostics(include_images=False):
+            if diag['type'] == type and (diag['database'] or {}).get('id') == database_id:
+                if include_images and diag['images']:
+                    self._mixin_diagnostic_images(diag['images'])
+                return diag
+
+        raise KeyError(
+            f'Could not find diagnostic item with type={repr(type)}, database={repr(database)}'
+        )
+
+    def tic_image(self) -> np.ndarray:
+        """Returns a numpy array with the TIC value for each spectrum"""
+        try:
+            diag = self.diagnostic('TIC', include_images=True)
+            return [image['image'] for image in diag['images'] if image['key'] == 'TIC'][0]
+        except Exception:
+            raise KeyError('TIC image not found - the dataset is likely still being processed')
+
 
 class MolecularDB:
-    def __init__(self, info, gqclient):
+    def __init__(self, info):
         self._info = info
-        self._gqclient = gqclient
 
     @property
-    def id(self):
+    def id(self) -> int:
         return self._info['id']
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._info['name']
 
     @property
-    def version(self):
+    def version(self) -> str:
         return self._info['version']
 
     @property
-    def is_public(self):
+    def is_public(self) -> bool:
         return self._info['isPublic']
 
     @property
-    def archived(self):
+    def archived(self) -> bool:
         return self._info['archived']
 
     def __repr__(self):
         return f'<{self.id}:{self.name}:{self.version}>'
+
+    def __getitem__(self, item):
+        """Compatibility shim for accessing properties as dictionary entries, to keep compatibility
+        with the TypedDict implementation in `DatabaseDetails`. New code should use the
+        class properties directly instead of accessing this like a dict."""
+        return self._info[item]
 
 
 class SMInstance(object):
@@ -1304,6 +1438,12 @@ class SMInstance(object):
         return "SMInstance({})".format(self._config['graphql_url'])
 
     def login(self, email=None, password=None, api_key=None):
+        """
+        DEPRECATED. Avoid calling this directly - pass credentials to SMInstance directly instead.
+        This function is kept for backwards compatibility
+
+        :meta private:
+        """
         assert (
             email and password
         ) or api_key, 'Either email and password, or api_key must be provided'
@@ -1314,19 +1454,26 @@ class SMInstance(object):
         assert self._gqclient.logged_in, 'Login failed'
 
     def reconnect(self):
+        """:meta private:"""
         self._gqclient = GraphQLClient(self._config)
         self._es_client = None
 
     def logged_in(self):
+        """:meta private:"""
         return self._gqclient.logged_in
 
     @property
     def projects(self):
+        """
+        Sub-object containing methods for interacting with projects.
+
+        :rtype: metaspace.projects_client.ProjectsClient
+        """
         from metaspace.projects_client import ProjectsClient
 
         return ProjectsClient(self._gqclient)
 
-    def check_projects(self, project_ids):
+    def _check_projects(self, project_ids):
         wrong_project_ids = []
         for project_id in project_ids:
             if self.projects.get_project(project_id) is None:
@@ -1335,6 +1482,12 @@ class SMInstance(object):
             raise Exception(f'The next project_ids is not valid: {", ".join(wrong_project_ids)}')
 
     def dataset(self, name=None, id=None) -> SMDataset:
+        """Retrieve a dataset by id (preferred) or name.
+
+        You can get a dataset's ID by viewing its annotations online and looking at the URL, e.g.
+        in this URL: :samp:`metaspace2020.eu/annotations?ds={2016-09-22_11h16m17s}`
+        the dataset ID is ``2016-09-22_11h16m17s``
+        """
         if id:
             return SMDataset(self._gqclient.getDataset(id), self._gqclient)
         elif name:
@@ -1342,24 +1495,70 @@ class SMInstance(object):
         else:
             raise Exception("either name or id must be provided")
 
-    def datasets(self, nameMask='', idMask='', **kwargs) -> List[SMDataset]:
+    def datasets(
+        self,
+        nameMask: Optional[str] = None,
+        idMask: Union[str, List[str], None] = None,
+        *,
+        submitter_id: Optional[str] = None,
+        group_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+        polarity: Optional[Polarity] = None,
+        ionisation_source: Optional[str] = None,
+        analyzer_type: Optional[str] = None,
+        maldi_matrix: Optional[str] = None,
+        organism: Optional[str] = None,
+        **kwargs,
+    ) -> List[SMDataset]:
+        """
+        Search for datasets that match the given criteria. If no criteria are given, it will
+        return all accessible datasets on METASPACE.
+
+        :param nameMask: Search string to be applied to the dataset name
+        :param idMask: Dataset ID or list of IDs
+        :param submitter_id: User ID of the submitter
+        :param group_id:
+        :param project_id:
+        :param polarity: 'Positive' or 'Negative'
+        :param ionisation_source:
+        :param analyzer_type:
+        :param maldi_matrix:
+        :param organism:
+        :return:
+        """
         datasetFilter = kwargs.copy()
-        if nameMask != '':
+        if nameMask is not None:
             datasetFilter['name'] = nameMask
-        if idMask != '':
+        if idMask is not None:
             datasetFilter['ids'] = idMask if isinstance(idMask, str) else "|".join(idMask)
+        if submitter_id is not None:
+            datasetFilter['submitter'] = submitter_id
+        if group_id is not None:
+            datasetFilter['group'] = group_id
+        if project_id is not None:
+            datasetFilter['project'] = project_id
+        if polarity is not None:
+            datasetFilter['polarity'] = polarity.upper()
+        if ionisation_source is not None:
+            datasetFilter['ionisationSource'] = ionisation_source
+        if analyzer_type is not None:
+            datasetFilter['analyzerType'] = analyzer_type
+        if maldi_matrix is not None:
+            datasetFilter['maldiMatrix'] = maldi_matrix
+        if organism is not None:
+            datasetFilter['organism'] = organism
 
         return [
             SMDataset(info, self._gqclient) for info in self._gqclient.getDatasets(datasetFilter)
         ]
 
-    def all_adducts(self):
-        raise NYI
-
     def metadata(self, datasets):
         """
+        DEPRECATED - SMInstance.datasets should be preferred
         Pandas dataframe for a subset of datasets
         where rows are flattened metadata JSON objects
+
+        :meta private:
         """
         df = json_normalize([d.metadata.json for d in datasets])
         df.index = [d.name for d in datasets]
@@ -1370,6 +1569,8 @@ class SMInstance(object):
         DEPRECATED
         This function does not work as previously described, and is kept only for backwards compatibility.
         Use sm.dataset(id='...').results() or sm.dataset(id='...').annotations() instead.
+
+        :meta private:
         """
         records = self._gqclient.getAnnotations(
             annotationFilter={'database': db_name, 'fdrLevel': fdr}, datasetFilter=datasetFilter
@@ -1392,6 +1593,13 @@ class SMInstance(object):
         )
 
     def get_metadata(self, datasetFilter={}):
+        """
+        DEPRECATED - SMInstance.datasets should be preferred
+        Pandas dataframe for a subset of datasets
+        where rows are flattened metadata JSON objects
+
+        :meta private:
+        """
         datasets = self._gqclient.getDatasets(datasetFilter=datasetFilter)
         df = pd.concat(
             [
@@ -1405,29 +1613,69 @@ class SMInstance(object):
 
     def submit_dataset(
         self,
-        imzml_fn: str,
-        ibd_fn: str,
-        dataset_name: str,
-        metadata: str,
+        imzml_fn: Optional[str],
+        ibd_fn: Optional[str],
+        name: str,
+        metadata: Union[str, dict],
         is_public: bool,
-        mol_dbs: List[str],
-        project_ids: List[str] = [],
-        adducts: List[str] = None,
-    ) -> dict:
-        """Submit a dataset for processing in Metaspace.
+        databases: List[Union[int, str, Tuple[str, str]]] = [DEFAULT_DATABASE],
+        *,
+        project_ids: Optional[List[str]] = None,
+        adducts: Optional[List[str]] = None,
+        neutral_losses: Optional[List[str]] = None,
+        chem_mods: Optional[List[str]] = None,
+        ppm: Optional[float] = None,
+        num_isotopic_peaks: Optional[int] = None,
+        decoy_sample_size: Optional[int] = None,
+        analysis_version: Optional[int] = None,
+        input_path: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> str:
+        """Submit a dataset for processing in METASPACE.
 
-        Args:
-            imzml_fn: imzml file name.
-            ibd_fn: ibd file name.
-            dataset_name: Dataset name.
-            metadata: Dict based metadata.
-            is_public: Make dataset public or not.
-            mol_dbs: List of molecular databases.
-            project_ids: List of project IDs that will contain this dataset.
-            adducts: List of adducts.
+        :param imzml_fn: Path to the imzML file to upload
+        :param ibd_fn: Path to the ibd file to upload
+        :param name: New dataset name
+        :param metadata: A JSON string or Python dict containing metadata. This must exactly follow
+            the expected format - see the `submit dataset example notebook`_.
+
+        :param is_public: If True, the dataset will be publicly visible.
+            If False, it will only be visible to yourself, other members of your Group,
+            METASPACE administrators, and members of any Projects you add it to
+        :param databases: List of databases to process with, either as IDs or (name, version)
+            tuples, e.g. [22, ('LipidMaps', '2017-12-12')]
+        :param project_ids: A list of project IDs to add this dataset to.
+        :param adducts: List of adducts. e.g. ['-H', '+Cl']
+            Normal adducts should be plus or minus followed by an element.
+            For radical ions/cations, use the special strings '[M]+' or '[M]-'.
+        :param neutral_losses: List of neutral losses, e.g. ['-H2O', '-CO2']
+        :param chem_mods:
+        :param ppm: m/z tolerance (in ppm) for generating ion images (default 3.0)
+        :param num_isotopic_peaks: Number of isotopic peaks to search for (default 4)
+        :param decoy_sample_size: Number of implausible adducts to use for generating the decoy
+            search database (default 20)
+        :param analysis_version:
+        :param input_path: To clone an existing dataset, specify input_path using the value of the
+            existing dataset's "s3dir".
+            When input_path is suppled, imzml_fn and ibd_fn can be set to none None.
+        :param description: Optional text to describe the dataset
+
+        :return: The newly created dataset ID
+
+        .. _submit dataset example notebook: ../examples/submit-dataset.ipynb
         """
-        polarity = json.loads(metadata)['MS_Analysis']['Polarity']
+        current_user_id = self.current_user_id()
+        assert current_user_id, 'You must be logged in to submit a dataset'
+
+        primary_group_id = self._gqclient.get_primary_group_id()
+        database_ids = [self._gqclient.map_database_to_id(db) for db in databases or []]
+
+        if isinstance(metadata, str):
+            metadata = json.loads(metadata)
+
+        # Set default adducts
         if not adducts:
+            polarity = metadata['MS_Analysis']['Polarity']
             if polarity == 'Positive':
                 adducts = ['+H', '+Na', '+K']
             elif polarity == 'Negative':
@@ -1437,20 +1685,135 @@ class SMInstance(object):
 
         # check the existence of projects by their project_id
         if project_ids:
-            self.check_projects(project_ids)
+            self._check_projects(project_ids)
+
+        if description:
+            description_json = _str_to_tiptap_markup(description)
+        else:
+            description_json = None
+
+        # Upload the files. Keep this as late as possible to minimize chances of error after upload
+        if input_path is None:
+            assert imzml_fn and ibd_fn, 'imzml_fn and ibd_fn must be supplied'
+            input_path = _dataset_upload(imzml_fn, ibd_fn, self._config['dataset_upload_url'])
 
         graphql_response = self._gqclient.create_dataset(
-            imzml_fn, ibd_fn, dataset_name, metadata, is_public, mol_dbs, project_ids, adducts
+            {
+                'name': name,
+                'inputPath': input_path,
+                'description': description_json,
+                'metadataJson': json.dumps(metadata),
+                'databaseIds': database_ids,
+                'adducts': adducts,
+                'neutralLosses': neutral_losses,
+                'chemMods': chem_mods,
+                'ppm': ppm,
+                'numPeaks': num_isotopic_peaks,
+                'decoySampleSize': decoy_sample_size,
+                'analysisVersion': analysis_version,
+                'submitterId': current_user_id,
+                'groupId': primary_group_id,
+                'projectIds': project_ids,
+                'isPublic': is_public,
+            }
         )
-        return json.loads(graphql_response['createDataset'])['datasetId']
+        return json.loads(graphql_response)['datasetId']
 
-    def update_dataset_dbs(self, datasetID, molDBs=None, adducts=None, priority=1):
-        return self._gqclient.update_dataset(
-            ds_id=datasetID, databases=molDBs, adducts=adducts, reprocess=True, priority=priority
-        )
+    def update_dataset_dbs(self, dataset_id, molDBs=None, adducts=None):
+        self.update_dataset(dataset_id, databases=molDBs, adducts=adducts, reprocess=True)
 
     def reprocess_dataset(self, dataset_id, force=False):
-        return self._gqclient.update_dataset(ds_id=dataset_id, reprocess=True, force=force)
+        self._gqclient.update_dataset(ds_id=dataset_id, reprocess=True, force=force)
+
+    def update_dataset(
+        self,
+        id: str,
+        *,
+        name: Optional[str] = None,
+        metadata: Any = None,
+        databases=None,
+        adducts: Optional[List[str]] = None,
+        neutral_losses: Optional[List[str]] = None,
+        chem_mods: Optional[List[str]] = None,
+        is_public: Optional[List[str]] = None,
+        ppm: Optional[float] = None,
+        num_isotopic_peaks: Optional[int] = None,
+        decoy_sample_size: Optional[int] = None,
+        analysis_version: Optional[int] = None,
+        reprocess: Optional[bool] = None,
+        force: bool = False,
+    ):
+        """Updates a dataset's metadata and/or processing settings. Only specify the fields that
+        should change. All arguments should be specified as keyword arguments,
+        e.g. to update a dataset's adducts:
+
+        >>> sm.update_dataset(
+        >>>     dataset_id='2018-11-07_14h15m28s',
+        >>>     adducts=['[M]+', '+H', '+K', '+Na'],
+        >>> )
+
+        :param id: (Required) ID of an existing dataset
+        :param name: New dataset name
+        :param metadata: A JSON string or Python dict containing updated metadata
+        :param databases: List of databases to process with, either as IDs or (name, version)
+            tuples, e.g. [22, ('LipidMaps', '2017-12-12')]
+        :param adducts: List of adducts. e.g. ['-H', '+Cl']
+            Normal adducts should be plus or minus followed by an element.
+            For radical ions/cations, use the special strings '[M]+' or '[M]-'.
+        :param neutral_losses: List of neutral losses, e.g. ['-H2O', '-CO2']
+        :param chem_mods:
+        :param is_public: If True, the dataset will be publicly visible.
+            If False, it will only be visible to yourself, other members of your Group,
+            METASPACE administrators, and members of any Projects you add it to
+        :param ppm: m/z tolerance (in ppm) for generating ion images (default 3.0)
+        :param num_isotopic_peaks: Number of isotopic peaks to search for (default 4)
+        :param decoy_sample_size: Number of implausible adducts to use for generating the decoy
+            search database (default 20)
+        :param analysis_version:
+        :param reprocess:
+            None (default): Reprocess if needed
+            True: Force reprocessing, even if not needed
+            False: Raise an error if the changes would require reprocessing
+        :param force:
+            True: Allow changes to datasets that are already being processed. This should be used
+            with caution, as it can cause errors or inconsistent results.
+        """
+
+        input_field = {}
+
+        if name is not None:
+            input_field['name'] = name
+        if metadata is not None:
+            if isinstance(metadata, str):
+                input_field['metadataJson'] = metadata
+            else:
+                input_field['metadataJson'] = json.dumps(metadata)
+        if databases is not None:
+            input_field['databaseIds'] = [self._gqclient.map_database_to_id(db) for db in databases]
+        if adducts is not None:
+            input_field['adducts'] = adducts
+        if neutral_losses is not None:
+            input_field['neutralLosses'] = neutral_losses
+        if chem_mods is not None:
+            input_field['chemMods'] = chem_mods
+        if is_public is not None:
+            input_field['is_public'] = is_public
+        if ppm is not None:
+            input_field['ppm'] = ppm
+        if num_isotopic_peaks is not None:
+            input_field['num_isotopic_peaks'] = num_isotopic_peaks
+        if decoy_sample_size is not None:
+            input_field['decoy_sample_size'] = decoy_sample_size
+        if analysis_version is not None:
+            input_field['analysis_version'] = analysis_version
+
+        try:
+            self._gqclient.update_dataset(id, input_field, reprocess or False, force)
+        except GraphQLException as ex:
+            if ex.type == 'reprocessing_needed' and reprocess is None:
+                self._gqclient.update_dataset(id, input_field, True, force)
+            else:
+                raise
 
     def delete_dataset(self, ds_id, **kwargs):
         return self._gqclient.delete_dataset(ds_id, **kwargs)
@@ -1478,10 +1841,11 @@ class SMInstance(object):
                 if db['name'] == name and db['version'] == version:
                     db_match = db
 
-        return db_match and MolecularDB(db_match, self._gqclient)
+        return db_match and MolecularDB(db_match)
 
     def databases(self) -> List[MolecularDB]:
-        return [MolecularDB(db, self._gqclient) for db in self._gqclient.get_visible_databases()]
+        dbs = sorted(self._gqclient.get_visible_databases(), key=lambda db: db['id'])
+        return [MolecularDB(db) for db in dbs]
 
     def create_database(
         self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
@@ -1693,3 +2057,19 @@ class DataframeNode(object):
 
 class DatasetNotFound(Exception):
     pass
+
+
+# Specify __all__ so that Sphinx documents everything in order from most to least interesting
+__all__ = [
+    'SMInstance',
+    'SMDataset',
+    'MolecularDB',
+    'IsotopeImages',
+    'OpticalImage',
+    'GraphQLClient',
+    'MetaspaceException',
+    'DatasetNotFound',
+    'GraphQLException',
+    'BadRequestException',
+    'InvalidResponseException',
+]

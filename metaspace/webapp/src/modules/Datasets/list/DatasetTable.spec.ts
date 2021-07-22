@@ -48,6 +48,8 @@ describe('DatasetTable', () => {
     polarity: 'POSITIVE',
     fdrCounts: mockFdrCounts,
     groupApproved: true,
+    canEdit: false,
+    canDelete: false,
   }
 
   afterEach(() => {

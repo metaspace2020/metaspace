@@ -89,8 +89,15 @@ class SMConfig:
         : dict
             SM configuration for handling specific type of MS data
         """
-        conf = cls.get_conf()
+        handlers = [
+            {
+                "type": "ims",
+                "extensions": ["imzml", "ibd"],
+            },
+            {
+                "type": "lcms",
+                "extensions": ["mzml"],
+            },
+        ]
         ms_file_extension = Path(ms_file_path).suffix[1:].lower()  # skip the leading "."
-        return next(
-            (h for h in conf['ms_file_handlers'] if ms_file_extension in h['extensions']), None
-        )
+        return next((h for h in handlers if ms_file_extension in h['extensions']), None)

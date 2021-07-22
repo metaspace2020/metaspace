@@ -39,6 +39,8 @@ describe('DatasetActionsDropdown', () => {
     status: 'FINISHED',
     statusUpdateDT: '2021-03-22T01:54:04.856Z',
     metadataType: 'Imaging MS',
+    canEdit: true,
+    canDelete: true,
     canDownload: true,
     uploadDT: '2021-03-11T14:29:21.641Z',
   }
@@ -60,8 +62,14 @@ describe('DatasetActionsDropdown', () => {
 
   const propsData = { dataset: mockDataset, currentUser: mockUserAdmin }
   const propsDataOwner = { dataset: mockDataset, currentUser: mockUserOwner }
-  const propsDataNormal = { dataset: mockDataset, currentUser: mockUser }
-  const propsDataNormalNoOptions = { dataset: { ...mockDataset, canDownload: false }, currentUser: mockUser }
+  const propsDataNormal = {
+    dataset: { ...mockDataset, canEdit: false, canDelete: false },
+    currentUser: mockUser,
+  }
+  const propsDataNormalNoOptions = {
+    dataset: { ...mockDataset, canEdit: false, canDelete: false, canDownload: false },
+    currentUser: mockUser,
+  }
 
   const testHarness = Vue.extend({
     components: {
@@ -81,26 +89,26 @@ describe('DatasetActionsDropdown', () => {
   it('it show all options to the admin', async() => {
     const wrapper = mount(testHarness, { store, router, propsData })
     await Vue.nextTick()
-    expect(wrapper.findAll('li').length).toBe(4)
+    expect(wrapper.findAll('li').length).toBe(5)
   })
 
   it('it show all options except reprocess if user is the ds owner, but not admin', async() => {
     const wrapper = mount(testHarness, { store, router, propsData: propsDataOwner })
     await Vue.nextTick()
-    expect(wrapper.findAll('li').length).toBe(3)
+    expect(wrapper.findAll('li').length).toBe(4)
   })
 
   it('it show only canDownload option for normalUser', async() => {
     const wrapper = mount(testHarness, { store, router, propsData: propsDataNormal })
     await Vue.nextTick()
-    expect(wrapper.findAll('li').length).toBe(1)
+    expect(wrapper.findAll('li').length).toBe(2)
   })
 
   it('it show only canDownload option for normalUser', async() => {
     const wrapper = mount(testHarness, { store, router, propsData: propsDataNormalNoOptions })
     await Vue.nextTick()
 
-    expect(wrapper.findAll('li').length).toBe(0)
+    expect(wrapper.findAll('li').length).toBe(1)
     expect(wrapper.find('.el-dropdown').element.style.visibility).toBe('hidden')
   })
 })

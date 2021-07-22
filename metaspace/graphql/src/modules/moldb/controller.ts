@@ -57,7 +57,7 @@ const assertUserCanEditMolecularDB = async(ctx: Context, databaseId: number) => 
     throw new UserError('Only admins can manage Metaspace public databases')
   }
 
-  assertUserBelongsToGroup(ctx, database.groupId)
+  await assertUserBelongsToGroup(ctx, database.groupId)
 }
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
@@ -65,7 +65,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async createMolecularDB(source, { databaseDetails }, ctx): Promise<MolecularDbModel> {
     logger.info(`User ${ctx.user.id} is creating molecular database ${JSON.stringify(databaseDetails)}`)
     const groupId = databaseDetails.groupId as string
-    assertUserBelongsToGroup(ctx, groupId)
+    await assertUserBelongsToGroup(ctx, groupId)
     validateInput(databaseDetails)
     await assertImportFileIsValid(databaseDetails.filePath)
 
