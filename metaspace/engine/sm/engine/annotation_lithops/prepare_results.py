@@ -74,8 +74,10 @@ def filter_results_and_make_pngs(
     w, h = ds_dims(imzml_reader.coordinates)
     jobs = _split_png_jobs(image_tasks_df, w, h)
     png_generator = PngGenerator(make_sample_area_mask(imzml_reader.coordinates))
+    logger.info(jobs)
 
     def save_png_chunk(df: pd.DataFrame, *, storage: Storage):
+        logger.info(df)
         pngs = []
         groups = defaultdict(lambda: [])
         for formula_i, cobj in df.cobj.items():
