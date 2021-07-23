@@ -10,6 +10,10 @@ import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/markPoint'
 import 'echarts/lib/component/markArea'
 import './DatasetBrowserPage.scss'
+import { useQuery } from '@vue/apollo-composable'
+import { getDatasetByIdQuery, GetDatasetByIdQuery } from '../../../api/dataset'
+import { annotationListQuery } from '../../../api/annotation'
+import config from '../../../lib/config'
 
 interface DatasetBrowserProps {
   className: string
@@ -39,8 +43,8 @@ export default defineComponent<DatasetBrowserProps>({
     },
   },
   setup(props, ctx) {
-    const { $router, $route } = ctx.root
-    const chart = ref(null)
+    const { $route, $store } = ctx.root
+    const spectrumChart = ref(null)
     const theoretical = [{
       centroid_mzs: [296.0660118248876, 297.0693785939558, 298.06408618327333,
         298.0703115985592],
@@ -9534,17 +9538,43 @@ export default defineComponent<DatasetBrowserProps>({
       },
     })
 
-    const datasetId = computed(() => $route.params.dataset_id)
+    const queryVariables = () => {
+      const filter = $store.getters.gqlAnnotationFilter
+      const dFilter = $store.getters.gqlDatasetFilter
+      const colocalizationCoeffFilter = $store.getters.gqlColocalizationFilter
+      const query = $store.getters.ftsQuery
 
-    onMounted(() => {
-      console.log('chartzz', chart)
-      if (chart && chart.value) {
-        // @ts-ignore
-        chart.value.chart.on('mousemove', function(params: any) {
-          console.log(params)
-        })
+      return {
+        filter,
+        dFilter,
+        query,
+        colocalizationCoeffFilter,
+        countIsomerCompounds: config.features.isomers,
       }
+    }
+
+    const datasetId = computed(() => $route.params.dataset_id)
+    const {
+      result: datasetResult,
+      loading: datasetLoading,
+    } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, {
+      id: datasetId,
     })
+
+    const queryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+    const queryVars = computed(() => ({
+      ...queryVariables(),
+      filter: { ...queryVariables().filter, fdrLevel: state.fdrFilter, database: state.databaseFilter },
+      dFilter: { ...queryVariables().dFilter, ids: datasetId },
+    }))
+    const {
+      result: annotationsResult,
+      loading: annotationsLoading,
+    } = useQuery<any>(annotationListQuery, queryVars,
+      queryOptions)
+    const dataset = computed(() => datasetResult.value != null ? datasetResult.value.dataset : null)
+    const annotations = computed(() => annotationsResult.value != null
+      ? annotationsResult.value.allAnnotations : null)
 
     const handleFilterClear = () => {
       state.peakFilter = PEAK_FILTER.ALL
@@ -9564,8 +9594,16 @@ export default defineComponent<DatasetBrowserProps>({
               class='w-3/5'
               onInput={(value: any) => {
                 state.peakFilter = value
+
+                if (dataset.value && state.databaseFilter === undefined) {
+                  state.databaseFilter = dataset.value.databases[0].id
+                }
+
                 if (value === PEAK_FILTER.FDR && !state.fdrFilter) {
-                  state.fdrFilter = 0.5
+                  state.fdrFilter = 5
+                } else if (value === PEAK_FILTER.ALL) {
+                  state.fdrFilter = undefined
+                  state.databaseFilter = undefined
                 }
               }}
               value={state.peakFilter}
@@ -9582,9 +9620,10 @@ export default defineComponent<DatasetBrowserProps>({
                   }}
                   placeholder='5%'
                   size='mini'>
-                  <Option label="5%" value={0.05}/>
-                  <Option label="10%" value={0.1}/>
-                  <Option label="50%" value={0.5}/>
+                  <Option label="5%" value={5}/>
+                  <Option label="10%" value={10}/>
+                  <Option label="20%" value={20}/>
+                  <Option label="50%" value={50}/>
                 </Select>
               </div>
             </RadioGroup>
@@ -9596,9 +9635,15 @@ export default defineComponent<DatasetBrowserProps>({
                 onChange={(value: number) => {
                   state.databaseFilter = value
                 }}
-                placeholder='HMDB-v4'>
-                <Option label="HMDB" value={1}/>
-                <Option label="Lipdmaps" value={2}/>
+                placeholder='HMDB - v4'>
+                {
+                  dataset.value
+                  && dataset.value.databases.map((database: any) => {
+                    return (
+                      <Option label={`${database.name} - ${database.version}`} value={database.id}/>
+                    )
+                  })
+                }
               </Select>
             </div>
           </div>
@@ -9655,7 +9700,12 @@ export default defineComponent<DatasetBrowserProps>({
           <Button class='clear-btn' size='mini' onClick={handleFilterClear}>
             Clear
           </Button>
-          <Button class='filter-btn' type='primary' size='mini'>
+          <Button class='filter-btn' type='primary' size='mini' onClick={() => {
+            queryOptions.enabled = true
+            setTimeout(() => {
+              queryOptions.enabled = false
+            }, 500)
+          }}>
             Filter
           </Button>
         </div>
@@ -9676,6 +9726,17 @@ export default defineComponent<DatasetBrowserProps>({
       )
     }
 
+    const handleZoomReset = () => {
+      if (spectrumChart && spectrumChart.value) {
+        // @ts-ignore
+        spectrumChart.value.chart.dispatchAction({
+          type: 'dataZoom',
+          start: 0,
+          end: 100,
+        })
+      }
+    }
+
     return () => {
       return (
         <div class={'dataset-browser-container'}>
@@ -9686,8 +9747,10 @@ export default defineComponent<DatasetBrowserProps>({
               </div>
               {renderFilterBox()}
               {/* {renderEmptySpectrum()} */}
-              <ECharts ref={chart}
-                onClick={() => { console.log('CLICK') }}
+              <ECharts
+                ref={spectrumChart}
+                autoResize={true}
+                {...{ on: { 'zr:dblclick': handleZoomReset } }}
                 class='chart' options={state.chartOptions}/>
             </div>
           </div>
