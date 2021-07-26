@@ -15,10 +15,16 @@ $header-height: 64px;
     height: 600px;
     width: 100%;
   }
+  .loader-holder{
+    @apply absolute flex flex-row items-center justify-center;
+    height: 100%;
+    width: 100%;
+    background: rgba(0,0,0,0.03);
+  }
   .chartz{
     background: blue;
     height: 400px;
-    width: 200px;
+    width: 100%;
   }
   .info-icon{
     font-size: 30px;
@@ -65,6 +71,7 @@ $header-height: 64px;
 
   .dataset-browser-holder{
     @apply w-full h-full border-2 border-dashed border-gray-300 relative;
+    overflow: hidden;
   }
 
   .dataset-browser-holder-header{
