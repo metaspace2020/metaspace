@@ -29,6 +29,8 @@ interface DatasetBrowserState {
   chartOptions: any
   sampleData: any[]
   chartLoading: boolean
+  imageLoading: boolean
+  ionImage: string | undefined
 }
 
 const PEAK_FILTER = {
@@ -54,7 +56,9 @@ export default defineComponent<DatasetBrowserProps>({
       mzmScoreFilter: undefined,
       mzmPolarityFilter: undefined,
       mzmScaleFilter: undefined,
+      ionImage: undefined,
       chartLoading: false,
+      imageLoading: false,
       sampleData: [],
       chartOptions: {
         grid: {
@@ -200,43 +204,81 @@ export default defineComponent<DatasetBrowserProps>({
     const annotations = computed(() => annotationsResult.value != null
       ? annotationsResult.value.allAnnotations : null)
 
-    onAnnotationsResult(async(result) => {
-      if (dataset.value && result) {
-        // @ts-ignore
-        const inputPath: string = dataset.value.inputPath.replace('s3a:', 's3:')
-        // const mz = result.data.value[0].mz
-        const ppm = 3
-        const url = 'http://127.0.0.1:8000/search_pixel'
-        const spectrumN = 0
-        try {
-          state.chartLoading = true
-          const response = await fetch(url, {
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json',
-            },
-            method: 'POST',
-            body: JSON.stringify({
-              s3_path: inputPath,
-              spectrum_n: spectrumN,
-            }),
-          })
-          const content = await response.json()
-          state.sampleData = [content]
-        } catch (e) {
-          console.log('E', e)
-        } finally {
-          state.chartLoading = false
-        }
-      }
-      queryOptions.enabled = false
-    })
     const annotatedPeaks = computed(() => {
       if (annotations.value) {
         return annotations.value.map((annot: any) => annot.mz)
       }
-
       return []
+    })
+
+    const requestSpectrum = async(spectrumN: number = 0) => {
+      // @ts-ignore
+      const inputPath: string = dataset.value.inputPath.replace('s3a:', 's3:')
+      const url = 'http://127.0.0.1:8000/search_pixel'
+
+      try {
+        state.chartLoading = true
+        const response = await fetch(url, {
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
+          body: JSON.stringify({
+            s3_path: inputPath,
+            spectrum_n: spectrumN,
+          }),
+        })
+        const content = await response.json()
+        state.sampleData = [content]
+      } catch (e) {
+        console.log('E', e)
+      } finally {
+        state.chartLoading = false
+      }
+    }
+
+    const requestIonImage = async() => {
+      // @ts-ignore
+      const inputPath: string = dataset.value.inputPath.replace('s3a:', 's3:')
+      const url = 'http://127.0.0.1:8000/search'
+
+      try {
+        state.imageLoading = true
+        const response = await fetch(url, {
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
+          body: JSON.stringify({
+            s3_path: inputPath,
+            mz: state.mzmScoreFilter,
+            ppm: state.mzmPolarityFilter,
+          }),
+        })
+
+        const content = await response.blob()
+        const src = URL.createObjectURL(content)
+        state.ionImage = src
+      } catch (e) {
+        console.log('E', e)
+      } finally {
+        state.imageLoading = false
+      }
+    }
+
+    onAnnotationsResult((result) => {
+      if (dataset.value && result) {
+        const mz = result.data.allAnnotations[0].mz
+        const ppm = 3
+        state.mzmScoreFilter = mz
+        state.mzmPolarityFilter = ppm
+        state.mzmScaleFilter = 'ppm'
+        requestSpectrum()
+        requestIonImage()
+      }
+      queryOptions.enabled = false
     })
 
     const handleFilterClear = () => {
@@ -360,16 +402,28 @@ export default defineComponent<DatasetBrowserProps>({
       )
     }
 
-    const renderFilterBox = () => {
+    const renderSpectrumFilterBox = () => {
       return (
         <div>
-          {renderImageFilters()}
           {renderBrowsingFilters()}
           <Button class='clear-btn' size='mini' onClick={handleFilterClear}>
             Clear
           </Button>
           <Button class='filter-btn' type='primary' size='mini' onClick={() => {
             queryOptions.enabled = true
+          }}>
+            Filter
+          </Button>
+        </div>
+      )
+    }
+
+    const renderImageFilterBox = () => {
+      return (
+        <div>
+          {renderImageFilters()}
+          <Button class='filter-btn' type='primary' size='mini' onClick={() => {
+            requestIonImage()
           }}>
             Filter
           </Button>
@@ -518,6 +572,8 @@ export default defineComponent<DatasetBrowserProps>({
 
     return () => {
       const parsedChartOptions = buildChartOptions(state.chartOptions)
+      const isEmpty = (!state.sampleData || (Array.isArray(state.sampleData) && state.sampleData.length === 0))
+
       return (
         <div class={'dataset-browser-container'}>
           <div class={'dataset-browser-wrapper w-full lg:w-1/2'}>
@@ -525,8 +581,12 @@ export default defineComponent<DatasetBrowserProps>({
               <div class='dataset-browser-holder-header'>
                 Spectrum browser
               </div>
-              {renderFilterBox()}
-              {/* {renderEmptySpectrum()} */}
+              {renderSpectrumFilterBox()}
+              {
+                !(annotationsLoading.value || state.chartLoading)
+                && isEmpty
+                && renderEmptySpectrum()
+              }
               <div class='relative'>
                 {
                   (annotationsLoading.value || state.chartLoading)
@@ -550,6 +610,23 @@ export default defineComponent<DatasetBrowserProps>({
             <div class='dataset-browser-holder'>
               <div class='dataset-browser-holder-header'>
                 Image viewer
+              </div>
+              {renderImageFilterBox()}
+              <div class='ion-image-holder'>
+                {
+                  (annotationsLoading.value || state.imageLoading)
+                  && <div class='loader-holder'>
+                    <div>
+                      <i
+                        class="el-icon-loading"
+                      />
+                    </div>
+                  </div>
+                }
+                {
+                  state.ionImage
+                  && <img class='ion-image' src={state.ionImage}/>
+                }
               </div>
             </div>
           </div>

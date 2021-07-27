@@ -15,6 +15,18 @@ $header-height: 64px;
     height: 600px;
     width: 100%;
   }
+
+  .ion-image-holder{
+    @apply flex flex-row items-center justify-center relative;
+    height: 600px;
+    width: 100%;
+  }
+
+  .ion-image{
+    width: calc(100% - 24px);
+    object-fit: contain;
+  }
+
   .loader-holder{
     @apply absolute flex flex-row items-center justify-center;
     height: 100%;
