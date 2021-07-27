@@ -140,6 +140,12 @@ describe('modules/project/controller (membership-related mutations)', () => {
         .toEqual(undefined)
     })
 
+    test('Manager invites existing user with spaces at ends of email address', async() => {
+      await doQuery(inviteUserToProjectQuery, { projectId, email: ` ${userContext.user.email} ` }, { context: managerContext })
+      expect(await testEntityManager.findOne(UserProjectModel, { projectId, userId }))
+        .toEqual(expect.objectContaining({ role: UPRO.INVITED }))
+    })
+
     test('User attempts to accept non-existent invitation', async() => {
       await expect(doQuery(acceptProjectInvitationQuery, { projectId })).rejects.toThrow('Unauthorized')
     })

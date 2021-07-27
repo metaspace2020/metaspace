@@ -385,6 +385,7 @@ export const Resolvers = {
     async inviteUserToGroup(
       _: any, { groupId, email }: any, { user, getUserIdOrFail, entityManager }: Context
     ): Promise<UserGroupModel> {
+      email = email.trim() // Trim any spaces at the ends, because it's easy to do when copy+pasting email addresses
       await assertCanEditGroup(entityManager, user, groupId)
       logger.info(`User '${user.id}' inviting ${email} to join '${groupId}' group...`)
 
