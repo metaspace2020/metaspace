@@ -35,6 +35,11 @@
           <molecular-formula :ion="isobar.ion" />
         </li>
       </ul>
+      <p class="max-w-measure-1">
+        This <b>Molecules</b> panel lists candidate molecules from the isobaric
+        {{ isobars.length === 1 ? 'ion' : 'ions' }},
+        and the <b>Diagnostics</b> panel contains more information about the overlapping isotopic peaks.
+      </p>
     </div>
     <div
       slot="reference"
