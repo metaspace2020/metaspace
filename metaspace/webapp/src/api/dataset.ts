@@ -76,6 +76,7 @@ export const datasetDetailItemFragment =
   gql`fragment DatasetDetailItem on Dataset {
     id
     name
+    inputPath
     description
     submitter {
       id
