@@ -35,7 +35,7 @@ def _split_png_jobs(image_tasks_df, w, h):
     job_bound_vals = np.linspace(0, total_cost + 1, n_jobs + 1)
     job_bound_idxs = np.searchsorted(np.cumsum(image_tasks_df.cost), job_bound_vals)
     jobs = [
-        (image_tasks_df.iloc[start:end], )
+        (image_tasks_df.iloc[start:end],)
         for start, end in zip(job_bound_idxs[:-1], job_bound_idxs[1:])
         if start != end
     ]
