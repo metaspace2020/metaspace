@@ -39,6 +39,7 @@ interface Props {
   ionImageTransform: number[][]
   opticalTransform: number[][]
   scrollBlock: boolean
+  keepPixelSelected: boolean
   pixelSizeX: number
   pixelSizeY: number
   pixelAspectRatio: number
@@ -116,7 +117,11 @@ const useScaleBar = (props: Props) => {
   return { renderScaleBar }
 }
 
-const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObject | null>) => {
+const usePixelIntensityDisplay = (
+  props: Props,
+  imageLoaderRef: Ref<ReferenceObject | null>,
+  emit: (event: string, ...args: any[]) => void,
+) => {
   const pixelIntensityTooltipRef = templateRef<any>('pixelIntensityTooltip')
   const cursorPixelPos = ref<[number, number] | null>(null)
   const zoomX = computed(() => props.zoom)
@@ -185,6 +190,10 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
       cursorPixelPos.value = [x, y]
     } else {
       cursorPixelPos.value = null
+    }
+
+    if (cursorPixelPos.value && props.keepPixelSelected) {
+      emit('pixel-select', { x: cursorPixelPos.value[0], y: cursorPixelPos.value[1] })
     }
   }
 
@@ -443,6 +452,7 @@ export default defineComponent<Props>({
     ionImageTransform: { type: Array },
     opticalTransform: { type: Array },
     scrollBlock: { type: Boolean, default: false },
+    keepPixelSelected: { type: Boolean, default: false },
     pixelSizeX: { type: Number, default: 0 },
     pixelSizeY: { type: Number, default: 0 },
     pixelAspectRatio: { type: Number, default: 1 },
@@ -455,7 +465,7 @@ export default defineComponent<Props>({
     const { renderScaleBar } = useScaleBar(props)
 
     const { imageSize } = useImageSize(props)
-    const { renderPixelIntensity, movePixelIntensity } = usePixelIntensityDisplay(props, imageLoaderRef)
+    const { renderPixelIntensity, movePixelIntensity } = usePixelIntensityDisplay(props, imageLoaderRef, emit)
     const { viewBoxStyle, handleZoom, handlePanStart } = usePanAndZoom(props, imageLoaderRef, emit, imageSize)
     const { renderIonImageView } = useIonImageView(props, imageSize)
     const { renderOpticalImage } = useBufferedOpticalImage(props)
@@ -482,8 +492,16 @@ export default defineComponent<Props>({
         style={{ width: props.width + 'px', height: props.height + 'px' }}
         onwheel={onWheel}
         onmousedown={handlePanStart}
-        onmousemove={({ clientX, clientY }: MouseEvent) => movePixelIntensity(clientX, clientY)}
-        onmouseleave={() => movePixelIntensity(null, null)}
+        onClick={({ clientX, clientY }: MouseEvent) => {
+          if (props.keepPixelSelected) {
+            movePixelIntensity(clientX, clientY)
+          }
+        }}
+        onmousemove={({ clientX, clientY }: MouseEvent) => {
+          if (!props.keepPixelSelected) {
+            movePixelIntensity(clientX, clientY)
+          }
+        }}
       >
         {viewBoxStyle.value
           && <div style={viewBoxStyle.value}>

@@ -10,6 +10,7 @@
     >
       <ion-image-viewer
         ref="imageLoader"
+        :keep-pixel-selected="keepPixelSelected"
         :ion-image-layers="ionImageLayers"
         :is-loading="ionImageIsLoading"
         :pixel-size-x="pixelSizeX"
@@ -27,6 +28,7 @@
         show-pixel-intensity
         v-bind="imageLoaderSettings"
         @move="handleImageMove"
+        @pixel-select="handlePixelSelect"
       />
     </div>
 
@@ -151,6 +153,9 @@ export default class MainImage extends Vue {
     @Prop({ type: String })
     scaleType?: ScaleType
 
+    @Prop({ type: Boolean })
+    keepPixelSelected?: boolean
+
     ionImageUrl: string | null = null;
     ionImagePng: Image | null = null;
     ionImageIsLoading = false;
@@ -259,6 +264,10 @@ export default class MainImage extends Vue {
         xOffset,
         yOffset,
       })
+    }
+
+    handlePixelSelect({ x, y }: any) {
+      this.$emit('pixel-select', { x, y })
     }
 }
 </script>
