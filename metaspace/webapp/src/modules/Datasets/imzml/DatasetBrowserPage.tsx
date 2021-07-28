@@ -6,6 +6,7 @@ import 'echarts/lib/chart/line'
 import 'echarts/lib/chart/bar'
 import 'echarts/lib/component/toolbox'
 import 'echarts/lib/component/grid'
+import 'echarts/lib/component/legend'
 import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/markPoint'
 import 'echarts/lib/component/markArea'
@@ -14,6 +15,8 @@ import { useQuery } from '@vue/apollo-composable'
 import { getDatasetByIdQuery, GetDatasetByIdQuery } from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
+import safeJsonParse from '../../../lib/safeJsonParse'
+import MainImage from '../../Annotations/annotation-widgets/default/MainImage.vue'
 
 interface DatasetBrowserProps {
   className: string
@@ -31,6 +34,9 @@ interface DatasetBrowserState {
   chartLoading: boolean
   imageLoading: boolean
   ionImage: string | undefined
+  metadata: any
+  x: number | undefined
+  y: number | undefined
 }
 
 const PEAK_FILTER = {
@@ -56,9 +62,12 @@ export default defineComponent<DatasetBrowserProps>({
       mzmScoreFilter: undefined,
       mzmPolarityFilter: undefined,
       mzmScaleFilter: undefined,
+      metadata: undefined,
       ionImage: undefined,
       chartLoading: false,
       imageLoading: false,
+      x: undefined,
+      y: undefined,
       sampleData: [],
       chartOptions: {
         grid: {
@@ -70,6 +79,9 @@ export default defineComponent<DatasetBrowserProps>({
         animation: false,
         toolbox: {
           feature: {
+            restore: {
+              title: 'Restore',
+            },
             dataZoom: {
               title: {
                 zoom: 'Zoom',
@@ -120,8 +132,12 @@ export default defineComponent<DatasetBrowserProps>({
             right: 16,
           },
         ],
+        legend: {
+          selectedMode: false,
+        },
         series: [
           {
+            name: 'Unannotated',
             type: 'bar',
             data: [],
             barWidth: 2,
@@ -140,7 +156,14 @@ export default defineComponent<DatasetBrowserProps>({
               },
               data: [],
             },
-
+          },
+          {
+            name: 'Annotated',
+            type: 'bar',
+            data: [],
+            itemStyle: {
+              color: 'blue',
+            },
           },
         ],
       },
@@ -211,7 +234,7 @@ export default defineComponent<DatasetBrowserProps>({
       return []
     })
 
-    const requestSpectrum = async(spectrumN: number = 0) => {
+    const requestSpectrum = async(x: number = 0, y: number = 0) => {
       // @ts-ignore
       const inputPath: string = dataset.value.inputPath.replace('s3a:', 's3:')
       const url = 'http://127.0.0.1:8000/search_pixel'
@@ -226,15 +249,19 @@ export default defineComponent<DatasetBrowserProps>({
           method: 'POST',
           body: JSON.stringify({
             s3_path: inputPath,
-            spectrum_n: spectrumN,
+            x,
+            y,
           }),
         })
         const content = await response.json()
         state.sampleData = [content]
+        state.x = content.x
+        state.y = content.y
       } catch (e) {
         console.log('E', e)
       } finally {
         state.chartLoading = false
+        buildChartOptions()
       }
     }
 
@@ -275,8 +302,8 @@ export default defineComponent<DatasetBrowserProps>({
         state.mzmScoreFilter = mz
         state.mzmPolarityFilter = ppm
         state.mzmScaleFilter = 'ppm'
-        requestSpectrum()
         requestIonImage()
+        buildMetadata(dataset.value)
       }
       queryOptions.enabled = false
     })
@@ -289,6 +316,32 @@ export default defineComponent<DatasetBrowserProps>({
       state.mzmPolarityFilter = undefined
       state.mzmScaleFilter = undefined
       queryOptions.enabled = true
+    }
+
+    const buildMetadata = (dataset: any) => {
+      const datasetMetadataExternals = {
+        Submitter: dataset.submitter,
+        PI: dataset.principalInvestigator,
+        Group: dataset.group,
+        Projects: dataset.projects,
+      }
+      state.metadata = Object.assign(safeJsonParse(dataset.metadataJson), datasetMetadataExternals)
+    }
+
+    const getPixelSizeX = () => {
+      if (state.metadata && state.metadata.MS_Analysis != null
+        && state.metadata.MS_Analysis.Pixel_Size != null) {
+        return state.metadata.MS_Analysis.Pixel_Size.Xaxis
+      }
+      return 0
+    }
+
+    const getPixelSizeY = () => {
+      if (state.metadata && state.metadata.MS_Analysis != null
+        && state.metadata.MS_Analysis.Pixel_Size != null) {
+        return state.metadata.MS_Analysis.Pixel_Size.Yaxis
+      }
+      return 0
     }
 
     const renderBrowsingFilters = () => {
@@ -334,7 +387,7 @@ export default defineComponent<DatasetBrowserProps>({
               </div>
             </RadioGroup>
             <div class='flex flex-col w-1/4'>
-              <span>Database</span>
+              <span class='text-xs'>Database</span>
               <Select
                 value={state.databaseFilter}
                 size='mini'
@@ -359,9 +412,9 @@ export default defineComponent<DatasetBrowserProps>({
 
     const renderImageFilters = () => {
       return (
-        <div class='dataset-browser-holder-filter-box mt-2'>
+        <div class='dataset-browser-holder-filter-box'>
           <span class='font-semibold'>Image filters</span>
-          <div class='flex flex-row w-full items-end mt-2'>
+          <div class='flex flex-row w-full items-end'>
             <span class='mr-2'>m/z</span>
             <InputNumber
               class='mr-2'
@@ -456,12 +509,12 @@ export default defineComponent<DatasetBrowserProps>({
       }
     }
 
-    const buildChartOptions = (chartOptions: any) => {
+    const buildChartOptions = () => {
       if (!state.sampleData || (Array.isArray(state.sampleData) && state.sampleData.length === 0)) {
-        return chartOptions
+        return
       }
 
-      const auxOptions = chartOptions
+      const auxOptions = state.chartOptions
       const data = []
       const markAreaData = []
       const markPointData: any[] = []
@@ -567,12 +620,32 @@ export default defineComponent<DatasetBrowserProps>({
       auxOptions.series[0].data = data
       auxOptions.series[0].markArea.data = markAreaData
       auxOptions.series[0].markPoint.data = markPointData
-      return auxOptions
+      state.chartOptions = auxOptions
+    }
+
+    const handlePixelSelect = (coordinates: any) => {
+      requestSpectrum(coordinates.x, coordinates.y)
+    }
+
+    const getImageLoaderSettings = () => {
+      return {
+        annotImageOpacity: 1.0,
+        opticalOpacity: 1.0,
+        opacityMode: 'constant',
+        imagePosition: {
+          zoom: 1,
+          xOffset: 0,
+          yOffset: 0,
+        },
+        opticalSrc: null,
+        opticalTransform: null,
+        pixelAspectRatio: config.features.ignore_pixel_aspect_ratio ? 1
+          : getPixelSizeX() && getPixelSizeY() && getPixelSizeX() / getPixelSizeY() || 1,
+      }
     }
 
     return () => {
-      const parsedChartOptions = buildChartOptions(state.chartOptions)
-      const isEmpty = (!state.sampleData || (Array.isArray(state.sampleData) && state.sampleData.length === 0))
+      const isEmpty = state.x === undefined && state.y === undefined
 
       return (
         <div class={'dataset-browser-container'}>
@@ -583,27 +656,29 @@ export default defineComponent<DatasetBrowserProps>({
               </div>
               {renderSpectrumFilterBox()}
               {
-                !(annotationsLoading.value || state.chartLoading)
-                && isEmpty
+                isEmpty && !state.chartLoading
                 && renderEmptySpectrum()
               }
-              <div class='relative'>
-                {
-                  (annotationsLoading.value || state.chartLoading)
-                  && <div class='loader-holder'>
-                    <div>
-                      <i
-                        class="el-icon-loading"
-                      />
+              {
+                (!isEmpty || state.chartLoading)
+                && <div class='relative'>
+                  {
+                    (annotationsLoading.value || state.chartLoading)
+                    && <div class='loader-holder'>
+                      <div>
+                        <i
+                          class="el-icon-loading"
+                        />
+                      </div>
                     </div>
-                  </div>
-                }
-                <ECharts
-                  ref={spectrumChart}
-                  autoResize={true}
-                  {...{ on: { 'zr:dblclick': handleZoomReset } }}
-                  class='chart' options={parsedChartOptions}/>
-              </div>
+                  }
+                  <ECharts
+                    ref={spectrumChart}
+                    autoResize={true}
+                    {...{ on: { 'zr:dblclick': handleZoomReset } }}
+                    class='chart' options={state.chartOptions}/>
+                </div>
+              }
             </div>
           </div>
           <div class='dataset-browser-wrapper w-full lg:w-1/2'>
@@ -625,7 +700,30 @@ export default defineComponent<DatasetBrowserProps>({
                 }
                 {
                   state.ionImage
-                  && <img class='ion-image' src={state.ionImage}/>
+                  && annotations.value
+                  && <MainImage
+                    keepPixelSelected
+                    annotation={{
+                      ...annotations.value[0],
+                      mz: state.mzmScoreFilter,
+                      isotopeImages: [
+                        {
+                          ...annotations.value[0].isotopeImages[0],
+                          maxIntensity: 200,
+                          minIntensity: 27,
+                          mz: state.mzmScoreFilter,
+                          totalIntensity: 20000,
+                          url: state.ionImage,
+                        },
+                      ],
+                    }}
+                    opacity={1}
+                    imageLoaderSettings={getImageLoaderSettings()}
+                    applyImageMove={() => { }}
+                    colormap='Viridis'
+                    scaleType='linear'
+                    {...{ on: { 'pixel-select': handlePixelSelect } }}
+                  />
                 }
               </div>
             </div>

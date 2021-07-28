@@ -7,23 +7,24 @@ $header-height: 64px;
 
   .echarts {
     width: 100%;
-    height: 100%;
+    height: 500px;
   }
 
   .chart{
     @apply flex flex-row items-center justify-center;
-    height: 600px;
+    height: 500px;
     width: 100%;
   }
 
   .ion-image-holder{
     @apply flex flex-row items-center justify-center relative;
-    height: 600px;
+    height: 500px;
     width: 100%;
   }
 
   .ion-image{
     width: calc(100% - 24px);
+    height: 400px;
     object-fit: contain;
   }
 
@@ -93,6 +94,7 @@ $header-height: 64px;
 
   .dataset-browser-holder-filter-box{
     @apply p-2 max-w-4xl box-border mx-auto leading-6 text-base;
+    min-height: 100px;
   }
 }
 
