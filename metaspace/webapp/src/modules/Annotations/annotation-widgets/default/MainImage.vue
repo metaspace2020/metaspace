@@ -32,7 +32,10 @@
       />
     </div>
 
-    <div class="colorbar-container">
+    <div
+      v-if="!hideColorBar"
+      class="colorbar-container"
+    >
       <div
         v-if="imageLoaderSettings.opticalSrc"
         class="opacity-slider dom-to-image-hidden"
@@ -155,6 +158,9 @@ export default class MainImage extends Vue {
 
     @Prop({ type: Boolean })
     keepPixelSelected?: boolean
+
+    @Prop({ type: Boolean })
+    hideColorBar?: boolean
 
     ionImageUrl: string | null = null;
     ionImagePng: Image | null = null;

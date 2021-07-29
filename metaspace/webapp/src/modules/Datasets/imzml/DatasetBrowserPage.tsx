@@ -19,6 +19,13 @@ import config from '../../../lib/config'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import MainImage from '../../Annotations/annotation-widgets/default/MainImage.vue'
 import ImageViewer from '../../ImageViewer/ImageViewer.vue'
+import { DatasetComparisonGrid } from '../comparison/DatasetComparisonGrid'
+import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
+import FadeTransition from '../../../components/FadeTransition'
+import OpacitySettings from '../../ImageViewer/OpacitySettings.vue'
+import RangeSlider from '../../../components/Slider/RangeSlider.vue'
+import IonIntensity from '../../ImageViewer/IonIntensity.vue'
+import Vue from 'vue'
 interface DatasetBrowserProps {
   className: string
 }
@@ -30,11 +37,13 @@ interface DatasetBrowserState {
   mzmScoreFilter: number | undefined
   mzmPolarityFilter: number | undefined
   mzmScaleFilter: string | undefined
+  scaleIntensity: boolean
   chartOptions: any
   sampleData: any[]
   chartLoading: boolean
   imageLoading: boolean
   ionImage: string | undefined
+  imageSettings: any
   metadata: any
   annotation: any
   x: number | undefined
@@ -69,6 +78,8 @@ export default defineComponent<DatasetBrowserProps>({
       annotation: undefined,
       chartLoading: false,
       imageLoading: false,
+      scaleIntensity: false,
+      imageSettings: undefined,
       x: undefined,
       y: undefined,
       sampleData: [],
@@ -104,6 +115,9 @@ export default defineComponent<DatasetBrowserProps>({
         },
         xAxis: {
           name: 'm/z',
+          splitLine: {
+            show: false,
+          },
           nameLocation: 'center',
           nameGap: 30,
           nameTextStyle: {
@@ -119,13 +133,22 @@ export default defineComponent<DatasetBrowserProps>({
         },
         yAxis: {
           name: 'Intensity',
+          splitLine: {
+            show: false,
+          },
+          triggerEvent: true,
           nameLocation: 'center',
-          nameGap: 30,
+          nameGap: 60,
           nameTextStyle: {
             fontWeight: 'bold',
             fontSize: 14,
           },
           type: 'value',
+          axisLabel: {
+            formatter: function(value: any) {
+              return state.scaleIntensity ? value : value.toExponential(2)
+            },
+          },
           boundaryGap: [0, '30%'],
         },
         dataZoom: [
@@ -298,6 +321,7 @@ export default defineComponent<DatasetBrowserProps>({
         const src = URL.createObjectURL(content)
         state.ionImage = src
         state.annotation = {
+          ...annotations.value[0],
           mz: state.mzmScoreFilter,
           isotopeImages: [
             {
@@ -307,11 +331,6 @@ export default defineComponent<DatasetBrowserProps>({
             },
           ],
         }
-        // maxIntensity: 1270257792
-        // minIntensity: 0
-        // mz: 296.0659429376638
-        // totalIntensity: 2472329871360
-        $store.commit('setAnnotation', state.annotation)
       } catch (e) {
         console.log('E', e)
       } finally {
@@ -330,6 +349,9 @@ export default defineComponent<DatasetBrowserProps>({
         buildMetadata(dataset.value)
         if (state.x !== undefined && state.y !== undefined) {
           requestSpectrum(state.x, state.y)
+        }
+        if (!state.imageSettings) {
+          startImageLoaderSettings()
         }
       }
       queryOptions.enabled = false
@@ -537,8 +559,13 @@ export default defineComponent<DatasetBrowserProps>({
     }
 
     const handleItemSelect = (item: any) => {
-      state.mzmScoreFilter = item.data.mz
-      requestIonImage()
+      if (item.targetType === 'axisName') {
+        state.scaleIntensity = !state.scaleIntensity
+        buildChartOptions()
+      } else {
+        state.mzmScoreFilter = item.data.mz
+        requestIonImage()
+      }
     }
 
     const buildChartOptions = () => {
@@ -557,7 +584,9 @@ export default defineComponent<DatasetBrowserProps>({
 
       for (let i = 0; i < state.sampleData[0].mzs.length; i++) {
         const xAxis = state.sampleData[0].mzs[i]
-        const yAxis = state.sampleData[0].ints[i] / maxIntensity * 100.0
+        const yAxis =
+          state.scaleIntensity
+            ? state.sampleData[0].ints[i] / maxIntensity * 100.0 : state.sampleData[0].ints[i]
         const tooltip = `m/z: ${xAxis.toFixed(4)}`
         let isAnnotated = false
 
@@ -666,21 +695,45 @@ export default defineComponent<DatasetBrowserProps>({
 
       auxOptions.xAxis.min = minX
       auxOptions.xAxis.max = maxX
+      auxOptions.yAxis.name = state.scaleIntensity ? 'Relative Intensity' : 'Intensity'
+      auxOptions.yAxis.max = state.scaleIntensity ? 100 : maxIntensity
       auxOptions.series[0].data = data
       auxOptions.series[0].markArea.data = markAreaData
       auxOptions.series[0].markPoint.data = markPointData
       state.chartOptions = auxOptions
+      handleZoomReset()
     }
 
     const handlePixelSelect = (coordinates: any) => {
       requestSpectrum(coordinates.x, coordinates.y)
     }
 
-    const getImageLoaderSettings = () => {
-      return {
+    const handleImageMove = ({ zoom, xOffset, yOffset }: any) => {
+      state.imageSettings.imagePosition.zoom = zoom
+      state.imageSettings.imagePosition.xOffset = xOffset
+      state.imageSettings.imagePosition.yOffset = yOffset
+    }
+
+    const handleColormapChange = (colormap: string) => {
+      state.imageSettings.colormap = colormap
+    }
+
+    const handleScaleTypeChange = (scaleType: string) => {
+      state.imageSettings.scaleType = scaleType
+    }
+
+    const handleScaleBarColorChange = (color: string) => {
+      state.imageSettings.scaleBarColor = color
+    }
+
+    const startImageLoaderSettings = () => {
+      state.imageSettings = {
         annotImageOpacity: 1.0,
         opticalOpacity: 1.0,
+        colormap: 'Viridis',
+        scaleType: 'linear',
         opacityMode: 'constant',
+        scaleBarColor: '#000000',
         imagePosition: {
           zoom: 1,
           xOffset: 0,
@@ -710,7 +763,7 @@ export default defineComponent<DatasetBrowserProps>({
               }
               {
                 (!isEmpty || state.chartLoading)
-                && <div class='relative'>
+                && <div class='chart-holder'>
                   {
                     (annotationsLoading.value || state.chartLoading)
                     && <div class='loader-holder'>
@@ -748,18 +801,48 @@ export default defineComponent<DatasetBrowserProps>({
                   </div>
                 }
                 {
+                  state.imageSettings
+                  && <MainImageHeader
+                    class='dataset-comparison-grid-item-header dom-to-image-hidden'
+                    annotation={state.annotation}
+                    slot="title"
+                    hideTitle
+                    isActive={false}
+                    showOpticalImage={false}
+                    toggleOpticalImage={(e: any) => { }}
+                    resetViewport={startImageLoaderSettings}
+                    hasOpticalImage={false}
+                    colormap={state.imageSettings.colormap}
+                    onColormapChange={handleColormapChange}
+                    scaleType={state.imageSettings.scaleType}
+                    onScaleTypeChange={handleScaleTypeChange}
+                    onScaleBarColorChange={handleScaleBarColorChange}
+                  />
+                }
+                {
                   state.ionImage
                   && state.annotation
-                  && <MainImage
-                    keepPixelSelected
-                    annotation={state.annotation}
-                    opacity={1}
-                    imageLoaderSettings={getImageLoaderSettings()}
-                    applyImageMove={() => { }}
-                    colormap='Viridis'
-                    scaleType='linear'
-                    {...{ on: { 'pixel-select': handlePixelSelect } }}
-                  />
+                  && state.imageSettings
+                  && <div class='relative'>
+                    <MainImage
+                      keepPixelSelected
+                      annotation={state.annotation}
+                      opacity={1}
+                      hideColorBar
+                      imageLoaderSettings={state.imageSettings}
+                      imagePosition={state.imageSettings.imagePosition}
+                      applyImageMove={handleImageMove}
+                      colormap={state.imageSettings.colormap}
+                      scaleBarColor={state.imageSettings.scaleBarColor}
+                      scaleType={state.imageSettings.scaleType}
+                      pixelSizeX={getPixelSizeX()}
+                      pixelSizeY={getPixelSizeY()}
+                      {...{ on: { 'pixel-select': handlePixelSelect } }}
+                    />
+                    <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
+
+                    </div>
+                  </div>
                 }
               </div>
             </div>
