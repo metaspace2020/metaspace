@@ -3,7 +3,7 @@
     slot="title"
     class="w-full"
   >
-    <span v-if="!hideOptions">
+    <span v-if="!hideOptions && !hideTitle">
       Image viewer
     </span>
     <div
@@ -123,6 +123,9 @@ export default class MainImageHeader extends Vue {
 
     @Prop({ type: Boolean })
     hideOptions: boolean | undefined
+
+    @Prop({ type: Boolean })
+    hideTitle: boolean | undefined
 
     @Prop({ type: Boolean })
     showIntensityTemplate: boolean | undefined
