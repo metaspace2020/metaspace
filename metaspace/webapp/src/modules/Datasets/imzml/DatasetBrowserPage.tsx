@@ -5,6 +5,7 @@ import ECharts from 'vue-echarts'
 import 'echarts/lib/chart/line'
 import 'echarts/lib/chart/bar'
 import 'echarts/lib/component/toolbox'
+import 'echarts/lib/component/tooltip'
 import 'echarts/lib/component/grid'
 import 'echarts/lib/component/legend'
 import 'echarts/lib/component/dataZoom'
@@ -17,7 +18,7 @@ import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import MainImage from '../../Annotations/annotation-widgets/default/MainImage.vue'
-
+import ImageViewer from '../../ImageViewer/ImageViewer.vue'
 interface DatasetBrowserProps {
   className: string
 }
@@ -35,6 +36,7 @@ interface DatasetBrowserState {
   imageLoading: boolean
   ionImage: string | undefined
   metadata: any
+  annotation: any
   x: number | undefined
   y: number | undefined
 }
@@ -64,6 +66,7 @@ export default defineComponent<DatasetBrowserProps>({
       mzmScaleFilter: undefined,
       metadata: undefined,
       ionImage: undefined,
+      annotation: undefined,
       chartLoading: false,
       imageLoading: false,
       x: undefined,
@@ -77,6 +80,12 @@ export default defineComponent<DatasetBrowserProps>({
           right: '10%',
         },
         animation: false,
+        tooltip: {
+          show: true,
+          formatter: function(value: any) {
+            return value.data.label
+          },
+        },
         toolbox: {
           feature: {
             restore: {
@@ -288,6 +297,21 @@ export default defineComponent<DatasetBrowserProps>({
         const content = await response.blob()
         const src = URL.createObjectURL(content)
         state.ionImage = src
+        state.annotation = {
+          mz: state.mzmScoreFilter,
+          isotopeImages: [
+            {
+              ...annotations.value[0].isotopeImages[0],
+              mz: state.mzmScoreFilter,
+              url: state.ionImage,
+            },
+          ],
+        }
+        // maxIntensity: 1270257792
+        // minIntensity: 0
+        // mz: 296.0659429376638
+        // totalIntensity: 2472329871360
+        $store.commit('setAnnotation', state.annotation)
       } catch (e) {
         console.log('E', e)
       } finally {
@@ -304,6 +328,9 @@ export default defineComponent<DatasetBrowserProps>({
         state.mzmScaleFilter = 'ppm'
         requestIonImage()
         buildMetadata(dataset.value)
+        if (state.x !== undefined && state.y !== undefined) {
+          requestSpectrum(state.x, state.y)
+        }
       }
       queryOptions.enabled = false
     })
@@ -509,6 +536,11 @@ export default defineComponent<DatasetBrowserProps>({
       }
     }
 
+    const handleItemSelect = (item: any) => {
+      state.mzmScoreFilter = item.data.mz
+      requestIonImage()
+    }
+
     const buildChartOptions = () => {
       if (!state.sampleData || (Array.isArray(state.sampleData) && state.sampleData.length === 0)) {
         return
@@ -526,6 +558,7 @@ export default defineComponent<DatasetBrowserProps>({
       for (let i = 0; i < state.sampleData[0].mzs.length; i++) {
         const xAxis = state.sampleData[0].mzs[i]
         const yAxis = state.sampleData[0].ints[i] / maxIntensity * 100.0
+        const tooltip = `m/z: ${xAxis.toFixed(4)}`
         let isAnnotated = false
 
         if (!minX || xAxis < minX) {
@@ -545,6 +578,8 @@ export default defineComponent<DatasetBrowserProps>({
 
         if (state.peakFilter === PEAK_FILTER.ALL && !isAnnotated) { // add unnanotated peaks
           data.push({
+            label: tooltip,
+            mz: xAxis,
             value: [xAxis, yAxis],
             itemStyle: {
               color: isAnnotated ? 'blue' : 'red',
@@ -552,6 +587,8 @@ export default defineComponent<DatasetBrowserProps>({
           })
 
           markPointData.push({
+            label: tooltip,
+            mz: xAxis,
             xAxis: xAxis,
             yAxis: yAxis,
             itemStyle: {
@@ -560,6 +597,8 @@ export default defineComponent<DatasetBrowserProps>({
           })
           markAreaData.push([
             {
+              label: tooltip,
+              mz: xAxis,
               xAxis: xAxis * 1.000003,
               yAxis: 0,
               itemStyle: {
@@ -568,6 +607,8 @@ export default defineComponent<DatasetBrowserProps>({
               },
             },
             {
+              label: tooltip,
+              mz: xAxis,
               xAxis: xAxis * 0.999997,
               yAxis: yAxis,
               itemStyle: {
@@ -581,12 +622,16 @@ export default defineComponent<DatasetBrowserProps>({
 
         if (isAnnotated) {
           data.push({
+            label: tooltip,
+            mz: xAxis,
             value: [xAxis, yAxis],
             itemStyle: {
               color: isAnnotated ? 'blue' : 'red',
             },
           })
           markPointData.push({
+            label: tooltip,
+            mz: xAxis,
             xAxis: xAxis,
             yAxis: yAxis,
             itemStyle: {
@@ -595,6 +640,8 @@ export default defineComponent<DatasetBrowserProps>({
           })
           markAreaData.push([
             {
+              label: tooltip,
+              mz: xAxis,
               xAxis: xAxis * 1.000003,
               yAxis: 0,
               itemStyle: {
@@ -603,6 +650,8 @@ export default defineComponent<DatasetBrowserProps>({
               },
             },
             {
+              label: tooltip,
+              mz: xAxis,
               xAxis: xAxis * 0.999997,
               yAxis: yAxis,
               itemStyle: {
@@ -675,7 +724,7 @@ export default defineComponent<DatasetBrowserProps>({
                   <ECharts
                     ref={spectrumChart}
                     autoResize={true}
-                    {...{ on: { 'zr:dblclick': handleZoomReset } }}
+                    {...{ on: { 'zr:dblclick': handleZoomReset, click: handleItemSelect } }}
                     class='chart' options={state.chartOptions}/>
                 </div>
               }
@@ -700,23 +749,10 @@ export default defineComponent<DatasetBrowserProps>({
                 }
                 {
                   state.ionImage
-                  && annotations.value
+                  && state.annotation
                   && <MainImage
                     keepPixelSelected
-                    annotation={{
-                      ...annotations.value[0],
-                      mz: state.mzmScoreFilter,
-                      isotopeImages: [
-                        {
-                          ...annotations.value[0].isotopeImages[0],
-                          maxIntensity: 200,
-                          minIntensity: 27,
-                          mz: state.mzmScoreFilter,
-                          totalIntensity: 20000,
-                          url: state.ionImage,
-                        },
-                      ],
-                    }}
+                    annotation={state.annotation}
                     opacity={1}
                     imageLoaderSettings={getImageLoaderSettings()}
                     applyImageMove={() => { }}

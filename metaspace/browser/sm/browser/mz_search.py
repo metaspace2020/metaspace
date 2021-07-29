@@ -105,7 +105,9 @@ def create_mz_image(mz_peaks: np.ndarray, coordinates: np.ndarray) -> Tuple[np.n
     ys = all_ys[image_coord_idxs]
     mz_image = np.zeros(shape=(nrows, ncols))
     np.add.at(mz_image, [ys, xs], mz_peaks[:, 1])
+    mz_max = mz_image.max()
+    mz_min = mz_image.min()
     if mz_image.max() > 0:
         mz_image /= mz_image.max()
 
-    return mz_image, alpha
+    return mz_image, alpha, mz_max, mz_min

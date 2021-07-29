@@ -17,8 +17,8 @@ $header-height: 64px;
   }
 
   .ion-image-holder{
-    @apply flex flex-row items-center justify-center relative;
-    height: 500px;
+    @apply flex flex-col items-center justify-center relative;
+    min-height: 500px;
     width: 100%;
   }
 

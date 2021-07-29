@@ -2,6 +2,7 @@ import argparse
 import shutil
 from pathlib import Path
 import time
+from pyimzml.ImzMLParser import ImzMLParser
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -60,7 +61,10 @@ class DatasetBrowser:
     ):
         start = time.time()
         log(start, f"fetching and initializing mz index files from {full_dataset_s3_path}")
+
         ds = utils.DatasetFiles(full_dataset_s3_path, TMP_LOCAL_PATH)
+        log(start, f"parsing imzml at {ds.imzml_path}")
+        self.imzml_path = ds.imzml_path
         self.coordinates = np.frombuffer(ds.read_coordinates(), dtype="i").reshape(-1, 2)
         self.mz_index = np.frombuffer(ds.read_mz_index(), dtype="f")
         self.sorted_peaks_s3_file = ds.make_sorted_peaks_s3_file()
@@ -72,11 +76,29 @@ class DatasetBrowser:
         mz_peaks = mz_search.search_and_fetch_mz_peaks(
             self.sorted_peaks_s3_file, self.mz_index, mz_lo, mz_hi
         )
-        mz_image, alpha = mz_search.create_mz_image(mz_peaks, self.coordinates)
-        rgba_image = plt.get_cmap("viridis")(mz_image)
+        mz_image, alpha, mz_max, mz_min = mz_search.create_mz_image(mz_peaks, self.coordinates)
+        rgba_image = plt.get_cmap("gray")(mz_image)
         rgba_image[:, :, 3] = alpha
         log(start, "done")
         return rgba_image
+
+    def search_pixel(self, x: int, y: int) -> np.ndarray:
+        start = time.time()
+        log(start, f"pixel parsing imzml at {self.imzml_path}")
+        p = ImzMLParser(self.imzml_path)
+        n = 0
+        coordinate_x = p.coordinates[n][0]
+        coordinate_y = p.coordinates[n][1]
+
+        if((x, y, 1) in p.coordinates):
+            n = p.coordinates.index((x, y, 1))
+            coordinate_x = p.coordinates[n][0]
+            coordinate_y = p.coordinates[n][1]
+
+        mzs, ints = p.getspectrum(n)
+
+        log(start, "done")
+        return dict({'mzs': mzs.tolist(), 'ints': ints.tolist(), 'x': coordinate_x, 'y': coordinate_y})
 
 
 if __name__ == "__main__":
