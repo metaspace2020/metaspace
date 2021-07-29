@@ -306,7 +306,7 @@ class Executor:
                             # Dismantle & wait for it to stop while the mutex is still active
                             # to avoid a race condition, as there's still some instability if a
                             # second request tries to start the VM while it is still stopping.
-                            executor.compute_handler.dismantle()
+                            executor.compute_handler.backend.master.stop()
                 except Exception as exc:
                     exception = exc
 
