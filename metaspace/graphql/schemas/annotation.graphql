@@ -48,6 +48,8 @@ type AggregatedAnnotation {
 type CompoundInfoEntry {
   database: String!
   url: String
+  # NOTE: CompoundInfoEntry.databaseId is the molecule's ID from the database (e.g. HMDB0000001). It is not the
+  # METASPACE-assigned ID of the database. To get the ID of the database itself, see `Annotation.databaseId`.
   databaseId: String!
 }
 

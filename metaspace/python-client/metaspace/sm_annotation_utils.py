@@ -28,12 +28,16 @@ from metaspace.types import (
     DatasetUser,
     DatasetGroup,
     DatasetProject,
+    DatasetDiagnostic,
 )
 
 try:
-    from typing import TypedDict  # Requires Python 3.8
+    from typing import TypedDict, Literal  # Requires Python 3.8
+
+    _TIC_Literal = Literal['TIC']
 except ImportError:
     TypedDict = dict
+    _TIC_Literal = str
 
 try:
     from pandas import json_normalize  # Only in Pandas 1.0.0+
@@ -417,6 +421,8 @@ class GraphQLClient(object):
         isotopeImages { mz url minIntensity maxIntensity totalIntensity }
     """
 
+    MOLECULAR_DB_FIELDS = "id name version isPublic archived default"
+
     def getDataset(self, datasetId):
         query = f"""
             query datasetInfo($id: String!) {{
@@ -564,13 +570,7 @@ class GraphQLClient(object):
         return self.query(query, variables)
 
     def get_visible_databases(self):
-        query = """
-            {
-              allMolecularDBs {
-                id name version isPublic archived default
-              }
-            }
-        """
+        query = f"query allMolecularDBs {{ allMolecularDBs {{ {self.MOLECULAR_DB_FIELDS} }} }}"
         result = self.query(query)
         return result['allMolecularDBs']
 
@@ -743,6 +743,22 @@ class GraphQLClient(object):
         variables = {"databaseId": id}
         return self.query(query, variables)['deleteMolecularDB']
 
+    def get_dataset_diagnostics(self, ds_id):
+        results = self.query(
+            f"""query getDatasetDiagnostics($datasetId: String!) {{
+          dataset(id: $datasetId) {{ 
+            diagnostics {{
+              id type jobId data
+              database {{ {self.MOLECULAR_DB_FIELDS} }}
+              images {{ key index url format }}
+            }}
+          }}
+        }}""",
+            {'datasetId': ds_id},
+        )
+
+        return results['dataset'].get('diagnostics')
+
 
 class IsotopeImages(object):
     def __init__(self, images, sf, chem_mod, neutral_loss, adduct, centroids, urls):
@@ -840,6 +856,8 @@ class SMDataset(object):
         self._metadata = make_metadata(self._info['metadataJson'])
         self._session = requests.session()
         self._databases = [MolecularDB(db) for db in self._info['databases']]
+        self._diagnostics = None
+        self._diagnostic_images = {}
 
     @property
     def id(self):
@@ -1064,6 +1082,7 @@ class SMDataset(object):
                                          are usually lower quality copies of the first isotopic ion image.
         :param bool  scale_intensity:    When True, the output values will be scaled to the intensity range of the original data.
                                          When False, the output values will be in the 0.0 to 1.0 range.
+                                         When 'TIC', the output values will be scaled by the TIC and will be in the 0.0 to 1.0 range.
         :param bool  hotspot_clipping:   When True, apply hotspot clipping. Recommended if the images will be used for visualisation.
                                          This is required to get ion images that match the METASPACE website
         :param str   neutral_loss:
@@ -1113,7 +1132,16 @@ class SMDataset(object):
         image_mzs = [r['mz'] for r in image_metadata]
         image_urls = [r['url'] for r in image_metadata]
 
-        if scale_intensity:
+        if isinstance(scale_intensity, np.ndarray):
+            scale_image = scale_intensity
+            scale_intensity = True
+        elif scale_intensity == 'TIC':
+            scale_image = self.tic_image()
+            scale_intensity = True
+        else:
+            scale_image = None
+
+        if scale_intensity is True:
             non_empty_images = [i for i in images if i is not None]
             if non_empty_images:
                 shape = non_empty_images[0].shape
@@ -1124,6 +1152,13 @@ class SMDataset(object):
                         lo = float(image_metadata[i]['minIntensity'])
                         hi = float(image_metadata[i]['maxIntensity'])
                         images[i] = lo + images[i] * (hi - lo)
+
+        if scale_image is not None:
+            for i in range(len(images)):
+                if images[i] is not None:
+                    nonzero = scale_image > 0  # Handle NaNs and div-by-zero warnings
+                    images[i] = np.divide(images[i], scale_image, where=nonzero)
+                    images[i][~nonzero] = 0
 
         if hotspot_clipping:
             for i in range(len(images)):
@@ -1140,7 +1175,7 @@ class SMDataset(object):
         fdr: float = 0.1,
         database: Union[int, str, Tuple[str, str]] = DEFAULT_DATABASE,
         only_first_isotope: bool = False,
-        scale_intensity: bool = True,
+        scale_intensity: Union[bool, _TIC_Literal, np.ndarray] = True,
         hotspot_clipping: bool = False,
         **annotation_filter,
     ) -> List[IsotopeImages]:
@@ -1154,6 +1189,8 @@ class SMDataset(object):
                 isotopes are usually lower quality copies of the first isotopic ion image.
             scale_intensity: When True, the output values will be scaled to the intensity range of
                 the original data. When False, the output values will be in the 0.0 to 1.0 range.
+                When 'TIC', the output values will be scaled by the TIC and will be in the
+                0.0 to 1.0 range.
             hotspot_clipping:   When True, apply hotspot clipping. Recommended if the images will
                 be used for visualisation. This is required to get ion images that match the
                 METASPACE website
@@ -1161,6 +1198,9 @@ class SMDataset(object):
         Returns:
             list of isotope images
         """
+        if not isinstance(scale_intensity, np.ndarray) and scale_intensity == 'TIC':
+            scale_intensity = self.tic_image()
+
         with ThreadPoolExecutor() as pool:
 
             def get_annotation_images(row):
@@ -1249,6 +1289,86 @@ class SMDataset(object):
             # has finished downloading
             with ThreadPoolExecutor() as ex:
                 ex.map(download_link, link['files'])
+
+    def _get_diagnostic_image(self, image):
+        key = (image['url'], image['format'])
+        if key not in self._diagnostic_images:
+            try:
+                raw = BytesIO(self._session.get(image['url']).content)
+            except Exception:
+                # Retry once in case of network error due to excessive parallelism
+                raw = BytesIO(self._session.get(image['url']).content)
+
+            if format == 'PNG':
+                import matplotlib.image as mpimg
+
+                image_content = mpimg.imread(raw)
+            else:
+                image_content = np.load(raw, allow_pickle=False)  # type: ignore
+
+            self._diagnostic_images[key] = image_content
+        return self._diagnostic_images[key]
+
+    def _mixin_diagnostic_images(self, images):
+        """Update `images` to include the image content"""
+        with ThreadPoolExecutor() as ex:
+            for image, image_content in zip(images, ex.map(self._get_diagnostic_image, images)):
+                image['image'] = image_content
+
+    def diagnostics(self, include_images=True) -> List[DatasetDiagnostic]:
+        """Retrieves all diagnostic information and additional metadata for the dataset.
+
+        :param include_images: (default True) whether to download and include images in the results
+        """
+        if self._diagnostics is None:
+            self._diagnostics = self._gqclient.get_dataset_diagnostics(self.id)
+            assert self._diagnostics is not None, 'Dataset not found'
+            # Convert databases to MolecularDB instances
+            for diag in self._diagnostics:
+                if diag['database'] is not None:
+                    diag['database'] = MolecularDB(diag['database'])
+
+        diagnostics = deepcopy(self._diagnostics)
+
+        if include_images:
+            self._mixin_diagnostic_images(image for diag in diagnostics for image in diag['images'])
+
+        return diagnostics
+
+    def diagnostic(self, type: str, database=None, include_images=True) -> DatasetDiagnostic:
+        """Retrieves a specific item from the dataset's diagnostic information / additional metadata
+        or raises an exception if it wasn't found
+        :param type: The type of diagnostic/metadata. Valid values:
+        type='TIC'
+            `data` contains information about the Total Ion Current across the dataset
+            `images` contains an image with the TIC for each spectrum
+        type='IMZML_METADATA'
+            `data` contains a summary of metadata from the ImzML file header
+            `images` contains a boolean image of which pixels had spectra in the input data.
+            Useful for non-square acquisition areas.
+        :param database: The ID or (name, version) of the database. Needed for database-specific
+            metadata types (currently not used)
+        :param include_images: (default True) whether to download and include images in the results
+        """
+
+        database_id = database and self._gqclient.map_database_to_id(database)
+        for diag in self.diagnostics(include_images=False):
+            if diag['type'] == type and (diag['database'] or {}).get('id') == database_id:
+                if include_images and diag['images']:
+                    self._mixin_diagnostic_images(diag['images'])
+                return diag
+
+        raise KeyError(
+            f'Could not find diagnostic item with type={repr(type)}, database={repr(database)}'
+        )
+
+    def tic_image(self) -> np.ndarray:
+        """Returns a numpy array with the TIC value for each spectrum"""
+        try:
+            diag = self.diagnostic('TIC', include_images=True)
+            return [image['image'] for image in diag['images'] if image['key'] == 'TIC'][0]
+        except Exception:
+            raise KeyError('TIC image not found - the dataset is likely still being processed')
 
 
 class MolecularDB:

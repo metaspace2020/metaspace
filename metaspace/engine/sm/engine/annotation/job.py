@@ -1,9 +1,9 @@
 import logging
-from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
 from typing import Iterable, Optional
 
 from sm.engine import molecular_db
+from sm.engine.annotation.diagnostics import del_diagnostics
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
@@ -38,27 +38,28 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
         moldb_ids = get_ds_moldb_ids(ds.id)
     moldbs = molecular_db.find_by_ids(moldb_ids)
 
-    with ThreadPoolExecutor() as executor:
-        for moldb in moldbs:
-            logger.info(f'Deleting isotopic images: ds_id={ds.id} ds_name={ds.name} moldb={moldb}')
-            img_id_rows = db.select_onecol(
-                'SELECT iso_image_ids '
-                'FROM annotation m '
-                'JOIN job j ON j.id = m.job_id '
-                'JOIN dataset d ON d.id = j.ds_id '
-                'WHERE ds_id = %s AND j.moldb_id = %s',
-                (ds.id, moldb.id),
-            )
+    job_ids = DB().select_onecol(
+        'SELECT j.id FROM job j WHERE ds_id = %s AND moldb_id = ANY(%s)', (ds.id, moldb_ids)
+    )
+    del_diagnostics(ds.id, job_ids)
 
-            for _ in executor.map(
-                lambda img_id: image_storage.delete_image(image_storage.ISO, ds.id, img_id),
-                (img_id for img_ids in img_id_rows for img_id in img_ids if img_id is not None),
-            ):
-                pass
+    for moldb in moldbs:
+        logger.info(f'Deleting isotopic images: ds_id={ds.id} ds_name={ds.name} moldb={moldb}')
+        img_id_rows = db.select_onecol(
+            'SELECT iso_image_ids '
+            'FROM annotation m '
+            'JOIN job j ON j.id = m.job_id '
+            'JOIN dataset d ON d.id = j.ds_id '
+            'WHERE ds_id = %s AND j.moldb_id = %s',
+            (ds.id, moldb.id),
+        )
 
-            logger.info(f"Deleting job results: ds_id={ds.id} ds_name={ds.name} moldb={moldb}")
-            db.alter('DELETE FROM job WHERE ds_id = %s and moldb_id = %s', (ds.id, moldb.id))
-            es.delete_ds(ds.id, moldb)
+        image_ids = [img_id for img_ids in img_id_rows for img_id in img_ids if img_id is not None]
+        image_storage.delete_images(image_storage.ISO, ds.id, image_ids)
+
+        logger.info(f"Deleting job results: ds_id={ds.id} ds_name={ds.name} moldb={moldb}")
+        db.alter('DELETE FROM job WHERE ds_id = %s and moldb_id = %s', (ds.id, moldb.id))
+        es.delete_ds(ds.id, moldb)
 
 
 def insert_running_job(ds_id: str, moldb_id: int) -> int:

@@ -49,32 +49,6 @@ def gen_iso_images(ds_segm_it, centr_df, nrows, ncols, isocalc):
             yield centr_f_inds[i], centr_p_inds[i], centr_ints[i], m
 
 
-def get_ds_dims(coordinates):
-    min_x, min_y = np.amin(coordinates, axis=0)
-    max_x, max_y = np.amax(coordinates, axis=0)
-    nrows, ncols = max_y - min_y + 1, max_x - min_x + 1
-    return nrows, ncols
-
-
-def get_pixel_indices(coordinates):
-    _coord = np.array(coordinates)
-    _coord = np.around(_coord, 5)  # correct for numerical precision
-    _coord -= np.amin(_coord, axis=0)
-
-    _, ncols = get_ds_dims(coordinates)
-    pixel_indices = _coord[:, 1] * ncols + _coord[:, 0]
-    pixel_indices = pixel_indices.astype(np.int32)
-    return pixel_indices
-
-
-def make_sample_area_mask(coordinates):
-    pixel_indices = get_pixel_indices(coordinates)
-    nrows, ncols = get_ds_dims(coordinates)
-    sample_area_mask = np.zeros(ncols * nrows, dtype=bool)
-    sample_area_mask[pixel_indices] = True
-    return sample_area_mask.reshape(nrows, ncols)
-
-
 def choose_ds_segments(ds_segments, centr_df, ppm):
     centr_segm_min_mz, centr_segm_max_mz = centr_df.mz.agg([np.min, np.max])
     centr_segm_min_mz -= centr_segm_min_mz * ppm * 1e-6
@@ -120,13 +94,13 @@ def get_file_path(name):
 
 def create_process_segment(
     ds_segments: List,
-    coordinates: np.ndarray,
+    sample_area_mask: np.ndarray,
+    nrows: int,
+    ncols: int,
     ds_config: DSConfig,
     target_formula_inds: Set[int],
     targeted_database_formula_inds: Set[int],
 ):
-    sample_area_mask = make_sample_area_mask(coordinates)
-    nrows, ncols = get_ds_dims(coordinates)
     compute_metrics = make_compute_image_metrics(
         sample_area_mask, nrows, ncols, ds_config['image_generation']
     )

@@ -87,12 +87,13 @@ def _save_subtask_perf(
     if futures:
         exec_times = [f.stats.get('worker_func_exec_time', -1) for f in futures]
     else:
-        exec_times = [-1]
+        # debug_run_locally=True doesn't make futures
+        exec_times = [sum(perf.entries.values()) for perf in subtask_perfs]
     inner_times = subtask_data.pop('inner time', [-1])
     mem_befores = subtask_data.pop('mem before', [-1])
     mem_afters = subtask_data.pop('mem after', [-1])
     perf_data = {
-        'num_actions': len(futures) if futures else -1,
+        'num_actions': len(exec_times),
         'attempts': attempt,
         'runtime_memory': runtime_memory,
         'max_memory': np.max(mem_afters).item(),

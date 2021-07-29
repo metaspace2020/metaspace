@@ -6,8 +6,8 @@ from typing import List, Tuple, Optional, Dict
 import numpy as np
 import pandas as pd
 from lithops.storage.utils import CloudObject
-from pyimzml.ImzMLParser import PortableSpectrumReader
 
+from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.annotate import process_centr_segments
 from sm.engine.annotation_lithops.build_moldb import InputMolDb, DbFDRData
 from sm.engine.annotation_lithops.cache import PipelineCacher, use_pipeline_cache
@@ -34,7 +34,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     formula_cobjs: List[CObj[pd.DataFrame]]
     db_data_cobjs: List[CObj[DbFDRData]]
     peaks_cobjs: List[CObj[pd.DataFrame]]
-    imzml_reader: PortableSpectrumReader
+    imzml_reader: LithopsImzMLReader
     ds_segments_bounds: np.ndarray
     ds_segms_cobjs: List[CObj[pd.DataFrame]]
     ds_segm_lens: np.ndarray
@@ -56,6 +56,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         lithops_config=None,
         cache_key=None,
         use_db_cache=True,
+        use_db_mutex=True,
     ):
         lithops_config = lithops_config or SMConfig.get_conf()['lithops']
         self.lithops_config = lithops_config
@@ -77,6 +78,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.cacher = None
 
         self.use_db_cache = use_db_cache
+        self.use_db_mutex = use_db_mutex
         self.ds_segm_size_mb = 128
 
     def __call__(
@@ -107,6 +109,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             moldbs=self.moldbs,
             debug_validate=debug_validate,
             use_cache=self.use_db_cache,
+            use_db_mutex=self.use_db_mutex,
         )
 
     @use_pipeline_cache
