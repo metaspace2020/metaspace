@@ -6,6 +6,7 @@ from functools import wraps
 from time import time
 
 import boto3
+from botocore.client import Config
 
 from sm.browser.mz_search import S3File
 
@@ -58,7 +59,11 @@ class DatasetFiles:
     def __init__(self, full_ds_s3_path: str, local_dir: Path = "/tmp/dataset-browser"):
         self.full_ds_s3_path = full_ds_s3_path.rstrip("/")
         bucket_name, self.ds_s3_path = re.sub(r"s3?://", "", self.full_ds_s3_path).split("/", 1)
-        s3 = boto3.Session().resource("s3")
+        s3 = boto3.Session().resource("s3",
+                                      endpoint_url='http://storage:9000',
+                                      aws_access_key_id='minioadmin',
+                                      aws_secret_access_key='minioadmin',
+                                      config=Config(signature_version='s3v4'))
         self._bucket = s3.Bucket(bucket_name)
 
         self.ds_name = self.ds_s3_path.split("/")[-1]

@@ -25,7 +25,9 @@
         scroll-block
         show-pixel-intensity
         v-bind="imageLoaderSettings"
+        :keep-pixel-selected="keepPixelSelected"
         @move="handleImageMove"
+        @pixel-select="handlePixelSelect"
       />
     </div>
     <div
@@ -128,6 +130,7 @@ interface Props {
   pixelSizeY: number
   scaleBarColor: string | null
   scaleType?: ScaleType
+  keepPixelSelected: boolean
 }
 
 const ImageViewer = defineComponent<Props>({
@@ -155,6 +158,7 @@ const ImageViewer = defineComponent<Props>({
     pixelSizeY: { type: Number },
     scaleBarColor: { type: String },
     scaleType: { type: String },
+    keepPixelSelected: { type: Boolean },
   },
   setup(props, { root, emit }) {
     const {
@@ -223,6 +227,9 @@ const ImageViewer = defineComponent<Props>({
           xOffset,
           yOffset,
         })
+      },
+      handlePixelSelect({ x, y }: any) {
+        emit('pixel-select', { x, y })
       },
       emitOpacity(value: number) {
         emit('opacity', value)
