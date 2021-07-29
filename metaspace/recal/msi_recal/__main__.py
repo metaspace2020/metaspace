@@ -97,6 +97,10 @@ The default transform is "align_msiwarp recal_ransac"
         help='Output path (default: input path with _recal suffix)',
     )
     parser.add_argument(
+        '--no-output',
+        help='Don\'t write an output file',
+    )
+    parser.add_argument(
         '--analyzer',
         choices=['orbitrap', 'ft-icr', 'tof'],
         default='orbitrap',
@@ -183,9 +187,13 @@ def main(args):
     )
     logging.getLogger('numba').setLevel('INFO')
     logging.getLogger('matplotlib').setLevel('INFO')
+    logger = logging.getLogger(__name__)
 
     input_path = Path(args.input)
-    output_path = Path(args.output) if args.output else None
+    if args.no_output:
+        output_path = None
+    else:
+        output_path = Path(args.output) if args.output else 'infer'
     if args.debug:
         debug_path = Path(args.debug)
     elif not args.no_debug:
@@ -221,6 +229,7 @@ def main(args):
         targeted_dbs=targeted_dbs,
         transforms=parse_transforms(args.transform),
     )
+    logger.debug(params)
 
     process_imzml_file(
         input_path, params, output_path, debug_path, samples=args.samples, limit=args.limit

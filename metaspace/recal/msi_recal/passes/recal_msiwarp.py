@@ -11,6 +11,7 @@ from msiwarp.util.warp import to_mx_peaks
 from msi_recal.db_peak_match import get_recal_candidates
 from msi_recal.math import peak_width, ppm_to_sigma_1
 from msi_recal.mean_spectrum import representative_spectrum
+from msi_recal.mx_warp_peaks import warp_peaks
 from msi_recal.params import RecalParams
 from msi_recal.plot import save_recal_image
 
@@ -109,20 +110,12 @@ class RecalMsiwarp:
             if not grp.mz.is_monotonic_increasing:
                 grp = grp.sort_values('mz')
 
-            recal_spectrum = mx.warp_peaks(
-                to_mx_peaks(grp.mz, grp.ints, self.jitter_sigma_1, sp, self.analyzer),
+            recal_mzs = warp_peaks(
+                grp.mz.values,
                 self.recal_nodes,
                 self.recal_move,
             )
-            results_dfs.append(
-                pd.DataFrame(
-                    {
-                        'sp': sp,
-                        'mz': [p.mz for p in recal_spectrum],
-                        'ints': [p.height for p in recal_spectrum],
-                    }
-                )
-            )
+            results_dfs.append(grp.assign(mz=recal_mzs))
 
         results_df = pd.concat(results_dfs)
         return results_df

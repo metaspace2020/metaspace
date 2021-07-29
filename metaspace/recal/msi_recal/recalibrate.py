@@ -104,16 +104,22 @@ def _imzml_writer_process(output_path, queue):
                 return
 
 
+def _null_writer_process(output_path, queue):
+    while queue.get() is not None:
+        queue.task_done()
+    queue.task_done()
+
+
 def process_imzml_file(
     input_path: Union[str, Path],
     params: RecalParams,
-    output_path: Union[str, Path, None] = None,
+    output_path: Union[str, Path, None, Literal['infer']] = 'infer',
     debug_path: Union[str, Path, None, Literal['infer']] = 'infer',
     samples: int = 100,
     limit: int = None,
 ):
     input_path = Path(input_path)
-    if not output_path:
+    if output_path == 'infer':
         output_path = Path(f'{input_path.parent}/{input_path.stem}_recal.imzML')
     if debug_path == 'infer':
         debug_path = Path(f'{input_path.parent}/{input_path.stem}_debug/')
@@ -124,7 +130,8 @@ def process_imzml_file(
     models, eval = build_pipeline(sample_peaks_df, params)
 
     writer_queue = JoinableQueue(2)
-    writer_process = Process(target=_imzml_writer_process, args=(output_path, writer_queue))
+    writer_func = _imzml_writer_process if output_path else _null_writer_process
+    writer_process = Process(target=writer_func, args=(output_path, writer_queue))
     writer_process.start()
 
     all_spectra_dfs = []
@@ -180,6 +187,8 @@ def process_imzml_file(
                 file.unlink()
         logger.info(f'Writing debug output to {debug_path}')
 
+        (debug_path / 'params.txt').open('wt').write(repr(params))
+
         all_spectra_df = pd.concat(all_spectra_dfs)
 
         for i, ((transform_name, *_), model) in enumerate(zip(params.transforms, models)):
@@ -190,3 +199,5 @@ def process_imzml_file(
                 logger.warning(f'{transform_name} error', exc_info=True)
 
         eval.get_report().to_csv(debug_path / 'evaluation_peaks.csv')
+
+    return eval

@@ -11,6 +11,7 @@ from msi_recal.mean_spectrum import (
     representative_spectrum,
     sample_across_mass_range,
 )
+from msi_recal.mx_warp_peaks import warp_peaks
 from msi_recal.params import RecalParams
 from msi_recal.plot import save_spectrum_image, save_mma_image
 
@@ -111,21 +112,16 @@ class AlignMsiwarp:
         mx_spectra = [
             to_mx_peaks(grp.mz, grp.ints, self.jitter_sigma_1, sp, self.analyzer)
             for sp, grp in spectra
+            if sp not in self.coef_
         ]
         self._calc_alignments(mx_spectra)
 
         # Apply alignments & convert back to dataframe format
         results_dfs = []
-        for (sp, spectrum), mx_spectrum in zip(spectra, mx_spectra):
+        for (sp, spectrum) in spectra:
             align_move = self.coef_[sp]
-            aligned_spectrum = mx.warp_peaks(mx_spectrum, self.align_nodes, align_move)
-            result_df = pd.DataFrame(
-                {
-                    'sp': sp,
-                    'mz': [p.mz for p in aligned_spectrum],
-                    'ints': [p.height for p in aligned_spectrum],
-                }
-            )
+            new_mzs = warp_peaks(spectrum.mz.values, self.align_nodes, align_move)
+            result_df = spectrum.assign(mz=new_mzs)
             results_dfs.append(result_df)
 
             # Add spectra to sample images
