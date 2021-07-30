@@ -1,5 +1,5 @@
 import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from '@vue/composition-api'
-import { Select, Option, RadioGroup, Radio, InputNumber, Button } from '../../../lib/element-ui'
+import { Select, Option, RadioGroup, Radio, InputNumber, Button, Input } from '../../../lib/element-ui'
 // @ts-ignore
 import ECharts from 'vue-echarts'
 import 'echarts/lib/chart/line'
@@ -18,19 +18,17 @@ import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import MainImage from '../../Annotations/annotation-widgets/default/MainImage.vue'
-import ImageViewer from '../../ImageViewer/ImageViewer.vue'
-import { DatasetComparisonGrid } from '../comparison/DatasetComparisonGrid'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
 import FadeTransition from '../../../components/FadeTransition'
-import OpacitySettings from '../../ImageViewer/OpacitySettings.vue'
 import RangeSlider from '../../../components/Slider/RangeSlider.vue'
 import IonIntensity from '../../ImageViewer/IonIntensity.vue'
-import Vue from 'vue'
-import { IonImage, loadPngFromUrl, processIonImage, renderScaleBar } from '../../../lib/ionImageRendering'
+import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../../lib/ionImageRendering'
 import { get } from 'lodash-es'
 import createColormap from '../../../lib/createColormap'
 import getColorScale from '../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../components/Slider'
+import { periodicTable } from './periodicTable'
+
 interface DatasetBrowserProps {
   className: string
 }
@@ -38,6 +36,7 @@ interface DatasetBrowserProps {
 interface DatasetBrowserState {
   peakFilter: number
   fdrFilter: number | undefined
+  moleculeFilter: string | undefined
   databaseFilter: number | string | undefined
   mzmScoreFilter: number | undefined
   mzmPolarityFilter: number | undefined
@@ -88,6 +87,7 @@ export default defineComponent<DatasetBrowserProps>({
       imageLoading: false,
       scaleIntensity: false,
       imageSettings: undefined,
+      moleculeFilter: undefined,
       x: undefined,
       y: undefined,
       ionImageUrl: undefined,
@@ -210,8 +210,6 @@ export default defineComponent<DatasetBrowserProps>({
       },
     })
 
-    const rangeSlider = ref<any>(null)
-
     const handleChartResize = () => {
       if (spectrumChart && spectrumChart.value) {
         // @ts-ignore
@@ -309,7 +307,6 @@ export default defineComponent<DatasetBrowserProps>({
     }
 
     const handleIonIntensityChange = async(intensity: number, type: string) => {
-      console.log('YO', intensity, type)
       if (type === 'min') {
         state.imageSettings.minIntensity = intensity
       } else {
@@ -366,6 +363,100 @@ export default defineComponent<DatasetBrowserProps>({
       }
 
       state.ionImage = null
+    }
+
+    const parseFormula = (formula: string) => {
+      const regexp = /(?<element>[A-Z][a-z]{0,2})(?<n>[0-9]*)/ig
+      const elements : any = {}
+      Array.from(formula.matchAll(regexp), (res, idx) => {
+        if (res.groups && res.groups.element && res.groups.element.length > 1) {
+          if (periodicTable[res.groups.element] === undefined) {
+            const auxElement = res.groups.element.substring(1, 2)
+            const auxElementCount = parseFormula(auxElement
+              + (res.groups && res.groups.n ? parseInt(res.groups.n, 10) : 1))
+
+            if (Object.keys(elements).includes(auxElement)) {
+              elements[auxElement] += auxElementCount[auxElement]
+            } else {
+              elements[auxElement] = auxElementCount[auxElement]
+            }
+
+            res.groups.element = res.groups.element.substring(0, 1)
+            res.groups.n = '1'
+          }
+        }
+
+        if (res.groups && res.groups.element in Object.keys(elements)) {
+          elements[res.groups.element] = elements[res.groups.element]
+            + (res.groups && res.groups.n ? parseInt(res.groups.n, 10) : 1)
+        } else if (res.groups && !(res.groups.element in Object.keys(elements))) {
+          elements[res.groups.element] = (res.groups && res.groups.n ? parseInt(res.groups.n, 10) : 1)
+        }
+      })
+
+      return elements
+    }
+
+    const formatFormula = (elements: any) => {
+      let formula = ''
+      Object.keys(elements).sort().forEach((elementKey: string) => {
+        const element = elements[elementKey]
+        if (element > 0) {
+          formula += elementKey + element
+        }
+      })
+      return formula
+    }
+
+    const calculateMzFromFormula = (molecularFormula: string) => {
+      const ionFormula = generateIonFormula(molecularFormula)
+      const ionElements = parseFormula(ionFormula)
+      let mz = 0
+
+      Object.keys(ionElements).forEach((elementKey: string) => {
+        const nOfElements = ionElements[elementKey]
+        if (periodicTable[elementKey]) {
+          const mass = periodicTable[elementKey][2][0]
+          mz += nOfElements * mass
+        }
+      })
+
+      return mz
+    }
+
+    const generateIonFormula = (molecularFormula: string) => {
+      const cleanFormula = molecularFormula.toUpperCase().trim().replace(/\s/g, '')
+      const regexpFormulas = /(?<formula>\w+)(?<adducts>([+-]\w+)*)/ig
+      const match = regexpFormulas.exec(cleanFormula)
+      const formula = match && match.groups ? match.groups.formula : ''
+      const adducts : string[] = []
+
+      if (match && match.groups && match.groups.adducts) {
+        const regexpAdduct = /([+-]\w+)/ig
+        Array.from(match.groups.adducts.matchAll(regexpAdduct),
+          (res, idx) => {
+            adducts.push(res[0])
+          })
+      }
+
+      const ionElements = parseFormula(formula)
+
+      adducts.forEach((adduct: string) => {
+        const elem = adduct.replace(/[^a-zA-Z]/g, '')
+        if (adduct.indexOf('+') !== -1) {
+          if (Object.keys(ionElements).includes(elem)) {
+            ionElements[elem] += 1
+          } else {
+            ionElements[elem] = 1
+          }
+        } else if (adduct.indexOf('-') !== -1) {
+          if (Object.keys(ionElements).includes(elem)) {
+            ionElements[elem] -= 1
+          }
+        }
+      })
+
+      return formatFormula(ionElements)
     }
 
     const requestIonImage = async() => {
@@ -541,6 +632,7 @@ export default defineComponent<DatasetBrowserProps>({
               value={state.mzmScoreFilter}
               onChange={(value: number) => {
                 state.mzmScoreFilter = value
+                state.moleculeFilter = undefined
               }}
               precision={4}
               step={0.0001}
@@ -571,6 +663,19 @@ export default defineComponent<DatasetBrowserProps>({
               <Option label="ppm" value='ppm'/>
             </Select>
           </div>
+          <div class='flex flex-row w-full items-end mt-2'>
+            <span class='pr-2'>Molecule</span>
+            <Input
+              class='select-box-mini'
+              value={state.moleculeFilter}
+              onInput={(value: string) => {
+                state.moleculeFilter = value
+                state.mzmScoreFilter = undefined
+              }}
+              size='mini'
+              placeholder='H2O+H'
+            />
+          </div>
         </div>
       )
     }
@@ -596,6 +701,9 @@ export default defineComponent<DatasetBrowserProps>({
         <div>
           {renderImageFilters()}
           <Button class='filter-btn' type='primary' size='mini' onClick={() => {
+            if (state.moleculeFilter) {
+              state.mzmScoreFilter = calculateMzFromFormula(state.moleculeFilter)
+            }
             requestIonImage()
           }}>
             Filter
