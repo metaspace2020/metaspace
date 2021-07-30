@@ -177,7 +177,7 @@ const usePixelIntensityDisplay = (
     Vue.nextTick(updatePixelIntensity)
   })
 
-  const movePixelIntensity = (clientX: number | null, clientY: number | null) => {
+  const movePixelIntensity = (clientX: number | null, clientY: number | null, updatePixel: boolean = false) => {
     if (imageLoaderRef.value != null && props.ionImageLayers.length && clientX != null && clientY != null) {
       const rect = imageLoaderRef.value.getBoundingClientRect()
       const { width = 0, height = 0 } = props.ionImageLayers[0].ionImage
@@ -187,13 +187,18 @@ const usePixelIntensityDisplay = (
       const y = Math.floor((clientY - (rect.top + rect.bottom) / 2 - 2)
         / zoomY.value - props.yOffset + height / 2)
 
-      cursorPixelPos.value = [x, y]
+      if (!props.keepPixelSelected) {
+        cursorPixelPos.value = [x, y]
+      } else if (
+        updatePixel && props.keepPixelSelected
+        && x >= 0 && y >= 0 && y < props.ionImageLayers[0].ionImage.height
+        && x < props.ionImageLayers[0].ionImage.width
+      ) { // check if pixel pos should update and if it is inside ionImage boundary
+        cursorPixelPos.value = [x, y]
+        emit('pixel-select', { x: cursorPixelPos.value[0], y: cursorPixelPos.value[1] })
+      }
     } else {
       cursorPixelPos.value = null
-    }
-
-    if (cursorPixelPos.value && props.keepPixelSelected) {
-      emit('pixel-select', { x: cursorPixelPos.value[0], y: cursorPixelPos.value[1] })
     }
   }
 
@@ -494,7 +499,7 @@ export default defineComponent<Props>({
         onmousedown={handlePanStart}
         onClick={({ clientX, clientY }: MouseEvent) => {
           if (props.keepPixelSelected) {
-            movePixelIntensity(clientX, clientY)
+            movePixelIntensity(clientX, clientY, true)
           }
         }}
         onmousemove={({ clientX, clientY }: MouseEvent) => {
