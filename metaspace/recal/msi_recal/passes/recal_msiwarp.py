@@ -13,12 +13,20 @@ from msi_recal.math import peak_width, ppm_to_sigma_1
 from msi_recal.mean_spectrum import representative_spectrum
 from msi_recal.mx_warp_peaks import warp_peaks
 from msi_recal.params import RecalParams
+from msi_recal.passes.transform import Transform
 from msi_recal.plot import save_recal_image
 
 logger = logging.getLogger(__name__)
 
 
-class RecalMsiwarp:
+class RecalMsiwarp(Transform):
+    CACHE_FIELDS = [
+        'recal_spectrum',
+        'recal_nodes',
+        'recal_move',
+        'skip',
+    ]
+
     def __init__(self, params: RecalParams, ppm='20', segments='4', precision='0.1'):
         self.params = params
         self.recal_sigma_1 = ppm_to_sigma_1(float(ppm), params.analyzer, params.base_mz)

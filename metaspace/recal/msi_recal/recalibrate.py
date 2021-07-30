@@ -1,7 +1,7 @@
 import logging
 from multiprocessing import JoinableQueue, Process
 from pathlib import Path
-from typing import Iterable, Union
+from typing import Iterable, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -60,7 +60,7 @@ def get_sample_spectra_df_from_parser(p: ImzMLParser, n_samples=200):
     return get_spectra_df_from_parser(p, sp_idxs)
 
 
-def build_pipeline(sample_peaks_df: pd.DataFrame, params: RecalParams):
+def build_pipeline(sample_peaks_df: pd.DataFrame, params: RecalParams, cache_path: Optional[Path]):
     models = []
     stages = [
         ('initial', sample_peaks_df),
@@ -70,7 +70,16 @@ def build_pipeline(sample_peaks_df: pd.DataFrame, params: RecalParams):
         assert tf_name in TRANSFORM, f'Unrecognized transform "{tf_name}"'
 
         tf = TRANSFORM[tf_name](params, *tf_args)
-        tf.fit(sample_peaks_df)
+        loaded_cache = False
+        if cache_path is not None:
+            try:
+                tf.load_cache(f'{cache_path}/{tf_name}')
+                loaded_cache = True
+                logger.debug(f'{tf_name} loaded from cache')
+            except (IOError, EOFError):
+                logger.debug(f'{tf_name} not cached')
+        if not loaded_cache:
+            tf.fit(sample_peaks_df)
         sample_peaks_df = tf.predict(sample_peaks_df)
 
         models.append(tf)
@@ -115,6 +124,7 @@ def process_imzml_file(
     params: RecalParams,
     output_path: Union[str, Path, None, Literal['infer']] = 'infer',
     debug_path: Union[str, Path, None, Literal['infer']] = 'infer',
+    cache_path: Union[str, Path, None, Literal['infer']] = 'infer',
     samples: int = 100,
     limit: int = None,
 ):
@@ -123,11 +133,15 @@ def process_imzml_file(
         output_path = Path(f'{input_path.parent}/{input_path.stem}_recal.imzML')
     if debug_path == 'infer':
         debug_path = Path(f'{input_path.parent}/{input_path.stem}_debug/')
+    if cache_path == 'infer':
+        cache_path = Path(f'{input_path.parent}/{input_path.stem}_cache/')
+        cache_path.mkdir(parents=True, exist_ok=True)
+    cache_path = Path(cache_path) if cache_path is not None else None
 
     p = ImzMLParser(str(input_path), parse_lib="ElementTree")
     sample_peaks_df, sample_spectra_df = get_sample_spectra_df_from_parser(p, n_samples=samples)
 
-    models, eval = build_pipeline(sample_peaks_df, params)
+    models, eval = build_pipeline(sample_peaks_df, params, cache_path)
 
     writer_queue = JoinableQueue(2)
     writer_func = _imzml_writer_process if output_path else _null_writer_process
@@ -169,6 +183,10 @@ def process_imzml_file(
 
             logger.debug(f'Writing spectra {start_i}-{end_i}')
             writer_queue.put(writer_job)
+
+        if cache_path:
+            for model in models:
+                model.save_cache()
     except KeyboardInterrupt:
         pass  # Don't rethrow - save the debug data if possible
     finally:

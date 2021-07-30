@@ -1,9 +1,15 @@
 import pandas as pd
 
+from msi_recal.passes.transform import Transform
 from msi_recal.plot import save_spectrum_image
 
 
-class Normalize:
+class Normalize(Transform):
+    CACHE_FIELDS = [
+        'intensity',
+        'ref_vals',
+    ]
+
     def __init__(self, params, intensity='median', ref='tic'):
         try:
             self.intensity = float(intensity)

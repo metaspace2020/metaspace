@@ -1,4 +1,5 @@
 import logging
+import re
 from pathlib import Path
 from pprint import pformat
 from typing import Union, Sequence
@@ -109,14 +110,17 @@ class RecalParams:
             dbs = ['cm3']
 
         if matrix is not None and matrix.lower() != 'none':
-            matrix_db = f'matrix_{matrix.lower()}_{polarity[:3]}'
-            if matrix_db in BUILTIN_DBS:
-                dbs.append(matrix_db)
-            else:
-                logger.warning(
-                    f'No peak database available for matrix {matrix}. Supported MALDI matrices:'
-                    + FORMATTED_MATRIXES
-                )
+            for mat in re.split('[,;/|]', matrix):
+                norm_mat = mat.lower().strip()
+                norm_mat = {'norharmane': 'nor'}.get(norm_mat, norm_mat)
+                matrix_db = f'matrix_{norm_mat}_{polarity[:3]}'
+                if matrix_db in BUILTIN_DBS:
+                    dbs.append(matrix_db)
+                else:
+                    logger.warning(
+                        f'No peak database available for matrix {mat}. Supported MALDI matrices:'
+                        + FORMATTED_MATRIXES
+                    )
 
         self.charge = {'positive': 1, 'negative': -1}[polarity]
         self.adducts = adducts

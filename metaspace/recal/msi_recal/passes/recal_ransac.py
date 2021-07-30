@@ -10,12 +10,26 @@ from sklearn.linear_model import RANSACRegressor
 from msi_recal.db_peak_match import get_recal_candidates
 from msi_recal.math import peak_width, ppm_to_sigma_1
 from msi_recal.params import RecalParams
+from msi_recal.passes.transform import Transform
 from msi_recal.plot import save_recal_image
 
 logger = logging.getLogger(__name__)
 
 
-class RecalRansac:
+class _IsValidSubset:
+    def __init__(self, bins):
+        self.bins = bins
+
+    def __call__(self, X_subset, y_subset):
+        return np.histogram(X_subset, self.bins)[0].all()
+
+
+class RecalRansac(Transform):
+    CACHE_FIELDS = [
+        'db_hits',
+        'model',
+    ]
+
     def __init__(self, params: RecalParams, ppm='500'):
         self.params = params
         self.recal_sigma_1 = ppm_to_sigma_1(float(ppm), params.analyzer, params.base_mz)
@@ -59,7 +73,7 @@ class RecalRansac:
             # min_samples
             min_samples=max(0.05, 3 / len(X)),
             residual_threshold=threshold,
-            is_data_valid=lambda X_subset, y_subset: np.histogram(X_subset, bins)[0].all(),
+            is_data_valid=_IsValidSubset(bins),
             loss='absolute_loss',
             stop_probability=1,
         )

@@ -170,6 +170,11 @@ Specify --no-default-dbs to suppress the defaults.
     )
     parser.add_argument('--no-debug', action='store_true', help='Suppress writing debug files')
     parser.add_argument(
+        '--cache',
+        help='Directory for cache files (default: input path with _cache suffix)',
+    )
+    parser.add_argument('--no-cache', action='store_true', help='Suppress using cache files')
+    parser.add_argument(
         '--samples', type=int, default=100, help='How many spectra to use for model fitting'
     )
     parser.add_argument('--limit', type=int, help='Only consider the first N spectra')
@@ -200,6 +205,12 @@ def main(args):
         debug_path = 'infer'
     else:
         debug_path = None
+    if args.cache:
+        cache_path = Path(args.cache)
+    elif not args.no_cache:
+        cache_path = 'infer'
+    else:
+        cache_path = None
 
     assert input_path.exists(), f'{input_path} not found'
 
@@ -232,7 +243,13 @@ def main(args):
     logger.debug(params)
 
     process_imzml_file(
-        input_path, params, output_path, debug_path, samples=args.samples, limit=args.limit
+        input_path=input_path,
+        params=params,
+        output_path=output_path,
+        debug_path=debug_path,
+        cache_path=cache_path,
+        samples=args.samples,
+        limit=args.limit,
     )
 
 

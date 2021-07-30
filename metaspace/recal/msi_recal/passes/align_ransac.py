@@ -9,11 +9,21 @@ from msi_recal.join_by_mz import join_by_mz
 from msi_recal.math import peak_width, ppm_to_sigma_1
 from msi_recal.mean_spectrum import representative_spectrum, hybrid_mean_spectrum
 from msi_recal.params import RecalParams
+from msi_recal.passes.transform import Transform
 
 logger = logging.getLogger(__name__)
 
 
-class AlignRansac:
+class AlignRansac(Transform):
+    CACHE_FIELDS = [
+        'min_mz',
+        'max_mz',
+        'coef_',
+        'lo_warp_',
+        'hi_warp_',
+        'target_spectrum',
+    ]
+
     def __init__(self, params: RecalParams, ppm='20'):
         self.align_sigma_1 = ppm_to_sigma_1(float(ppm), params.analyzer, params.base_mz)
         self.jitter_sigma_1 = params.jitter_sigma_1

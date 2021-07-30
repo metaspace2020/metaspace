@@ -13,6 +13,7 @@ from msi_recal.mean_spectrum import (
 )
 from msi_recal.mx_warp_peaks import warp_peaks
 from msi_recal.params import RecalParams
+from msi_recal.passes.transform import Transform
 from msi_recal.plot import save_spectrum_image, save_mma_image
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,18 @@ except ImportError:
     signal = None
 
 
-class AlignMsiwarp:
+class AlignMsiwarp(Transform):
+    CACHE_FIELDS = [
+        'coef_',
+        'warps_',
+        'ref_s',
+        'align_nodes',
+        'sample_mzs',
+        'sample_mzs_bounds',
+        'sample_before',
+        'sample_after',
+    ]
+
     def __init__(self, params: RecalParams, ppm='5', segments='1', precision='0.2'):
         self.params = params
         self.align_sigma_1 = ppm_to_sigma_1(float(ppm), params.analyzer, params.base_mz)
@@ -114,7 +126,8 @@ class AlignMsiwarp:
             for sp, grp in spectra
             if sp not in self.coef_
         ]
-        self._calc_alignments(mx_spectra)
+        if mx_spectra:
+            self._calc_alignments(mx_spectra)
 
         # Apply alignments & convert back to dataframe format
         results_dfs = []
