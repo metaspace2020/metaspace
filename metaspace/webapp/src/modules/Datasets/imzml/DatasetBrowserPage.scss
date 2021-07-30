@@ -5,6 +5,13 @@ $header-height: 64px;
   @apply flex flex-row flex-wrap p-0;
   min-height: calc(100vh - #{$header-height});
 
+  .range-slider{
+    width: 200px;
+  }
+  .ds-intensities-wrapper{
+    @apply flex justify-between;
+  }
+
   .ds-viewer-controls-wrapper{
     @apply absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-between items-end w-0;
   }

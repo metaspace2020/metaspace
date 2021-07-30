@@ -26,6 +26,11 @@ import OpacitySettings from '../../ImageViewer/OpacitySettings.vue'
 import RangeSlider from '../../../components/Slider/RangeSlider.vue'
 import IonIntensity from '../../ImageViewer/IonIntensity.vue'
 import Vue from 'vue'
+import { IonImage, loadPngFromUrl, processIonImage, renderScaleBar } from '../../../lib/ionImageRendering'
+import { get } from 'lodash-es'
+import createColormap from '../../../lib/createColormap'
+import getColorScale from '../../../lib/getColorScale'
+import { THUMB_WIDTH } from '../../../components/Slider'
 interface DatasetBrowserProps {
   className: string
 }
@@ -38,11 +43,13 @@ interface DatasetBrowserState {
   mzmPolarityFilter: number | undefined
   mzmScaleFilter: string | undefined
   scaleIntensity: boolean
+  ionImageUrl: any
   chartOptions: any
   sampleData: any[]
   chartLoading: boolean
   imageLoading: boolean
-  ionImage: string | undefined
+  ionImage: any
+  rangeSliderStyle: any
   imageSettings: any
   metadata: any
   annotation: any
@@ -76,12 +83,14 @@ export default defineComponent<DatasetBrowserProps>({
       metadata: undefined,
       ionImage: undefined,
       annotation: undefined,
+      rangeSliderStyle: undefined,
       chartLoading: false,
       imageLoading: false,
       scaleIntensity: false,
       imageSettings: undefined,
       x: undefined,
       y: undefined,
+      ionImageUrl: undefined,
       sampleData: [],
       chartOptions: {
         grid: {
@@ -201,6 +210,8 @@ export default defineComponent<DatasetBrowserProps>({
       },
     })
 
+    const rangeSlider = ref<any>(null)
+
     const handleChartResize = () => {
       if (spectrumChart && spectrumChart.value) {
         // @ts-ignore
@@ -297,6 +308,66 @@ export default defineComponent<DatasetBrowserProps>({
       }
     }
 
+    const handleIonIntensityChange = async(intensity: number, type: string) => {
+      console.log('YO', intensity, type)
+      if (type === 'min') {
+        state.imageSettings.minIntensity = intensity
+      } else {
+        state.imageSettings.maxIntensity = intensity
+      }
+    }
+    const handleUserScalingChange = async(userScaling: any) => {
+      state.imageSettings.userScaling = userScaling
+    }
+
+    const handleIonIntensityLockChange = async(value: number, type: string) => {
+      const minLocked = type === 'min' ? value : state.imageSettings.lockedIntensities[0]
+      const maxLocked = type === 'max' ? value : state.imageSettings.lockedIntensities[1]
+      const lockedIntensities = [minLocked, maxLocked]
+      const intensity = getIntensity(state.ionImage,
+        lockedIntensities)
+      state.imageSettings.lockedIntensities = lockedIntensities
+      state.imageSettings.intensity = intensity
+    }
+
+    const buildRangeSliderStyle = (scaleRange: number[] = [0, 1]) => {
+      const width = 190
+      const activeColorMap = state.imageSettings.colormap
+      const ionImage = state.ionImage
+      const cmap = createColormap(activeColorMap)
+      const { range } = getColorScale(activeColorMap)
+      const { scaledMinIntensity, scaledMaxIntensity } = ionImage || {}
+      const minColor = range[0]
+      const maxColor = range[range.length - 1]
+      const gradient = scaledMinIntensity === scaledMaxIntensity
+        ? `linear-gradient(to right, ${range.join(',')})`
+        : ionImage ? `url(${renderScaleBar(ionImage, cmap, true)})` : ''
+      const [minScale, maxScale] = scaleRange
+      const minStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * minScale))
+      const maxStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * maxScale))
+      state.rangeSliderStyle = {
+        background: [
+          `0px / ${minStop}px 100% linear-gradient(${minColor},${minColor}) no-repeat`,
+          `${minStop}px / ${maxStop - minStop}px 100% ${gradient} repeat-y`,
+          `${minColor} ${maxStop}px / ${width - maxStop}px 100% linear-gradient(${maxColor},${maxColor}) no-repeat`,
+        ].join(','),
+      }
+    }
+
+    const setIonImage = async() => {
+      if (state.ionImageUrl) {
+        const ionImagePng = await loadPngFromUrl(state.ionImageUrl)
+        const isotopeImage = get(state.annotation, 'isotopeImages[0]')
+        const { minIntensity, maxIntensity } = isotopeImage
+        state.ionImage = await processIonImage(ionImagePng, minIntensity, maxIntensity,
+          state.imageSettings.scaleType)
+        state.imageSettings.intensity = getIntensity(state.ionImage)
+        buildRangeSliderStyle()
+      }
+
+      state.ionImage = null
+    }
+
     const requestIonImage = async() => {
       // @ts-ignore
       const inputPath: string = dataset.value.inputPath.replace('s3a:', 's3:')
@@ -318,8 +389,7 @@ export default defineComponent<DatasetBrowserProps>({
         })
 
         const content = await response.blob()
-        const src = URL.createObjectURL(content)
-        state.ionImage = src
+        state.ionImageUrl = URL.createObjectURL(content)
         state.annotation = {
           ...annotations.value[0],
           mz: state.mzmScoreFilter,
@@ -327,7 +397,7 @@ export default defineComponent<DatasetBrowserProps>({
             {
               ...annotations.value[0].isotopeImages[0],
               mz: state.mzmScoreFilter,
-              url: state.ionImage,
+              url: state.ionImageUrl,
             },
           ],
         }
@@ -338,20 +408,21 @@ export default defineComponent<DatasetBrowserProps>({
       }
     }
 
-    onAnnotationsResult((result) => {
+    onAnnotationsResult(async(result) => {
       if (dataset.value && result) {
         const mz = result.data.allAnnotations[0].mz
         const ppm = 3
         state.mzmScoreFilter = mz
         state.mzmPolarityFilter = ppm
         state.mzmScaleFilter = 'ppm'
-        requestIonImage()
-        buildMetadata(dataset.value)
-        if (state.x !== undefined && state.y !== undefined) {
-          requestSpectrum(state.x, state.y)
-        }
+        await requestIonImage()
         if (!state.imageSettings) {
           startImageLoaderSettings()
+        }
+        await setIonImage()
+        buildMetadata(dataset.value)
+        if (state.x !== undefined && state.y !== undefined) {
+          await requestSpectrum(state.x, state.y)
         }
       }
       queryOptions.enabled = false
@@ -716,18 +787,68 @@ export default defineComponent<DatasetBrowserProps>({
 
     const handleColormapChange = (colormap: string) => {
       state.imageSettings.colormap = colormap
+      buildRangeSliderStyle()
     }
 
     const handleScaleTypeChange = (scaleType: string) => {
       state.imageSettings.scaleType = scaleType
+      buildRangeSliderStyle()
     }
 
     const handleScaleBarColorChange = (color: string) => {
       state.imageSettings.scaleBarColor = color
     }
 
+    const getIntensityData = (
+      image: number, clipped: number, scaled: number, user: number, quantile: number, isLocked?: boolean,
+    ) => {
+      const isClipped = quantile > 0 && quantile < 1 && user === image
+      return {
+        image,
+        clipped,
+        scaled,
+        user,
+        quantile,
+        status: isLocked ? 'LOCKED' : isClipped ? 'CLIPPED' : undefined,
+      }
+    }
+
+    const getIntensity = (ionImage: any, lockedIntensities: any = []) => {
+      if (ionImage !== null) {
+        const {
+          minIntensity, maxIntensity,
+          clippedMinIntensity, clippedMaxIntensity,
+          scaledMinIntensity, scaledMaxIntensity,
+          userMinIntensity, userMaxIntensity,
+          lowQuantile, highQuantile,
+        } = ionImage || {}
+        const [lockedMin, lockedMax] = lockedIntensities
+
+        return {
+          min: getIntensityData(
+            minIntensity,
+            clippedMinIntensity,
+            scaledMinIntensity,
+            userMinIntensity,
+            lowQuantile,
+            lockedMin !== undefined,
+          ),
+          max: getIntensityData(
+            maxIntensity,
+            clippedMaxIntensity,
+            scaledMaxIntensity,
+            userMaxIntensity,
+            highQuantile,
+            lockedMax !== undefined,
+          ),
+        }
+      }
+      return null
+    }
+
     const startImageLoaderSettings = () => {
       state.imageSettings = {
+        lockedIntensities: [undefined, undefined],
         annotImageOpacity: 1.0,
         opticalOpacity: 1.0,
         colormap: 'Viridis',
@@ -741,6 +862,7 @@ export default defineComponent<DatasetBrowserProps>({
         },
         opticalSrc: null,
         opticalTransform: null,
+        userScaling: [0, 1],
         pixelAspectRatio: config.features.ignore_pixel_aspect_ratio ? 1
           : getPixelSizeX() && getPixelSizeY() && getPixelSizeX() / getPixelSizeY() || 1,
       }
@@ -820,8 +942,7 @@ export default defineComponent<DatasetBrowserProps>({
                   />
                 }
                 {
-                  state.ionImage
-                  && state.annotation
+                  state.annotation
                   && state.imageSettings
                   && <div class='relative'>
                     <MainImage
@@ -835,13 +956,49 @@ export default defineComponent<DatasetBrowserProps>({
                       colormap={state.imageSettings.colormap}
                       scaleBarColor={state.imageSettings.scaleBarColor}
                       scaleType={state.imageSettings.scaleType}
+                      userScaling={state.imageSettings.userScaling}
                       pixelSizeX={getPixelSizeX()}
                       pixelSizeY={getPixelSizeY()}
                       {...{ on: { 'pixel-select': handlePixelSelect } }}
                     />
-                    <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
-
-                    </div>
+                    {
+                      state.imageSettings.intensity
+                      && <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
+                        <FadeTransition class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden">
+                          <div
+                            class="range-slider p-3 bg-gray-100 rounded-lg box-border shadow-xs">
+                            <RangeSlider
+                              class="ds-comparison-opacity-item"
+                              value={state.imageSettings.userScaling}
+                              min={0}
+                              max={1}
+                              step={0.01}
+                              style={state.rangeSliderStyle}
+                              onInput={handleUserScalingChange}
+                            />
+                            <div
+                              class="ds-intensities-wrapper">
+                              <IonIntensity
+                                value={state.imageSettings.minIntensity}
+                                intensities={state.imageSettings.intensity?.min}
+                                label="Minimum intensity"
+                                placeholder="min."
+                                onInput={(value: number) => handleIonIntensityChange(value, 'min')}
+                                onLock={(value: number) => handleIonIntensityLockChange(value, 'min')}
+                              />
+                              <IonIntensity
+                                value={state.imageSettings.maxIntensity}
+                                intensities={state.imageSettings.intensity?.max}
+                                label="Minimum intensity"
+                                placeholder="min."
+                                onInput={(value: number) => handleIonIntensityChange(value, 'max')}
+                                onLock={(value: number) => handleIonIntensityLockChange(value, 'max')}
+                              />
+                            </div>
+                          </div>
+                        </FadeTransition>
+                      </div>
+                    }
                   </div>
                 }
               </div>

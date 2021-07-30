@@ -156,6 +156,9 @@ export default class MainImage extends Vue {
     @Prop({ type: String })
     scaleType?: ScaleType
 
+    @Prop({ type: Array })
+    userScaling?: [number, number]
+
     @Prop({ type: Boolean })
     keepPixelSelected?: boolean
 
@@ -210,7 +213,8 @@ export default class MainImage extends Vue {
       if (this.ionImagePng != null) {
         const isotopeImage = get(this.annotation, 'isotopeImages[0]')
         const { minIntensity, maxIntensity } = isotopeImage
-        return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.scaleType)
+
+        return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.scaleType, this.userScaling)
       } else {
         return null
       }
