@@ -136,7 +136,7 @@ class Executor:
           allowing a function to supply more granular timing data and add custom data.
         * Memory & time usage is recorded for each invocation.
         * A `cost_factors` DataFrame may be supplied - currently just saved to DB, but planned
-          to be used as a data source for predicting memory & time usage automatically based on
+          to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 be used as a data source for predicting memory & time usage automatically based on
           previous executions.
           This DF should have one row per job (in the same order), and each column should be a float
           that represents some factor that could contribute to memory/time usage.
@@ -167,7 +167,7 @@ class Executor:
                     config=lithops_config, runtime=RUNTIME_CE, backend='code_engine',
                 ),
                 'ibm_vpc': lithops.StandaloneExecutor(
-                    config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE,
+                    config=lithops_config, runtime=RUNTIME_CF_VPC,
                 ),
             }
 
@@ -337,7 +337,7 @@ class Executor:
         if executor.config['lithops']['mode'] == 'standalone':
             # Set number of parallel workers based on memory requirements
             # Lithops>=2.2.17 can configure this via `.map(worker_processes=workers)`
-            executor.config['lithops']['workers'] = min(
+            executor.config['lithops']['worker_processes'] = min(
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
 
