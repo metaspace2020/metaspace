@@ -157,7 +157,8 @@ class SciTester:
         perf = NullProfiler()
         if use_lithops:
             # Override the runtime to force it to run without docker.
-            lithops_executor.RUNTIME_DOCKER_IMAGE = 'python'
+            lithops_executor.RUNTIME_CF_VPC = 'python'
+            lithops_executor.RUNTIME_CE = 'python'
 
             executor = Executor(self.sm_config['lithops'], perf)
             ServerAnnotationJob(executor, ds, perf, self.sm_config).run(debug_validate=True)
