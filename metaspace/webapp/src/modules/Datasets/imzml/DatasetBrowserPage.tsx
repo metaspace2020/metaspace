@@ -459,7 +459,7 @@ export default defineComponent<DatasetBrowserProps>({
       return formatFormula(ionElements)
     }
 
-    const requestIonImage = async() => {
+    const requestIonImage = async(mzValue : number | undefined = state.mzmScoreFilter) => {
       // @ts-ignore
       const inputPath: string = dataset.value.inputPath.replace('s3a:', 's3:')
       const url = 'http://127.0.0.1:8000/search'
@@ -474,7 +474,7 @@ export default defineComponent<DatasetBrowserProps>({
           method: 'POST',
           body: JSON.stringify({
             s3_path: inputPath,
-            mz: state.mzmScoreFilter,
+            mz: mzValue,
             ppm: state.mzmPolarityFilter,
           }),
         })
@@ -483,11 +483,11 @@ export default defineComponent<DatasetBrowserProps>({
         state.ionImageUrl = URL.createObjectURL(content)
         state.annotation = {
           ...annotations.value[0],
-          mz: state.mzmScoreFilter,
+          mz: mzValue,
           isotopeImages: [
             {
               ...annotations.value[0].isotopeImages[0],
-              mz: state.mzmScoreFilter,
+              mz: mzValue,
               url: state.ionImageUrl,
             },
           ],
@@ -519,16 +519,6 @@ export default defineComponent<DatasetBrowserProps>({
       queryOptions.enabled = false
     })
 
-    const handleFilterClear = () => {
-      state.peakFilter = PEAK_FILTER.ALL
-      state.fdrFilter = undefined
-      state.databaseFilter = undefined
-      state.mzmScoreFilter = undefined
-      state.mzmPolarityFilter = undefined
-      state.mzmScaleFilter = undefined
-      queryOptions.enabled = true
-    }
-
     const buildMetadata = (dataset: any) => {
       const datasetMetadataExternals = {
         Submitter: dataset.submitter,
@@ -558,8 +548,8 @@ export default defineComponent<DatasetBrowserProps>({
     const renderBrowsingFilters = () => {
       return (
         <div class='dataset-browser-holder-filter-box'>
-          <span class='font-semibold'>Browsing filters</span>
-          <div class='flex flex-row w-full items-end'>
+          <p class='font-semibold'>Browsing filters</p>
+          <div class='filter-holder'>
             <RadioGroup
               class='w-3/5'
               onInput={(value: any) => {
@@ -576,6 +566,11 @@ export default defineComponent<DatasetBrowserProps>({
                   state.databaseFilter = undefined
                 }
               }}
+              onChange={() => {
+                if (state.x !== undefined && state.y !== undefined) {
+                  queryOptions.enabled = true
+                }
+              }}
               value={state.peakFilter}
               size='mini'>
               <Radio class='w-full' label={PEAK_FILTER.ALL}>All Peaks</Radio>
@@ -587,6 +582,9 @@ export default defineComponent<DatasetBrowserProps>({
                   onChange={(value: number) => {
                     state.fdrFilter = value
                     state.peakFilter = PEAK_FILTER.FDR
+                    if (state.x !== undefined && state.y !== undefined) {
+                      queryOptions.enabled = true
+                    }
                   }}
                   placeholder='5%'
                   size='mini'>
@@ -604,6 +602,9 @@ export default defineComponent<DatasetBrowserProps>({
                 size='mini'
                 onChange={(value: number) => {
                   state.databaseFilter = value
+                  if (state.x !== undefined && state.y !== undefined) {
+                    queryOptions.enabled = true
+                  }
                 }}
                 placeholder='HMDB - v4'>
                 {
@@ -624,38 +625,46 @@ export default defineComponent<DatasetBrowserProps>({
     const renderImageFilters = () => {
       return (
         <div class='dataset-browser-holder-filter-box'>
-          <span class='font-semibold'>Image filters</span>
-          <div class='flex flex-row w-full items-end'>
-            <span class='mr-2'>m/z</span>
+          <p class='font-semibold'>Image filters</p>
+          <div class='filter-holder'>
+            <span class='mr-2 label'>m/z</span>
             <InputNumber
-              class='mr-2'
               value={state.mzmScoreFilter}
-              onChange={(value: number) => {
+              onInput={(value: number) => {
                 state.mzmScoreFilter = value
                 state.moleculeFilter = undefined
+              }}
+              onChange={() => {
+                requestIonImage()
               }}
               precision={4}
               step={0.0001}
               size='mini'
               placeholder='174.0408'
             />
-            <span class='mr-2'>+-</span>
+            <span class='mx-1'>+-</span>
             <InputNumber
               class='mr-2 select-box'
               value={state.mzmPolarityFilter}
-              onChange={(value: number) => {
+              onInput={(value: number) => {
                 state.mzmPolarityFilter = value
+                state.moleculeFilter = undefined
               }}
-              precision={1}
+              onChange={() => {
+                requestIonImage()
+              }}
+              precision={2}
               step={0.01}
               size='mini'
               placeholder='2.5'
             />
             <Select
-              class='select-box-mini'
+              class='select-box-mini ml-px'
               value={state.mzmScaleFilter}
               onChange={(value: string) => {
                 state.mzmScaleFilter = value
+                state.moleculeFilter = undefined
+                requestIonImage()
               }}
               size='mini'
               placeholder='ppm'>
@@ -664,50 +673,22 @@ export default defineComponent<DatasetBrowserProps>({
             </Select>
           </div>
           <div class='flex flex-row w-full items-end mt-2'>
-            <span class='pr-2'>Molecule</span>
+            <span class='label pr-2'>Formula</span>
             <Input
-              class='select-box-mini'
+              class='formula-input'
               value={state.moleculeFilter}
               onInput={(value: string) => {
                 state.moleculeFilter = value
                 state.mzmScoreFilter = undefined
               }}
+              onChange={() => {
+                const { moleculeFilter } : any = state
+                requestIonImage(calculateMzFromFormula(moleculeFilter as string))
+              }}
               size='mini'
               placeholder='H2O+H'
             />
           </div>
-        </div>
-      )
-    }
-
-    const renderSpectrumFilterBox = () => {
-      return (
-        <div>
-          {renderBrowsingFilters()}
-          <Button class='clear-btn' size='mini' onClick={handleFilterClear}>
-            Clear
-          </Button>
-          <Button class='filter-btn' type='primary' size='mini' onClick={() => {
-            queryOptions.enabled = true
-          }}>
-            Filter
-          </Button>
-        </div>
-      )
-    }
-
-    const renderImageFilterBox = () => {
-      return (
-        <div>
-          {renderImageFilters()}
-          <Button class='filter-btn' type='primary' size='mini' onClick={() => {
-            if (state.moleculeFilter) {
-              state.mzmScoreFilter = calculateMzFromFormula(state.moleculeFilter)
-            }
-            requestIonImage()
-          }}>
-            Filter
-          </Button>
         </div>
       )
     }
@@ -986,7 +967,7 @@ export default defineComponent<DatasetBrowserProps>({
               <div class='dataset-browser-holder-header'>
                 Spectrum browser
               </div>
-              {renderSpectrumFilterBox()}
+              {renderBrowsingFilters()}
               {
                 isEmpty && !state.chartLoading
                 && renderEmptySpectrum()
@@ -1018,7 +999,7 @@ export default defineComponent<DatasetBrowserProps>({
               <div class='dataset-browser-holder-header'>
                 Image viewer
               </div>
-              {renderImageFilterBox()}
+              {renderImageFilters()}
               <div class='ion-image-holder'>
                 {
                   (annotationsLoading.value || state.imageLoading)

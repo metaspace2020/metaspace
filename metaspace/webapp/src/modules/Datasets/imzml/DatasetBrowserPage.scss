@@ -5,6 +5,9 @@ $header-height: 64px;
   @apply flex flex-row flex-wrap p-0;
   min-height: calc(100vh - #{$header-height});
 
+  .label{
+    width: 60px;
+  }
   .range-slider{
     width: 200px;
   }
@@ -87,6 +90,9 @@ $header-height: 64px;
     @apply border-2 border-dashed border-gray-200 relative rounded m-6 p-2 flex flex-row items-center justify-center;
     background: rgba(224,224,224,0.2);
   }
+  .formula-input{
+    max-width: 22rem;
+  }
 
   .select-box{
     max-width: 7rem;
@@ -111,6 +117,8 @@ $header-height: 64px;
   p {
     @apply my-0 max-w-measure-4;
   }
+
+
 
   h1 {
     @apply text-4xl leading-12 font-display;
@@ -138,6 +146,15 @@ $header-height: 64px;
   .dataset-browser-holder-filter-box{
     @apply p-2 max-w-4xl box-border mx-auto leading-6 text-base;
     min-height: 100px;
+
+    p{
+      @apply mb-2;
+    }
+
+    .filter-holder{
+      @apply flex flex-row w-full items-end;
+      min-height: 30px;
+    }
   }
 }
 
