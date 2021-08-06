@@ -27,6 +27,8 @@ import createColormap from '../../../lib/createColormap'
 import getColorScale from '../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../components/Slider'
 import { periodicTable } from './periodicTable'
+import Vue from 'vue'
+import SingleIonImageControls from '../../ImageViewer/SingleIonImageControls.vue'
 
 interface DatasetBrowserProps {
   className: string
@@ -325,14 +327,52 @@ export default defineComponent<DatasetBrowserProps>({
     }
 
     const handleIonIntensityChange = async(intensity: number, type: string) => {
+      let minScale = state.imageSettings.userScaling[0]
+      let maxScale = state.imageSettings.userScaling[1]
+
       if (type === 'min') {
-        state.imageSettings.minIntensity = intensity
+        minScale = intensity / state.imageSettings.intensity.max.image
+        minScale = minScale > 1 ? 1 : minScale
+        minScale = minScale > maxScale ? maxScale : minScale
+        minScale = minScale < 0 ? 0 : minScale
       } else {
-        state.imageSettings.maxIntensity = intensity
+        maxScale = intensity / state.imageSettings.intensity.max.image
+        maxScale = maxScale > 1 ? 1 : maxScale
+        maxScale = maxScale < 0 ? 0 : maxScale
+        maxScale = maxScale < minScale ? minScale : maxScale
       }
+
+      handleUserScalingChange([minScale, maxScale])
     }
+
     const handleUserScalingChange = async(userScaling: any) => {
       state.imageSettings.userScaling = userScaling
+
+      const minScale =
+        state.imageSettings.intensity?.min?.status === 'LOCKED'
+          ? userScaling[0] * (1
+          - (state.imageSettings.intensity.min.user / state.imageSettings.intensity.max.image))
+          + (state.imageSettings.intensity.min.user / state.imageSettings.intensity.max.image)
+          : userScaling[0]
+
+      const maxScale = userScaling[1] * (state.imageSettings.intensity?.max?.status === 'LOCKED'
+        ? state.imageSettings.intensity.max.user / state.imageSettings.intensity.max.image : 1)
+      const scale = [minScale, maxScale]
+      state.imageSettings.imageScaledScaling = scale
+
+      Vue.set(state.imageSettings, 'intensity', {
+        ...state.imageSettings.intensity,
+        min:
+          {
+            ...state.imageSettings.intensity.min,
+            scaled: state.imageSettings.intensity.max.image * userScaling[0],
+          },
+        max:
+          {
+            ...state.imageSettings.intensity.max,
+            scaled: state.imageSettings.intensity.max.image * userScaling[1],
+          },
+      })
     }
 
     const handleIonIntensityLockChange = async(value: number, type: string) => {
@@ -341,8 +381,30 @@ export default defineComponent<DatasetBrowserProps>({
       const lockedIntensities = [minLocked, maxLocked]
       const intensity = getIntensity(state.ionImage,
         lockedIntensities)
+
+      if (intensity && intensity.max && maxLocked && intensity.max.status === 'LOCKED') {
+        intensity.max.scaled = maxLocked
+        intensity.max.user = maxLocked
+        intensity.max.clipped = maxLocked
+      }
+
+      if (intensity && intensity.min && minLocked && intensity.min.status === 'LOCKED') {
+        intensity.min.scaled = minLocked
+        intensity.min.user = minLocked
+        intensity.min.clipped = minLocked
+      }
+
+      if (intensity && intensity.min && intensity.min.status !== 'LOCKED'
+      ) {
+        state.imageSettings.imageScaledScaling = [0, state.imageSettings.imageScaledScaling[1]]
+      }
+      if (intensity && intensity.max && intensity.max.status !== 'LOCKED') {
+        state.imageSettings.imageScaledScaling = [state.imageSettings.imageScaledScaling[0], 1]
+      }
+
       state.imageSettings.lockedIntensities = lockedIntensities
       state.imageSettings.intensity = intensity
+      state.imageSettings.userScaling = [0, 1]
     }
 
     const buildRangeSliderStyle = (scaleRange: number[] = [0, 1]) => {
@@ -357,6 +419,13 @@ export default defineComponent<DatasetBrowserProps>({
       const gradient = scaledMinIntensity === scaledMaxIntensity
         ? `linear-gradient(to right, ${range.join(',')})`
         : ionImage ? `url(${renderScaleBar(ionImage, cmap, true)})` : ''
+
+      state.imageSettings.colorBar = {
+        minColor,
+        maxColor,
+        gradient,
+      }
+
       const [minScale, maxScale] = scaleRange
       const minStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * minScale))
       const maxStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * maxScale))
@@ -378,9 +447,9 @@ export default defineComponent<DatasetBrowserProps>({
           state.imageSettings.scaleType)
         state.imageSettings.intensity = getIntensity(state.ionImage)
         buildRangeSliderStyle()
+      } else {
+        state.ionImage = null
       }
-
-      state.ionImage = null
     }
 
     const parseFormula = (formula: string) => {
@@ -925,6 +994,7 @@ export default defineComponent<DatasetBrowserProps>({
         opticalSrc: null,
         opticalTransform: null,
         userScaling: [0, 1],
+        imageScaledScaling: [0, 1],
         pixelAspectRatio: config.features.ignore_pixel_aspect_ratio ? 1
           : getPixelSizeX() && getPixelSizeY() && getPixelSizeX() / getPixelSizeY() || 1,
       }
@@ -932,6 +1002,7 @@ export default defineComponent<DatasetBrowserProps>({
 
     return () => {
       const isEmpty = state.x === undefined && state.y === undefined
+
       return (
         <div class={'dataset-browser-container'}>
           <div class={'dataset-browser-wrapper w-full lg:w-1/2'}>
@@ -1017,7 +1088,7 @@ export default defineComponent<DatasetBrowserProps>({
                       colormap={state.imageSettings.colormap}
                       scaleBarColor={state.imageSettings.scaleBarColor}
                       scaleType={state.imageSettings.scaleType}
-                      userScaling={state.imageSettings.userScaling}
+                      userScaling={state.imageSettings.imageScaledScaling}
                       pixelSizeX={getPixelSizeX()}
                       pixelSizeY={getPixelSizeY()}
                       {...{ on: { 'pixel-select': handlePixelSelect } }}
@@ -1040,7 +1111,6 @@ export default defineComponent<DatasetBrowserProps>({
                             <div
                               class="ds-intensities-wrapper">
                               <IonIntensity
-                                value={state.imageSettings.minIntensity}
                                 intensities={state.imageSettings.intensity?.min}
                                 label="Minimum intensity"
                                 placeholder="min."
@@ -1048,10 +1118,9 @@ export default defineComponent<DatasetBrowserProps>({
                                 onLock={(value: number) => handleIonIntensityLockChange(value, 'min')}
                               />
                               <IonIntensity
-                                value={state.imageSettings.maxIntensity}
                                 intensities={state.imageSettings.intensity?.max}
-                                label="Minimum intensity"
-                                placeholder="min."
+                                label="Maximum intensity"
+                                placeholder="man."
                                 onInput={(value: number) => handleIonIntensityChange(value, 'max')}
                                 onLock={(value: number) => handleIonIntensityLockChange(value, 'max')}
                               />
