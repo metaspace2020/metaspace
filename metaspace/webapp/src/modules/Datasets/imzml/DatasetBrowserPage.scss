@@ -13,6 +13,10 @@ $header-height: 64px;
   }
   .ds-intensities-wrapper{
     @apply flex justify-between;
+
+    .icon-check{
+      z-index: 1;
+    }
   }
 
   .ds-viewer-controls-wrapper{
