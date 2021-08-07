@@ -1,16 +1,5 @@
-import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from '@vue/composition-api'
-import { Select, Option, RadioGroup, Radio, InputNumber, Button, Input } from '../../../lib/element-ui'
-// @ts-ignore
-import ECharts from 'vue-echarts'
-import 'echarts/lib/chart/line'
-import 'echarts/lib/chart/bar'
-import 'echarts/lib/component/toolbox'
-import 'echarts/lib/component/tooltip'
-import 'echarts/lib/component/grid'
-import 'echarts/lib/component/legend'
-import 'echarts/lib/component/dataZoom'
-import 'echarts/lib/component/markPoint'
-import './DatasetBrowserPage.scss'
+import { computed, defineComponent, reactive } from '@vue/composition-api'
+import { Select, Option, RadioGroup, Radio, InputNumber, Input } from '../../../lib/element-ui'
 import { useQuery } from '@vue/apollo-composable'
 import { getDatasetByIdQuery, GetDatasetByIdQuery } from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
@@ -28,7 +17,8 @@ import getColorScale from '../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../components/Slider'
 import { periodicTable } from './periodicTable'
 import Vue from 'vue'
-import SingleIonImageControls from '../../ImageViewer/SingleIonImageControls.vue'
+import DatasetBrowserSpectrumChart from './DatasetBrowserSpectrumChart'
+import './DatasetBrowserPage.scss'
 
 interface DatasetBrowserProps {
   className: string
@@ -44,7 +34,6 @@ interface DatasetBrowserState {
   mzmScaleFilter: string | undefined
   scaleIntensity: boolean
   ionImageUrl: any
-  chartOptions: any
   sampleData: any[]
   chartLoading: boolean
   imageLoading: boolean
@@ -72,7 +61,6 @@ export default defineComponent<DatasetBrowserProps>({
   },
   setup: function(props, ctx) {
     const { $route, $store } = ctx.root
-    const spectrumChart = ref(null)
     const state = reactive<DatasetBrowserState>({
       peakFilter: PEAK_FILTER.ALL,
       fdrFilter: undefined,
@@ -93,156 +81,6 @@ export default defineComponent<DatasetBrowserProps>({
       y: undefined,
       ionImageUrl: undefined,
       sampleData: [],
-      chartOptions: {
-        grid: {
-          top: 60,
-          bottom: 80,
-          left: '10%',
-          right: '10%',
-        },
-        animation: false,
-        tooltip: {
-          show: true,
-          formatter: function(value: any) {
-            return value.data.tooltip
-          },
-        },
-        toolbox: {
-          feature: {
-            myTool1: {
-              show: true,
-              title: 'Restore',
-              icon:
-                'path://M512 981.333333c-209.866667 0-396.693333-126.026667-466.293333-314.08a35.52 35.52 0 0 1 '
-                + '23.626666-44.426666 38.613333 38.613333 0 0 1 48 20.693333c58.666667 158.933333 217.013333 '
-                + '265.493333 394.666667 265.6s336-106.666667 394.666667-266.133333a37.6 37.6 0 0 1 '
-                + '28.853333-23.626667 38.986667 38.986667 0 0 1 35.786667 11.946667 34.773333 34.773333 '
-                + '0 0 1 7.146666 35.36c-69.386667 188.373333-256.48 314.666667-466.453333 314.666666z '
-                + 'm431.36-574.08a37.92 37.92 0 0 1-35.946667-24.266666C849.386667 222.56 690.613333 114.88 '
-                + '512 114.72S174.72 222.346667 116.746667 382.773333A38.72 38.72 0 0 1 69.333333 403.733333a35.786667 '
-                + '35.786667 0 0 1-24.106666-44.373333C113.333333 169.866667 301.013333 42.666667 512 '
-                + '42.666667s398.666667 127.306667 467.146667 316.96a34.56 34.56 0 0 1-4.906667 32.64 '
-                + '38.933333 38.933333 0 0 1-30.88 14.986666z',
-              onclick: () => {
-                handleZoomReset()
-              },
-            },
-            dataZoom: {
-              title: {
-                zoom: 'Zoom',
-                back: 'Zoom reset',
-              },
-            },
-            saveAsImage: {
-              title: 'Download',
-            },
-          },
-        },
-        xAxis: {
-          name: 'm/z',
-          splitLine: {
-            show: false,
-          },
-          nameLocation: 'center',
-          nameGap: 30,
-          nameTextStyle: {
-            fontWeight: 'bold',
-            fontSize: 14,
-          },
-          type: 'value',
-          axisLabel: {
-            formatter: function(value: any) {
-              return value.toFixed(0.4)
-            },
-          },
-        },
-        yAxis: {
-          name: 'Intensity',
-          splitLine: {
-            show: false,
-          },
-          triggerEvent: true,
-          nameLocation: 'center',
-          nameGap: 60,
-          nameTextStyle: {
-            fontWeight: 'bold',
-            fontSize: 14,
-          },
-          type: 'value',
-          axisLabel: {
-            formatter: function(value: any) {
-              return state.scaleIntensity ? value : value.toExponential(2)
-            },
-          },
-          boundaryGap: [0, '30%'],
-        },
-        dataZoom: [
-          {
-            type: 'inside',
-            xAxisIndex: 0,
-            filterMode: 'empty',
-          },
-          {
-            type: 'slider',
-            yAxisIndex: 0,
-            filterMode: 'empty',
-            right: 16,
-          },
-        ],
-        legend: {
-          selectedMode: false,
-        },
-        series: [
-          {
-            name: 'Unannotated',
-            type: 'bar',
-            data: [],
-            label: {
-              show: true,
-              position: 'top',
-              formatter: '{b}',
-            },
-            labelLayout: {
-              hideOverlap: true,
-            },
-            barWidth: 2,
-            itemStyle: {
-              color: 'red',
-            },
-            markPoint: {
-              symbol: 'circle',
-              symbolSize: 10,
-              label: {
-                show: false,
-              },
-              data: [],
-            },
-          },
-          {
-            name: 'Annotated',
-            type: 'bar',
-            data: [],
-            itemStyle: {
-              color: 'blue',
-            },
-          },
-        ],
-      },
-    })
-
-    const handleChartResize = () => {
-      if (spectrumChart && spectrumChart.value) {
-        // @ts-ignore
-        spectrumChart.value.chart.resize()
-      }
-    }
-
-    onMounted(() => {
-      window.addEventListener('resize', handleChartResize)
-    })
-
-    onUnmounted(() => {
-      window.removeEventListener('resize', handleChartResize)
     })
 
     const queryVariables = () => {
@@ -322,7 +160,6 @@ export default defineComponent<DatasetBrowserProps>({
         console.log('E', e)
       } finally {
         state.chartLoading = false
-        buildChartOptions()
       }
     }
 
@@ -714,7 +551,7 @@ export default defineComponent<DatasetBrowserProps>({
         <div class='dataset-browser-holder-filter-box'>
           <p class='font-semibold'>Image filters</p>
           <div class='filter-holder'>
-            <span class='mr-2 label'>m/z</span>
+            <span class='label'>m/z</span>
             <InputNumber
               value={state.mzmScoreFilter}
               onInput={(value: number) => {
@@ -760,7 +597,7 @@ export default defineComponent<DatasetBrowserProps>({
             </Select>
           </div>
           <div class='flex flex-row w-full items-end mt-2'>
-            <span class='label pr-2'>Formula</span>
+            <span class='label'>Formula</span>
             <Input
               class='formula-input'
               value={state.moleculeFilter}
@@ -792,118 +629,6 @@ export default defineComponent<DatasetBrowserProps>({
           </div>
         </div>
       )
-    }
-
-    const handleZoomReset = () => {
-      if (spectrumChart && spectrumChart.value) {
-        // @ts-ignore
-        spectrumChart.value.chart.dispatchAction({
-          type: 'dataZoom',
-          start: 0,
-          end: 100,
-        })
-      }
-    }
-
-    const handleItemSelect = (item: any) => {
-      if (item.targetType === 'axisName') {
-        state.scaleIntensity = !state.scaleIntensity
-        buildChartOptions()
-      } else {
-        state.mzmScoreFilter = item.data.mz
-        requestIonImage()
-      }
-    }
-
-    const buildChartOptions = () => {
-      if (!state.sampleData || (Array.isArray(state.sampleData) && state.sampleData.length === 0)) {
-        return
-      }
-
-      const auxOptions = state.chartOptions
-      const data = []
-      const annotatedTheoreticalMzs = annotatedPeaks.value
-      const markPointData: any[] = []
-      let minX
-      let maxX
-      const maxIntensity = Math.max(...state.sampleData[0].ints)
-
-      for (let i = 0; i < state.sampleData[0].mzs.length; i++) {
-        const xAxis = state.sampleData[0].mzs[i]
-        const yAxis =
-          state.scaleIntensity
-            ? state.sampleData[0].ints[i] / maxIntensity * 100.0 : state.sampleData[0].ints[i]
-        const tooltip = `m/z: ${xAxis.toFixed(4)}`
-        let isAnnotated = false
-
-        if (!minX || xAxis < minX) {
-          minX = xAxis
-        }
-        if (!maxX || xAxis > maxX) {
-          maxX = xAxis
-        }
-        // check if is annotated
-        annotatedTheoreticalMzs.forEach((theoreticalMz: number) => {
-          const highestMz = theoreticalMz * 1.000003
-          const lowestMz = theoreticalMz * 0.999997
-          if (xAxis >= lowestMz && xAxis <= highestMz) {
-            isAnnotated = true
-          }
-        })
-
-        if (state.peakFilter === PEAK_FILTER.ALL && !isAnnotated) { // add unnanotated peaks
-          data.push({
-            name: xAxis.toFixed(4),
-            tooltip,
-            mz: xAxis,
-            value: [xAxis, yAxis],
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-
-          markPointData.push({
-            label: tooltip,
-            mz: xAxis,
-            xAxis: xAxis,
-            yAxis: yAxis,
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-        }
-
-        if (isAnnotated) {
-          data.push({
-            name: xAxis.toFixed(4),
-            tooltip,
-            mz: xAxis,
-            value: [xAxis, yAxis],
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-
-          markPointData.push({
-            label: tooltip,
-            mz: xAxis,
-            xAxis: xAxis,
-            yAxis: yAxis,
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-        }
-      }
-
-      auxOptions.xAxis.min = minX
-      auxOptions.xAxis.max = maxX
-      auxOptions.yAxis.name = state.scaleIntensity ? 'Relative Intensity' : 'Intensity'
-      auxOptions.yAxis.max = state.scaleIntensity ? 100 : maxIntensity
-      auxOptions.series[0].markPoint.data = markPointData
-      auxOptions.series[0].data = data
-      state.chartOptions = auxOptions
-      handleZoomReset()
     }
 
     const handlePixelSelect = (coordinates: any) => {
@@ -1011,30 +736,18 @@ export default defineComponent<DatasetBrowserProps>({
                 Spectrum browser
               </div>
               {renderBrowsingFilters()}
-              {
-                isEmpty && !state.chartLoading
-                && renderEmptySpectrum()
-              }
-              {
-                (!isEmpty || state.chartLoading)
-                && <div class='chart-holder'>
-                  {
-                    (annotationsLoading.value || state.chartLoading)
-                    && <div class='loader-holder'>
-                      <div>
-                        <i
-                          class="el-icon-loading"
-                        />
-                      </div>
-                    </div>
-                  }
-                  <ECharts
-                    ref={spectrumChart}
-                    autoResize={true}
-                    {...{ on: { 'zr:dblclick': handleZoomReset, click: handleItemSelect } }}
-                    class='chart' options={state.chartOptions}/>
-                </div>
-              }
+              <DatasetBrowserSpectrumChart
+                isEmpty={isEmpty}
+                isLoading={state.chartLoading}
+                isDataLoading={annotationsLoading.value}
+                data={state.sampleData}
+                annotatedData={annotatedPeaks.value}
+                peakFilter={state.peakFilter}
+                onItemSelected={(mz: number) => {
+                  state.mzmScoreFilter = mz
+                  requestIonImage()
+                }}
+              />
             </div>
           </div>
           <div class='dataset-browser-wrapper w-full lg:w-1/2'>

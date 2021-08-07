@@ -6,11 +6,13 @@ $header-height: 64px;
   min-height: calc(100vh - #{$header-height});
 
   .label{
-    width: 60px;
+    width: 70px;
   }
+
   .range-slider{
     width: 200px;
   }
+
   .ds-intensities-wrapper{
     @apply flex justify-between;
 
@@ -23,25 +25,12 @@ $header-height: 64px;
     @apply absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-between items-end w-0;
   }
 
-
-  .echarts {
-    width: 100%;
-    height: 500px;
-  }
-
-  .chart{
-    @apply flex flex-row items-center justify-center;
-    height: 500px;
-    width: 100%;
-  }
-
   .ion-image-holder{
     @apply flex flex-col items-center justify-start relative;
     min-height: 500px;
     width: 100%;
     background: rgba(0,0,0,0.01);
     height: 100%;
-
 
     .av-icon-button {
       @apply self-center mb-2 mr-1 h-6;
@@ -58,18 +47,15 @@ $header-height: 64px;
     }
   }
 
-  .chart-holder{
-    @apply flex flex-col items-center justify-start relative;
-    min-height: 500px;
-    width: 100%;
-    background: rgba(0,0,0,0.01);
-    height: 100%;
-  }
-
   .ion-image{
     width: calc(100% - 24px);
     height: 400px;
     object-fit: contain;
+  }
+
+  .info-icon{
+    font-size: 30px;
+    color: gray;
   }
 
   .loader-holder{
@@ -80,22 +66,8 @@ $header-height: 64px;
     padding-top: 30%;
   }
 
-  .chartz{
-    background: blue;
-    height: 400px;
-    width: 100%;
-  }
-  .info-icon{
-    font-size: 30px;
-    color: gray;
-  }
-
-  .dataset-browser-empty-spectrum{
-    @apply border-2 border-dashed border-gray-200 relative rounded m-6 p-2 flex flex-row items-center justify-center;
-    background: rgba(224,224,224,0.2);
-  }
   .formula-input{
-    max-width: 22rem;
+    max-width: 22.05rem;
   }
 
   .select-box{
@@ -106,23 +78,9 @@ $header-height: 64px;
     max-width: 5rem;
   }
 
-  .filter-btn{
-    @apply absolute;
-    top: 3rem;
-    right: 0.5rem;
-  }
-
-  .clear-btn{
-    @apply absolute;
-    top: 3rem;
-    right: 5rem;
-  }
-
   p {
     @apply my-0 max-w-measure-4;
   }
-
-
 
   h1 {
     @apply text-4xl leading-12 font-display;
@@ -131,7 +89,6 @@ $header-height: 64px;
   .dataset-comparison-grid-item-header{
     @apply flex justify-end;
   }
-
 
   .dataset-browser-wrapper{
     @apply p-4 max-w-4xl box-border mx-auto leading-6 text-base;
