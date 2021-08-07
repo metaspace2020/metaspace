@@ -105,7 +105,6 @@ export default defineComponent<DatasetBrowserProps>({
     const datasetId = computed(() => $route.params.dataset_id)
     const {
       result: datasetResult,
-      loading: datasetLoading,
     } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, {
       id: datasetId,
     })
@@ -116,6 +115,7 @@ export default defineComponent<DatasetBrowserProps>({
       filter: { ...queryVariables().filter, fdrLevel: state.fdrFilter, databaseId: state.databaseFilter },
       dFilter: { ...queryVariables().dFilter, ids: datasetId },
     }))
+
     const {
       result: annotationsResult,
       loading: annotationsLoading,
@@ -128,7 +128,12 @@ export default defineComponent<DatasetBrowserProps>({
 
     const annotatedPeaks = computed(() => {
       if (annotations.value) {
-        return annotations.value.map((annot: any) => annot.mz)
+        return annotations.value.map((annot: any) => {
+          return {
+            possibleCompounds: annot.possibleCompounds,
+            mz: annot.mz,
+          }
+        })
       }
       return []
     })
@@ -612,20 +617,6 @@ export default defineComponent<DatasetBrowserProps>({
               size='mini'
               placeholder='H2O+H'
             />
-          </div>
-        </div>
-      )
-    }
-
-    const renderEmptySpectrum = () => {
-      return (
-        <div class='dataset-browser-empty-spectrum'>
-          <i class="el-icon-info info-icon mr-6"/>
-          <div class='flex flex-col text-xs w-3/4'>
-            <p class='font-semibold mb-2'>Steps:</p>
-            <p>1 - Select a pixel on the image viewer</p>
-            <p>2 - Apply the filter you desire</p>
-            <p>3 - The interaction is multi-way, so you can also update the ion image via spectrum interaction</p>
           </div>
         </div>
       )

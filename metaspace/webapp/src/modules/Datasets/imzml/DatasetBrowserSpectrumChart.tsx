@@ -220,7 +220,8 @@ export default defineComponent<DatasetBrowserSpectrumChartProps>({
         const auxInts : number[] = []
         for (let i = 0; i < chartData.value[0].mzs.length; i++) {
           const xAxis = chartData.value[0].mzs[i]
-          annotatedTheoreticalMzs.forEach((theoreticalMz: number) => {
+          annotatedTheoreticalMzs.forEach((annotation: any) => {
+            const theoreticalMz : number = annotation.mz
             const highestMz = theoreticalMz * 1.000003
             const lowestMz = theoreticalMz * 0.999997
             if (xAxis >= lowestMz && xAxis <= highestMz) {
@@ -236,7 +237,7 @@ export default defineComponent<DatasetBrowserSpectrumChartProps>({
         const yAxis =
           state.scaleIntensity
             ? chartData.value[0].ints[i] / maxIntensity * 100.0 : chartData.value[0].ints[i]
-        const tooltip = `m/z: ${xAxis.toFixed(4)}`
+        let tooltip = `m/z: ${xAxis.toFixed(4)}`
         let isAnnotated = false
 
         if (!minX || xAxis < minX) {
@@ -246,11 +247,22 @@ export default defineComponent<DatasetBrowserSpectrumChartProps>({
           maxX = xAxis
         }
         // check if is annotated
-        annotatedTheoreticalMzs.forEach((theoreticalMz: number) => {
+        let hasCompoundsHeader = false
+        annotatedTheoreticalMzs.forEach((annotation: any) => {
+          const theoreticalMz : number = annotation.mz
           const highestMz = theoreticalMz * 1.000003
           const lowestMz = theoreticalMz * 0.999997
           if (xAxis >= lowestMz && xAxis <= highestMz) {
             isAnnotated = true
+
+            if (annotation.possibleCompounds.length > 0 && !hasCompoundsHeader) {
+              tooltip += '<br>Candidate molecules: <br>'
+              hasCompoundsHeader = true
+            }
+
+            annotation.possibleCompounds.forEach((compound: any) => {
+              tooltip += compound.name + '<br>'
+            })
           }
         })
 
