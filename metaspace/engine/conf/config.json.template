@@ -85,7 +85,7 @@
     },
     "code_engine": {
       "region": "eu-de",
-      "kubecfg_path": "/opt/dev/metaspace/metaspace/engine/conf/metaspace-staging-ce.json"
+      "kubecfg_path": "/home/ubuntu/.bluemix/plugins/code-engine/metaspace-staging-ce-56d11f60-a685-4a3b-b053-ff3f5d8cf249.yaml"
     },
     "ibm_vpc": {
       "endpoint": "https://eu-de.iaas.cloud.ibm.com",

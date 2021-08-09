@@ -25,7 +25,7 @@ TRet = TypeVar('TRet')
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
 RUNTIME_CF_VPC = 'metaspace2020/metaspace-lithops:1.8.4'
-RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:1.8.6'
+RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:1.8.6.7'
 MEM_LIMITS = {
     'localhost': 32768,
     'ibm_cf': 4096,
@@ -136,7 +136,7 @@ class Executor:
           allowing a function to supply more granular timing data and add custom data.
         * Memory & time usage is recorded for each invocation.
         * A `cost_factors` DataFrame may be supplied - currently just saved to DB, but planned
-          to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 be used as a data source for predicting memory & time usage automatically based on
+          to be used as a data source for predicting memory & time usage automatically based on
           previous executions.
           This DF should have one row per job (in the same order), and each column should be a float
           that represents some factor that could contribute to memory/time usage.
@@ -160,15 +160,15 @@ class Executor:
         else:
             self.is_hybrid = True
             self.executors = {
-                # 'ibm_cf': lithops.ServerlessExecutor(
-                #     config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE
-                # ),
                 'code_engine': lithops.ServerlessExecutor(
                     config=lithops_config, runtime=RUNTIME_CE, backend='code_engine',
                 ),
                 'ibm_vpc': lithops.StandaloneExecutor(
                     config=lithops_config, runtime=RUNTIME_CF_VPC,
                 ),
+                # 'ibm_cf': lithops.ServerlessExecutor(
+                #     config=lithops_config, runtime=RUNTIME_CF_VPC
+                # ),
             }
 
         self.storage = Storage(lithops_config)
@@ -311,7 +311,7 @@ class Executor:
                             # Dismantle & wait for it to stop while the mutex is still active
                             # to avoid a race condition, as there's still some instability if a
                             # second request tries to start the VM while it is still stopping.
-                            executor.compute_handler.backend.master.stop()
+                            executor.dismantle()
                 except Exception as exc:
                     exception = exc
 
@@ -340,6 +340,10 @@ class Executor:
             executor.config['lithops']['worker_processes'] = min(
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
+        if executor.config['lithops']['mode'] == 'serverless':
+            runtime_cpu = runtime_memory / 1024 / 2.0
+            executor.config['code_engine']['runtime_cpu'] = runtime_cpu
+            logger.info(f'Setup {runtime_cpu} CPUs and {runtime_memory} MB RAM')
 
         return executor
 
