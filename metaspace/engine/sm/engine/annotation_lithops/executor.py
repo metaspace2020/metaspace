@@ -161,10 +161,13 @@ class Executor:
             self.is_hybrid = True
             self.executors = {
                 'code_engine': lithops.ServerlessExecutor(
-                    config=lithops_config, runtime=RUNTIME_CE, backend='code_engine',
+                    config=lithops_config,
+                    runtime=RUNTIME_CE,
+                    backend='code_engine',
                 ),
                 'ibm_vpc': lithops.StandaloneExecutor(
-                    config=lithops_config, runtime=RUNTIME_CF_VPC,
+                    config=lithops_config,
+                    runtime=RUNTIME_CF_VPC,
                 ),
                 # 'ibm_cf': lithops.ServerlessExecutor(
                 #     config=lithops_config, runtime=RUNTIME_CF_VPC
