@@ -17,7 +17,6 @@ import FilterPanel from '../../Filters/FilterPanel.vue'
 import config from '../../../lib/config'
 import { DatasetListItem, datasetListItemsQuery } from '../../../api/dataset'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
-import Vue from 'vue'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -135,7 +134,9 @@ export default defineComponent<DatasetComparisonPageProps>({
     }))
     const annotationsQuery = useQuery<any>(comparisonAnnotationListQuery, queryVars, queryOptions)
     const datasetsQuery = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery,
-      queryVars, queryOptions)
+      {
+        dFilter: { ids: Object.values(state.grid || {}).join('|') },
+      }, queryOptions)
     const loadAnnotations = () => { queryOptions.enabled = true }
     state.annotations = computed(() => {
       if (annotationsQuery.result.value) {

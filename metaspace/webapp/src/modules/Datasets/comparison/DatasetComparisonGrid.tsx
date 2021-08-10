@@ -566,7 +566,11 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           ? props.datasets.find((dataset: any) => dataset.id === state.grid[`${row}-${col}`])
           : null
       return (
-        <span class='dataset-comparison-grid-ds-name'>{dataset?.name}</span>
+        <div class='dataset-comparison-grid-ds-name'>
+          <span class='ds-name'>
+            {dataset?.name}
+          </span>
+        </div>
       )
     }
 

@@ -51,6 +51,12 @@
     background: #F1F5F8;
   }
 
+  .ds-name{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
   .dataset-comparison-grid-item-header{
     @apply flex flex-row;
     background: #F1F5F8;
