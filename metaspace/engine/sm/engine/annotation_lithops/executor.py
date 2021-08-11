@@ -344,7 +344,8 @@ class Executor:
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
         if executor.config['lithops']['mode'] == 'serverless':
-            runtime_cpu = runtime_memory / 1024 / 2.0
+            # selected `Balanced combination` between CPU and RAM
+            runtime_cpu = runtime_memory / 1024 / 4.0
             executor.config['code_engine']['runtime_cpu'] = runtime_cpu
             logger.info(f'Setup {runtime_cpu} CPUs and {runtime_memory} MB RAM')
 
