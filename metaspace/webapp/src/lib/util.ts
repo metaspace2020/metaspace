@@ -34,6 +34,7 @@ export function renderMolFormula(ion: string): string {
 }
 
 export function renderMolFormulaHtml(ion: string): string {
+  // Deprecated - use src/components/MolecularFormula.tsx instead when possible
   return renderMolFormula(ion).replace(/(\d+)/g, '<sub>$1</sub>')
 }
 

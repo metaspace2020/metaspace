@@ -178,6 +178,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   },
 
   async inviteUserToProject(source, { projectId, email }, ctx: Context): Promise<UserProjectSource> {
+    email = email.trim() // Trim spaces at the ends, because copy+pasting email addresses often adds unwanted spaces
     let user = await findUserByEmail(ctx.entityManager, email)
       || await findUserByEmail(ctx.entityManager, email, 'not_verified_email')
     const currentUser = await ctx.entityManager.findOneOrFail(UserModel, ctx.getUserIdOrFail())
