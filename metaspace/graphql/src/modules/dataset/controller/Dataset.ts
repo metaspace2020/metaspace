@@ -443,6 +443,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           ...diag,
           data: JSON.stringify(diag.data),
           database: diag.job?.molecularDB ?? null,
+          updatedDT: diag.updatedDT.toISOString(),
         }))
         const keyedResults = _.groupBy(formattedResults, 'datasetId')
         return datasetIds.map(id => keyedResults[id] || [])
