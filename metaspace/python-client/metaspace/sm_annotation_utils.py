@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import pprint
 import re
@@ -213,22 +214,33 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
             bucket = dest_url.path[1:].split('/')[0]
         return bucket
 
+    def iterate_file(key, upload_id, local_path):
+        part = 0
+        with open(local_path, 'rb') as f:
+            f.seek(0, 2)
+            file_len_mb = f.tell() / 1024 ** 2
+            f.seek(0)
+            # S3 supports max 10000 parts per file. Increase part size if needed
+            part_size = max(5, int(math.ceil(file_len_mb / 10000))) * 1024 ** 2
+            while True:
+                file_data = f.read(part_size)
+                if not file_data:
+                    break
+
+                part += 1
+                print(f'Uploading {part:3} part of {Path(local_path).name} file...')
+                presigned_url = sign_part_upload(key, upload_id, part)
+                yield part, presigned_url, file_data
+
     key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers)
 
-    PART_SIZE = 5 * 1024 ** 2
-    etags = []
-    part = 0
-    with open(local_path, 'rb') as f:
-        while True:
-            file_data = f.read(PART_SIZE)
-            if not file_data:
-                break
-
-            part += 1
-            print(f'Uploading {part:3} part of {Path(local_path).name} file...')
-            presigned_url = sign_part_upload(key, upload_id, part)
-            etag = upload_part(presigned_url, file_data)
-            etags.append((part, etag))
+    with ThreadPoolExecutor(8) as ex:
+        etags = list(
+            ex.map(
+                lambda args: (args[0], upload_part(*args[1:])),
+                iterate_file(key, upload_id, local_path),
+            )
+        )
 
     bucket = complete_multipart_upload(key, upload_id, etags)
     return bucket, key
