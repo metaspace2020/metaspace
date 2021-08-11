@@ -67,21 +67,41 @@ class RecalRansac(Transform):
         # against cases where the upper half of the mass range is almost empty.
         bins = np.histogram_bin_edges(recal_candidates.db_mz, 2)
         bins[1] = np.clip(bins[1], *np.percentile(_X, [20, 80]))
+        # sum-spectrum peaks should be much more consistent than jitter_sigma_1, so try running
+        # RANSAC with a much tighter tolerance, increasing the tolerance if the model can't converge
+        # TODO: With this logic can max_trials be lowered?
+        for i in [0.125, 0.25, 0.5, 1.0]:
+            try:
+                self.model = RANSACRegressor(
+                    max_trials=10000,
+                    # min_samples
+                    min_samples=max(0.05, 3 / len(X)),
+                    residual_threshold=(threshold * i) ** 2,  # use ** 2 only if loss = squared_loss
+                    is_data_valid=_IsValidSubset(bins),
+                    loss='squared_loss',
+                    stop_probability=1,
+                )
+                self.model.fit(_X, _y, _weights)
+            except ValueError:
+                if i == 1:
+                    raise
+                else:
+                    logger.info(
+                        f'RANSAC couldn\'t converge with sigma={self.jitter_sigma_1 * i}, '
+                        f'trying again with a higher tolerance'
+                    )
 
-        self.model = RANSACRegressor(
-            max_trials=10000,
-            # min_samples
-            min_samples=max(0.05, 3 / len(X)),
-            residual_threshold=threshold,
-            is_data_valid=_IsValidSubset(bins),
-            loss='absolute_loss',
-            stop_probability=1,
-        )
-        self.model.fit(_X, _y, _weights)
-        y_pred = self.model.estimator_.predict(_X)
-        pred_inliers = np.abs(_y - y_pred) < threshold
+        y_db_pred = self.model.estimator_.predict(self.db_hits.mz.values.reshape(-1, 1))
+        db_threshold = peak_width(self.db_hits.db_mz.values, self.analyzer, self.jitter_sigma_1)
+        db_inliers = np.abs(self.db_hits.db_mz.values - y_db_pred) < db_threshold
+        self.db_hits['recal_inlier'] = db_inliers
+        mz_err_before = self.db_hits.db_mz - self.db_hits.mz
+        self.db_hits['ppm_err_before'] = (mz_err_before) / (self.db_hits.db_mz * 1e6)
+        mz_err_after = self.db_hits.db_mz - y_db_pred
+        self.db_hits['ppm_err_after'] = mz_err_after / (self.db_hits.db_mz * 1e6)
 
-        logger.debug(f'RANSAC model hit {np.count_nonzero(pred_inliers)} inliers out of {len(_y)}')
+        n_inliers = np.count_nonzero(self.db_hits.recal_inlier & self.db_hits.used_for_recal)
+        logger.debug(f'RANSAC model hit {n_inliers} inliers out of {len(_y)}')
         min_mz = np.floor(X.mz.min() / 10) * 10
         max_mz = np.ceil(X.mz.max() / 10) * 10
         new_min, new_max = self.model.predict([[min_mz], [max_mz]])

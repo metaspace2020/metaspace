@@ -2,7 +2,12 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
-from msi_recal.math import peak_width, ppm_to_sigma_1, mass_accuracy_bounds
+from msi_recal.math import (
+    peak_width,
+    ppm_to_sigma_1,
+    mass_accuracy_bounds,
+    mass_accuracy_bound_indices,
+)
 
 from msi_recal import RecalParams
 from msi_recal.db_peak_match import get_db_hits
@@ -31,7 +36,7 @@ class EvalPeaksCollector:
 
         self.eval_peaks = eval_peaks
         self._mz_lo, self._mz_hi = mass_accuracy_bounds(
-            self.eval_peaks.db_mz, params.analyzer, params.jitter_sigma_1
+            self.eval_peaks.db_mz, params.analyzer, params.jitter_sigma_1 * 10
         )
         self.ppm_sigma_1 = ppm_to_sigma_1(1, params.analyzer, params.base_mz)
         self.collected_peak_sets = defaultdict(lambda: defaultdict(list))
@@ -52,6 +57,7 @@ class EvalPeaksCollector:
     def get_stats(self, set_name=None):
         peaks_dict = self.collected_peak_sets.get(set_name, {})
         stats = []
+
         for mol_idx, dfs in peaks_dict.items():
             peak_df = pd.concat(dfs)
             if not len(peak_df):
@@ -77,6 +83,37 @@ class EvalPeaksCollector:
             )
 
         return pd.DataFrame(stats).set_index('mol_idx')
+
+    # def get_mol_moves(self):
+    #     after_key, after_peaks = list(self.collected_peak_sets.items())[-1]
+    #     print(f'Key: {after_key}')
+    #     after_df = pd.concat(after_peaks)
+    #
+    #     spans = mass_accuracy_bound_indices(
+    #         after_df.mzs.values,
+    #         self.eval_peaks.db_mz.values,
+    #         self.params.analyzer,
+    #         self.params.jitter_sigma_1,
+    #     )
+    #     indexes = []
+    #     for lo, hi in spans:
+    #         indexes.append(after_df.index[lo:hi])
+    #     mols = {}
+    #     for mol_idx, idxs in enumerate(indexes):
+    #         mol = mols[mol_idx] = {
+    #             'mol_idx': mol_idx
+    #         }
+    #         if len(idxs):
+    #             for set_name, peaks_dict in self.collected_peak_sets.items():
+    #                 peaks = peaks_dict.get(mol_idx)
+    #                 if peaks is not None:
+    #                     peaks = peaks.loc[idxs]
+    #                     if len(peaks): WIP
+    #
+    #
+    #                 if mol_idx in peaks_dict:
+    #
+    #                 peaks = peaks_dict[mol_idx]
 
     def get_report(self):
         report_df = self.eval_peaks

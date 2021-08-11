@@ -156,7 +156,7 @@ def _calc_db_scores(
     limit_of_detection,
     max_mz,
     min_mz,
-    params,
+    params: RecalParams,
     sigma_1,
 ):
     db['db_mz'] = [
