@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SimpleIonImageViewer it should match snapshot when empty 1`] = `
+<div
+  class="simple-ion-image-container"
+  isempty="true"
+/>
+`;
+
+exports[`SimpleIonImageViewer it should match snapshot when loading chart data 1`] = `
+<div
+  class="simple-ion-image-container"
+  isdataloading="true"
+/>
+`;

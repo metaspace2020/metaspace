@@ -13,16 +13,16 @@ jest.mock('echarts/renderers', () => ({ default: jest.fn() }))
 jest.mock('echarts/charts', () => ({ default: jest.fn() }))
 jest.mock('echarts/components', () => ({ default: jest.fn() }))
 
-const testHarness = Vue.extend({
-  components: {
-    DatasetBrowserSpectrumChart,
-  },
-  render(h) {
-    return h(DatasetBrowserSpectrumChart, { props: this.$attrs })
-  },
-})
-
 describe('DatasetBrowserSpectrumChart', () => {
+  const testHarness = Vue.extend({
+    components: {
+      DatasetBrowserSpectrumChart,
+    },
+    render(h) {
+      return h(DatasetBrowserSpectrumChart, { props: this.$attrs })
+    },
+  })
+
   beforeAll(() => {
     Vue.use(Vuex)
     sync(store, router)
