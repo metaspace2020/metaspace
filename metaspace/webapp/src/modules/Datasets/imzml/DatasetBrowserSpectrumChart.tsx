@@ -1,15 +1,35 @@
 import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from '@vue/composition-api'
 // @ts-ignore
 import ECharts from 'vue-echarts'
-import 'echarts/lib/chart/line'
-import 'echarts/lib/chart/bar'
-import 'echarts/lib/component/toolbox'
-import 'echarts/lib/component/tooltip'
-import 'echarts/lib/component/grid'
-import 'echarts/lib/component/legend'
-import 'echarts/lib/component/dataZoom'
-import 'echarts/lib/component/markPoint'
+import { use } from 'echarts/core'
+import {
+  CanvasRenderer,
+} from 'echarts/renderers'
+import {
+  BarChart,
+  LineChart,
+} from 'echarts/charts'
+import {
+  GridComponent,
+  TooltipComponent,
+  ToolboxComponent,
+  LegendComponent,
+  DataZoomComponent,
+  MarkPointComponent,
+} from 'echarts/components'
 import './DatasetBrowserSpectrumChart.scss'
+
+use([
+  CanvasRenderer,
+  BarChart,
+  LineChart,
+  GridComponent,
+  TooltipComponent,
+  ToolboxComponent,
+  LegendComponent,
+  DataZoomComponent,
+  MarkPointComponent,
+])
 
 interface DatasetBrowserSpectrumChartProps {
   isEmpty: boolean
@@ -30,7 +50,7 @@ const PEAK_FILTER = {
   FDR: 2,
 }
 
-export default defineComponent<DatasetBrowserSpectrumChartProps>({
+export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectrumChartProps>({
   name: 'DatasetBrowserSpectrumChart',
   props: {
     isEmpty: {
