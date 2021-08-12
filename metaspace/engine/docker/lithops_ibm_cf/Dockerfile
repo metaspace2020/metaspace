@@ -1,27 +1,18 @@
-# Minimal Docker image for PyWren
-
-# Python 3.7.5
-FROM python:3.8.5-slim-buster
+FROM python:3.8.11-slim-buster
 
 ENV FLASK_PROXY_PORT 8080
 
-RUN pip install --no-cache-dir --upgrade pip setuptools six \
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir \
-        simplejson==3.17.2 \
-        httplib2==0.18.1 \
-        kafka_python==1.4.6 \
-        lxml==4.5.2 \
-        python-dateutil==2.8.0 \
-        pika==0.13.1 \
-        flask==1.1.1 \
-        gevent==20.9.0 \
-        ibm-cos-sdk==2.6.0 \
-        redis==3.3.8 \
-        requests==2.22.0 \
         cloudpickle==1.6.0 \
+        flask==2.0.1 \
+        gevent==21.8.0 \
+        ibm-cos-sdk==2.10.0 \
+        pika==1.2.0 \
         ps-mem==3.12 \
-        tblib==1.7.0 \
-        namegenerator==1.0.6
+        redis==3.5.3 \
+        requests==2.26.0 \
+        tblib==1.7.0
 
 COPY requirements.txt /tmp/requirements.txt
 RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow|scikit-learn|Pillow|boto3)" /tmp/requirements.txt > /tmp/requirements-lithops.txt

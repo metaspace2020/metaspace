@@ -1,4 +1,4 @@
-FROM python:3.8-slim-buster
+FROM python:3.8.11-slim-buster
 
 RUN apt-get update \
     && apt-get install -y \
@@ -9,23 +9,15 @@ RUN apt-get update \
 
 RUN pip install --upgrade pip setuptools wheel \
     && pip install --no-cache-dir \
-        cloudpickle \
-        flask \
-        gevent \
-        gunicorn \
-        httplib2 \
-        ibm-cos-sdk \
-        # kafka \
-        # lxml \
-        # numpy \
-        # pandas \
-        pika \
-        ps-mem \
-        # python-dateutil \
-        redis \
-        requests \
-        # simplejson \
-        tblib
+        cloudpickle==1.6.0 \
+        flask==2.0.1 \
+        gunicorn==20.1.0 \
+        ibm-cos-sdk==2.10.0 \
+        pika==1.2.0 \
+        ps-mem==3.12 \
+        redis==3.5.3 \
+        requests==2.26.0 \
+        tblib==1.7.0
 
 ENV PORT 8080
 ENV CONCURRENCY 4
