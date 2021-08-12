@@ -27,7 +27,7 @@ jobs:
       uses: joerick/cibuildwheel@v1.10.0
       env:
         CIBW_BUILD: "*_amd64 *_x86_64"
-        CIBW_SKIP: "cp27* pp*"
+        CIBW_SKIP: "cp27* cp35* pp*"
       with:
         package-dir: metaspace/recal
 

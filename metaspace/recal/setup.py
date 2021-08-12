@@ -10,6 +10,18 @@ from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
 
+def fix_includes_hack():
+    # IDK what happened to the GitHub Actions container image, but suddenly the build started
+    # failing on Windows with this error:
+    # MSIWarp\src\lib\warp\warp.cpp(375,32): error C3861: 'back_inserter': identifier not found
+    header_contents = open('MSIWarp/src/lib/warp/warp.hpp', 'rt').read()
+    if '<iterator>' not in header_contents:
+        header_contents = header_contents.replace(
+            '#include <vector>', '#include <vector>\n#include <iterator>'
+        )
+        open('MSIWarp/src/lib/warp/warp.hpp', 'wt').write(header_contents)
+
+
 ## This CMakeExtension stuff is part of MSIWarp vendoring (bundling a built copy of their library with our library)
 ## It's hacky and should be removed as soon as there's a MSIWarp package available on PyPI
 
@@ -22,6 +34,8 @@ class CMakeExtension(Extension):
 
 class CMakeBuild(build_ext):
     def run(self):
+        fix_includes_hack()
+
         try:
             out = subprocess.check_output(['cmake', '--version'])
         except OSError:
@@ -65,7 +79,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='msi_recal',
-    version='0.2.2',
+    version='0.2.3',
     description='Pipeline for mostly unsupervised recalibration of imzML mass spectrometry data',
     url='https://github.com/metaspace2020/metaspace/tree/master/metaspace/recal',
     author='Alexandrov Team, EMBL',

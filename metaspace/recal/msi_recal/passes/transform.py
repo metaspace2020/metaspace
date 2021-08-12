@@ -11,7 +11,7 @@ Self = TypeVar('Self')
 
 
 def reduce_MxPeak(peak):
-    return mx.peak, (peak.id, peak.mz, peak.height, peak.sigma_mz)
+    return mx.peak, (peak.id, peak.mz, peak.height, peak.sigma)
 
 
 def hydrate_MxNode(mz, slack, n_steps):
