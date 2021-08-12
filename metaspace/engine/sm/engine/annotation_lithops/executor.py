@@ -169,9 +169,6 @@ class Executor:
                     config=lithops_config,
                     runtime=RUNTIME_CF_VPC,
                 ),
-                # 'ibm_cf': lithops.ServerlessExecutor(
-                #     config=lithops_config, runtime=RUNTIME_CF_VPC
-                # ),
             }
 
         self.storage = Storage(lithops_config)
@@ -339,7 +336,6 @@ class Executor:
 
         if executor.config['lithops']['mode'] == 'standalone':
             # Set number of parallel workers based on memory requirements
-            # Lithops>=2.2.17 can configure this via `.map(worker_processes=workers)`
             executor.config['lithops']['worker_processes'] = min(
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
