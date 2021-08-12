@@ -85,7 +85,7 @@
     },
     "code_engine": {
       "region": "eu-de",
-      "kubecfg_path": "/home/ubuntu/.bluemix/plugins/code-engine/metaspace-staging-ce-56d11f60-a685-4a3b-b053-ff3f5d8cf249.yaml",
+      "kubecfg_path": "{{ sm_lithops_kubecfg_path }}",
       "runtime": ""
     },
     "ibm_vpc": {
