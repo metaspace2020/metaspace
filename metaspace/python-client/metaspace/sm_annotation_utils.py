@@ -169,9 +169,10 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
                 resp = session.request(method, url, data=data, json=json, headers=headers)
                 resp.raise_for_status()
                 return resp.json() if not return_headers else resp.headers
-            except requests.RequestException:
+            except requests.RequestException as ex:
                 if i == max_retries:
                     raise
+                print(f'{ex}\nRetrying...')
 
     def init_multipart_upload(filename, file_type, headers={}):
         url = companion_url + '/s3/multipart'
