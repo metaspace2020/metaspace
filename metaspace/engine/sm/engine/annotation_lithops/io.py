@@ -142,7 +142,9 @@ def get_ranges_from_cobject(
     to minimize the number of requests without wasting any bandwidth if there are large gaps
     between requested ranges."""
     max_jump = 2 ** 16  # Largest gap between ranges before a new request should be made
-    max_chunk_size = 256 * 2 ** 20  # Limit to 256MB because SSL fails if requests are >2GB
+    # Limit chunks to 256MB to avoid large memory allocations, and because SSL fails if requests
+    # are >2GB https://bugs.python.org/issue42853 (Fixed in Python 3.9.7, broken in 3.8.*)
+    max_chunk_size = 256 * 2 ** 20
 
     request_ranges: List[Tuple[int, int]] = []
     tasks = []
