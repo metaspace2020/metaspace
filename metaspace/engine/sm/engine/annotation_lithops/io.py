@@ -142,6 +142,7 @@ def get_ranges_from_cobject(
     to minimize the number of requests without wasting any bandwidth if there are large gaps
     between requested ranges."""
     max_jump = 2 ** 16  # Largest gap between ranges before a new request should be made
+    max_chunk_size = 256 * 2 ** 20  # Limit to 256MB because SSL fails if requests are >2GB
 
     request_ranges: List[Tuple[int, int]] = []
     tasks = []
@@ -151,7 +152,7 @@ def get_ranges_from_cobject(
         lo_idx, hi_idx = ranges[input_i]
         if range_start is None:
             range_start, range_end = lo_idx, hi_idx
-        elif lo_idx - range_end <= max_jump:
+        elif lo_idx - range_end <= max_jump and range_end - range_start <= max_chunk_size:
             range_end = max(range_end, hi_idx)
         else:
             request_ranges.append((range_start, range_end))
