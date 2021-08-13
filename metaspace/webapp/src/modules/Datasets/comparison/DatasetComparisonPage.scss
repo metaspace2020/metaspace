@@ -1,4 +1,8 @@
 .dataset-comparison-page{
+  .ds-comparison-info{
+    @apply flex items-center justify-center p-2 w-full;
+    min-height: 50px;
+  }
 
   .dataset-comparison-item-header{
     background: #F1F5F8;
@@ -44,7 +48,7 @@
   }
 
   .ds-comparison-opacity-item{
-   min-width: 160px;
+    min-width: 160px;
   }
   #annot-content {
     width: 100%;
