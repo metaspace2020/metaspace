@@ -160,17 +160,18 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
         method='GET',
         json=None,
         data=None,
-        headers={},
+        headers=None,
         return_headers=False,
+        max_retries=0,
     ):
-        if method == 'POST':
-            resp = requests.post(url, data=data, json=json, headers=headers)
-        elif method == 'PUT':
-            resp = requests.put(url, data=data, json=json, headers=headers)
-        else:
-            resp = requests.get(url)
-        resp.raise_for_status()
-        return resp.json() if not return_headers else resp.headers
+        for i in range(max_retries + 1):
+            try:
+                resp = session.request(method, url, data=data, json=json, headers=headers)
+                resp.raise_for_status()
+                return resp.json() if not return_headers else resp.headers
+            except requests.RequestException:
+                if i == max_retries:
+                    raise
 
     def init_multipart_upload(filename, file_type, headers={}):
         url = companion_url + '/s3/multipart'
@@ -185,7 +186,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
     def sign_part_upload(key, upload_id, part):
         query = urllib.parse.urlencode({'key': key})
         url = f'{companion_url}/s3/multipart/{upload_id}/{part}?{query}'
-        resp_data = send_request(url)
+        resp_data = send_request(url, max_retries=2)
         return resp_data['url']
 
     def upload_part(presigned_url, data):
@@ -195,6 +196,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
             data=data,
             headers=headers,
             return_headers=True,
+            max_retries=2,
         )
         return resp_data['ETag']
 
@@ -202,7 +204,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
         query = urllib.parse.urlencode({'key': key})
         url = f'{companion_url}/s3/multipart/{upload_id}/complete?{query}'
         data = {'parts': [{'PartNumber': part, 'ETag': etag} for part, etag in etags]}
-        resp_data = send_request(url, 'POST', json=data, headers=headers)
+        resp_data = send_request(url, 'POST', json=data, headers=headers, max_retries=2)
         # Decode bucket from returned URL
         location = urllib.parse.unquote(resp_data['location'])
         dest_url = urllib.parse.urlparse(location)
@@ -221,17 +223,19 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
             file_len_mb = f.tell() / 1024 ** 2
             f.seek(0)
             # S3 supports max 10000 parts per file. Increase part size if needed
-            part_size = max(5, int(math.ceil(file_len_mb / 10000))) * 1024 ** 2
+            part_size_mb = max(5, int(math.ceil(file_len_mb / 10000)))
+            n_parts = int(math.ceil(file_len_mb / part_size_mb))
             while True:
-                file_data = f.read(part_size)
+                file_data = f.read(part_size_mb * 1024 ** 2)
                 if not file_data:
                     break
 
                 part += 1
-                print(f'Uploading {part:3} part of {Path(local_path).name} file...')
+                print(f'Uploading part {part:3}/{n_parts:3} of {Path(local_path).name} file...')
                 presigned_url = sign_part_upload(key, upload_id, part)
                 yield part, presigned_url, file_data
 
+    session = requests.Session()
     key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers)
 
     with ThreadPoolExecutor(8) as ex:
