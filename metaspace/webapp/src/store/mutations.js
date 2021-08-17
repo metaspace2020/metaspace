@@ -205,6 +205,13 @@ export default {
     });
   },
 
+  setNormalization(state, normalization) {
+    router.replace({
+      query: !normalization ? omit(state.route.query, 'norm')
+        : {...state.route.query, norm: normalization }
+    });
+  },
+
   setCurrentPage(state, page) {
     router.replace({
       query: page !== 1
