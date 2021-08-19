@@ -159,6 +159,7 @@ const ImageViewer = defineComponent<Props>({
     scaleBarColor: { type: String },
     scaleType: { type: String },
     keepPixelSelected: { type: Boolean },
+    ticData: { type: Float32Array },
   },
   setup(props, { root, emit }) {
     const {

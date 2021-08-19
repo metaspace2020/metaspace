@@ -58,6 +58,8 @@
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.10",
     "marked": "^0.7.0",
+    "ndarray": "^1.0.19",
+    "npyjs": "^0.2.1",
     "numeric": "^1.2.6",
     "popper.js": "^1.14.7",
     "querystring": "^0.2.0",

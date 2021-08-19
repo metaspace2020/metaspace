@@ -64,7 +64,7 @@ const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: num
   return canvas.toDataURL()
 }
 
-const extractIntensityAndMask = (png: Image, min: number, max: number) => {
+const extractIntensityAndMask = (png: Image, min: number, max: number, normalizationData: any) => {
   const { width, height, depth, ctype } = png
   const bytesPerComponent = depth <= 8 ? 1 : 2
   const hasAlpha = ctype === 4 || ctype === 6
@@ -97,7 +97,13 @@ const extractIntensityAndMask = (png: Image, min: number, max: number) => {
   } else {
     for (let i = 0; i < numPixels; i++) {
       const byteOffset = i * numComponents * bytesPerComponent
-      intensityValues[i] = dataView.getUint16(byteOffset, false) * rangeVal + baseVal
+      let intensity = dataView.getUint16(byteOffset, false)
+      if (normalizationData && normalizationData[i] && !isNaN(normalizationData[i])) {
+        intensity = intensity / normalizationData[i] * 1000000000
+      } else if (normalizationData && normalizationData[i] && isNaN(normalizationData[i])) {
+        intensity = 0
+      }
+      intensityValues[i] = intensity * rangeVal + baseVal
     }
     if (hasAlpha) {
       const alphaOffset = (numComponents - 1) * bytesPerComponent
@@ -227,12 +233,13 @@ export const loadPngFromUrl = async(url: string): Promise<Image> => {
 export const processIonImage = (
   png: Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
   userScaling: readonly [number, number] = [0, 1],
-  userIntensities: readonly [number?, number?] = []): IonImage => {
+  userIntensities: readonly [number?, number?] = [],
+  normalizationData: readonly [number?] = []): IonImage => {
   const [scaleMode, lowQuantile, highQuantile] = SCALES[scaleType]
   const { width, height } = png
   const [userMin = minIntensity, userMax = maxIntensity] = userIntensities
 
-  const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity)
+  const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity, normalizationData)
 
   // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
   // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
@@ -261,7 +268,7 @@ export const processIonImage = (
 
   let rankValues = null
   if (scaleType === 'hist') {
-    const { intensityValues } = extractIntensityAndMask(png, scaledMin, scaledMax)
+    const { intensityValues } = extractIntensityAndMask(png, scaledMin, scaledMax, normalizationData)
     const values = getQuantileValues(intensityValues, mask)
     rankValues = getRankValues(values, lowQuantile, highQuantile)
   }

@@ -21,6 +21,18 @@ gql`fragment AnnotationDetailItem on Annotation {
     id
     submitter { id name email }
     principalInvestigator { name email }
+    diagnostics {
+      id
+      type
+      updatedDT
+      data
+      images {
+        key
+        index
+        url
+        format
+      }
+    }
     group { id name shortName }
     groupApproved
     projects { id name }

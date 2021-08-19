@@ -15,6 +15,7 @@ interface Props {
   imageLoaderSettings: any
   colormap: string
   scaleType?: ScaleType
+  ticData?: any
 }
 interface ColorBar {
   minColor: string,
@@ -99,7 +100,9 @@ function createComputedImageData(props: Props, layer: IonImageLayer): ComputedIm
     const raw = rawImageCache[layer.id]
     if (raw.value !== null) {
       const annotation = annotationCache[layer.id]
+
       const { minIntensity, maxIntensity } = getImageIntensities(annotation)
+
       return processIonImage(
         raw.value,
         minIntensity,
@@ -107,6 +110,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer): ComputedIm
         props.scaleType,
         scaleRange.value,
         userIntensities.value,
+        props.ticData,
       )
     }
     return null

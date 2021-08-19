@@ -32,6 +32,7 @@
         <annotation-view
           v-if="selectedAnnotation && selectedAnnotation.status !== 'reprocessed_snapshot'"
           :annotation="selectedAnnotation"
+          :normalization="selectedNormalizationMatrix"
         />
         <div
           v-if="selectedAnnotation && selectedAnnotation.status === 'reprocessed_snapshot'"
@@ -140,6 +141,10 @@ export default {
 
     selectedAnnotation() {
       return this.$store.state.annotation
+    },
+
+    selectedNormalizationMatrix() {
+      return this.$store.state.normalizationMatrix
     },
 
     filter() {

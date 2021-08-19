@@ -35,6 +35,7 @@ import FilterIcon from '../../assets/inline/filter.svg'
 
 import { ImageSettings, useIonImageSettings } from '../ImageViewer/ionImageState'
 import viewerState from '../ImageViewer/state'
+import { readNpy } from '../../lib/npyHandler'
 
 const { settings: ionImageSettings } = useIonImageSettings()
 
@@ -109,6 +110,9 @@ export default class AnnotationView extends Vue {
    @Prop()
    annotation: any
 
+   @Prop()
+   normalization: any
+
    msAcqGeometry: any
    opticalImages!: OpticalImage[] | null
    datasetVisibility: DatasetVisibilityResult | null = null
@@ -117,6 +121,15 @@ export default class AnnotationView extends Vue {
 
    created() {
      this.onImageMove = throttle(this.onImageMove)
+   }
+
+   mounted() {
+     const tics = this.annotation.dataset.diagnostics.filter((diagnostic: any) => diagnostic.type === 'TIC')
+     const tic = tics[0].images.filter((image: any) => image.key === 'TIC' && image.format === 'NPY')
+     readNpy(tic[0].url)
+       .then(({ data, shape }) => {
+         this.$store.commit('setNormalizationMatrix', data)
+       })
    }
 
    metadataDependentComponent(category: string): any {
@@ -139,6 +152,10 @@ export default class AnnotationView extends Vue {
 
    get scaleType(): string {
      return this.$store.getters.settings.annotationView.scaleType
+   }
+
+   get ticData(): string {
+     return this.$store.getters.settings.annotationView.normalization
    }
 
    get imageOpacityMode(): OpacityMode {
