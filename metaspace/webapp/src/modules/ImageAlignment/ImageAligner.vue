@@ -67,6 +67,7 @@
       :max-height="100500"
       :annot-image-opacity="annotImageOpacity"
       :ion-image-transform="ionImageTransform"
+      :normalization-data="normalizationData"
       opacity-mode="linear"
       @dblclick.native="onDoubleClick"
       @mousedown.native="onImageMouseDown"
@@ -145,6 +146,7 @@ export default {
       type: Array,
       default: () => [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
     },
+    ticData: { type: Float32Array },
   },
   data() {
     return {
@@ -173,6 +175,10 @@ export default {
   computed: {
     layerTransform() {
       return 'translate(0, 0)'
+    },
+
+    normalizationData() {
+      return this.ticData
     },
 
     transform() {

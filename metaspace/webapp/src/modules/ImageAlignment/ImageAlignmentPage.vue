@@ -99,6 +99,12 @@
             :max="1"
             :step="0.01"
           />
+
+          <el-checkbox
+            v-model="enableNormalization"
+          >
+            TIC normalization
+          </el-checkbox>
         </div>
 
         <div class="annotation-selection">
@@ -195,6 +201,7 @@
       style="position:relative;top:0px;z-index:1;"
       :annot-image-opacity="annotImageOpacity"
       :optical-src="opticalImgUrl"
+      :tic-data="enableNormalization ? ticData : null"
       :initial-transform="initialTransform"
       :padding="padding"
       :rotation-angle-degrees="angle"
@@ -214,6 +221,7 @@ import { renderMolFormula, renderMolFormulaHtml } from '../../lib/util'
 import gql from 'graphql-tag'
 import reportError from '../../lib/reportError'
 import graphqlClient from '../../api/graphqlClient'
+import { readNpy } from '@/lib/npyHandler'
 
 export default {
   name: 'ImageAlignmentPage',
@@ -239,10 +247,12 @@ export default {
       annotationIndex: 0,
       file: null,
       opticalImgUrl: null,
+      ticData: null,
       alreadyUploaded: false,
       initialTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
       padding: 100,
       angle: 0,
+      enableNormalization: false,
       showHints: {
         status: true,
         text: 'Hide hints',
@@ -282,7 +292,12 @@ export default {
           countIsomerCompounds: false,
         }
       },
-      update: data => data.allAnnotations,
+      update(data) {
+        // get normalization data for selected annotation
+        const annotation = this.currentAnnotation || data.allAnnotations[0]
+        this.updateNormalizationData(annotation)
+        return data.allAnnotations
+      },
     },
 
     datasetProperties: {
@@ -383,6 +398,18 @@ export default {
     },
     updateIndex(newIdx) {
       this.annotationIndex = newIdx - 1
+      this.updateNormalizationData(this.currentAnnotation)
+    },
+    updateNormalizationData(annotation) {
+      const tics = annotation.dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
+      const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
+      readNpy(tic[0].url)
+        .then(({ data, shape }) => {
+          this.ticData = data
+        })
+        .catch((e) => {
+          this.ticData = null
+        })
     },
     async submit() {
       if (this.alreadyUploaded) {

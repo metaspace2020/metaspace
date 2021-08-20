@@ -98,9 +98,13 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
     for (let i = 0; i < numPixels; i++) {
       const byteOffset = i * numComponents * bytesPerComponent
       let intensity = dataView.getUint16(byteOffset, false)
-      if (normalizationData && normalizationData[i] && !isNaN(normalizationData[i])) {
+      if (
+        normalizationData && normalizationData.length === numPixels
+        && normalizationData[i] && !isNaN(normalizationData[i])) {
         intensity = intensity / normalizationData[i] * 1000000000
-      } else if (normalizationData && normalizationData[i] && isNaN(normalizationData[i])) {
+      } else if (
+        normalizationData && normalizationData.length === numPixels
+        && normalizationData[i] && isNaN(normalizationData[i])) {
         intensity = 0
       }
       intensityValues[i] = intensity * rangeVal + baseVal
