@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="!hasNormalizationError"
     class="relative"
   >
     <div
@@ -99,6 +100,15 @@
       :dom-node="imageArea"
     />
   </div>
+  <div
+    v-else
+    class="normalization-error-wrapper"
+  >
+    <i class="el-icon-error info-icon mr-2" />
+    <p class="text-lg">
+      There was an error on normalization!
+    </p>
+  </div>
 </template>
 <script lang="ts">
 import { defineComponent, computed, reactive, ref, toRefs, onMounted } from '@vue/composition-api'
@@ -159,7 +169,7 @@ const ImageViewer = defineComponent<Props>({
     scaleBarColor: { type: String },
     scaleType: { type: String },
     keepPixelSelected: { type: Boolean },
-    ticData: { type: Float32Array },
+    ticData: { type: Object },
   },
   setup(props, { root, emit }) {
     const {
@@ -238,6 +248,9 @@ const ImageViewer = defineComponent<Props>({
       emitOpticalOpacity(value: number) {
         emit('opticalOpacity', value)
       },
+      hasNormalizationError: computed(() =>
+        root.$store.getters.settings.annotationView.normalization && root.$store.state.normalization
+      && root.$store.state.normalization.error),
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
       lockIntensityEnabled: config.features.lock_intensity,
     }
@@ -264,6 +277,14 @@ export default ImageViewer
   flex-wrap: wrap;
   width: 240px;
   @apply mt-2 ml-2;
+}
+.normalization-error-wrapper{
+  height: 537px;
+  width: 100%;
+  @apply flex items-center justify-center;
+}
+.info-icon{
+  font-size: 20px;
 }
 @media (min-width: 768px) {
   .ion-slider-wrapper{

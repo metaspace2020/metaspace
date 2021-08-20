@@ -99,12 +99,14 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
       const byteOffset = i * numComponents * bytesPerComponent
       let intensity = dataView.getUint16(byteOffset, false)
       if (
-        normalizationData && normalizationData.length === numPixels
-        && normalizationData[i] && !isNaN(normalizationData[i])) {
-        intensity = intensity / normalizationData[i] * 1000000000
+        normalizationData && normalizationData.data
+        && normalizationData.data.length === numPixels
+        && normalizationData.data[i] && !isNaN(normalizationData.data[i])) {
+        intensity = intensity / normalizationData.data[i] * 1000000000
       } else if (
-        normalizationData && normalizationData.length === numPixels
-        && normalizationData[i] && isNaN(normalizationData[i])) {
+        normalizationData && normalizationData.data
+        && normalizationData.data.length === numPixels
+        && normalizationData.data[i] && isNaN(normalizationData.data[i])) {
         intensity = 0
       }
       intensityValues[i] = intensity * rangeVal + baseVal
@@ -238,7 +240,7 @@ export const processIonImage = (
   png: Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
   userScaling: readonly [number, number] = [0, 1],
   userIntensities: readonly [number?, number?] = [],
-  normalizationData: readonly [number?] = []): IonImage => {
+  normalizationData: any): IonImage => {
   const [scaleMode, lowQuantile, highQuantile] = SCALES[scaleType]
   const { width, height } = png
   const [userMin = minIntensity, userMax = maxIntensity] = userIntensities

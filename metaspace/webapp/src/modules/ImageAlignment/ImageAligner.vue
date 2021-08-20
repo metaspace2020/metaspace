@@ -79,7 +79,6 @@
 </template>
 
 <script>
-import Vue from 'vue'
 import ImageLoader from '../../components/ImageLoader.vue'
 import { inv, dot, diag } from 'numeric'
 import { scrollDistance } from '../../lib/util'
@@ -146,7 +145,7 @@ export default {
       type: Array,
       default: () => [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
     },
-    ticData: { type: Float32Array },
+    ticData: { type: Object },
   },
   data() {
     return {

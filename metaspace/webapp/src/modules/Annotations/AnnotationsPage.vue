@@ -144,7 +144,7 @@ export default {
     },
 
     selectedNormalizationMatrix() {
-      return this.$store.state.normalizationMatrix
+      return this.$store.state.normalization
     },
 
     filter() {

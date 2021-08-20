@@ -128,7 +128,20 @@ export default class AnnotationView extends Vue {
      const tic = tics[0].images.filter((image: any) => image.key === 'TIC' && image.format === 'NPY')
      readNpy(tic[0].url)
        .then(({ data, shape }) => {
-         this.$store.commit('setNormalizationMatrix', data)
+         this.$store.commit('setNormalizationMatrix', {
+           data,
+           shape,
+           type: 'TIC',
+           error: false,
+         })
+       })
+       .catch(() => {
+         this.$store.commit('setNormalizationMatrix', {
+           data: null,
+           shape: null,
+           type: 'TIC',
+           error: true,
+         })
        })
    }
 

@@ -196,7 +196,7 @@
       </div>
     </div>
     <image-aligner
-      v-if="opticalImgUrl"
+      v-if="opticalImgUrl && !hasNormalizationError"
       ref="aligner"
       style="position:relative;top:0px;z-index:1;"
       :annot-image-opacity="annotImageOpacity"
@@ -208,6 +208,15 @@
       :ion-image-src="massSpecSrc"
       @updateRotationAngle="updateAngle"
     />
+    <div
+      v-if="hasNormalizationError"
+      class="normalization-error-wrapper"
+    >
+      <i class="el-icon-error info-icon mr-2" />
+      <p class="text-lg">
+        There was an error on normalization!
+      </p>
+    </div>
   </div>
 </template>
 
@@ -222,6 +231,7 @@ import gql from 'graphql-tag'
 import reportError from '../../lib/reportError'
 import graphqlClient from '../../api/graphqlClient'
 import { readNpy } from '@/lib/npyHandler'
+import { computed } from '@vue/composition-api'
 
 export default {
   name: 'ImageAlignmentPage',
@@ -326,6 +336,11 @@ export default {
       return this.$store.state.route.params.dataset_id
     },
 
+    hasNormalizationError() {
+      return this.enableNormalization && this.ticData
+      && this.ticData.error
+    },
+
     currentAnnotation() {
       if (!this.annotations || this.annotations.length === 0) {
         return null
@@ -405,10 +420,20 @@ export default {
       const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
       readNpy(tic[0].url)
         .then(({ data, shape }) => {
-          this.ticData = data
+          this.ticData = {
+            data,
+            shape,
+            type: 'TIC',
+            error: false,
+          }
         })
-        .catch((e) => {
-          this.ticData = null
+        .catch(() => {
+          this.ticData = {
+            data: null,
+            shape: null,
+            type: 'TIC',
+            error: true,
+          }
         })
     },
     async submit() {
@@ -607,6 +632,15 @@ export default {
 
   .hint-list{
     list-style-type: none;
+  }
+
+  .normalization-error-wrapper{
+    height: 537px;
+    width: 100%;
+    @apply flex items-center justify-center;
+  }
+  .info-icon{
+    font-size: 20px;
   }
 
 </style>

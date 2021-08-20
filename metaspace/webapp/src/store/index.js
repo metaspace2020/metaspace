@@ -19,7 +19,7 @@ const store = new Vuex.Store({
     annotation: undefined,
 
     // currently selected normalization matrix
-    normalizationMatrix: undefined,
+    normalization: undefined,
 
     // is annotation table loading?
     tableIsLoading: true,

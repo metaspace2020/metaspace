@@ -156,7 +156,7 @@ export default {
   },
 
   setNormalizationMatrix(state, normalizationMatrix) {
-    state.normalizationMatrix = normalizationMatrix;
+    state.normalization = normalizationMatrix;
   },
 
   setSnapshotAnnotationIds(state, annotation) {
