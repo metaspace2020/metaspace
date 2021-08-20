@@ -417,24 +417,33 @@ export default {
     },
     updateNormalizationData(annotation) {
       const tics = annotation.dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
-      const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
-      readNpy(tic[0].url)
-        .then(({ data, shape }) => {
-          this.ticData = {
-            data,
-            shape,
-            type: 'TIC',
-            error: false,
-          }
-        })
-        .catch(() => {
-          this.ticData = {
-            data: null,
-            shape: null,
-            type: 'TIC',
-            error: true,
-          }
-        })
+      if (tics && tics[0]) {
+        const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
+        readNpy(tic[0].url)
+          .then(({ data, shape }) => {
+            this.ticData = {
+              data,
+              shape,
+              type: 'TIC',
+              error: false,
+            }
+          })
+          .catch(() => {
+            this.ticData = {
+              data: null,
+              shape: null,
+              type: 'TIC',
+              error: true,
+            }
+          })
+      } else {
+        this.ticData = {
+          data: null,
+          shape: null,
+          type: 'TIC',
+          error: true,
+        }
+      }
     },
     async submit() {
       if (this.alreadyUploaded) {

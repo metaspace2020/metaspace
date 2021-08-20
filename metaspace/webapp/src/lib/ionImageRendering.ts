@@ -240,7 +240,7 @@ export const processIonImage = (
   png: Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
   userScaling: readonly [number, number] = [0, 1],
   userIntensities: readonly [number?, number?] = [],
-  normalizationData: any): IonImage => {
+  normalizationData?: any): IonImage => {
   const [scaleMode, lowQuantile, highQuantile] = SCALES[scaleType]
   const { width, height } = png
   const [userMin = minIntensity, userMax = maxIntensity] = userIntensities
