@@ -20,6 +20,8 @@
         :scale-bar-color="scaleBarColor"
         :scale-type="scaleType"
         :width="dimensions.width"
+        :show-normalized-intensity="showNormalizedIntensity"
+        :normalization-data="normalizationData"
         :x-offset="imageLoaderSettings.imagePosition.xOffset"
         :y-offset="imageLoaderSettings.imagePosition.yOffset"
         :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
@@ -251,6 +253,8 @@ const ImageViewer = defineComponent<Props>({
       hasNormalizationError: computed(() =>
         root.$store.getters.settings.annotationView.normalization && root.$store.state.normalization
       && root.$store.state.normalization.error),
+      showNormalizedIntensity: computed(() => root.$store.getters.settings.annotationView.normalization),
+      normalizationData: computed(() => root.$store.state.normalization),
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
       lockIntensityEnabled: config.features.lock_intensity,
     }

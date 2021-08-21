@@ -45,6 +45,8 @@ interface Props {
   pixelAspectRatio: number
   scaleBarColor: string
   showPixelIntensity: boolean
+  showNormalizedIntensity: boolean
+  normalizationData: any
 }
 
 const useScrollBlock = () => {
@@ -139,6 +141,7 @@ const usePixelIntensityDisplay = (
           const [r, g, b] = colorMap[colorMap.length - 1]
           layers.push({
             intensity: intensityValues[idx].toExponential(1),
+            normalizedIntensity: props.normalizationData?.data?.[idx]?.toExponential(1),
             color: props.ionImageLayers.length > 1 ? `rgb(${r},${g},${b})` : null,
           })
         }
@@ -213,7 +216,7 @@ const usePixelIntensityDisplay = (
       >
         {cursorOverLayers.value?.length > 1
           ? <ul slot="content" class="list-none p-0 m-0">
-            {cursorOverLayers.value?.map(({ intensity, color }) =>
+            {cursorOverLayers.value?.map(({ intensity, color, normalizedIntensity }) =>
               <li class="flex leading-5 items-center">
                 { color && <i
                   class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
@@ -223,7 +226,24 @@ const usePixelIntensityDisplay = (
               </li>
             )}
           </ul>
-          : <span slot="content">{cursorOverLayers.value?.[0].intensity}</span>}
+          : <div slot="content" class='flex flex-col'>
+            <div>
+              {
+                props.showNormalizedIntensity
+                && <span>Intensity: </span>
+              }
+              <span>{cursorOverLayers.value?.[0].intensity}</span>
+            </div>
+            {
+              props.showNormalizedIntensity
+              && <div>
+                <span>TIC: </span>
+                <span>
+                  {cursorOverLayers.value?.[0].normalizedIntensity}
+                </span>
+              </div>
+            }
+          </div> }
         <div
           style={pixelIntensityStyle.value}
           class="absolute block border-solid z-30 pointer-events-none box-border"
@@ -464,6 +484,8 @@ export default defineComponent<Props>({
     pixelAspectRatio: { type: Number, default: 1 },
     scaleBarColor: { type: String, default: null },
     showPixelIntensity: { type: Boolean, default: false },
+    showNormalizedIntensity: { type: Boolean, default: false },
+    normalizationData: { type: Object },
   },
   setup(props: Props, { emit }: SetupContext) {
     const imageLoaderRef = templateRef<ReferenceObject>('imageLoader')
