@@ -40,11 +40,13 @@
         <ion-image-menu
           v-if="mode === 'MULTI'"
           key="multi"
+          :is-normalized="showNormalizedIntensity"
           :menu-items="ionImageMenuItems"
         />
         <single-ion-image-controls
           v-else-if="!isLoading"
           key="single"
+          :is-normalized="showNormalizedIntensity"
           v-bind="singleIonImageControls"
         />
       </fade-transition>
