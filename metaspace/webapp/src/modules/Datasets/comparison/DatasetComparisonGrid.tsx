@@ -586,7 +586,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     const handleIonIntensityLockChangeForAll = (value: number, type: string) => {
       // apply max lock to all grids
       Object.keys(state.gridState).forEach((gridKey) => {
-        // if (gridKey !== key) { // Note this is no longer needed, because the function isn't doing weird recursion
         handleIonIntensityLockChange(value, gridKey, type)
         if (value) {
           handleIonIntensityChange(value, gridKey, type, true)
