@@ -483,7 +483,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
           >
             <div
               class="scale-bar-x"
-              style="color: rgb(0, 0, 0); border-color: #000000; width: 58.333333333333336px;"
+              style="color: rgb(0, 0, 0); border-color: #000000; width: 83.33333333333333px;"
             >
               <div
                 class="scale-bar-x-text"
@@ -1094,7 +1094,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
           >
             <div
               class="scale-bar-x"
-              style="color: rgb(0, 0, 0); border-color: #000000; width: 58.333333333333336px;"
+              style="color: rgb(0, 0, 0); border-color: #000000; width: 83.33333333333333px;"
             >
               <div
                 class="scale-bar-x-text"

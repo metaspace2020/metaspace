@@ -233,19 +233,22 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         gridCell.ionImagePng = ionImagePng
       } else {
         const metadata = getMetadata(annotation)
+        // eslint-disable-next-line camelcase
+        const pixelSizeX = metadata?.MS_Analysis?.Pixel_Size?.Xaxis || 0
+        // eslint-disable-next-line camelcase
+        const pixelSizeY = metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0
+
         gridCell = reactive({
           intensity,
           ionImagePng,
-          // eslint-disable-next-line camelcase
-          pixelSizeX: metadata?.MS_Analysis?.Pixel_Size?.Xaxis || 0,
-          // eslint-disable-next-line camelcase
-          pixelSizeY: metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0,
+          pixelSizeX,
+          pixelSizeY,
           ionImageLayers: ionImageLayersAux,
           imageFit: computed(() => imageFit(key)),
           lockedIntensities: [undefined, undefined],
           annotImageOpacity: 1.0,
           imagePosition: defaultImagePosition(),
-          pixelAspectRatio: 1,
+          pixelAspectRatio: pixelSizeX && pixelSizeY && pixelSizeX / pixelSizeY,
           imageZoom: 1,
           showOpticalImage: true,
           userScaling: [0, 1],
@@ -325,7 +328,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
     const defaultImagePosition = () => ({
       // This is a function so that it always makes a separate copy for each image
-      zoom: 0.7,
+      zoom: 1,
       xOffset: 0,
       yOffset: 0,
     })
@@ -421,7 +424,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       state.gridState[key]!.imagePosition = defaultImagePosition()
     }
 
-    const toggleOpticalImage = async(event: any, key: string) => {
+    const toggleOpticalImage = (event: any, key: string) => {
       event.stopPropagation()
       const gridCell = state.gridState[key]
       if (gridCell != null) {
@@ -467,11 +470,11 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
     }
 
-    const handleOpacityChange = async(opacity: any, key: string) => {
+    const handleOpacityChange = (opacity: any, key: string) => {
       state.gridState[key]!.annotImageOpacity = opacity
     }
 
-    const handleUserScalingChange = async(userScaling: any, key: string) => {
+    const handleUserScalingChange = (userScaling: any, key: string) => {
       const gridCell = state.gridState[key]
       if (gridCell == null) {
         return
@@ -515,7 +518,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           : maxIntensity * userScaling[1]
     }
 
-    const handleIonIntensityChange = async(intensity: number, key: string, type: string,
+    const handleIonIntensityChange = (intensity: number, key: string, type: string,
       ignoreBoundaries : boolean = false) => {
       const gridCell = state.gridState[key]
       if (gridCell == null) {
@@ -545,7 +548,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       handleUserScalingChange([minScale, maxScale], key)
     }
 
-    const handleIonIntensityLockChange = async(value: number, key: string, type: string) => {
+    const handleIonIntensityLockChange = (value: number, key: string, type: string) => {
       const gridCell = state.gridState[key]
       if (gridCell == null) {
         return
@@ -580,7 +583,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       gridCell.userScaling = [0, 1]
     }
 
-    const handleIonIntensityLockChangeForAll = async(value: number, type: string) => {
+    const handleIonIntensityLockChangeForAll = (value: number, type: string) => {
       // apply max lock to all grids
       Object.keys(state.gridState).forEach((gridKey) => {
         // if (gridKey !== key) { // Note this is no longer needed, because the function isn't doing weird recursion
@@ -684,14 +687,15 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 scaleType={props.scaleType}
                 pixelSizeX={gridCell.pixelSizeX}
                 pixelSizeY={gridCell.pixelSizeY}
+                pixelAspectRatio={gridCell.pixelAspectRatio}
                 imageHeight={gridCell.ionImageLayers[0]?.ionImage?.height }
                 imageWidth={gridCell.ionImageLayers[0]?.ionImage?.width }
                 height={dimensions.height}
                 width={dimensions.width}
                 zoom={gridCell.imagePosition?.zoom
-                * gridCell.imageFit?.imageZoom}
-                minZoom={gridCell.imageFit?.imageZoom / 4}
-                maxZoom={gridCell.imageFit?.imageZoom * 20}
+                * gridCell.imageFit.imageZoom}
+                minZoom={gridCell.imageFit.imageZoom / 4}
+                maxZoom={gridCell.imageFit.imageZoom * 20}
                 xOffset={gridCell.imagePosition?.xOffset || 0}
                 yOffset={gridCell.imagePosition?.yOffset || 0}
                 opticalSrc={gridCell.showOpticalImage
