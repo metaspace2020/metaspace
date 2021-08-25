@@ -280,7 +280,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
       const auxGrid = grid
       const selectedAnnotation = props.annotations[annotationIdx]
-      const settingPromises = Object.keys(auxGrid).map(async(key) => {
+      const settingPromises = Object.keys(auxGrid).map((key) => {
         const item = auxGrid[key]
         const dsIndex = selectedAnnotation
           ? selectedAnnotation.datasetIds.findIndex((dsId: string) => dsId === item) : -1
@@ -294,6 +294,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       })
 
       Promise.all(settingPromises)
+        .catch(console.error)
         .finally(() => {
           state.firstLoaded = true
           resizeHandler()
@@ -422,10 +423,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
     const toggleOpticalImage = async(event: any, key: string) => {
       event.stopPropagation()
-      const settings = state.gridState[key]
-      if (settings != null) {
-        settings.showOpticalImage = !settings.showOpticalImage
-        settings.annotImageOpacity = settings.showOpticalImage ? settings.annotImageOpacity : 1
+      const gridCell = state.gridState[key]
+      if (gridCell != null) {
+        gridCell.showOpticalImage = !gridCell.showOpticalImage
+        gridCell.annotImageOpacity = gridCell.showOpticalImage ? gridCell.annotImageOpacity : 1
       }
     }
     const formatMSM = (value: number) => {
@@ -471,21 +472,21 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const handleUserScalingChange = async(userScaling: any, key: string) => {
-      const settings = state.gridState[key]
-      if (settings == null) {
+      const gridCell = state.gridState[key]
+      if (gridCell == null) {
         return
       }
-      const maxIntensity = settings.intensity.max.status === 'CLIPPED'
-        ? settings.intensity.max.clipped : settings.intensity.max.image
+      const maxIntensity = gridCell.intensity.max.status === 'CLIPPED'
+        ? gridCell.intensity.max.clipped : gridCell.intensity.max.image
       const minScale =
-        settings.intensity?.min?.status === 'LOCKED'
+        gridCell.intensity?.min?.status === 'LOCKED'
           ? userScaling[0] * (1
-          - (settings.intensity.min.user / maxIntensity))
-          + (settings.intensity.min.user / maxIntensity)
+          - (gridCell.intensity.min.user / maxIntensity))
+          + (gridCell.intensity.min.user / maxIntensity)
           : userScaling[0]
 
-      const maxScale = userScaling[1] * (settings.intensity?.max?.status === 'LOCKED'
-        ? settings.intensity.max.user / maxIntensity : 1)
+      const maxScale = userScaling[1] * (gridCell.intensity?.max?.status === 'LOCKED'
+        ? gridCell.intensity.max.user / maxIntensity : 1)
       const rangeSliderScale = userScaling.slice(0)
 
       // added in order to keep consistency even with ignore boundaries
@@ -496,34 +497,34 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         rangeSliderScale[1] = 1
       }
 
-      settings.userScaling = rangeSliderScale
-      settings.imageScaledScaling = [minScale, maxScale]
+      gridCell.userScaling = rangeSliderScale
+      gridCell.imageScaledScaling = [minScale, maxScale]
 
-      settings.intensity.min.scaled =
-        settings.intensity?.min?.status === 'LOCKED'
+      gridCell.intensity.min.scaled =
+        gridCell.intensity?.min?.status === 'LOCKED'
         && maxIntensity * userScaling[0]
-        < settings.intensity.min.user
-          ? settings.intensity.min.user
+        < gridCell.intensity.min.user
+          ? gridCell.intensity.min.user
           : maxIntensity * userScaling[0]
 
-      settings.intensity.max.scaled =
-        settings.intensity?.max?.status === 'LOCKED'
+      gridCell.intensity.max.scaled =
+        gridCell.intensity?.max?.status === 'LOCKED'
         && maxIntensity * userScaling[1]
-        > settings.intensity.max.user
-          ? settings.intensity.max.user
+        > gridCell.intensity.max.user
+          ? gridCell.intensity.max.user
           : maxIntensity * userScaling[1]
     }
 
     const handleIonIntensityChange = async(intensity: number, key: string, type: string,
       ignoreBoundaries : boolean = false) => {
-      const settings = state.gridState[key]
-      if (settings == null) {
+      const gridCell = state.gridState[key]
+      if (gridCell == null) {
         return
       }
-      let minScale = settings.userScaling[0]
-      let maxScale = settings.userScaling[1]
-      const maxIntensity = settings.intensity.max.status === 'CLIPPED'
-        ? settings.intensity.max.clipped : settings.intensity.max.image
+      let minScale = gridCell.userScaling[0]
+      let maxScale = gridCell.userScaling[1]
+      const maxIntensity = gridCell.intensity.max.status === 'CLIPPED'
+        ? gridCell.intensity.max.clipped : gridCell.intensity.max.image
 
       if (type === 'min') {
         minScale = intensity / maxIntensity
