@@ -211,7 +211,7 @@ const quantizeScaleBar = (minIntensity: number, maxIntensity: number,
   return quantizeIonImage(linearDistribution, minIntensity, maxIntensity, rankValues, scaleMode)
 }
 
-export const loadPngFromUrl = async(url: string) => {
+export const loadPngFromUrl = async(url: string): Promise<Image> => {
   const response = await fetch(url, { credentials: 'omit' })
   if (response.status !== 200) {
     throw Object.assign(
