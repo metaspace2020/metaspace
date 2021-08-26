@@ -218,7 +218,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     const startImageSettings = async(key: string, annotation: any) => {
       const hasPreviousSettings = state.gridState[key] != null
       const ionImagePng = await loadPngFromUrl(annotation.isotopeImages[0].url)
-      const ionImageLayersAux = computed(() => ionImageLayers(key))
 
       let gridCell: GridCellState
       if (hasPreviousSettings) {
@@ -232,11 +231,13 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         const pixelSizeY = metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0
 
         gridCell = reactive({
-          intensity: null, // @ts-ignore // Gets set later, because getIntensity needs state.gridState[key] to run
+          intensity: null, // @ts-ignore // Gets set later, because ionImageLayers needs state.gridState[key] set
           ionImagePng,
           pixelSizeX,
           pixelSizeY,
-          ionImageLayers: ionImageLayersAux,
+          // ionImageLayers and imageFit rely on state.gridState[key] to be correctly set - avoid evaluating them
+          // until this has been inserted into state.gridState
+          ionImageLayers: computed(() => ionImageLayers(key)),
           imageFit: computed(() => imageFit(key)),
           lockedIntensities: [undefined, undefined],
           annotImageOpacity: 1.0,
@@ -247,14 +248,14 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           userScaling: [0, 1],
           imageScaledScaling: [0, 1],
           scaleBarUrl: computed(() => renderScaleBar(
-            ionImageLayersAux.value[0]?.ionImage,
+            gridCell.ionImageLayers[0]?.ionImage,
             createColormap(props.colormap),
             true,
           )),
         })
         Vue.set(state.gridState, key, gridCell)
       }
-      const intensity = getIntensity(ionImageLayersAux.value[0]?.ionImage)
+      const intensity = getIntensity(gridCell.ionImageLayers[0]?.ionImage)
 
       intensity.min.scaled = 0
       intensity.max.scaled = intensity.max.status === 'CLIPPED'
