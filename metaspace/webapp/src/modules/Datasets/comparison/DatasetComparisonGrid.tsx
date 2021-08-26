@@ -420,7 +420,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       if (event) {
         event.stopPropagation()
       }
-      state.gridState[key]!.imagePosition = defaultImagePosition()
+      if (state.gridState[key]) {
+        state.gridState[key]!.imagePosition = defaultImagePosition()
+      }
     }
 
     const toggleOpticalImage = (event: any, key: string) => {
