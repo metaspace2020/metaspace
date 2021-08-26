@@ -1,9 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
+exports[`DatasetComparisonGrid it should match snapshot 1`] = `
 <div
   annotations="[object Object]"
   class="dataset-comparison-grid"
+  datasets="[object Object],[object Object]"
   ncols="2"
   nrows="1"
   selectedannotation="0"
@@ -16,6 +17,12 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
       class="dataset-comparison-grid-col overflow-hidden relative"
     >
       <span
+        class="dataset-comparison-grid-ds-name"
+      >
+        New test create
+      </span>
+      <span
+        annotation="[object Object]"
         class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"
         slot="title"
       >
@@ -411,8 +418,94 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
         />
       </span>
       <div
+        class="dataset-comparison-extra dom-to-image-hidden"
+      >
+        <div
+          class="dataset-comparison-msm-badge"
+        >
+          MSM 
+          <b>
+            0.736
+          </b>
+        </div>
+        <div
+          class="dataset-comparison-fdr-badge"
+        >
+          FDR 
+          <b>
+            5%
+          </b>
+        </div>
+        <mock-el-popover
+          placement="right"
+          trigger="hover"
+        >
+          <div
+            slot-key="default"
+          >
+            Individual dataset annotation page.
+          </div>
+          <div
+            slot-key="reference"
+          >
+            <div
+              class="dataset-comparison-link"
+            >
+              <a
+                class=""
+                href="/annotations?db_id=1&ds=2021-04-14_07h23m35s"
+                target="_blank"
+              >
+                <i
+                  class="flex"
+                  classname="h-6 w-6 pointer-events-none"
+                >
+                  <svg
+                    data-icon="icon-external-window"
+                  />
+                </i>
+              </a>
+            </div>
+          </div>
+        </mock-el-popover>
+      </div>
+      <div
         class="ds-wrapper relative"
       >
+        <div
+          class="relative overflow-hidden"
+          mock-v-loading="false"
+          scaletype="linear"
+          style="width: 410px; height: 300px;"
+        >
+          <div
+            class="scale-bar"
+          >
+            <div
+              class="scale-bar-x"
+              style="color: rgb(0, 0, 0); border-color: #000000; width: 83.33333333333333px;"
+            >
+              <div
+                class="scale-bar-x-text"
+              >
+                
+      1 mm
+    
+              </div>
+            </div>
+             
+            <!---->
+          </div>
+          <div
+            class="absolute inset-0 z-30 pointer-events-none bg-body flex items-center justify-center opacity-0 duration-1000"
+          >
+            <p
+              class="relative block z-40 m-0 text-white text-2xl"
+            >
+              Use CTRL + scroll wheel to zoom the image
+            </p>
+          </div>
+        </div>
         <div
           class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar"
         >
@@ -431,7 +524,95 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
             leaveactiveclass="duration-150 transition-opacity ease-in-out"
             leavetoclass="opacity-0"
             mode="out-in"
-          />
+          >
+            <div
+              class="p-3 bg-gray-100 rounded-lg box-border shadow-xs"
+            >
+              <div
+                class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer ds-comparison-opacity-item"
+              >
+                <div
+                  class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                  style="left: -1px;"
+                  tabindex="0"
+                />
+                 
+                <div
+                  class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                  style="left: -11px;"
+                  tabindex="0"
+                />
+              </div>
+              <div
+                class="ds-intensities-wrapper"
+              >
+                <transition-stub
+                  enteractiveclass="duration-150 transition-opacity ease-in-out"
+                  enterclass="opacity-0"
+                  leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                  leavetoclass="opacity-0"
+                  mode="out-in"
+                >
+                  <div
+                    class="h-5 flex items-center sm-flex-direction"
+                  >
+                    <button
+                      class="button-reset h-4 leading-5"
+                      title="Click to edit"
+                    >
+                      
+      0.0e+0
+    
+                    </button>
+                     
+                    <button
+                      class="button-reset h-4 mx-1"
+                      title="Lock intensity"
+                    >
+                      <svg
+                        class="fill-current text-gray-600"
+                        data-icon="icon-lock"
+                      />
+                    </button>
+                     
+                    <!---->
+                  </div>
+                </transition-stub>
+                <transition-stub
+                  enteractiveclass="duration-150 transition-opacity ease-in-out"
+                  enterclass="opacity-0"
+                  leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                  leavetoclass="opacity-0"
+                  mode="out-in"
+                >
+                  <div
+                    class="h-5 flex items-center sm-flex-direction"
+                  >
+                    <button
+                      class="button-reset h-4 leading-5"
+                      title="Click to edit"
+                    >
+                      
+      0.0e+0
+    
+                    </button>
+                     
+                    <button
+                      class="button-reset h-4 mx-1"
+                      title="Lock intensity"
+                    >
+                      <svg
+                        class="fill-current text-gray-600"
+                        data-icon="icon-lock"
+                      />
+                    </button>
+                     
+                    <!---->
+                  </div>
+                </transition-stub>
+              </div>
+            </div>
+          </transition-stub>
         </div>
         <button
           class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
@@ -447,6 +628,12 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
       class="dataset-comparison-grid-col overflow-hidden relative"
     >
       <span
+        class="dataset-comparison-grid-ds-name"
+      >
+        New 2
+      </span>
+      <span
+        annotation="[object Object]"
         class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"
         slot="title"
       >
@@ -842,8 +1029,94 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
         />
       </span>
       <div
+        class="dataset-comparison-extra dom-to-image-hidden"
+      >
+        <div
+          class="dataset-comparison-msm-badge"
+        >
+          MSM 
+          <b>
+            0.736
+          </b>
+        </div>
+        <div
+          class="dataset-comparison-fdr-badge"
+        >
+          FDR 
+          <b>
+            5%
+          </b>
+        </div>
+        <mock-el-popover
+          placement="right"
+          trigger="hover"
+        >
+          <div
+            slot-key="default"
+          >
+            Individual dataset annotation page.
+          </div>
+          <div
+            slot-key="reference"
+          >
+            <div
+              class="dataset-comparison-link"
+            >
+              <a
+                class=""
+                href="/annotations?db_id=1&ds=2021-03-31_08h41m01s"
+                target="_blank"
+              >
+                <i
+                  class="flex"
+                  classname="h-6 w-6 pointer-events-none"
+                >
+                  <svg
+                    data-icon="icon-external-window"
+                  />
+                </i>
+              </a>
+            </div>
+          </div>
+        </mock-el-popover>
+      </div>
+      <div
         class="ds-wrapper relative"
       >
+        <div
+          class="relative overflow-hidden"
+          mock-v-loading="false"
+          scaletype="linear"
+          style="width: 410px; height: 300px;"
+        >
+          <div
+            class="scale-bar"
+          >
+            <div
+              class="scale-bar-x"
+              style="color: rgb(0, 0, 0); border-color: #000000; width: 83.33333333333333px;"
+            >
+              <div
+                class="scale-bar-x-text"
+              >
+                
+      1 mm
+    
+              </div>
+            </div>
+             
+            <!---->
+          </div>
+          <div
+            class="absolute inset-0 z-30 pointer-events-none bg-body flex items-center justify-center opacity-0 duration-1000"
+          >
+            <p
+              class="relative block z-40 m-0 text-white text-2xl"
+            >
+              Use CTRL + scroll wheel to zoom the image
+            </p>
+          </div>
+        </div>
         <div
           class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar"
         >
@@ -862,7 +1135,95 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
             leaveactiveclass="duration-150 transition-opacity ease-in-out"
             leavetoclass="opacity-0"
             mode="out-in"
-          />
+          >
+            <div
+              class="p-3 bg-gray-100 rounded-lg box-border shadow-xs"
+            >
+              <div
+                class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer ds-comparison-opacity-item"
+              >
+                <div
+                  class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                  style="left: -1px;"
+                  tabindex="0"
+                />
+                 
+                <div
+                  class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                  style="left: -11px;"
+                  tabindex="0"
+                />
+              </div>
+              <div
+                class="ds-intensities-wrapper"
+              >
+                <transition-stub
+                  enteractiveclass="duration-150 transition-opacity ease-in-out"
+                  enterclass="opacity-0"
+                  leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                  leavetoclass="opacity-0"
+                  mode="out-in"
+                >
+                  <div
+                    class="h-5 flex items-center sm-flex-direction"
+                  >
+                    <button
+                      class="button-reset h-4 leading-5"
+                      title="Click to edit"
+                    >
+                      
+      0.0e+0
+    
+                    </button>
+                     
+                    <button
+                      class="button-reset h-4 mx-1"
+                      title="Lock intensity"
+                    >
+                      <svg
+                        class="fill-current text-gray-600"
+                        data-icon="icon-lock"
+                      />
+                    </button>
+                     
+                    <!---->
+                  </div>
+                </transition-stub>
+                <transition-stub
+                  enteractiveclass="duration-150 transition-opacity ease-in-out"
+                  enterclass="opacity-0"
+                  leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                  leavetoclass="opacity-0"
+                  mode="out-in"
+                >
+                  <div
+                    class="h-5 flex items-center sm-flex-direction"
+                  >
+                    <button
+                      class="button-reset h-4 leading-5"
+                      title="Click to edit"
+                    >
+                      
+      0.0e+0
+    
+                    </button>
+                     
+                    <button
+                      class="button-reset h-4 mx-1"
+                      title="Lock intensity"
+                    >
+                      <svg
+                        class="fill-current text-gray-600"
+                        data-icon="icon-lock"
+                      />
+                    </button>
+                     
+                    <!---->
+                  </div>
+                </transition-stub>
+              </div>
+            </div>
+          </transition-stub>
         </div>
         <button
           class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"

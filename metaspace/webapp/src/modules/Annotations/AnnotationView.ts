@@ -33,30 +33,10 @@ import LockSvg from '../../assets/inline/refactoring-ui/icon-lock.svg'
 import LocationPinSvg from '../../assets/inline/refactoring-ui/icon-location-pin.svg'
 import FilterIcon from '../../assets/inline/filter.svg'
 
-import { useIonImageSettings } from '../ImageViewer/ionImageState'
+import { ImageSettings, useIonImageSettings } from '../ImageViewer/ionImageState'
 import viewerState from '../ImageViewer/state'
 
 const { settings: ionImageSettings } = useIonImageSettings()
-
- type ImagePosition = {
-   zoom: number
-   xOffset: number
-   yOffset: number
- }
-
- type ImageSettings = {
-   annotImageOpacity: number
-   opacityMode: OpacityMode
-   imagePosition: ImagePosition
-   opticalSrc: string | null
-   opticalTransform: number[][] | null
-   pixelAspectRatio: number
-   opticalOpacity: number
-   // scaleType is deliberately not included here, because every time it changes some slow computation occurs,
-   // and the computed getters were being triggered by any part of the ImageSettings object changing, such as opacity,
-   // causing a lot of jank.
-   // scaleType?: ScaleType
- }
 
 const metadataDependentComponents: any = {}
 const componentsToRegister: any = {

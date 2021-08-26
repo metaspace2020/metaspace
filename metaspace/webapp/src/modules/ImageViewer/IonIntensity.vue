@@ -83,14 +83,6 @@ export default defineComponent<Props>({
     const editing = ref(false)
 
     const status = computed(() => props.intensities.status)
-    const display = computed(() => {
-      if (status.value === 'LOCKED') {
-        return props.intensities.user
-      } else if (status.value === 'CLIPPED') {
-        return props.intensities.clipped
-      }
-      return props.value
-    })
     const intensity = computed(() => props.intensities.scaled.toExponential(1))
 
     return {

@@ -6,7 +6,90 @@ import { sync } from 'vuex-router-sync'
 import store from '../../../store'
 import router from '../../../router'
 
-describe('DatasetComparisonAnnotationTable', () => {
+// Mock loadPngFromUrl to prevent network requests, but keep the rest of ionImageRendering as it's actually used
+jest.mock('../../../lib/ionImageRendering', () => Object.assign(
+  {},
+  jest.requireActual('../../../lib/ionImageRendering'),
+  { loadPngFromUrl: jest.fn() },
+))
+
+describe('DatasetComparisonGrid', () => {
+  const datasets = [
+    {
+      id: '2021-04-14_07h23m35s',
+      submitter: {
+        id: '039801c8-919e-11eb-908e-3b2b8e672707',
+        name: 'John Doe',
+        email: null,
+      },
+      principalInvestigator: {
+        name: 'Jhon Doe',
+        email: null,
+      },
+      group: null,
+      groupApproved: false,
+      projects: [
+        {
+          id: 'b738905e-9229-11eb-8e15-4fc9140611d2',
+          name: 'New Test',
+        },
+        {
+          id: '05c6519a-8049-11eb-927e-6bf28a9b25ae',
+          name: 'Test',
+        },
+        {
+          id: '717123c8-9d0b-11eb-a675-eb973178fad8',
+          name: 'Teste antigo',
+        },
+      ],
+      name: 'New test create',
+      polarity: 'POSITIVE',
+      metadataJson: '{"Data_Type":"Imaging MS","Sample_Information":'
+      + '{"Condition":"wild","Organism":"Fish","Organism_Part":"tail",'
+      + '"Sample_Growth_Conditions":""},"Sample_Preparation":'
+      + '{"MALDI_Matrix":"none","Tissue_Modification":"chemical",'
+      + '"Sample_Stabilisation":"water","MALDI_Matrix_Application":'
+      + '"none","Solvent":"none"},"MS_Analysis":{"Polarity":"Positive"'
+      + ',"Ionisation_Source":"MALDI","Analyzer":"Orbittrap",'
+      + '"Detector_Resolving_Power":{"Resolving_Power":140000,"mz":200},"'
+      + 'Pixel_Size":{"Xaxis":12,"Yaxis":12}},"Additional_Information":{"Supplementary":""}}',
+      isPublic: true,
+      opticalImages: [],
+    },
+    {
+      id: '2021-03-31_08h41m01s',
+      submitter: {
+        id: '19cd5e98-919e-11eb-a246-03c68134260b',
+        name: 'Zed Doe',
+        email: null,
+      },
+      principalInvestigator: {
+        name: 'ZEDX',
+        email: null,
+      },
+      group: null,
+      groupApproved: false,
+      projects: [
+        {
+          id: '05c6519a-8049-11eb-927e-6bf28a9b25ae',
+          name: 'Test',
+        },
+      ],
+      name: 'New 2',
+      polarity: 'POSITIVE',
+      metadataJson: '{"Data_Type":"Imaging MS","Sample_Information":'
+      + '{"Condition":"wild","Organism":"Fish","Organism_Part":"tail",'
+      + '"Sample_Growth_Conditions":""},"Sample_Preparation":'
+      + '{"MALDI_Matrix":"none","Tissue_Modification":"chemical",'
+      + '"Sample_Stabilisation":"water","MALDI_Matrix_Application":'
+      + '"none","Solvent":"none"},"MS_Analysis":{"Polarity":"Positive"'
+      + ',"Ionisation_Source":"MALDI","Analyzer":"Orbittrap",'
+      + '"Detector_Resolving_Power":{"Resolving_Power":140000,"mz":200},"'
+      + 'Pixel_Size":{"Xaxis":12,"Yaxis":12}},"Additional_Information":{"Supplementary":""}}',
+      isPublic: true,
+      opticalImages: [],
+    },
+  ]
   const propsData = {
     nCols: 2,
     nRows: 1,
@@ -16,6 +99,7 @@ describe('DatasetComparisonAnnotationTable', () => {
       },
     },
     selectedAnnotation: 0,
+    datasets,
     annotations: [
       {
         ion: 'c10h11no+na+',
@@ -24,7 +108,7 @@ describe('DatasetComparisonAnnotationTable', () => {
           '2021-03-31_08h41m01s',
           '2021-04-14_07h23m35s',
         ],
-        datasets: [
+        annotations: [
           {
             id: '2021-03-31_08h41m01s_4580',
             sumFormula: 'C10H11NO',
@@ -41,39 +125,7 @@ describe('DatasetComparisonAnnotationTable', () => {
             colocalizationCoeff: null,
             offSample: null,
             offSampleProb: null,
-            dataset: {
-              id: '2021-03-31_08h41m01s',
-              submitter: {
-                id: '19cd5e98-919e-11eb-a246-03c68134260b',
-                name: 'Zed Doe',
-                email: null,
-              },
-              principalInvestigator: {
-                name: 'ZEDX',
-                email: null,
-              },
-              group: null,
-              groupApproved: false,
-              projects: [
-                {
-                  id: '05c6519a-8049-11eb-927e-6bf28a9b25ae',
-                  name: 'Test',
-                },
-              ],
-              name: 'New 2',
-              polarity: 'POSITIVE',
-              metadataJson: '{"Data_Type":"Imaging MS","Sample_Information":'
-                + '{"Condition":"wild","Organism":"Fish","Organism_Part":"tail",'
-                + '"Sample_Growth_Conditions":""},"Sample_Preparation":'
-                + '{"MALDI_Matrix":"none","Tissue_Modification":"chemical",'
-                + '"Sample_Stabilisation":"water","MALDI_Matrix_Application":'
-                + '"none","Solvent":"none"},"MS_Analysis":{"Polarity":"Positive"'
-                + ',"Ionisation_Source":"MALDI","Analyzer":"Orbittrap",'
-                + '"Detector_Resolving_Power":{"Resolving_Power":140000,"mz":200},"'
-                + 'Pixel_Size":{"Xaxis":12,"Yaxis":12}},"Additional_Information":{"Supplementary":""}}',
-              isPublic: true,
-              opticalImages: [],
-            },
+            dataset: datasets[1],
             databaseDetails: {
               id: 1,
             },
@@ -196,47 +248,7 @@ describe('DatasetComparisonAnnotationTable', () => {
             colocalizationCoeff: null,
             offSample: null,
             offSampleProb: null,
-            dataset: {
-              id: '2021-04-14_07h23m35s',
-              submitter: {
-                id: '039801c8-919e-11eb-908e-3b2b8e672707',
-                name: 'John Doe',
-                email: null,
-              },
-              principalInvestigator: {
-                name: 'Jhon Doe',
-                email: null,
-              },
-              group: null,
-              groupApproved: false,
-              projects: [
-                {
-                  id: 'b738905e-9229-11eb-8e15-4fc9140611d2',
-                  name: 'New Test',
-                },
-                {
-                  id: '05c6519a-8049-11eb-927e-6bf28a9b25ae',
-                  name: 'Test',
-                },
-                {
-                  id: '717123c8-9d0b-11eb-a675-eb973178fad8',
-                  name: 'Teste antigo',
-                },
-              ],
-              name: 'New test create',
-              polarity: 'POSITIVE',
-              metadataJson: '{"Data_Type":"Imaging MS","Sample_Information":'
-                + '{"Condition":"wild","Organism":"Fish","Organism_Part":"tail",'
-                + '"Sample_Growth_Conditions":""},"Sample_Preparation":'
-                + '{"MALDI_Matrix":"none","Tissue_Modification":"chemical",'
-                + '"Sample_Stabilisation":"water","MALDI_Matrix_Application":'
-                + '"none","Solvent":"none"},"MS_Analysis":{"Polarity":"Positive"'
-                + ',"Ionisation_Source":"MALDI","Analyzer":"Orbittrap",'
-                + '"Detector_Resolving_Power":{"Resolving_Power":140000,"mz":200},"'
-                + 'Pixel_Size":{"Xaxis":12,"Yaxis":12}},"Additional_Information":{"Supplementary":""}}',
-              isPublic: true,
-              opticalImages: [],
-            },
+            dataset: datasets[0],
             databaseDetails: {
               id: 1,
             },
