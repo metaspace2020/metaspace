@@ -219,17 +219,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       const hasPreviousSettings = state.gridState[key] != null
       const ionImagePng = await loadPngFromUrl(annotation.isotopeImages[0].url)
       const ionImageLayersAux = computed(() => ionImageLayers(key))
-      const intensity = getIntensity(ionImageLayersAux.value[0]?.ionImage)
 
-      if (intensity) {
-        intensity.min.scaled = 0
-        intensity.max.scaled = intensity.max.status === 'CLIPPED'
-          ? intensity.max.clipped : intensity.max.image
-      }
       let gridCell: GridCellState
       if (hasPreviousSettings) {
         gridCell = state.gridState[key]!
-        gridCell.intensity = intensity
         gridCell.ionImagePng = ionImagePng
       } else {
         const metadata = getMetadata(annotation)
@@ -239,7 +232,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         const pixelSizeY = metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0
 
         gridCell = reactive({
-          intensity,
+          intensity: null, // @ts-ignore // Gets set later, because getIntensity needs state.gridState[key] to run
           ionImagePng,
           pixelSizeX,
           pixelSizeY,
@@ -261,7 +254,12 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         })
         Vue.set(state.gridState, key, gridCell)
       }
+      const intensity = getIntensity(ionImageLayersAux.value[0]?.ionImage)
 
+      intensity.min.scaled = 0
+      intensity.max.scaled = intensity.max.status === 'CLIPPED'
+        ? intensity.max.clipped : intensity.max.image
+      gridCell.intensity = intensity
       // persist ion intensity lock status
       if (hasPreviousSettings && gridCell.lockedIntensities !== undefined) {
         if (gridCell.lockedIntensities[0] !== undefined) {
