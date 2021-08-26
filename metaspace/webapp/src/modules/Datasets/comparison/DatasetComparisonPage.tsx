@@ -20,6 +20,7 @@ import MainImageHeader from '../../Annotations/annotation-widgets/default/MainIm
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
+import { SimpleShareLink } from './SimpleShareLink'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -266,6 +267,10 @@ export default defineComponent<DatasetComparisonPageProps>({
               Copy m/z to clipboard
             </CopyButton>
           </span>
+          <SimpleShareLink
+            name={$route.name}
+            params={$route.params}
+            query={$route.query}/>
         </div>
       )
     }
