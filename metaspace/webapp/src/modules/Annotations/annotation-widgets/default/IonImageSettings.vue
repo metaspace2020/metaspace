@@ -34,9 +34,25 @@
       </el-form-item>
       <el-form-item
         v-if="showIntensityTemplate"
-        label="Intensity lock"
         data-feature-anchor="global-intensity-lock"
       >
+        <el-popover
+          slot="label"
+          trigger="hover"
+          placement="right"
+        >
+          <div slot="reference">
+            Intensity lock
+            <new-feature-badge feature-key="template-intensity-lock">
+              <i class="el-icon-question metadata-help-icon ml-1" />
+            </new-feature-badge>
+          </div>
+          <div class="max-w-xs">
+            Select a dataset as template to lock
+            all the other dataset's according
+            to the template max and min intensities value.
+          </div>
+        </el-popover>
         <el-select
           :value="selectedTemplate"
           style="width: 300px;"
@@ -128,6 +144,7 @@ import ColorBar from './Colorbar.vue'
 import { Component, Prop } from 'vue-property-decorator'
 import { ScaleType } from '../../../../lib/ionImageRendering'
 import ScaleBar from '../../../../components/ScaleBar.vue'
+import NewFeatureBadge, { hideFeatureBadge } from '../../../../components/NewFeatureBadge'
 
  interface colorObjType {
    code: string,
@@ -137,7 +154,7 @@ import ScaleBar from '../../../../components/ScaleBar.vue'
 
  @Component({
    name: 'ion-image-setting',
-   components: { ColorBar, ScaleBar },
+   components: { ColorBar, ScaleBar, NewFeatureBadge },
  })
 export default class IonImageSettings extends Vue {
    @Prop({ type: String })
@@ -153,7 +170,7 @@ export default class IonImageSettings extends Vue {
    defaultLockTemplate: string | undefined;
 
    @Prop({ type: Array })
-   lockTemplateOptions: any[];
+   lockTemplateOptions: any[] | undefined;
 
    @Prop({ type: Boolean })
    showIntensityTemplate: boolean | undefined
@@ -214,6 +231,7 @@ export default class IonImageSettings extends Vue {
    onTemplateChange(dsId: string) {
      this.$store.commit('setLockTemplate', dsId)
      this.$emit('templateChange', dsId)
+     hideFeatureBadge('template-intensity-lock')
    }
 }
 </script>
@@ -232,4 +250,9 @@ export default class IonImageSettings extends Vue {
   #ion-image-settings > .el-form--label-top .el-form-item__label {
     padding: 0;
   }
+
+ .el-badge__content.is-fixed{
+   right: 0;
+   top: 10px;
+ }
 </style>

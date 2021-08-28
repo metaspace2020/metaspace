@@ -6,6 +6,7 @@ import DownloadDialog from './DownloadDialog'
 import reportError from '../../../lib/reportError'
 import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 import config from '../../../lib/config'
+import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
 
 const DatasetItemActions = defineComponent({
   name: 'DatasetItemActions',
@@ -235,12 +236,21 @@ const DatasetItemActions = defineComponent({
             props.showOverview
             && <div>
               <i class="el-icon-data-analysis" />
-              <router-link to={{
-                name: 'dataset-overview',
-                params: { dataset_id: props.dataset.id },
-              }}>
-                Dataset overview
-              </router-link>
+              <NewFeatureBadge featureKey="dataset-overview">
+                <router-link
+                  class='mr-2'
+                  to={{
+                    name: 'dataset-overview',
+                    params: { dataset_id: props.dataset.id },
+                  }}>
+                  <span
+                    onClick={(e: any) => {
+                      e.stopPropagation()
+                      hideFeatureBadge('dataset-overview')
+                    }}
+                  >Dataset overview</span>
+                </router-link>
+              </NewFeatureBadge>
             </div>
           }
         </div>
