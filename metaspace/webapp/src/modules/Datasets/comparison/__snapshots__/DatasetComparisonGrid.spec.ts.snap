@@ -90,6 +90,8 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                   </div>
                 </div>
                  
+                <!---->
+                 
                 <div
                   class="el-form-item"
                 >
@@ -700,6 +702,8 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                     </transition-stub>
                   </div>
                 </div>
+                 
+                <!---->
                  
                 <div
                   class="el-form-item"

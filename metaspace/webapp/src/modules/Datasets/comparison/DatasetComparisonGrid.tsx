@@ -35,6 +35,7 @@ interface DatasetComparisonGridProps {
   datasets: any[]
   isLoading: boolean
   resetViewPort: boolean
+  lockedIntensityTemplate: string
 }
 
 interface GridCellState {
@@ -59,6 +60,7 @@ interface DatasetComparisonGridState {
   gridState: Record<string, GridCellState | null>,
   grid: any,
   annotationData: any,
+  globalLockedIntensities: [number | undefined, number | undefined]
   annotations: any[],
   refsLoaded: boolean,
   showViewer: boolean,
@@ -116,6 +118,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       type: String,
       default: '#000000',
     },
+    lockedIntensityTemplate: {
+      type: String,
+    },
   },
   // @ts-ignore
   setup: function(props, { refs, emit, root }) {
@@ -125,6 +130,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       gridState: {},
       grid: undefined,
       annotations: [],
+      globalLockedIntensities: [undefined, undefined],
       annotationData: {},
       selectedAnnotation: props.selectedAnnotation,
       refsLoaded: false,
@@ -218,8 +224,8 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     const startImageSettings = async(key: string, annotation: any) => {
       const hasPreviousSettings = state.gridState[key] != null
       const ionImagePng = await loadPngFromUrl(annotation.isotopeImages[0].url)
-
       let gridCell: GridCellState
+
       if (hasPreviousSettings) {
         gridCell = state.gridState[key]!
         gridCell.ionImagePng = ionImagePng
@@ -255,14 +261,16 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         })
         Vue.set(state.gridState, key, gridCell)
       }
+
       const intensity = getIntensity(gridCell.ionImageLayers[0]?.ionImage)
 
       intensity.min.scaled = 0
-      intensity.max.scaled = intensity.max.status === 'CLIPPED'
-        ? intensity.max.clipped : intensity.max.image
+      intensity.max.scaled = state.globalLockedIntensities && state.globalLockedIntensities[1]
+        ? state.globalLockedIntensities[1] : (intensity.max.clipped || intensity.max.image)
       gridCell.intensity = intensity
+      gridCell.lockedIntensities = state.globalLockedIntensities
       // persist ion intensity lock status
-      if (hasPreviousSettings && gridCell.lockedIntensities !== undefined) {
+      if (gridCell.lockedIntensities !== undefined) {
         if (gridCell.lockedIntensities[0] !== undefined) {
           await handleIonIntensityLockChange(gridCell.lockedIntensities[0], key, 'min')
         }
@@ -298,6 +306,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       Promise.all(settingPromises)
         .catch(console.error)
         .finally(() => {
+          if (props.lockedIntensityTemplate) {
+            handleIonIntensityLockAllByTemplate(props.lockedIntensityTemplate)
+          }
           state.firstLoaded = true
           resizeHandler()
         })
@@ -311,8 +322,30 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     })
 
     // set images and annotation related items when selected annotation changes
-    watch(() => props.selectedAnnotation, (newValue) => {
-      updateAnnotationData(settings.value.grid, newValue)
+    watch(() => props.selectedAnnotation, async(newValue) => {
+      await updateAnnotationData(settings.value.grid, newValue)
+    })
+
+    const handleIonIntensityUnLockAll = () => {
+      // apply max lock to all grids
+      Object.keys(state.gridState).forEach((gridKey) => {
+        const gridCell : GridCellState = state.gridState[gridKey]!
+        const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
+        const minIntensity = gridCell.intensity.min.clipped || gridCell.intensity.min.image
+        handleIonIntensityLockChange(undefined, gridKey, 'min')
+        handleIonIntensityLockChange(undefined, gridKey, 'max')
+        handleIonIntensityChange(minIntensity, gridKey, 'min')
+        handleIonIntensityChange(maxIntensity, gridKey, 'max')
+      })
+    }
+
+    // set lock by template
+    watch(() => props.lockedIntensityTemplate, (newValue) => {
+      if (newValue) {
+        handleIonIntensityLockAllByTemplate(newValue)
+      } else if (newValue === undefined) {
+        handleIonIntensityUnLockAll()
+      }
     })
 
     // reset view port globally
@@ -475,13 +508,12 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       state.gridState[key]!.annotImageOpacity = opacity
     }
 
-    const handleUserScalingChange = (userScaling: any, key: string) => {
+    const handleUserScalingChange = (userScaling: any, key: string, ignoreBoundaries: boolean = false) => {
       const gridCell = state.gridState[key]
       if (gridCell == null) {
         return
       }
-      const maxIntensity = gridCell.intensity.max.status === 'CLIPPED'
-        ? gridCell.intensity.max.clipped : gridCell.intensity.max.image
+      const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
       const minScale =
         gridCell.intensity?.min?.status === 'LOCKED'
           ? userScaling[0] * (1
@@ -494,66 +526,68 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       const rangeSliderScale = userScaling.slice(0)
 
       // added in order to keep consistency even with ignore boundaries
-      if (rangeSliderScale[0] < 0) {
+      if (rangeSliderScale[0] < 0 || (gridCell.intensity?.min?.status === 'LOCKED' && ignoreBoundaries)) {
         rangeSliderScale[0] = 0
       }
-      if (rangeSliderScale[1] > 1) {
+      if (rangeSliderScale[1] > 1 || (gridCell.intensity?.max?.status === 'LOCKED' && ignoreBoundaries)) {
         rangeSliderScale[1] = 1
       }
 
       gridCell.userScaling = rangeSliderScale
       gridCell.imageScaledScaling = [minScale, maxScale]
 
+      const maxScaleDisplay = state.globalLockedIntensities && state.globalLockedIntensities[1]
+        ? state.globalLockedIntensities[1] : (gridCell.intensity.max.clipped || gridCell.intensity.max.image)
+
       gridCell.intensity.min.scaled =
         gridCell.intensity?.min?.status === 'LOCKED'
         && maxIntensity * userScaling[0]
         < gridCell.intensity.min.user
-          ? gridCell.intensity.min.user
+          ? maxScaleDisplay
           : maxIntensity * userScaling[0]
 
       gridCell.intensity.max.scaled =
         gridCell.intensity?.max?.status === 'LOCKED'
         && maxIntensity * userScaling[1]
         > gridCell.intensity.max.user
-          ? gridCell.intensity.max.user
+          ? maxScaleDisplay
           : maxIntensity * userScaling[1]
     }
 
-    const handleIonIntensityChange = (intensity: number, key: string, type: string,
+    const handleIonIntensityChange = (intensity: number | undefined, key: string, type: string,
       ignoreBoundaries : boolean = false) => {
       const gridCell = state.gridState[key]
-      if (gridCell == null) {
+      if (gridCell == null || intensity === undefined) {
         return
       }
       let minScale = gridCell.userScaling[0]
       let maxScale = gridCell.userScaling[1]
-      const maxIntensity = gridCell.intensity.max.status === 'CLIPPED'
-        ? gridCell.intensity.max.clipped : gridCell.intensity.max.image
+      const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
 
       if (type === 'min') {
         minScale = intensity / maxIntensity
-        if (!ignoreBoundaries) {
-          minScale = minScale > 1 ? 1 : minScale
-          minScale = minScale > maxScale ? maxScale : minScale
-          minScale = minScale < 0 ? 0 : minScale
-        }
       } else {
         maxScale = intensity / maxIntensity
-        if (!ignoreBoundaries) {
-          maxScale = maxScale > 1 ? 1 : maxScale
-          maxScale = maxScale < 0 ? 0 : maxScale
-          maxScale = maxScale < minScale ? minScale : maxScale
-        }
       }
 
-      handleUserScalingChange([minScale, maxScale], key)
+      if (!ignoreBoundaries) {
+        minScale = minScale > 1 ? 1 : minScale
+        minScale = minScale > maxScale ? maxScale : minScale
+        minScale = minScale < 0 ? 0 : minScale
+        maxScale = maxScale > 1 ? 1 : maxScale
+        maxScale = maxScale < 0 ? 0 : maxScale
+        maxScale = maxScale < minScale ? minScale : maxScale
+      }
+
+      handleUserScalingChange([minScale, maxScale], key, ignoreBoundaries)
     }
 
-    const handleIonIntensityLockChange = (value: number, key: string, type: string) => {
+    const handleIonIntensityLockChange = (value: number | undefined, key: string, type: string) => {
       const gridCell = state.gridState[key]
       if (gridCell == null) {
         return
       }
+
       const minLocked = type === 'min' ? value : gridCell.lockedIntensities[0]
       const maxLocked = type === 'max' ? value : gridCell.lockedIntensities[1]
       const intensity = getIntensity(gridCell.ionImageLayers[0]?.ionImage, [minLocked, maxLocked])
@@ -574,24 +608,54 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         gridCell.imageScaledScaling = [0, gridCell.imageScaledScaling[1]]
       }
       if (intensity && intensity.max !== undefined && intensity.max.status !== 'LOCKED') {
-        intensity.max.scaled = intensity.max.status === 'CLIPPED'
-          ? intensity.max.clipped : intensity.max.image
+        intensity.max.scaled = intensity.max.clipped || intensity.max.image
         gridCell.imageScaledScaling = [gridCell.imageScaledScaling[0], 1]
       }
 
       gridCell.lockedIntensities = [minLocked, maxLocked]
+      state.globalLockedIntensities = [minLocked, maxLocked]
       gridCell.intensity = intensity
       gridCell.userScaling = [0, 1]
     }
 
-    const handleIonIntensityLockChangeForAll = (value: number, type: string) => {
+    const handleIonIntensityLockChangeForAll = (value: number, key: string, type: string) => {
       // apply max lock to all grids
       Object.keys(state.gridState).forEach((gridKey) => {
         handleIonIntensityLockChange(value, gridKey, type)
-        if (value) {
+        if (value && gridKey !== key) {
           handleIonIntensityChange(value, gridKey, type, true)
         }
       })
+
+      // emit lock all (used to reset template lock if set)
+      if (props.lockedIntensityTemplate) {
+        emit('lockAllIntensities')
+      }
+    }
+
+    const handleIonIntensityLockAllByTemplate = async(dsId: string) => {
+      let maxIntensity
+      let minIntensity
+
+      Object.keys(settings.value.grid).map((key) => {
+        const cellId = settings.value.grid[key]
+        if (cellId === dsId) {
+          const gridCell : GridCellState = state.gridState[key]!
+          if (gridCell && gridCell.intensity) {
+            maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
+            minIntensity = gridCell.intensity.min.clipped || gridCell.intensity.min.image
+            state.globalLockedIntensities = [minIntensity, maxIntensity]
+          }
+        }
+      })
+
+      for (let i = 0; i < Object.keys(settings.value.grid).length; i++) {
+        const key = Object.keys(settings.value.grid)[i]
+        await handleIonIntensityLockChange(maxIntensity, key, 'max')
+        await handleIonIntensityLockChange(minIntensity, key, 'min')
+        handleIonIntensityChange(minIntensity, key, 'min', true)
+        handleIonIntensityChange(maxIntensity, key, 'max', true)
+      }
     }
 
     const renderDatasetName = (row: number, col: number) => {
@@ -608,6 +672,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       const key = `${row}-${col}`
       const gridCell = state.gridState[key]
       const annData = state.annotationData[key]
+
       if (
         (!props.isLoading && annData == null && gridCell == null)
         || (!props.isLoading && props.selectedAnnotation === -1)
@@ -752,7 +817,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                           handleIonIntensityChange(value, key,
                             'min')}
                         onLock={(value: number) =>
-                          handleIonIntensityLockChangeForAll(value, 'min')}
+                          handleIonIntensityLockChangeForAll(value, key, 'min')}
                       />
                       <IonIntensity
                         intensities={gridCell.intensity?.max}
@@ -762,7 +827,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                           handleIonIntensityChange(value, key,
                             'max')}
                         onLock={(value: number) =>
-                          handleIonIntensityLockChangeForAll(value, 'max')}
+                          handleIonIntensityLockChangeForAll(value, key, 'max')}
                       />
                     </div>
                   </div>

@@ -32,6 +32,28 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item
+        v-if="showIntensityTemplate"
+        label="Intensity lock"
+        data-feature-anchor="global-intensity-lock"
+      >
+        <el-select
+          :value="selectedTemplate"
+          style="width: 300px;"
+          clearable
+          placeholder="Choose the template dataset"
+          @input="onTemplateChange"
+          @clear="onTemplateChange"
+        >
+          <el-option
+            v-for="item in lockTemplateOptions"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          >
+          </el-option>
+        </el-select>
+      </el-form-item>
       <el-form-item label="Colormap">
         <el-select
           :value="colormap"
@@ -127,6 +149,15 @@ export default class IonImageSettings extends Vue {
    @Prop({ type: String })
    defaultScaleBarColor: string | undefined;
 
+   @Prop({ type: String })
+   defaultLockTemplate: string | undefined;
+
+   @Prop({ type: Array })
+   lockTemplateOptions: any[];
+
+   @Prop({ type: Boolean })
+   showIntensityTemplate: boolean | undefined
+
    availableScales: string[] = ['Viridis', 'Cividis', 'Hot', 'YlGnBu', 'Portland', 'Greys', 'Inferno', 'Turbo'];
    paletteColors: colorObjType[] = [{
      code: '#000000',
@@ -152,6 +183,11 @@ export default class IonImageSettings extends Vue {
      return this.defaultScaleType ? this.defaultScaleType : this.$store.getters.settings.annotationView.scaleType
    }
 
+   get selectedTemplate() {
+     return this.defaultLockTemplate ? this.defaultLockTemplate
+       : this.$store.getters.settings.annotationView.lockTemplate
+   }
+
    scaleBarColors(color: string): string {
      let cssBaseRule = `width: 100px; height: 20px; margin: 2px auto; background-color:${color};`
      if (color === '#FFFFFF') {
@@ -173,6 +209,11 @@ export default class IonImageSettings extends Vue {
    onScaleBarColorChange(c: string) {
      this.pickedColor = c
      this.$emit('scaleBarColorChange', c === 'hidden' ? null : c)
+   }
+
+   onTemplateChange(dsId: string) {
+     this.$store.commit('setLockTemplate', dsId)
+     this.$emit('templateChange', dsId)
    }
 }
 </script>

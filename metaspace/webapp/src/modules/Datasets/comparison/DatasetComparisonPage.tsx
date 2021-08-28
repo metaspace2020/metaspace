@@ -21,12 +21,14 @@ import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/Cand
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import { SimpleShareLink } from './SimpleShareLink'
+import { uniqBy } from 'lodash-es'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
   scaleBarColor: string
   scaleType: string
   colormap: string
+  selectedLockTemplate: string | null
   showOpticalImage: boolean
 }
 
@@ -89,6 +91,7 @@ export default defineComponent<DatasetComparisonPageProps>({
         scaleType: 'linear',
         colormap: 'Viridis',
         showOpticalImage: false,
+        selectedLockTemplate: null,
       },
       annotations: [],
       datasets: [],
@@ -187,6 +190,11 @@ export default defineComponent<DatasetComparisonPageProps>({
         state.nRows = auxSettings.nRows
         state.grid = auxSettings.grid
         await requestAnnotations()
+
+        // sets lock template after grid mounted
+        if ($store.getters.settings.annotationView.lockTemplate) {
+          handleTemplateChange($store.getters.settings.annotationView.lockTemplate)
+        }
       }
     })
 
@@ -207,6 +215,11 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     const handleColormapChange = (colormap: string) => {
       state.globalImageSettings.colormap = colormap
+    }
+
+    const handleTemplateChange = (dsId: string) => {
+      state.globalImageSettings.selectedLockTemplate = dsId
+      $store.commit('setLockTemplate', dsId)
     }
 
     const handleRowChange = (idx: number) => {
@@ -289,12 +302,17 @@ export default defineComponent<DatasetComparisonPageProps>({
             onScaleBarColorChange={handleScaleBarColorChange}
             scaleType={state.globalImageSettings?.scaleType}
             onScaleTypeChange={handleScaleTypeChange}
+            showIntensityTemplate={true}
             colormap={state.globalImageSettings?.colormap}
             onColormapChange={handleColormapChange}
+            lockedTemplate={state.globalImageSettings.selectedLockTemplate}
+            onTemplateChange={handleTemplateChange}
             showOpticalImage={false}
             hasOpticalImage={false}
             resetViewport={resetViewPort}
             toggleOpticalImage={() => {}}
+            lockTemplateOptions={uniqBy(datasets.value, 'id')
+              .filter((ds: any) => Object.values(state.grid).includes(ds.id))}
           />
           <ImageSaver
             class="absolute top-0 right-0 mt-2 mr-2 dom-to-image-hidden"
@@ -309,6 +327,8 @@ export default defineComponent<DatasetComparisonPageProps>({
                 nRows={nRows}
                 resetViewPort={state.globalImageSettings.resetViewPort}
                 onResetViewPort={resetViewPort}
+                onLockAllIntensities={handleTemplateChange}
+                lockedIntensityTemplate={state.globalImageSettings.selectedLockTemplate}
                 scaleBarColor={state.globalImageSettings.scaleBarColor}
                 scaleType={state.globalImageSettings.scaleType}
                 colormap={state.globalImageSettings.colormap}
