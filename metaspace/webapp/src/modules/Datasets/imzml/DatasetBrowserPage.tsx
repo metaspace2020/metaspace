@@ -154,7 +154,6 @@ export default defineComponent<DatasetBrowserProps>({
       // @ts-ignore
       const inputPath: string = dataset.value.inputPath.replace('s3a:', 's3:')
       const url = 'http://127.0.0.1:8000/search'
-
       try {
         state.imageLoading = true
         const response = await fetch(url, {
@@ -192,11 +191,13 @@ export default defineComponent<DatasetBrowserProps>({
 
     onAnnotationsResult(async(result) => {
       if (dataset.value && result) {
-        const mz = result.data.allAnnotations[0].mz
-        const ppm = 3
-        state.mzmScoreFilter = mz
-        state.mzmPolarityFilter = ppm
-        state.mzmScaleFilter = 'ppm'
+        if (!state.mzmScoreFilter) {
+          const mz = result.data.allAnnotations[0].mz
+          const ppm = 3
+          state.mzmScoreFilter = mz
+          state.mzmPolarityFilter = ppm
+          state.mzmScaleFilter = 'ppm'
+        }
         await requestIonImage()
         buildMetadata(dataset.value)
         if (state.x !== undefined && state.y !== undefined) {
@@ -339,7 +340,9 @@ export default defineComponent<DatasetBrowserProps>({
               value={state.mzmScoreFilter}
               onInput={(value: number) => {
                 state.mzmScoreFilter = value
-                state.moleculeFilter = undefined
+                if (value && state.moleculeFilter) {
+                  state.moleculeFilter = undefined
+                }
               }}
               onChange={() => {
                 requestIonImage()
@@ -386,7 +389,9 @@ export default defineComponent<DatasetBrowserProps>({
               value={state.moleculeFilter}
               onInput={(value: string) => {
                 state.moleculeFilter = value
-                state.mzmScoreFilter = undefined
+                if (value && state.mzmScoreFilter) {
+                  state.mzmScoreFilter = undefined
+                }
               }}
               onChange={() => {
                 const { moleculeFilter } : any = state

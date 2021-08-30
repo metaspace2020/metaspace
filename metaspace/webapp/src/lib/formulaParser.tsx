@@ -1,31 +1,14 @@
 import { periodicTable } from './periodicTable'
 
 export const parseFormula = (formula: string) => {
-  const regexp = /(?<element>[A-Z][a-z]{0,2})(?<n>[0-9]*)/ig
-  const elements : any = {}
-  Array.from(formula.matchAll(regexp), (res, idx) => {
-    if (res.groups && res.groups.element && res.groups.element.length > 1) {
-      if (periodicTable[res.groups.element] === undefined) {
-        const auxElement = res.groups.element.substring(1, 2)
-        const auxElementCount = parseFormula(auxElement
-          + (res.groups && res.groups.n ? parseInt(res.groups.n, 10) : 1))
-
-        if (Object.keys(elements).includes(auxElement)) {
-          elements[auxElement] += auxElementCount[auxElement]
-        } else {
-          elements[auxElement] = auxElementCount[auxElement]
-        }
-
-        res.groups.element = res.groups.element.substring(0, 1)
-        res.groups.n = '1'
-      }
-    }
-
-    if (res.groups && res.groups.element in Object.keys(elements)) {
-      elements[res.groups.element] = elements[res.groups.element]
-        + (res.groups && res.groups.n ? parseInt(res.groups.n, 10) : 1)
-    } else if (res.groups && !(res.groups.element in Object.keys(elements))) {
-      elements[res.groups.element] = (res.groups && res.groups.n ? parseInt(res.groups.n, 10) : 1)
+  const regexp = /(?<element>[A-Z][a-z]{0,2})(?<n>[0-9]*)/g
+  const elements : Record<string, number> = {}
+  Array.from(formula.matchAll(regexp), ({ groups = {} }) => {
+    const { element, n } = groups
+    if (element && element in periodicTable) {
+      elements[element] = (elements[element] ?? 0) + parseInt(n !== '' ? n : '1', 10)
+    } else {
+      throw new Error(`Invalid element ${element}`)
     }
   })
 
@@ -60,7 +43,7 @@ export const calculateMzFromFormula = (molecularFormula: string) => {
 }
 
 export const generateIonFormula = (molecularFormula: string) => {
-  const cleanFormula = molecularFormula.toUpperCase().trim().replace(/\s/g, '')
+  const cleanFormula = molecularFormula.trim().replace(/\s/g, '')
   const regexpFormulas = /(?<formula>\w+)(?<adducts>([+-]\w+)*)/ig
   const match = regexpFormulas.exec(cleanFormula)
   const formula = match && match.groups ? match.groups.formula : ''
@@ -77,18 +60,20 @@ export const generateIonFormula = (molecularFormula: string) => {
   const ionElements = parseFormula(formula)
 
   adducts.forEach((adduct: string) => {
-    const elem = adduct.replace(/[^a-zA-Z]/g, '')
-    if (adduct.indexOf('+') !== -1) {
-      if (Object.keys(ionElements).includes(elem)) {
-        ionElements[elem] += 1
-      } else {
-        ionElements[elem] = 1
+    const adductElements = parseFormula(adduct)
+    Object.keys(adductElements).forEach((key: string) => {
+      if (adduct.indexOf('+') !== -1) {
+        if (Object.keys(ionElements).includes(key)) {
+          ionElements[key] += adductElements[key]
+        } else {
+          ionElements[key] = adductElements[key]
+        }
+      } else if (adduct.indexOf('-') !== -1) {
+        if (Object.keys(ionElements).includes(key)) {
+          ionElements[key] -= adductElements[key]
+        }
       }
-    } else if (adduct.indexOf('-') !== -1) {
-      if (Object.keys(ionElements).includes(elem)) {
-        ionElements[elem] -= 1
-      }
-    }
+    })
   })
 
   return formatFormula(ionElements)
