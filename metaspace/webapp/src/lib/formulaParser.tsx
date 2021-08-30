@@ -15,6 +15,31 @@ export const parseFormula = (formula: string) => {
   return elements
 }
 
+export const isFormulaValid = (formula: string) => {
+  // check if formula follows the desired standard
+  if (!formula.match('^(([A-Za-z]+[0-9]*)+([+-]{1,1}([A-Za-z]+[0-9]*)+)*)+$')) {
+    return false
+  }
+
+  // check if typed strings are in period table
+  // split string by number to cover cases like H2o being transformed to Ho
+  const moleculesCandidates = formula.split(/\d+/).filter((a: string) => a)
+
+  // check real molecules in moleculesCandidates matching with periodic table
+  for (let j : number = 0; j < moleculesCandidates.length; j++) {
+    const candidateMolecule = moleculesCandidates[j]
+    const molecules = candidateMolecule.replace(/[^A-Za-z]/g, '').split(/(?=[A-Z])/)
+    for (let i : number = 0; i < molecules.length; i++) {
+      const molecule : string = molecules[i]
+      if (!Object.keys(periodicTable).includes(molecule)) {
+        return false
+      }
+    }
+  }
+
+  return true
+}
+
 export const formatFormula = (elements: any) => {
   let formula = ''
   Object.keys(elements).sort().forEach((elementKey: string) => {
