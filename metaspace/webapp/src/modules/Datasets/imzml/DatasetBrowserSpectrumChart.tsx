@@ -337,7 +337,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
       auxOptions.yAxis.max = state.scaleIntensity ? 100 : maxIntensity
       auxOptions.series[0].markPoint.data = markPointData
       auxOptions.series[0].data = data
-      handleZoomReset()
+      // handleZoomReset()
       return auxOptions
     })
 

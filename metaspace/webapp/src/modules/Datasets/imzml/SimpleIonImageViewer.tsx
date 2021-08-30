@@ -6,7 +6,7 @@ import FadeTransition from '../../../components/FadeTransition'
 import RangeSlider from '../../../components/Slider/RangeSlider.vue'
 import IonIntensity from '../../ImageViewer/IonIntensity.vue'
 import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../../lib/ionImageRendering'
-import { get } from 'lodash-es'
+import { get, throttle } from 'lodash-es'
 import createColormap from '../../../lib/createColormap'
 import getColorScale from '../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../components/Slider'
@@ -363,9 +363,9 @@ export default defineComponent<SimpleIonImageViewerProps>({
                         value={state.imageSettings.userScaling}
                         min={0}
                         max={1}
-                        step={0.01}
+                        step={0.1}
                         style={state.rangeSliderStyle}
-                        onInput={handleUserScalingChange}
+                        onInput={throttle((userScaling : any) => { handleUserScalingChange(userScaling) }, 1000)}
                       />
                     }
                     {
