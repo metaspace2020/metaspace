@@ -8,7 +8,7 @@ import safeJsonParse from '../../../lib/safeJsonParse'
 import { DatasetBrowserSpectrumChart } from './DatasetBrowserSpectrumChart'
 import './DatasetBrowserPage.scss'
 import SimpleIonImageViewer from './SimpleIonImageViewer'
-import { calculateMzFromFormula } from '../../../lib/formulaParser'
+import { calculateMzFromFormula, isFormulaValid } from '../../../lib/formulaParser'
 
 interface DatasetBrowserProps {
   className: string
@@ -26,6 +26,7 @@ interface DatasetBrowserState {
   sampleData: any[]
   chartLoading: boolean
   imageLoading: boolean
+  invalidFormula: boolean
   metadata: any
   annotation: any
   x: number | undefined
@@ -63,6 +64,7 @@ export default defineComponent<DatasetBrowserProps>({
       y: undefined,
       ionImageUrl: undefined,
       sampleData: [],
+      invalidFormula: false,
     })
 
     const queryVariables = () => {
@@ -340,11 +342,12 @@ export default defineComponent<DatasetBrowserProps>({
               value={state.mzmScoreFilter}
               onInput={(value: number) => {
                 state.mzmScoreFilter = value
-                if (value && state.moleculeFilter) {
-                  state.moleculeFilter = undefined
-                }
               }}
               onChange={() => {
+                if (state.moleculeFilter) {
+                  state.moleculeFilter = undefined
+                  state.invalidFormula = false
+                }
                 requestIonImage()
               }}
               precision={4}
@@ -382,24 +385,35 @@ export default defineComponent<DatasetBrowserProps>({
               <Option label="ppm" value='ppm'/>
             </Select>
           </div>
-          <div class='flex flex-row w-full items-end mt-2'>
+          <div class='flex flex-row w-full items-start mt-2'>
             <span class='label'>Formula</span>
-            <Input
-              class='formula-input'
-              value={state.moleculeFilter}
-              onInput={(value: string) => {
-                state.moleculeFilter = value
-                if (value && state.mzmScoreFilter) {
-                  state.mzmScoreFilter = undefined
-                }
-              }}
-              onChange={() => {
-                const { moleculeFilter } : any = state
-                requestIonImage(calculateMzFromFormula(moleculeFilter as string))
-              }}
-              size='mini'
-              placeholder='H2O+H'
-            />
+            <div class='formula-input-wrapper'>
+              <Input
+                class={'formula-input' + (state.invalidFormula ? ' formula-input-error' : '')}
+                value={state.moleculeFilter}
+                onInput={(value: string) => {
+                  if (value && !isFormulaValid(value)) {
+                    state.invalidFormula = true
+                  } else {
+                    state.invalidFormula = false
+                  }
+                  state.moleculeFilter = value
+                }}
+                onChange={() => {
+                  const { moleculeFilter } : any = state
+                  if (!state.invalidFormula) {
+                    const newMz = calculateMzFromFormula(moleculeFilter as string)
+                    state.mzmScoreFilter = newMz
+                    requestIonImage(newMz)
+                  }
+                }}
+                size='mini'
+                placeholder='H2O+H'
+              />
+              <span class='error-message' style={{ visibility: !state.invalidFormula ? 'hidden' : '' }}>
+                Invalid formula!
+              </span>
+            </div>
           </div>
         </div>
       )
