@@ -48,9 +48,7 @@
             </new-feature-badge>
           </div>
           <div class="max-w-xs">
-            Select a dataset as template to lock
-            all the other dataset's according
-            to the template max and min intensities value.
+            Apply intensities range of one dataset to all other datasets.
           </div>
         </el-popover>
         <el-select

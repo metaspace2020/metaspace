@@ -330,12 +330,14 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       // apply max lock to all grids
       Object.keys(state.gridState).forEach((gridKey) => {
         const gridCell : GridCellState = state.gridState[gridKey]!
-        const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
-        const minIntensity = gridCell.intensity.min.clipped || gridCell.intensity.min.image
-        handleIonIntensityLockChange(undefined, gridKey, 'min')
-        handleIonIntensityLockChange(undefined, gridKey, 'max')
-        handleIonIntensityChange(minIntensity, gridKey, 'min')
-        handleIonIntensityChange(maxIntensity, gridKey, 'max')
+        if (gridCell) {
+          const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
+          const minIntensity = gridCell.intensity.min.clipped || gridCell.intensity.min.image
+          handleIonIntensityLockChange(undefined, gridKey, 'min')
+          handleIonIntensityLockChange(undefined, gridKey, 'max')
+          handleIonIntensityChange(minIntensity, gridKey, 'min')
+          handleIonIntensityChange(maxIntensity, gridKey, 'max')
+        }
       })
     }
 
