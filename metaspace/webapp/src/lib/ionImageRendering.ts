@@ -96,20 +96,6 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
       mask.fill(255)
     }
   } else {
-    let maxIntensity = 1
-    // get max pixel intensity to use on tic normalizationScale
-    if (
-      normalizationData && normalizationData.data
-      && normalizationData.data.length === numPixels) {
-      for (let i = 0; i < numPixels; i++) {
-        const byteOffset = i * numComponents * bytesPerComponent
-        const intensity = dataView.getUint16(byteOffset)
-        if (intensity > maxIntensity) {
-          maxIntensity = intensity
-        }
-      }
-    }
-
     for (let i = 0; i < numPixels; i++) {
       const byteOffset = i * numComponents * bytesPerComponent
       let intensity = dataView.getUint16(byteOffset)
@@ -119,15 +105,12 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
         normalizationData && normalizationData.data
           && normalizationData.data.length === numPixels
           && normalizationData.data[i] && !isNaN(normalizationData.data[i])) { // scale intensity to 0 - 100
-        intensity = ((intensity / normalizationData.data[i]) * 100)
-            / (maxIntensity / normalizationData.metadata.max_tic)
+        intensity = (intensity / normalizationData.data[i]) * 100000000
       } else if (
         normalizationData && normalizationData.data
-          && normalizationData.data.length === numPixels
-          && normalizationData.data[i] && isNaN(normalizationData.data[i])) {
+          && normalizationData.data.length === numPixels) {
         intensity = 0
       }
-
       intensityValues[i] = intensity * rangeVal + baseVal
     }
 

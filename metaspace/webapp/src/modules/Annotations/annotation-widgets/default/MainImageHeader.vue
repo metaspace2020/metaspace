@@ -61,6 +61,21 @@
         >
       </button>
     </div>
+    <fade-transition v-if="isNormalized">
+      <el-popover
+        placement="bottom"
+        class="norm-badge"
+        trigger="hover"
+      >
+        <div slot="reference">
+          TIC normalized
+        </div>
+        <div class="norm-info">
+          This ion image was TIC-normalized.
+          The intensities were divided by the TIC value and then scaled by multiplying by 1e+8.
+        </div>
+      </el-popover>
+    </fade-transition>
     <fade-transition v-if="multiImageFlag">
       <MenuButtons
         v-if="isActive"
@@ -135,6 +150,10 @@ export default class MainImageHeader extends Vue {
       return config.features.multiple_ion_images
     }
 
+    get isNormalized() {
+      return this.$store.getters.settings.annotationView.normalization
+    }
+
     onScaleBarColorChange(color: string | null) {
       this.$emit('scaleBarColorChange', color)
     }
@@ -160,5 +179,24 @@ export default class MainImageHeader extends Vue {
 <style scoped>
 .inactive {
   opacity: 0.3;
+}
+
+.norm-badge{
+  background: rgba(0,0,0,0.3);
+  border-radius: 16px;
+  color: white;
+  padding: 0 5px;
+  font-size: 11px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  right: 45px;
+  height: 25px;
+}
+
+.norm-info{
+  max-width: 250px;
+  text-align: left;
 }
 </style>
