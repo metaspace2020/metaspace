@@ -232,6 +232,7 @@ import reportError from '../../lib/reportError'
 import graphqlClient from '../../api/graphqlClient'
 import { readNpy } from '@/lib/npyHandler'
 import { computed } from '@vue/composition-api'
+import safeJsonParse from '@/lib/safeJsonParse'
 
 export default {
   name: 'ImageAlignmentPage',
@@ -424,6 +425,7 @@ export default {
             this.ticData = {
               data,
               shape,
+              metadata: safeJsonParse(tics[0].data),
               type: 'TIC',
               error: false,
             }
@@ -432,6 +434,7 @@ export default {
             this.ticData = {
               data: null,
               shape: null,
+              metadata: null,
               type: 'TIC',
               error: true,
             }
@@ -440,6 +443,7 @@ export default {
         this.ticData = {
           data: null,
           shape: null,
+          metadata: null,
           type: 'TIC',
           error: true,
         }

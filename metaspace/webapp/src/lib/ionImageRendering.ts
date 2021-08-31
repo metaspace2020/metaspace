@@ -80,6 +80,7 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
   const intensityValues = new Float32Array(numPixels)
   const mask = new Uint8ClampedArray(numPixels)
   const dataView = new DataView(pngDataBuffer, 0, numPixels * numComponents * bytesPerComponent)
+
   if (bytesPerComponent === 1) {
     for (let i = 0; i < numPixels; i++) {
       const byteOffset = i * numComponents * bytesPerComponent
@@ -95,22 +96,41 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
       mask.fill(255)
     }
   } else {
+    let maxIntensity = 1
+    // get max pixel intensity to use on tic normalizationScale
+    if (
+      normalizationData && normalizationData.data
+      && normalizationData.data.length === numPixels) {
+      for (let i = 0; i < numPixels; i++) {
+        const byteOffset = i * numComponents * bytesPerComponent
+        const intensity = dataView.getUint16(byteOffset)
+        if (intensity > maxIntensity) {
+          maxIntensity = intensity
+        }
+      }
+    }
+
     for (let i = 0; i < numPixels; i++) {
       const byteOffset = i * numComponents * bytesPerComponent
-      let intensity = dataView.getUint16(byteOffset, false)
+      let intensity = dataView.getUint16(byteOffset)
+
+      // apply normalization
       if (
         normalizationData && normalizationData.data
-        && normalizationData.data.length === numPixels
-        && normalizationData.data[i] && !isNaN(normalizationData.data[i])) {
-        intensity = intensity / normalizationData.data[i] * 1000000000
+          && normalizationData.data.length === numPixels
+          && normalizationData.data[i] && !isNaN(normalizationData.data[i])) { // scale intensity to 0 - 100
+        intensity = ((intensity / normalizationData.data[i]) * 100)
+            / (maxIntensity / normalizationData.metadata.max_tic)
       } else if (
         normalizationData && normalizationData.data
-        && normalizationData.data.length === numPixels
-        && normalizationData.data[i] && isNaN(normalizationData.data[i])) {
+          && normalizationData.data.length === numPixels
+          && normalizationData.data[i] && isNaN(normalizationData.data[i])) {
         intensity = 0
       }
+
       intensityValues[i] = intensity * rangeVal + baseVal
     }
+
     if (hasAlpha) {
       const alphaOffset = (numComponents - 1) * bytesPerComponent
       for (let i = 0; i < numPixels; i++) {

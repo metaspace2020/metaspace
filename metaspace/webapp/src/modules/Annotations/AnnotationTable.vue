@@ -287,6 +287,8 @@ import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/for
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
+import { readNpy } from '../../lib/npyHandler'
+import safeJsonParse from '../../lib/safeJsonParse'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -574,6 +576,8 @@ export default Vue.extend({
       if (row !== null) {
         this.currentRowIndex = this.annotations.indexOf(row)
       }
+
+      this.setNormalizationData(row)
     },
 
     onKeyDown(event) {
@@ -643,6 +647,43 @@ export default Vue.extend({
     updateFilter(delta) {
       const filter = Object.assign({}, this.filter, delta)
       this.$store.commit('updateFilter', filter)
+    },
+
+    setNormalizationData(annotation) {
+      if (annotation) {
+        const tics = annotation.dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
+
+        if (tics && tics[0]) {
+          const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
+          readNpy(tic[0].url)
+            .then(({ data, shape }) => {
+              this.$store.commit('setNormalizationMatrix', {
+                data,
+                shape,
+                metadata: safeJsonParse(tics[0].data),
+                type: 'TIC',
+                error: false,
+              })
+            })
+            .catch(() => {
+              this.$store.commit('setNormalizationMatrix', {
+                data: null,
+                shape: null,
+                metadata: null,
+                type: 'TIC',
+                error: true,
+              })
+            })
+        } else {
+          this.$store.commit('setNormalizationMatrix', {
+            data: null,
+            shape: null,
+            metadata: null,
+            type: 'TIC',
+            error: true,
+          })
+        }
+      }
     },
 
     filterGroup(row) {

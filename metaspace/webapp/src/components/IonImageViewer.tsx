@@ -141,7 +141,7 @@ const usePixelIntensityDisplay = (
           const [r, g, b] = colorMap[colorMap.length - 1]
           layers.push({
             intensity: intensityValues[idx].toExponential(1),
-            normalizedIntensity: props.normalizationData?.data?.[idx]?.toExponential(1),
+            normalizedIntensity: (intensityValues[idx] / props.normalizationData?.data?.[idx]).toExponential(1),
             color: props.ionImageLayers.length > 1 ? `rgb(${r},${g},${b})` : null,
           })
         }
@@ -222,7 +222,24 @@ const usePixelIntensityDisplay = (
                   class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
                   style={{ background: color }}
                 /> }
-                {intensity}
+                <div class='flex flex-col leading-snug'>
+                  <div>
+                    {
+                      props.showNormalizedIntensity
+                    && <span>Intensity: </span>
+                    }
+                    <span>{intensity}</span>
+                  </div>
+                  {
+                    props.showNormalizedIntensity
+                  && <div class='mb-1'>
+                    <span>TIC: </span>
+                    <span>
+                      {normalizedIntensity}
+                    </span>
+                  </div>
+                  }
+                </div>
               </li>
             )}
           </ul>

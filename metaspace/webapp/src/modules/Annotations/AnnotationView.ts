@@ -35,7 +35,6 @@ import FilterIcon from '../../assets/inline/filter.svg'
 
 import { ImageSettings, useIonImageSettings } from '../ImageViewer/ionImageState'
 import viewerState from '../ImageViewer/state'
-import { readNpy } from '../../lib/npyHandler'
 
 const { settings: ionImageSettings } = useIonImageSettings()
 
@@ -121,38 +120,6 @@ export default class AnnotationView extends Vue {
 
    created() {
      this.onImageMove = throttle(this.onImageMove)
-   }
-
-   mounted() {
-     const tics = this.annotation.dataset.diagnostics.filter((diagnostic: any) => diagnostic.type === 'TIC')
-
-     if (tics && tics[0]) {
-       const tic = tics[0].images.filter((image: any) => image.key === 'TIC' && image.format === 'NPY')
-       readNpy(tic[0].url)
-         .then(({ data, shape }) => {
-           this.$store.commit('setNormalizationMatrix', {
-             data,
-             shape,
-             type: 'TIC',
-             error: false,
-           })
-         })
-         .catch(() => {
-           this.$store.commit('setNormalizationMatrix', {
-             data: null,
-             shape: null,
-             type: 'TIC',
-             error: true,
-           })
-         })
-     } else {
-       this.$store.commit('setNormalizationMatrix', {
-         data: null,
-         shape: null,
-         type: 'TIC',
-         error: true,
-       })
-     }
    }
 
    metadataDependentComponent(category: string): any {

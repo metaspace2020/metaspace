@@ -23,6 +23,7 @@
           @colormapChange="onColormapChange"
           @scaleTypeChange="onScaleTypeChange"
           @scaleBarColorChange="onScaleBarColorChange"
+          @normalizationChange="onNormalizationChange"
           @templateChange="onTemplateChange"
         />
         <button
@@ -148,6 +149,10 @@ export default class MainImageHeader extends Vue {
 
     onScaleTypeChange(scaleType: string | null) {
       this.$emit('scaleTypeChange', scaleType)
+    }
+
+    onNormalizationChange(value: boolean) {
+      this.$emit('normalizationChange', value)
     }
 }
 </script>

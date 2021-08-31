@@ -44,7 +44,15 @@ exports[`IonImageViewer should match snapshot (with channels tooltip) 1`] = `
               class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
               style="background: rgb(255, 0, 0);"
             />
-            9.6e+3
+            <div
+              class="flex flex-col leading-snug"
+            >
+              <div>
+                <span>
+                  9.6e+3
+                </span>
+              </div>
+            </div>
           </li>
           <li
             class="flex leading-5 items-center"
@@ -53,7 +61,15 @@ exports[`IonImageViewer should match snapshot (with channels tooltip) 1`] = `
               class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
               style="background: rgb(0, 255, 0);"
             />
-            9.6e+3
+            <div
+              class="flex flex-col leading-snug"
+            >
+              <div>
+                <span>
+                  9.6e+3
+                </span>
+              </div>
+            </div>
           </li>
         </ul>
       </div>
