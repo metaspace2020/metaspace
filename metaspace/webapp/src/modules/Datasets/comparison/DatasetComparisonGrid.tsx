@@ -1,12 +1,12 @@
-import { defineComponent, onMounted, onUnmounted, reactive, watchEffect } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, watch } from '@vue/composition-api'
 import './DatasetComparisonGrid.scss'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
 import Vue from 'vue'
 import createColormap from '../../../lib/createColormap'
-import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../../lib/ionImageRendering'
+import { IonImage, loadPngFromUrl, processIonImage, renderScaleBar } from '../../../lib/ionImageRendering'
 import IonImageViewer from '../../../components/IonImageViewer'
 import safeJsonParse from '../../../lib/safeJsonParse'
-import fitImageToArea from '../../../lib/fitImageToArea'
+import fitImageToArea, { FitImageToAreaResult } from '../../../lib/fitImageToArea'
 import FadeTransition from '../../../components/FadeTransition'
 import OpacitySettings from '../../ImageViewer/OpacitySettings.vue'
 import RangeSlider from '../../../components/Slider/RangeSlider.vue'
@@ -14,11 +14,12 @@ import IonIntensity from '../../ImageViewer/IonIntensity.vue'
 import ImageSaver from '../../ImageViewer/ImageSaver.vue'
 import getColorScale from '../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../components/Slider'
-import { isEqual } from 'lodash-es'
 import { encodeParams } from '../../Filters'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
 import { Popover } from '../../../lib/element-ui'
+import { ImagePosition } from '../../ImageViewer/ionImageState'
+import { range } from 'lodash-es'
 
 const RouterLink = Vue.component('router-link')
 
@@ -34,12 +35,32 @@ interface DatasetComparisonGridProps {
   datasets: any[]
   isLoading: boolean
   resetViewPort: boolean
+  lockedIntensityTemplate: string
+}
+
+interface GridCellState {
+  intensity: any
+  ionImagePng: any
+  pixelSizeX: number
+  pixelSizeY: number
+  ionImageLayers: any
+  imageFit: Readonly<FitImageToAreaResult>
+  lockedIntensities: [number | undefined, number | undefined]
+  annotImageOpacity: number
+  imagePosition: ImagePosition,
+  pixelAspectRatio: number
+  imageZoom: number
+  showOpticalImage: boolean
+  userScaling: [number, number],
+  imageScaledScaling: [number, number],
+  scaleBarUrl: Readonly<string>,
 }
 
 interface DatasetComparisonGridState {
-  gridState: any,
+  gridState: Record<string, GridCellState | null>,
   grid: any,
   annotationData: any,
+  globalLockedIntensities: [number | undefined, number | undefined]
   annotations: any[],
   refsLoaded: boolean,
   showViewer: boolean,
@@ -97,6 +118,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       type: String,
       default: '#000000',
     },
+    lockedIntensityTemplate: {
+      type: String,
+    },
   },
   // @ts-ignore
   setup: function(props, { refs, emit, root }) {
@@ -106,6 +130,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       gridState: {},
       grid: undefined,
       annotations: [],
+      globalLockedIntensities: [undefined, undefined],
       annotationData: {},
       selectedAnnotation: props.selectedAnnotation,
       refsLoaded: false,
@@ -157,34 +182,33 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return Object.assign(safeJsonParse(annotation.dataset.metadataJson), datasetMetadataExternals)
     }
 
-    const imageFit = async(annotation: any, key: string, pixelAspectRatio: number = 1) => {
-      const finalImage = await ionImage(state.gridState[key]?.ionImagePng, annotation.isotopeImages[0])
-      const { width = dimensions.width, height = dimensions.height } = finalImage || {}
+    const imageFit = (key: string) => {
+      const gridCell = state.gridState[key]
+      const { width = dimensions.width, height = dimensions.height } = gridCell?.ionImagePng || {}
 
       return fitImageToArea({
         imageWidth: width,
-        imageHeight: height / (state.gridState[key]?.pixelAspectRatio || 1),
-        areaWidth: dimensions.height,
-        areaHeight: dimensions.width,
+        imageHeight: height / (gridCell?.pixelAspectRatio || 1),
+        areaWidth: dimensions.width,
+        areaHeight: dimensions.height,
       })
     }
 
     const buildRangeSliderStyle = (key: string, scaleRange: number[] = [0, 1]) => {
-      if (!refs[`range-slider-${key}`] || state.gridState[`${key}`]?.empty || !state.gridState[`${key}`]) {
+      const gridCell = state.gridState[key]
+      if (!refs[`range-slider-${key}`] || !gridCell) {
         return null
       }
 
       const width = refs[`range-slider-${key}`]?.offsetWidth
-      const activeColorMap = state.gridState[`${key}`]?.colormap
-      const ionImage = state.gridState[`${key}`]?.ionImageLayers[0]?.ionImage
-      const cmap = createColormap(activeColorMap)
-      const { range } = getColorScale(activeColorMap)
+      const ionImage = gridCell?.ionImageLayers[0]?.ionImage
+      const { range } = getColorScale(props.colormap)
       const { scaledMinIntensity, scaledMaxIntensity } = ionImage || {}
       const minColor = range[0]
       const maxColor = range[range.length - 1]
       const gradient = scaledMinIntensity === scaledMaxIntensity
         ? `linear-gradient(to right, ${range.join(',')})`
-        : ionImage ? `url(${renderScaleBar(ionImage, cmap, true)})` : ''
+        : ionImage ? `url(${gridCell?.scaleBarUrl})` : ''
       const [minScale, maxScale] = scaleRange
       const minStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * minScale))
       const maxStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * maxScale))
@@ -198,162 +222,150 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const startImageSettings = async(key: string, annotation: any) => {
+      const hasPreviousSettings = state.gridState[key] != null
       const ionImagePng = await loadPngFromUrl(annotation.isotopeImages[0].url)
-      const ionImageLayersAux = await ionImageLayers(annotation, key)
-      const imageFitAux = await imageFit(annotation, key)
-      const intensity = getIntensity(ionImageLayersAux[0]?.ionImage)
-      const metadata = getMetadata(annotation)
-      const hasPreviousSettings = state.gridState[key] && !state.gridState[key].empty
+      let gridCell: GridCellState
 
-      const settings = {
-        intensity,
-        ionImagePng,
-        metadata,
+      if (hasPreviousSettings) {
+        gridCell = state.gridState[key]!
+        gridCell.ionImagePng = ionImagePng
+      } else {
+        const metadata = getMetadata(annotation)
         // eslint-disable-next-line camelcase
-        pixelSizeX: metadata?.MS_Analysis?.Pixel_Size?.Xaxis || 0,
+        const pixelSizeX = metadata?.MS_Analysis?.Pixel_Size?.Xaxis || 0
         // eslint-disable-next-line camelcase
-        pixelSizeY: metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0,
-        ionImageLayers: ionImageLayersAux,
-        imageFit: imageFitAux,
-        lockedIntensities: hasPreviousSettings && state.gridState[key].lockedIntensities !== undefined
-          ? state.gridState[key].lockedIntensities : [undefined, undefined],
-        annotImageOpacity: hasPreviousSettings && state.gridState[key].annotImageOpacity !== undefined
-          ? state.gridState[key].annotImageOpacity : 1.0,
-        opacityMode: hasPreviousSettings && state.gridState[key].opacityMode !== undefined
-          ? state.gridState[key].opacityMode : 'linear',
-        imagePosition: hasPreviousSettings && state.gridState[key].imagePosition !== undefined
-          ? state.gridState[key].imagePosition : defaultImagePosition,
-        pixelAspectRatio: hasPreviousSettings && state.gridState[key].pixelAspectRatio !== undefined
-          ? state.gridState[key].pixelAspectRatio : 1,
-        imageZoom: hasPreviousSettings && state.gridState[key].imageZoom !== undefined
-          ? state.gridState[key].imageZoom : 1,
-        showOpticalImage: hasPreviousSettings && state.gridState[key].showOpticalImage !== undefined
-          ? state.gridState[key].showOpticalImage : true,
-        colormap: hasPreviousSettings && state.gridState[key].colormap !== undefined
-          ? state.gridState[key].colormap : props.colormap,
-        scaleType: hasPreviousSettings && state.gridState[key].scaleType !== undefined
-          ? state.gridState[key].scaleType : 'linear',
-        scaleBarColor: hasPreviousSettings && state.gridState[key].scaleBarColor !== undefined
-          ? state.gridState[key].scaleBarColor : '#000000',
-        userScaling: hasPreviousSettings && state.gridState[key].userScaling !== undefined
-          ? state.gridState[key].userScaling : [0, 1],
+        const pixelSizeY = metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0
+
+        gridCell = reactive({
+          intensity: null, // @ts-ignore // Gets set later, because ionImageLayers needs state.gridState[key] set
+          ionImagePng,
+          pixelSizeX,
+          pixelSizeY,
+          // ionImageLayers and imageFit rely on state.gridState[key] to be correctly set - avoid evaluating them
+          // until this has been inserted into state.gridState
+          ionImageLayers: computed(() => ionImageLayers(key)),
+          imageFit: computed(() => imageFit(key)),
+          lockedIntensities: [undefined, undefined],
+          annotImageOpacity: 1.0,
+          imagePosition: defaultImagePosition(),
+          pixelAspectRatio: pixelSizeX && pixelSizeY && pixelSizeX / pixelSizeY,
+          imageZoom: 1,
+          showOpticalImage: true,
+          userScaling: [0, 1],
+          imageScaledScaling: [0, 1],
+          scaleBarUrl: computed(() => renderScaleBar(
+            gridCell.ionImageLayers[0]?.ionImage,
+            createColormap(props.colormap),
+            true,
+          )),
+        })
+        Vue.set(state.gridState, key, gridCell)
       }
 
-      Vue.set(state.gridState, key, settings)
-      Vue.set(state.annotationData, key, annotation)
-      await handleImageLayerUpdate(state.annotationData[key], key)
+      const intensity = getIntensity(gridCell.ionImageLayers[0]?.ionImage)
+
+      intensity.min.scaled = 0
+      intensity.max.scaled = state.globalLockedIntensities && state.globalLockedIntensities[1]
+        ? state.globalLockedIntensities[1] : (intensity.max.clipped || intensity.max.image)
+      gridCell.intensity = intensity
+      gridCell.lockedIntensities = state.globalLockedIntensities
+      // persist ion intensity lock status
+      if (gridCell.lockedIntensities !== undefined) {
+        if (gridCell.lockedIntensities[0] !== undefined) {
+          await handleIonIntensityLockChange(gridCell.lockedIntensities[0], key, 'min')
+        }
+        if (gridCell.lockedIntensities[1] !== undefined) {
+          await handleIonIntensityLockChange(gridCell.lockedIntensities[1], key, 'max')
+        }
+      }
     }
 
-    const unsetAnnotation = (key: string) => {
-      Vue.set(state.annotationData, key, { empty: true })
-      Vue.set(state.gridState, key, { empty: true })
-    }
-
-    const getAnnotationData = (grid: any, annotationIdx = 0) => {
+    const updateAnnotationData = (grid: any, annotationIdx = 0) => {
       if (!grid || !props.annotations || props.annotations.length === 0 || annotationIdx === -1) {
         state.annotationData = {}
         state.gridState = {}
         state.firstLoaded = true
-        return {}
+        return
       }
 
       const auxGrid = grid
       const selectedAnnotation = props.annotations[annotationIdx]
-      const settingPromises = Object.keys(auxGrid).map(async(key) => {
+      const settingPromises = Object.keys(auxGrid).map((key) => {
         const item = auxGrid[key]
         const dsIndex = selectedAnnotation
           ? selectedAnnotation.datasetIds.findIndex((dsId: string) => dsId === item) : -1
         if (dsIndex !== -1) {
+          Vue.set(state.annotationData, key, selectedAnnotation.annotations[dsIndex])
           return startImageSettings(key, selectedAnnotation.annotations[dsIndex])
         } else {
-          return unsetAnnotation(key)
+          Vue.set(state.annotationData, key, null)
+          Vue.set(state.gridState, key, null)
         }
       })
 
       Promise.all(settingPromises)
-        .then((values) => {
-          // pass
-        })
-        .catch((e) => {
-          // pass
-        })
+        .catch(console.error)
         .finally(() => {
+          if (props.lockedIntensityTemplate) {
+            handleIonIntensityLockAllByTemplate(props.lockedIntensityTemplate)
+          }
           state.firstLoaded = true
           resizeHandler()
         })
     }
 
-    watchEffect(async(onInvalidate) => {
-      // initial settings build
-      if ((!state.grid && props.annotations && props.settings.value)
-        || (state.grid && !isEqual(state.annotations, props.annotations))) {
-        const auxSettings = safeJsonParse(props.settings.value.snapshot)
-        state.grid = auxSettings.grid
-        state.annotations = props.annotations
-        await getAnnotationData(state.grid, state.selectedAnnotation)
-      } else if (state.selectedAnnotation !== props.selectedAnnotation) { // row change update
-        state.selectedAnnotation = props.selectedAnnotation
-        await getAnnotationData(state.grid, state.selectedAnnotation)
+    const settings = computed(() => {
+      if (props.settings.value) {
+        return safeJsonParse(props.settings.value.snapshot)
       }
+      return {}
+    })
 
-      // reset global viewPort
-      if (props.resetViewPort === true && state.gridState) {
-        emit('resetViewPort', false)
-        resetGlobalViewPort()
-      }
+    // set images and annotation related items when selected annotation changes
+    watch(() => props.selectedAnnotation, async(newValue) => {
+      await updateAnnotationData(settings.value.grid, newValue)
+    })
 
-      // change global colormap
-      if (props.colormap && state.gridState) {
-        let diffColormapCount = 0
-        Object.keys(state.gridState).forEach((key: string) => {
-          if (state.gridState[key] && state.gridState[key].colormap
-            && state.gridState[key].colormap !== props.colormap) {
-            diffColormapCount += 1
-          }
-        })
-
-        if (diffColormapCount > 0) {
-          handleGlobalColormapChange()
+    const handleIonIntensityUnLockAll = () => {
+      // apply max lock to all grids
+      Object.keys(state.gridState).forEach((gridKey) => {
+        const gridCell : GridCellState = state.gridState[gridKey]!
+        if (gridCell) {
+          const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
+          const minIntensity = gridCell.intensity.min.clipped || gridCell.intensity.min.image
+          handleIonIntensityLockChange(undefined, gridKey, 'min')
+          handleIonIntensityLockChange(undefined, gridKey, 'max')
+          handleIonIntensityChange(minIntensity, gridKey, 'min')
+          handleIonIntensityChange(maxIntensity, gridKey, 'max')
         }
-      }
+      })
+    }
 
-      // change global scaleType
-      if (props.scaleType && state.gridState) {
-        let diffScaleCount = 0
-        Object.keys(state.gridState).forEach((key: string) => {
-          if (state.gridState[key] && state.gridState[key].scaleType
-            && state.gridState[key].scaleType !== props.scaleType) {
-            diffScaleCount += 1
-          }
-        })
-
-        if (diffScaleCount > 0) {
-          handleGlobalScaleTypeChange()
-        }
-      }
-
-      // change global scaleBarColor
-      if ((props.scaleBarColor || props.scaleBarColor === null) && state.gridState) {
-        let diffscaleBarColorCount = 0
-        Object.keys(state.gridState).forEach((key: string) => {
-          if (state.gridState[key]
-            && (state.gridState[key].scaleBarColor || state.gridState[key].scaleBarColor === null)
-            && state.gridState[key].scaleBarColor !== props.scaleBarColor) {
-            diffscaleBarColorCount += 1
-          }
-        })
-
-        if (diffscaleBarColorCount > 0) {
-          handleGlobalScaleBarColorChange()
-        }
+    // set lock by template
+    watch(() => props.lockedIntensityTemplate, (newValue) => {
+      if (newValue) {
+        handleIonIntensityLockAllByTemplate(newValue)
+      } else if (newValue === undefined) {
+        handleIonIntensityUnLockAll()
       }
     })
 
-    const defaultImagePosition = {
-      zoom: 0.7,
+    // reset view port globally
+    watch(() => props.resetViewPort, (newValue) => {
+      if (newValue) {
+        emit('resetViewPort', false)
+        Object.keys(state.gridState).forEach((key: string) => {
+          resetViewPort(null, key)
+        })
+      }
+    })
+
+    const defaultImagePosition = () => ({
+      // This is a function so that it always makes a separate copy for each image
+      zoom: 1,
       xOffset: 0,
       yOffset: 0,
-    }
+    })
 
     const getIntensityData = (
       image: number, clipped: number, scaled: number, user: number, quantile: number, isLocked?: boolean,
@@ -369,15 +381,15 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
     }
 
-    const getIntensity = (ionImage: any, lockedIntensities: any = []) => {
-      if (ionImage !== null) {
+    const getIntensity = (ionImage: IonImage, lockedIntensities: any = []) => {
+      if (ionImage != null) {
         const {
           minIntensity, maxIntensity,
           clippedMinIntensity, clippedMaxIntensity,
           scaledMinIntensity, scaledMaxIntensity,
           userMinIntensity, userMaxIntensity,
           lowQuantile, highQuantile,
-        } = ionImage || {}
+        } = ionImage
         const [lockedMin, lockedMax] = lockedIntensities
 
         return {
@@ -399,60 +411,62 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           ),
         }
       }
-      return null
+      return {
+        min: getIntensityData(0, 0, 0, 0, 0, false),
+        max: getIntensityData(0, 0, 0, 0, 0, false),
+      }
     }
 
-    const ionImage = async(ionImagePng: any, isotopeImage: any,
+    const ionImage = (ionImagePng: any, isotopeImage: any,
       scaleType: any = 'linear', userScaling: any = [0, 1]) => {
-      if (!isotopeImage) {
+      if (!isotopeImage || !ionImagePng) {
         return null
       }
       const { minIntensity, maxIntensity } = isotopeImage
-      const png = await loadPngFromUrl(isotopeImage.url)
-      return png
-        ? processIonImage(png, minIntensity, maxIntensity, scaleType, userScaling) : null
+      return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType, userScaling)
     }
 
-    const ionImageLayers = async(annotation: any, key: string,
-      colormap: string = 'Viridis', opacityMode: any = 'linear') => {
-      const finalImage = await ionImage(state.gridState[key]?.ionImagePng,
+    const ionImageLayers = (key: string) => {
+      const annotation = state.annotationData[key]
+      const gridCell = state.gridState[key]
+
+      if (annotation == null || gridCell == null) {
+        return []
+      }
+      const finalImage = ionImage(gridCell.ionImagePng,
         annotation.isotopeImages[0],
-        state.gridState[key]?.scaleType, state.gridState[key]?.userScaling)
-      const hasOpticalImage = state.annotationData[key]?.dataset?.opticalImages[0]?.url
-        !== undefined
+        props.scaleType, gridCell.imageScaledScaling)
+      const hasOpticalImage = annotation.dataset.opticalImages[0]?.url !== undefined
 
       if (finalImage) {
         return [{
           ionImage: finalImage,
-          colorMap: createColormap(state.gridState[key]?.colormap || colormap,
-            hasOpticalImage ? (state.gridState[key]?.opacityMode || opacityMode) : 'constant',
-            hasOpticalImage ? (state.gridState[key]?.annotImageOpacity || 1) : 1),
+          colorMap: createColormap(props.colormap,
+            hasOpticalImage && gridCell.showOpticalImage
+              ? 'linear' : 'constant',
+            hasOpticalImage && gridCell.showOpticalImage
+              ? (gridCell.annotImageOpacity || 1) : 1),
         }]
       }
       return []
-    }
-
-    const resetGlobalViewPort = () => {
-      Object.keys(state.gridState).forEach((key: string) => {
-        resetViewPort(null, key)
-      })
     }
 
     const resetViewPort = (event: any, key: string) => {
       if (event) {
         event.stopPropagation()
       }
-      Vue.set(state.gridState, key, { ...state.gridState[key], imagePosition: defaultImagePosition })
+      if (state.gridState[key]) {
+        state.gridState[key]!.imagePosition = defaultImagePosition()
+      }
     }
 
     const toggleOpticalImage = (event: any, key: string) => {
       event.stopPropagation()
-      Vue.set(state.gridState, key, {
-        ...state.gridState[key],
-        showOpticalImage: !state.gridState[key].showOpticalImage,
-        annotImageOpacity:
-          !state.gridState[key].showOpticalImage ? state.gridState[key].annotImageOpacity : 1,
-      })
+      const gridCell = state.gridState[key]
+      if (gridCell != null) {
+        gridCell.showOpticalImage = !gridCell.showOpticalImage
+        gridCell.annotImageOpacity = gridCell.showOpticalImage ? gridCell.annotImageOpacity : 1
+      }
     }
     const formatMSM = (value: number) => {
       return value.toFixed(3)
@@ -462,16 +476,13 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return value ? `${Math.round(value * 100)}%` : '-'
     }
 
-    const handleImageMove = ({ zoom, xOffset, yOffset }: any, imageFit: any, key: string) => {
-      Vue.set(state.gridState, key, {
-        ...state.gridState[key],
-        imagePosition: {
-          ...state.gridState[key].imagePosition,
-          zoom: zoom / imageFit.imageZoom,
-          xOffset,
-          yOffset,
-        },
-      })
+    const handleImageMove = ({ zoom, xOffset, yOffset }: any, key: string) => {
+      const gridCell = state.gridState[key]
+      if (gridCell != null) {
+        gridCell.imagePosition.zoom = zoom / gridCell.imageFit.imageZoom
+        gridCell.imagePosition.xOffset = xOffset
+        gridCell.imagePosition.yOffset = yOffset
+      }
     }
 
     const annotationsLink = (datasetId: string, database?: string, fdrLevel?: number) => {
@@ -495,75 +506,164 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
     }
 
-    const handleImageLayerUpdate = async(annotation: any, key: string) => {
-      const ionImageLayersAux = await ionImageLayers(annotation, key)
-      Vue.set(state.gridState, key, { ...state.gridState[key], ionImageLayers: ionImageLayersAux })
+    const handleOpacityChange = (opacity: any, key: string) => {
+      state.gridState[key]!.annotImageOpacity = opacity
     }
 
-    const handleGlobalColormapChange = () => {
-      Object.keys(state.gridState).forEach((key: string) => {
-        handleColormapChange(props.colormap, key)
-      })
+    const handleUserScalingChange = (userScaling: any, key: string, ignoreBoundaries: boolean = false) => {
+      const gridCell = state.gridState[key]
+      if (gridCell == null) {
+        return
+      }
+      const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
+      const minScale =
+        gridCell.intensity?.min?.status === 'LOCKED'
+          ? userScaling[0] * (1
+          - (gridCell.intensity.min.user / maxIntensity))
+          + (gridCell.intensity.min.user / maxIntensity)
+          : userScaling[0]
+
+      const maxScale = userScaling[1] * (gridCell.intensity?.max?.status === 'LOCKED'
+        ? gridCell.intensity.max.user / maxIntensity : 1)
+      const rangeSliderScale = userScaling.slice(0)
+
+      // added in order to keep consistency even with ignore boundaries
+      if (rangeSliderScale[0] < 0 || (gridCell.intensity?.min?.status === 'LOCKED' && ignoreBoundaries)) {
+        rangeSliderScale[0] = 0
+      }
+      if (rangeSliderScale[1] > 1 || (gridCell.intensity?.max?.status === 'LOCKED' && ignoreBoundaries)) {
+        rangeSliderScale[1] = 1
+      }
+
+      gridCell.userScaling = rangeSliderScale
+      gridCell.imageScaledScaling = [minScale, maxScale]
+
+      const maxScaleDisplay = state.globalLockedIntensities && state.globalLockedIntensities[1]
+        ? state.globalLockedIntensities[1] : (gridCell.intensity.max.clipped || gridCell.intensity.max.image)
+
+      gridCell.intensity.min.scaled =
+        gridCell.intensity?.min?.status === 'LOCKED'
+        && maxIntensity * userScaling[0]
+        < gridCell.intensity.min.user
+          ? maxScaleDisplay
+          : maxIntensity * userScaling[0]
+
+      gridCell.intensity.max.scaled =
+        gridCell.intensity?.max?.status === 'LOCKED'
+        && maxIntensity * userScaling[1]
+        > gridCell.intensity.max.user
+          ? maxScaleDisplay
+          : maxIntensity * userScaling[1]
     }
 
-    const handleColormapChange = async(colormap: string, key: string) => {
-      Vue.set(state.gridState, key, { ...state.gridState[key], colormap })
-      await handleImageLayerUpdate(state.annotationData[key], key)
-    }
+    const handleIonIntensityChange = (intensity: number | undefined, key: string, type: string,
+      ignoreBoundaries : boolean = false) => {
+      const gridCell = state.gridState[key]
+      if (gridCell == null || intensity === undefined) {
+        return
+      }
+      let minScale = gridCell.userScaling[0]
+      let maxScale = gridCell.userScaling[1]
+      const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
 
-    const handleOpacityChange = async(opacity: any, key: string) => {
-      Vue.set(state.gridState, key, { ...state.gridState[key], annotImageOpacity: opacity })
-      await handleImageLayerUpdate(state.annotationData[key], key)
-    }
-
-    const handleUserScalingChange = async(userScaling: any, key: string) => {
-      Vue.set(state.gridState, key, { ...state.gridState[key], userScaling: userScaling })
-      await handleImageLayerUpdate(state.annotationData[key], key)
-    }
-
-    const handleGlobalScaleTypeChange = () => {
-      Object.keys(state.gridState).forEach((key: string) => {
-        handleScaleTypeChange(props.scaleType, key)
-      })
-    }
-
-    const handleScaleTypeChange = async(scaleType: string, key: string) => {
-      Vue.set(state.gridState, key, { ...state.gridState[key], scaleType })
-      await handleImageLayerUpdate(state.annotationData[key], key)
-    }
-
-    const handleIonIntensityChange = async(intensity: number, key: string, type: string) => {
       if (type === 'min') {
-        Vue.set(state.gridState, key, { ...state.gridState[key], minIntensity: intensity })
+        minScale = intensity / maxIntensity
       } else {
-        Vue.set(state.gridState, key, { ...state.gridState[key], maxIntensity: intensity })
+        maxScale = intensity / maxIntensity
+      }
+
+      if (!ignoreBoundaries) {
+        minScale = minScale > 1 ? 1 : minScale
+        minScale = minScale > maxScale ? maxScale : minScale
+        minScale = minScale < 0 ? 0 : minScale
+        maxScale = maxScale > 1 ? 1 : maxScale
+        maxScale = maxScale < 0 ? 0 : maxScale
+        maxScale = maxScale < minScale ? minScale : maxScale
+      }
+
+      handleUserScalingChange([minScale, maxScale], key, ignoreBoundaries)
+    }
+
+    const handleIonIntensityLockChange = (value: number | undefined, key: string, type: string) => {
+      const gridCell = state.gridState[key]
+      if (gridCell == null) {
+        return
+      }
+
+      const minLocked = type === 'min' ? value : gridCell.lockedIntensities[0]
+      const maxLocked = type === 'max' ? value : gridCell.lockedIntensities[1]
+      const intensity = getIntensity(gridCell.ionImageLayers[0]?.ionImage, [minLocked, maxLocked])
+
+      if (intensity && intensity.max && maxLocked && intensity.max.status === 'LOCKED') {
+        intensity.max.scaled = maxLocked
+        intensity.max.user = maxLocked
+      }
+
+      if (intensity && intensity.min && minLocked && intensity.min.status === 'LOCKED') {
+        intensity.min.scaled = minLocked
+        intensity.min.user = minLocked
+      }
+
+      if (intensity && intensity.min !== undefined && intensity.min.status !== 'LOCKED'
+      ) {
+        intensity.min.scaled = 0
+        gridCell.imageScaledScaling = [0, gridCell.imageScaledScaling[1]]
+      }
+      if (intensity && intensity.max !== undefined && intensity.max.status !== 'LOCKED') {
+        intensity.max.scaled = intensity.max.clipped || intensity.max.image
+        gridCell.imageScaledScaling = [gridCell.imageScaledScaling[0], 1]
+      }
+
+      gridCell.lockedIntensities = [minLocked, maxLocked]
+      state.globalLockedIntensities = [minLocked, maxLocked]
+      gridCell.intensity = intensity
+      gridCell.userScaling = [0, 1]
+    }
+
+    const handleIonIntensityLockChangeForAll = (value: number, key: string, type: string) => {
+      // apply max lock to all grids
+      Object.keys(state.gridState).forEach((gridKey) => {
+        handleIonIntensityLockChange(value, gridKey, type)
+        if (value && gridKey !== key) {
+          handleIonIntensityChange(value, gridKey, type, true)
+        }
+      })
+
+      // emit lock all (used to reset template lock if set)
+      if (props.lockedIntensityTemplate) {
+        emit('lockAllIntensities')
       }
     }
 
-    const handleIonIntensityLockChange = async(value: number, key: string, type: string) => {
-      const minLocked = type === 'min' ? value : state.gridState[key].lockedIntensities[0]
-      const maxLocked = type === 'max' ? value : state.gridState[key].lockedIntensities[1]
-      const lockedIntensities = [minLocked, maxLocked]
-      const intensity = getIntensity(state.gridState[`${key}`]?.ionImageLayers[0]?.ionImage,
-        lockedIntensities)
+    const handleIonIntensityLockAllByTemplate = async(dsId: string) => {
+      let maxIntensity
+      let minIntensity
 
-      Vue.set(state.gridState, key, { ...state.gridState[key], lockedIntensities, intensity })
-    }
-
-    const handleGlobalScaleBarColorChange = () => {
-      Object.keys(state.gridState).forEach((key: string) => {
-        handleScaleBarColorChange(props.scaleBarColor, key)
+      Object.keys(settings.value.grid).map((key) => {
+        const cellId = settings.value.grid[key]
+        if (cellId === dsId) {
+          const gridCell : GridCellState = state.gridState[key]!
+          if (gridCell && gridCell.intensity) {
+            maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
+            minIntensity = gridCell.intensity.min.clipped || gridCell.intensity.min.image
+            state.globalLockedIntensities = [minIntensity, maxIntensity]
+          }
+        }
       })
-    }
 
-    const handleScaleBarColorChange = async(scaleBarColor: string, key: string) => {
-      Vue.set(state.gridState, key, { ...state.gridState[key], scaleBarColor })
+      for (let i = 0; i < Object.keys(settings.value.grid).length; i++) {
+        const key = Object.keys(settings.value.grid)[i]
+        await handleIonIntensityLockChange(maxIntensity, key, 'max')
+        await handleIonIntensityLockChange(minIntensity, key, 'min')
+        handleIonIntensityChange(minIntensity, key, 'min', true)
+        handleIonIntensityChange(maxIntensity, key, 'max', true)
+      }
     }
 
     const renderDatasetName = (row: number, col: number) => {
       const dataset =
         props.datasets
-          ? props.datasets.find((dataset: any) => dataset.id === state.grid[`${row}-${col}`])
+          ? props.datasets.find((dataset: any) => dataset.id === settings.value.grid[`${row}-${col}`])
           : null
       return (
         <span class='dataset-comparison-grid-ds-name'>{dataset?.name}</span>
@@ -571,11 +671,14 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const renderImageViewerHeaders = (row: number, col: number) => {
+      const key = `${row}-${col}`
+      const gridCell = state.gridState[key]
+      const annData = state.annotationData[key]
+
       if (
-        (!props.isLoading
-          && state.annotationData[`${row}-${col}`]?.empty
-          && state.gridState[`${row}-${col}`]?.empty)
-        || (!props.isLoading && state.selectedAnnotation === -1)
+        (!props.isLoading && annData == null && gridCell == null)
+        || (!props.isLoading && props.selectedAnnotation === -1)
+        || (props.selectedAnnotation >= props.annotations.length)
       ) {
         return (
           <div key={col} class='dataset-comparison-grid-col overflow-hidden items-center justify-start'
@@ -588,33 +691,29 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return (
         <div key={col} class='dataset-comparison-grid-col overflow-hidden relative'
           style={{ height: 200, width: 200 }}>
-          {
-            state.gridState
-            && state.gridState[`${row}-${col}`]
-            && renderDatasetName(row, col)
-          }
+          {gridCell && renderDatasetName(row, col)}
           <MainImageHeader
             class='dataset-comparison-grid-item-header dom-to-image-hidden'
-            annotation={state.annotationData[`${row}-${col}`]}
+            annotation={annData}
             slot="title"
             isActive={false}
             hideOptions={true}
-            showOpticalImage={!!state.gridState[`${row}-${col}`]?.showOpticalImage}
-            toggleOpticalImage={(e: any) => toggleOpticalImage(e, `${row}-${col}`)}
-            resetViewport={(e: any) => resetViewPort(e, `${row}-${col}`)}
+            showOpticalImage={!!gridCell?.showOpticalImage}
+            toggleOpticalImage={(e: any) => toggleOpticalImage(e, key)}
+            resetViewport={(e: any) => resetViewPort(e, key)}
             hasOpticalImage={
-              state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.url
+              annData?.dataset?.opticalImages[0]?.url
               !== undefined}
           />
           {
-            state.annotationData[`${row}-${col}`]
-            && state.annotationData[`${row}-${col}`].msmScore
+            annData
+            && annData.msmScore
             && <div class="dataset-comparison-extra dom-to-image-hidden">
               <div class="dataset-comparison-msm-badge">
-                <b>MSM</b> {formatMSM(state.annotationData[`${row}-${col}`].msmScore)}
+                MSM <b>{formatMSM(annData.msmScore)}</b>
               </div>
               <div class="dataset-comparison-fdr-badge">
-                <b>FDR</b> {formatFDR(state.annotationData[`${row}-${col}`].fdrLevel)}
+                FDR <b>{formatFDR(annData.fdrLevel)}</b>
               </div>
               <Popover
                 trigger="hover"
@@ -623,10 +722,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 <div slot="reference" class="dataset-comparison-link">
                   <RouterLink
                     target='_blank'
-                    to={annotationsLink(state.annotationData[`${row}-${col}`].dataset.id.toString(),
-                      state.annotationData[`${row}-${col}`].databaseDetails.id.toString(),
-                      state.annotationData[`${row}-${col}`].databaseDetails.fdrLevel)}>
-
+                    to={annotationsLink(annData.dataset.id.toString(),
+                      annData.databaseDetails.id.toString(),
+                      annData.databaseDetails.fdrLevel)}>
                     <StatefulIcon className="h-6 w-6 pointer-events-none">
                       <ExternalWindowSvg/>
                     </StatefulIcon>
@@ -647,98 +745,91 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
             }
             {
               !props.isLoading
-              && state.gridState[`${row}-${col}`]
-              && state.gridState[`${row}-${col}`].ionImageLayers
+              && gridCell
+              && gridCell.ionImageLayers
               && <IonImageViewer
                 isLoading={props.isLoading || !state.firstLoaded}
-                ionImageLayers={state.gridState[`${row}-${col}`]?.ionImageLayers}
-                scaleBarColor={state.gridState[`${row}-${col}`]?.scaleBarColor}
-                scaleType={state.gridState[`${row}-${col}`]?.scaleType}
-                pixelSizeX={state.gridState[`${row}-${col}`]?.pixelSizeX}
-                pixelSizeY={state.gridState[`${row}-${col}`]?.pixelSizeY}
-                imageHeight={state.gridState[`${row}-${col}`]?.
-                  ionImageLayers[0]?.ionImage?.height }
-                imageWidth={state.gridState[`${row}-${col}`]?.
-                  ionImageLayers[0]?.ionImage?.width }
+                ionImageLayers={gridCell.ionImageLayers}
+                scaleBarColor={props.scaleBarColor}
+                scaleType={props.scaleType}
+                pixelSizeX={gridCell.pixelSizeX}
+                pixelSizeY={gridCell.pixelSizeY}
+                pixelAspectRatio={gridCell.pixelAspectRatio}
+                imageHeight={gridCell.ionImageLayers[0]?.ionImage?.height }
+                imageWidth={gridCell.ionImageLayers[0]?.ionImage?.width }
                 height={dimensions.height}
                 width={dimensions.width}
-                zoom={state.gridState[`${row}-${col}`]?.imagePosition?.zoom
-                * state.gridState[`${row}-${col}`]?.imageFit?.imageZoom}
-                minZoom={state.gridState[`${row}-${col}`]?.imageFit?.imageZoom / 4}
-                maxZoom={state.gridState[`${row}-${col}`]?.imageFit?.imageZoom * 20}
-                xOffset={state.gridState[`${row}-${col}`]?.imagePosition?.xOffset || 0}
-                yOffset={state.gridState[`${row}-${col}`]?.imagePosition?.yOffset || 0}
-                opticalSrc={state.gridState[`${row}-${col}`]?.showOpticalImage
-                  ? state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.url
+                zoom={gridCell.imagePosition?.zoom
+                * gridCell.imageFit.imageZoom}
+                minZoom={gridCell.imageFit.imageZoom / 4}
+                maxZoom={gridCell.imageFit.imageZoom * 20}
+                xOffset={gridCell.imagePosition?.xOffset || 0}
+                yOffset={gridCell.imagePosition?.yOffset || 0}
+                opticalSrc={gridCell.showOpticalImage
+                  ? annData?.dataset?.opticalImages[0]?.url
                   : undefined}
-                opticalTransform={state.gridState[`${row}-${col}`]?.showOpticalImage
-                  ? state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.transform
+                opticalTransform={gridCell.showOpticalImage
+                  ? annData?.dataset?.opticalImages[0]?.transform
                   : undefined}
                 scrollBlock
                 showPixelIntensity
-                onMove={(e: any) =>
-                  handleImageMove(e, state.gridState[`${row}-${col}`]?.imageFit,
-                    `${row}-${col}`)}
+                onMove={(e: any) => handleImageMove(e, key)}
               />
             }
             <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
               <FadeTransition class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden">
                 {
-                  state.gridState[`${row}-${col}`]?.showOpticalImage
-                  && state.annotationData[`${row}-${col}`]?.dataset?.opticalImages[0]?.url
+                  gridCell?.showOpticalImage
+                  && annData?.dataset?.opticalImages[0]?.url
                   !== undefined
                   && <OpacitySettings
                     key="opacity"
                     class="ds-comparison-opacity-item sm-leading-trim mt-auto dom-to-image-hidden"
-                    opacity={state.gridState[`${row}-${col}`]?.annotImageOpacity !== undefined
-                      ? state.gridState[`${row}-${col}`]?.annotImageOpacity : 1}
-                    onOpacity={(opacity: number) => handleOpacityChange(opacity, `${row}-${col}`)}
+                    opacity={gridCell.annotImageOpacity !== undefined
+                      ? gridCell.annotImageOpacity : 1}
+                    onOpacity={(opacity: number) => handleOpacityChange(opacity, key)}
                   />
                 }
               </FadeTransition>
               <FadeTransition class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden">
                 {
                   state.refsLoaded
-                  && state.gridState[`${row}-${col}`]
-                  && state.gridState[`${row}-${col}`].userScaling
+                  && gridCell != null
+                  && gridCell.userScaling
                   && <div
                     class="p-3 bg-gray-100 rounded-lg box-border shadow-xs"
                     ref={`range-slider-${row}-${col}`}>
                     <RangeSlider
                       class="ds-comparison-opacity-item"
-                      value={state.gridState[`${row}-${col}`].userScaling}
+                      value={gridCell.userScaling}
                       min={0}
                       max={1}
                       step={0.01}
-                      style={buildRangeSliderStyle(`${row}-${col}`)}
+                      style={buildRangeSliderStyle(key)}
                       onInput={(nextRange: number[]) =>
-                        handleUserScalingChange(nextRange, `${row}-${col}`)}
+                        handleUserScalingChange(nextRange, key)}
                     />
                     <div
                       class="ds-intensities-wrapper">
                       <IonIntensity
-                        value={state.gridState[`${row}-${col}`].minIntensity}
-                        intensities={state.gridState[`${row}-${col}`].intensity?.min}
+                        intensities={gridCell.intensity?.min}
                         label="Minimum intensity"
                         placeholder="min."
                         onInput={(value: number) =>
-                          handleIonIntensityChange(value, `${row}-${col}`,
+                          handleIonIntensityChange(value, key,
                             'min')}
                         onLock={(value: number) =>
-                          handleIonIntensityLockChange(value, `${row}-${col}`,
-                            'min')}
+                          handleIonIntensityLockChangeForAll(value, key, 'min')}
                       />
                       <IonIntensity
-                        value={state.gridState[`${row}-${col}`].maxIntensity}
-                        intensities={state.gridState[`${row}-${col}`]?.intensity?.max}
+                        intensities={gridCell.intensity?.max}
                         label="Minimum intensity"
                         placeholder="min."
                         onInput={(value: number) =>
-                          handleIonIntensityChange(value, `${row}-${col}`,
+                          handleIonIntensityChange(value, key,
                             'max')}
                         onLock={(value: number) =>
-                          handleIonIntensityLockChange(value, `${row}-${col}`,
-                            'max')}
+                          handleIonIntensityLockChangeForAll(value, key, 'max')}
                       />
                     </div>
                   </div>
@@ -761,11 +852,11 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return (
         <div class="dataset-comparison-grid">
           {
-            Array.from(Array(props.nRows).keys()).map((row) => {
+            range(props.nRows).map((row) => {
               return (
                 <div key={row} class='dataset-comparison-grid-row'>
                   {
-                    Array.from(Array(props.nCols).keys()).map((col) => {
+                    range(props.nCols).map((col) => {
                       return renderImageViewerHeaders(row, col)
                     })
                   }

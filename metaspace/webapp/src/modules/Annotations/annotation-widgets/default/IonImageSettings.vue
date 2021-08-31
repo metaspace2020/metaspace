@@ -32,6 +32,42 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item
+        v-if="showIntensityTemplate"
+        data-feature-anchor="global-intensity-lock"
+      >
+        <el-popover
+          slot="label"
+          trigger="hover"
+          placement="right"
+        >
+          <div slot="reference">
+            Intensity lock
+            <new-feature-badge feature-key="template-intensity-lock">
+              <i class="el-icon-question metadata-help-icon ml-1" />
+            </new-feature-badge>
+          </div>
+          <div class="max-w-xs">
+            Apply intensities range of one dataset to all other datasets.
+          </div>
+        </el-popover>
+        <el-select
+          :value="selectedTemplate"
+          style="width: 300px;"
+          clearable
+          placeholder="Choose the template dataset"
+          @input="onTemplateChange"
+          @clear="onTemplateChange"
+        >
+          <el-option
+            v-for="item in lockTemplateOptions"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          >
+          </el-option>
+        </el-select>
+      </el-form-item>
       <el-form-item label="Colormap">
         <el-select
           :value="colormap"
@@ -106,6 +142,7 @@ import ColorBar from './Colorbar.vue'
 import { Component, Prop } from 'vue-property-decorator'
 import { ScaleType } from '../../../../lib/ionImageRendering'
 import ScaleBar from '../../../../components/ScaleBar.vue'
+import NewFeatureBadge, { hideFeatureBadge } from '../../../../components/NewFeatureBadge'
 
  interface colorObjType {
    code: string,
@@ -115,7 +152,7 @@ import ScaleBar from '../../../../components/ScaleBar.vue'
 
  @Component({
    name: 'ion-image-setting',
-   components: { ColorBar, ScaleBar },
+   components: { ColorBar, ScaleBar, NewFeatureBadge },
  })
 export default class IonImageSettings extends Vue {
    @Prop({ type: String })
@@ -126,6 +163,15 @@ export default class IonImageSettings extends Vue {
 
    @Prop({ type: String })
    defaultScaleBarColor: string | undefined;
+
+   @Prop({ type: String })
+   defaultLockTemplate: string | undefined;
+
+   @Prop({ type: Array })
+   lockTemplateOptions: any[] | undefined;
+
+   @Prop({ type: Boolean })
+   showIntensityTemplate: boolean | undefined
 
    availableScales: string[] = ['Viridis', 'Cividis', 'Hot', 'YlGnBu', 'Portland', 'Greys', 'Inferno', 'Turbo'];
    paletteColors: colorObjType[] = [{
@@ -152,6 +198,11 @@ export default class IonImageSettings extends Vue {
      return this.defaultScaleType ? this.defaultScaleType : this.$store.getters.settings.annotationView.scaleType
    }
 
+   get selectedTemplate() {
+     return this.defaultLockTemplate ? this.defaultLockTemplate
+       : this.$store.getters.settings.annotationView.lockTemplate
+   }
+
    scaleBarColors(color: string): string {
      let cssBaseRule = `width: 100px; height: 20px; margin: 2px auto; background-color:${color};`
      if (color === '#FFFFFF') {
@@ -174,6 +225,12 @@ export default class IonImageSettings extends Vue {
      this.pickedColor = c
      this.$emit('scaleBarColorChange', c === 'hidden' ? null : c)
    }
+
+   onTemplateChange(dsId: string) {
+     this.$store.commit('setLockTemplate', dsId)
+     this.$emit('templateChange', dsId)
+     hideFeatureBadge('template-intensity-lock')
+   }
 }
 </script>
 
@@ -191,4 +248,9 @@ export default class IonImageSettings extends Vue {
   #ion-image-settings > .el-form--label-top .el-form-item__label {
     padding: 0;
   }
+
+ .el-badge__content.is-fixed{
+   right: 0;
+   top: 10px;
+ }
 </style>

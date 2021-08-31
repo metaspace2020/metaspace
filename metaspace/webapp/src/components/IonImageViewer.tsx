@@ -412,6 +412,7 @@ const useImageSize = (props: Props) => {
 }
 
 export default defineComponent<Props>({
+  name: 'IonImageViewer',
   props: {
     ionImageLayers: Array,
     isLoading: { type: Boolean, default: false },
