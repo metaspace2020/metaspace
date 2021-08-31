@@ -151,7 +151,7 @@ export default class MainImageHeader extends Vue {
     }
 
     get isNormalized() {
-      return this.$store.getters.settings.annotationView.normalization
+      return this.$store.getters.settings.annotationView.normalization && this.isActive
     }
 
     onScaleBarColorChange(color: string | null) {
