@@ -86,6 +86,120 @@ exports[`IonImageViewer should match snapshot (with channels tooltip) 1`] = `
 </div>
 `;
 
+exports[`IonImageViewer should match snapshot (with normalization) 1`] = `
+<div
+  class="relative overflow-hidden"
+  height="300"
+  ionimagelayers="[object Object],[object Object]"
+  mock-v-loading="false"
+  normalizationdata="[object Object]"
+  shownormalizedintensity="true"
+  showpixelintensity="true"
+  style="width: 200px; height: 300px;"
+  width="200"
+  xoffset="0"
+  yoffset="0"
+  zoom="1"
+>
+  <div
+    style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
+  >
+    <canvas
+      class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
+      data-images="http://placebacon.com/200/300, http://placekitten.com/200/300"
+      height="300"
+      width="200"
+    />
+    <div />
+  </div>
+  <div>
+    <mock-el-tooltip
+      manual="true"
+      placement="top"
+      popper-class="pointer-events-none"
+      value="true"
+    >
+      <div
+        slot-key="content"
+      >
+        <ul
+          class="list-none p-0 m-0"
+        >
+          <li
+            class="flex leading-5 items-center"
+          >
+            <i
+              class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
+              style="background: rgb(255, 0, 0);"
+            />
+            <div
+              class="flex flex-col leading-snug"
+            >
+              <div>
+                <span>
+                  Intensity: 
+                </span>
+                <span>
+                  9.6e+3
+                </span>
+              </div>
+              <div
+                class="mb-1"
+              >
+                <span>
+                  TIC: 
+                </span>
+                <span>
+                  1.0e+0
+                </span>
+              </div>
+            </div>
+          </li>
+          <li
+            class="flex leading-5 items-center"
+          >
+            <i
+              class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
+              style="background: rgb(0, 255, 0);"
+            />
+            <div
+              class="flex flex-col leading-snug"
+            >
+              <div>
+                <span>
+                  Intensity: 
+                </span>
+                <span>
+                  9.6e+3
+                </span>
+              </div>
+              <div
+                class="mb-1"
+              >
+                <span>
+                  TIC: 
+                </span>
+                <span>
+                  1.0e+0
+                </span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div
+        slot-key="default"
+      >
+        <div
+          class="absolute block border-solid z-30 pointer-events-none box-border"
+          style="left: 47.5px; top: 47.5px; width: 0.5px; height: 0.5px;"
+        />
+      </div>
+    </mock-el-tooltip>
+  </div>
+</div>
+`;
+
 exports[`IonImageViewer should match snapshot 1`] = `
 <div
   class="relative overflow-hidden"

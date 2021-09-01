@@ -2,6 +2,7 @@ import { decode, Image } from 'upng-js'
 import { quantile } from 'simple-statistics'
 import { range } from 'lodash-es'
 import { DEFAULT_SCALE_TYPE } from './constants'
+import safeJsonParse from './safeJsonParse'
 
 export interface IonImage {
   intensityValues: Float32Array;
@@ -22,6 +23,14 @@ export interface IonImage {
   scaleBarValues: Uint8ClampedArray;
   lowQuantile: number;
   highQuantile: number;
+}
+
+export interface Normalization {
+  data: number[] | null | Float32Array
+  shape: [number, number] | null,
+  metadata: any,
+  type: string | null,
+  error: boolean,
 }
 
 export type ColorMap = readonly number[][]
@@ -64,7 +73,7 @@ const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: num
   return canvas.toDataURL()
 }
 
-const extractIntensityAndMask = (png: Image, min: number, max: number, normalizationData: any) => {
+const extractIntensityAndMask = (png: Image, min: number, max: number, normalizationData?: Normalization) => {
   const { width, height, depth, ctype } = png
   const bytesPerComponent = depth <= 8 ? 1 : 2
   const hasAlpha = ctype === 4 || ctype === 6
@@ -256,7 +265,7 @@ export const processIonImage = (
   png: Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
   userScaling: readonly [number, number] = [0, 1],
   userIntensities: readonly [number?, number?] = [],
-  normalizationData?: any): IonImage => {
+  normalizationData?: Normalization): IonImage => {
   const [scaleMode, lowQuantile, highQuantile] = SCALES[scaleType]
   const { width, height } = png
   const [userMin = minIntensity, userMax = maxIntensity] = userIntensities

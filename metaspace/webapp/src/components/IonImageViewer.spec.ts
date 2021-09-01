@@ -5,6 +5,7 @@ import { range } from 'lodash-es'
 import IonImageViewer from './IonImageViewer'
 import * as _ionImageRendering from '../lib/ionImageRendering'
 import createColormap from '../lib/createColormap'
+import safeJsonParse from '../lib/safeJsonParse'
 
 jest.mock('../lib/ionImageRendering')
 const mockIonImageRendering = _ionImageRendering as jest.Mocked<typeof _ionImageRendering>
@@ -78,6 +79,32 @@ describe('IonImageViewer', () => {
 
   it('should match snapshot (with channels tooltip)', async() => {
     const wrapper = mount(testHarness, { propsData })
+    await Vue.nextTick()
+
+    // Trigger mouseover to show the intensity popup.
+    wrapper.find('div>div').trigger('mousemove', {
+      clientX: 250,
+      clientY: 150,
+    })
+    await Vue.nextTick()
+
+    expect(wrapper.element).toMatchSnapshot()
+  })
+
+  it('should match snapshot (with normalization)', async() => {
+    const wrapper = mount(testHarness, {
+      propsData: {
+        ...propsData,
+        showNormalizedIntensity: true,
+        normalizationData: {
+          data: new Float32Array(range(W * H)),
+          shape: [W, H],
+          metadata: {},
+          type: 'TIC',
+          error: false,
+        },
+      },
+    })
     await Vue.nextTick()
 
     // Trigger mouseover to show the intensity popup.

@@ -1,4 +1,4 @@
-import { processIonImage, renderIonImageToBuffer } from './ionImageRendering'
+import { Normalization, processIonImage, renderIonImageToBuffer } from './ionImageRendering'
 import { range, times } from 'lodash-es'
 import { decode, encodeLL, Image } from 'upng-js'
 import { readFile } from 'fs'
@@ -27,6 +27,22 @@ const getGradientPng = (is16Bit = true, isGrayscale = true, hasAlpha = true, len
 
   return decode(encodeLL([data], values.length, 1,
     isGrayscale ? 1 : 3, hasAlpha ? 1 : 0, is16Bit ? 16 : 8))
+}
+
+const getNormalizedData = (is16Bit = true, isGrayscale = true, hasAlpha = true,
+  length = 256): Normalization => {
+  const values = is16Bit ? range(0, 65536, Math.ceil(65536 / length))
+    : range(0, 256, Math.ceil(256 / length))
+  const componentSize = is16Bit ? 2 : 1
+  const numComponents = (isGrayscale ? 1 : 3) + (hasAlpha ? 1 : 0)
+
+  return {
+    data: new Float32Array(range(values.length)),
+    shape: [numComponents, componentSize],
+    metadata: {},
+    type: 'TIC',
+    error: false,
+  }
 }
 
 describe('ionImageRendering.ts', () => {
@@ -96,6 +112,17 @@ describe('ionImageRendering.ts', () => {
     const image = processIonImage(png, 0, 1, 'linear-full', [0.25, 0.75])
     expect(image.scaledMinIntensity).toBe(0.25)
     expect(image.scaledMaxIntensity).toBe(0.75)
+  })
+
+  test('processIonImage should normalize intensity', () => {
+    const png = getGradientPng()
+    const image = processIonImage(png, 0, 1, 'linear-full',
+      [0.25, 0.75])
+    const imageNormalized = processIonImage(png, 0, 1, 'linear-full',
+      [0.25, 0.75], undefined,
+      getNormalizedData())
+
+    expect(image.intensityValues).not.toBe(imageNormalized.intensityValues)
   })
 
   test('processIonImage should not clip if user intensities provided', () => {
