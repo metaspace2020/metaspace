@@ -478,7 +478,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
           class="relative overflow-hidden"
           mock-v-loading="false"
           scaletype="linear"
-          style="width: 410px; height: 300px;"
+          style="width: 200px; height: 300px;"
         >
           <div
             class="scale-bar"
@@ -541,7 +541,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                  
                 <div
                   class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
-                  style="left: -11px;"
+                  style="left: 189px;"
                   tabindex="0"
                 />
               </div>
@@ -1091,7 +1091,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
           class="relative overflow-hidden"
           mock-v-loading="false"
           scaletype="linear"
-          style="width: 410px; height: 300px;"
+          style="width: 200px; height: 300px;"
         >
           <div
             class="scale-bar"
@@ -1154,7 +1154,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                  
                 <div
                   class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
-                  style="left: -11px;"
+                  style="left: 189px;"
                   tabindex="0"
                 />
               </div>
