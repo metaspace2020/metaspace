@@ -130,6 +130,9 @@ export default class MainImageHeader extends Vue {
     @Prop({ type: Boolean })
     showIntensityTemplate: boolean | undefined
 
+    @Prop({ type: Boolean })
+    hideTitle: boolean | undefined
+
     get multiImageFlag() {
       return config.features.multiple_ion_images
     }
