@@ -1,7 +1,7 @@
 import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { Select, Option, RadioGroup, Radio, InputNumber, Input } from '../../../lib/element-ui'
 import { useQuery } from '@vue/apollo-composable'
-import { getDatasetByIdQuery, GetDatasetByIdQuery } from '../../../api/dataset'
+import { GetDatasetByIdQuery, getDatasetByIdWithPathQuery } from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
 import safeJsonParse from '../../../lib/safeJsonParse'
@@ -9,6 +9,7 @@ import { DatasetBrowserSpectrumChart } from './DatasetBrowserSpectrumChart'
 import './DatasetBrowserPage.scss'
 import SimpleIonImageViewer from './SimpleIonImageViewer'
 import { calculateMzFromFormula, isFormulaValid } from '../../../lib/formulaParser'
+import reportError from '../../../lib/reportError'
 
 interface DatasetBrowserProps {
   className: string
@@ -89,7 +90,7 @@ export default defineComponent<DatasetBrowserProps>({
     const datasetId = computed(() => $route.params.dataset_id)
     const {
       result: datasetResult,
-    } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, {
+    } = useQuery<GetDatasetByIdQuery>(getDatasetByIdWithPathQuery, {
       id: datasetId,
     })
 
@@ -146,7 +147,7 @@ export default defineComponent<DatasetBrowserProps>({
         state.x = content.x
         state.y = content.y
       } catch (e) {
-        console.log('E', e)
+        reportError(e)
       } finally {
         state.chartLoading = false
       }
@@ -185,7 +186,7 @@ export default defineComponent<DatasetBrowserProps>({
           ],
         }
       } catch (e) {
-        console.log('E', e)
+        reportError(e)
       } finally {
         state.imageLoading = false
       }
@@ -402,7 +403,7 @@ export default defineComponent<DatasetBrowserProps>({
                 onChange={() => {
                   const { moleculeFilter } : any = state
                   if (!state.invalidFormula) {
-                    const newMz = calculateMzFromFormula(moleculeFilter as string)
+                    const newMz = calculateMzFromFormula(moleculeFilter as string, dataset.value?.polarity)
                     state.mzmScoreFilter = newMz
                     requestIonImage(newMz)
                   }
