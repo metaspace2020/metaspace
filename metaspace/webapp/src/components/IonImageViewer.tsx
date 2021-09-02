@@ -39,6 +39,7 @@ interface Props {
   ionImageTransform: number[][]
   opticalTransform: number[][]
   scrollBlock: boolean
+  keepPixelSelected: boolean
   pixelSizeX: number
   pixelSizeY: number
   pixelAspectRatio: number
@@ -116,7 +117,11 @@ const useScaleBar = (props: Props) => {
   return { renderScaleBar }
 }
 
-const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObject | null>) => {
+const usePixelIntensityDisplay = (
+  props: Props,
+  imageLoaderRef: Ref<ReferenceObject | null>,
+  emit: (event: string, ...args: any[]) => void,
+) => {
   const pixelIntensityTooltipRef = templateRef<any>('pixelIntensityTooltip')
   const cursorPixelPos = ref<[number, number] | null>(null)
   const zoomX = computed(() => props.zoom)
@@ -172,7 +177,7 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
     Vue.nextTick(updatePixelIntensity)
   })
 
-  const movePixelIntensity = (clientX: number | null, clientY: number | null) => {
+  const movePixelIntensity = (clientX: number | null, clientY: number | null, updatePixel: boolean = false) => {
     if (imageLoaderRef.value != null && props.ionImageLayers.length && clientX != null && clientY != null) {
       const rect = imageLoaderRef.value.getBoundingClientRect()
       const { width = 0, height = 0 } = props.ionImageLayers[0].ionImage
@@ -182,7 +187,16 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
       const y = Math.floor((clientY - (rect.top + rect.bottom) / 2 - 2)
         / zoomY.value - props.yOffset + height / 2)
 
-      cursorPixelPos.value = [x, y]
+      if (!props.keepPixelSelected) {
+        cursorPixelPos.value = [x, y]
+      } else if (
+        updatePixel && props.keepPixelSelected
+        && x >= 0 && y >= 0 && y < props.ionImageLayers[0].ionImage.height
+        && x < props.ionImageLayers[0].ionImage.width
+      ) { // check if pixel pos should update and if it is inside ionImage boundary
+        cursorPixelPos.value = [x, y]
+        emit('pixel-select', { x: cursorPixelPos.value[0], y: cursorPixelPos.value[1] })
+      }
     } else {
       cursorPixelPos.value = null
     }
@@ -444,6 +458,7 @@ export default defineComponent<Props>({
     ionImageTransform: { type: Array },
     opticalTransform: { type: Array },
     scrollBlock: { type: Boolean, default: false },
+    keepPixelSelected: { type: Boolean, default: false },
     pixelSizeX: { type: Number, default: 0 },
     pixelSizeY: { type: Number, default: 0 },
     pixelAspectRatio: { type: Number, default: 1 },
@@ -456,7 +471,7 @@ export default defineComponent<Props>({
     const { renderScaleBar } = useScaleBar(props)
 
     const { imageSize } = useImageSize(props)
-    const { renderPixelIntensity, movePixelIntensity } = usePixelIntensityDisplay(props, imageLoaderRef)
+    const { renderPixelIntensity, movePixelIntensity } = usePixelIntensityDisplay(props, imageLoaderRef, emit)
     const { viewBoxStyle, handleZoom, handlePanStart } = usePanAndZoom(props, imageLoaderRef, emit, imageSize)
     const { renderIonImageView } = useIonImageView(props, imageSize)
     const { renderOpticalImage } = useBufferedOpticalImage(props)
@@ -483,8 +498,16 @@ export default defineComponent<Props>({
         style={{ width: props.width + 'px', height: props.height + 'px' }}
         onwheel={onWheel}
         onmousedown={handlePanStart}
-        onmousemove={({ clientX, clientY }: MouseEvent) => movePixelIntensity(clientX, clientY)}
-        onmouseleave={() => movePixelIntensity(null, null)}
+        onClick={({ clientX, clientY }: MouseEvent) => {
+          if (props.keepPixelSelected) {
+            movePixelIntensity(clientX, clientY, true)
+          }
+        }}
+        onmousemove={({ clientX, clientY }: MouseEvent) => {
+          if (!props.keepPixelSelected) {
+            movePixelIntensity(clientX, clientY)
+          }
+        }}
       >
         {viewBoxStyle.value
           && <div style={viewBoxStyle.value}>

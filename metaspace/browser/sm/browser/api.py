@@ -5,14 +5,24 @@ import PIL.Image
 import numpy as np
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.responses import JSONResponse
 from starlette.responses import StreamingResponse
 import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
 
 from sm.browser import utils
 from sm.browser.main import preprocess_dataset_peaks, DatasetBrowser
 
 app = FastAPI()
+origins = ["*"]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @functools.lru_cache(maxsize=128)
 def load_dataset_browser(s3_path: str):
@@ -28,6 +38,11 @@ async def preprocess(item: DatasetPreprocessItem):
     preprocess_dataset_peaks(item.s3_path)
     return {"status": "ok"}
 
+
+class PixelSearchItem(BaseModel):
+    s3_path: str
+    x: int
+    y: int
 
 class MzSearchItem(BaseModel):
     s3_path: str
@@ -50,6 +65,12 @@ async def perform_search(item: MzSearchItem):
     image.save(fp, format="PNG")
     fp.seek(0)
     return PngStreamingResponse(fp)
+
+
+@app.post("/search_pixel")
+async def perform_search(item: PixelSearchItem):
+    dataset_browser = load_dataset_browser(item.s3_path)
+    return JSONResponse(dataset_browser.search_pixel(item.x, item.y))
 
 
 if __name__ == "__main__":

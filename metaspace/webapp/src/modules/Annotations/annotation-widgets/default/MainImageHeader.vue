@@ -3,7 +3,7 @@
     slot="title"
     class="w-full"
   >
-    <span v-if="!hideOptions">
+    <span v-if="!hideOptions && !hideTitle">
       Image viewer
     </span>
     <div
@@ -126,6 +126,9 @@ export default class MainImageHeader extends Vue {
 
     @Prop({ type: Boolean })
     showIntensityTemplate: boolean | undefined
+
+    @Prop({ type: Boolean })
+    hideTitle: boolean | undefined
 
     get multiImageFlag() {
       return config.features.multiple_ion_images
