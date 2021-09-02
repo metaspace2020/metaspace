@@ -76,7 +76,6 @@ export const datasetDetailItemFragment =
   gql`fragment DatasetDetailItem on Dataset {
     id
     name
-    inputPath
     description
     submitter {
       id
@@ -303,11 +302,23 @@ export interface DownloadLinkJson {
 export interface GetDatasetByIdQuery {
   dataset: DatasetDetailItem
 }
+
 export const getDatasetByIdQuery =
   gql`query getDatasetByIdQuery($id: String!, $inpFdrLvls: [Int!] = [5, 10, 20, 50],
   $checkLvl: Int = 10) {
     dataset(id: $id) {
       ...DatasetDetailItem
+    }
+  }
+  ${datasetDetailItemFragment}
+`
+
+export const getDatasetByIdWithPathQuery =
+  gql`query getDatasetByIdQuery($id: String!, $inpFdrLvls: [Int!] = [5, 10, 20, 50],
+  $checkLvl: Int = 10) {
+    dataset(id: $id) {
+      ...DatasetDetailItem
+      inputPath
     }
   }
   ${datasetDetailItemFragment}

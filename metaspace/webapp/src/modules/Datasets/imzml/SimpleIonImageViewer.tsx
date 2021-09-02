@@ -28,7 +28,6 @@ interface SimpleIonImageViewerState {
   ionImage: any
   rangeSliderStyle: any
   imageSettings: any
-  annotation: any
 }
 
 export default defineComponent<SimpleIonImageViewerProps>({
@@ -54,7 +53,6 @@ export default defineComponent<SimpleIonImageViewerProps>({
   setup: function(props, { emit }) {
     const state = reactive<SimpleIonImageViewerState>({
       ionImage: undefined,
-      annotation: undefined,
       rangeSliderStyle: undefined,
       chartLoading: false,
       imageLoading: false,
@@ -316,8 +314,7 @@ export default defineComponent<SimpleIonImageViewerProps>({
             state.imageSettings
             && <MainImageHeader
               class='simple-ion-image-item-header dom-to-image-hidden'
-              annotation={state.annotation}
-              slot="title"
+              annotation={annotation.value}
               hideTitle
               isActive={false}
               showOpticalImage={false}

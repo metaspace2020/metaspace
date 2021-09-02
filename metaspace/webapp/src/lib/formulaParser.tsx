@@ -51,7 +51,7 @@ export const formatFormula = (elements: any) => {
   return formula
 }
 
-export const calculateMzFromFormula = (molecularFormula: string) => {
+export const calculateMzFromFormula = (molecularFormula: string, polarity?: string) => {
   const ionFormula = generateIonFormula(molecularFormula)
   const ionElements = parseFormula(ionFormula)
   let mz = 0
@@ -63,6 +63,12 @@ export const calculateMzFromFormula = (molecularFormula: string) => {
       mz += nOfElements * mass
     }
   })
+
+  if (polarity && polarity === 'POSITIVE') {
+    mz += periodicTable.Ee[2][0]
+  } else if (polarity && polarity === 'NEGATIVE') {
+    mz -= periodicTable.Ee[2][0]
+  }
 
   return mz
 }
