@@ -125,9 +125,6 @@ export default class MainImageHeader extends Vue {
     hideOptions: boolean | undefined
 
     @Prop({ type: Boolean })
-    hideTitle: boolean | undefined
-
-    @Prop({ type: Boolean })
     showIntensityTemplate: boolean | undefined
 
     @Prop({ type: Boolean })
