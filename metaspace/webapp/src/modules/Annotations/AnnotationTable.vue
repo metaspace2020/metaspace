@@ -235,26 +235,38 @@
         </div>
       </div>
 
-      <div>
-        <progress-button
-          v-if="isExporting && totalCount > 5000"
-          class="export-btn"
-          :width="130"
-          :height="40"
-          :percentage="exportProgress * 100"
-          @click="abortExport"
+      <el-popover trigger="hover">
+        <div slot="reference">
+          <progress-button
+            v-if="isExporting && totalCount > 5000"
+            class="export-btn"
+            :width="130"
+            :height="40"
+            :percentage="exportProgress * 100"
+            @click="abortExport"
+          >
+            Cancel
+          </progress-button>
+          <el-button
+            v-else
+            slot="reference"
+            class="export-btn"
+            :disabled="isExporting"
+            @click="startExport"
+          >
+            Export to CSV
+          </el-button>
+        </div>
+
+        Documentation for the CSV export is available
+        <a
+          href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
+          rel="noopener noreferrer nofollow"
+          target="_blank"
         >
-          Cancel
-        </progress-button>
-        <el-button
-          v-else
-          class="export-btn"
-          :disabled="isExporting"
-          @click="startExport"
-        >
-          Export to CSV
-        </el-button>
-      </div>
+          here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
+        </a>
+      </el-popover>
     </div>
   </el-row>
 </template>
@@ -263,6 +275,7 @@
 import ProgressButton from './ProgressButton.vue'
 import AnnotationTableMolName from './AnnotationTableMolName.vue'
 import FilterIcon from '../../assets/inline/filter.svg'
+import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg'
 import {
   annotationListQuery,
   tableExportQuery,
@@ -274,6 +287,7 @@ import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/for
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
+import StatefulIcon from '../../components/StatefulIcon'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -307,6 +321,8 @@ export default Vue.extend({
     ProgressButton,
     AnnotationTableMolName,
     FilterIcon,
+    StatefulIcon,
+    ExternalWindowSvg,
   },
   props: ['hideColumns'],
   data() {
