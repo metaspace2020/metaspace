@@ -24,7 +24,7 @@ TRet = TypeVar('TRet')
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_CF_VPC = 'metaspace2020/metaspace-lithops:1.8.5'
+RUNTIME_CF_VPC = 'metaspace2020/metaspace-lithops:1.8.5.2'
 RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:1.8.6.9'
 MEM_LIMITS = {
     'localhost': 32768,
@@ -160,6 +160,10 @@ class Executor:
         else:
             self.is_hybrid = True
             self.executors = {
+                # 'ibm_cf': lithops.ServerlessExecutor(
+                #     config=lithops_config,
+                #     runtime=RUNTIME_CF_VPC
+                # ),
                 'code_engine': lithops.ServerlessExecutor(
                     config=lithops_config,
                     runtime=RUNTIME_CE,
@@ -340,8 +344,8 @@ class Executor:
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
         if executor.config['lithops']['mode'] == 'serverless':
-            # selected `Balanced combination` between CPU and RAM
-            runtime_cpu = runtime_memory / 1024 / 4.0
+            # selected `CPU intensive` between CPU and RAM
+            runtime_cpu = runtime_memory / 1024 / 2.0
             executor.config['code_engine']['runtime_cpu'] = runtime_cpu
             logger.info(f'Setup {runtime_cpu} CPUs and {runtime_memory} MB RAM')
 

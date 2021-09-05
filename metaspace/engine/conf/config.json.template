@@ -85,7 +85,7 @@
     },
     "code_engine": {
       "region": "eu-de",
-      "kubecfg_path": "{{ sm_lithops_kubecfg_path }}",
+      "namespace": "5s42h2uzmkv",
       "runtime": ""
     },
     "ibm_vpc": {
