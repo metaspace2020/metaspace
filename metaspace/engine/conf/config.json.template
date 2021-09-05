@@ -85,7 +85,7 @@
     },
     "code_engine": {
       "region": "eu-de",
-      "namespace": "5s42h2uzmkv",
+      "namespace": "",
       "runtime": ""
     },
     "ibm_vpc": {
