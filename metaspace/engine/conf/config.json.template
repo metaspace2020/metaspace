@@ -85,7 +85,7 @@
     },
     "code_engine": {
       "region": "eu-de",
-      "namespace": "",
+      "namespace": "{{ sm_lithops_ce_namespace }}",
       "runtime": ""
     },
     "ibm_vpc": {
