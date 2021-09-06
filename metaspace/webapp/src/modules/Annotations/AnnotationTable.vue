@@ -287,7 +287,6 @@ import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/for
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
-import StatefulIcon from '../../components/StatefulIcon'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -321,7 +320,6 @@ export default Vue.extend({
     ProgressButton,
     AnnotationTableMolName,
     FilterIcon,
-    StatefulIcon,
     ExternalWindowSvg,
   },
   props: ['hideColumns'],
