@@ -140,4 +140,4 @@ def build_moldb(
 
         return formula_cobjs, db_data_cobjs
 
-    return executor.call(_build_moldb, (), runtime_memory=2048 * 2)
+    return executor.call(_build_moldb, (), runtime_memory=4096)
