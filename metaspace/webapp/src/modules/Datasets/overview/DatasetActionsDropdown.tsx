@@ -6,6 +6,7 @@ import reportError from '../../../lib/reportError'
 import DownloadDialog from '../list/DownloadDialog'
 import { DatasetComparisonDialog } from '../comparison/DatasetComparisonDialog'
 import config from '../../../lib/config'
+import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
 
 interface DatasetActionsDropdownProps {
   actionLabel: string
@@ -89,6 +90,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     }
 
     const openCompareDialog = () => {
+      hideFeatureBadge('dataset-comparison')
       state.showCompareDialog = true
     }
 
@@ -157,7 +159,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           <Button class="p-1" type="primary">
             <span class="ml-2">{actionLabel}</span><i class="el-icon-arrow-down el-icon--right"/>
           </Button>
-          <DropdownMenu class='dataset-overview-menu'>
+          <DropdownMenu class='dataset-overview-menu p-2'>
             {
               canEdit
               && <DropdownItem command="edit">{editActionLabel}</DropdownItem>
@@ -166,7 +168,11 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
               canDownload
               && <DropdownItem command="download">{downloadActionLabel}</DropdownItem>
             }
-            <DropdownItem command="compare" >{compareActionLabel}</DropdownItem>
+            <DropdownItem command="compare" >
+              <NewFeatureBadge featureKey="dataset-comparison">
+                {compareActionLabel}
+              </NewFeatureBadge>
+            </DropdownItem>
             {
               canDelete
               && <DropdownItem class='text-red-500' command="delete">{deleteActionLabel}</DropdownItem>

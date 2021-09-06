@@ -590,7 +590,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             <TableColumn
               key="datasetCount"
               property="datasetCount"
-              label="# of datasets"
+              label="Datasets #"
               sortable="custom"
               minWidth="100"
             />

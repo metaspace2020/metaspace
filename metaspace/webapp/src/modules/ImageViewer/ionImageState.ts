@@ -3,6 +3,7 @@ import { computed, reactive, ref, toRefs } from '@vue/composition-api'
 import { channels as channelToRGB } from '../../lib/getColorScale'
 
 import viewerState from './state'
+import { OpacityMode } from '../../lib/createColormap'
 
 export interface Annotation {
   id: string
@@ -59,6 +60,26 @@ interface Settings {
   isLockActive: boolean
   opacity: number
   opticalOpacity: number
+}
+
+export type ImagePosition = {
+  zoom: number
+  xOffset: number
+  yOffset: number
+}
+
+export type ImageSettings = {
+  annotImageOpacity: number
+  opacityMode: OpacityMode
+  imagePosition: ImagePosition
+  opticalSrc: string | null
+  opticalTransform: number[][] | null
+  pixelAspectRatio: number
+  opticalOpacity: number
+  // scaleType is deliberately not included here, because every time it changes some slow computation occurs,
+  // and the computed getters were being triggered by any part of the ImageSettings object changing, such as opacity,
+  // causing a lot of jank.
+  // scaleType?: ScaleType
 }
 
 const channels = ['magenta', 'green', 'blue', 'red', 'yellow', 'cyan', 'orange', 'violet']

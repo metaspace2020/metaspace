@@ -2615,6 +2615,13 @@
     "@types/d3-voronoi" "*"
     "@types/d3-zoom" "*"
 
+"@types/echarts@^4.9.9":
+  version "4.9.9"
+  resolved "https://registry.npmjs.org/@types/echarts/-/echarts-4.9.9.tgz#9c203acc5f700fe46fcf6bc1ec748fcb128d8ed0"
+  integrity sha512-6nQTxGG0ldOkJVE/4BSyGsThdNZIO5FYYiSeZQp75dSnVXW17J2d7ZQYm/ItGp32jDJEzzttt7JEcCJ4J9/phA==
+  dependencies:
+    "@types/zrender" "*"
+
 "@types/eslint-visitor-keys@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@types/eslint-visitor-keys/-/eslint-visitor-keys-1.0.0.tgz#1ee30d79544ca84d68d4b3cdb0af4f205663dd2d"
@@ -2946,6 +2953,11 @@
 "@types/zen-observable@^0.8.0":
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/@types/zen-observable/-/zen-observable-0.8.0.tgz#8b63ab7f1aa5321248aad5ac890a485656dcea4d"
+
+"@types/zrender@*":
+  version "4.0.0"
+  resolved "https://registry.npmjs.org/@types/zrender/-/zrender-4.0.0.tgz#a6806f12ec4eccaaebd9b0d816f049aca6188fbd"
+  integrity sha512-s89GOIeKFiod2KSqHkfd2rzx+T2DVu7ihZCBEBnhFrzvQPUmzvDSBot9Fi1DfMQm9Odg+rTqoMGC38RvrwJK2w==
 
 "@typescript-eslint/eslint-plugin@^2.18.0":
   version "2.18.0"
@@ -7361,6 +7373,14 @@ ecc-jsbn@~0.1.1:
   resolved "https://registry.yarnpkg.com/ecc-jsbn/-/ecc-jsbn-0.1.1.tgz#0fc73a9ed5f0d53c38193398523ef7e543777505"
   dependencies:
     jsbn "~0.1.0"
+
+echarts@5.1.2:
+  version "5.1.2"
+  resolved "https://registry.npmjs.org/echarts/-/echarts-5.1.2.tgz#aa1ab0cef5b74fa2f7c620261a5f286893d30fd1"
+  integrity sha512-okUhO4sw22vwZp+rTPNjd/bvTdpug4K4sHNHyrV8NdAncIX9/AarlolFqtJCAYKGFYhUBNjIWu1EznFrSWTFxg==
+  dependencies:
+    tslib "2.0.3"
+    zrender "5.1.1"
 
 editorconfig@^0.15.3:
   version "0.15.3"
@@ -11850,10 +11870,6 @@ minimist-options@4.1.0:
     is-plain-obj "^1.1.0"
     kind-of "^6.0.3"
 
-minimist@0.0.8:
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/minimist/-/minimist-0.0.8.tgz#857fcabfc3397d2625b8228262e86aa7a011b05d"
-
 minimist@^1.1.1, minimist@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.0.tgz#a35008b20f41383eec1fb914f4cd5df79a264284"
@@ -11928,13 +11944,7 @@ mixin-deep@^1.2.0:
     for-in "^1.0.2"
     is-extendable "^1.0.1"
 
-mkdirp@0.x, mkdirp@^0.5.1, mkdirp@~0.5.0, mkdirp@~0.5.1:
-  version "0.5.1"
-  resolved "https://registry.npmjs.org/mkdirp/-/mkdirp-0.5.1.tgz#30057438eac6cf7f8c4767f38648d6697d75c903"
-  dependencies:
-    minimist "0.0.8"
-
-mkdirp@^0.5.3, mkdirp@^0.5.5:
+mkdirp@0.x, mkdirp@^0.5.1, mkdirp@^0.5.3, mkdirp@^0.5.5, mkdirp@~0.5.0, mkdirp@~0.5.1:
   version "0.5.5"
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.5.5.tgz#d91cefd62d1436ca0f41620e251288d420099def"
   integrity sha512-NKmAlESf6jMGym1++R0Ra7wvhV+wFW63FaSOFPwRahvea0gMUcGUhVeAg/0BC0wiv9ih5NYPB1Wn1UEI1/L+xQ==
@@ -12945,9 +12955,9 @@ path-key@^3.0.0, path-key@^3.1.0:
   integrity sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==
 
 path-parse@^1.0.6:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/path-parse/-/path-parse-1.0.6.tgz#d62dbb5679405d72c4737ec58600e9ddcf06d24c"
-  integrity sha512-GSmOT2EbHrINBf9SR7CDELwlJ8AENk3Qn7OikK4nFYAu3Ote2+JYNVvkpAEQm3/TLNEJFD/xZJjzyxg3KBWOzw==
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/path-parse/-/path-parse-1.0.7.tgz#fbc114b60ca42b30d9daf5858e4bd68bbedb6735"
+  integrity sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==
 
 path-to-regexp@0.1.7:
   version "0.1.7"
@@ -14407,6 +14417,11 @@ requires-port@^1.0.0:
   resolved "https://registry.yarnpkg.com/requires-port/-/requires-port-1.0.0.tgz#925d2601d39ac485e091cf0da5c6e694dc3dcaff"
   integrity sha1-kl0mAdOaxIXgkc8NpcbmlNw9yv8=
 
+resize-detector@^0.1.10:
+  version "0.1.10"
+  resolved "https://registry.npmjs.org/resize-detector/-/resize-detector-0.1.10.tgz#1da3f961aa5f914ccbcfd3752d52fd45beeb692c"
+  integrity sha512-iLcXC8A6Fb0DfA+TRiywrK/0A22bFqkhntjMJMEzXDA4XkcEkfwpNbv7W8iewUiD0xYIaeiXOfiEehTqGKsUFw==
+
 resize-observer-polyfill@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/resize-observer-polyfill/-/resize-observer-polyfill-1.5.0.tgz#660ff1d9712a2382baa2cad450a4716209f9ca69"
@@ -15762,9 +15777,9 @@ tar-stream@^1.5.2:
     xtend "^4.0.0"
 
 tar@^6.0.2:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/tar/-/tar-6.1.0.tgz#d1724e9bcc04b977b18d5c573b333a2207229a83"
-  integrity sha512-DUCttfhsnLCjwoDoFcI+B2iJgYa93vBnDUATYEeRx6sntCTdN01VnqsIuTlALXla/LWooNg0yEGeB+Y8WdFxGA==
+  version "6.1.11"
+  resolved "https://registry.yarnpkg.com/tar/-/tar-6.1.11.tgz#6760a38f003afa1b2ffd0ffe9e9abbd0eab3d621"
+  integrity sha512-an/KZQzQUkZCkuoAA64hM92X0Urb6VpRhAFllDzz44U2mcD5scmT3zBc4VgVpkugF580+DQn8eAFSyoQt0tznA==
   dependencies:
     chownr "^2.0.0"
     fs-minipass "^2.0.0"
@@ -16200,6 +16215,11 @@ tsconfig@^7.0.0:
     "@types/strip-json-comments" "0.0.30"
     strip-bom "^3.0.0"
     strip-json-comments "^2.0.0"
+
+tslib@2.0.3:
+  version "2.0.3"
+  resolved "https://registry.npmjs.org/tslib/-/tslib-2.0.3.tgz#8e0741ac45fc0c226e58a17bfc3e64b9bc6ca61c"
+  integrity sha512-uZtkfKblCEQtZKBF6EBXVZeQNl82yqtDQdv+eck8u7tdPxjLu2/lp5/uPW+um2tpuxINHWy3GhiccY7QgEaVHQ==
 
 tslib@^1, tslib@^1.10.0, tslib@^1.8.1, tslib@^1.9.0:
   version "1.10.0"
@@ -16778,6 +16798,15 @@ vue-clickaway@^2.1.0:
   resolved "https://registry.yarnpkg.com/vue-clickaway/-/vue-clickaway-2.1.0.tgz#392de764751f31cd20787e8fb3a6e319825f8d4f"
   dependencies:
     loose-envify "^1.2.0"
+
+vue-echarts@^5.0.0-beta.0:
+  version "5.0.0-beta.0"
+  resolved "https://registry.npmjs.org/vue-echarts/-/vue-echarts-5.0.0-beta.0.tgz#438dd4b0fc5ccea281709c1f7c6321b05352bdf4"
+  integrity sha512-QZFKGXDAYFQo+F20REpzcdLx79nsl4kOorJRpN+08aYq4YiIlmtWss1Lxadm7Fo+NYyWm8nnT+h4xHv3uqWIDQ==
+  dependencies:
+    core-js "^3.4.4"
+    lodash "^4.17.15"
+    resize-detector "^0.1.10"
 
 vue-eslint-parser@^7.0.0:
   version "7.0.0"
@@ -17556,3 +17585,10 @@ zen-observable-ts@^0.8.20:
 zen-observable@^0.8.0:
   version "0.8.9"
   resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.8.9.tgz#0475c760ff0eda046bbdfa4dc3f95d392807ac53"
+
+zrender@5.1.1:
+  version "5.1.1"
+  resolved "https://registry.npmjs.org/zrender/-/zrender-5.1.1.tgz#0515f4f8cc0f4742f02a6b8819550a6d13d64c5c"
+  integrity sha512-oeWlmUZPQdS9f5hK4pV21tHPqA3wgQ7CkKkw7l0CCBgWlJ/FP+lRgLFtUBW6yam4JX8y9CdHJo1o587VVrbcoQ==
+  dependencies:
+    tslib "2.0.3"

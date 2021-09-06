@@ -7,6 +7,7 @@
     @submit.prevent="submit"
     @click.stop
     @mousedown.stop
+    @keyup.stop
   >
     <label>
       <span class="sr-only">

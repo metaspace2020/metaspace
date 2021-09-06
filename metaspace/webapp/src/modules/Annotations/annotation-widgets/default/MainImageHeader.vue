@@ -3,7 +3,7 @@
     slot="title"
     class="w-full"
   >
-    <span v-if="!hideOptions">
+    <span v-if="!hideOptions && !hideTitle">
       Image viewer
     </span>
     <div
@@ -17,9 +17,13 @@
         <ion-image-settings
           :default-colormap="colormap"
           :default-scale-type="scaleType"
+          :default-lock-template="lockedTemplate"
+          :show-intensity-template="showIntensityTemplate"
+          :lock-template-options="lockTemplateOptions"
           @colormapChange="onColormapChange"
           @scaleTypeChange="onScaleTypeChange"
           @scaleBarColorChange="onScaleBarColorChange"
+          @templateChange="onTemplateChange"
         />
         <button
           v-if="!hideOptions"
@@ -100,7 +104,13 @@ export default class MainImageHeader extends Vue {
     colormap: string | undefined;
 
     @Prop({ type: String })
+    lockedTemplate: string | undefined;
+
+    @Prop({ type: String })
     scaleType: string | undefined;
+
+    @Prop({ type: Array })
+    lockTemplateOptions: any[] | undefined;
 
     @Prop({ required: true, type: Function })
     resetViewport!: Function;
@@ -114,12 +124,22 @@ export default class MainImageHeader extends Vue {
     @Prop({ type: Boolean })
     hideOptions: boolean | undefined
 
+    @Prop({ type: Boolean })
+    showIntensityTemplate: boolean | undefined
+
+    @Prop({ type: Boolean })
+    hideTitle: boolean | undefined
+
     get multiImageFlag() {
       return config.features.multiple_ion_images
     }
 
     onScaleBarColorChange(color: string | null) {
       this.$emit('scaleBarColorChange', color)
+    }
+
+    onTemplateChange(dsId: string) {
+      this.$emit('templateChange', dsId)
     }
 
     onColormapChange(color: string | null) {

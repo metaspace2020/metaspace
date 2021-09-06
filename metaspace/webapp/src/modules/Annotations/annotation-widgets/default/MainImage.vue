@@ -10,6 +10,7 @@
     >
       <ion-image-viewer
         ref="imageLoader"
+        :keep-pixel-selected="keepPixelSelected"
         :ion-image-layers="ionImageLayers"
         :is-loading="ionImageIsLoading"
         :pixel-size-x="pixelSizeX"
@@ -27,10 +28,14 @@
         show-pixel-intensity
         v-bind="imageLoaderSettings"
         @move="handleImageMove"
+        @pixel-select="handlePixelSelect"
       />
     </div>
 
-    <div class="colorbar-container">
+    <div
+      v-if="!hideColorBar"
+      class="colorbar-container"
+    >
       <div
         v-if="imageLoaderSettings.opticalSrc"
         class="opacity-slider dom-to-image-hidden"
@@ -151,6 +156,15 @@ export default class MainImage extends Vue {
     @Prop({ type: String })
     scaleType?: ScaleType
 
+    @Prop({ type: Array })
+    userScaling?: [number, number]
+
+    @Prop({ type: Boolean })
+    keepPixelSelected?: boolean
+
+    @Prop({ type: Boolean })
+    hideColorBar?: boolean
+
     ionImageUrl: string | null = null;
     ionImagePng: Image | null = null;
     ionImageIsLoading = false;
@@ -199,7 +213,8 @@ export default class MainImage extends Vue {
       if (this.ionImagePng != null) {
         const isotopeImage = get(this.annotation, 'isotopeImages[0]')
         const { minIntensity, maxIntensity } = isotopeImage
-        return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.scaleType)
+
+        return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.scaleType, this.userScaling)
       } else {
         return null
       }
@@ -259,6 +274,10 @@ export default class MainImage extends Vue {
         xOffset,
         yOffset,
       })
+    }
+
+    handlePixelSelect({ x, y }: any) {
+      this.$emit('pixel-select', { x, y })
     }
 }
 </script>
