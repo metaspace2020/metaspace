@@ -423,12 +423,16 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       const includeOffSample = config.features.off_sample
       const includeIsomers = config.features.isomers
       const includeIsobars = config.features.isobars
+      const includeNeutralLosses = config.features.neutral_losses
+      const includeChemMods = config.features.chem_mods
       const colocalizedWith = props.filter?.colocalizedWith
 
       let csv = csvExportHeader()
 
-      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
-        'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
+      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct',
+        ...(includeChemMods ? ['chemMod'] : []),
+        ...(includeNeutralLosses ? ['neutralLoss'] : []),
+        'ion', 'mz', 'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
         'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity']
       if (includeColoc) {
         columns.push('colocalizationCoeff')
@@ -451,7 +455,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
       function formatRow(row : any) {
         const {
-          dataset, sumFormula, adduct, ion, mz,
+          dataset, sumFormula, adduct, chemMod, neutralLoss, ion, mz,
           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
           isotopeImages, isomers, isobars,
           offSample, offSampleProb, colocalizationCoeff,
@@ -460,7 +464,10 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
           dataset.groupApproved && dataset.group ? dataset.group.name : '',
           dataset.name,
           dataset.id,
-          sumFormula, 'M' + adduct, mz,
+          sumFormula, 'M' + adduct,
+          ...(includeChemMods ? [chemMod] : []),
+          ...(includeNeutralLosses ? [neutralLoss] : []),
+          ion, mz,
           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
           formatCsvTextArray(possibleCompounds.map((m: any) => m.name)),
           formatCsvTextArray(possibleCompounds.map(databaseId)),

@@ -97,6 +97,8 @@ gql`query GetAggregatedAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: S
     datasetIds
     annotations {
       ...AnnotationDetailItem
+      chemMod
+      neutralLoss
     }
   }
   }
@@ -114,6 +116,8 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
       id
       sumFormula
       adduct
+      chemMod
+      neutralLoss
       ion
       mz
       msmScore
