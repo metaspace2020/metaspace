@@ -654,7 +654,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                 }
               </div>
 
-              Documentation for the CSV export is available
+              Documentation for the CSV export is available{' '}
               <a
                 href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
                 rel="noopener noreferrer nofollow"

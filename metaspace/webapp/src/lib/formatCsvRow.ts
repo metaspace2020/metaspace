@@ -25,5 +25,5 @@ export const csvExportHeader = () => {
  */
 export const formatCsvTextArray = (values: string[]): string =>
   values
-    .map(val => val.replace(/, +/g, ','))
+    .map(val => (val ?? '').replace(/, +/g, ','))
     .join(', ')

@@ -97,8 +97,15 @@ gql`query GetAggregatedAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: S
     datasetIds
     annotations {
       ...AnnotationDetailItem
+
+      # Extra fields needed for CSV export
       chemMod
       neutralLoss
+      possibleCompounds {
+        information {
+          databaseId
+        }
+      }
     }
   }
   }
