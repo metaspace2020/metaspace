@@ -344,8 +344,13 @@ class Executor:
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
         if executor.config['lithops']['mode'] == 'serverless':
-            # selected `CPU intensive` between CPU and RAM
-            runtime_cpu = runtime_memory / 1024 / 2.0
+            # selected `CPU-intensive` combination between CPU and RAM
+            # if amount of RAM <= 16 GB. In case of 32 GB, switch on `Balanced`
+            # https://cloud.ibm.com/docs/codeengine?topic=codeengine-mem-cpu-combo
+            if runtime_memory <= 16 * 1024:
+                runtime_cpu = runtime_memory / 1024 / 2.0
+            else:
+                runtime_cpu = runtime_memory / 1024 / 4.0
             executor.config['code_engine']['runtime_cpu'] = runtime_cpu
             logger.info(f'Setup {runtime_cpu} CPUs and {runtime_memory} MB RAM')
 
