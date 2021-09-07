@@ -155,7 +155,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
         <Dropdown style={{
           visibility: (!canEdit && !canDelete && !canReprocess && !canDownload) ? 'hidden' : '',
         }} trigger='click' type="primary" onCommand={handleCommand}>
-          <NewFeatureBadge featureKey="dataset-overview-actionsx">
+          <NewFeatureBadge featureKey="dataset-overview-actions">
             <Button class="p-1" type="primary" onClick={() => {
               hideFeatureBadge('dataset-overview-actions')
             }}>
