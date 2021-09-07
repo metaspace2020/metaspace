@@ -227,7 +227,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       const ionImagePng = await loadPngFromUrl(annotation.isotopeImages[0].url)
       let gridCell: GridCellState
 
-      console.log('HALLo')
       if (hasPreviousSettings) {
         gridCell = state.gridState[key]!
         gridCell.ionImagePng = ionImagePng
@@ -237,7 +236,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         const pixelSizeX = metadata?.MS_Analysis?.Pixel_Size?.Xaxis || 0
         // eslint-disable-next-line camelcase
         const pixelSizeY = metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0
-        console.log('pixelSizeXY', pixelSizeX, pixelSizeY)
         gridCell = reactive({
           intensity: null, // @ts-ignore // Gets set later, because ionImageLayers needs state.gridState[key] set
           ionImagePng,
@@ -670,7 +668,8 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           ? props.datasets.find((dataset: any) => dataset.id === settings.value.grid[`${row}-${col}`])
           : null
       return (
-        <span class='dataset-comparison-grid-ds-name'>{dataset?.name}</span>
+        <span class='dataset-comparison-grid-ds-name'>{dataset?.name?.substring(0, 39)}
+          {dataset?.name?.length > 40 ? '...' : ''}</span>
       )
     }
 

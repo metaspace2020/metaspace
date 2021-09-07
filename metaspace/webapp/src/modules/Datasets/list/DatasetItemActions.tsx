@@ -7,6 +7,7 @@ import reportError from '../../../lib/reportError'
 import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 import config from '../../../lib/config'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
+import './DatasetItemActions.scss'
 
 const DatasetItemActions = defineComponent({
   name: 'DatasetItemActions',
@@ -256,7 +257,7 @@ const DatasetItemActions = defineComponent({
           {
             props.showOverview
             && props.idx === 0
-            && <div>
+            && <div class='featured-action'>
               <i class="el-icon-data-analysis" />
               <NewFeatureBadge featureKey="dataset-overview">
                 <router-link
