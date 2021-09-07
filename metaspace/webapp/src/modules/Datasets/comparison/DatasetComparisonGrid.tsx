@@ -20,6 +20,7 @@ import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
 import { Popover } from '../../../lib/element-ui'
 import { ImagePosition } from '../../ImageViewer/ionImageState'
 import { range } from 'lodash-es'
+import config from '../../../lib/config'
 
 const RouterLink = Vue.component('router-link')
 
@@ -226,6 +227,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       const ionImagePng = await loadPngFromUrl(annotation.isotopeImages[0].url)
       let gridCell: GridCellState
 
+      console.log('HALLo')
       if (hasPreviousSettings) {
         gridCell = state.gridState[key]!
         gridCell.ionImagePng = ionImagePng
@@ -235,7 +237,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         const pixelSizeX = metadata?.MS_Analysis?.Pixel_Size?.Xaxis || 0
         // eslint-disable-next-line camelcase
         const pixelSizeY = metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0
-
+        console.log('pixelSizeXY', pixelSizeX, pixelSizeY)
         gridCell = reactive({
           intensity: null, // @ts-ignore // Gets set later, because ionImageLayers needs state.gridState[key] set
           ionImagePng,
@@ -248,7 +250,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           lockedIntensities: [undefined, undefined],
           annotImageOpacity: 1.0,
           imagePosition: defaultImagePosition(),
-          pixelAspectRatio: pixelSizeX && pixelSizeY && pixelSizeX / pixelSizeY,
+          pixelAspectRatio:
+            config.features.ignore_pixel_aspect_ratio ? 1
+              : pixelSizeX && pixelSizeY && pixelSizeX / pixelSizeY || 1,
           imageZoom: 1,
           showOpticalImage: true,
           userScaling: [0, 1],

@@ -15,6 +15,7 @@ const DatasetItemActions = defineComponent({
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     metadata: { type: Object as () => any, required: true },
     currentUser: { type: Object as () => any },
+    idx: { type: Number },
   },
   setup(props, { emit, root: { $apollo, $confirm, $notify } }) {
     const state = reactive({
@@ -234,6 +235,27 @@ const DatasetItemActions = defineComponent({
 
           {
             props.showOverview
+            && props.idx !== 0
+            && <div>
+              <i class="el-icon-data-analysis"/>
+              <router-link
+                className='mr-2'
+                to={{
+                  name: 'dataset-overview',
+                  params: { dataset_id: props.dataset.id },
+                }}>
+                <span
+                  onClick={(e: any) => {
+                    e.stopPropagation()
+                    hideFeatureBadge('dataset-overview')
+                  }}
+                >Dataset overview</span>
+              </router-link>
+            </div>
+          }
+          {
+            props.showOverview
+            && props.idx === 0
             && <div>
               <i class="el-icon-data-analysis" />
               <NewFeatureBadge featureKey="dataset-overview">
