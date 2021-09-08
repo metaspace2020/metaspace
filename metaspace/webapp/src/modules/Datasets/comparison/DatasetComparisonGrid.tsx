@@ -271,13 +271,16 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         ? state.globalLockedIntensities[1] : (intensity.max.clipped || intensity.max.image)
       gridCell.intensity = intensity
       gridCell.lockedIntensities = state.globalLockedIntensities
+
       // persist ion intensity lock status
       if (gridCell.lockedIntensities !== undefined) {
         if (gridCell.lockedIntensities[0] !== undefined) {
           await handleIonIntensityLockChange(gridCell.lockedIntensities[0], key, 'min')
+          // await handleIonIntensityChange(gridCell.lockedIntensities[0], key, 'min')
         }
         if (gridCell.lockedIntensities[1] !== undefined) {
           await handleIonIntensityLockChange(gridCell.lockedIntensities[1], key, 'max')
+          await handleIonIntensityChange(gridCell.lockedIntensities[1], key, 'max')
         }
       }
     }
@@ -543,11 +546,14 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       const maxScaleDisplay = state.globalLockedIntensities && state.globalLockedIntensities[1]
         ? state.globalLockedIntensities[1] : (gridCell.intensity.max.clipped || gridCell.intensity.max.image)
 
+      const minScaleDisplay = state.globalLockedIntensities && state.globalLockedIntensities[0]
+        ? state.globalLockedIntensities[0] : 0
+
       gridCell.intensity.min.scaled =
         gridCell.intensity?.min?.status === 'LOCKED'
         && maxIntensity * userScaling[0]
         < gridCell.intensity.min.user
-          ? maxScaleDisplay
+          ? minScaleDisplay
           : maxIntensity * userScaling[0]
 
       gridCell.intensity.max.scaled =
@@ -559,7 +565,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const handleIonIntensityChange = (intensity: number | undefined, key: string, type: string,
-      ignoreBoundaries : boolean = false) => {
+      ignoreBoundaries : boolean = true) => {
       const gridCell = state.gridState[key]
       if (gridCell == null || intensity === undefined) {
         return
