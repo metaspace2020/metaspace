@@ -80,18 +80,14 @@ export const SimpleShareLink = defineComponent<SimpleShareLinkProps>({
       try {
         const datasetIds = props.datasets.map((dataset: any) => dataset.id)
         const filter = $store.getters.filter
-        const annotations = props.annotations[props.selectedAnnotation].annotations || []
-        const annotationIds = annotations.map((annotation: any) => annotation.id)
-        const ionFormulas = annotations.map((annotation: any) => annotation.ion)
-        const dbIds = annotations.map((annotation: any) => annotation.databaseDetails.id.toString())
         const settings = safeJsonParse(props.settings)
         const grid = settings.grid
 
         const variables : any = {
           input: {
             version: 1,
-            ionFormulas,
-            dbIds,
+            ionFormulas: [],
+            dbIds: [],
             annotationIds: datasetIds,
             snapshot: JSON.stringify({
               nRows: props.nRows,
@@ -103,7 +99,6 @@ export const SimpleShareLink = defineComponent<SimpleShareLinkProps>({
               lockedIntensityTemplate: props.lockedIntensityTemplate,
               globalLockedIntensities: props.globalLockedIntensities,
               grid,
-              annotationIds,
               filter,
             }),
             datasetId: props.sourceDsId,
