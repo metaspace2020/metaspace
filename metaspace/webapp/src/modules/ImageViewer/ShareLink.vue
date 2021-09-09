@@ -127,7 +127,7 @@ export default defineComponent<Props>({
       try {
         const annotationIonsQuery = await root.$apollo.query({
           query: gql`query AnnotationNames($ids: String) {
-                    options: allAnnotations(filter: {annotationId: $ids}) {
+                    options: allAnnotations(filter: {annotationId: $ids}, limit: 100) {
                       ion
                       database
                       databaseDetails {
