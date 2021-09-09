@@ -78,10 +78,10 @@ export const SimpleShareLink = defineComponent<SimpleShareLinkProps>({
       state.status = 'SAVING'
 
       try {
-        const datasetIds = props.datasets.map((dataset: any) => dataset.id)
         const filter = $store.getters.filter
         const settings = safeJsonParse(props.settings)
         const grid = settings.grid
+        const datasetIds = Object.values(grid)
 
         const variables : any = {
           input: {
