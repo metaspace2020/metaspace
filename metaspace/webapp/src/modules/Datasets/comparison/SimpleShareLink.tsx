@@ -1,16 +1,37 @@
-import { defineComponent, reactive } from '@vue/composition-api'
+import { computed, defineComponent, reactive } from '@vue/composition-api'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
-import { Popover } from '../../../lib/element-ui'
+import { Button, Popover } from '../../../lib/element-ui'
 import Vue from 'vue'
 import FadeTransition from '../../../components/FadeTransition'
+import { useMutation } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import safeJsonParse from '../../../lib/safeJsonParse'
+import reportError from '../../../lib/reportError'
+import useOutClick from '../../../lib/useOutClick'
 
 const RouterLink = Vue.component('router-link')
+const saveSettings = gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
+  saveImageViewerSnapshot(input: $input)
+}`
 
 interface SimpleShareLinkProps {
   name: string
   params: any
   query: any
+  viewId: string
+  nCols: number
+  nRows: number
+  settings: string
+  colormap: string
+  scaleType: string
+  scaleBarColor: string
+  sourceDsId: string
+  selectedAnnotation: number
+  annotations: any[]
+  datasets: any[]
+  lockedIntensityTemplate: string
+  globalLockedIntensities: [number | undefined, number | undefined]
 }
 
 export const SimpleShareLink = defineComponent<SimpleShareLinkProps>({
@@ -19,37 +40,121 @@ export const SimpleShareLink = defineComponent<SimpleShareLinkProps>({
     name: { type: String, required: true },
     params: { type: Object },
     query: { type: Object },
+    viewId: { type: String },
+    nCols: { type: Number },
+    nRows: { type: Number },
+    settings: { type: String },
+    colormap: { type: String },
+    scaleType: { type: String },
+    sourceDsId: { type: String },
+    scaleBarColor: { type: String },
+    selectedAnnotation: { type: Number },
+    annotations: { type: Array },
+    datasets: { type: Array },
+    lockedIntensityTemplate: { type: String },
+    globalLockedIntensities: { type: Array },
   },
   setup(props, ctx) {
+    const { $store, $route } = ctx.root
+    const state = reactive({
+      status: 'CLOSED',
+      viewId: null,
+    })
+    const { mutate: settingsMutation } = useMutation<any>(saveSettings)
+    const query = computed(() => props.query)
     const getUrl = () => {
       return {
         name: props.name,
         params: props.params,
-        query: props.query,
+        query: {
+          ...props.query,
+          row: props.selectedAnnotation,
+          viewId: state.viewId,
+        },
+      }
+    }
+
+    const handleClick = async() => {
+      state.status = 'SAVING'
+
+      try {
+        const datasetIds = props.datasets.map((dataset: any) => dataset.id)
+        const filter = $store.getters.filter
+        const annotations = props.annotations[props.selectedAnnotation].annotations || []
+        const annotationIds = annotations.map((annotation: any) => annotation.id)
+        const ionFormulas = annotations.map((annotation: any) => annotation.ion)
+        const dbIds = annotations.map((annotation: any) => annotation.databaseDetails.id.toString())
+        const settings = safeJsonParse(props.settings)
+        const grid = settings.grid
+
+        const variables : any = {
+          input: {
+            version: 1,
+            ionFormulas,
+            dbIds,
+            annotationIds: datasetIds,
+            snapshot: JSON.stringify({
+              nRows: props.nRows,
+              nCols: props.nCols,
+              query: props.query,
+              colormap: props.colormap,
+              scaleBarColor: props.scaleBarColor,
+              scaleType: props.scaleType,
+              lockedIntensityTemplate: props.lockedIntensityTemplate,
+              globalLockedIntensities: props.globalLockedIntensities,
+              grid,
+              annotationIds,
+              filter,
+            }),
+            datasetId: props.sourceDsId,
+          },
+        }
+        const result = await settingsMutation(variables)
+        state.viewId = result.data.saveImageViewerSnapshot
+        state.status = 'HAS_LINK'
+        useOutClick(() => { state.status = 'CLOSED' })
+      } catch (e) {
+        reportError(e)
+        state.status = 'CLOSED'
       }
     }
 
     return () => {
+      const { status } = state
+
       return (
         <Popover
-          trigger="hover"
-          placement="bottom">
-          <div
+          trigger="manual"
+          placement="bottom"
+          value={status !== 'CLOSED'}>
+          <Button
             slot="reference"
-            class="button-reset h-6 w-6 block ml-2">
+            class="button-reset h-6 w-6 block ml-2"
+            onClick={handleClick}>
             <StatefulIcon className="h-6 w-6 pointer-events-none">
               <ExternalWindowSvg/>
             </StatefulIcon>
-          </div>
+          </Button>
           <FadeTransition class="m-0 leading-5 text-center">
-            <div>
-              <RouterLink to={getUrl()} target="_blank">
+            {
+              status === 'OPEN'
+              && <p>Link to this annotation</p>
+            }
+            {
+              status === 'SAVING'
+              && <p>Saving</p>
+            }
+            {
+              status === 'HAS_LINK'
+              && <div>
+                <RouterLink to={getUrl()} target="_blank">
                   Share this link
-              </RouterLink>
-              <span class="block text-xs tracking-wide">
+                </RouterLink>
+                <span class="block text-xs tracking-wide">
                 opens in a new window
-              </span>
-            </div>
+                </span>
+              </div>
+            }
           </FadeTransition>
         </Popover>
       )

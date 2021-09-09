@@ -21,7 +21,8 @@ import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/Cand
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import { SimpleShareLink } from './SimpleShareLink'
-import { uniqBy } from 'lodash-es'
+import { invert, uniqBy } from 'lodash-es'
+import { decodeParams, stripFilteringParams } from '../../Filters'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -29,6 +30,7 @@ interface GlobalImageSettings {
   scaleType: string
   colormap: string
   selectedLockTemplate: string | null
+  globalLockedIntensities: [number | undefined, number | undefined]
   showOpticalImage: boolean
 }
 
@@ -50,7 +52,6 @@ interface DatasetComparisonPageState {
   refsLoaded: boolean
   showViewer: boolean
   annotationLoading: boolean
-  filter: any
   isLoading: any
   collapse: string[]
 }
@@ -92,6 +93,7 @@ export default defineComponent<DatasetComparisonPageProps>({
         colormap: 'Viridis',
         showOpticalImage: false,
         selectedLockTemplate: null,
+        globalLockedIntensities: [undefined, undefined],
       },
       annotations: [],
       datasets: [],
@@ -103,7 +105,6 @@ export default defineComponent<DatasetComparisonPageProps>({
       refsLoaded: false,
       showViewer: false,
       annotationLoading: true,
-      filter: $store.getters.filter,
       isLoading: false,
     })
     const { dataset_id: sourceDsId } = $route.params
@@ -189,6 +190,37 @@ export default defineComponent<DatasetComparisonPageProps>({
         state.nCols = auxSettings.nCols
         state.nRows = auxSettings.nRows
         state.grid = auxSettings.grid
+
+        if (auxSettings.filter) {
+          const filter = Object.assign({}, auxSettings.filter)
+          $store.commit('updateFilter', filter)
+        }
+
+        if (auxSettings.colormap) {
+          handleColormapChange(auxSettings.colormap)
+        } else if ($route.query.cmap) {
+          handleColormapChange($route.query.cmap)
+        }
+
+        if (auxSettings.scaleType) {
+          handleScaleTypeChange(auxSettings.scaleType)
+        } else if ($route.query.scale) {
+          handleScaleTypeChange($route.query.scale)
+        }
+
+        handleScaleBarColorChange(auxSettings.scaleBarColor)
+        if (auxSettings.lockedIntensityTemplate) {
+          handleTemplateChange(auxSettings.lockedIntensityTemplate)
+        } else if (
+          Array.isArray(auxSettings.globalLockedIntensities)
+          && auxSettings.globalLockedIntensities.length === 2) {
+          const intensities : [number | undefined, number | undefined] = [
+            auxSettings.globalLockedIntensities[0] === null ? undefined : auxSettings.globalLockedIntensities[0],
+            auxSettings.globalLockedIntensities[1] === null ? undefined : auxSettings.globalLockedIntensities[1],
+          ]
+          handleIntensitiesChange(intensities)
+        }
+
         await requestAnnotations()
 
         // sets lock template after grid mounted
@@ -222,6 +254,10 @@ export default defineComponent<DatasetComparisonPageProps>({
       $store.commit('setLockTemplate', dsId)
     }
 
+    const handleIntensitiesChange = (intensities: [number | undefined, number | undefined]) => {
+      state.globalImageSettings.globalLockedIntensities = intensities
+    }
+
     const handleRowChange = (idx: number) => {
       if (idx !== -1) {
         state.isLoading = true
@@ -233,6 +269,9 @@ export default defineComponent<DatasetComparisonPageProps>({
     }
 
     const renderInfo = () => {
+      const nCols = state.nCols
+      const nRows = state.nRows
+
       if (
         state.selectedAnnotation === undefined
         || state.selectedAnnotation === -1
@@ -281,6 +320,19 @@ export default defineComponent<DatasetComparisonPageProps>({
             </CopyButton>
           </span>
           <SimpleShareLink
+            viewId={snapshotId}
+            nCols={nCols}
+            nRows={nRows}
+            lockedIntensityTemplate={state.globalImageSettings.selectedLockTemplate}
+            globalLockedIntensities={state.globalImageSettings.globalLockedIntensities}
+            scaleBarColor={state.globalImageSettings.scaleBarColor}
+            scaleType={state.globalImageSettings.scaleType}
+            colormap={state.globalImageSettings.colormap}
+            settings={gridSettings.value?.snapshot}
+            annotations={state.annotations || []}
+            datasets={datasets.value || []}
+            selectedAnnotation={state.selectedAnnotation}
+            sourceDsId={sourceDsId}
             name={$route.name}
             params={$route.params}
             query={$route.query}/>
@@ -328,7 +380,9 @@ export default defineComponent<DatasetComparisonPageProps>({
                 resetViewPort={state.globalImageSettings.resetViewPort}
                 onResetViewPort={resetViewPort}
                 onLockAllIntensities={handleTemplateChange}
+                onIntensitiesChange={handleIntensitiesChange}
                 lockedIntensityTemplate={state.globalImageSettings.selectedLockTemplate}
+                globalLockedIntensities={state.globalImageSettings.globalLockedIntensities}
                 scaleBarColor={state.globalImageSettings.scaleBarColor}
                 scaleType={state.globalImageSettings.scaleType}
                 colormap={state.globalImageSettings.colormap}
