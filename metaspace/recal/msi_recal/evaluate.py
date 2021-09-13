@@ -84,37 +84,6 @@ class EvalPeaksCollector:
 
         return pd.DataFrame(stats).set_index('mol_idx')
 
-    # def get_mol_moves(self):
-    #     after_key, after_peaks = list(self.collected_peak_sets.items())[-1]
-    #     print(f'Key: {after_key}')
-    #     after_df = pd.concat(after_peaks)
-    #
-    #     spans = mass_accuracy_bound_indices(
-    #         after_df.mzs.values,
-    #         self.eval_peaks.db_mz.values,
-    #         self.params.analyzer,
-    #         self.params.jitter_sigma_1,
-    #     )
-    #     indexes = []
-    #     for lo, hi in spans:
-    #         indexes.append(after_df.index[lo:hi])
-    #     mols = {}
-    #     for mol_idx, idxs in enumerate(indexes):
-    #         mol = mols[mol_idx] = {
-    #             'mol_idx': mol_idx
-    #         }
-    #         if len(idxs):
-    #             for set_name, peaks_dict in self.collected_peak_sets.items():
-    #                 peaks = peaks_dict.get(mol_idx)
-    #                 if peaks is not None:
-    #                     peaks = peaks.loc[idxs]
-    #                     if len(peaks): WIP
-    #
-    #
-    #                 if mol_idx in peaks_dict:
-    #
-    #                 peaks = peaks_dict[mol_idx]
-
     def get_report(self):
         report_df = self.eval_peaks
         for set_name, peaks_dict in self.collected_peak_sets.items():
