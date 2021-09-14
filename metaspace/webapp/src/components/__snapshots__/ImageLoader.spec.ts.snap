@@ -9,6 +9,7 @@ exports[`ImageLoader should match snapshot (minimal) 1`] = `
     style="width: 200px; height: 300px; transform: scaleX(1.23);"
   >
     <div
+      data-test-key="ion-image-panel"
       style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
     >
       <canvas
@@ -33,6 +34,7 @@ exports[`ImageLoader should match snapshot (with everything turned on) 1`] = `
   >
     <div
       class=""
+      data-test-key="ion-image-panel"
       style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
     >
       <canvas

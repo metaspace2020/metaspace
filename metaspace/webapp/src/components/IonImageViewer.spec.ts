@@ -108,7 +108,7 @@ describe('IonImageViewer', () => {
     await Vue.nextTick()
 
     // Trigger mouseover to show the intensity popup.
-    wrapper.find('div>div').trigger('mousemove', {
+    wrapper.find('[data-test-key="ion-image-panel"] div').trigger('mousemove', {
       clientX: 250,
       clientY: 150,
     })

@@ -549,7 +549,7 @@ export default defineComponent<Props>({
         }}
       >
         {viewBoxStyle.value
-          && <div style={viewBoxStyle.value}>
+          && <div data-test-key="ion-image-panel" style={viewBoxStyle.value}>
             {renderIonImageView()}
             {renderOpticalImage()}
           </div>}

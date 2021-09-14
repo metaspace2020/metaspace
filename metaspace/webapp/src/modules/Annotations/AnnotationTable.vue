@@ -277,7 +277,7 @@ import AnnotationTableMolName from './AnnotationTableMolName.vue'
 import FilterIcon from '../../assets/inline/filter.svg'
 import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg'
 import {
-  annotationListQuery,
+  annotationListQuery, annotationsDiagnosticsQuery,
   tableExportQuery,
 } from '../../api/annotation'
 
@@ -649,40 +649,43 @@ export default Vue.extend({
       this.$store.commit('updateFilter', filter)
     },
 
-    setNormalizationData(annotation) {
-      if (annotation) {
-        const tics = annotation.dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
+    async setNormalizationData(currentAnnotation) {
+      if (!currentAnnotation) {
+        return null
+      }
 
-        if (tics && tics[0]) {
-          const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
-          readNpy(tic[0].url)
-            .then(({ data, shape }) => {
-              this.$store.commit('setNormalizationMatrix', {
-                data,
-                shape,
-                metadata: safeJsonParse(tics[0].data),
-                type: 'TIC',
-                error: false,
-              })
-            })
-            .catch(() => {
-              this.$store.commit('setNormalizationMatrix', {
-                data: null,
-                shape: null,
-                metadata: null,
-                type: 'TIC',
-                error: true,
-              })
-            })
-        } else {
-          this.$store.commit('setNormalizationMatrix', {
-            data: null,
-            shape: null,
-            metadata: null,
-            type: 'TIC',
-            error: true,
-          })
-        }
+      try {
+        const resp = await this.$apollo.query({
+          query: annotationsDiagnosticsQuery,
+          variables: {
+            ...this.queryVariables,
+            filter: {
+              ...this.queryVariables.filter,
+              annotationId: currentAnnotation.id,
+            },
+          },
+        })
+
+        const annotation = resp.data.allAnnotations && resp.data.allAnnotations[0]
+          ? resp.data.allAnnotations[0] : null
+        const tics = annotation.dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
+        const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
+        const { data, shape } = await readNpy(tic[0].url)
+        this.$store.commit('setNormalizationMatrix', {
+          data,
+          shape,
+          metadata: safeJsonParse(tics[0].data),
+          type: 'TIC',
+          error: false,
+        })
+      } catch (e) {
+        this.$store.commit('setNormalizationMatrix', {
+          data: null,
+          shape: null,
+          metadata: null,
+          type: 'TIC',
+          error: true,
+        })
       }
     },
 

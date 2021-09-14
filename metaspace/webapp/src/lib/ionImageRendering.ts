@@ -100,7 +100,7 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
         normalizationData && normalizationData.data
         && normalizationData.data.length === numPixels
         && normalizationData.data[i] && !isNaN(normalizationData.data[i])) {
-        intensity = (intensity / normalizationData.data[i]) * 100000000
+        intensity = (intensity / normalizationData.data[i]) * 1000000
       } else if (
         normalizationData && normalizationData.data
         && normalizationData.data.length === numPixels) {

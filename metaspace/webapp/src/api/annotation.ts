@@ -21,18 +21,6 @@ gql`fragment AnnotationDetailItem on Annotation {
     id
     submitter { id name email }
     principalInvestigator { name email }
-    diagnostics {
-      id
-      type
-      updatedDT
-      data
-      images {
-        key
-        index
-        url
-        format
-      }
-    }
     group { id name shortName }
     groupApproved
     projects { id name }
@@ -213,6 +201,32 @@ gql`query GetRelatedAnnotations($datasetId: String!, $filter: AnnotationFilter!,
         shouldWarn
       }
       colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
+    }
+  }`
+
+export const annotationsDiagnosticsQuery =
+gql`query GetAnnotationsDiagnostics($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
+  $offset: Int, $limit: Int, $query: String,
+  $filter: AnnotationFilter, $dFilter: DatasetFilter) {
+  allAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query,
+    orderBy: $orderBy, sortingOrder: $sortingOrder,
+    offset: $offset, limit: $limit) {
+      id
+      dataset {
+        id
+        diagnostics {
+          id
+          type
+          updatedDT
+          data
+          images {
+            key
+            index
+            url
+            format
+          }
+        }
+      }
     }
   }`
 

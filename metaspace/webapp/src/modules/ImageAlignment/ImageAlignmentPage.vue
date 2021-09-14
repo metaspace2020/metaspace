@@ -223,7 +223,7 @@
 <script>
 
 import ImageAligner from './ImageAligner.vue'
-import { annotationListQuery } from '../../api/annotation'
+import { annotationListQuery, annotationsDiagnosticsQuery } from '../../api/annotation'
 import { addOpticalImageQuery, deleteOpticalImageQuery, rawOpticalImageQuery } from '../../api/dataset'
 import { renderMolFormula, renderMolFormulaHtml } from '../../lib/util'
 
@@ -416,30 +416,39 @@ export default {
       this.annotationIndex = newIdx - 1
       this.updateNormalizationData(this.currentAnnotation)
     },
-    updateNormalizationData(annotation) {
-      const tics = annotation.dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
-      if (tics && tics[0]) {
+    async updateNormalizationData(currentAnnotation) {
+      if (!currentAnnotation) {
+        return null
+      }
+
+      try {
+        const resp = await this.$apollo.query({
+          query: annotationsDiagnosticsQuery,
+          variables: {
+            filter: { fdrLevel: 0.5, annotationId: currentAnnotation.id },
+            dFilter: { ids: this.datasetId },
+            offset: 0,
+            limit: 100,
+            query: '',
+            orderBy: 'ORDER_BY_MSM',
+            sortingOrder: 'DESCENDING',
+            countIsomerCompounds: false,
+          },
+        })
+        const annotation = resp.data.allAnnotations && resp.data.allAnnotations[0]
+          ? resp.data.allAnnotations[0] : null
+        const tics = annotation.dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
         const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
-        readNpy(tic[0].url)
-          .then(({ data, shape }) => {
-            this.ticData = {
-              data,
-              shape,
-              metadata: safeJsonParse(tics[0].data),
-              type: 'TIC',
-              error: false,
-            }
-          })
-          .catch(() => {
-            this.ticData = {
-              data: null,
-              shape: null,
-              metadata: null,
-              type: 'TIC',
-              error: true,
-            }
-          })
-      } else {
+        const { data, shape } = await readNpy(tic[0].url)
+
+        this.ticData = {
+          data,
+          shape,
+          metadata: safeJsonParse(tics[0].data),
+          type: 'TIC',
+          error: false,
+        }
+      } catch (e) {
         this.ticData = {
           data: null,
           shape: null,

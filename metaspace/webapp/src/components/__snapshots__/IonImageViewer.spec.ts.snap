@@ -14,6 +14,7 @@ exports[`IonImageViewer should match snapshot (with channels tooltip) 1`] = `
   zoom="1"
 >
   <div
+    data-test-key="ion-image-panel"
     style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
   >
     <canvas
@@ -102,6 +103,7 @@ exports[`IonImageViewer should match snapshot (with normalization) 1`] = `
   zoom="1"
 >
   <div
+    data-test-key="ion-image-panel"
     style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
   >
     <canvas
@@ -214,6 +216,7 @@ exports[`IonImageViewer should match snapshot 1`] = `
   zoom="1"
 >
   <div
+    data-test-key="ion-image-panel"
     style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
   >
     <canvas

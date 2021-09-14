@@ -8,6 +8,6 @@ export const readNpy = async(npyFile: string) => {
     const { data, shape } = fromArrayBuffer(arrayBuffer)
     return { data, shape }
   } catch (e) {
-    return new Promise<any>((resolve, reject) => reject(Error("Couldn't parse file")))
+    throw Error("Couldn't parse file")
   }
 }
