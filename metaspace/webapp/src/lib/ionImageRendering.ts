@@ -2,7 +2,6 @@ import { decode, Image } from 'upng-js'
 import { quantile } from 'simple-statistics'
 import { range } from 'lodash-es'
 import { DEFAULT_SCALE_TYPE } from './constants'
-import safeJsonParse from './safeJsonParse'
 
 export interface IonImage {
   intensityValues: Float32Array;
@@ -83,30 +82,31 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
   const baseVal = Number(min)
   // NOTE: pngDataBuffer usually has some trailing padding bytes. TypedArrays should have explicit sizes specified to prevent over-reading
   const pngDataBuffer = (png.data as any as Uint8Array).buffer // The typings are wrong
+  const TIC_MULTIPLIER = 1000000
 
   // NOTE: This function is a bit verbose. It's intentionally structured this way so that the JS engine can
   // statically determine the types of all variables involved in copying, and hopefully generate fast machine code.
   const intensityValues = new Float32Array(numPixels)
   const mask = new Uint8ClampedArray(numPixels)
   const dataView = new DataView(pngDataBuffer, 0, numPixels * numComponents * bytesPerComponent)
-
   if (bytesPerComponent === 1) {
     for (let i = 0; i < numPixels; i++) {
       const byteOffset = i * numComponents * bytesPerComponent
-      let intensity = dataView.getUint8(byteOffset)
+      let intensity = dataView.getUint8(byteOffset) * rangeVal + baseVal
 
       // apply normalization
       if (
         normalizationData && normalizationData.data
         && normalizationData.data.length === numPixels
         && normalizationData.data[i] && !isNaN(normalizationData.data[i])) {
-        intensity = (intensity / normalizationData.data[i]) * 1000000
+        intensity = (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
       } else if (
         normalizationData && normalizationData.data
         && normalizationData.data.length === numPixels) {
         intensity = 0
       }
-      intensityValues[i] = intensity * rangeVal + baseVal
+
+      intensityValues[i] = intensity
     }
     if (hasAlpha) {
       const alphaOffset = numComponents - 1
@@ -120,20 +120,20 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
   } else {
     for (let i = 0; i < numPixels; i++) {
       const byteOffset = i * numComponents * bytesPerComponent
-      let intensity = dataView.getUint16(byteOffset)
+      let intensity = dataView.getUint16(byteOffset) * rangeVal + baseVal
 
       // apply normalization
       if (
         normalizationData && normalizationData.data
-          && normalizationData.data.length === numPixels
-          && normalizationData.data[i] && !isNaN(normalizationData.data[i])) {
-        intensity = (intensity / normalizationData.data[i]) * 100000000
+          && normalizationData.data[i] && !isNaN(normalizationData.data[i])
+      ) {
+        intensity = (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
       } else if (
         normalizationData && normalizationData.data
           && normalizationData.data.length === numPixels) {
         intensity = 0
       }
-      intensityValues[i] = intensity * rangeVal + baseVal
+      intensityValues[i] = intensity
     }
 
     if (hasAlpha) {
@@ -268,9 +268,15 @@ export const processIonImage = (
   normalizationData?: Normalization): IonImage => {
   const [scaleMode, lowQuantile, highQuantile] = SCALES[scaleType]
   const { width, height } = png
-  const [userMin = minIntensity, userMax = maxIntensity] = userIntensities
+  let [userMin = minIntensity, userMax = maxIntensity] = userIntensities
 
   const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity, normalizationData)
+
+  // assign normalized intensities
+  if (normalizationData && scaleType !== 'hist') {
+    maxIntensity = normalizationData ? maxIntensity / normalizationData.metadata.maxTic * 1000000 : maxIntensity
+    userMax = maxIntensity
+  }
 
   // Only non-zero values should be considered for hotspot removal, otherwise sparse images have most of their set pixels treated as hotspots.
   // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
@@ -285,7 +291,6 @@ export const processIonImage = (
   } else if (scaleMode === 'log' || lowQuantile > 0) {
     min = safeQuantile(quantileValues, lowQuantile)
   }
-
   let max = maxIntensity
   if (userMax !== maxIntensity) {
     max = userMax
@@ -294,14 +299,29 @@ export const processIonImage = (
   }
 
   const [minScale, maxScale] = userScaling
-  const scaledMin = min + ((max - min) * minScale)
-  const scaledMax = min + ((max - min) * maxScale)
+  let scaledMin = min + ((max - min) * minScale)
+  let scaledMax = min + ((max - min) * maxScale)
 
   let rankValues = null
   if (scaleType === 'hist') {
     const { intensityValues } = extractIntensityAndMask(png, scaledMin, scaledMax, normalizationData)
     const values = getQuantileValues(intensityValues, mask)
     rankValues = getRankValues(values, lowQuantile, highQuantile)
+
+    // reassign intensity values to be displayed if normalized
+    if (normalizationData) {
+      maxIntensity = normalizationData ? maxIntensity / normalizationData.metadata.maxTic * 1000000 : maxIntensity
+      userMax = maxIntensity
+      max = maxIntensity
+
+      if (userMax !== maxIntensity) {
+        max = userMax
+      } else if (highQuantile < 1) {
+        max = safeQuantile(quantileValues, highQuantile)
+      }
+      scaledMin = min + ((max - min) * minScale)
+      scaledMax = min + ((max - min) * maxScale)
+    }
   }
 
   const clippedValues = quantizeIonImage(intensityValues, scaledMin, scaledMax, rankValues, scaleMode)

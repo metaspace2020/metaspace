@@ -670,11 +670,17 @@ export default Vue.extend({
           ? resp.data.allAnnotations[0] : null
         const tics = annotation.dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
         const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
-        const { data, shape } = await readNpy(tic[0].url)
+        const { data, shape, image } = await readNpy(tic[0].url)
+        const metadata = safeJsonParse(tics[0].data)
+        metadata.maxTic = metadata.max_tic
+        metadata.minTic = metadata.min_tic
+        delete metadata.max_tic
+        delete metadata.min_tic
+
         this.$store.commit('setNormalizationMatrix', {
           data,
           shape,
-          metadata: safeJsonParse(tics[0].data),
+          metadata: metadata,
           type: 'TIC',
           error: false,
         })

@@ -72,7 +72,7 @@
         </div>
         <div class="norm-info">
           This ion image was TIC-normalized.
-          The intensities were divided by the TIC value and then scaled by multiplying by 1e+8.
+          The intensities were divided by the TIC value and then scaled by multiplying by 1e+6.
         </div>
       </el-popover>
     </fade-transition>

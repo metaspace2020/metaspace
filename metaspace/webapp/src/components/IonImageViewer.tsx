@@ -139,9 +139,12 @@ const usePixelIntensityDisplay = (
           && mask[y * width + x] !== 0) {
           const idx = y * width + x
           const [r, g, b] = colorMap[colorMap.length - 1]
+          const validNormalization = props.normalizationData && props.normalizationData.data
+            && props.normalizationData.data[idx] && !isNaN(props.normalizationData.data[idx])
           layers.push({
             intensity: intensityValues[idx].toExponential(1),
-            normalizedIntensity: (intensityValues[idx] / props.normalizationData?.data?.[idx]).toExponential(1),
+            normalizedIntensity: !validNormalization ? 0
+              : (intensityValues[idx] / props.normalizationData?.data?.[idx] * 1000000).toExponential(1),
             color: props.ionImageLayers.length > 1 ? `rgb(${r},${g},${b})` : null,
           })
         }

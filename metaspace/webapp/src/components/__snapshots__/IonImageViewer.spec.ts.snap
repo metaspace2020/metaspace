@@ -152,7 +152,7 @@ exports[`IonImageViewer should match snapshot (with normalization) 1`] = `
                   TIC: 
                 </span>
                 <span>
-                  1.0e+0
+                  1.0e+6
                 </span>
               </div>
             </div>
@@ -182,7 +182,7 @@ exports[`IonImageViewer should match snapshot (with normalization) 1`] = `
                   TIC: 
                 </span>
                 <span>
-                  1.0e+0
+                  1.0e+6
                 </span>
               </div>
             </div>
