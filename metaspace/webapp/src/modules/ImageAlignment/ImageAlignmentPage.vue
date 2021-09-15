@@ -457,6 +457,7 @@ export default {
             sortingOrder: 'DESCENDING',
             countIsomerCompounds: false,
           },
+          fetchPolicy: 'cache-first',
         })
         this.showFullTIC = currentAnnotation.type === 'TIC'
         const annotation = resp.data.allAnnotations && resp.data.allAnnotations[0]

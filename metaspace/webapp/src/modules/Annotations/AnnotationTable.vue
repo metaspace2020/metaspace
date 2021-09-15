@@ -664,6 +664,7 @@ export default Vue.extend({
               annotationId: currentAnnotation.id,
             },
           },
+          fetchPolicy: 'cache-first',
         })
 
         const annotation = resp.data.allAnnotations && resp.data.allAnnotations[0]
