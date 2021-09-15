@@ -682,6 +682,7 @@ export default Vue.extend({
           shape,
           metadata: metadata,
           type: 'TIC',
+          showFullTIC: false,
           error: false,
         })
       } catch (e) {
@@ -689,6 +690,7 @@ export default Vue.extend({
           data: null,
           shape: null,
           metadata: null,
+          showFullTIC: null,
           type: 'TIC',
           error: true,
         })

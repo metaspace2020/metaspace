@@ -102,6 +102,7 @@
 
           <el-checkbox
             v-model="enableNormalization"
+            :disabled="currentAnnotation && currentAnnotation.type === 'TIC'"
           >
             TIC normalization
           </el-checkbox>
@@ -113,12 +114,14 @@
             layout="prev,slot,next"
             :total="annotations ? annotations.length : 0"
             :page-size="1"
+            :current-page="annotationIndex + 1"
             @current-change="updateIndex"
           >
             <el-select
               v-model="annotationIndex"
               filterable
               class="annotation-short-info"
+              @change="(newIdx) => updateIndex(newIdx + 1)"
             >
               <el-option
                 v-for="(annot, i) in annotations"
@@ -201,7 +204,7 @@
       style="position:relative;top:0px;z-index:1;"
       :annot-image-opacity="annotImageOpacity"
       :optical-src="opticalImgUrl"
-      :tic-data="enableNormalization ? ticData : null"
+      :tic-data="normalizationData"
       :initial-transform="initialTransform"
       :padding="padding"
       :rotation-angle-degrees="angle"
@@ -231,7 +234,6 @@ import gql from 'graphql-tag'
 import reportError from '../../lib/reportError'
 import graphqlClient from '../../api/graphqlClient'
 import { readNpy } from '@/lib/npyHandler'
-import { computed } from '@vue/composition-api'
 import safeJsonParse from '@/lib/safeJsonParse'
 
 export default {
@@ -264,6 +266,7 @@ export default {
       padding: 100,
       angle: 0,
       enableNormalization: false,
+      showFullTIC: false,
       showHints: {
         status: true,
         text: 'Hide hints',
@@ -307,6 +310,18 @@ export default {
         // get normalization data for selected annotation
         const annotation = this.currentAnnotation || data.allAnnotations[0]
         this.updateNormalizationData(annotation)
+
+        // add TIC reference
+        if (data.allAnnotations[0] && data.allAnnotations[0].id !== 'TIC') {
+          const ticAnnotation = [{
+            ...data.allAnnotations[0],
+            baseId: data.allAnnotations[0].id,
+            id: 'TIC',
+            type: 'TIC',
+          }]
+          data.allAnnotations = ticAnnotation.concat(data.allAnnotations)
+          this.updateNormalizationData(ticAnnotation[0])
+        }
         return data.allAnnotations
       },
     },
@@ -340,6 +355,10 @@ export default {
     hasNormalizationError() {
       return this.enableNormalization && this.ticData
       && this.ticData.error
+    },
+
+    normalizationData() {
+      return (this.showFullTIC || this.enableNormalization) ? this.ticData : null
     },
 
     currentAnnotation() {
@@ -381,12 +400,12 @@ export default {
 
     renderAnnotation(annotation) {
       const { ion } = annotation
-      return renderMolFormulaHtml(ion)
+      return annotation.type === 'TIC' ? 'TIC' : renderMolFormulaHtml(ion)
     },
 
     renderLabel(annotation) {
       const { ion } = annotation
-      return renderMolFormula(ion)
+      return annotation.type === 'TIC' ? 'TIC' : renderMolFormula(ion)
     },
 
     onFileChange(event) {
@@ -425,7 +444,11 @@ export default {
         const resp = await this.$apollo.query({
           query: annotationsDiagnosticsQuery,
           variables: {
-            filter: { fdrLevel: 0.5, annotationId: currentAnnotation.id },
+            filter: {
+              fdrLevel: 0.5,
+              annotationId: currentAnnotation.type === 'TIC'
+                ? currentAnnotation.baseId : currentAnnotation.id,
+            },
             dFilter: { ids: this.datasetId },
             offset: 0,
             limit: 100,
@@ -435,6 +458,7 @@ export default {
             countIsomerCompounds: false,
           },
         })
+        this.showFullTIC = currentAnnotation.type === 'TIC'
         const annotation = resp.data.allAnnotations && resp.data.allAnnotations[0]
           ? resp.data.allAnnotations[0] : null
         const tics = annotation.dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
@@ -452,12 +476,14 @@ export default {
           metadata: metadata,
           type: 'TIC',
           error: false,
+          showFullTIC: currentAnnotation.type === 'TIC',
         }
       } catch (e) {
         this.ticData = {
           data: null,
           shape: null,
           metadata: null,
+          showFullTIC: null,
           type: 'TIC',
           error: true,
         }

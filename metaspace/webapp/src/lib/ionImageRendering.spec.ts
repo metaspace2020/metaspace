@@ -42,6 +42,7 @@ const getNormalizedData = (is16Bit = true, isGrayscale = true, hasAlpha = true,
     metadata: {},
     type: 'TIC',
     error: false,
+    showFullTIC: false,
   }
 }
 

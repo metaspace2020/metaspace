@@ -29,6 +29,7 @@ export interface Normalization {
   shape: [number, number] | null,
   metadata: any,
   type: string | null,
+  showFullTIC: boolean | null,
   error: boolean,
 }
 
@@ -99,7 +100,8 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
         normalizationData && normalizationData.data
         && normalizationData.data.length === numPixels
         && normalizationData.data[i] && !isNaN(normalizationData.data[i])) {
-        intensity = (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
+        intensity = normalizationData.showFullTIC
+          ? normalizationData.data[i] : (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
       } else if (
         normalizationData && normalizationData.data
         && normalizationData.data.length === numPixels) {
@@ -125,9 +127,11 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
       // apply normalization
       if (
         normalizationData && normalizationData.data
-          && normalizationData.data[i] && !isNaN(normalizationData.data[i])
+        && normalizationData.data.length === numPixels
+        && normalizationData.data[i] && !isNaN(normalizationData.data[i])
       ) {
-        intensity = (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
+        intensity = normalizationData.showFullTIC
+          ? normalizationData.data[i] : (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
       } else if (
         normalizationData && normalizationData.data
           && normalizationData.data.length === numPixels) {
