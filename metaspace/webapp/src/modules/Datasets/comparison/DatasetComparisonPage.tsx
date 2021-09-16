@@ -328,8 +328,6 @@ export default defineComponent<DatasetComparisonPageProps>({
             scaleType={state.globalImageSettings.scaleType}
             colormap={state.globalImageSettings.colormap}
             settings={gridSettings.value?.snapshot}
-            annotations={state.annotations || []}
-            datasets={datasets.value || []}
             selectedAnnotation={state.selectedAnnotation}
             sourceDsId={sourceDsId}
             name={$route.name}
