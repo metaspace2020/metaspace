@@ -204,32 +204,6 @@ gql`query GetRelatedAnnotations($datasetId: String!, $filter: AnnotationFilter!,
     }
   }`
 
-export const annotationsDiagnosticsQuery =
-gql`query GetAnnotationsDiagnostics($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
-  $offset: Int, $limit: Int, $query: String,
-  $filter: AnnotationFilter, $dFilter: DatasetFilter) {
-  allAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query,
-    orderBy: $orderBy, sortingOrder: $sortingOrder,
-    offset: $offset, limit: $limit) {
-      id
-      dataset {
-        id
-        diagnostics {
-          id
-          type
-          updatedDT
-          data
-          images {
-            key
-            index
-            url
-            format
-          }
-        }
-      }
-    }
-  }`
-
 export const relatedMoleculesQuery =
   gql`query RelatedMoleculesQuery($datasetId: String!, $filter: AnnotationFilter!,
                                 $orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder) {

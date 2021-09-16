@@ -25,7 +25,7 @@ export interface IonImage {
 }
 
 export interface Normalization {
-  data: number[] | null | Float32Array
+  data: Float32Array | null
   shape: [number, number] | null,
   metadata: any,
   type: string | null,
@@ -73,6 +73,17 @@ const createDataUrl = (imageBytes: Uint8ClampedArray, width: number, height: num
   return canvas.toDataURL()
 }
 
+const getNormalizationIntensityAndMask = (normalizationData: Normalization) => {
+  const intensityValues = normalizationData.data!
+  const mask = new Uint8ClampedArray(intensityValues.length)
+  for (let i = 0; i < intensityValues.length; i++) {
+    mask[i] = Number.isNaN(intensityValues[i]) ? 0 : 255
+  }
+  const [width, height] = normalizationData.shape!
+
+  return { intensityValues, mask, width, height }
+}
+
 const extractIntensityAndMask = (png: Image, min: number, max: number, normalizationData?: Normalization) => {
   const { width, height, depth, ctype } = png
   const bytesPerComponent = depth <= 8 ? 1 : 2
@@ -100,8 +111,7 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
         normalizationData && normalizationData.data
         && normalizationData.data.length === numPixels
         && normalizationData.data[i] && !isNaN(normalizationData.data[i])) {
-        intensity = normalizationData.showFullTIC
-          ? normalizationData.data[i] : (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
+        intensity = (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
       } else if (
         normalizationData && normalizationData.data
         && normalizationData.data.length === numPixels) {
@@ -130,8 +140,7 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
         && normalizationData.data.length === numPixels
         && normalizationData.data[i] && !isNaN(normalizationData.data[i])
       ) {
-        intensity = normalizationData.showFullTIC
-          ? normalizationData.data[i] : (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
+        intensity = (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
       } else if (
         normalizationData && normalizationData.data
           && normalizationData.data.length === numPixels) {
@@ -274,7 +283,9 @@ export const processIonImage = (
   const { width, height } = png
   let [userMin = minIntensity, userMax = maxIntensity] = userIntensities
 
-  const { intensityValues, mask } = extractIntensityAndMask(png, minIntensity, maxIntensity, normalizationData)
+  const { intensityValues, mask } = normalizationData?.showFullTIC
+    ? getNormalizationIntensityAndMask(normalizationData)
+    : extractIntensityAndMask(png, minIntensity, maxIntensity, normalizationData)
 
   // assign normalized intensities
   if (normalizationData && scaleType !== 'hist') {
@@ -308,7 +319,9 @@ export const processIonImage = (
 
   let rankValues = null
   if (scaleType === 'hist') {
-    const { intensityValues } = extractIntensityAndMask(png, scaledMin, scaledMax, normalizationData)
+    const { intensityValues } = normalizationData?.showFullTIC
+      ? getNormalizationIntensityAndMask(normalizationData)
+      : extractIntensityAndMask(png, scaledMin, scaledMax, normalizationData)
     const values = getQuantileValues(intensityValues, mask)
     rankValues = getRankValues(values, lowQuantile, highQuantile)
 

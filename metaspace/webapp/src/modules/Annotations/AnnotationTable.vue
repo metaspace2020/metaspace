@@ -277,7 +277,7 @@ import AnnotationTableMolName from './AnnotationTableMolName.vue'
 import FilterIcon from '../../assets/inline/filter.svg'
 import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg'
 import {
-  annotationListQuery, annotationsDiagnosticsQuery,
+  annotationListQuery,
   tableExportQuery,
 } from '../../api/annotation'
 
@@ -289,6 +289,7 @@ import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
+import { getDatasetDiagnosticsQuery } from '../../api/dataset'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -656,20 +657,14 @@ export default Vue.extend({
 
       try {
         const resp = await this.$apollo.query({
-          query: annotationsDiagnosticsQuery,
+          query: getDatasetDiagnosticsQuery,
           variables: {
-            ...this.queryVariables,
-            filter: {
-              ...this.queryVariables.filter,
-              annotationId: currentAnnotation.id,
-            },
+            id: currentAnnotation.dataset.id,
           },
           fetchPolicy: 'cache-first',
         })
-
-        const annotation = resp.data.allAnnotations && resp.data.allAnnotations[0]
-          ? resp.data.allAnnotations[0] : null
-        const tics = annotation.dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
+        const dataset = resp.data.dataset
+        const tics = dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
         const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
         const { data, shape, image } = await readNpy(tic[0].url)
         const metadata = safeJsonParse(tics[0].data)

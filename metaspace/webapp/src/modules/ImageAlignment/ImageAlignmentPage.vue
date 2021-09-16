@@ -102,7 +102,7 @@
 
           <el-checkbox
             v-model="enableNormalization"
-            :disabled="currentAnnotation && currentAnnotation.type === 'TIC'"
+            :disabled="currentAnnotation && currentAnnotation.type === 'TIC Image'"
           >
             TIC normalization
           </el-checkbox>
@@ -226,8 +226,13 @@
 <script>
 
 import ImageAligner from './ImageAligner.vue'
-import { annotationListQuery, annotationsDiagnosticsQuery } from '../../api/annotation'
-import { addOpticalImageQuery, deleteOpticalImageQuery, rawOpticalImageQuery } from '../../api/dataset'
+import { annotationListQuery } from '../../api/annotation'
+import {
+  addOpticalImageQuery,
+  deleteOpticalImageQuery,
+  getDatasetDiagnosticsQuery,
+  rawOpticalImageQuery,
+} from '../../api/dataset'
 import { renderMolFormula, renderMolFormulaHtml } from '../../lib/util'
 
 import gql from 'graphql-tag'
@@ -312,12 +317,11 @@ export default {
         this.updateNormalizationData(annotation)
 
         // add TIC reference
-        if (data.allAnnotations[0] && data.allAnnotations[0].id !== 'TIC') {
+        if (data.allAnnotations[0] && data.allAnnotations[0].id !== 'TIC Image') {
           const ticAnnotation = [{
             ...data.allAnnotations[0],
-            baseId: data.allAnnotations[0].id,
-            id: 'TIC',
-            type: 'TIC',
+            id: 'TIC Image',
+            type: 'TIC Image',
           }]
           data.allAnnotations = ticAnnotation.concat(data.allAnnotations)
           this.updateNormalizationData(ticAnnotation[0])
@@ -400,12 +404,12 @@ export default {
 
     renderAnnotation(annotation) {
       const { ion } = annotation
-      return annotation.type === 'TIC' ? 'TIC' : renderMolFormulaHtml(ion)
+      return annotation.type === 'TIC Image' ? 'TIC Image' : renderMolFormulaHtml(ion)
     },
 
     renderLabel(annotation) {
       const { ion } = annotation
-      return annotation.type === 'TIC' ? 'TIC' : renderMolFormula(ion)
+      return annotation.type === 'TIC Image' ? 'TIC Image' : renderMolFormula(ion)
     },
 
     onFileChange(event) {
@@ -442,27 +446,15 @@ export default {
 
       try {
         const resp = await this.$apollo.query({
-          query: annotationsDiagnosticsQuery,
+          query: getDatasetDiagnosticsQuery,
           variables: {
-            filter: {
-              fdrLevel: 0.5,
-              annotationId: currentAnnotation.type === 'TIC'
-                ? currentAnnotation.baseId : currentAnnotation.id,
-            },
-            dFilter: { ids: this.datasetId },
-            offset: 0,
-            limit: 100,
-            query: '',
-            orderBy: 'ORDER_BY_MSM',
-            sortingOrder: 'DESCENDING',
-            countIsomerCompounds: false,
+            id: currentAnnotation.dataset.id,
           },
           fetchPolicy: 'cache-first',
         })
-        this.showFullTIC = currentAnnotation.type === 'TIC'
-        const annotation = resp.data.allAnnotations && resp.data.allAnnotations[0]
-          ? resp.data.allAnnotations[0] : null
-        const tics = annotation.dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
+        this.showFullTIC = currentAnnotation.type === 'TIC Image'
+        const dataset = resp.data.dataset
+        const tics = dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
         const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
         const { data, shape } = await readNpy(tic[0].url)
         const metadata = safeJsonParse(tics[0].data)
@@ -477,7 +469,7 @@ export default {
           metadata: metadata,
           type: 'TIC',
           error: false,
-          showFullTIC: currentAnnotation.type === 'TIC',
+          showFullTIC: currentAnnotation.type === 'TIC Image',
         }
       } catch (e) {
         this.ticData = {
