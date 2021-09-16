@@ -47,8 +47,6 @@ export const DatasetComparisonShareLink = defineComponent<DatasetComparisonShare
     sourceDsId: { type: String },
     scaleBarColor: { type: String },
     selectedAnnotation: { type: Number },
-    annotations: { type: Array },
-    datasets: { type: Array },
     lockedIntensityTemplate: { type: String },
     globalLockedIntensities: { type: Array },
   },
