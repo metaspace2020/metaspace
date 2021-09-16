@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive } from '@vue/composition-api'
+import { defineComponent, reactive } from '@vue/composition-api'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
 import { Button, Popover } from '../../../lib/element-ui'
@@ -15,7 +15,7 @@ const saveSettings = gql`mutation saveImageViewerSnapshotMutation($input: ImageV
   saveImageViewerSnapshot(input: $input)
 }`
 
-interface SimpleShareLinkProps {
+interface DatasetComparisonShareLinkProps {
   name: string
   params: any
   query: any
@@ -28,14 +28,12 @@ interface SimpleShareLinkProps {
   scaleBarColor: string
   sourceDsId: string
   selectedAnnotation: number
-  annotations: any[]
-  datasets: any[]
   lockedIntensityTemplate: string
   globalLockedIntensities: [number | undefined, number | undefined]
 }
 
-export const SimpleShareLink = defineComponent<SimpleShareLinkProps>({
-  name: 'SimpleShareLink',
+export const DatasetComparisonShareLink = defineComponent<DatasetComparisonShareLinkProps>({
+  name: 'DatasetComparisonShareLink',
   props: {
     name: { type: String, required: true },
     params: { type: Object },
@@ -61,7 +59,6 @@ export const SimpleShareLink = defineComponent<SimpleShareLinkProps>({
       viewId: null,
     })
     const { mutate: settingsMutation } = useMutation<any>(saveSettings)
-    const query = computed(() => props.query)
     const getUrl = () => {
       return {
         name: props.name,

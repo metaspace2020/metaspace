@@ -279,7 +279,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       if (gridCell.lockedIntensities !== undefined) {
         if (gridCell.lockedIntensities[0] !== undefined) {
           await handleIonIntensityLockChange(gridCell.lockedIntensities[0], key, 'min')
-          // await handleIonIntensityChange(gridCell.lockedIntensities[0], key, 'min')
+          await handleIonIntensityChange(gridCell.lockedIntensities[0], key, 'min')
         }
         if (gridCell.lockedIntensities[1] !== undefined) {
           await handleIonIntensityLockChange(gridCell.lockedIntensities[1], key, 'max')
@@ -681,8 +681,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           ? props.datasets.find((dataset: any) => dataset.id === settings.value.grid[`${row}-${col}`])
           : null
       return (
-        <span class='dataset-comparison-grid-ds-name'>{dataset?.name?.substring(0, 39)}
-          {dataset?.name?.length > 40 ? '...' : ''}</span>
+        <div class='ds-comparison-item-line'>
+          <span class='dataset-comparison-grid-ds-name truncate'>{dataset?.name}</span>
+        </div>
       )
     }
 

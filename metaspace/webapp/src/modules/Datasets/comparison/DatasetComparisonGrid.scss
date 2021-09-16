@@ -46,9 +46,14 @@
     min-height: 300px;
   }
 
-  .dataset-comparison-grid-ds-name{
-    @apply flex flex-row w-full justify-center items-center	font-medium;
+  .ds-comparison-item-line {
+    @apply w-full flex items-center justify-center truncate;
     background: #F1F5F8;
+  }
+
+  .dataset-comparison-grid-ds-name{
+    @apply truncate text-center;
+    width: 400px;
   }
 
   .dataset-comparison-grid-item-header{

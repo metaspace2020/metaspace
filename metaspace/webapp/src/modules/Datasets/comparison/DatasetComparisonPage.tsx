@@ -20,9 +20,8 @@ import MainImageHeader from '../../Annotations/annotation-widgets/default/MainIm
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
-import { SimpleShareLink } from './SimpleShareLink'
-import { invert, uniqBy } from 'lodash-es'
-import { decodeParams, stripFilteringParams } from '../../Filters'
+import { DatasetComparisonShareLink } from './DatasetComparisonShareLink'
+import { uniqBy } from 'lodash-es'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -319,7 +318,7 @@ export default defineComponent<DatasetComparisonPageProps>({
               Copy m/z to clipboard
             </CopyButton>
           </span>
-          <SimpleShareLink
+          <DatasetComparisonShareLink
             viewId={snapshotId}
             nCols={nCols}
             nRows={nRows}
