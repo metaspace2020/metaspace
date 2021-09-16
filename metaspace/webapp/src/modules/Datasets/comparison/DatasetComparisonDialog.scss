@@ -29,4 +29,12 @@
   }
 }
 
+.ds-comparison-step{
+  .el-tag{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+}
+
 

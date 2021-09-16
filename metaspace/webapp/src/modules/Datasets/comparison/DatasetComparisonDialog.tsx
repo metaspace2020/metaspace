@@ -166,7 +166,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
               </p>
               {
                 state.workflowStep === 1
-                && <form>
+                && <form class='ds-comparison-step'>
                   <Select
                     class={`w-full ${state.firstStepError ? 'sm-form-error' : ''}`}
                     value={state.selectedDatasetIds}

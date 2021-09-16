@@ -21,6 +21,7 @@
 
     <DatasetItemActions
       :dataset="dataset"
+      :idx="idx"
       :metadata="metadata"
       :current-user="currentUser"
     />

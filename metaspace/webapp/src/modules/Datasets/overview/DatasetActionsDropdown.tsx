@@ -90,7 +90,6 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     }
 
     const openCompareDialog = () => {
-      hideFeatureBadge('dataset-comparison')
       state.showCompareDialog = true
     }
 
@@ -156,9 +155,13 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
         <Dropdown style={{
           visibility: (!canEdit && !canDelete && !canReprocess && !canDownload) ? 'hidden' : '',
         }} trigger='click' type="primary" onCommand={handleCommand}>
-          <Button class="p-1" type="primary">
-            <span class="ml-2">{actionLabel}</span><i class="el-icon-arrow-down el-icon--right"/>
-          </Button>
+          <NewFeatureBadge featureKey="dataset-overview-actions">
+            <Button class="p-1" type="primary" onClick={() => {
+              hideFeatureBadge('dataset-overview-actions')
+            }}>
+              <span class="ml-2">{actionLabel}</span><i class="el-icon-arrow-down el-icon--right"/>
+            </Button>
+          </NewFeatureBadge>
           <DropdownMenu class='dataset-overview-menu p-2'>
             {
               canEdit
@@ -168,11 +171,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
               canDownload
               && <DropdownItem command="download">{downloadActionLabel}</DropdownItem>
             }
-            <DropdownItem command="compare" >
-              <NewFeatureBadge featureKey="dataset-comparison">
-                {compareActionLabel}
-              </NewFeatureBadge>
-            </DropdownItem>
+            <DropdownItem command="compare">{compareActionLabel}</DropdownItem>
             {
               canDelete
               && <DropdownItem class='text-red-500' command="delete">{deleteActionLabel}</DropdownItem>

@@ -20,6 +20,7 @@ import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
 import { Popover } from '../../../lib/element-ui'
 import { ImagePosition } from '../../ImageViewer/ionImageState'
 import { range } from 'lodash-es'
+import config from '../../../lib/config'
 
 const RouterLink = Vue.component('router-link')
 
@@ -36,6 +37,7 @@ interface DatasetComparisonGridProps {
   isLoading: boolean
   resetViewPort: boolean
   lockedIntensityTemplate: string
+  globalLockedIntensities: [number | undefined, number | undefined]
 }
 
 interface GridCellState {
@@ -60,7 +62,6 @@ interface DatasetComparisonGridState {
   gridState: Record<string, GridCellState | null>,
   grid: any,
   annotationData: any,
-  globalLockedIntensities: [number | undefined, number | undefined]
   annotations: any[],
   refsLoaded: boolean,
   showViewer: boolean,
@@ -121,6 +122,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     lockedIntensityTemplate: {
       type: String,
     },
+    globalLockedIntensities: {
+      type: Array,
+      default: () => [undefined, undefined],
+    },
   },
   // @ts-ignore
   setup: function(props, { refs, emit, root }) {
@@ -130,7 +135,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       gridState: {},
       grid: undefined,
       annotations: [],
-      globalLockedIntensities: [undefined, undefined],
       annotationData: {},
       selectedAnnotation: props.selectedAnnotation,
       refsLoaded: false,
@@ -235,7 +239,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         const pixelSizeX = metadata?.MS_Analysis?.Pixel_Size?.Xaxis || 0
         // eslint-disable-next-line camelcase
         const pixelSizeY = metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0
-
         gridCell = reactive({
           intensity: null, // @ts-ignore // Gets set later, because ionImageLayers needs state.gridState[key] set
           ionImagePng,
@@ -248,7 +251,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           lockedIntensities: [undefined, undefined],
           annotImageOpacity: 1.0,
           imagePosition: defaultImagePosition(),
-          pixelAspectRatio: pixelSizeX && pixelSizeY && pixelSizeX / pixelSizeY,
+          pixelAspectRatio:
+            config.features.ignore_pixel_aspect_ratio ? 1
+              : pixelSizeX && pixelSizeY && pixelSizeX / pixelSizeY || 1,
           imageZoom: 1,
           showOpticalImage: true,
           userScaling: [0, 1],
@@ -265,17 +270,20 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       const intensity = getIntensity(gridCell.ionImageLayers[0]?.ionImage)
 
       intensity.min.scaled = 0
-      intensity.max.scaled = state.globalLockedIntensities && state.globalLockedIntensities[1]
-        ? state.globalLockedIntensities[1] : (intensity.max.clipped || intensity.max.image)
+      intensity.max.scaled = globalLockedIntensities.value && globalLockedIntensities.value[1]
+        ? globalLockedIntensities.value[1] : (intensity.max.clipped || intensity.max.image)
       gridCell.intensity = intensity
-      gridCell.lockedIntensities = state.globalLockedIntensities
+      gridCell.lockedIntensities = globalLockedIntensities.value as [number | undefined, number | undefined]
+
       // persist ion intensity lock status
       if (gridCell.lockedIntensities !== undefined) {
         if (gridCell.lockedIntensities[0] !== undefined) {
           await handleIonIntensityLockChange(gridCell.lockedIntensities[0], key, 'min')
+          await handleIonIntensityChange(gridCell.lockedIntensities[0], key, 'min')
         }
         if (gridCell.lockedIntensities[1] !== undefined) {
           await handleIonIntensityLockChange(gridCell.lockedIntensities[1], key, 'max')
+          await handleIonIntensityChange(gridCell.lockedIntensities[1], key, 'max')
         }
       }
     }
@@ -321,6 +329,8 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return {}
     })
 
+    const globalLockedIntensities = computed(() => props.globalLockedIntensities)
+
     // set images and annotation related items when selected annotation changes
     watch(() => props.selectedAnnotation, async(newValue) => {
       await updateAnnotationData(settings.value.grid, newValue)
@@ -332,7 +342,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         const gridCell : GridCellState = state.gridState[gridKey]!
         if (gridCell) {
           const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
-          const minIntensity = gridCell.intensity.min.clipped || gridCell.intensity.min.image
+          const minIntensity = 0
           handleIonIntensityLockChange(undefined, gridKey, 'min')
           handleIonIntensityLockChange(undefined, gridKey, 'max')
           handleIonIntensityChange(minIntensity, gridKey, 'min')
@@ -538,14 +548,17 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       gridCell.userScaling = rangeSliderScale
       gridCell.imageScaledScaling = [minScale, maxScale]
 
-      const maxScaleDisplay = state.globalLockedIntensities && state.globalLockedIntensities[1]
-        ? state.globalLockedIntensities[1] : (gridCell.intensity.max.clipped || gridCell.intensity.max.image)
+      const maxScaleDisplay = globalLockedIntensities.value && globalLockedIntensities.value[1]
+        ? globalLockedIntensities.value[1] : (gridCell.intensity.max.clipped || gridCell.intensity.max.image)
+
+      const minScaleDisplay = globalLockedIntensities.value && globalLockedIntensities.value[0]
+        ? globalLockedIntensities.value[0] : 0
 
       gridCell.intensity.min.scaled =
         gridCell.intensity?.min?.status === 'LOCKED'
         && maxIntensity * userScaling[0]
         < gridCell.intensity.min.user
-          ? maxScaleDisplay
+          ? minScaleDisplay
           : maxIntensity * userScaling[0]
 
       gridCell.intensity.max.scaled =
@@ -557,7 +570,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const handleIonIntensityChange = (intensity: number | undefined, key: string, type: string,
-      ignoreBoundaries : boolean = false) => {
+      ignoreBoundaries : boolean = true) => {
       const gridCell = state.gridState[key]
       if (gridCell == null || intensity === undefined) {
         return
@@ -615,7 +628,8 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
 
       gridCell.lockedIntensities = [minLocked, maxLocked]
-      state.globalLockedIntensities = [minLocked, maxLocked]
+      emit('intensitiesChange', [minLocked, maxLocked])
+
       gridCell.intensity = intensity
       gridCell.userScaling = [0, 1]
     }
@@ -624,6 +638,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       // apply max lock to all grids
       Object.keys(state.gridState).forEach((gridKey) => {
         handleIonIntensityLockChange(value, gridKey, type)
+
         if (value && gridKey !== key) {
           handleIonIntensityChange(value, gridKey, type, true)
         }
@@ -645,8 +660,8 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           const gridCell : GridCellState = state.gridState[key]!
           if (gridCell && gridCell.intensity) {
             maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
-            minIntensity = gridCell.intensity.min.clipped || gridCell.intensity.min.image
-            state.globalLockedIntensities = [minIntensity, maxIntensity]
+            minIntensity = 0
+            emit('intensitiesChange', [minIntensity, maxIntensity])
           }
         }
       })
@@ -666,7 +681,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           ? props.datasets.find((dataset: any) => dataset.id === settings.value.grid[`${row}-${col}`])
           : null
       return (
-        <span class='dataset-comparison-grid-ds-name'>{dataset?.name}</span>
+        <div class='ds-comparison-item-line'>
+          <span class='dataset-comparison-grid-ds-name truncate'>{dataset?.name}</span>
+        </div>
       )
     }
 
