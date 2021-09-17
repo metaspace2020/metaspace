@@ -160,9 +160,14 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
         <div class="fdr-legend fdr-50">50%</div>
       </div>
     </div>
-    <div><button type="button" class="el-button el-button--default export-btn">
-        <!---->
-        <!----><span>Export to CSV</span></button></div>
+    <mock-el-popover trigger="hover">
+      <div slot-key="default">Documentation for the CSV export is available <a href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export" rel="noopener noreferrer nofollow" target="_blank">here<svg data-icon="icon-external-window" class="inline h-4 w-4 -mb-1 fill-current text-gray-800"></svg></a></div>
+      <div slot-key="reference">
+        <div><button type="button" class="el-button el-button--default export-btn">
+            <!---->
+            <!----><span>Export to CSV</span></button></div>
+      </div>
+    </mock-el-popover>
   </div>
 </div>
 `;

@@ -1,4 +1,4 @@
-import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watchEffect } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from '@vue/composition-api'
 import './DatasetComparisonAnnotationTable.scss'
 import { Table, TableColumn, Pagination, Button, Popover } from '../../../lib/element-ui'
 import ProgressButton from '../../Annotations/ProgressButton.vue'
@@ -6,6 +6,9 @@ import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue
 import { findIndex } from 'lodash-es'
 import config from '../../../lib/config'
 import FileSaver from 'file-saver'
+import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../../lib/formatCsvRow'
+import ExternalWindowSvg from '../../../assets/inline/refactoring-ui/icon-external-window.svg'
+import StatefulIcon from '../../../components/StatefulIcon.vue'
 
 interface DatasetComparisonAnnotationTableProps {
   annotations: any[]
@@ -72,29 +75,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       isExporting: false,
       exportProgress: 0,
     })
-
-    const csvExportHeader = () => {
-      const dateStr = new Date().toLocaleString().replace(/,/g, '')
-      return `# Generated at ${dateStr}. For help see https://bit.ly/2HO2uz4\n`
-        + `# URL: ${window.location.href}\n`
-    }
-
-    const formatCsvTextArray = (values: string[]): string =>
-      values
-        .map(val => val?.replace(/, +/g, ','))
-        .join(', ')
-
-    const formatCsvRow = (values: string[]): string => {
-      const escaped = values.map(v => {
-        if (v != null) {
-          return `"${String(v)?.replace(/"/g, '""')}"`
-        } else {
-          return ''
-        }
-      })
-
-      return escaped.join(',') + '\n'
-    }
 
     const onKeyUp = (event: any) => {
       // @ts-ignore
@@ -443,12 +423,16 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       const includeOffSample = config.features.off_sample
       const includeIsomers = config.features.isomers
       const includeIsobars = config.features.isobars
+      const includeNeutralLosses = config.features.neutral_losses
+      const includeChemMods = config.features.chem_mods
       const colocalizedWith = props.filter?.colocalizedWith
 
       let csv = csvExportHeader()
 
-      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
-        'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
+      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct',
+        ...(includeChemMods ? ['chemMod'] : []),
+        ...(includeNeutralLosses ? ['neutralLoss'] : []),
+        'ion', 'mz', 'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
         'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity']
       if (includeColoc) {
         columns.push('colocalizationCoeff')
@@ -471,7 +455,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
       function formatRow(row : any) {
         const {
-          dataset, sumFormula, adduct, ion, mz,
+          dataset, sumFormula, adduct, chemMod, neutralLoss, ion, mz,
           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
           isotopeImages, isomers, isobars,
           offSample, offSampleProb, colocalizationCoeff,
@@ -480,7 +464,10 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
           dataset.groupApproved && dataset.group ? dataset.group.name : '',
           dataset.name,
           dataset.id,
-          sumFormula, 'M' + adduct, mz,
+          sumFormula, 'M' + adduct,
+          ...(includeChemMods ? [chemMod] : []),
+          ...(includeNeutralLosses ? [neutralLoss] : []),
+          ion, mz,
           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
           formatCsvTextArray(possibleCompounds.map((m: any) => m.name)),
           formatCsvTextArray(possibleCompounds.map(databaseId)),
@@ -639,9 +626,10 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                 </div>
               </div>
             </div>
-            <div>
-              {
-                state.isExporting
+            <Popover trigger="hover">
+              <div slot="reference">
+                {
+                  state.isExporting
                 && totalCount > 5000
                 && <ProgressButton
                   class="export-btn"
@@ -652,9 +640,9 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                 >
                   Cancel
                 </ProgressButton>
-              }
-              {
-                !(state.isExporting
+                }
+                {
+                  !(state.isExporting
                   && totalCount > 5000)
                 && <Button
                   class="export-btn"
@@ -663,8 +651,18 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                 >
                   Export to CSV
                 </Button>
-              }
-            </div>
+                }
+              </div>
+
+              Documentation for the CSV export is available{' '}
+              <a
+                href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
+                rel="noopener noreferrer nofollow"
+                target="_blank"
+              >
+                here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
+              </a>
+            </Popover>
           </div>
         </div>
       )

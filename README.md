@@ -19,13 +19,16 @@ The METASPACE platform is developed by software engineers, data scientists and
 | [graphql](metaspace/graphql) | A GraphQL API for accessing the annotations database and metabolite annotation engine |
 | [webapp](metaspace/webapp) | A web application for submitting datasets and browsing results |
 | [python-client](metaspace/python-client) | A Python library and set of example Jupyter notebooks for performing data analysis on the annotations database |
-| [ansible](ansible) | Ansible playbooks for deploying to AWS and Vagrant |
+| [ansible](ansible) | Ansible playbooks for deploying to AWS |
 | [docker](docker) | Docker Compose configuration for making development and testing environments |
-| [metadata](metaspace/metadata) | Imaging mass spectrometry metadata collected in METASPACE |
+
+Development documentation for each of these projects is available in the [wiki](https://github.com/metaspace2020/metaspace/wiki)
 
 ## Installation
-Please check the [ansible](ansible) project for production installations on AWS,
- and the [docker](docker) project for development installations with Docker.
+Please check the [ansible](https://github.com/metaspace2020/metaspace/wiki/Ansible-server-provisioning-and-deployment)
+documentation for production installations on AWS,
+and the [docker](https://github.com/metaspace2020/metaspace/wiki/Docker-dev-environments)
+documentation for development installations with Docker.
 
 ## Uploading Dataset and Browsing Results
 Please visit the help page of our web application running on AWS:

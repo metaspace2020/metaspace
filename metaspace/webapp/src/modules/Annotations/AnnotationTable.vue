@@ -235,26 +235,38 @@
         </div>
       </div>
 
-      <div>
-        <progress-button
-          v-if="isExporting && totalCount > 5000"
-          class="export-btn"
-          :width="130"
-          :height="40"
-          :percentage="exportProgress * 100"
-          @click="abortExport"
+      <el-popover trigger="hover">
+        <div slot="reference">
+          <progress-button
+            v-if="isExporting && totalCount > 5000"
+            class="export-btn"
+            :width="130"
+            :height="40"
+            :percentage="exportProgress * 100"
+            @click="abortExport"
+          >
+            Cancel
+          </progress-button>
+          <el-button
+            v-else
+            slot="reference"
+            class="export-btn"
+            :disabled="isExporting"
+            @click="startExport"
+          >
+            Export to CSV
+          </el-button>
+        </div>
+
+        Documentation for the CSV export is available
+        <a
+          href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
+          rel="noopener noreferrer nofollow"
+          target="_blank"
         >
-          Cancel
-        </progress-button>
-        <el-button
-          v-else
-          class="export-btn"
-          :disabled="isExporting"
-          @click="startExport"
-        >
-          Export to CSV
-        </el-button>
-      </div>
+          here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
+        </a>
+      </el-popover>
     </div>
   </el-row>
 </template>
@@ -263,6 +275,7 @@
 import ProgressButton from './ProgressButton.vue'
 import AnnotationTableMolName from './AnnotationTableMolName.vue'
 import FilterIcon from '../../assets/inline/filter.svg'
+import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg'
 import {
   annotationListQuery,
   tableExportQuery,
@@ -307,6 +320,7 @@ export default Vue.extend({
     ProgressButton,
     AnnotationTableMolName,
     FilterIcon,
+    ExternalWindowSvg,
   },
   props: ['hideColumns'],
   data() {
@@ -651,10 +665,14 @@ export default Vue.extend({
       const includeOffSample = config.features.off_sample
       const includeIsomers = config.features.isomers
       const includeIsobars = config.features.isobars
+      const includeNeutralLosses = config.features.neutral_losses
+      const includeChemMods = config.features.chem_mods
       const colocalizedWith = this.filter.colocalizedWith
       let csv = csvExportHeader()
-      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
-        'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
+      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct',
+        ...(includeChemMods ? ['chemMod'] : []),
+        ...(includeNeutralLosses ? ['neutralLoss'] : []),
+        'ion', 'mz', 'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
         'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity']
       if (includeColoc) {
         columns.push('colocalizationCoeff')
@@ -676,7 +694,7 @@ export default Vue.extend({
 
       function formatRow(row) {
         const {
-          dataset, sumFormula, adduct, ion, mz,
+          dataset, sumFormula, adduct, chemMod, neutralLoss, ion, mz,
           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
           isotopeImages, isomers, isobars,
           offSample, offSampleProb, colocalizationCoeff,
@@ -685,7 +703,10 @@ export default Vue.extend({
           dataset.groupApproved && dataset.group ? dataset.group.name : '',
           dataset.name,
           dataset.id,
-          sumFormula, 'M' + adduct, mz,
+          sumFormula, 'M' + adduct,
+          ...(includeChemMods ? [chemMod] : []),
+          ...(includeNeutralLosses ? [neutralLoss] : []),
+          ion, mz,
           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
           formatCsvTextArray(possibleCompounds.map(m => m.name)),
           formatCsvTextArray(possibleCompounds.map(databaseId)),

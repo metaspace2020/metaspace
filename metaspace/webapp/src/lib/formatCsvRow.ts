@@ -12,7 +12,7 @@ export default (values: string[]): string => {
 
 export const csvExportHeader = () => {
   const dateStr = new Date().toLocaleString().replace(/,/g, '')
-  return `# Generated at ${dateStr}. For help see https://bit.ly/2HO2uz4\n`
+  return `# Generated at ${dateStr}. For help see https://bit.ly/3Bzs6Z4\n`
   + `# URL: ${window.location.href}\n`
 }
 
@@ -25,5 +25,5 @@ export const csvExportHeader = () => {
  */
 export const formatCsvTextArray = (values: string[]): string =>
   values
-    .map(val => val.replace(/, +/g, ','))
+    .map(val => (val ?? '').replace(/, +/g, ','))
     .join(', ')
