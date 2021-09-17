@@ -23,6 +23,7 @@
       <clipping-notice
         :type="clippingNotice.type"
         :intensity="intensity.value"
+        :is-normalized="isNormalized"
       />
     </el-popover>
   </overlay>
@@ -42,6 +43,7 @@ export default defineComponent({
     intensity: Object,
     colorBar: Object,
     scaleRange: Object,
+    isNormalized: Boolean,
   },
   components: {
     Overlay,

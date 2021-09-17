@@ -313,6 +313,25 @@ export const getDatasetByIdQuery =
   ${datasetDetailItemFragment}
 `
 
+export const getDatasetDiagnosticsQuery =
+gql`query getDatasetDiagnosticsQuery($id: String!) {
+  dataset(id: $id) {
+      id
+      diagnostics {
+        id
+        type
+        updatedDT
+        data
+        images {
+          key
+          index
+          url
+          format
+        }
+      }
+    }
+}`
+
 export const getDatasetByIdWithPathQuery =
   gql`query getDatasetByIdQuery($id: String!, $inpFdrLvls: [Int!] = [5, 10, 20, 50],
   $checkLvl: Int = 10) {

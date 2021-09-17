@@ -5,6 +5,7 @@
       :key="item.id"
       :item="item"
       :is-active="activeLayer === item.id"
+      :is-normalized="isNormalized"
       :popups-disabled="popupsDisabled"
       @active="setActiveLayer"
       @remove="removeLayer"
@@ -47,6 +48,7 @@ import { useIonImageMenu } from './ionImageState'
 export default defineComponent({
   props: {
     menuItems: Array,
+    isNormalized: Boolean,
   },
   components: {
     IonImageMenuItem,

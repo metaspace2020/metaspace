@@ -2,7 +2,7 @@
   <p class="m-0">
     <span v-if="type === 'hotspot-removal'">
       <b>Hot-spot removal has been applied to this image</b>.
-      Intensities above the 99ᵗʰ percentile, {{ maxIntensities.clipped }},
+      {{ isNormalized ? 'Relative intensities': 'Intensities' }} above the 99ᵗʰ percentile, {{ maxIntensities.clipped }},
       have been reduced to {{ maxIntensities.clipped }}.
       The highest intensity before hot-spot removal was {{ maxIntensities.original }}.
     </span>
@@ -35,6 +35,7 @@ const formatIntensities = (intensities: IonImageIntensity) => {
 export default defineComponent({
   props: {
     type: String,
+    isNormalized: Boolean,
     intensity: { type: Object, required: true },
   },
   setup(props) {

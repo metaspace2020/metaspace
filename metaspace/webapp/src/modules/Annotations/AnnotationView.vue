@@ -131,6 +131,7 @@
             :pixel-size-y="pixelSizeY"
             :scale-bar-color="scaleBarColor"
             :scale-type="scaleType"
+            :tic-data="ticData ? normalization : null"
             @opacity="newVal => opacity = newVal"
             @opticalOpacity="newVal => opticalOpacity = newVal"
           />

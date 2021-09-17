@@ -73,6 +73,9 @@ export default class ImageLoader extends Vue {
     @Prop()
     annotImageOpacity?: number;
 
+    @Prop()
+    normalizationData?: any;
+
     containerWidth = 500;
     containerHeight = 500;
     ionImage: IonImage | null = null;
@@ -93,7 +96,6 @@ export default class ImageLoader extends Vue {
       }
     }
 
-    @Watch('src')
     async updateIonImage() {
       // Keep track of which image is loading so that this can bail if src changes before the download finishes
       const newUrl = this.src
@@ -104,7 +106,8 @@ export default class ImageLoader extends Vue {
           const png = await loadPngFromUrl((config.imageStorage || '') + newUrl)
 
           if (newUrl === this.src) {
-            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity, this.scaleType)
+            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity, this.scaleType,
+              undefined, undefined, this.normalizationData)
             this.ionImageIsLoading = false
           }
         } catch (err) {
@@ -115,6 +118,16 @@ export default class ImageLoader extends Vue {
           }
         }
       }
+    }
+
+    @Watch('src')
+    async updateImageSrc() {
+      this.updateIonImage()
+    }
+
+    @Watch('normalizationData')
+    async updateIonImageNormalization() {
+      this.updateIonImage()
     }
 
     get zoom() {

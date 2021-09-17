@@ -68,6 +68,18 @@
           </el-option>
         </el-select>
       </el-form-item>
+      <el-form-item
+        v-if="!hideNormalization"
+        label=""
+      >
+        <el-checkbox
+          :value="normalization"
+          class="font-thin"
+          @change="onNormalizationChange"
+        >
+          TIC normalization
+        </el-checkbox>
+      </el-form-item>
       <el-form-item label="Colormap">
         <el-select
           :value="colormap"
@@ -164,6 +176,12 @@ export default class IonImageSettings extends Vue {
    @Prop({ type: String })
    defaultScaleBarColor: string | undefined;
 
+   @Prop({ type: Boolean })
+   defaultNormalization: boolean | undefined;
+
+   @Prop({ type: Boolean })
+   hideNormalization: boolean | undefined;
+
    @Prop({ type: String })
    defaultLockTemplate: string | undefined;
 
@@ -198,6 +216,11 @@ export default class IonImageSettings extends Vue {
      return this.defaultScaleType ? this.defaultScaleType : this.$store.getters.settings.annotationView.scaleType
    }
 
+   get normalization() {
+     return this.defaultNormalization ? this.defaultNormalization
+       : this.$store.getters.settings.annotationView.normalization
+   }
+
    get selectedTemplate() {
      return this.defaultLockTemplate ? this.defaultLockTemplate
        : this.$store.getters.settings.annotationView.lockTemplate
@@ -224,6 +247,11 @@ export default class IonImageSettings extends Vue {
    onScaleBarColorChange(c: string) {
      this.pickedColor = c
      this.$emit('scaleBarColorChange', c === 'hidden' ? null : c)
+   }
+
+   onNormalizationChange(value: boolean) {
+     this.$store.commit('setNormalization', value)
+     this.$emit('normalizationChange', value)
    }
 
    onTemplateChange(dsId: string) {

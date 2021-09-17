@@ -99,6 +99,46 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                 <div
                   class="el-form-item"
                 >
+                  <!---->
+                  <div
+                    class="el-form-item__content"
+                  >
+                    <label
+                      class="el-checkbox font-thin"
+                    >
+                      <span
+                        class="el-checkbox__input"
+                      >
+                        <span
+                          class="el-checkbox__inner"
+                        />
+                        <input
+                          aria-hidden="false"
+                          class="el-checkbox__original"
+                          type="checkbox"
+                          value=""
+                        />
+                      </span>
+                      <span
+                        class="el-checkbox__label"
+                      >
+                        
+        TIC normalization
+      
+                        <!---->
+                      </span>
+                    </label>
+                    <transition-stub
+                      name="el-zoom-in-top"
+                    >
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+                 
+                <div
+                  class="el-form-item"
+                >
                   <label
                     class="el-form-item__label"
                   >
@@ -414,6 +454,8 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
            
           <!---->
         </div>
+         
+        <!---->
          
         <transition-stub
           enteractiveclass="duration-150 transition-opacity ease-in-out"
@@ -716,6 +758,46 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                 <div
                   class="el-form-item"
                 >
+                  <!---->
+                  <div
+                    class="el-form-item__content"
+                  >
+                    <label
+                      class="el-checkbox font-thin"
+                    >
+                      <span
+                        class="el-checkbox__input"
+                      >
+                        <span
+                          class="el-checkbox__inner"
+                        />
+                        <input
+                          aria-hidden="false"
+                          class="el-checkbox__original"
+                          type="checkbox"
+                          value=""
+                        />
+                      </span>
+                      <span
+                        class="el-checkbox__label"
+                      >
+                        
+        TIC normalization
+      
+                        <!---->
+                      </span>
+                    </label>
+                    <transition-stub
+                      name="el-zoom-in-top"
+                    >
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+                 
+                <div
+                  class="el-form-item"
+                >
                   <label
                     class="el-form-item__label"
                   >
@@ -1031,6 +1113,8 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
            
           <!---->
         </div>
+         
+        <!---->
          
         <transition-stub
           enteractiveclass="duration-150 transition-opacity ease-in-out"

@@ -287,6 +287,9 @@ import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/for
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
+import { readNpy } from '../../lib/npyHandler'
+import safeJsonParse from '../../lib/safeJsonParse'
+import { getDatasetDiagnosticsQuery } from '../../api/dataset'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -574,6 +577,8 @@ export default Vue.extend({
       if (row !== null) {
         this.currentRowIndex = this.annotations.indexOf(row)
       }
+
+      this.setNormalizationData(row)
     },
 
     onKeyDown(event) {
@@ -643,6 +648,49 @@ export default Vue.extend({
     updateFilter(delta) {
       const filter = Object.assign({}, this.filter, delta)
       this.$store.commit('updateFilter', filter)
+    },
+
+    async setNormalizationData(currentAnnotation) {
+      if (!currentAnnotation) {
+        return null
+      }
+
+      try {
+        const resp = await this.$apollo.query({
+          query: getDatasetDiagnosticsQuery,
+          variables: {
+            id: currentAnnotation.dataset.id,
+          },
+          fetchPolicy: 'cache-first',
+        })
+        const dataset = resp.data.dataset
+        const tics = dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
+        const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
+        const { data, shape, image } = await readNpy(tic[0].url)
+        const metadata = safeJsonParse(tics[0].data)
+        metadata.maxTic = metadata.max_tic
+        metadata.minTic = metadata.min_tic
+        delete metadata.max_tic
+        delete metadata.min_tic
+
+        this.$store.commit('setNormalizationMatrix', {
+          data,
+          shape,
+          metadata: metadata,
+          type: 'TIC',
+          showFullTIC: false,
+          error: false,
+        })
+      } catch (e) {
+        this.$store.commit('setNormalizationMatrix', {
+          data: null,
+          shape: null,
+          metadata: null,
+          showFullTIC: null,
+          type: 'TIC',
+          error: true,
+        })
+      }
     },
 
     filterGroup(row) {

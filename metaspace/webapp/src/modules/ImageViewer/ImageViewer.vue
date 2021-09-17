@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="!hasNormalizationError"
     class="relative"
   >
     <div
@@ -19,6 +20,8 @@
         :scale-bar-color="scaleBarColor"
         :scale-type="scaleType"
         :width="dimensions.width"
+        :show-normalized-intensity="showNormalizedIntensity"
+        :normalization-data="normalizationData"
         :x-offset="imageLoaderSettings.imagePosition.xOffset"
         :y-offset="imageLoaderSettings.imagePosition.yOffset"
         :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
@@ -37,11 +40,13 @@
         <ion-image-menu
           v-if="mode === 'MULTI'"
           key="multi"
+          :is-normalized="showNormalizedIntensity"
           :menu-items="ionImageMenuItems"
         />
         <single-ion-image-controls
           v-else-if="!isLoading"
           key="single"
+          :is-normalized="showNormalizedIntensity"
           v-bind="singleIonImageControls"
         />
       </fade-transition>
@@ -98,6 +103,15 @@
       class="absolute top-0 left-0 mt-3 ml-3"
       :dom-node="imageArea"
     />
+  </div>
+  <div
+    v-else
+    class="normalization-error-wrapper"
+  >
+    <i class="el-icon-error info-icon mr-2" />
+    <p class="text-lg">
+      There was an error on normalization!
+    </p>
   </div>
 </template>
 <script lang="ts">
@@ -159,6 +173,7 @@ const ImageViewer = defineComponent<Props>({
     scaleBarColor: { type: String },
     scaleType: { type: String },
     keepPixelSelected: { type: Boolean },
+    ticData: { type: Object },
   },
   setup(props, { root, emit }) {
     const {
@@ -237,6 +252,11 @@ const ImageViewer = defineComponent<Props>({
       emitOpticalOpacity(value: number) {
         emit('opticalOpacity', value)
       },
+      hasNormalizationError: computed(() =>
+        root.$store.getters.settings.annotationView.normalization && root.$store.state.normalization
+      && root.$store.state.normalization.error),
+      showNormalizedIntensity: computed(() => root.$store.getters.settings.annotationView.normalization),
+      normalizationData: computed(() => root.$store.state.normalization),
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
       lockIntensityEnabled: config.features.lock_intensity,
     }
@@ -263,6 +283,14 @@ export default ImageViewer
   flex-wrap: wrap;
   width: 240px;
   @apply mt-2 ml-2;
+}
+.normalization-error-wrapper{
+  height: 537px;
+  width: 100%;
+  @apply flex items-center justify-center;
+}
+.info-icon{
+  font-size: 20px;
 }
 @media (min-width: 768px) {
   .ion-slider-wrapper{
