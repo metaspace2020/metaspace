@@ -166,7 +166,7 @@ export default class AnnotationView extends Vue {
        path,
        query: {
          ...encodeParams(filter, path, this.$store.state.filterLists),
-         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale'),
+         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale', 'norm'),
        },
      }
    }
