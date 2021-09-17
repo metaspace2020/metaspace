@@ -15,6 +15,7 @@
         trigger="click"
       >
         <ion-image-settings
+          :hide-normalization="hideNormalization"
           :default-colormap="colormap"
           :default-scale-type="scaleType"
           :default-lock-template="lockedTemplate"
@@ -139,6 +140,9 @@ export default class MainImageHeader extends Vue {
 
     @Prop({ type: Boolean })
     hideOptions: boolean | undefined
+
+    @Prop({ type: Boolean })
+    hideNormalization: boolean | undefined
 
     @Prop({ type: Boolean })
     showIntensityTemplate: boolean | undefined

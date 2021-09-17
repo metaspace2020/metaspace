@@ -352,6 +352,7 @@ export default defineComponent<DatasetComparisonPageProps>({
             scaleType={state.globalImageSettings?.scaleType}
             onScaleTypeChange={handleScaleTypeChange}
             showIntensityTemplate={true}
+            hideNormalization={true}
             colormap={state.globalImageSettings?.colormap}
             onColormapChange={handleColormapChange}
             lockedTemplate={state.globalImageSettings.selectedLockTemplate}

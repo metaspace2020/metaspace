@@ -68,7 +68,10 @@
           </el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="">
+      <el-form-item
+        v-if="!hideNormalization"
+        label=""
+      >
         <el-checkbox
           :value="normalization"
           class="font-thin"
@@ -175,6 +178,9 @@ export default class IonImageSettings extends Vue {
 
    @Prop({ type: Boolean })
    defaultNormalization: boolean | undefined;
+
+   @Prop({ type: Boolean })
+   hideNormalization: boolean | undefined;
 
    @Prop({ type: String })
    defaultLockTemplate: string | undefined;
