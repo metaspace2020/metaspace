@@ -366,14 +366,6 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
   }
 }
 
-export const renderIonImage = (ionImage: IonImage, cmap: readonly number[][]) => {
-  const { width, height } = ionImage
-
-  const outputBuffer = renderIonImageToBuffer(ionImage, cmap)
-
-  return createDataUrl(new Uint8ClampedArray(outputBuffer), width, height)
-}
-
 export const renderScaleBar = (ionImage: IonImage, cmap: ColorMap, horizontal: boolean) => {
   const outputBytes = new Uint8ClampedArray(256 * 4)
   for (let i = 0; i < ionImage.scaleBarValues.length; i++) {

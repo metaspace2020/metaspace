@@ -1,7 +1,7 @@
 import { ref, Ref, computed, watch } from '@vue/composition-api'
 import { Image } from 'upng-js'
 
-import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../lib/ionImageRendering'
+import { IonImage, loadPngFromUrl, processIonImage, renderScaleBar } from '../../lib/ionImageRendering'
 import { ScaleType } from '../../lib/ionImageRendering'
 import createColorMap from '../../lib/createColormap'
 import getColorScale from '../../lib/getColorScale'
@@ -16,6 +16,27 @@ interface Props {
   colormap: string
   scaleType?: ScaleType
 }
+interface ColorBar {
+  minColor: string,
+  maxColor: string,
+  gradient: string,
+}
+interface IntensityData {
+  image: number,
+  clipped: number,
+  scaled: number,
+  user: number,
+  quantile: number,
+  status: 'LOCKED' | 'CLIPPED' | undefined,
+}
+
+interface ComputedImageData {
+  colorBar: Readonly<Ref<Readonly<ColorBar>>>,
+  colorMap: Readonly<Ref<Readonly<number[][]>>>,
+  image: Readonly<Ref<Readonly<IonImage | null>>>,
+  intensity: Readonly<Ref<Readonly<{min: IntensityData, max: IntensityData} | null>>>,
+  scaleRange: Readonly<Ref<Readonly<[number, number]>>>,
+}
 
 const { annotationCache, onAnnotationChange, activeAnnotation, getImageIntensities } = useAnnotations()
 const { lockedIntensities, lockedScaleRange } = useIonImageSettings()
@@ -25,7 +46,7 @@ const rawImageCache : Record<string, Ref<Image | null>> = {}
 
 function getIntensityData(
   image: number, clipped: number, scaled: number, user: number, quantile: number, isLocked?: boolean,
-) {
+): IntensityData {
   const isClipped = quantile > 0 && quantile < 1 && user === image
   return {
     image,
@@ -34,10 +55,10 @@ function getIntensityData(
     user,
     quantile,
     status: isLocked ? 'LOCKED' : isClipped ? 'CLIPPED' : undefined,
-  }
+  } as const
 }
 
-function createComputedImageData(props: Props, layer: IonImageLayer) {
+function createComputedImageData(props: Props, layer: IonImageLayer): ComputedImageData {
   if (!(layer.id in rawImageCache)) {
     rawImageCache[layer.id] = ref<Image | null>(null)
   }
@@ -46,10 +67,9 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
     const annotation = annotationCache[layer.id]
     const [isotopeImage] = annotation.isotopeImages
     if (isotopeImage && isotopeImage.url) {
-      loadPngFromUrl(isotopeImage.url)
-        .then(img => {
-          rawImageCache[layer.id].value = img
-        })
+      loadPngFromUrl(isotopeImage.url).then(img => {
+        rawImageCache[layer.id].value = img
+      })
         .catch(err => {
           reportError(err, null)
         })
@@ -157,33 +177,28 @@ function createComputedImageData(props: Props, layer: IonImageLayer) {
 }
 
 const useIonImages = (props: Props) => {
+  const computedImageDataCache = new WeakMap<IonImageLayer, ComputedImageData>()
+
   const ionImagesWithData = computed(() => {
-    const memo = []
+    let layers
     if (viewerState.mode.value === 'SINGLE') {
-      const layer = activeAnnotation.value ? layerCache[activeAnnotation.value] : null
-      if (layer) {
-        memo.push({
-          layer,
-          data: createComputedImageData(props, layer),
-        })
-      }
+      layers = (activeAnnotation.value ? [layerCache[activeAnnotation.value]] : [])
     } else {
-      for (const layer of orderedLayers.value) {
-        memo.push({
-          layer,
-          data: createComputedImageData(props, layer),
-        })
-      }
+      layers = orderedLayers.value
     }
-    return memo
+    return layers.map(layer => {
+      let data = computedImageDataCache.get(layer)
+      if (data == null) {
+        data = createComputedImageData(props, layer)
+        computedImageDataCache.set(layer, data)
+      }
+      return { layer, data }
+    })
   })
 
-  const ionImagesLoading = computed(() => {
-    for (const { data } of ionImagesWithData.value) {
-      if (data.image.value === null) return true
-    }
-    return false
-  })
+  const ionImagesLoading = computed(
+    () => ionImagesWithData.value.some(({ data }) => data.image.value === null),
+  )
 
   const ionImageLayers = computed(() => {
     if (viewerState.mode.value === 'SINGLE') {
