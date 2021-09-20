@@ -50,7 +50,7 @@ Add these to your `~/.bashrc` or `~/.bash_profile`:
 
 ```
 alias dc="docker-compose"
-alias dclogs="dc logs -f --tail 0 api webapp graphql annotate-daemon update-daemon off-sample"
+alias dclogs="dc logs -f --tail 0 api update-daemon annotate-daemon lithops-daemon graphql webapp"
 dcr() {
     docker-compose kill "$@" ; docker-compose up -d --no-deps --no-recreate "$@"
 }

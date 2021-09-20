@@ -51,7 +51,7 @@ METASPACE team members can use `eu-de`/Frankfurt for all services.
 9. (Optional) [Set up a VPC](https://cloud.ibm.com/vpc-ext/provision/vs)
     * VPC instances aren't used much in development, so it may be best to just skip this step and share the existing instance. 
     * **Operating system:** Ubuntu
-    * **Profile:** Balanced 32GB RAM
+    * **Profile:** Balanced 128GB RAM
     * **SSH Key:** Upload your own SSH public key
     * After creation, go into the instance details and add a Floating IP address
 10. Configure your connection to the VPC
@@ -72,9 +72,9 @@ METASPACE team members can use `eu-de`/Frankfurt for all services.
 1. Download it from https://cloud.ibm.com/docs/cli
 2. Install plugins:
     ```
-    ibm_cloud plugin install cloud-functions
-    ibm_cloud plugin install cloud-object-storage
-    ibm_cloud plugin install vpc-infrastructure
+    ibmcloud plugin install cloud-functions
+    ibmcloud plugin install cloud-object-storage
+    ibmcloud plugin install vpc-infrastructure
     ```
 3. Sign in with `ibmcloud login` and follow the prompts.
 4. Use `ibmcloud target --cf` to select the organization / namespace that your functions are in.

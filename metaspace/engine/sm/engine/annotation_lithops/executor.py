@@ -24,7 +24,7 @@ TRet = TypeVar('TRet')
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.4'
+RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.9.0'
 MEM_LIMITS = {
     'localhost': 32768,
     'ibm_cf': 4096,
@@ -333,7 +333,7 @@ class Executor:
         if executor.config['lithops']['mode'] == 'standalone':
             # Set number of parallel workers based on memory requirements
             # Lithops>=2.2.17 can configure this via `.map(worker_processes=workers)`
-            executor.config['lithops']['workers'] = min(
+            executor.config['lithops']['worker_processes'] = min(
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
 
