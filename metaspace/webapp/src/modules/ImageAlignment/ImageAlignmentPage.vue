@@ -99,8 +99,8 @@
             :max="1"
             :step="0.01"
           />
-
           <el-checkbox
+            v-if="showTicOption"
             v-model="enableNormalization"
             :disabled="currentAnnotation && currentAnnotation.type === 'TIC Image'"
           >
@@ -240,6 +240,7 @@ import reportError from '../../lib/reportError'
 import graphqlClient from '../../api/graphqlClient'
 import { readNpy } from '@/lib/npyHandler'
 import safeJsonParse from '@/lib/safeJsonParse'
+import config from '@/lib/config'
 
 export default {
   name: 'ImageAlignmentPage',
@@ -315,9 +316,8 @@ export default {
         // get normalization data for selected annotation
         const annotation = this.currentAnnotation || data.allAnnotations[0]
         this.updateNormalizationData(annotation)
-
         // add TIC reference
-        if (data.allAnnotations[0] && data.allAnnotations[0].id !== 'TIC Image') {
+        if (config.features.tic && data.allAnnotations[0] && data.allAnnotations[0].id !== 'TIC Image') {
           const ticAnnotation = [{
             ...data.allAnnotations[0],
             id: 'TIC Image',
@@ -359,6 +359,10 @@ export default {
     hasNormalizationError() {
       return this.enableNormalization && this.ticData
       && this.ticData.error
+    },
+
+    showTicOption() {
+      return config.features.tic
     },
 
     normalizationData() {

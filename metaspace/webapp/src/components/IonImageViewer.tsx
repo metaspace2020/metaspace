@@ -236,7 +236,7 @@ const usePixelIntensityDisplay = (
                   {
                     props.showNormalizedIntensity
                   && <div class='mb-1'>
-                    <span>TIC: </span>
+                    <span>TIC-relative intensity: </span>
                     <span>
                       {normalizedIntensity}
                     </span>
@@ -257,7 +257,7 @@ const usePixelIntensityDisplay = (
             {
               props.showNormalizedIntensity
               && <div>
-                <span>TIC: </span>
+                <span>TIC-relative intensity: </span>
                 <span>
                   {cursorOverLayers.value?.[0].normalizedIntensity}
                 </span>
