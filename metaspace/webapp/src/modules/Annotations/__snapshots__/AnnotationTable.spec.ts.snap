@@ -2,11 +2,11 @@
 
 exports[`AnnotationTable should be able to export a CSV 1`] = `
 "# URL: http://localhost/annotations?viewId=xxxx&ds=2019-02-12_15h55m06s
-\\"group\\",\\"datasetName\\",\\"datasetId\\",\\"formula\\",\\"adduct\\",\\"mz\\",\\"msm\\",\\"fdr\\",\\"rhoSpatial\\",\\"rhoSpectral\\",\\"rhoChaos\\",\\"moleculeNames\\",\\"moleculeIds\\",\\"minIntensity\\",\\"maxIntensity\\",\\"totalIntensity\\",\\"colocalizationCoeff\\",\\"offSample\\",\\"rawOffSampleProb\\",\\"isomerIons\\",\\"isobarIons\\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"10\\",\\"0\\",\\"7.333333333333333\\",\\"0.840809\\",\\"false\\",\\"0.03\\",\\"annotations.0.isomers.0.ion, annotations.0.isomers.1.ion\\",\\"annotations.0.isobars.0.ion, annotations.0.isobars.1.ion\\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"10.333333333333334\\",\\"0.3333333333333333\\",\\"7.666666666666667\\",\\"0.840809\\",\\"false\\",\\"0.03\\",\\"annotations.1.isomers.0.ion, annotations.1.isomers.1.ion\\",\\"annotations.1.isobars.0.ion, annotations.1.isobars.1.ion\\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"3\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"10\\",\\"0\\",\\"7.333333333333333\\",\\"0.840809\\",\\"false\\",\\"0.03\\",\\"annotations.0.isomers.0.ion, annotations.0.isomers.1.ion\\",\\"annotations.0.isobars.0.ion, annotations.0.isobars.1.ion\\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"4\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"10.333333333333334\\",\\"0.3333333333333333\\",\\"7.666666666666667\\",\\"0.840809\\",\\"false\\",\\"0.03\\",\\"annotations.1.isomers.0.ion, annotations.1.isomers.1.ion\\",\\"annotations.1.isobars.0.ion, annotations.1.isobars.1.ion\\"
+\\"group\\",\\"datasetName\\",\\"datasetId\\",\\"formula\\",\\"adduct\\",\\"chemMod\\",\\"ion\\",\\"mz\\",\\"msm\\",\\"fdr\\",\\"rhoSpatial\\",\\"rhoSpectral\\",\\"rhoChaos\\",\\"moleculeNames\\",\\"moleculeIds\\",\\"minIntensity\\",\\"maxIntensity\\",\\"totalIntensity\\",\\"colocalizationCoeff\\",\\"offSample\\",\\"rawOffSampleProb\\",\\"isomerIons\\",\\"isobarIons\\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"annotations.0.chemMod\\",\\"C19H18N2O7S2-H+\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"10\\",\\"0\\",\\"7.333333333333333\\",\\"0.840809\\",\\"false\\",\\"0.03\\",\\"annotations.0.isomers.0.ion, annotations.0.isomers.1.ion\\",\\"annotations.0.isobars.0.ion, annotations.0.isobars.1.ion\\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"annotations.1.chemMod\\",\\"C19H18N2O7S2-H+\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"10.333333333333334\\",\\"0.3333333333333333\\",\\"7.666666666666667\\",\\"0.840809\\",\\"false\\",\\"0.03\\",\\"annotations.1.isomers.0.ion, annotations.1.isomers.1.ion\\",\\"annotations.1.isobars.0.ion, annotations.1.isobars.1.ion\\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"annotations.0.chemMod\\",\\"C19H18N2O7S2-H+\\",\\"3\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"10\\",\\"0\\",\\"7.333333333333333\\",\\"0.840809\\",\\"false\\",\\"0.03\\",\\"annotations.0.isomers.0.ion, annotations.0.isomers.1.ion\\",\\"annotations.0.isobars.0.ion, annotations.0.isobars.1.ion\\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"annotations.1.chemMod\\",\\"C19H18N2O7S2-H+\\",\\"4\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"10.333333333333334\\",\\"0.3333333333333333\\",\\"7.666666666666667\\",\\"0.840809\\",\\"false\\",\\"0.03\\",\\"annotations.1.isomers.0.ion, annotations.1.isomers.1.ion\\",\\"annotations.1.isobars.0.ion, annotations.1.isobars.1.ion\\"
 "
 `;
 
@@ -178,11 +178,20 @@ exports[`AnnotationTable should match snapshot 1`] = `
         </div>
       </div>
     </div>
-    <div><button type="button" class="el-button export-btn el-button--default">
-        <!---->
-        <!----><span>
-        Export to CSV
-      </span></button></div>
+    <mock-el-popover trigger="hover">
+      <div slot-key="default">
+
+        Documentation for the CSV export is available
+        <a href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export" rel="noopener noreferrer nofollow" target="_blank">
+          here<svg data-icon="icon-external-window" class="inline h-4 w-4 -mb-1 fill-current text-gray-800"></svg></a></div>
+      <div slot-key="reference">
+        <div><button type="button" class="el-button export-btn el-button--default" slot="reference">
+            <!---->
+            <!----><span>
+          Export to CSV
+        </span></button></div>
+      </div>
+    </mock-el-popover>
   </div>
 </div>
 `;
@@ -355,11 +364,20 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
         </div>
       </div>
     </div>
-    <div><button type="button" class="el-button export-btn el-button--default">
-        <!---->
-        <!----><span>
-        Export to CSV
-      </span></button></div>
+    <mock-el-popover trigger="hover">
+      <div slot-key="default">
+
+        Documentation for the CSV export is available
+        <a href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export" rel="noopener noreferrer nofollow" target="_blank">
+          here<svg data-icon="icon-external-window" class="inline h-4 w-4 -mb-1 fill-current text-gray-800"></svg></a></div>
+      <div slot-key="reference">
+        <div><button type="button" class="el-button export-btn el-button--default" slot="reference">
+            <!---->
+            <!----><span>
+          Export to CSV
+        </span></button></div>
+      </div>
+    </mock-el-popover>
   </div>
 </div>
 `;

@@ -39,11 +39,14 @@ interface Props {
   ionImageTransform: number[][]
   opticalTransform: number[][]
   scrollBlock: boolean
+  keepPixelSelected: boolean
   pixelSizeX: number
   pixelSizeY: number
   pixelAspectRatio: number
   scaleBarColor: string
   showPixelIntensity: boolean
+  showNormalizedIntensity: boolean
+  normalizationData: any
 }
 
 const useScrollBlock = () => {
@@ -116,7 +119,11 @@ const useScaleBar = (props: Props) => {
   return { renderScaleBar }
 }
 
-const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObject | null>) => {
+const usePixelIntensityDisplay = (
+  props: Props,
+  imageLoaderRef: Ref<ReferenceObject | null>,
+  emit: (event: string, ...args: any[]) => void,
+) => {
   const pixelIntensityTooltipRef = templateRef<any>('pixelIntensityTooltip')
   const cursorPixelPos = ref<[number, number] | null>(null)
   const zoomX = computed(() => props.zoom)
@@ -132,8 +139,12 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
           && mask[y * width + x] !== 0) {
           const idx = y * width + x
           const [r, g, b] = colorMap[colorMap.length - 1]
+          const validNormalization = props.normalizationData && props.normalizationData.data
+            && props.normalizationData.data[idx] && !isNaN(props.normalizationData.data[idx])
           layers.push({
             intensity: intensityValues[idx].toExponential(1),
+            normalizedIntensity: !validNormalization ? 0
+              : (intensityValues[idx] / props.normalizationData?.data?.[idx] * 1000000).toExponential(1),
             color: props.ionImageLayers.length > 1 ? `rgb(${r},${g},${b})` : null,
           })
         }
@@ -172,7 +183,7 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
     Vue.nextTick(updatePixelIntensity)
   })
 
-  const movePixelIntensity = (clientX: number | null, clientY: number | null) => {
+  const movePixelIntensity = (clientX: number | null, clientY: number | null, updatePixel: boolean = false) => {
     if (imageLoaderRef.value != null && props.ionImageLayers.length && clientX != null && clientY != null) {
       const rect = imageLoaderRef.value.getBoundingClientRect()
       const { width = 0, height = 0 } = props.ionImageLayers[0].ionImage
@@ -182,7 +193,16 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
       const y = Math.floor((clientY - (rect.top + rect.bottom) / 2 - 2)
         / zoomY.value - props.yOffset + height / 2)
 
-      cursorPixelPos.value = [x, y]
+      if (!props.keepPixelSelected) {
+        cursorPixelPos.value = [x, y]
+      } else if (
+        updatePixel && props.keepPixelSelected
+        && x >= 0 && y >= 0 && y < props.ionImageLayers[0].ionImage.height
+        && x < props.ionImageLayers[0].ionImage.width
+      ) { // check if pixel pos should update and if it is inside ionImage boundary
+        cursorPixelPos.value = [x, y]
+        emit('pixel-select', { x: cursorPixelPos.value[0], y: cursorPixelPos.value[1] })
+      }
     } else {
       cursorPixelPos.value = null
     }
@@ -199,17 +219,51 @@ const usePixelIntensityDisplay = (props: Props, imageLoaderRef: Ref<ReferenceObj
       >
         {cursorOverLayers.value?.length > 1
           ? <ul slot="content" class="list-none p-0 m-0">
-            {cursorOverLayers.value?.map(({ intensity, color }) =>
+            {cursorOverLayers.value?.map(({ intensity, color, normalizedIntensity }) =>
               <li class="flex leading-5 items-center">
                 { color && <i
                   class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
                   style={{ background: color }}
                 /> }
-                {intensity}
+                <div class='flex flex-col leading-snug'>
+                  <div>
+                    {
+                      props.showNormalizedIntensity
+                    && <span>Intensity: </span>
+                    }
+                    <span>{intensity}</span>
+                  </div>
+                  {
+                    props.showNormalizedIntensity
+                  && <div class='mb-1'>
+                    <span>TIC: </span>
+                    <span>
+                      {normalizedIntensity}
+                    </span>
+                  </div>
+                  }
+                </div>
               </li>
             )}
           </ul>
-          : <span slot="content">{cursorOverLayers.value?.[0].intensity}</span>}
+          : <div slot="content" class='flex flex-col'>
+            <div>
+              {
+                props.showNormalizedIntensity
+                && <span>Intensity: </span>
+              }
+              <span>{cursorOverLayers.value?.[0].intensity}</span>
+            </div>
+            {
+              props.showNormalizedIntensity
+              && <div>
+                <span>TIC: </span>
+                <span>
+                  {cursorOverLayers.value?.[0].normalizedIntensity}
+                </span>
+              </div>
+            }
+          </div> }
         <div
           style={pixelIntensityStyle.value}
           class="absolute block border-solid z-30 pointer-events-none box-border"
@@ -412,6 +466,7 @@ const useImageSize = (props: Props) => {
 }
 
 export default defineComponent<Props>({
+  name: 'IonImageViewer',
   props: {
     ionImageLayers: Array,
     isLoading: { type: Boolean, default: false },
@@ -443,11 +498,14 @@ export default defineComponent<Props>({
     ionImageTransform: { type: Array },
     opticalTransform: { type: Array },
     scrollBlock: { type: Boolean, default: false },
+    keepPixelSelected: { type: Boolean, default: false },
     pixelSizeX: { type: Number, default: 0 },
     pixelSizeY: { type: Number, default: 0 },
     pixelAspectRatio: { type: Number, default: 1 },
     scaleBarColor: { type: String, default: null },
     showPixelIntensity: { type: Boolean, default: false },
+    showNormalizedIntensity: { type: Boolean, default: false },
+    normalizationData: { type: Object },
   },
   setup(props: Props, { emit }: SetupContext) {
     const imageLoaderRef = templateRef<ReferenceObject>('imageLoader')
@@ -455,7 +513,7 @@ export default defineComponent<Props>({
     const { renderScaleBar } = useScaleBar(props)
 
     const { imageSize } = useImageSize(props)
-    const { renderPixelIntensity, movePixelIntensity } = usePixelIntensityDisplay(props, imageLoaderRef)
+    const { renderPixelIntensity, movePixelIntensity } = usePixelIntensityDisplay(props, imageLoaderRef, emit)
     const { viewBoxStyle, handleZoom, handlePanStart } = usePanAndZoom(props, imageLoaderRef, emit, imageSize)
     const { renderIonImageView } = useIonImageView(props, imageSize)
     const { renderOpticalImage } = useBufferedOpticalImage(props)
@@ -482,11 +540,19 @@ export default defineComponent<Props>({
         style={{ width: props.width + 'px', height: props.height + 'px' }}
         onwheel={onWheel}
         onmousedown={handlePanStart}
-        onmousemove={({ clientX, clientY }: MouseEvent) => movePixelIntensity(clientX, clientY)}
-        onmouseleave={() => movePixelIntensity(null, null)}
+        onClick={({ clientX, clientY }: MouseEvent) => {
+          if (props.keepPixelSelected) {
+            movePixelIntensity(clientX, clientY, true)
+          }
+        }}
+        onmousemove={({ clientX, clientY }: MouseEvent) => {
+          if (!props.keepPixelSelected) {
+            movePixelIntensity(clientX, clientY)
+          }
+        }}
       >
         {viewBoxStyle.value
-          && <div style={viewBoxStyle.value}>
+          && <div data-test-key="ion-image-panel" style={viewBoxStyle.value}>
             {renderIonImageView()}
             {renderOpticalImage()}
           </div>}

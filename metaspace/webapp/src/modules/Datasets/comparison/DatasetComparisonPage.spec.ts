@@ -12,6 +12,16 @@ describe('DatasetComparisonPage', () => {
     snapshot: '{"nCols":2,"nRows":1,"grid":{"0-0":"2021-04-14_07h23m35s",'
       + '"0-1":"2021-04-06_08h35m04s"}}',
   }))
+  const dsData = [{
+    id: '2021-04-14_07h23m35s',
+    name: 'Mock (1)',
+    uploadDT: '2021-03-31T14:02:28.722Z',
+  },
+  {
+    id: '2021-04-06_08h35m04s',
+    name: 'Mock (2)',
+    uploadDT: '2021-03-30T21:25:18.473Z',
+  }]
 
   const testHarness = Vue.extend({
     components: {
@@ -26,6 +36,9 @@ describe('DatasetComparisonPage', () => {
     initMockGraphqlClient({
       Query: () => ({
         imageViewerSnapshot: snapshotData,
+        allDatasets: () => {
+          return dsData
+        },
       }),
     })
   }

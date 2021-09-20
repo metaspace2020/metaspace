@@ -33,30 +33,10 @@ import LockSvg from '../../assets/inline/refactoring-ui/icon-lock.svg'
 import LocationPinSvg from '../../assets/inline/refactoring-ui/icon-location-pin.svg'
 import FilterIcon from '../../assets/inline/filter.svg'
 
-import { useIonImageSettings } from '../ImageViewer/ionImageState'
+import { ImageSettings, useIonImageSettings } from '../ImageViewer/ionImageState'
 import viewerState from '../ImageViewer/state'
 
 const { settings: ionImageSettings } = useIonImageSettings()
-
- type ImagePosition = {
-   zoom: number
-   xOffset: number
-   yOffset: number
- }
-
- type ImageSettings = {
-   annotImageOpacity: number
-   opacityMode: OpacityMode
-   imagePosition: ImagePosition
-   opticalSrc: string | null
-   opticalTransform: number[][] | null
-   pixelAspectRatio: number
-   opticalOpacity: number
-   // scaleType is deliberately not included here, because every time it changes some slow computation occurs,
-   // and the computed getters were being triggered by any part of the ImageSettings object changing, such as opacity,
-   // causing a lot of jank.
-   // scaleType?: ScaleType
- }
 
 const metadataDependentComponents: any = {}
 const componentsToRegister: any = {
@@ -129,6 +109,9 @@ export default class AnnotationView extends Vue {
    @Prop()
    annotation: any
 
+   @Prop()
+   normalization: any
+
    msAcqGeometry: any
    opticalImages!: OpticalImage[] | null
    datasetVisibility: DatasetVisibilityResult | null = null
@@ -161,6 +144,10 @@ export default class AnnotationView extends Vue {
      return this.$store.getters.settings.annotationView.scaleType
    }
 
+   get ticData(): string {
+     return this.$store.getters.settings.annotationView.normalization
+   }
+
    get imageOpacityMode(): OpacityMode {
      return (this.showOpticalImage && this.bestOpticalImage != null) ? 'linear' : 'constant'
    }
@@ -179,7 +166,7 @@ export default class AnnotationView extends Vue {
        path,
        query: {
          ...encodeParams(filter, path, this.$store.state.filterLists),
-         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale'),
+         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale', 'norm'),
        },
      }
    }

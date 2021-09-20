@@ -2,8 +2,10 @@
 
 exports[`DatasetActionsDropdown it should match snapshot 1`] = `
 <eldropdown-stub trigger="click" type="primary" size="" hideonclick="true" placement="bottom-end" visiblearrow="true" showtimeout="250" hidetimeout="150" tabindex="0" dataset="[object Object]" currentuser="[object Object]">
-  <elbutton-stub type="primary" icon="" nativetype="button" class="p-1"><span class="ml-2">Actions</span><i class="el-icon-arrow-down el-icon--right"></i></elbutton-stub>
-  <eldropdownmenu-stub transformorigin="true" placement="bottom" boundariespadding="5" offset="0" visiblearrow="true" arrowoffset="0" appendtobody="true" popperoptions="[object Object]" class="dataset-overview-menu">
+  <el-badge-stub value="New" class="sm-feature-badge">
+    <elbutton-stub type="primary" icon="" nativetype="button" class="p-1"><span class="ml-2">Actions</span><i class="el-icon-arrow-down el-icon--right"></i></elbutton-stub>
+  </el-badge-stub>
+  <eldropdownmenu-stub transformorigin="true" placement="bottom" boundariespadding="5" offset="0" visiblearrow="true" arrowoffset="0" appendtobody="true" popperoptions="[object Object]" class="dataset-overview-menu p-2">
     <eldropdownitem-stub command="edit">Edit metadata</eldropdownitem-stub>
     <eldropdownitem-stub command="download">Download</eldropdownitem-stub>
     <eldropdownitem-stub command="compare">Compare with other datasets...</eldropdownitem-stub>

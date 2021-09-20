@@ -99,6 +99,13 @@
             :max="1"
             :step="0.01"
           />
+
+          <el-checkbox
+            v-model="enableNormalization"
+            :disabled="currentAnnotation && currentAnnotation.type === 'TIC Image'"
+          >
+            TIC normalization
+          </el-checkbox>
         </div>
 
         <div class="annotation-selection">
@@ -107,12 +114,14 @@
             layout="prev,slot,next"
             :total="annotations ? annotations.length : 0"
             :page-size="1"
+            :current-page="annotationIndex + 1"
             @current-change="updateIndex"
           >
             <el-select
               v-model="annotationIndex"
               filterable
               class="annotation-short-info"
+              @change="(newIdx) => updateIndex(newIdx + 1)"
             >
               <el-option
                 v-for="(annot, i) in annotations"
@@ -190,17 +199,27 @@
       </div>
     </div>
     <image-aligner
-      v-if="opticalImgUrl"
+      v-if="opticalImgUrl && !hasNormalizationError"
       ref="aligner"
       style="position:relative;top:0px;z-index:1;"
       :annot-image-opacity="annotImageOpacity"
       :optical-src="opticalImgUrl"
+      :tic-data="normalizationData"
       :initial-transform="initialTransform"
       :padding="padding"
       :rotation-angle-degrees="angle"
       :ion-image-src="massSpecSrc"
       @updateRotationAngle="updateAngle"
     />
+    <div
+      v-if="hasNormalizationError"
+      class="normalization-error-wrapper"
+    >
+      <i class="el-icon-error info-icon mr-2" />
+      <p class="text-lg">
+        There was an error on normalization!
+      </p>
+    </div>
   </div>
 </template>
 
@@ -208,12 +227,19 @@
 
 import ImageAligner from './ImageAligner.vue'
 import { annotationListQuery } from '../../api/annotation'
-import { addOpticalImageQuery, deleteOpticalImageQuery, rawOpticalImageQuery } from '../../api/dataset'
+import {
+  addOpticalImageQuery,
+  deleteOpticalImageQuery,
+  getDatasetDiagnosticsQuery,
+  rawOpticalImageQuery,
+} from '../../api/dataset'
 import { renderMolFormula, renderMolFormulaHtml } from '../../lib/util'
 
 import gql from 'graphql-tag'
 import reportError from '../../lib/reportError'
 import graphqlClient from '../../api/graphqlClient'
+import { readNpy } from '@/lib/npyHandler'
+import safeJsonParse from '@/lib/safeJsonParse'
 
 export default {
   name: 'ImageAlignmentPage',
@@ -239,10 +265,13 @@ export default {
       annotationIndex: 0,
       file: null,
       opticalImgUrl: null,
+      ticData: null,
       alreadyUploaded: false,
       initialTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
       padding: 100,
       angle: 0,
+      enableNormalization: false,
+      showFullTIC: false,
       showHints: {
         status: true,
         text: 'Hide hints',
@@ -282,7 +311,23 @@ export default {
           countIsomerCompounds: false,
         }
       },
-      update: data => data.allAnnotations,
+      update(data) {
+        // get normalization data for selected annotation
+        const annotation = this.currentAnnotation || data.allAnnotations[0]
+        this.updateNormalizationData(annotation)
+
+        // add TIC reference
+        if (data.allAnnotations[0] && data.allAnnotations[0].id !== 'TIC Image') {
+          const ticAnnotation = [{
+            ...data.allAnnotations[0],
+            id: 'TIC Image',
+            type: 'TIC Image',
+          }]
+          data.allAnnotations = ticAnnotation.concat(data.allAnnotations)
+          this.updateNormalizationData(ticAnnotation[0])
+        }
+        return data.allAnnotations
+      },
     },
 
     datasetProperties: {
@@ -309,6 +354,15 @@ export default {
   computed: {
     datasetId() {
       return this.$store.state.route.params.dataset_id
+    },
+
+    hasNormalizationError() {
+      return this.enableNormalization && this.ticData
+      && this.ticData.error
+    },
+
+    normalizationData() {
+      return (this.showFullTIC || this.enableNormalization) ? this.ticData : null
     },
 
     currentAnnotation() {
@@ -350,12 +404,12 @@ export default {
 
     renderAnnotation(annotation) {
       const { ion } = annotation
-      return renderMolFormulaHtml(ion)
+      return annotation.type === 'TIC Image' ? 'TIC Image' : renderMolFormulaHtml(ion)
     },
 
     renderLabel(annotation) {
       const { ion } = annotation
-      return renderMolFormula(ion)
+      return annotation.type === 'TIC Image' ? 'TIC Image' : renderMolFormula(ion)
     },
 
     onFileChange(event) {
@@ -383,6 +437,50 @@ export default {
     },
     updateIndex(newIdx) {
       this.annotationIndex = newIdx - 1
+      this.updateNormalizationData(this.currentAnnotation)
+    },
+    async updateNormalizationData(currentAnnotation) {
+      if (!currentAnnotation) {
+        return null
+      }
+
+      try {
+        const resp = await this.$apollo.query({
+          query: getDatasetDiagnosticsQuery,
+          variables: {
+            id: currentAnnotation.dataset.id,
+          },
+          fetchPolicy: 'cache-first',
+        })
+        this.showFullTIC = currentAnnotation.type === 'TIC Image'
+        const dataset = resp.data.dataset
+        const tics = dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
+        const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
+        const { data, shape } = await readNpy(tic[0].url)
+        const metadata = safeJsonParse(tics[0].data)
+        metadata.maxTic = metadata.max_tic
+        metadata.minTic = metadata.min_tic
+        delete metadata.max_tic
+        delete metadata.min_tic
+
+        this.ticData = {
+          data,
+          shape,
+          metadata: metadata,
+          type: 'TIC',
+          error: false,
+          showFullTIC: currentAnnotation.type === 'TIC Image',
+        }
+      } catch (e) {
+        this.ticData = {
+          data: null,
+          shape: null,
+          metadata: null,
+          showFullTIC: null,
+          type: 'TIC',
+          error: true,
+        }
+      }
     },
     async submit() {
       if (this.alreadyUploaded) {
@@ -580,6 +678,15 @@ export default {
 
   .hint-list{
     list-style-type: none;
+  }
+
+  .normalization-error-wrapper{
+    height: 537px;
+    width: 100%;
+    @apply flex items-center justify-center;
+  }
+  .info-icon{
+    font-size: 20px;
   }
 
 </style>

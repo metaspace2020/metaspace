@@ -206,9 +206,9 @@ def extract_dataset_diagnostics(ds_id: str, imzml_reader: ImzMLReader):
                 'ds_id': ds_id,
                 'type': DiagnosticType.TIC,
                 'data': {
-                    'min_tic': np.min(tic_vals).item() if len(tic_vals) else 0,
-                    'max_tic': np.max(tic_vals).item() if len(tic_vals) else 0,
-                    'sum_tic': np.sum(tic_vals).item() if len(tic_vals) else 0,
+                    'min_tic': np.nan_to_num(np.min(tic_vals).item()) if len(tic_vals) else 0,
+                    'max_tic': np.nan_to_num(np.max(tic_vals).item()) if len(tic_vals) else 0,
+                    'sum_tic': np.nan_to_num(np.sum(tic_vals).item()) if len(tic_vals) else 0,
                     'is_from_metadata': imzml_reader.is_tic_from_metadata,
                 },
                 'images': [tic_image],

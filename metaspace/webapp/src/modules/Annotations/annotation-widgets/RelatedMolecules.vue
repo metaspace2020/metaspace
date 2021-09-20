@@ -16,10 +16,18 @@
           >
             <div>
               <span v-if="other.isIsomer">Isomer:</span>
-              <span v-else-if="other.isIsobar">Isobar {{ renderMassShift(annotation.mz, other.mz) }}: </span>
-              <span
+              <span v-else-if="other.isIsobar">
+                Isobar
+                <el-popover trigger="hover">
+                  <span slot="reference">{{ renderMassShift(annotation.mz, other.mz) }}</span>
+                  <p><molecular-formula :ion="annotation.ion" /> (Selected annotation): {{ annotation.mz.toFixed(4) }}</p>
+                  <p><molecular-formula :ion="other.ion" /> (Isobar): {{ other.mz.toFixed(4) }}</p>
+                  <p>Check the <b>Diagnostics</b> panel for more detail about the overlapping peaks.</p>
+                </el-popover>:
+              </span>
+              <molecular-formula
                 class="ion-formula"
-                v-html="renderMolFormulaHtml(other.ion)"
+                :ion="other.ion"
               />
             </div>
 
@@ -94,7 +102,7 @@
 
 <script>
 import { omit, sortBy, uniqBy } from 'lodash-es'
-import { renderMassShift, renderMolFormulaHtml } from '../../../lib/util'
+import { renderMassShift } from '../../../lib/util'
 import { relatedMoleculesQuery } from '../../../api/annotation'
 import { encodeParams, stripFilteringParams } from '../../Filters'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../../Filters/filterSpecs'
@@ -102,12 +110,14 @@ import CompoundsList from './CompoundsList.vue'
 import FdrBadge from './FdrBadge.vue'
 import MsmBadge from './MsmBadge.vue'
 import config from '../../../lib/config'
+import MolecularFormula from '../../../components/MolecularFormula'
 
 export default {
   components: {
     CompoundsList,
     FdrBadge,
     MsmBadge,
+    MolecularFormula,
   },
   props: {
     annotation: { type: Object, required: true },
@@ -183,7 +193,6 @@ export default {
   },
   methods: {
     renderMassShift,
-    renderMolFormulaHtml,
     linkToAnnotation(other) {
       const filters = {
         datasetIds: this.annotations ? this.annotations.map((annotation) => annotation.dataset.id)

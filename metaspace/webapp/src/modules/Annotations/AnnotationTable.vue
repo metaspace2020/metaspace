@@ -235,26 +235,38 @@
         </div>
       </div>
 
-      <div>
-        <progress-button
-          v-if="isExporting && totalCount > 5000"
-          class="export-btn"
-          :width="130"
-          :height="40"
-          :percentage="exportProgress * 100"
-          @click="abortExport"
+      <el-popover trigger="hover">
+        <div slot="reference">
+          <progress-button
+            v-if="isExporting && totalCount > 5000"
+            class="export-btn"
+            :width="130"
+            :height="40"
+            :percentage="exportProgress * 100"
+            @click="abortExport"
+          >
+            Cancel
+          </progress-button>
+          <el-button
+            v-else
+            slot="reference"
+            class="export-btn"
+            :disabled="isExporting"
+            @click="startExport"
+          >
+            Export to CSV
+          </el-button>
+        </div>
+
+        Documentation for the CSV export is available
+        <a
+          href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
+          rel="noopener noreferrer nofollow"
+          target="_blank"
         >
-          Cancel
-        </progress-button>
-        <el-button
-          v-else
-          class="export-btn"
-          :disabled="isExporting"
-          @click="startExport"
-        >
-          Export to CSV
-        </el-button>
-      </div>
+          here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
+        </a>
+      </el-popover>
     </div>
   </el-row>
 </template>
@@ -263,6 +275,7 @@
 import ProgressButton from './ProgressButton.vue'
 import AnnotationTableMolName from './AnnotationTableMolName.vue'
 import FilterIcon from '../../assets/inline/filter.svg'
+import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg'
 import {
   annotationListQuery,
   tableExportQuery,
@@ -274,6 +287,9 @@ import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/for
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
+import { readNpy } from '../../lib/npyHandler'
+import safeJsonParse from '../../lib/safeJsonParse'
+import { getDatasetDiagnosticsQuery } from '../../api/dataset'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -307,6 +323,7 @@ export default Vue.extend({
     ProgressButton,
     AnnotationTableMolName,
     FilterIcon,
+    ExternalWindowSvg,
   },
   props: ['hideColumns'],
   data() {
@@ -560,6 +577,8 @@ export default Vue.extend({
       if (row !== null) {
         this.currentRowIndex = this.annotations.indexOf(row)
       }
+
+      this.setNormalizationData(row)
     },
 
     onKeyDown(event) {
@@ -631,6 +650,49 @@ export default Vue.extend({
       this.$store.commit('updateFilter', filter)
     },
 
+    async setNormalizationData(currentAnnotation) {
+      if (!currentAnnotation) {
+        return null
+      }
+
+      try {
+        const resp = await this.$apollo.query({
+          query: getDatasetDiagnosticsQuery,
+          variables: {
+            id: currentAnnotation.dataset.id,
+          },
+          fetchPolicy: 'cache-first',
+        })
+        const dataset = resp.data.dataset
+        const tics = dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
+        const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
+        const { data, shape, image } = await readNpy(tic[0].url)
+        const metadata = safeJsonParse(tics[0].data)
+        metadata.maxTic = metadata.max_tic
+        metadata.minTic = metadata.min_tic
+        delete metadata.max_tic
+        delete metadata.min_tic
+
+        this.$store.commit('setNormalizationMatrix', {
+          data,
+          shape,
+          metadata: metadata,
+          type: 'TIC',
+          showFullTIC: false,
+          error: false,
+        })
+      } catch (e) {
+        this.$store.commit('setNormalizationMatrix', {
+          data: null,
+          shape: null,
+          metadata: null,
+          showFullTIC: null,
+          type: 'TIC',
+          error: true,
+        })
+      }
+    },
+
     filterGroup(row) {
       if (row.dataset.group != null) {
         this.updateFilter({ group: row.dataset.group.id })
@@ -651,10 +713,14 @@ export default Vue.extend({
       const includeOffSample = config.features.off_sample
       const includeIsomers = config.features.isomers
       const includeIsobars = config.features.isobars
+      const includeNeutralLosses = config.features.neutral_losses
+      const includeChemMods = config.features.chem_mods
       const colocalizedWith = this.filter.colocalizedWith
       let csv = csvExportHeader()
-      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
-        'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
+      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct',
+        ...(includeChemMods ? ['chemMod'] : []),
+        ...(includeNeutralLosses ? ['neutralLoss'] : []),
+        'ion', 'mz', 'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
         'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity']
       if (includeColoc) {
         columns.push('colocalizationCoeff')
@@ -676,7 +742,7 @@ export default Vue.extend({
 
       function formatRow(row) {
         const {
-          dataset, sumFormula, adduct, ion, mz,
+          dataset, sumFormula, adduct, chemMod, neutralLoss, ion, mz,
           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
           isotopeImages, isomers, isobars,
           offSample, offSampleProb, colocalizationCoeff,
@@ -685,7 +751,10 @@ export default Vue.extend({
           dataset.groupApproved && dataset.group ? dataset.group.name : '',
           dataset.name,
           dataset.id,
-          sumFormula, 'M' + adduct, mz,
+          sumFormula, 'M' + adduct,
+          ...(includeChemMods ? [chemMod] : []),
+          ...(includeNeutralLosses ? [neutralLoss] : []),
+          ion, mz,
           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
           formatCsvTextArray(possibleCompounds.map(m => m.name)),
           formatCsvTextArray(possibleCompounds.map(databaseId)),

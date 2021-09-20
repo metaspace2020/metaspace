@@ -215,6 +215,8 @@ export interface UrlTableSettings {
 export interface UrlAnnotationViewSettings {
   activeSections: string[]
   colormap: string
+  normalization: boolean
+  lockTemplate: string | null
   colocalizationAlgo: string | null
   scaleType: ScaleType
 }
@@ -251,7 +253,9 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
     annotationView: {
       activeSections: DEFAULT_ANNOTATION_VIEW_SECTIONS,
       colormap: DEFAULT_COLORMAP,
+      normalization: false,
       colocalizationAlgo: null,
+      lockTemplate: null,
       scaleType: DEFAULT_SCALE_TYPE,
     },
 
@@ -274,6 +278,9 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
   if (query.cmap) {
     settings.annotationView.colormap = query.cmap
   }
+  if (query.norm) {
+    settings.annotationView.normalization = true
+  }
   if (query.scale) {
     settings.annotationView.scaleType = (query.scale || DEFAULT_SCALE_TYPE) as ScaleType
   }
@@ -282,6 +289,9 @@ export function decodeSettings(location: Location): UrlSettings | undefined {
   }
   if (query.alg) {
     settings.annotationView.colocalizationAlgo = query.alg
+  }
+  if (query.lock) {
+    settings.annotationView.lockTemplate = query.lock
   }
   if (query.tab !== undefined) {
     settings.datasets.tab = query.tab

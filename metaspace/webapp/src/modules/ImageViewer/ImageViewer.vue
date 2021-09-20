@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="!hasNormalizationError"
     class="relative"
   >
     <div
@@ -19,13 +20,17 @@
         :scale-bar-color="scaleBarColor"
         :scale-type="scaleType"
         :width="dimensions.width"
+        :show-normalized-intensity="showNormalizedIntensity"
+        :normalization-data="normalizationData"
         :x-offset="imageLoaderSettings.imagePosition.xOffset"
         :y-offset="imageLoaderSettings.imagePosition.yOffset"
         :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
         scroll-block
         show-pixel-intensity
         v-bind="imageLoaderSettings"
+        :keep-pixel-selected="keepPixelSelected"
         @move="handleImageMove"
+        @pixel-select="handlePixelSelect"
       />
     </div>
     <div
@@ -35,11 +40,13 @@
         <ion-image-menu
           v-if="mode === 'MULTI'"
           key="multi"
+          :is-normalized="showNormalizedIntensity"
           :menu-items="ionImageMenuItems"
         />
         <single-ion-image-controls
           v-else-if="!isLoading"
           key="single"
+          :is-normalized="showNormalizedIntensity"
           v-bind="singleIonImageControls"
         />
       </fade-transition>
@@ -97,6 +104,15 @@
       :dom-node="imageArea"
     />
   </div>
+  <div
+    v-else
+    class="normalization-error-wrapper"
+  >
+    <i class="el-icon-error info-icon mr-2" />
+    <p class="text-lg">
+      There was an error on normalization!
+    </p>
+  </div>
 </template>
 <script lang="ts">
 import { defineComponent, computed, reactive, ref, toRefs, onMounted } from '@vue/composition-api'
@@ -128,6 +144,7 @@ interface Props {
   pixelSizeY: number
   scaleBarColor: string | null
   scaleType?: ScaleType
+  keepPixelSelected: boolean
 }
 
 const ImageViewer = defineComponent<Props>({
@@ -155,6 +172,8 @@ const ImageViewer = defineComponent<Props>({
     pixelSizeY: { type: Number },
     scaleBarColor: { type: String },
     scaleType: { type: String },
+    keepPixelSelected: { type: Boolean },
+    ticData: { type: Object },
   },
   setup(props, { root, emit }) {
     const {
@@ -224,12 +243,20 @@ const ImageViewer = defineComponent<Props>({
           yOffset,
         })
       },
+      handlePixelSelect({ x, y }: any) {
+        emit('pixel-select', { x, y })
+      },
       emitOpacity(value: number) {
         emit('opacity', value)
       },
       emitOpticalOpacity(value: number) {
         emit('opticalOpacity', value)
       },
+      hasNormalizationError: computed(() =>
+        root.$store.getters.settings.annotationView.normalization && root.$store.state.normalization
+      && root.$store.state.normalization.error),
+      showNormalizedIntensity: computed(() => root.$store.getters.settings.annotationView.normalization),
+      normalizationData: computed(() => root.$store.state.normalization),
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
       lockIntensityEnabled: config.features.lock_intensity,
     }
@@ -256,6 +283,14 @@ export default ImageViewer
   flex-wrap: wrap;
   width: 240px;
   @apply mt-2 ml-2;
+}
+.normalization-error-wrapper{
+  height: 537px;
+  width: 100%;
+  @apply flex items-center justify-center;
+}
+.info-icon{
+  font-size: 20px;
 }
 @media (min-width: 768px) {
   .ion-slider-wrapper{

@@ -13,8 +13,6 @@ import {
 } from '../modules/Filters';
 import { DEFAULT_ANNOTATION_VIEW_SECTIONS, DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER } from '../modules/Filters/url';
 import { DEFAULT_SCALE_TYPE } from '../lib/constants';
-import {computed} from "@vue/composition-api";
-
 
 function updatedLocation(state, filter) {
   let query = encodeParams(filter, state.route.path, state.filterLists);
@@ -157,6 +155,10 @@ export default {
     state.annotation = annotation;
   },
 
+  setNormalizationMatrix(state, normalizationMatrix) {
+    state.normalization = normalizationMatrix;
+  },
+
   setSnapshotAnnotationIds(state, annotation) {
     state.snapshotAnnotationIds = annotation;
   },
@@ -196,6 +198,21 @@ export default {
       query: scaleType !== DEFAULT_SCALE_TYPE
         ? { ...state.route.query, scale: scaleType }
         : omit(state.route.query, 'scale'),
+    });
+  },
+
+  setLockTemplate(state, lockTemplate) {
+    router.replace({
+      query: lockTemplate
+        ? { ...state.route.query, lock: lockTemplate }
+        : omit(state.route.query, 'lock'),
+    });
+  },
+
+  setNormalization(state, normalization) {
+    router.replace({
+      query: !normalization ? omit(state.route.query, 'norm')
+        : {...state.route.query, norm: normalization }
     });
   },
 
