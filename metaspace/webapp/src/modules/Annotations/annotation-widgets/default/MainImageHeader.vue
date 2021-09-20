@@ -63,19 +63,11 @@
       </button>
     </div>
     <fade-transition v-if="isNormalized">
-      <el-popover
-        placement="bottom"
+      <div
         class="norm-badge"
-        trigger="hover"
       >
-        <div slot="reference">
-          TIC normalized
-        </div>
-        <div class="norm-info">
-          This ion image was TIC-normalized.
-          The intensities were divided by the TIC value and then scaled by multiplying by 1e+6.
-        </div>
-      </el-popover>
+        TIC normalized
+      </div>
     </fade-transition>
     <fade-transition v-if="multiImageFlag">
       <MenuButtons
@@ -141,7 +133,7 @@ export default class MainImageHeader extends Vue {
     @Prop({ type: Boolean })
     hideOptions: boolean | undefined
 
-    @Prop({ type: Boolean })
+    @Prop({ type: Boolean, default: () => !config.features.tic })
     hideNormalization: boolean | undefined
 
     @Prop({ type: Boolean })

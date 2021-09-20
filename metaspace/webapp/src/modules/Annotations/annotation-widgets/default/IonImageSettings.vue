@@ -74,10 +74,23 @@
       >
         <el-checkbox
           :value="normalization"
-          class="font-thin"
           @change="onNormalizationChange"
         >
-          TIC normalization
+          <div class="font-thin flex flex-row items-center">
+            TIC normalization
+            <el-popover
+              trigger="hover"
+              placement="right"
+            >
+              <div slot="reference">
+                <i class="el-icon-question metadata-help-icon ml-1" />
+              </div>
+              <div class="max-w-xs">
+                This ion image was TIC-normalized.
+                The intensities were divided by the TIC value and then scaled by multiplying by 1e+6.
+              </div>
+            </el-popover>
+          </div>
         </el-checkbox>
       </el-form-item>
       <el-form-item label="Colormap">
