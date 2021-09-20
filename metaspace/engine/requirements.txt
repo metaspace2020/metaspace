@@ -4,7 +4,7 @@ pyMSpec==0.1.2
 cpyMSpec==0.4.2  # Drop all isotopic patterns if updated!
 cpyMSpec_0_3_5==0.3.5
 pyimzML==1.4.1
-requests
+requests==2.26.0
 pytest
 boto3==1.17.13
 fabric3
@@ -14,9 +14,9 @@ elasticsearch-dsl>=5.0.0,<6.0.0
 pika==0.13.1
 bottle
 Pillow==8.2.0
-numpy>=1.19.2
-scipy>=1.5.2
-pandas>=1.1.3
+numpy==1.19.5
+scipy==1.6.0
+pandas==1.2.0
 cffi
 psycopg2-binary==2.8.6
 cherrypy<9
