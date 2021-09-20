@@ -73,7 +73,6 @@ def filter_results_and_make_pngs(
     png_generator = PngGenerator(imzml_reader.mask)
 
     def save_png_chunk(df: pd.DataFrame, *, storage: Storage):
-        logger.info(df)
         pngs = []
         groups = defaultdict(lambda: [])
         for formula_i, cobj in df.cobj.items():

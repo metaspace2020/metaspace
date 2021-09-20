@@ -4,7 +4,7 @@
 process_name = {{ sm_lithops_daemon_app_name }}-%(process_num)s
 environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin"
 directory = {{ sm_home }}
-command = {{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python scripts/run_sm_daemon.py --name=lithops --exit-after 10000
+command = {{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python scripts/run_sm_daemon.py --name=lithops --exit-after 86400
 redirect_stderr = true
 stdout_logfile = {{ sm_home }}/logs/{{ sm_lithops_daemon_app_name }}-%(process_num)s.log
 numprocs = {{ sm_lithops_daemon_nprocs }}
