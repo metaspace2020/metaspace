@@ -44,7 +44,7 @@
           <div slot="reference">
             Intensity lock
             <new-feature-badge feature-key="template-intensity-lock">
-              <i class="el-icon-question metadata-help-icon ml-1" />
+              <i class="el-icon-question cursor-pointer ml-1" />
             </new-feature-badge>
           </div>
           <div class="max-w-xs">
@@ -83,7 +83,7 @@
               placement="right"
             >
               <div slot="reference">
-                <i class="el-icon-question metadata-help-icon ml-1" />
+                <i class="el-icon-question cursor-pointer ml-1" />
               </div>
               <div class="max-w-xs">
                 This ion image was TIC-normalized.
