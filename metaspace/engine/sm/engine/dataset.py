@@ -166,26 +166,28 @@ class Dataset:
         return msg
 
 
-def _normalize_instrument(analysis_version, instrument):
-    if analysis_version < 2:
-        return instrument if instrument in ('Orbitrap', 'FTICR') else 'TOF'
-
+def _normalize_instrument(instrument):
     instrument = (instrument or '').lower()
-    if 'orbitrap' in instrument:
+    if any(phrase in instrument for phrase in ['orbitrap', 'exactive', 'exploris', 'hf-x', 'uhmr']):
         return 'Orbitrap'
     if any(phrase in instrument for phrase in ['fticr', 'ft-icr', 'ftms', 'ft-ms']):
         return 'FTICR'
-    return 'TOF'
+    if any(phrase in instrument for phrase in ['tof', 'mrt', 'exploris', 'synapt', 'xevo']):
+        return 'TOF'
+
+    # Fall back to Orbitrap, because its resolving power as a function of mass lies between
+    # the other analyzer types.
+    return 'Orbitrap'
 
 
-def _get_isotope_generation_from_metadata(metadata, analysis_version):
+def _get_isotope_generation_from_metadata(metadata):
     assert 'MS_Analysis' in metadata
 
     sm_config = SMConfig.get_conf()
 
     polarity = metadata['MS_Analysis']['Polarity']
     polarity_sign = {'Positive': '+', 'Negative': '-'}[polarity]
-    instrument = _normalize_instrument(analysis_version, metadata['MS_Analysis']['Analyzer'])
+    instrument = _normalize_instrument(metadata['MS_Analysis']['Analyzer'])
     resolving_power = metadata['MS_Analysis']['Detector_Resolving_Power']
     rp_mz = float(resolving_power['mz'])
     rp_resolution = float(resolving_power['Resolving_Power'])
@@ -236,7 +238,7 @@ def generate_ds_config(
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
     analysis_version = analysis_version or 1
-    iso_params = _get_isotope_generation_from_metadata(metadata, analysis_version)
+    iso_params = _get_isotope_generation_from_metadata(metadata)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
 
     return {
