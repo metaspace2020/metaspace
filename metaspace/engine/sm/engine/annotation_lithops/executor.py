@@ -307,7 +307,7 @@ class Executor:
                             # Dismantle & wait for it to stop while the mutex is still active
                             # to avoid a race condition, as there's still some instability if a
                             # second request tries to start the VM while it is still stopping.
-                            executor.dismantle()
+                            executor.compute_handler.backend.master.stop()
                 except Exception as exc:
                     exception = exc
 
@@ -332,7 +332,6 @@ class Executor:
 
         if executor.config['lithops']['mode'] == 'standalone':
             # Set number of parallel workers based on memory requirements
-            # Lithops>=2.2.17 can configure this via `.map(worker_processes=workers)`
             executor.config['lithops']['worker_processes'] = min(
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
