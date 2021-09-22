@@ -357,7 +357,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
                 <line stroke="currentColor" x2="-6"></line><text fill="currentColor" x="-11" dy="0.32em">100</text>
               </g>
             </g><text class="intensity-axis-label" transform="translate(-30, 120) rotate(-90)">Relative intensity</text><text style="text-anchor: middle;" transform="translate(60, 270) ">m/z</text>
-            <g class="sample-graph refSample">
+            <g class="sample-graph soloSample">
               <g>
                 <circle cx="9.999999999999526" cy="0" r="4"></circle>
                 <circle cx="110.00000000000047" cy="96" r="4"></circle>
@@ -371,26 +371,7 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
                 <rect width="0.06060000000047694" height="144" x="109.96970000000023" y="96"></rect>
               </g>
             </g>
-            <g class="sample-graph compSample">
-              <g>
-                <circle cx="9.999999999999526" cy="0" r="4"></circle>
-                <circle cx="110.00000000000047" cy="96" r="4"></circle>
-              </g>
-              <g>
-                <line x1="9.999999999999526" x2="9.999999999999526" y1="0" y2="240"></line>
-                <line x1="110.00000000000047" x2="110.00000000000047" y1="96" y2="240"></line>
-              </g>
-              <g>
-                <rect width="0.0599999999991514" height="240" x="9.969999999999951" y="0"></rect>
-                <rect width="0.06060000000047694" height="144" x="109.96970000000023" y="96"></rect>
-              </g>
-            </g>
-            <g class="theor-graph refTheor">
-              <g>
-                <path d="M0,240L9.999999999999526,237.6L19.99999999999905,240L100.00000000000095,240L110.00000000000047,238.8L120,240"></path>
-              </g>
-            </g>
-            <g class="theor-graph compTheor">
+            <g class="theor-graph soloTheor">
               <g>
                 <path d="M0,240L9.999999999999526,237.6L19.99999999999905,240L100.00000000000095,240L110.00000000000047,238.8L120,240"></path>
               </g>
