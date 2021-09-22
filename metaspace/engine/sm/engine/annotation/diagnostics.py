@@ -137,7 +137,8 @@ def del_diagnostics(ds_id: str, job_ids: Optional[List[int]] = None):
 
         # Delete existing DB rows
         db.alter(
-            'DELETE FROM dataset_diagnostic WHERE id = ANY(%s)', [row['id'] for row in existing]
+            'DELETE FROM dataset_diagnostic WHERE id = ANY(%s)',
+            ([row['id'] for row in existing],),
         )
 
 
