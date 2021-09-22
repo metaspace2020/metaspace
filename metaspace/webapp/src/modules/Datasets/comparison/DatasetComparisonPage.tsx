@@ -2,8 +2,10 @@ import { Collapse, CollapseItem } from '../../../lib/element-ui'
 import {
   computed,
   defineComponent,
-  onMounted, reactive,
-  ref, watchEffect,
+  onMounted,
+  reactive,
+  ref,
+  watchEffect,
 } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
 import { comparisonAnnotationListQuery } from '../../../api/annotation'
@@ -15,16 +17,21 @@ import { DatasetComparisonGrid } from './DatasetComparisonGrid'
 import gql from 'graphql-tag'
 import FilterPanel from '../../Filters/FilterPanel.vue'
 import config from '../../../lib/config'
-import { DatasetListItem, datasetListItemsQuery } from '../../../api/dataset'
+import {
+  DatasetListItemWithDiagnostics,
+  datasetListItemsWithDiagnosticsQuery,
+} from '../../../api/dataset'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import { DatasetComparisonShareLink } from './DatasetComparisonShareLink'
 import { uniqBy } from 'lodash-es'
+import { readNpy } from '../../../lib/npyHandler'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
+  isNormalized: boolean
   scaleBarColor: string
   scaleType: string
   colormap: string
@@ -53,6 +60,7 @@ interface DatasetComparisonPageState {
   annotationLoading: boolean
   isLoading: any
   collapse: string[]
+  normalizationData: any
 }
 
 export default defineComponent<DatasetComparisonPageProps>({
@@ -87,6 +95,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       gridState: {},
       globalImageSettings: {
         resetViewPort: false,
+        isNormalized: false,
         scaleBarColor: '#000000',
         scaleType: 'linear',
         colormap: 'Viridis',
@@ -105,20 +114,15 @@ export default defineComponent<DatasetComparisonPageProps>({
       showViewer: false,
       annotationLoading: true,
       isLoading: false,
+      normalizationData: {},
     })
     const { dataset_id: sourceDsId } = $route.params
     const { viewId: snapshotId } = $route.query
     const {
       result: settingsResult,
-      onResult: onSnapshotResult,
     } = useQuery<any>(fetchImageViewerSnapshot, {
       id: snapshotId,
       datasetId: sourceDsId,
-    })
-
-    onSnapshotResult(async(result) => {
-      // enable datasets name query, now that the ids where gotten
-      dsQueryOptions.enabled = true
     })
 
     const gridSettings = computed(() => settingsResult.value != null
@@ -148,16 +152,66 @@ export default defineComponent<DatasetComparisonPageProps>({
     const {
       result: annotationsResult,
       loading: annotationsLoading,
+      onResult: onAnnotationsResult,
     } = useQuery<any>(comparisonAnnotationListQuery, queryVars, queryOptions)
-    const datasetsQuery = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery,
-      {
+
+    onAnnotationsResult(async(result) => {
+      // enable datasets name query, now that the ids where gotten
+      dsQueryOptions.enabled = true
+    })
+
+    const {
+      result: datasetsResult,
+      onResult: onDatasetsResult,
+    } = useQuery<{allDatasets: DatasetListItemWithDiagnostics[]}>(datasetListItemsWithDiagnosticsQuery,
+      () => ({
         dFilter: {
           ...queryVariables().dFilter,
           ids:
             gridSettings.value ? Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid || {})
               .join('|') : '',
         },
-      }, dsQueryOptions)
+      }), dsQueryOptions)
+
+    onDatasetsResult(async(result) => {
+      const normalizationData : any = {}
+      // calculate normalization
+      if (result && result.data && result.data.allDatasets) {
+        for (let i = 0; i < result.data.allDatasets.length; i++) {
+          const dataset = result.data.allDatasets[i]
+          try {
+            const tics = dataset.diagnostics.filter((diagnostic : any) => diagnostic.type === 'TIC')
+            const tic = tics[0].images.filter((image: any) => image.key === 'TIC' && image.format === 'NPY')
+            const { data, shape } = await readNpy(tic[0].url)
+            const metadata = safeJsonParse(tics[0].data)
+            metadata.maxTic = metadata.max_tic
+            metadata.minTic = metadata.min_tic
+            delete metadata.max_tic
+            delete metadata.min_tic
+
+            normalizationData[dataset.id] = {
+              data,
+              shape,
+              metadata: metadata,
+              type: 'TIC',
+              showFullTIC: false,
+              error: false,
+            }
+          } catch (e) {
+            normalizationData[dataset.id] = {
+              data: null,
+              shape: null,
+              metadata: null,
+              showFullTIC: null,
+              type: 'TIC',
+              error: true,
+            }
+          }
+        }
+      }
+      state.normalizationData = normalizationData
+    })
+
     const loadAnnotations = () => { queryOptions.enabled = true }
     state.annotations = computed(() => {
       if (annotationsResult.value) {
@@ -166,8 +220,8 @@ export default defineComponent<DatasetComparisonPageProps>({
       return null
     })
     const datasets = computed(() => {
-      if (datasetsQuery.result.value) {
-        return datasetsQuery.result.value.allDatasets
+      if (datasetsResult.value) {
+        return datasetsResult.value.allDatasets
       }
       return null
     })
@@ -199,6 +253,12 @@ export default defineComponent<DatasetComparisonPageProps>({
           handleColormapChange(auxSettings.colormap)
         } else if ($route.query.cmap) {
           handleColormapChange($route.query.cmap)
+        }
+
+        if (auxSettings.norm) {
+          handleNormalizationChange(true)
+        } else if ($route.query.norm) {
+          handleNormalizationChange(true)
         }
 
         if (auxSettings.scaleType) {
@@ -246,6 +306,10 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     const handleColormapChange = (colormap: string) => {
       state.globalImageSettings.colormap = colormap
+    }
+
+    const handleNormalizationChange = (isNormalized: boolean) => {
+      state.globalImageSettings.isNormalized = isNormalized
     }
 
     const handleTemplateChange = (dsId: string) => {
@@ -352,7 +416,8 @@ export default defineComponent<DatasetComparisonPageProps>({
             scaleType={state.globalImageSettings?.scaleType}
             onScaleTypeChange={handleScaleTypeChange}
             showIntensityTemplate={true}
-            hideNormalization={true}
+            showNormalizedBadge={state.collapse.includes('images') && state.globalImageSettings.isNormalized}
+            onNormalizationChange={handleNormalizationChange}
             colormap={state.globalImageSettings?.colormap}
             onColormapChange={handleColormapChange}
             lockedTemplate={state.globalImageSettings.selectedLockTemplate}
@@ -361,8 +426,7 @@ export default defineComponent<DatasetComparisonPageProps>({
             hasOpticalImage={false}
             resetViewport={resetViewPort}
             toggleOpticalImage={() => {}}
-            lockTemplateOptions={uniqBy(datasets.value, 'id')
-              .filter((ds: any) => Object.values(state.grid).includes(ds.id))}
+            lockTemplateOptions={uniqBy(datasets.value, 'id')}
           />
           <ImageSaver
             class="absolute top-0 right-0 mt-2 mr-2 dom-to-image-hidden"
@@ -384,8 +448,10 @@ export default defineComponent<DatasetComparisonPageProps>({
                 scaleBarColor={state.globalImageSettings.scaleBarColor}
                 scaleType={state.globalImageSettings.scaleType}
                 colormap={state.globalImageSettings.colormap}
+                isNormalized={state.globalImageSettings.isNormalized}
                 settings={gridSettings}
                 annotations={state.annotations || []}
+                normalizationData={state.normalizationData}
                 datasets={datasets.value || []}
                 selectedAnnotation={state.selectedAnnotation}
                 isLoading={state.isLoading || annotationsLoading.value}
@@ -431,7 +497,6 @@ export default defineComponent<DatasetComparisonPageProps>({
     return () => {
       const nCols = state.nCols
       const nRows = state.nRows
-
       if (!snapshotId) {
         return (
           <div class='dataset-comparison-page w-full flex flex-wrap flex-row items-center justify-center'>

@@ -3,6 +3,16 @@
   min-height: 200px;
   overflow-x: auto;
 
+  .normalization-error-wrapper{
+    height: 350px;
+    width: 100%;
+    @apply flex items-center justify-center;
+  }
+
+  .info-icon{
+    font-size: 20px;
+  }
+
   .dataset-comparison-extra{
     position: absolute;
     right: 8px;

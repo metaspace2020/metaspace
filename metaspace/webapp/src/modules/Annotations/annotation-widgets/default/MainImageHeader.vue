@@ -130,6 +130,9 @@ export default class MainImageHeader extends Vue {
     @Prop({ required: true, type: Boolean })
     isActive!: boolean
 
+    @Prop({ type: Boolean, default: () => false })
+    showNormalizedBadge: boolean
+
     @Prop({ type: Boolean })
     hideOptions: boolean | undefined
 
@@ -147,7 +150,7 @@ export default class MainImageHeader extends Vue {
     }
 
     get isNormalized() {
-      return this.$store.getters.settings.annotationView.normalization && this.isActive
+      return this.showNormalizedBadge || (this.$store.getters.settings.annotationView.normalization && this.isActive)
     }
 
     onScaleBarColorChange(color: string | null) {

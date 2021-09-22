@@ -33,9 +33,11 @@ interface DatasetComparisonGridProps {
   scaleBarColor: string
   selectedAnnotation: number
   annotations: any[]
+  normalizationData: any
   datasets: any[]
   isLoading: boolean
   resetViewPort: boolean
+  isNormalized: boolean
   lockedIntensityTemplate: string
   globalLockedIntensities: [number | undefined, number | undefined]
 }
@@ -95,6 +97,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       type: Array,
       required: true,
     },
+    normalizationData: {
+      type: Object,
+      default: () => {},
+    },
     datasets: {
       type: Array,
       required: true,
@@ -104,6 +110,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       default: false,
     },
     resetViewPort: {
+      type: Boolean,
+      default: false,
+    },
+    isNormalized: {
       type: Boolean,
       default: false,
     },
@@ -428,12 +438,13 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const ionImage = (ionImagePng: any, isotopeImage: any,
-      scaleType: any = 'linear', userScaling: any = [0, 1]) => {
+      scaleType: any = 'linear', userScaling: any = [0, 1], normalizedData: any = null) => {
       if (!isotopeImage || !ionImagePng) {
         return null
       }
       const { minIntensity, maxIntensity } = isotopeImage
-      return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType, userScaling)
+      return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType
+        , userScaling, undefined, normalizedData)
     }
 
     const ionImageLayers = (key: string) => {
@@ -445,7 +456,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
       const finalImage = ionImage(gridCell.ionImagePng,
         annotation.isotopeImages[0],
-        props.scaleType, gridCell.imageScaledScaling)
+        props.scaleType, gridCell.imageScaledScaling,
+        props.isNormalized && props.normalizationData
+          ? props.normalizationData[annotation.dataset.id] : null)
       const hasOpticalImage = annotation.dataset.opticalImages[0]?.url !== undefined
 
       if (finalImage) {
@@ -705,6 +718,23 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           </div>)
       }
 
+      if (props.isNormalized && annData && annData.dataset && annData.dataset.id
+        && props.normalizationData[annData.dataset.id] && props.normalizationData[annData.dataset.id].error) {
+        return (
+          <div key={col} class='dataset-comparison-grid-col overflow-hidden relative'
+            style={{ height: 200, width: 200 }}>
+            {gridCell && renderDatasetName(row, col)}
+            <div
+              class="normalization-error-wrapper"
+            >
+              <i class="el-icon-error info-icon mr-2" />
+              <p class="text-lg">
+              There was an error on normalization!
+              </p>
+            </div>
+          </div>
+        )
+      }
       return (
         <div key={col} class='dataset-comparison-grid-col overflow-hidden relative'
           style={{ height: 200, width: 200 }}>
