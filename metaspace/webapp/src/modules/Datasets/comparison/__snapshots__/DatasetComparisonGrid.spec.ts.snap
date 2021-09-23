@@ -519,14 +519,24 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
         <div
           class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar"
         >
-          <transition-stub
-            class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden"
-            enteractiveclass="duration-150 transition-opacity ease-in-out"
-            enterclass="opacity-0"
-            leaveactiveclass="duration-150 transition-opacity ease-in-out"
-            leavetoclass="opacity-0"
-            mode="out-in"
-          />
+          <div
+            class="flex absolute bottom-0 right-0 my-3 ml-3 dom-to-image-hidden"
+          >
+            <transition-stub
+              enteractiveclass="duration-150 transition-opacity ease-in-out"
+              enterclass="opacity-0"
+              leaveactiveclass="duration-150 transition-opacity ease-in-out"
+              leavetoclass="opacity-0"
+              mode="out-in"
+            />
+            <transition-stub
+              enteractiveclass="duration-150 transition-opacity ease-in-out"
+              enterclass="opacity-0"
+              leaveactiveclass="duration-150 transition-opacity ease-in-out"
+              leavetoclass="opacity-0"
+              mode="out-in"
+            />
+          </div>
           <transition-stub
             class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden"
             enteractiveclass="duration-150 transition-opacity ease-in-out"
@@ -1140,14 +1150,24 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
         <div
           class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar"
         >
-          <transition-stub
-            class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden"
-            enteractiveclass="duration-150 transition-opacity ease-in-out"
-            enterclass="opacity-0"
-            leaveactiveclass="duration-150 transition-opacity ease-in-out"
-            leavetoclass="opacity-0"
-            mode="out-in"
-          />
+          <div
+            class="flex absolute bottom-0 right-0 my-3 ml-3 dom-to-image-hidden"
+          >
+            <transition-stub
+              enteractiveclass="duration-150 transition-opacity ease-in-out"
+              enterclass="opacity-0"
+              leaveactiveclass="duration-150 transition-opacity ease-in-out"
+              leavetoclass="opacity-0"
+              mode="out-in"
+            />
+            <transition-stub
+              enteractiveclass="duration-150 transition-opacity ease-in-out"
+              enterclass="opacity-0"
+              leaveactiveclass="duration-150 transition-opacity ease-in-out"
+              leavetoclass="opacity-0"
+              mode="out-in"
+            />
+          </div>
           <transition-stub
             class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden"
             enteractiveclass="duration-150 transition-opacity ease-in-out"

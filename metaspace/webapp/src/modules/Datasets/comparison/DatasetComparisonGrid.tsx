@@ -51,6 +51,7 @@ interface GridCellState {
   imageFit: Readonly<FitImageToAreaResult>
   lockedIntensities: [number | undefined, number | undefined]
   annotImageOpacity: number
+  opticalOpacity: number
   imagePosition: ImagePosition,
   pixelAspectRatio: number
   imageZoom: number
@@ -260,6 +261,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           imageFit: computed(() => imageFit(key)),
           lockedIntensities: [undefined, undefined],
           annotImageOpacity: 1.0,
+          opticalOpacity: 1.0,
           imagePosition: defaultImagePosition(),
           pixelAspectRatio:
             config.features.ignore_pixel_aspect_ratio ? 1
@@ -533,6 +535,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       state.gridState[key]!.annotImageOpacity = opacity
     }
 
+    const handleOpticalOpacityChange = (opacity: any, key: string) => {
+      state.gridState[key]!.opticalOpacity = opacity
+    }
+
     const handleUserScalingChange = (userScaling: any, key: string, ignoreBoundaries: boolean = false) => {
       const gridCell = state.gridState[key]
       if (gridCell == null) {
@@ -802,6 +808,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 pixelSizeX={gridCell.pixelSizeX}
                 pixelSizeY={gridCell.pixelSizeY}
                 pixelAspectRatio={gridCell.pixelAspectRatio}
+                opticalOpacity={gridCell.opticalOpacity}
                 imageHeight={gridCell.ionImageLayers[0]?.ionImage?.height }
                 imageWidth={gridCell.ionImageLayers[0]?.ionImage?.width }
                 height={dimensions.height}
@@ -824,20 +831,37 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
               />
             }
             <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
-              <FadeTransition class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden">
-                {
-                  gridCell?.showOpticalImage
-                  && annData?.dataset?.opticalImages[0]?.url
-                  !== undefined
-                  && <OpacitySettings
-                    key="opacity"
-                    class="ds-comparison-opacity-item sm-leading-trim mt-auto dom-to-image-hidden"
-                    opacity={gridCell.annotImageOpacity !== undefined
-                      ? gridCell.annotImageOpacity : 1}
-                    onOpacity={(opacity: number) => handleOpacityChange(opacity, key)}
-                  />
-                }
-              </FadeTransition>
+              <div class="flex absolute bottom-0 right-0 my-3 ml-3 dom-to-image-hidden">
+                <FadeTransition>
+                  {
+                    gridCell?.showOpticalImage
+                    && annData?.dataset?.opticalImages[0]?.url
+                    !== undefined
+                    && <OpacitySettings
+                      key="opticalOpacity"
+                      label="Optical image visibility"
+                      class="ds-comparison-opacity-item m-1 sm-leading-trim mt-auto dom-to-image-hidden"
+                      opacity={gridCell.opticalOpacity !== undefined
+                        ? gridCell.opticalOpacity : 1}
+                      onOpacity={(opacity: number) => handleOpticalOpacityChange(opacity, key)}
+                    />
+                  }
+                </FadeTransition>
+                <FadeTransition>
+                  {
+                    gridCell?.showOpticalImage
+                    && annData?.dataset?.opticalImages[0]?.url
+                    !== undefined
+                    && <OpacitySettings
+                      key="opacity"
+                      class="ds-comparison-opacity-item m-1 sm-leading-trim mt-auto dom-to-image-hidden"
+                      opacity={gridCell.annotImageOpacity !== undefined
+                        ? gridCell.annotImageOpacity : 1}
+                      onOpacity={(opacity: number) => handleOpacityChange(opacity, key)}
+                    />
+                  }
+                </FadeTransition>
+              </div>
               <FadeTransition class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden">
                 {
                   state.refsLoaded
