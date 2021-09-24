@@ -70,6 +70,7 @@ export interface DatasetDetailItem {
   canDelete: boolean;
   canDownload: boolean;
   uploadDT: string;
+  diagnostics: any;
 }
 
 export const datasetDetailItemFragment =
@@ -366,6 +367,18 @@ export const getDatasetByIdWithPathQuery =
     dataset(id: $id) {
       ...DatasetDetailItem
       inputPath
+      diagnostics {
+        id
+        type
+        updatedDT
+        data
+        images {
+          key
+          index
+          url
+          format
+        }
+      }
     }
   }
   ${datasetDetailItemFragment}

@@ -1,7 +1,7 @@
 import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { Select, Option, RadioGroup, Radio, InputNumber, Input } from '../../../lib/element-ui'
 import { useQuery } from '@vue/apollo-composable'
-import { GetDatasetByIdQuery, getDatasetByIdWithPathQuery } from '../../../api/dataset'
+import { GetDatasetByIdQuery, getDatasetByIdWithPathQuery, getDatasetDiagnosticsQuery } from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
 import safeJsonParse from '../../../lib/safeJsonParse'
@@ -10,6 +10,7 @@ import './DatasetBrowserPage.scss'
 import SimpleIonImageViewer from './SimpleIonImageViewer'
 import { calculateMzFromFormula, isFormulaValid } from '../../../lib/formulaParser'
 import reportError from '../../../lib/reportError'
+import { readNpy } from '../../../lib/npyHandler'
 
 interface DatasetBrowserProps {
   className: string
@@ -30,6 +31,7 @@ interface DatasetBrowserState {
   invalidFormula: boolean
   metadata: any
   annotation: any
+  normalizationData: any
   x: number | undefined
   y: number | undefined
 }
@@ -65,6 +67,7 @@ export default defineComponent<DatasetBrowserProps>({
       y: undefined,
       ionImageUrl: undefined,
       sampleData: [],
+      normalizationData: {},
       invalidFormula: false,
     })
 
@@ -90,8 +93,41 @@ export default defineComponent<DatasetBrowserProps>({
     const datasetId = computed(() => $route.params.dataset_id)
     const {
       result: datasetResult,
+      onResult: onDatasetsResult,
     } = useQuery<GetDatasetByIdQuery>(getDatasetByIdWithPathQuery, {
       id: datasetId,
+    })
+
+    onDatasetsResult(async(result) => {
+      try {
+        const dataset = result!.data.dataset
+        const tics = dataset.diagnostics.filter((diagnostic: any) => diagnostic.type === 'TIC')
+        const tic = tics[0].images.filter((image: any) => image.key === 'TIC' && image.format === 'NPY')
+        const { data, shape } = await readNpy(tic[0].url)
+        const metadata = safeJsonParse(tics[0].data)
+        metadata.maxTic = metadata.max_tic
+        metadata.minTic = metadata.min_tic
+        delete metadata.max_tic
+        delete metadata.min_tic
+
+        state.normalizationData = {
+          data,
+          shape,
+          metadata: metadata,
+          type: 'TIC',
+          showFullTIC: false,
+          error: false,
+        }
+      } catch (e) {
+        state.normalizationData = {
+          data: null,
+          shape: null,
+          metadata: null,
+          showFullTIC: null,
+          type: 'TIC',
+          error: true,
+        }
+      }
     })
 
     const queryOptions = reactive({ enabled: true, fetchPolicy: 'no-cache' as const })
@@ -470,6 +506,7 @@ export default defineComponent<DatasetBrowserProps>({
                     ionImageUrl={state.ionImageUrl}
                     pixelSizeX={getPixelSizeX()}
                     pixelSizeY={getPixelSizeY()}
+                    normalizationData={state.normalizationData}
                     onPixelSelected={handlePixelSelect}
                   />
                 }
