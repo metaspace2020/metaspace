@@ -288,7 +288,7 @@ export const processIonImage = (
     : extractIntensityAndMask(png, minIntensity, maxIntensity, normalizationData)
 
   // assign normalized intensities
-  if (normalizationData && scaleType !== 'hist') {
+  if (normalizationData && normalizationData.metadata && scaleType !== 'hist') {
     maxIntensity = normalizationData ? maxIntensity / normalizationData.metadata.maxTic * 1000000 : maxIntensity
     userMax = maxIntensity
   }
@@ -326,7 +326,7 @@ export const processIonImage = (
     rankValues = getRankValues(values, lowQuantile, highQuantile)
 
     // reassign intensity values to be displayed if normalized
-    if (normalizationData) {
+    if (normalizationData && normalizationData.metadata) {
       maxIntensity = normalizationData ? maxIntensity / normalizationData.metadata.maxTic * 1000000 : maxIntensity
       userMax = maxIntensity
       max = maxIntensity

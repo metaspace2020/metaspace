@@ -33,9 +33,11 @@ interface DatasetComparisonGridProps {
   scaleBarColor: string
   selectedAnnotation: number
   annotations: any[]
+  normalizationData: any
   datasets: any[]
   isLoading: boolean
   resetViewPort: boolean
+  isNormalized: boolean
   lockedIntensityTemplate: string
   globalLockedIntensities: [number | undefined, number | undefined]
 }
@@ -49,6 +51,7 @@ interface GridCellState {
   imageFit: Readonly<FitImageToAreaResult>
   lockedIntensities: [number | undefined, number | undefined]
   annotImageOpacity: number
+  opticalOpacity: number
   imagePosition: ImagePosition,
   pixelAspectRatio: number
   imageZoom: number
@@ -95,6 +98,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       type: Array,
       required: true,
     },
+    normalizationData: {
+      type: Object,
+      default: () => {},
+    },
     datasets: {
       type: Array,
       required: true,
@@ -104,6 +111,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       default: false,
     },
     resetViewPort: {
+      type: Boolean,
+      default: false,
+    },
+    isNormalized: {
       type: Boolean,
       default: false,
     },
@@ -250,6 +261,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           imageFit: computed(() => imageFit(key)),
           lockedIntensities: [undefined, undefined],
           annotImageOpacity: 1.0,
+          opticalOpacity: 1.0,
           imagePosition: defaultImagePosition(),
           pixelAspectRatio:
             config.features.ignore_pixel_aspect_ratio ? 1
@@ -428,12 +440,13 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const ionImage = (ionImagePng: any, isotopeImage: any,
-      scaleType: any = 'linear', userScaling: any = [0, 1]) => {
+      scaleType: any = 'linear', userScaling: any = [0, 1], normalizedData: any = null) => {
       if (!isotopeImage || !ionImagePng) {
         return null
       }
       const { minIntensity, maxIntensity } = isotopeImage
-      return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType, userScaling)
+      return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType
+        , userScaling, undefined, normalizedData)
     }
 
     const ionImageLayers = (key: string) => {
@@ -445,7 +458,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
       const finalImage = ionImage(gridCell.ionImagePng,
         annotation.isotopeImages[0],
-        props.scaleType, gridCell.imageScaledScaling)
+        props.scaleType, gridCell.imageScaledScaling,
+        props.isNormalized && props.normalizationData
+          ? props.normalizationData[annotation.dataset.id] : null)
       const hasOpticalImage = annotation.dataset.opticalImages[0]?.url !== undefined
 
       if (finalImage) {
@@ -518,6 +533,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
     const handleOpacityChange = (opacity: any, key: string) => {
       state.gridState[key]!.annotImageOpacity = opacity
+    }
+
+    const handleOpticalOpacityChange = (opacity: any, key: string) => {
+      state.gridState[key]!.opticalOpacity = opacity
     }
 
     const handleUserScalingChange = (userScaling: any, key: string, ignoreBoundaries: boolean = false) => {
@@ -705,6 +724,23 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           </div>)
       }
 
+      if (props.isNormalized && annData && annData.dataset && annData.dataset.id
+        && props.normalizationData[annData.dataset.id] && props.normalizationData[annData.dataset.id].error) {
+        return (
+          <div key={col} class='dataset-comparison-grid-col overflow-hidden relative'
+            style={{ height: 200, width: 200 }}>
+            {gridCell && renderDatasetName(row, col)}
+            <div
+              class="normalization-error-wrapper"
+            >
+              <i class="el-icon-error info-icon mr-2" />
+              <p class="text-lg">
+              There was an error on normalization!
+              </p>
+            </div>
+          </div>
+        )
+      }
       return (
         <div key={col} class='dataset-comparison-grid-col overflow-hidden relative'
           style={{ height: 200, width: 200 }}>
@@ -772,6 +808,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 pixelSizeX={gridCell.pixelSizeX}
                 pixelSizeY={gridCell.pixelSizeY}
                 pixelAspectRatio={gridCell.pixelAspectRatio}
+                opticalOpacity={gridCell.opticalOpacity}
                 imageHeight={gridCell.ionImageLayers[0]?.ionImage?.height }
                 imageWidth={gridCell.ionImageLayers[0]?.ionImage?.width }
                 height={dimensions.height}
@@ -794,20 +831,37 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
               />
             }
             <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
-              <FadeTransition class="absolute bottom-0 right-0 mt-3 ml-3 dom-to-image-hidden">
-                {
-                  gridCell?.showOpticalImage
-                  && annData?.dataset?.opticalImages[0]?.url
-                  !== undefined
-                  && <OpacitySettings
-                    key="opacity"
-                    class="ds-comparison-opacity-item sm-leading-trim mt-auto dom-to-image-hidden"
-                    opacity={gridCell.annotImageOpacity !== undefined
-                      ? gridCell.annotImageOpacity : 1}
-                    onOpacity={(opacity: number) => handleOpacityChange(opacity, key)}
-                  />
-                }
-              </FadeTransition>
+              <div class="flex absolute bottom-0 right-0 my-3 ml-3 dom-to-image-hidden">
+                <FadeTransition>
+                  {
+                    gridCell?.showOpticalImage
+                    && annData?.dataset?.opticalImages[0]?.url
+                    !== undefined
+                    && <OpacitySettings
+                      key="opticalOpacity"
+                      label="Optical image visibility"
+                      class="ds-comparison-opacity-item m-1 sm-leading-trim mt-auto dom-to-image-hidden"
+                      opacity={gridCell.opticalOpacity !== undefined
+                        ? gridCell.opticalOpacity : 1}
+                      onOpacity={(opacity: number) => handleOpticalOpacityChange(opacity, key)}
+                    />
+                  }
+                </FadeTransition>
+                <FadeTransition>
+                  {
+                    gridCell?.showOpticalImage
+                    && annData?.dataset?.opticalImages[0]?.url
+                    !== undefined
+                    && <OpacitySettings
+                      key="opacity"
+                      class="ds-comparison-opacity-item m-1 sm-leading-trim mt-auto dom-to-image-hidden"
+                      opacity={gridCell.annotImageOpacity !== undefined
+                        ? gridCell.annotImageOpacity : 1}
+                      onOpacity={(opacity: number) => handleOpacityChange(opacity, key)}
+                    />
+                  }
+                </FadeTransition>
+              </div>
               <FadeTransition class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden">
                 {
                   state.refsLoaded

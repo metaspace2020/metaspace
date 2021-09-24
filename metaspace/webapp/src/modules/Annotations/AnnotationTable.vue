@@ -666,7 +666,7 @@ export default Vue.extend({
         const dataset = resp.data.dataset
         const tics = dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
         const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
-        const { data, shape, image } = await readNpy(tic[0].url)
+        const { data, shape } = await readNpy(tic[0].url)
         const metadata = safeJsonParse(tics[0].data)
         metadata.maxTic = metadata.max_tic
         metadata.minTic = metadata.min_tic

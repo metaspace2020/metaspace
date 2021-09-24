@@ -3,6 +3,28 @@
   min-height: 200px;
   overflow-x: auto;
 
+
+  .ds-comparison-opacity-item{
+    min-width: 170px;
+
+    span{
+      font-size: 10px;
+      line-height: 1.2rem;
+      white-space: nowrap;
+      margin-left: 1px;
+    }
+  }
+
+  .normalization-error-wrapper{
+    height: 350px;
+    width: 100%;
+    @apply flex items-center justify-center;
+  }
+
+  .info-icon{
+    font-size: 20px;
+  }
+
   .dataset-comparison-extra{
     position: absolute;
     right: 8px;
