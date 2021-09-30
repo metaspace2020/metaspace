@@ -27,11 +27,14 @@ interface DatasetComparisonDialogState {
   showOptions: boolean
   firstStepError: boolean
   secondStepError: boolean
+  maxCellError: boolean
   finalStepError: boolean
   loading: boolean
   arrangement: {[key: string] : string}
   datasetName: string
 }
+
+const MAX_CELLS = 10
 
 export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogProps>({
   name: 'DatasetComparisonDialog',
@@ -50,6 +53,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
       showOptions: true,
       firstStepError: false,
       secondStepError: false,
+      maxCellError: false,
       finalStepError: false,
       arrangement: {},
       loading: false,
@@ -188,14 +192,23 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                     }
                   </Select>
                   {
+                    state.maxCellError
+                    && <ErrorLabelText class='mt-0'>
+                      Only up to {MAX_CELLS} datasets can be selected!
+                    </ErrorLabelText>
+                  }
+                  {
                     state.firstStepError
                     && <ErrorLabelText class='mt-0'>
                       Please select at least two datasets to be compared!
                     </ErrorLabelText>
                   }
                   <Button onClick={async() => {
-                    if (state.selectedDatasetIds.length > 1) {
+                    if (state.selectedDatasetIds.length > MAX_CELLS) {
+                      state.maxCellError = true
+                    } else if (state.selectedDatasetIds.length > 1) {
                       state.firstStepError = false
+                      state.maxCellError = false
                       state.workflowStep = 2
                     } else {
                       state.firstStepError = true
@@ -266,6 +279,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                         state.secondStepError = true
                       } else {
                         state.secondStepError = false
+                        state.maxCellError = false
                         state.workflowStep = 3
                       }
                     }} type="primary">
