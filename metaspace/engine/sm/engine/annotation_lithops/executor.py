@@ -25,7 +25,7 @@ TRet = TypeVar('TRet')
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
 RUNTIME_CF_VPC = 'metaspace2020/metaspace-lithops:1.9.0'
-RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:1.8.6.11'
+RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:1.9.0'
 MEM_LIMITS = {
     'localhost': 32768,
     'ibm_cf': 4096,
