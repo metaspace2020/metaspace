@@ -70,6 +70,7 @@ export interface DatasetDetailItem {
   canDelete: boolean;
   canDownload: boolean;
   uploadDT: string;
+  diagnostics: any;
 }
 
 export const datasetDetailItemFragment =
@@ -164,12 +165,40 @@ export interface DatasetListItem {
   uploadDT: string;
 }
 
+export interface DatasetListItemWithDiagnostics {
+  id: string;
+  name: string;
+  uploadDT: string;
+  diagnostics: any;
+}
+
 export const datasetListItemsQuery =
   gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $limit: Int = 10000) {
     allDatasets(offset: 0, limit: $limit, filter: $dFilter, simpleQuery: $query) {
       id
       name
       uploadDT
+    }
+  }`
+
+export const datasetListItemsWithDiagnosticsQuery =
+  gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $limit: Int = 10000) {
+    allDatasets(offset: 0, limit: $limit, filter: $dFilter, simpleQuery: $query) {
+      id
+      name
+      uploadDT
+      diagnostics {
+        id
+        type
+        updatedDT
+        data
+        images {
+          key
+          index
+          url
+          format
+        }
+      }
     }
   }`
 
@@ -313,12 +342,43 @@ export const getDatasetByIdQuery =
   ${datasetDetailItemFragment}
 `
 
+export const getDatasetDiagnosticsQuery =
+gql`query getDatasetDiagnosticsQuery($id: String!) {
+  dataset(id: $id) {
+      id
+      diagnostics {
+        id
+        type
+        updatedDT
+        data
+        images {
+          key
+          index
+          url
+          format
+        }
+      }
+    }
+}`
+
 export const getDatasetByIdWithPathQuery =
   gql`query getDatasetByIdQuery($id: String!, $inpFdrLvls: [Int!] = [5, 10, 20, 50],
   $checkLvl: Int = 10) {
     dataset(id: $id) {
       ...DatasetDetailItem
       inputPath
+      diagnostics {
+        id
+        type
+        updatedDT
+        data
+        images {
+          key
+          index
+          url
+          format
+        }
+      }
     }
   }
   ${datasetDetailItemFragment}

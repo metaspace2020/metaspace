@@ -1,9 +1,8 @@
 # Ansible project for setting up machines running SM platform
 
-## Installation Types Supported
-* ~[Vagrant virtualbox Installation](vbox/README.md)~ (Removed in favor of Docker installations)
-* [AWS Installation](aws/README.md)
-* [Docker installation](../docker/README.md)
+## Documentation
+
+Documentation is in the [wiki](https://github.com/metaspace2020/metaspace/wiki/Ansible-server-provisioning-and-deployment)
 
 ## Acknowledgements and license
 

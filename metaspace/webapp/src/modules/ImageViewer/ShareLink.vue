@@ -127,7 +127,7 @@ export default defineComponent<Props>({
       try {
         const annotationIonsQuery = await root.$apollo.query({
           query: gql`query AnnotationNames($ids: String) {
-                    options: allAnnotations(filter: {annotationId: $ids}) {
+                    options: allAnnotations(filter: {annotationId: $ids}, limit: 100) {
                       ion
                       database
                       databaseDetails {
@@ -140,7 +140,6 @@ export default defineComponent<Props>({
           },
         })
         const annotationIons = annotationIonsQuery.data.options
-
         const result = await root.$apollo.mutate({
           mutation: gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
             saveImageViewerSnapshot(input: $input)
@@ -156,6 +155,7 @@ export default defineComponent<Props>({
                 annotationIons,
                 filter: store.getters.filter,
                 ionImage: ionImage.snapshot,
+                query: props.route.query,
               }),
               datasetId: props.annotation.dataset.id,
             },

@@ -155,6 +155,10 @@ export default {
     state.annotation = annotation;
   },
 
+  setNormalizationMatrix(state, normalizationMatrix) {
+    state.normalization = normalizationMatrix;
+  },
+
   setSnapshotAnnotationIds(state, annotation) {
     state.snapshotAnnotationIds = annotation;
   },
@@ -202,6 +206,13 @@ export default {
       query: lockTemplate
         ? { ...state.route.query, lock: lockTemplate }
         : omit(state.route.query, 'lock'),
+    });
+  },
+
+  setNormalization(state, normalization) {
+    router.replace({
+      query: !normalization ? omit(state.route.query, 'norm')
+        : {...state.route.query, norm: normalization }
     });
   },
 

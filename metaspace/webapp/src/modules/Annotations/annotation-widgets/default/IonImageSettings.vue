@@ -44,7 +44,7 @@
           <div slot="reference">
             Intensity lock
             <new-feature-badge feature-key="template-intensity-lock">
-              <i class="el-icon-question metadata-help-icon ml-1" />
+              <i class="el-icon-question cursor-pointer ml-1" />
             </new-feature-badge>
           </div>
           <div class="max-w-xs">
@@ -67,6 +67,31 @@
           >
           </el-option>
         </el-select>
+      </el-form-item>
+      <el-form-item
+        v-if="!hideNormalization"
+        label=""
+      >
+        <el-checkbox
+          :value="normalization"
+          @change="onNormalizationChange"
+        >
+          <div class="font-thin flex flex-row items-center">
+            TIC normalization
+            <el-popover
+              trigger="hover"
+              placement="right"
+            >
+              <div slot="reference">
+                <i class="el-icon-question cursor-pointer ml-1" />
+              </div>
+              <div class="max-w-xs">
+                This ion image was TIC-normalized.
+                The intensities were divided by the TIC value and then scaled by multiplying by 1e+6.
+              </div>
+            </el-popover>
+          </div>
+        </el-checkbox>
       </el-form-item>
       <el-form-item label="Colormap">
         <el-select
@@ -164,6 +189,12 @@ export default class IonImageSettings extends Vue {
    @Prop({ type: String })
    defaultScaleBarColor: string | undefined;
 
+   @Prop({ type: Boolean })
+   defaultNormalization: boolean | undefined;
+
+   @Prop({ type: Boolean })
+   hideNormalization: boolean | undefined;
+
    @Prop({ type: String })
    defaultLockTemplate: string | undefined;
 
@@ -198,6 +229,11 @@ export default class IonImageSettings extends Vue {
      return this.defaultScaleType ? this.defaultScaleType : this.$store.getters.settings.annotationView.scaleType
    }
 
+   get normalization() {
+     return this.defaultNormalization ? this.defaultNormalization
+       : this.$store.getters.settings.annotationView.normalization
+   }
+
    get selectedTemplate() {
      return this.defaultLockTemplate ? this.defaultLockTemplate
        : this.$store.getters.settings.annotationView.lockTemplate
@@ -224,6 +260,11 @@ export default class IonImageSettings extends Vue {
    onScaleBarColorChange(c: string) {
      this.pickedColor = c
      this.$emit('scaleBarColorChange', c === 'hidden' ? null : c)
+   }
+
+   onNormalizationChange(value: boolean) {
+     this.$store.commit('setNormalization', value)
+     this.$emit('normalizationChange', value)
    }
 
    onTemplateChange(dsId: string) {

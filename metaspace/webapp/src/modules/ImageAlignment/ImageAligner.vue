@@ -67,6 +67,7 @@
       :max-height="100500"
       :annot-image-opacity="annotImageOpacity"
       :ion-image-transform="ionImageTransform"
+      :normalization-data="normalizationData"
       opacity-mode="linear"
       @dblclick.native="onDoubleClick"
       @mousedown.native="onImageMouseDown"
@@ -78,7 +79,6 @@
 </template>
 
 <script>
-import Vue from 'vue'
 import ImageLoader from '../../components/ImageLoader.vue'
 import { inv, dot, diag } from 'numeric'
 import { scrollDistance } from '../../lib/util'
@@ -145,6 +145,7 @@ export default {
       type: Array,
       default: () => [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
     },
+    ticData: { type: Object },
   },
   data() {
     return {
@@ -173,6 +174,10 @@ export default {
   computed: {
     layerTransform() {
       return 'translate(0, 0)'
+    },
+
+    normalizationData() {
+      return this.ticData
     },
 
     transform() {

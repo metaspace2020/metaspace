@@ -45,6 +45,8 @@ interface Props {
   pixelAspectRatio: number
   scaleBarColor: string
   showPixelIntensity: boolean
+  showNormalizedIntensity: boolean
+  normalizationData: any
 }
 
 const useScrollBlock = () => {
@@ -137,8 +139,12 @@ const usePixelIntensityDisplay = (
           && mask[y * width + x] !== 0) {
           const idx = y * width + x
           const [r, g, b] = colorMap[colorMap.length - 1]
+          const validNormalization = props.normalizationData && props.normalizationData.data
+            && props.normalizationData.data[idx] && !isNaN(props.normalizationData.data[idx])
           layers.push({
             intensity: intensityValues[idx].toExponential(1),
+            normalizedIntensity: !validNormalization ? 0
+              : (intensityValues[idx] / props.normalizationData?.data?.[idx] * 1000000).toExponential(1),
             color: props.ionImageLayers.length > 1 ? `rgb(${r},${g},${b})` : null,
           })
         }
@@ -213,17 +219,51 @@ const usePixelIntensityDisplay = (
       >
         {cursorOverLayers.value?.length > 1
           ? <ul slot="content" class="list-none p-0 m-0">
-            {cursorOverLayers.value?.map(({ intensity, color }) =>
+            {cursorOverLayers.value?.map(({ intensity, color, normalizedIntensity }) =>
               <li class="flex leading-5 items-center">
                 { color && <i
                   class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
                   style={{ background: color }}
                 /> }
-                {intensity}
+                <div class='flex flex-col leading-snug'>
+                  <div>
+                    {
+                      props.showNormalizedIntensity
+                    && <span>Intensity: </span>
+                    }
+                    <span>{intensity}</span>
+                  </div>
+                  {
+                    props.showNormalizedIntensity
+                  && <div class='mb-1'>
+                    <span>TIC-relative intensity: </span>
+                    <span>
+                      {normalizedIntensity}
+                    </span>
+                  </div>
+                  }
+                </div>
               </li>
             )}
           </ul>
-          : <span slot="content">{cursorOverLayers.value?.[0].intensity}</span>}
+          : <div slot="content" class='flex flex-col'>
+            <div>
+              {
+                props.showNormalizedIntensity
+                && <span>Intensity: </span>
+              }
+              <span>{cursorOverLayers.value?.[0].intensity}</span>
+            </div>
+            {
+              props.showNormalizedIntensity
+              && <div>
+                <span>TIC-relative intensity: </span>
+                <span>
+                  {cursorOverLayers.value?.[0].normalizedIntensity}
+                </span>
+              </div>
+            }
+          </div> }
         <div
           style={pixelIntensityStyle.value}
           class="absolute block border-solid z-30 pointer-events-none box-border"
@@ -464,6 +504,8 @@ export default defineComponent<Props>({
     pixelAspectRatio: { type: Number, default: 1 },
     scaleBarColor: { type: String, default: null },
     showPixelIntensity: { type: Boolean, default: false },
+    showNormalizedIntensity: { type: Boolean, default: false },
+    normalizationData: { type: Object },
   },
   setup(props: Props, { emit }: SetupContext) {
     const imageLoaderRef = templateRef<ReferenceObject>('imageLoader')
@@ -510,7 +552,7 @@ export default defineComponent<Props>({
         }}
       >
         {viewBoxStyle.value
-          && <div style={viewBoxStyle.value}>
+          && <div data-test-key="ion-image-panel" style={viewBoxStyle.value}>
             {renderIonImageView()}
             {renderOpticalImage()}
           </div>}

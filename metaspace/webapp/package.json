@@ -59,6 +59,7 @@
     "lodash-es": "^4.17.10",
     "marked": "^0.7.0",
     "numeric": "^1.2.6",
+    "numpy-parser": "^1.2.3",
     "popper.js": "^1.14.7",
     "querystring": "^0.2.0",
     "sanitize-html": "^2.3.2",

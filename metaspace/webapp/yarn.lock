@@ -12430,6 +12430,11 @@ numeric@^1.2.6:
   version "1.2.6"
   resolved "https://registry.npmjs.org/numeric/-/numeric-1.2.6.tgz#765b02bef97988fcf880d4eb3f36b80fa31335aa"
 
+numpy-parser@^1.2.3:
+  version "1.2.3"
+  resolved "https://registry.npmjs.org/numpy-parser/-/numpy-parser-1.2.3.tgz#215469bd06b0e10de82bf3937c97b4b753f3804d"
+  integrity sha512-hdb0XHWTMk9lOyWxHWbwwstD2MQxpecIbqURtyrAxEf8OUbUjEbdjTu/PimTycX99/l7pSMbtw7ueANMcfQzcA==
+
 nwsapi@^2.0.7, nwsapi@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.2.0.tgz#204879a9e3d068ff2a55139c2c772780681a38b7"

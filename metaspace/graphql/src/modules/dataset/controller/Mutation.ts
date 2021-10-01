@@ -77,6 +77,23 @@ function validateMetadata(metadata: MetadataNode) {
   /* eslint-disable-next-line @typescript-eslint/no-floating-promises */ // ajv is only async when the schema has $async nodes
   validator(cleanValue)
   const validationErrors = validator.errors || []
+
+  // Validate MS_Analysis.Analyzer (if present) is a recognized analyzer type
+  // eslint-disable-next-line camelcase
+  const analyzer = metadata.MS_Analysis?.Analyzer?.toLowerCase()
+  const recognizedAnalyzers = [
+    // This list should match _normalize_instrument in sm/engine/dataset.py
+    'orbitrap', 'exactive', 'exploris', 'hf-x', 'uhmr', // Orbitraps
+    'fticr', 'ft-icr', 'ftms', 'ft-ms', // FT-ICRs
+    'tof', 'mrt', 'exploris', 'synapt', 'xevo', // TOFs
+  ]
+  if (analyzer && !recognizedAnalyzers.some(a => analyzer.includes(a))) {
+    validationErrors.push({
+      dataPath: '.MS_Analysis.Analyzer',
+      message: 'Unrecognized analyzer. Please specify the technology: FT-ICR, Orbitrap or TOF.',
+    } as any)
+  }
+
   if (validationErrors.length > 0) {
     throw new UserError(JSON.stringify({
       type: 'failed_validation',

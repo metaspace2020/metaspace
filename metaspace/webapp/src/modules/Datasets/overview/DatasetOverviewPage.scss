@@ -35,6 +35,11 @@ $opt-desc-color: #C4C4C4;
 
 .dataset-overview-header{
   @apply  flex flex-row items-center justify-between px-6;
+
+  .el-badge__content.is-fixed{
+    top: 0px;
+    right: 5px;
+  }
 }
 
 

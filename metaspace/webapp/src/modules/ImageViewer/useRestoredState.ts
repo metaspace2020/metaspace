@@ -6,6 +6,7 @@ import { restoreImageViewerState } from './state'
 import { restoreIonImageState } from './ionImageState'
 import store from '../../store'
 import { annotationDetailItemFragment } from '../../api/annotation'
+import router from '../../router'
 
 export default async($apollo: any, id: string, datasetId: string) => {
   try {
@@ -45,6 +46,30 @@ export default async($apollo: any, id: string, datasetId: string) => {
       store.commit('updateFilter', {
         ...filter,
       })
+    }
+
+    // set stored query params
+    if (parsed.query?.cmap) {
+      store.commit('setColormap', parsed.query.cmap)
+    }
+    if (parsed.query?.scale) {
+      store.commit('setScaleType', parsed.query.scale)
+    }
+    const searchParams = new URLSearchParams(window.location.search)
+
+    if (parsed.query?.norm) {
+      store.commit('setNormalization', parsed.query.norm)
+    }
+
+    if ((parsed.query?.feat || parsed.query?.norm) && !searchParams.get('feat')) {
+      router.replace({
+        query: {
+          // @ts-ignore
+          ...router.history.current.query,
+          feat: !parsed.query.feat ? 'tic' : parsed.query?.feat,
+        },
+      })
+      window.location.reload()
     }
 
     if (annotations.length > 0) {

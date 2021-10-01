@@ -163,7 +163,13 @@ export default class MainImage extends Vue {
     keepPixelSelected?: boolean
 
     @Prop({ type: Boolean })
+    isNormalized?: boolean
+
+    @Prop({ type: Boolean })
     hideColorBar?: boolean
+
+    @Prop({ type: Object })
+    normalizationData?: any
 
     ionImageUrl: string | null = null;
     ionImagePng: Image | null = null;
@@ -213,8 +219,8 @@ export default class MainImage extends Vue {
       if (this.ionImagePng != null) {
         const isotopeImage = get(this.annotation, 'isotopeImages[0]')
         const { minIntensity, maxIntensity } = isotopeImage
-
-        return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.scaleType, this.userScaling)
+        return processIonImage(this.ionImagePng, minIntensity, maxIntensity, this.scaleType, this.userScaling
+          , undefined, this.isNormalized ? this.normalizationData : null)
       } else {
         return null
       }

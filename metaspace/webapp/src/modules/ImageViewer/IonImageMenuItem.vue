@@ -72,6 +72,7 @@
     <clipping-notice
       v-if="!item.loading"
       :type="clippingNotice.type"
+      :is-normalized="isNormalized"
       :intensity="item.intensity.value"
     />
   </el-popover>
@@ -115,6 +116,7 @@ export default defineComponent<Props>({
   props: {
     item: Object,
     isActive: Boolean,
+    isNormalized: Boolean,
     popupsDisabled: Boolean,
   },
   setup(props, { emit }) {

@@ -15,6 +15,7 @@
         trigger="click"
       >
         <ion-image-settings
+          :hide-normalization="hideNormalization"
           :default-colormap="colormap"
           :default-scale-type="scaleType"
           :default-lock-template="lockedTemplate"
@@ -23,6 +24,7 @@
           @colormapChange="onColormapChange"
           @scaleTypeChange="onScaleTypeChange"
           @scaleBarColorChange="onScaleBarColorChange"
+          @normalizationChange="onNormalizationChange"
           @templateChange="onTemplateChange"
         />
         <button
@@ -60,6 +62,13 @@
         >
       </button>
     </div>
+    <fade-transition v-if="isNormalized">
+      <div
+        class="norm-badge"
+      >
+        TIC normalized
+      </div>
+    </fade-transition>
     <fade-transition v-if="multiImageFlag">
       <MenuButtons
         v-if="isActive"
@@ -122,7 +131,13 @@ export default class MainImageHeader extends Vue {
     isActive!: boolean
 
     @Prop({ type: Boolean })
+    showNormalizedBadge: boolean = false
+
+    @Prop({ type: Boolean })
     hideOptions: boolean | undefined
+
+    @Prop({ type: Boolean, default: () => !config.features.tic })
+    hideNormalization: boolean | undefined
 
     @Prop({ type: Boolean })
     showIntensityTemplate: boolean | undefined
@@ -132,6 +147,10 @@ export default class MainImageHeader extends Vue {
 
     get multiImageFlag() {
       return config.features.multiple_ion_images
+    }
+
+    get isNormalized() {
+      return this.showNormalizedBadge || (this.$store.getters.settings.annotationView.normalization && this.isActive)
     }
 
     onScaleBarColorChange(color: string | null) {
@@ -149,11 +168,34 @@ export default class MainImageHeader extends Vue {
     onScaleTypeChange(scaleType: string | null) {
       this.$emit('scaleTypeChange', scaleType)
     }
+
+    onNormalizationChange(value: boolean) {
+      this.$emit('normalizationChange', value)
+    }
 }
 </script>
 
 <style scoped>
 .inactive {
   opacity: 0.3;
+}
+
+.norm-badge{
+  background: rgba(0,0,0,0.3);
+  border-radius: 16px;
+  color: white;
+  padding: 0 5px;
+  font-size: 11px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  right: 45px;
+  height: 25px;
+}
+
+.norm-info{
+  max-width: 250px;
+  text-align: left;
 }
 </style>

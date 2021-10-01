@@ -5,7 +5,7 @@ import MainImageHeader from '../../Annotations/annotation-widgets/default/MainIm
 import FadeTransition from '../../../components/FadeTransition'
 import RangeSlider from '../../../components/Slider/RangeSlider.vue'
 import IonIntensity from '../../ImageViewer/IonIntensity.vue'
-import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../../lib/ionImageRendering'
+import { loadPngFromUrl, processIonImage, renderScaleBar, ScaleType } from '../../../lib/ionImageRendering'
 import { get, throttle } from 'lodash-es'
 import createColormap from '../../../lib/createColormap'
 import getColorScale from '../../../lib/getColorScale'
@@ -13,8 +13,28 @@ import { THUMB_WIDTH } from '../../../components/Slider'
 import Vue from 'vue'
 import './SimpleIonImageViewer.scss'
 
+interface ImageSettings {
+  isNormalized: boolean
+  lockedIntensities: [number | undefined, number | undefined],
+  scaleBarColor: string
+  scaleType: ScaleType
+  colormap: string
+  annotImageOpacity: number
+  opticalOpacity: number
+  opacityMode: string
+  imagePosition: any
+  opticalSrc: string | null
+  opticalTransform: any
+  userScaling: [number, number]
+  imageScaledScaling: [number, number]
+  pixelAspectRatio: number
+  intensity?: any,
+  colorBar?: any
+}
+
 interface SimpleIonImageViewerProps {
   annotation: any
+  normalizationData: any
   ionImageUrl: string | null
   pixelSizeX: number
   pixelSizeY: number
@@ -27,7 +47,7 @@ interface SimpleIonImageViewerState {
   imageLoading: boolean
   ionImage: any
   rangeSliderStyle: any
-  imageSettings: any
+  imageSettings: ImageSettings
 }
 
 export default defineComponent<SimpleIonImageViewerProps>({
@@ -36,6 +56,10 @@ export default defineComponent<SimpleIonImageViewerProps>({
     annotation: {
       type: Object,
       default: undefined,
+    },
+    normalizationData: {
+      type: Object,
+      default: () => {},
     },
     ionImageUrl: {
       type: String,
@@ -50,14 +74,35 @@ export default defineComponent<SimpleIonImageViewerProps>({
       default: 0,
     },
   },
-  setup: function(props, { emit }) {
+  setup: function(props, { emit, root }) {
+    const { $route } = root
     const state = reactive<SimpleIonImageViewerState>({
       ionImage: undefined,
       rangeSliderStyle: undefined,
       chartLoading: false,
       imageLoading: false,
       scaleIntensity: false,
-      imageSettings: undefined,
+      imageSettings: {
+        isNormalized: !!$route.query.norm,
+        lockedIntensities: [undefined, undefined],
+        annotImageOpacity: 1.0,
+        opticalOpacity: 1.0,
+        colormap: 'Viridis',
+        scaleType: 'linear',
+        opacityMode: 'constant',
+        scaleBarColor: '#000000',
+        imagePosition: {
+          zoom: 1,
+          xOffset: 0,
+          yOffset: 0,
+        },
+        opticalSrc: null,
+        opticalTransform: null,
+        userScaling: [0, 1],
+        imageScaledScaling: [0, 1],
+        pixelAspectRatio: config.features.ignore_pixel_aspect_ratio ? 1
+          : props.pixelSizeX && props.pixelSizeY && props.pixelSizeX / props.pixelSizeY || 1,
+      },
       ionImageUrl: undefined,
     })
 
@@ -108,14 +153,14 @@ export default defineComponent<SimpleIonImageViewerProps>({
 
       const maxScale = userScaling[1] * (state.imageSettings.intensity?.max?.status === 'LOCKED'
         ? state.imageSettings.intensity.max.user / state.imageSettings.intensity.max.image : 1)
-      const scale = [minScale, maxScale]
+      const scale : [number, number] = [minScale, maxScale]
       state.imageSettings.imageScaledScaling = scale
 
       Vue.set(state.imageSettings, 'intensity', {
         ...state.imageSettings.intensity,
         min:
           {
-            ...state.imageSettings.intensity.min,
+            ...state.imageSettings.intensity?.min,
             scaled:
               state.imageSettings.intensity?.min?.status === 'LOCKED'
               && state.imageSettings.intensity.max.image * userScaling[0]
@@ -140,8 +185,8 @@ export default defineComponent<SimpleIonImageViewerProps>({
     const handleIonIntensityLockChange = async(value: number, type: string) => {
       const minLocked = type === 'min' ? value : state.imageSettings.lockedIntensities[0]
       const maxLocked = type === 'max' ? value : state.imageSettings.lockedIntensities[1]
-      const lockedIntensities = [minLocked, maxLocked]
-      const intensity = getIntensity(state.ionImage,
+      const lockedIntensities : [number | undefined, number | undefined] = [minLocked, maxLocked]
+      const intensity : any = getIntensity(state.ionImage,
         lockedIntensities)
 
       if (intensity && intensity.max && maxLocked && intensity.max.status === 'LOCKED') {
@@ -175,7 +220,8 @@ export default defineComponent<SimpleIonImageViewerProps>({
         const isotopeImage = get(annotation.value, 'isotopeImages[0]')
         const { minIntensity, maxIntensity } = isotopeImage
         state.ionImage = await processIonImage(ionImagePng, minIntensity, maxIntensity,
-          state.imageSettings.scaleType)
+          state.imageSettings.scaleType, undefined, undefined
+          , state.imageSettings.isNormalized ? props.normalizationData : null)
         state.imageSettings.intensity = getIntensity(state.ionImage)
         buildRangeSliderStyle()
       } else {
@@ -197,12 +243,16 @@ export default defineComponent<SimpleIonImageViewerProps>({
       state.imageSettings.colormap = colormap
     }
 
-    const handleScaleTypeChange = (scaleType: string) => {
+    const handleScaleTypeChange = (scaleType: ScaleType) => {
       state.imageSettings.scaleType = scaleType
     }
 
     const handleScaleBarColorChange = (color: string) => {
       state.imageSettings.scaleBarColor = color
+    }
+
+    const handleNormalizationChange = (isNormalized: boolean) => {
+      state.imageSettings.isNormalized = isNormalized
     }
 
     const buildRangeSliderStyle = (scaleRange: number[] = [0, 1]) => {
@@ -285,6 +335,7 @@ export default defineComponent<SimpleIonImageViewerProps>({
 
     const startImageLoaderSettings = () => {
       state.imageSettings = {
+        isNormalized: !!$route.query.norm,
         lockedIntensities: [undefined, undefined],
         annotImageOpacity: 1.0,
         opticalOpacity: 1.0,
@@ -326,6 +377,7 @@ export default defineComponent<SimpleIonImageViewerProps>({
               scaleType={state.imageSettings.scaleType}
               onScaleTypeChange={handleScaleTypeChange}
               onScaleBarColorChange={handleScaleBarColorChange}
+              onNormalizationChange={handleNormalizationChange}
             />
           }
           {
@@ -342,6 +394,8 @@ export default defineComponent<SimpleIonImageViewerProps>({
                 applyImageMove={handleImageMove}
                 colormap={state.imageSettings.colormap}
                 scaleBarColor={state.imageSettings.scaleBarColor}
+                normalizationData={props.normalizationData}
+                isNormalized={state.imageSettings.isNormalized}
                 scaleType={state.imageSettings.scaleType}
                 userScaling={state.imageSettings.imageScaledScaling}
                 pixelSizeX={props.pixelSizeX}

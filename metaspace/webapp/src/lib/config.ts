@@ -7,6 +7,7 @@ const fileConfig = require('../clientConfig.json')
 interface Features {
   coloc: boolean;
   show_dataset_overview: boolean;
+  tic: boolean;
   ion_thumbs: boolean;
   off_sample: boolean;
   off_sample_col: boolean; // Not a "feature" - just shows an extra column for debugging
@@ -55,6 +56,7 @@ const defaultConfig: ClientConfig = {
   features: {
     coloc: true,
     show_dataset_overview: false,
+    tic: false,
     ion_thumbs: true,
     off_sample: true,
     off_sample_col: false,

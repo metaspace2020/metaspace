@@ -10,7 +10,7 @@ exports[`DatasetComparisonDialog it should match snapshot 1`] = `
         <ol class="sm-workflow leading-6 m-0 p-0">
           <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 active">
             <p class="sm-workflow-header">Select the datasets</p>
-            <form>
+            <form class="ds-comparison-step">
               <div class="el-select w-full ">
                 <div class="el-select__tags" style="max-width: -32px; width: 100%;">
                   <!---->

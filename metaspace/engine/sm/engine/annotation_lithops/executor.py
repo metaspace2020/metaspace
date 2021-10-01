@@ -24,8 +24,8 @@ TRet = TypeVar('TRet')
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_CF_VPC = 'metaspace2020/metaspace-lithops:1.8.5.2'
-RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:1.8.6.9'
+RUNTIME_CF_VPC = 'metaspace2020/metaspace-lithops:1.9.0'
+RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:1.8.6.11'
 MEM_LIMITS = {
     'localhost': 32768,
     'ibm_cf': 4096,
@@ -315,7 +315,7 @@ class Executor:
                             # Dismantle & wait for it to stop while the mutex is still active
                             # to avoid a race condition, as there's still some instability if a
                             # second request tries to start the VM while it is still stopping.
-                            executor.dismantle()
+                            executor.compute_handler.backend.master.stop()
                 except Exception as exc:
                     exception = exc
 
