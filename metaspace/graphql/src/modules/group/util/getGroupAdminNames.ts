@@ -5,7 +5,7 @@ import * as _ from 'lodash'
 
 const getGroupAdminNames = async(ctx: Context, groupId: string) => {
   const dataloader = ctx.contextCacheGet('getGroupAdminNamesDataLoader', [], () => {
-    return new DataLoader(async(groupIds: string[]): Promise<(string[] | null)[]> => {
+    return new DataLoader(async(groupIds: string[]): Promise<string[][]> => {
       const results = await ctx.entityManager.createQueryBuilder(UserGroupModel, 'userGroup')
         .leftJoin('userGroup.user', 'user')
         .where('userGroup.groupId = ANY(:groupIds)', { groupIds })
@@ -15,7 +15,7 @@ const getGroupAdminNames = async(ctx: Context, groupId: string) => {
         .addSelect('array_agg(user.name)', 'names')
         .getRawMany()
       const keyedResults = _.keyBy(results, 'groupId')
-      return groupIds.map(id => keyedResults[id] != null ? keyedResults[id].names : null)
+      return groupIds.map(id => keyedResults[id] != null ? keyedResults[id].names : [])
     })
   })
   return dataloader.load(groupId)
