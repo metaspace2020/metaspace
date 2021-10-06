@@ -120,6 +120,7 @@
             <el-select
               v-model="annotationIndex"
               filterable
+              :loading="!annotations"
               class="annotation-short-info"
               @change="(newIdx) => updateIndex(newIdx + 1)"
             >
@@ -305,7 +306,7 @@ export default {
           filter: { fdrLevel: 0.5 },
           dFilter: { ids: this.datasetId },
           offset: 0,
-          limit: 100,
+          limit: 1000,
           query: '',
           orderBy: 'ORDER_BY_MSM',
           sortingOrder: 'DESCENDING',

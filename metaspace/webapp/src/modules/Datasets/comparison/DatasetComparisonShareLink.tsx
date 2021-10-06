@@ -121,8 +121,8 @@ export const DatasetComparisonShareLink = defineComponent<DatasetComparisonShare
             slot="reference"
             class="button-reset h-6 w-6 block ml-2"
             onClick={handleClick}>
-            <StatefulIcon className="h-6 w-6 pointer-events-none">
-              <ExternalWindowSvg/>
+            <StatefulIcon class="h-6 w-6 pointer-events-none">
+              <ExternalWindowSvg class='fill-current'/>
             </StatefulIcon>
           </Button>
           <FadeTransition class="m-0 leading-5 text-center">

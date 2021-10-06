@@ -8,7 +8,6 @@ import config from '../../../lib/config'
 import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../../lib/formatCsvRow'
 import ExternalWindowSvg from '../../../assets/inline/refactoring-ui/icon-external-window.svg'
-import StatefulIcon from '../../../components/StatefulIcon.vue'
 
 interface DatasetComparisonAnnotationTableProps {
   annotations: any[]
@@ -95,7 +94,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
           return
         }
         state.selectedRow = state.processedAnnotations[currentDataIndex - 1]
-        onPageChange(state.offset - 1)
+        onPageChange(state.offset - 1, true)
         return
       }
 
@@ -104,7 +103,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
           return
         }
         state.selectedRow = state.processedAnnotations[currentDataIndex + 1]
-        onPageChange(state.offset + 1)
+        onPageChange(state.offset + 1, true)
         return
       }
 
@@ -132,7 +131,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       handleSortChange({ order, prop })
       state.selectedRow = row ? props.annotations[parseInt(row, 10)]
         : state.processedAnnotations[0]
-      onPageChange(page ? parseInt(page, 10) : 1)
+      onPageChange(page ? parseInt(page, 10) : 1, true)
       if (!state.keyListenerAdded) {
         state.keyListenerAdded = true
         window.addEventListener('keyup', onKeyUp)
@@ -174,7 +173,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     const setCurrentRow = () => {
       clearCurrentRow()
       const currentIndex = getCurrentRowIndex()
-
       // guarantee old selection was removed
       if (state.currentRowIndex !== currentIndex && state.currentRowIndex !== -1) {
         setTimeout(() => {
@@ -324,15 +322,15 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       state.pageSize = newSize
     }
 
-    const onPageChange = (newPage: number) => {
+    const onPageChange = (newPage: number, fromUpDownArrow : boolean = false) => {
       const currentDataIndex = getDataItemIndex()
 
       // right
-      if (newPage > state.offset) {
+      if (!fromUpDownArrow && newPage > state.offset) {
         const newIndex = Math.min(currentDataIndex + (state.pageSize * (newPage - state.offset)),
           props.annotations.length - 1)
         state.selectedRow = state.processedAnnotations[newIndex]
-      } else if (newPage < state.offset) { // left
+      } else if (!fromUpDownArrow && newPage < state.offset) { // left
         const newIndex = Math.max(0, currentDataIndex - (state.pageSize * (state.offset - newPage)))
         state.selectedRow = state.processedAnnotations[newIndex]
       }
