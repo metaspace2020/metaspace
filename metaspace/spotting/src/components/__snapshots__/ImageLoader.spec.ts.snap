@@ -1,0 +1,99 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ImageLoader should match snapshot (minimal) 1`] = `
+<div>
+  <div
+    class="relative overflow-hidden"
+    imagefitparams="[object Object]"
+    mock-v-loading="false"
+    style="width: 200px; height: 300px; transform: scaleX(1.23);"
+  >
+    <div
+      data-test-key="ion-image-panel"
+      style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
+    >
+      <canvas
+        class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
+        data-images="http://placebacon.com/200/300"
+        height="300"
+        width="200"
+      />
+      <div />
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ImageLoader should match snapshot (with everything turned on) 1`] = `
+<div>
+  <div
+    class="relative overflow-hidden"
+    imagefitparams="[object Object]"
+    mock-v-loading="false"
+    style="width: 200px; height: 300px; transform: scaleX(1.23);"
+  >
+    <div
+      class=""
+      data-test-key="ion-image-panel"
+      style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
+    >
+      <canvas
+        class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
+        data-images="http://placebacon.com/200/300"
+        height="300"
+        width="200"
+      />
+      <div>
+        <img
+          class="absolute top-0 left-0 -z-10 origin-top-left"
+          crossorigin="anonymous"
+          src="http://placekitten.com/200/300"
+          style="transform: matrix3d(1, 4, 0, 7,
+             2, 5, 0, 8,
+                      0,          0, 1,          0,
+             3, 6, 0, 9);"
+        />
+      </div>
+    </div>
+    <div>
+      <mock-el-tooltip
+        manual="true"
+        placement="top"
+        popper-class="pointer-events-none"
+        value="true"
+      >
+        <div
+          slot-key="content"
+        >
+          <div
+            class="flex flex-col"
+          >
+            <div>
+              <span>
+                9.6e+3
+              </span>
+            </div>
+          </div>
+        </div>
+        <div
+          slot-key="default"
+        >
+          <div
+            class="absolute block border-solid z-30 pointer-events-none box-border"
+            style="left: 47.5px; top: 47.5px; width: 0.5px; height: 0.5px;"
+          />
+        </div>
+      </mock-el-tooltip>
+    </div>
+    <div
+      class="absolute inset-0 z-30 pointer-events-none bg-body flex items-center justify-center opacity-0 duration-1000"
+    >
+      <p
+        class="relative block z-40 m-0 text-white text-2xl"
+      >
+        Use CTRL + scroll wheel to zoom the image
+      </p>
+    </div>
+  </div>
+</div>
+`;

@@ -1,0 +1,85 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TransferDatasetsDialog should match snapshot (datasets to import, invited) 1`] = `
+<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog" currentuserid="current user id">
+  <div mock-v-loading="0">
+    <div>
+      <p style="margin-top: 0px;">
+        Are you sure you want to join Group Name?
+      </p>
+      <div class="button-bar"><button type="button" class="el-button el-button--default el-button--small">
+          <!---->
+          <!----><span>
+          Cancel
+        </span></button> <button type="button" class="el-button el-button--primary el-button--small">
+          <!---->
+          <!----><span>
+          Join group
+        </span></button></div>
+    </div>
+  </div>
+</mock-el-dialog>
+`;
+
+exports[`TransferDatasetsDialog should match snapshot (datasets to import, requesting access) 1`] = `
+<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog" currentuserid="current user id">
+  <div mock-v-loading="0">
+    <div>
+      <p style="margin-top: 0px;">
+        An email will be sent to the group's principal investigator to confirm your access.
+      </p>
+      <div class="button-bar"><button type="button" class="el-button el-button--default el-button--small">
+          <!---->
+          <!----><span>
+          Cancel
+        </span></button> <button type="button" class="el-button el-button--primary el-button--small">
+          <!---->
+          <!----><span>
+          Request access
+        </span></button></div>
+    </div>
+  </div>
+</mock-el-dialog>
+`;
+
+exports[`TransferDatasetsDialog should match snapshot (no datasets, invited) 1`] = `
+<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog" currentuserid="current user id">
+  <div mock-v-loading="0">
+    <div>
+      <p style="margin-top: 0px;">
+        Are you sure you want to join Group Name?
+      </p>
+      <div class="button-bar"><button type="button" class="el-button el-button--default el-button--small">
+          <!---->
+          <!----><span>
+          Cancel
+        </span></button> <button type="button" class="el-button el-button--primary el-button--small">
+          <!---->
+          <!----><span>
+          Join group
+        </span></button></div>
+    </div>
+  </div>
+</mock-el-dialog>
+`;
+
+exports[`TransferDatasetsDialog should match snapshot (no datasets, requesting access) 1`] = `
+<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog" currentuserid="current user id">
+  <div mock-v-loading="0">
+    <div>
+      <p style="margin-top: 0px;">
+        An email will be sent to the group's principal investigator to confirm your access.
+      </p>
+      <div class="button-bar"><button type="button" class="el-button el-button--default el-button--small">
+          <!---->
+          <!----><span>
+          Cancel
+        </span></button> <button type="button" class="el-button el-button--primary el-button--small">
+          <!---->
+          <!----><span>
+          Request access
+        </span></button></div>
+    </div>
+  </div>
+</mock-el-dialog>
+`;

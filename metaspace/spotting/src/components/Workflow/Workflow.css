@@ -1,0 +1,67 @@
+.sm-workflow {
+  counter-reset: workflow;
+  list-style: none;
+}
+
+.sm-workflow-step:last-child {
+  border-color: transparent; /* border still required for alignment */
+}
+
+.sm-workflow-step > * + *,
+.sm-workflow-step form > * + * {
+  @apply m-0 mt-6;
+}
+
+.sm-workflow-header + *,
+.sm-workflow-step form > :first-child {
+  margin: 0;
+}
+
+/* action buttons look better slightly closer to preceding element */
+.sm-workflow-step form > button:last-child {
+  @apply mt-5;
+}
+
+.sm-workflow-step > .sm-workflow-header {
+  margin: 0;
+  line-height: 3rem;
+}
+
+/* hack allows left border to connect to next li */
+.sm-workflow-step > :last-child {
+  margin-bottom: 3rem;
+}
+
+
+/* status indicators */
+
+.sm-workflow-step:before {
+  @apply text-gray-700 text-2xl font-bold bg-gray-200 transition-colors ease-in-out duration-300 h-12 w-12;
+  align-items: center;
+  border-radius: 50%;
+  content: counter(workflow);
+  counter-increment: workflow;
+  display: flex;
+  justify-content: center;
+  left: calc(-1.5rem - 1px); /* 50% plus 1px for adjoining line */
+  position: absolute;
+  top: 0;
+}
+
+.sm-workflow-step.active,
+.sm-workflow-step.done {
+  color: inherit;
+}
+
+.sm-workflow-step.active:before {
+  @apply bg-primary text-white;
+}
+
+.sm-workflow-step.done:before {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.sm-workflow-step.done:before {
+  content: '\e6da';
+  font-family: element-icons !important;
+}

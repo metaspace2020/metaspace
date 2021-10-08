@@ -1,0 +1,15 @@
+.requested-access-dialog {
+  .el-dialog {
+    @apply max-w-lg;
+
+    .el-form-item {
+      margin-bottom: 10px;
+    }
+    .el-form-item__label {
+      line-height: 1.2em;
+    }
+  }
+
+
+}
+

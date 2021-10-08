@@ -1,0 +1,98 @@
+/* Resets */
+
+.text-inherit {
+  color: inherit;
+}
+
+.bg-none {
+  background: none;
+}
+
+.button-reset {
+  @apply bg-none text-inherit border-none cursor-pointer p-0;
+  letter-spacing: inherit;
+  line-height: inherit;
+}
+
+.margin-reset > * {
+  margin: 0;
+}
+
+/* https://nelo.is/writing/styling-better-focus-states */
+*:focus {
+  outline: none;
+}
+.focus-visible,
+.focus-ring:focus:not(:active) {
+  outline: 2px solid theme('colors.primary');
+  outline-offset: 2px;
+  /* box-shadow: 0 0 0 2px theme('colors.primary'); - too intrusive without redesigning everything */
+}
+
+@tailwind base;
+
+@tailwind components;
+
+@tailwind utilities;
+
+
+/* Extra utilities */
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
+  /* Edge still doesn't support pixelated image interpolation, so ion images look bad there */
+}
+
+.transition-fade {
+  transition-property: opacity, visibility;
+}
+
+.h2-leading-12 h2 {
+  @apply leading-8 py-2 m-0;
+}
+
+.v-rhythm-3 > * + * {
+  @apply mt-3;
+}
+
+.v-rhythm-4 > * + * {
+  @apply mt-4;
+}
+
+.v-rhythm-5 > * + * {
+  @apply mt-5;
+}
+
+.v-rhythm-6 > * + * {
+  @apply mt-6;
+}
+
+.cursor-help {
+  cursor: help;
+}
+
+/* Debug */
+
+.baseline-grid {
+  background-image: linear-gradient(180deg,theme('colors.red.500') 1px,transparent 0);
+  background-position: 0 0;
+  background-repeat: repeat;
+  border-bottom: 1px solid theme('colors.red.500');
+}
+
+.baseline-grid-4 {
+  @apply baseline-grid;
+  background-size: 100% theme('spacing.4');
+}
+
+.baseline-grid-5 {
+  @apply baseline-grid;
+  background-size: 100% theme('spacing.5');
+}
+
+.baseline-grid-6 {
+  @apply baseline-grid;
+  background-size: 100% theme('spacing.6');
+}

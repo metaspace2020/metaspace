@@ -1,0 +1,138 @@
+/* Original */
+
+.el-collapse-item__header {
+  padding-left: 10px
+}
+
+.el-collapse-item__arrow {
+  line-height: 40px;
+  float: left;
+  margin-left: 8px
+}
+
+.el-collapse-item.is-active .el-collapse-item__header {
+  @apply bg-gray-100;
+}
+
+.el-message {
+  top: 75px
+}
+
+.el-dialog__body,
+.el-popover {
+  word-break: normal;
+}
+
+
+/* New */
+
+.el-select .el-tag__close.el-icon-close {
+  background: none;
+  right: -4px;
+}
+.el-tag--small .el-icon-close,
+.el-select .el-tag__close.el-icon-close::before {
+  transform: none;
+  width: 14px;
+  height: 14px;
+}
+.el-tag.el-tag--info {
+  @apply bg-gray-100 border-gray-300 text-gray-700;
+}
+.el-tag.el-tag--info .el-tag__close {
+  @apply text-gray-700;
+}
+
+.el-tabs__item.is-active,
+.el-tabs__item:hover,
+.el-pager li.active,
+.el-pager li:hover,
+.el-switch__label.is-active,
+.el-checkbox__input.is-checked + .el-checkbox__label,
+.el-select-dropdown__item.selected,
+.el-table th.is-sortable.ascending,
+.el-table th.is-sortable.descending,
+.el-button--text {
+  @apply text-primary;
+}
+
+.el-table .sort-caret.ascending {
+  border-bottom-color: theme('colors.gray.300')
+}
+.el-table .sort-caret.descending {
+  border-top-color: theme('colors.gray.300')
+}
+.el-table .ascending .sort-caret.ascending {
+  border-bottom-color: theme('colors.primary')
+}
+.el-table .descending .sort-caret.descending {
+  border-top-color: theme('colors.primary')
+}
+
+.v-modal {
+  @apply bg-gray-900;
+}
+
+.el-input-group {
+  display: flex;
+}
+.el-input-group .el-input__inner {
+  /* Fix for IE11 */
+  flex-grow: 1;
+  width: auto;
+  /* Fix for Safari */
+  margin: 0;
+}
+.el-input-group__append,
+.el-input-group__prepend {
+  @apply px-4 flex items-center w-auto text-gray-700;
+}
+.el-input.is-disabled .el-input-group__append,
+.el-input.is-disabled .el-input-group__prepend {
+  @apply border-gray-200;
+}
+
+.el-message-box__headerbtn {
+  z-index: 1;
+}
+
+.el-notification__content {
+  text-align: unset;
+}
+
+.el-dropdown-menu__item:focus,
+.el-dropdown-menu__item:not(.is-disabled):hover {
+  @apply text-primary;
+}
+
+/* Use `<el-dialog customClass="el-dialog-lean">` to remove excessive padding above/below body */
+.el-dialog-lean .el-dialog__body {
+  padding: 0 theme('margin.5') theme('margin.2')
+}
+
+.el-message__content {
+  @apply leading-snug;
+}
+
+.el-tabs__content {
+  overflow: visible; /* prevents shadows getting clipped */
+}
+.el-tabs.with-badges {
+  margin-top: -10px;
+}
+.el-tabs.with-badges .el-tabs__item {
+  margin-top: 10px;
+}
+
+.el-switch:focus-within {
+  outline: 2px solid theme('colors.gray.600');
+  outline-offset: 4px;
+}
+
+.el-switch.is-checked {
+  outline-color: theme('colors.primary');
+}
+
+.el-collapse-item--no-padding .el-collapse-item__content {
+  padding: 0
+}

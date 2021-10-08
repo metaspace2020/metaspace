@@ -1,0 +1,91 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NewFeaturePopup should match snapshot (in view) 1`] = `
+<div>
+  <span>
+    <span>
+      Test anchor
+    </span>
+  </span>
+   
+  <div
+    class="el-popover el-popper leading-5 p-5 text-left"
+  >
+    <h3
+      class="leading-10 m-0 mt-2"
+    >
+      <div
+        class="el-badge"
+      >
+        
+      Test title
+    
+        <transition-stub
+          name="el-zoom-in-center"
+        >
+          <sup
+            class="el-badge__content el-badge__content--undefined is-fixed"
+          >
+            New
+          </sup>
+        </transition-stub>
+      </div>
+    </h3>
+     
+    <div
+      class="sm-content font-normal"
+    >
+      <p>
+        test content
+      </p>
+    </div>
+     
+    <div
+      class="flex justify-end items-center h-10 mt-5"
+    >
+      <button
+        class="el-button el-button--default el-button--small"
+        type="button"
+      >
+        <!---->
+        <!---->
+        <span>
+          
+      Remind me later
+    
+        </span>
+      </button>
+       
+      <button
+        class="el-button el-button--primary el-button--small"
+        type="button"
+      >
+        <!---->
+        <!---->
+        <span>
+          
+      Got it!
+    
+        </span>
+      </button>
+    </div>
+     
+    <div
+      class="popper__arrow"
+      x-arrow=""
+    />
+  </div>
+</div>
+`;
+
+exports[`NewFeaturePopup should match snapshot (not in view) 1`] = `
+<div>
+  <span>
+    <span>
+      Test anchor
+    </span>
+  </span>
+   
+  <!---->
+</div>
+`;

@@ -1,0 +1,83 @@
+$x-axis-color: #EB5757;
+$y-axis-color: #27AE60;
+$aggregation-color: #56CCF2;
+$filter-color: #828282;
+
+
+.dashboard-container{
+  @apply flex flex-wrap m-12 justify-between;
+
+
+  .select-box-mini{
+    @apply mt-1;
+    width: 10rem;
+  }
+
+  .filter-container{
+    @apply flex font-bold flex-wrap;
+
+    .filter-box{
+      @apply flex flex-col;
+    }
+  }
+
+  .visualization-container{
+    @apply flex flex-wrap overflow-hidden items-end	;
+
+  }
+
+  .visualization-selector{
+    @apply flex flex-wrap font-bold border-2 border-solid border-gray-200 rounded p-2 overflow-hidden items-center;
+    background: #E0E0E0;
+    height: 20px;
+
+    .selected{
+      color: #1287EE;
+    }
+
+    .icon-holder{
+      text-align: center;
+      height: 20px;
+      width: 40px;
+    }
+
+    .vis-icon{
+      @apply m-0 cursor-pointer	;
+      font-size: 20px;
+    }
+  }
+
+  .content-container{
+    @apply flex flex-wrap border-2 border-solid border-gray-200 rounded w-full mt-6 overflow-hidden;
+    min-height: 400px;
+
+  }
+
+  .x-axis-label{
+    color: $x-axis-color;
+  }
+  .y-axis-label{
+    color: $y-axis-color;
+  }
+  .filter-label{
+    color: $filter-color;
+  }
+  .aggregation-label{
+    color: $aggregation-color;
+  }
+
+  .dashboard-instructions{
+    @apply w-full border-2 border-dashed border-gray-200 relative rounded m-16 p-2 flex flex-row items-center justify-center;
+    background: rgba(224,224,224,0.2);
+    color: #828282;
+
+    .instruction-title{
+      @apply font-bold text-lg italic mb-4;
+    }
+
+    p{
+      @apply text-lg font-light m-0 mb-2;
+    }
+  }
+}
+

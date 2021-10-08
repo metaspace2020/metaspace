@@ -1,0 +1,78 @@
+.sm-table {
+  border-spacing: 0;
+  font-size: 14px;
+  line-height: 24px;
+  width: 100%;
+}
+
+.sm-table th {
+  @apply text-gray-600;
+  text-align: left;
+}
+
+.sm-table th, .sm-table td {
+  @apply border-0 border-b border-solid border-gray-200;
+  padding: 12px;
+  position: relative;
+}
+
+.sm-table tr > :first-child {
+  padding-left: 0;
+}
+
+.sm-table tr > :last-child {
+  padding-right: 0;
+}
+
+.sm-table-cell {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  white-space: nowrap;
+}
+
+.sm-table-cell > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* creates space for notification when column is full */
+.sm-table-cell .el-tooltip.notification {
+  min-width: 16px;
+}
+
+.sm-table-empty-row {
+  text-align: center;
+}
+
+.sm-table-button-group {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+
+/* User Details table */
+
+.sm-table-user-details tr > :nth-child(1) {
+  width: 40%;
+}
+
+.sm-table-user-details tr > :nth-child(2) {
+  width: 20%;
+}
+
+.sm-table-user-details tr > :nth-child(3) {
+  text-align: right;
+  width: 15%;
+}
+
+.sm-table-user-details tr > :nth-child(4) {
+  text-align: right;
+  width: 25%;
+}

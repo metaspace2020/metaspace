@@ -1,0 +1,17 @@
+{
+  "graphqlUrl": null,
+  "wsGraphqlUrl": null,
+  "companionUrl": null,
+
+  "google_client_id": "{{ sm_webapp_google_client_id }}",
+
+  "sentry": {
+    "dsn": "{{ sentry_dsn }}",
+    "environment": "{{ stage | replace('/', '_') }}",
+    "release": "{{ metaspace_repo_revision }}"
+  },
+
+  "metadataTypes": {{ sm_webapp_metadata_types | to_json }},
+
+  "features": {{ sm_webapp_features | to_json }}
+}

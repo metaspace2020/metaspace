@@ -1,0 +1,48 @@
+.sm-RichText .ProseMirror {
+  @apply leading-normal min-h-full p-4 box-border;
+}
+
+.sm-RichText .ProseMirror-focused {
+  outline: none;
+}
+
+/*
+  Text formatting
+  ---------------
+*/
+
+.sm-RichText .ProseMirror * {
+  margin: 0;
+}
+
+.sm-RichText .ProseMirror > * + * {
+  @apply mt-3;
+}
+
+.sm-RichText .ProseMirror > * + h2 {
+  @apply mt-6;
+}
+
+.sm-RichText .ProseMirror h2 {
+  @apply text-xl leading-6;
+}
+
+.sm-RichText .ProseMirror ul {
+  @apply pl-6;
+  list-style: outside;
+}
+
+.sm-RichText .ProseMirror sub,
+.sm-RichText .ProseMirror sup {
+  @apply text-xs;
+  line-height: 1;
+}
+
+.sm-RichText .ProseMirror a {
+  cursor: pointer;
+}
+
+.sm-RichText-placeholder:first-child::before {
+  @apply float-left text-gray-600 pointer-events-none italic h-0 text-xl leading-tight;
+  content: attr(data-empty-text);
+}

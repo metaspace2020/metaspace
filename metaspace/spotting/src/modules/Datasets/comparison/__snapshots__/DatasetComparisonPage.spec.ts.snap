@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DatasetComparisonPage it should match not found snapshot 1`] = `<div class="dataset-comparison-page w-full flex flex-wrap flex-row items-center justify-center">Not found</div>`;
+
+exports[`DatasetComparisonPage it should match snapshot 1`] = `<div class="dataset-comparison-page w-full flex flex-wrap flex-row items-center justify-center">Not found</div>`;
