@@ -1,0 +1,33 @@
+.sm-RichTextArea .ProseMirror > * + * {
+  @apply mt-2;
+}
+
+.sm-RichTextArea .ProseMirror > * + h2 {
+  @apply mt-4;
+}
+
+.sm-RichTextArea .ProseMirror h2 {
+  @apply text-lg;
+}
+
+.sm-RichTextArea .ProseMirror p {
+  max-width: none;
+}
+
+.sm-RichTextArea:not(:focus-within) > label:hover + div {
+  @apply border-gray-500
+}
+
+.sm-RichTextArea-description {
+  @apply m-0 absolute px-2 bg-gray-100 rounded-br rounded-tl
+    text-xs leading-5 text-gray-700 tracking-wide select-none
+    transition-colors duration-300 ease-in-out
+    border-solid border-0 border-l border-t border-gray-300;
+
+  bottom: 1px;
+  right: 1px;
+}
+
+.sm-RichTextArea:focus-within .sm-RichTextArea-description {
+  @apply bg-white text-primary border-primary;
+}

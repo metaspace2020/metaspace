@@ -1,0 +1,133 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AnnotationCountTable it should match snapshot 1`] = `
+<div class="relative text-center" data="[object Object],[object Object]" id="xxxx" header="5,10,20,50">
+  <h4># of annotations with FDR% &lt;=</h4>
+  <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" style="width: 100%; margin-top: 20px;">
+    <div class="hidden-columns">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+    <div class="el-table__header-wrapper">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 400px;">
+        <colgroup>
+          <col name="el-table_1_column_1" width="80">
+          <col name="el-table_1_column_2" width="80">
+          <col name="el-table_1_column_3" width="80">
+          <col name="el-table_1_column_4" width="80">
+          <col name="el-table_1_column_5" width="80">
+        </colgroup>
+        <thead class="">
+          <tr class="">
+            <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf is-sortable">
+              <div class="cell">Database<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+            </th>
+            <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf is-sortable">
+              <div class="cell">5%<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+            </th>
+            <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf is-sortable">
+              <div class="cell">10%<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+            </th>
+            <th colspan="1" rowspan="1" class="el-table_1_column_4     is-leaf is-sortable">
+              <div class="cell">20%<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+            </th>
+            <th colspan="1" rowspan="1" class="el-table_1_column_5     is-leaf is-sortable">
+              <div class="cell">50%<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+            </th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+    <div class="el-table__body-wrapper is-scrolling-left">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 400px;">
+        <colgroup>
+          <col name="el-table_1_column_1" width="80">
+          <col name="el-table_1_column_2" width="80">
+          <col name="el-table_1_column_3" width="80">
+          <col name="el-table_1_column_4" width="80">
+          <col name="el-table_1_column_5" width="80">
+        </colgroup>
+        <tbody>
+          <tr class="el-table__row">
+            <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx" class="">HMDB-v4</a></div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.05" class="">55</a></div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.1" class="">104</a></div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
+              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.2" class="">196</a></div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.5" class="">224</a></div>
+            </td>
+          </tr>
+          <tr class="el-table__row">
+            <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx" class="">ChEBI-2018-01</a></div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.05" class="">65</a></div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.1" class="">90</a></div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
+              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.2" class="">177</a></div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.5" class="">190</a></div>
+            </td>
+          </tr>
+          <!---->
+        </tbody>
+      </table>
+      <!---->
+      <!---->
+    </div>
+    <div class="el-table__footer-wrapper">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__footer" style="width: 400px;">
+        <colgroup>
+          <col name="el-table_1_column_1" width="80">
+          <col name="el-table_1_column_2" width="80">
+          <col name="el-table_1_column_3" width="80">
+          <col name="el-table_1_column_4" width="80">
+          <col name="el-table_1_column_5" width="80">
+        </colgroup>
+        <tbody class="">
+          <tr>
+            <td colspan="1" rowspan="1" class="el-table_1_column_1 is-leaf">
+              <div class="cell">Total Annotations</div>
+            </td>
+            <td colspan="1" rowspan="1" class="el-table_1_column_2 is-leaf">
+              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.05" class="">120</a></div>
+            </td>
+            <td colspan="1" rowspan="1" class="el-table_1_column_3 is-leaf">
+              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.1" class="">194</a></div>
+            </td>
+            <td colspan="1" rowspan="1" class="el-table_1_column_4 is-leaf">
+              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.2" class="">373</a></div>
+            </td>
+            <td colspan="1" rowspan="1" class="el-table_1_column_5 is-leaf">
+              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.5" class="">414</a></div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!---->
+    <!---->
+    <!---->
+    <div class="el-table__column-resize-proxy" style="display: none;"></div>
+  </div>
+  <div class="text-right mt-2"><button type="button" class="el-button el-button--default">
+      <!---->
+      <!----><span>Browse annotations</span></button></div>
+</div>
+`;

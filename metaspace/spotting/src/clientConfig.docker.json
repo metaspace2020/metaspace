@@ -1,0 +1,27 @@
+{
+  "graphqlUrl": null,
+  "wsGraphqlUrl": null,
+  "google_client_id": "clientid",
+  "ravenDsn": null,
+  "metadataTypes": [
+    "ims",
+    "lcms"
+  ],
+  "features": {
+    "coloc": true,
+    "ion_thumbs": true,
+    "off_sample": true,
+    "off_sample_col": false,
+    "new_feature_popups": true,
+    "optical_transform": false,
+    "all_dbs": true,
+    "all_adducts": true,
+    "neutral_losses": true,
+    "chem_mods": true,
+    "advanced_ds_config": false,
+    "isomers": true,
+    "isobars": true,
+    "moldb_mgmt": true,
+    "multiple_ion_images": true
+  }
+}

@@ -1,0 +1,335 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MolecularDatabases details view should match snapshot (archived) 1`] = `
+<transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+  <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+    <div class="relative leading-6 h2-leading-12" mock-v-loading="true">
+      <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"><span class="flex items-center"><i class="flex w-6 h-6 mr-1"><svg data-icon="icon-arrow-thin-left-circle"></svg></i><span class="leading-none mt-1">All databases</span></span></a></div>
+      <div class="max-w-measure-3 mx-auto mt-6 mb-18">
+        <div class="flex justify-between items-center">
+          <h2 title="foo - v1" class="truncate">foo <small class="text-gray-700 font-normal">v1</small></h2><button type="button" class="el-button el-button--default ml-3">
+            <!---->
+            <!----><span>Upload new version</span></button>
+        </div>
+        <form action="#" class="v-rhythm-6 mt-3">
+          <div><label for="database-full-name"><span class="text-base font-medium">Full name</span></label>
+            <div class="el-input">
+              <!----><input type="text" autocomplete="off" id="database-full-name" class="el-input__inner">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+            </div>
+          </div>
+          <div class="sm-RichText sm-RichTextArea relative"><label><span class="text-base font-medium">Description</span></label>
+            <div class="h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary mt-1">
+              <div contenteditable="true" tabindex="0" class="ProseMirror">
+                <p><br></p>
+              </div>
+            </div>
+            <div class="absolute bg-white rounded p-1 border border-solid border-gray-100 shadow mb-2 transform -translate-x-1/2 transition-fade ease-in-out duration-150 invisible opacity-0" style="left: 0px; bottom: 0px;"><span class="flex items-start justify-center"><button title="Bold (Ctrl+B)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H8c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h5.78c2.07 0 3.96-1.69 3.97-3.77.01-1.53-.85-2.84-2.15-3.44zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"></path></svg></button><button title="Italic (Ctrl+I)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M10 5.5c0 .83.67 1.5 1.5 1.5h.71l-3.42 8H7.5c-.83 0-1.5.67-1.5 1.5S6.67 18 7.5 18h5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-.71l3.42-8h1.29c.83 0 1.5-.67 1.5-1.5S17.33 4 16.5 4h-5c-.83 0-1.5.67-1.5 1.5z"></path></svg></button><button title="Underline (Ctrl+U)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M12.79 16.95c3.03-.39 5.21-3.11 5.21-6.16V4.25C18 3.56 17.44 3 16.75 3s-1.25.56-1.25 1.25v6.65c0 1.67-1.13 3.19-2.77 3.52-2.25.47-4.23-1.25-4.23-3.42V4.25C8.5 3.56 7.94 3 7.25 3S6 3.56 6 4.25V11c0 3.57 3.13 6.42 6.79 5.95zM5 20c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1z"></path></svg></button><button title="Title" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M5 5.5C5 6.33 5.67 7 6.5 7h4v10.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V7h4c.83 0 1.5-.67 1.5-1.5S18.33 4 17.5 4h-11C5.67 4 5 4.67 5 5.5z"></path></svg></button><button title="Bullet list" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM8 19h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zm0-6h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zM7 6c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1z"></path></svg></button><button title="Subscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold tracking-wider">H<sub class="text-xs leading-none">2</sub></span></button><button title="Superscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold">x<sup class="text-xs leading-none">2</sup></span></button></span></div>
+            <p title="Highlight a word or phrase for formatting options" class="sm-RichTextArea-description cursor-help">Rich Text</p>
+          </div>
+          <div>
+            <p class="m-0 mb-3"><span class="text-base font-medium">Annotation access</span></p>
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"><i class="flex w-6 h-6"><svg data-icon="icon-check"></svg></i></transition-stub>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100"><input type="radio" id="database-annotations-private" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are private</span><span class="block text-sm text-gray-800">Results will be visible to group members only</span></label>
+            </div>
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700"><input type="radio" id="database-annotations-public" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are public</span><span class="block text-sm text-gray-800">Results will be visible to everyone</span></label>
+            </div>
+          </div>
+          <div><label for="database-link"><span class="text-base font-medium">Link</span></label>
+            <div class="el-input">
+              <!----><input type="text" autocomplete="off" id="database-link" class="el-input__inner">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+            </div>
+          </div>
+          <div class="sm-RichText sm-RichTextArea relative"><label><span class="text-base font-medium">Citation</span></label>
+            <div class="h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary mt-1">
+              <div contenteditable="true" tabindex="0" class="ProseMirror">
+                <p><br></p>
+              </div>
+            </div>
+            <div class="absolute bg-white rounded p-1 border border-solid border-gray-100 shadow mb-2 transform -translate-x-1/2 transition-fade ease-in-out duration-150 invisible opacity-0" style="left: 0px; bottom: 0px;"><span class="flex items-start justify-center"><button title="Bold (Ctrl+B)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H8c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h5.78c2.07 0 3.96-1.69 3.97-3.77.01-1.53-.85-2.84-2.15-3.44zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"></path></svg></button><button title="Italic (Ctrl+I)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M10 5.5c0 .83.67 1.5 1.5 1.5h.71l-3.42 8H7.5c-.83 0-1.5.67-1.5 1.5S6.67 18 7.5 18h5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-.71l3.42-8h1.29c.83 0 1.5-.67 1.5-1.5S17.33 4 16.5 4h-5c-.83 0-1.5.67-1.5 1.5z"></path></svg></button><button title="Underline (Ctrl+U)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M12.79 16.95c3.03-.39 5.21-3.11 5.21-6.16V4.25C18 3.56 17.44 3 16.75 3s-1.25.56-1.25 1.25v6.65c0 1.67-1.13 3.19-2.77 3.52-2.25.47-4.23-1.25-4.23-3.42V4.25C8.5 3.56 7.94 3 7.25 3S6 3.56 6 4.25V11c0 3.57 3.13 6.42 6.79 5.95zM5 20c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1z"></path></svg></button><button title="Title" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M5 5.5C5 6.33 5.67 7 6.5 7h4v10.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V7h4c.83 0 1.5-.67 1.5-1.5S18.33 4 17.5 4h-11C5.67 4 5 4.67 5 5.5z"></path></svg></button><button title="Bullet list" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM8 19h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zm0-6h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zM7 6c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1z"></path></svg></button><button title="Subscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold tracking-wider">H<sub class="text-xs leading-none">2</sub></span></button><button title="Superscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold">x<sup class="text-xs leading-none">2</sup></span></button></span></div>
+            <p title="Highlight a word or phrase for formatting options" class="sm-RichTextArea-description cursor-help">Rich Text</p>
+          </div><button class="el-button el-button--primary">Update details</button>
+        </form>
+        <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="mt-12">
+          <form class="margin-reset mt-12">
+            <h2>Un-archive database</h2>
+            <p>Database will be available for dataset processing again.</p><button type="button" class="el-button el-button--default mt-5">
+              <!---->
+              <!----><span>Un-archive database</span></button>
+          </form>
+        </transition-stub>
+      </div>
+    </div>
+  </transition-stub>
+</transition-stub>
+`;
+
+exports[`MolecularDatabases details view should match snapshot (manager) 1`] = `
+<transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+  <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+    <div class="relative leading-6 h2-leading-12" mock-v-loading="true">
+      <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"><span class="flex items-center"><i class="flex w-6 h-6 mr-1"><svg data-icon="icon-arrow-thin-left-circle"></svg></i><span class="leading-none mt-1">All databases</span></span></a></div>
+      <div class="max-w-measure-3 mx-auto mt-6 mb-18">
+        <div class="flex justify-between items-center">
+          <h2 title="undefined - undefined" class="truncate"> <small class="text-gray-700 font-normal"></small></h2><button type="button" class="el-button el-button--default ml-3">
+            <!---->
+            <!----><span>Upload new version</span></button>
+        </div>
+        <form action="#" class="v-rhythm-6 mt-3">
+          <div><label for="database-full-name"><span class="text-base font-medium">Full name</span></label>
+            <div class="el-input">
+              <!----><input type="text" autocomplete="off" id="database-full-name" class="el-input__inner">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+            </div>
+          </div>
+          <div class="sm-RichText sm-RichTextArea relative"><label><span class="text-base font-medium">Description</span></label>
+            <div class="h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary mt-1">
+              <div contenteditable="true" tabindex="0" class="ProseMirror">
+                <p><br></p>
+              </div>
+            </div>
+            <div class="absolute bg-white rounded p-1 border border-solid border-gray-100 shadow mb-2 transform -translate-x-1/2 transition-fade ease-in-out duration-150 invisible opacity-0" style="left: 0px; bottom: 0px;"><span class="flex items-start justify-center"><button title="Bold (Ctrl+B)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H8c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h5.78c2.07 0 3.96-1.69 3.97-3.77.01-1.53-.85-2.84-2.15-3.44zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"></path></svg></button><button title="Italic (Ctrl+I)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M10 5.5c0 .83.67 1.5 1.5 1.5h.71l-3.42 8H7.5c-.83 0-1.5.67-1.5 1.5S6.67 18 7.5 18h5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-.71l3.42-8h1.29c.83 0 1.5-.67 1.5-1.5S17.33 4 16.5 4h-5c-.83 0-1.5.67-1.5 1.5z"></path></svg></button><button title="Underline (Ctrl+U)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M12.79 16.95c3.03-.39 5.21-3.11 5.21-6.16V4.25C18 3.56 17.44 3 16.75 3s-1.25.56-1.25 1.25v6.65c0 1.67-1.13 3.19-2.77 3.52-2.25.47-4.23-1.25-4.23-3.42V4.25C8.5 3.56 7.94 3 7.25 3S6 3.56 6 4.25V11c0 3.57 3.13 6.42 6.79 5.95zM5 20c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1z"></path></svg></button><button title="Title" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M5 5.5C5 6.33 5.67 7 6.5 7h4v10.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V7h4c.83 0 1.5-.67 1.5-1.5S18.33 4 17.5 4h-11C5.67 4 5 4.67 5 5.5z"></path></svg></button><button title="Bullet list" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM8 19h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zm0-6h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zM7 6c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1z"></path></svg></button><button title="Subscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold tracking-wider">H<sub class="text-xs leading-none">2</sub></span></button><button title="Superscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold">x<sup class="text-xs leading-none">2</sup></span></button></span></div>
+            <p title="Highlight a word or phrase for formatting options" class="sm-RichTextArea-description cursor-help">Rich Text</p>
+          </div>
+          <div>
+            <p class="m-0 mb-3"><span class="text-base font-medium">Annotation access</span></p>
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"><i class="flex w-6 h-6"><svg data-icon="icon-check"></svg></i></transition-stub>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100"><input type="radio" id="database-annotations-private" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are private</span><span class="block text-sm text-gray-800">Results will be visible to group members only</span></label>
+            </div>
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700"><input type="radio" id="database-annotations-public" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are public</span><span class="block text-sm text-gray-800">Results will be visible to everyone</span></label>
+            </div>
+          </div>
+          <div><label for="database-link"><span class="text-base font-medium">Link</span></label>
+            <div class="el-input">
+              <!----><input type="text" autocomplete="off" id="database-link" class="el-input__inner">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+            </div>
+          </div>
+          <div class="sm-RichText sm-RichTextArea relative"><label><span class="text-base font-medium">Citation</span></label>
+            <div class="h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary mt-1">
+              <div contenteditable="true" tabindex="0" class="ProseMirror">
+                <p><br></p>
+              </div>
+            </div>
+            <div class="absolute bg-white rounded p-1 border border-solid border-gray-100 shadow mb-2 transform -translate-x-1/2 transition-fade ease-in-out duration-150 invisible opacity-0" style="left: 0px; bottom: 0px;"><span class="flex items-start justify-center"><button title="Bold (Ctrl+B)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H8c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h5.78c2.07 0 3.96-1.69 3.97-3.77.01-1.53-.85-2.84-2.15-3.44zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"></path></svg></button><button title="Italic (Ctrl+I)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M10 5.5c0 .83.67 1.5 1.5 1.5h.71l-3.42 8H7.5c-.83 0-1.5.67-1.5 1.5S6.67 18 7.5 18h5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-.71l3.42-8h1.29c.83 0 1.5-.67 1.5-1.5S17.33 4 16.5 4h-5c-.83 0-1.5.67-1.5 1.5z"></path></svg></button><button title="Underline (Ctrl+U)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M12.79 16.95c3.03-.39 5.21-3.11 5.21-6.16V4.25C18 3.56 17.44 3 16.75 3s-1.25.56-1.25 1.25v6.65c0 1.67-1.13 3.19-2.77 3.52-2.25.47-4.23-1.25-4.23-3.42V4.25C8.5 3.56 7.94 3 7.25 3S6 3.56 6 4.25V11c0 3.57 3.13 6.42 6.79 5.95zM5 20c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1z"></path></svg></button><button title="Title" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M5 5.5C5 6.33 5.67 7 6.5 7h4v10.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V7h4c.83 0 1.5-.67 1.5-1.5S18.33 4 17.5 4h-11C5.67 4 5 4.67 5 5.5z"></path></svg></button><button title="Bullet list" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM8 19h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zm0-6h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zM7 6c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1z"></path></svg></button><button title="Subscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold tracking-wider">H<sub class="text-xs leading-none">2</sub></span></button><button title="Superscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold">x<sup class="text-xs leading-none">2</sup></span></button></span></div>
+            <p title="Highlight a word or phrase for formatting options" class="sm-RichTextArea-description cursor-help">Rich Text</p>
+          </div><button class="el-button el-button--primary">Update details</button>
+        </form>
+        <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="mt-12">
+          <form class="margin-reset mt-12">
+            <h2>Archive database</h2>
+            <p>Database will not be available for dataset processing.</p><button type="button" class="el-button el-button--default mt-5">
+              <!---->
+              <!----><span>Archive database</span></button>
+          </form>
+        </transition-stub>
+        <form class="margin-reset mt-12">
+          <h2>Delete database</h2>
+          <p>Unprocessed dataset jobs using this database will also be removed.</p><button type="button" class="el-button el-button--danger mt-5">
+            <!---->
+            <!----><span>Delete database</span></button>
+        </form>
+      </div>
+    </div>
+  </transition-stub>
+</transition-stub>
+`;
+
+exports[`MolecularDatabases details view should match snapshot 1`] = `
+<transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+  <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+    <div class="relative leading-6 h2-leading-12" mock-v-loading="true">
+      <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"><span class="flex items-center"><i class="flex w-6 h-6 mr-1"><svg data-icon="icon-arrow-thin-left-circle"></svg></i><span class="leading-none mt-1">All databases</span></span></a></div>
+      <div class="max-w-measure-3 mx-auto mt-6 mb-18">
+        <div class="flex justify-between items-center">
+          <h2 title="undefined - undefined" class="truncate"> <small class="text-gray-700 font-normal"></small></h2><button type="button" class="el-button el-button--default ml-3">
+            <!---->
+            <!----><span>Upload new version</span></button>
+        </div>
+        <form action="#" class="v-rhythm-6 mt-3">
+          <div><label for="database-full-name"><span class="text-base font-medium">Full name</span></label>
+            <div class="el-input">
+              <!----><input type="text" autocomplete="off" id="database-full-name" class="el-input__inner">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+            </div>
+          </div>
+          <div class="sm-RichText sm-RichTextArea relative"><label><span class="text-base font-medium">Description</span></label>
+            <div class="h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary mt-1">
+              <div contenteditable="true" tabindex="0" class="ProseMirror">
+                <p><br></p>
+              </div>
+            </div>
+            <div class="absolute bg-white rounded p-1 border border-solid border-gray-100 shadow mb-2 transform -translate-x-1/2 transition-fade ease-in-out duration-150 invisible opacity-0" style="left: 0px; bottom: 0px;"><span class="flex items-start justify-center"><button title="Bold (Ctrl+B)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H8c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h5.78c2.07 0 3.96-1.69 3.97-3.77.01-1.53-.85-2.84-2.15-3.44zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"></path></svg></button><button title="Italic (Ctrl+I)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M10 5.5c0 .83.67 1.5 1.5 1.5h.71l-3.42 8H7.5c-.83 0-1.5.67-1.5 1.5S6.67 18 7.5 18h5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-.71l3.42-8h1.29c.83 0 1.5-.67 1.5-1.5S17.33 4 16.5 4h-5c-.83 0-1.5.67-1.5 1.5z"></path></svg></button><button title="Underline (Ctrl+U)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M12.79 16.95c3.03-.39 5.21-3.11 5.21-6.16V4.25C18 3.56 17.44 3 16.75 3s-1.25.56-1.25 1.25v6.65c0 1.67-1.13 3.19-2.77 3.52-2.25.47-4.23-1.25-4.23-3.42V4.25C8.5 3.56 7.94 3 7.25 3S6 3.56 6 4.25V11c0 3.57 3.13 6.42 6.79 5.95zM5 20c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1z"></path></svg></button><button title="Title" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M5 5.5C5 6.33 5.67 7 6.5 7h4v10.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V7h4c.83 0 1.5-.67 1.5-1.5S18.33 4 17.5 4h-11C5.67 4 5 4.67 5 5.5z"></path></svg></button><button title="Bullet list" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM8 19h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zm0-6h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zM7 6c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1z"></path></svg></button><button title="Subscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold tracking-wider">H<sub class="text-xs leading-none">2</sub></span></button><button title="Superscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold">x<sup class="text-xs leading-none">2</sup></span></button></span></div>
+            <p title="Highlight a word or phrase for formatting options" class="sm-RichTextArea-description cursor-help">Rich Text</p>
+          </div>
+          <div>
+            <p class="m-0 mb-3"><span class="text-base font-medium">Annotation access</span></p>
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"><i class="flex w-6 h-6"><svg data-icon="icon-check"></svg></i></transition-stub>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100"><input type="radio" id="database-annotations-private" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are private</span><span class="block text-sm text-gray-800">Results will be visible to group members only</span></label>
+            </div>
+            <div class="flex -ml-12">
+              <div class="w-9 flex items-center">
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out"></transition-stub>
+              </div><label class="cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700"><input type="radio" id="database-annotations-public" name="isPublic" class="sr-only"><span class="text-base font-medium">Annotations are public</span><span class="block text-sm text-gray-800">Results will be visible to everyone</span></label>
+            </div>
+          </div>
+          <div><label for="database-link"><span class="text-base font-medium">Link</span></label>
+            <div class="el-input">
+              <!----><input type="text" autocomplete="off" id="database-link" class="el-input__inner">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+            </div>
+          </div>
+          <div class="sm-RichText sm-RichTextArea relative"><label><span class="text-base font-medium">Citation</span></label>
+            <div class="h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary mt-1">
+              <div contenteditable="true" tabindex="0" class="ProseMirror">
+                <p><br></p>
+              </div>
+            </div>
+            <div class="absolute bg-white rounded p-1 border border-solid border-gray-100 shadow mb-2 transform -translate-x-1/2 transition-fade ease-in-out duration-150 invisible opacity-0" style="left: 0px; bottom: 0px;"><span class="flex items-start justify-center"><button title="Bold (Ctrl+B)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H8c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h5.78c2.07 0 3.96-1.69 3.97-3.77.01-1.53-.85-2.84-2.15-3.44zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"></path></svg></button><button title="Italic (Ctrl+I)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M10 5.5c0 .83.67 1.5 1.5 1.5h.71l-3.42 8H7.5c-.83 0-1.5.67-1.5 1.5S6.67 18 7.5 18h5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-.71l3.42-8h1.29c.83 0 1.5-.67 1.5-1.5S17.33 4 16.5 4h-5c-.83 0-1.5.67-1.5 1.5z"></path></svg></button><button title="Underline (Ctrl+U)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M12.79 16.95c3.03-.39 5.21-3.11 5.21-6.16V4.25C18 3.56 17.44 3 16.75 3s-1.25.56-1.25 1.25v6.65c0 1.67-1.13 3.19-2.77 3.52-2.25.47-4.23-1.25-4.23-3.42V4.25C8.5 3.56 7.94 3 7.25 3S6 3.56 6 4.25V11c0 3.57 3.13 6.42 6.79 5.95zM5 20c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1z"></path></svg></button><button title="Title" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M5 5.5C5 6.33 5.67 7 6.5 7h4v10.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V7h4c.83 0 1.5-.67 1.5-1.5S18.33 4 17.5 4h-11C5.67 4 5 4.67 5 5.5z"></path></svg></button><button title="Bullet list" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM8 19h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zm0-6h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zM7 6c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1z"></path></svg></button><button title="Subscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold tracking-wider">H<sub class="text-xs leading-none">2</sub></span></button><button title="Superscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold">x<sup class="text-xs leading-none">2</sup></span></button></span></div>
+            <p title="Highlight a word or phrase for formatting options" class="sm-RichTextArea-description cursor-help">Rich Text</p>
+          </div><button class="el-button el-button--primary">Update details</button>
+        </form>
+        <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out" class="mt-12">
+          <form class="margin-reset mt-12">
+            <h2>Archive database</h2>
+            <p>Database will not be available for dataset processing.</p><button type="button" class="el-button el-button--default mt-5">
+              <!---->
+              <!----><span>Archive database</span></button>
+          </form>
+        </transition-stub>
+      </div>
+    </div>
+  </transition-stub>
+</transition-stub>
+`;
+
+exports[`MolecularDatabases should match snapshot 1`] = `
+<transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+  <div>
+    <header class="flex justify-between items-center py-3">
+      <div class="flex items-center"><i class="flex rounded-full p-2 bg-blue-100 w-6 h-6 mx-3"><svg data-icon="icon-user-group"></svg></i>
+        <p class="m-0 ml-1 text-sm leading-5 text-gray-700">Databases are only available to members of this group.<br>You can choose to make derived annotations visible to others.</p>
+      </div><button type="button" class="el-button el-button--primary">
+        <!---->
+        <!----><span>Upload Database</span></button>
+    </header>
+    <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" style="width: 100%;" mock-v-loading="false">
+      <div class="hidden-columns">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      <div class="el-table__header-wrapper">
+        <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 576px;">
+          <colgroup>
+            <col name="el-table_1_column_1" width="144">
+            <col name="el-table_1_column_2" width="144">
+            <col name="el-table_1_column_3" width="144">
+            <col name="el-table_1_column_4" width="144">
+          </colgroup>
+          <thead class="">
+            <tr class="">
+              <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf is-sortable">
+                <div class="cell">Name<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+              </th>
+              <th colspan="1" rowspan="1" class="el-table_1_column_2 descending    is-leaf is-sortable">
+                <div class="cell">Uploaded<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+              </th>
+              <th colspan="1" rowspan="1" class="el-table_1_column_3  is-center   is-leaf">
+                <div class="cell">Public annotations</div>
+              </th>
+              <th colspan="1" rowspan="1" class="el-table_1_column_4  is-center   is-leaf">
+                <div class="cell">Archived</div>
+              </th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div class="el-table__body-wrapper is-scrolling-left">
+        <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 576px;">
+          <colgroup>
+            <col name="el-table_1_column_1" width="144">
+            <col name="el-table_1_column_2" width="144">
+            <col name="el-table_1_column_3" width="144">
+            <col name="el-table_1_column_4" width="144">
+          </colgroup>
+          <tbody>
+            <tr class="el-table__row cursor-pointer">
+              <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                <div class="cell"><span><span class="text-body font-medium">bar</span> <span class="text-gray-700">v1</span></span></div>
+              </td>
+              <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                <div class="cell">
+                  <mock-elapsed-time date="group.molecularDatabases.1.createdDT"></mock-elapsed-time>
+                </div>
+              </td>
+              <td rowspan="1" colspan="1" class="el-table_1_column_3 is-center ">
+                <div class="cell"><span class="flex justify-center items-center h-5"><i class="flex w-6 h-6"><svg data-icon="icon-check"></svg></i></span></div>
+              </td>
+              <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                <div class="cell"><span class="flex justify-center items-center h-5"></span></div>
+              </td>
+            </tr>
+            <tr class="el-table__row cursor-pointer">
+              <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                <div class="cell"><span><span class="text-body font-medium">foo</span> <span class="text-gray-700">v1</span></span></div>
+              </td>
+              <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                <div class="cell">
+                  <mock-elapsed-time date="group.molecularDatabases.0.createdDT"></mock-elapsed-time>
+                </div>
+              </td>
+              <td rowspan="1" colspan="1" class="el-table_1_column_3 is-center ">
+                <div class="cell"><span class="flex justify-center items-center h-5"></span></div>
+              </td>
+              <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                <div class="cell"><span class="flex justify-center items-center h-5"><i class="flex w-6 h-6"><svg data-icon="icon-check"></svg></i></span></div>
+              </td>
+            </tr>
+            <!---->
+          </tbody>
+        </table>
+        <!---->
+        <!---->
+      </div>
+      <!---->
+      <!---->
+      <!---->
+      <!---->
+      <div class="el-table__column-resize-proxy" style="display: none;"></div>
+    </div>
+  </div>
+</transition-stub>
+`;
