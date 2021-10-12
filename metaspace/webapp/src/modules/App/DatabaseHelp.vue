@@ -9,8 +9,10 @@
     </p>
     <ul class="v-rhythm-3 max-w-measure-4">
       <li>
-        <b>Brassica Napus Database (BraChemDB):</b>
-        A curated rapeseed database from LC-MS/MS measurements.
+        <b><a href="https://www.protim.eu/en">Brassica Napus Database (BraChemDB)</a>:</b>
+        The BraChemDB Database contains small molecule metabolites experimentally detected in the rapeseed Brassica napus,
+        available only on METASPACE and provided by IGEPP’s Metabolic Profiling and Metabolomic Platform and Protim Core Facility,
+        University of Rennes 1.
         <div>
           <el-popover
             trigger="hover"
