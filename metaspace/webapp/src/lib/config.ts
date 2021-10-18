@@ -56,7 +56,7 @@ const defaultConfig: ClientConfig = {
   features: {
     coloc: true,
     show_dataset_overview: false,
-    tic: false,
+    tic: true,
     ion_thumbs: true,
     off_sample: true,
     off_sample_col: false,
