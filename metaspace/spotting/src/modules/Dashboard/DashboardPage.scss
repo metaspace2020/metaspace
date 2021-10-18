@@ -52,6 +52,11 @@ $filter-color: #828282;
     min-height: 400px;
 
   }
+  .chart-container{
+    @apply w-full h-full border-2 border-dashed border-gray-300 relative;
+    min-height: 400px;
+
+  }
 
   .x-axis-label{
     color: $x-axis-color;
