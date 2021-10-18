@@ -1,7 +1,12 @@
 import { defineComponent, reactive } from '@vue/composition-api'
 import './DashboardPage.scss'
 import { Option, Select } from '../../../../webapp/src/lib/element-ui'
-import { orderBy } from 'lodash-es'
+import { keyBy, merge, orderBy } from 'lodash-es'
+import { DashboardScatterChart } from './DashboardScatterChart'
+import { classification } from '../../data/custom_classification'
+import { datasets } from '../../data/datasets'
+import { predictions } from '../../data/predictions'
+import { pathways } from '../../data/pathways'
 
 interface Options{
   xAxis: any
@@ -11,6 +16,10 @@ interface Options{
 
 interface DashboardState {
   filter: any
+  xAxisValues: any
+  yAxisValues: any
+  data: any
+  visualMap: any
   options: Options
   selectedView: number
 }
@@ -23,73 +32,73 @@ const VIEW = {
 const AXIS_VALUES = [
   {
     label: 'Polarity',
-    src: 'polarity',
+    src: 'Polarity',
   },
   {
     label: 'Adducts',
-    src: 'adducts',
+    src: 'adduct',
   },
   {
     label: 'Neutral losses',
-    src: 'neutral losses',
+    src: 'neutral_loss',
   },
   {
     label: 'Matrix',
-    src: 'matrix',
+    src: 'Matrix short',
   },
   {
     label: 'Molecule',
-    src: 'molecule',
+    src: 'formula',
   },
   {
     label: 'Technology',
-    src: 'technology',
+    src: 'Technology',
   },
   {
     label: 'Pathway',
-    src: 'pathway',
+    src: 'name_short',
   },
   {
     label: 'Class',
-    src: 'class',
+    src: 'fine_class',
   },
   {
     label: 'Dataset',
-    src: 'dataset',
+    src: 'dataset_name',
   },
 ]
 
 const AGGREGATED_VALUES = [
   {
     label: 'Prediction',
-    src: 'prediction',
+    src: 'coarse_class',
   },
   {
     label: 'Intensity',
-    src: 'intensity',
+    src: 'spot_intensity',
   },
   {
     label: 'Simple count',
-    src: 'count',
+    src: 'in_n_spots',
   },
 ]
 
 const FILTER_VALUES = [
   {
     label: 'Polarity',
-    src: 'polarity',
+    src: 'Polarity',
   },
   {
     label: 'Adducts',
-    src: 'adducts',
+    src: 'adduct',
   },
   {
     label: 'Neutral losses',
-    src: 'neutral losses',
+    src: 'neutral_loss',
   },
   {
     label: 'Matrix',
-    src: 'matrix',
+    src: 'Matrix short',
   },
   {
     label: 'Prediction',
@@ -97,25 +106,49 @@ const FILTER_VALUES = [
   },
   {
     label: 'Technology',
-    src: 'technology',
+    src: 'Technology',
   },
   {
     label: 'Pathway',
-    src: 'pathway',
+    src: 'name_short',
   },
   {
     label: 'Class',
-    src: 'class',
+    src: 'fine_class',
   },
   {
     label: 'Dataset',
-    src: 'dataset',
+    src: 'dataset_name',
   },
   {
     label: 'Intensity',
     src: 'intensity',
   },
 ]
+
+const CLASSIFICATION_METRICS = {
+  fine_class: true,
+  coarse_class: true,
+}
+
+const DATASET_METRICS = {
+  Polarity: true,
+  Technology: true,
+  'Matrix short': true,
+}
+
+const PREDICTION_METRICS = {
+  adduct: true,
+  dataset_name: true,
+  formula: true,
+  neutral_loss: true,
+  in_n_spots: true,
+  spot_intensity: true,
+}
+
+const PATHWAY_METRICS = {
+  name_short: true,
+}
 
 export default defineComponent({
   name: 'dashboard',
@@ -123,6 +156,10 @@ export default defineComponent({
     const { $route, $store } = ctx.root
     const state = reactive<DashboardState>({
       filter: undefined,
+      xAxisValues: [],
+      yAxisValues: [],
+      data: [],
+      visualMap: {},
       options: {
         xAxis: null,
         yAxis: null,
@@ -130,6 +167,169 @@ export default defineComponent({
       },
       selectedView: VIEW.SCATTER,
     })
+
+    const buildValues = () => {
+      let auxX : any = null
+      let auxY : any = null
+      let auxAgg : any = null
+
+      if (Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)) {
+        auxX = classification
+      } else if (Object.keys(DATASET_METRICS).includes(state.options.xAxis)) {
+        auxX = datasets
+      } else if (Object.keys(PREDICTION_METRICS).includes(state.options.xAxis)) {
+        auxX = predictions
+      } else if (Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)) {
+        auxX = pathways
+      }
+
+      if (Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)) {
+        auxY = classification
+      } else if (Object.keys(DATASET_METRICS).includes(state.options.yAxis)) {
+        auxY = datasets
+      } else if (Object.keys(PREDICTION_METRICS).includes(state.options.yAxis)) {
+        auxY = predictions
+      } else if (Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)) {
+        auxY = pathways
+      }
+
+      if (Object.keys(CLASSIFICATION_METRICS).includes(state.options.aggregation)) {
+        auxAgg = classification
+      } else if (Object.keys(DATASET_METRICS).includes(state.options.aggregation)) {
+        auxAgg = datasets
+      } else if (Object.keys(PREDICTION_METRICS).includes(state.options.aggregation)) {
+        auxAgg = predictions
+      } else if (Object.keys(PATHWAY_METRICS).includes(state.options.aggregation)) {
+        auxAgg = pathways
+      }
+
+      const auxXWithInternal = keyBy(auxX, 'internal_id')
+      const auxAggWithInternal = keyBy(auxAgg, 'internal_id')
+      const isContinuous = state.options.aggregation !== 'coarse_class'
+      const aggregations : any = Object.keys(keyBy(auxAgg, state.options.aggregation)).map((category: any) => {
+        return {
+          value: isContinuous ? parseFloat(category) : category,
+          label: category,
+        }
+      })
+      const chartValues : any = {}
+      let maxValue : number = 1
+      const availableAggregations : any = []
+
+      console.log('aggregations', aggregations)
+
+      Object.keys(auxXWithInternal).forEach((internalId : any) => {
+        auxXWithInternal[internalId].yAxis = auxY.filter((a: any) => a.internal_id === parseInt(internalId, 10))
+        auxXWithInternal[internalId].xAxis = auxX.filter((a: any) => a.internal_id === parseInt(internalId, 10))
+        auxXWithInternal[internalId].xAxisCount = auxXWithInternal[internalId].xAxis.length
+        auxXWithInternal[internalId].yAxisCount = auxXWithInternal[internalId].yAxis.length
+        const auxAggValue : any = auxAggWithInternal[internalId] !== undefined
+          ? auxAggWithInternal[internalId][state.options.aggregation] : null
+        auxXWithInternal[internalId].aggregation = aggregations.find((category: any) => auxAggValue !== null
+        && category.value
+          === (isContinuous ? parseFloat(auxAggValue) : auxAggValue))
+
+        if (auxAggWithInternal[internalId]) {
+          console.log('A', auxAggValue, state.options.aggregation, auxAggWithInternal[internalId],
+            auxXWithInternal[internalId].aggregation)
+        }
+
+        if (maxValue < auxXWithInternal[internalId].yAxisCount) {
+          maxValue = auxXWithInternal[internalId].yAxisCount
+        }
+        if (auxXWithInternal[internalId].yAxis.length > 0) {
+          const yKey = auxXWithInternal[internalId].yAxis[0][state.options.yAxis]
+          chartValues[
+            `${auxXWithInternal[internalId][state.options.xAxis]}-${yKey}`] =
+            auxXWithInternal[internalId]
+        }
+      })
+
+      const dotValues : any = []
+      let counter = 0
+      // console.log('SIZE', state.yAxisValues.length * state.xAxisValues.length)
+      state.yAxisValues.forEach((yKey: any, yIndex: number) => {
+        state.xAxisValues.forEach((xKey: any, xIndex: number) => {
+          const auxValue = chartValues[`${xKey}-${yKey}`]
+            ? chartValues[`${xKey}-${yKey}`].yAxisCount : 0
+          if (auxValue && !availableAggregations.includes(chartValues[`${xKey}-${yKey}`].aggregation?.value)) {
+            availableAggregations.push(chartValues[`${xKey}-${yKey}`].aggregation)
+          }
+
+          if (auxValue) {
+            dotValues.push({
+              value: [xIndex, yIndex, (auxValue / maxValue) * 5,
+                chartValues[`${xKey}-${yKey}`]?.aggregation?.value || 0],
+              label: {},
+            })
+          }
+
+          counter += 1
+        })
+      })
+
+      state.visualMap = {
+        type: state.options.aggregation !== 'coarse_class' ? 'continuous' : 'piecewise',
+        show: true,
+        dimension: 3,
+        top: 'top',
+        left: 'right',
+      }
+
+      console.log('VIS', state.visualMap)
+
+      if (state.visualMap.type === 'piecewise') {
+        state.visualMap.pieces = availableAggregations
+      }
+
+      console.log('YOxxx', chartValues)
+      state.data = dotValues
+    }
+
+    const handleAggregationChange = (value: any) => {
+      state.options.aggregation = value
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+        // console.log('HEY2')
+        buildValues()
+      }
+    }
+
+    const handleAxisChange = (value: any, isXAxis : boolean = true) => {
+      // console.log('HE', value)
+      const axis : any = []
+      let src : any = ''
+
+      if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
+        src = classification
+      } else if (Object.keys(DATASET_METRICS).includes(value)) {
+        src = datasets
+      } else if (Object.keys(PREDICTION_METRICS).includes(value)) {
+        src = predictions
+      } else if (Object.keys(PATHWAY_METRICS).includes(value)) {
+        src = pathways
+      }
+
+      if (!src) {
+        return
+      }
+
+      src.forEach((row: any) => {
+        if (!axis.includes(row[value])) {
+          axis.push(row[value])
+        }
+      })
+      axis.sort()
+
+      if (isXAxis) {
+        state.xAxisValues = axis
+      } else {
+        state.yAxisValues = axis
+      }
+
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+        buildValues()
+      }
+    }
 
     const renderFilters = () => {
       return (
@@ -141,6 +341,7 @@ export default defineComponent({
               value={state.options.xAxis}
               onChange={(value: number) => {
                 state.options.xAxis = value
+                handleAxisChange(value)
               }}
               placeholder='Class'
               size='mini'>
@@ -158,6 +359,7 @@ export default defineComponent({
               value={state.options.yAxis}
               onChange={(value: number) => {
                 state.options.yAxis = value
+                handleAxisChange(value, false)
               }}
               placeholder='Method'
               size='mini'>
@@ -175,6 +377,7 @@ export default defineComponent({
               value={state.options.aggregation}
               onChange={(value: number) => {
                 state.options.aggregation = value
+                handleAggregationChange(value)
               }}
               placeholder='Method'
               size='mini'>
@@ -252,13 +455,29 @@ export default defineComponent({
       )
     }
 
+    const renderScatterplot = () => {
+      return (
+        <div class='chart-container'>
+          <DashboardScatterChart
+            xAxis={state.xAxisValues}
+            yAxis={state.yAxisValues}
+            data={state.data}
+            visualMap={state.visualMap}
+          />
+        </div>
+      )
+    }
+
     return () => {
+      const showChart = true
+
       return (
         <div class={'dashboard-container'}>
           {renderFilters()}
           {renderVisualizations()}
           <div class={'content-container'}>
-            {renderDashboardInstructions()}
+            {!showChart && renderDashboardInstructions()}
+            {showChart && renderScatterplot()}
           </div>
         </div>
       )
