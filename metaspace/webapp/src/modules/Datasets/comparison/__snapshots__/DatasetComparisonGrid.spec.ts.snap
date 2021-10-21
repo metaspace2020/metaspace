@@ -96,7 +96,76 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                  
                 <!---->
                  
-                <!---->
+                <div
+                  class="el-form-item"
+                >
+                  <!---->
+                  <div
+                    class="el-form-item__content"
+                  >
+                    <label
+                      class="el-checkbox"
+                    >
+                      <span
+                        class="el-checkbox__input"
+                      >
+                        <span
+                          class="el-checkbox__inner"
+                        />
+                        <input
+                          aria-hidden="false"
+                          class="el-checkbox__original"
+                          type="checkbox"
+                          value=""
+                        />
+                      </span>
+                      <span
+                        class="el-checkbox__label"
+                      >
+                        <div
+                          class="font-thin flex flex-row items-center"
+                        >
+                          
+          TIC normalization
+          
+                          <mock-el-popover
+                            placement="right"
+                            trigger="hover"
+                          >
+                            <div
+                              slot-key="default"
+                            >
+                               
+                              <div
+                                class="max-w-xs"
+                              >
+                                
+              This ion image was TIC-normalized.
+              The intensities were divided by the TIC value and then scaled by multiplying by 1e+6.
+            
+                              </div>
+                            </div>
+                            <div
+                              slot-key="reference"
+                            >
+                              <div>
+                                <i
+                                  class="el-icon-question cursor-pointer ml-1"
+                                />
+                              </div>
+                            </div>
+                          </mock-el-popover>
+                        </div>
+                        <!---->
+                      </span>
+                    </label>
+                    <transition-stub
+                      name="el-zoom-in-top"
+                    >
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
                  
                 <div
                   class="el-form-item"
@@ -727,7 +796,76 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                  
                 <!---->
                  
-                <!---->
+                <div
+                  class="el-form-item"
+                >
+                  <!---->
+                  <div
+                    class="el-form-item__content"
+                  >
+                    <label
+                      class="el-checkbox"
+                    >
+                      <span
+                        class="el-checkbox__input"
+                      >
+                        <span
+                          class="el-checkbox__inner"
+                        />
+                        <input
+                          aria-hidden="false"
+                          class="el-checkbox__original"
+                          type="checkbox"
+                          value=""
+                        />
+                      </span>
+                      <span
+                        class="el-checkbox__label"
+                      >
+                        <div
+                          class="font-thin flex flex-row items-center"
+                        >
+                          
+          TIC normalization
+          
+                          <mock-el-popover
+                            placement="right"
+                            trigger="hover"
+                          >
+                            <div
+                              slot-key="default"
+                            >
+                               
+                              <div
+                                class="max-w-xs"
+                              >
+                                
+              This ion image was TIC-normalized.
+              The intensities were divided by the TIC value and then scaled by multiplying by 1e+6.
+            
+                              </div>
+                            </div>
+                            <div
+                              slot-key="reference"
+                            >
+                              <div>
+                                <i
+                                  class="el-icon-question cursor-pointer ml-1"
+                                />
+                              </div>
+                            </div>
+                          </mock-el-popover>
+                        </div>
+                        <!---->
+                      </span>
+                    </label>
+                    <transition-stub
+                      name="el-zoom-in-top"
+                    >
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
                  
                 <div
                   class="el-form-item"
