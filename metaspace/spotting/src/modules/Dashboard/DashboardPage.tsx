@@ -1,12 +1,8 @@
-import { defineComponent, reactive } from '@vue/composition-api'
+import { defineComponent, onMounted, reactive } from '@vue/composition-api'
 import './DashboardPage.scss'
 import { Option, Select } from '../../../../webapp/src/lib/element-ui'
-import { keyBy, merge, orderBy } from 'lodash-es'
+import { groupBy, keyBy, merge, orderBy, uniq, uniqBy } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
-import { classification } from '../../data/custom_classification'
-import { datasets } from '../../data/datasets'
-import { predictions } from '../../data/predictions'
-import { pathways } from '../../data/pathways'
 
 interface Options{
   xAxis: any
@@ -17,11 +13,18 @@ interface Options{
 interface DashboardState {
   filter: any
   xAxisValues: any
+  rawData: any
   yAxisValues: any
   data: any
   visualMap: any
   options: Options
   selectedView: number
+  loading: boolean
+  predictions: any
+  datasets : any
+  classification : any
+  pathways : any
+  wellmap : any
 }
 
 const VIEW = {
@@ -155,10 +158,14 @@ export default defineComponent({
   setup: function(props, ctx) {
     const { $route, $store } = ctx.root
     const state = reactive<DashboardState>({
-      filter: undefined,
+      filter: {
+        src: null,
+        value: null,
+      },
       xAxisValues: [],
       yAxisValues: [],
       data: [],
+      rawData: undefined,
       visualMap: {},
       options: {
         xAxis: null,
@@ -166,46 +173,163 @@ export default defineComponent({
         aggregation: null,
       },
       selectedView: VIEW.SCATTER,
+      loading: false,
+      predictions: null,
+      datasets: null,
+      classification: null,
+      pathways: null,
+      wellmap: null,
+    })
+
+    onMounted(async() => {
+      const fromServer = true
+      try {
+        console.log('INDO')
+        state.loading = true
+        const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/'
+        const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
+        const predictions = await response.json()
+        const datasetResponse = await fetch(baseUrl + 'datasets.json')
+        const datasets = await datasetResponse.json()
+        const chemClassResponse = await fetch(baseUrl + 'custom_classification.json')
+        const classification = await chemClassResponse.json()
+        const pathwayResponse = await fetch(baseUrl + 'pathways.json')
+        const pathways = await pathwayResponse.json()
+        const wellmapResponse = await fetch(baseUrl + 'wellmap.json')
+        const wellmap = await wellmapResponse.json()
+
+        state.predictions = predictions
+        state.datasets = datasets
+        state.classification = classification
+        state.pathways = pathways
+        state.wellmap = wellmap
+
+        const datasetsById = keyBy(datasets, 'Clone ID')
+        const chemClassById = groupBy(classification, 'name_short')
+        const pathwayById = groupBy(pathways, 'name_short')
+        const wellmapById = groupBy(wellmap, 'name_short')
+
+        let count = 0
+        const predWithDs = predictions.map((prediction: any) => {
+          if (datasetsById[prediction.dataset_id]) {
+            return {
+              polarity: datasetsById[prediction.dataset_id].Polarity,
+              matrix_short: datasetsById[prediction.dataset_id]['Matrix short'],
+              matrix_long: datasetsById[prediction.dataset_id]['Matrix long'],
+              ...prediction,
+            }
+          }
+
+          return prediction
+        })
+
+        const predWithClass : any = []
+        predWithDs.forEach((prediction: any) => {
+          if (chemClassById[prediction.name_short]) {
+            chemClassById[prediction.name_short].forEach((classification: any) => {
+              predWithClass.push({ ...classification, ...prediction })
+            })
+            count += chemClassById[prediction.name_short].length
+          } else {
+            predWithClass.push(prediction)
+          }
+        })
+
+        count = 0
+        const predWithPathway : any = []
+        predWithClass.forEach((prediction: any) => {
+          if (pathwayById[prediction.name_short]) {
+            pathwayById[prediction.name_short].forEach((pathway: any) => {
+              predWithPathway.push({ ...pathway, ...prediction })
+            })
+            count += pathwayById[prediction.name_short].length
+          } else {
+            predWithPathway.push(prediction)
+          }
+        })
+
+        count = 0
+        const predWithWellmap : any = []
+        predWithPathway.forEach((prediction: any) => {
+          if (wellmapById[prediction.name_short]) {
+            wellmapById[prediction.name_short].forEach((wellmap: any) => {
+              predWithWellmap.push({ ...wellmap, ...prediction })
+            })
+            count += wellmapById[prediction.name_short].length
+          } else {
+            predWithWellmap.push(prediction)
+          }
+        })
+        console.log('FINALERA', predWithWellmap)
+        state.rawData = predWithWellmap
+      } catch (e) {
+        console.log('predE', e)
+      } finally {
+        state.loading = false
+      }
+      console.log('INDO')
     })
 
     const buildValues = () => {
+      let auxData : any = null
       let auxX : any = null
       let auxY : any = null
       let auxAgg : any = null
 
       if (Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)) {
-        auxX = classification
+        auxX = state.classification
       } else if (Object.keys(DATASET_METRICS).includes(state.options.xAxis)) {
-        auxX = datasets
+        auxX = state.datasets
       } else if (Object.keys(PREDICTION_METRICS).includes(state.options.xAxis)) {
-        auxX = predictions
+        auxX = state.predictions
       } else if (Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)) {
-        auxX = pathways
+        auxX = state.pathways
       }
 
       if (Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)) {
-        auxY = classification
+        auxY = state.classification
       } else if (Object.keys(DATASET_METRICS).includes(state.options.yAxis)) {
-        auxY = datasets
+        auxY = state.datasets
       } else if (Object.keys(PREDICTION_METRICS).includes(state.options.yAxis)) {
-        auxY = predictions
+        auxY = state.predictions
       } else if (Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)) {
-        auxY = pathways
+        auxY = state.pathways
       }
 
       if (Object.keys(CLASSIFICATION_METRICS).includes(state.options.aggregation)) {
-        auxAgg = classification
+        auxAgg = state.classification
       } else if (Object.keys(DATASET_METRICS).includes(state.options.aggregation)) {
-        auxAgg = datasets
+        auxAgg = state.datasets
       } else if (Object.keys(PREDICTION_METRICS).includes(state.options.aggregation)) {
-        auxAgg = predictions
+        auxAgg = state.predictions
       } else if (Object.keys(PATHWAY_METRICS).includes(state.options.aggregation)) {
-        auxAgg = pathways
+        auxAgg = state.pathways
       }
 
-      const auxXWithInternal = keyBy(auxX, 'internal_id')
-      const auxAggWithInternal = keyBy(auxAgg, 'internal_id')
-      const isContinuous = state.options.aggregation !== 'coarse_class'
+      console.log('state.options.xAxis', state.options.xAxis)
+      console.log('state.options.xAxis2', state.rawData[0][state.options.xAxis])
+
+      console.log('state.options.yAxis', state.options.yAxis)
+      console.log('state.options.yAxis2', state.rawData[0][state.options.yAxis])
+
+      auxData = groupBy(state.rawData, state.options.xAxis)
+
+      let maxValue : number = 1
+      Object.keys(auxData).forEach((key: string) => {
+        auxData[key] = groupBy(auxData[key], state.options.yAxis)
+
+        Object.keys(auxData[key]).forEach((xKey: any) => {
+          if (auxData[key][xKey].length > maxValue) {
+            maxValue = auxData[key][xKey].length
+          }
+        })
+      })
+
+      console.log('X', auxData)
+      console.log('X2', state.xAxisValues)
+      console.log('X3', state.yAxisValues)
+
+      const dotValues : any = []
       const aggregations : any = Object.keys(keyBy(auxAgg, state.options.aggregation)).map((category: any) => {
         return {
           value: isContinuous ? parseFloat(category) : category,
@@ -213,66 +337,44 @@ export default defineComponent({
         }
       })
       const chartValues : any = {}
-      let maxValue : number = 1
-      const availableAggregations : any = []
+      let availableAggregations : any = []
 
-      console.log('aggregations', aggregations)
+      console.log('state.options.aggregation', state.options.aggregation)
 
-      Object.keys(auxXWithInternal).forEach((internalId : any) => {
-        auxXWithInternal[internalId].yAxis = auxY.filter((a: any) => a.internal_id === parseInt(internalId, 10))
-        auxXWithInternal[internalId].xAxis = auxX.filter((a: any) => a.internal_id === parseInt(internalId, 10))
-        auxXWithInternal[internalId].xAxisCount = auxXWithInternal[internalId].xAxis.length
-        auxXWithInternal[internalId].yAxisCount = auxXWithInternal[internalId].yAxis.length
-        const auxAggValue : any = auxAggWithInternal[internalId] !== undefined
-          ? auxAggWithInternal[internalId][state.options.aggregation] : null
-        auxXWithInternal[internalId].aggregation = aggregations.find((category: any) => auxAggValue !== null
-        && category.value
-          === (isContinuous ? parseFloat(auxAggValue) : auxAggValue))
+      state.xAxisValues.forEach((xKey: any, xIndex: number) => {
+        console.log('auxX[xKey]', auxData[xKey])
+        state.yAxisValues.forEach((yKey: any, yIndex: number) => {
+          if (auxData[xKey][yKey]) {
+            availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey], state.options.aggregation)))
 
-        if (auxAggWithInternal[internalId]) {
-          console.log('A', auxAggValue, state.options.aggregation, auxAggWithInternal[internalId],
-            auxXWithInternal[internalId].aggregation)
-        }
-
-        if (maxValue < auxXWithInternal[internalId].yAxisCount) {
-          maxValue = auxXWithInternal[internalId].yAxisCount
-        }
-        if (auxXWithInternal[internalId].yAxis.length > 0) {
-          const yKey = auxXWithInternal[internalId].yAxis[0][state.options.yAxis]
-          chartValues[
-            `${auxXWithInternal[internalId][state.options.xAxis]}-${yKey}`] =
-            auxXWithInternal[internalId]
-        }
-      })
-
-      const dotValues : any = []
-      let counter = 0
-      // console.log('SIZE', state.yAxisValues.length * state.xAxisValues.length)
-      state.yAxisValues.forEach((yKey: any, yIndex: number) => {
-        state.xAxisValues.forEach((xKey: any, xIndex: number) => {
-          const auxValue = chartValues[`${xKey}-${yKey}`]
-            ? chartValues[`${xKey}-${yKey}`].yAxisCount : 0
-          if (auxValue && !availableAggregations.includes(chartValues[`${xKey}-${yKey}`].aggregation?.value)) {
-            availableAggregations.push(chartValues[`${xKey}-${yKey}`].aggregation)
-          }
-
-          if (auxValue) {
+            const auxValue = auxData[xKey][yKey].length
             dotValues.push({
-              value: [xIndex, yIndex, (auxValue / maxValue) * 5,
-                chartValues[`${xKey}-${yKey}`]?.aggregation?.value || 0],
+              value: [xIndex, yIndex, (auxValue / maxValue) * 10, auxData[xKey][yKey][0][state.options.aggregation]],
               label: {},
             })
           }
-
-          counter += 1
         })
       })
+
+      availableAggregations = uniq(availableAggregations).map((agg: any) => {
+        return {
+          label: agg,
+          value: agg,
+        }
+      })
+      console.log('maxValue', maxValue)
+      console.log('availableAggregations', availableAggregations)
+
+      console.log('dotValues', dotValues)
+
+      console.log('aggregations', aggregations)
+      const isContinuous = state.options.aggregation !== 'coarse_class'
 
       state.visualMap = {
         type: state.options.aggregation !== 'coarse_class' ? 'continuous' : 'piecewise',
         show: true,
         dimension: 3,
-        top: 'top',
+        top: 'bottom',
         left: 'right',
       }
 
@@ -300,13 +402,13 @@ export default defineComponent({
       let src : any = ''
 
       if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
-        src = classification
+        src = state.classification
       } else if (Object.keys(DATASET_METRICS).includes(value)) {
-        src = datasets
+        src = state.datasets
       } else if (Object.keys(PREDICTION_METRICS).includes(value)) {
-        src = predictions
+        src = state.predictions
       } else if (Object.keys(PATHWAY_METRICS).includes(value)) {
-        src = pathways
+        src = state.pathways
       }
 
       if (!src) {
@@ -393,9 +495,9 @@ export default defineComponent({
             <div class='flex flex-wrap'>
               <Select
                 class='select-box-mini mr-2'
-                value={state.options.aggregation}
+                value={state.filter.src}
                 onChange={(value: number) => {
-                  state.options.aggregation = value
+                  state.filter.src = value
                 }}
                 placeholder='Neutral losses'
                 size='mini'>
@@ -407,9 +509,9 @@ export default defineComponent({
               </Select>
               <Select
                 class='select-box-mini mr-2'
-                value={state.options.aggregation}
+                value={state.filter.value}
                 onChange={(value: number) => {
-                  state.options.aggregation = value
+                  state.filter.value = value
                 }}
                 placeholder='Adduct'
                 size='mini'>
@@ -475,6 +577,7 @@ export default defineComponent({
         <div class={'dashboard-container'}>
           {renderFilters()}
           {renderVisualizations()}
+          {state.loading ? 'loading' : 'loaded'}
           <div class={'content-container'}>
             {!showChart && renderDashboardInstructions()}
             {showChart && renderScatterplot()}
