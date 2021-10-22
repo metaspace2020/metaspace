@@ -345,7 +345,8 @@ export default defineComponent({
         console.log('auxX[xKey]', auxData[xKey])
         state.yAxisValues.forEach((yKey: any, yIndex: number) => {
           if (auxData[xKey][yKey]) {
-            availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey], state.options.aggregation)))
+            availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
+              state.options.aggregation)))
 
             const auxValue = auxData[xKey][yKey].length
             dotValues.push({
