@@ -110,11 +110,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       scaleIntensity: false,
       chartOptions: {
         title: {
-          text: 'Punch Card of Github',
-        },
-        legend: {
-          data: ['Punch Card'],
-          left: 'right',
+          text: '',
         },
         tooltip: {
           position: 'top',
@@ -126,6 +122,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           left: 2,
           top: 10,
           right: 20,
+          bottom: 200,
           containLabel: true,
         },
         xAxis: {
@@ -176,7 +173,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }
-      console.log('auxOptions', auxOptions)
+      console.log('auxOptions', JSON.stringify(auxOptions))
       return auxOptions
     })
 
