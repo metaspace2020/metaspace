@@ -63,8 +63,8 @@ convertLegacyUrls()
 const router = new VueRouter({
   mode: 'history',
   routes: [
-    { path: '/(about)?', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
-    { path: '/dashboard', name: 'dashboard', component: asyncPages.DashboardPage },
+    // { path: '/(about)?', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
+    { path: '/(dashboard)?', name: 'dashboard', component: asyncPages.DashboardPage },
     { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
     {
       path: '/datasets',

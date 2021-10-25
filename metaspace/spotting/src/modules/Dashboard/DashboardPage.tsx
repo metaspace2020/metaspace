@@ -195,7 +195,7 @@ export default defineComponent({
 
     onMounted(async() => {
       try {
-        console.log('INDO')
+        console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/'
         const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
@@ -227,6 +227,7 @@ export default defineComponent({
               Polarity: datasetsById[prediction.dataset_id].Polarity,
               'Matrix short': datasetsById[prediction.dataset_id]['Matrix short'],
               'Matrix long': datasetsById[prediction.dataset_id]['Matrix long'],
+              Technology: datasetsById[prediction.dataset_id].Technology,
               ...prediction,
             }
           }
@@ -271,10 +272,10 @@ export default defineComponent({
             predWithWellmap.push(prediction)
           }
         })
-        console.log('FINALERA', predWithWellmap)
+        console.log('File loaded', predWithWellmap)
         state.rawData = predWithWellmap
       } catch (e) {
-        console.log('predE', e)
+        console.log('error', e)
       } finally {
         state.loading = false
       }
@@ -303,8 +304,6 @@ export default defineComponent({
       }
 
       buildValues()
-
-      console.log('INDO')
     })
 
     const buildValues = () => {
@@ -312,7 +311,6 @@ export default defineComponent({
       let filteredData : any = state.rawData
       state.buildingChart = true
       if (state.filter.src && state.filter.value) {
-        console.log('filtrando', state.filter.src, state.filter.value)
         filteredData = filteredData.filter((data: any) => {
           return data[state.filter.src] === state.filter.value
         })
@@ -403,12 +401,9 @@ export default defineComponent({
 
       state.filter.options = Object.keys(keyBy(src, value)).sort().filter((option: any) => option !== null
         && option !== undefined && option !== '')
-
-      console.log('src', src)
     }
 
     const handleAxisChange = (value: any, isXAxis : boolean = true) => {
-      // console.log('HE', value)
       let axis : any = []
       let src : any = ''
 
