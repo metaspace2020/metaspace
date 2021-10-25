@@ -259,6 +259,14 @@ export default {
     });
   },
 
+  setPageSize(state, pageSize) {
+    router.replace({
+      query: pageSize !== 5
+        ? { ...state.route.query, pageSize: String(pageSize) }
+        : omit(state.route.query, 'pageSize'),
+    });
+  },
+
   setRow(state, row) {
     router.replace({
       query: row !== 1
