@@ -216,6 +216,41 @@ export default {
     });
   },
 
+  setXAxis(state, value) {
+    router.replace({
+      query: !value ? omit(state.route.query, 'xAxis')
+        : {...state.route.query, xAxis: value }
+    });
+  },
+
+  setYAxis(state, value) {
+    router.replace({
+      query: !value ? omit(state.route.query, 'yAxis')
+        : {...state.route.query, yAxis: value }
+    });
+  },
+
+  setAgg(state, value) {
+    router.replace({
+      query: !value ? omit(state.route.query, 'agg')
+        : {...state.route.query, agg: value }
+    });
+  },
+
+  setFilter(state, value) {
+    router.replace({
+      query: !value ? omit(state.route.query, 'filter')
+        : {...state.route.query, filter: value }
+    });
+  },
+
+  setFilterValue(state, value) {
+    router.replace({
+      query: !value ? omit(state.route.query, 'filterValue')
+        : {...state.route.query, filterValue: value }
+    });
+  },
+
   setCurrentPage(state, page) {
     router.replace({
       query: page !== 1
