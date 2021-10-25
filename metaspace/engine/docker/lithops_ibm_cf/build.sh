@@ -6,5 +6,5 @@ fi
 
 WORKDIR=$PWD
 pushd ../../
-docker build -f "$WORKDIR/Dockerfile" -t "metaspace2020/metaspace-lithops:$1  " .
+docker build -f "$WORKDIR/Dockerfile" -t "metaspace2020/metaspace-lithops:$1" .
 popd
