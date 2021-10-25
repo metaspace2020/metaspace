@@ -1,9 +1,9 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
 import './DashboardPage.scss'
-import { Option, Select } from '../../../../webapp/src/lib/element-ui'
-import { groupBy, keyBy, merge, orderBy, uniq, uniqBy } from 'lodash-es'
+import { Option, Select, Pagination } from '../../../../webapp/src/lib/element-ui'
+import { groupBy, keyBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
-import { predictions } from '../../data/predictions'
+// import { predictions } from '../../data/predictions'
 
 interface Options{
   xAxis: any
@@ -21,11 +21,13 @@ interface DashboardState {
   options: Options
   selectedView: number
   loading: boolean
+  buildingChart: boolean
   predictions: any
   datasets : any
   classification : any
   pathways : any
   wellmap : any
+  pagination: any
 }
 
 const VIEW = {
@@ -124,10 +126,10 @@ const FILTER_VALUES = [
     label: 'Dataset',
     src: 'dataset_name',
   },
-  {
-    label: 'Intensity',
-    src: 'spot_intensity',
-  },
+  // {
+  //   label: 'Intensity',
+  //   src: 'spot_intensity',
+  // },
 ]
 
 const CLASSIFICATION_METRICS = {
@@ -157,7 +159,8 @@ const PATHWAY_METRICS = {
 export default defineComponent({
   name: 'dashboard',
   setup: function(props, ctx) {
-    const { $store, $router, $route } = ctx.root
+    const { $store, $route } = ctx.root
+    const pageSizes = [5, 15, 30, 100]
     const state = reactive<DashboardState>({
       filter: {
         src: null,
@@ -174,8 +177,15 @@ export default defineComponent({
         yAxis: null,
         aggregation: null,
       },
+      pagination: {
+        nOfPages: 1,
+        pageSize: 5,
+        currentPage: 1,
+        total: 1,
+      },
       selectedView: VIEW.SCATTER,
       loading: false,
+      buildingChart: false,
       predictions: null,
       datasets: null,
       classification: null,
@@ -184,13 +194,12 @@ export default defineComponent({
     })
 
     onMounted(async() => {
-      const fromServer = true
       try {
         console.log('INDO')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/'
-        // const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
-        // const predictions = await response.json()
+        const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
+        const predictions = await response.json()
         const datasetResponse = await fetch(baseUrl + 'datasets.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification.json')
@@ -270,6 +279,12 @@ export default defineComponent({
         state.loading = false
       }
 
+      if ($route.query.page) {
+        state.pagination.currentPage = parseInt($route.query.page, 10)
+      }
+      if ($route.query.pageSize) {
+        state.pagination.pageSize = parseInt($route.query.pageSize, 10)
+      }
       if ($route.query.xAxis) {
         handleAxisChange($route.query.xAxis)
       }
@@ -287,13 +302,15 @@ export default defineComponent({
         handleFilterValueChange($route.query.filterValue)
       }
 
+      buildValues()
+
       console.log('INDO')
     })
 
     const buildValues = () => {
       let auxData : any = null
       let filteredData : any = state.rawData
-
+      state.buildingChart = true
       if (state.filter.src && state.filter.value) {
         console.log('filtrando', state.filter.src, state.filter.value)
         filteredData = filteredData.filter((data: any) => {
@@ -306,9 +323,9 @@ export default defineComponent({
       Object.keys(auxData).forEach((key: string) => {
         auxData[key] = groupBy(auxData[key], state.options.yAxis)
 
-        Object.keys(auxData[key]).forEach((xKey: any) => {
-          if (auxData[key][xKey].length > maxValue) {
-            maxValue = auxData[key][xKey].length
+        Object.keys(auxData[key]).forEach((yKey: any) => {
+          if (auxData[key][yKey].length > maxValue && state.xAxisValues.includes(key)) {
+            maxValue = auxData[key][yKey].length
           }
         })
       })
@@ -324,7 +341,7 @@ export default defineComponent({
 
             const auxValue = auxData[xKey][yKey].length
             dotValues.push({
-              value: [xIndex, yIndex, (auxValue / maxValue) * 10, auxData[xKey][yKey][0][state.options.aggregation]],
+              value: [xIndex, yIndex, (auxValue / maxValue) * 15, auxData[xKey][yKey][0][state.options.aggregation]],
               label: {},
             })
           }
@@ -351,6 +368,7 @@ export default defineComponent({
         state.visualMap.show = availableAggregations.length > 0
       }
       state.data = dotValues
+      state.buildingChart = false
     }
 
     const handleAggregationChange = (value: any) => {
@@ -371,7 +389,6 @@ export default defineComponent({
     const handleFilterSrcChange = (value: any) => {
       state.filter.src = value
       $store.commit('setFilter', value)
-      console.log('src', state.filter.src)
       let src : any = null
 
       if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
@@ -392,7 +409,7 @@ export default defineComponent({
 
     const handleAxisChange = (value: any, isXAxis : boolean = true) => {
       // console.log('HE', value)
-      const axis : any = []
+      let axis : any = []
       let src : any = ''
 
       if (isXAxis) {
@@ -423,9 +440,13 @@ export default defineComponent({
         }
       })
       axis.sort()
+      axis = axis.filter((item: any) => item && item !== 'null' && item !== 'none')
 
       if (isXAxis) {
-        state.xAxisValues = axis
+        const start = ((state.pagination.currentPage - 1) * state.pagination.pageSize)
+        const end = ((state.pagination.currentPage - 1) * state.pagination.pageSize) + state.pagination.pageSize
+        state.pagination.total = axis.length
+        state.xAxisValues = axis.slice(start, end)
       } else {
         state.yAxisValues = axis
       }
@@ -447,6 +468,7 @@ export default defineComponent({
                 handleAxisChange(value)
               }}
               placeholder='Class'
+              disabled={state.loading}
               size='mini'>
               {
                 orderBy(AXIS_VALUES, ['label'], ['asc']).map((option: any) => {
@@ -463,6 +485,7 @@ export default defineComponent({
               onChange={(value: number) => {
                 handleAxisChange(value, false)
               }}
+              disabled={state.loading}
               placeholder='Method'
               size='mini'>
               {
@@ -481,6 +504,7 @@ export default defineComponent({
                 state.options.aggregation = value
                 handleAggregationChange(value)
               }}
+              disabled={state.loading}
               placeholder='Method'
               size='mini'>
               {
@@ -499,6 +523,8 @@ export default defineComponent({
                 onChange={(value: number) => {
                   handleFilterSrcChange(value)
                 }}
+                clearable
+                disabled={state.loading}
                 placeholder='Neutral losses'
                 size='mini'>
                 {
@@ -516,6 +542,7 @@ export default defineComponent({
                 onChange={(value: number) => {
                   handleFilterValueChange(value)
                 }}
+                disabled={state.loading}
                 placeholder='Adduct'
                 size='mini'>
                 {
@@ -561,6 +588,34 @@ export default defineComponent({
       )
     }
 
+    const onPageChange = (newPage: number) => {
+      state.pagination.currentPage = newPage
+      $store.commit('setCurrentPage', newPage)
+      handleAxisChange(state.options.xAxis)
+    }
+
+    const onPageSizeChange = (newSize: number) => {
+      state.pagination.pageSize = newSize
+      $store.commit('setPageSize', newSize)
+      handleAxisChange(state.options.xAxis)
+    }
+
+    const renderPagination = () => {
+      return (
+        <div class="block">
+          <Pagination
+            total={state.pagination.total}
+            pageSize={state.pagination.pageSize}
+            pageSizes={pageSizes}
+            currentPage={state.pagination.currentPage}
+            {...{ on: { 'update:currentPage': onPageChange } }}
+            {...{ on: { 'update:pageSize': onPageSizeChange } }}
+            layout='prev,pager,next,sizes'
+          />
+        </div>
+      )
+    }
+
     const renderScatterplot = () => {
       return (
         <div class='chart-container'>
@@ -570,12 +625,15 @@ export default defineComponent({
             data={state.data}
             visualMap={state.visualMap}
           />
+          {!state.loading && renderPagination()}
         </div>
       )
     }
 
     return () => {
-      const showChart = true
+      const showChart =
+        ($route.query.xAxis && $route.query.yAxis && $route.query.agg)
+        || (state.options.xAxis && state.options.yAxis && state.options.aggregation)
 
       return (
         <div class={'dashboard-container'}>
@@ -584,14 +642,13 @@ export default defineComponent({
           <div class={'content-container'}>
             {!showChart && renderDashboardInstructions()}
             {showChart && renderScatterplot()}
-            {state.loading
+            {(state.loading || state.buildingChart)
             && <div class='absolute'>
               <i
                 class="el-icon-loading"
               />
             </div>
             }
-
           </div>
         </div>
       )
