@@ -173,7 +173,6 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }
-      console.log('auxOptions', JSON.stringify(auxOptions))
       return auxOptions
     })
 

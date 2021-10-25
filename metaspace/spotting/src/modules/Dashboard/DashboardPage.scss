@@ -48,7 +48,7 @@ $filter-color: #828282;
   }
 
   .content-container{
-    @apply flex flex-wrap border-2 border-solid border-gray-200 rounded w-full mt-6 overflow-hidden;
+    @apply flex flex-wrap border-2 border-solid border-gray-200 rounded w-full mt-6 overflow-hidden items-center justify-center;
     min-height: 400px;
 
   }

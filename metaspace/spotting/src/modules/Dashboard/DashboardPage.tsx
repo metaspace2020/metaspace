@@ -3,6 +3,7 @@ import './DashboardPage.scss'
 import { Option, Select } from '../../../../webapp/src/lib/element-ui'
 import { groupBy, keyBy, merge, orderBy, uniq, uniqBy } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
+import { predictions } from '../../data/predictions'
 
 interface Options{
   xAxis: any
@@ -105,7 +106,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'Prediction',
-    src: 'prediction',
+    src: 'coarse_class',
   },
   {
     label: 'Technology',
@@ -125,7 +126,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'Intensity',
-    src: 'intensity',
+    src: 'spot_intensity',
   },
 ]
 
@@ -156,11 +157,12 @@ const PATHWAY_METRICS = {
 export default defineComponent({
   name: 'dashboard',
   setup: function(props, ctx) {
-    const { $route, $store } = ctx.root
+    const { $store, $router, $route } = ctx.root
     const state = reactive<DashboardState>({
       filter: {
         src: null,
         value: null,
+        options: [],
       },
       xAxisValues: [],
       yAxisValues: [],
@@ -187,8 +189,8 @@ export default defineComponent({
         console.log('INDO')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/'
-        const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
-        const predictions = await response.json()
+        // const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
+        // const predictions = await response.json()
         const datasetResponse = await fetch(baseUrl + 'datasets.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification.json')
@@ -213,9 +215,9 @@ export default defineComponent({
         const predWithDs = predictions.map((prediction: any) => {
           if (datasetsById[prediction.dataset_id]) {
             return {
-              polarity: datasetsById[prediction.dataset_id].Polarity,
-              matrix_short: datasetsById[prediction.dataset_id]['Matrix short'],
-              matrix_long: datasetsById[prediction.dataset_id]['Matrix long'],
+              Polarity: datasetsById[prediction.dataset_id].Polarity,
+              'Matrix short': datasetsById[prediction.dataset_id]['Matrix short'],
+              'Matrix long': datasetsById[prediction.dataset_id]['Matrix long'],
               ...prediction,
             }
           }
@@ -267,53 +269,39 @@ export default defineComponent({
       } finally {
         state.loading = false
       }
+
+      if ($route.query.xAxis) {
+        handleAxisChange($route.query.xAxis)
+      }
+      if ($route.query.yAxis) {
+        handleAxisChange($route.query.yAxis, false)
+      }
+      if ($route.query.agg) {
+        handleAggregationChange($route.query.agg)
+      }
+      if ($route.query.filter) {
+        handleFilterSrcChange($route.query.filter)
+      }
+
+      if ($route.query.filterValue) {
+        handleFilterValueChange($route.query.filterValue)
+      }
+
       console.log('INDO')
     })
 
     const buildValues = () => {
       let auxData : any = null
-      let auxX : any = null
-      let auxY : any = null
-      let auxAgg : any = null
+      let filteredData : any = state.rawData
 
-      if (Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)) {
-        auxX = state.classification
-      } else if (Object.keys(DATASET_METRICS).includes(state.options.xAxis)) {
-        auxX = state.datasets
-      } else if (Object.keys(PREDICTION_METRICS).includes(state.options.xAxis)) {
-        auxX = state.predictions
-      } else if (Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)) {
-        auxX = state.pathways
+      if (state.filter.src && state.filter.value) {
+        console.log('filtrando', state.filter.src, state.filter.value)
+        filteredData = filteredData.filter((data: any) => {
+          return data[state.filter.src] === state.filter.value
+        })
       }
 
-      if (Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)) {
-        auxY = state.classification
-      } else if (Object.keys(DATASET_METRICS).includes(state.options.yAxis)) {
-        auxY = state.datasets
-      } else if (Object.keys(PREDICTION_METRICS).includes(state.options.yAxis)) {
-        auxY = state.predictions
-      } else if (Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)) {
-        auxY = state.pathways
-      }
-
-      if (Object.keys(CLASSIFICATION_METRICS).includes(state.options.aggregation)) {
-        auxAgg = state.classification
-      } else if (Object.keys(DATASET_METRICS).includes(state.options.aggregation)) {
-        auxAgg = state.datasets
-      } else if (Object.keys(PREDICTION_METRICS).includes(state.options.aggregation)) {
-        auxAgg = state.predictions
-      } else if (Object.keys(PATHWAY_METRICS).includes(state.options.aggregation)) {
-        auxAgg = state.pathways
-      }
-
-      console.log('state.options.xAxis', state.options.xAxis)
-      console.log('state.options.xAxis2', state.rawData[0][state.options.xAxis])
-
-      console.log('state.options.yAxis', state.options.yAxis)
-      console.log('state.options.yAxis2', state.rawData[0][state.options.yAxis])
-
-      auxData = groupBy(state.rawData, state.options.xAxis)
-
+      auxData = groupBy(filteredData, state.options.xAxis)
       let maxValue : number = 1
       Object.keys(auxData).forEach((key: string) => {
         auxData[key] = groupBy(auxData[key], state.options.yAxis)
@@ -325,26 +313,12 @@ export default defineComponent({
         })
       })
 
-      console.log('X', auxData)
-      console.log('X2', state.xAxisValues)
-      console.log('X3', state.yAxisValues)
-
       const dotValues : any = []
-      const aggregations : any = Object.keys(keyBy(auxAgg, state.options.aggregation)).map((category: any) => {
-        return {
-          value: isContinuous ? parseFloat(category) : category,
-          label: category,
-        }
-      })
-      const chartValues : any = {}
       let availableAggregations : any = []
 
-      console.log('state.options.aggregation', state.options.aggregation)
-
       state.xAxisValues.forEach((xKey: any, xIndex: number) => {
-        console.log('auxX[xKey]', auxData[xKey])
         state.yAxisValues.forEach((yKey: any, yIndex: number) => {
-          if (auxData[xKey][yKey]) {
+          if (auxData[xKey] && auxData[xKey][yKey]) {
             availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
               state.options.aggregation)))
 
@@ -363,13 +337,6 @@ export default defineComponent({
           value: agg,
         }
       })
-      console.log('maxValue', maxValue)
-      console.log('availableAggregations', availableAggregations)
-
-      console.log('dotValues', dotValues)
-
-      console.log('aggregations', aggregations)
-      const isContinuous = state.options.aggregation !== 'coarse_class'
 
       state.visualMap = {
         type: state.options.aggregation !== 'coarse_class' ? 'continuous' : 'piecewise',
@@ -379,28 +346,62 @@ export default defineComponent({
         left: 'right',
       }
 
-      console.log('VIS', state.visualMap)
-
       if (state.visualMap.type === 'piecewise') {
         state.visualMap.pieces = availableAggregations
+        state.visualMap.show = availableAggregations.length > 0
       }
-
-      console.log('YOxxx', chartValues)
       state.data = dotValues
     }
 
     const handleAggregationChange = (value: any) => {
       state.options.aggregation = value
+      $store.commit('setAgg', value)
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
-        // console.log('HEY2')
         buildValues()
       }
+    }
+
+    const handleFilterValueChange = (value: any) => {
+      state.filter.value = value
+      $store.commit('setFilterValue', value)
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+        buildValues()
+      }
+    }
+    const handleFilterSrcChange = (value: any) => {
+      state.filter.src = value
+      $store.commit('setFilter', value)
+      console.log('src', state.filter.src)
+      let src : any = null
+
+      if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
+        src = state.classification
+      } else if (Object.keys(DATASET_METRICS).includes(value)) {
+        src = state.datasets
+      } else if (Object.keys(PREDICTION_METRICS).includes(value)) {
+        src = state.predictions
+      } else if (Object.keys(PATHWAY_METRICS).includes(value)) {
+        src = state.pathways
+      }
+
+      state.filter.options = Object.keys(keyBy(src, value)).sort().filter((option: any) => option !== null
+        && option !== undefined && option !== '')
+
+      console.log('src', src)
     }
 
     const handleAxisChange = (value: any, isXAxis : boolean = true) => {
       // console.log('HE', value)
       const axis : any = []
       let src : any = ''
+
+      if (isXAxis) {
+        state.options.xAxis = value
+        $store.commit('setXAxis', value)
+      } else {
+        state.options.yAxis = value
+        $store.commit('setYAxis', value)
+      }
 
       if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
         src = state.classification
@@ -443,7 +444,6 @@ export default defineComponent({
               class='select-box-mini'
               value={state.options.xAxis}
               onChange={(value: number) => {
-                state.options.xAxis = value
                 handleAxisChange(value)
               }}
               placeholder='Class'
@@ -461,7 +461,6 @@ export default defineComponent({
               class='select-box-mini'
               value={state.options.yAxis}
               onChange={(value: number) => {
-                state.options.yAxis = value
                 handleAxisChange(value, false)
               }}
               placeholder='Method'
@@ -498,7 +497,7 @@ export default defineComponent({
                 class='select-box-mini mr-2'
                 value={state.filter.src}
                 onChange={(value: number) => {
-                  state.filter.src = value
+                  handleFilterSrcChange(value)
                 }}
                 placeholder='Neutral losses'
                 size='mini'>
@@ -511,15 +510,19 @@ export default defineComponent({
               <Select
                 class='select-box-mini mr-2'
                 value={state.filter.value}
+                filterable
+                clearable
+                noDataText='No data'
                 onChange={(value: number) => {
-                  state.filter.value = value
+                  handleFilterValueChange(value)
                 }}
                 placeholder='Adduct'
                 size='mini'>
-                <Option label="5%" value={0.05}/>
-                <Option label="10%" value={0.1}/>
-                <Option label="20%" value={0.2}/>
-                <Option label="50%" value={0.5}/>
+                {
+                  state.filter.options.map((option: any) => {
+                    return <Option label={option} value={option}/>
+                  })
+                }
               </Select>
             </div>
           </div>
@@ -578,10 +581,17 @@ export default defineComponent({
         <div class={'dashboard-container'}>
           {renderFilters()}
           {renderVisualizations()}
-          {state.loading ? 'loading' : 'loaded'}
           <div class={'content-container'}>
             {!showChart && renderDashboardInstructions()}
             {showChart && renderScatterplot()}
+            {state.loading
+            && <div class='absolute'>
+              <i
+                class="el-icon-loading"
+              />
+            </div>
+            }
+
           </div>
         </div>
       )
