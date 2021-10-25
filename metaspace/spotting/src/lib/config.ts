@@ -2,7 +2,7 @@
 import { defaultsDeep } from 'lodash-es'
 import { getLocalStorage, removeLocalStorage, setLocalStorage } from './localStorage'
 import { MAX_MOL_DBS_EXT, MAX_MOL_DBS } from './constants'
-const fileConfig = require('../clientConfig.json')
+// const fileConfig = require('../clientConfig.json')
 
 interface Features {
   coloc: boolean;
@@ -81,7 +81,7 @@ const defaultConfig: ClientConfig = {
 
 const FEATURE_STORAGE_KEY = 'featureFlags'
 
-const config = defaultsDeep({}, fileConfig, defaultConfig) as ClientConfig
+const config = defaultsDeep({}, {}, defaultConfig) as ClientConfig
 
 export const updateConfigFromQueryString = () => {
   if (typeof window !== 'undefined') {

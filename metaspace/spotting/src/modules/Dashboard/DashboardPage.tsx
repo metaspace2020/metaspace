@@ -1,6 +1,6 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
 import './DashboardPage.scss'
-import { Option, Select, Pagination } from '../../../../webapp/src/lib/element-ui'
+import { Option, Select, Pagination } from '../../lib/element-ui'
 import { groupBy, keyBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 // import { predictions } from '../../data/predictions'
