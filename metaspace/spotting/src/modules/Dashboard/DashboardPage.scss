@@ -48,7 +48,7 @@ $filter-color: #828282;
     }
   }
   .feature-box{
-    @apply absolute cursor-pointer;
+    @apply flex flex-wrap absolute cursor-pointer items-center justify-center;
     top: 8px;
     right: 8px;
     z-index: 2;
