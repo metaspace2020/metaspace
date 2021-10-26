@@ -3,7 +3,8 @@ import './DashboardPage.scss'
 import { Option, Select, Pagination } from '../../lib/element-ui'
 import { groupBy, keyBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
-// import { predictions } from '../../data/predictions'
+import { ShareLink } from './ShareLink'
+import { predictions } from '../../data/predictions'
 
 interface Options{
   xAxis: any
@@ -22,6 +23,7 @@ interface DashboardState {
   options: Options
   selectedView: number
   loading: boolean
+  loadingFilterOptions: boolean
   buildingChart: boolean
   predictions: any
   datasets : any
@@ -198,6 +200,7 @@ export default defineComponent({
       },
       selectedView: VIEW.SCATTER,
       loading: false,
+      loadingFilterOptions: false,
       buildingChart: false,
       predictions: null,
       datasets: null,
@@ -211,8 +214,8 @@ export default defineComponent({
         console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/'
-        const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
-        const predictions = await response.json()
+        // const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
+        // const predictions = await response.json()
         const datasetResponse = await fetch(baseUrl + 'datasets.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification.json')
@@ -449,6 +452,7 @@ export default defineComponent({
 
     const handleFilterSrcChange = (value: any) => {
       state.filter.src = value
+      state.loadingFilterOptions = true
 
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation && state.filter.value) {
         state.filter.value = null
@@ -471,6 +475,7 @@ export default defineComponent({
 
       state.filter.options = Object.keys(keyBy(src, value)).sort().filter((option: any) => option !== null
         && option !== undefined && option !== '')
+      state.loadingFilterOptions = false
     }
 
     const handleAxisChange = (value: any, isXAxis : boolean = true) => {
@@ -618,6 +623,7 @@ export default defineComponent({
               <Select
                 class='select-box-mini mr-2'
                 value={state.filter.value}
+                loading={state.loadingFilterOptions}
                 filterable
                 clearable
                 noDataText='No data'
@@ -719,10 +725,13 @@ export default defineComponent({
         || (state.options.xAxis && state.options.yAxis && state.options.aggregation)
 
       return (
-        <div class={'dashboard-container'}>
+        <div class='dashboard-container'>
           {renderFilters()}
           {renderVisualizations()}
-          <div class={'content-container'}>
+          <div class='content-container'>
+            <div class='feature-box'>
+              <ShareLink name='dashboard' query={getQueryParams()}/>
+            </div>
             {!showChart && renderDashboardInstructions()}
             {showChart && renderScatterplot()}
             {(state.loading || state.buildingChart)

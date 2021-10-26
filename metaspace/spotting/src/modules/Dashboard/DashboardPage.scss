@@ -47,9 +47,15 @@ $filter-color: #828282;
       font-size: 20px;
     }
   }
+  .feature-box{
+    @apply absolute cursor-pointer;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    }
 
   .content-container{
-    @apply flex flex-wrap border-2 border-solid border-gray-200 rounded w-full mt-6 overflow-hidden items-center justify-center;
+    @apply flex relative flex-wrap border-2 border-solid border-gray-200 rounded w-full mt-6 overflow-hidden items-center justify-center;
     min-height: 400px;
 
   }
