@@ -4,7 +4,7 @@ import { Option, Select, Pagination } from '../../lib/element-ui'
 import { groupBy, keyBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { ShareLink } from './ShareLink'
-import { predictions } from '../../data/predictions'
+// import { predictions } from '../../data/predictions'
 
 interface Options{
   xAxis: any
@@ -214,8 +214,8 @@ export default defineComponent({
         console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/'
-        // const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
-        // const predictions = await response.json()
+        const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
+        const predictions = await response.json()
         const datasetResponse = await fetch(baseUrl + 'datasets.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification.json')
