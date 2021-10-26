@@ -173,6 +173,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }
+      console.log('OPTx', auxOptions.visualMap)
       return auxOptions
     })
 
@@ -210,20 +211,6 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       }
     }
 
-    const renderEmptySpectrum = () => {
-      return (
-        <div class='dataset-browser-empty-spectrum'>
-          <i class="el-icon-info info-icon mr-6"/>
-          <div class='flex flex-col text-xs w-3/4'>
-            <p class='font-semibold mb-2'>Steps:</p>
-            <p>1 - Select a pixel on the image viewer</p>
-            <p>2 - Apply the filter you desire</p>
-            <p>3 - The interaction is multi-way, so you can also update the ion image via spectrum interaction</p>
-          </div>
-        </div>
-      )
-    }
-
     const renderSpectrum = () => {
       const { isLoading, isDataLoading } = props
 
@@ -255,7 +242,6 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
     }
 
     return () => {
-      const { isEmpty, isLoading } = props
       return (
         <div class={'dataset-browser-spectrum-container'}>
           {renderSpectrum()}

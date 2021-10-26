@@ -4,7 +4,9 @@ import { Option, Select, Pagination } from '../../lib/element-ui'
 import { groupBy, keyBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { ShareLink } from './ShareLink'
+import { ChartSettings } from './ChartSettings'
 // import { predictions } from '../../data/predictions'
+import createColormap from '../../lib/createColormap'
 
 interface Options{
   xAxis: any
@@ -14,6 +16,7 @@ interface Options{
 }
 
 interface DashboardState {
+  colormap: any
   filter: any
   xAxisValues: any
   rawData: any
@@ -176,6 +179,7 @@ export default defineComponent({
     const { $route, $router } = ctx.root
     const pageSizes = [5, 15, 30, 100]
     const state = reactive<DashboardState>({
+      colormap: null,
       filter: {
         src: null,
         value: null,
@@ -381,7 +385,21 @@ export default defineComponent({
         })
       })
 
-      availableAggregations = uniq(availableAggregations).map((agg: any) => {
+      let colormap : any = state.colormap
+      let colorSteps : number = 1
+      const colors : any = []
+
+      if (!Array.isArray(colormap)) {
+        colormap = createColormap('Viridis').map((color: any) => {
+          return `rgba(${color.join(',')})`
+        })
+      }
+
+      availableAggregations = uniq(availableAggregations).sort()
+      colorSteps = availableAggregations.length
+        ? (colormap.length / availableAggregations.length) : 1
+      availableAggregations = availableAggregations.map((agg: any, aggIndex: number) => {
+        colors.push(colormap[Math.floor(aggIndex * colorSteps)])
         return {
           label: agg,
           value: agg,
@@ -394,6 +412,9 @@ export default defineComponent({
         dimension: 3,
         top: 'bottom',
         left: 'right',
+        inRange: {
+          color: colors,
+        },
       }
 
       if (state.visualMap.type === 'piecewise') {
@@ -424,6 +445,15 @@ export default defineComponent({
       state.filter.value = value
       $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filterValue: value } })
 
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+        buildValues()
+      }
+    }
+
+    const handleColormapChange = (colors: any) => {
+      state.colormap = colors.map((color: any) => {
+        return `rgba(${color.join(',')})`
+      })
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
       }
@@ -731,6 +761,7 @@ export default defineComponent({
           <div class='content-container'>
             <div class='feature-box'>
               <ShareLink name='dashboard' query={getQueryParams()}/>
+              <ChartSettings onColor={handleColormapChange}/>
             </div>
             {!showChart && renderDashboardInstructions()}
             {showChart && renderScatterplot()}
