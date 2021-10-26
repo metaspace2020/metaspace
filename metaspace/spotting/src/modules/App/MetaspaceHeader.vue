@@ -25,7 +25,6 @@
 </template>
 
 <script>
-import { encodeParams } from '../Filters'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { HeaderLink, HeaderButton } from './HeaderLink'
 
@@ -74,7 +73,6 @@ const MetaspaceHeader = {
       f = Object.assign({}, f, this.$store.getters.filter)
       const link = {
         path,
-        query: encodeParams(f, path, this.$store.state.filterLists),
       }
       return link
     },

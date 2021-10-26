@@ -1,25 +1,12 @@
 import { mzFilterPrecision } from '../lib/util';
-import { decodeParams, decodeSettings, getLevel } from '../modules/Filters';
 import config from '../lib/config';
 
 /** For filters where empty string is a valid client-side value that must be converted to empty string for the API */
 const noneToEmptyString = s => s === 'none' ? '' : s;
 
 export default {
-  filterLevel(state) {
-    return getLevel(state.route.path);
-  },
-
-  filter(state) {
-    return decodeParams(state.route, state.filterLists);
-  },
-
   currentUser(state) {
     return state.currentUser;
-  },
-
-  settings(state) {
-    return decodeSettings(state.route);
   },
 
   ftsQuery(state, getters) {
