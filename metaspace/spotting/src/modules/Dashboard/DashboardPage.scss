@@ -1,6 +1,7 @@
 $x-axis-color: #EB5757;
 $y-axis-color: #27AE60;
 $aggregation-color: #56CCF2;
+$metric-color: #BB6BD9;
 $filter-color: #828282;
 
 
@@ -69,6 +70,10 @@ $filter-color: #828282;
   }
   .aggregation-label{
     color: $aggregation-color;
+  }
+
+  .metric-label{
+    color: $metric-color;
   }
 
   .dashboard-instructions{

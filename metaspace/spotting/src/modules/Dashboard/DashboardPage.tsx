@@ -9,6 +9,7 @@ interface Options{
   xAxis: any
   yAxis: any
   aggregation: any
+  valueMetric: any
 }
 
 interface DashboardState {
@@ -156,10 +157,21 @@ const PATHWAY_METRICS = {
   name_short: true,
 }
 
+const VALUE_METRICS = {
+  count: {
+    label: 'Count',
+    src: 1,
+  },
+  average: {
+    label: 'Average',
+    src: 2,
+  },
+}
+
 export default defineComponent({
   name: 'dashboard',
   setup: function(props, ctx) {
-    const { $store, $route } = ctx.root
+    const { $route, $router } = ctx.root
     const pageSizes = [5, 15, 30, 100]
     const state = reactive<DashboardState>({
       filter: {
@@ -176,6 +188,7 @@ export default defineComponent({
         xAxis: null,
         yAxis: null,
         aggregation: null,
+        valueMetric: VALUE_METRICS.count.src,
       },
       pagination: {
         nOfPages: 1,
@@ -286,6 +299,9 @@ export default defineComponent({
       if ($route.query.pageSize) {
         state.pagination.pageSize = parseInt($route.query.pageSize, 10)
       }
+      if ($route.query.metric) {
+        state.options.valueMetric = parseInt($route.query.metric, 10)
+      }
       if ($route.query.xAxis) {
         handleAxisChange($route.query.xAxis)
       }
@@ -332,14 +348,30 @@ export default defineComponent({
       let availableAggregations : any = []
 
       state.xAxisValues.forEach((xKey: any, xIndex: number) => {
+        let totalCount : number = 1
+        let yMaxValue : number = 0
+
+        if (auxData[xKey] && state.options.valueMetric === VALUE_METRICS.average.src) {
+          Object.keys(auxData[xKey]).forEach((metricKey: string) => {
+            totalCount += auxData[xKey][metricKey].length
+          })
+          Object.keys(auxData[xKey]).forEach((metricKey: string) => {
+            if (auxData[xKey][metricKey].length > yMaxValue) {
+              yMaxValue = auxData[xKey][metricKey].length
+            }
+          })
+          yMaxValue = yMaxValue / totalCount
+        }
+
         state.yAxisValues.forEach((yKey: any, yIndex: number) => {
           if (auxData[xKey] && auxData[xKey][yKey]) {
             availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
               state.options.aggregation)))
+            const auxValue = state.options.valueMetric === VALUE_METRICS.count.src
+              ? (auxData[xKey][yKey].length / maxValue) : (auxData[xKey][yKey].length / totalCount / yMaxValue)
 
-            const auxValue = auxData[xKey][yKey].length
             dotValues.push({
-              value: [xIndex, yIndex, (auxValue / maxValue) * 15, auxData[xKey][yKey][0][state.options.aggregation]],
+              value: [xIndex, yIndex, auxValue * 15, auxData[xKey][yKey][0][state.options.aggregation]],
               label: {},
             })
           }
@@ -371,7 +403,15 @@ export default defineComponent({
 
     const handleAggregationChange = (value: any) => {
       state.options.aggregation = value
-      $store.commit('setAgg', value)
+      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), agg: value } })
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+        buildValues()
+      }
+    }
+
+    const handleValueMetricChange = (value: any) => {
+      state.options.valueMetric = value
+      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), metric: value } })
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
       }
@@ -379,14 +419,44 @@ export default defineComponent({
 
     const handleFilterValueChange = (value: any) => {
       state.filter.value = value
-      $store.commit('setFilterValue', value)
+      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filterValue: value } })
+
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
       }
     }
+
+    const getQueryParams = () => {
+      const queryObj : any = {
+        filter: state.filter.src,
+        filterValue: state.filter.value,
+        xAxis: state.options.xAxis,
+        yAxis: state.options.yAxis,
+        agg: state.options.aggregation,
+        metric: state.options.valueMetric,
+        page: state.pagination.currentPage,
+        pageSize: state.pagination.pageSize,
+      }
+
+      Object.keys(queryObj).forEach((key: string) => {
+        if (!queryObj[key]) {
+          delete queryObj[key]
+        }
+      })
+
+      return queryObj
+    }
+
     const handleFilterSrcChange = (value: any) => {
       state.filter.src = value
-      $store.commit('setFilter', value)
+
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && state.filter.value) {
+        state.filter.value = null
+        buildValues()
+      }
+
+      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filter: value } })
+
       let src : any = null
 
       if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
@@ -409,10 +479,10 @@ export default defineComponent({
 
       if (isXAxis) {
         state.options.xAxis = value
-        $store.commit('setXAxis', value)
+        $router.replace({ name: 'dashboard', query: { ...getQueryParams(), xAxis: value } })
       } else {
         state.options.yAxis = value
-        $store.commit('setYAxis', value)
+        $router.replace({ name: 'dashboard', query: { ...getQueryParams(), yAxis: value } })
       }
 
       if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
@@ -496,7 +566,6 @@ export default defineComponent({
               class='select-box-mini'
               value={state.options.aggregation}
               onChange={(value: number) => {
-                state.options.aggregation = value
                 handleAggregationChange(value)
               }}
               disabled={state.loading}
@@ -504,6 +573,24 @@ export default defineComponent({
               size='mini'>
               {
                 orderBy(AGGREGATED_VALUES, ['label'], ['asc']).map((option: any) => {
+                  return <Option label={option.label} value={option.src}/>
+                })
+              }
+            </Select>
+          </div>
+          <div class='filter-box m-2'>
+            <span class='metric-label mb-2'>Value metric</span>
+            <Select
+              class='select-box-mini'
+              value={state.options.valueMetric}
+              onChange={(value: number) => {
+                handleValueMetricChange(value)
+              }}
+              disabled={state.loading}
+              placeholder='Method'
+              size='mini'>
+              {
+                orderBy(VALUE_METRICS, ['label'], ['asc']).map((option: any) => {
                   return <Option label={option.label} value={option.src}/>
                 })
               }
@@ -577,7 +664,8 @@ export default defineComponent({
             <p>1 - Select the x axis metric in the <span class='x-axis-label'>red</span> zone;</p>
             <p>2 - Select the y axis metric in the <span class='y-axis-label'>green</span> zone;</p>
             <p>3 - Select the aggregated method (color) in the <span class='aggregation-label'>blue</span> zone;</p>
-            <p>4 - Apply the filters you desire.</p>
+            <p>4 - Select the value metric (radius size) in the <span class='metric-label'>purple</span> zone;</p>
+            <p>5 - Apply the filters you desire.</p>
           </div>
         </div>
       )
@@ -585,13 +673,13 @@ export default defineComponent({
 
     const onPageChange = (newPage: number) => {
       state.pagination.currentPage = newPage
-      $store.commit('setCurrentPage', newPage)
+      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), page: newPage.toString() } })
       handleAxisChange(state.options.xAxis)
     }
 
     const onPageSizeChange = (newSize: number) => {
       state.pagination.pageSize = newSize
-      $store.commit('setPageSize', newSize)
+      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), pageSize: newSize.toString() } })
       handleAxisChange(state.options.xAxis)
     }
 
