@@ -5,7 +5,6 @@ Vue.use(Vuex);
 import getters from './getters.js';
 import mutations from './mutations.js';
 import actions from './actions.js';
-import {accountModule} from '../modules/Account';
 
 const store = new Vuex.Store({
   state: {
@@ -33,10 +32,7 @@ const store = new Vuex.Store({
 
   getters,
   mutations,
-  actions,
-  modules: {
-    account: accountModule
-  }
+  actions
 })
 
 export default store;

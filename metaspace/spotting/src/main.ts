@@ -51,9 +51,6 @@ const apolloProvider = new VueApollo({
 })
 Vue.use(ElementUI, { locale })
 sync(store, router)
-router.afterEach((to: Route) => {
-  store.commit('updateFilterOnNavigate', to)
-})
 
 const isProd = process.env.NODE_ENV === 'production'
 

@@ -19,11 +19,6 @@
 
     <metaspace-footer v-if="$route.meta.footer" />
 
-    <dialog-controller />
-    <!--<release-notes-dialog />-->
-
-    <new-feature-popups />
-
     <tour-step
       ref="tour"
       :tour="$store.state.currentTour"
@@ -36,13 +31,10 @@
 import * as cookie from 'js-cookie'
 import MetaspaceHeader from './MetaspaceHeader.vue'
 import MetaspaceFooter from './MetaspaceFooter.vue'
-// import ReleaseNotesDialog from './ReleaseNotesDialog.vue';
 import TourStep from './TourStep.vue'
-import { DialogController } from '../Account'
 import config from '../../lib/config'
 import Vue, { ComponentOptions } from 'vue'
 import CookieBanner from './CookieBanner'
-import NewFeaturePopups from './NewFeaturePopups'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 export default {
@@ -52,9 +44,7 @@ export default {
     MetaspaceFooter,
     // ReleaseNotesDialog,
     TourStep,
-    DialogController,
     CookieBanner,
-    NewFeaturePopups,
   },
   data() {
     return {
