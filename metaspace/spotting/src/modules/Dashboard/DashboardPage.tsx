@@ -759,10 +759,13 @@ export default defineComponent({
           {renderFilters()}
           {renderVisualizations()}
           <div class='content-container'>
-            <div class='feature-box'>
-              <ShareLink name='dashboard' query={getQueryParams()}/>
-              <ChartSettings onColor={handleColormapChange}/>
-            </div>
+            {
+              showChart
+              && <div class='feature-box'>
+                <ShareLink name='dashboard' query={getQueryParams()}/>
+                <ChartSettings onColor={handleColormapChange}/>
+              </div>
+            }
             {!showChart && renderDashboardInstructions()}
             {showChart && renderScatterplot()}
             {(state.loading || state.buildingChart)

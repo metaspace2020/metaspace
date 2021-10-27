@@ -112,6 +112,13 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         title: {
           text: '',
         },
+        toolbox: {
+          feature: {
+            saveAsImage: {
+              title: ' ',
+            },
+          },
+        },
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
@@ -120,7 +127,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         },
         grid: {
           left: 2,
-          top: 10,
+          top: 20,
           right: 20,
           bottom: 200,
           containLabel: true,
