@@ -129,7 +129,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           left: 2,
           top: 20,
           right: 20,
-          bottom: 200,
+          bottom: 40,
           containLabel: true,
         },
         xAxis: {
