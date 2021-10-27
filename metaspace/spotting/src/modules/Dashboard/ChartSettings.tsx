@@ -1,6 +1,8 @@
 import { defineComponent, reactive } from '@vue/composition-api'
 import { Option, Popover, Select } from '../../lib/element-ui'
 import FadeTransition from '../../components/FadeTransition'
+// @ts-ignore
+import Colorbar from '../../components/Colorbar'
 import { Button } from '../../../../webapp/src/lib/element-ui'
 import createColormap from '../../lib/createColormap'
 
@@ -33,6 +35,7 @@ export const ChartSettings = defineComponent({
           placement="bottom">
           <Button
             slot="reference"
+            style={{ color: 'gray' }}
             class="button-reset h-6 w-6 block ml-2">
             <i
               class="el-icon-setting text-xl pointer-events-none"
@@ -50,7 +53,15 @@ export const ChartSettings = defineComponent({
                   size='mini'>
                   {
                     availableScales.map((option: any) => {
-                      return <Option label={option} value={option}/>
+                      return (
+                        <Option label={option} value={option}>
+                          <div class='h-full w-full py-2'>
+                            <Colorbar class="h-full w-full"
+                              map={option}
+                              horizontal/>
+                          </div>
+                        </Option>
+                      )
                     })
                   }
                 </Select>

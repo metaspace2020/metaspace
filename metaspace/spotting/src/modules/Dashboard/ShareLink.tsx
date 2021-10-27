@@ -2,6 +2,7 @@ import { defineComponent, reactive } from '@vue/composition-api'
 import { Popover } from '../../lib/element-ui'
 import Vue from 'vue'
 import FadeTransition from '../../components/FadeTransition'
+import { Button } from '../../../../webapp/src/lib/element-ui'
 
 const RouterLink = Vue.component('router-link')
 
@@ -62,7 +63,10 @@ export const ShareLink = defineComponent<ShareLinkProps>({
         <Popover
           trigger="hover"
           placement="bottom">
-          <div slot="reference" className="h-6 w-6 pointer-events-none">
+          <div
+            slot="reference"
+            style={{ color: 'gray' }}
+            className="h-6 w-6 pointer-events-none">
             <i
               class="el-icon-share"
             />
