@@ -2,7 +2,6 @@ import { defineComponent, reactive } from '@vue/composition-api'
 import { Popover } from '../../lib/element-ui'
 import Vue from 'vue'
 import FadeTransition from '../../components/FadeTransition'
-import { Button } from '../../../../webapp/src/lib/element-ui'
 
 const RouterLink = Vue.component('router-link')
 

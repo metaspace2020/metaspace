@@ -9,6 +9,7 @@ import {
   BarChart,
   ScatterChart,
   LineChart,
+  HeatmapChart,
 } from 'echarts/charts'
 import {
   GridComponent,
@@ -21,13 +22,14 @@ import {
   VisualMapPiecewiseComponent,
   VisualMapContinuousComponent,
 } from 'echarts/components'
-import './DashboardScatterChart.scss'
+import './DashboardHeatmapChart.scss'
 
 use([
   CanvasRenderer,
   BarChart,
   ScatterChart,
   LineChart,
+  HeatmapChart,
   GridComponent,
   TooltipComponent,
   ToolboxComponent,
@@ -39,7 +41,7 @@ use([
   VisualMapContinuousComponent,
 ])
 
-interface DashboardScatterChartProps {
+interface DashboardHeatmapChartProps {
   isEmpty: boolean
   isLoading: boolean
   isDataLoading: boolean
@@ -51,7 +53,7 @@ interface DashboardScatterChartProps {
   peakFilter: number
 }
 
-interface DashboardScatterChartState {
+interface DashboardHeatmapChartState {
   scaleIntensity: boolean
   chartOptions: any
 }
@@ -61,8 +63,10 @@ const PEAK_FILTER = {
   FDR: 2,
 }
 
-export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>({
-  name: 'DashboardScatterChart',
+// const items = ['not detected', 'M+H', 'M+Na', 'M+']
+
+export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>({
+  name: 'DashboardHeatmapChart',
   props: {
     isEmpty: {
       type: Boolean,
@@ -106,24 +110,11 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
     const xAxisData = computed(() => props.xAxis)
     const yAxisData = computed(() => props.yAxis)
 
-    const state = reactive<DashboardScatterChartState>({
+    const state = reactive<DashboardHeatmapChartState>({
       scaleIntensity: false,
       chartOptions: {
-        title: {
-          text: '',
-        },
-        toolbox: {
-          feature: {
-            saveAsImage: {
-              title: ' ',
-            },
-          },
-        },
         tooltip: {
           position: 'top',
-          formatter: function(params: any) {
-            return params.value[2].toFixed(2) + ' ' + params.data?.label?.key + ' in ' + props.xAxis[params.value[0]]
-          },
         },
         grid: {
           left: 2,
@@ -135,33 +126,44 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         xAxis: {
           type: 'category',
           data: [],
-          boundaryGap: false,
-          splitLine: {
-            show: false,
-          },
-          axisLine: {
-            show: false,
-          },
-          axisLabel: {
+          splitArea: {
             show: true,
-            interval: 0,
-            rotate: 30,
           },
           position: 'top',
         },
         yAxis: {
           type: 'category',
           data: [],
-          axisLine: {
-            show: false,
+          splitArea: {
+            show: true,
           },
         },
+        visualMap: {
+          min: 0,
+          max: 10,
+          calculable: true,
+          orient: 'horizontal',
+          left: 'center',
+          bottom: '15%',
+        },
         series: [{
-          type: 'scatter',
-          symbolSize: function(val: any) {
-            return val[2] * 2
-          },
+          name: 'Punch Card',
+          type: 'heatmap',
           data: [],
+          label: {
+            normal: {
+              show: true,
+              formatter: (param: any) => {
+                return param.name
+              },
+            },
+          },
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: 'rgba(0, 0, 0, 0.5)',
+            },
+          },
         }],
       },
     })
@@ -180,7 +182,8 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }
-      return auxOptions
+      console.log('OPTx', auxOptions.visualMap)
+      return state.chartOptions
     })
 
     const handleChartResize = () => {
