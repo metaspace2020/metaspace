@@ -5,7 +5,7 @@ import { groupBy, keyBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
-// import { predictions } from '../../data/predictions'
+import { predictions } from '../../data/predictions'
 import createColormap from '../../lib/createColormap'
 
 interface Options{
@@ -218,8 +218,8 @@ export default defineComponent({
         console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/'
-        const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
-        const predictions = await response.json()
+        // const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
+        // const predictions = await response.json()
         const datasetResponse = await fetch(baseUrl + 'datasets.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification.json')
@@ -379,7 +379,7 @@ export default defineComponent({
 
             dotValues.push({
               value: [xIndex, yIndex, auxValue * 15, auxData[xKey][yKey][0][state.options.aggregation]],
-              label: {},
+              label: { key: yKey },
             })
           }
         })
