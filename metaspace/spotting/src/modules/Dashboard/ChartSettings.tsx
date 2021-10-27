@@ -1,9 +1,8 @@
 import { defineComponent, reactive } from '@vue/composition-api'
-import { Option, Popover, Select } from '../../lib/element-ui'
+import { Option, Popover, Select, Button } from '../../lib/element-ui'
 import FadeTransition from '../../components/FadeTransition'
 // @ts-ignore
 import Colorbar from '../../components/Colorbar'
-import { Button } from '../../../../webapp/src/lib/element-ui'
 import createColormap from '../../lib/createColormap'
 
 interface ChartSettingsState {

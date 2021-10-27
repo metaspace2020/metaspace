@@ -3,6 +3,7 @@ import './DashboardPage.scss'
 import { Option, Select, Pagination } from '../../lib/element-ui'
 import { groupBy, keyBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
+import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
 // import { predictions } from '../../data/predictions'
@@ -735,10 +736,23 @@ export default defineComponent({
       )
     }
 
-    const renderScatterplot = () => {
+    const renderScatterChart = () => {
       return (
         <div class='chart-container'>
           <DashboardScatterChart
+            xAxis={state.xAxisValues}
+            yAxis={state.yAxisValues}
+            data={state.data}
+            visualMap={state.visualMap}
+          />
+          {!state.loading && renderPagination()}
+        </div>
+      )
+    }
+    const renderHeatmapChart = () => {
+      return (
+        <div class='chart-container'>
+          <DashboardHeatmapChart
             xAxis={state.xAxisValues}
             yAxis={state.yAxisValues}
             data={state.data}
@@ -753,6 +767,7 @@ export default defineComponent({
       const showChart =
         ($route.query.xAxis && $route.query.yAxis && $route.query.agg)
         || (state.options.xAxis && state.options.yAxis && state.options.aggregation)
+      const { selectedView } = state
 
       return (
         <div class='dashboard-container'>
@@ -767,7 +782,8 @@ export default defineComponent({
               </div>
             }
             {!showChart && renderDashboardInstructions()}
-            {showChart && renderScatterplot()}
+            {showChart && selectedView === VIEW.SCATTER && renderScatterChart()}
+            {showChart && selectedView === VIEW.HEATMAP && renderHeatmapChart()}
             {(state.loading || state.buildingChart)
             && <div class='absolute'>
               <i
