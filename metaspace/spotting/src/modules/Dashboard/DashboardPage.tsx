@@ -6,7 +6,7 @@ import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
-// import { predictions } from '../../data/predictions'
+import { predictions } from '../../data/predictions'
 import createColormap from '../../lib/createColormap'
 
 interface Options{
@@ -219,9 +219,9 @@ export default defineComponent({
         console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/'
-        const response = await fetch(baseUrl + 'all_predictions_12-Jul-2021.json')
+        const response = await fetch(baseUrl + 'all_predictions_22-Oct-2021.json')
         const predictions = await response.json()
-        const datasetResponse = await fetch(baseUrl + 'datasets.json')
+        const datasetResponse = await fetch(baseUrl + 'datasets_updated.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification.json')
         const classification = await chemClassResponse.json()
@@ -377,10 +377,9 @@ export default defineComponent({
               state.options.aggregation)))
             const auxValue = state.options.valueMetric === VALUE_METRICS.count.src
               ? (auxData[xKey][yKey].length / maxValue) : (auxData[xKey][yKey].length / totalCount / yMaxValue)
-
             dotValues.push({
               value: [xIndex, yIndex, auxValue * 15, auxData[xKey][yKey][0][state.options.aggregation]],
-              label: { key: yKey },
+              label: { key: yKey, molecule: auxData[xKey][yKey][0].formula },
             })
           }
         })
