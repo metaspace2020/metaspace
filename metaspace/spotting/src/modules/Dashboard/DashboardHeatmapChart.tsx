@@ -146,6 +146,13 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
           left: 'center',
           bottom: '15%',
         },
+        toolbox: {
+          feature: {
+            saveAsImage: {
+              title: ' ',
+            },
+          },
+        },
         series: [{
           name: 'Punch Card',
           type: 'heatmap',
@@ -154,7 +161,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
             normal: {
               show: true,
               formatter: (param: any) => {
-                return param.name
+                return param.data?.label?.molecule ? param.data?.label?.molecule : 'Not detected'
               },
             },
           },
@@ -182,7 +189,6 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }
-      console.log('OPTx', auxOptions.visualMap)
       return state.chartOptions
     })
 
