@@ -189,7 +189,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
         shortName: ds._source.ds_group_short_name || 'NULL',
         urlSlug: null,
         members: null,
-        get adminNames(): Promise<string[] | null> {
+        get adminNames(): Promise<string[]> {
           return getGroupAdminNames(ctx, groupId)
         },
       }
