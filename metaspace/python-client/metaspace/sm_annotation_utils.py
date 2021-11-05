@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import requests
 from PIL import Image
+from tqdm import tqdm
 
 from metaspace.image_processing import clip_hotspots
 from metaspace.types import (
@@ -1089,6 +1090,7 @@ class SMDataset(object):
         hotspot_clipping=False,
         neutral_loss='',
         chem_mod='',
+        image_metadata=[],
     ):
         """Retrieve ion images for a specific sf and adduct.
 
@@ -1104,18 +1106,9 @@ class SMDataset(object):
                                          This is required to get ion images that match the METASPACE website
         :param str   neutral_loss:
         :param str   chem_mod:
+        :param list  image_metadata:
         :return IsotopeImages:
         """
-        records = self._gqclient.getAnnotations(
-            {
-                'sumFormula': sf,
-                'adduct': adduct,
-                'databaseId': None,
-                'neutralLoss': neutral_loss,
-                'chemMod': chem_mod,
-            },
-            {'ids': self.id},
-        )
 
         import matplotlib.image as mpimg
 
@@ -1138,9 +1131,7 @@ class SMDataset(object):
             assert data.max() <= 1
             return data
 
-        if records:
-            image_metadata = records[0]['isotopeImages']
-        else:
+        if not image_metadata:
             raise LookupError(f'Isotope image for "{sf}{chem_mod}{neutral_loss}{adduct}" not found')
         if only_first_isotope:
             image_metadata = image_metadata[:1]
@@ -1221,7 +1212,7 @@ class SMDataset(object):
         with ThreadPoolExecutor() as pool:
 
             def get_annotation_images(row):
-                sf, adduct, neutral_loss, chem_mod = row
+                sf, adduct, neutral_loss, chem_mod, isotope_images = row
                 return self.isotope_images(
                     sf,
                     adduct,
@@ -1230,18 +1221,23 @@ class SMDataset(object):
                     neutral_loss=neutral_loss,
                     chem_mod=chem_mod,
                     hotspot_clipping=hotspot_clipping,
+                    image_metadata=isotope_images,
                 )
 
             annotations = self.annotations(
                 fdr=fdr,
                 database=database,
-                return_vals=('sumFormula', 'adduct', 'neutralLoss', 'chemMod'),
+                return_vals=('sumFormula', 'adduct', 'neutralLoss', 'chemMod', 'isotopeImages'),
                 **annotation_filter,
             )
             return list(
-                pool.map(
-                    get_annotation_images,
-                    annotations,
+                tqdm(
+                    pool.map(
+                        get_annotation_images,
+                        annotations,
+                    ),
+                    total=len(annotations),
+                    bar_format='{l_bar}{bar:40}{r_bar}{bar:-10b}',
                 )
             )
 
