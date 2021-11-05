@@ -335,9 +335,11 @@ export default {
           variables: {
             dFilter: {
               metadataType: 'Imaging MS',
-              status: 'FINISHED',
+              submitter: this.submitter.id,
               name,
             },
+            orderBy: 'ORDER_BY_DATE',
+            sortingOrder: 'DESCENDING',
             query: '',
             limit: 10,
           },
@@ -394,6 +396,9 @@ export default {
           : (dataset && dataset.metadata && dataset.metadata.Data_Type)
       ) || defaultMetadataType
       await this.loadForm(dataset, options, mdType)
+      if (this.isNew) {
+        await this.fetchDatasets()
+      }
     },
 
     async reloadForm(mdType) {
