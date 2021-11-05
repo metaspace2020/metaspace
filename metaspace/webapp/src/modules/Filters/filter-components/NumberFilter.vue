@@ -7,7 +7,19 @@
     @destroy="destroy"
   >
     <div slot="edit">
+      <el-input
+        v-if="rawInput"
+        ref="input"
+        v-model="localValue"
+        :step="step"
+        :max="max"
+        :min="min"
+        class="w-full"
+        controls-position="right"
+        @change="onChange"
+      />
       <el-input-number
+        v-else
         ref="input"
         v-model="localValue"
         :step="step"
@@ -38,7 +50,7 @@
 </template>
 
 <script>
-import Vue, { ComponentOptions } from 'vue'
+import Vue from 'vue'
 import TagFilter from './TagFilter.vue'
 import { FilterHelpText } from './TagFilterComponents'
 
@@ -56,19 +68,23 @@ export default Vue.extend({
     max: Number,
     maxlength: String,
     step: Number,
+    rawInput: { type: Boolean, default: false },
   },
   data(vm) {
     return {
-      localValue: Number(vm.value) || 0,
+      localValue: (this.rawInput ? vm.value : Number(vm.value)) || 0,
     }
   },
   watch: {
     value: function() {
-      this.localValue = Number(this.value) || 0
+      this.localValue = (this.rawInput ? this.value : Number(this.value)) || 0
     },
   },
   methods: {
     onChange(val) {
+      if (this.rawInput) {
+        val = val.replace(/[^.\d]/g, '').replace(/^(\d*\.?)|(\d*)\.?/g, '$1$2')
+      }
       /* sending undefined causes an issue */
       const v = val === undefined ? 0 : val
       this.$emit('input', v)

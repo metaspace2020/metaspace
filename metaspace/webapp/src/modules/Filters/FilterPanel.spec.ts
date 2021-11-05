@@ -96,7 +96,7 @@ describe('FilterPanel', () => {
       project: 'abc',
       datasetIds: ['aaa', 'bbb'],
       // compoundName: 'C10H15N3O5',
-      mz: 296.1,
+      mz: '296.1',
     }
     await Vue.nextTick()
 
