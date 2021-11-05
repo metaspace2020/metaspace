@@ -60,6 +60,7 @@ interface DatasetComparisonPageState {
   annotationLoading: boolean
   isLoading: any
   collapse: string[]
+  databaseOptions: any
   normalizationData: any
 }
 
@@ -93,6 +94,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     const state = reactive<DatasetComparisonPageState>({
       selectedAnnotation: -1,
       gridState: {},
+      databaseOptions: undefined,
       globalImageSettings: {
         resetViewPort: false,
         isNormalized: false,
@@ -177,8 +179,13 @@ export default defineComponent<DatasetComparisonPageProps>({
       const normalizationData : any = {}
       // calculate normalization
       if (result && result.data && result.data.allDatasets) {
+        let databases : any[] = []
+
         for (let i = 0; i < result.data.allDatasets.length; i++) {
-          const dataset = result.data.allDatasets[i]
+          const dataset : any = result.data.allDatasets[i]
+
+          databases = databases.concat(dataset.databases)
+
           try {
             const tics = dataset.diagnostics.filter((diagnostic : any) => diagnostic.type === 'TIC')
             const tic = tics[0].images.filter((image: any) => image.key === 'TIC' && image.format === 'NPY')
@@ -208,6 +215,8 @@ export default defineComponent<DatasetComparisonPageProps>({
             }
           }
         }
+
+        state.databaseOptions = { database: uniqBy(databases, 'id') }
       }
       state.normalizationData = normalizationData
     })
@@ -505,7 +514,12 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
       return (
         <div class='dataset-comparison-page w-full flex flex-wrap flex-row'>
-          <FilterPanel class='w-full' level='annotation' hiddenFilters={['datasetIds']}/>
+          <FilterPanel
+            class='w-full'
+            level='annotation'
+            hiddenFilters={['datasetIds']}
+            fixedOptions={state.databaseOptions}
+          />
           <div class='dataset-comparison-wrapper w-full md:w-6/12 relative'>
             {
               state.annotations
