@@ -69,25 +69,21 @@ exports[`MetadataEditor should match snapshot 1`] = `
 <div id="md-editor-container">
   <div mock-v-loading="true" style="position: relative;">
     <div id="md-section-list">
-      <div class="flex flex-row w-full flex-wrap mt-6">
-        <div class="metadata-section__title w-3/12">
-          Metadata template
-          <mock-el-popover trigger="hover" placement="top">
-            <div slot-key="default">
-              <div class="max-w-sm">
-                Type the name of a previous uploaded dataset and select
-                it to use its metadata as a template for you new upload!
-              </div>
+      <div class="flex flex-row w-full flex-wrap mt-6 justify-end">
+        <mock-el-popover trigger="click" placement="left">
+          <div slot-key="default">
+            <div class="max-w-sm">
+              <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches">
+                <mock-el-option value="allDatasets.0.id" label="allDatasets.0.name"></mock-el-option>
+                <mock-el-option value="allDatasets.1.id" label="allDatasets.1.name"></mock-el-option>
+              </mock-el-select>
             </div>
-            <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
-          </mock-el-popover>
-        </div>
-        <div class="ml-1">
-          <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches">
-            <mock-el-option value="allDatasets.0.id" label="allDatasets.0.name"></mock-el-option>
-            <mock-el-option value="allDatasets.1.id" label="allDatasets.1.name"></mock-el-option>
-          </mock-el-select>
-        </div>
+          </div>
+          <div slot-key="reference"><button type="button" class="el-button mr-1 el-button--primary">
+              <!---->
+              <!----><span>
+            Copy metadata from another dataset...<i class="el-icon-document-copy ml-1"></i></span></button></div>
+        </mock-el-popover>
       </div>
       <div class="flex flex-row w-full flex-wrap mt-6">
         <div class="metadata-section__title w-3/12">

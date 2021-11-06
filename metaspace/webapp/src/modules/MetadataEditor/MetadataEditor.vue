@@ -7,47 +7,42 @@
       <div id="md-section-list">
         <div
           v-if="isNew"
-          class="flex flex-row w-full flex-wrap mt-6"
+          class="flex flex-row w-full flex-wrap mt-6 justify-end"
         >
-          <div class="metadata-section__title w-3/12">
-            Metadata template
-            <el-popover
-              trigger="hover"
-              placement="top"
-            >
-              <div class="max-w-sm">
-                Type the name of a previous uploaded dataset and select
-                it to use its metadata as a template for you new upload!
-              </div>
-              <i
-                slot="reference"
-                class="el-icon-question metadata-help-icon"
-              />
-            </el-popover>
-          </div>
-          <div
-            class="ml-1"
+          <el-popover
+            trigger="click"
+            placement="left"
           >
-            <el-select
-              v-model="metadataTemplate"
-              placeholder="Start typing name"
-              remote
-              filterable
-              clearable
-              :remote-method="fetchDatasets"
-              :loading="loadingTemplates"
-              loading-text="Loading matching entries..."
-              no-match-text="No matches"
-              @change="metadataTemplateSelection"
+            <el-button
+              slot="reference"
+              type="primary"
+              class="mr-1"
             >
-              <el-option
-                v-for="option in templateOptions"
-                :key="option.id"
-                :value="option.id"
-                :label="option.name"
-              />
-            </el-select>
-          </div>
+              Copy metadata from another dataset...<i class="el-icon-document-copy ml-1"></i>
+            </el-button>
+
+            <div class="max-w-sm">
+              <el-select
+                v-model="metadataTemplate"
+                placeholder="Start typing name"
+                remote
+                filterable
+                clearable
+                :remote-method="fetchDatasets"
+                :loading="loadingTemplates"
+                loading-text="Loading matching entries..."
+                no-match-text="No matches"
+                @change="metadataTemplateSelection"
+              >
+                <el-option
+                  v-for="option in templateOptions"
+                  :key="option.id"
+                  :value="option.id"
+                  :label="option.name"
+                />
+              </el-select>
+            </div>
+          </el-popover>
         </div>
         <div class="flex flex-row w-full flex-wrap mt-6">
           <div class="metadata-section__title w-3/12">
