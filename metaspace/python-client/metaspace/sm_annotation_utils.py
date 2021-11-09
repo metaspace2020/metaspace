@@ -1132,6 +1132,21 @@ class SMDataset(object):
             return data
 
         if not image_metadata:
+            records = self._gqclient.getAnnotations(
+                {
+                    'sumFormula': sf,
+                    'adduct': adduct,
+                    'databaseId': None,
+                    'neutralLoss': neutral_loss,
+                    'chemMod': chem_mod,
+                },
+                {'ids': self.id},
+            )
+
+            if records:
+                image_metadata = records[0]['isotopeImages']
+
+        if not image_metadata:
             raise LookupError(f'Isotope image for "{sf}{chem_mod}{neutral_loss}{adduct}" not found')
         if only_first_isotope:
             image_metadata = image_metadata[:1]
