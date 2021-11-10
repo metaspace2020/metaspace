@@ -120,6 +120,7 @@ export default class AnnotationView extends Vue {
 
    created() {
      this.onImageMove = throttle(this.onImageMove)
+     this.$store.commit('setRoiInfo', [])
    }
 
    metadataDependentComponent(category: string): any {
@@ -146,6 +147,10 @@ export default class AnnotationView extends Vue {
 
    get ticData(): string {
      return this.$store.getters.settings.annotationView.normalization
+   }
+
+   get roiInfo(): any {
+     return this.$store.state.roiInfo
    }
 
    get imageOpacityMode(): OpacityMode {
@@ -318,6 +323,18 @@ export default class AnnotationView extends Vue {
 
    setScaleBarColor(color: string | null) {
      this.scaleBarColor = color
+   }
+
+   addRoi(roiItem: any) {
+     const roi = this.roiInfo || []
+     roi.push(roiItem)
+     this.$store.commit('setRoiInfo', roi)
+   }
+
+   addRoiCoordinate(coordinates: any) {
+     const roi = this.roiInfo || []
+     roi[roi.length - 1].coordinates.push(coordinates)
+     this.$store.commit('setRoiInfo', roi)
    }
 
    filterColocSamples() {

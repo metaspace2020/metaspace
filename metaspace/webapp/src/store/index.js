@@ -21,6 +21,9 @@ const store = new Vuex.Store({
     // currently selected normalization matrix
     normalization: undefined,
 
+    // roi settings
+    roiInfo: [],
+
     // is annotation table loading?
     tableIsLoading: true,
 

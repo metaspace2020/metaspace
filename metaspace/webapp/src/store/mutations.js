@@ -159,6 +159,10 @@ export default {
     state.normalization = normalizationMatrix;
   },
 
+  setRoiInfo(state, roi) {
+    state.roiInfo = roi;
+  },
+
   setSnapshotAnnotationIds(state, annotation) {
     state.snapshotAnnotationIds = annotation;
   },

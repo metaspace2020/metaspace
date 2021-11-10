@@ -115,6 +115,9 @@
             :reset-viewport="resetViewport"
             :toggle-optical-image="toggleOpticalImage"
             :is-active="activeSections.includes('images')"
+            :roi-info="roiInfo"
+            :show-roi="true"
+            @addRoi="addRoi"
             @scaleBarColorChange="setScaleBarColor"
           />
           <component
@@ -133,6 +136,7 @@
             :scale-type="scaleType"
             :tic-data="ticData ? normalization : null"
             @opacity="newVal => opacity = newVal"
+            @roi-coordinate="addRoiCoordinate"
             @opticalOpacity="newVal => opticalOpacity = newVal"
           />
         </el-collapse-item>

@@ -69,6 +69,40 @@
         TIC normalized
       </div>
     </fade-transition>
+    <fade-transition v-if="showRoi">
+      <el-popover
+        placement="bottom"
+        width="200"
+        trigger="click"
+      >
+        <div>
+          <div
+            v-for="roi in roiInfo"
+            :key="roi.name"
+          >
+            {{ roi.name }}
+          </div>
+          <div>
+          </div>
+          <el-button
+            class="button-reset h-9 rounded-lg flex items-center justify-center px-2 hover:bg-gray-100"
+            icon="el-icon-add-location"
+            @click="addRoi"
+          >
+            Add ROI
+          </el-button>
+        </div>
+        <el-button
+          slot="reference"
+          class="roi-badge button-reset h-9 rounded-lg flex items-center justify-center px-2 hover:bg-gray-100"
+          icon="el-icon-add-location"
+          @click="openRoi"
+        >
+          Regions of interest
+        </el-button>
+      </el-popover>
+    </fade-transition>
+
     <fade-transition v-if="multiImageFlag">
       <MenuButtons
         v-if="isActive"
@@ -91,6 +125,18 @@ import config from '../../../../lib/config'
 interface colorObjType {
   code: string,
   colorName: string
+}
+
+const channels: any = {
+  magenta: 'rgb(255, 0, 255)',
+  green: 'rgb(0, 255, 0)',
+  blue: 'rgb(0, 0, 255)',
+  red: 'rgb(255, 0, 0)',
+  yellow: 'rgb(255, 255, 0)',
+  cyan: 'rgb(0, 255, 255)',
+  orange: 'rgb(255, 128, 0)',
+  violet: 'rgb(128, 0, 255)',
+  white: 'rgb(255, 255, 255)',
 }
 
 @Component({
@@ -139,8 +185,14 @@ export default class MainImageHeader extends Vue {
     @Prop({ type: Boolean, default: () => !config.features.tic })
     hideNormalization: boolean | undefined
 
+    @Prop({ type: Array, default: () => [] })
+    roiInfo: any
+
     @Prop({ type: Boolean })
     showIntensityTemplate: boolean | undefined
+
+    @Prop({ type: Boolean })
+    showRoi: boolean | undefined
 
     @Prop({ type: Boolean })
     hideTitle: boolean | undefined
@@ -172,12 +224,41 @@ export default class MainImageHeader extends Vue {
     onNormalizationChange(value: boolean) {
       this.$emit('normalizationChange', value)
     }
+
+    openRoi(e: any) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+
+    addRoi(e: any) {
+      e.stopPropagation()
+      e.preventDefault()
+      const index = this.roiInfo.length
+      const channel : any = Object.values(channels)[index]
+      this.$emit('addRoi', {
+        coordinates: [],
+        color: channel.replace('rgb', 'rgba').replace(')', ', 0.4)'),
+        strokeColor: channel,
+        name: `ROI ${index + 1}`,
+      })
+    }
 }
 </script>
 
 <style scoped>
 .inactive {
   opacity: 0.3;
+}
+
+.roi-badge{
+  padding: 0 5px;
+  font-size: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  right: 45px;
+  height: 0;
 }
 
 .norm-badge{

@@ -8,6 +8,7 @@
       v-resize="onResize"
     >
       <ion-image-viewer
+        :roi-enabled="true"
         :height="dimensions.height"
         :image-height="ionImageDimensions.height"
         :image-width="ionImageDimensions.width"
@@ -22,6 +23,7 @@
         :width="dimensions.width"
         :show-normalized-intensity="showNormalizedIntensity"
         :normalization-data="normalizationData"
+        :roi-info="roiInfo"
         :x-offset="imageLoaderSettings.imagePosition.xOffset"
         :y-offset="imageLoaderSettings.imagePosition.yOffset"
         :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
@@ -31,6 +33,7 @@
         :keep-pixel-selected="keepPixelSelected"
         @move="handleImageMove"
         @pixel-select="handlePixelSelect"
+        @roi-coordinate="handleRoiCoordinate"
       />
     </div>
     <div
@@ -246,6 +249,9 @@ const ImageViewer = defineComponent<Props>({
       handlePixelSelect({ x, y }: any) {
         emit('pixel-select', { x, y })
       },
+      handleRoiCoordinate({ x, y }: any) {
+        emit('roi-coordinate', { x, y })
+      },
       emitOpacity(value: number) {
         emit('opacity', value)
       },
@@ -256,6 +262,7 @@ const ImageViewer = defineComponent<Props>({
         root.$store.getters.settings.annotationView.normalization && root.$store.state.normalization
       && root.$store.state.normalization.error),
       showNormalizedIntensity: computed(() => root.$store.getters.settings.annotationView.normalization),
+      roiInfo: computed(() => root.$store.state.roiInfo),
       normalizationData: computed(() => root.$store.state.normalization),
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
       lockIntensityEnabled: config.features.lock_intensity,

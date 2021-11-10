@@ -488,6 +488,8 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
          
         <!---->
          
+        <!---->
+         
         <transition-stub
           enteractiveclass="duration-150 transition-opacity ease-in-out"
           enterclass="opacity-0"
@@ -1185,6 +1187,8 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
            
           <!---->
         </div>
+         
+        <!---->
          
         <!---->
          
