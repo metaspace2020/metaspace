@@ -70,39 +70,10 @@
       </div>
     </fade-transition>
     <fade-transition v-if="showRoi">
-      <el-popover
-        placement="bottom"
-        width="200"
-        trigger="click"
-      >
-        <div>
-          <div
-            v-for="roi in roiInfo"
-            :key="roi.name"
-          >
-            {{ roi.name }}
-          </div>
-          <div>
-          </div>
-          <el-button
-            class="button-reset h-9 rounded-lg flex items-center justify-center px-2 hover:bg-gray-100"
-            icon="el-icon-add-location"
-            @click="addRoi"
-          >
-            Add ROI
-          </el-button>
-        </div>
-        <el-button
-          slot="reference"
-          class="roi-badge button-reset h-9 rounded-lg flex items-center justify-center px-2 hover:bg-gray-100"
-          icon="el-icon-add-location"
-          @click="openRoi"
-        >
-          Regions of interest
-        </el-button>
-      </el-popover>
+      <div class="roi-container">
+        <roi-settings />
+      </div>
     </fade-transition>
-
     <fade-transition v-if="multiImageFlag">
       <MenuButtons
         v-if="isActive"
@@ -119,6 +90,7 @@ import IonImageSettings from './IonImageSettings.vue'
 import { MenuButtons } from '../../../ImageViewer'
 import FadeTransition from '../../../../components/FadeTransition'
 import AspectRatioIcon from '../../../../assets/inline/material/aspect-ratio.svg'
+import RoiSettings from '../../../../components/RoiSettings'
 
 import config from '../../../../lib/config'
 
@@ -146,6 +118,7 @@ const channels: any = {
     MenuButtons,
     AspectRatioIcon,
     FadeTransition,
+    RoiSettings,
   },
 })
 export default class MainImageHeader extends Vue {
@@ -185,9 +158,6 @@ export default class MainImageHeader extends Vue {
     @Prop({ type: Boolean, default: () => !config.features.tic })
     hideNormalization: boolean | undefined
 
-    @Prop({ type: Array, default: () => [] })
-    roiInfo: any
-
     @Prop({ type: Boolean })
     showIntensityTemplate: boolean | undefined
 
@@ -224,24 +194,6 @@ export default class MainImageHeader extends Vue {
     onNormalizationChange(value: boolean) {
       this.$emit('normalizationChange', value)
     }
-
-    openRoi(e: any) {
-      e.stopPropagation()
-      e.preventDefault()
-    }
-
-    addRoi(e: any) {
-      e.stopPropagation()
-      e.preventDefault()
-      const index = this.roiInfo.length
-      const channel : any = Object.values(channels)[index]
-      this.$emit('addRoi', {
-        coordinates: [],
-        color: channel.replace('rgb', 'rgba').replace(')', ', 0.4)'),
-        strokeColor: channel,
-        name: `ROI ${index + 1}`,
-      })
-    }
 }
 </script>
 
@@ -250,15 +202,9 @@ export default class MainImageHeader extends Vue {
   opacity: 0.3;
 }
 
-.roi-badge{
-  padding: 0 5px;
-  font-size: 14px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.roi-container{
   position: absolute;
-  right: 45px;
-  height: 0;
+  right: 50px;
 }
 
 .norm-badge{

@@ -8,7 +8,6 @@
       v-resize="onResize"
     >
       <ion-image-viewer
-        :roi-enabled="true"
         :height="dimensions.height"
         :image-height="ionImageDimensions.height"
         :image-width="ionImageDimensions.width"

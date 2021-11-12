@@ -115,9 +115,7 @@
             :reset-viewport="resetViewport"
             :toggle-optical-image="toggleOpticalImage"
             :is-active="activeSections.includes('images')"
-            :roi-info="roiInfo"
             :show-roi="true"
-            @addRoi="addRoi"
             @scaleBarColorChange="setScaleBarColor"
           />
           <component

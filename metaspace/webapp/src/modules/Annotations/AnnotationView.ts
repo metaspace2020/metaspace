@@ -325,12 +325,6 @@ export default class AnnotationView extends Vue {
      this.scaleBarColor = color
    }
 
-   addRoi(roiItem: any) {
-     const roi = this.roiInfo || []
-     roi.push(roiItem)
-     this.$store.commit('setRoiInfo', roi)
-   }
-
    addRoiCoordinate(coordinates: any) {
      const roi = this.roiInfo || []
      roi[roi.length - 1].coordinates.push(coordinates)

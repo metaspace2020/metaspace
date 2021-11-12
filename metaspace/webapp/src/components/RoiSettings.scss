@@ -1,0 +1,12 @@
+.roi-content{
+  @apply flex flex-col flex-wrap;
+
+  .roi-item{
+    @apply flex w-full justify-center items-center flex-wrap;
+  }
+
+  .roi-channels{
+    @apply flex w-full justify-between items-center relative;
+    height: 10px;
+  }
+}

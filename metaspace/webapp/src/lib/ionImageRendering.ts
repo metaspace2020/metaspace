@@ -441,11 +441,11 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
     applyImageData(canvas, pixels, width, height)
     if (roiInfo && roiInfo.length > 0) {
       roiInfo.forEach((roiItem: any) => {
-        if (roiItem.coordinates.length > 0) {
+        if (roiItem.visible && roiItem.coordinates.length > 0) {
           ctx.beginPath()
           ctx.strokeStyle = roiItem.strokeColor
           ctx.fillStyle = roiItem.color
-          ctx.lineWidth = 2
+          ctx.lineWidth = 1
           ctx.moveTo(roiItem.coordinates[0].x, roiItem.coordinates[0].y)
           for (let index = 1; index < roiItem.coordinates.length; index++) {
             ctx.lineTo(roiItem.coordinates[index].x, roiItem.coordinates[index].y)
