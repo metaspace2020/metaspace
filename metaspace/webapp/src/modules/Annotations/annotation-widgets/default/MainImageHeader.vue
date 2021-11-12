@@ -71,7 +71,7 @@
     </fade-transition>
     <fade-transition v-if="showRoi">
       <div class="roi-container">
-        <roi-settings />
+        <roi-settings @download="onRoiDownload" />
       </div>
     </fade-transition>
     <fade-transition v-if="multiImageFlag">
@@ -193,6 +193,10 @@ export default class MainImageHeader extends Vue {
 
     onNormalizationChange(value: boolean) {
       this.$emit('normalizationChange', value)
+    }
+
+    onRoiDownload(index: number) {
+      this.$emit('download', index)
     }
 }
 </script>

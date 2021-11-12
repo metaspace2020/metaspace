@@ -57,6 +57,10 @@ export default defineComponent<Props>({
       e.preventDefault()
     }
 
+    const triggerDownload = (index: number) => {
+      emit('download', index)
+    }
+
     const toggleHidden = (index: number) => {
       const roiInfo = getRoi()
       Vue.set(roiInfo, index, { ...roiInfo[index], visible: !roiInfo[index].visible })
@@ -97,15 +101,22 @@ export default defineComponent<Props>({
                   <div class='roi-item relative'>
                     <div class='flex w-full justify-between items-center'>
                       {roi.name}
-                      <Button class="button-reset h-5" onClick={() => toggleHidden(roiIndex)}>
-                        {
-                          roi.visible
-                        && <VisibleIcon class="fill-current w-5 h-5 text-gray-800"/>
-                        } {
-                          !roi.visible
-                        && <HiddenIcon class="fill-current w-5 h-5 text-gray-800"/>
-                        }
-                      </Button>
+                      <div class='flex justify-center items-center'>
+                        <Button class="button-reset h-5" onClick={() => toggleHidden(roiIndex)}>
+                          {
+                            roi.visible
+                            && <VisibleIcon class="fill-current w-5 h-5 text-gray-800"/>
+                          } {
+                            !roi.visible
+                          && <HiddenIcon class="fill-current w-5 h-5 text-gray-800"/>
+                          }
+                        </Button>
+                        <Button
+                          class="button-reset h-5"
+                          icon="el-icon-download"
+                          onClick={() => triggerDownload(roiIndex)}/>
+                      </div>
+
                     </div>
                     <div class='roi-channels'>
                       <ChannelSelector

@@ -117,7 +117,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, reactive, ref, toRefs, onMounted } from '@vue/composition-api'
+import { defineComponent, computed, reactive, ref, toRefs, onMounted, watch } from '@vue/composition-api'
 import { Image } from 'upng-js'
 import resize from 'vue-resize-directive'
 
@@ -135,6 +135,8 @@ import useIonImages from './useIonImages'
 import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
 import { ScaleType } from '../../lib/ionImageRendering'
 import config from '../../lib/config'
+import isInsidePolygon from '../../lib/isInsidePolygon'
+import FileSaver from 'file-saver'
 
 interface Props {
   annotation: any
@@ -147,6 +149,7 @@ interface Props {
   scaleBarColor: string | null
   scaleType?: ScaleType
   keepPixelSelected: boolean
+  downloadRoi: number
 }
 
 const ImageViewer = defineComponent<Props>({
@@ -175,6 +178,7 @@ const ImageViewer = defineComponent<Props>({
     scaleBarColor: { type: String },
     scaleType: { type: String },
     keepPixelSelected: { type: Boolean },
+    downloadRoi: { type: Number },
     ticData: { type: Object },
   },
   setup(props, { root, emit }) {
@@ -185,12 +189,38 @@ const ImageViewer = defineComponent<Props>({
       ionImagesLoading,
       ionImageDimensions,
     } = useIonImages(props)
-
     // don't think this is the best way to do it
     root.$store.watch((_, getters) => getters.filter.datasetIds, (datasetIds = [], previous) => {
       if (datasetIds.length !== 1 || (previous && previous[0] !== datasetIds[0])) {
         resetIonImageState()
         resetImageViewerState()
+      }
+    })
+
+    // download ROI feature
+    watch(() => props.downloadRoi, () => {
+      if (!Array.isArray(root.$store.state.roiInfo)
+        || props.downloadRoi === -1 || root.$store.state.roiInfo.length - 1 < props.downloadRoi
+        || !root.$store.state.roiInfo[props.downloadRoi]) {
+        return
+      }
+      for (const { ionImage } of ionImageLayers.value) {
+        const { width, height, intensityValues } = ionImage
+        const rows = [['name', 'x', 'y', 'intensity']]
+        for (let x = 0; x < width; x++) {
+          for (let y = 0; y < height; y++) {
+            if (isInsidePolygon([x, y],
+              root.$store.state.roiInfo[props.downloadRoi].coordinates.map((coordinate: any) => {
+                return [coordinate.x, coordinate.y]
+              }))) {
+              const idx = y * width + x
+              rows.push([root.$store.state.roiInfo[props.downloadRoi].name, x, y, intensityValues[idx]])
+            }
+          }
+        }
+        const csv = rows.map(e => e.join(',')).join('\n')
+        const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+        FileSaver.saveAs(blob, `${root.$store.state.roiInfo[props.downloadRoi].name}.csv`)
       }
     })
 

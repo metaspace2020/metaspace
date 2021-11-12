@@ -117,6 +117,7 @@
             :is-active="activeSections.includes('images')"
             :show-roi="true"
             @scaleBarColorChange="setScaleBarColor"
+            @download="onRoiDownload"
           />
           <component
             :is="metadataDependentComponent('main-image')"
@@ -133,6 +134,7 @@
             :scale-bar-color="scaleBarColor"
             :scale-type="scaleType"
             :tic-data="ticData ? normalization : null"
+            :download-roi="downloadRoi"
             @opacity="newVal => opacity = newVal"
             @roi-coordinate="addRoiCoordinate"
             @opticalOpacity="newVal => opticalOpacity = newVal"
