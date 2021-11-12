@@ -206,11 +206,11 @@ const ImageViewer = defineComponent<Props>({
       }
       const rows = [['name', 'molecule', 'x', 'y', 'intensity']]
       const roiName : any = root.$store.state.roiInfo[props.downloadRoi].name
+      const items : any = ionImageMenuItems.value
       let molIdx : number = 0
-
       for (const { ionImage } of ionImageLayers.value) {
         const { width, height, intensityValues } = ionImage
-        const molName : any = ionImageMenuItems.value[molIdx].annotation.ion
+        const molName : any = items[molIdx].annotation.ion
         for (let x = 0; x < width; x++) {
           for (let y = 0; y < height; y++) {
             if (isInsidePolygon([x, y],

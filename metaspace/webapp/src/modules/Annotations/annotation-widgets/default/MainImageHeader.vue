@@ -99,18 +99,6 @@ interface colorObjType {
   colorName: string
 }
 
-const channels: any = {
-  magenta: 'rgb(255, 0, 255)',
-  green: 'rgb(0, 255, 0)',
-  blue: 'rgb(0, 0, 255)',
-  red: 'rgb(255, 0, 0)',
-  yellow: 'rgb(255, 255, 0)',
-  cyan: 'rgb(0, 255, 255)',
-  orange: 'rgb(255, 128, 0)',
-  violet: 'rgb(128, 0, 255)',
-  white: 'rgb(255, 255, 255)',
-}
-
 @Component({
   name: 'main-image-header',
   components: {
@@ -221,7 +209,7 @@ export default class MainImageHeader extends Vue {
   justify-content: center;
   align-items: center;
   position: absolute;
-  right: 45px;
+  right: 225px;
   height: 25px;
 }
 
