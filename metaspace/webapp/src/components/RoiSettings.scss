@@ -1,8 +1,16 @@
+$bgColor: hsl(208, 36%, 96%);
+
 .roi-content{
   @apply flex flex-col flex-wrap;
 
+  .roi-label{
+    @apply font-bold;
+  }
+
   .roi-item{
     @apply flex w-full justify-center items-center flex-wrap;
+    height: 60px;
+    border-bottom: 1px solid lightgray;
   }
 
   .roi-channels{
@@ -10,3 +18,12 @@
     height: 10px;
   }
 }
+
+.roi-popper{
+  background: $bgColor;
+
+  .popper__arrow::after{
+    border-bottom-color: $bgColor !important;
+  }
+}
+

@@ -90,6 +90,7 @@ export default defineComponent<Props>({
       return (
         <Popover
           ref={popover}
+          popperClass='roi-popper'
           placement="bottom"
           width="200"
           trigger="click"
@@ -100,7 +101,9 @@ export default defineComponent<Props>({
                 return (
                   <div class='roi-item relative'>
                     <div class='flex w-full justify-between items-center'>
-                      {roi.name}
+                      <span class='roi-label' style={ { color: roi.channel } }>
+                        {roi.name}
+                      </span>
                       <div class='flex justify-center items-center'>
                         <Button class="button-reset h-5" onClick={() => toggleHidden(roiIndex)}>
                           {

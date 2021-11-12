@@ -204,9 +204,13 @@ const ImageViewer = defineComponent<Props>({
         || !root.$store.state.roiInfo[props.downloadRoi]) {
         return
       }
+      const rows = [['name', 'molecule', 'x', 'y', 'intensity']]
+      const roiName : any = root.$store.state.roiInfo[props.downloadRoi].name
+      let molIdx : number = 0
+
       for (const { ionImage } of ionImageLayers.value) {
         const { width, height, intensityValues } = ionImage
-        const rows = [['name', 'x', 'y', 'intensity']]
+        const molName : any = ionImageMenuItems.value[molIdx].annotation.ion
         for (let x = 0; x < width; x++) {
           for (let y = 0; y < height; y++) {
             if (isInsidePolygon([x, y],
@@ -214,14 +218,16 @@ const ImageViewer = defineComponent<Props>({
                 return [coordinate.x, coordinate.y]
               }))) {
               const idx = y * width + x
-              rows.push([root.$store.state.roiInfo[props.downloadRoi].name, x, y, intensityValues[idx]])
+              rows.push([roiName, molName, x, y, intensityValues[idx]])
             }
           }
         }
-        const csv = rows.map(e => e.join(',')).join('\n')
-        const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
-        FileSaver.saveAs(blob, `${root.$store.state.roiInfo[props.downloadRoi].name}.csv`)
+        molIdx += 1
       }
+
+      const csv = rows.map(e => e.join(',')).join('\n')
+      const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+      FileSaver.saveAs(blob, `${roiName}.csv`)
     })
 
     const imageArea = ref<HTMLElement | null>(null)
