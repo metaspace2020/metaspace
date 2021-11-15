@@ -7,6 +7,7 @@
       <sm-form @submit="handleSave">
         <h2>Project Details</h2>
         <edit-project-form
+          ref="projectForm"
           v-model="model"
           class="mt-3 mb-6 v-rhythm-6"
           :is-published="isPublished"
@@ -201,6 +202,7 @@ export default class ProjectSettings extends Vue {
       this.errors = {}
       this.isSaving = true
       try {
+        const projectForm : any = await this.$refs.projectForm.validate() as any
         const { name, isPublic, urlSlug, doi } = this.model
         await this.$apollo.mutate<UpdateProjectMutation>({
           mutation: updateProjectMutation,
@@ -239,10 +241,12 @@ export default class ProjectSettings extends Vue {
           })
         }
       } catch (err) {
-        try {
-          this.errors = parseValidationErrors(err)
-        } finally {
-          reportError(err)
+        if (err !== false) { // false is the project validation form
+          try {
+            this.errors = parseValidationErrors(err)
+          } finally {
+            reportError(err)
+          }
         }
       } finally {
         this.isSaving = false
