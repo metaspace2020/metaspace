@@ -202,7 +202,7 @@ export default class ProjectSettings extends Vue {
       this.errors = {}
       this.isSaving = true
       try {
-        const projectForm : any = await this.$refs.projectForm.validate() as any
+        await (this.$refs.projectForm as any).validate()
         const { name, isPublic, urlSlug, doi } = this.model
         await this.$apollo.mutate<UpdateProjectMutation>({
           mutation: updateProjectMutation,
