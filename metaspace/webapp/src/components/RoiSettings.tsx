@@ -1,13 +1,26 @@
 import VisibleIcon from '../assets/inline/refactoring-ui/icon-view-visible.svg'
 import HiddenIcon from '../assets/inline/refactoring-ui/icon-view-hidden.svg'
-import { defineComponent, computed, ref } from '@vue/composition-api'
+import { defineComponent, computed, ref, reactive } from '@vue/composition-api'
 import { Button, Input, Popover } from '../lib/element-ui'
 import Vue from 'vue'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
 import './RoiSettings.scss'
+import { useQuery } from '@vue/apollo-composable'
+import { annotationListQuery } from '../api/annotation'
+import config from '../lib/config'
+import { loadPngFromUrl, processIonImage } from '../lib/ionImageRendering'
+import reportError from '../lib/reportError'
+import isInsidePolygon from '../lib/isInsidePolygon'
+import FileSaver from 'file-saver'
 
-interface Props {
-  roiInfo: any[],
+interface RoiSettingsProps {
+  annotation: any,
+}
+
+interface RoiSettingsState {
+  isDownloading: boolean,
+  offset: number,
+  rows: any[],
 }
 
 const channels: any = {
@@ -22,14 +35,124 @@ const channels: any = {
   white: 'rgb(255, 255, 255)',
 }
 
-export default defineComponent<Props>({
+const CHUNK_SIZE = 10
+
+export default defineComponent<RoiSettingsProps>({
   name: 'RoiSettings',
   props: {
-    roiInfo: { type: Array, default: () => [] },
+    annotation: { type: Object, default: () => {} },
   },
   setup(props, { root, emit }) {
     const { $store } = root
     const popover = ref(null)
+    const state = reactive<RoiSettingsState>({
+      offset: 0,
+      rows: [],
+      isDownloading: false,
+    })
+
+    const queryVariables = () => {
+      const filter = $store.getters.gqlAnnotationFilter
+      const dFilter = $store.getters.gqlDatasetFilter
+      const colocalizationCoeffFilter = $store.getters.gqlColocalizationFilter
+      const query = $store.getters.ftsQuery
+
+      return {
+        filter,
+        dFilter,
+        query,
+        colocalizationCoeffFilter,
+        countIsomerCompounds: config.features.isomers,
+      }
+    }
+
+    const queryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+    const queryVars = computed(() => ({
+      ...queryVariables(),
+      dFilter: { ...queryVariables().dFilter, ids: props.annotation.dataset.id },
+      limit: CHUNK_SIZE,
+      offset: state.offset,
+    }))
+
+    const {
+      result: annotationsResult,
+      loading: annotationsLoading,
+      onResult: onAnnotationsResult,
+    } = useQuery<any>(annotationListQuery, queryVars, queryOptions)
+
+    onAnnotationsResult(async(result) => {
+      if (result && result.data) {
+        let rows = state.rows
+        if (state.offset === 0) {
+          rows = []
+          let cols = ['mol_formula', 'adduct', 'mz', 'mol_name']
+          const roiInfo = getRoi()
+          cols = cols.concat(roiInfo.map((roi: any) => roi.name))
+          rows.push(cols)
+        }
+
+        for (let i = 0; i < result.data.allAnnotations.length; i++) {
+          const annotation = result.data.allAnnotations[i]
+          const row = await formatRow(annotation)
+          rows.push(row)
+        }
+        state.rows = rows
+
+        if (state.offset < result.data.countAnnotations) {
+          state.offset += CHUNK_SIZE
+        } else {
+          queryOptions.enabled = false
+          const csv = state.rows.map((e: any) => e.join(',')).join('\n')
+          const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+          FileSaver.saveAs(blob, 'rois.csv')
+          state.isDownloading = false
+          state.offset = 0
+        }
+      }
+    })
+
+    const ionImage = (ionImagePng: any, isotopeImage: any,
+      scaleType: any = 'linear', userScaling: any = [0, 1], normalizedData: any = null) => {
+      if (!isotopeImage || !ionImagePng) {
+        return null
+      }
+      const { minIntensity, maxIntensity } = isotopeImage
+      return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType
+        , userScaling, undefined, normalizedData)
+    }
+
+    const formatRow = async(annotation: any) => {
+      const [isotopeImage] = annotation.isotopeImages
+      const ionImagePng = await loadPngFromUrl(isotopeImage.url)
+      const molFormula : any = annotation.ionFormula
+      const molName : any = annotation.ion
+      const adduct : any = annotation.adduct
+      const mz : any = annotation.mz
+      const finalImage : any = ionImage(ionImagePng, annotation.isotopeImages[0])
+      const row : any = [molFormula, adduct, mz, molName]
+      const roiInfo = getRoi()
+      const { width, height, intensityValues } = finalImage
+
+      roiInfo.forEach((roi: any) => {
+        const intensities = []
+
+        for (let x = 0; x < width; x++) {
+          for (let y = 0; y < height; y++) {
+            if (isInsidePolygon([x, y],
+              roi.coordinates.map((coordinate: any) => {
+                return [coordinate.x, coordinate.y]
+              }))) {
+              const idx = y * width + x
+              intensities.push(intensityValues[idx])
+            }
+          }
+        }
+
+        row.push(`"${intensities.join(',')}"`)
+      })
+
+      return row
+    }
 
     const getRoi = () => {
       return $store.state.roiInfo || []
@@ -57,8 +180,9 @@ export default defineComponent<Props>({
       e.preventDefault()
     }
 
-    const triggerDownload = (index: number) => {
-      emit('download', index)
+    const triggerDownload = () => {
+      queryOptions.enabled = true
+      state.isDownloading = true
     }
 
     const toggleHidden = (index: number) => {
@@ -97,6 +221,20 @@ export default defineComponent<Props>({
         >
           <div class='roi-content'>
             {
+              roiInfo.length > 0
+              && !state.isDownloading
+              && <Button
+                class="button-reset h-5"
+                icon="el-icon-download"
+                onClick={triggerDownload}/>
+            }
+            {
+              state.isDownloading
+              && <div>
+                <i class="el-icon-loading" />
+              </div>
+            }
+            {
               roiInfo.map((roi: any, roiIndex: number) => {
                 return (
                   <div class='roi-item relative'>
@@ -114,10 +252,6 @@ export default defineComponent<Props>({
                           && <HiddenIcon class="fill-current w-5 h-5 text-gray-800"/>
                           }
                         </Button>
-                        <Button
-                          class="button-reset h-5"
-                          icon="el-icon-download"
-                          onClick={() => triggerDownload(roiIndex)}/>
                       </div>
 
                     </div>

@@ -71,7 +71,10 @@
     </fade-transition>
     <fade-transition v-if="showRoi">
       <div class="roi-container">
-        <roi-settings @download="onRoiDownload" />
+        <roi-settings
+          :annotation="annotation"
+          @download="onRoiDownload"
+        />
       </div>
     </fade-transition>
     <fade-transition v-if="multiImageFlag">
@@ -115,6 +118,9 @@ export default class MainImageHeader extends Vue {
 
     @Prop({ required: true, type: Boolean })
     showOpticalImage!: boolean;
+
+    @Prop({ type: Object })
+    annotation: string | undefined;
 
     @Prop({ type: String })
     colormap: string | undefined;

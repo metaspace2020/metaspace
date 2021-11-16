@@ -1,7 +1,7 @@
 $bgColor: hsl(208, 36%, 96%);
 
 .roi-content{
-  @apply flex flex-col flex-wrap;
+  @apply flex flex-col flex-wrap justify-center items-center;
 
   .roi-label{
     @apply font-bold;
