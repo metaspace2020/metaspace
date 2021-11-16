@@ -22,6 +22,7 @@ const router = new VueRouter({
   mode: 'history',
   routes: [
     { path: '/(dashboard)?', name: 'dashboard', component: asyncPages.DashboardPage },
+    { path: '/project', name: 'project', component: asyncPages.DashboardPage },
     { path: '*', component: NotFoundPage, meta: { footer: true, flex: true } },
   ],
   scrollBehavior(to, from, savedPosition) {

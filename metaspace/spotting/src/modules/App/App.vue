@@ -18,12 +18,6 @@
     />
 
     <metaspace-footer v-if="$route.meta.footer" />
-
-    <tour-step
-      ref="tour"
-      :tour="$store.state.currentTour"
-    />
-    <cookie-banner />
   </div>
 </template>
 
@@ -31,10 +25,8 @@
 import * as cookie from 'js-cookie'
 import MetaspaceHeader from './MetaspaceHeader.vue'
 import MetaspaceFooter from './MetaspaceFooter.vue'
-import TourStep from './TourStep.vue'
 import config from '../../lib/config'
 import Vue, { ComponentOptions } from 'vue'
-import CookieBanner from './CookieBanner'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 export default {
@@ -42,36 +34,10 @@ export default {
   components: {
     MetaspaceHeader,
     MetaspaceFooter,
-    // ReleaseNotesDialog,
-    TourStep,
-    CookieBanner,
   },
   data() {
     return {
       features: config.features,
-    }
-  },
-  async created() {
-    const flashMessage = cookie.getJSON('flashMessage')
-    if (flashMessage) {
-      try {
-        if (flashMessage.type === 'verify_email_success') {
-          await this.$alert('Your email address was successfully verified. You may now upload datasets to METASPACE.',
-            'Welcome to METASPACE', { type: 'success' })
-        } else if (flashMessage.type === 'verify_email_failure') {
-          await this.$alert('This email verification link is invalid or has expired. '
-            + 'Try signing in or resetting your password. '
-            + 'If this keeps happening, please <a href="mailto:contact@metaspace2020.eu">let us know</a>.',
-          'Something went wrong!', { type: 'warning', dangerouslyUseHTMLString: true })
-        } else if (flashMessage.type === 'review_token_success') {
-          await this.$alert('You have been granted access to a private project.',
-            'Welcome to METASPACE', { type: 'success' })
-        }
-      } catch (err) {
-        // Ignore any errors - promise rejection here just means that the user cancelled out of the dialog
-      } finally {
-        cookie.remove('flashMessage')
-      }
     }
   },
 }
