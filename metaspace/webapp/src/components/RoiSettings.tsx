@@ -34,7 +34,7 @@ const channels: any = {
   white: 'rgb(255, 255, 255)',
 }
 
-const CHUNK_SIZE = 10
+const CHUNK_SIZE = 1000
 
 export default defineComponent<RoiSettingsProps>({
   name: 'RoiSettings',
