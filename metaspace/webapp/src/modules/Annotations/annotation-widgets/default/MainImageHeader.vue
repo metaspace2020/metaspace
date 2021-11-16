@@ -73,7 +73,6 @@
       <div class="roi-container">
         <roi-settings
           :annotation="annotation"
-          @download="onRoiDownload"
         />
       </div>
     </fade-transition>
@@ -187,10 +186,6 @@ export default class MainImageHeader extends Vue {
 
     onNormalizationChange(value: boolean) {
       this.$emit('normalizationChange', value)
-    }
-
-    onRoiDownload(index: number) {
-      this.$emit('download', index)
     }
 }
 </script>

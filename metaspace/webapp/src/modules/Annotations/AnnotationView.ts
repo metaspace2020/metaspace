@@ -113,7 +113,6 @@ export default class AnnotationView extends Vue {
    normalization: any
 
    msAcqGeometry: any
-   downloadRoi: number = -1
    opticalImages!: OpticalImage[] | null
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
@@ -328,13 +327,6 @@ export default class AnnotationView extends Vue {
 
    setScaleBarColor(color: string | null) {
      this.scaleBarColor = color
-   }
-
-   onRoiDownload(index: number) {
-     this.downloadRoi = index
-     setTimeout(() => {
-       this.downloadRoi = -1
-     }, 500)
    }
 
    addRoiCoordinate(coordinates: any) {

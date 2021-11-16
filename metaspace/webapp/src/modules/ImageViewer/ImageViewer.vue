@@ -149,7 +149,6 @@ interface Props {
   scaleBarColor: string | null
   scaleType?: ScaleType
   keepPixelSelected: boolean
-  downloadRoi: number
 }
 
 const ImageViewer = defineComponent<Props>({
@@ -178,7 +177,6 @@ const ImageViewer = defineComponent<Props>({
     scaleBarColor: { type: String },
     scaleType: { type: String },
     keepPixelSelected: { type: Boolean },
-    downloadRoi: { type: Number },
     ticData: { type: Object },
   },
   setup(props, { root, emit }) {
@@ -195,39 +193,6 @@ const ImageViewer = defineComponent<Props>({
         resetIonImageState()
         resetImageViewerState()
       }
-    })
-
-    // download ROI feature
-    watch(() => props.downloadRoi, () => {
-      if (!Array.isArray(root.$store.state.roiInfo)
-        || props.downloadRoi === -1 || root.$store.state.roiInfo.length - 1 < props.downloadRoi
-        || !root.$store.state.roiInfo[props.downloadRoi]) {
-        return
-      }
-      const rows = [['name', 'molecule', 'x', 'y', 'intensity']]
-      const roiName : any = root.$store.state.roiInfo[props.downloadRoi].name
-      const items : any = ionImageMenuItems.value
-      let molIdx : number = 0
-      for (const { ionImage } of ionImageLayers.value) {
-        const { width, height, intensityValues } = ionImage
-        const molName : any = items[molIdx].annotation.ion
-        for (let x = 0; x < width; x++) {
-          for (let y = 0; y < height; y++) {
-            if (isInsidePolygon([x, y],
-              root.$store.state.roiInfo[props.downloadRoi].coordinates.map((coordinate: any) => {
-                return [coordinate.x, coordinate.y]
-              }))) {
-              const idx = y * width + x
-              rows.push([roiName, molName, x, y, intensityValues[idx]])
-            }
-          }
-        }
-        molIdx += 1
-      }
-
-      const csv = rows.map(e => e.join(',')).join('\n')
-      const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
-      FileSaver.saveAs(blob, `${roiName}.csv`)
     })
 
     const imageArea = ref<HTMLElement | null>(null)

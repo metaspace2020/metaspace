@@ -9,7 +9,6 @@ import { useQuery } from '@vue/apollo-composable'
 import { annotationListQuery } from '../api/annotation'
 import config from '../lib/config'
 import { loadPngFromUrl, processIonImage } from '../lib/ionImageRendering'
-import reportError from '../lib/reportError'
 import isInsidePolygon from '../lib/isInsidePolygon'
 import FileSaver from 'file-saver'
 
@@ -42,7 +41,7 @@ export default defineComponent<RoiSettingsProps>({
   props: {
     annotation: { type: Object, default: () => {} },
   },
-  setup(props, { root, emit }) {
+  setup(props, { root }) {
     const { $store } = root
     const popover = ref(null)
     const state = reactive<RoiSettingsState>({
@@ -171,6 +170,7 @@ export default defineComponent<RoiSettingsProps>({
         strokeColor: channel.replace('rgb', 'rgba').replace(')', ', 0.6)'),
         name: `ROI ${index + 1}`,
         visible: true,
+        edit: false,
       })
       $store.commit('setRoiInfo', roiInfo)
     }
@@ -183,6 +183,18 @@ export default defineComponent<RoiSettingsProps>({
     const triggerDownload = () => {
       queryOptions.enabled = true
       state.isDownloading = true
+    }
+
+    const handleNameEdit = (value: any, index: number) => {
+      const roiInfo = getRoi()
+      Vue.set(roiInfo, index, { ...roiInfo[index], name: value })
+      $store.commit('setRoiInfo', roiInfo)
+    }
+
+    const toggleEdit = (index: number) => {
+      const roiInfo = getRoi()
+      Vue.set(roiInfo, index, { ...roiInfo[index], edit: !roiInfo[index].edit })
+      $store.commit('setRoiInfo', roiInfo)
     }
 
     const toggleHidden = (index: number) => {
@@ -239,10 +251,26 @@ export default defineComponent<RoiSettingsProps>({
                 return (
                   <div class='roi-item relative'>
                     <div class='flex w-full justify-between items-center'>
-                      <span class='roi-label' style={ { color: roi.channel } }>
-                        {roi.name}
-                      </span>
+                      {
+                        !roi.edit
+                        && <span class='roi-label' style={ { color: roi.channel } }>
+                          {roi.name}
+                        </span>
+                      }
+                      {
+                        roi.edit
+                        && <Input
+                          class='roi-label'
+                          size='small'
+                          value={roi.name}
+                          onChange={() => toggleEdit(roiIndex)}
+                          onInput={(value: any) => { handleNameEdit(value, roiIndex) }}/>
+                      }
                       <div class='flex justify-center items-center'>
+                        <Button
+                          class="button-reset h-5"
+                          icon="el-icon-edit-outline"
+                          onClick={() => toggleEdit(roiIndex)}/>
                         <Button class="button-reset h-5" onClick={() => toggleHidden(roiIndex)}>
                           {
                             roi.visible
