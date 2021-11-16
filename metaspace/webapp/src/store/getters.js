@@ -62,10 +62,10 @@ export default {
 
     if (filter.mz) {
       const mz = parseFloat(filter.mz),
-        deltamz = parseFloat(mzFilterPrecision(mz));
+        deltamz = parseFloat(mzFilterPrecision(filter.mz));
       f.mzFilter = {
-        min: mz - deltamz,
-        max: mz + deltamz
+        min: (mz - deltamz),
+        max: (mz + deltamz)
       };
     }
 
