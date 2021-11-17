@@ -20,6 +20,7 @@ interface RoiSettingsState {
   isDownloading: boolean,
   offset: number,
   rows: any[],
+  cols: any[],
 }
 
 const channels: any = {
@@ -47,6 +48,7 @@ export default defineComponent<RoiSettingsProps>({
     const state = reactive<RoiSettingsState>({
       offset: 0,
       rows: [],
+      cols: [],
       isDownloading: false,
     })
 
@@ -81,21 +83,10 @@ export default defineComponent<RoiSettingsProps>({
 
     onAnnotationsResult(async(result) => {
       if (result && result.data) {
-        let rows = state.rows
-        if (state.offset === 0) {
-          rows = []
-          let cols = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
-          const roiInfo = getRoi()
-          cols = cols.concat(roiInfo.map((roi: any) => roi.name))
-          rows.push(cols)
-        }
-
         for (let i = 0; i < result.data.allAnnotations.length; i++) {
           const annotation = result.data.allAnnotations[i]
-          const row = await formatRow(annotation)
-          rows.push(row)
+          await formatRow(annotation)
         }
-        state.rows = rows
 
         if (state.offset < result.data.countAnnotations) {
           state.offset += CHUNK_SIZE
@@ -106,6 +97,8 @@ export default defineComponent<RoiSettingsProps>({
           FileSaver.saveAs(blob, `${props.annotation.dataset.name.replace(/\s/g, '_')}_ROI.csv`)
           state.isDownloading = false
           state.offset = 0
+          state.rows = []
+          state.cols = []
         }
       }
     })
@@ -132,6 +125,8 @@ export default defineComponent<RoiSettingsProps>({
       const row : any = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
       const roiInfo = getRoi()
       const { width, height, intensityValues } = finalImage
+      const cols : any[] = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
+      const rows : any = state.rows
 
       roiInfo.forEach((roi: any) => {
         const intensities = []
@@ -142,16 +137,22 @@ export default defineComponent<RoiSettingsProps>({
               roi.coordinates.map((coordinate: any) => {
                 return [coordinate.x, coordinate.y]
               }))) {
+              if (state.offset === 0 && state.rows.length === 0) {
+                cols.push(`${roi.name}_x${x}_y${y}`)
+              }
               const idx = y * width + x
-              intensities.push(intensityValues[idx])
+              row.push(intensityValues[idx])
             }
           }
         }
-
-        row.push(`"${intensities.join(',')}"`)
       })
 
-      return row
+      if (state.offset === 0 && state.rows.length === 0) {
+        rows.push(cols)
+      }
+
+      rows.push(row)
+      state.rows = rows
     }
 
     const getRoi = () => {
