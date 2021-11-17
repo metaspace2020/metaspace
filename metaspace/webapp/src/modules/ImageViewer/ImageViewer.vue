@@ -33,6 +33,7 @@
         @move="handleImageMove"
         @pixel-select="handlePixelSelect"
         @roi-coordinate="handleRoiCoordinate"
+        @toggle-roi="handleRoiToggle"
       />
     </div>
     <div
@@ -251,6 +252,9 @@ const ImageViewer = defineComponent<Props>({
       },
       handleRoiCoordinate({ x, y }: any) {
         emit('roi-coordinate', { x, y })
+      },
+      handleRoiToggle(enabled: boolean) {
+        emit('toggle-roi', enabled)
       },
       emitOpacity(value: number) {
         emit('opacity', value)

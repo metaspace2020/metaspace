@@ -6,21 +6,9 @@ import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
 import config from '../lib/config'
 import { renderIonImages, IonImageLayer } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
-import { throttle } from 'lodash-es'
+import { debounce, throttle } from 'lodash-es'
 import { ReferenceObject } from 'popper.js'
 import { templateRef } from '../lib/templateRef'
-
-const channels: any = {
-  magenta: 'rgb(255, 0, 255)',
-  green: 'rgb(0, 255, 0)',
-  blue: 'rgb(0, 0, 255)',
-  red: 'rgb(255, 0, 0)',
-  yellow: 'rgb(255, 255, 0)',
-  cyan: 'rgb(0, 255, 255)',
-  orange: 'rgb(255, 128, 0)',
-  violet: 'rgb(128, 0, 255)',
-  white: 'rgb(255, 255, 255)',
-}
 
 const formatMatrix3d = (t: readonly number[][]) =>
   `matrix3d(${t[0][0]}, ${t[1][0]}, 0, ${t[2][0]},
@@ -439,7 +427,6 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
   emit: (event: string, ...args: any[]) => void,
 ) => {
   const canvasRef = templateRef<HTMLCanvasElement>('ionImageCanvas')
-  const rect : any = {}
 
   const renderToCanvas = () => {
     const { width, height } = imageSize.value
@@ -449,11 +436,20 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
       renderIonImages(props.ionImageLayers, canvas, width, height, props.roiInfo)
     }
   }
+
+  const handleDoubleClick = (e: any) => {
+    if (props.roiInfo && props.roiInfo.length > 0) {
+      emit('toggle-roi', !props.roiInfo[props.roiInfo.length - 1].isDrawing)
+    }
+  }
+
   const handleMouseDown = (e: any) => {
     e.preventDefault()
     e.stopPropagation()
 
-    if (imageLoaderRef.value != null && props.ionImageLayers.length && e.clientX != null && e.clientY != null) {
+    if (
+      props.roiInfo[props.roiInfo.length - 1].isDrawing
+      && imageLoaderRef.value != null && props.ionImageLayers.length && e.clientX != null && e.clientY != null) {
       const cursorPixelPos = ref<[number, number] | null>(null)
       const { width = 0, height = 0 } = props.ionImageLayers[0].ionImage
       const zoomX = computed(() => props.zoom)
@@ -474,14 +470,19 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
 
   const renderIonImageView = () => {
     const { width, height } = imageSize.value
+
     return (
       <canvas
         ref="ionImageCanvas"
         width={width}
         height={height}
-        onmousedown={Array.isArray(props.roiInfo) && props.roiInfo.length > 0 ? handleMouseDown : () => {}}
+        ondblclick={handleDoubleClick}
+        onmousedown={Array.isArray(props.roiInfo) && props.roiInfo.length > 0
+        && props.roiInfo[props.roiInfo.length - 1].isDrawing ? debounce(handleMouseDown, 500) : () => {}}
         class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
         style={{
+          cursor: props.roiInfo && props.roiInfo.length > 0 && props.roiInfo[props.roiInfo.length - 1].isDrawing
+            ? 'crosshair' : '',
           transform: (props.ionImageTransform ? formatMatrix3d(props.ionImageTransform) : ''),
         }}
       />

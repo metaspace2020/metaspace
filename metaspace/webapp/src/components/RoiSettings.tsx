@@ -169,10 +169,11 @@ export default defineComponent<RoiSettingsProps>({
         coordinates: [],
         channel: Object.keys(channels)[index],
         color: channel.replace('rgb', 'rgba').replace(')', ', 0.4)'),
-        strokeColor: channel.replace('rgb', 'rgba').replace(')', ', 0.6)'),
+        strokeColor: channel.replace('rgb', 'rgba').replace(')', ', 1)'),
         name: `ROI ${index + 1}`,
         visible: true,
         edit: false,
+        isDrawing: true,
       })
       $store.commit('setRoiInfo', roiInfo)
     }

@@ -335,6 +335,13 @@ export default class AnnotationView extends Vue {
      this.$store.commit('setRoiInfo', roi)
    }
 
+   handleRoiToggle(enabled: boolean) {
+     const roi = this.roiInfo || []
+     const index = roi.length - 1
+     Vue.set(roi, index, { ...roi[index], isDrawing: enabled })
+     this.$store.commit('setRoiInfo', roi)
+   }
+
    filterColocSamples() {
      this.$store.commit('updateFilter', {
        ...omit(this.$store.getters.filter, ANNOTATION_SPECIFIC_FILTERS),
