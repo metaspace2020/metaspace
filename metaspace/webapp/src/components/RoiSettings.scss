@@ -1,5 +1,6 @@
 $bgColor: hsl(208, 36%, 96%);
 
+
 .roi-content{
   @apply flex flex-col flex-wrap justify-center items-center;
 
@@ -27,3 +28,23 @@ $bgColor: hsl(208, 36%, 96%);
   }
 }
 
+.roi-badge{
+  @apply flex justify-center items-center;
+}
+
+.roi-badge-selected{
+
+  &::after{
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 3px;
+    right: 3px;
+    bottom: 2px;
+    box-sizing: border-box;
+    border-style: solid;
+    border-bottom-width: 3px;
+    border-color: transparent;
+    border-bottom-color: hsl(208, 76%, 39%);
+  }
+}

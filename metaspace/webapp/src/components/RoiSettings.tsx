@@ -1,5 +1,6 @@
 import VisibleIcon from '../assets/inline/refactoring-ui/icon-view-visible.svg'
 import HiddenIcon from '../assets/inline/refactoring-ui/icon-view-hidden.svg'
+import RoiIcon from '../assets/inline/roi-icon.svg'
 import { defineComponent, computed, ref, reactive } from '@vue/composition-api'
 import { Button, Input, Popover } from '../lib/element-ui'
 import Vue from 'vue'
@@ -21,6 +22,7 @@ interface RoiSettingsState {
   offset: number,
   rows: any[],
   cols: any[],
+  isOpen: boolean,
 }
 
 const channels: any = {
@@ -50,6 +52,7 @@ export default defineComponent<RoiSettingsProps>({
       rows: [],
       cols: [],
       isDownloading: false,
+      isOpen: false,
     })
 
     const queryVariables = () => {
@@ -181,6 +184,7 @@ export default defineComponent<RoiSettingsProps>({
     const openRoi = (e: any) => {
       e.stopPropagation()
       e.preventDefault()
+      state.isOpen = !state.isOpen
     }
 
     const triggerDownload = () => {
@@ -305,13 +309,15 @@ export default defineComponent<RoiSettingsProps>({
               Add ROI
             </Button>
           </div>
+
           <Button
             slot="reference"
-            class="roi-badge button-reset h-9 rounded-lg flex items-center justify-center px-2 hover:bg-gray-100"
-            icon="el-icon-add-location"
+            class="button-reset h-9 rounded-lg flex items-center justify-center px-2 hover:bg-gray-100"
             onClick={openRoi}
           >
-            Regions of interest
+            <div class='roi-badge'>
+              <RoiIcon class='roi-icon fill-current'/>
+            </div>
           </Button>
         </Popover>
       )

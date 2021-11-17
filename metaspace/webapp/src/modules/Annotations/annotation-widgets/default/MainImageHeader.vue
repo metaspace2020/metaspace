@@ -197,7 +197,7 @@ export default class MainImageHeader extends Vue {
 
 .roi-container{
   position: absolute;
-  right: 50px;
+  right: 40px;
 }
 
 .norm-badge{
@@ -210,7 +210,7 @@ export default class MainImageHeader extends Vue {
   justify-content: center;
   align-items: center;
   position: absolute;
-  right: 225px;
+  right: 85px;
   height: 25px;
 }
 
