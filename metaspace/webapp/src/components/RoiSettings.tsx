@@ -84,7 +84,7 @@ export default defineComponent<RoiSettingsProps>({
         let rows = state.rows
         if (state.offset === 0) {
           rows = []
-          let cols = ['mol_formula', 'adduct', 'mz', 'mol_name']
+          let cols = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
           const roiInfo = getRoi()
           cols = cols.concat(roiInfo.map((roi: any) => roi.name))
           rows.push(cols)
@@ -103,7 +103,7 @@ export default defineComponent<RoiSettingsProps>({
           queryOptions.enabled = false
           const csv = state.rows.map((e: any) => e.join(',')).join('\n')
           const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
-          FileSaver.saveAs(blob, 'rois.csv')
+          FileSaver.saveAs(blob, `${props.annotation.dataset.name.replace(/\s/g, '_')}_ROI.csv`)
           state.isDownloading = false
           state.offset = 0
         }
@@ -124,11 +124,12 @@ export default defineComponent<RoiSettingsProps>({
       const [isotopeImage] = annotation.isotopeImages
       const ionImagePng = await loadPngFromUrl(isotopeImage.url)
       const molFormula : any = annotation.ionFormula
-      const molName : any = annotation.ion
+      const molName : any = annotation.possibleCompounds.map((m : any) => m.name).join(',')
+      const molIds : any = annotation.possibleCompounds.map((m : any) => m.information[0].databaseId).join(',')
       const adduct : any = annotation.adduct
       const mz : any = annotation.mz
       const finalImage : any = ionImage(ionImagePng, annotation.isotopeImages[0])
-      const row : any = [molFormula, adduct, mz, molName]
+      const row : any = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
       const roiInfo = getRoi()
       const { width, height, intensityValues } = finalImage
 

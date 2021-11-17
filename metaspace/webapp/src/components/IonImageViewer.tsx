@@ -435,40 +435,38 @@ const useBufferedOpticalImage = (props: Props) => {
 }
 
 const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: number }>,
+  imageLoaderRef: Ref<ReferenceObject | null>,
   emit: (event: string, ...args: any[]) => void,
 ) => {
   const canvasRef = templateRef<HTMLCanvasElement>('ionImageCanvas')
-  let rect : any = {}
+  const rect : any = {}
 
   const renderToCanvas = () => {
     const { width, height } = imageSize.value
     const canvas = canvasRef.value
 
-    const reOffset = () => {
-      if (canvas) {
-        rect = canvas.getBoundingClientRect()
-      }
-    }
-    window.onscroll = function(e: any) { reOffset() }
-
     if (canvas && width && height) {
-      reOffset()
       renderIonImages(props.ionImageLayers, canvas, width, height, props.roiInfo)
     }
   }
   const handleMouseDown = (e: any) => {
     e.preventDefault()
     e.stopPropagation()
-    const { width = 0, height = 0 } = props.ionImageLayers[0].ionImage
-    const zoomX = computed(() => props.zoom)
-    const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
-    // Includes a 2px offset up and left so that the selected pixel is less obscured by the mouse cursor
-    const x = Math.floor((e.clientX - (rect.left + rect.right) / 2 - 2)
-      / zoomX.value - props.xOffset + width / 2)
-    const y = Math.floor((e.clientY - (rect.top + rect.bottom) / 2 - 2)
-      / zoomY.value - props.yOffset + height / 2)
 
-    emit('roi-coordinate', { x, y })
+    if (imageLoaderRef.value != null && props.ionImageLayers.length && e.clientX != null && e.clientY != null) {
+      const cursorPixelPos = ref<[number, number] | null>(null)
+      const { width = 0, height = 0 } = props.ionImageLayers[0].ionImage
+      const zoomX = computed(() => props.zoom)
+      const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
+      const rect = imageLoaderRef.value.getBoundingClientRect()
+      const x = Math.floor((e.clientX - (rect.left + rect.right) / 2)
+        / zoomX.value - props.xOffset + width / 2)
+      const y = Math.floor((e.clientY - (rect.top + rect.bottom) / 2)
+        / zoomY.value - props.yOffset + height / 2)
+
+      cursorPixelPos.value = [x, y]
+      emit('roi-coordinate', { x: cursorPixelPos.value[0], y: cursorPixelPos.value[1] })
+    }
   }
 
   onMounted(renderToCanvas)
@@ -557,7 +555,7 @@ export default defineComponent<Props>({
     const { imageSize } = useImageSize(props)
     const { renderPixelIntensity, movePixelIntensity } = usePixelIntensityDisplay(props, imageLoaderRef, emit)
     const { viewBoxStyle, handleZoom, handlePanStart } = usePanAndZoom(props, imageLoaderRef, emit, imageSize)
-    const { renderIonImageView } = useIonImageView(props, imageSize, emit)
+    const { renderIonImageView } = useIonImageView(props, imageSize, imageLoaderRef, emit)
     const { renderOpticalImage } = useBufferedOpticalImage(props)
 
     const onWheel = (event: WheelEventCompat) => {

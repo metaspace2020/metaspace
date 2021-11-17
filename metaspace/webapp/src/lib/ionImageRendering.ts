@@ -456,8 +456,6 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
         }
       })
     }
-
-    // ctx.strokeRect(60, 37, 150, 100)
   }
 }
 
