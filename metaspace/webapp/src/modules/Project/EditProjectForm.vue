@@ -11,12 +11,21 @@
     <div>
       <label>
         <primary-label-text>Title</primary-label-text>
-        <el-input
-          v-model="value.name"
-          class="py-1"
-          :max-length="50"
-        />
+        <el-form-item prop="name">
+          <el-input
+            v-model="value.name"
+            class="py-1"
+            :max-length="50"
+            :min-length="2"
+            validate-event
+          />
+        </el-form-item>
       </label>
+      <!--      empty and hidden input to prevent press enter reload vue bug
+       https://forum.framework7.io/t/vue-pressing-enter-key-in-input-causes-app-to-reload/2585 -->
+      <el-input
+        class="hidden"
+      />
     </div>
     <div>
       <label>
@@ -71,7 +80,10 @@ export default class EditProjectForm extends Vue {
     isPublished!: Boolean;
 
     rules = {
-      name: [{ type: 'string', required: true, min: 2, message: 'Name is required', trigger: 'manual' }],
+      name: [
+        { required: true, message: 'Name is required', trigger: 'manual' },
+        { min: 2, max: 50, message: 'Length should be 2 to 50', trigger: 'change' },
+      ],
     };
 
     async validate(): Promise<boolean> {

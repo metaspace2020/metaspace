@@ -35,6 +35,7 @@
         </el-button>
         <el-button
           type="primary"
+          autofocus
           :loading="isSubmitting"
           @click="handleCreate"
         >
@@ -118,6 +119,7 @@ export default class CreateProjectDialog extends Vue {
       try {
         const selectedDatasetIds = Object.keys(this.selectedDatasets).filter(key => this.selectedDatasets[key])
         const { name, isPublic, urlSlug } = this.project
+
         const { data } = await this.$apollo.mutate({
           mutation: createProjectMutation,
           variables: {

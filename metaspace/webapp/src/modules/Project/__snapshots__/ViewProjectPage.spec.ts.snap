@@ -880,13 +880,29 @@ exports[`ViewProjectPage settings tab should disable actions when published 1`] 
                 <h2>Project Details</h2>
                 <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
                   <div><label><span class="text-base font-medium">Title</span>
-                      <div class="py-1 el-input">
-                        <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
+                      <div class="el-form-item is-required">
                         <!---->
-                        <!---->
-                        <!---->
-                        <!---->
-                      </div></label></div>
+                        <div class="el-form-item__content">
+                          <div class="py-1 el-input">
+                            <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
+                            <!---->
+                            <!---->
+                            <!---->
+                            <!---->
+                          </div>
+                          <transition-stub name="el-zoom-in-top">
+                            <!---->
+                          </transition-stub>
+                        </div>
+                      </div></label>
+                    <div class="hidden el-input">
+                      <!----><input type="text" autocomplete="off" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                  </div>
                   <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
         Visibility of the project only, does not apply to included datasets
       </span></label>
@@ -991,13 +1007,29 @@ exports[`ViewProjectPage settings tab should disable actions when under review 1
                 <h2>Project Details</h2>
                 <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
                   <div><label><span class="text-base font-medium">Title</span>
-                      <div class="py-1 el-input">
-                        <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
+                      <div class="el-form-item is-required">
                         <!---->
-                        <!---->
-                        <!---->
-                        <!---->
-                      </div></label></div>
+                        <div class="el-form-item__content">
+                          <div class="py-1 el-input">
+                            <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
+                            <!---->
+                            <!---->
+                            <!---->
+                            <!---->
+                          </div>
+                          <transition-stub name="el-zoom-in-top">
+                            <!---->
+                          </transition-stub>
+                        </div>
+                      </div></label>
+                    <div class="hidden el-input">
+                      <!----><input type="text" autocomplete="off" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                  </div>
                   <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
         Visibility of the project only, does not apply to included datasets
       </span></label>
@@ -1095,13 +1127,29 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
                 <h2>Project Details</h2>
                 <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
                   <div><label><span class="text-base font-medium">Title</span>
-                      <div class="py-1 el-input">
-                        <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
+                      <div class="el-form-item is-required">
                         <!---->
-                        <!---->
-                        <!---->
-                        <!---->
-                      </div></label></div>
+                        <div class="el-form-item__content">
+                          <div class="py-1 el-input">
+                            <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
+                            <!---->
+                            <!---->
+                            <!---->
+                            <!---->
+                          </div>
+                          <transition-stub name="el-zoom-in-top">
+                            <!---->
+                          </transition-stub>
+                        </div>
+                      </div></label>
+                    <div class="hidden el-input">
+                      <!----><input type="text" autocomplete="off" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                  </div>
                   <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
         Visibility of the project only, does not apply to included datasets
       </span></label>
