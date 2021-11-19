@@ -330,8 +330,36 @@ export default class AnnotationView extends Vue {
    }
 
    addRoiCoordinate(coordinates: any) {
+     const RADIUS = 2
+     const isInsideCircle = (x: number, y: number, centerX: number, centerY: number, radius: number) => {
+       return Math.pow((x - centerX), 2) + Math.pow((y - centerY), 2) < Math.pow(radius, 2)
+     }
+
      const roi = this.roiInfo || []
-     roi[roi.length - 1].coordinates.push(coordinates)
+     const roiIndex = roi.length - 1
+     if (coordinates.isFixed) {
+       if (roi[roiIndex].coordinates.length === 0) {
+         roi[roiIndex].coordinates.push(coordinates)
+       } else {
+         roi[roiIndex].coordinates[roi[roiIndex].coordinates.length - 1] = coordinates
+       }
+
+       roi[roiIndex].coordinates.forEach((coordinate: any, index: number) => {
+         if (
+           index !== roi[roiIndex].coordinates.length - 1
+           && isInsideCircle(coordinates.x, coordinates.y, coordinate.x, coordinate.y, RADIUS)) {
+           roi[roiIndex].isDrawing = false
+           roi[roiIndex].coordinates[index].isEndPoint = true
+         }
+       })
+     } else if (roi[roiIndex].coordinates.length > 0) {
+       if (roi[roiIndex].coordinates[roi[roiIndex].coordinates.length - 1].isFixed) {
+         roi[roiIndex].coordinates.push(coordinates)
+       } else {
+         roi[roiIndex].coordinates[roi[roiIndex].coordinates.length - 1] = coordinates
+       }
+     }
+
      this.$store.commit('setRoiInfo', roi)
    }
 

@@ -443,7 +443,7 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
     }
   }
 
-  const handleMouseDown = (e: any) => {
+  const handleMouseDown = (e: any, isFixed: boolean = true) => {
     e.preventDefault()
     e.stopPropagation()
 
@@ -461,7 +461,7 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
         / zoomY.value - props.yOffset + height / 2)
 
       cursorPixelPos.value = [x, y]
-      emit('roi-coordinate', { x: cursorPixelPos.value[0], y: cursorPixelPos.value[1] })
+      emit('roi-coordinate', { x: cursorPixelPos.value[0], y: cursorPixelPos.value[1], isFixed })
     }
   }
 
@@ -470,15 +470,17 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
 
   const renderIonImageView = () => {
     const { width, height } = imageSize.value
+    const roiEnabled = Array.isArray(props.roiInfo) && props.roiInfo.length > 0
+      && props.roiInfo[props.roiInfo.length - 1].isDrawing
 
     return (
       <canvas
         ref="ionImageCanvas"
         width={width}
         height={height}
-        ondblclick={handleDoubleClick}
-        onmousedown={Array.isArray(props.roiInfo) && props.roiInfo.length > 0
-        && props.roiInfo[props.roiInfo.length - 1].isDrawing ? debounce(handleMouseDown, 500) : () => {}}
+        // ondblclick={handleDoubleClick}
+        onmousemove={ roiEnabled ? debounce((e) => { handleMouseDown(e, false) }, 100) : () => {}}
+        onmousedown={roiEnabled ? debounce(handleMouseDown, 100) : () => {}}
         class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
         style={{
           cursor: props.roiInfo && props.roiInfo.length > 0 && props.roiInfo[props.roiInfo.length - 1].isDrawing

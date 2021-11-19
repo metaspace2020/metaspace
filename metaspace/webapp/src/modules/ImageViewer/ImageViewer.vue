@@ -250,8 +250,8 @@ const ImageViewer = defineComponent<Props>({
       handlePixelSelect({ x, y }: any) {
         emit('pixel-select', { x, y })
       },
-      handleRoiCoordinate({ x, y }: any) {
-        emit('roi-coordinate', { x, y })
+      handleRoiCoordinate({ x, y, isFixed }: any) {
+        emit('roi-coordinate', { x, y, isFixed })
       },
       handleRoiToggle(enabled: boolean) {
         emit('toggle-roi', enabled)

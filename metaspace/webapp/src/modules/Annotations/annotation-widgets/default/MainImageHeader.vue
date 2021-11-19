@@ -70,7 +70,10 @@
       </div>
     </fade-transition>
     <fade-transition v-if="showRoi">
-      <div class="roi-container">
+      <div
+        v-if="isActive"
+        class="roi-container"
+      >
         <roi-settings
           :annotation="annotation"
         />
