@@ -21,7 +21,8 @@
           />
         </el-form-item>
       </label>
-      <!--      empty and hidden input to prevent press enter reload vue bug-->
+      <!--      empty and hidden input to prevent press enter reload vue bug
+       https://forum.framework7.io/t/vue-pressing-enter-key-in-input-causes-app-to-reload/2585 -->
       <el-input
         class="hidden"
       />
