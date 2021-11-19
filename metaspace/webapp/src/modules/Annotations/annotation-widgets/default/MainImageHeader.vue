@@ -158,10 +158,11 @@ export default class MainImageHeader extends Vue {
     showIntensityTemplate: boolean | undefined
 
     @Prop({ type: Boolean })
-    showRoi: boolean | undefined
-
-    @Prop({ type: Boolean })
     hideTitle: boolean | undefined
+
+    get showRoi() {
+      return config.features.roi
+    }
 
     get multiImageFlag() {
       return config.features.multiple_ion_images

@@ -33,7 +33,6 @@
         @move="handleImageMove"
         @pixel-select="handlePixelSelect"
         @roi-coordinate="handleRoiCoordinate"
-        @toggle-roi="handleRoiToggle"
       />
     </div>
     <div
@@ -133,11 +132,9 @@ import OpacitySettings from './OpacitySettings.vue'
 import viewerState, { resetImageViewerState } from './state'
 import { resetIonImageState } from './ionImageState'
 import useIonImages from './useIonImages'
-import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
+import fitImageToArea from '../../lib/fitImageToArea'
 import { ScaleType } from '../../lib/ionImageRendering'
 import config from '../../lib/config'
-import isInsidePolygon from '../../lib/isInsidePolygon'
-import FileSaver from 'file-saver'
 
 interface Props {
   annotation: any
@@ -252,9 +249,6 @@ const ImageViewer = defineComponent<Props>({
       },
       handleRoiCoordinate({ x, y, isFixed }: any) {
         emit('roi-coordinate', { x, y, isFixed })
-      },
-      handleRoiToggle(enabled: boolean) {
-        emit('toggle-roi', enabled)
       },
       emitOpacity(value: number) {
         emit('opacity', value)

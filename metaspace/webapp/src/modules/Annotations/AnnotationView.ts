@@ -337,7 +337,8 @@ export default class AnnotationView extends Vue {
 
      const roi = this.roiInfo || []
      const roiIndex = roi.length - 1
-     if (coordinates.isFixed) {
+
+     if (coordinates.isFixed) { // fixed draw point
        if (roi[roiIndex].coordinates.length === 0) {
          roi[roiIndex].coordinates.push(coordinates)
        } else {
@@ -345,6 +346,7 @@ export default class AnnotationView extends Vue {
        }
 
        roi[roiIndex].coordinates.forEach((coordinate: any, index: number) => {
+         // stop ROI creation if line reach polygon draw point
          if (
            index !== roi[roiIndex].coordinates.length - 1
            && isInsideCircle(coordinates.x, coordinates.y, coordinate.x, coordinate.y, RADIUS)) {
@@ -352,7 +354,7 @@ export default class AnnotationView extends Vue {
            roi[roiIndex].coordinates[index].isEndPoint = true
          }
        })
-     } else if (roi[roiIndex].coordinates.length > 0) {
+     } else if (roi[roiIndex].coordinates.length > 0) { // coordinates do adjust polygon line
        if (roi[roiIndex].coordinates[roi[roiIndex].coordinates.length - 1].isFixed) {
          roi[roiIndex].coordinates.push(coordinates)
        } else {
@@ -360,13 +362,6 @@ export default class AnnotationView extends Vue {
        }
      }
 
-     this.$store.commit('setRoiInfo', roi)
-   }
-
-   handleRoiToggle(enabled: boolean) {
-     const roi = this.roiInfo || []
-     const index = roi.length - 1
-     Vue.set(roi, index, { ...roi[index], isDrawing: enabled })
      this.$store.commit('setRoiInfo', roi)
    }
 

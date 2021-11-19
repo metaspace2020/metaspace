@@ -135,7 +135,6 @@
             :tic-data="ticData ? normalization : null"
             @opacity="newVal => opacity = newVal"
             @roi-coordinate="addRoiCoordinate"
-            @toggle-roi="handleRoiToggle"
             @opticalOpacity="newVal => opticalOpacity = newVal"
           />
         </el-collapse-item>

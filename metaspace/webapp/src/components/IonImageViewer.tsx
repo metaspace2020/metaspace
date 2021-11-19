@@ -437,12 +437,6 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
     }
   }
 
-  const handleDoubleClick = (e: any) => {
-    if (props.roiInfo && props.roiInfo.length > 0) {
-      emit('toggle-roi', !props.roiInfo[props.roiInfo.length - 1].isDrawing)
-    }
-  }
-
   const handleMouseDown = (e: any, isFixed: boolean = true) => {
     e.preventDefault()
     e.stopPropagation()
@@ -478,7 +472,6 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
         ref="ionImageCanvas"
         width={width}
         height={height}
-        // ondblclick={handleDoubleClick}
         onmousemove={ roiEnabled ? debounce((e) => { handleMouseDown(e, false) }, 100) : () => {}}
         onmousedown={roiEnabled ? debounce(handleMouseDown, 100) : () => {}}
         class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"

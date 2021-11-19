@@ -439,6 +439,8 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
       }
     }
     applyImageData(canvas, pixels, width, height)
+
+    // ROI drawing
     const RADIUS = 2
     if (roiInfo && roiInfo.length > 0) {
       roiInfo.forEach((roiItem: any) => {
@@ -456,13 +458,13 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
           for (let index = 1; index < roiItem.coordinates.length; index++) {
             ctx.lineTo(roiItem.coordinates[index].x, roiItem.coordinates[index].y)
             if (roiItem.coordinates[index].isFixed) {
-              ctx.arc(roiItem.coordinates[index].x, roiItem.coordinates[index].y, RADIUS, 0, 2 * Math.PI)
+              ctx.arc(roiItem.coordinates[index].x, roiItem.coordinates[index].y, RADIUS
+                , 0, 2 * Math.PI)
             }
-            if (roiItem.coordinates[index].isEndPoint) {
+            if (roiItem.coordinates[index].isEndPoint) { // closes path if last point
               ctx.closePath()
             }
           }
-          // ctx.closePath()
           ctx.fill()
           ctx.stroke()
         }
