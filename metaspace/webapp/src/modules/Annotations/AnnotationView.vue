@@ -133,6 +133,7 @@
             :scale-type="scaleType"
             :tic-data="ticData ? normalization : null"
             @opacity="newVal => opacity = newVal"
+            @roi-coordinate="addRoiCoordinate"
             @opticalOpacity="newVal => opticalOpacity = newVal"
           />
         </el-collapse-item>

@@ -69,6 +69,16 @@
         TIC normalized
       </div>
     </fade-transition>
+    <fade-transition v-if="showRoi">
+      <div
+        v-if="isActive"
+        class="roi-container"
+      >
+        <roi-settings
+          :annotation="annotation"
+        />
+      </div>
+    </fade-transition>
     <fade-transition v-if="multiImageFlag">
       <MenuButtons
         v-if="isActive"
@@ -85,6 +95,7 @@ import IonImageSettings from './IonImageSettings.vue'
 import { MenuButtons } from '../../../ImageViewer'
 import FadeTransition from '../../../../components/FadeTransition'
 import AspectRatioIcon from '../../../../assets/inline/material/aspect-ratio.svg'
+import RoiSettings from '../../../../components/RoiSettings'
 
 import config from '../../../../lib/config'
 
@@ -100,6 +111,7 @@ interface colorObjType {
     MenuButtons,
     AspectRatioIcon,
     FadeTransition,
+    RoiSettings,
   },
 })
 export default class MainImageHeader extends Vue {
@@ -108,6 +120,9 @@ export default class MainImageHeader extends Vue {
 
     @Prop({ required: true, type: Boolean })
     showOpticalImage!: boolean;
+
+    @Prop({ type: Object })
+    annotation: string | undefined;
 
     @Prop({ type: String })
     colormap: string | undefined;
@@ -145,6 +160,10 @@ export default class MainImageHeader extends Vue {
     @Prop({ type: Boolean })
     hideTitle: boolean | undefined
 
+    get showRoi() {
+      return config.features.roi
+    }
+
     get multiImageFlag() {
       return config.features.multiple_ion_images
     }
@@ -180,6 +199,11 @@ export default class MainImageHeader extends Vue {
   opacity: 0.3;
 }
 
+.roi-container{
+  position: absolute;
+  right: 40px;
+}
+
 .norm-badge{
   background: rgba(0,0,0,0.3);
   border-radius: 16px;
@@ -190,7 +214,7 @@ export default class MainImageHeader extends Vue {
   justify-content: center;
   align-items: center;
   position: absolute;
-  right: 45px;
+  right: 85px;
   height: 25px;
 }
 

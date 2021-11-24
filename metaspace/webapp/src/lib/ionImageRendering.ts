@@ -402,7 +402,8 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap: readonly number
   return outputBuffer
 }
 
-export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasElement, width: number, height: number) => {
+export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasElement, width: number, height: number,
+  roiInfo?: any[]) => {
   const ctx = canvas.getContext('2d')!
   ctx.clearRect(0, 0, width, height)
 
@@ -438,6 +439,37 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
       }
     }
     applyImageData(canvas, pixels, width, height)
+
+    // ROI drawing
+    const RADIUS = 2
+    if (roiInfo && roiInfo.length > 0) {
+      roiInfo.forEach((roiItem: any) => {
+        if (roiItem.visible && roiItem.coordinates.length > 0) {
+          ctx.beginPath()
+          ctx.strokeStyle = roiItem.strokeColor
+          ctx.fillStyle = roiItem.color
+          ctx.lineWidth = 1
+          ctx.moveTo(roiItem.coordinates[0].x, roiItem.coordinates[0].y)
+
+          if (roiItem.coordinates[0].isFixed) {
+            ctx.arc(roiItem.coordinates[0].x, roiItem.coordinates[0].y, RADIUS, 0, 2 * Math.PI)
+          }
+
+          for (let index = 1; index < roiItem.coordinates.length; index++) {
+            ctx.lineTo(roiItem.coordinates[index].x, roiItem.coordinates[index].y)
+            if (roiItem.coordinates[index].isFixed) {
+              ctx.arc(roiItem.coordinates[index].x, roiItem.coordinates[index].y, RADIUS
+                , 0, 2 * Math.PI)
+            }
+            if (roiItem.coordinates[index].isEndPoint) { // closes path if last point
+              ctx.closePath()
+            }
+          }
+          ctx.fill()
+          ctx.stroke()
+        }
+      })
+    }
   }
 }
 

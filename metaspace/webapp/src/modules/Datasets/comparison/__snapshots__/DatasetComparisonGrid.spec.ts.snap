@@ -26,7 +26,6 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
         </span>
       </div>
       <span
-        annotation="[object Object]"
         class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"
         slot="title"
       >
@@ -485,6 +484,8 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
            
           <!---->
         </div>
+         
+        <!---->
          
         <!---->
          
@@ -726,7 +727,6 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
         </span>
       </div>
       <span
-        annotation="[object Object]"
         class="w-full dataset-comparison-grid-item-header dom-to-image-hidden"
         slot="title"
       >
@@ -1185,6 +1185,8 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
            
           <!---->
         </div>
+         
+        <!---->
          
         <!---->
          

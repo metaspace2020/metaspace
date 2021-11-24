@@ -6,7 +6,7 @@ import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
 import config from '../lib/config'
 import { renderIonImages, IonImageLayer } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
-import { throttle } from 'lodash-es'
+import { debounce, throttle } from 'lodash-es'
 import { ReferenceObject } from 'popper.js'
 import { templateRef } from '../lib/templateRef'
 
@@ -17,6 +17,7 @@ const formatMatrix3d = (t: readonly number[][]) =>
              ${t[0][2]}, ${t[1][2]}, 0, ${t[2][2]})`
 
 interface Props {
+  roiInfo: any[];
   ionImageLayers: IonImageLayer[]
   isLoading: boolean
   // width & height of HTML element
@@ -421,13 +422,40 @@ const useBufferedOpticalImage = (props: Props) => {
   return { renderOpticalImage }
 }
 
-const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: number }>) => {
+const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: number }>,
+  imageLoaderRef: Ref<ReferenceObject | null>,
+  emit: (event: string, ...args: any[]) => void,
+) => {
   const canvasRef = templateRef<HTMLCanvasElement>('ionImageCanvas')
+
   const renderToCanvas = () => {
     const { width, height } = imageSize.value
     const canvas = canvasRef.value
+
     if (canvas && width && height) {
-      renderIonImages(props.ionImageLayers, canvas, width, height)
+      renderIonImages(props.ionImageLayers, canvas, width, height, props.roiInfo)
+    }
+  }
+
+  const handleMouseDown = (e: any, isFixed: boolean = true) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (
+      props.roiInfo[props.roiInfo.length - 1].isDrawing
+      && imageLoaderRef.value != null && props.ionImageLayers.length && e.clientX != null && e.clientY != null) {
+      const cursorPixelPos = ref<[number, number] | null>(null)
+      const { width = 0, height = 0 } = props.ionImageLayers[0].ionImage
+      const zoomX = computed(() => props.zoom)
+      const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
+      const rect = imageLoaderRef.value.getBoundingClientRect()
+      const x = Math.floor((e.clientX - (rect.left + rect.right) / 2)
+        / zoomX.value - props.xOffset + width / 2)
+      const y = Math.floor((e.clientY - (rect.top + rect.bottom) / 2)
+        / zoomY.value - props.yOffset + height / 2)
+
+      cursorPixelPos.value = [x, y]
+      emit('roi-coordinate', { x: cursorPixelPos.value[0], y: cursorPixelPos.value[1], isFixed })
     }
   }
 
@@ -436,13 +464,21 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
 
   const renderIonImageView = () => {
     const { width, height } = imageSize.value
+    const roiEnabled = Array.isArray(props.roiInfo) && props.roiInfo.length > 0
+      && props.roiInfo[props.roiInfo.length - 1].isDrawing
+
     return (
       <canvas
         ref="ionImageCanvas"
         width={width}
         height={height}
+        onmousemove={roiEnabled ? debounce((e) => { handleMouseDown(e, false) }, 100,
+          { leading: true }) : () => {}}
+        onmousedown={roiEnabled ? debounce(handleMouseDown, 100, { leading: true }) : () => {}}
         class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
         style={{
+          cursor: props.roiInfo && props.roiInfo.length > 0 && props.roiInfo[props.roiInfo.length - 1].isDrawing
+            ? 'crosshair' : '',
           transform: (props.ionImageTransform ? formatMatrix3d(props.ionImageTransform) : ''),
         }}
       />
@@ -506,6 +542,7 @@ export default defineComponent<Props>({
     showPixelIntensity: { type: Boolean, default: false },
     showNormalizedIntensity: { type: Boolean, default: false },
     normalizationData: { type: Object },
+    roiInfo: { type: Array, default: () => [] },
   },
   setup(props: Props, { emit }: SetupContext) {
     const imageLoaderRef = templateRef<ReferenceObject>('imageLoader')
@@ -515,7 +552,7 @@ export default defineComponent<Props>({
     const { imageSize } = useImageSize(props)
     const { renderPixelIntensity, movePixelIntensity } = usePixelIntensityDisplay(props, imageLoaderRef, emit)
     const { viewBoxStyle, handleZoom, handlePanStart } = usePanAndZoom(props, imageLoaderRef, emit, imageSize)
-    const { renderIonImageView } = useIonImageView(props, imageSize)
+    const { renderIonImageView } = useIonImageView(props, imageSize, imageLoaderRef, emit)
     const { renderOpticalImage } = useBufferedOpticalImage(props)
 
     const onWheel = (event: WheelEventCompat) => {
