@@ -115,6 +115,9 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       chartOptions: {
         tooltip: {
           position: 'top',
+          formatter: function(params: any) {
+            return params.value[4].toFixed(2) + ' ' + params.data?.label?.key + ' in ' + props.xAxis[params.value[0]]
+          },
         },
         grid: {
           left: 2,
