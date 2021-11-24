@@ -14,7 +14,7 @@ import { Component, Prop } from 'vue-property-decorator'
 import { Location } from 'vue-router'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import safeJsonParse from '../../lib/safeJsonParse'
-import { omit, pick, sortBy, throttle } from 'lodash-es'
+import { cloneDeep, omit, pick, sortBy, throttle } from 'lodash-es'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../Filters/filterSpecs'
 import { encodeParams } from '../Filters'
 import config from '../../lib/config'
@@ -329,37 +329,45 @@ export default class AnnotationView extends Vue {
      this.scaleBarColor = color
    }
 
-   addRoiCoordinate(coordinates: any) {
+   addRoiCoordinate(roiPoint: any) {
      const RADIUS = 2
      const isInsideCircle = (x: number, y: number, centerX: number, centerY: number, radius: number) => {
-       return Math.pow((x - centerX), 2) + Math.pow((y - centerY), 2) < Math.pow(radius, 2)
+       return (x - centerX) ** 2 + (y - centerY) ** 2 < radius ** 2
      }
 
      const roi = this.roiInfo || []
      const roiIndex = roi.length - 1
+     const coordinates : any[] = roi[roiIndex].coordinates
+     let isRepeatedPoint : boolean = false
 
-     if (coordinates.isFixed) { // fixed draw point
-       if (roi[roiIndex].coordinates.length === 0) {
-         roi[roiIndex].coordinates.push(coordinates)
+     if (roiPoint.isFixed) { // fixed draw point
+       if (coordinates.length === 0) {
+         coordinates.push(roiPoint)
        } else {
-         roi[roiIndex].coordinates[roi[roiIndex].coordinates.length - 1] = coordinates
+         if (roiPoint.x === coordinates[coordinates.length - 1].x
+         && roiPoint.y === coordinates[coordinates.length - 1].y && coordinates[coordinates.length - 1].isFixed) {
+           isRepeatedPoint = true
+         }
+         coordinates[coordinates.length - 1] = roiPoint
        }
+       Vue.set(roi, roiIndex, { ...roi[roiIndex], coordinates })
 
-       roi[roiIndex].coordinates.forEach((coordinate: any, index: number) => {
+       coordinates.forEach((coordinate: any, index: number) => {
          // stop ROI creation if line reach polygon draw point
          if (
-           index !== roi[roiIndex].coordinates.length - 1
-           && isInsideCircle(coordinates.x, coordinates.y, coordinate.x, coordinate.y, RADIUS)) {
-           roi[roiIndex].isDrawing = false
-           roi[roiIndex].coordinates[index].isEndPoint = true
+           (index !== coordinates.length - 1 || isRepeatedPoint)
+           && isInsideCircle(roiPoint.x, roiPoint.y, coordinate.x, coordinate.y, RADIUS)) {
+           coordinates[coordinates.length - 1].isEndPoint = true
+           Vue.set(roi, roiIndex, { ...roi[roiIndex], isDrawing: false })
          }
        })
-     } else if (roi[roiIndex].coordinates.length > 0) { // coordinates do adjust polygon line
-       if (roi[roiIndex].coordinates[roi[roiIndex].coordinates.length - 1].isFixed) {
-         roi[roiIndex].coordinates.push(coordinates)
+     } else if (coordinates.length > 0) { // coordinates do adjust polygon line
+       if (coordinates[coordinates.length - 1].isFixed) {
+         coordinates.push(roiPoint)
        } else {
-         roi[roiIndex].coordinates[roi[roiIndex].coordinates.length - 1] = coordinates
+         coordinates[coordinates.length - 1] = roiPoint
        }
+       Vue.set(roi, roiIndex, { ...roi[roiIndex], coordinates })
      }
 
      this.$store.commit('setRoiInfo', roi)

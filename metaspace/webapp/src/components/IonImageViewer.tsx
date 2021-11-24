@@ -472,8 +472,9 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
         ref="ionImageCanvas"
         width={width}
         height={height}
-        onmousemove={ roiEnabled ? debounce((e) => { handleMouseDown(e, false) }, 100) : () => {}}
-        onmousedown={roiEnabled ? debounce(handleMouseDown, 100) : () => {}}
+        onmousemove={roiEnabled ? debounce((e) => { handleMouseDown(e, false) }, 100,
+          { leading: true }) : () => {}}
+        onmousedown={roiEnabled ? debounce(handleMouseDown, 100, { leading: true }) : () => {}}
         class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
         style={{
           cursor: props.roiInfo && props.roiInfo.length > 0 && props.roiInfo[props.roiInfo.length - 1].isDrawing

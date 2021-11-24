@@ -132,14 +132,13 @@ export default defineComponent<RoiSettingsProps>({
       const rows : any = state.rows
 
       roiInfo.forEach((roi: any) => {
-        const intensities = []
+        const roiCoordinates = roi.coordinates.map((coordinate: any) => {
+          return [coordinate.x, coordinate.y]
+        })
 
         for (let x = 0; x < width; x++) {
           for (let y = 0; y < height; y++) {
-            if (isInsidePolygon([x, y],
-              roi.coordinates.map((coordinate: any) => {
-                return [coordinate.x, coordinate.y]
-              }))) {
+            if (isInsidePolygon([x, y], roiCoordinates)) {
               if (state.offset === 0 && state.rows.length === 0) {
                 cols.push(`${roi.name}_x${x}_y${y}`)
               }
