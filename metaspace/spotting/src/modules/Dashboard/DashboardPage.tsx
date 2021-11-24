@@ -84,7 +84,7 @@ const AXIS_VALUES = [
 const AGGREGATED_VALUES = [
   {
     label: 'Prediction',
-    src: 'coarse_class',
+    src: 'pred_val',
   },
   {
     label: 'Intensity',
@@ -92,7 +92,7 @@ const AGGREGATED_VALUES = [
   },
   {
     label: 'Simple count',
-    src: 'in_n_spots',
+    src: 'pred_twostate',
   },
 ]
 
@@ -115,7 +115,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'Prediction',
-    src: 'coarse_class',
+    src: 'pred_val',
   },
   {
     label: 'Technology',
@@ -157,6 +157,8 @@ const PREDICTION_METRICS = {
   neutral_loss: true,
   in_n_spots: true,
   spot_intensity: true,
+  pred_val: true,
+  pred_twostate: true,
 }
 
 const PATHWAY_METRICS = {
@@ -378,7 +380,9 @@ export default defineComponent({
             const auxValue = state.options.valueMetric === VALUE_METRICS.count.src
               ? (auxData[xKey][yKey].length / maxValue) : (auxData[xKey][yKey].length / totalCount / yMaxValue)
             dotValues.push({
-              value: [xIndex, yIndex, auxValue * 15, auxData[xKey][yKey][0][state.options.aggregation]],
+              value: [xIndex, yIndex, auxValue * 15, auxData[xKey][yKey][0][state.options.aggregation],
+                state.options.valueMetric === VALUE_METRICS.count.src ? auxData[xKey][yKey].length
+                  : (auxData[xKey][yKey].length / totalCount)],
               label: { key: yKey, molecule: auxData[xKey][yKey][0].formula },
             })
           }

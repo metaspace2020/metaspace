@@ -122,7 +122,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
-            return params.value[2].toFixed(2) + ' ' + params.data?.label?.key + ' in ' + props.xAxis[params.value[0]]
+            return params.value[4].toFixed(2) + ' ' + params.data?.label?.key + ' in ' + props.xAxis[params.value[0]]
           },
         },
         grid: {
