@@ -352,8 +352,9 @@ export default defineComponent({
       state.buildingChart = true
       if (state.filter.src && state.filter.value) {
         filteredData = filteredData.filter((data: any) => {
+          const filterValue = state.filter.value === 'null' ? null : state.filter.value
           return state.filter.isNumeric ? parseFloat(data[state.filter.src]) <= parseFloat(state.filter.value)
-            : data[state.filter.src] === state.filter.value
+            : data[state.filter.src] === filterValue
         })
       }
 
