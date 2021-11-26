@@ -8,6 +8,7 @@ import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
 import { predictions } from '../../data/predictions'
 import createColormap from '../../lib/createColormap'
+import { InputNumber } from '../../../../webapp/src/lib/element-ui'
 
 interface Options{
   xAxis: any
@@ -114,8 +115,14 @@ const FILTER_VALUES = [
     src: 'Matrix short',
   },
   {
-    label: 'Prediction',
+    label: 'Value Prediction',
     src: 'pred_val',
+    isNumeric: true,
+  },
+  {
+    label: 'State Prediction',
+    src: 'pred_twostate',
+    isBoolean: true,
   },
   {
     label: 'Technology',
@@ -186,6 +193,8 @@ export default defineComponent({
       filter: {
         src: null,
         value: null,
+        isNumeric: false,
+        isBoolean: false,
         options: [],
       },
       xAxisValues: [],
@@ -326,7 +335,10 @@ export default defineComponent({
       }
 
       if ($route.query.filterValue) {
-        handleFilterValueChange($route.query.filterValue)
+        const filterValue = state.filter.isBoolean ? parseInt($route.query.filterValue, 10)
+          : $route.query.filterValue
+
+        handleFilterValueChange(filterValue)
       }
 
       buildValues()
@@ -335,10 +347,13 @@ export default defineComponent({
     const buildValues = () => {
       let auxData : any = null
       let filteredData : any = state.rawData
+      let min : number = 0
+      let max : number = 1
       state.buildingChart = true
       if (state.filter.src && state.filter.value) {
         filteredData = filteredData.filter((data: any) => {
-          return data[state.filter.src] === state.filter.value
+          return state.filter.isNumeric ? parseFloat(data[state.filter.src]) <= parseFloat(state.filter.value)
+            : data[state.filter.src] === state.filter.value
         })
       }
 
@@ -375,14 +390,25 @@ export default defineComponent({
 
         state.yAxisValues.forEach((yKey: any, yIndex: number) => {
           if (auxData[xKey] && auxData[xKey][yKey]) {
-            availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
-              state.options.aggregation)))
-            const auxValue = state.options.valueMetric === VALUE_METRICS.count.src
-              ? (auxData[xKey][yKey].length / maxValue) : (auxData[xKey][yKey].length / totalCount / yMaxValue)
+            let pointAggregation : any = auxData[xKey][yKey][0][state.options.aggregation]
+
+            if (state.options.aggregation === 'pred_twostate') {
+              const predAgg : any = groupBy(auxData[xKey][yKey],
+                state.options.aggregation)
+              pointAggregation = (predAgg[0] || []).length + (predAgg[1] || []).length
+              availableAggregations = availableAggregations.concat(pointAggregation)
+            } else {
+              availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
+                state.options.aggregation)))
+            }
+
+            const value : number = state.options.valueMetric === VALUE_METRICS.count.src ? auxData[xKey][yKey].length
+              : (auxData[xKey][yKey].length / totalCount)
+            const normalizedValue = state.options.valueMetric === VALUE_METRICS.count.src
+              ? (value / maxValue) : (value / yMaxValue)
+
             dotValues.push({
-              value: [xIndex, yIndex, auxValue * 15, auxData[xKey][yKey][0][state.options.aggregation],
-                state.options.valueMetric === VALUE_METRICS.count.src ? auxData[xKey][yKey].length
-                  : (auxData[xKey][yKey].length / totalCount)],
+              value: [xIndex, yIndex, normalizedValue * 15, pointAggregation, value],
               label: { key: yKey, molecule: auxData[xKey][yKey][0].formula },
             })
           }
@@ -403,6 +429,13 @@ export default defineComponent({
       colorSteps = availableAggregations.length
         ? (colormap.length / availableAggregations.length) : 1
       availableAggregations = availableAggregations.map((agg: any, aggIndex: number) => {
+        if (agg < min) {
+          min = agg
+        }
+        if (agg > max) {
+          max = agg
+        }
+
         colors.push(colormap[Math.floor(aggIndex * colorSteps)])
         return {
           label: agg,
@@ -419,13 +452,22 @@ export default defineComponent({
           color: colors,
         },
         orient: 'horizontal',
+        min: 0,
+        max: 1,
       }
 
       if (state.visualMap.type === 'piecewise') {
         state.visualMap.pieces = availableAggregations
         state.visualMap.show = availableAggregations.length > 0
+      } else {
+        state.visualMap.min = min
+        state.visualMap.max = max
       }
       state.data = dotValues
+      if (state.data.length === 0) {
+        state.visualMap = { show: false }
+      }
+
       state.buildingChart = false
     }
 
@@ -442,6 +484,14 @@ export default defineComponent({
       $router.replace({ name: 'dashboard', query: { ...getQueryParams(), metric: value } })
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
+      }
+    }
+
+    const parseBooleanLabel = (value: string) => {
+      if (parseInt(value, 10) === 0) {
+        return 'False'
+      } else {
+        return 'True'
       }
     }
 
@@ -486,16 +536,29 @@ export default defineComponent({
 
     const handleFilterSrcChange = (value: any) => {
       state.filter.src = value
-      state.loadingFilterOptions = true
 
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && state.filter.value) {
-        state.filter.value = null
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation
+        && state.filter.value !== null && state.filter.value !== undefined) {
+        handleFilterValueChange(null)
         buildValues()
       }
 
       $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filter: value } })
 
       let src : any = null
+      const filterSpec = FILTER_VALUES.find((filter: any) => filter.src === value)
+      if (filterSpec && filterSpec.isNumeric) {
+        state.filter.isNumeric = true
+        state.filter.isBoolean = false
+        return
+      } else if (filterSpec && filterSpec.isBoolean) {
+        state.filter.isNumeric = false
+        state.filter.isBoolean = true
+      } else {
+        state.filter.isNumeric = false
+        state.filter.isBoolean = false
+      }
+      state.loadingFilterOptions = true
 
       if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
         src = state.classification
@@ -654,25 +717,49 @@ export default defineComponent({
                   })
                 }
               </Select>
-              <Select
-                class='select-box-mini mr-2'
-                value={state.filter.value}
-                loading={state.loadingFilterOptions}
-                filterable
-                clearable
-                noDataText='No data'
-                onChange={(value: number) => {
-                  handleFilterValueChange(value)
-                }}
-                disabled={state.loading}
-                placeholder='Adduct'
-                size='mini'>
-                {
-                  state.filter.options.map((option: any) => {
-                    return <Option label={option} value={option}/>
-                  })
-                }
-              </Select>
+              {
+                !state.filter.isNumeric
+                && <Select
+                  class='select-box-mini mr-2'
+                  value={
+                    state.filter.isBoolean && state.filter.value
+                      ? parseInt(state.filter.value, 10) : state.filter.value
+                  }
+                  loading={state.loadingFilterOptions}
+                  filterable
+                  clearable
+                  noDataText='No data'
+                  onChange={(value: number) => {
+                    handleFilterValueChange(value)
+                  }}
+                  disabled={state.loading}
+                  placeholder='Adduct'
+                  size='mini'>
+                  {
+                    state.filter.options.map((option: any) => {
+                      return <Option
+                        label={state.filter.isBoolean ? parseBooleanLabel(option) : option}
+                        value={state.filter.isBoolean ? parseInt(option, 10) : option}/>
+                    })
+                  }
+                </Select>
+              }
+              {
+                state.filter.isNumeric
+                && !state.filter.isBoolean
+                && <InputNumber
+                  class='select-box-mini mr-2'
+                  size="mini"
+                  min={0}
+                  max={1}
+                  step={0.001}
+                  value={parseFloat(state.filter.value)}
+                  loading={state.loadingFilterOptions}
+                  disabled={state.loading}
+                  onChange={(value: number) => {
+                    handleFilterValueChange(value)
+                  }}/>
+              }
             </div>
           </div>
         </div>
