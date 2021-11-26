@@ -8,6 +8,10 @@ import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 import config from '../../../lib/config'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
 import './DatasetItemActions.scss'
+import RichText from '../../../components/RichText'
+import isValidTiptapJson from '../../../lib/isValidTiptapJson'
+import safeJsonParse from '../../../lib/safeJsonParse'
+import { Tree } from '../../../lib/element-ui'
 
 const DatasetItemActions = defineComponent({
   name: 'DatasetItemActions',
@@ -115,12 +119,46 @@ const DatasetItemActions = defineComponent({
       && publicationStatus.value != null,
     )
 
+    const getDescriptionAsTree = () => {
+      const { dataset } = props
+
+      return [{
+        label: 'Additional Info',
+        children: [
+          {
+            label: 'Supplementary',
+            rawDescription: isValidTiptapJson(safeJsonParse(dataset.description))
+              ? safeJsonParse(dataset.description) : null,
+          },
+        ],
+      }]
+    }
+
+    const renderDescription = (h : any, { node, data } : { node : any, data : any }) => {
+      return (
+        <div class="custom-tree-node">
+          {
+            !data.rawDescription
+            && <span>{node.label}</span>
+          }
+          {
+            data.rawDescription
+            && <RichText
+              class="custom-text"
+              placeholder=" "
+              content={data.rawDescription}
+              readonly={true}/>
+          }
+        </div>)
+    }
+
     return () => {
       const { dataset, metadata, currentUser } = props
 
       return (
         <div class="ds-actions">
           <el-dialog
+            customClass='dataset-item-dialog'
             title="Provided metadata"
             lock-scroll={false}
             visible={state.showMetadataDialog}
@@ -129,6 +167,11 @@ const DatasetItemActions = defineComponent({
             <DatasetInfo
               metadata={metadata}
               currentUser={currentUser}
+            />
+            <Tree
+              defaultExpandAll
+              data={getDescriptionAsTree()}
+              renderContent={renderDescription}
             />
           </el-dialog>
 

@@ -141,6 +141,7 @@ exports[`DatasetItem should match snapshot 1`] = `
     class="ds-actions"
   >
     <mock-el-dialog
+      customclass="dataset-item-dialog"
       title="Provided metadata"
     >
       <div
@@ -151,6 +152,81 @@ exports[`DatasetItem should match snapshot 1`] = `
           default-expanded-keys="MS analysis,Detector resolving power,Data Management"
           id="metadata-tree"
           node-key="id"
+        />
+      </div>
+      <div
+        class="el-tree"
+        role="tree"
+      >
+        <div
+          aria-expanded="true"
+          class="el-tree-node is-expanded is-focusable"
+          draggable="false"
+          role="treeitem"
+          tabindex="0"
+        >
+          <div
+            class="el-tree-node__content"
+            style="padding-left: 0px;"
+          >
+            <span
+              class="expanded el-tree-node__expand-icon el-icon-caret-right"
+            />
+            <!---->
+            <!---->
+            <div
+              class="custom-tree-node"
+            >
+              <span>
+                Additional Info
+              </span>
+            </div>
+          </div>
+          <transition-stub>
+            <div
+              aria-expanded="true"
+              class="el-tree-node__children"
+              role="group"
+            >
+              <div
+                aria-expanded="true"
+                class="el-tree-node is-expanded is-focusable"
+                draggable="false"
+                role="treeitem"
+                tabindex="-1"
+              >
+                <div
+                  class="el-tree-node__content"
+                  style="padding-left: 18px;"
+                >
+                  <span
+                    class="is-leaf el-tree-node__expand-icon el-icon-caret-right"
+                  />
+                  <!---->
+                  <!---->
+                  <div
+                    class="custom-tree-node"
+                  >
+                    <span>
+                      Supplementary
+                    </span>
+                  </div>
+                </div>
+                <transition-stub>
+                  <div
+                    aria-expanded="true"
+                    class="el-tree-node__children"
+                    role="group"
+                  />
+                </transition-stub>
+              </div>
+            </div>
+          </transition-stub>
+        </div>
+        <!---->
+        <div
+          class="el-tree__drop-indicator"
+          style="display: none;"
         />
       </div>
     </mock-el-dialog>
