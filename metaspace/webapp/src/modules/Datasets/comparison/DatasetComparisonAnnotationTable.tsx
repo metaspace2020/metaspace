@@ -46,7 +46,7 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_MSM: 'msmscore',
   ORDER_BY_FDR_MSM: 'fdrlevel',
   ORDER_BY_FORMULA: 'sumformula',
-  ORDER_BY_DS_COUNT: 'datasetCount',
+  ORDER_BY_DS_COUNT: 'datasetcount',
 }
 
 export const DatasetComparisonAnnotationTable = defineComponent<DatasetComparisonAnnotationTableProps>({
@@ -128,7 +128,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       const { sort, row, page } = $route.query
       const order = sort?.indexOf('-') === 0 ? 'descending' : 'ascending'
       const prop = sort ? sort.replace('-', '') : SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM
-      handleSortChange({ order, prop })
+      handleSortChange({ order, prop }, false)
       state.selectedRow = row ? props.annotations[parseInt(row, 10)]
         : state.processedAnnotations[0]
       onPageChange(page ? parseInt(page, 10) : 1, true)
@@ -287,7 +287,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
     const handleSortDsCount = (order: string) => {
       state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.datasetCount - b.datasetCount)))
+        (order === 'ascending' ? 1 : -1) * (a.datasetcount - b.datasetcount)))
     }
 
     const handleSortFdr = (order: string) => {
@@ -295,7 +295,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         (order === 'ascending' ? 1 : -1) * (a.fdrLevel - b.fdrLevel)))
     }
 
-    const handleSortChange = (settings: any) => {
+    const handleSortChange = (settings: any, setCurrentRow: boolean = true) => {
       const { prop, order } = settings
 
       if (!order) {
@@ -316,6 +316,11 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         by: prop,
         dir: order?.toUpperCase(),
       })
+
+      if (setCurrentRow) {
+        state.selectedRow = state.processedAnnotations[0]
+        onPageChange(1)
+      }
     }
 
     const onPageSizeChange = (newSize: number) => {
@@ -574,7 +579,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             />
             <TableColumn
               key="datasetCount"
-              property="datasetCount"
+              property="datasetcount"
               label="Datasets #"
               sortable="custom"
               minWidth="100"

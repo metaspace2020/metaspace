@@ -26,10 +26,8 @@ import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/Cand
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import { DatasetComparisonShareLink } from './DatasetComparisonShareLink'
-import { groupBy, isEqual, uniqBy } from 'lodash-es'
+import { groupBy, isEqual, uniqBy, uniq } from 'lodash-es'
 import { readNpy } from '../../../lib/npyHandler'
-import { resetIonImageState } from '../../ImageViewer/ionImageState'
-import { resetImageViewerState } from '../../ImageViewer/state'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -188,7 +186,7 @@ export default defineComponent<DatasetComparisonPageProps>({
           const processedAnnotations = Object.keys(annotationsByIon).map((ion: string) => {
             const annotations = annotationsByIon[ion]
             const dbId = annotations[0].databaseDetails.id
-            const datasetIds = annotations.map((annotation: any) => annotation.dataset.id)
+            const datasetIds = uniq(annotations.map((annotation: any) => annotation.dataset.id))
 
             return {
               ion,
@@ -577,7 +575,7 @@ export default defineComponent<DatasetComparisonPageProps>({
                     ...ion.annotations[0],
                     msmScore: Math.max(...ion.annotations.map((annot: any) => annot.msmScore)),
                     fdrlevel: Math.min(...ion.annotations.map((annot: any) => annot.fdrlevel)),
-                    datasetCount: (ion.datasetIds || []).length,
+                    datasetcount: (ion.datasetIds || []).length,
                     rawAnnotations: ion.annotations,
                   }
                 })}
