@@ -12,6 +12,7 @@ describe('DatasetComparisonPage', () => {
     snapshot: '{"nCols":2,"nRows":1,"grid":{"0-0":"2021-04-14_07h23m35s",'
       + '"0-1":"2021-04-06_08h35m04s"}}',
   }))
+
   const dsData = [{
     id: '2021-04-14_07h23m35s',
     name: 'Mock (1)',
@@ -36,6 +37,9 @@ describe('DatasetComparisonPage', () => {
     initMockGraphqlClient({
       Query: () => ({
         imageViewerSnapshot: snapshotData,
+        allAnnotations: () => {
+          return []
+        },
         allDatasets: () => {
           return dsData
         },
@@ -83,22 +87,5 @@ describe('DatasetComparisonPage', () => {
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
-  })
-
-  it('it should call snapshot settings query', async() => {
-    router.replace({
-      name: 'datasets-comparison',
-      query: {
-        viewId: 'xxxx',
-      },
-      params: {
-        dataset_id: 'xxxx',
-      },
-    })
-    graphqlWithData()
-    mount(testHarness, { store, router })
-    await Vue.nextTick()
-
-    expect(snapshotData).toHaveBeenCalledTimes(1)
   })
 })

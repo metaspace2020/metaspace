@@ -4,11 +4,11 @@ import {
   defineComponent,
   onMounted,
   reactive,
-  ref,
+  ref, watch,
   watchEffect,
 } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
-import { comparisonAnnotationListQuery } from '../../../api/annotation'
+import { annotationListQuery, comparisonAnnotationListQuery } from '../../../api/annotation'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import RelatedMolecules from '../../Annotations/annotation-widgets/RelatedMolecules.vue'
 import ImageSaver from '../../ImageViewer/ImageSaver.vue'
@@ -26,7 +26,7 @@ import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/Cand
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import { DatasetComparisonShareLink } from './DatasetComparisonShareLink'
-import { uniqBy } from 'lodash-es'
+import { groupBy, isEqual, uniqBy, uniq } from 'lodash-es'
 import { readNpy } from '../../../lib/npyHandler'
 
 interface GlobalImageSettings {
@@ -62,7 +62,12 @@ interface DatasetComparisonPageState {
   collapse: string[]
   databaseOptions: any
   normalizationData: any
+  offset: number
+  rawAnnotations: any
+  processedAnnotations: any
 }
+
+const CHUNK_SIZE = 1000
 
 export default defineComponent<DatasetComparisonPageProps>({
   name: 'DatasetComparisonPage',
@@ -105,7 +110,7 @@ export default defineComponent<DatasetComparisonPageProps>({
         selectedLockTemplate: null,
         globalLockedIntensities: [undefined, undefined],
       },
-      annotations: [],
+      annotations: undefined,
       datasets: [],
       collapse: ['images'],
       grid: undefined,
@@ -117,6 +122,9 @@ export default defineComponent<DatasetComparisonPageProps>({
       annotationLoading: true,
       isLoading: false,
       normalizationData: {},
+      offset: 0,
+      rawAnnotations: [],
+      processedAnnotations: [],
     })
     const { dataset_id: sourceDsId } = $route.params
     const { viewId: snapshotId } = $route.query
@@ -145,21 +153,54 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
     }
 
-    const queryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+    const annotationQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const dsQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
-    const queryVars = computed(() => ({
+    const annotationQueryVars = computed(() => ({
       ...queryVariables(),
       dFilter: { ...queryVariables().dFilter, ids: Object.values(state.grid || {}).join('|') },
+      limit: CHUNK_SIZE,
+      offset: state.offset,
     }))
+
     const {
       result: annotationsResult,
       loading: annotationsLoading,
-      onResult: onAnnotationsResult,
-    } = useQuery<any>(comparisonAnnotationListQuery, queryVars, queryOptions)
+      onResult: onAllAnnotationsResult,
+    } = useQuery<any>(annotationListQuery, annotationQueryVars, annotationQueryOptions)
 
-    onAnnotationsResult(async(result) => {
-      // enable datasets name query, now that the ids where gotten
-      dsQueryOptions.enabled = true
+    onAllAnnotationsResult(async(result) => {
+      let rawAnnotations = state.rawAnnotations
+      if (result && result.data) {
+        if (state.offset === 0) {
+          rawAnnotations = []
+        }
+        rawAnnotations = rawAnnotations.concat(result.data.allAnnotations)
+
+        state.rawAnnotations = rawAnnotations
+        if (state.offset < result.data.countAnnotations) {
+          state.offset += CHUNK_SIZE
+        } else {
+          annotationQueryOptions.enabled = false
+          state.offset = 0
+          const annotationsByIon = groupBy(state.rawAnnotations, 'ion')
+          const processedAnnotations = Object.keys(annotationsByIon).map((ion: string) => {
+            const annotations = annotationsByIon[ion]
+            const dbId = annotations[0].databaseDetails.id
+            const datasetIds = uniq(annotations.map((annotation: any) => annotation.dataset.id))
+
+            return {
+              ion,
+              dbId,
+              datasetIds,
+              annotations,
+            }
+          })
+
+          state.annotations = processedAnnotations
+          dsQueryOptions.enabled = true
+          state.annotationLoading = false
+        }
+      }
     })
 
     const {
@@ -221,13 +262,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       state.normalizationData = normalizationData
     })
 
-    const loadAnnotations = () => { queryOptions.enabled = true }
-    state.annotations = computed(() => {
-      if (annotationsResult.value) {
-        return annotationsResult.value.allAggregatedAnnotations
-      }
-      return null
-    })
+    const loadAnnotations = () => { annotationQueryOptions.enabled = true }
     const datasets = computed(() => {
       if (datasetsResult.value) {
         return datasetsResult.value.allDatasets
@@ -238,12 +273,21 @@ export default defineComponent<DatasetComparisonPageProps>({
     const requestAnnotations = async() => {
       state.isLoading = true
       loadAnnotations()
-      state.annotationLoading = false
       state.isLoading = false
     }
 
     onMounted(() => {
       state.refsLoaded = true
+
+      // add listener to query annotations again in case the filters change
+      $store.watch((_, getters) => [getters.gqlAnnotationFilter,
+        $store.getters.gqlDatasetFilter, $store.getters.gqlColocalizationFilter, $store.getters.ftsQuery],
+      (filter, previousFilter) => {
+        if (state.annotations && !isEqual(filter, previousFilter)) {
+          state.offset = 0
+          annotationQueryOptions.enabled = true
+        }
+      })
     })
 
     watchEffect(async() => {
@@ -506,6 +550,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     return () => {
       const nCols = state.nCols
       const nRows = state.nRows
+
       if (!snapshotId) {
         return (
           <div class='dataset-comparison-page w-full flex flex-wrap flex-row items-center justify-center'>
@@ -530,7 +575,7 @@ export default defineComponent<DatasetComparisonPageProps>({
                     ...ion.annotations[0],
                     msmScore: Math.max(...ion.annotations.map((annot: any) => annot.msmScore)),
                     fdrlevel: Math.min(...ion.annotations.map((annot: any) => annot.fdrlevel)),
-                    datasetCount: (ion.datasetIds || []).length,
+                    datasetcount: (ion.datasetIds || []).length,
                     rawAnnotations: ion.annotations,
                   }
                 })}
@@ -538,7 +583,7 @@ export default defineComponent<DatasetComparisonPageProps>({
               />
             }
             {
-              (annotationsLoading.value)
+              annotationsLoading.value
               && <div class='w-full absolute text-center top-0'>
                 <i
                   class="el-icon-loading"
