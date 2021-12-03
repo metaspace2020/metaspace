@@ -121,14 +121,21 @@ const DatasetItemActions = defineComponent({
 
     const getDescriptionAsTree = () => {
       const { dataset } = props
+      const rawDescription = isValidTiptapJson(safeJsonParse(dataset.description))
+        ? safeJsonParse(dataset.description) : null
+      let isEmpty = true
+
+      if (rawDescription && safeJsonParse(rawDescription).content) {
+        isEmpty = false
+      }
 
       return [{
         label: 'Additional Info',
+        isEmpty,
         children: [
           {
             label: 'Supplementary',
-            rawDescription: isValidTiptapJson(safeJsonParse(dataset.description))
-              ? safeJsonParse(dataset.description) : null,
+            rawDescription,
           },
         ],
       }]
@@ -154,6 +161,7 @@ const DatasetItemActions = defineComponent({
 
     return () => {
       const { dataset, metadata, currentUser } = props
+      const description = getDescriptionAsTree()
 
       return (
         <div class="ds-actions">
@@ -168,11 +176,16 @@ const DatasetItemActions = defineComponent({
               metadata={metadata}
               currentUser={currentUser}
             />
-            <Tree
-              defaultExpandAll
-              data={getDescriptionAsTree()}
-              renderContent={renderDescription}
-            />
+            {
+              description
+              && description[0]
+              && !description[0].isEmpty
+              && <Tree
+                defaultExpandAll
+                data={description}
+                renderContent={renderDescription}
+              />
+            }
           </el-dialog>
 
           {state.showDownloadDialog
