@@ -158,7 +158,12 @@ export default defineComponent<RoiSettingsProps>({
     }
 
     const getRoi = () => {
-      return $store.state.roiInfo || []
+      if (
+        props.annotation && props.annotation.dataset?.id && $store.state.roiInfo
+        && Object.keys($store.state.roiInfo).includes(props.annotation.dataset.id)) {
+        return $store.state.roiInfo[props.annotation.dataset.id] || []
+      }
+      return []
     }
 
     const addRoi = (e: any) => {
@@ -177,7 +182,7 @@ export default defineComponent<RoiSettingsProps>({
         edit: false,
         isDrawing: true,
       })
-      $store.commit('setRoiInfo', roiInfo)
+      $store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
     const openRoi = (e: any) => {
@@ -194,25 +199,25 @@ export default defineComponent<RoiSettingsProps>({
     const handleNameEdit = (value: any, index: number) => {
       const roiInfo = getRoi()
       Vue.set(roiInfo, index, { ...roiInfo[index], name: value })
-      $store.commit('setRoiInfo', roiInfo)
+      $store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
     const toggleEdit = (index: number) => {
       const roiInfo = getRoi()
       Vue.set(roiInfo, index, { ...roiInfo[index], edit: !roiInfo[index].edit })
-      $store.commit('setRoiInfo', roiInfo)
+      $store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
     const toggleHidden = (index: number) => {
       const roiInfo = getRoi()
       Vue.set(roiInfo, index, { ...roiInfo[index], visible: !roiInfo[index].visible })
-      $store.commit('setRoiInfo', roiInfo)
+      $store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
     const removeRoi = (index: number) => {
       const roiInfo = getRoi()
       roiInfo.splice(index, 1)
-      $store.commit('setRoiInfo', roiInfo)
+      $store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
     const changeRoi = (channel: any, index: number) => {
@@ -223,7 +228,7 @@ export default defineComponent<RoiSettingsProps>({
         strokeColor: channels[channel].replace('rgb', 'rgba').replace(')', ', 0.6)'),
         color: channels[channel].replace('rgb', 'rgba').replace(')', ', 0.4)'),
       })
-      $store.commit('setRoiInfo', roiInfo)
+      $store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
     return () => {

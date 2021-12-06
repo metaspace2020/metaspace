@@ -120,11 +120,11 @@ export default class AnnotationView extends Vue {
 
    created() {
      this.onImageMove = throttle(this.onImageMove)
-     this.$store.commit('setRoiInfo', [])
+     this.$store.commit('resetRoiInfo')
    }
 
    mounted() {
-     this.$store.commit('setRoiInfo', [])
+     this.$store.commit('resetRoiInfo')
    }
 
    metadataDependentComponent(category: string): any {
@@ -154,7 +154,12 @@ export default class AnnotationView extends Vue {
    }
 
    get roiInfo(): any {
-     return this.$store.state.roiInfo
+     if (
+       this.annotation && this.annotation.dataset?.id && this.$store.state.roiInfo
+       && Object.keys(this.$store.state.roiInfo).includes(this.annotation.dataset.id)) {
+       return this.$store.state.roiInfo[this.annotation.dataset.id] || []
+     }
+     return []
    }
 
    get imageOpacityMode(): OpacityMode {
@@ -370,7 +375,7 @@ export default class AnnotationView extends Vue {
        Vue.set(roi, roiIndex, { ...roi[roiIndex], coordinates })
      }
 
-     this.$store.commit('setRoiInfo', roi)
+     this.$store.commit('setRoiInfo', { key: this.annotation.dataset.id, roi })
    }
 
    filterColocSamples() {

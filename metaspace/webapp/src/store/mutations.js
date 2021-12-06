@@ -13,6 +13,7 @@ import {
 } from '../modules/Filters';
 import { DEFAULT_ANNOTATION_VIEW_SECTIONS, DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER } from '../modules/Filters/url';
 import { DEFAULT_SCALE_TYPE } from '../lib/constants';
+import Vue from 'vue'
 
 function updatedLocation(state, filter) {
   let query = encodeParams(filter, state.route.path, state.filterLists);
@@ -159,8 +160,12 @@ export default {
     state.normalization = normalizationMatrix;
   },
 
-  setRoiInfo(state, roi) {
-    state.roiInfo = roi;
+  setRoiInfo(state, {key, roi}) {
+    Vue.set(state.roiInfo, key, roi)
+  },
+
+  resetRoiInfo(state) {
+    state.roiInfo = {};
   },
 
   setSnapshotAnnotationIds(state, annotation) {
