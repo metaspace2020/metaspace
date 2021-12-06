@@ -10,6 +10,7 @@ from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 from shutil import copyfileobj
+from threading import BoundedSemaphore
 from typing import Optional, List, Iterable, Union, Tuple, Any, TYPE_CHECKING
 from urllib.parse import urlparse
 
@@ -192,15 +193,18 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
         return resp_data['url']
 
     def upload_part(presigned_url, data):
-        resp_data = send_request(
-            presigned_url,
-            'PUT',
-            data=data,
-            headers=headers,
-            return_headers=True,
-            max_retries=2,
-        )
-        return resp_data['ETag']
+        try:
+            resp_data = send_request(
+                presigned_url,
+                'PUT',
+                data=data,
+                headers=headers,
+                return_headers=True,
+                max_retries=2,
+            )
+            return resp_data['ETag']
+        finally:
+            semaphore.release()
 
     def complete_multipart_upload(key, upload_id, etags, headers={}):
         query = urllib.parse.urlencode({'key': key})
@@ -228,6 +232,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
             part_size_mb = max(5, int(math.ceil(file_len_mb / 10000)))
             n_parts = int(math.ceil(file_len_mb / part_size_mb))
             while True:
+                semaphore.acquire()
                 file_data = f.read(part_size_mb * 1024 ** 2)
                 if not file_data:
                     break
@@ -240,7 +245,14 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
     session = requests.Session()
     key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers)
 
-    with ThreadPoolExecutor(8) as ex:
+    # Python evaluates the input to ThreadPoolExecutor.map eagerly, which would allow iterate_file
+    # to read parts and sign uploads even if there was a significant queue to upload_part.
+    # This semaphore ensures that iterate_file can only read, sign and yield a part when upload_part
+    # is ready to receive it.
+    n_threads = 8
+    semaphore = BoundedSemaphore(n_threads)
+
+    with ThreadPoolExecutor(n_threads) as ex:
         etags = list(
             ex.map(
                 lambda args: (args[0], upload_part(*args[1:])),
