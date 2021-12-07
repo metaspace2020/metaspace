@@ -28,17 +28,9 @@ interface DatasetComparisonAnnotationTableState {
 
 const KEY_TO_ACTION = {
   ArrowUp: 'up',
-  K: 'up',
-  k: 'up',
   ArrowDown: 'down',
-  J: 'down',
-  j: 'down',
   ArrowLeft: 'left',
-  H: 'left',
-  h: 'left',
   ArrowRight: 'right',
-  L: 'right',
-  l: 'right',
 }
 
 const SORT_ORDER_TO_COLUMN = {

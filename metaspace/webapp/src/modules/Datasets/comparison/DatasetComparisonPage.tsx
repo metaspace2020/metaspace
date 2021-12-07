@@ -4,11 +4,11 @@ import {
   defineComponent,
   onMounted,
   reactive,
-  ref, watch,
+  ref,
   watchEffect,
 } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
-import { annotationListQuery, comparisonAnnotationListQuery } from '../../../api/annotation'
+import { annotationListQuery } from '../../../api/annotation'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import RelatedMolecules from '../../Annotations/annotation-widgets/RelatedMolecules.vue'
 import ImageSaver from '../../ImageViewer/ImageSaver.vue'
