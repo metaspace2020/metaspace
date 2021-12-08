@@ -17,7 +17,6 @@ from sm.engine.annotation.job import (
     get_ds_moldb_ids,
     JobStatus,
 )
-from sm.engine.annotation.formula_validator import METRICS
 from sm.engine.annotation_spark.msm_basic_search import MSMSearch
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
@@ -92,6 +91,7 @@ class AnnotationJob:
                 perf=self._perf,
             )
             search_results_it = search_alg.search()
+            results_dfs = {}
 
             for job_id, (moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(
                 job_ids, search_results_it
@@ -102,19 +102,21 @@ class AnnotationJob:
                     search_results = SearchResults(
                         ds_id=self._ds.id,
                         job_id=job_id,
-                        metric_names=METRICS.keys(),
                         n_peaks=self._ds.config['isotope_generation']['n_peaks'],
                         charge=self._ds.config['isotope_generation']['charge'],
                     )
                     search_results.store(
                         moldb_ion_metrics_df, moldb_ion_images_rdd, imzml_reader.mask, self._db
                     )
+                    # FIXME: I don't think this is the full DF... certainly won't have decoys
+                    # FIXME: this is job_id, diagnostics expects db_id, diagnostics is wrong.
+                    results_dfs[job_id] = moldb_ion_metrics_df
                     job_status = JobStatus.FINISHED
                 finally:
                     update_finished_job(job_id, job_status)
 
             # Save non-job-related diagnostics
-            diagnostics = extract_dataset_diagnostics(self._ds.id, imzml_reader)
+            diagnostics = extract_dataset_diagnostics(self._ds.id, imzml_reader, results_dfs)
             add_diagnostics(diagnostics)
 
     def _save_data_from_raw_ms_file(self, imzml_reader: FSImzMLReader):

@@ -182,8 +182,8 @@ def test_sm_daemons(
         ]
     )
 
-    url_dict = {'iso_image_ids': ['iso_image_1', None, None, None]}
-    post_images_to_image_store_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
+    image_ids = ['iso_image_1', None, None, None]
+    post_images_to_image_store_mock.return_value = {0: image_ids, 1: image_ids, 2: image_ids}
 
     db = DB()
     es = ESExporter(db, local_sm_config)
@@ -258,7 +258,7 @@ def test_sm_daemons(
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemons_annot_fails(
     MSMSearchMock,
-    post_images_to_annot_service_mock,
+    post_images_to_image_store_mock,
     test_db,
     es_dsl_search,
     clean_isotope_storage,
@@ -276,8 +276,8 @@ def test_sm_daemons_annot_fails(
     msm_algo_mock = MSMSearchMock()
     msm_algo_mock.search.side_effect = throw_exception_function
 
-    url_dict = {'iso_image_ids': ['iso_image_1', None, None, None]}
-    post_images_to_annot_service_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
+    image_ids = ['iso_image_1', None, None, None]
+    post_images_to_image_store_mock.return_value = {0: image_ids, 1: image_ids, 2: image_ids}
 
     db = DB()
     es = ESExporter(db, local_sm_config)
@@ -303,7 +303,7 @@ def test_sm_daemons_annot_fails(
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemon_es_export_fails(
     MSMSearchMock,
-    post_images_to_annot_service_mock,
+    post_images_to_image_store_mock,
     test_db,
     es_dsl_search,
     clean_isotope_storage,
@@ -347,8 +347,8 @@ def test_sm_daemon_es_export_fails(
             ('max_iso_ints', []),
         ]
     )
-    url_dict = {'iso_image_ids': ['iso_image_1', None, None, None]}
-    post_images_to_annot_service_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
+    image_ids = ['iso_image_1', None, None, None]
+    post_images_to_image_store_mock.return_value = {0: image_ids, 1: image_ids, 2: image_ids}
 
     db = DB()
 

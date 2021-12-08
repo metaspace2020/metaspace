@@ -1,17 +1,20 @@
-import json
 import logging
+import pickle
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum
 from io import BytesIO
 from traceback import format_exc
-from typing import Optional, Any, Union, List, TypedDict
+from typing import Optional, Any, Union, List, TypedDict, Dict
 
 import numpy as np
+import pandas as pd
+import zstandard
 
 from sm.engine import image_storage
 from sm.engine.annotation.imzml_reader import ImzMLReader
 from sm.engine.db import DB
+from sm.engine.utils.numpy_json_encoder import numpy_json_dumps
 
 logger = logging.getLogger('engine')
 
@@ -21,6 +24,7 @@ class DiagnosticType(str, Enum):
 
     TIC = 'TIC'
     IMZML_METADATA = 'IMZML_METADATA'
+    FDR_RESULTS = 'FDR_RESULTS'
 
 
 class DiagnosticImageKey(str, Enum):
@@ -28,11 +32,19 @@ class DiagnosticImageKey(str, Enum):
     TIC = 'TIC'
     # if type == DiagnosticType.IMZML_METADATA
     MASK = 'MASK'
+    FDR_RESULTS = 'FDR_RESULTS'
 
 
 class DiagnosticImageFormat(str, Enum):
     PNG = 'PNG'
     NPY = 'NPY'
+    JSON = 'JSON'
+    # TODO: Replace this
+    PICKLE_ZSTD = (
+        'PICKLE_ZSTD'  # NEVER USE THIS. If you do use it, never load it from inside Python code,
+    )
+    # because pickle files can run any code they want during loading and there is no way to secure it.
+    # Also, pickle files tend to break between versions
 
 
 class DiagnosticImage(TypedDict, total=False):
@@ -89,7 +101,7 @@ def add_diagnostics(diagnostics: List[DatasetDiagnostic]):
         for row in existing:
             for img in row['images'] or []:
                 image_ids_by_ds[row['ds_id']].append(img['image_id'])
-        for ds_id, image_ids in image_ids_by_ds.values():
+        for ds_id, image_ids in image_ids_by_ds.items():
             image_storage.delete_images(image_storage.DIAG, ds_id, image_ids)
 
         # Delete existing DB rows
@@ -107,9 +119,9 @@ def add_diagnostics(diagnostics: List[DatasetDiagnostic]):
                 d.get('job_id'),
                 d['type'],
                 datetime.now(),
-                json.dumps(d['data']) if d.get('data') is not None else None,
+                numpy_json_dumps(d['data']) if d.get('data') is not None else None,
                 d.get('error'),
-                json.dumps(d.get('images', [])),
+                numpy_json_dumps(d.get('images', [])),
             )
             for d in diagnostics
         ],
@@ -156,14 +168,35 @@ def save_npy_image(ds_id: str, arr: np.ndarray):
     return image_storage.post_image(image_storage.DIAG, ds_id, buf)
 
 
-def save_diagnostic_image(ds_id: str, arr: np.ndarray, key, index=None) -> DiagnosticImage:
+def save_pickle_image(ds_id: str, data):
+    buf = BytesIO()
+    cctx = zstandard.ZstdCompressor(level=3)
+    with cctx.stream_writer(buf, closefd=False) as writer:
+        pickle.dump(data, writer)
+    buf.seek(0)
+    return image_storage.post_image(image_storage.DIAG, ds_id, buf)
+
+
+def save_diagnostic_image(
+    ds_id: str, data: Any, key, index=None, format=DiagnosticImageFormat.NPY
+) -> DiagnosticImage:
     assert key in DiagnosticImageKey
-    image_id = save_npy_image(ds_id, arr)
+    if format is DiagnosticImageFormat.NPY:
+        image_id = save_npy_image(ds_id, data)
+    elif format is DiagnosticImageFormat.JSON:
+        image_id = image_storage.post_image(
+            image_storage.DIAG, ds_id, BytesIO(numpy_json_dumps(data).encode())
+        )
+    else:
+        assert (
+            format == DiagnosticImageFormat.PICKLE_ZSTD
+        ), 'Unknown format passed to save_diagnostic_image'
+        image_id = save_pickle_image(ds_id, data)
     image = {
         'key': key,
         'image_id': image_id,
         'url': image_storage.get_image_url(image_storage.DIAG, ds_id, image_id),
-        'format': DiagnosticImageFormat.NPY,
+        'format': format,
     }
 
     if index is not None:
@@ -176,12 +209,20 @@ def load_npy_image(ds_id: str, image_id: str):
     return np.load(BytesIO(buf), allow_pickle=False)
 
 
-def extract_dataset_diagnostics(ds_id: str, imzml_reader: ImzMLReader):
-    mask_image = save_diagnostic_image(ds_id, imzml_reader.mask, DiagnosticImageKey.MASK)
-    diagnostics: List[DatasetDiagnostic] = [
-        {
-            'ds_id': ds_id,
-            'type': DiagnosticType.IMZML_METADATA,
+def extract_dataset_diagnostics(
+    ds_id: str, imzml_reader: ImzMLReader, results_dfs: Dict[int, pd.DataFrame]
+):
+    def run_diagnostic_fn(type, fn):
+        try:
+            result = fn()
+        except Exception:
+            logger.exception(f'Exception generating {type} diagnostic', exc_info=True)
+            result = {'error': format_exc()}
+        return {'ds_id': ds_id, 'type': type, **result}
+
+    def metadata_diagnostic():
+        mask_image = save_diagnostic_image(ds_id, imzml_reader.mask, DiagnosticImageKey.MASK)
+        return {
             'data': {
                 'n_spectra': imzml_reader.n_spectra,
                 'min_coords': imzml_reader.raw_coord_bounds[0].tolist(),
@@ -196,32 +237,39 @@ def extract_dataset_diagnostics(ds_id: str, imzml_reader: ImzMLReader):
             },
             'images': [mask_image],
         }
-    ]
-    try:
+
+    def tic_diagnostic():
         tic = imzml_reader.tic_image()
         tic_vals = tic[~np.isnan(tic)]
         tic_image = save_diagnostic_image(ds_id, tic, key=DiagnosticImageKey.TIC)
 
-        diagnostics.append(
-            {
-                'ds_id': ds_id,
-                'type': DiagnosticType.TIC,
-                'data': {
-                    'min_tic': np.nan_to_num(np.min(tic_vals).item()) if len(tic_vals) else 0,
-                    'max_tic': np.nan_to_num(np.max(tic_vals).item()) if len(tic_vals) else 0,
-                    'sum_tic': np.nan_to_num(np.sum(tic_vals).item()) if len(tic_vals) else 0,
-                    'is_from_metadata': imzml_reader.is_tic_from_metadata,
-                },
-                'images': [tic_image],
-            }
-        )
-    except Exception:
-        logger.exception('Exception generating TIC diagnostic', exc_info=True)
-        diagnostics.append(
-            {
-                'ds_id': ds_id,
-                'type': DiagnosticType.TIC,
-                'error': format_exc(),
-            }
-        )
-    return diagnostics
+        return {
+            'data': {
+                'min_tic': np.nan_to_num(np.min(tic_vals).item()) if len(tic_vals) else 0,
+                'max_tic': np.nan_to_num(np.max(tic_vals).item()) if len(tic_vals) else 0,
+                'sum_tic': np.nan_to_num(np.sum(tic_vals).item()) if len(tic_vals) else 0,
+                'is_from_metadata': imzml_reader.is_tic_from_metadata,
+            },
+            'images': [tic_image],
+        }
+
+    def fdr_results_diagnostic():
+        # FIXME: Convert this into a "job diagnostic"
+        return {
+            'images': [
+                save_diagnostic_image(
+                    ds_id,
+                    results_df,
+                    key=DiagnosticImageKey.FDR_RESULTS,
+                    index=db_id,
+                    format=DiagnosticImageFormat.PICKLE_ZSTD,
+                )
+                for db_id, results_df in results_dfs.items()
+            ]
+        }
+
+    return [
+        run_diagnostic_fn(DiagnosticType.IMZML_METADATA, metadata_diagnostic),
+        run_diagnostic_fn(DiagnosticType.TIC, tic_diagnostic),
+        run_diagnostic_fn(DiagnosticType.FDR_RESULTS, fdr_results_diagnostic),
+    ]

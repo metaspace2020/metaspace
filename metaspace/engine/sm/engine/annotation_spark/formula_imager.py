@@ -1,7 +1,7 @@
 import logging
 import pickle
 from pathlib import Path
-from typing import List, Set
+from typing import List, Set, Iterator
 
 import numpy as np
 import pandas as pd
@@ -11,7 +11,9 @@ from scipy.sparse import coo_matrix
 from sm.engine.annotation.formula_validator import (
     make_compute_image_metrics,
     formula_image_metrics,
+    FormulaImageItem,
 )
+from sm.engine.annotation.imzml_reader import ImzMLReader
 from sm.engine.ds_config import DSConfig
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
@@ -20,7 +22,7 @@ logger = logging.getLogger('engine')
 
 # pylint: disable=too-many-locals
 # this function is compute performance optimized
-def gen_iso_images(ds_segm_it, centr_df, nrows, ncols, isocalc):
+def gen_iso_images(ds_segm_it, centr_df, nrows, ncols, isocalc) -> Iterator[FormulaImageItem]:
     for ds_segm_df in ds_segm_it:
         ds_segm_mz_min, _ = isocalc.mass_accuracy_bounds(ds_segm_df.mz.values[0])
         _, ds_segm_mz_max = isocalc.mass_accuracy_bounds(ds_segm_df.mz.values[-1])
@@ -28,9 +30,9 @@ def gen_iso_images(ds_segm_it, centr_df, nrows, ncols, isocalc):
         centr_df_slice = centr_df[(centr_df.mz >= ds_segm_mz_min) & (centr_df.mz <= ds_segm_mz_max)]
 
         centr_mzs = centr_df_slice.mz.values
+        centr_ints = centr_df_slice.int.values
         centr_f_inds = centr_df_slice.formula_i.values
         centr_p_inds = centr_df_slice.peak_i.values
-        centr_ints = centr_df_slice.int.values
 
         lower, upper = isocalc.mass_accuracy_bounds(centr_mzs)
         lower_inds = np.searchsorted(ds_segm_df.mz.values, lower, 'l')
@@ -39,14 +41,28 @@ def gen_iso_images(ds_segm_it, centr_df, nrows, ncols, isocalc):
         # Note: consider going in the opposite direction so that
         # formula_image_metrics can check for the first peak images instead of the last
         for i, (lo_i, up_i) in enumerate(zip(lower_inds, upper_inds)):
-            m = None
+            image = mz_image = None
             if up_i - lo_i > 0:
-                data = ds_segm_df.int.values[lo_i:up_i]
+                # Copy ints/mzs so that these slices don't pin the whole dataset segment in memory
+                ints = ds_segm_df.int.values[lo_i:up_i].astype('f', copy=True)
+                mzs = ds_segm_df.mz.values[lo_i:up_i].astype('f', copy=True)
                 inds = ds_segm_df.sp_idx.values[lo_i:up_i]
-                row_inds = inds / ncols
-                col_inds = inds % ncols
-                m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
-            yield centr_f_inds[i], centr_p_inds[i], centr_ints[i], m
+                row_inds, col_inds = np.divmod(inds, ncols, dtype='uint16')
+                # The row_inds/col_inds can be safely shared between the two coo_matrixes
+                image = coo_matrix((ints, (row_inds, col_inds)), shape=(nrows, ncols), copy=False)
+                mz_image = coo_matrix((mzs, (row_inds, col_inds)), shape=(nrows, ncols), copy=False)
+
+            yield FormulaImageItem(
+                formula_i=centr_f_inds[i],
+                peak_i=centr_p_inds[i],
+                theo_mz=centr_mzs[i],
+                theo_int=centr_ints[i],
+                # If this image includes the last element of the dataset segment, it's possible the
+                # next dataset segment will include more pixels from this image.
+                may_be_split=up_i >= len(ds_segm_df) - 1,
+                image=image,
+                mz_image=mz_image,
+            )
 
 
 def choose_ds_segments(ds_segments, centr_df, ppm):
@@ -94,20 +110,17 @@ def get_file_path(name):
 
 def create_process_segment(
     ds_segments: List,
-    sample_area_mask: np.ndarray,
-    nrows: int,
-    ncols: int,
+    imzml_reader: ImzMLReader,
     ds_config: DSConfig,
     target_formula_inds: Set[int],
     targeted_database_formula_inds: Set[int],
 ):
-    compute_metrics = make_compute_image_metrics(
-        sample_area_mask, nrows, ncols, ds_config['image_generation']
-    )
+    compute_metrics = make_compute_image_metrics(imzml_reader, ds_config['image_generation'])
     isocalc = IsocalcWrapper(ds_config)
     ppm = ds_config['image_generation']['ppm']
     min_px = ds_config['image_generation']['min_px']
     n_peaks = ds_config['isotope_generation']['n_peaks']
+    nrows, ncols = imzml_reader.h, imzml_reader.w
 
     def process_centr_segment(segm_i):
         centr_segm_path = get_file_path(f'centr_segm_{segm_i:04}.pickle')

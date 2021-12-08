@@ -129,6 +129,9 @@ class FSImzMLReader(ImzMLReader):
     def iter_spectra(self, sp_idxs: Sequence[int]):
         for sp_idx in sp_idxs:
             mzs, ints = self._imzml_parser.getspectrum(sp_idx)
+            assert len(mzs) == self._imzml_parser.mzLengths[sp_idx], 'Incomplete .ibd file'
+            assert len(ints) == self._imzml_parser.intensityLengths[sp_idx], 'Incomplete .ibd file'
+            assert len(mzs) == len(ints), f"Spectrum {sp_idx} mz and intensity counts don't match"
             sp_idx, mzs, ints = self._process_spectrum(sp_idx, mzs, ints)
             yield sp_idx, mzs, ints
 
@@ -178,6 +181,9 @@ class LithopsImzMLReader(ImzMLReader):
             ints = np.frombuffer(int_data[i], dtype=self.imzml_reader.intensityPrecision).copy()
             mz_data[i] = None  # type: ignore # Avoid holding memory longer than necessary
             int_data[i] = None  # type: ignore
+            assert len(mzs) == self.imzml_reader.mzLengths[sp_idx], 'Incomplete .ibd file'
+            assert len(ints) == self.imzml_reader.intensityLengths[sp_idx], 'Incomplete .ibd file'
+            assert len(mzs) == len(ints), f"Spectrum {sp_idx} mz and intensity counts don't match"
 
             # _process_spectrum isn't thread-safe, so only access it in a mutex
             with _process_spectrum_lock:

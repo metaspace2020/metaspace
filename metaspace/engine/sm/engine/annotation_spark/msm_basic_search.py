@@ -11,7 +11,7 @@ from pyspark.storagelevel import StorageLevel
 
 from sm.engine import molecular_db
 from sm.engine.annotation.formula_centroids import CentroidsGenerator
-from sm.engine.annotation.imzml_reader import ImzMLReader
+from sm.engine.annotation.imzml_reader import FSImzMLReader
 from sm.engine.annotation_spark.formula_imager import create_process_segment
 from sm.engine.annotation_spark.segmenter import (
     calculate_centroids_segments_n,
@@ -144,7 +144,7 @@ class MSMSearch:
     def __init__(
         self,
         spark_context: pyspark.SparkContext,
-        imzml_reader: ImzMLReader,
+        imzml_reader: FSImzMLReader,
         moldbs: List[MolecularDB],
         ds_config: DSConfig,
         ds_data_path: Path,
@@ -298,9 +298,7 @@ class MSMSearch:
 
         process_centr_segment = create_process_segment(
             ds_segments,
-            self._imzml_reader.mask,
-            self._imzml_reader.h,
-            self._imzml_reader.w,
+            self._imzml_reader,
             self._ds_config,
             target_formula_inds,
             targeted_database_formula_inds,

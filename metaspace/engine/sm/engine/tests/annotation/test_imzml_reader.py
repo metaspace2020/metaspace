@@ -7,7 +7,7 @@ from pyimzml.ImzMLWriter import ImzMLWriter
 
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from tests.conftest import make_imzml_reader_mock, sm_config, executor
-
+from tests.utils import TEST_DS_CONFIG
 
 MOCK_COORDINATES = [(x, y, 1) for y in range(1, 4, 2) for x in range(1, 4, 2)]
 MOCK_SPECTRA = [(np.arange(1, i + 1), np.full(i, i)) for i in range(1, len(MOCK_COORDINATES) + 1)]
@@ -25,6 +25,7 @@ def make_lithops_imzml_reader(
     storage: Storage,
     mz_precision='f',
     polarity='positive',
+    ds_config=TEST_DS_CONFIG,
 ):
     """Create an ImzML file, upload it into storage, and return an imzml_reader for it"""
     mz_dtype = {'f': np.float32, 'd': np.float64}[mz_precision]

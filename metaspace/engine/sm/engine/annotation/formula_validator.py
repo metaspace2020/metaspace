@@ -1,7 +1,7 @@
 """
 Classes and functions for isotope image validation
 """
-from collections import OrderedDict, defaultdict
+from dataclasses import dataclass, field, fields
 from typing import (
     Tuple,
     Dict,
@@ -11,168 +11,230 @@ from typing import (
     List,
     Optional,
     Iterable,
-    TypedDict,
+    Union,
 )
 
 import numpy as np
 import pandas as pd
-from pyImagingMSpec.image_measures import isotope_image_correlation, isotope_pattern_match
-from cpyImagingMSpec import measure_of_chaos
 from scipy.sparse import coo_matrix
 
+from sm.engine.annotation.image_manip import (
+    bool_aligned_dilate,
+    convert_images_to_dense,
+    compact_empty_space,
+)
+from sm.engine.annotation.imzml_reader import ImzMLReader
+from sm.engine.annotation.metrics import (
+    v1_spatial,
+    v1_chaos,
+    v1_spectral,
+    calc_mz_stddev,
+)
 from sm.engine.ds_config import DSConfigImageGeneration
 
-METRICS = OrderedDict(
-    [
-        ('chaos', 0.0),
-        ('spatial', 0.0),
-        ('spectral', 0.0),
-        ('msm', 0.0),
-        ('total_iso_ints', [0.0, 0.0, 0.0, 0.0]),
-        ('min_iso_ints', [0.0, 0.0, 0.0, 0.0]),
-        ('max_iso_ints', [0.0, 0.0, 0.0, 0.0]),
-    ]
-)
+
+@dataclass()
+class Metrics:
+    formula_i: int = 0
+
+    # These are left as None if they're skipped due to early rejection optimizations
+    # Use the compute_unused_metrics config value to force them to be computed
+    chaos: Optional[float] = None
+    spatial: Optional[float] = None
+    spectral: Optional[float] = None
+    msm: float = 0.0
+
+    # Per-image metrics
+    total_iso_ints: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
+    min_iso_ints: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
+    max_iso_ints: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
+
+    # Mass metrics
+    mz_mean: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
+    mz_stddev: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
+    mz_theo: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
+    mz_theo_ints: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
 
 
-class MetricsDict(TypedDict):
-    chaos: float
-    spatial: float
-    spectral: float
-    msm: float
-    total_iso_ints: List[float]
-    min_iso_ints: List[float]
-    max_iso_ints: List[float]
+@dataclass()
+class FormulaImageItem:
+    """Holds the images and theoretical mz/intensity for one peak from one dataset segment.
+    Needed for the Spark implementation's m/z-ordered iteration of images, as one image set may be
+    spread across multiple dataset segments.
+    """
+
+    formula_i: int
+    peak_i: int
+    theo_mz: float
+    theo_int: float
+    may_be_split: bool
+    image: Optional[coo_matrix]
+    mz_image: Optional[coo_matrix]  # mz_images' pixels must be in the same order as images' pixels
 
 
-# (formula index, peak index, predicted intensity, image)
-FormulaImageItem = Tuple[int, int, float, coo_matrix]
-# (formula index, predicted intensities, images)
-FormulaImageSet = Tuple[int, List[float], List[Optional[coo_matrix]]]
+@dataclass()
+class FormulaImageSet:
+    formula_i: int
+    is_target: bool
+    targeted: bool
+    # NOTE: On the Spark codepath, centroids outside of the mass range of the dataset are unlikely
+    # to be included in theo_mzs/theo_ints
+    theo_mzs: List[float]
+    theo_ints: List[float]
+    images: List[Optional[coo_matrix]]
+    # mz_images' pixels must be in the same order as images' pixels
+    # NOTE: mz_images should generally never be converted to a dense array, because all the built-in
+    # methods for converting sparse matrices to dense arrays SUM values if one pixel has multiple
+    # values, whereas m/zs need to be averaged when combined.
+    mz_images: List[Optional[coo_matrix]]
+
+
+EMPTY_METRICS_DF = pd.DataFrame(columns=[f.name for f in fields(Metrics)])
+
 # (formula index, metrics, images)
 # images isn't present for decoy ions
-FormulaMetricSet = Tuple[int, MetricsDict, Optional[List[Optional[coo_matrix]]]]
+FormulaMetricSet = Tuple[int, Metrics, Optional[List[Optional[coo_matrix]]]]
 
-ComputeMetricsFunc = Callable[[List[Optional[coo_matrix]], List[float]], MetricsDict]
-
-
-def replace_nan(val, default=0):
-    def replace(x):
-        if not x or np.isinf(x) or np.isnan(x):
-            return default
-
-        return float(x)
-
-    if isinstance(val, list):
-        return [replace(x) for x in val]
-
-    return replace(val)
+ComputeMetricsFunc = Callable[[FormulaImageSet], Metrics]
 
 
 def make_compute_image_metrics(
-    sample_area_mask: np.ndarray, nrows: int, ncols: int, img_gen_config: DSConfigImageGeneration
+    imzml_reader: ImzMLReader, img_gen_config: DSConfigImageGeneration
 ) -> ComputeMetricsFunc:
-    """Returns a function for computing formula images metrics
 
-    Args
-    -----
-    sample_area_mask: ndarray[bool]
-        mask for separating sampled pixels (True) from non-sampled (False)
+    sample_area_mask = imzml_reader.mask
+    min_res = 4
+    ds_row_mask = bool_aligned_dilate(np.any(sample_area_mask, axis=1), min_res)
+    ds_col_mask = bool_aligned_dilate(np.any(sample_area_mask, axis=0), min_res)
+    n_spectra = np.count_nonzero(sample_area_mask)
+    n_levels = img_gen_config.get('n_levels', 30)
+    min_px = img_gen_config.get('min_px', 1)
+    compute_unused_metrics = img_gen_config.get('compute_unused_metrics', False)
 
-    img_gen_config : dict
-        isotope_generation section of the dataset config
-    Returns
-    -----
-        function
-    """
-    empty_matrix = np.zeros((nrows, ncols))
-    sample_area_mask_flat = sample_area_mask.flatten()
+    def compute_metrics(image_set: FormulaImageSet):
+        doc = Metrics(formula_i=image_set.formula_i)
+        iso_imgs = convert_images_to_dense(image_set.images, ds_row_mask, ds_col_mask, min_res)
 
-    def compute_metrics(iso_images_sparse, formula_ints):
-        np.seterr(invalid='ignore')  # to ignore division by zero warnings
+        iso_imgs_flat = iso_imgs.reshape(iso_imgs.shape[0], -1)
+        iso_imgs_flat = iso_imgs_flat[:, iso_imgs_flat.any(axis=0)]
 
-        doc = METRICS.copy()
-        if iso_images_sparse:
-            iso_imgs = [
-                img.toarray() if img is not None else empty_matrix for img in iso_images_sparse
-            ]
+        doc.total_iso_ints = [img.sum() for img in iso_imgs_flat]
+        doc.min_iso_ints = [
+            # iso_imgs_flat has empty pixels removed, so img.min() isn't always correct
+            0.0 if len(img) < n_spectra else img.min(initial=0)
+            for img in iso_imgs_flat
+        ]
+        doc.max_iso_ints = [img.max(initial=0) for img in iso_imgs_flat]
 
-            iso_imgs_flat = [img.flatten()[sample_area_mask_flat] for img in iso_imgs]
-            iso_imgs_flat = iso_imgs_flat[: len(formula_ints)]
+        doc.mz_theo = list(image_set.theo_mzs)
+        doc.mz_theo_ints = list(image_set.theo_ints)
+        doc.mz_mean, doc.mz_stddev = calc_mz_stddev(
+            image_set.images, image_set.mz_images, image_set.theo_mzs
+        )
 
-            doc['total_iso_ints'] = [img.sum() for img in iso_imgs]
-            doc['min_iso_ints'] = [img.min() for img in iso_imgs]
-            doc['max_iso_ints'] = [img.max() for img in iso_imgs]
+        is_complete_set = (
+            image_set.images[0] is not None and image_set.images[0].nnz >= min_px
+        ) and any(True for i in image_set.images[1:] if i is not None and i.nnz >= min_px)
+        calc_all = image_set.is_target or image_set.targeted or compute_unused_metrics
 
-            doc['spectral'] = isotope_pattern_match(iso_imgs_flat, formula_ints)
-            if doc['spectral'] > 0:
+        # FIXME: Need to prove that these metrics are IDENTICAL to the existing ones
+        # Run through the metrics from fastest to slowest, existing early if results indicate
+        # that the MSM will be zero and the annotation can be discarded
+        if is_complete_set or calc_all:
+            doc.spectral = v1_spectral(iso_imgs_flat, image_set.theo_ints)
+            if doc.spectral > 0.0 or calc_all:
+                doc.spatial = v1_spatial(iso_imgs_flat, n_spectra, image_set.theo_ints)
+                if doc.spatial > 0.0 or calc_all:
+                    doc.chaos = v1_chaos(iso_imgs[0], n_levels)
 
-                doc['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=formula_ints[1:])
-                if doc['spatial'] > 0:
+        doc.msm = (doc.chaos or 0.0) * (doc.spatial or 0.0) * (doc.spectral or 0.0)
 
-                    moc = measure_of_chaos(iso_imgs[0], img_gen_config.get('n_levels', 30))
-                    doc['chaos'] = 0 if np.isclose(moc, 1.0) else moc
-                    if doc['chaos'] > 0:
-
-                        doc['msm'] = doc['chaos'] * doc['spatial'] * doc['spectral']
-        return OrderedDict((k, replace_nan(v)) for k, v in doc.items())
+        return doc
 
     return compute_metrics
 
 
+def concat_coo_matrices(a: coo_matrix, b: coo_matrix):
+    """Normally adding two coo_matrices together results in a csr_matrix being returned.
+    To keep everything in coo_matrix format, it's necessary to manually concatenate the internal
+    arrays when merging two matrices. This method doesn't sum values for duplicated coordinates.
+    """
+
+    return coo_matrix(
+        (
+            np.concatenate([a.data, b.data]),
+            (np.concatenate([a.row, b.row]), np.concatenate([a.col, b.col])),
+        ),
+        shape=a.shape,
+        copy=False,
+    )
+
+
+def mask_coo_matrix(mat: coo_matrix, mask: Union[np.array, slice]):
+    return coo_matrix((mat.data[mask], (mat.row[mask], mat.col[mask])), shape=mat.shape)
+
+
 def iter_images_in_sets(
-    formula_images_it: Iterable[FormulaImageItem], n_peaks: int
+    formula_images_it: Iterable[FormulaImageItem],
+    n_peaks: int,
+    target_formula_inds: Set[int],
+    targeted_database_formula_inds: Set[int],
 ) -> Iterator[FormulaImageSet]:
     """Buffer semi-ordered images from formula_images_it and yield them in sets grouped by
     formula index. Formula indexes can come in any order, but for a given formula index
     it's assumed that the peaks are always received in order lowest to highest.
 
     Args:
-        formula_images_it: Iterator over tuples of
-            (formula index, peak index, formula intensity, image).
+        formula_images_it: Iterator over FormulaImageItems
         n_peaks: Max number of isotopic peaks per formula
+        target_formula_inds: Set of formula_inds that are target molecules
+        targeted_database_formula_inds: Set of formula_inds that are molecules in targeted databases
     """
-    f_images_buffer: Dict[int, List[Optional[coo_matrix]]] = defaultdict(lambda: [None] * n_peaks)
-    f_ints_buffer: Dict[int, List[float]] = defaultdict(lambda: [0.0] * n_peaks)
+    image_set_buffer: Dict[int, FormulaImageSet] = {}
+    yielded_formula_is = set()
 
-    for f_i, p_i, f_int, image in formula_images_it:
-        if f_images_buffer[f_i][p_i] is None:
-            f_images_buffer[f_i][p_i] = image
-        else:
-            f_images_buffer[f_i][p_i] += image
-        f_ints_buffer[f_i][p_i] = f_int
+    for image_item in formula_images_it:
+        if image_item.formula_i not in image_set_buffer:
+            assert image_item.formula_i not in yielded_formula_is, (
+                'Images already dispatched for this formula. This means there\'s probably a bug '
+                'in the way that formula_imager handles images that span multiple DS segments.'
+            )
+            image_set_buffer[image_item.formula_i] = FormulaImageSet(
+                formula_i=image_item.formula_i,
+                is_target=image_item.formula_i in target_formula_inds,
+                targeted=image_item.formula_i in targeted_database_formula_inds,
+                theo_mzs=[0.0] * n_peaks,
+                theo_ints=[0.0] * n_peaks,
+                images=[None] * n_peaks,
+                mz_images=[None] * n_peaks,
+            )
 
-        if p_i == n_peaks - 1:  # last formula image index
-            f_images = f_images_buffer.pop(f_i)
-            f_ints = f_ints_buffer.pop(f_i)
-            yield f_i, f_ints, f_images
+        image_set = image_set_buffer[image_item.formula_i]
+        p_i = image_item.peak_i
+        image_set.theo_mzs[p_i] = image_item.theo_mz
+        image_set.theo_ints[p_i] = image_item.theo_int
+
+        if image_set.images[p_i] is None:
+            image_set.images[p_i] = image_item.image
+            image_set.mz_images[p_i] = image_item.mz_image
+        elif image_item.image is not None:
+            image_set.images[p_i] = concat_coo_matrices(image_set.images[p_i], image_item.image)
+            image_set.mz_images[p_i] = concat_coo_matrices(
+                image_set.mz_images[p_i], image_item.mz_image
+            )
+
+        # If all images have been received for this formula, yield it
+        if p_i == n_peaks - 1 and not image_item.may_be_split:
+            yielded_formula_is.add(image_item.formula_i)
+            yield image_set_buffer.pop(image_item.formula_i)
 
     # process formulas with len(peaks) < max_peaks and those that were cut to dataset max mz
-    for f_i, f_images in f_images_buffer.items():
-        f_ints = f_ints_buffer[f_i]
-        yield f_i, f_ints, f_images
-
-
-def complete_image_list(images, require_first=True):
-    non_empty_image_n = sum(1 for img in images if img is not None)
-    if non_empty_image_n == 0:
-        return False
-
-    if require_first:
-        return images[0] is not None
-
-    return True
-
-
-def nullify_images_with_too_few_pixels(f_images, min_px):
-    return [img if (img is not None and img.nnz >= min_px) else None for img in f_images]
+    yield from image_set_buffer.values()
 
 
 def compute_and_filter_metrics(
     formula_image_set_it: Iterable[FormulaImageSet],
     compute_metrics: Callable,
-    target_formula_inds: Set[int],
-    targeted_database_formula_inds: Set[int],
     min_px: int,
 ) -> Iterator[FormulaMetricSet]:
     """Compute isotope image metrics for each formula.
@@ -181,40 +243,41 @@ def compute_and_filter_metrics(
         formula_image_set_it: Iterator over tuples of
             (formula index, peak index, formula intensity, image).
         compute_metrics: Metrics function.
-        target_formula_inds: Indices of target ion formulas (non-decoy ion formulas).
-        targeted_database_formula_inds: Indices of ion formulas
-            that correspond to targeted databases.
         min_px: Minimum number of pixels each image should have.
     """
-    for f_i, f_ints, f_images in formula_image_set_it:
-        f_images = nullify_images_with_too_few_pixels(f_images, min_px)
-        is_targeted = f_i in targeted_database_formula_inds
-        if complete_image_list(f_images, require_first=not is_targeted):
-            f_metrics = compute_metrics(f_images, f_ints)
-            if f_metrics['msm'] > 0 or is_targeted:
-                if f_i in target_formula_inds:
-                    yield f_i, f_metrics, f_images
-                else:
-                    yield f_i, f_metrics, None
+    for image_set in formula_image_set_it:
+        for i in range(len(image_set.images)):
+            if image_set.images[i] is not None and image_set.images[i].nnz < min_px:
+                image_set.images[i] = None
+                image_set.mz_images[i] = None
+
+        # FIXME: Integrate this skip logic into compute_metrics
+        # if complete_image_list(peak_df.image.values, require_first=not is_targeted):
+
+        f_metrics = compute_metrics(image_set)
+        # FIXME: Discard non-targeted msm=0 images here?
+        if image_set.is_target:
+            yield image_set.formula_i, f_metrics, image_set.images
+        else:
+            yield image_set.formula_i, f_metrics, None
 
 
 def collect_metrics_as_df(
     metrics_it: Iterable[FormulaMetricSet],
 ) -> Tuple[pd.DataFrame, Dict[int, List[Optional[coo_matrix]]]]:
     """Collects metrics and images into a single dataframe and dict of images"""
-    formula_metrics = {}
+    formula_metrics = []
     formula_images = {}
 
     for f_i, f_metrics, f_images in metrics_it:
-        formula_metrics[f_i] = f_metrics
+        formula_metrics.append(f_metrics)
         if f_images is not None:
             formula_images[f_i] = f_images
 
     if formula_metrics:
-        formula_metrics_df = pd.DataFrame.from_dict(formula_metrics, orient='index')
+        formula_metrics_df = pd.DataFrame(formula_metrics).set_index('formula_i')
     else:
-        formula_metrics_df = pd.DataFrame(columns=list(METRICS.keys()))
-    formula_metrics_df.index.name = 'formula_i'
+        formula_metrics_df = EMPTY_METRICS_DF.set_index('formula_i')
 
     return formula_metrics_df, formula_images
 
@@ -227,12 +290,15 @@ def formula_image_metrics(
     n_peaks: int,
     min_px: int,
 ) -> Tuple[pd.DataFrame, Dict]:
-    formula_image_set_it = iter_images_in_sets(formula_images_it, n_peaks)
+    formula_image_set_it = iter_images_in_sets(
+        formula_images_it,
+        n_peaks,
+        target_formula_inds,
+        targeted_database_formula_inds,
+    )
     metrics_it = compute_and_filter_metrics(
         formula_image_set_it,
         compute_metrics,
-        target_formula_inds,
-        targeted_database_formula_inds,
         min_px,
     )
     formula_metrics_df, formula_images = collect_metrics_as_df(metrics_it)

@@ -1,17 +1,18 @@
 import json
 import logging
-from collections import OrderedDict
-from typing import List
 
 import numpy as np
 import pandas as pd
 import pyspark
+from dataclasses import fields
 
+from sm.engine.annotation.formula_validator import Metrics
 from sm.engine.config import SMConfig
 from sm.engine.image_storage import ImageStorage
 from sm.engine.db import DB
 from sm.engine.ion_mapping import get_ion_id_mapping
 from sm.engine.annotation.png_generator import PngGenerator
+from sm.engine.utils.numpy_json_encoder import numpy_json_dumps
 
 logger = logging.getLogger('engine')
 METRICS_INS = (
@@ -25,28 +26,28 @@ METRICS_INS = (
 class SearchResults:
     """Container for molecule search results."""
 
-    def __init__(self, ds_id: str, job_id: int, metric_names: List[str], n_peaks: int, charge: int):
+    def __init__(self, ds_id: str, job_id: int, n_peaks: int, charge: int):
         """
         Args:
             ds_id: dataset id
             job_id: annotation job id
-            metric_names: list of metric names
             n_peaks: number of isotopic peaks
             charge: charge of ions
         """
         self.ds_id = ds_id
         self.job_id = job_id
-        self.metric_names = metric_names
         self.n_peaks = n_peaks
         self.charge = charge
 
     def _metrics_table_row_gen(self, job_id, metr_df, ion_image_ids, ion_mapping):
+        stats_cols = [
+            f.name for f in fields(Metrics) if f.name != 'formula_i' and f.name in metr_df.columns
+        ]
         for _, row in metr_df.iterrows():
-            m = OrderedDict((name, row[name]) for name in self.metric_names)
-            metr_json = json.dumps(m)
+            metr_json = numpy_json_dumps({m: row[m] for m in stats_cols})
             if row.formula_i not in ion_image_ids:
                 logger.debug(f'Missing "formula_i": {row}, {ion_image_ids}')
-            image_ids = ion_image_ids[row.formula_i]['iso_image_ids']
+            image_ids = ion_image_ids[row.formula_i]
             yield (
                 job_id,
                 row.formula,
@@ -92,7 +93,7 @@ class SearchResults:
                             image_storage.ISO, ds_id, img_bytes
                         )
 
-                yield formula_i, {'iso_image_ids': iso_image_ids}
+                yield formula_i, iso_image_ids
 
         return dict(ion_images_rdd.mapPartitions(generate_png_and_post).collect())
 

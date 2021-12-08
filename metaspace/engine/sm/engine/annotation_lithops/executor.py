@@ -24,7 +24,7 @@ TRet = TypeVar('TRet')
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.9.0'
+RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:1.8.6.12-lachlan'
 MEM_LIMITS = {
     'localhost': 32768,
     'ibm_cf': 4096,
@@ -181,6 +181,7 @@ class Executor:
         runtime_memory: int = None,
         include_modules=None,
         debug_run_locally=False,
+        max_memory: int = None,
         **lithops_kwargs,
     ) -> List[TRet]:
         if len(func_args) == 0:
@@ -244,7 +245,11 @@ class Executor:
                 failed_activation_ids=failed_activation_ids,
             )
 
-            if isinstance(exc, (MemoryError, TimeoutError)) and runtime_memory <= 4096:
+            if (
+                isinstance(exc, (MemoryError, TimeoutError))
+                and runtime_memory <= 4096
+                and (max_memory is None or runtime_memory < max_memory)
+            ):
                 old_memory = runtime_memory
                 runtime_memory *= 2
                 attempt += 1
@@ -264,7 +269,7 @@ class Executor:
                     f'{func_name} raised an exception. '
                     f'Failed activation(s): {failed_idxs} '
                     f'ID(s): {failed_activation_ids}',
-                    exc_info=True,
+                    exc_info=exc,
                 )
                 raise exc
 

@@ -11,9 +11,8 @@ from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.annotate import process_centr_segments
 from sm.engine.annotation_lithops.build_moldb import InputMolDb, DbFDRData
 from sm.engine.annotation_lithops.cache import PipelineCacher, use_pipeline_cache
-from sm.engine.annotation_lithops.calculate_centroids import calculate_centroids, validate_centroids
 from sm.engine.annotation_lithops.executor import Executor
-from sm.engine.annotation_lithops.io import CObj, iter_cobjs_with_prefetch
+from sm.engine.annotation_lithops.io import CObj, iter_cobjs_with_prefetch, load_cobjs
 from sm.engine.annotation_lithops.load_ds import load_ds, validate_ds_segments
 from sm.engine.annotation_lithops.moldb_pipeline import get_moldb_centroids
 from sm.engine.annotation_lithops.prepare_results import filter_results_and_make_pngs
@@ -22,6 +21,7 @@ from sm.engine.annotation_lithops.segment_centroids import (
     segment_centroids,
     validate_centroid_segments,
 )
+from sm.engine.annotation_lithops.store_images import store_images_to_s3
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
@@ -81,7 +81,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.use_db_mutex = use_db_mutex
         self.ds_segm_size_mb = 128
 
-    def __call__(
+    def run_pipeline(
         self, debug_validate=False, use_cache=True
     ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]]]:
         # pylint: disable=unexpected-keyword-arg
@@ -111,15 +111,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             use_cache=self.use_db_cache,
             use_db_mutex=self.use_db_mutex,
         )
-
-    @use_pipeline_cache
-    def calculate_centroids(self):
-        self.peaks_cobjs = calculate_centroids(
-            self.executor, self.formula_cobjs, self.isocalc_wrapper
-        )
-
-    def validate_calculate_centroids(self):
-        validate_centroids(self.executor, self.peaks_cobjs)
 
     @use_pipeline_cache
     def load_ds(self):
@@ -191,6 +182,24 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.images_df,
             self.imzml_reader,
         )
+
+    def store_images_to_s3(self, ds_id: str):
+        """Stores ion images to S3 ImageStorage. Not part of run_pipeline because this is unwanted
+        when running from a LocalAnnotationJob."""
+        formula_i_to_db_id = pd.concat([df.moldb_id for df in self.results_dfs.values()])
+        return store_images_to_s3(
+            self.executor,
+            ds_id,
+            formula_i_to_db_id,
+            self.png_cobjs,
+        )
+
+    def get_fdr_diagnostics(self):
+        for db_data in load_cobjs(self.storage, self.db_data_cobjs):
+            self.results_dfs[db_data['id']] = self.formula_metrics_df.join(
+                db_data['formula_map_df'].set_index('formula_i')
+            )
+        self.png_cobjs = []
 
     def clean(self, all_caches=False):
         if self.cacher:

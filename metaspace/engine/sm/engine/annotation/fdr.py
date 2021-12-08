@@ -9,86 +9,16 @@ from sm.engine.formula_parser import format_modifiers
 logger = logging.getLogger('engine')
 
 DECOY_ADDUCTS = [
-    '+He',
-    '+Li',
-    '+Be',
-    '+B',
-    '+C',
-    '+N',
-    '+O',
-    '+F',
-    '+Ne',
-    '+Mg',
-    '+Al',
-    '+Si',
-    '+P',
-    '+S',
-    '+Cl',
-    '+Ar',
-    '+Ca',
-    '+Sc',
-    '+Ti',
-    '+V',
-    '+Cr',
-    '+Mn',
-    '+Fe',
-    '+Co',
-    '+Ni',
-    '+Cu',
-    '+Zn',
-    '+Ga',
-    '+Ge',
-    '+As',
-    '+Se',
-    '+Br',
-    '+Kr',
-    '+Rb',
-    '+Sr',
-    '+Y',
-    '+Zr',
-    '+Nb',
-    '+Mo',
-    '+Ru',
-    '+Rh',
-    '+Pd',
-    '+Ag',
-    '+Cd',
-    '+In',
-    '+Sn',
-    '+Sb',
-    '+Te',
-    '+I',
-    '+Xe',
-    '+Cs',
-    '+Ba',
-    '+La',
-    '+Ce',
-    '+Pr',
-    '+Nd',
-    '+Sm',
-    '+Eu',
-    '+Gd',
-    '+Tb',
-    '+Dy',
-    '+Ho',
-    '+Ir',
-    '+Th',
-    '+Pt',
-    '+Os',
-    '+Yb',
-    '+Lu',
-    '+Bi',
-    '+Pb',
-    '+Re',
-    '+Tl',
-    '+Tm',
-    '+U',
-    '+W',
-    '+Au',
-    '+Er',
-    '+Hf',
-    '+Hg',
-    '+Ta',
+    # fmt: off
+    '+He', '+Li', '+Be', '+B', '+C', '+N', '+O', '+F', '+Ne', '+Mg',
+    '+Al', '+Si', '+P', '+S', '+Cl', '+Ar', '+Ca', '+Sc', '+Ti', '+V',
+    '+Cr', '+Mn', '+Fe', '+Co', '+Ni', '+Cu', '+Zn', '+Ga', '+Ge', '+As',
+    '+Se', '+Br', '+Kr', '+Rb', '+Sr', '+Y', '+Zr', '+Nb', '+Mo', '+Ru',
+    '+Rh', '+Pd', '+Ag', '+Cd', '+In', '+Sn', '+Sb', '+Te', '+I', '+Xe',
+    '+Cs', '+Ba', '+La', '+Ce', '+Pr', '+Nd', '+Sm', '+Eu', '+Gd', '+Tb',
+    '+Dy', '+Ho', '+Ir', '+Th', '+Pt', '+Os', '+Yb', '+Lu', '+Bi', '+Pb',
+    '+Re', '+Tl', '+Tm', '+U', '+W', '+Au', '+Er', '+Hf', '+Hg', '+Ta',
+    # fmt: on
 ]
 
 
@@ -167,8 +97,14 @@ class FDR:
                 return level
         return 1.0
 
-    @staticmethod
-    def _msm_fdr_map(target_msm, decoy_msm):
+    def _msm_fdr_map(self, target_msm, decoy_msm, decoy_ratio):
+        """
+        decoy ratio - ratio of decoys to targets for the given ranking. This has to be provided
+        because `target_msm` and `decoy_msm` usually exclude zero-scored annotations, but those
+        excluded need to be taken into account for the FDR calculation.
+        In analysis_version=1, many rankings with matched target/decoy sizes are used, so this should be 1
+        In analysis_version=3, a single ranking is done per target, so this should be the decoy_sample_size
+        """
         target_msm_hits = pd.Series(target_msm.msm.value_counts(), name='target')
         decoy_msm_hits = pd.Series(decoy_msm.msm.value_counts(), name='decoy')
         msm_df = (
@@ -178,12 +114,23 @@ class FDR:
         )
         msm_df['target_cum'] = msm_df.target.cumsum()
         msm_df['decoy_cum'] = msm_df.decoy.cumsum()
-        msm_df['fdr'] = msm_df.decoy_cum / msm_df.target_cum
+
+        if self.analysis_version < 3:
+            msm_df['fdr'] = msm_df.decoy_cum / decoy_ratio / msm_df.target_cum
+        else:
+            # Per the Rule of Succession, to find the the best estimate of a
+            # Bernoulli distribution's mean, add one to the number of observations of each class.
+            # Other FDR algorithms don't seem to do this, and technically this isn't actually a
+            # Bernoulli distribution, but it's the best approach I could find to integrate
+            # uncertainty into the FDR values to avoid producing misleading 0% FDR values
+            # (which likely have a large-but-unreported margin of error).
+            msm_df['fdr'] = (msm_df.decoy_cum + 1) / decoy_ratio / (msm_df.target_cum + 1)
         return msm_df.fdr
 
     def _digitize_fdr(self, fdr_df):
         if self.analysis_version < 2:
-            df = fdr_df.copy().sort_values(by='msm', ascending=False)
+            # Bin annotations by predefined FDR levels
+            df = fdr_df.sort_values(by='msm', ascending=False)
             msm_levels = [df[df.fdr < fdr_thr].msm.min() for fdr_thr in self.fdr_levels]
             df['fdr_d'] = 1.0
             for msm_thr, fdr_thr in zip(msm_levels, self.fdr_levels):
@@ -191,10 +138,11 @@ class FDR:
                 df.loc[row_mask, 'fdr_d'] = fdr_thr
             df['fdr'] = df.fdr_d
             return df.drop('fdr_d', axis=1)
-
-        df = fdr_df.sort_values(by='msm')
-        df['fdr'] = np.minimum.accumulate(df.fdr)  # pylint: disable=no-member
-        return df
+        else:
+            # Calculate continuous FDR values.
+            df = fdr_df.sort_values(by='msm')
+            df['fdr'] = np.minimum.accumulate(df.fdr)
+            return df
 
     def estimate_fdr(self, formula_msm):
         logger.info('Estimating FDR')
@@ -206,20 +154,32 @@ class FDR:
             target_msm = formula_msm[formula_msm.modifier == tm]
             full_decoy_df = td_df.loc[tm, ['formula', 'dm']]
 
-            msm_fdr_list = []
-            for i in range(self.decoy_sample_size):
-                decoy_subset_df = full_decoy_df[i :: self.decoy_sample_size]
-                decoy_msm = pd.merge(
+            if self.analysis_version >= 3:
+                all_decoy_msm = pd.merge(
                     formula_msm,
-                    decoy_subset_df,
+                    full_decoy_df,
                     left_on=['formula', 'modifier'],
                     right_on=['formula', 'dm'],
                 )
-                msm_fdr = self._msm_fdr_map(target_msm, decoy_msm)
-                msm_fdr_list.append(msm_fdr)
+                msm_to_fdr = self._msm_fdr_map(target_msm, all_decoy_msm, self.decoy_sample_size)
+            else:
+                msm_fdr_list = []
+                # Do a separate ranking for each of the 20 target:decoy pairings, then take the
+                # median FDR for each target
+                for i in range(self.decoy_sample_size):
+                    decoy_subset_df = full_decoy_df[i :: self.decoy_sample_size]
+                    decoy_msm = pd.merge(
+                        formula_msm,
+                        decoy_subset_df,
+                        left_on=['formula', 'modifier'],
+                        right_on=['formula', 'dm'],
+                    )
+                    msm_fdr = self._msm_fdr_map(target_msm, decoy_msm, 1)
+                    msm_fdr_list.append(msm_fdr)
 
-            msm_fdr_avg = pd.Series(pd.concat(msm_fdr_list, axis=1).median(axis=1), name='fdr')
-            target_fdr = self._digitize_fdr(target_msm.join(msm_fdr_avg, on='msm'))
+                msm_to_fdr = pd.Series(pd.concat(msm_fdr_list, axis=1).median(axis=1), name='fdr')
+
+            target_fdr = self._digitize_fdr(target_msm.join(msm_to_fdr, on='msm'))
             target_fdr_df_list.append(target_fdr.drop('msm', axis=1))
 
-        return pd.concat(target_fdr_df_list, axis=0)
+        return pd.concat(target_fdr_df_list)
