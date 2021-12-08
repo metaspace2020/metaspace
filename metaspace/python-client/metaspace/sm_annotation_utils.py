@@ -193,17 +193,26 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
         resp_data = send_request(url, max_retries=2)
         return resp_data['url']
 
-    def upload_part(presigned_url, data):
+    def upload_part(part, data):
         try:
-            resp_data = send_request(
-                presigned_url,
-                'PUT',
-                data=data,
-                headers=headers,
-                return_headers=True,
-                max_retries=2,
-            )
-            return resp_data['ETag']
+            max_retries = 3
+            for i in range(max_retries):
+                try:
+                    presigned_url = sign_part_upload(key, upload_id, part)
+                    resp_data = send_request(
+                        presigned_url,
+                        'PUT',
+                        data=data,
+                        headers=headers,
+                        return_headers=True,
+                        max_retries=2,
+                    )
+                    return resp_data['ETag']
+                except Exception as ex:
+                    if i == max_retries - 1:
+                        raise
+                    else:
+                        print(f'Part {part} failed with error: {ex}. Retrying...')
         finally:
             semaphore.release()
 
@@ -240,8 +249,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
 
                 part += 1
                 print(f'Uploading part {part:3}/{n_parts:3} of {Path(local_path).name} file...')
-                presigned_url = sign_part_upload(key, upload_id, part)
-                yield part, presigned_url, file_data
+                yield part, file_data
 
     session = requests.Session()
     key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers)
@@ -256,7 +264,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
     with ThreadPoolExecutor(n_threads) as ex:
         etags = list(
             ex.map(
-                lambda args: (args[0], upload_part(*args[1:])),
+                lambda args: (args[0], upload_part(*args)),
                 iterate_file(key, upload_id, local_path),
             )
         )
