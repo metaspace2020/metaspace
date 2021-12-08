@@ -1485,8 +1485,13 @@ class SMInstance(object):
         try:
             self.reconnect()
         except (AssertionError, BadRequestException) as ex:
-            if ('Invalid API key' in ex.message or 'Login failed' in ex.message) and (api_key is None and email is None):
-                print(f'Login failed. Call sm.save_login(overwrite=True) to update your saved credentials.')
+            if ('Invalid API key' in ex.message or 'Login failed' in ex.message) and (
+                api_key is None and email is None
+            ):
+                print(
+                    f'Login failed. Call sm.save_login(overwrite=True) to update your '
+                    f'saved credentials.'
+                )
             else:
                 print(f'Failed to connect to {self._config["host"]}: {ex.message}')
 
@@ -1501,7 +1506,10 @@ class SMInstance(object):
             print(f'{config_path} already exists. Call sm.save_login(overwrite=True) to overwrite.')
             return
 
-        api_key = getpass(f'Please generate an API key at https://metaspace2020.eu/user/me and enter it here (or leave blank to cancel):')
+        api_key = getpass(
+            f'Please generate an API key at https://metaspace2020.eu/user/me and enter it here '
+            f'(or leave blank to cancel):'
+        )
         api_key = api_key.strip()
         if not api_key:
             print('Cancelled')
