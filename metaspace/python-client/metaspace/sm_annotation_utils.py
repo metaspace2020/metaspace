@@ -7,6 +7,7 @@ import urllib.parse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+from getpass import getpass
 from io import BytesIO
 from pathlib import Path
 from shutil import copyfileobj
@@ -1472,10 +1473,41 @@ class SMInstance(object):
             from urllib3.exceptions import InsecureRequestWarning
 
             warnings.filterwarnings('ignore', category=InsecureRequestWarning)
-        self.reconnect()
+
+        try:
+            self.reconnect()
+        except (AssertionError, BadRequestException) as ex:
+            if ('Invalid API key' in ex.message or 'Login failed' in ex.message) and (api_key is None and email is None):
+                print(f'Login failed. Call sm.save_login(overwrite=True) to update your saved credentials.')
+            else:
+                print(f'Failed to connect to {self._config["host"]}: {ex.message}')
 
     def __repr__(self):
         return "SMInstance({})".format(self._config['graphql_url'])
+
+    def save_login(self, overwrite=False):
+        """Saves login credentials to the config file so that they will be automatically loaded
+        in future uses of SMInstance()"""
+        config_path = Path.home() / '.metaspace'
+        if config_path.exists() and not overwrite:
+            print(f'{config_path} already exists. Call sm.save_login(overwrite=True) to overwrite.')
+            return
+
+        api_key = getpass(f'Please generate an API key at https://metaspace2020.eu/user/me and enter it here (or leave blank to cancel):')
+        api_key = api_key.strip()
+        if not api_key:
+            print('Cancelled')
+            return
+
+        try:
+            self.login(api_key=api_key)
+        except:
+            print(f'Login failed. Please check your API key and try again.')
+            return
+
+        config_path.open('w').write(f'api_key={api_key}')
+
+        print(f'Saved API key to {config_path}')
 
     def login(self, email=None, password=None, api_key=None):
         """
