@@ -37,7 +37,8 @@ extensions = [
     'sphinx_autodoc_typehints',
 ]
 
-source_suffix = ['.rst', '.ipynb']
+# NOTE: Never add .ipynb to this list: https://github.com/readthedocs/readthedocs.org/issues/8424#issuecomment-903014083
+source_suffix = ['.rst']
 nbsphinx_execute = 'never'
 
 # The name of the Pygments (syntax highlighting) style to use.
