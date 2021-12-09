@@ -7,9 +7,11 @@ import urllib.parse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
+from getpass import getpass
 from io import BytesIO
 from pathlib import Path
 from shutil import copyfileobj
+from threading import BoundedSemaphore
 from typing import Optional, List, Iterable, Union, Tuple, Any, TYPE_CHECKING
 from urllib.parse import urlparse
 
@@ -191,16 +193,28 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
         resp_data = send_request(url, max_retries=2)
         return resp_data['url']
 
-    def upload_part(presigned_url, data):
-        resp_data = send_request(
-            presigned_url,
-            'PUT',
-            data=data,
-            headers=headers,
-            return_headers=True,
-            max_retries=2,
-        )
-        return resp_data['ETag']
+    def upload_part(part, data):
+        try:
+            max_retries = 3
+            for i in range(max_retries):
+                try:
+                    presigned_url = sign_part_upload(key, upload_id, part)
+                    resp_data = send_request(
+                        presigned_url,
+                        'PUT',
+                        data=data,
+                        headers=headers,
+                        return_headers=True,
+                        max_retries=2,
+                    )
+                    return resp_data['ETag']
+                except Exception as ex:
+                    if i == max_retries - 1:
+                        raise
+                    else:
+                        print(f'Part {part} failed with error: {ex}. Retrying...')
+        finally:
+            semaphore.release()
 
     def complete_multipart_upload(key, upload_id, etags, headers={}):
         query = urllib.parse.urlencode({'key': key})
@@ -228,22 +242,29 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
             part_size_mb = max(5, int(math.ceil(file_len_mb / 10000)))
             n_parts = int(math.ceil(file_len_mb / part_size_mb))
             while True:
+                semaphore.acquire()
                 file_data = f.read(part_size_mb * 1024 ** 2)
                 if not file_data:
                     break
 
                 part += 1
                 print(f'Uploading part {part:3}/{n_parts:3} of {Path(local_path).name} file...')
-                presigned_url = sign_part_upload(key, upload_id, part)
-                yield part, presigned_url, file_data
+                yield part, file_data
 
     session = requests.Session()
     key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers)
 
-    with ThreadPoolExecutor(8) as ex:
+    # Python evaluates the input to ThreadPoolExecutor.map eagerly, which would allow iterate_file
+    # to read parts and sign uploads even if there was a significant queue to upload_part.
+    # This semaphore ensures that iterate_file can only read, sign and yield a part when upload_part
+    # is ready to receive it.
+    n_threads = 8
+    semaphore = BoundedSemaphore(n_threads)
+
+    with ThreadPoolExecutor(n_threads) as ex:
         etags = list(
             ex.map(
-                lambda args: (args[0], upload_part(*args[1:])),
+                lambda args: (args[0], upload_part(*args)),
                 iterate_file(key, upload_id, local_path),
             )
         )
@@ -1460,10 +1481,49 @@ class SMInstance(object):
             from urllib3.exceptions import InsecureRequestWarning
 
             warnings.filterwarnings('ignore', category=InsecureRequestWarning)
-        self.reconnect()
+
+        try:
+            self.reconnect()
+        except (AssertionError, BadRequestException) as ex:
+            if ('Invalid API key' in ex.message or 'Login failed' in ex.message) and (
+                api_key is None and email is None
+            ):
+                print(
+                    f'Login failed. Call sm.save_login(overwrite=True) to update your '
+                    f'saved credentials.'
+                )
+            else:
+                print(f'Failed to connect to {self._config["host"]}: {ex.message}')
 
     def __repr__(self):
         return "SMInstance({})".format(self._config['graphql_url'])
+
+    def save_login(self, overwrite=False):
+        """Saves login credentials to the config file so that they will be automatically loaded
+        in future uses of SMInstance()"""
+        config_path = Path.home() / '.metaspace'
+        if config_path.exists() and not overwrite:
+            print(f'{config_path} already exists. Call sm.save_login(overwrite=True) to overwrite.')
+            return
+
+        api_key = getpass(
+            f'Please generate an API key at https://metaspace2020.eu/user/me and enter it here '
+            f'(or leave blank to cancel):'
+        )
+        api_key = api_key.strip()
+        if not api_key:
+            print('Cancelled')
+            return
+
+        try:
+            self.login(api_key=api_key)
+        except:
+            print(f'Login failed. Please check your API key and try again.')
+            return
+
+        config_path.open('w').write(f'api_key={api_key}')
+
+        print(f'Saved API key to {config_path}')
 
     def login(self, email=None, password=None, api_key=None):
         """
