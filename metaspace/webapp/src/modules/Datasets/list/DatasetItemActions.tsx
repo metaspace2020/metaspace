@@ -8,6 +8,10 @@ import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 import config from '../../../lib/config'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
 import './DatasetItemActions.scss'
+import RichText from '../../../components/RichText'
+import isValidTiptapJson from '../../../lib/isValidTiptapJson'
+import safeJsonParse from '../../../lib/safeJsonParse'
+import { Tree } from '../../../lib/element-ui'
 
 const DatasetItemActions = defineComponent({
   name: 'DatasetItemActions',
@@ -115,12 +119,54 @@ const DatasetItemActions = defineComponent({
       && publicationStatus.value != null,
     )
 
+    const getDescriptionAsTree = () => {
+      const { dataset } = props
+      const rawDescription = isValidTiptapJson(safeJsonParse(dataset.description))
+        ? safeJsonParse(dataset.description) : null
+      let isEmpty = true
+
+      if (rawDescription && safeJsonParse(rawDescription).content) {
+        isEmpty = false
+      }
+
+      return [{
+        label: 'Additional Info',
+        isEmpty,
+        children: [
+          {
+            label: 'Supplementary',
+            rawDescription,
+          },
+        ],
+      }]
+    }
+
+    const renderDescription = (h : any, { node, data } : { node : any, data : any }) => {
+      return (
+        <div class="custom-tree-node">
+          {
+            !data.rawDescription
+            && <span>{node.label}</span>
+          }
+          {
+            data.rawDescription
+            && <RichText
+              class="custom-text"
+              placeholder=" "
+              content={data.rawDescription}
+              readonly={true}/>
+          }
+        </div>)
+    }
+
     return () => {
       const { dataset, metadata, currentUser } = props
+      const description = getDescriptionAsTree()
 
       return (
         <div class="ds-actions">
           <el-dialog
+            customClass='dataset-item-dialog'
             title="Provided metadata"
             lock-scroll={false}
             visible={state.showMetadataDialog}
@@ -130,6 +176,16 @@ const DatasetItemActions = defineComponent({
               metadata={metadata}
               currentUser={currentUser}
             />
+            {
+              description
+              && description[0]
+              && !description[0].isEmpty
+              && <Tree
+                defaultExpandAll
+                data={description}
+                renderContent={renderDescription}
+              />
+            }
           </el-dialog>
 
           {state.showDownloadDialog
