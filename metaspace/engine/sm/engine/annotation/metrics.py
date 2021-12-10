@@ -79,12 +79,6 @@ def v2_spatial_spearman(imgs, intensities):
         return (corr + 1) / 2
 
 
-def weighted_stddev(values, weights):
-    average = np.average(values, weights=weights)
-    stddev = np.sqrt(np.average((values - average) ** 2, weights=weights))
-    return average, stddev
-
-
 def v1_chaos(iso_img, n_levels):
     # Shrink image if possible, as chaos performance is highly resolution-dependent
     iso_img = compact_empty_space(iso_img)

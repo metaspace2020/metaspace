@@ -4,6 +4,7 @@ import os
 import pprint
 import re
 import urllib.parse
+import warnings
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
@@ -1326,13 +1327,23 @@ class SMDataset(object):
             except Exception:
                 # Retry once in case of network error due to excessive parallelism
                 raw = BytesIO(self._session.get(image['url']).content)
+            try:
+                if format == 'PNG':
+                    import matplotlib.image as mpimg
 
-            if format == 'PNG':
-                import matplotlib.image as mpimg
-
-                image_content = mpimg.imread(raw)
-            else:
-                image_content = np.load(raw, allow_pickle=False)  # type: ignore
+                    image_content = mpimg.imread(raw)
+                elif format == 'NPY':
+                    image_content = np.load(raw, allow_pickle=False)  # type: ignore
+                elif format == 'JSON':
+                    image_content = json.load(raw)
+                elif format == 'PARQUET':
+                    image_content = pd.read_parquet(raw)
+                else:
+                    print(f'Warning: Unrecognized image format {format}, returning unparsed content')
+                    image_content = raw
+            except Exception as ex:
+                print(f'Warning: Could not parse image {image["url"]}: {ex}')
+                image_content = raw
 
             self._diagnostic_images[key] = image_content
         return self._diagnostic_images[key]
