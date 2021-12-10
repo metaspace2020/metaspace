@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 from cpyImagingMSpec import measure_of_chaos
 from pyImagingMSpec.image_measures import isotope_pattern_match
@@ -9,16 +7,14 @@ from scipy.stats import spearmanr
 from sm.engine.annotation.image_manip import count_connected_components, compact_empty_space
 
 
-def v1_spatial(iso_imgs_flat, n_spectra, intensities, min_px=2, weights=None, force_pos=False):
+def v1_spatial(iso_imgs_flat, n_spectra, intensities, weights=None, force_pos=False):
     """Reimplementation of pyImagingMSpec.image_measures.isotope_image_correlation supporting
     a variable denominator when calculating the corrcoef (to compensate for the removed zero-valued
     pixels).
     """
-    # FIXME: np.count_nonzero(iso_imgs_flat[0]) < 2 used here for backcompat, but it's not actually
-    # needed by the algorithm
     if (
         len(iso_imgs_flat) < 2
-        or np.count_nonzero(iso_imgs_flat[0]) < min_px
+        or np.count_nonzero(iso_imgs_flat[0]) < 2
         or np.sum(intensities[1:]) == 0
     ):
         return 0
@@ -30,7 +26,6 @@ def v1_spatial(iso_imgs_flat, n_spectra, intensities, min_px=2, weights=None, fo
     try:
         # coerce between [0 1]
         return np.clip(np.average(iso_correlation, weights=intensities[1:]), 0, 1)
-        # return np.average(iso_correlation, weights=intensities[1:])
     except TypeError:
         raise ValueError("Number of images is not equal to the number of weights + 1")
 
@@ -91,7 +86,6 @@ def weighted_stddev(values, weights):
 
 
 def v1_chaos(iso_img, n_levels):
-
     # Shrink image if possible, as chaos performance is highly resolution-dependent
     iso_img = compact_empty_space(iso_img)
 
@@ -152,22 +146,10 @@ def v1_spectral(iso_imgs_flat, formula_ints):
     return isotope_pattern_match(iso_imgs_flat, formula_ints)
 
 
-def v2_spectral(iso_imgs_flat, formula_ints, weights=None, limit_of_detection=0):
-    if len(formula_ints) < 2:
-        return 0
-    mask = iso_imgs_flat[0] > limit_of_detection / (np.max(formula_ints[1:]) / formula_ints[0])
-    # Awkwardness: If all pixels are below the limit of detection, don't mask
-    if not mask.all() and mask.any():
-        iso_imgs_flat = iso_imgs_flat[:, mask]
-        if weights is not None:
-            weights = weights[mask]
-    if weights is None:
-        weights = np.ones(iso_imgs_flat.shape[1])
-
-    image_ints = np.sum(iso_imgs_flat * weights[np.newaxis, :], axis=1)
-    image_ints_norm = image_ints / np.linalg.norm(image_ints)
-    formula_ints_norm = formula_ints / np.linalg.norm(formula_ints)
-    return 1 - np.mean(np.abs(formula_ints_norm - image_ints_norm))
+def weighted_stddev(values, weights):
+    average = np.average(values, weights=weights)
+    stddev = np.sqrt(np.average((values - average) ** 2, weights=weights))
+    return average, stddev
 
 
 def calc_mz_stddev(iso_images_sparse, iso_mzs_sparse, formula_mzs):
@@ -181,4 +163,4 @@ def calc_mz_stddev(iso_images_sparse, iso_mzs_sparse, formula_mzs):
         else:
             mz_mean.append(theo_mz)
             mz_stddev.append(0)
-    return mz_mean, mz_stddev
+    return np.float32(mz_mean), np.float32(mz_stddev)

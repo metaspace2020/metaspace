@@ -1,15 +1,13 @@
 import logging
-import pickle
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum
 from io import BytesIO
 from traceback import format_exc
-from typing import Optional, Any, Union, List, TypedDict, Dict
+from typing import Optional, Any, Union, List, TypedDict
 
 import numpy as np
 import pandas as pd
-import zstandard
 
 from sm.engine import image_storage
 from sm.engine.annotation.imzml_reader import ImzMLReader
@@ -32,19 +30,17 @@ class DiagnosticImageKey(str, Enum):
     TIC = 'TIC'
     # if type == DiagnosticType.IMZML_METADATA
     MASK = 'MASK'
-    FDR_RESULTS = 'FDR_RESULTS'
+    # if type == DiagnosticType.FDR_RESULTS
+    DECOY_MAP_DF = 'DECOY_MAP_DF'
+    FORMULA_MAP_DF = 'FORMULA_MAP_DF'
+    METRICS_DF = 'METRICS_DF'
 
 
 class DiagnosticImageFormat(str, Enum):
     PNG = 'PNG'
     NPY = 'NPY'
     JSON = 'JSON'
-    # TODO: Replace this
-    PICKLE_ZSTD = (
-        'PICKLE_ZSTD'  # NEVER USE THIS. If you do use it, never load it from inside Python code,
-    )
-    # because pickle files can run any code they want during loading and there is no way to secure it.
-    # Also, pickle files tend to break between versions
+    PARQUET = 'PARQUET'
 
 
 class DiagnosticImage(TypedDict, total=False):
@@ -62,6 +58,36 @@ class DatasetDiagnostic(TypedDict, total=False):
     data: Any
     error: Union[str, None]
     images: List[DiagnosticImage]
+
+
+class FdrDiagnosticBundle(TypedDict):
+    """Holds the inputs required to save a FDR diagnostic for one job"""
+
+    decoy_sample_size: int
+    decoy_map_df: pd.DataFrame
+    """decoy_map_df lists each base formula and the pairs of target modifier and decoy modifiers,
+    This is the comprehensive set - all formulas are included and exactly `decoy_sample_size` decoys
+    exist per base formula + target modifier combination, unfiltered by mass, metrics or formula validity.
+
+    Columns: formula, tm, dm
+    """
+    formula_map_df: pd.DataFrame
+    """formula_map_df associates the filtered formula + (target/decoy) modifiers with their 
+    corresponding formula_i. Multiple formula+modifiers can have the same formula_i if they sum to 
+    the same element counts. Some rows may be missing if excluded due to mass or invalid formulas.
+    
+    Columns: 
+        formula - base formula of the molecule
+        modifier - matches tm or dm from decoy_map_df
+        formula_i - index into metrics_df
+    """
+    metrics_df: pd.DataFrame
+    """metrics_df contains the calculated metrics for each tested annotation. Array-valued columns 
+    (listed in METRICS_ARRAY_COLUMNS) are unpacked into separate columns for better storage.
+    
+    Index: formula_i 
+    Columns: See `Metrics` class for the full list 
+    """
 
 
 def add_diagnostics(diagnostics: List[DatasetDiagnostic]):
@@ -168,12 +194,10 @@ def save_npy_image(ds_id: str, arr: np.ndarray):
     return image_storage.post_image(image_storage.DIAG, ds_id, buf)
 
 
-def save_pickle_image(ds_id: str, data):
-    buf = BytesIO()
-    cctx = zstandard.ZstdCompressor(level=3)
-    with cctx.stream_writer(buf, closefd=False) as writer:
-        pickle.dump(data, writer)
-    buf.seek(0)
+def save_parquet_image(ds_id: str, data):
+    assert isinstance(data, (pd.DataFrame, pd.Series)), 'Parquet data must be a DataFrame or Series'
+
+    buf = BytesIO(data.to_parquet())
     return image_storage.post_image(image_storage.DIAG, ds_id, buf)
 
 
@@ -181,17 +205,16 @@ def save_diagnostic_image(
     ds_id: str, data: Any, key, index=None, format=DiagnosticImageFormat.NPY
 ) -> DiagnosticImage:
     assert key in DiagnosticImageKey
-    if format is DiagnosticImageFormat.NPY:
+    if format == DiagnosticImageFormat.NPY:
         image_id = save_npy_image(ds_id, data)
-    elif format is DiagnosticImageFormat.JSON:
+    elif format == DiagnosticImageFormat.JSON:
         image_id = image_storage.post_image(
             image_storage.DIAG, ds_id, BytesIO(numpy_json_dumps(data).encode())
         )
+    elif format == DiagnosticImageFormat.PARQUET:
+        image_id = save_parquet_image(ds_id, data)
     else:
-        assert (
-            format == DiagnosticImageFormat.PICKLE_ZSTD
-        ), 'Unknown format passed to save_diagnostic_image'
-        image_id = save_pickle_image(ds_id, data)
+        raise ValueError(f'Unknown format: {format}')
     image = {
         'key': key,
         'image_id': image_id,
@@ -209,17 +232,49 @@ def load_npy_image(ds_id: str, image_id: str):
     return np.load(BytesIO(buf), allow_pickle=False)
 
 
-def extract_dataset_diagnostics(
-    ds_id: str, imzml_reader: ImzMLReader, results_dfs: Dict[int, pd.DataFrame]
-):
-    def run_diagnostic_fn(type, fn):
+def _run_diagnostic_fn(ds_id, type, fn):
+    # Try several times because occasionally lag/network issues cause object upload to timeout.
+    for attempt in range(3):
         try:
             result = fn()
         except Exception:
-            logger.exception(f'Exception generating {type} diagnostic', exc_info=True)
+            logger.exception(
+                f'Exception generating {type} diagnostic after {attempt+1} attempts',
+                exc_info=True,
+            )
             result = {'error': format_exc()}
-        return {'ds_id': ds_id, 'type': type, **result}
+    return {'ds_id': ds_id, 'type': type, **result}
 
+
+def extract_job_diagnostics(
+    ds_id: str,
+    job_id: int,
+    fdr_bundle: FdrDiagnosticBundle,
+):
+    sanity_check_fdr_diagnostics(fdr_bundle)
+
+    def fdr_diagnostic():
+        images = [
+            save_diagnostic_image(ds_id, df, key=key, format=DiagnosticImageFormat.PARQUET)
+            for key, df in [
+                (DiagnosticImageKey.DECOY_MAP_DF, fdr_bundle['decoy_map_df']),
+                (DiagnosticImageKey.FORMULA_MAP_DF, fdr_bundle['formula_map_df']),
+                (DiagnosticImageKey.METRICS_DF, fdr_bundle['metrics_df']),
+            ]
+        ]
+        return {
+            'job_id': job_id,
+            'images': images,
+            'data': {'decoy_sample_size': fdr_bundle['decoy_sample_size']},
+        }
+
+    return [_run_diagnostic_fn(ds_id, DiagnosticType.FDR_RESULTS, fdr_diagnostic)]
+
+
+def extract_dataset_diagnostics(
+    ds_id: str,
+    imzml_reader: ImzMLReader,
+):
     def metadata_diagnostic():
         mask_image = save_diagnostic_image(ds_id, imzml_reader.mask, DiagnosticImageKey.MASK)
         return {
@@ -253,23 +308,34 @@ def extract_dataset_diagnostics(
             'images': [tic_image],
         }
 
-    def fdr_results_diagnostic():
-        # FIXME: Convert this into a "job diagnostic"
-        return {
-            'images': [
-                save_diagnostic_image(
-                    ds_id,
-                    results_df,
-                    key=DiagnosticImageKey.FDR_RESULTS,
-                    index=db_id,
-                    format=DiagnosticImageFormat.PICKLE_ZSTD,
-                )
-                for db_id, results_df in results_dfs.items()
-            ]
-        }
-
     return [
-        run_diagnostic_fn(DiagnosticType.IMZML_METADATA, metadata_diagnostic),
-        run_diagnostic_fn(DiagnosticType.TIC, tic_diagnostic),
-        run_diagnostic_fn(DiagnosticType.FDR_RESULTS, fdr_results_diagnostic),
+        _run_diagnostic_fn(ds_id, DiagnosticType.IMZML_METADATA, metadata_diagnostic),
+        _run_diagnostic_fn(ds_id, DiagnosticType.TIC, tic_diagnostic),
     ]
+
+
+def sanity_check_fdr_diagnostics(fdr_bundle: FdrDiagnosticBundle) -> None:
+    """Ensure FdrDiagnostics is in the expected format, because this would be a nightmare to
+    debug later if invalid data is saved"""
+    decoy_map_df = fdr_bundle['decoy_map_df']
+    formula_map_df = fdr_bundle['formula_map_df']
+    metrics_df = fdr_bundle['metrics_df']
+
+    decoy_sample_size = fdr_bundle['decoy_sample_size']
+    decoy_map_df_cols = ['formula', 'tm', 'dm']
+    formula_map_df_cols = ['formula', 'modifier', 'formula_i']
+    metrics_df_cols = ['chaos', 'spectral', 'spatial', 'msm']
+
+    assert set(decoy_map_df.columns) == set(
+        decoy_map_df_cols
+    ), f'Unexpected columns in decoy_map_df: {decoy_map_df.columns}'
+
+    assert set(formula_map_df.columns) == set(
+        formula_map_df_cols
+    ), f'Unexpected columns in formula_map_df: {formula_map_df.columns}'
+
+    assert metrics_df.index.name == 'formula_i', 'metrics_df.index.name != formula_i'
+    assert metrics_df.index.is_unique, 'metrics_df.index is not unique'
+    assert all(
+        col in metrics_df.columns for col in metrics_df_cols
+    ), f'Unexpected columns in metrics_df: {metrics_df.columns}'

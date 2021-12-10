@@ -1,9 +1,14 @@
 from copy import deepcopy
+from dataclasses import asdict
 from datetime import datetime
 
+import pandas as pd
+
+from sm.engine import molecular_db
+from sm.engine.annotation.diagnostics import FdrDiagnosticBundle
+from sm.engine.annotation.formula_validator import Metrics
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
-from sm.engine import molecular_db
 from sm.engine.molecular_db import MolecularDB
 
 TEST_METADATA = {
@@ -76,3 +81,27 @@ def create_test_ds(
     )
     ds.save(DB(), es=es, allow_insert=True)
     return ds
+
+
+def create_test_fdr_diagnostics_bundle() -> FdrDiagnosticBundle:
+    return FdrDiagnosticBundle(
+        decoy_sample_size=2,
+        decoy_map_df=pd.DataFrame(
+            {
+                'formula': ['H2O', 'H2O', 'H2SO4', 'H2SO4'],
+                'tm': ['+H', '+H', '+Na', '+Na'],
+                'dm': ['+U', '+Pb', '+U', '+Pb'],
+            }
+        ),
+        formula_map_df=pd.DataFrame(
+            {
+                'formula': ['H2O', 'H2O', 'H2O', 'H2O', 'H2SO4', 'H2SO4', 'H2SO4', 'H2SO4'],
+                'modifier': ['+H', '+Na', '+U', '+Pb', '+H', '+Na', '+U', '+Pb'],
+                'formula_i': [8, 9, 10, 11, 12, 11, 10, 9],
+            }
+        ),
+        metrics_df=pd.DataFrame(
+            [asdict(Metrics()) for i in [8, 9, 10]],
+            index=pd.Index([8, 9, 10], name='formula_i'),
+        ),
+    )

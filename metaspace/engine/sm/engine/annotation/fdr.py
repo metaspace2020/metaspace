@@ -45,7 +45,9 @@ class FDR:
     fdr_levels = [0.05, 0.1, 0.2, 0.5]
 
     def __init__(self, fdr_config, chem_mods, neutral_losses, target_adducts, analysis_version):
-        self.decoy_sample_size = fdr_config['decoy_sample_size']
+        self.decoy_adduct_cand = [ad for ad in DECOY_ADDUCTS if ad not in target_adducts]
+        self.decoy_sample_size = min(fdr_config['decoy_sample_size'], len(self.decoy_adduct_cand))
+
         self.chem_mods = chem_mods
         self.neutral_losses = neutral_losses
         self.target_adducts = target_adducts
@@ -56,23 +58,22 @@ class FDR:
             chem_mods, neutral_losses, target_adducts
         )
 
-    def _choose_decoys(self, decoys):
-        copy = decoys.copy()
+    def _choose_decoys(self):
+        copy = self.decoy_adduct_cand.copy()
         np.random.shuffle(copy)
         return copy[: self.decoy_sample_size]
 
-    def _decoy_adduct_gen(self, target_formulas, decoy_adducts_cand):
+    def _decoy_adduct_gen(self, target_formulas):
         np.random.seed(self.random_seed)
         target_modifiers = list(self.target_modifiers_df.decoy_modifier_prefix.items())
         # pylint: disable=invalid-name
         for formula, (tm, dm_prefix) in product(target_formulas, target_modifiers):
-            for da in self._choose_decoys(decoy_adducts_cand):
+            for da in self._choose_decoys():
                 yield (formula, tm, dm_prefix + da)
 
     def decoy_adducts_selection(self, target_formulas):
-        decoy_adduct_cand = [add for add in DECOY_ADDUCTS if add not in self.target_adducts]
         self.td_df = pd.DataFrame(
-            self._decoy_adduct_gen(target_formulas, decoy_adduct_cand),
+            self._decoy_adduct_gen(target_formulas),
             columns=['formula', 'tm', 'dm'],
         )
 

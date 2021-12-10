@@ -10,8 +10,11 @@ from pyspark.files import SparkFiles
 from pyspark.storagelevel import StorageLevel
 
 from sm.engine import molecular_db
+from sm.engine.annotation.diagnostics import FdrDiagnosticBundle
+from sm.engine.annotation.fdr import FDR
 from sm.engine.annotation.formula_centroids import CentroidsGenerator
 from sm.engine.annotation.imzml_reader import FSImzMLReader
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation_spark.formula_imager import create_process_segment
 from sm.engine.annotation_spark.segmenter import (
     calculate_centroids_segments_n,
@@ -23,12 +26,10 @@ from sm.engine.annotation_spark.segmenter import (
     segment_ds,
     spectra_sample_gen,
 )
-from sm.engine.ds_config import DSConfig
-from sm.engine.annotation.fdr import FDR
-from sm.engine.formula_parser import safe_generate_ion_formula
-from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
-from sm.engine.molecular_db import MolecularDB
 from sm.engine.config import SMConfig
+from sm.engine.ds_config import DSConfig
+from sm.engine.formula_parser import safe_generate_ion_formula
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')
@@ -117,13 +118,15 @@ def compute_fdr_and_filter_results(
     ion_formula_map_df: pd.DataFrame,
     formula_metrics_df: pd.DataFrame,
     formula_images_rdd: pyspark.RDD,
-) -> Tuple[pd.DataFrame, pyspark.RDD]:
+) -> Tuple[pd.DataFrame, pyspark.RDD, FdrDiagnosticBundle]:
     """Compute FDR for database annotations and filter them."""
 
     moldb_formula_map_df = ion_formula_map_df[ion_formula_map_df.moldb_id == moldb.id].drop(
         'moldb_id', axis=1
     )
+
     moldb_metrics_fdr_df = compute_fdr(fdr, formula_metrics_df, moldb_formula_map_df)
+
     if not moldb.targeted:
         max_fdr = 0.5
         moldb_metrics_fdr_df = moldb_metrics_fdr_df[moldb_metrics_fdr_df.fdr <= max_fdr]
@@ -137,7 +140,28 @@ def compute_fdr_and_filter_results(
     moldb_ion_metrics_df = moldb_metrics_fdr_df.merge(
         fdr.target_modifiers_df, left_on='modifier', right_index=True
     )
-    return moldb_ion_metrics_df, moldb_ion_images_rdd
+
+    # Extract the metrics for just this database, avoiding duplicates and handling missing rows
+    all_metrics_df = formula_metrics_df.merge(
+        moldb_formula_map_df.index.rename('formula_i').drop_duplicates().to_frame(index=True)[[]],
+        left_index=True,
+        right_index=True,
+        how='inner',
+    )
+
+    formula_map_df = (
+        moldb_formula_map_df.drop(columns=['ion_formula'])
+        .rename_axis(index='formula_i')
+        .reset_index()
+    )
+    fdr_bundle = FdrDiagnosticBundle(
+        decoy_sample_size=fdr.decoy_sample_size,
+        decoy_map_df=fdr.td_df,
+        formula_map_df=formula_map_df,
+        metrics_df=all_metrics_df,
+    )
+
+    return moldb_ion_metrics_df, moldb_ion_images_rdd, fdr_bundle
 
 
 class MSMSearch:
@@ -260,7 +284,7 @@ class MSMSearch:
 
         return target_formula_inds, targeted_database_formula_inds
 
-    def search(self) -> Iterable[Tuple[pd.DataFrame, pyspark.RDD]]:
+    def search(self) -> Iterable[Tuple[pd.DataFrame, pyspark.RDD, FdrDiagnosticBundle]]:
         """Search, score, and compute FDR for all MolecularDB formulas.
 
         Yields:
@@ -271,7 +295,7 @@ class MSMSearch:
         ds_segments = self.define_segments_and_segment_ds(ds_segm_size_mb=20)
         self._perf.record_entry('segmented ds')
 
-        moldb_fdr_list = init_fdr(self._ds_config, self._moldbs)
+        self.fdrs = moldb_fdr_list = init_fdr(self._ds_config, self._moldbs)
         ion_formula_map_df = collect_ion_formulas(self._spark_context, moldb_fdr_list)
         self._perf.record_entry('collected ion formulas')
 

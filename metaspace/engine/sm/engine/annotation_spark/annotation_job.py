@@ -1,14 +1,19 @@
+import logging
 import time
 from pathlib import Path
 from pprint import pformat
 from shutil import copytree, rmtree
-import logging
 from typing import Optional, Dict
 
 from pyspark import SparkContext, SparkConf
 
+from sm.engine import molecular_db, storage
 from sm.engine.annotation.acq_geometry import make_acq_geometry
-from sm.engine.annotation.diagnostics import add_diagnostics, extract_dataset_diagnostics
+from sm.engine.annotation.diagnostics import (
+    add_diagnostics,
+    extract_dataset_diagnostics,
+    extract_job_diagnostics,
+)
 from sm.engine.annotation.imzml_reader import FSImzMLReader
 from sm.engine.annotation.job import (
     del_jobs,
@@ -18,13 +23,12 @@ from sm.engine.annotation.job import (
     JobStatus,
 )
 from sm.engine.annotation_spark.msm_basic_search import MSMSearch
+from sm.engine.annotation_spark.search_results import SearchResults
+from sm.engine.config import SMConfig
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
-from sm.engine.annotation_spark.search_results import SearchResults
-from sm.engine.util import split_s3_path
-from sm.engine.config import SMConfig
 from sm.engine.es_export import ESExporter
-from sm.engine import molecular_db, storage
+from sm.engine.util import split_s3_path
 from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')
@@ -91,9 +95,8 @@ class AnnotationJob:
                 perf=self._perf,
             )
             search_results_it = search_alg.search()
-            results_dfs = {}
 
-            for job_id, (moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(
+            for job_id, (moldb_ion_metrics_df, moldb_ion_images_rdd, fdr_bundle) in zip(
                 job_ids, search_results_it
             ):
                 # Save results for each moldb
@@ -108,15 +111,14 @@ class AnnotationJob:
                     search_results.store(
                         moldb_ion_metrics_df, moldb_ion_images_rdd, imzml_reader.mask, self._db
                     )
-                    # FIXME: I don't think this is the full DF... certainly won't have decoys
-                    # FIXME: this is job_id, diagnostics expects db_id, diagnostics is wrong.
-                    results_dfs[job_id] = moldb_ion_metrics_df
+                    add_diagnostics(extract_job_diagnostics(self._ds.id, job_id, fdr_bundle))
+
                     job_status = JobStatus.FINISHED
                 finally:
                     update_finished_job(job_id, job_status)
 
             # Save non-job-related diagnostics
-            diagnostics = extract_dataset_diagnostics(self._ds.id, imzml_reader, results_dfs)
+            diagnostics = extract_dataset_diagnostics(self._ds.id, imzml_reader)
             add_diagnostics(diagnostics)
 
     def _save_data_from_raw_ms_file(self, imzml_reader: FSImzMLReader):

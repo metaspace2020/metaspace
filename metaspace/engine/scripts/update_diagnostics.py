@@ -85,7 +85,8 @@ def process_dataset(sm_config, del_first, ds_id):
                         # Read all spectra so that mz/tic data is populated
                         pass
 
-        diagnostics = extract_dataset_diagnostics(ds_id, imzml_reader)
+        fdr_diagnostics = []  # FDR diagnostics require a complete reprocessing of the dataset
+        diagnostics = extract_dataset_diagnostics(ds_id, imzml_reader, fdr_diagnostics)
         add_diagnostics(diagnostics)
         return ds_id, True
     except Exception:

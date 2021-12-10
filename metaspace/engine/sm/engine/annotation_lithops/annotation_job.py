@@ -10,23 +10,27 @@ from ibm_boto3.s3.transfer import TransferConfig, MB
 from lithops.storage import Storage
 from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
 
-from sm.engine.annotation.diagnostics import extract_dataset_diagnostics, add_diagnostics
+from sm.engine.annotation.diagnostics import (
+    extract_dataset_diagnostics,
+    add_diagnostics,
+    extract_job_diagnostics,
+)
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
 from sm.engine.annotation_lithops.executor import Executor
-from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch, load_cobj
+from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.pipeline import Pipeline
 from sm.engine.annotation_lithops.utils import jsonhash
 from sm.engine.annotation_spark.search_results import SearchResults
+from sm.engine.config import SMConfig
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 from sm.engine.es_export import ESExporter
 from sm.engine.molecular_db import read_moldb_file
+from sm.engine.storage import get_s3_client
 from sm.engine.util import split_s3_path, split_cos_path
-from sm.engine.config import SMConfig
 from sm.engine.utils.db_mutex import DBMutex
 from sm.engine.utils.perf_profile import Profiler
-from sm.engine.storage import get_s3_client
 
 logger = logging.getLogger('engine')
 
@@ -306,11 +310,10 @@ class ServerAnnotationJob:
         try:
             self.results_dfs, self.png_cobjs = self.pipe.run_pipeline(**kwargs)
             self.db_formula_image_ids = self.pipe.store_images_to_s3(self.ds.id)
+            fdr_bundles = self.pipe.get_fdr_bundles(moldb_to_job_map)
 
             # Save non-job-related diagnostics
-            diagnostics = extract_dataset_diagnostics(
-                self.ds.id, self.pipe.imzml_reader, self.pipe.results_dfs
-            )
+            diagnostics = extract_dataset_diagnostics(self.ds.id, self.pipe.imzml_reader)
             add_diagnostics(diagnostics)
 
             for moldb_id, job_id in moldb_to_job_map.items():
@@ -324,6 +327,8 @@ class ServerAnnotationJob:
                     charge=self.ds.config['isotope_generation']['charge'],
                 )
                 search_results.store_ion_metrics(results_df, formula_image_ids, self.db)
+
+                add_diagnostics(extract_job_diagnostics(self.ds.id, job_id, fdr_bundles[job_id]))
 
                 update_finished_job(job_id, JobStatus.FINISHED)
         except Exception:

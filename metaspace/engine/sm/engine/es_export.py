@@ -14,16 +14,16 @@ from elasticsearch import (
 from elasticsearch.client import IndicesClient, IngestClient
 from elasticsearch.helpers import parallel_bulk
 
-from sm.engine.utils.db_mutex import DBMutex
-from sm.engine.db import DB
-from sm.engine.annotation.fdr import FDR
-from sm.engine.formula_parser import format_ion_formula
-from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
-from sm.engine import molecular_db
-from sm.engine.molecular_db import MolecularDB
-from sm.engine.utils.retry_on_exception import retry_on_exception
-from sm.engine.config import SMConfig
 from sm.engine import image_storage
+from sm.engine import molecular_db
+from sm.engine.annotation.fdr import FDR
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
+from sm.engine.config import SMConfig
+from sm.engine.db import DB
+from sm.engine.formula_parser import format_ion_formula
+from sm.engine.molecular_db import MolecularDB
+from sm.engine.utils.db_mutex import DBMutex
+from sm.engine.utils.retry_on_exception import retry_on_exception
 
 logger = logging.getLogger('engine')
 
@@ -390,7 +390,7 @@ class ESExporter:
                 for image_id in doc['iso_image_ids']
             ]
 
-            if moldb.targeted:
+            if moldb.targeted and ds_doc['config'].get('analysis_version', 1) == 1:
                 fdr_level = doc['fdr'] = -1
             else:
                 fdr_level = FDR.nearest_fdr_level(doc['fdr'])

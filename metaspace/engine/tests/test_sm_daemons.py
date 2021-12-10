@@ -1,27 +1,27 @@
-import os
-from os.path import join, dirname
-import sys
 import logging
+import os
+import sys
+import time
 from collections import OrderedDict
 from functools import partial
+from os.path import join, dirname
 from pathlib import Path
 from unittest.mock import patch
-import time
 
+import numpy as np
+import pandas as pd
 import pytest
 from PIL import Image
 from fabric.api import local
 from fabric.context_managers import warn_only
-import numpy as np
-import pandas as pd
 
+from sm.engine.annotation.job import JobStatus
 from sm.engine.daemons.actions import DaemonAction
+from sm.engine.dataset import DatasetStatus
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.dataset import DatasetStatus
-from sm.engine.annotation.job import JobStatus
 from sm.engine.queue import QueueConsumer
-from .utils import create_test_molecular_db, create_test_ds
+from .utils import create_test_molecular_db, create_test_ds, create_test_fdr_diagnostics_bundle
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
 logger = logging.getLogger('annotate-daemon')
@@ -169,7 +169,9 @@ def test_sm_daemons(
         }
     ).set_index('formula_i')
     search_algo_mock = MSMSearchMock()
-    search_algo_mock.search.return_value = [(formula_metrics_df, [])]
+    search_algo_mock.search.return_value = [
+        (formula_metrics_df, [], create_test_fdr_diagnostics_bundle())
+    ]
     search_algo_mock.metrics = OrderedDict(
         [
             ('chaos', 0),
@@ -335,7 +337,9 @@ def test_sm_daemon_es_export_fails(
         }
     ).set_index('formula_i')
     search_algo_mock = MSMSearchMock()
-    search_algo_mock.search.return_value = [(formula_metrics_df, [])]
+    search_algo_mock.search.return_value = [
+        (formula_metrics_df, [], create_test_fdr_diagnostics_bundle())
+    ]
     search_algo_mock.metrics = OrderedDict(
         [
             ('chaos', 0),

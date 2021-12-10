@@ -21,7 +21,6 @@ from scipy.sparse import coo_matrix
 from sm.engine.annotation.image_manip import (
     bool_aligned_dilate,
     convert_images_to_dense,
-    compact_empty_space,
 )
 from sm.engine.annotation.imzml_reader import ImzMLReader
 from sm.engine.annotation.metrics import (
@@ -45,15 +44,15 @@ class Metrics:
     msm: float = 0.0
 
     # Per-image metrics
-    total_iso_ints: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
-    min_iso_ints: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
-    max_iso_ints: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
+    total_iso_ints: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    min_iso_ints: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    max_iso_ints: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
 
     # Mass metrics
-    mz_mean: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
-    mz_stddev: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
-    mz_theo: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
-    mz_theo_ints: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0, 0.0])
+    mz_mean: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    mz_stddev: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    mz_theo: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    mz_theo_ints: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
 
 
 @dataclass()
@@ -118,16 +117,18 @@ def make_compute_image_metrics(
         iso_imgs_flat = iso_imgs.reshape(iso_imgs.shape[0], -1)
         iso_imgs_flat = iso_imgs_flat[:, iso_imgs_flat.any(axis=0)]
 
-        doc.total_iso_ints = [img.sum() for img in iso_imgs_flat]
-        doc.min_iso_ints = [
-            # iso_imgs_flat has empty pixels removed, so img.min() isn't always correct
-            0.0 if len(img) < n_spectra else img.min(initial=0)
-            for img in iso_imgs_flat
-        ]
-        doc.max_iso_ints = [img.max(initial=0) for img in iso_imgs_flat]
+        doc.total_iso_ints = np.float32([img.sum() for img in iso_imgs_flat])
+        doc.min_iso_ints = np.float32(
+            [
+                # iso_imgs_flat has empty pixels removed, so img.min() isn't always correct
+                0.0 if len(img) < n_spectra else img.min(initial=0)
+                for img in iso_imgs_flat
+            ]
+        )
+        doc.max_iso_ints = np.float32([img.max(initial=0) for img in iso_imgs_flat])
 
-        doc.mz_theo = list(image_set.theo_mzs)
-        doc.mz_theo_ints = list(image_set.theo_ints)
+        doc.mz_theo = np.float32(image_set.theo_mzs)
+        doc.mz_theo_ints = np.float32(image_set.theo_ints)
         doc.mz_mean, doc.mz_stddev = calc_mz_stddev(
             image_set.images, image_set.mz_images, image_set.theo_mzs
         )

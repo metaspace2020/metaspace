@@ -6,11 +6,12 @@ import numpy as np
 import pandas as pd
 from lithops.storage import Storage
 
+from sm.engine.annotation.diagnostics import FdrDiagnosticBundle
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
-from sm.engine.annotation_lithops.build_moldb import InputMolDb
-from sm.engine.annotation_lithops.executor import Executor
-from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation.png_generator import PngGenerator
+from sm.engine.annotation_lithops.build_moldb import InputMolDb, DbFDRData
+from sm.engine.annotation_lithops.executor import Executor
+from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch, CObj
 
 logger = logging.getLogger('annotation-pipeline')
 
@@ -91,3 +92,34 @@ def filter_results_and_make_pngs(
     png_cobjs = fexec.map(save_png_chunk, jobs, include_modules=['png'])
 
     return results_dfs, png_cobjs
+
+
+def get_fdr_bundles(
+    storage: Storage,
+    formula_metrics_df: pd.DataFrame,
+    db_data_cobjs: List[CObj[DbFDRData]],
+    db_id_to_job_id: Dict[int, int],
+) -> Dict[int, FdrDiagnosticBundle]:
+    bundles: Dict[int, FdrDiagnosticBundle] = {}
+    for db_data in iter_cobjs_with_prefetch(storage, db_data_cobjs):
+        fdr = db_data['fdr']
+        formula_map_df = (
+            db_data['formula_map_df'].drop(columns=['target']).drop_duplicates(ignore_index=True)
+        )
+
+        # Extract the metrics for just this database, avoiding duplicates and handling missing rows
+        metrics_df = formula_metrics_df.rename_axis(index='formula_i').merge(
+            formula_map_df[['formula_i']].drop_duplicates().set_index('formula_i'),
+            left_index=True,
+            right_index=True,
+        )
+        job_id = db_id_to_job_id[db_data['id']]
+        bundle = FdrDiagnosticBundle(
+            decoy_sample_size=fdr.decoy_sample_size,
+            decoy_map_df=fdr.td_df,
+            formula_map_df=formula_map_df,
+            metrics_df=metrics_df,
+        )
+        bundles[job_id] = bundle
+
+    return bundles

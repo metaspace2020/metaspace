@@ -7,25 +7,29 @@ import numpy as np
 import pandas as pd
 from lithops.storage.utils import CloudObject
 
+from sm.engine.annotation.diagnostics import FdrDiagnosticBundle
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation_lithops.annotate import process_centr_segments
 from sm.engine.annotation_lithops.build_moldb import InputMolDb, DbFDRData
 from sm.engine.annotation_lithops.cache import PipelineCacher, use_pipeline_cache
 from sm.engine.annotation_lithops.executor import Executor
-from sm.engine.annotation_lithops.io import CObj, iter_cobjs_with_prefetch, load_cobjs
+from sm.engine.annotation_lithops.io import CObj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.load_ds import load_ds, validate_ds_segments
 from sm.engine.annotation_lithops.moldb_pipeline import get_moldb_centroids
-from sm.engine.annotation_lithops.prepare_results import filter_results_and_make_pngs
+from sm.engine.annotation_lithops.prepare_results import (
+    filter_results_and_make_pngs,
+    get_fdr_bundles,
+)
 from sm.engine.annotation_lithops.run_fdr import run_fdr
 from sm.engine.annotation_lithops.segment_centroids import (
     segment_centroids,
     validate_centroid_segments,
 )
 from sm.engine.annotation_lithops.store_images import store_images_to_s3
+from sm.engine.config import SMConfig
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
-from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
-from sm.engine.config import SMConfig
 
 logger = logging.getLogger('annotation-pipeline')
 
@@ -194,12 +198,10 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.png_cobjs,
         )
 
-    def get_fdr_diagnostics(self):
-        for db_data in load_cobjs(self.storage, self.db_data_cobjs):
-            self.results_dfs[db_data['id']] = self.formula_metrics_df.join(
-                db_data['formula_map_df'].set_index('formula_i')
-            )
-        self.png_cobjs = []
+    def get_fdr_bundles(self, db_id_to_job_id: Dict[int, int]) -> Dict[int, FdrDiagnosticBundle]:
+        return get_fdr_bundles(
+            self.storage, self.formula_metrics_df, self.db_data_cobjs, db_id_to_job_id
+        )
 
     def clean(self, all_caches=False):
         if self.cacher:
