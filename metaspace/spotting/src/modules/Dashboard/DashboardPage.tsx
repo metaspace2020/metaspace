@@ -230,7 +230,9 @@ export default defineComponent({
         console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/'
-        const response = await fetch(baseUrl + 'all_predictions_22-Oct-2021.json')
+        // const response = await fetch(baseUrl + 'all_predictions_22-Oct-2021.json')
+        const response = await fetch('https://firebasestorage.googleapis.com/v0/b/spotting-7cf45.appspot.com/' +
+          'o/pred_local_mans.json?alt=media&token=52d34403-fecc-4385-b6a1-c1b3c08a0706')
         const predictions = await response.json()
         const datasetResponse = await fetch(baseUrl + 'datasets_updated.json')
         const datasets = await datasetResponse.json()
