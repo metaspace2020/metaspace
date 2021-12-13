@@ -18,23 +18,16 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from cpyImagingMSpec import measure_of_chaos
-from pyImagingMSpec.image_measures import isotope_image_correlation, isotope_pattern_match
 from scipy.sparse import coo_matrix
 
-from sm.engine.annotation.image_manip import (
-    bool_aligned_dilate,
-    convert_images_to_dense,
-)
 from sm.engine.annotation.imzml_reader import ImzMLReader
 from sm.engine.annotation.metrics import (
-    v1_spatial,
-    v1_chaos,
-    v2_chaos,
-    v1_spectral,
+    spatial_metric,
+    chaos_metric,
+    spectral_metric,
     calc_mz_stddev,
 )
-from sm.engine.ds_config import DSConfigImageGeneration
+from sm.engine.ds_config import DSConfig
 
 
 @dataclass()
@@ -46,20 +39,7 @@ class Metrics:
     chaos: Optional[float] = None
     spatial: Optional[float] = None
     spectral: Optional[float] = None
-    v1_chaos: Optional[float] = None
-    v2_chaos: Optional[float] = None
-    v1_spatial: Optional[float] = None
-    v1_spectral: Optional[float] = None
     msm: float = 0.0
-
-    t_compact: int = 0
-    t_chaos: int = 0
-    t_spatial: int = 0
-    t_spectral: int = 0
-    t_v1_chaos: int = 0
-    t_v2_chaos: int = 0
-    t_v1_spatial: int = 0
-    t_v1_spectral: int = 0
 
     # Per-image metrics
     total_iso_ints: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
@@ -90,6 +70,9 @@ class FormulaImageItem:
     mz_image: Optional[coo_matrix]  # mz_images' pixels must be in the same order as images' pixels
 
 
+EMPTY_METRICS_DF = pd.DataFrame(columns=[f.name for f in fields(Metrics)])
+
+
 @dataclass()
 class FormulaImageSet:
     formula_i: int
@@ -107,8 +90,6 @@ class FormulaImageSet:
     mz_images: List[Optional[coo_matrix]]
 
 
-EMPTY_METRICS_DF = pd.DataFrame(columns=[f.name for f in fields(Metrics)])
-
 # (formula index, metrics, images)
 # images isn't present for decoy ions
 FormulaMetricSet = Tuple[int, Metrics, Optional[List[Optional[coo_matrix]]]]
@@ -117,17 +98,17 @@ ComputeMetricsFunc = Callable[[FormulaImageSet], Metrics]
 
 
 def make_compute_image_metrics(
-    imzml_reader: ImzMLReader, img_gen_config: DSConfigImageGeneration
+    imzml_reader: ImzMLReader, ds_config: DSConfig
 ) -> ComputeMetricsFunc:
 
-    sample_area_mask = imzml_reader.mask
-    min_res = 4
-    ds_row_mask = bool_aligned_dilate(np.any(sample_area_mask, axis=1), min_res)
-    ds_col_mask = bool_aligned_dilate(np.any(sample_area_mask, axis=0), min_res)
-    n_spectra = np.count_nonzero(sample_area_mask)
+    analysis_version = ds_config.get('analysis_version', 1)
+    img_gen_config = ds_config['image_generation']
     n_levels = img_gen_config.get('n_levels', 30)
     min_px = img_gen_config.get('min_px', 1)
     compute_unused_metrics = img_gen_config.get('compute_unused_metrics', False)
+
+    sample_area_mask = imzml_reader.mask
+    n_spectra = np.count_nonzero(sample_area_mask)
     empty_matrix = np.zeros(sample_area_mask.shape, dtype=np.float32)
     sample_area_mask_flat = sample_area_mask.flatten()
 
@@ -138,21 +119,14 @@ def make_compute_image_metrics(
             yield
             setattr(doc, 't_' + attr, time.time_ns() - start)
 
-        doc = Metrics(formula_i=image_set.formula_i)
-        with bench('compact'):
-            iso_imgs = convert_images_to_dense(image_set.images, ds_row_mask, ds_col_mask, min_res)
+        iso_imgs = [img.toarray() if img is not None else empty_matrix for img in image_set.images]
+        iso_imgs = [img.copy() for img in iso_imgs]
+        iso_imgs_flat = np.array([img.flatten()[sample_area_mask_flat] for img in iso_imgs])
 
-            iso_imgs_flat = iso_imgs.reshape(iso_imgs.shape[0], -1)
-            iso_imgs_flat = iso_imgs_flat[:, iso_imgs_flat.any(axis=0)]
+        doc = Metrics(formula_i=image_set.formula_i)
 
         doc.total_iso_ints = np.float32([img.sum() for img in iso_imgs_flat])
-        doc.min_iso_ints = np.float32(
-            [
-                # iso_imgs_flat has empty pixels removed, so img.min() isn't always correct
-                0.0 if len(img) < n_spectra else img.min(initial=0)
-                for img in iso_imgs_flat
-            ]
-        )
+        doc.min_iso_ints = np.float32([img.min(initial=0) for img in iso_imgs_flat])
         doc.max_iso_ints = np.float32([img.max(initial=0) for img in iso_imgs_flat])
 
         doc.mz_theo = np.float32(image_set.theo_mzs)
@@ -166,35 +140,18 @@ def make_compute_image_metrics(
         ) and any(True for i in image_set.images[1:] if i is not None and i.nnz >= min_px)
         calc_all = image_set.is_target or image_set.targeted or compute_unused_metrics
 
-        # FIXME: Need to prove that these metrics are IDENTICAL to the existing ones
-        # Run through the metrics from fastest to slowest, existing early if results indicate
-        # that the MSM will be zero and the annotation can be discarded
         if is_complete_set or calc_all:
-            with bench('spectral'):
-                doc.spectral = v1_spectral(iso_imgs_flat, image_set.theo_ints)
+            doc.spectral = spectral_metric(iso_imgs_flat, image_set.theo_ints)
             if doc.spectral > 0.0 or calc_all:
-                with bench('spatial'):
-                    doc.spatial = v1_spatial(iso_imgs_flat, n_spectra, image_set.theo_ints)
-                if doc.spatial > 0.0 or calc_all:
-                    with bench('chaos'):
-                        doc.chaos = v1_chaos(iso_imgs[0], n_levels)
-        if calc_all:
-            v1_iso_imgs = [
-                img.toarray() if img is not None else empty_matrix for img in image_set.images
-            ]
-            v1_iso_imgs_flat = [img.flatten()[sample_area_mask_flat] for img in v1_iso_imgs]
-            v1_iso_imgs_flat = v1_iso_imgs_flat[: len(image_set.theo_ints)]
-            with bench('v1_spectral'):
-                doc.v1_spectral = isotope_pattern_match(v1_iso_imgs_flat, image_set.theo_ints)
-            with bench('v1_spatial'):
-                doc.v1_spatial = isotope_image_correlation(
-                    v1_iso_imgs_flat, weights=image_set.theo_ints[1:]
+                # Keep the old spatial implementation in v1 to keep compatibility with old results
+                # But prefer the new implementation as it's faster and only differs due to floating
+                # point imprecision.
+                v1_spatial = analysis_version == 1
+                doc.spatial = spatial_metric(
+                    iso_imgs_flat, n_spectra, image_set.theo_ints, v1_impl=v1_spatial
                 )
-            with bench('v1_chaos'):
-                moc = measure_of_chaos(v1_iso_imgs[0], img_gen_config.get('n_levels', 30))
-                doc.v1_chaos = 0 if np.isclose(moc, 1.0) else moc
-            with bench('v2_chaos'):
-                doc.v2_chaos = v2_chaos(v1_iso_imgs[0], lin_levels=n_levels)
+                if doc.spatial > 0.0 or calc_all:
+                    doc.chaos = chaos_metric(iso_imgs[0], n_levels)
 
         doc.msm = (doc.chaos or 0.0) * (doc.spatial or 0.0) * (doc.spectral or 0.0)
 

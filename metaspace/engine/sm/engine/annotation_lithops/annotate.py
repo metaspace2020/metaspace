@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Dict, Tuple, Optional, Iterator
+from typing import List, Tuple, Optional, Iterator
 
 import numpy as np
 import pandas as pd
@@ -16,10 +16,10 @@ from sm.engine.annotation.formula_validator import (
     FormulaImageSet,
 )
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj, load_cobjs
 from sm.engine.ds_config import DSConfig
-from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.utils.perf_profile import Profiler
 
 ImagesRow = Tuple[int, int, List[coo_matrix]]
@@ -29,11 +29,11 @@ logger = logging.getLogger('annotation-pipeline')
 class ImagesManager:
     """
     Collects ion images (in sparse coo_matrix format) and formula metrics.
-    Images are progressively saved to COS in chunks specified by `max_formula_images_size` to
-    prevent using too much memory.
+    Images are progressively saved to COS in chunks specified by `chunk_size` to
+    prevent using too much memory, and to control the batch size during PNG conversion.
     """
 
-    chunk_size = 100 * 1024 ** 2  # 100MB
+    chunk_size = 50 * 1024 ** 2  # 50MB
 
     def __init__(self, storage: Storage):
 
@@ -177,7 +177,7 @@ def gen_iso_image_sets(
                 ints = sp_ints[row.lower_idx : row.upper_idx].astype('f', copy=True)
                 mzs = sp_mzs[row.lower_idx : row.upper_idx].astype('f', copy=True)
                 inds = sp_inds[row.lower_idx : row.upper_idx]
-                row_inds, col_inds = np.divmod(inds, ncols, dtype='uint16')
+                row_inds, col_inds = np.divmod(inds, ncols, dtype='i')
                 # The row_inds/col_inds can be safely shared between the two coo_matrixes
                 image = coo_matrix((ints, (row_inds, col_inds)), shape=(nrows, ncols), copy=False)
                 mz_image = coo_matrix((mzs, (row_inds, col_inds)), shape=(nrows, ncols), copy=False)
@@ -271,7 +271,7 @@ def process_centr_segments(
     isocalc_wrapper = IsocalcWrapper(ds_config)
     image_gen_config = ds_config['image_generation']
     n_peaks = ds_config['isotope_generation']['n_peaks']
-    compute_metrics = make_compute_image_metrics(imzml_reader, image_gen_config)
+    compute_metrics = make_compute_image_metrics(imzml_reader, ds_config)
     min_px = image_gen_config['min_px']
     # TODO: Get available memory from Lithops somehow so it updates if memory is increased on retry
     pw_mem_mb = 4096 if is_intensive_dataset else 2048

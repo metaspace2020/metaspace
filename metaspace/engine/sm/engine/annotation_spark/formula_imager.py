@@ -14,8 +14,8 @@ from sm.engine.annotation.formula_validator import (
     FormulaImageItem,
 )
 from sm.engine.annotation.imzml_reader import ImzMLReader
-from sm.engine.ds_config import DSConfig
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
+from sm.engine.ds_config import DSConfig
 
 logger = logging.getLogger('engine')
 
@@ -47,7 +47,7 @@ def gen_iso_images(ds_segm_it, centr_df, nrows, ncols, isocalc) -> Iterator[Form
                 ints = ds_segm_df.int.values[lo_i:up_i].astype('f', copy=True)
                 mzs = ds_segm_df.mz.values[lo_i:up_i].astype('f', copy=True)
                 inds = ds_segm_df.sp_idx.values[lo_i:up_i]
-                row_inds, col_inds = np.divmod(inds, ncols, dtype='uint16')
+                row_inds, col_inds = np.divmod(inds, ncols, dtype='i')
                 # The row_inds/col_inds can be safely shared between the two coo_matrixes
                 image = coo_matrix((ints, (row_inds, col_inds)), shape=(nrows, ncols), copy=False)
                 mz_image = coo_matrix((mzs, (row_inds, col_inds)), shape=(nrows, ncols), copy=False)
@@ -115,7 +115,7 @@ def create_process_segment(
     target_formula_inds: Set[int],
     targeted_database_formula_inds: Set[int],
 ):
-    compute_metrics = make_compute_image_metrics(imzml_reader, ds_config['image_generation'])
+    compute_metrics = make_compute_image_metrics(imzml_reader, ds_config)
     isocalc = IsocalcWrapper(ds_config)
     ppm = ds_config['image_generation']['ppm']
     min_px = ds_config['image_generation']['min_px']

@@ -218,6 +218,8 @@ input DatasetCreateInput {
   numPeaks: Int
   decoySampleSize: Int
   analysisVersion: Int
+  computeUnusedMetrics: Boolean
+  fdrModel: String
 
   submitterId: ID!  # Only for admins
   groupId: ID
@@ -241,6 +243,9 @@ input DatasetUpdateInput {
   numPeaks: Int
   decoySampleSize: Int
   analysisVersion: Int
+  computeUnusedMetrics: Boolean
+  fdrModel: String
+
 
   submitterId: ID
   groupId: ID

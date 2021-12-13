@@ -1,9 +1,7 @@
-from collections import OrderedDict
 from itertools import product
 from unittest.mock import patch
-import numpy as np
+
 import pandas as pd
-import pytest
 from pandas.util.testing import assert_frame_equal
 from scipy.sparse import coo_matrix
 
@@ -13,16 +11,23 @@ from sm.engine.annotation.formula_validator import (
     FormulaImageItem,
 )
 from sm.engine.annotation.metrics import weighted_stddev
-from sm.engine.ds_config import DSConfigImageGeneration
+from sm.engine.ds_config import DSConfigImageGeneration, DSConfig
 from tests.conftest import make_imzml_reader_mock
 
 
 def _test_compute_metrics():
-    img_gen_config = DSConfigImageGeneration(
-        ppm=3.0, n_levels=30, min_px=1, compute_unused_metrics=False
+    ds_config = DSConfig(
+        analysis_version=1,
+        image_generation=DSConfigImageGeneration(
+            ppm=3.0, n_levels=30, min_px=1, compute_unused_metrics=False
+        ),
+        # Unused fields
+        database_ids=None,
+        isotope_generation=None,
+        fdr=None,
     )
     imzml_reader = make_imzml_reader_mock(list(product(range(2), range(3))))
-    compute_metrics = make_compute_image_metrics(imzml_reader, img_gen_config)
+    compute_metrics = make_compute_image_metrics(imzml_reader, ds_config)
     return compute_metrics
 
 

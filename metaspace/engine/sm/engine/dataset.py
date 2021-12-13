@@ -3,9 +3,9 @@ import logging
 from datetime import datetime
 from typing import Dict
 
+from sm.engine.config import SMConfig
 from sm.engine.ds_config import DSConfig
 from sm.engine.errors import UnknownDSID
-from sm.engine.config import SMConfig
 
 logger = logging.getLogger('engine')
 
@@ -49,6 +49,8 @@ FLAT_DS_CONFIG_KEYS = frozenset(
         'decoy_sample_size',
         'neutral_losses',
         'chem_mods',
+        'compute_unused_metrics',
+        'fdr_model',
     }
 )
 
@@ -234,6 +236,8 @@ def generate_ds_config(
     decoy_sample_size=None,
     neutral_losses=None,
     chem_mods=None,
+    compute_unused_metrics=None,
+    fdr_model=None,
 ) -> DSConfig:
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
@@ -253,8 +257,13 @@ def generate_ds_config(
             'neutral_losses': neutral_losses or [],
             'chem_mods': chem_mods or [],
         },
-        'fdr': {'decoy_sample_size': decoy_sample_size or 20},
-        'image_generation': {'ppm': ppm or 3, 'n_levels': 30, 'min_px': min_px or 1},
+        'fdr': {'decoy_sample_size': decoy_sample_size or 20, 'fdr_model': fdr_model or 'v3'},
+        'image_generation': {
+            'ppm': ppm or 3,
+            'n_levels': 30,
+            'min_px': min_px or 1,
+            'compute_unused_metrics': compute_unused_metrics or False,
+        },
     }
 
 
@@ -280,6 +289,8 @@ def update_ds_config(old_config, metadata, **kwargs):
         'decoy_sample_size': fdr.get('decoy_sample_size'),
         'ppm': image_generation.get('ppm'),
         'min_px': image_generation.get('min_px'),
+        'compute_unused_metrics': image_generation.get('compute_unused_metrics'),
+        'fdr_model': fdr.get('fdr_model'),
     }
 
     for k, v in old_vals.items():

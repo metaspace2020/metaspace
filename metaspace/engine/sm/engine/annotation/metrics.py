@@ -1,17 +1,29 @@
 import numpy as np
 from cpyImagingMSpec import measure_of_chaos
-from pyImagingMSpec.image_measures import isotope_pattern_match
+from pyImagingMSpec.image_measures import isotope_pattern_match, isotope_image_correlation
 from scipy.ndimage import maximum_filter, minimum_filter, grey_closing
-from scipy.stats import spearmanr
 
-from sm.engine.annotation.image_manip import count_connected_components, compact_empty_space
+from sm.engine.annotation.image_manip import count_connected_components
 
 
-def v1_spatial(iso_imgs_flat, n_spectra, intensities, weights=None, force_pos=False):
+def spectral_metric(iso_imgs_flat, formula_ints):
+    return isotope_pattern_match(iso_imgs_flat, formula_ints)
+
+
+def spatial_metric(iso_imgs_flat, n_spectra, intensities, v1_impl=False):
     """Reimplementation of pyImagingMSpec.image_measures.isotope_image_correlation supporting
     a variable denominator when calculating the corrcoef (to compensate for the removed zero-valued
-    pixels).
+    pixels). This allows it to work on images that have had empty areas removed, without impacting
+    the results, which can improve speed significantly.
+
+    This returns values that can be very slightly different from the original pyImagingMSpec due to
+    floating point imprecision, but the results never seemed to differ by more than 0.0000001.
+    Specify v1_impl=True to use the original pyImagingMSpec implementation.
     """
+
+    if v1_impl:
+        return isotope_image_correlation(iso_imgs_flat, weights=intensities[1:])
+
     if (
         len(iso_imgs_flat) < 2
         or np.count_nonzero(iso_imgs_flat[0]) < 2
@@ -19,9 +31,9 @@ def v1_spatial(iso_imgs_flat, n_spectra, intensities, weights=None, force_pos=Fa
     ):
         return 0
 
-    iso_correlation = spatial_corr(iso_imgs_flat, n_spectra, weights)
-    if force_pos:
-        iso_correlation = np.clip(iso_correlation, 0, 1)
+    iso_imgs_flat = iso_imgs_flat[:, iso_imgs_flat.any(axis=0)]
+
+    iso_correlation = spatial_corr(iso_imgs_flat, n_spectra, None)
 
     try:
         # coerce between [0 1]
@@ -61,33 +73,38 @@ def spatial_corr(iso_imgs_flat, n_spectra, weights=None):
     return iso_correlation
 
 
-def v2_spatial_spearman(imgs, intensities):
-    if not (intensities > 0).all():
-        imgs = imgs[intensities > 0]
-        intensities = intensities[intensities > 0]
-
-    corr_mat = spearmanr(imgs.T).correlation
-    if np.isscalar(corr_mat):
-        if np.isnan(corr_mat):
-            # When all images are constant, spearmanr returns a scalar nan
-            return 1
-        else:
-            # When there are only 2 images, spearmanr returns a scalar
-            return (corr_mat + 1) / 2
+def _chaos_dilate(arr):
+    """NOTE: This mutates the input. It's equivalent to
+    scipy.ndimage.binary_dilation(arr, iterations=2), but it's about 10x faster.
+    It dilates a row/col mask such that the masked image will get the same measure of chaos score,
+    as measure-of-chaos does its own dilation on the image which can cause connected regions
+    to merge if gaps in the image are made too small.
+    """
+    arr = arr.copy()
+    arr[1:] |= arr[:-1]
+    arr[1:] |= arr[:-1]
+    arr[:-2] |= arr[2:]
+    if np.count_nonzero(arr) >= 0.9 * len(arr):
+        # Not sparse enough to justify compaction - return a slice so that numpy can skip copying
+        return slice(None)
     else:
-        corr = np.average(np.nan_to_num(corr_mat[0, 1:]), weights=np.nan_to_num(intensities[1:]))
-        return (corr + 1) / 2
+        return arr
 
 
-def v1_chaos(iso_img, n_levels):
+def chaos_metric(iso_img, n_levels):
     # Shrink image if possible, as chaos performance is highly resolution-dependent
-    iso_img = compact_empty_space(iso_img)
+    iso_img = iso_img[_chaos_dilate(np.any(iso_img, axis=1)), :]
+    iso_img = iso_img[:, _chaos_dilate(np.any(iso_img, axis=0))]
 
     if iso_img.size == 0:
-        # measure_of_chaos segfaults if the image has no elements
+        # measure_of_chaos segfaults if the image has no elements - in Lithops this appears as a
+        # MemoryError. Skip empty images.
         return 0
 
-    # iso_img = np.require(iso_img, dtype='f', requirements=['C', 'A'])
+    # measure_of_chaos behaves weirdly on Fortran-ordered arrays, which happen sometimes due to the
+    # above slicing operations. this makes it a C-ordered, aligned copy if needed.
+    iso_img = np.require(iso_img, requirements=['A', 'C'])
+
     moc = measure_of_chaos(iso_img, n_levels)
     return 0 if np.isclose(moc, 1.0) else moc
 
@@ -136,8 +153,39 @@ def v2_chaos(iso_img, lin_levels=30, geom_levels=30, full_dilate=False):
     return [lin_ratio, lin_count, geom_ratio, geom_count]
 
 
-def v1_spectral(iso_imgs_flat, formula_ints):
-    return isotope_pattern_match(iso_imgs_flat, formula_ints)
+def v2_chaos_orig(iso_img, n_levels=30):
+    """Reimplementation of the chaos metric. I didn't manage to get it to exactly match the original
+    implementation. This one seems to have significantly better dynamic range - it often produces
+    values like 0.6 when the original implementation rarely produces values below 0.95
+
+    Original implementation: https://github.com/alexandrovteam/ims-cpp/blob/dcc12b4c50dbfdcde3f765af85fb8b3bb5cd7ec3/ims/image_measures.cpp#L89
+    """
+    # Old way: level-thresholding -> dilation -> erosion -> connected component count
+    # New way: "dilation" via maximum-filter -> "erosion" via minimum-filter -> level-thresholding -> connected component count
+    dilated = maximum_filter(iso_img, footprint=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]))
+    # Old way: mode='nearest', new way: mode='constant'
+    iso_img = minimum_filter(dilated, size=(3, 3), mode='nearest')
+
+    if not iso_img.any():
+        # Old way - detect this case when the return value is exactly 1.0
+        return 0.0
+
+    # Old way: np.linspace(0, max_ints, n_levels)
+    mask = np.empty(iso_img.shape, dtype='bool')
+
+    thresholds = np.linspace(0, np.max(iso_img), n_levels)
+
+    pixel_counts = np.ones(len(thresholds), 'i')
+    component_counts = np.zeros(len(thresholds), 'i')
+    for i, threshold in enumerate(thresholds):
+        np.greater(iso_img, threshold, out=mask)
+        if mask.any():
+            pixel_counts[i] = np.count_nonzero(mask)
+            component_counts[i] = count_connected_components(mask)
+
+    mean_count = 1 - np.mean(component_counts) / np.count_nonzero(iso_img)
+
+    return mean_count
 
 
 def weighted_stddev(values, weights):
