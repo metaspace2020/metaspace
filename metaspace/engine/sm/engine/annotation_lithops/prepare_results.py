@@ -100,6 +100,8 @@ def get_fdr_bundles(
     db_data_cobjs: List[CObj[DbFDRData]],
     db_id_to_job_id: Dict[int, int],
 ) -> Dict[int, FdrDiagnosticBundle]:
+
+    logger.debug(f'Making {len(db_data_cobjs)} FDR bundles')
     bundles: Dict[int, FdrDiagnosticBundle] = {}
     for db_data in iter_cobjs_with_prefetch(storage, db_data_cobjs):
         fdr = db_data['fdr']

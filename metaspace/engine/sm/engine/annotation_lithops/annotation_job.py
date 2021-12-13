@@ -317,6 +317,7 @@ class ServerAnnotationJob:
             add_diagnostics(diagnostics)
 
             for moldb_id, job_id in moldb_to_job_map.items():
+                logger.debug(f'Storing results for moldb {moldb_id}')
                 results_df = self.results_dfs[moldb_id]
                 formula_image_ids = self.db_formula_image_ids.get(moldb_id, {})
 

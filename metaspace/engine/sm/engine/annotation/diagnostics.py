@@ -94,6 +94,10 @@ def add_diagnostics(diagnostics: List[DatasetDiagnostic]):
     """Upserts dataset diagnostics, overwriting existing values with the same ds_id, job_id, type"""
     # Validate input, as postgres can't enforce the JSON columns have the correct schema,
     # and many places (graphql, python client, etc.) rely on these structures.
+
+    if not diagnostics:
+        return
+
     for diagnostic in diagnostics:
         assert 'ds_id' in diagnostic
         assert 'type' in diagnostic
@@ -122,6 +126,9 @@ def add_diagnostics(diagnostics: List[DatasetDiagnostic]):
     )
 
     if existing:
+        logger.debug(
+            f'Deleting {len(existing)} existing diagnostics for dataset {existing[0]["ds_id"]}'
+        )
         # Delete existing images
         image_ids_by_ds = defaultdict(list)
         for row in existing:
@@ -136,6 +143,7 @@ def add_diagnostics(diagnostics: List[DatasetDiagnostic]):
             ([row['id'] for row in existing],),
         )
 
+    logger.debug(f'Inserting {len(diagnostics)} diagnostics for dataset {diagnostics[0]["ds_id"]}')
     db.insert(
         'INSERT INTO dataset_diagnostic (ds_id, job_id, type, updated_dt, data, error, images) '
         'VALUES (%s, %s, %s, %s, %s, %s, %s)',
@@ -307,6 +315,8 @@ def extract_dataset_diagnostics(
             },
             'images': [tic_image],
         }
+
+    logger.debug(f'Extracting dataset diagnostics for {ds_id}')
 
     return [
         _run_diagnostic_fn(ds_id, DiagnosticType.IMZML_METADATA, metadata_diagnostic),
