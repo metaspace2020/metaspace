@@ -34,10 +34,10 @@ def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
     ]
     df = pd.DataFrame(
         rows,
-        columns=['chem_mod', 'neutral_loss', 'adduct', 'target_modifier', 'decoy_modifier_prefix'],
+        columns=['chem_mod', 'neutral_loss', 'adduct', 'tm', 'decoy_modifier_prefix'],
         dtype='O',
     )
-    df = df.set_index('target_modifier')
+    df = df.set_index('tm')
     return df
 
 
@@ -66,10 +66,20 @@ class FDR:
     def _decoy_adduct_gen(self, target_formulas):
         np.random.seed(self.random_seed)
         target_modifiers = list(self.target_modifiers_df.decoy_modifier_prefix.items())
-        # pylint: disable=invalid-name
-        for formula, (tm, dm_prefix) in product(target_formulas, target_modifiers):
-            for da in self._choose_decoys():
-                yield (formula, tm, dm_prefix + da)
+        if self.analysis_version < 3:
+            # NOTE: These are later selected by index % decoy_sample_size. Generation order matters.
+            # pylint: disable=invalid-name
+            for formula, (tm, dm_prefix) in product(target_formulas, target_modifiers):
+                for da in self._choose_decoys():
+                    yield formula, tm, dm_prefix + da
+        else:
+            # In v3, share the decoy adducts, as there's no benefit to re-sampling decoys
+            # for each target modifier, but it's significantly expensive to do so.
+            for formula in target_formulas:
+                decoys = self._choose_decoys()
+                for tm, dm_prefix in target_modifiers:
+                    for da in decoys:
+                        yield formula, tm, dm_prefix + da
 
     def decoy_adducts_selection(self, target_formulas):
         self.td_df = pd.DataFrame(
@@ -101,7 +111,7 @@ class FDR:
     def _msm_fdr_map(self, target_msm, decoy_msm, decoy_ratio):
         """
         decoy ratio - ratio of decoys to targets for the given ranking. This has to be provided
-        because `target_msm` and `decoy_msm` usually exclude zero-scored annotations, but those
+        because `target_scores` and `decoy_scores` usually exclude zero-scored annotations, but those
         excluded need to be taken into account for the FDR calculation.
         In analysis_version=1, many rankings with matched target/decoy sizes are used, so this should be 1
         In analysis_version=3, a single ranking is done per target, so this should be the decoy_sample_size

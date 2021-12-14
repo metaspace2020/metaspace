@@ -111,8 +111,11 @@ type DatasetProject {
 }
 
 enum DiagnosticImageFormat {
+# This should match the list in engine/sm/engine/annotation/diagnostics.py
   PNG
   NPY # N-Dimensional Array in NumPy's .npy serialization format
+  JSON
+  PARQUET
 }
 
 type DiagnosticImage {

@@ -10,9 +10,9 @@ from botocore.exceptions import ClientError
 from pyspark import SparkContext  # pylint: disable=unused-import
 
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper  # pylint: disable=unused-import
-from sm.engine.util import split_s3_path
 from sm.engine.config import SMConfig
 from sm.engine.storage import get_s3_client
+from sm.engine.util import split_s3_path
 
 logger = logging.getLogger('engine')
 
@@ -40,8 +40,9 @@ class CentroidsGenerator:
                 self._isocalc.charge,
             )
         else:
-            self._ion_centroids_path = '{}/v2/{}/{}_{}/{}'.format(
+            self._ion_centroids_path = '{}/v{}/{}/{}_{}/{}'.format(
                 self._sm_config['isotope_storage']['path'],
+                self._isocalc.analysis_version,
                 self._isocalc.n_peaks,
                 self._isocalc.instrument,
                 self._isocalc.sigma,

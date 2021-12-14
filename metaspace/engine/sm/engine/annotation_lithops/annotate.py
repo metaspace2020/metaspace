@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Tuple, Optional, Iterator
+from typing import List, Tuple, Optional, Iterator, Any
 
 import numpy as np
 import pandas as pd
@@ -164,7 +164,7 @@ def gen_iso_image_sets(
             mz_width=upper_mz - lower_mz,
         )
 
-        buffer = []
+        buffer: List[Tuple[Any, coo_matrix, coo_matrix]] = []
         for row in centr_df.itertuples(False):
             if len(buffer) != 0 and buffer[0][0].formula_i != row.formula_i:
                 yield yield_buffer(buffer)

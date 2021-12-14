@@ -3,7 +3,6 @@ from __future__ import annotations
 import inspect
 import logging
 import resource
-import traceback
 from contextlib import ExitStack
 from datetime import datetime
 from itertools import chain
@@ -94,7 +93,7 @@ def _save_subtask_perf(
     mem_afters = subtask_data.pop('mem after', [-1])
     perf_data = {
         'num_actions': len(exec_times),
-        'attempts': attempt,
+        'attempt': attempt,
         'runtime_memory': runtime_memory,
         'max_memory': np.max(mem_afters).item(),
         'max_time': np.max(exec_times).item(),
@@ -239,7 +238,7 @@ class Executor:
                 func_name,
                 start_time,
                 datetime.now(),
-                error=traceback.format_exc(),
+                error=exc,
                 attempt=attempt,
                 runtime_memory=runtime_memory,
                 failed_activation_ids=failed_activation_ids,

@@ -23,7 +23,7 @@ TEST_METADATA = {
 }
 
 TEST_DS_CONFIG = {
-    "image_generation": {"n_levels": 30, "ppm": 3, "min_px": 1},
+    "image_generation": {"n_levels": 30, "ppm": 3, "min_px": 1, "compute_unused_metrics": False},
     "analysis_version": 1,
     "isotope_generation": {
         "adducts": ["+H", "+Na", "+K", "[M]+"],
@@ -34,7 +34,7 @@ TEST_DS_CONFIG = {
         "neutral_losses": [],
         "chem_mods": [],
     },
-    "fdr": {"decoy_sample_size": 20},
+    "fdr": {"decoy_sample_size": 20, "fdr_model": None},
     "database_ids": [0],
 }
 

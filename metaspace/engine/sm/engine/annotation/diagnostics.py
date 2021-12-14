@@ -18,7 +18,7 @@ logger = logging.getLogger('engine')
 
 
 class DiagnosticType(str, Enum):
-    """Should match the enum in metaspace/graphql/src/modules/dataset/model.ts"""
+    """Should match the enum in metaspace/graphql/src/modules/engine/model.ts"""
 
     TIC = 'TIC'
     IMZML_METADATA = 'IMZML_METADATA'
@@ -37,6 +37,9 @@ class DiagnosticImageKey(str, Enum):
 
 
 class DiagnosticImageFormat(str, Enum):
+    """This should match the enums in graphql/schemas/dataset.graphql
+    and metaspace/graphql/src/modules/engine/model.ts"""
+
     PNG = 'PNG'
     NPY = 'NPY'
     JSON = 'JSON'
@@ -223,12 +226,12 @@ def save_diagnostic_image(
         image_id = save_parquet_image(ds_id, data)
     else:
         raise ValueError(f'Unknown format: {format}')
-    image = {
-        'key': key,
-        'image_id': image_id,
-        'url': image_storage.get_image_url(image_storage.DIAG, ds_id, image_id),
-        'format': format,
-    }
+    image = DiagnosticImage(
+        key=key,
+        image_id=image_id,
+        url=image_storage.get_image_url(image_storage.DIAG, ds_id, image_id),
+        format=format,
+    )
 
     if index is not None:
         image['index'] = index

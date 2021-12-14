@@ -244,6 +244,7 @@ def generate_ds_config(
     analysis_version = analysis_version or 1
     iso_params = _get_isotope_generation_from_metadata(metadata)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
+    default_fdr_model = 'v3_default' if analysis_version >= 3 else None
 
     return {
         'database_ids': moldb_ids,
@@ -257,7 +258,10 @@ def generate_ds_config(
             'neutral_losses': neutral_losses or [],
             'chem_mods': chem_mods or [],
         },
-        'fdr': {'decoy_sample_size': decoy_sample_size or 20, 'fdr_model': fdr_model or 'v3'},
+        'fdr': {
+            'decoy_sample_size': decoy_sample_size or 20,
+            'fdr_model': fdr_model or default_fdr_model,
+        },
         'image_generation': {
             'ppm': ppm or 3,
             'n_levels': 30,

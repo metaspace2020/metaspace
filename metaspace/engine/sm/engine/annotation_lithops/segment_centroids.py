@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import math
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple
@@ -10,6 +9,7 @@ import numpy as np
 import pandas as pd
 from lithops.storage.utils import CloudObject
 
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation_lithops.annotate import choose_ds_segments
 from sm.engine.annotation_lithops.calculate_centroids import validate_formulas_not_in_multiple_segms
 from sm.engine.annotation_lithops.executor import Executor
@@ -19,7 +19,6 @@ from sm.engine.annotation_lithops.io import (
     load_cobj,
     load_cobjs,
 )
-from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
 MIN_CENTR_SEGMS = 32
 
@@ -172,9 +171,12 @@ def segment_centroids(
 
         # Try to balance formulas so that they all span roughly the same number of DS segments,
         # and have roughly the same number of formulas.
-        max_segm_span = max((formula_segms_df.hi - formula_segms_df.lo).max(), 4)
+        max_segm_span = max((formula_segms_df.hi - formula_segms_df.lo).max(), 3)
         # FIXME: incorporate image size here so that more intensive datasets are made more granular
-        max_segm_count = int(round(np.clip(centr_n / 1000, 1000, 5000)))
+        if is_intensive_dataset:
+            max_segm_count = int(round(np.clip(centr_n / 1000, 1000, 5000)))
+        else:
+            max_segm_count = int(round(np.clip(centr_n / 1000, 1000, 15000)))
         formula_i_groups = []
         segm_lo_idx = 0
         while segm_lo_idx < len(formula_segms_df):

@@ -1,24 +1,26 @@
-from io import BytesIO
+from __future__ import annotations
+
 import json
 import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
-from typing import List, Tuple, Callable, Dict, Protocol, Union
+from io import BytesIO
+from typing import List, Tuple, Callable, Dict, Protocol, Union, TYPE_CHECKING
 
+import PIL.Image
 import numpy as np
 from botocore.exceptions import ClientError
 from scipy.ndimage import zoom
-import PIL.Image
 
 from sm.engine.config import SMConfig
 from sm.engine.storage import get_s3_resource, create_bucket, get_s3_client
 from sm.engine.utils.retry_on_exception import retry_on_exception
 
-try:
+if TYPE_CHECKING:
     from mypy_boto3_s3.service_resource import S3ServiceResource
     from mypy_boto3_s3.client import S3Client
-except ImportError:
+else:
     S3ServiceResource = object
     S3Client = object
 

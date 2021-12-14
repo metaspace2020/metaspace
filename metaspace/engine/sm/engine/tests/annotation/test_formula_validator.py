@@ -31,12 +31,12 @@ def _test_compute_metrics():
     return compute_metrics
 
 
-@patch('sm.engine.annotation.formula_validator.v1_spectral')
-@patch('sm.engine.annotation.formula_validator.v1_spatial')
-@patch('sm.engine.annotation.formula_validator.v1_chaos')
+@patch('sm.engine.annotation.formula_validator.spectral_metric')
+@patch('sm.engine.annotation.formula_validator.spatial_metric')
+@patch('sm.engine.annotation.formula_validator.chaos_metric')
 def test_formula_image_metrics(chaos_mock, spatial_mock, spectral_mock):
     spectral_mock.side_effect = lambda imgs_flat, *args: imgs_flat[0][0]
-    spatial_mock.side_effect = lambda imgs_flat, *args: imgs_flat[0][1]
+    spatial_mock.side_effect = lambda imgs_flat, *args, **kwargs: imgs_flat[0][1]
     chaos_mock.side_effect = lambda img, *args: img[0, 2]
 
     # Images 2 & 3 combine to equal image 1
@@ -65,7 +65,7 @@ def test_formula_image_metrics(chaos_mock, spatial_mock, spectral_mock):
     metrics_df, _ = formula_image_metrics(
         ref_image_items,
         _test_compute_metrics(),
-        target_formula_inds={0, 1},
+        target_formula_inds={1, 2, 3},
         targeted_database_formula_inds=set(),
         n_peaks=2,
         min_px=1,
@@ -82,8 +82,10 @@ def test_formula_image_metrics(chaos_mock, spatial_mock, spectral_mock):
         'max_iso_ints': [image1.max(), image1.max()],
         'mz_mean': [10.0, 10.0],
         'mz_stddev': [expected_stddev, expected_stddev],
-        'mz_theo': [10, 11],
-        'mz_theo_ints': [100, 10],
+        'mz_err_abs': 0.0,
+        'mz_err_rel': -1.0,  # mz_mean is 10 but theo_mz is 11, so error is -1
+        'theo_mz': [10, 11],
+        'theo_ints': [100, 10],
     }
     expected_metrics_df = pd.DataFrame(
         [expected_metrics] * 3, index=pd.Index([1, 2, 3], name='formula_i')
@@ -91,9 +93,9 @@ def test_formula_image_metrics(chaos_mock, spatial_mock, spectral_mock):
     assert_frame_equal(metrics_df, expected_metrics_df)
 
 
-@patch('sm.engine.annotation.formula_validator.v1_spectral', return_value=0.9)
-@patch('sm.engine.annotation.formula_validator.v1_spatial', return_value=0.8)
-@patch('sm.engine.annotation.formula_validator.v1_chaos', return_value=0.7)
+@patch('sm.engine.annotation.formula_validator.spectral_metric', return_value=0.9)
+@patch('sm.engine.annotation.formula_validator.spatial_metric', return_value=0.8)
+@patch('sm.engine.annotation.formula_validator.chaos_metric', return_value=0.7)
 def test_targeted_database_metrics(chaos_mock, spatial_mock, spectral_mock):
     image = coo_matrix([[1.0, 0.9, 0.8], [0.7, 0.0, 0.5]])
     empty_image = coo_matrix([[0.0, 0.0, 0.8], [0.0, 0.0, 0.0]])

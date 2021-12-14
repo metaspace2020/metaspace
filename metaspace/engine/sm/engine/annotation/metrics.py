@@ -205,4 +205,34 @@ def calc_mz_stddev(iso_images_sparse, iso_mzs_sparse, formula_mzs):
         else:
             mz_mean.append(theo_mz)
             mz_stddev.append(0)
-    return np.float32(mz_mean), np.float32(mz_stddev)
+    return mz_mean, mz_stddev
+
+
+def calc_mass_errs(mz_mean, formula_mzs, formula_ints):
+    # FIXME: Is it better for training if this is in PPM instead of Da?
+    mz_err_abs = mz_mean[0] - formula_mzs[0]
+    if formula_ints[1:].sum() > 0:
+        mz_err_rel = np.average(
+            (mz_mean[1:] - formula_mzs[1:] - mz_err_abs), weights=formula_ints[1:]
+        )
+    else:
+        mz_err_rel = 0
+
+    return mz_err_abs, mz_err_rel
+
+
+def mass_metrics(iso_images_sparse, iso_mzs_sparse, formula_mzs, formula_ints):
+    formula_mzs = np.asarray(formula_mzs)
+    formula_ints = np.asarray(formula_ints)
+    mz_mean, mz_stddev = calc_mz_stddev(iso_images_sparse, iso_mzs_sparse, formula_mzs)
+    # mz_mean is intentionally kept as float64 for the call to calc_mass_errs, as theoretically
+    # some instruments may benefit from this precision. After this calculation, it's only kept for
+    # display purposes, so it's fine to reduce it to float32.
+    mz_err_abs, mz_err_rel = calc_mass_errs(mz_mean, formula_mzs, formula_ints)
+
+    # Convert to float32 for smaller storage
+    mz_mean = np.float32(mz_mean)
+    mz_stddev = np.float32(mz_stddev)
+    mz_err_abs = np.float32(mz_err_abs)
+    mz_err_rel = np.float32(mz_err_rel)
+    return mz_mean, mz_stddev, mz_err_abs, mz_err_rel

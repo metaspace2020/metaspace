@@ -13,13 +13,15 @@ from sm.engine.config import SMConfig
 from sm.engine.image_storage import ImageStorage
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
+DbFormulaImagesDict = Dict[int, Dict[int, List[Optional[str]]]]
+
 
 def store_images_to_s3(
     executor: Executor,
     ds_id: str,
     formula_i_to_db_id: pd.Series,
     png_cobjs: List[CObj[List[Tuple[int, bytes]]]],
-) -> Dict[int, Dict[int, List[Optional[str]]]]:
+) -> DbFormulaImagesDict:
     """
     Upload PNG isotopic images to S3 image storage. Images may be uploaded multiple times if a
     formula_i is in multiple databases (i.e. there are duplicates in the formula_i_to_db_id index).
@@ -28,7 +30,7 @@ def store_images_to_s3(
     """
     sm_config = SMConfig.get_conf()
 
-    def _upload_batch(
+    def _upload_png_batch(
         png_cobj: CObj[List[Tuple[int, bytes]]], *, storage: Storage, perf: SubtaskProfiler
     ):
         def _upload_images(pngs):
@@ -47,7 +49,7 @@ def store_images_to_s3(
             .join(formula_i_to_db_id, how='inner')
         )
         with ThreadPoolExecutor() as ex:
-            db_formula_image_ids = defaultdict(dict)
+            db_formula_image_ids: DbFormulaImagesDict = defaultdict(dict)
 
             for db_id, formula_id, image_ids in zip(
                 tasks.moldb_id, tasks.index, ex.map(_upload_images, tasks.pngs)
@@ -59,8 +61,8 @@ def store_images_to_s3(
 
         return db_formula_image_ids
 
-    results = executor.map(_upload_batch, [(cobj,) for cobj in png_cobjs], runtime_memory=512)
-    db_formula_image_ids = defaultdict(dict)
+    results = executor.map(_upload_png_batch, [(cobj,) for cobj in png_cobjs], runtime_memory=512)
+    db_formula_image_ids: DbFormulaImagesDict = defaultdict(dict)
     for result in results:
         for db_id, db_result in result.items():
             db_formula_image_ids[db_id].update(db_result)

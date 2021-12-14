@@ -129,13 +129,14 @@ export class Job {
 }
 
 // Should match the literal in metaspace/engine/sm/engine/annotation/diagnostics.py
-export type DiagnosticType = 'TIC' | 'IMZML_METADATA'
+export type DiagnosticType = 'TIC' | 'IMZML_METADATA' | 'FDR_RESULTS'
 export const DiagnosticTypeOptions: {[k in DiagnosticType]: k} = {
   TIC: 'TIC',
   IMZML_METADATA: 'IMZML_METADATA',
+  FDR_RESULTS: 'FDR_RESULTS',
 }
 
-export type DiagnosticImageFormat = 'PNG' | 'NPY'
+export type DiagnosticImageFormat = 'PNG' | 'NPY' | 'JSON' | 'PARQUET'
 export interface DiagnosticImage {
   key: string;
   index?: number;

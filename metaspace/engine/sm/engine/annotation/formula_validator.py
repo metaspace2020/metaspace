@@ -21,12 +21,7 @@ import pandas as pd
 from scipy.sparse import coo_matrix
 
 from sm.engine.annotation.imzml_reader import ImzMLReader
-from sm.engine.annotation.metrics import (
-    spatial_metric,
-    chaos_metric,
-    spectral_metric,
-    calc_mz_stddev,
-)
+from sm.engine.annotation.metrics import spatial_metric, chaos_metric, spectral_metric, mass_metrics
 from sm.engine.ds_config import DSConfig
 
 
@@ -42,15 +37,34 @@ class Metrics:
     msm: float = 0.0
 
     # Per-image metrics
-    total_iso_ints: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
-    min_iso_ints: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
-    max_iso_ints: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    total_iso_ints: np.ndarray = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    min_iso_ints: np.ndarray = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    max_iso_ints: np.ndarray = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
 
     # Mass metrics
-    mz_mean: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
-    mz_stddev: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
-    mz_theo: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
-    mz_theo_ints: List[float] = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    # Most of these are float32 because it's enough for humans and reduces storage size.
+    # Float32 is accurate to 7 digits, or 0.059ppm (worst-case), and virtually no instruments have
+    # that degree of mass accuracy.
+    # However, temporary values of theo_mz and mz_mean are kept as float64 because once averaged
+    # across all pixels in an image, the mass accuracy may surpass 0.059ppm, and mz_err_abs and
+    # mz_err_rel can theoretically benefit from the higher precision.
+    mz_mean: np.ndarray = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    mz_stddev: np.ndarray = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    mz_err_abs: float = 0.0
+    mz_err_rel: float = 0.0
+
+    # Theoretical mass/intensity values. These don't contribute to the score and are only preserved
+    # for ease of display/analysis. Older versions did not store these fields.
+    theo_mz: np.ndarray = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+    theo_ints: np.ndarray = field(default_factory=lambda: np.zeros(4, dtype=np.float32))
+
+    # Timing fields (in nanoseconds)
+    # Uncomment these and the usages of "benchmark" in compute_metrics to get the timings saved in
+    # the FDR diagnostic.
+    # t_overall: int = 0
+    # t_chaos: int = 0
+    # t_spatial: int = 0
+    # t_spectral: int = 0
 
 
 # Intensity metrics
@@ -80,8 +94,8 @@ class FormulaImageSet:
     targeted: bool
     # NOTE: On the Spark codepath, centroids outside of the mass range of the dataset are unlikely
     # to be included in theo_mzs/theo_ints
-    theo_mzs: List[float]
-    theo_ints: List[float]
+    theo_mzs: np.ndarray
+    theo_ints: np.ndarray
     images: List[Optional[coo_matrix]]
     # mz_images' pixels must be in the same order as images' pixels
     # NOTE: mz_images should generally never be converted to a dense array, because all the built-in
@@ -114,10 +128,12 @@ def make_compute_image_metrics(
 
     def compute_metrics(image_set: FormulaImageSet):
         @contextmanager
-        def bench(attr):
+        def benchmark(attr):
             start = time.time_ns()
             yield
             setattr(doc, 't_' + attr, time.time_ns() - start)
+
+        # with benchmark('overall'):
 
         iso_imgs = [img.toarray() if img is not None else empty_matrix for img in image_set.images]
         iso_imgs = [img.copy() for img in iso_imgs]
@@ -129,28 +145,32 @@ def make_compute_image_metrics(
         doc.min_iso_ints = np.float32([img.min(initial=0) for img in iso_imgs_flat])
         doc.max_iso_ints = np.float32([img.max(initial=0) for img in iso_imgs_flat])
 
-        doc.mz_theo = np.float32(image_set.theo_mzs)
-        doc.mz_theo_ints = np.float32(image_set.theo_ints)
-        doc.mz_mean, doc.mz_stddev = calc_mz_stddev(
-            image_set.images, image_set.mz_images, image_set.theo_mzs
+        doc.theo_mz = np.float32(image_set.theo_mzs)
+        doc.theo_ints = np.float32(image_set.theo_ints)
+        doc.mz_mean, doc.mz_stddev, doc.mz_err_abs, doc.mz_err_rel = mass_metrics(
+            image_set.images, image_set.mz_images, image_set.theo_mzs, image_set.theo_ints
         )
 
+        # For non-targeted databases, image sets that don't have at least 2 images will
         is_complete_set = (
             image_set.images[0] is not None and image_set.images[0].nnz >= min_px
         ) and any(True for i in image_set.images[1:] if i is not None and i.nnz >= min_px)
         calc_all = image_set.is_target or image_set.targeted or compute_unused_metrics
 
         if is_complete_set or calc_all:
+            # with benchmark('spectral'):
             doc.spectral = spectral_metric(iso_imgs_flat, image_set.theo_ints)
-            if doc.spectral > 0.0 or calc_all:
+            if (doc.spectral or 0.0) > 0.0 or calc_all:
                 # Keep the old spatial implementation in v1 to keep compatibility with old results
                 # But prefer the new implementation as it's faster and only differs due to floating
                 # point imprecision.
                 v1_spatial = analysis_version == 1
+                # with benchmark('spatial'):
                 doc.spatial = spatial_metric(
                     iso_imgs_flat, n_spectra, image_set.theo_ints, v1_impl=v1_spatial
                 )
-                if doc.spatial > 0.0 or calc_all:
+                if (doc.spatial or 0.0) > 0.0 or calc_all:
+                    # with benchmark('chaos'):
                     doc.chaos = chaos_metric(iso_imgs[0], n_levels)
 
         doc.msm = (doc.chaos or 0.0) * (doc.spatial or 0.0) * (doc.spectral or 0.0)
@@ -209,8 +229,8 @@ def iter_images_in_sets(
                 formula_i=image_item.formula_i,
                 is_target=image_item.formula_i in target_formula_inds,
                 targeted=image_item.formula_i in targeted_database_formula_inds,
-                theo_mzs=[0.0] * n_peaks,
-                theo_ints=[0.0] * n_peaks,
+                theo_mzs=np.zeros(n_peaks),
+                theo_ints=np.zeros(n_peaks),
                 images=[None] * n_peaks,
                 mz_images=[None] * n_peaks,
             )
@@ -252,8 +272,8 @@ def compute_and_filter_metrics(
         min_px: Minimum number of pixels each image should have.
     """
     for image_set in formula_image_set_it:
-        for i in range(len(image_set.images)):
-            if image_set.images[i] is not None and image_set.images[i].nnz < min_px:
+        for i, img in enumerate(image_set.images):
+            if img is not None and img.nnz < min_px:
                 image_set.images[i] = None
                 image_set.mz_images[i] = None
 
