@@ -7,6 +7,7 @@ from contextlib import ExitStack
 from datetime import datetime
 from itertools import chain
 from threading import Thread, current_thread
+from traceback import format_tb
 from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional
 
 import lithops
@@ -117,6 +118,21 @@ def _save_subtask_perf(
         else:
             subtask_summary = subtask_df.iloc[0].to_string()
         logger.debug(f'Subtasks:\n{subtask_summary}')
+
+
+def exception_to_json_obj(exc):
+    if exc is None:
+        return None
+
+    obj = {}
+    try:
+        obj['type'] = type(exc).__name__
+        obj['message'] = str(exc)
+        if hasattr(exc, '__traceback__'):
+            obj['traceback'] = format_tb(getattr(exc, '__traceback__'))
+    except:
+        logger.warning(f'Failed to serialize exception {exc}', exc_info=True)
+    return obj
 
 
 class Executor:
@@ -238,7 +254,7 @@ class Executor:
                 func_name,
                 start_time,
                 datetime.now(),
-                error=exc,
+                error=exception_to_json_obj(exc),
                 attempt=attempt,
                 runtime_memory=runtime_memory,
                 failed_activation_ids=failed_activation_ids,
