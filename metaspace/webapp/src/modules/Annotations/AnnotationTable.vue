@@ -65,8 +65,10 @@
       <el-table-column
         v-if="!hidden('Group')"
         key="lab"
+        property="dataset.group.name"
         label="Lab"
         min-width="95"
+        sortable="custom"
       >
         <template slot-scope="props">
           <div class="cell-wrapper">
@@ -91,6 +93,7 @@
         property="dataset.name"
         label="Dataset"
         min-width="140"
+        sortable="custom"
       >
         <template slot-scope="props">
           <div class="cell-wrapper">
@@ -108,6 +111,7 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('Annotation')"
         key="sumFormula"
         property="sumFormula"
         label="Annotation"
@@ -120,6 +124,20 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('Adduct')"
+        key="adduct"
+        property="adduct"
+        label="Adduct"
+        sortable="custom"
+        min-width="80"
+      >
+        <template slot-scope="props">
+          <span> {{ props.row.adduct }} </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('mz')"
         key="mz"
         property="mz"
         label="m/z"
@@ -147,7 +165,7 @@
         property="offSampleProb"
         label="Off-sample %"
         sortable="custom"
-        min-width="60"
+        min-width="120"
       >
         <template slot-scope="props">
           <span> {{ (props.row.offSampleProb * 100).toFixed(0) }}% </span>
@@ -155,11 +173,51 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('rhoSpatial')"
+        key="rhoSpatial"
+        property="rhoSpatial"
+        label="Spatial metric"
+        sortable="custom"
+        min-width="120"
+      >
+        <template slot-scope="props">
+          <span> {{ props.row.rhoSpatial }} </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('rhoSpectral')"
+        key="rhoSpectral"
+        property="rhoSpectral"
+        label="Spectral metric"
+        sortable="custom"
+        min-width="130"
+      >
+        <template slot-scope="props">
+          <span> {{ props.row.rhoSpectral }} </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('rhoChaos')"
+        key="rhoChaos"
+        property="rhoChaos"
+        label="Chaos metric"
+        sortable="custom"
+        min-width="120"
+      >
+        <template slot-scope="props">
+          <span> {{ props.row.rhoChaos }} </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('MSM')"
         key="msmScore"
         property="msmScore"
         label="MSM"
         sortable="custom"
-        min-width="60"
+        min-width="70"
       >
         <template slot-scope="props">
           <span>{{ formatMSM(props.row) }}</span>
@@ -167,12 +225,83 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('Database')"
+        key="database"
+        property="database"
+        label="Database"
+        sortable="custom"
+        min-width="90"
+      >
+        <template slot-scope="props">
+          <span> {{ props.row.database }} </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('Molecules')"
+        key="possibleCompounds"
+        property="possibleCompounds"
+        label="Molecules"
+        show-overflow-tooltip
+        min-width="90"
+      >
+        <template slot-scope="props">
+          <div class="long-text-col">
+            {{ props.row.possibleCompounds.map((molecule) => molecule.name).join(', ') }}
+          </div>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('Isos')"
+        key="isomers"
+        property="isomers"
+        label="Isomers/Isobars"
+        sortable="custom"
+        min-width="140"
+      >
+        <template slot-scope="props">
+          <i
+            v-if="props.row.isomers.length > 0 || props.row.isobars.length > 0"
+            class="el-icon-warning justify-center w-full flex"
+          />
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('maxIntensity')"
+        key="maxIntensity"
+        property="isotopeImages[0].maxIntensity"
+        label="Max Intensity"
+        min-width="120"
+        sortable="custom"
+      >
+        <template slot-scope="props">
+          {{ props.row.isotopeImages[0].maxIntensity.toFixed(4) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('totalIntensity')"
+        key="totalIntensity"
+        property="isotopeImages[0].totalIntensity"
+        label="Total Intensity"
+        min-width="120"
+        sortable="custom"
+      >
+        <template slot-scope="props">
+          {{ props.row.isotopeImages[0].totalIntensity.toFixed(4) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('FDR')"
         key="fdrLevel"
         property="fdrLevel"
         label="FDR"
         class-name="fdr-cell"
         sortable="custom"
-        min-width="40"
+        min-width="60"
       >
         <template slot-scope="props">
           <span v-if="props.row.fdrLevel == null">&mdash;</span>
@@ -233,6 +362,33 @@
             50%
           </div>
         </div>
+      </div>
+
+      <div class="flex w-full items-center justify-end mr-2">
+        <el-popover>
+          <el-button slot="reference">
+            Columns <i class="el-icon-arrow-down">
+            </i>
+          </el-button>
+          <div>
+            <div
+              v-for="(column, i) in columns"
+              :key="column.label"
+              class="cursor-pointer select-none"
+              @click="handleColumnClick(i)"
+            >
+              <i
+                v-if="column.selected"
+                class="el-icon-check"
+              />
+              <i
+                v-else
+                class="el-icon-check invisible"
+              />
+              {{ column.label }}
+            </div>
+          </div>
+        </el-popover>
       </div>
 
       <el-popover trigger="hover">
@@ -314,6 +470,16 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_FORMULA: 'sumFormula',
   ORDER_BY_OFF_SAMPLE: 'offSampleProb',
   ORDER_BY_COLOCALIZATION: 'colocalizationCoeff',
+  ORDER_BY_ADDUCT: 'adduct',
+  ORDER_BY_GROUP: 'dataset.group.name',
+  ORDER_BY_DATASET: 'dataset.name',
+  ORDER_BY_DATABASE: 'database',
+  ORDER_BY_CHAOS: 'rhoChaos',
+  ORDER_BY_SPATIAL: 'rhoSpatial',
+  ORDER_BY_SPECTRAL: 'rhoSpectral',
+  ORDER_BY_MAX_INT: 'isotopeImages[0].maxIntensity',
+  ORDER_BY_TOTAL_INT: 'isotopeImages[0].totalIntensity',
+  ORDER_BY_ISO: 'isomers',
 }
 const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
 
@@ -339,6 +505,88 @@ export default Vue.extend({
       csvChunkSize: 1000,
       nextCurrentRowIndex: null,
       loadedSnapshotAnnotations: false,
+      columns: [
+        {
+          label: 'Lab',
+          src: 'Group',
+          selected: true,
+        },
+        {
+          label: 'Dataset',
+          src: 'Dataset',
+          selected: true,
+        },
+        {
+          label: 'Annotation',
+          src: 'Annotation',
+          selected: true,
+        },
+        {
+          label: 'm/z',
+          src: 'mz',
+          selected: true,
+        },
+        {
+          label: 'MSM',
+          src: 'MSM',
+          selected: true,
+        },
+        {
+          label: 'FDR',
+          src: 'FDR',
+          selected: true,
+        },
+        {
+          label: 'Molecules',
+          src: 'Molecules',
+          selected: false,
+        },
+        {
+          label: 'Database',
+          src: 'Database',
+          selected: false,
+        },
+        {
+          label: 'Max Intensity',
+          src: 'maxIntensity',
+          selected: false,
+        },
+        {
+          label: 'Total Intensity',
+          src: 'totalIntensity',
+          selected: false,
+        },
+        {
+          label: 'Adduct',
+          src: 'Adduct',
+          selected: false,
+        },
+        {
+          label: 'Spatial metric',
+          src: 'rhoSpatial',
+          selected: false,
+        },
+        {
+          label: 'Spectral metric',
+          src: 'rhoSpectral',
+          selected: false,
+        },
+        {
+          label: 'Chaos metric',
+          src: 'rhoChaos',
+          selected: false,
+        },
+        {
+          label: 'On/Off-sample %',
+          src: 'OffSampleProb',
+          selected: false,
+        },
+        {
+          label: 'Isomers/Isobars',
+          src: 'Isos',
+          selected: false,
+        },
+      ],
     }
   },
   computed: {
@@ -393,6 +641,8 @@ export default Vue.extend({
     },
 
     tableSort() {
+      console.log('this.orderBy', this.orderBy)
+      console.log('this.orderBy2', SORT_ORDER_TO_COLUMN[this.orderBy])
       return {
         prop: SORT_ORDER_TO_COLUMN[this.orderBy] || 'msmScore',
         order: this.sortingOrder.toLowerCase(),
@@ -526,7 +776,9 @@ export default Vue.extend({
     },
 
     hidden(columnLabel) {
-      return this.hideColumns.indexOf(columnLabel) >= 0
+      return this.columns.findIndex((col) => col.src === columnLabel) === -1
+        ? this.hideColumns.indexOf(columnLabel) >= 0
+        : !this.columns.find((col) => col.src === columnLabel)?.selected
     },
 
     getRowClass({ row }) {
@@ -805,6 +1057,10 @@ export default Vue.extend({
       this.isExporting = false
       this.exportProgress = 0
     },
+
+    handleColumnClick(index) {
+      this.columns[index].selected = !this.columns[index].selected
+    },
   },
 })
 </script>
@@ -937,5 +1193,10 @@ export default Vue.extend({
 
  #annot-count {
    padding-left: 5px;
+ }
+ .long-text-col{
+   text-overflow: ellipsis !important;
+   overflow: hidden;
+   white-space: nowrap;
  }
 </style>

@@ -17,30 +17,39 @@ exports[`AnnotationTable should match snapshot 1`] = `
       <div></div>
       <div></div>
       <div></div>
-      <div></div>
       <!---->
       <div></div>
+      <!---->
+      <!---->
+      <!---->
+      <!---->
+      <div></div>
+      <!---->
+      <!---->
+      <!---->
+      <!---->
+      <!---->
       <div></div>
       <div></div>
     </div>
     <div class="el-table__header-wrapper">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 560px;">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 590px;">
         <colgroup>
           <col name="el-table_1_column_1" width="95">
           <col name="el-table_1_column_2" width="140">
           <col name="el-table_1_column_3" width="120">
           <col name="el-table_1_column_4" width="65">
-          <col name="el-table_1_column_5" width="60">
-          <col name="el-table_1_column_6" width="40">
+          <col name="el-table_1_column_5" width="70">
+          <col name="el-table_1_column_6" width="60">
           <col name="el-table_1_column_7" width="40">
         </colgroup>
         <thead class="">
           <tr class="">
-            <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf">
-              <div class="cell">Lab</div>
+            <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf is-sortable">
+              <div class="cell">Lab<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
-            <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf">
-              <div class="cell">Dataset</div>
+            <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf is-sortable">
+              <div class="cell">Dataset<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
             <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf is-sortable">
               <div class="cell">Annotation<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
@@ -62,14 +71,14 @@ exports[`AnnotationTable should match snapshot 1`] = `
       </table>
     </div>
     <div class="el-table__body-wrapper is-scrolling-left">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 560px;">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 590px;">
         <colgroup>
           <col name="el-table_1_column_1" width="95">
           <col name="el-table_1_column_2" width="140">
           <col name="el-table_1_column_3" width="120">
           <col name="el-table_1_column_4" width="65">
-          <col name="el-table_1_column_5" width="60">
-          <col name="el-table_1_column_6" width="40">
+          <col name="el-table_1_column_5" width="70">
+          <col name="el-table_1_column_6" width="60">
           <col name="el-table_1_column_7" width="40">
         </colgroup>
         <tbody>
@@ -178,6 +187,66 @@ exports[`AnnotationTable should match snapshot 1`] = `
         </div>
       </div>
     </div>
+    <div class="flex w-full items-center justify-end mr-2">
+      <mock-el-popover>
+        <div slot-key="default">
+          <div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              Lab
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              Dataset
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              Annotation
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              m/z
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              MSM
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              FDR
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Molecules
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Database
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Max Intensity
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Total Intensity
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Adduct
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Spatial metric
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Spectral metric
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Chaos metric
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              On/Off-sample %
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Isomers/Isobars
+            </div>
+          </div>
+        </div>
+        <div slot-key="reference"><button type="button" class="el-button el-button--default">
+            <!---->
+            <!----><span>
+          Columns <i class="el-icon-arrow-down"></i></span></button></div>
+      </mock-el-popover>
+    </div>
     <mock-el-popover trigger="hover">
       <div slot-key="default">
 
@@ -203,30 +272,39 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
       <div></div>
       <div></div>
       <div></div>
-      <div></div>
       <!---->
       <div></div>
+      <!---->
+      <!---->
+      <!---->
+      <!---->
+      <div></div>
+      <!---->
+      <!---->
+      <!---->
+      <!---->
+      <!---->
       <div></div>
       <div></div>
     </div>
     <div class="el-table__header-wrapper">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 560px;">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 590px;">
         <colgroup>
           <col name="el-table_2_column_8" width="95">
           <col name="el-table_2_column_9" width="140">
           <col name="el-table_2_column_10" width="120">
           <col name="el-table_2_column_11" width="65">
-          <col name="el-table_2_column_12" width="60">
-          <col name="el-table_2_column_13" width="40">
+          <col name="el-table_2_column_12" width="70">
+          <col name="el-table_2_column_13" width="60">
           <col name="el-table_2_column_14" width="40">
         </colgroup>
         <thead class="">
           <tr class="">
-            <th colspan="1" rowspan="1" class="el-table_2_column_8     is-leaf">
-              <div class="cell">Lab</div>
+            <th colspan="1" rowspan="1" class="el-table_2_column_8     is-leaf is-sortable">
+              <div class="cell">Lab<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
-            <th colspan="1" rowspan="1" class="el-table_2_column_9     is-leaf">
-              <div class="cell">Dataset</div>
+            <th colspan="1" rowspan="1" class="el-table_2_column_9     is-leaf is-sortable">
+              <div class="cell">Dataset<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
             </th>
             <th colspan="1" rowspan="1" class="el-table_2_column_10     is-leaf is-sortable">
               <div class="cell">Annotation<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
@@ -248,14 +326,14 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
       </table>
     </div>
     <div class="el-table__body-wrapper is-scrolling-left">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 560px;">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 590px;">
         <colgroup>
           <col name="el-table_2_column_8" width="95">
           <col name="el-table_2_column_9" width="140">
           <col name="el-table_2_column_10" width="120">
           <col name="el-table_2_column_11" width="65">
-          <col name="el-table_2_column_12" width="60">
-          <col name="el-table_2_column_13" width="40">
+          <col name="el-table_2_column_12" width="70">
+          <col name="el-table_2_column_13" width="60">
           <col name="el-table_2_column_14" width="40">
         </colgroup>
         <tbody>
@@ -363,6 +441,66 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
           50%
         </div>
       </div>
+    </div>
+    <div class="flex w-full items-center justify-end mr-2">
+      <mock-el-popover>
+        <div slot-key="default">
+          <div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              Lab
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              Dataset
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              Annotation
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              m/z
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              MSM
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              FDR
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Molecules
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Database
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Max Intensity
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Total Intensity
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Adduct
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Spatial metric
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Spectral metric
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Chaos metric
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              On/Off-sample %
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Isomers/Isobars
+            </div>
+          </div>
+        </div>
+        <div slot-key="reference"><button type="button" class="el-button el-button--default">
+            <!---->
+            <!----><span>
+          Columns <i class="el-icon-arrow-down"></i></span></button></div>
+      </mock-el-popover>
     </div>
     <mock-el-popover trigger="hover">
       <div slot-key="default">
