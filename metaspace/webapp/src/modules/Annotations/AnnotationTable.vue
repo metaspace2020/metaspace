@@ -327,7 +327,7 @@
     </el-table>
 
     <div class="flex justify-between items-start mt-2">
-      <div>
+      <div class="mt-1">
         <el-pagination
           v-if="!initialLoading"
           :total="totalCount"
@@ -364,8 +364,8 @@
         </div>
       </div>
 
-      <div class="flex w-full items-center justify-end mr-2">
-        <el-popover>
+      <div class="flex w-full items-center justify-end flex-wrap">
+        <el-popover class="mt-1">
           <el-button slot="reference">
             Columns <i class="el-icon-arrow-down">
             </i>
@@ -389,40 +389,64 @@
             </div>
           </div>
         </el-popover>
-      </div>
 
-      <el-popover trigger="hover">
-        <div slot="reference">
-          <progress-button
-            v-if="isExporting && totalCount > 5000"
-            class="export-btn"
-            :width="130"
-            :height="40"
-            :percentage="exportProgress * 100"
-            @click="abortExport"
+        <el-popover
+          class="ml-2 mt-1"
+          trigger="hover"
+        >
+          <div slot="reference">
+            <progress-button
+              v-if="isExporting && totalCount > 5000"
+              class="export-btn"
+              :width="130"
+              :height="40"
+              :percentage="exportProgress * 100"
+              @click="abortExport"
+            >
+              Cancel
+            </progress-button>
+            <el-button
+              v-else
+              slot="reference"
+              class="export-btn"
+              :disabled="isExporting"
+              @click="startExport"
+            >
+              Export to CSV
+            </el-button>
+          </div>
+
+          Documentation for the CSV export is available
+          <a
+            href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
+            rel="noopener noreferrer nofollow"
+            target="_blank"
           >
-            Cancel
-          </progress-button>
+            here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
+          </a>
+        </el-popover>
+
+        <div class="ml-2 mt-1">
+          <el-button
+            v-if="isFullScreen"
+            class="full-screen-btn"
+            @click="$emit('screen')"
+          >
+            <full-screen
+              class="full-screen-icon"
+            />
+          </el-button>
           <el-button
             v-else
-            slot="reference"
-            class="export-btn"
-            :disabled="isExporting"
-            @click="startExport"
+            class="full-screen-btn"
+            @click="$emit('screen')"
           >
-            Export to CSV
+            <exit-full-screen
+              class="full-screen-icon"
+            />
           </el-button>
         </div>
-
-        Documentation for the CSV export is available
-        <a
-          href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
-          rel="noopener noreferrer nofollow"
-          target="_blank"
-        >
-          here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
-        </a>
-      </el-popover>
+      </div>
     </div>
   </el-row>
 </template>
@@ -446,6 +470,8 @@ import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
 import { getDatasetDiagnosticsQuery } from '../../api/dataset'
+import FullScreen from '../../assets/inline/full_screen.svg'
+import ExitFullScreen from '../../assets/inline/exit_full_screen.svg'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -490,8 +516,10 @@ export default Vue.extend({
     AnnotationTableMolName,
     FilterIcon,
     ExternalWindowSvg,
+    ExitFullScreen,
+    FullScreen,
   },
-  props: ['hideColumns'],
+  props: ['hideColumns', 'isFullScreen'],
   data() {
     return {
       annotations: [],
@@ -641,8 +669,6 @@ export default Vue.extend({
     },
 
     tableSort() {
-      console.log('this.orderBy', this.orderBy)
-      console.log('this.orderBy2', SORT_ORDER_TO_COLUMN[this.orderBy])
       return {
         prop: SORT_ORDER_TO_COLUMN[this.orderBy] || 'msmScore',
         order: this.sortingOrder.toLowerCase(),
@@ -1198,5 +1224,13 @@ export default Vue.extend({
    text-overflow: ellipsis !important;
    overflow: hidden;
    white-space: nowrap;
+ }
+ .full-screen-icon{
+   transform: scale(0.4);
+   margin: -13.5px -11.5px;
+ }
+ .full-screen-btn{
+   padding: 0;
+   margin: 0;
  }
 </style>

@@ -261,6 +261,9 @@ exports[`AnnotationTable should match snapshot 1`] = `
         </span></button></div>
       </div>
     </mock-el-popover>
+    <div class="ml-2"><button type="button" class="el-button full-screen-btn el-button--default">
+        <!---->
+        <!----><span><svg data-icon="exit_full_screen" class="full-screen-icon"></svg></span></button></div>
   </div>
 </div>
 `;
@@ -516,6 +519,9 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
         </span></button></div>
       </div>
     </mock-el-popover>
+    <div class="ml-2"><button type="button" class="el-button full-screen-btn el-button--default">
+        <!---->
+        <!----><span><svg data-icon="exit_full_screen" class="full-screen-icon"></svg></span></button></div>
   </div>
 </div>
 `;

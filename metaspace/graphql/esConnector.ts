@@ -132,8 +132,6 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
     return obj
   }
 
-  console.log('olar1', orderBy)
-
   // annotation orderings
   if (orderBy === 'ORDER_BY_MZ') {
     return [sortTerm('mz', order)]
@@ -424,7 +422,6 @@ export const esSearchResults = async(args: any, docType: DocType,
     from: args.offset,
     size: args.limit,
   }
-  console.log('request', JSON.stringify(request))
   const resp = await es.search(request)
   return resp.hits.hits
 }
