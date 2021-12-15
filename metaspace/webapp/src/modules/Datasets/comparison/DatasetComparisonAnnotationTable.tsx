@@ -1,4 +1,4 @@
-import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from '@vue/composition-api'
 import './DatasetComparisonAnnotationTable.scss'
 import { Table, TableColumn, Pagination, Button, Popover } from '../../../lib/element-ui'
 import ProgressButton from '../../Annotations/ProgressButton.vue'
@@ -68,6 +68,11 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     })
 
     const onKeyUp = (event: any) => {
+      const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
+      if (!shouldMoveFocus) { // ignore event if focused on filters
+        return
+      }
+
       // @ts-ignore
       const action : string = KEY_TO_ACTION[event.key]
 
@@ -117,13 +122,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     }
 
     onMounted(() => {
-      const { sort, row, page } = $route.query
-      const order = sort?.indexOf('-') === 0 ? 'descending' : 'ascending'
-      const prop = sort ? sort.replace('-', '') : SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM
-      handleSortChange({ order, prop }, false)
-      state.selectedRow = row ? props.annotations[parseInt(row, 10)]
-        : state.processedAnnotations[0]
-      onPageChange(page ? parseInt(page, 10) : 1, true)
+      initializeTable()
       if (!state.keyListenerAdded) {
         state.keyListenerAdded = true
         window.addEventListener('keyup', onKeyUp)
@@ -136,6 +135,23 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         window.removeEventListener('keyup', onKeyUp)
       }
     })
+
+    watch(() => props.isLoading, (newValue, oldValue) => {
+      if (newValue === true && oldValue === false) { // check for filter updates to re-render
+        initializeTable()
+      }
+    })
+
+    const initializeTable = () => {
+      const { sort, row, page } = $route.query
+      const order = sort?.indexOf('-') === 0 ? 'descending' : 'ascending'
+      const prop = sort ? sort.replace('-', '') : SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM
+      handleSortChange({ order, prop }, false)
+
+      state.selectedRow = row ? props.annotations[parseInt(row, 10)]
+        : state.processedAnnotations[0]
+      onPageChange(page ? parseInt(page, 10) : 1, true)
+    }
 
     const clearCurrentRow = () => {
       const currentRows = document.querySelectorAll('.current-row')
@@ -150,12 +166,12 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       const dataStart = ((state.offset - 1) * state.pageSize)
       const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
       return findIndex(state.processedAnnotations.slice(dataStart, dataEnd),
-        (annotation: any) => { return state.selectedRow.id === annotation?.id })
+        (annotation: any) => { return state.selectedRow?.id === annotation?.id })
     }
 
     const getDataItemIndex = () => {
       return findIndex(state.processedAnnotations,
-        (annotation: any) => { return state.selectedRow.id === annotation?.id })
+        (annotation: any) => { return state.selectedRow?.id === annotation?.id })
     }
 
     const getNumberOfPages = () => {
@@ -330,9 +346,13 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       } else if (!fromUpDownArrow && newPage < state.offset) { // left
         const newIndex = Math.max(0, currentDataIndex - (state.pageSize * (state.offset - newPage)))
         state.selectedRow = state.processedAnnotations[newIndex]
+      } else if (currentDataIndex === -1 && state.processedAnnotations.length > 0) { // keep row selected
+        state.selectedRow = state.processedAnnotations[0]
       }
 
+      newPage = newPage < 1 ? 1 : newPage
       state.offset = newPage
+
       $store.commit('setCurrentPage', newPage)
       handleCurrentRowChange(state.selectedRow)
     }

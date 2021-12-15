@@ -57,7 +57,6 @@ interface DatasetComparisonPageState {
   annotationData: any
   refsLoaded: boolean
   showViewer: boolean
-  annotationLoading: boolean
   isLoading: any
   collapse: string[]
   databaseOptions: any
@@ -119,7 +118,6 @@ export default defineComponent<DatasetComparisonPageProps>({
       annotationData: {},
       refsLoaded: false,
       showViewer: false,
-      annotationLoading: true,
       isLoading: false,
       normalizationData: {},
       offset: 0,
@@ -198,7 +196,6 @@ export default defineComponent<DatasetComparisonPageProps>({
 
           state.annotations = processedAnnotations
           dsQueryOptions.enabled = true
-          state.annotationLoading = false
         }
       }
     })
@@ -569,7 +566,7 @@ export default defineComponent<DatasetComparisonPageProps>({
             {
               state.annotations
               && <DatasetComparisonAnnotationTable
-                isLoading={state.annotationLoading}
+                isLoading={annotationsLoading.value}
                 annotations={state.annotations.map((ion: any) => {
                   return {
                     ...ion.annotations[0],
@@ -583,7 +580,8 @@ export default defineComponent<DatasetComparisonPageProps>({
               />
             }
             {
-              annotationsLoading.value
+              !state.annotations
+              && annotationsLoading.value
               && <div class='w-full absolute text-center top-0'>
                 <i
                   class="el-icon-loading"
