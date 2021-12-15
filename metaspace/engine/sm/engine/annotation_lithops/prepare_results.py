@@ -17,20 +17,20 @@ logger = logging.getLogger('annotation-pipeline')
 
 
 def _split_png_jobs(image_tasks_df, w, h):
-    # Guess the cost per imageset, and split into relatively even chunks.
-    # This is a quick attempt and needs review
-    # This assumes they're already sorted by cobj, and factors in:
-    # * Number of populated pixels (because very sparse images should be much faster to encode)
-    # * Total image size (because even empty pixels have some cost)
-    # * Cost of loading a new cobj
-    # * Constant overhead per image
+    # Guess the cost (in ms) per imageset, and split into relatively even chunks, aiming for 2s each.
+    # Based on local testing, PngGenerator.generate_png() can encode ~20M empty pixels per second,
+    # or ~10M non-empty pixels per second.
+    # This assumes rows are already sorted by cobj, and factors in:
+    # * Number of empty and non-empty pixels (1/20000 ms for empty, 1/10000 ms for non-empty)
+    # * Cost of loading a new cobj (assumed to be 10ms)
+    # * Constant overhead per image (assumed to be 1ms)
     cobj_keys = [cobj.key for cobj in image_tasks_df.cobj]
     cobj_changed = np.array(
         [(i == 0 or key == cobj_keys[i - 1]) for i, key in enumerate(cobj_keys)]
     )
-    image_tasks_df['cost'] = image_tasks_df.n_pixels + (w * h) / 5 + cobj_changed * 100000 + 1000
+    image_tasks_df['cost'] = (w * h + image_tasks_df.n_pixels) / 20000 + cobj_changed * 10 + 1
     total_cost = image_tasks_df.cost.sum()
-    n_jobs = int(np.ceil(np.clip(total_cost / 1e8, 1, 100)))
+    n_jobs = int(np.ceil(np.clip(total_cost / 2000, 1, 100)))
     job_bound_vals = np.linspace(0, total_cost + 1, n_jobs + 1)
     job_bound_idxs = np.searchsorted(np.cumsum(image_tasks_df.cost), job_bound_vals)
     jobs = [

@@ -4,6 +4,7 @@ from itertools import product
 import numpy as np
 import pandas as pd
 
+from sm.engine.annotation.scoring_model import ScoringModel, MsmScoringModel
 from sm.engine.formula_parser import format_modifiers
 
 logger = logging.getLogger('engine')
@@ -39,6 +40,76 @@ def _make_target_modifiers_df(chem_mods, neutral_losses, target_adducts):
     )
     df = df.set_index('tm')
     return df
+
+
+def score_to_fdr_map(
+    target_scores: np.ndarray,
+    decoy_scores: np.ndarray,
+    decoy_ratio: float,
+    rule_of_succession: bool,
+    monotonic: bool,
+) -> pd.Series:
+    """Returns a Series where the index is the target/decoy scores and the value is the FDR.
+    Scores can have any magnitude, but must be floating point numbers where higher values indicate
+    higher confidence.
+
+    target/decoy scores can have any finite values, but it's assumed that higher values indicate
+    higher confidence.
+
+    Args:
+        target_scores: scores for all targets
+        decoy_scores: scores for all decoys
+        decoy_ratio: ratio of decoys to targets for the given ranking. This has to be provided
+            because `target_scores` and `decoy_scores` usually exclude zero-scored annotations,
+            but those excluded values need to be taken into account for the FDR calculation.
+            In analysis_version=1, many rankings with matched target/decoy sizes are used, so this should be 1
+            In analysis_version=3, a single ranking with many decoys is done per target, so this should be the decoy_sample_size
+        rule_of_succession: When true, starts the sequence with 1 target and 1 decoy,
+            which improves stability and solves the overoptimistic "0% FDR" problem.
+        monotonic: When true, ensures that there are no cases where having a lower score would
+            have a lower FDR. This is generally preferred - false only makes sense if the FDRs
+            are going to be somehow manipulated (e.g. averaged over several rankings) before being
+            made monotonic.
+    """
+    target_hits = pd.Series(target_scores, name='target').value_counts()
+    decoy_hits = pd.Series(decoy_scores, name='decoy').value_counts()
+    counts_df = pd.concat([target_hits, decoy_hits], axis=1).fillna(0).sort_index(ascending=False)
+    cumulative_targets = counts_df.target.cumsum()
+    cumulative_decoys = counts_df.decoy.cumsum()
+    if rule_of_succession:
+        # Per the Rule of Succession, to find the best estimate of a
+        # Bernoulli distribution's mean, add one to the number of observations of each class.
+        # Other FDR algorithms don't seem to do this, and technically this isn't actually a
+        # Bernoulli distribution, but it's the best approach I could find to integrate
+        # uncertainty into the FDR values to avoid producing misleading 0% FDR values
+        # (which likely have a large-but-unreported margin of error).
+        cumulative_targets = cumulative_targets + 1
+        cumulative_decoys = cumulative_decoys + 1
+
+    fdrs = cumulative_decoys / decoy_ratio / cumulative_targets
+    fdrs[cumulative_targets == 0] = 1
+    if monotonic:
+        # FDRs is already sorted by score descending, so reverse it, take the running-minimum,
+        # then reverse it again to get the original order.
+        fdrs = pd.Series(np.minimum.accumulate(fdrs.values[::-1])[::-1], index=fdrs.index)
+
+    return fdrs
+
+
+def run_fdr_ranking(
+    target_scores: pd.Series,
+    decoy_scores: pd.Series,
+    decoy_ratio: float,
+    rule_of_succession: bool,
+    monotonic: bool,
+):
+    fdr_map = score_to_fdr_map(
+        target_scores.values, decoy_scores.values, decoy_ratio, rule_of_succession, monotonic
+    )
+
+    fdrs = fdr_map.loc[target_scores.values].values
+
+    return pd.Series(fdrs, index=target_scores.index)
 
 
 class FDR:
@@ -108,89 +179,60 @@ class FDR:
                 return level
         return 1.0
 
-    def _msm_fdr_map(self, target_msm, decoy_msm, decoy_ratio):
-        """
-        decoy ratio - ratio of decoys to targets for the given ranking. This has to be provided
-        because `target_scores` and `decoy_scores` usually exclude zero-scored annotations, but those
-        excluded need to be taken into account for the FDR calculation.
-        In analysis_version=1, many rankings with matched target/decoy sizes are used, so this should be 1
-        In analysis_version=3, a single ranking is done per target, so this should be the decoy_sample_size
-        """
-        target_msm_hits = pd.Series(target_msm.msm.value_counts(), name='target')
-        decoy_msm_hits = pd.Series(decoy_msm.msm.value_counts(), name='decoy')
-        msm_df = (
-            pd.concat([target_msm_hits, decoy_msm_hits], axis=1)
-            .fillna(0)
-            .sort_index(ascending=False)
-        )
-        msm_df['target_cum'] = msm_df.target.cumsum()
-        msm_df['decoy_cum'] = msm_df.decoy.cumsum()
-
-        if self.analysis_version < 3:
-            msm_df['fdr'] = msm_df.decoy_cum / decoy_ratio / msm_df.target_cum
-        else:
-            # Per the Rule of Succession, to find the the best estimate of a
-            # Bernoulli distribution's mean, add one to the number of observations of each class.
-            # Other FDR algorithms don't seem to do this, and technically this isn't actually a
-            # Bernoulli distribution, but it's the best approach I could find to integrate
-            # uncertainty into the FDR values to avoid producing misleading 0% FDR values
-            # (which likely have a large-but-unreported margin of error).
-            msm_df['fdr'] = (msm_df.decoy_cum + 1) / decoy_ratio / (msm_df.target_cum + 1)
-        return msm_df.fdr
-
     def _digitize_fdr(self, fdr_df):
-        if self.analysis_version < 2:
-            # Bin annotations by predefined FDR levels
-            df = fdr_df.sort_values(by='msm', ascending=False)
-            msm_levels = [df[df.fdr < fdr_thr].msm.min() for fdr_thr in self.fdr_levels]
-            df['fdr_d'] = 1.0
-            for msm_thr, fdr_thr in zip(msm_levels, self.fdr_levels):
-                row_mask = np.isclose(df.fdr_d, 1.0) & np.greater_equal(df.msm, msm_thr)
-                df.loc[row_mask, 'fdr_d'] = fdr_thr
-            df['fdr'] = df.fdr_d
-            return df.drop('fdr_d', axis=1)
-        else:
-            # Calculate continuous FDR values.
-            df = fdr_df.sort_values(by='msm')
-            df['fdr'] = np.minimum.accumulate(df.fdr)
-            return df
+        # Bin annotations by predefined FDR thresholds, also making them monotonic
+        # This is only used in analysis_version==1
+        df = fdr_df.sort_values(by='msm', ascending=False)
+        msm_levels = [df[df.fdr < fdr_thr].msm.min() for fdr_thr in self.fdr_levels]
+        df['fdr_d'] = 1.0
+        for msm_thr, fdr_thr in zip(msm_levels, self.fdr_levels):
+            row_mask = np.isclose(df.fdr_d, 1.0) & np.greater_equal(df.msm, msm_thr)
+            df.loc[row_mask, 'fdr_d'] = fdr_thr
+        df['fdr'] = df.fdr_d
+        return df.drop('fdr_d', axis=1)
 
-    def estimate_fdr(self, formula_msm):
+    def estimate_fdr(
+        self, formula_msm: pd.DataFrame, scoring_model: ScoringModel = None
+    ) -> pd.DataFrame:
         logger.info('Estimating FDR')
+
+        if scoring_model is None:
+            scoring_model = MsmScoringModel()
 
         td_df = self.td_df.set_index('tm')
 
         target_fdr_df_list = []
         for tm in self.target_modifiers_df.index.drop_duplicates():  # pylint: disable=invalid-name
             target_msm = formula_msm[formula_msm.modifier == tm]
-            full_decoy_df = td_df.loc[tm, ['formula', 'dm']]
+            full_decoy_df = td_df.loc[tm, ['formula', 'dm']].rename(columns={'dm': 'modifier'})
 
             if self.analysis_version >= 3:
-                all_decoy_msm = pd.merge(
-                    formula_msm,
-                    full_decoy_df,
-                    left_on=['formula', 'modifier'],
-                    right_on=['formula', 'dm'],
+                decoy_msm = pd.merge(formula_msm, full_decoy_df, on=['formula', 'modifier'])
+                target_df, decoy_df = scoring_model.score(
+                    target_msm, decoy_msm, self.decoy_sample_size
                 )
-                msm_to_fdr = self._msm_fdr_map(target_msm, all_decoy_msm, self.decoy_sample_size)
+
+                fdr_vals = run_fdr_ranking(
+                    target_df.msm, decoy_df.msm, self.decoy_sample_size, True, True
+                )
+                target_fdr = target_df.assign(fdr=fdr_vals)
             else:
-                msm_fdr_list = []
                 # Do a separate ranking for each of the 20 target:decoy pairings, then take the
                 # median FDR for each target
+                fdr_vals_list = []
                 for i in range(self.decoy_sample_size):
                     decoy_subset_df = full_decoy_df[i :: self.decoy_sample_size]
-                    decoy_msm = pd.merge(
-                        formula_msm,
-                        decoy_subset_df,
-                        left_on=['formula', 'modifier'],
-                        right_on=['formula', 'dm'],
-                    )
-                    msm_fdr = self._msm_fdr_map(target_msm, decoy_msm, 1)
-                    msm_fdr_list.append(msm_fdr)
+                    decoy_msm = pd.merge(formula_msm, decoy_subset_df, on=['formula', 'modifier'])
 
-                msm_to_fdr = pd.Series(pd.concat(msm_fdr_list, axis=1).median(axis=1), name='fdr')
+                    # Extra columns added by scoring_model are discarded for simplicity,
+                    # as it's unlikely anyone will use this codepath with a CatBoost model
+                    target_df, decoy_df = scoring_model.score(target_msm, decoy_msm, 1)
 
-            target_fdr = self._digitize_fdr(target_msm.join(msm_to_fdr, on='msm'))
-            target_fdr_df_list.append(target_fdr.drop('msm', axis=1))
+                    fdr_vals = run_fdr_ranking(target_df.msm, decoy_df.msm, 1, False, False)
+                    fdr_vals_list.append(fdr_vals)
+
+                msm_to_fdr = pd.Series(pd.concat(fdr_vals_list, axis=1).median(axis=1), name='fdr')
+                target_fdr = self._digitize_fdr(target_msm.join(msm_to_fdr))
+            target_fdr_df_list.append(target_fdr)
 
         return pd.concat(target_fdr_df_list)

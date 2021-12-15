@@ -7,7 +7,7 @@ from sm.engine.annotation.image_manip import count_connected_components
 
 
 def spectral_metric(iso_imgs_flat, formula_ints):
-    return isotope_pattern_match(iso_imgs_flat, formula_ints)
+    return np.nan_to_num(isotope_pattern_match(iso_imgs_flat, formula_ints))
 
 
 def spatial_metric(iso_imgs_flat, n_spectra, intensities, v1_impl=False):

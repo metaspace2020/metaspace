@@ -1,10 +1,11 @@
 from itertools import product
 from unittest.mock import patch
 
+import numpy as np
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
 
-from sm.engine.annotation.fdr import FDR
+from sm.engine.annotation.fdr import FDR, run_fdr_ranking
 from sm.engine.formula_parser import format_modifiers
 
 FDR_CONFIG = {'decoy_sample_size': 2}
@@ -165,3 +166,23 @@ def test_chem_mods_and_neutral_losses():
     assert min_count < len(ions) <= max_count
     target_ions = list(product(formulas, target_modifiers))
     assert set(target_ions).issubset(set(map(tuple, ions)))
+
+
+def test_run_fdr_ranking():
+    target_scores = np.array([1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0])
+    decoy_scores = np.array([0.8, 0.55, 0.2, 0.1])
+    n_targets = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    n_decoys = np.array([0, 0, 1, 1, 1, 2, 2, 2, 3, 4, 4])
+    expected_fdr = n_decoys / n_targets
+    expected_fdr_ros = (n_decoys + 1) / (n_targets + 1)
+    expected_fdr_mono = np.array(
+        [0 / 2, 0 / 2, 1 / 5, 1 / 5, 1 / 5, 2 / 8, 2 / 8, 2 / 8, 3 / 9, 4 / 11, 4 / 11]
+    )
+
+    fdr = run_fdr_ranking(target_scores, decoy_scores, 1, False, False)
+    fdr_ros = run_fdr_ranking(target_scores, decoy_scores, 1, True, False)
+    fdr_mono = run_fdr_ranking(target_scores, decoy_scores, 1, False, True)
+
+    assert np.isclose(fdr, expected_fdr).all()
+    assert np.isclose(fdr_ros, expected_fdr_ros).all()
+    assert np.isclose(fdr_mono, expected_fdr_mono).all()
