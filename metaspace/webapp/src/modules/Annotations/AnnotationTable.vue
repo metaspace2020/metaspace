@@ -257,8 +257,7 @@
         key="isomers"
         property="isomers"
         label="Isomers/Isobars"
-        sortable="custom"
-        min-width="140"
+        min-width="120"
       >
         <template slot-scope="props">
           <i
@@ -464,7 +463,7 @@ import {
 import Vue from 'vue'
 import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
-import { invert } from 'lodash-es'
+import { flatMap, invert } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
@@ -472,6 +471,7 @@ import safeJsonParse from '../../lib/safeJsonParse'
 import { getDatasetDiagnosticsQuery } from '../../api/dataset'
 import FullScreen from '../../assets/inline/full_screen.svg'
 import ExitFullScreen from '../../assets/inline/exit_full_screen.svg'
+import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -780,6 +780,9 @@ export default Vue.extend({
       },
     },
   },
+  created() {
+    this.columns = getLocalStorage('annotationTableCols') || this.columns
+  },
   methods: {
     onPageSizeChange(newSize) {
       this.recordsPerPage = newSize
@@ -1086,6 +1089,7 @@ export default Vue.extend({
 
     handleColumnClick(index) {
       this.columns[index].selected = !this.columns[index].selected
+      setLocalStorage('annotationTableCols', this.columns)
     },
   },
 })
@@ -1232,5 +1236,8 @@ export default Vue.extend({
  .full-screen-btn{
    padding: 0;
    margin: 0;
+ }
+ .el-table table {
+   width: 0px; // fix safari dynamic column size bug
  }
 </style>
