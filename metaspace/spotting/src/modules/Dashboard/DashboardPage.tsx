@@ -1,14 +1,13 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
 import './DashboardPage.scss'
-import { Option, Select, Pagination } from '../../lib/element-ui'
-import { groupBy, keyBy, orderBy, uniq } from 'lodash-es'
+import { Option, Select, Pagination, InputNumber, Button } from '../../lib/element-ui'
+import { cloneDeep, groupBy, keyBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
 import { predictions } from '../../data/predictions'
 import createColormap from '../../lib/createColormap'
-import { InputNumber } from '../../../../webapp/src/lib/element-ui'
 
 interface Options{
   xAxis: any
@@ -19,7 +18,7 @@ interface Options{
 
 interface DashboardState {
   colormap: any
-  filter: any
+  filter: any[]
   xAxisValues: any
   rawData: any
   yAxisValues: any
@@ -189,15 +188,16 @@ export default defineComponent({
   setup: function(props, ctx) {
     const { $route, $router } = ctx.root
     const pageSizes = [5, 15, 30, 100]
+    const filterItem = {
+      src: null,
+      value: null,
+      isNumeric: false,
+      isBoolean: false,
+      options: [],
+    }
     const state = reactive<DashboardState>({
       colormap: null,
-      filter: {
-        src: null,
-        value: null,
-        isNumeric: false,
-        isBoolean: false,
-        options: [],
-      },
+      filter: [cloneDeep(filterItem)],
       xAxisValues: [],
       yAxisValues: [],
       data: [],
@@ -336,7 +336,7 @@ export default defineComponent({
       }
 
       if ($route.query.filterValue) {
-        const filterValue = state.filter.isBoolean ? parseInt($route.query.filterValue, 10)
+        const filterValue = state.filter[0].isBoolean ? parseInt($route.query.filterValue, 10)
           : $route.query.filterValue
 
         handleFilterValueChange(filterValue)
@@ -351,13 +351,16 @@ export default defineComponent({
       let min : number = 0
       let max : number = 1
       state.buildingChart = true
-      if (state.filter.src && state.filter.value) {
-        filteredData = filteredData.filter((data: any) => {
-          const filterValue = state.filter.value === 'null' ? null : state.filter.value
-          return state.filter.isNumeric ? parseFloat(data[state.filter.src]) <= parseFloat(state.filter.value)
-            : data[state.filter.src] === filterValue
-        })
-      }
+
+      state.filter.forEach((filter: any) => {
+        if (filter.src && filter.value) {
+          filteredData = filteredData.filter((data: any) => {
+            const filterValue = filter.value === 'null' ? null : filter.value
+            return filter.isNumeric ? parseFloat(data[filter.src]) <= parseFloat(filter.value)
+              : data[filter.src] === filterValue
+          })
+        }
+      })
 
       auxData = groupBy(filteredData, state.options.xAxis)
       let maxValue : number = 1
@@ -497,13 +500,23 @@ export default defineComponent({
       }
     }
 
-    const handleFilterValueChange = (value: any) => {
-      state.filter.value = value
+    const handleFilterValueChange = (value: any, idx : any = 0) => {
+      state.filter[idx].value = value
       $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filterValue: value } })
 
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
       }
+    }
+
+    const removeFilterItem = () => {
+      state.filter.pop()
+    }
+
+    const addFilterItem = () => {
+      const filters = state.filter
+      filters.push(cloneDeep(filterItem))
+      state.filter = filters
     }
 
     const handleColormapChange = (colors: any) => {
@@ -517,8 +530,8 @@ export default defineComponent({
 
     const getQueryParams = () => {
       const queryObj : any = {
-        filter: state.filter.src,
-        filterValue: state.filter.value,
+        filter: state.filter[0].src,
+        filterValue: state.filter[0].value,
         xAxis: state.options.xAxis,
         yAxis: state.options.yAxis,
         agg: state.options.aggregation,
@@ -536,12 +549,12 @@ export default defineComponent({
       return queryObj
     }
 
-    const handleFilterSrcChange = (value: any) => {
-      state.filter.src = value
+    const handleFilterSrcChange = (value: any, idx : any = 0) => {
+      state.filter[idx].src = value
 
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation
-        && state.filter.value !== null && state.filter.value !== undefined) {
-        handleFilterValueChange(null)
+        && state.filter[idx].value !== null && state.filter[idx].value !== undefined) {
+        handleFilterValueChange(null, idx)
         buildValues()
       }
 
@@ -550,15 +563,15 @@ export default defineComponent({
       let src : any = null
       const filterSpec = FILTER_VALUES.find((filter: any) => filter.src === value)
       if (filterSpec && filterSpec.isNumeric) {
-        state.filter.isNumeric = true
-        state.filter.isBoolean = false
+        state.filter[idx].isNumeric = true
+        state.filter[idx].isBoolean = false
         return
       } else if (filterSpec && filterSpec.isBoolean) {
-        state.filter.isNumeric = false
-        state.filter.isBoolean = true
+        state.filter[idx].isNumeric = false
+        state.filter[idx].isBoolean = true
       } else {
-        state.filter.isNumeric = false
-        state.filter.isBoolean = false
+        state.filter[idx].isNumeric = false
+        state.filter[idx].isBoolean = false
       }
       state.loadingFilterOptions = true
 
@@ -572,7 +585,7 @@ export default defineComponent({
         src = state.pathways
       }
 
-      state.filter.options = Object.keys(keyBy(src, value)).sort().filter((option: any) => option !== null
+      state.filter[idx].options = Object.keys(keyBy(src, value)).sort().filter((option: any) => option !== null
         && option !== undefined && option !== '')
       state.loadingFilterOptions = false
     }
@@ -700,69 +713,93 @@ export default defineComponent({
               }
             </Select>
           </div>
+
           <div class='filter-box m-2'>
             <span class='filter-label mb-2'>Filters</span>
-            <div class='flex flex-wrap'>
-              <Select
-                class='select-box-mini mr-2'
-                value={state.filter.src}
-                onChange={(value: number) => {
-                  handleFilterSrcChange(value)
-                }}
-                clearable
-                disabled={state.loading}
-                placeholder='Neutral losses'
-                size='mini'>
-                {
-                  orderBy(FILTER_VALUES, ['label'], ['asc']).map((option: any) => {
-                    return <Option label={option.label} value={option.src}/>
-                  })
-                }
-              </Select>
-              {
-                !state.filter.isNumeric
-                && <Select
-                  class='select-box-mini mr-2'
-                  value={
-                    state.filter.isBoolean && state.filter.value
-                      ? parseInt(state.filter.value, 10) : state.filter.value
-                  }
-                  loading={state.loadingFilterOptions}
-                  filterable
-                  clearable
-                  noDataText='No data'
-                  onChange={(value: number) => {
-                    handleFilterValueChange(value)
-                  }}
-                  disabled={state.loading}
-                  placeholder='Adduct'
-                  size='mini'>
-                  {
-                    state.filter.options.map((option: any) => {
-                      return <Option
-                        label={state.filter.isBoolean ? parseBooleanLabel(option) : option}
-                        value={state.filter.isBoolean ? parseInt(option, 10) : option}/>
-                    })
-                  }
-                </Select>
-              }
-              {
-                state.filter.isNumeric
-                && !state.filter.isBoolean
-                && <InputNumber
-                  class='select-box-mini mr-2'
-                  size="mini"
-                  min={0}
-                  max={1}
-                  step={0.001}
-                  value={parseFloat(state.filter.value)}
-                  loading={state.loadingFilterOptions}
-                  disabled={state.loading}
-                  onChange={(value: number) => {
-                    handleFilterValueChange(value)
-                  }}/>
-              }
-            </div>
+            {
+              state.filter.map((filter: any, filterIdx: number) => {
+                return (
+                  <div class='flex flex-wrap justify-center items-center'>
+                    <Select
+                      class='select-box-mini mr-2'
+                      value={filter.src}
+                      onChange={(value: number) => {
+                        handleFilterSrcChange(value, filterIdx)
+                      }}
+                      clearable
+                      disabled={state.loading}
+                      placeholder='Neutral losses'
+                      size='mini'>
+                      {
+                        orderBy(FILTER_VALUES, ['label'], ['asc']).map((option: any) => {
+                          return <Option
+                            disabled={state.filter.map((item: any) => item.src).includes(option.src)}
+                            label={option.label}
+                            value={option.src}/>
+                        })
+                      }
+                    </Select>
+                    {
+                      !filter.isNumeric
+                      && <Select
+                        class='select-box-mini mr-2'
+                        value={
+                          filter.isBoolean && filter.value
+                            ? parseInt(filter.value, 10) : filter.value
+                        }
+                        loading={state.loadingFilterOptions}
+                        filterable
+                        clearable
+                        noDataText='No data'
+                        onChange={(value: number) => {
+                          handleFilterValueChange(value, filterIdx)
+                        }}
+                        disabled={state.loading}
+                        placeholder='Adduct'
+                        size='mini'>
+                        {
+                          filter.options.map((option: any) => {
+                            return <Option
+                              label={filter.isBoolean ? parseBooleanLabel(option) : option}
+                              value={filter.isBoolean ? parseInt(option, 10) : option}/>
+                          })
+                        }
+                      </Select>
+                    }
+                    {
+                      filter.isNumeric
+                      && !filter.isBoolean
+                      && <InputNumber
+                        class='select-box-mini mr-2'
+                        size="mini"
+                        min={0}
+                        max={1}
+                        step={0.001}
+                        value={parseFloat(state.filter[0].value)}
+                        loading={state.loadingFilterOptions}
+                        disabled={state.loading}
+                        onChange={(value: number) => {
+                          handleFilterValueChange(value, filterIdx)
+                        }}/>
+                    }
+                    <div class='flex' style={{ visibility: filterIdx !== 0 ? 'hidden' : '' }}>
+                      <div
+                        class='icon'
+                        onClick={removeFilterItem}
+                        style={{ visibility: state.filter.length < 2 ? 'hidden' : '' }}>
+                        <i class="el-icon-remove"/>
+                      </div>
+                      <div
+                        class='icon'
+                        onClick={addFilterItem}
+                        style={{ visibility: state.filter.length >= FILTER_VALUES.length ? 'hidden' : '' }}>
+                        <i class="el-icon-circle-plus"/>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            }
           </div>
         </div>
       )
