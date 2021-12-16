@@ -8,6 +8,9 @@ $filter-color: #828282;
 .dashboard-container{
   @apply flex flex-wrap m-12 justify-between;
 
+  .icon{
+    @apply flex items-center justify-center cursor-pointer mt-1;
+  }
 
   .select-box-mini{
     @apply mt-1;
