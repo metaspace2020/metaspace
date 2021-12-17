@@ -67,7 +67,7 @@ export class MolecularDB {
   @Column({ type: 'uuid', nullable: true })
   userID: string | null;
 
-  @ManyToOne( () => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 

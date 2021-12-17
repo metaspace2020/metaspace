@@ -11,6 +11,7 @@ import { assertImportFileIsValid } from './util/assertImportFileIsValid'
 import { MolecularDbRepository } from './MolecularDbRepository'
 import { assertUserBelongsToGroup } from './util/assertUserBelongsToGroup'
 import validateInput from './util/validateInput'
+import { User } from '../user/model'
 
 const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
   createdDT(database): string {
@@ -19,6 +20,10 @@ const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
 
   hidden(database): boolean {
     return database.archived || !database.isPublic
+  },
+
+  user(database): User {
+    return database.user
   },
 }
 
@@ -64,12 +69,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
   async createMolecularDB(source, { databaseDetails }, ctx): Promise<MolecularDbModel> {
     logger.info(`User ${ctx.user.id} is creating molecular database ${JSON.stringify(databaseDetails)}`)
+    const userId = ctx.user.id as string
     const groupId = databaseDetails.groupId as string
     await assertUserBelongsToGroup(ctx, groupId)
     validateInput(databaseDetails)
     await assertImportFileIsValid(databaseDetails.filePath)
 
-    const { id } = await smApiCreateDatabase({ ...databaseDetails, groupId })
+    const { id } = await smApiCreateDatabase({ ...databaseDetails, groupId, userId })
     return await ctx.entityManager.getCustomRepository(MolecularDbRepository).findDatabaseById(ctx, id)
   },
 

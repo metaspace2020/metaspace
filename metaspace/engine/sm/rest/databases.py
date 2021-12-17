@@ -28,6 +28,7 @@ def create():
         name - short database name
         version - database version, any string
         group_id - UUID of group database belongs to
+        user_id - UUID of user database create to
         is_public - database search results visible to everybody
         file_path - S3 path to database import file (s3://bucket/path)
         description - database description
@@ -51,7 +52,7 @@ def create():
         params = body_to_json(bottle.request)
         logger.info(f'Creating molecular database. Params: {params}')
 
-        required_fields = ['name', 'version', 'group_id', 'file_path']
+        required_fields = ['name', 'version', 'group_id', 'user_id', 'file_path']
         if not all(field in params for field in required_fields):
             return make_response(WRONG_PARAMETERS, errors=[f'Required fields: {required_fields}'])
 
