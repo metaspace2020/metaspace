@@ -11,7 +11,7 @@ import {
 import { Group } from '../group/model'
 import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
 import { Moment } from 'moment'
-import { User } from "../user/model"
+import { User } from '../user/model'
 
 @Entity({ schema: 'public', name: 'molecular_db' })
 @Unique('molecular_db_uindex', ['groupId', 'name', 'version'])

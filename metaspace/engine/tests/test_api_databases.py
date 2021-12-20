@@ -14,6 +14,7 @@ from .utils import create_test_molecular_db
 
 BUCKET_NAME = 'sm-engine-tests'
 GROUP_ID = '123e4567-e89b-12d3-a456-426655440000'
+USER_ID = 'ddd0be50-1268-4ae4-9e99-eb73e92a9aeb'
 MOLDB_COUNT_SEL = 'SELECT COUNT(*) FROM molecular_db'
 
 
@@ -21,8 +22,16 @@ MOLDB_COUNT_SEL = 'SELECT COUNT(*) FROM molecular_db'
 def fill_db(test_db):
     db = DB()
     db.insert(
+        'INSERT INTO graphql.user (id, name, email) VALUES (%s, %s, %s)',
+        [(USER_ID, 'name', 'name@embl.de')],
+    )
+    db.insert(
         'INSERT INTO graphql.group (id, name, short_name) VALUES (%s, %s, %s)',
         [(GROUP_ID, 'test-group', 'test-group')],
+    )
+    db.insert(
+        'INSERT INTO graphql.dataset (id, user_id, group_id) VALUES (%s, %s, %s)',
+        [('dataset id', USER_ID, GROUP_ID)],
     )
 
     yield
@@ -58,6 +67,7 @@ def moldb_input_doc(**kwargs):
         'version': '2000-01-01',
         'is_public': False,
         'group_id': GROUP_ID,
+        'user_id': USER_ID,
         'description': 'Full database description',
         **kwargs,
     }
