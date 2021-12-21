@@ -1,4 +1,6 @@
-from typing import List, Tuple
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import List, Tuple, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -14,6 +16,9 @@ def add_derived_features(
     formula_validator .
     """
     from sm.engine.annotation.fdr import score_to_fdr_map  # circular import
+
+    nonzero_targets = (target_df.chaos > 0) & (target_df.spatial > 0) & (target_df.spectral > 0)
+    nonzero_decoys = (decoy_df.chaos > 0) & (decoy_df.spatial > 0) & (decoy_df.spectral > 0)
 
     fdr_features = [(f[: -len('_fdr')], f) for f in features if f.endswith('_fdr')]
     for feature, fdr_feature in fdr_features:
@@ -31,14 +36,20 @@ def add_derived_features(
         # Rule of Succession is disabled here because it would add an unnecessary bias at
         # by limiting the minimum value. It will eventually be applied in the final FDR ranking.
         fdr_map = score_to_fdr_map(
-            target_values,
-            decoy_values,
+            target_values[nonzero_targets],
+            decoy_values[nonzero_decoys],
             decoy_ratio,
             rule_of_succession=False,
             monotonic=True,
         )
-        target_df[fdr_feature] = fdr_map.loc[target_values].values
-        decoy_df[fdr_feature] = fdr_map.loc[decoy_values].values
+
+        # fdr_map = fdr_map.clip(0.0, 1.0)
+        target_df[fdr_feature] = np.where(
+            nonzero_targets, fdr_map.reindex(target_values, fill_value=1.0).values, 1.0
+        )
+        decoy_df[fdr_feature] = np.where(
+            nonzero_decoys, fdr_map.reindex(decoy_values, fill_value=1.0).values, 1.0
+        )
 
 
 class ScoringModel:
@@ -52,10 +63,10 @@ class ScoringModel:
 
 
 class CatBoostScoringModel(ScoringModel):
-    def __init__(self, model_name: str, model: CatBoost, features: List[str]):
+    def __init__(self, model_name: str, model: CatBoost, params: Dict):
         self.model_name = model_name
         self.model = model
-        self.features = features
+        self.features = params['features']
 
     def score(
         self, target_df: pd.DataFrame, decoy_df: pd.DataFrame, decoy_ratio: float
@@ -77,3 +88,30 @@ class MsmScoringModel(ScoringModel):
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         # MSM column is already populated - just pass it through
         return target_df, decoy_df
+
+
+def load_scoring_model(name: Optional[str]) -> ScoringModel:
+    # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
+    from sm.engine.db import DB  # pylint: disable=import-outside-toplevel
+    from sm.engine.storage import get_s3_client
+    from sm.engine.util import split_s3_path
+
+    if name is None:
+        return MsmScoringModel()
+
+    row = DB().select_one("SELECT type, params FROM scoring_model WHERE name = %s", (name,))
+    assert row is not None, f'Scoring model {name} not found'
+    type, params = row
+
+    if type == 'catboost':
+        bucket, key = split_s3_path(params['s3_path'])
+        with TemporaryDirectory() as tmpdir:
+            model_file = Path(tmpdir) / 'model.cbm'
+            with model_file.open('wb') as f:
+                f.write(get_s3_client().get_object(Bucket=bucket, Key=key)['Body'].read())
+            model = CatBoost()
+            model.load_model(str(model_file), 'cbm')
+
+        return CatBoostScoringModel(name, model, params)
+    else:
+        raise ValueError(f'Unsupported scoring model type: {type}')

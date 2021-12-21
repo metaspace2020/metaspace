@@ -1,17 +1,16 @@
-import json
 import logging
+from dataclasses import fields
 
 import numpy as np
 import pandas as pd
 import pyspark
-from dataclasses import fields
 
 from sm.engine.annotation.formula_validator import Metrics
-from sm.engine.config import SMConfig
-from sm.engine.image_storage import ImageStorage
-from sm.engine.db import DB
-from sm.engine.ion_mapping import get_ion_id_mapping
 from sm.engine.annotation.png_generator import PngGenerator
+from sm.engine.config import SMConfig
+from sm.engine.db import DB
+from sm.engine.image_storage import ImageStorage
+from sm.engine.ion_mapping import get_ion_id_mapping
 from sm.engine.utils.numpy_json_encoder import numpy_json_dumps
 
 logger = logging.getLogger('engine')
@@ -21,6 +20,14 @@ METRICS_INS = (
     ') '
     'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
 )
+METRICS_FIELDS = [
+    *[f.name for f in [*fields(Metrics)] if f.name != 'formula_i'],
+    'chaos_fdr',
+    'spatial_fdr',
+    'spectral_fdr',
+    'mz_err_abs_fdr',
+    'mz_err_rel_fdr',
+]
 
 
 class SearchResults:
@@ -40,9 +47,7 @@ class SearchResults:
         self.charge = charge
 
     def _metrics_table_row_gen(self, job_id, metr_df, ion_image_ids, ion_mapping):
-        stats_cols = [
-            f.name for f in fields(Metrics) if f.name != 'formula_i' and f.name in metr_df.columns
-        ]
+        stats_cols = [f for f in METRICS_FIELDS if f in metr_df.columns]
         for _, row in metr_df.iterrows():
             metr_json = numpy_json_dumps({m: row[m] for m in stats_cols})
             if row.formula_i not in ion_image_ids:

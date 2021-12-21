@@ -1,6 +1,9 @@
 <template>
   <el-row id="scores-table">
-    <div class="msm-score-calc">
+    <div
+      v-if="showV1"
+      class="msm-score-calc"
+    >
       MSM score =
       <span>{{ annotation.msmScore.toFixed(3) }}</span> =
       <span>{{ annotation.rhoSpatial.toFixed(3) }}</span>
@@ -10,6 +13,23 @@
       <span>{{ annotation.rhoChaos.toFixed(3) }}</span>
       (&rho;<sub>chaos</sub>)
     </div>
+    <div
+      v-else-if="showV3"
+      class="msm-score-calc"
+    >
+      MSM score <span>{{ annotation.msmScore.toFixed(3) }}</span> =
+      <span>{{ scoringModel }}</span>(
+      &rho;<sub>spatial</sub>=<span>{{ annotation.rhoSpatial.toFixed(3) }}</span>{{ ', ' }}
+      &rho;<sub>spectral</sub>=<span>{{ annotation.rhoSpectral.toFixed(3) }}</span>{{ ', ' }}
+      &rho;<sub>chaos</sub>=<span>{{ annotation.rhoChaos.toFixed(3) }}</span>{{ ', ' }}
+      &rho;<sub>absoluteMz</sub>=<span>{{ annotation.rhoMzErrAbs.toFixed(3) }}</span>{{ ', ' }}
+      &rho;<sub>relativeMz</sub>=<span>{{ annotation.rhoMzErrRel.toFixed(3) }}</span>
+      )
+    </div>
+    <div
+      v-else
+      class="h-4"
+    />
     <div v-if="showOffSample">
       <el-popover
         trigger="hover"
@@ -32,15 +52,32 @@ import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator'
 
 import config from '../../../../lib/config'
+import safeJsonParse from '../../../../lib/safeJsonParse'
 
 @Component({
 })
 export default class DiagnosticsMetrics extends Vue {
     @Prop()
+    loading!: boolean
+
+    @Prop()
     annotation: any
 
+    get scoringModel(): string | null {
+      // eslint-disable-next-line camelcase
+      return this.annotation != null ? safeJsonParse(this.annotation.dataset.configJson)?.fdr.scoring_model : null
+    }
+
+    get showV1(): boolean {
+      return this.annotation != null && this.scoringModel == null
+    }
+
+    get showV3(): boolean {
+      return this.annotation != null && this.scoringModel != null
+    }
+
     get showOffSample(): boolean {
-      return config.features.off_sample && this.annotation.offSample != null
+      return this.annotation != null && config.features.off_sample && this.annotation.offSample != null
     }
 
     get formattedOffSampleProb(): string {

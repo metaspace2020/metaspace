@@ -18,6 +18,14 @@ type Annotation {
   rhoSpatial: Float
   rhoSpectral: Float
   rhoChaos: Float
+
+  metricsJson: String!
+
+  theoreticalPeakMz: [Float!]
+  theoreticalPeakIntensity: [Float!]
+  observedPeakMz: [Float!]
+  observedPeakMzStddev: [Float!]
+
   isotopeImages: [MzImage!]!
   isomers: [IsomerAnnotation!]!
   isobars: [IsobarAnnotation!]!

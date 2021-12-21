@@ -162,11 +162,23 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
     }
   }`
 
-export const peakChartDataQuery =
+export const diagnosticsDataQuery =
 gql`query GetAnnotation($id: String!) {
     annotation(id: $id) {
       id
       peakChartData
+
+      dataset { id configJson scoringModel { name type params } }
+
+      msmScore
+      fdrLevel
+
+      metricsJson
+
+      theoreticalPeakMz
+      theoreticalPeakIntensity
+      observedPeakMz
+      observedPeakMzStddev
     }
   }`
 

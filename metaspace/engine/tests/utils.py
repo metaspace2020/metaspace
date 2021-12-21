@@ -34,7 +34,7 @@ TEST_DS_CONFIG = {
         "neutral_losses": [],
         "chem_mods": [],
     },
-    "fdr": {"decoy_sample_size": 20, "fdr_model": None},
+    "fdr": {"decoy_sample_size": 20, "scoring_model": None},
     "database_ids": [0],
 }
 

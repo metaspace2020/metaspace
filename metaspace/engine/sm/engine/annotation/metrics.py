@@ -3,8 +3,6 @@ from cpyImagingMSpec import measure_of_chaos
 from pyImagingMSpec.image_measures import isotope_pattern_match, isotope_image_correlation
 from scipy.ndimage import maximum_filter, minimum_filter, grey_closing
 
-from sm.engine.annotation.image_manip import count_connected_components
-
 
 def spectral_metric(iso_imgs_flat, formula_ints):
     return np.nan_to_num(isotope_pattern_match(iso_imgs_flat, formula_ints))
@@ -113,6 +111,11 @@ def v2_chaos(iso_img, lin_levels=30, geom_levels=30, full_dilate=False):
     # Original implementation: https://github.com/alexandrovteam/ims-cpp/blob/dcc12b4c50dbfdcde3f765af85fb8b3bb5cd7ec3/ims/image_measures.cpp#L89
     # Old way: level-thresholding -> dilation -> erosion -> connected component count
     # New way: "dilation" via maximum-filter -> "erosion" via minimum-filter -> level-thresholding -> connected component count
+
+    # Local import of image_manip because numba isn't included in the Lithops Docker image
+    # as it adds ~25MB. If this metric is ever used again, numba will need to be added to the image.
+    from sm.engine.annotation.image_manip import count_connected_components
+
     if full_dilate:
         iso_img = grey_closing(iso_img, size=(3, 3))
     else:
@@ -162,6 +165,11 @@ def v2_chaos_orig(iso_img, n_levels=30):
     """
     # Old way: level-thresholding -> dilation -> erosion -> connected component count
     # New way: "dilation" via maximum-filter -> "erosion" via minimum-filter -> level-thresholding -> connected component count
+
+    # Local import of image_manip because numba isn't included in the Lithops Docker image
+    # as it adds ~25MB. If this metric is ever used again, numba will need to be added to the image.
+    from sm.engine.annotation.image_manip import count_connected_components
+
     dilated = maximum_filter(iso_img, footprint=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]))
     # Old way: mode='nearest', new way: mode='constant'
     iso_img = minimum_filter(dilated, size=(3, 3), mode='nearest')

@@ -88,6 +88,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     def run_pipeline(
         self, debug_validate=False, use_cache=True
     ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]]]:
+
         # pylint: disable=unexpected-keyword-arg
         self.prepare_moldb(debug_validate=debug_validate)
 
@@ -174,7 +175,9 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     @use_pipeline_cache
     def run_fdr(self):
-        self.fdrs = run_fdr(self.executor, self.formula_metrics_df, self.db_data_cobjs)
+        self.fdrs = run_fdr(
+            self.executor, self.formula_metrics_df, self.db_data_cobjs, self.ds_config
+        )
 
     @use_pipeline_cache
     def prepare_results(self):

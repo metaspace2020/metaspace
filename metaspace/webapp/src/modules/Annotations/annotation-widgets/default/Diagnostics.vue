@@ -57,7 +57,8 @@
     </div>
     <div :class="comparisonAnnotationGroup ? 'ref-annotation-container' : ''">
       <diagnostics-metrics
-        :annotation="annotation"
+        :loading="loading && diagnosticsData == null"
+        :annotation="diagnosticsData"
       />
       <diagnostics-images
         :annotation="annotation"
@@ -122,7 +123,7 @@ import DiagnosticsImages from './DiagnosticsImages.vue'
 import DiagnosticsPlot from '../DiagnosticsPlot.vue'
 import CandidateMoleculesPopover from '../CandidateMoleculesPopover.vue'
 import { groupBy, intersection, sortBy, xor } from 'lodash-es'
-import { peakChartDataQuery, isobarsQuery } from '../../../../api/annotation'
+import { diagnosticsDataQuery, isobarsQuery } from '../../../../api/annotation'
 import { renderMassShift, renderMolFormula, renderMolFormulaHtml } from '../../../../lib/util'
 import safeJsonParse from '../../../../lib/safeJsonParse'
 import reportError from '../../../../lib/reportError'
@@ -145,17 +146,12 @@ interface AnnotationGroup {
     CandidateMoleculesPopover,
   },
   apollo: {
-    peakChartData: {
-      query: peakChartDataQuery,
+    diagnosticsData: {
+      query: diagnosticsDataQuery,
       loadingKey: 'loading',
       fetchPolicy: 'cache-first',
       update: (data: any) => {
-        const { annotation } = data
-        if (annotation != null) {
-          return safeJsonParse(annotation.peakChartData)
-        } else {
-          return null
-        }
+        return data.annotation
       },
       variables(): any {
         return {
@@ -197,7 +193,7 @@ export default class Diagnostics extends Vue {
     imageLoaderSettings: any;
 
     loading = 0;
-    peakChartData: any;
+    diagnosticsData: any;
     isobarAnnotations: any[] = [];
     // Keep track of the last ionFormula used for fetching isobars, so that discrepancies can be reported
     isobarAnnotationsIonFormula: string | null = null;
@@ -211,6 +207,10 @@ export default class Diagnostics extends Vue {
           && !this.annotationGroups.some(ag => ag.ionFormula === this.comparisonIonFormula)) {
         this.comparisonIonFormula = null
       }
+    }
+
+    get peakChartData() {
+      return this.diagnosticsData != null ? safeJsonParse(this.diagnosticsData.peakChartData) : null
     }
 
     get annotationGroups(): AnnotationGroup[] {

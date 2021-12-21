@@ -3,37 +3,67 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
+import pytest
 
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.db import DB
 from sm.engine.es_export import (
     ESExporter,
     ESExporterIsobars,
     ESIndexManager,
 )
-from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.molecular_db import MolecularDB
 from .utils import create_test_molecular_db
+
+# Datasets processed prior to the ML Scoring updates
+OLD_STATS = {
+    'chaos': 1,
+    'spatial': 0.9,
+    'spectral': 0.8,
+    'total_iso_ints': [100, 45],
+    'min_iso_ints': [0, 5],
+    'max_iso_ints': [100, 40],
+}
+# Datasets processed after the ML Scoring updates, with analysis_version==1
+V1_STATS = {
+    **OLD_STATS,
+    'mz_err_abs': -0.0001,
+    'mz_err_rel': 0.0002,
+    'theo_mz': [12.0, 13.1],
+    'theo_ints': [100, 50.0],
+    'mz_mean': [11.9999, 13.1001],
+    'mz_stddev': [0.00001, 0.000002],
+}
+# Datasets processed after the ML Scoring updates, with analysis_version==3
+V3_STATS = {
+    **V1_STATS,
+    'chaos_fdr': 0.01,
+    'spatial_fdr': 0.02,
+    'spectral_fdr': 0.03,
+    'mz_err_abs_fdr': 0.04,
+    'mz_err_rel_fdr': 0.05,
+}
+STATS_RENAMES = {
+    'spatial': 'image_corr',
+    'spatial_fdr': 'image_corr_fdr',
+    'spectral': 'pattern_match',
+    'spectral_fdr': 'pattern_match_fdr',
+}
 
 
 def wait_for_es(es, index):
     es.indices.refresh(index=index)
 
 
-def test_index_ds_works(sm_config, test_db, es, es_dsl_search, sm_index, ds_config, metadata):
+@pytest.mark.parametrize('annotation_stats', [OLD_STATS, V1_STATS, V3_STATS])
+def test_index_ds_works(
+    sm_config, test_db, es, es_dsl_search, sm_index, ds_config, metadata, annotation_stats
+):
     ds_id = '2000-01-01_00h00m'
     upload_dt = datetime.now().isoformat()
     last_finished = '2017-01-01 00:00:00'
     iso_image_ids = ['iso_img_id_1', 'iso_img_id_2']
-    annotation_stats = json.dumps(
-        {
-            'chaos': 1,
-            'spatial': 1,
-            'spectral': 1,
-            'total_iso_ints': 100,
-            'min_iso_ints': 0,
-            'max_iso_ints': 100,
-        }
-    )
+    stats = json.dumps(annotation_stats)
 
     db = DB()
     db.insert(
@@ -74,8 +104,8 @@ def test_index_ds_works(sm_config, test_db, es, es_dsl_search, sm_index, ds_conf
         "msm, fdr, stats, iso_image_ids, ion_id) "
         "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
         [
-            [job_id, 'H2O', '-H+O', '-H', '+H', 1, 0.1, annotation_stats, iso_image_ids, ion_id1],
-            [job_id, 'Au', '', '', '+H', 1, 0.05, annotation_stats, iso_image_ids, ion_id2],
+            [job_id, 'H2O', '-H+O', '-H', '+H', 1, 0.1, stats, iso_image_ids, ion_id1],
+            [job_id, 'Au', '', '', '+H', 1, 0.05, stats, iso_image_ids, ion_id2],
         ],
     )
 
@@ -154,18 +184,17 @@ def test_index_ds_works(sm_config, test_db, es, es_dsl_search, sm_index, ds_conf
         .execute()
         .to_dict()['hits']['hits'][0]['_source']
     )
+    expected_stats_fields = {
+        STATS_RENAMES.get(key, key): value for key, value in annotation_stats.items()
+    }
     assert ann_1_d == {
         **expected_ds_fields,
-        'pattern_match': 1.0,
-        'image_corr': 1.0,
+        **expected_stats_fields,
         'fdr': 0.1,
-        'chaos': 1.0,
         'formula': 'H2O',
-        'min_iso_ints': 0,
         'msm': 1.0,
         'ion': 'H2O-H+O-H+H+',
         'ion_formula': 'HO2',
-        'total_iso_ints': 100,
         'centroid_mzs': [100.0, 200.0, 300.0],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
         'iso_image_urls': [
@@ -176,7 +205,6 @@ def test_index_ds_works(sm_config, test_db, es, es_dsl_search, sm_index, ds_conf
         'isomer_ions': [],
         'polarity': '+',
         'job_id': 1,
-        'max_iso_ints': 100,
         'adduct': '+H',
         'neutral_loss': '-H',
         'chem_mod': '-H+O',
@@ -197,16 +225,12 @@ def test_index_ds_works(sm_config, test_db, es, es_dsl_search, sm_index, ds_conf
     )
     assert ann_2_d == {
         **expected_ds_fields,
-        'pattern_match': 1.0,
-        'image_corr': 1.0,
+        **expected_stats_fields,
         'fdr': 0.05,
-        'chaos': 1.0,
         'formula': 'Au',
-        'min_iso_ints': 0,
         'msm': 1.0,
         'ion': 'Au+H+',
         'ion_formula': 'HAu',
-        'total_iso_ints': 100,
         'centroid_mzs': [10.0, 20.0],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
         'iso_image_urls': [
@@ -217,7 +241,6 @@ def test_index_ds_works(sm_config, test_db, es, es_dsl_search, sm_index, ds_conf
         'isomer_ions': [],
         'polarity': '+',
         'job_id': 1,
-        'max_iso_ints': 100,
         'adduct': '+H',
         'neutral_loss': '',
         'chem_mod': '',

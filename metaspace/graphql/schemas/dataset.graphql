@@ -21,6 +21,7 @@ type Dataset {
   maldiMatrix: String
 
   configJson: String!
+  scoringModel: ScoringModel
   # full metadata JSON conforming to schema published at
   # https://github.com/metaspace2020/metaspace/tree/master/metaspace/metadata
   metadataJson: String!
@@ -135,6 +136,12 @@ type DatasetDiagnostic {
   images: [DiagnosticImage!]!
 }
 
+type ScoringModel {
+  name: String!
+  type: String!
+  params: String!
+}
+
 enum DatasetOrderBy {
   ORDER_BY_DATE
   ORDER_BY_NAME
@@ -222,7 +229,7 @@ input DatasetCreateInput {
   decoySampleSize: Int
   analysisVersion: Int
   computeUnusedMetrics: Boolean
-  fdrModel: String
+  scoringModel: String
 
   submitterId: ID!  # Only for admins
   groupId: ID
@@ -247,7 +254,7 @@ input DatasetUpdateInput {
   decoySampleSize: Int
   analysisVersion: Int
   computeUnusedMetrics: Boolean
-  fdrModel: String
+  scoringModel: String
 
 
   submitterId: ID
@@ -356,7 +363,7 @@ type Mutation {
     useLithops: Boolean=true
   ): String!
 
-  # Throws errors of types: "under_review_or_published", "reprocessing_needed", "failed_validation"
+  # Throws errors of types: "under_review_or_published", "reprocessing_needed", "failed_validation", "dataset_busy"
   updateDataset(
     id: String!,
     input: DatasetUpdateInput!,

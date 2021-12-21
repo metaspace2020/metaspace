@@ -67,7 +67,11 @@ def test_estimate_fdr_returns_correct_df():
         columns=['formula', 'modifier', 'msm'],
     )
     exp_sf_df = pd.DataFrame(
-        [['H2O', '+H', 0.2], ['C2H2', '+H', 0.8]], columns=['formula', 'modifier', 'fdr']
+        [
+            ['H2O', '+H', 0.85, 0.2],
+            ['C2H2', '+H', 0.5, 0.8],
+        ],
+        columns=['formula', 'modifier', 'msm', 'fdr'],
     )
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
@@ -102,8 +106,13 @@ def test_estimate_fdr_digitize_works():
         columns=['formula', 'modifier', 'msm'],
     )
     exp_sf_df = pd.DataFrame(
-        [['C1', '+H', 0.4], ['C2', '+H', 0.4], ['C3', '+H', 0.4], ['C4', '+H', 0.8]],
-        columns=['formula', 'modifier', 'fdr'],
+        [
+            ['C1', '+H', 1.0, 0.4],
+            ['C2', '+H', 0.75, 0.4],
+            ['C3', '+H', 0.5, 0.4],
+            ['C4', '+H', 0.25, 0.8],
+        ],
+        columns=['formula', 'modifier', 'msm', 'fdr'],
     )
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
@@ -169,13 +178,13 @@ def test_chem_mods_and_neutral_losses():
 
 
 def test_run_fdr_ranking():
-    target_scores = np.array([1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0])
-    decoy_scores = np.array([0.8, 0.55, 0.2, 0.1])
-    n_targets = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-    n_decoys = np.array([0, 0, 1, 1, 1, 2, 2, 2, 3, 4, 4])
+    target_scores = pd.Series([1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0])
+    decoy_scores = pd.Series([0.8, 0.55, 0.2, 0.1])
+    n_targets = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    n_decoys = pd.Series([0, 0, 1, 1, 1, 2, 2, 2, 3, 4, 4])
     expected_fdr = n_decoys / n_targets
     expected_fdr_ros = (n_decoys + 1) / (n_targets + 1)
-    expected_fdr_mono = np.array(
+    expected_fdr_mono = pd.Series(
         [0 / 2, 0 / 2, 1 / 5, 1 / 5, 1 / 5, 2 / 8, 2 / 8, 2 / 8, 3 / 9, 4 / 11, 4 / 11]
     )
 

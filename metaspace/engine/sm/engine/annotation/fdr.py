@@ -112,6 +112,22 @@ def run_fdr_ranking(
     return pd.Series(fdrs, index=target_scores.index)
 
 
+def run_fdr_ranking_labeled(
+    scores: pd.Series,
+    target: pd.Series,
+    decoy_ratio: float,
+    rule_of_succession: bool,
+    monotonic: bool,
+):
+    """Runs an FDR ranking for a list of scores with a separate target/decoy flag.
+    Returns calculated FDRs for both targets and decoys."""
+    fdr_map = score_to_fdr_map(
+        scores[target].values, scores[~target].values, decoy_ratio, rule_of_succession, monotonic
+    )
+
+    return pd.Series(fdr_map.loc[scores.values].values, index=scores.index)
+
+
 class FDR:
     fdr_levels = [0.05, 0.1, 0.2, 0.5]
 

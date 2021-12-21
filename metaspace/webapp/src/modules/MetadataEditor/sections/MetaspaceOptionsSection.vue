@@ -117,6 +117,13 @@
                 :options="ANALYSIS_VERSION_OPTIONS"
                 @input="val => onInput('analysisVersion', val)"
               />
+              <form-field
+                type="text"
+                name="Scoring model"
+                :value="value.scoringModel || ''"
+                :error="error && error.scoringModel"
+                @input="val => onInput('scoringModel', val ? val : null)"
+              />
             </el-col>
           </el-row>
           <el-row
@@ -225,7 +232,8 @@ export default class MetaspaceOptionsSection extends Vue {
     MAX_CHEM_MODS = MAX_CHEM_MODS;
     ANALYSIS_VERSION_OPTIONS = [
       { value: 1, label: 'v1 (Stable)' },
-      { value: 2, label: 'v2 (Development)' },
+      { value: 2, label: 'v2 (Internal)' },
+      { value: 3, label: 'v3 (ML-Driven)' },
     ];
 
     neutralLossOptions: string[] = [];

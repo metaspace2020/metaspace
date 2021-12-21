@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
         tblib==1.7.0
 
 COPY requirements.txt /tmp/requirements.txt
-RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow|scikit-learn|Pillow|boto3|numba|catboost|zstandard)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
+RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow|scikit-learn|Pillow|boto3|catboost)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
 RUN pip install --no-cache-dir -r /tmp/requirements-lithops.txt
 
 # create action working directory

@@ -50,7 +50,7 @@ FLAT_DS_CONFIG_KEYS = frozenset(
         'neutral_losses',
         'chem_mods',
         'compute_unused_metrics',
-        'fdr_model',
+        'scoring_model',
     }
 )
 
@@ -237,14 +237,14 @@ def generate_ds_config(
     neutral_losses=None,
     chem_mods=None,
     compute_unused_metrics=None,
-    fdr_model=None,
+    scoring_model=None,
 ) -> DSConfig:
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
     analysis_version = analysis_version or 1
     iso_params = _get_isotope_generation_from_metadata(metadata)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
-    default_fdr_model = 'v3_default' if analysis_version >= 3 else None
+    default_scoring_model = 'v3_default' if analysis_version >= 3 else None
 
     return {
         'database_ids': moldb_ids,
@@ -260,7 +260,7 @@ def generate_ds_config(
         },
         'fdr': {
             'decoy_sample_size': decoy_sample_size or 20,
-            'fdr_model': fdr_model or default_fdr_model,
+            'scoring_model': scoring_model or default_scoring_model,
         },
         'image_generation': {
             'ppm': ppm or 3,
@@ -294,7 +294,7 @@ def update_ds_config(old_config, metadata, **kwargs):
         'ppm': image_generation.get('ppm'),
         'min_px': image_generation.get('min_px'),
         'compute_unused_metrics': image_generation.get('compute_unused_metrics'),
-        'fdr_model': fdr.get('fdr_model'),
+        'scoring_model': fdr.get('scoring_model'),
     }
 
     for k, v in old_vals.items():

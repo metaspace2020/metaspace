@@ -263,6 +263,18 @@ CREATE TABLE "public"."perf_profile_entry" (
   CONSTRAINT "PK_729ef8c877e7facd61d75e754e9" PRIMARY KEY ("id")
 );
 
+CREATE TABLE "public"."scoring_model" (
+  "id" SERIAL NOT NULL, 
+  "name" text NOT NULL, 
+  "type" text NOT NULL, 
+  "params" json NOT NULL, 
+  CONSTRAINT "PK_f4aafae7cbb3f34533cb9f932a6" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX "IDX_842e010e1dfd01fc0005c8ff8c" ON "public"."scoring_model" (
+  "name"
+) ;
+
 CREATE TABLE "graphql"."dataset" (
   "id" text NOT NULL, 
   "user_id" uuid NOT NULL, 

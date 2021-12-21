@@ -60,7 +60,13 @@ def filter_results_and_make_pngs(
     results_dfs = {}
     all_formula_is = set()
     for moldb_id, fdr in fdrs.items():
-        result_df = formula_metrics_df.join(fdr, how='inner').sort_values('fdr')
+        result_df = (
+            # Drop any columns already in fdr, as the FDR results may add or overwrite columns
+            # with values from the scoring function.
+            formula_metrics_df.drop(columns=fdr.columns, errors='ignore')
+            .join(fdr, how='inner')
+            .sort_values('fdr')
+        )
         # Filter out zero-MSM annotations again to ensure that untargeted databases don't get
         # zero-MSM annotations, even if they have some overlap with targeted databases.
         is_targeted = any(db['targeted'] for db in moldbs if db['id'] == moldb_id)

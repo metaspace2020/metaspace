@@ -104,10 +104,17 @@ def compute_fdr(fdr, formula_metrics_df, formula_map_df) -> pd.DataFrame:
     """Compute fdr and filter formulas."""
 
     moldb_ion_metrics_df = _left_merge(formula_metrics_df, formula_map_df, on='ion_formula')
-    formula_fdr_df = fdr.estimate_fdr(moldb_ion_metrics_df[['formula', 'modifier', 'msm']])
+    formula_fdr_df = fdr.estimate_fdr(moldb_ion_metrics_df)
     # fdr is computed only for target modification ions
+    overwritten_cols = (
+        set(moldb_ion_metrics_df)
+        .intersection(formula_fdr_df.columns)
+        .difference({'formula', 'modifier'})
+    )
     moldb_ion_metrics_df = _left_merge(
-        moldb_ion_metrics_df, formula_fdr_df, on=['formula', 'modifier']
+        moldb_ion_metrics_df.drop(columns=overwritten_cols),
+        formula_fdr_df,
+        on=['formula', 'modifier'],
     )
     return moldb_ion_metrics_df
 

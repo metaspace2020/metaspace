@@ -60,7 +60,7 @@ export interface MetaspaceOptions {
     email: string;
   } | null;
   analysisVersion: number;
-  fdrModel: string;
+  scoringModel: string;
   ppm: number;
   numPeaks: number;
   decoySampleSize: number;
