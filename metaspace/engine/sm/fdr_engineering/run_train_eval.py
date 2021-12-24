@@ -17,6 +17,7 @@ from catboost import sum_models
 from metaspace.sm_annotation_utils import SMInstance
 
 from sm.engine.annotation.fdr import run_fdr_ranking, run_fdr_ranking_labeled
+from sm.engine.annotation.scoring_model import add_derived_features
 from sm.engine.storage import get_s3_client
 from sm.fdr_engineering.train_model import (
     get_ranking_data,
@@ -58,21 +59,40 @@ metrics_df = get_ranking_data(ds_diags, all_features)
 #%% Open results from local files
 metrics_df = pd.read_parquet(data_dir / 'metrics_df.parquet')
 
+#%% Recalculate FDR fields
+def calc_fdr_fields(df):
+    target = df.target == 1.0
+    target_df = df[target].copy()
+    decoy_df = df[~target].copy()
+    decoy_sample_size = (
+        20 / df[df.target == 1].modifier.nunique()
+    )  # TODO: Remove hard-coded value 20
+    add_derived_features(target_df, decoy_df, decoy_sample_size, all_features)
+
+    fdr_cols = [c for c in target_df.columns if c.endswith('_fdr')]
+    return pd.concat([target_df, decoy_df])[fdr_cols]
+
+
+# NOTE: This groups by ds_id instead of group_name when running the FDR ranking. This means all
+# adducts are combined into a single ranking
+fdr_fields_df = pd.concat([calc_fdr_fields(df) for ds_id, df in metrics_df.groupby('ds_id')])
+metrics_df = metrics_df.drop(columns=fdr_fields_df.columns, errors='ignore').join(fdr_fields_df)
 
 #%% Model parameters
 features = [
-    'chaos',
-    'spatial',
-    'spectral',
-    'mz_err_abs',
-    'mz_err_rel',
+    'chaos_fdr',
+    'spatial_fdr',
+    'spectral_fdr',
+    'mz_err_abs_fdr',
+    'mz_err_rel_fdr',
 ]
 cb_params = {
-    # 100 iterations  is enough for evaluation, but usually 600 gets the best score for the eval set
-    'iterations': 10,
+    # 100 iterations is enough for comparing methods, but usually 600 gets the best score for the eval set
+    'iterations': 1000,
     # Ranking loss funcitons work best: https://catboost.ai/en/docs/concepts/loss-functions-ranking
     # Be careful about YetiRank - it doesn't support max_pairs and has a tendency to suddenly eat all your RAM
     # Pairwise functions are better but aren't compatible with monotone_constraints
+    # 'loss_function': 'PairLogit:max_pairs=10000',
     'loss_function': 'PairLogitPairwise:max_pairs=10000',
     'use_best_model': True,
     # Features are designed so that higher values are better, except FDR features where
@@ -82,11 +102,11 @@ cb_params = {
     # we can find an explanation for why a worse score could increase the likelihood
     # of an annotation.
     # 'monotone_constraints': {i: -1 if f.endswith('_fdr') else 1 for i, f in enumerate(features)},
-    'verbose': True,
+    'verbose': 100,
 }
 
 #%% Evaluate with cross-validation if desired
-splits = get_cv_splits(metrics_df.ds_id.unique())
+splits = get_cv_splits(metrics_df.ds_id.unique(), 2)
 results = cv_train(metrics_df, splits, features, cb_params)
 # Sum to make an ensemble model - sometimes it's useful
 ens_model = sum_models(results.model.to_list())

@@ -196,18 +196,21 @@ def make_pairs(df, n_per_group=10000, max_n=1000000):
 
 
 def cv_train(metrics_df, splits, features, cb_params):
-    results = []
-    for train_ds_ids, eval_ds_ids in splits:
+    def run_split(i):
+        train_ds_ids, eval_ds_ids = splits[i]
         model = train_catboost_model(metrics_df, train_ds_ids, eval_ds_ids, features, cb_params)
 
-        results.append(
-            {
-                'best_iteration': model.get_best_iteration(),
-                'train': next(iter(model.get_best_score()['learn'].values())),
-                'validate': next(iter(model.get_best_score()['validation'].values())),
-                'model': model,
-            }
-        )
+        return {
+            'best_iteration': model.get_best_iteration(),
+            'train': next(iter(model.get_best_score()['learn'].values())),
+            'validate': next(iter(model.get_best_score()['validation'].values())),
+            'model': model,
+        }
+
+    # CatBoost often only uses 2-3 cores, so run two at once to maximize throughput
+    with ThreadPoolExecutor(2) as ex:
+        results = list(ex.map(run_split, range(len(splits))))
+
     return pd.DataFrame(results)
 
 
