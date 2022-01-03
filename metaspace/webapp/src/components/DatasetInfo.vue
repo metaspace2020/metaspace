@@ -52,7 +52,9 @@ export default Vue.extend({
     },
 
     treeData() {
-      const schemaBasedVals = this.objToTreeNode(null, this.metadata, this.schema)
+      const metadata = this.metadata
+      delete metadata.Additional_Information
+      const schemaBasedVals = this.objToTreeNode(null, metadata, this.schema)
       // The current user may be allowed by the API to see the submitter & PI's email address due to being members
       // of the same groups/projects, but we don't have any way of communicating why they're allowed to see some emails
       // and not others. This could creep users out and make them wonder if we're sharing their email address to

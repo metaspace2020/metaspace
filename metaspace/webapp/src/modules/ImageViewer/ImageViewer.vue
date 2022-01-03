@@ -224,6 +224,15 @@ const ImageViewer = defineComponent<Props>({
       return /Trident\/|MSIE/.test(window.navigator.userAgent)
     })
 
+    const roiInfo = computed(() => {
+      if (
+        props.annotation && props.annotation.dataset?.id && root.$store.state.roiInfo
+        && Object.keys(root.$store.state.roiInfo).includes(props.annotation.dataset.id)) {
+        return root.$store.state.roiInfo[props.annotation.dataset.id] || []
+      }
+      return []
+    })
+
     return {
       imageArea,
       dimensions,
@@ -260,7 +269,7 @@ const ImageViewer = defineComponent<Props>({
         root.$store.getters.settings.annotationView.normalization && root.$store.state.normalization
       && root.$store.state.normalization.error),
       showNormalizedIntensity: computed(() => root.$store.getters.settings.annotationView.normalization),
-      roiInfo: computed(() => root.$store.state.roiInfo),
+      roiInfo,
       normalizationData: computed(() => root.$store.state.normalization),
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
       lockIntensityEnabled: config.features.lock_intensity,
