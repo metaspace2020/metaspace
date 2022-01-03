@@ -257,13 +257,13 @@ export default class MetaspaceOptionsSection extends Vue {
     }
 
     onDbRemoval<TKey extends keyof MetaspaceOptions>(val: any) {
-      if (this.defaultDb && val === this.defaultDb.id) {
-        this.$message({
-          message: `${(this.defaultDb.group?.shortName || 'METASPACE')}
-        ${formatDatabaseLabel(this.defaultDb)} is the default database and It can not be removed.`,
-        })
-        this.onInput('databaseIds', this.value.databaseIds)
-      }
+      // if (this.defaultDb && val === this.defaultDb.id) {
+      //   this.$message({
+      //     message: `${(this.defaultDb.group?.shortName || 'METASPACE')}
+      //   ${formatDatabaseLabel(this.defaultDb)} is the default database and It can not be removed.`,
+      //   })
+      //   this.onInput('databaseIds', this.value.databaseIds)
+      // }
     }
 
     normalizeNeutralLoss(query: string) {

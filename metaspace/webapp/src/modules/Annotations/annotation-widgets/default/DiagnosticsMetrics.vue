@@ -18,17 +18,20 @@
       class="msm-score-calc"
     >
       MSM score <span>{{ annotation.msmScore.toFixed(3) }}</span> =
-      <span>{{ scoringModel }}</span>(
-      &rho;<sub>spatial</sub>=<span>{{ annotation.rhoSpatial.toFixed(3) }}</span>{{ ', ' }}
-      &rho;<sub>spectral</sub>=<span>{{ annotation.rhoSpectral.toFixed(3) }}</span>{{ ', ' }}
-      &rho;<sub>chaos</sub>=<span>{{ annotation.rhoChaos.toFixed(3) }}</span>{{ ', ' }}
-      &rho;<sub>absoluteMz</sub>=<span>{{ annotation.rhoMzErrAbs.toFixed(3) }}</span>{{ ', ' }}
-      &rho;<sub>relativeMz</sub>=<span>{{ annotation.rhoMzErrRel.toFixed(3) }}</span>
-      )
+      <span>{{ scoringModel }}</span>
+      (<span
+        v-for="(val, key, i) in metrics || {}"
+        :key="key"
+      ><!--
+        -->&rho;<sub>{{ key }}</sub>=<!--
+        --><span>{{ formatNumber(val) }}</span><!--
+        -->{{ i !== Object.keys(metrics).length - 1 ? ', ' : '' }}<!--
+        --></span>)
     </div>
     <div
       v-else
-      class="h-4"
+      v-loading="1"
+      class="msm-score-calc h-4"
     />
     <div v-if="showOffSample">
       <el-popover
@@ -53,6 +56,7 @@ import { Component, Prop } from 'vue-property-decorator'
 
 import config from '../../../../lib/config'
 import safeJsonParse from '../../../../lib/safeJsonParse'
+import { sortBy } from 'lodash-es'
 
 @Component({
 })
@@ -63,17 +67,30 @@ export default class DiagnosticsMetrics extends Vue {
     @Prop()
     annotation: any
 
+    get metrics(): Record<string, number> | null {
+      const order = ['spatial', 'spectral', 'chaos', 'mz_err_abs', 'mz_err_rel']
+      let metrics = this.annotation?.metricsJson != null ? safeJsonParse(this.annotation.metricsJson) : null
+      if (metrics != null) {
+        const sorted = sortBy(
+          Object.entries(metrics).filter(([k, v]) => order.includes(k)),
+          ([k, v]) => order.indexOf(k),
+        )
+        metrics = Object.fromEntries(sorted)
+      }
+      return metrics
+    }
+
     get scoringModel(): string | null {
       // eslint-disable-next-line camelcase
       return this.annotation != null ? safeJsonParse(this.annotation.dataset.configJson)?.fdr.scoring_model : null
     }
 
     get showV1(): boolean {
-      return this.annotation != null && this.scoringModel == null
+      return this.metrics != null && this.scoringModel == null
     }
 
     get showV3(): boolean {
-      return this.annotation != null && this.scoringModel != null
+      return this.metrics != null && this.scoringModel != null
     }
 
     get showOffSample(): boolean {
@@ -87,6 +104,14 @@ export default class DiagnosticsMetrics extends Vue {
         return 'greater than 90%'
       } else {
         return (+this.annotation.offSampleProb * 100).toFixed(0) + '%'
+      }
+    }
+
+    formatNumber(num: number | undefined | null, digits = 3): string {
+      if (num != null) {
+        return num.toFixed(digits)
+      } else {
+        return '\u2014' // Em-dash
       }
     }
 }

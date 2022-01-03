@@ -96,7 +96,8 @@
       class="comp-annotation-container"
     >
       <diagnostics-metrics
-        :annotation="comparisonAnnotationGroup.annotations[0]"
+        :loading="comparisonLoading && comparisonDiagnosticsData == null"
+        :annotation="comparisonDiagnosticsData"
       />
       <diagnostics-images
         :annotation="comparisonAnnotationGroup.annotations[0]"
@@ -159,6 +160,22 @@ interface AnnotationGroup {
         }
       },
     },
+    comparisonDiagnosticsData: {
+      query: diagnosticsDataQuery,
+      loadingKey: 'comparisonLoading',
+      fetchPolicy: 'cache-first',
+      update: (data: any) => {
+        return data.annotation
+      },
+      skip() {
+        return this.comparisonAnnotationGroup?.annotations[0].id == null
+      },
+      variables(): any {
+        return {
+          id: this.comparisonAnnotationGroup?.annotations[0].id,
+        }
+      },
+    },
     isobarAnnotations: {
       query: isobarsQuery,
       loadingKey: 'loading',
@@ -193,7 +210,9 @@ export default class Diagnostics extends Vue {
     imageLoaderSettings: any;
 
     loading = 0;
+    comparisonLoading = 0;
     diagnosticsData: any;
+    comparisonDiagnosticsData: any;
     isobarAnnotations: any[] = [];
     // Keep track of the last ionFormula used for fetching isobars, so that discrepancies can be reported
     isobarAnnotationsIonFormula: string | null = null;
