@@ -242,10 +242,9 @@ def get_stratified_sample(ds_df, count):
         group_weights = weights.groupby(ds_df[col]).sum() ** 0.5
         group_weights = group_weights.sort_values(ascending=False)
         group_weights /= group_weights.sum()
-        # other = group_weights.index.isin([*group_weights.index[pop:], 'Other'])
+        other = group_weights.index.isin([*group_weights.index[pop:], 'Other'])
         adjustment = pd.Series(
-            1 / group_weights,
-            # np.where(other, 1 / max(group_weights[other].sum(), 0.001), 1 / group_weights),
+            np.where(other, 1 / max(group_weights[other].sum(), 0.001), 1 / group_weights),
             index=group_weights.index,
         )
 
