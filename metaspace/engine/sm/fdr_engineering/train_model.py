@@ -1,10 +1,13 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import List
 
 import numpy as np
 import pandas as pd
+from botocore.exceptions import ClientError
 from catboost import CatBoost, Pool
 from metaspace import SMInstance
 from sphinx.util import requests
@@ -17,6 +20,7 @@ from sm.engine.annotation.diagnostics import (
 )
 from sm.engine.annotation.fdr import run_fdr_ranking_labeled
 from sm.engine.annotation.scoring_model import add_derived_features
+from sm.engine.storage import get_s3_client
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +83,8 @@ def get_ranking_data(ds_diags, features):
             targets = map_df[['formula', 'tm']].rename(columns={'tm': 'modifier'}).drop_duplicates()
             decoys = map_df[['formula', 'dm']].rename(columns={'dm': 'modifier'})
             decoy_sample_size = len(decoys) / len(targets)
+            # v1 FDR takes the median of many separate rankings for the different decoy groups
+            decoys['decoy_i'] = np.arange(len(decoys)) % decoy_sample_size
             target_df = targets.merge(formula_map_df, on=['formula', 'modifier']).merge(
                 metrics_df, left_on='formula_i', right_index=True
             )
@@ -90,7 +96,7 @@ def get_ranking_data(ds_diags, features):
             target_df = target_df[lambda df: (df.chaos > 0) & (df.spatial > 0) & (df.spectral > 0)]
             decoy_df = decoy_df[lambda df: (df.chaos > 0) & (df.spatial > 0) & (df.spectral > 0)]
 
-            # Sanity check: Skip this group if there are <10 annotations that would get FDR<=10%
+            # Sanity check: Skip this group if there are <10 annotations that would get FDR<=20%
             # as it's an indicator that the data is bad for some reason (e.g. this adduct shouldn't
             # form at all with this instrument/sample type)
             all_df = pd.concat([target_df.assign(target=True), decoy_df.assign(target=False)])
@@ -101,8 +107,8 @@ def get_ranking_data(ds_diags, features):
                 rule_of_succession=True,
                 monotonic=True,
             )
-            if np.count_nonzero(all_df.fdr[all_df.target] <= 0.1) < 10:
-                print(f'Skipping {ds_id} {tm} as there are less than 10 FDR<=10% targets')
+            if np.count_nonzero(all_df.fdr[all_df.target] <= 0.2) < 10:
+                print(f'Skipping {ds_id} {tm} as there are less than 10 FDR<=20% targets')
                 continue
             if np.count_nonzero(all_df.fdr[~all_df.target] <= 0.5) < 10:
                 print(f'Skipping {ds_id} {tm} as there are less than 10 FDR<=50% decoys')
@@ -199,11 +205,13 @@ def cv_train(metrics_df, splits, features, cb_params):
     def run_split(i):
         train_ds_ids, eval_ds_ids = splits[i]
         model = train_catboost_model(metrics_df, train_ds_ids, eval_ds_ids, features, cb_params)
-
+        best_score = model.get_best_score()
         return {
             'best_iteration': model.get_best_iteration(),
-            'train': next(iter(model.get_best_score()['learn'].values())),
-            'validate': next(iter(model.get_best_score()['validation'].values())),
+            'train': next(iter(best_score.get('learn', {}).values()), None) if best_score else None,
+            'validate': next(iter(best_score.get('validation', {}).values()), None)
+            if best_score
+            else None,
             'model': model,
         }
 
@@ -250,3 +258,57 @@ def train_catboost_model(metrics_df, train_ds_ids, eval_ds_ids, features, cb_par
     # assert np.isclose(np.min(all_preds), 0.0, atol=0.001)
     # assert np.isclose(np.max(all_preds), 1.0, atol=0.001)
     return model
+
+
+def upload_model(model, bucket, prefix, is_public, overwrite=False):
+    s3_client = get_s3_client()
+
+    if not overwrite:
+        try:
+            head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/model.cbm')
+            head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/model.json')
+        except:
+            head = None
+        assert head is None, 'Model already uploaded'
+
+    # Create the bucket if necessary
+    try:
+        s3_client.head_bucket(Bucket=bucket)
+    except ClientError:
+        print(f"Couldn't find bucket {bucket}, creating...")
+        s3_client.create_bucket(Bucket=bucket)
+
+    with TemporaryDirectory() as tmpdir:
+        cbm_path = Path(tmpdir) / 'model.cbm'
+        json_path = Path(tmpdir) / 'model.json'
+        model.save_model(str(cbm_path), format='cbm')
+        model.save_model(str(json_path), format='json')
+        acl = 'public-read' if is_public else None
+        s3_client.put_object(
+            Bucket=bucket, Key=f'{prefix}/model.cbm', Body=cbm_path.open('rb').read(), ACL=acl
+        )
+
+        s3_client.put_object(
+            Bucket=bucket, Key=f'{prefix}/model.json', Body=json_path.open('rb').read(), ACL=acl
+        )
+    return f's3://{bucket}/{prefix}/model.cbm'
+
+
+def upload_training_data(metrics_df, bucket, prefix, is_public, overwrite=False):
+    s3_client = get_s3_client()
+
+    if not overwrite:
+        try:
+            head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/train_data.parquet')
+        except:
+            head = None
+        assert head is None, 'Training data already uploaded'
+
+    with TemporaryDirectory() as tmpdir:
+        path = Path(tmpdir) / 'train_data.parquet'
+        metrics_df.to_parquet(path)
+        acl = 'public-read' if is_public else None
+        s3_client.put_object(
+            Bucket=bucket, Key=f'{prefix}/train_data.parquet', Body=path.open('rb').read(), ACL=acl
+        )
+    return f's3://{bucket}/{prefix}/model.cbm'

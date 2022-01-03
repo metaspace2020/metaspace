@@ -1339,7 +1339,9 @@ class SMDataset(object):
                 elif format == 'PARQUET':
                     image_content = pd.read_parquet(raw)
                 else:
-                    print(f'Warning: Unrecognized image format {format}, returning unparsed content')
+                    print(
+                        f'Warning: Unrecognized image format {format}, returning unparsed content'
+                    )
                     image_content = raw
             except Exception as ex:
                 print(f'Warning: Could not parse image {image["url"]}: {ex}')

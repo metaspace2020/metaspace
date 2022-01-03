@@ -8,23 +8,22 @@ It may also be necessary to call GlobalInit() before upload to ensure the config
 import json
 import logging
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import numpy as np
 import pandas as pd
-from botocore.exceptions import ClientError
 from catboost import sum_models
 from metaspace.sm_annotation_utils import SMInstance
 
 from sm.engine.annotation.fdr import run_fdr_ranking, run_fdr_ranking_labeled
 from sm.engine.annotation.scoring_model import add_derived_features
-from sm.engine.storage import get_s3_client
 from sm.fdr_engineering.train_model import (
     get_ranking_data,
     get_cv_splits,
     cv_train,
     get_many_fdr_diagnostics_remote,
     train_catboost_model,
+    upload_model,
+    upload_training_data,
 )
 
 logger = logging.getLogger(__name__)
@@ -36,7 +35,6 @@ dataset_ids_file = data_dir / 'dataset_ids.txt'
 dataset_ids = [ds_id.strip() for ds_id in dataset_ids_file.open().readlines()]
 dst_dataset_ids = [ds_id + dst_suffix for ds_id in dataset_ids]
 
-#%% Retrieve results from server and format them (skip this if you have downloaded results)
 all_features = [
     'chaos',
     'spatial',
@@ -49,15 +47,19 @@ all_features = [
     'mz_err_abs_fdr',
     'mz_err_rel_fdr',
 ]
-sm_dst = SMInstance(config_path=str(Path.home() / '.metaspace.local'))
+#%% Download the data or load it from a local cache file
+downloaded_data_file = data_dir / 'metrics_df_fdr20.parquet'
+force_redownload = False
+if downloaded_data_file.exists() and not force_redownload:
+    metrics_df = pd.read_parquet(downloaded_data_file)
+    logger.info(f'Loaded {downloaded_data_file}')
+else:
+    sm_dst = SMInstance(config_path=str(Path.home() / '.metaspace.local'))
 
-# ds_diags is an iterable to save temp memory
-ds_diags = get_many_fdr_diagnostics_remote(sm_dst, dst_dataset_ids)
-metrics_df = get_ranking_data(ds_diags, all_features)
-# metrics_df.to_parquet(data_dir / 'metrics_df.parquet')
-
-#%% Open results from local files
-metrics_df = pd.read_parquet(data_dir / 'metrics_df.parquet')
+    # ds_diags is an iterable to save temp memory
+    ds_diags = get_many_fdr_diagnostics_remote(sm_dst, dst_dataset_ids)
+    metrics_df = get_ranking_data(ds_diags, all_features)
+    metrics_df.to_parquet(downloaded_data_file)
 
 #%% Recalculate FDR fields
 def calc_fdr_fields(df):
@@ -76,47 +78,68 @@ def calc_fdr_fields(df):
 # NOTE: This groups by ds_id instead of group_name when running the FDR ranking. This means all
 # adducts are combined into a single ranking
 fdr_fields_df = pd.concat([calc_fdr_fields(df) for ds_id, df in metrics_df.groupby('ds_id')])
-metrics_df = metrics_df.drop(columns=fdr_fields_df.columns, errors='ignore').join(fdr_fields_df)
+train_metrics_df = metrics_df = metrics_df.drop(
+    columns=fdr_fields_df.columns, errors='ignore'
+).join(fdr_fields_df)
+
+#%% Make a smaller dataset for training, using this opportunity to balance targets & decoys
+# (Skip this unless using very expensive loss functions like YetiRank)
+
+# def subsample(df, max_group_size=5000):
+#     target = df.target == 1.0
+#     target_df = df[target].copy()
+#     decoy_df = df[~target].copy()
+#     return pd.concat(
+#         [
+#             target_df.sample(n=min(len(target_df), max(0, max_group_size - len(decoy_df)))),
+#             decoy_df.sample(n=min(len(decoy_df), max(0, max_group_size - len(target_df)))),
+#         ]
+#     )
+#
+#
+# train_metrics_df = pd.concat(
+#     [subsample(df) for ds_id, df in metrics_df.groupby('group_name', observed=True)]
+# )
 
 #%% Model parameters
 features = [
-    'chaos_fdr',
-    'spatial_fdr',
-    'spectral_fdr',
-    'mz_err_abs_fdr',
-    'mz_err_rel_fdr',
+    'chaos',
+    'spatial',
+    'spectral',
+    'mz_err_abs',
+    'mz_err_rel',
 ]
 cb_params = {
-    # 100 iterations is enough for comparing methods, but usually 600 gets the best score for the eval set
+    # 100 iterations is usually enough for comparing methods, but the eval set gets the best score at ~600
     'iterations': 1000,
-    # Ranking loss funcitons work best: https://catboost.ai/en/docs/concepts/loss-functions-ranking
+    # Ranking loss functions work best: https://catboost.ai/en/docs/concepts/loss-functions-ranking
     # Be careful about YetiRank - it doesn't support max_pairs and has a tendency to suddenly eat all your RAM
-    # Pairwise functions are better but aren't compatible with monotone_constraints
-    # 'loss_function': 'PairLogit:max_pairs=10000',
-    'loss_function': 'PairLogitPairwise:max_pairs=10000',
+    # CatBoost docs say PairLogitPairwise is better than PairLogit, but I found it was slower and gave worse results
+    'loss_function': 'PairLogit:max_pairs=10000',
     'use_best_model': True,
-    # Features are designed so that higher values are better, except FDR features where
-    # lower values are better. Enforce this as a monotonicity constraint to reduce
-    # overfitting & improve interpretability.
+    # Non-FDR features are designed so that higher values are better.
+    # Enforce this as a monotonicity constraint to reduce overfitting & improve interpretability.
     # This seems to reduce accuracy, but I feel it's a necessary constraint unless
     # we can find an explanation for why a worse score could increase the likelihood
     # of an annotation.
-    # 'monotone_constraints': {i: -1 if f.endswith('_fdr') else 1 for i, f in enumerate(features)},
-    'verbose': 100,
+    'monotone_constraints': {i: 0 if f.endswith('_fdr') else 1 for i, f in enumerate(features)},
+    'verbose': True,
+    # 'task_type': 'GPU',
 }
 
 #%% Evaluate with cross-validation if desired
 splits = get_cv_splits(metrics_df.ds_id.unique(), 2)
-results = cv_train(metrics_df, splits, features, cb_params)
+results = cv_train(train_metrics_df, splits, features, cb_params)
 # Sum to make an ensemble model - sometimes it's useful
 ens_model = sum_models(results.model.to_list())
 #%% Make final model from all data
 final_params = {
     **cb_params,
-    'iterations': 600,
+    'iterations': 1000,
+    'loss_function': 'PairLogit:max_pairs=10000',  # Reduce max_pairs if CatBoost complains
     'use_best_model': False,  # Must be disabled when eval set is None
     # CatBoost quantizes all inputs into bins, and border_count determines their granularity.
-    # 254 is the default, higher gives slightly better accuracy but is slower
+    # 254 is the default, higher gives slightly better accuracy but is slower to train
     'border_count': 1024,
 }
 final_model = train_catboost_model(
@@ -152,18 +175,19 @@ def eval_model(model, metrics_df):
 
 
 # Cross-validated stats
-stats_df = pd.concat(
-    [
-        eval_model(model, metrics_df[metrics_df.ds_id.isin(eval_ds_ids)])
-        for (_, eval_ds_ids), model in zip(splits, results.model)
-    ]
-)
+# stats_df = pd.concat(
+#     [
+#         eval_model(model, metrics_df[metrics_df.ds_id.isin(eval_ds_ids)])
+#         for (_, eval_ds_ids), model in zip(splits, results.model)
+#     ]
+# )
 
 # Ensemble model stats
 # stats_df = eval_model(ens_model, metrics_df)
 
-# Final model stats
-# stats_df = eval_model(final_model, metrics_df)
+# Final model stats (NOTE: This model is trained on the eval set, so this should not be used for
+# reporting, only diagnostics)
+stats_df = eval_model(final_model, metrics_df)
 
 
 print(stats_df.delta_fdr10.describe())
@@ -195,63 +219,14 @@ export_df.to_csv('local/ml_scoring/prod_impl.csv', index=False)
 
 
 #%% Save model to S3 & DB
-def upload_model(model, bucket, prefix, is_public, overwrite=False):
-    s3_client = get_s3_client()
-
-    if not overwrite:
-        try:
-            head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/model.cbm')
-            head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/model.json')
-        except:
-            head = None
-        assert head is None, 'Model already uploaded'
-
-    # Create the bucket if necessary
-    try:
-        s3_client.head_bucket(Bucket=bucket)
-    except ClientError:
-        print(f"Couldn't find bucket {bucket}, creating...")
-        s3_client.create_bucket(Bucket=bucket)
-
-    with TemporaryDirectory() as tmpdir:
-        cbm_path = Path(tmpdir) / 'model.cbm'
-        json_path = Path(tmpdir) / 'model.json'
-        model.save_model(str(cbm_path), format='cbm')
-        model.save_model(str(json_path), format='json')
-        acl = 'public-read' if is_public else None
-        s3_client.put_object(
-            Bucket=bucket, Key=f'{prefix}/model.cbm', Body=cbm_path.open('rb').read(), ACL=acl
-        )
-
-        s3_client.put_object(
-            Bucket=bucket, Key=f'{prefix}/model.json', Body=json_path.open('rb').read(), ACL=acl
-        )
-    return f's3://{bucket}/{prefix}/model.cbm'
-
-
-def upload_training_data(metrics_df, bucket, prefix, is_public, overwrite=False):
-    s3_client = get_s3_client()
-
-    if not overwrite:
-        try:
-            head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/train_data.parquet')
-        except:
-            head = None
-        assert head is None, 'Training data already uploaded'
-
-    with TemporaryDirectory() as tmpdir:
-        path = Path(tmpdir) / 'train_data.parquet'
-        metrics_df.to_parquet(path)
-        acl = 'public-read' if is_public else None
-        s3_client.put_object(
-            Bucket=bucket, Key=f'{prefix}/train_data.parquet', Body=path.open('rb').read(), ACL=acl
-        )
-    return f's3://{bucket}/{prefix}/model.cbm'
-
 
 model_name = 'v3_default'
-s3_path = upload_model(final_model, 'sm-engine', f'scoring_models/{model_name}', is_public=True)
-upload_training_data(metrics_df, 'sm-engine', f'scoring_models/{model_name}', is_public=True)
+s3_path = upload_model(
+    final_model, 'sm-engine', f'scoring_models/{model_name}', is_public=True, overwrite=True
+)
+upload_training_data(
+    metrics_df, 'sm-engine', f'scoring_models/{model_name}', is_public=True, overwrite=True
+)
 print(
     f'''Now add a row to the scoring_models table:
 name: {model_name}

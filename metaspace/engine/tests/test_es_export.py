@@ -43,12 +43,15 @@ V3_STATS = {
     'mz_err_abs_fdr': 0.04,
     'mz_err_rel_fdr': 0.05,
 }
-STATS_RENAMES = {
-    'spatial': 'image_corr',
-    'spatial_fdr': 'image_corr_fdr',
-    'spectral': 'pattern_match',
-    'spectral_fdr': 'pattern_match_fdr',
-}
+NON_METRIC_STATS = [
+    'total_iso_ints',
+    'min_iso_ints',
+    'max_iso_ints',
+    'theo_mz',
+    'theo_ints',
+    'mz_mean',
+    'mz_stddev',
+]
 
 
 def wait_for_es(es, index):
@@ -184,12 +187,17 @@ def test_index_ds_works(
         .execute()
         .to_dict()['hits']['hits'][0]['_source']
     )
-    expected_stats_fields = {
-        STATS_RENAMES.get(key, key): value for key, value in annotation_stats.items()
+    top_level_stats = {
+        'pattern_match': annotation_stats['spectral'],
+        'image_corr': annotation_stats['spatial'],
+        'chaos': annotation_stats['chaos'],
+        **{key: value for key, value in annotation_stats.items() if key in NON_METRIC_STATS},
     }
+    metrics = {key: value for key, value in annotation_stats.items() if key not in NON_METRIC_STATS}
     assert ann_1_d == {
         **expected_ds_fields,
-        **expected_stats_fields,
+        **top_level_stats,
+        'metrics': metrics,
         'fdr': 0.1,
         'formula': 'H2O',
         'msm': 1.0,
@@ -225,7 +233,8 @@ def test_index_ds_works(
     )
     assert ann_2_d == {
         **expected_ds_fields,
-        **expected_stats_fields,
+        **top_level_stats,
+        'metrics': metrics,
         'fdr': 0.05,
         'formula': 'Au',
         'msm': 1.0,

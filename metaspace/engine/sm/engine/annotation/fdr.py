@@ -87,7 +87,8 @@ def score_to_fdr_map(
         cumulative_decoys = cumulative_decoys + 1
 
     fdrs = cumulative_decoys / decoy_ratio / cumulative_targets
-    fdrs[cumulative_targets == 0] = 1
+    fdrs[cumulative_targets == 0] = 1  # Fix NaNs when decoys come before targets
+
     if monotonic:
         # FDRs is already sorted by score descending, so reverse it, take the running-minimum,
         # then reverse it again to get the original order.
@@ -223,6 +224,9 @@ class FDR:
             full_decoy_df = td_df.loc[tm, ['formula', 'dm']].rename(columns={'dm': 'modifier'})
 
             if self.analysis_version >= 3:
+                # Do a single big ranking with all the decoys, numerically compensating for the
+                # imbalanced sets sizes. This is equivalent to averaging across the different random
+                # sets of decoys.
                 decoy_msm = pd.merge(formula_msm, full_decoy_df, on=['formula', 'modifier'])
                 target_df, decoy_df = scoring_model.score(
                     target_msm, decoy_msm, self.decoy_sample_size
