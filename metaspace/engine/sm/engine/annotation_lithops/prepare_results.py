@@ -17,9 +17,9 @@ logger = logging.getLogger('annotation-pipeline')
 
 
 def _split_png_jobs(image_tasks_df, w, h):
-    # Guess the cost (in ms) per imageset, and split into relatively even chunks, aiming for 2s each.
-    # Based on local testing, PngGenerator.generate_png() can encode ~20M empty pixels per second,
-    # or ~10M non-empty pixels per second.
+    # Guess the cost (in ms) per imageset, and split into relatively even chunks,
+    # aiming for 2s each. Based on local testing, PngGenerator.generate_png() can encode
+    # ~20M empty pixels per second, or ~10M non-empty pixels per second.
     # This assumes rows are already sorted by cobj, and factors in:
     # * Number of empty and non-empty pixels (1/20000 ms for empty, 1/10000 ms for non-empty)
     # * Cost of loading a new cobj (assumed to be 10ms)

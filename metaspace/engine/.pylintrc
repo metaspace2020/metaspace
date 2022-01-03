@@ -155,8 +155,11 @@ disable=print-statement,
         duplicate-code,
         # Redefined outer variable name is a recurring problem in scripts
         redefined-outer-name,
-        # Unnecessary else after return.
-        no-else-return
+        # Unnecessary else after return/raise
+        no-else-return,
+        no-else-raise,
+        # .keys() is already used extensively, and it's better to be explicit (PEP 20)
+        consider-iterating-dictionary
 
 
 # Enable the message, report, category or checker with the given id(s). You can
@@ -288,7 +291,7 @@ function-naming-style=snake_case
 #function-rgx=
 
 # Good variable names which should always be accepted, separated by a comma.
-good-names=_,i,j,f,k,n,a,e,m,v,h,w,x,db,df,ds,db,id,es,fn,fp,on,xs,ys,mz,Run,app,logger,parser,args,sm_config,s3
+good-names=_,i,j,f,k,n,a,e,m,v,h,w,x,y,db,df,ds,db,id,es,fn,fp,on,xs,ys,mz,sm,up,Run,app,logger,parser,args,sm_config,s3,X
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no

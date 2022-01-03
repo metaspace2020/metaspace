@@ -225,6 +225,7 @@ def _get_isotope_generation_from_metadata(metadata):
     return default_adducts, charge, isocalc_sigma, instrument
 
 
+# pylint: disable=too-many-arguments
 def generate_ds_config(
     metadata,
     analysis_version=None,

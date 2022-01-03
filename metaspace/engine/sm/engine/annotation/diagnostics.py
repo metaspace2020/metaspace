@@ -70,26 +70,27 @@ class FdrDiagnosticBundle(TypedDict):
     decoy_map_df: pd.DataFrame
     """decoy_map_df lists each base formula and the pairs of target modifier and decoy modifiers,
     This is the comprehensive set - all formulas are included and exactly `decoy_sample_size` decoys
-    exist per base formula + target modifier combination, unfiltered by mass, metrics or formula validity.
+    exist per base formula + target modifier combination, unfiltered by mass, metrics or formula
+    validity.
 
     Columns: formula, tm, dm
     """
     formula_map_df: pd.DataFrame
-    """formula_map_df associates the filtered formula + (target/decoy) modifiers with their 
-    corresponding formula_i. Multiple formula+modifiers can have the same formula_i if they sum to 
+    """formula_map_df associates the filtered formula + (target/decoy) modifiers with their
+    corresponding formula_i. Multiple formula+modifiers can have the same formula_i if they sum to
     the same element counts. Some rows may be missing if excluded due to mass or invalid formulas.
-    
-    Columns: 
+
+    Columns:
         formula - base formula of the molecule
         modifier - matches tm or dm from decoy_map_df
         formula_i - index into metrics_df
     """
     metrics_df: pd.DataFrame
-    """metrics_df contains the calculated metrics for each tested annotation. Array-valued columns 
+    """metrics_df contains the calculated metrics for each tested annotation. Array-valued columns
     (listed in METRICS_ARRAY_COLUMNS) are unpacked into separate columns for better storage.
-    
-    Index: formula_i 
-    Columns: See `Metrics` class for the full list 
+
+    Index: formula_i
+    Columns: See `Metrics` class for the full list
     """
 
 
@@ -213,24 +214,24 @@ def save_parquet_image(ds_id: str, data):
 
 
 def save_diagnostic_image(
-    ds_id: str, data: Any, key, index=None, format=DiagnosticImageFormat.NPY
+    ds_id: str, data: Any, key, index=None, fmt=DiagnosticImageFormat.NPY
 ) -> DiagnosticImage:
     assert key in DiagnosticImageKey
-    if format == DiagnosticImageFormat.NPY:
+    if fmt == DiagnosticImageFormat.NPY:
         image_id = save_npy_image(ds_id, data)
-    elif format == DiagnosticImageFormat.JSON:
+    elif fmt == DiagnosticImageFormat.JSON:
         image_id = image_storage.post_image(
             image_storage.DIAG, ds_id, BytesIO(numpy_json_dumps(data).encode())
         )
-    elif format == DiagnosticImageFormat.PARQUET:
+    elif fmt == DiagnosticImageFormat.PARQUET:
         image_id = save_parquet_image(ds_id, data)
     else:
-        raise ValueError(f'Unknown format: {format}')
+        raise ValueError(f'Unknown format: {fmt}')
     image = DiagnosticImage(
         key=key,
         image_id=image_id,
         url=image_storage.get_image_url(image_storage.DIAG, ds_id, image_id),
-        format=format,
+        format=fmt,
     )
 
     if index is not None:
@@ -243,18 +244,18 @@ def load_npy_image(ds_id: str, image_id: str):
     return np.load(BytesIO(buf), allow_pickle=False)
 
 
-def _run_diagnostic_fn(ds_id, type, fn):
+def _run_diagnostic_fn(ds_id, type_, fn):
     # Try several times because occasionally lag/network issues cause object upload to timeout.
     for attempt in range(3):
         try:
             result = fn()
         except Exception:
             logger.exception(
-                f'Exception generating {type} diagnostic after {attempt+1} attempts',
+                f'Exception generating {type_} diagnostic after {attempt + 1} attempts',
                 exc_info=True,
             )
             result = {'error': format_exc()}
-    return {'ds_id': ds_id, 'type': type, **result}
+    return {'ds_id': ds_id, 'type': type_, **result}
 
 
 def extract_job_diagnostics(
@@ -266,7 +267,7 @@ def extract_job_diagnostics(
 
     def fdr_diagnostic():
         images = [
-            save_diagnostic_image(ds_id, df, key=key, format=DiagnosticImageFormat.PARQUET)
+            save_diagnostic_image(ds_id, df, key=key, fmt=DiagnosticImageFormat.PARQUET)
             for key, df in [
                 (DiagnosticImageKey.DECOY_MAP_DF, fdr_bundle['decoy_map_df']),
                 (DiagnosticImageKey.FORMULA_MAP_DF, fdr_bundle['formula_map_df']),
@@ -334,7 +335,6 @@ def sanity_check_fdr_diagnostics(fdr_bundle: FdrDiagnosticBundle) -> None:
     formula_map_df = fdr_bundle['formula_map_df']
     metrics_df = fdr_bundle['metrics_df']
 
-    decoy_sample_size = fdr_bundle['decoy_sample_size']
     decoy_map_df_cols = ['formula', 'tm', 'dm']
     formula_map_df_cols = ['formula', 'modifier', 'formula_i']
     metrics_df_cols = ['chaos', 'spectral', 'spatial', 'msm']

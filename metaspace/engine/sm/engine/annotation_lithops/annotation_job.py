@@ -65,7 +65,7 @@ def _upload_if_needed(
 
     with ExitStack() as stack:
         if use_db_mutex:
-            # Lock during upload to prevent multiple jobs trying to upload the same file simultaneously
+            # Lock during upload to prevent parallel jobs upload the same file simultaneously
             stack.enter_context(DBMutex().lock(bucket + key, timeout=1200))
 
         try:

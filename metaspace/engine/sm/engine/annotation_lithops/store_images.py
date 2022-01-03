@@ -48,11 +48,11 @@ def store_images_to_s3(
             .set_index('formula_i')
             .join(formula_i_to_db_id, how='inner')
         )
-        with ThreadPoolExecutor() as ex:
+        with ThreadPoolExecutor() as executor:
             db_formula_image_ids: DbFormulaImagesDict = defaultdict(dict)
 
             for db_id, formula_id, image_ids in zip(
-                tasks.moldb_id, tasks.index, ex.map(_upload_images, tasks.pngs)
+                tasks.moldb_id, tasks.index, executor.map(_upload_images, tasks.pngs)
             ):
                 db_formula_image_ids[db_id][formula_id] = image_ids
                 n_images += len([i for i in image_ids if i is not None])

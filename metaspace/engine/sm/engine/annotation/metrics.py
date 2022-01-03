@@ -36,8 +36,8 @@ def spatial_metric(iso_imgs_flat, n_spectra, intensities, v1_impl=False):
     try:
         # coerce between [0 1]
         return np.clip(np.average(iso_correlation, weights=intensities[1:]), 0, 1)
-    except TypeError:
-        raise ValueError("Number of images is not equal to the number of weights + 1")
+    except TypeError as exc:
+        raise ValueError("Number of images is not equal to the number of weights + 1") from exc
 
 
 def spatial_corr(iso_imgs_flat, n_spectra, weights=None):
@@ -107,13 +107,52 @@ def chaos_metric(iso_img, n_levels):
     return 0 if np.isclose(moc, 1.0) else moc
 
 
-def v2_chaos(iso_img, lin_levels=30, geom_levels=30, full_dilate=False):
-    # Original implementation: https://github.com/alexandrovteam/ims-cpp/blob/dcc12b4c50dbfdcde3f765af85fb8b3bb5cd7ec3/ims/image_measures.cpp#L89
-    # Old way: level-thresholding -> dilation -> erosion -> connected component count
-    # New way: "dilation" via maximum-filter -> "erosion" via minimum-filter -> level-thresholding -> connected component count
+def v2_chaos(iso_img, n_levels=30, geom_scaling=False, full_dilate=False):
+    """
+    WIP code for experimenting with improvements to the measure of chaos metric.
+
+    Arguments:
+        iso_img: first isotopic image
+        n_levels: number of intensity thresholds to sample at.
+        geom_scaling: whether to use geometric scaling instead of linear scaling for selecting
+                      the intensity thresholds
+        full_dilate: whether to do an 8-way dilation instead of a 4-way dilation, which causes
+                     small islands of 1-2 pixels to be kept
+
+    This returns 2 candidate metric values: the ratio-based metric and the count-based metric
+    Only one metric value is expected to actually be used in the end. They're just all calculated in
+    parallel because it's faster to do them in parallel the optimal method hasn't been decided yet.
+
+    The "count-based" values match the old algorithm - it's the mean number of connected components
+        divided by the total number of pixels with non-zero intensity.
+    The "ratio-based" values are the potentially improved version - it calculates the ratio of
+        connected components to pixels at every intensity threshold. This should work better on
+        images that have a several regions of different intensities.
+    Linear vs log-scaling are just different ways to choose the intensity thresholds where connected
+        components are counted. n_levels directly affects performance, so choosing better thresholds
+        would allow the n_levels to be reduced. Log-scaling usually makes more sense with mass spec
+        intensities.
+
+    Findings:
+        * This python reimplementation is faster than the C++ implementation as long as numba is
+          used to accelerate count_connected_components
+        * full_dilate doesn't seem to help. It's also much slower
+        * n_levels=10, geom_scaling=True is much faster than n_levels=30, geom_scaling=False
+          and gives very similar results. It's probably a worthwhile change
+
+
+
+    Original implementation:
+    https://github.com/alexandrovteam/ims-cpp/blob/dcc12b4c50dbfdcde3f765af85fb8b3bb5cd7ec3/ims/image_measures.cpp#L89
+    Old way: level-thresholding -> dilation -> erosion -> connected component count
+    New way: "dilation" via maximum-filter -> "erosion" via minimum-filter -> level-thresholding
+             -> connected component count
+
+    """
 
     # Local import of image_manip because numba isn't included in the Lithops Docker image
     # as it adds ~25MB. If this metric is ever used again, numba will need to be added to the image.
+    # pylint: disable=import-outside-toplevel  # Avoid pulling numba into lithops
     from sm.engine.annotation.image_manip import count_connected_components
 
     if full_dilate:
@@ -125,7 +164,7 @@ def v2_chaos(iso_img, lin_levels=30, geom_levels=30, full_dilate=False):
 
     if not iso_img.any():
         # Old way - detect this case when the return value is exactly 1.0
-        return [0.0, 0.0, 0.0, 0.0]
+        return [0.0, 0.0]
 
     # Old way: np.linspace(0, max_ints, n_levels)
     mask = np.empty(iso_img.shape, dtype='bool')
@@ -143,17 +182,16 @@ def v2_chaos(iso_img, lin_levels=30, geom_levels=30, full_dilate=False):
             mean_ratio = 1 - np.mean((component_counts / pixel_counts)[component_counts > 0])
             mean_count = 1 - np.mean(component_counts) / np.count_nonzero(iso_img)
 
-            return mean_ratio, mean_count
+            return [mean_ratio, mean_count]
         else:
-            return -1.0, -1.0
+            return [-1.0, -1.0]
 
     max_ints = np.max(iso_img)
-    lin_ratio, lin_count = calc_chaos_metrics(np.linspace(0, max_ints, lin_levels, endpoint=False))
-    geom_ratio, geom_count = calc_chaos_metrics(
-        np.geomspace(max_ints / 1000, max_ints, geom_levels, endpoint=False)
-    )
-
-    return [lin_ratio, lin_count, geom_ratio, geom_count]
+    if geom_scaling:
+        levels = np.geomspace(max_ints / 1000, max_ints, n_levels, endpoint=False)
+    else:
+        levels = np.linspace(0, max_ints, n_levels, endpoint=False)
+    return calc_chaos_metrics(levels)
 
 
 def v2_chaos_orig(iso_img, n_levels=30):
@@ -161,13 +199,15 @@ def v2_chaos_orig(iso_img, n_levels=30):
     implementation. This one seems to have significantly better dynamic range - it often produces
     values like 0.6 when the original implementation rarely produces values below 0.95
 
-    Original implementation: https://github.com/alexandrovteam/ims-cpp/blob/dcc12b4c50dbfdcde3f765af85fb8b3bb5cd7ec3/ims/image_measures.cpp#L89
+    Original implementation:
+    https://github.com/alexandrovteam/ims-cpp/blob/dcc12b4c50dbfdcde3f765af85fb8b3bb5cd7ec3/ims/image_measures.cpp#L89
+    Old way: level-thresholding -> dilation -> erosion -> connected component count
+    New way: "dilation" via maximum-filter -> "erosion" via minimum-filter -> level-thresholding
+             -> connected component count
     """
-    # Old way: level-thresholding -> dilation -> erosion -> connected component count
-    # New way: "dilation" via maximum-filter -> "erosion" via minimum-filter -> level-thresholding -> connected component count
-
     # Local import of image_manip because numba isn't included in the Lithops Docker image
     # as it adds ~25MB. If this metric is ever used again, numba will need to be added to the image.
+    # pylint: disable=import-outside-toplevel  # Avoid pulling numba into lithops
     from sm.engine.annotation.image_manip import count_connected_components
 
     dilated = maximum_filter(iso_img, footprint=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]))

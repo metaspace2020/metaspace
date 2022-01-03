@@ -26,6 +26,32 @@ ImagesRow = Tuple[int, int, List[coo_matrix]]
 logger = logging.getLogger('annotation-pipeline')
 
 
+# pylint: disable=too-many-return-statements  # splitting this function makes it harder to follow
+def _try_shrink_metrics_series(series):
+    """For a series of metrics, try to convert it to 32-bit types to use less memory.
+    Also convert to numpy arrays if the metric values are lists.
+    """
+    dtype = series.dtype
+    if dtype == np.float64:
+        return series.astype('f')  # shrink to 32-bit float
+    elif dtype == np.int64:
+        return series.astype('i')  # shrink to 32-bit int
+    elif dtype == np.object and len(series) > 0:
+        item = series.iloc[0]
+        if isinstance(item, np.ndarray):
+            if item.dtype == np.float64:
+                return [v.astype('f') for v in series]
+            elif item.dtype == np.int64:
+                return [v.astype('i') for v in series]
+        elif isinstance(item, list) and len(item) > 0:
+            if isinstance(item, (float, np.floating)):
+                return [np.array(v, dtype='f') for v in series]
+            elif isinstance(item, (int, np.integer)):
+                return [np.array(v, dtype='i') for v in series]
+
+    return series
+
+
 class ImagesManager:
     """
     Collects ion images (in sparse coo_matrix format) and formula metrics.
@@ -92,27 +118,10 @@ class ImagesManager:
                 formula_metrics_df.columns
             )
             if unknown_fields:
-                print(f'Unknown fields: ' + "\n".join(sorted(unknown_fields)))
+                print('Unknown fields: ' + "\n".join(sorted(unknown_fields)))
             # Shrink array
             for col in formula_metrics_df.columns:
-                series = formula_metrics_df[col]
-                dtype = series.dtype
-                if dtype == np.float64:
-                    formula_metrics_df[col] = series.astype('f')
-                elif dtype == np.int64:
-                    formula_metrics_df[col] = series.astype('i')
-                elif dtype == np.object and len(formula_metrics_df) > 0:
-                    item = series.iloc[0]
-                    if isinstance(item, np.ndarray):
-                        if item.dtype == np.float64:
-                            formula_metrics_df[col] = [v.astype('f') for v in series]
-                        elif item.dtype == np.int64:
-                            formula_metrics_df[col] = [v.astype('i') for v in series]
-                    elif isinstance(item, list) and len(item) > 0:
-                        if isinstance(item, (float, np.floating)):
-                            formula_metrics_df[col] = [np.array(v, dtype='f') for v in series]
-                        elif isinstance(item, (int, np.integer)):
-                            formula_metrics_df[col] = [np.array(v, dtype='i') for v in series]
+                formula_metrics_df[col] = _try_shrink_metrics_series(formula_metrics_df[col])
         else:
             formula_metrics_df = EMPTY_METRICS_DF
         formula_metrics_df = formula_metrics_df.set_index('formula_i')

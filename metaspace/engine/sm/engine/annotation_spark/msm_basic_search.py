@@ -302,7 +302,7 @@ class MSMSearch:
         ds_segments = self.define_segments_and_segment_ds(ds_segm_size_mb=20)
         self._perf.record_entry('segmented ds')
 
-        self.fdrs = moldb_fdr_list = init_fdr(self._ds_config, self._moldbs)
+        moldb_fdr_list = init_fdr(self._ds_config, self._moldbs)
         ion_formula_map_df = collect_ion_formulas(self._spark_context, moldb_fdr_list)
         self._perf.record_entry('collected ion formulas')
 

@@ -127,6 +127,7 @@ def make_compute_image_metrics(
     sample_area_mask_flat = sample_area_mask.flatten()
 
     def compute_metrics(image_set: FormulaImageSet):
+        # pylint: disable=unused-variable  # benchmark is used in commented-out dev code
         @contextmanager
         def benchmark(attr):
             start = time.time_ns()
@@ -180,7 +181,7 @@ def make_compute_image_metrics(
     return compute_metrics
 
 
-def concat_coo_matrices(a: coo_matrix, b: coo_matrix):
+def concat_coo_matrices(*mats: coo_matrix):
     """Normally adding two coo_matrices together results in a csr_matrix being returned.
     To keep everything in coo_matrix format, it's necessary to manually concatenate the internal
     arrays when merging two matrices. This method doesn't sum values for duplicated coordinates.
@@ -188,10 +189,10 @@ def concat_coo_matrices(a: coo_matrix, b: coo_matrix):
 
     return coo_matrix(
         (
-            np.concatenate([a.data, b.data]),
-            (np.concatenate([a.row, b.row]), np.concatenate([a.col, b.col])),
+            np.concatenate([m.data for m in mats]),
+            (np.concatenate([m.row for m in mats]), np.concatenate([m.col for m in mats])),
         ),
-        shape=a.shape,
+        shape=mats[0].shape,
         copy=False,
     )
 

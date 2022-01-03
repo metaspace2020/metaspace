@@ -14,10 +14,13 @@ the SMInstance API, or remove the too-few-annotations filter.
 
 import re
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
+# pylint: disable=no-name-in-module
 from Levenshtein import distance
 from metaspace.sm_annotation_utils import SMInstance
 
@@ -52,15 +55,15 @@ def normalize_source(source):
 
 def normalize_resolving_power(ms_analysis):
     analyzer = normalize_analyzer(ms_analysis['Analyzer'])
-    rp = ms_analysis['Detector_Resolving_Power']['Resolving_Power']
+    resolving_power = ms_analysis['Detector_Resolving_Power']['Resolving_Power']
     mz = ms_analysis['Detector_Resolving_Power']['mz']
 
     if analyzer == 'FTICR':
-        return rp * mz / 200.0
+        return resolving_power * mz / 200.0
     elif analyzer == 'Orbitrap':
-        return rp * (mz / 200.0) ** 0.5
+        return resolving_power * (mz / 200.0) ** 0.5
     else:
-        return rp
+        return resolving_power
 
 
 SOLVENT_MAPPING = {
@@ -124,6 +127,7 @@ all_ds_df = pd.DataFrame(
         'name': ds.name,
         'group': ds.group['shortName'] if ds.group else 'None',
         'submitter': ds.submitter['name'],
+        # pylint: disable=protected-access
         'is_public': ds._info['isPublic'],
         'polarity': ds.metadata['MS_Analysis']['Polarity'],
         'source': normalize_source(ds.metadata['MS_Analysis']['Ionisation_Source']),
@@ -140,7 +144,8 @@ all_ds_df = pd.DataFrame(
     if ds
 )
 
-# The "20 labs" project shouldn't be included with EMBL as it gets unusual priority due to its diversity within the group
+# The "20 labs" project shouldn't be included with EMBL as it gets unusual priority due to its
+# diversity within the group
 ext_datasets = [ds.id for ds in sm.datasets(project='62d1990a-a4ff-11eb-96db-abcc9848804b')]
 all_ds_df.loc[all_ds_df.ds_id.isin(ext_datasets), 'group'] = 'None'
 
@@ -157,12 +162,12 @@ last_grouping, last_name, last_submitter = '', '', ''
 for row in (
     all_ds_df.sort_values(
         'name',
-        key=lambda s: s.str.replace('\d', '').str.replace('(sample|slide)[A-Z]', '\\1', case=True),
+        key=lambda s: s.str.replace(r'\d', '').str.replace('(sample|slide)[A-Z]', '\\1', case=True),
     )
     .sort_values('submitter', kind='stable')
     .itertuples()
 ):
-    name = re.sub('\d', '', row.name)
+    name = re.sub(r'\d', '', row.name)
     if row.submitter == last_submitter and distance(name, last_name) < 1:
         all_ds_df.loc[row[0], 'batch_grouping'] = last_grouping
     else:
@@ -174,7 +179,8 @@ for row in (
 ds_mask = (
     # Primary criteria: Datasets should be public OR submitted by EMBL
     (all_ds_df.is_public | (all_ds_df.group == '♡EMBL♡'))
-    # Exclude datasets that are obviously test submissions or re-uploads for some other bioinformatic project
+    # Exclude datasets that are obviously test submissions or re-uploads for some other
+    # bioinformatic project
     & (all_ds_df.name != 'Example file')
     & ~(all_ds_df.name.str.startswith('Dataset '))
     & ~(all_ds_df.name.str.endswith('_recal'))
@@ -218,10 +224,9 @@ print(f'{len(ds_df)} / {len(norm_ds_df)}')
 
 #%%  Try to select a diverse but relatively representative sample of datasets
 def get_stratified_sample(ds_df, count):
-    """"""
     weights = ds_df.batch_weight.copy()
-    # For (col, count), take the top `count` values of `col` and compact the rest into an "Other" category
-    # These are applied to the weights in order and the order has a big impact matters.
+    # For (col, count), take the top `count` values of `col` and compact the rest into an "Other"
+    # category.  These are applied to the weights in order and the order has a big impact.
     # If a particular column isn't being proportionately represented in the results, try moving it
     # up or down in the list.
     cols = [
@@ -237,7 +242,7 @@ def get_stratified_sample(ds_df, count):
         group_weights = weights.groupby(ds_df[col]).sum() ** 0.5
         group_weights = group_weights.sort_values(ascending=False)
         group_weights /= group_weights.sum()
-        other = group_weights.index.isin([*group_weights.index[pop:], 'Other'])
+        # other = group_weights.index.isin([*group_weights.index[pop:], 'Other'])
         adjustment = pd.Series(
             1 / group_weights,
             # np.where(other, 1 / max(group_weights[other].sum(), 0.001), 1 / group_weights),

@@ -62,8 +62,10 @@ def score_to_fdr_map(
         decoy_ratio: ratio of decoys to targets for the given ranking. This has to be provided
             because `target_scores` and `decoy_scores` usually exclude zero-scored annotations,
             but those excluded values need to be taken into account for the FDR calculation.
-            In analysis_version=1, many rankings with matched target/decoy sizes are used, so this should be 1
-            In analysis_version=3, a single ranking with many decoys is done per target, so this should be the decoy_sample_size
+            In analysis_version=1, many rankings with matched target/decoy sizes are used,
+                so this should be 1
+            In analysis_version=3, a single ranking with many decoys is done per target,
+                so this should be the decoy_sample_size
         rule_of_succession: When true, starts the sequence with 1 target and 1 decoy,
             which improves stability and solves the overoptimistic "0% FDR" problem.
         monotonic: When true, ensures that there are no cases where having a lower score would
@@ -157,17 +159,19 @@ class FDR:
         if self.analysis_version < 3:
             # NOTE: These are later selected by index % decoy_sample_size. Generation order matters.
             # pylint: disable=invalid-name
-            for formula, (tm, dm_prefix) in product(target_formulas, target_modifiers):
-                for da in self._choose_decoys():
-                    yield formula, tm, dm_prefix + da
+            for formula, (target_modifier, decoy_prefix) in product(
+                target_formulas, target_modifiers
+            ):
+                for decoy_adduct in self._choose_decoys():
+                    yield formula, target_modifier, decoy_prefix + decoy_adduct
         else:
             # In v3, share the decoy adducts, as there's no benefit to re-sampling decoys
             # for each target modifier, but it's significantly expensive to do so.
             for formula in target_formulas:
                 decoys = self._choose_decoys()
-                for tm, dm_prefix in target_modifiers:
-                    for da in decoys:
-                        yield formula, tm, dm_prefix + da
+                for target_modifier, decoy_prefix in target_modifiers:
+                    for decoy_adduct in decoys:
+                        yield formula, target_modifier, decoy_prefix + decoy_adduct
 
     def decoy_adducts_selection(self, target_formulas):
         self.td_df = pd.DataFrame(

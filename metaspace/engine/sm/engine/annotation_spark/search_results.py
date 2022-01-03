@@ -46,7 +46,8 @@ class SearchResults:
         self.n_peaks = n_peaks
         self.charge = charge
 
-    def _metrics_table_row_gen(self, job_id, metr_df, ion_image_ids, ion_mapping):
+    @staticmethod
+    def _metrics_table_row_gen(job_id, metr_df, ion_image_ids, ion_mapping):
         stats_cols = [f for f in METRICS_FIELDS if f in metr_df.columns]
         for _, row in metr_df.iterrows():
             metr_json = numpy_json_dumps({m: row[m] for m in stats_cols})

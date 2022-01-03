@@ -9,7 +9,7 @@ Example config file contents (remove indentation):
     api_key=0000  # Get an API key from your user profile on the server
 
 The dataset IDs should be listed in local/ml_scoring/dataset_ids.txt (one ID per line)
-On the destination server, the `dst_suffix` suffix will only be appended to each dataset ID if your
+On the destination server, the `DST_SUFFIX` suffix will only be appended to each dataset ID if your
 account is an admin account!! If you're not an admin, random IDs will be generated, and you'll need
 to fix the code here to keep track of them.
 """
@@ -28,7 +28,7 @@ from sm.fdr_engineering.rerun_datasets import reprocess_dataset_remote, wait_for
 logger = logging.getLogger(__name__)
 sm_src = SMInstance()
 sm_dst = SMInstance(config_path=str(Path.home() / '.metaspace.local'))
-dst_suffix = '_ml_training'
+DST_SUFFIX = '_ml_training'
 
 core_metabolome_dst_id = next(
     db.id for db in sm_dst.databases() if db.name == 'CoreMetabolome' and db.version == 'v3'
@@ -37,7 +37,7 @@ data_dir = Path('local/ml_scoring').resolve()  # the "local" subdirectory is .gi
 data_dir.parent.mkdir(parents=True, exist_ok=True)
 dataset_ids_file = data_dir / 'dataset_ids.txt'
 dataset_ids = [ds_id.strip() for ds_id in dataset_ids_file.open().readlines()]
-dst_dataset_ids = [ds_id + dst_suffix for ds_id in dataset_ids]
+dst_dataset_ids = [ds_id + DST_SUFFIX for ds_id in dataset_ids]
 
 #%%
 # # Test VPC
@@ -48,9 +48,11 @@ dst_dataset_ids = [ds_id + dst_suffix for ds_id in dataset_ids]
 print()
 #%%
 def update_metadata(metadata: Any, config: DSConfig) -> Tuple[Any, DSConfig]:
-    """The purpose of this function is to reset every dataset's config to the desired values for training.
+    """The purpose of this function is to reset every dataset's config to the desired values for
+    training.
     Mainly this means enforcing the default values so that no unwanted noise is included, however
-    it also importantly sets the 'compute_unused_metrics' flag and selects which database to use."""
+    it also importantly sets the 'compute_unused_metrics' flag and selects which database to use.
+    """
     ds_config: DSConfig = deepcopy(config)
     ds_config['analysis_version'] = 1
     ds_config['isotope_generation']['chem_mods'] = []
@@ -85,7 +87,7 @@ for i, ds_id in enumerate(dataset_ids):
             sm_src,
             sm_dst,
             ds_id,
-            ds_id + dst_suffix,
+            ds_id + DST_SUFFIX,
             update_metadata,
             # skip_existing=False,
         )
@@ -96,8 +98,8 @@ for i, ds_id in enumerate(dataset_ids):
             print('Too many errors, aborting')
             break
 
-    # If this generates "DATASET_BUSY" errors, try emptying the sm_lithops queue (assuming it's not a production server)
-    # and resetting their status in the database with e.g.:
+    # If this generates "DATASET_BUSY" errors, try emptying the sm_lithops queue (assuming it's
+    # not a production server) and resetting their status in the database with e.g.:
     # UPDATE public.dataset SET status='FINISHED' WHERE id LIKE '%_ml_training';
 
 #%% Wait for datasets to finish

@@ -130,7 +130,7 @@ def exception_to_json_obj(exc):
         obj['message'] = str(exc)
         if hasattr(exc, '__traceback__'):
             obj['traceback'] = format_tb(getattr(exc, '__traceback__'))
-    except:
+    except Exception:
         logger.warning(f'Failed to serialize exception {exc}', exc_info=True)
     return obj
 

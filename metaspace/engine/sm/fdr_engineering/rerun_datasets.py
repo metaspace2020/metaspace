@@ -87,7 +87,7 @@ def reprocess_dataset_remote(
         assert dst_ds.status == 'FINISHED'
         assert any(diag['type'] == DiagnosticType.FDR_RESULTS for diag in dst_ds.diagnostics(False))
         existing = True
-    except:
+    except Exception:
         existing = False
 
     if skip_existing and existing:
@@ -97,7 +97,9 @@ def reprocess_dataset_remote(
     smds = sm_src.dataset(id=src_ds_id)
     ds_metadata, ds_config = update_metadata_func(smds.metadata, smds.config)
 
-    graphql_response = sm_dst._gqclient.create_dataset(
+    # pylint: disable=protected-access  # There's no other clean way to get _gqclient
+    gqclient_dst = sm_dst._gqclient
+    graphql_response = gqclient_dst.create_dataset(
         {
             'name': smds.name,
             'inputPath': smds.s3dir,
@@ -111,7 +113,7 @@ def reprocess_dataset_remote(
             'decoySampleSize': ds_config['fdr']['decoy_sample_size'],
             'analysisVersion': ds_config['analysis_version'],
             'submitterId': sm_dst.current_user_id(),
-            'groupId': sm_dst._gqclient.get_primary_group_id(),
+            'groupId': gqclient_dst.get_primary_group_id(),
             # 'projectIds': project_ids,
             'isPublic': False,
             'scoringModel': ds_config['fdr'].get('scoring_model'),

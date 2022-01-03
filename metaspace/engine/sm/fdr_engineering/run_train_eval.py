@@ -2,7 +2,7 @@
 Step 3: Download the results, train and evaluate the model, and upload it to S3.
 
 The S3 part requires you to have AWS configured in your engine/conf/config.json file.
-It may also be necessary to call GlobalInit() before upload to ensure the config is loaded - haven't tested
+It may also be necessary to call GlobalInit() before upload to ensure the config is loaded
 """
 
 import json
@@ -27,13 +27,13 @@ from sm.fdr_engineering.train_model import (
 )
 
 logger = logging.getLogger(__name__)
-dst_suffix = '_ml_training'
+DST_SUFFIX = '_ml_training'
 
 data_dir = Path('local/ml_scoring').resolve()  # the "local" subdirectory is .gitignored
 data_dir.parent.mkdir(parents=True, exist_ok=True)
 dataset_ids_file = data_dir / 'dataset_ids.txt'
 dataset_ids = [ds_id.strip() for ds_id in dataset_ids_file.open().readlines()]
-dst_dataset_ids = [ds_id + dst_suffix for ds_id in dataset_ids]
+dst_dataset_ids = [ds_id + DST_SUFFIX for ds_id in dataset_ids]
 
 all_features = [
     'chaos',
@@ -49,8 +49,8 @@ all_features = [
 ]
 #%% Download the data or load it from a local cache file
 downloaded_data_file = data_dir / 'metrics_df_fdr20.parquet'
-force_redownload = False
-if downloaded_data_file.exists() and not force_redownload:
+FORCE_REDOWNLOAD = False
+if downloaded_data_file.exists() and not FORCE_REDOWNLOAD:
     metrics_df = pd.read_parquet(downloaded_data_file)
     logger.info(f'Loaded {downloaded_data_file}')
 else:
@@ -110,11 +110,14 @@ features = [
     'mz_err_rel',
 ]
 cb_params = {
-    # 100 iterations is usually enough for comparing methods, but the eval set gets the best score at ~600
+    # 100 iterations is usually consistent enough for comparing methods, but typically the best
+    # for the eval set is around ~600
     'iterations': 1000,
     # Ranking loss functions work best: https://catboost.ai/en/docs/concepts/loss-functions-ranking
-    # Be careful about YetiRank - it doesn't support max_pairs and has a tendency to suddenly eat all your RAM
-    # CatBoost docs say PairLogitPairwise is better than PairLogit, but I found it was slower and gave worse results
+    # Be careful about YetiRank - it doesn't support max_pairs and has a tendency to suddenly eat
+    # all your RAM
+    # CatBoost docs say PairLogitPairwise is better than PairLogit, but I found it was slower and
+    # gave worse results
     'loss_function': 'PairLogit:max_pairs=10000',
     'use_best_model': True,
     # Non-FDR features are designed so that higher values are better.
@@ -147,14 +150,23 @@ final_model = train_catboost_model(
 )
 
 #%% Evaluate the model and print a summary
+def v1_fdr(target_df, decoy_df):
+
+    fdr_dfs = []
+    for _, decoy_subset_df in decoy_df.groupby('decoy_i'):
+        fdr_dfs.append(run_fdr_ranking(target_df, decoy_subset_df, 1, True, True))
+    return pd.concat(fdr_dfs, axis=1).median(axis=1)
+
+
 def eval_model(model, metrics_df):
     res = []
-    # observed=True prevents empty grp_metrics_dfs when there's a group_name category but it has no rows
-    for grp, grp_metrics_df in metrics_df.groupby('group_name', observed=True):
+    # observed=True prevents empty grp_metrics_dfs when there's an empty group_name category
+    for _, grp_metrics_df in metrics_df.groupby('group_name', observed=True):
         grp_msm = grp_metrics_df.chaos * grp_metrics_df.spatial * grp_metrics_df.spectral
         grp_preds = pd.Series(model.predict(grp_metrics_df[features]), index=grp_metrics_df.index)
         target = grp_metrics_df.target == 1.0
         msm_fdrs = run_fdr_ranking(grp_msm[target], grp_msm[~target], 20, True, True)
+        # msm_fdrs = v1_fdr(grp_msm[target], grp_msm[~target])
         preds_fdrs = run_fdr_ranking(grp_preds[target], grp_preds[~target], 20, True, True)
         res.append(
             {
@@ -191,6 +203,11 @@ stats_df = eval_model(final_model, metrics_df)
 
 
 print(stats_df.delta_fdr10.describe())
+n_fewer_anns = stats_df.delta_fdr10[stats_df.delta_fdr10 < 1].count()
+print(
+    f'Datasets with fewer annotations: {n_fewer_anns}/{len(stats_df)}'
+    f'={n_fewer_anns / len(stats_df):.2%}'
+)
 
 #%% Export raw results for comparison with other implementations
 
@@ -217,19 +234,18 @@ export_df['pred_fdr'] = pd.concat(
 
 export_df.to_csv('local/ml_scoring/prod_impl.csv', index=False)
 
-
 #%% Save model to S3 & DB
 
-model_name = 'v3_default'
+MODEL_NAME = 'v3_default'
 s3_path = upload_model(
-    final_model, 'sm-engine', f'scoring_models/{model_name}', is_public=True, overwrite=True
+    final_model, 'sm-engine', f'scoring_models/{MODEL_NAME}', is_public=True, overwrite=True
 )
 upload_training_data(
-    metrics_df, 'sm-engine', f'scoring_models/{model_name}', is_public=True, overwrite=True
+    metrics_df, 'sm-engine', f'scoring_models/{MODEL_NAME}', is_public=True, overwrite=True
 )
 print(
     f'''Now add a row to the scoring_models table:
-name: {model_name}
+name: {MODEL_NAME}
 type: catboost
 params: {json.dumps({"s3_path": s3_path, "features": features})}
 '''

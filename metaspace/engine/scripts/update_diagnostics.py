@@ -85,8 +85,7 @@ def process_dataset(sm_config, del_first, ds_id):
                         # Read all spectra so that mz/tic data is populated
                         pass
 
-        fdr_diagnostics = []  # FDR diagnostics require a complete reprocessing of the dataset
-        diagnostics = extract_dataset_diagnostics(ds_id, imzml_reader, fdr_diagnostics)
+        diagnostics = extract_dataset_diagnostics(ds_id, imzml_reader)
         add_diagnostics(diagnostics)
         return ds_id, True
     except Exception:
@@ -151,7 +150,10 @@ def run_diagnostics(sm_config, ds_ids, del_first, jobs):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Reindex or update dataset results')
+    parser = argparse.ArgumentParser(
+        description='Reindex or update dataset results. NOTE: FDR diagnostics are unsupported as '
+        'they require the dataset to be completely reprocessed.'
+    )
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
     parser.add_argument('--ds-id', help='DS id (or comma-separated list of ids)')
     parser.add_argument('--sql-where', help='SQL WHERE clause for datasets table')

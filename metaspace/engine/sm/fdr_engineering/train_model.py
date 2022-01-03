@@ -55,7 +55,7 @@ def get_fdr_diagnostics_remote(sm: SMInstance, dataset_id: str):
 
 def get_many_fdr_diagnostics_remote(sm: SMInstance, dataset_ids: List[str]):
     errors = []
-    with ThreadPoolExecutor() as ex:
+    with ThreadPoolExecutor() as executor:
 
         def _get_ds(i, ds_id):
             print(f'Retrieving dataset {i}/{len(dataset_ids)}: {ds_id}')
@@ -65,7 +65,7 @@ def get_many_fdr_diagnostics_remote(sm: SMInstance, dataset_ids: List[str]):
                 logger.exception(f'Error retrieving dataset {ds_id}: {e}')
                 return ds_id, e
 
-        for ret in ex.map(_get_ds, range(len(dataset_ids)), dataset_ids):
+        for ret in executor.map(_get_ds, range(len(dataset_ids)), dataset_ids):
             if not isinstance(ret[1], Exception):
                 yield ret
             else:
@@ -79,7 +79,7 @@ def get_ranking_data(ds_diags, features):
         print(f'Processing dataset {i}: {ds_id}')
         _groups = []
         rankings = list(decoy_map_df.groupby('tm'))
-        for tm, map_df in rankings:
+        for target_modifier, map_df in rankings:
             targets = map_df[['formula', 'tm']].rename(columns={'tm': 'modifier'}).drop_duplicates()
             decoys = map_df[['formula', 'dm']].rename(columns={'dm': 'modifier'})
             decoy_sample_size = len(decoys) / len(targets)
@@ -108,15 +108,19 @@ def get_ranking_data(ds_diags, features):
                 monotonic=True,
             )
             if np.count_nonzero(all_df.fdr[all_df.target] <= 0.2) < 10:
-                print(f'Skipping {ds_id} {tm} as there are less than 10 FDR<=20% targets')
+                print(
+                    f'Skipping {ds_id} {target_modifier} as there are less than 10 FDR<=20% targets'
+                )
                 continue
             if np.count_nonzero(all_df.fdr[~all_df.target] <= 0.5) < 10:
-                print(f'Skipping {ds_id} {tm} as there are less than 10 FDR<=50% decoys')
+                print(
+                    f'Skipping {ds_id} {target_modifier} as there are less than 10 FDR<=50% decoys'
+                )
                 continue
 
             # Add FDR metrics
             add_derived_features(target_df, decoy_df, decoy_sample_size, features)
-            group_name = f'{ds_id},{tm}'
+            group_name = f'{ds_id},{target_modifier}'
             merged_df = pd.concat(
                 [
                     target_df.assign(target=1.0, group_name=group_name, ds_id=ds_id),
@@ -127,9 +131,9 @@ def get_ranking_data(ds_diags, features):
             _groups.append(merged_df)
         return _groups
 
-    with ThreadPoolExecutor() as ex:
+    with ThreadPoolExecutor() as executor:
         groups = []
-        for result in ex.map(_process_ds, enumerate(ds_diags)):
+        for result in executor.map(_process_ds, enumerate(ds_diags)):
             groups.extend(result)
 
     groups_df = pd.concat(groups, ignore_index=True)
@@ -191,6 +195,7 @@ def make_pairs(df, n_per_group=10000, max_n=1000000):
         amount_to_subtract = max(1, surplus // len(set_counts))
         max_per_set -= amount_to_subtract
 
+    # pylint: disable=consider-using-enumerate  # Would be misleading as pair_sets[i] is reassigned
     for i in range(len(pair_sets)):
         if len(pair_sets[i]) > max_per_set:
             pair_sets[i] = pair_sets[i][
@@ -216,8 +221,8 @@ def cv_train(metrics_df, splits, features, cb_params):
         }
 
     # CatBoost often only uses 2-3 cores, so run two at once to maximize throughput
-    with ThreadPoolExecutor(2) as ex:
-        results = list(ex.map(run_split, range(len(splits))))
+    with ThreadPoolExecutor(2) as executor:
+        results = list(executor.map(run_split, range(len(splits))))
 
     return pd.DataFrame(results)
 
@@ -267,7 +272,7 @@ def upload_model(model, bucket, prefix, is_public, overwrite=False):
         try:
             head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/model.cbm')
             head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/model.json')
-        except:
+        except Exception:
             head = None
         assert head is None, 'Model already uploaded'
 
@@ -300,7 +305,7 @@ def upload_training_data(metrics_df, bucket, prefix, is_public, overwrite=False)
     if not overwrite:
         try:
             head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/train_data.parquet')
-        except:
+        except Exception:
             head = None
         assert head is None, 'Training data already uploaded'
 

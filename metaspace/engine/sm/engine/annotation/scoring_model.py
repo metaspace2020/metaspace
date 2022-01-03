@@ -15,7 +15,8 @@ def add_derived_features(
     require statistics from a full ranking of targets & decoys, which isn't available in
     formula_validator .
     """
-    from sm.engine.annotation.fdr import score_to_fdr_map  # circular import
+    # pylint: disable=import-outside-toplevel  # circular import
+    from sm.engine.annotation.fdr import score_to_fdr_map
 
     nonzero_targets = (target_df.chaos > 0) & (target_df.spatial > 0) & (target_df.spectral > 0)
     nonzero_decoys = (decoy_df.chaos > 0) & (decoy_df.spatial > 0) & (decoy_df.spectral > 0)
@@ -109,7 +110,8 @@ class MsmScoringModel(ScoringModel):
 
 def load_scoring_model(name: Optional[str]) -> ScoringModel:
     # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
-    from sm.engine.db import DB  # pylint: disable=import-outside-toplevel
+    # pylint: disable=import-outside-toplevel  # circular import
+    from sm.engine.db import DB
     from sm.engine.storage import get_s3_client
     from sm.engine.util import split_s3_path
 
@@ -118,9 +120,9 @@ def load_scoring_model(name: Optional[str]) -> ScoringModel:
 
     row = DB().select_one("SELECT type, params FROM scoring_model WHERE name = %s", (name,))
     assert row is not None, f'Scoring model {name} not found'
-    type, params = row
+    type_, params = row
 
-    if type == 'catboost':
+    if type_ == 'catboost':
         bucket, key = split_s3_path(params['s3_path'])
         with TemporaryDirectory() as tmpdir:
             model_file = Path(tmpdir) / 'model.cbm'
@@ -131,4 +133,4 @@ def load_scoring_model(name: Optional[str]) -> ScoringModel:
 
         return CatBoostScoringModel(name, model, params)
     else:
-        raise ValueError(f'Unsupported scoring model type: {type}')
+        raise ValueError(f'Unsupported scoring model type: {type_}')

@@ -4,6 +4,12 @@ import numpy as np
 
 @numba.njit(numba.int32(numba.boolean[:, :]))
 def count_connected_components(mask: np.ndarray):
+    """
+    Python-based reimplementation of:
+        https://github.com/alexandrovteam/ims-cpp/blob/dcc12b4c50dbfdcde3f765af85fb8b3bb5cd7ec3/ims/image_measures.cpp#L89
+
+    with an optimization to only need to keep 2 rows of labels in memory at a time
+    """
     h, w = mask.shape
     parent = [0]
 
@@ -12,17 +18,17 @@ def count_connected_components(mask: np.ndarray):
             i = parent[i]
         return i
 
-    def set_root(i, r):
+    def set_root(i, root):
         while parent[i] < i:
-            i, parent[i] = parent[i], r
+            i, parent[i] = parent[i], root
 
     def merge_labels(i, j):
-        r = find_root(i)
+        root = find_root(i)
         if i != j:
-            r = min(r, find_root(j))
-            set_root(j, r)
-        set_root(i, r)
-        return r
+            root = min(root, find_root(j))
+            set_root(j, root)
+        set_root(i, root)
+        return root
 
     # Optimization: only keep labels for the current and previous row, as the rest of the image
     # isn't needed

@@ -114,8 +114,7 @@ def segment_centroids(
     is_intensive_dataset: bool,
     isocalc_wrapper: IsocalcWrapper,
 ) -> List[CObj[pd.DataFrame]]:
-    # pylint: disable=too-many-locals,too-many-statements
-    max_ds_segms_size_per_db_segm_mb = 2560 if is_intensive_dataset else 1536
+    # pylint: disable=too-many-locals
     mz_min, mz_max = ds_segms_bounds[0, 0], ds_segms_bounds[-1, 1]
 
     clip_centr_chunks_cobjs, centr_n = clip_centr_df(fexec, peaks_cobjs, mz_min, mz_max)
@@ -172,7 +171,6 @@ def segment_centroids(
         # Try to balance formulas so that they all span roughly the same number of DS segments,
         # and have roughly the same number of formulas.
         max_segm_span = max((formula_segms_df.hi - formula_segms_df.lo).max(), 3)
-        # FIXME: incorporate image size here so that more intensive datasets are made more granular
         if is_intensive_dataset:
             max_segm_count = int(round(np.clip(centr_n / 1000, 1000, 5000)))
         else:
