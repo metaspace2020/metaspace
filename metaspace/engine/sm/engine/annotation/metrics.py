@@ -108,6 +108,7 @@ def chaos_metric(iso_img, n_levels):
 
 
 def v2_chaos(iso_img, n_levels=30, geom_scaling=False, full_dilate=False):
+    # GCOVR_EXCL_START  # Disable code coverage for this function as it's not prod code
     """
     WIP code for experimenting with improvements to the measure of chaos metric.
 
@@ -192,9 +193,11 @@ def v2_chaos(iso_img, n_levels=30, geom_scaling=False, full_dilate=False):
     else:
         levels = np.linspace(0, max_ints, n_levels, endpoint=False)
     return calc_chaos_metrics(levels)
+    # GCOVR_EXCL_STOP
 
 
 def v2_chaos_orig(iso_img, n_levels=30):
+    # GCOVR_EXCL_START  # Disable code coverage for this function as it's not prod code
     """Reimplementation of the chaos metric. I didn't manage to get it to exactly match the original
     implementation. This one seems to have significantly better dynamic range - it often produces
     values like 0.6 when the original implementation rarely produces values below 0.95
@@ -234,6 +237,7 @@ def v2_chaos_orig(iso_img, n_levels=30):
     mean_count = 1 - np.mean(component_counts) / np.count_nonzero(iso_img)
 
     return mean_count
+    # GCOVR_EXCL_STOP
 
 
 def weighted_stddev(values, weights):
@@ -257,7 +261,6 @@ def calc_mz_stddev(iso_images_sparse, iso_mzs_sparse, formula_mzs):
 
 
 def calc_mass_errs(mz_mean, formula_mzs, formula_ints):
-    # FIXME: Is it better for training if this is in PPM instead of Da?
     mz_err_abs = mz_mean[0] - formula_mzs[0]
     if formula_ints[1:].sum() > 0:
         mz_err_rel = np.average(

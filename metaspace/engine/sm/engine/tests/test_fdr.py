@@ -1,5 +1,6 @@
 from itertools import product
 from unittest.mock import patch
+import pytest
 
 import numpy as np
 import pandas as pd
@@ -41,13 +42,14 @@ def test_fdr_decoy_adduct_selection_saves_corr():
     )
 
 
-def test_estimate_fdr_returns_correct_df():
+@pytest.mark.parametrize('analysis_version,expected_fdrs', [(1, [0.2, 0.8]), (3, [1 / 4, 2 / 3])])
+def test_estimate_fdr_returns_correct_df(analysis_version, expected_fdrs):
     fdr = FDR(
         fdr_config=FDR_CONFIG,
         chem_mods=[],
         neutral_losses=[],
         target_adducts=['+H'],
-        analysis_version=1,
+        analysis_version=analysis_version,
     )
     fdr.fdr_levels = [0.2, 0.8]
     fdr.td_df = pd.DataFrame(
@@ -68,11 +70,11 @@ def test_estimate_fdr_returns_correct_df():
     )
     exp_sf_df = pd.DataFrame(
         [
-            ['H2O', '+H', 0.85, 0.2],
-            ['C2H2', '+H', 0.5, 0.8],
+            ['H2O', '+H', 0.85],
+            ['C2H2', '+H', 0.5],
         ],
-        columns=['formula', 'modifier', 'msm', 'fdr'],
-    )
+        columns=['formula', 'modifier', 'msm'],
+    ).assign(fdr=expected_fdrs)
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
 

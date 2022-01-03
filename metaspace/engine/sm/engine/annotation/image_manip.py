@@ -4,6 +4,7 @@ import numpy as np
 
 @numba.njit(numba.int32(numba.boolean[:, :]))
 def count_connected_components(mask: np.ndarray):
+    # GCOVR_EXCL_START  # Disable code coverage for this function as it's not prod code
     """
     Python-based reimplementation of:
         https://github.com/alexandrovteam/ims-cpp/blob/dcc12b4c50dbfdcde3f765af85fb8b3bb5cd7ec3/ims/image_measures.cpp#L89
@@ -60,9 +61,11 @@ def count_connected_components(mask: np.ndarray):
             parent[i] = n_components
 
     return n_components
+    # GCOVR_EXCL_STOP
 
 
 def downsample_fast(img):
+    # GCOVR_EXCL_START  # Disable code coverage for this function as it's not prod code
     """Fast halving of resolution of both axes by averaging 2x2 pixel groups.
     Equivalent to skimage.transform.downscale_local_mean(img, (2,2)) but runs in 1/10th of the time.
     Supports stacked images - Only the last 2 dimensions are rescaled.
@@ -81,3 +84,4 @@ def downsample_fast(img):
         half_h += half_w[..., 1::2, :]
 
     return half_h * 0.25
+    # GCOVR_EXCL_STOP
