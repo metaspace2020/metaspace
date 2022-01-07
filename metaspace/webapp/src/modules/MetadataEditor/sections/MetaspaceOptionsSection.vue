@@ -236,7 +236,7 @@ export default class MetaspaceOptionsSection extends Vue {
     MAX_CHEM_MODS = MAX_CHEM_MODS;
     ANALYSIS_VERSION_OPTIONS = [
       { value: 1, label: 'v1 (Stable)' },
-      { value: 2, label: 'v2 (Internal)' },
+      { value: 2, label: 'v2 (Internal)' }, // Nobody uses v2, it can probably be hidden so that v3 can be "2.0"
       { value: 3, label: 'v3 (ML-Driven)' },
     ];
 
@@ -245,7 +245,7 @@ export default class MetaspaceOptionsSection extends Vue {
 
     get scoringModelOptions() {
       return [
-        // Input doesn't support nulls - an empty string for None instead, but it needs to be converted to/from null
+        // FormField doesn't support nulls - using empty string instead, but it needs to be converted to/from null
         { value: '', label: 'None' },
         ...(this.scoringModels ?? []).map((m: any) => ({ value: m.name, label: m.name })),
       ]
@@ -269,13 +269,13 @@ export default class MetaspaceOptionsSection extends Vue {
     }
 
     onDbRemoval<TKey extends keyof MetaspaceOptions>(val: any) {
-      // if (this.defaultDb && val === this.defaultDb.id) {
-      //   this.$message({
-      //     message: `${(this.defaultDb.group?.shortName || 'METASPACE')}
-      //   ${formatDatabaseLabel(this.defaultDb)} is the default database and It can not be removed.`,
-      //   })
-      //   this.onInput('databaseIds', this.value.databaseIds)
-      // }
+      if (this.defaultDb && val === this.defaultDb.id) {
+        this.$message({
+          message: `${(this.defaultDb.group?.shortName || 'METASPACE')}
+        ${formatDatabaseLabel(this.defaultDb)} is the default database and It can not be removed.`,
+        })
+        this.onInput('databaseIds', this.value.databaseIds)
+      }
     }
 
     normalizeNeutralLoss(query: string) {
