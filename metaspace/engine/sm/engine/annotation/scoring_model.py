@@ -1,5 +1,6 @@
 import json
 import re
+import logging
 from datetime import datetime
 from hashlib import sha1
 from pathlib import Path
@@ -12,6 +13,8 @@ from catboost import CatBoost
 
 from sm.engine.storage import get_s3_client
 from sm.engine.util import split_s3_path
+
+logger = logging.getLogger('engine')
 
 
 def add_derived_features(
@@ -212,16 +215,19 @@ def upload_catboost_scoring_model(
             print(f"Couldn't find bucket {bucket}, creating...")
             s3_client.create_bucket(Bucket=bucket)
 
-        acl = 'public-read' if is_public else None
-        s3_client.put_object(Bucket=bucket, Key=cbm_key, Body=cbm_path.read_bytes(), ACL=acl)
-        s3_client.put_object(Bucket=bucket, Key=json_key, Body=json_path.read_bytes(), ACL=acl)
+        acl = {'ACL': 'public-read'} if is_public else {}
+        logger.info(f'Uploading CBM model to s3://{bucket}/{cbm_key}')
+        s3_client.put_object(Bucket=bucket, Key=cbm_key, Body=cbm_path.read_bytes(), **acl)
+        logger.info(f'Uploading JSON model to s3://{bucket}/{json_key}')
+        s3_client.put_object(Bucket=bucket, Key=json_key, Body=json_path.read_bytes(), **acl)
 
         # Upload training data
         if train_data is not None:
             data_path = Path(tmpdir) / 'train_data.parquet'
             train_data.to_parquet(data_path)
             data_key = f'{prefix}/train_data-{version}.parquet'
-            s3_client.put_object(Bucket=bucket, Key=data_key, Body=data_path.read_bytes(), ACL=acl)
+            logger.info(f'Uploading training data to to s3://{bucket}/{data_key}')
+            s3_client.put_object(Bucket=bucket, Key=data_key, Body=data_path.read_bytes(), **acl)
 
     return {
         's3_path': f's3://{bucket}/{cbm_key}',
@@ -240,11 +246,13 @@ def save_scoring_model_to_db(name, type, params):
 
     db = DB()
     if db.select_one('SELECT * FROM scoring_model WHERE name = %s', (name,)) is not None:
+        logger.info(f'Updating existing scoring model {name}')
         DB().alter(
             'UPDATE scoring_model SET type = %s, params = %s WHERE name = %s',
             (type, params, name),
         )
     else:
+        logger.info(f'Inserting new scoring model {name}')
         DB().alter(
             'INSERT INTO scoring_model(name, type, params) VALUES (%s, %s, %s)',
             (name, type, params),
