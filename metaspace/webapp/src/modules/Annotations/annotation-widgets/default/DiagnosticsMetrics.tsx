@@ -96,7 +96,7 @@ const DiagnosticsMetrics = defineComponent({
         offSampleTag = (
           <div>
             <Popover trigger="hover" open-delay={100}>
-              Image analysis gave an off-sample probability of {{ formattedOffSampleProb }}.
+              Image analysis gave an off-sample probability of { formattedOffSampleProb }.
               <span slot="reference" class={annotation.offSample ? 'off-sample-tag' : 'on-sample-tag'}>
                 { props.annotation.offSample ? 'Off-sample' : 'On-sample' }
               </span>

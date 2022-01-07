@@ -57,7 +57,7 @@
     </div>
     <div :class="comparisonAnnotationGroup ? 'ref-annotation-container' : ''">
       <diagnostics-metrics
-        :loading="loading && diagnosticsData == null"
+        :loading="loading"
         :annotation="diagnosticsData"
       />
       <diagnostics-images
@@ -96,7 +96,7 @@
       class="comp-annotation-container"
     >
       <diagnostics-metrics
-        :loading="comparisonLoading && comparisonDiagnosticsData == null"
+        :loading="comparisonLoading"
         :annotation="comparisonDiagnosticsData"
       />
       <diagnostics-images

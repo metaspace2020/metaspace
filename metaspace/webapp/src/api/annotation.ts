@@ -168,7 +168,7 @@ gql`query GetAnnotation($id: String!) {
       id
       peakChartData
 
-      dataset { id configJson scoringModel { name type params } }
+      dataset { id configJson scoringModel { id name } }
 
       msmScore
       fdrLevel
@@ -179,6 +179,9 @@ gql`query GetAnnotation($id: String!) {
       theoreticalPeakIntensity
       observedPeakMz
       observedPeakMzStddev
+
+      offSample
+      offSampleProb
     }
   }`
 
