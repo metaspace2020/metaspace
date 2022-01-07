@@ -25,6 +25,12 @@ type Adduct {
   default: Boolean!
 }
 
+type ScoringModel {
+  id: Int!
+  name: String!
+  type: String!
+}
+
 type Query {
   metadataSuggestions(field: String!, query: String!, limit: Int = 10): [String!]!
 
@@ -37,6 +43,8 @@ type Query {
   adductSuggestions: [Adduct!]!
 
   colocalizationAlgos: [ColocalizationAlgo!]!
+
+  scoringModels: [ScoringModel!]!
 }
 
 schema {

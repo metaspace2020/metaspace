@@ -142,6 +142,7 @@ export const metadataOptionsQuery = gql`query metadataOptionsQuery {
     }
   }
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
+  scoringModels {id, name}
 }`
 
 export const colocalizationAlgosQuery = gql`query colocalizationAlgosQuery {
