@@ -152,7 +152,6 @@ class SciTester:
         os.environ['PYSPARK_PYTHON'] = sys.executable
 
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
-        ds.config['analysis_version'] = 3
         self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self.db, allow_insert=True)
         perf = NullProfiler()

@@ -13,4 +13,5 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 def numpy_json_dumps(obj):
+    """JSON encoder that supports Numpy scalars and arrays"""
     return json.dumps(obj, cls=NumpyEncoder)

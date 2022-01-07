@@ -29,4 +29,3 @@ s3fs
 lithops==2.5.8
 numba==0.54.0
 catboost==1.0.3
-zstandard==0.15.2

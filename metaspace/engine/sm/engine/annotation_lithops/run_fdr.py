@@ -37,11 +37,7 @@ def run_fdr(
             .assign(moldb_id=moldb_id)
             .set_index('formula_i')
             .merge(modifiers, left_on='modifier', right_index=True, how='outer')
-            # .drop(columns=['modifier'])
         )
-
-        # if not db_data['targeted']:
-        #     results_df = results_df[results_df.fdr <= 1]
 
         return db_data['id'], results_df
 
@@ -49,7 +45,7 @@ def run_fdr(
     scoring_model = load_scoring_model(ds_config['fdr'].get('scoring_model'))
 
     args = [(db_data_cobj,) for db_data_cobj in db_data_cobjs]
-    results = executor.map(_run_fdr_for_db, args, runtime_memory=4096)
+    results = executor.map(_run_fdr_for_db, args, runtime_memory=2048)
 
     for moldb_id, moldb_fdrs in results:
         logger.info(f'DB {moldb_id} number of annotations with FDR less than:')
