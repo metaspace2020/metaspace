@@ -118,10 +118,11 @@
                 @input="val => onInput('analysisVersion', val)"
               />
               <form-field
-                type="text"
+                type="select"
                 name="Scoring model"
                 :value="value.scoringModel || ''"
                 :error="error && error.scoringModel"
+                :options="scoringModelOptions"
                 @input="val => onInput('scoringModel', val ? val : null)"
               />
             </el-col>
@@ -218,6 +219,9 @@ export default class MetaspaceOptionsSection extends Vue {
     @Prop({ type: Array, required: true })
     adductOptions!: {value: string, label: string}[];
 
+    @Prop({ type: Array, required: true })
+    scoringModels!: {name: string}[];
+
     @Prop({ type: Boolean, required: true })
     isNewDataset!: boolean;
 
@@ -238,6 +242,14 @@ export default class MetaspaceOptionsSection extends Vue {
 
     neutralLossOptions: string[] = [];
     chemModOptions: string[] = [];
+
+    get scoringModelOptions() {
+      return [
+        // Input doesn't support nulls - an empty string for None instead, but it needs to be converted to/from null
+        { value: '', label: 'None' },
+        ...(this.scoringModels ?? []).map((m: any) => ({ value: m.name, label: m.name })),
+      ]
+    }
 
     get databaseOptions() {
       return this.databasesByGroup.map(({ shortName, molecularDatabases }) => ({

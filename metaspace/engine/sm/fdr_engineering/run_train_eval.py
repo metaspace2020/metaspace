@@ -14,16 +14,19 @@ import pandas as pd
 from catboost import sum_models
 from metaspace.sm_annotation_utils import SMInstance
 
+from sm.engine.util import GlobalInit
 from sm.engine.annotation.fdr import run_fdr_ranking, run_fdr_ranking_labeled
-from sm.engine.annotation.scoring_model import add_derived_features
+from sm.engine.annotation.scoring_model import (
+    add_derived_features,
+    upload_catboost_scoring_model,
+    save_scoring_model_to_db,
+)
 from sm.fdr_engineering.train_model import (
     get_ranking_data,
     get_cv_splits,
     cv_train,
     get_many_fdr_diagnostics_remote,
     train_catboost_model,
-    upload_model,
-    upload_training_data,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,8 +42,10 @@ all_features = [
     'chaos',
     'spatial',
     'spectral',
-    'mz_err_abs',
-    'mz_err_rel',
+    # _abserr suffix applies the 1-abs(val) transformation
+    'mz_err_abs_abserr',
+    'mz_err_rel_abserr',
+    # _fdr suffix applies the FDR transformation
     'chaos_fdr',
     'spatial_fdr',
     'spectral_fdr',
@@ -66,13 +71,12 @@ def calc_fdr_fields(df):
     target = df.target == 1.0
     target_df = df[target].copy()
     decoy_df = df[~target].copy()
-    decoy_sample_size = (
-        20 / df[df.target == 1].modifier.nunique()
-    )  # TODO: Remove hard-coded value 20
+    # FIXME: Remove hard-coded value 20 - should be decoy_sample_size
+    decoy_sample_size = 20 / df[df.target == 1].modifier.nunique()
     add_derived_features(target_df, decoy_df, decoy_sample_size, all_features)
 
     fdr_cols = [c for c in target_df.columns if c.endswith('_fdr')]
-    return pd.concat([target_df, decoy_df])[fdr_cols]
+    return pd.concat([target_df, decoy_df])[fdr_cols].add_suffix('g')
 
 
 # NOTE: This groups by ds_id instead of group_name when running the FDR ranking. This means all
@@ -106,8 +110,8 @@ features = [
     'chaos',
     'spatial',
     'spectral',
-    'mz_err_abs',
-    'mz_err_rel',
+    'mz_err_abs_abserr',
+    'mz_err_rel_abserr',
 ]
 cb_params = {
     # 100 iterations is usually consistent enough for comparing methods, but typically the best
@@ -125,15 +129,15 @@ cb_params = {
     # This seems to reduce accuracy, but I feel it's a necessary constraint unless
     # we can find an explanation for why a worse score could increase the likelihood
     # of an annotation.
-    'monotone_constraints': {i: 0 if f.endswith('_fdr') else 1 for i, f in enumerate(features)},
+    'monotone_constraints': {i: 0 if '_fdr' in f else 1 for i, f in enumerate(features)},
     'verbose': True,
     # 'task_type': 'GPU',
 }
 
 #%% Evaluate with cross-validation if desired
-splits = get_cv_splits(metrics_df.ds_id.unique(), 2)
+splits = get_cv_splits(metrics_df.ds_id.unique(), 5)
 results = cv_train(train_metrics_df, splits, features, cb_params)
-# Sum to make an ensemble model - sometimes it's useful
+# Sum to make an ensemble model - sometimes it's interesting for debugging
 ens_model = sum_models(results.model.to_list())
 #%% Make final model from all data
 final_params = {
@@ -150,14 +154,6 @@ final_model = train_catboost_model(
 )
 
 #%% Evaluate the model and print a summary
-def v1_fdr(target_df, decoy_df):
-
-    fdr_dfs = []
-    for _, decoy_subset_df in decoy_df.groupby('decoy_i'):
-        fdr_dfs.append(run_fdr_ranking(target_df, decoy_subset_df, 1, True, True))
-    return pd.concat(fdr_dfs, axis=1).median(axis=1)
-
-
 def eval_model(model, metrics_df):
     res = []
     # observed=True prevents empty grp_metrics_dfs when there's an empty group_name category
@@ -166,7 +162,6 @@ def eval_model(model, metrics_df):
         grp_preds = pd.Series(model.predict(grp_metrics_df[features]), index=grp_metrics_df.index)
         target = grp_metrics_df.target == 1.0
         msm_fdrs = run_fdr_ranking(grp_msm[target], grp_msm[~target], 20, True, True)
-        # msm_fdrs = v1_fdr(grp_msm[target], grp_msm[~target])
         preds_fdrs = run_fdr_ranking(grp_preds[target], grp_preds[~target], 20, True, True)
         res.append(
             {
@@ -234,19 +229,20 @@ export_df['pred_fdr'] = pd.concat(
 
 export_df.to_csv('local/ml_scoring/prod_impl.csv', index=False)
 
-#%% Save model to S3 & DB
+#%% Save model to S3
 
 MODEL_NAME = 'v3_default'
-s3_path = upload_model(
-    final_model, 'sm-engine', f'scoring_models/{MODEL_NAME}', is_public=True, overwrite=True
+# Remove unwanted fields from metrics_df for saving training data
+train_data = metrics_df[[*features, 'target', 'group_name', 'formula', 'modifier', 'decoy_i']]
+params = upload_catboost_scoring_model(
+    final_model,  # '../fdr-models/model-2022-01-05T13-45-26.947188-416b1311.cbm',
+    'sm-engine',
+    f'scoring_models/{MODEL_NAME}',
+    is_public=True,
+    train_data=train_data,
 )
-upload_training_data(
-    metrics_df, 'sm-engine', f'scoring_models/{MODEL_NAME}', is_public=True, overwrite=True
-)
-print(
-    f'''Now add a row to the scoring_models table:
-name: {MODEL_NAME}
-type: catboost
-params: {json.dumps({"s3_path": s3_path, "features": features})}
-'''
-)
+print(params)
+
+# Update DB with model (if running a local METASPACE environment)
+GlobalInit()
+save_scoring_model_to_db(MODEL_NAME, 'catboost', params)

@@ -8,7 +8,11 @@ import pandas as pd
 import pytest
 from catboost import CatBoost, Pool
 
-from sm.engine.annotation.scoring_model import load_scoring_model
+from sm.engine.annotation.scoring_model import (
+    load_scoring_model,
+    upload_catboost_scoring_model,
+    save_scoring_model_to_db,
+)
 from sm.engine.db import DB
 from sm.engine.storage import get_s3_client
 
@@ -26,33 +30,20 @@ def s3_catboost_scoring_model(test_db):
     name = 'test_scoring_model'
     features = ['chaos', 'chaos_fdr', 'mz_err_abs_fdr']
     # Train a model that just predicts the chaos metric and ignores the other features
-    dummy_X = np.array(list(product(np.linspace(0, 1, 101), [0], [0])))
+    dummy_X = pd.DataFrame(
+        {
+            'chaos': np.linspace(0, 1, 101),
+            'chaos_fdr': 0,
+            'mz_err_abs_fdr': 0,
+        }
+    )
     model = CatBoost(
         {'iterations': 10, 'feature_weights': {0: 1, 1: 0, 2: 0}, 'verbose': False}
-    ).fit(Pool(dummy_X, dummy_X[:, 0]))
+    ).fit(Pool(dummy_X, dummy_X.chaos.values))
 
     # Upload the model to S3
-    s3_client = get_s3_client()
-    try:
-        s3_client.head_bucket(Bucket=BUCKET_NAME)
-    except:
-        print(f"Creating bucket {BUCKET_NAME}")
-        s3_client.create_bucket(Bucket=BUCKET_NAME)
-
-    with TemporaryDirectory() as tmpdir:
-        cbm_path = Path(tmpdir) / 'model.cbm'
-        model.save_model(str(cbm_path), format='cbm')
-        s3_client.put_object(
-            Bucket=BUCKET_NAME, Key=f'{name}/model.cbm', Body=cbm_path.open('rb').read()
-        )
-    params = {
-        's3_path': f's3://{BUCKET_NAME}/{name}/model.cbm',
-        'features': features,
-    }
-    DB().insert(
-        'INSERT INTO scoring_model (name, type, params) VALUES (%s, %s, %s)',
-        [(name, 'catboost', json.dumps(params))],
-    )
+    params = upload_catboost_scoring_model(model, BUCKET_NAME, name, False, dummy_X)
+    save_scoring_model_to_db(name, 'catboost', params)
 
     return name
 

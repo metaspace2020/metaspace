@@ -136,12 +136,6 @@ type DatasetDiagnostic {
   images: [DiagnosticImage!]!
 }
 
-type ScoringModel {
-  name: String!
-  type: String!
-  params: String!
-}
-
 enum DatasetOrderBy {
   ORDER_BY_DATE
   ORDER_BY_NAME

@@ -1,5 +1,6 @@
 import logging
 from itertools import product
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -213,7 +214,7 @@ class FDR:
         return df.drop('fdr_d', axis=1)
 
     def estimate_fdr(
-        self, formula_msm: pd.DataFrame, scoring_model: ScoringModel = None
+        self, formula_msm: pd.DataFrame, scoring_model: Optional[ScoringModel]
     ) -> pd.DataFrame:
         logger.info('Estimating FDR')
 

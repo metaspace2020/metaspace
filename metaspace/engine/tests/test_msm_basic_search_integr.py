@@ -73,7 +73,7 @@ def test_compute_fdr(spark_context, ds_config):
         columns=['formula_i', 'ion_formula', 'msm'],
     ).set_index('formula_i')
 
-    metrics_df = compute_fdr(fdr, formula_metrics_df, formula_map_df)
+    metrics_df = compute_fdr(fdr, formula_metrics_df, formula_map_df, None)
 
     assert len(metrics_df) == 3
     assert sorted(metrics_df.columns.tolist()) == sorted(
@@ -84,7 +84,7 @@ def test_compute_fdr(spark_context, ds_config):
 def make_search_results(spark_context):
     fdr_mock = MagicMock(FDR)
     fdr_mock.decoy_sample_size = 2
-    fdr_mock.estimate_fdr.side_effect = lambda df: df.assign(fdr=[0.5, 1.0])
+    fdr_mock.estimate_fdr.side_effect = lambda df, scoring_model: df.assign(fdr=[0.5, 1.0])
     fdr_mock.target_modifiers_df = pd.DataFrame(
         {'target_modifier': ['+H'], 'adduct': ['+H']}
     ).set_index('target_modifier')
@@ -119,7 +119,7 @@ def test_compute_fdr_and_filter_results(targeted, exp_annot_n, spark_context):
     )
 
     moldb_ion_metrics_df, moldb_ion_images_rdd, fdr_bundle = compute_fdr_and_filter_results(
-        moldb, fdr, ion_formula_map_df, formula_metrics_df, formula_images_rdd
+        moldb, fdr, ion_formula_map_df, formula_metrics_df, formula_images_rdd, None
     )
 
     assert moldb_ion_metrics_df.shape[0] == exp_annot_n

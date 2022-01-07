@@ -1,10 +1,17 @@
+import json
+import re
+from datetime import datetime
+from hashlib import sha1
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
 from catboost import CatBoost
+
+from sm.engine.storage import get_s3_client
+from sm.engine.util import split_s3_path
 
 
 def add_derived_features(
@@ -52,6 +59,22 @@ def add_derived_features(
             nonzero_decoys, fdr_map.reindex(decoy_values, fill_value=1.0).values, 1.0
         )
 
+    abserr_features = [(f[: -len('_abserr')], f) for f in features if f.endswith('_abserr')]
+    for feature, abserr_feature in abserr_features:
+        # With mz_err features, 0 is the best value, and values get worse as they move away
+        # from 0 in either direction. They're transformed by the negative absolute value here
+        # so that higher values are better. However, this transformed value is not interesting
+        # to either users or debugging developers, so it's filtered out later.
+        target_df[abserr_feature] = -target_df[feature].abs()
+        decoy_df[abserr_feature] = -decoy_df[feature].abs()
+
+
+def remove_uninteresting_features(target_df: pd.DataFrame, decoy_df: pd.DataFrame):
+    uninteresting_features = [f for f in target_df.columns if f.endswith('_abserr')]
+    target_df = target_df.drop(uninteresting_features, axis=1)
+    decoy_df = decoy_df.drop(uninteresting_features, axis=1)
+    return target_df, decoy_df
+
 
 class ScoringModel:
     def score(
@@ -97,6 +120,8 @@ class CatBoostScoringModel(ScoringModel):
         target_df.msm.clip(0.0, 1.0, inplace=True)
         decoy_df.msm.clip(0.0, 1.0, inplace=True)
 
+        remove_uninteresting_features(target_df, decoy_df)
+
         return target_df, decoy_df
 
 
@@ -112,8 +137,6 @@ def load_scoring_model(name: Optional[str]) -> ScoringModel:
     # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
     # pylint: disable=import-outside-toplevel  # circular import
     from sm.engine.db import DB
-    from sm.engine.storage import get_s3_client
-    from sm.engine.util import split_s3_path
 
     if name is None:
         return MsmScoringModel()
@@ -134,3 +157,95 @@ def load_scoring_model(name: Optional[str]) -> ScoringModel:
         return CatBoostScoringModel(name, model, params)
     else:
         raise ValueError(f'Unsupported scoring model type: {type_}')
+
+
+def upload_catboost_scoring_model(
+    model: Union[CatBoost, Path, str],
+    bucket: str,
+    prefix: str,
+    is_public: bool,
+    train_data: pd.DataFrame = None,
+):
+    """
+    Args:
+        model: The catboost model or path to the CBM file. Must be trained on a DataFrame so that
+               feature names are included
+        bucket: Destination S3/MinIO bucket
+        prefix: S3/MinIO prefix
+        is_public: True to save with a 'public-read' ACL. False to use the bucket's default ACL
+        train_data: (Optional) If provided it will be saved alongside the model. Not needed for
+                    anything, but it may make future work easier.
+    """
+    version = None
+    if isinstance(model, (Path, str)):
+        model_path = Path(model)
+        model = CatBoost().load_model(str(model_path), format='cbm')
+        version_match = re.fullmatch(r'model-(.*)\.cbm', model_path.name)
+        if version_match is not None:
+            # Copy the version from the filename if there is one
+            version = version_match[1]
+
+    features = model.feature_names_
+    assert features, 'Model should have feature_names_ set'
+
+    with TemporaryDirectory() as tmpdir:
+        # Save CBM (small, faster to load) and JSON (in case it's needed for forward compatibility)
+        cbm_path = Path(tmpdir) / 'model.cbm'
+        json_path = Path(tmpdir) / 'model.json'
+        model.save_model(str(cbm_path), format='cbm')
+        model.save_model(str(json_path), format='json')
+
+        if version is None:
+            # Add a timestamp and hash to the model path as a crude versioning mechanism,
+            # so that it's possible to recover if the model is accidentally reuploaded
+            timestamp = datetime.now().isoformat().replace(':', '-')
+            version = f'{timestamp}-{sha1(cbm_path.read_bytes()).hexdigest()[:8]}'
+
+        cbm_key = f'{prefix}/model-{version}.cbm'
+        json_key = f'{prefix}/model-{version}.json'
+
+        # Create the bucket if necessary
+        s3_client = get_s3_client()
+        try:
+            s3_client.head_bucket(Bucket=bucket)
+        except Exception:
+            print(f"Couldn't find bucket {bucket}, creating...")
+            s3_client.create_bucket(Bucket=bucket)
+
+        acl = 'public-read' if is_public else None
+        s3_client.put_object(Bucket=bucket, Key=cbm_key, Body=cbm_path.read_bytes(), ACL=acl)
+        s3_client.put_object(Bucket=bucket, Key=json_key, Body=json_path.read_bytes(), ACL=acl)
+
+        # Upload training data
+        if train_data is not None:
+            data_path = Path(tmpdir) / 'train_data.parquet'
+            train_data.to_parquet(data_path)
+            data_key = f'{prefix}/train_data-{version}.parquet'
+            s3_client.put_object(Bucket=bucket, Key=data_key, Body=data_path.read_bytes(), ACL=acl)
+
+    return {
+        's3_path': f's3://{bucket}/{cbm_key}',
+        'features': features,
+    }
+
+
+def save_scoring_model_to_db(name, type, params):
+    """Adds/updates the scoring_model in the local database"""
+    # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
+    # pylint: disable=import-outside-toplevel  # circular import
+    from sm.engine.db import DB
+
+    if not isinstance(params, str):
+        params = json.dumps(params)
+
+    db = DB()
+    if db.select_one('SELECT * FROM scoring_model WHERE name = %s', (name,)) is not None:
+        DB().alter(
+            'UPDATE scoring_model SET type = %s, params = %s WHERE name = %s',
+            (type, params, name),
+        )
+    else:
+        DB().alter(
+            'INSERT INTO scoring_model(name, type, params) VALUES (%s, %s, %s)',
+            (name, type, params),
+        )

@@ -76,7 +76,7 @@ def test_estimate_fdr_returns_correct_df(analysis_version, expected_fdrs):
         columns=['formula', 'modifier', 'msm'],
     ).assign(fdr=expected_fdrs)
 
-    assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
+    assert_frame_equal(fdr.estimate_fdr(msm_df, None), exp_sf_df)
 
 
 def test_estimate_fdr_digitize_works():
@@ -117,7 +117,7 @@ def test_estimate_fdr_digitize_works():
         columns=['formula', 'modifier', 'msm', 'fdr'],
     )
 
-    assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
+    assert_frame_equal(fdr.estimate_fdr(msm_df, None), exp_sf_df)
 
 
 def test_ions():

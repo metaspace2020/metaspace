@@ -1,16 +1,13 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
-from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import List
+import requests
 
 import numpy as np
 import pandas as pd
-from botocore.exceptions import ClientError
 from catboost import CatBoost, Pool
 from metaspace import SMInstance
-from sphinx.util import requests
 
 from sm.engine.annotation.diagnostics import (
     get_dataset_diagnostics,
@@ -265,55 +262,18 @@ def train_catboost_model(metrics_df, train_ds_ids, eval_ds_ids, features, cb_par
     return model
 
 
-def upload_model(model, bucket, prefix, is_public, overwrite=False):
-    s3_client = get_s3_client()
+def add_model_to_db(name, type, params):
+    """Adds/updates the scoring_model in the local database"""
+    from sm.engine.db import DB
 
-    if not overwrite:
-        try:
-            head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/model.cbm')
-            head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/model.json')
-        except Exception:
-            head = None
-        assert head is None, 'Model already uploaded'
-
-    # Create the bucket if necessary
     try:
-        s3_client.head_bucket(Bucket=bucket)
-    except ClientError:
-        print(f"Couldn't find bucket {bucket}, creating...")
-        s3_client.create_bucket(Bucket=bucket)
-
-    with TemporaryDirectory() as tmpdir:
-        cbm_path = Path(tmpdir) / 'model.cbm'
-        json_path = Path(tmpdir) / 'model.json'
-        model.save_model(str(cbm_path), format='cbm')
-        model.save_model(str(json_path), format='json')
-        acl = 'public-read' if is_public else None
-        s3_client.put_object(
-            Bucket=bucket, Key=f'{prefix}/model.cbm', Body=cbm_path.open('rb').read(), ACL=acl
+        DB().alter(
+            """INSERT INTO scoring_model(name, type, params) 
+            VALUES (%s, %s, %s)""",
+            (name, type, params),
         )
-
-        s3_client.put_object(
-            Bucket=bucket, Key=f'{prefix}/model.json', Body=json_path.open('rb').read(), ACL=acl
+    except Exception:
+        DB().alter(
+            """UPDATE scoring_model SET type = %s, params = %s WHERE name = %s""",
+            (type, params, name),
         )
-    return f's3://{bucket}/{prefix}/model.cbm'
-
-
-def upload_training_data(metrics_df, bucket, prefix, is_public, overwrite=False):
-    s3_client = get_s3_client()
-
-    if not overwrite:
-        try:
-            head = s3_client.head_object(Bucket=bucket, Key=f'{prefix}/train_data.parquet')
-        except Exception:
-            head = None
-        assert head is None, 'Training data already uploaded'
-
-    with TemporaryDirectory() as tmpdir:
-        path = Path(tmpdir) / 'train_data.parquet'
-        metrics_df.to_parquet(path)
-        acl = 'public-read' if is_public else None
-        s3_client.put_object(
-            Bucket=bucket, Key=f'{prefix}/train_data.parquet', Body=path.open('rb').read(), ACL=acl
-        )
-    return f's3://{bucket}/{prefix}/model.cbm'

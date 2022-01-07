@@ -24,3 +24,5 @@ yarn run deref-schema
 yarn run gen-binding
 nodemon -e graphql -q --exec "yarn run gen-binding" &
 exec yarn exec ts-node-dev -- --respawn server.js
+# For debugging add --inspect=0.0.0.0:9229  to the above e.g.
+# exec yarn exec ts-node-dev -- --respawn server.js

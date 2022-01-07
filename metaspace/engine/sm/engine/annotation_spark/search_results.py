@@ -21,7 +21,7 @@ METRICS_INS = (
     'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
 )
 METRICS_FIELDS = [
-    *[f.name for f in [*fields(Metrics)] if f.name != 'formula_i'],
+    *[f.name for f in [*fields(Metrics)] if f.name != 'formula_i' and f.name != 'msm'],
     'chaos_fdr',
     'spatial_fdr',
     'spectral_fdr',

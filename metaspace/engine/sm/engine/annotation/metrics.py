@@ -65,8 +65,10 @@ def spatial_corr(iso_imgs_flat, n_spectra, weights=None):
         covleft = (np.sum(X[0:1] * X, axis=1) + (avg[0] * avg * padding)) / (n_spectra - 1)
     # Calculate np.corrcoef from np.cof results
     # iso_correlation = np.corrcoef(flt_images_flat)[1:, 0]
-    iso_correlation = covleft[1:] / np.sqrt(covdiag[0] * covdiag[1:])
-    # when all values are the same (e.g. zeros) then correlation is undefined
+    with np.errstate(divide='ignore', invalid='ignore'):
+        iso_correlation = covleft[1:] / np.sqrt(covdiag[0] * covdiag[1:])
+    # When all values are the same (e.g. zeros) then the covariance matrix can have zeros or nans.
+    # Replace these with 0s to avoid downstream errors
     iso_correlation[np.isinf(iso_correlation) | np.isnan(iso_correlation)] = 0
     return iso_correlation
 
