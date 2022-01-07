@@ -8,6 +8,16 @@ import { Popover } from '../../../../lib/element-ui'
 const interleave = <T extends any>(arr: T[], separator: T): T[] =>
   arr.flatMap(item => [separator, item]).slice(1)
 
+const formatOffSampleProb = (offSampleProb: number) => {
+  if (offSampleProb < 0.1) {
+    return 'less than 10%'
+  } else if (offSampleProb > 0.9) {
+    return 'greater than 90%'
+  } else {
+    return (+offSampleProb * 100).toFixed(0) + '%'
+  }
+}
+
 const DiagnosticsMetrics = defineComponent({
   name: 'DiagnosticsMetrics',
   props: {
@@ -88,15 +98,10 @@ const DiagnosticsMetrics = defineComponent({
 
       let offSampleTag
       if (config.features.off_sample && annotation?.offSample != null) {
-        const formattedOffSampleProb = (
-          annotation.offSampleProb < 0.1 ? 'less than 10%'
-            : annotation.offSampleProb > 0.9 ? 'greater than 90%'
-              : (+annotation.offSampleProb * 100).toFixed(0) + '%'
-        )
         offSampleTag = (
           <div>
             <Popover trigger="hover" open-delay={100}>
-              Image analysis gave an off-sample probability of { formattedOffSampleProb }.
+              Image analysis gave an off-sample probability of { formatOffSampleProb(annotation.offSampleProb) }.
               <span slot="reference" class={annotation.offSample ? 'off-sample-tag' : 'on-sample-tag'}>
                 { props.annotation.offSample ? 'Off-sample' : 'On-sample' }
               </span>
