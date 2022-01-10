@@ -2,7 +2,6 @@ import argparse
 import logging
 from pathlib import Path
 
-from sm.engine import molecular_db
 from sm.engine.util import GlobalInit
 from sm.engine.annotation.scoring_model import (
     load_scoring_model,
@@ -27,15 +26,15 @@ def import_catboost_model(name: str, model: str, bucket: str, public: bool, over
         model=model, bucket=bucket, prefix=prefix, is_public=public
     )
     logger.info('Inserting model into DB')
-    save_scoring_model_to_db(name=name, type='catboost', params=params)
+    save_scoring_model_to_db(name=name, type_='catboost', params=params)
     logger.info('Done')
 
 
 def main():
     parser = argparse.ArgumentParser(description='Upload and import a .cbm CatBoost scoring model')
     parser.add_argument('name', type=str, help='Name')
-    parser.add_argument('model', type=str, help=f'Path to a CBM model file.')
-    parser.add_argument('bucket', type=str, help=f'S3 or MinIO bucket to upload to')
+    parser.add_argument('model', type=str, help='Path to a CBM model file.')
+    parser.add_argument('bucket', type=str, help='S3 or MinIO bucket to upload to')
 
     parser.add_argument(
         '--overwrite', action='store_true', help='Overwrite scoring model if it already exists'

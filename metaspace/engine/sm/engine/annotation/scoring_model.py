@@ -25,7 +25,7 @@ def add_derived_features(
     require statistics from a full ranking of targets & decoys, which isn't available in
     formula_validator .
     """
-    # pylint: disable=import-outside-toplevel  # circular import
+    # pylint: disable=import-outside-toplevel,cyclic-import  # circular import
     from sm.engine.annotation.fdr import score_to_fdr_map
 
     nonzero_targets = (target_df.chaos > 0) & (target_df.spatial > 0) & (target_df.spectral > 0)
@@ -235,7 +235,7 @@ def upload_catboost_scoring_model(
     }
 
 
-def save_scoring_model_to_db(name, type, params):
+def save_scoring_model_to_db(name, type_, params):
     """Adds/updates the scoring_model in the local database"""
     # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
     # pylint: disable=import-outside-toplevel  # circular import
@@ -249,11 +249,11 @@ def save_scoring_model_to_db(name, type, params):
         logger.info(f'Updating existing scoring model {name}')
         DB().alter(
             'UPDATE scoring_model SET type = %s, params = %s WHERE name = %s',
-            (type, params, name),
+            (type_, params, name),
         )
     else:
         logger.info(f'Inserting new scoring model {name}')
         DB().alter(
             'INSERT INTO scoring_model(name, type, params) VALUES (%s, %s, %s)',
-            (name, type, params),
+            (name, type_, params),
         )

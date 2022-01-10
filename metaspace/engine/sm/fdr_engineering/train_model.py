@@ -17,7 +17,6 @@ from sm.engine.annotation.diagnostics import (
 )
 from sm.engine.annotation.fdr import run_fdr_ranking_labeled
 from sm.engine.annotation.scoring_model import add_derived_features
-from sm.engine.storage import get_s3_client
 
 logger = logging.getLogger(__name__)
 
@@ -260,20 +259,3 @@ def train_catboost_model(metrics_df, train_ds_ids, eval_ds_ids, features, cb_par
     # assert np.isclose(np.min(all_preds), 0.0, atol=0.001)
     # assert np.isclose(np.max(all_preds), 1.0, atol=0.001)
     return model
-
-
-def add_model_to_db(name, type, params):
-    """Adds/updates the scoring_model in the local database"""
-    from sm.engine.db import DB
-
-    try:
-        DB().alter(
-            """INSERT INTO scoring_model(name, type, params) 
-            VALUES (%s, %s, %s)""",
-            (name, type, params),
-        )
-    except Exception:
-        DB().alter(
-            """UPDATE scoring_model SET type = %s, params = %s WHERE name = %s""",
-            (type, params, name),
-        )

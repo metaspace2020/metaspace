@@ -5,7 +5,6 @@ The S3 part requires you to have AWS configured in your engine/conf/config.json 
 It may also be necessary to call GlobalInit() before upload to ensure the config is loaded
 """
 
-import json
 import logging
 from pathlib import Path
 
