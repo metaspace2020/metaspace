@@ -5,7 +5,9 @@ from scipy.ndimage import maximum_filter, minimum_filter, grey_closing
 
 
 def spectral_metric(iso_imgs_flat, formula_ints):
-    return np.nan_to_num(isotope_pattern_match(iso_imgs_flat, formula_ints))
+    # Ignore div-by-zero / NaN errors - they're handled internally
+    with np.errstate(divide='ignore', invalid='ignore'):
+        return np.nan_to_num(isotope_pattern_match(iso_imgs_flat, formula_ints))
 
 
 def spatial_metric(iso_imgs_flat, n_spectra, intensities, v1_impl=False):
@@ -20,7 +22,9 @@ def spatial_metric(iso_imgs_flat, n_spectra, intensities, v1_impl=False):
     """
 
     if v1_impl:
-        return isotope_image_correlation(iso_imgs_flat, weights=intensities[1:])
+        # Ignore div-by-zero / NaN errors - they're handled internally
+        with np.errstate(divide='ignore', invalid='ignore'):
+            return isotope_image_correlation(iso_imgs_flat, weights=intensities[1:])
 
     if (
         len(iso_imgs_flat) < 2
