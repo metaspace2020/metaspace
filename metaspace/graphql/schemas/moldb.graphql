@@ -20,7 +20,7 @@ type MolecularDB {
   link: String
   citation: String
   group: GroupShortInfo
-  user: ID!
+  user: User
 }
 
 input CreateMolecularDBInput {

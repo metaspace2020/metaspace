@@ -19,6 +19,7 @@ import { deleteDataset } from '../dataset/operation/deleteDataset'
 import { resolveGroupScopeRole } from '../group/util/resolveGroupScopeRole'
 import canSeeUserEmail from './util/canSeeUserEmail'
 import { ProjectSourceRepository } from '../project/ProjectSourceRepository'
+import { getUserSourceById, resolveUserScopeRole } from './util/getUserSourceById'
 
 const assertCanEditUser = (user: ContextUser, userId: string) => {
   if (!user.id) {
@@ -28,22 +29,6 @@ const assertCanEditUser = (user: ContextUser, userId: string) => {
   if (user.role !== 'admin' && user.id !== userId) {
     throw new UserError('Access denied')
   }
-}
-
-const resolveUserScopeRole = (ctx: Context, userId?: string): ScopeRole => {
-  let scopeRole = SRO.OTHER
-  if (userId && userId === ctx.user.id) {
-    scopeRole = SRO.PROFILE_OWNER
-  }
-  return scopeRole
-}
-
-const getUserSourceById = async function(ctx: Context, userId: string): Promise<UserSource | null> {
-  const scopeRole = resolveUserScopeRole(ctx, userId)
-  const user = await ctx.entityManager.getRepository(UserModel).findOne({
-    where: { id: userId },
-  })
-  return user != null ? convertUserToUserSource(user, scopeRole) : null
 }
 
 export const Resolvers = {

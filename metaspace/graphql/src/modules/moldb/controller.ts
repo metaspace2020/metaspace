@@ -3,7 +3,7 @@ import { UserError } from 'graphql-errors'
 
 import logger from '../../utils/logger'
 import { Context } from '../../context'
-import { FieldResolversFor } from '../../bindingTypes'
+import { FieldResolversFor, ScopeRole, ScopeRoleOptions as SRO, UserSource } from '../../bindingTypes'
 import { MolecularDB as MolecularDbModel } from './model'
 import { MolecularDB, Mutation, Query } from '../../binding'
 import { smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase } from '../../utils/smApi/databases'
@@ -12,6 +12,7 @@ import { MolecularDbRepository } from './MolecularDbRepository'
 import { assertUserBelongsToGroup } from './util/assertUserBelongsToGroup'
 import validateInput from './util/validateInput'
 import { User } from '../user/model'
+import { getUserSourceById } from '../user/util/getUserSourceById'
 
 const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
   createdDT(database): string {
@@ -22,8 +23,20 @@ const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
     return database.archived || !database.isPublic
   },
 
-  user(database): User {
-    return database.user
+  user: async function(database, args: any, ctx): Promise<User|null> {
+    logger.info(`User ctx ${ctx.user.id}`)
+    logger.info(`User db ${database.userId}`)
+
+    const userGroupIds = await ctx.user.getMemberOfGroupIds()
+    const databaseGroupId = database.groupId!.toString()
+    logger.info(`Group from context ${userGroupIds}`)
+    logger.info(`Group from database ${database.groupId?.toString()}`)
+
+    if (ctx.isAdmin || userGroupIds.includes(databaseGroupId)) {
+      return getUserSourceById(ctx, database.userId!)
+    } else {
+      return null
+    }
   },
 }
 
