@@ -145,7 +145,7 @@ def load_scoring_model(name: Optional[str]) -> ScoringModel:
         return MsmScoringModel()
 
     row = DB().select_one("SELECT type, params FROM scoring_model WHERE name = %s", (name,))
-    assert row is not None, f'Scoring model {name} not found'
+    assert row, f'Scoring model {name} not found'
     type_, params = row
 
     if type_ == 'catboost':
@@ -245,7 +245,7 @@ def save_scoring_model_to_db(name, type, params):
         params = json.dumps(params)
 
     db = DB()
-    if db.select_one('SELECT * FROM scoring_model WHERE name = %s', (name,)) is not None:
+    if db.select_one('SELECT * FROM scoring_model WHERE name = %s', (name,)):
         logger.info(f'Updating existing scoring model {name}')
         DB().alter(
             'UPDATE scoring_model SET type = %s, params = %s WHERE name = %s',

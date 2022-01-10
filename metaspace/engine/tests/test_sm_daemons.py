@@ -169,9 +169,14 @@ def test_sm_daemons(
         }
     ).set_index('formula_i')
     search_algo_mock = MSMSearchMock()
-    search_algo_mock.search.return_value = [
-        (formula_metrics_df, [], create_test_fdr_diagnostics_bundle())
-    ]
+
+    def mock_search(*args):
+        # Read all spectra so that ImzML diagnostic fields are populated
+        imzml_reader = MSMSearchMock.call_args_list[-1][1]['imzml_reader']
+        _ = list(imzml_reader.iter_spectra(range(imzml_reader.n_spectra)))
+        return [(formula_metrics_df, [], create_test_fdr_diagnostics_bundle())]
+
+    search_algo_mock.search.side_effect = mock_search
     search_algo_mock.metrics = OrderedDict(
         [
             ('chaos', 0),
@@ -226,20 +231,20 @@ def test_sm_daemons(
     assert start <= finish
 
     # image metrics asserts
-    rows = db.select('SELECT formula, adduct, stats, iso_image_ids FROM annotation')
+    rows = db.select('SELECT formula, adduct, msm, stats, iso_image_ids FROM annotation')
     rows = sorted(
         rows, key=lambda row: row[1]
     )  # Sort in Python because postgres sorts symbols inconsistently between locales
     assert len(rows) == 3
     for row, expected_adduct in zip(rows, ['+H', '+Na', '[M]+']):
-        formula, adduct, stats, iso_image_ids = row
+        formula, adduct, msm, stats, iso_image_ids = row
         assert formula == 'C12H24O'
         assert adduct == expected_adduct
+        assert np.isclose(msm, 0.9 ** 3)
         assert stats == {
             'chaos': 0.9,
             'spatial': 0.9,
             'spectral': 0.9,
-            'msm': 0.9 ** 3,
             'total_iso_ints': [100.0],
             'min_iso_ints': [0],
             'max_iso_ints': [10.0],

@@ -81,12 +81,11 @@ def test_save_ion_img_metrics_correct_db_call(search_results):
                     'chaos',
                     'spatial',
                     'spectral',
-                    'msm',
                     'total_iso_ints',
                     'min_iso_ints',
                     'max_iso_ints',
                 ],
-                (0.9, 0.9, 0.9, 0.9 ** 3, [100, 10], [0, 0], [10, 1]),
+                (0.9, 0.9, 0.9, [100, 10], [0, 0], [10, 1]),
             )
         )
     )
@@ -143,12 +142,11 @@ def test_non_native_python_number_types_handled(search_results):
                         'chaos',
                         'spatial',
                         'spectral',
-                        'msm',
                         'total_iso_ints',
                         'min_iso_ints',
                         'max_iso_ints',
                     ],
-                    (0.9, 0.9, 0.9, 0.9 ** 3, [100, 10], [0, 0], [10, 1]),
+                    (0.9, 0.9, 0.9, [100, 10], [0, 0], [10, 1]),
                 )
             )
         )
