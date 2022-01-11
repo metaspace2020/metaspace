@@ -3,7 +3,7 @@ import { UserError } from 'graphql-errors'
 
 import logger from '../../utils/logger'
 import { Context } from '../../context'
-import { FieldResolversFor, ScopeRole, ScopeRoleOptions as SRO, UserSource } from '../../bindingTypes'
+import { FieldResolversFor } from '../../bindingTypes'
 import { MolecularDB as MolecularDbModel } from './model'
 import { MolecularDB, Mutation, Query } from '../../binding'
 import { smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase } from '../../utils/smApi/databases'
