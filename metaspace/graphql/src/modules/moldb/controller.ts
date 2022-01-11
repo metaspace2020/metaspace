@@ -13,6 +13,7 @@ import { assertUserBelongsToGroup } from './util/assertUserBelongsToGroup'
 import validateInput from './util/validateInput'
 import { User } from '../user/model'
 import { getUserSourceById } from '../user/util/getUserSourceById'
+import { getS3Client } from '../../utils/awsClient'
 
 const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
   createdDT(database): string {
@@ -24,16 +25,43 @@ const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
   },
 
   user: async function(database, args: any, ctx): Promise<User|null> {
-    logger.info(`User ctx ${ctx.user.id}`)
-    logger.info(`User db ${database.userId}`)
-
     const userGroupIds = await ctx.user.getMemberOfGroupIds()
     const databaseGroupId = database.groupId!.toString()
-    logger.info(`Group from context ${userGroupIds}`)
-    logger.info(`Group from database ${database.groupId?.toString()}`)
 
     if (ctx.isAdmin || userGroupIds.includes(databaseGroupId)) {
       return getUserSourceById(ctx, database.userId!)
+    } else {
+      return null
+    }
+  },
+
+  async downloadLink(database) {
+    if (typeof database.inputPath !== 'string') {
+      return null
+    }
+
+    logger.info(`${database.inputPath}`)
+    const parsedPath = /s3:\/\/([^/]+)\/(.*)/.exec(database.inputPath)
+    logger.info(`${parsedPath}`)
+    if (parsedPath != null) {
+      const [, bucket, prefix] = parsedPath
+      const s3 = getS3Client()
+      const objects = await s3.listObjectsV2({
+        Bucket: bucket,
+        Prefix: prefix,
+      }).promise()
+
+      const fileKey = (objects.Contents || [])
+        .map(obj => obj.Key!)
+        .filter(key => key && /(\.tsv|\.TSV|.csv)$/i.test(key.toLocaleLowerCase()))
+
+      const file = fileKey.map(key => ({
+        filename: key.replace(/.*\//, ''),
+        link: s3.getSignedUrl('getObject', { Bucket: bucket, Key: key, Expires: 1800 }),
+      }))
+      return JSON.stringify({
+        file,
+      })
     } else {
       return null
     }

@@ -21,6 +21,7 @@ type MolecularDB {
   citation: String
   group: GroupShortInfo
   user: User
+  downloadLink: String
 }
 
 input CreateMolecularDBInput {
