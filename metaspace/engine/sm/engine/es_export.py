@@ -410,7 +410,7 @@ class ESExporter:
                 for image_id in doc['iso_image_ids']
             ]
 
-            if moldb.targeted and ds_doc['config'].get('analysis_version', 1) == 1:
+            if moldb.targeted and ds_doc['ds_config'].get('analysis_version', 1) == 1:
                 fdr_level = doc['fdr'] = -1
             else:
                 fdr_level = FDR.nearest_fdr_level(doc['fdr'])
