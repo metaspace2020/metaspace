@@ -10,3 +10,4 @@ docs/_templates
 /local/
 .dmypy.json
 /typings/
+/tests/reports/test-*.csv  # Local test results
