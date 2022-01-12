@@ -137,7 +137,6 @@ def make_compute_image_metrics(
         # with benchmark('overall'):
 
         iso_imgs = [img.toarray() if img is not None else empty_matrix for img in image_set.images]
-        iso_imgs = [img.copy() for img in iso_imgs]
         iso_imgs_flat = np.array([img.flatten()[sample_area_mask_flat] for img in iso_imgs])
 
         doc = Metrics(formula_i=image_set.formula_i)
@@ -278,11 +277,7 @@ def compute_and_filter_metrics(
                 image_set.images[i] = None
                 image_set.mz_images[i] = None
 
-        # FIXME: Integrate this skip logic into compute_metrics
-        # if complete_image_list(peak_df.image.values, require_first=not is_targeted):
-
         f_metrics = compute_metrics(image_set)
-        # FIXME: Discard non-targeted msm=0 images here?
         if image_set.is_target:
             yield image_set.formula_i, f_metrics, image_set.images
         else:
