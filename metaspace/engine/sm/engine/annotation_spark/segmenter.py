@@ -101,7 +101,12 @@ def fetch_chunk_spectra_data(sp_ids, imzml_reader):
         ints_list.append(ints_)
 
     mzs = np.concatenate(mzs_list)
-    by_mz = np.argsort(mzs)
+    # Mergesort is used for 2 reasons:
+    # * It's much faster than the default quicksort, because m/z data is already partially sorted
+    #   and the underlying "Timsort" implementation is optimized for partially-sorted data.
+    # * It's a "stable sort", meaning it will preserve the ordering by spectrum index if mz values
+    #   are equal. The order of pixels affects some metrics, so this stability is important.
+    by_mz = np.argsort(mzs, kind='mergesort')
     sp_chunk_df = pd.DataFrame(
         {
             'sp_idx': np.concatenate(sp_idxs_list)[by_mz].astype(SpIdxDType),
