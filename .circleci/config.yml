@@ -372,7 +372,7 @@ jobs:
           name: Run scientific test
           command: |
             #while true; do echo '---'; sleep 5; done  # uncomment this line for debugging
-            python tests/sci_test/spheroid.py -r --mock-image-storage --lithops --config=conf/scitest_config.json
+            python tests/sci_test/spheroid.py --lithops --analysis-version=1
 
 workflows:
   version: 2

@@ -258,6 +258,7 @@ class ServerAnnotationJob:
         perf: Profiler,
         sm_config: Optional[Dict] = None,
         use_cache=False,
+        store_images=True,
     ):
         """
         Args
@@ -272,6 +273,7 @@ class ServerAnnotationJob:
         self.s3_client = get_s3_client()
         self.ds = ds
         self.perf = perf
+        self.store_images = store_images
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = _upload_imzmls_from_prefix_if_needed(
@@ -307,9 +309,21 @@ class ServerAnnotationJob:
             moldb_to_job_map[moldb_id] = insert_running_job(self.ds.id, moldb_id)
         self.perf.add_extra_data(moldb_ids=list(moldb_to_job_map.keys()))
 
+        n_peaks = self.ds.config['isotope_generation']['n_peaks']
+
         try:
+            # Run annotation
             self.results_dfs, self.png_cobjs = self.pipe.run_pipeline(**kwargs)
-            self.db_formula_image_ids = self.pipe.store_images_to_s3(self.ds.id)
+
+            # Save images (if enabled)
+            if self.store_images:
+                self.db_formula_image_ids = self.pipe.store_images_to_s3(self.ds.id)
+            else:
+                self.db_formula_image_ids = {
+                    moldb_id: {formula_i: [None] * n_peaks for formula_i in result_df.index}
+                    for moldb_id, result_df in self.results_dfs.items()
+                }
+
             fdr_bundles = self.pipe.get_fdr_bundles(moldb_to_job_map)
 
             # Save non-job-related diagnostics
@@ -324,7 +338,7 @@ class ServerAnnotationJob:
                 search_results = SearchResults(
                     ds_id=self.ds.id,
                     job_id=job_id,
-                    n_peaks=self.ds.config['isotope_generation']['n_peaks'],
+                    n_peaks=n_peaks,
                     charge=self.ds.config['isotope_generation']['charge'],
                 )
                 search_results.store_ion_metrics(results_df, formula_image_ids, self.db)

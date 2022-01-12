@@ -116,7 +116,13 @@
         "level": "INFO"
       },
       "lithops": {
-        "level": "INFO"
+        "level": "WARNING"
+      },
+      "lithops.invokers": {
+        "level": "WARNING"
+      },
+      "lithops.executors": {
+        "level": "WARNING"
       }
     }
   },
