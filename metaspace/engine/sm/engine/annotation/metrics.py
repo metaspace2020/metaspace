@@ -284,8 +284,4 @@ def mass_metrics(iso_images_sparse, iso_mzs_sparse, formula_mzs, formula_ints):
     mz_mean, mz_stddev = calc_mz_stddev(iso_images_sparse, iso_mzs_sparse, formula_mzs)
     mz_err_abs, mz_err_rel = calc_mass_errs(mz_mean, formula_mzs, formula_ints)
 
-    mz_mean = mz_mean
-    mz_stddev = mz_stddev
-    mz_err_abs = mz_err_abs
-    mz_err_rel = mz_err_rel
     return mz_mean, mz_stddev, mz_err_abs, mz_err_rel
