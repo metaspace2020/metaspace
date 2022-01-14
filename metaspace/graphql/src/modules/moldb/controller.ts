@@ -24,7 +24,7 @@ const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
     return database.archived || !database.isPublic
   },
 
-  user: async function(database, args: any, ctx): Promise<User|null> {
+  user: async function(database: MolecularDbModel, args: any, ctx: Context): Promise<User|null> {
     const userGroupIds = await ctx.user.getMemberOfGroupIds()
     const databaseGroupId = database.groupId!.toString()
 
@@ -35,35 +35,20 @@ const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
     }
   },
 
-  async downloadLink(database) {
+  downloadLink(database: MolecularDbModel) {
     if (typeof database.inputPath !== 'string') {
       return null
     }
 
-    logger.info(`${database.inputPath}`)
     const parsedPath = /s3:\/\/([^/]+)\/(.*)/.exec(database.inputPath)
-    logger.info(`${parsedPath}`)
     if (parsedPath != null) {
       const [, bucket, prefix] = parsedPath
       const s3 = getS3Client()
-      const objects = await s3.listObjectsV2({
-        Bucket: bucket,
-        Prefix: prefix,
-      }).promise()
 
-      const fileKey = (objects.Contents || [])
-        .map(obj => obj.Key!)
-        .filter(key => key && /(\.tsv|\.TSV|.csv)$/i.test(key.toLocaleLowerCase()))
-
-      const file = fileKey.map(key => ({
-        filename: key.replace(/.*\//, ''),
-        link: s3.getSignedUrl('getObject', { Bucket: bucket, Key: key, Expires: 1800 }),
-      }))
       return JSON.stringify({
-        file,
+        filename: prefix.split('/').slice(-1)[0],
+        link: s3.getSignedUrl('getObject', { Bucket: bucket, Key: prefix, Expires: 1800 }),
       })
-    } else {
-      return null
     }
   },
 }
