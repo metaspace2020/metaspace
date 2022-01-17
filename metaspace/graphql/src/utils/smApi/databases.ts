@@ -35,6 +35,7 @@ interface CreateDatabaseArgs {
     version: string;
     isPublic?: boolean;
     groupId: string;
+    userId: string;
     filePath: string;
     fullName?: string;
     description?: string;

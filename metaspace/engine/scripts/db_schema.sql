@@ -32,7 +32,9 @@ CREATE TABLE "public"."molecular_db" (
   "archived" boolean NOT NULL DEFAULT false, 
   "targeted" boolean NOT NULL DEFAULT false, 
   "group_id" uuid, 
+  "user_id" uuid, 
   "default" boolean NOT NULL DEFAULT false, 
+  "input_path" text, 
   CONSTRAINT "molecular_db_uindex" UNIQUE ("group_id", 
   "name", 
   "version"), 
@@ -310,6 +312,10 @@ CREATE TABLE "graphql"."image_viewer_snapshot" (
 
 ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_a18f5f7d6cc662006d9c849ea1f" FOREIGN KEY (
   "group_id") REFERENCES "graphql"."group"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_8b8177fd2c25bee10f19af2591c" FOREIGN KEY (
+  "user_id") REFERENCES "graphql"."user"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."molecule" ADD CONSTRAINT "FK_01280507c3bd02500e2861fb279" FOREIGN KEY (
