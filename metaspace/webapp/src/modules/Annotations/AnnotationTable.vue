@@ -168,7 +168,8 @@
         min-width="120"
       >
         <template slot-scope="props">
-          <span> {{ (props.row.offSampleProb * 100).toFixed(0) }}% </span>
+          <span> {{ (props.row.offSampleProb === null || props.row.offSampleProb === undefined) ?
+            '-' : (props.row.offSampleProb * 100).toFixed(0) }} % </span>
         </template>
       </el-table-column>
 
@@ -550,43 +551,18 @@ export default Vue.extend({
           selected: true,
         },
         {
+          label: 'Adduct',
+          src: 'Adduct',
+          selected: false,
+        },
+        {
           label: 'm/z',
           src: 'mz',
           selected: true,
         },
         {
-          label: 'MSM',
-          src: 'MSM',
-          selected: true,
-        },
-        {
-          label: 'FDR',
-          src: 'FDR',
-          selected: true,
-        },
-        {
-          label: 'Molecules',
-          src: 'Molecules',
-          selected: false,
-        },
-        {
-          label: 'Database',
-          src: 'Database',
-          selected: false,
-        },
-        {
-          label: 'Max Intensity',
-          src: 'maxIntensity',
-          selected: false,
-        },
-        {
-          label: 'Total Intensity',
-          src: 'totalIntensity',
-          selected: false,
-        },
-        {
-          label: 'Adduct',
-          src: 'Adduct',
+          label: 'Off-sample probability %',
+          src: 'OffSampleProb',
           selected: false,
         },
         {
@@ -605,14 +581,39 @@ export default Vue.extend({
           selected: false,
         },
         {
-          label: 'On/Off-sample %',
-          src: 'OffSampleProb',
+          label: 'MSM',
+          src: 'MSM',
+          selected: true,
+        },
+        {
+          label: 'Database',
+          src: 'Database',
+          selected: false,
+        },
+        {
+          label: 'Molecules',
+          src: 'Molecules',
           selected: false,
         },
         {
           label: 'Isomers/Isobars',
           src: 'Isos',
           selected: false,
+        },
+        {
+          label: 'Max Intensity',
+          src: 'maxIntensity',
+          selected: false,
+        },
+        {
+          label: 'Total Intensity',
+          src: 'totalIntensity',
+          selected: false,
+        },
+        {
+          label: 'FDR',
+          src: 'FDR',
+          selected: true,
         },
       ],
     }
@@ -781,9 +782,26 @@ export default Vue.extend({
     },
   },
   created() {
-    this.columns = getLocalStorage('annotationTableCols') || this.columns
+    const localColSettings = getLocalStorage('annotationTableCols')
+    const columns = this.columns
+    if (Array.isArray(localColSettings)) {
+      localColSettings.forEach((colSetting) => {
+        const colIdx = columns.findIndex(col => col.src === colSetting.src)
+        if (colIdx !== -1) {
+          columns[colIdx].selected = colSetting.selected
+        }
+      })
+    }
+    this.columns = columns
+    this.hideDatasetRelatedColumns()
   },
   methods: {
+    hideDatasetRelatedColumns() {
+      if (Array.isArray(this.filter.datasetIds) && this.filter.datasetIds.length > 0) {
+        this.columns.find((col) => col.src === 'Group').selected = false
+        this.columns.find((col) => col.src === 'Dataset').selected = false
+      }
+    },
     onPageSizeChange(newSize) {
       this.recordsPerPage = newSize
     },
@@ -929,6 +947,9 @@ export default Vue.extend({
     updateFilter(delta) {
       const filter = Object.assign({}, this.filter, delta)
       this.$store.commit('updateFilter', filter)
+      if (Object.keys(delta).includes('datasetIds')) { // hide dataset related filters if dataset filter added
+        this.hideDatasetRelatedColumns()
+      }
     },
 
     async setNormalizationData(currentAnnotation) {

@@ -200,29 +200,14 @@ exports[`AnnotationTable should match snapshot 1`] = `
             <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
               Annotation
             </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Adduct
+            </div>
             <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
               m/z
             </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
-              MSM
-            </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
-              FDR
-            </div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              Molecules
-            </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              Database
-            </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              Max Intensity
-            </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              Total Intensity
-            </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              Adduct
+              Off-sample probability %
             </div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
               Spatial metric
@@ -233,11 +218,26 @@ exports[`AnnotationTable should match snapshot 1`] = `
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
               Chaos metric
             </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              MSM
+            </div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              On/Off-sample %
+              Database
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Molecules
             </div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
               Isomers/Isobars
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Max Intensity
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Total Intensity
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              FDR
             </div>
           </div>
         </div>
@@ -458,29 +458,14 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
             <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
               Annotation
             </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Adduct
+            </div>
             <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
               m/z
             </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
-              MSM
-            </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
-              FDR
-            </div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              Molecules
-            </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              Database
-            </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              Max Intensity
-            </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              Total Intensity
-            </div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              Adduct
+              Off-sample probability %
             </div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
               Spatial metric
@@ -491,11 +476,26 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
               Chaos metric
             </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              MSM
+            </div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
-              On/Off-sample %
+              Database
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Molecules
             </div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
               Isomers/Isobars
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Max Intensity
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i>
+              Total Intensity
+            </div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i>
+              FDR
             </div>
           </div>
         </div>
