@@ -247,9 +247,17 @@ def v2_chaos_orig(iso_img, n_levels=30):
 
 
 def weighted_stddev(values, weights):
+    # Numpy's weighted average is extremely dependent on the order of items, and gives inconsistent
+    # results even with 64-bit precision. np.longdouble (80-bit precision on x86 platforms)
+    # significantly reduces the order-dependent error, but beware that results may still differ
+    # depending on how the input values are ordered.
+    # The Spark and Lithops pipelines often collect pixels into a coo_matrix in a different order.
+    values = values.astype(np.longdouble)
+    weights = weights.astype(np.longdouble)
+
     average = np.average(values, weights=weights)
     stddev = np.sqrt(np.average((values - average) ** 2, weights=weights))
-    return average, stddev
+    return average.astype(np.float64), stddev.astype(np.float64)
 
 
 def calc_mz_stddev(iso_images_sparse, iso_mzs_sparse, formula_mzs):
@@ -262,7 +270,7 @@ def calc_mz_stddev(iso_images_sparse, iso_mzs_sparse, formula_mzs):
             mz_stddev.append(stddev)
         else:
             mz_mean.append(theo_mz)
-            mz_stddev.append(0)
+            mz_stddev.append(0.0)
     return mz_mean, mz_stddev
 
 

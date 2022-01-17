@@ -101,7 +101,14 @@ def read_ds_segments(first_segm_i, last_segm_i):
         segm_path = get_file_path(f'ds_segm_{ds_segm_i:04}.pickle')
         ds_segm_df = read_ds_segment(segm_path)
         if ds_segm_df is not None:
-            yield ds_segm_df.sort_values(by='mz')
+            # Mergesort is used for 2 reasons:
+            # * It's much faster than the default quicksort, because m/z data is already partially
+            #   sorted and the underlying "Timsort" implementation is optimized for partially-sorted
+            #   data.
+            # * It's a "stable sort", meaning it will preserve the ordering by spectrum index if mz
+            #   values are equal. The order of pixels affects some metrics, so this stability is
+            #   important.
+            yield ds_segm_df.sort_values(by='mz', kind='mergesort')
 
 
 def get_file_path(name):
