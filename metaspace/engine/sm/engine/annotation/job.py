@@ -39,7 +39,7 @@ def del_jobs(ds: Dataset, moldb_ids: Optional[Iterable[int]] = None):
     moldbs = molecular_db.find_by_ids(moldb_ids)
 
     job_ids = DB().select_onecol(
-        'SELECT j.id FROM job j WHERE ds_id = %s AND moldb_id = ANY(%s)', (ds.id, moldb_ids)
+        'SELECT j.id FROM job j WHERE ds_id = %s AND moldb_id = ANY(%s)', (ds.id, list(moldb_ids))
     )
     del_diagnostics(ds.id, job_ids)
 
