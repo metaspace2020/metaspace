@@ -26,12 +26,12 @@ const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
 
   user: async function(database: MolecularDbModel, args: any, ctx: Context): Promise<User|null> {
     const userGroupIds = await ctx.user.getMemberOfGroupIds()
-    const databaseGroupId = database.groupId!.toString()
-
-    if (ctx.isAdmin || userGroupIds.includes(databaseGroupId)) {
-      return getUserSourceById(ctx, database.userId!)
-    } else {
+    if (database.userId == null) {
       return null
+    } else if (!ctx.isAdmin && (database.groupId == null || !userGroupIds.includes(database.groupId))) {
+      return null
+    } else {
+      return getUserSourceById(ctx, database.userId)
     }
   },
 
