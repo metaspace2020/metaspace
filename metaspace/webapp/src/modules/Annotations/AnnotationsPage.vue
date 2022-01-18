@@ -155,6 +155,7 @@ export default {
     const filter = this.filter
     delete filter.annotationIds
     this.$store.commit('updateFilter', filter)
+    this.$store.commit('resetRoiInfo')
 
     if (isSnapshot()) {
       const { viewId } = this.$route.query
