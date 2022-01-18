@@ -376,7 +376,8 @@ jobs:
       - run:
           name: Run scientific test
           command: |
-            python -m tests.sci_test.spheroid.py --analysis-version=3 --database cm3
+            export PYTHONPATH="$PYTHONPATH:`pwd`"
+            python tests/sci_test/spheroid.py --analysis-version=3 --database cm3
 
 workflows:
   version: 2
