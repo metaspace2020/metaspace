@@ -319,6 +319,7 @@ jobs:
          command: black --check .
 
   test-engine-sci:
+    resource_class: large
     docker:
       - image: metaspace2020/sm-engine:1.8.1
 
