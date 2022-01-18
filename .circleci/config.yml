@@ -340,6 +340,10 @@ jobs:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
 
+      - image: minio/minio:RELEASE.2021-01-16T02-19-44Z
+        entrypoint: sh
+        command: -c 'mkdir -p /data/sm-image-storage-sci-test && /usr/bin/minio server /data'
+
     working_directory: ~/metaspace/metaspace/engine
     steps:
       - checkout:
@@ -358,22 +362,22 @@ jobs:
           command: |
             pip install --upgrade -r requirements.txt -r requirements-dev.txt
             pip install -e .
-      - run:
-          name: Create engine database
-          command: |
-            createdb -h localhost -U sm sm_test
-            psql -h localhost -U sm -d sm_test < scripts/db_schema.sql
-      - run:
-          name: Import test molecular database
-          command: |
-            wget -qN https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_4.tsv -O /tmp/hmdb_4.tsv
-            python scripts/import_molecular_db.py --config=conf/scitest_config.json \
-              HMDB-v4 2020-01-01 /tmp/hmdb_4.tsv
+      # - run:
+      #     name: Create engine database
+      #     command: |
+      #       createdb -h localhost -U sm sm_test
+      #       psql -h localhost -U sm -d sm_test < scripts/db_schema.sql
+      # - run:
+      #     name: Import test molecular database
+      #     command: |
+      #       wget -qN https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_4.tsv -O /tmp/hmdb_4.tsv
+      #       python scripts/import_molecular_db.py --config=conf/scitest_config.json \
+      #         HMDB-v4 2020-01-01 /tmp/hmdb_4.tsv
       - run:
           name: Run scientific test
           command: |
             #while true; do echo '---'; sleep 5; done  # uncomment this line for debugging
-            python tests/sci_test/spheroid.py --analysis-version=1
+            python tests/sci_test/spheroid.py --analysis-version=3 --database cm3
 
 workflows:
   version: 2
