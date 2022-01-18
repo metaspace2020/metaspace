@@ -372,7 +372,7 @@ jobs:
           name: Run scientific test
           command: |
             #while true; do echo '---'; sleep 5; done  # uncomment this line for debugging
-            python tests/sci_test/spheroid.py --lithops --analysis-version=1
+            python tests/sci_test/spheroid.py --analysis-version=1
 
 workflows:
   version: 2
@@ -393,18 +393,18 @@ workflows:
 ## parallelism is reduced to minimize memory usage.
 ## Re-test after https://github.com/metaspace2020/metaspace/issues/763 has been addressed
 #
-#  sci-test-on-demand:
-#    jobs:
-#      - generate-graphql-schema
-#      - test-engine-sci:
-#          requires:
-#            - generate-graphql-schema
-#          filters:
-#            branches:
-#              only:
-#                - master
-#                # Add additional branches to run sci-test against here. Clean up old branches if you notice any.
-#                - feat/lithops-ds-sort-in-ram
+ sci-test-on-demand:
+   jobs:
+     - generate-graphql-schema
+     - test-engine-sci:
+         requires:
+           - generate-graphql-schema
+         filters:
+           branches:
+             only:
+               - master
+               # Add additional branches to run sci-test against here. Clean up old branches if you notice any.
+               - feat/v3-sci-test
 
 
 ## Disabled until we have time to redo these tests
