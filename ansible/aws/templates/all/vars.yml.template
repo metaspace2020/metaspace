@@ -12,6 +12,7 @@ metaspace_home: /opt/dev/metaspace
 
 time_zone_name: UTC  # Ubuntu timezone name
 
+# sm-engine user creds
 aws_access_key_id: "{{ vault_aws_access_key_id }}"
 aws_secret_access_key: "{{ vault_aws_secret_access_key }}"
 aws_key_name: "{{ vault_aws_key_name }}"
@@ -40,7 +41,7 @@ miniconda_version: latest
 miniconda_python: 3
 miniconda_prefix: /opt/dev/miniconda3
 miniconda_env:
-  name: sm
+  name: sm38
   channels:
     - conda-forge
   dependencies:
@@ -71,6 +72,7 @@ sm_default_adducts:
 sm_redis:
   host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
   port: 6379
+sm_image_storage_bucket: IMAGE_BUCKET_NAME
 
 off_sample_api_endpoint: OFF_SAMPLE_API_ENDPOINT
 
@@ -83,7 +85,7 @@ sm_cluster_autostart_redis:
 
 # Configuration for IBM Cloud / Lithops. See metaspace/engine/docs/Lithops.md for instructions on setting up an
 # IBM Cloud environment. Set `sm_lithops_daemon_nprocs` to `0` to disable Lithops.
-sm_lithops_daemon_nprocs: 0
+sm_lithops_daemon_nprocs: 1
 sm_lithops_iam_api_key: "{{ vault_lithops_iam_api_key }}"
 sm_lithops_cos_access_key: "{{ vault_lithops_cos_access_key }}"
 sm_lithops_cos_secret_key: "{{ vault_lithops_cos_secret_key }}"
@@ -92,16 +94,12 @@ sm_lithops_cos_bucket_data:
 sm_lithops_cos_bucket_imzml:
 sm_lithops_cf_ns_name:
 sm_lithops_cf_ns_id:
+sm_lithops_ce_namespace: "{{ vault_lithops_ce_namespace }}"
 sm_lithops_vpc_instance_id:
 sm_lithops_vpc_instance_ip:
 sm_lithops_vpc_ssh_private_key: "{{ vault_lithops_vpc_ssh_private_key }}"
 
-mol_db_home: "{{ metaspace_home }}/metaspace/mol-db"
-mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:5001/v1"
-mol_db_postgres_pass: "{{ vault_mol_db_postgres_password }}"
 mol_db_image_dir: /var/www/mol-images
-mol_db_miniconda_env:
-  name: mol-db
 mol_db_import_databases: true  # set to false to avoid triggering database import
 mol_db_import_mol_images: true  # set to false to avoid reimporting all molecular images
 mol_db_image_archives:
@@ -173,7 +171,7 @@ sm_graphql_home: "{{ metaspace_home }}/metaspace/graphql"
 sm_graphql_slack_webhook_url: ""
 sm_graphql_slack_channel: ""
 sm_graphql_jwt_secret: "{{ vault_sm_web_jwt_secret }}"
-sm_graphql_public_url: "http://{{ sm_graphql_hostname }}/graphql"
+sm_graphql_public_url: "https://{{ sm_graphql_hostname }}/graphql"
 sm_graphql_mol_image_host: "{{ sm_graphql_hostname }}"
 sm_graphql_img_upload_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_graphql_database_password: "{{ sm_postgres_password }}"
@@ -191,7 +189,7 @@ sm_graphql_upload_destination: s3
 sm_graphql_s3_upload_bucket: "{{ vault_sm_web_s3_upload_bucket }}"
 sm_graphql_google_client_id: "{{ vault_sm_web_google_client_id }}"
 sm_graphql_google_client_secret: "{{ vault_sm_web_google_client_secret }}"
-sm_graphql_google_callback_url: "http://{{ sm_webapp_hostname }}/api_auth/google/callback"
+sm_graphql_google_callback_url: "https://{{ sm_webapp_hostname }}/api_auth/google/callback"
 sm_graphql_cookie_secret: "{{ vault_sm_web_cookie_secret }}"
 sm_graphql_features:
   graphqlMocks: false
@@ -229,6 +227,9 @@ sm_webapp_features:
   advanced_ds_config: false
   isomers: true
   isobars: true
+  moldb_mgmt: true
+  multiple_ion_images: true
+  lithops: true
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 sm_activate_nvm: source {{ ansible_env.HOME }}/.nvm/nvm.sh && nvm use
@@ -276,9 +277,11 @@ nginx_upstream_hosts:
     server: 127.0.0.1:9200
 
 nginx_servers:
-  - desc: Kibana redirect
+  - desc: Kibana proxy pass
     params:
-      - listen 8080;
+      - listen 8080 ssl;
+      - ssl_certificate ssl/{{ ssl.cert }};
+      - ssl_certificate_key ssl/{{ ssl.key }};
     locations:
       - path: /
         params:
@@ -328,6 +331,10 @@ nginx_servers:
           - location ~ \.\w*$ {
               try_files $uri =404;
             }
+      - path: /fs/iso_images/
+        params:
+          - proxy_pass http://isotope_image_server/fs/iso_images/;
+          - limit_except GET {deny all;}
       - path: /db/iso_images/
         params:
           - proxy_pass http://isotope_image_server/db/iso_images/;
@@ -368,9 +375,11 @@ nginx_servers:
           - proxy_set_header Connection "upgrade";
           - include proxy-params.conf;
 
-  - desc: Elasticsearch redirect
+  - desc: Elasticsearch proxy pass
     params:
-      - listen {{ sm_es_port }};
+      - listen 9210 ssl;
+      - ssl_certificate ssl/{{ ssl.cert }};
+      - ssl_certificate_key ssl/{{ ssl.key }};
     locations:
       - path: /
         params:
@@ -379,6 +388,7 @@ nginx_servers:
         - proxy_pass http://elasticsearch_server;
         - include proxy-params.conf;
         - client_max_body_size 100M;
+        - proxy_read_timeout 300;
 
 basic_auth_users:
   - user: "{{ sm_es_user }}"
@@ -390,16 +400,30 @@ basic_auth_users:
 # no ansible vars are allowed below, used by python scripts
 
 cluster_configuration:
+  alarms:
+    spark-instance-idle-status:
+      prefix: spark-instance-idle-status
+      params:
+        Namespace: AWS/EC2
+        MetricName: CPUUtilization
+        Statistic: Average
+        ComparisonOperator: LessThanThreshold
+        Threshold: 5
+        Period: 300  # >=60s if detailed monitoring enabled else >=300s,
+        EvaluationPeriods: 18
+        DatapointsToAlarm: 18
+        AlarmActions: ['arn:aws:sns:eu-west-1:236062312728:sm-cluster-status']
+        TreatMissingData: ignore
+
   instances:
     web:
       hostgroup: WEB_HOSTGROUP  # specify a custom name for the group of hosts
-      type: r4.large
+      type: r5.large
       n: 1
       elipalloc:  # create manually in AWS console and put the id here to use static IP address
       price:  # put price to use spot instances
       sec_group: default  # update for better security
       image: ami-07174474  # public ubuntu 16.04 at eu-west-1
-                           # ami-4d6c0e22 is for eu-central-1
       tags:
         backup: ''
         retention_daily: '2'
@@ -408,13 +432,13 @@ cluster_configuration:
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 200
+            VolumeSize: 300
             DeleteOnTermination: True
-            VolumeType: gp2
+            VolumeType: gp3
 
     master:
       hostgroup: MASTER_HOSTGROUP  # specify a custom name for the group of hosts
-      type: c4.4xlarge
+      type: c5.4xlarge
       n: 1
       elipalloc:
       price:  1.0
@@ -424,13 +448,16 @@ cluster_configuration:
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 500
+            VolumeSize: 1000
             DeleteOnTermination: True
-            VolumeType: gp2
+            VolumeType: gp3
+
+      alarms:
+        - spark-instance-idle-status
 
     slave:
       hostgroup: SLAVE_HOSTGROUP  # specify a custom name for the group of hosts
-      type: c4.4xlarge
+      type: c5.4xlarge
       n: 1
       elipalloc:
       price: 1.0
@@ -440,9 +467,13 @@ cluster_configuration:
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 500
+            VolumeSize: 1000
             DeleteOnTermination: True
-            VolumeType: gp2
+            VolumeType: gp3
+
+      alarms:
+        - spark-instance-idle-status
+
 # uncomment below if you want to use Elasticsearch for logs aggregation
     elk:
       hostgroup: elk
