@@ -235,6 +235,17 @@ def find_by_name(name: str, allow_legacy_names=False) -> MolecularDB:
     return MolecularDB(**data)
 
 
+def find_by_name_version(name: str, version: str) -> MolecularDB:
+    data = DB().select_one_with_fields(
+        'SELECT id, name, version, targeted, group_id FROM molecular_db '
+        'WHERE name = %s AND version = %s',
+        params=(name, version),
+    )
+    if not data:
+        raise SMError(f'MolecularDB not found: {name}')
+    return MolecularDB(**data)
+
+
 def find_default() -> List[MolecularDB]:
     data = DB().select_with_fields(
         'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE "default" = TRUE',

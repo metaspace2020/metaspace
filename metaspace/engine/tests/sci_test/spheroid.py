@@ -22,28 +22,43 @@ from sm.engine.annotation_lithops.executor import Executor
 import sm.engine.annotation_lithops.executor as lithops_executor
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
 from sm.engine.db import DB
+from sm.engine.errors import SMError
 from sm.engine.tests.db_sql_schema import DB_SQL_SCHEMA
 from sm.engine.util import GlobalInit
 from sm.engine.config import proj_root, SMConfig
 from sm.engine.utils.create_ds_from_files import create_ds_from_files
 from sm.engine.utils.perf_profile import NullProfiler
 
+MOL_DBS = {
+    'hmdb': {
+        'name': 'HMDB',
+        'version': 'v4',
+        'url': 'https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_4.tsv',
+    },
+    'cm3': {
+        'name': 'CoreMetabolome',
+        'version': 'v3',
+        'url': 'https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/core_metabolome/core_metabolome_v3.csv',
+    },
+}
+
 
 class SciTester:
-    def __init__(self, sm_config, analysis_version):
+    def __init__(self, sm_config, analysis_version, database):
         reports_path = Path(proj_root()) / 'tests/reports'
         timestamp = datetime.now().replace(microsecond=0).isoformat().replace(':', '-')
-        suffix = f'v{analysis_version}'
+        suffix = f'{database}-v{analysis_version}'
 
         self.sm_config = sm_config
         self.db = DB()
 
         self.ds_id = '2000-01-01_00h00m01s'
-        self.ref_results_path = reports_path / f'spheroid-results-{suffix}.csv'
+        self.ref_results_path = reports_path / f'spheroid-{suffix}.csv'
         self.output_results_path = reports_path / f'test-{suffix}-{timestamp}.csv'
 
         self.ds_name = 'sci_test_spheroid_untreated'
         self.ds_data_path = join(self.sm_config['fs']['spark_data_path'], self.ds_name)
+        self.moldb = MOL_DBS[database]
         self.analysis_version = analysis_version
         self.input_path = join(proj_root(), 'tests/data/untreated')
         self.ds_config_path = join(self.input_path, 'config.json')
@@ -197,11 +212,14 @@ class SciTester:
         if not store_images:
             self._patch_image_storage()
 
+        moldb_id = molecular_db.find_by_name_version(self.moldb['name'], self.moldb['version']).id
+
         os.environ['PYSPARK_PYTHON'] = sys.executable
 
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
         ds.config['analysis_version'] = self.analysis_version
         ds.config['fdr']['scoring_model'] = 'v3_default' if self.analysis_version > 1 else None
+        ds.config['database_ids'] = [moldb_id]
 
         self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self.db, allow_insert=True)
@@ -211,7 +229,14 @@ class SciTester:
             lithops_executor.RUNTIME_DOCKER_IMAGE = 'python'
 
             executor = Executor(self.sm_config['lithops'], perf)
-            job = ServerAnnotationJob(executor, ds, perf, self.sm_config, store_images=store_images)
+            job = ServerAnnotationJob(
+                executor,
+                ds,
+                perf,
+                self.sm_config,
+                store_images=store_images,
+                # store_diagnostics=store_images,
+            )
             job.run(debug_validate=True)
         else:
             AnnotationJob(ds, perf).run()
@@ -227,12 +252,13 @@ class SciTester:
 def run(
     sm_config,
     analysis_version,
+    database,
     store_images,
     use_lithops,
     save_reference,
     save_comparison,
 ):
-    sci_tester = SciTester(sm_config, analysis_version)
+    sci_tester = SciTester(sm_config, analysis_version, database)
     run_search_successful = False
     search_results_different = False
     try:
@@ -278,7 +304,7 @@ def ensure_db_exists(sm_config):
                     curs.execute(f'CREATE DATABASE {db_name} OWNER {db_owner}')
 
 
-def ensure_db_populated(sm_config, analysis_version):
+def ensure_db_populated(sm_config, analysis_version, database):
     db = DB()
     # Install DB schema if needed
     query = "SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public' AND tablename = 'dataset'"
@@ -288,14 +314,14 @@ def ensure_db_populated(sm_config, analysis_version):
         db.alter(DB_SQL_SCHEMA)
 
     # Import HMDB if needed
-    query = "SELECT COUNT(*) FROM molecular_db WHERE name = 'HMDB' AND version = 'v4'"
-    hmdb_exists = db.select_one(query)[0] >= 1
-    if not hmdb_exists:
-        print('Importing HMDB')
+    moldb = MOL_DBS[database]
+    try:
+        molecular_db.find_by_name_version(moldb['name'], moldb['version'])
+    except SMError:
+        print(f'Importing {database}')
         with TemporaryDirectory() as tmp:
-            hmdb_url = 'https://sm-engine.s3-eu-west-1.amazonaws.com/tests/hmdb_4.tsv'
-            urlretrieve(hmdb_url, f'{tmp}/hmdb-v4.tsv')
-            molecular_db.create('HMDB', 'v4', f'{tmp}/hmdb-v4.tsv')
+            urlretrieve(moldb['url'], f'{tmp}/moldb.tsv')
+            molecular_db.create(moldb['name'], moldb['version'], f'{tmp}/moldb.tsv')
 
     if analysis_version > 1:
         if len(db.select("SELECT name FROM scoring_model WHERE name = 'v3_default'")) == 0:
@@ -339,6 +365,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '--analysis-version', type=int, default=1, help='which pipeline analysis_version to use'
     )
+    parser.add_argument(
+        '--database',
+        default='hmdb',
+        help='which database to use (hmdb or cm3)',
+        choices=MOL_DBS.keys(),
+    )
     args = parser.parse_args()
 
     if args.save_ref:
@@ -352,11 +384,12 @@ if __name__ == '__main__':
     ensure_db_exists(SMConfig.get_conf())
 
     with GlobalInit(config_path=args.sm_config_path) as sm_config:
-        ensure_db_populated(sm_config, args.analysis_version)
+        ensure_db_populated(sm_config, args.analysis_version, args.database)
 
         run(
             sm_config=sm_config,
             analysis_version=args.analysis_version,
+            database=args.database,
             store_images=args.store_images,
             use_lithops=args.lithops,
             save_reference=args.save_ref,
