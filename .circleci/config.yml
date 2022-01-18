@@ -393,18 +393,18 @@ workflows:
 ## parallelism is reduced to minimize memory usage.
 ## Re-test after https://github.com/metaspace2020/metaspace/issues/763 has been addressed
 #
-sci-test-on-demand:
-  jobs:
-    - generate-graphql-schema
-    - test-engine-sci:
-        requires:
-          - generate-graphql-schema
-        filters:
-          branches:
-            only:
-              - master
-              # Add additional branches to run sci-test against here. Clean up old branches if you notice any.
-              - feat/v3-sci-test
+  sci-test-on-demand:
+    jobs:
+      - generate-graphql-schema
+      - test-engine-sci:
+          requires:
+            - generate-graphql-schema
+          filters:
+            branches:
+              only:
+                - master
+                # Add additional branches to run sci-test against here. Clean up old branches if you notice any.
+                - feat/v3-sci-test
 
 
 ## Disabled until we have time to redo these tests
