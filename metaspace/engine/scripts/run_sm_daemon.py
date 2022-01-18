@@ -15,6 +15,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.daemons.update import SMUpdateDaemon
 from sm.engine.daemons.annotate import SMAnnotateDaemon
 from sm.engine.daemons.dataset_manager import DatasetManager
+from sm.engine import image_storage
 from sm.engine.queue import (
     SM_ANNOTATE,
     SM_UPDATE,
@@ -43,6 +44,8 @@ def main(daemon_name, exit_after):
     logger.info(f'Starting {daemon_name}-daemon')
 
     conn_pool = ConnectionPool(sm_config['db'])
+    # Ensure the S3 bucket for image storage exists and is configured correctly.
+    image_storage.configure_bucket(sm_config)
 
     daemons = []
     if daemon_name == 'annotate':

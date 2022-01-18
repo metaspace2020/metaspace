@@ -219,7 +219,8 @@ get_ion_images_for_analysis: _GetIonImagesForAnalysis
 
 
 @retry_on_exception(ClientError)
-def _configure_bucket(sm_config: Dict):
+def configure_bucket(sm_config: Dict):
+    """Creates the image storage bucket if needed and sets the ACL."""
     bucket_name = sm_config['image_storage']['bucket']
     logger.info(f'Configuring image storage bucket: {bucket_name}')
 
@@ -255,8 +256,6 @@ def _configure_bucket(sm_config: Dict):
 
 
 def init(sm_config: Dict):
-    _configure_bucket(sm_config)
-
     # pylint: disable=global-statement
     global _instance, get_image, post_image, delete_image, delete_images, get_image_url
     global get_ion_images_for_analysis
