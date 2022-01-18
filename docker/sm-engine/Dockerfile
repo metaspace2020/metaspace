@@ -51,14 +51,10 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
 # --- Engine dependencies ---
 COPY metaspace/engine/requirements.txt /requirements.txt
 COPY metaspace/engine/requirements-dev.txt /requirements-dev.txt
-# Install catboost without dependencies, because it depends on large packages plotly and matplotlib
-RUN grep -Ev '^(catboost)' /requirements.txt > /requirements-base.txt
-RUN grep -E '^(catboost)' /requirements.txt > /requirements-nodeps.txt
 
 RUN PIP_INSTALL="python -m pip install --upgrade" && \
     $PIP_INSTALL pip setuptools && \
-    $PIP_INSTALL -r requirements-base.txt -r requirements-dev.txt && \
-    $PIP_INSTALL -r requirements-nodeps.txt --no-deps && \
+    $PIP_INSTALL -r requirements.txt -r requirements-dev.txt && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
 
 # Create a user (this may need to be fixed if someone has a non-1000 UID)
