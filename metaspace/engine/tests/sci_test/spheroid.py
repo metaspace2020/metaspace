@@ -111,8 +111,8 @@ class SciTester:
             # Otherwise use unaligned bins
             min_edge = np.min(metric_vals)
             max_edge = np.max(metric_vals)
-            n_bins = 11
-        bins = np.linspace(min_edge, max_edge, n_bins)
+            n_bins = 10
+        bins = np.linspace(min_edge, max_edge, n_bins + 1)
         metric_freq, metric_interv = np.histogram(metric_vals, bins=bins)
 
         for lo, hi, freq in zip(metric_interv[:-1], metric_interv[1:], metric_freq):
@@ -235,7 +235,6 @@ class SciTester:
                 perf,
                 self.sm_config,
                 store_images=store_images,
-                # store_diagnostics=store_images,
             )
             job.run(debug_validate=True)
         else:
@@ -328,7 +327,7 @@ def ensure_db_populated(sm_config, analysis_version, database):
             print("Importing v3_default scoring model")
             params = upload_catboost_scoring_model(
                 model=Path(proj_root())
-                / '../scoring-models/model-2022-01-05T13-45-26.947188-416b1311.cbm',
+                / '../scoring-models/v3_default/model-2022-01-05T13-45-26.947188-416b1311.cbm',
                 bucket=sm_config['lithops']['lithops']['storage_bucket'],
                 prefix=f'test_scoring_models/v3_default',
                 is_public=False,
