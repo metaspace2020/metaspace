@@ -1,0 +1,43 @@
+{
+    "Submitted_By": {
+        "Submitter": {
+            "First_Name": "Name", 
+            "Surname": "Surname", 
+            "Email": "name@embl.de"
+        }, 
+        "Principal_Investigator": {
+            "First_Name": "", 
+            "Surname": "", 
+            "Email": ""
+        }, 
+        "Institution": "EMBL"
+    },
+    "Sample_Information": {
+        "Organism": "Homo_sapiens_(Human)", 
+        "Organism_Part": "Colon", 
+        "Condition": "Imortalised_Cell_Line", 
+        "Sample_Growth_Conditions": "Culture_3D"
+    }, 
+    "Additional_Information": {
+        "Sample_Description_Freetext": "", 
+        "Expected_Molecules_Freetext": "", 
+        "Additional_Information_Freetext": "", 
+        "Publication_DOI": "", 
+        "Sample_Preparation_Freetext": ""
+    }, 
+    "MS_Analysis": {
+        "Polarity": "Positive", 
+        "Ionisation_Source": "MALDI", 
+        "Detector_Resolving_Power": {
+            "Resolving_Power": 80000, 
+            "mz": 700
+        }, 
+        "Analyzer": "FTICR"
+    }, 
+    "Sample_Preparation": {
+        "MALDI_Matrix": "2,5-dihydroxybenzoic_acid_(DHB)", 
+        "MALDI_Matrix_Application": "Spray_Robot", 
+        "Sample_Stabilisation": "Fresh_Frozen", 
+        "Tissue_Modification": "none"
+    }
+}
