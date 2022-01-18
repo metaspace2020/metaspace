@@ -19,5 +19,5 @@
     "fdr": {
         "decoy_sample_size": 20
     },
-    "databases": ["HMDB-v4"]
+    "databases": []
 }
