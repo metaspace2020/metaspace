@@ -148,8 +148,9 @@ class SciTester:
             new_level = next((i for i, level in enumerate(levels) if fdr_new < level), len(levels))
             return abs(ref_level - new_level) > 1
         else:
-            # Allow +/- 10% difference
-            return abs(fdr_ref - fdr_new) > fdr_ref * 0.1
+            # Allow +/- 10% relative difference OR +/- 5% FDR absolute difference to compensate for
+            # possible differences if the decoys are sampled differently.
+            return not np.isclose(fdr_ref, fdr_new, rtol=0.1, atol=0.05)
 
     def make_comparison_df(self):
         ref_results = pd.read_csv(self.ref_results_path)
