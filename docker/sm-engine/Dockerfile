@@ -12,7 +12,6 @@ ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 RUN sed -i -e 's|http://.*archive.ubuntu.com/ubuntu/|mirror://mirrors.ubuntu.com/mirrors.txt|' /etc/apt/sources.list
 
 RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
-    PIP_INSTALL="python -m pip install --upgrade" && \
     apt-get update && \
 # ----- Tools -----
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
@@ -29,7 +28,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         openjdk-8-jre-headless ca-certificates-java wget && \
     wget -qO - https://archive.apache.org/dist/spark/spark-$SPARK_VER/$SPARK_DIR.tgz | tar xz && \
-# ----- Python and Pip -----
+# ----- Python -----
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && \
@@ -39,13 +38,12 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         python3.8-dev \
         python3-distutils \
         libsm6 libxrender1 libxext6 \
+        git curl postgresql-client libpq-dev \
         && \
     wget -O /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
     python3.8 /tmp/get-pip.py && \
     ln -s /usr/bin/python3.8 /usr/local/bin/python3 && \
     ln -s /usr/bin/python3.8 /usr/local/bin/python && \
-    $PIP_INSTALL \
-        setuptools && \
     apt-get clean -y && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
@@ -53,16 +51,14 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
 # --- Engine dependencies ---
 COPY metaspace/engine/requirements.txt /requirements.txt
 COPY metaspace/engine/requirements-dev.txt /requirements-dev.txt
-RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
-    PIP_INSTALL="python -m pip install --upgrade" && \
-    apt-get update && \
-    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
-        git curl postgresql-client libpq-dev && \
-    $PIP_INSTALL pip && \
-    $PIP_INSTALL -r requirements.txt && \
-    $PIP_INSTALL -r requirements-dev.txt && \
-    apt-get clean -y && \
-    apt-get autoremove -y && \
+# Install catboost without dependencies, because it depends on large packages plotly and matplotlib
+RUN grep -Ev '^(catboost)' /requirements.txt > /requirements-base.txt
+RUN grep -E '^(catboost)' /requirements.txt > /requirements-nodeps.txt
+
+RUN PIP_INSTALL="python -m pip install --upgrade" && \
+    $PIP_INSTALL pip setuptools && \
+    $PIP_INSTALL -r requirements-base.txt -r requirements-dev.txt && \
+    $PIP_INSTALL -r requirements-nodeps.txt --no-deps && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/.cache/*
 
 # Create a user (this may need to be fixed if someone has a non-1000 UID)
