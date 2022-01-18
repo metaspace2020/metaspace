@@ -1,0 +1,50 @@
+$bgColor: hsl(208, 36%, 96%);
+
+
+.roi-content{
+  @apply flex flex-col flex-wrap justify-center items-center;
+
+  .roi-label{
+    @apply font-bold;
+  }
+
+  .roi-item{
+    @apply flex w-full justify-center items-center flex-wrap;
+    height: 60px;
+    border-bottom: 1px solid lightgray;
+  }
+
+  .roi-channels{
+    @apply flex w-full justify-between items-center relative;
+    height: 10px;
+  }
+}
+
+.roi-popper{
+  background: $bgColor;
+
+  .popper__arrow::after{
+    border-bottom-color: $bgColor !important;
+  }
+}
+
+.roi-badge{
+  @apply flex justify-center items-center;
+}
+
+.roi-badge-selected{
+
+  &::after{
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 3px;
+    right: 3px;
+    bottom: 2px;
+    box-sizing: border-box;
+    border-style: solid;
+    border-bottom-width: 3px;
+    border-color: transparent;
+    border-bottom-color: hsl(208, 76%, 39%);
+  }
+}

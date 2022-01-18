@@ -5,6 +5,45 @@
       style="position: relative;"
     >
       <div id="md-section-list">
+        <div
+          v-if="isNew"
+          class="flex flex-row w-full flex-wrap mt-6 justify-end"
+        >
+          <el-popover
+            trigger="click"
+            placement="left"
+          >
+            <el-button
+              slot="reference"
+              type="primary"
+              class="mr-1"
+            >
+              Copy metadata from another dataset...<i class="el-icon-document-copy ml-1"></i>
+            </el-button>
+
+            <div class="max-w-sm">
+              <el-select
+                v-model="metadataTemplate"
+                placeholder="Start typing name"
+                remote
+                filterable
+                clearable
+                :remote-method="fetchDatasets"
+                :loading="loadingTemplates"
+                loading-text="Loading matching entries..."
+                no-match-text="No matches"
+                @change="metadataTemplateSelection"
+              >
+                <el-option
+                  v-for="option in templateOptions"
+                  :key="option.id"
+                  :value="option.id"
+                  :label="option.name"
+                />
+              </el-select>
+            </div>
+          </el-popover>
+        </div>
         <div class="flex flex-row w-full flex-wrap mt-6">
           <div class="metadata-section__title w-3/12">
             Dataset description
@@ -107,6 +146,8 @@ import isValidTiptapJson from '../../lib/isValidTiptapJson'
 import config from '../../lib/config'
 import { getDatabasesByGroup } from '../MolecularDatabases/formatting'
 import RichText from '../../components/RichText/RichText'
+import { datasetListItemsQuery } from '../../api/dataset'
+import reportError from '../../lib/reportError'
 
 const factories = {
   string: schema => schema.default || '',
@@ -154,6 +195,9 @@ export default {
       initialValue: null,
       initialMetaspaceOptions: null,
       autoDatasetName: null,
+      loadingTemplates: false,
+      metadataTemplate: null,
+      templateOptions: [],
     }
   },
 
@@ -207,34 +251,34 @@ export default {
     this.loadingPromise = this.initializeForm()
   },
   methods: {
-    async loadDataset() {
-      const metaspaceOptionsFromDataset = (dataset, isNew) => {
-        const {
-          isPublic, configJson, databases, adducts,
-          name, group, projects, submitter, principalInvestigator,
-          description,
-        } = dataset
-        const config = safeJsonParse(configJson)
-        return {
-          submitterId: submitter ? submitter.id : null,
-          groupId: group ? group.id : null,
-          projectIds: projects ? projects.map(p => p.id) : [],
-          principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
-          description: isValidTiptapJson(safeJsonParse(description))
-            ? safeJsonParse(description) : null,
-          isPublic,
-          databaseIds: databases.map(_ => _.id),
-          adducts,
-          name,
-          neutralLosses: isNew ? [] : get(config, 'isotope_generation.neutral_losses') || [],
-          chemMods: isNew ? [] : get(config, 'isotope_generation.chem_mods') || [],
-          numPeaks: isNew ? null : get(config, 'isotope_generation.n_peaks') || null,
-          decoySampleSize: isNew ? null : get(config, 'fdr.decoy_sample_size') || null,
-          ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
-          analysisVersion: isNew ? 1 : get(config, 'analysis_version') || 1,
-        }
+    metaspaceOptionsFromDataset(dataset, isNew) {
+      const {
+        isPublic, configJson, databases, adducts,
+        name, group, projects, submitter, principalInvestigator,
+        description,
+      } = dataset
+      const config = safeJsonParse(configJson)
+      return {
+        submitterId: submitter ? submitter.id : null,
+        groupId: group ? group.id : null,
+        projectIds: projects ? projects.map(p => p.id) : [],
+        principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
+        description: isValidTiptapJson(safeJsonParse(description))
+          ? safeJsonParse(description) : null,
+        isPublic,
+        databaseIds: databases.map(_ => _.id),
+        adducts,
+        name,
+        neutralLosses: isNew ? [] : get(config, 'isotope_generation.neutral_losses') || [],
+        chemMods: isNew ? [] : get(config, 'isotope_generation.chem_mods') || [],
+        numPeaks: isNew ? null : get(config, 'isotope_generation.n_peaks') || null,
+        decoySampleSize: isNew ? null : get(config, 'fdr.decoy_sample_size') || null,
+        ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
+        analysisVersion: isNew ? 1 : get(config, 'analysis_version') || 1,
       }
+    },
 
+    async loadDataset() {
       if (!this.datasetId) {
         const { data } = await this.$apollo.query({
           query: newDatasetQuery,
@@ -244,7 +288,7 @@ export default {
         return {
           metadata: dataset && safeJsonParse(dataset.metadataJson) || {},
           metaspaceOptions: {
-            ...(dataset != null ? metaspaceOptionsFromDataset(dataset, true) : null),
+            ...(dataset != null ? this.metaspaceOptionsFromDataset(dataset, true) : null),
             submitterId: this.$store.state.currentTour ? null : data.currentUser.id,
             groupId: this.$store.state.currentTour ? null
               : data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
@@ -271,10 +315,58 @@ export default {
         }
         return {
           metadata: JSON.parse(data.dataset.metadataJson),
-          metaspaceOptions: metaspaceOptionsFromDataset(data.dataset, false),
+          metaspaceOptions: this.metaspaceOptionsFromDataset(data.dataset, false),
           submitter,
           databases: data.dataset.databases,
         }
+      }
+    },
+
+    async fetchDatasets(name) {
+      this.loadingTemplates = true
+      try {
+        const resp = await this.$apollo.query({
+          query: datasetListItemsQuery,
+          variables: {
+            dFilter: {
+              metadataType: 'Imaging MS',
+              submitter: this.submitter.id,
+              name,
+            },
+            orderBy: 'ORDER_BY_DATE',
+            sortingOrder: 'DESCENDING',
+            query: '',
+            limit: 10,
+          },
+        })
+        this.templateOptions = resp.data.allDatasets
+      } catch (e) {
+        reportError(e)
+      } finally {
+        this.loadingTemplates = false
+      }
+    },
+
+    async metadataTemplateSelection(datasetId) {
+      try {
+        const { data } = await this.$apollo.query({
+          query: editDatasetQuery,
+          variables: { id: datasetId },
+        })
+        const dataset = {
+          metadata: data.dataset && safeJsonParse(data.dataset.metadataJson) || {},
+          metaspaceOptions: {
+            ...(data.dataset != null ? this.metaspaceOptionsFromDataset(data.dataset, true) : null),
+            submitterId: this.$store.state.currentTour ? null : data.currentUser.id,
+            groupId: this.$store.state.currentTour ? null
+              : data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
+          },
+          submitter: data.currentUser,
+          databases: data.dataset ? data.dataset.databases : [],
+        }
+        await this.loadForm(dataset, await this.loadOptions(), dataset.metadata.Data_Type || 'Imaging MS')
+      } catch (e) {
+        reportError(e)
       }
     },
 
@@ -299,6 +391,9 @@ export default {
           : (dataset && dataset.metadata && dataset.metadata.Data_Type)
       ) || defaultMetadataType
       await this.loadForm(dataset, options, mdType)
+      if (this.isNew) {
+        await this.fetchDatasets()
+      }
     },
 
     async reloadForm(mdType) {

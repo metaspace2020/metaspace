@@ -81,7 +81,7 @@ export function decodePayload(jwt: JWT) {
 
 export function mzFilterPrecision(value: number | string): string {
   // Using parseFloat to remove any extra decimal places that won't actually count toward the precision
-  const splitVal = String(parseFloat(String(value))).split('.')
+  const splitVal = String(value).split('.')
   if (splitVal.length === 1) {
     return '1'
   } else {

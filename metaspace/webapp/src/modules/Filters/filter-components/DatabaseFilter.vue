@@ -172,6 +172,9 @@ export default class DatabaseFilter extends Vue {
     @Prop()
     value!: string | undefined;
 
+    @Prop()
+    fixedOptions!: any | undefined;
+
     allDBsByGroup: any = null
     datasetDBsByGroup: any = null
 
@@ -219,6 +222,13 @@ export default class DatabaseFilter extends Vue {
       this.filterOptions('')
     }
 
+    @Watch('fixedOptions')
+    updateFixedOptions() {
+      this.previousQuery = null
+      this.options = {}
+      this.filterOptions('')
+    }
+
     filterOptions(query: string) {
       if (query === this.previousQuery || this.dbsByGroup === null) {
         return
@@ -228,9 +238,11 @@ export default class DatabaseFilter extends Vue {
 
       try {
         const groupOptions: GroupOption[] = []
+        const sourceDatabases = Array.isArray(this.fixedOptions) && this.fixedOptions.length > 0
+          ? getDatabasesByGroup(this.fixedOptions) : this.dbsByGroup
         const queryRegex = new RegExp(query, 'i')
 
-        for (const group of this.dbsByGroup) {
+        for (const group of sourceDatabases) {
           const options: Option[] = []
           for (const db of group.molecularDatabases) {
             const id = db.id.toString()

@@ -62,6 +62,7 @@ gql`fragment AnnotationDetailItem on Annotation {
     information {
       database
       url
+      databaseId
     }
   }
 }`

@@ -69,6 +69,22 @@ exports[`MetadataEditor should match snapshot 1`] = `
 <div id="md-editor-container">
   <div mock-v-loading="true" style="position: relative;">
     <div id="md-section-list">
+      <div class="flex flex-row w-full flex-wrap mt-6 justify-end">
+        <mock-el-popover trigger="click" placement="left">
+          <div slot-key="default">
+            <div class="max-w-sm">
+              <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches">
+                <mock-el-option value="allDatasets.0.id" label="allDatasets.0.name"></mock-el-option>
+                <mock-el-option value="allDatasets.1.id" label="allDatasets.1.name"></mock-el-option>
+              </mock-el-select>
+            </div>
+          </div>
+          <div slot-key="reference"><button type="button" class="el-button mr-1 el-button--primary">
+              <!---->
+              <!----><span>
+            Copy metadata from another dataset...<i class="el-icon-document-copy ml-1"></i></span></button></div>
+        </mock-el-popover>
+      </div>
       <div class="flex flex-row w-full flex-wrap mt-6">
         <div class="metadata-section__title w-3/12">
           Dataset description
@@ -687,13 +703,29 @@ exports[`MetadataEditor should match snapshot 1`] = `
           <div mock-v-loading="0">
             <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
               <div><label><span class="text-base font-medium">Title</span>
-                  <div class="py-1 el-input">
-                    <!----><input type="text" autocomplete="off" max-length="50" class="el-input__inner">
+                  <div class="el-form-item is-required">
                     <!---->
-                    <!---->
-                    <!---->
-                    <!---->
-                  </div></label></div>
+                    <div class="el-form-item__content">
+                      <div class="py-1 el-input">
+                        <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <!---->
+                        <!---->
+                      </div>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div></label>
+                <div class="hidden el-input">
+                  <!----><input type="text" autocomplete="off" class="el-input__inner">
+                  <!---->
+                  <!---->
+                  <!---->
+                  <!---->
+                </div>
+              </div>
               <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
         Visibility of the project only, does not apply to included datasets
       </span></label>
@@ -725,7 +757,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 <!---->
                 <!----><span>
         Cancel
-      </span></button> <button type="button" class="el-button el-button--primary">
+      </span></button> <button autofocus="autofocus" type="button" class="el-button el-button--primary">
                 <!---->
                 <!----><span>
         Create project

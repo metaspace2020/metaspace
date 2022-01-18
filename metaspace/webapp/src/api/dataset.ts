@@ -187,6 +187,16 @@ export const datasetListItemsWithDiagnosticsQuery =
       id
       name
       uploadDT
+      databases {
+        id
+        name
+        version
+        archived
+        group {
+          id
+          shortName
+        }
+      }
       diagnostics {
         id
         type

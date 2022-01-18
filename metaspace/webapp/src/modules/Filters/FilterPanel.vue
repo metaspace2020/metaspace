@@ -81,7 +81,7 @@ Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
 /** @type {ComponentOptions<Vue> & Vue} */
 const FilterPanel = {
   name: 'filter-panel',
-  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters'],
+  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters', 'fixedOptions'],
   components: filterComponents,
   mounted() {
     this.$store.dispatch('initFilterLists')
@@ -242,6 +242,7 @@ const FilterPanel = {
           attrs: {
             ...pick(attrs, FILTER_COMPONENT_PROPS),
             value: this.getFilterValue(filterSpec, filterKey),
+            fixedOptions: this.getFixedOptions(filterSpec, filterKey),
             options: this.getFilterOptions(filterSpec, filterKey),
           },
         }
@@ -255,8 +256,16 @@ const FilterPanel = {
       }
     },
 
+    getFixedOptions(filter, filterKey) {
+      if (this.fixedOptions && Object.keys(this.fixedOptions).includes(filterKey)) {
+        return this.fixedOptions[filterKey]
+      }
+      return undefined
+    },
+
     getFilterOptions(filter, filterKey) {
       const { filterLists } = this.$store.state
+
       // dynamically generated options are supported:
       // either specify a function of optionLists or one of its field names
       if (filterKey === 'simpleFilter') {

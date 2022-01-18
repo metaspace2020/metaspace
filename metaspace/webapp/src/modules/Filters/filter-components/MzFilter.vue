@@ -2,6 +2,7 @@
   <number-filter
     v-bind="$attrs"
     :step="0.0001"
+    :raw-input="true"
     v-on="$listeners"
   >
     <span class="ml-1">
@@ -11,7 +12,7 @@
 </template>
 
 <script>
-import Vue, { ComponentOptions } from 'vue'
+import Vue from 'vue'
 import { mzFilterPrecision } from '../../../lib/util'
 import NumberFilter from './NumberFilter.vue'
 

@@ -11,6 +11,9 @@ import { assertImportFileIsValid } from './util/assertImportFileIsValid'
 import { MolecularDbRepository } from './MolecularDbRepository'
 import { assertUserBelongsToGroup } from './util/assertUserBelongsToGroup'
 import validateInput from './util/validateInput'
+import { User } from '../user/model'
+import { getUserSourceById } from '../user/util/getUserSourceById'
+import { getS3Client } from '../../utils/awsClient'
 
 const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
   createdDT(database): string {
@@ -19,6 +22,34 @@ const MolecularDbResolvers: FieldResolversFor<MolecularDB, MolecularDbModel> = {
 
   hidden(database): boolean {
     return database.archived || !database.isPublic
+  },
+
+  user: async function(database: MolecularDbModel, args: any, ctx: Context): Promise<User|null> {
+    const userGroupIds = await ctx.user.getMemberOfGroupIds()
+    if (database.userId == null) {
+      return null
+    } else if (!ctx.isAdmin && (database.groupId == null || !userGroupIds.includes(database.groupId))) {
+      return null
+    } else {
+      return getUserSourceById(ctx, database.userId)
+    }
+  },
+
+  downloadLink(database: MolecularDbModel) {
+    if (typeof database.inputPath !== 'string') {
+      return null
+    }
+
+    const parsedPath = /s3:\/\/([^/]+)\/(.*)/.exec(database.inputPath)
+    if (parsedPath != null) {
+      const [, bucket, prefix] = parsedPath
+      const s3 = getS3Client()
+
+      return JSON.stringify({
+        filename: prefix.split('/').slice(-1)[0],
+        link: s3.getSignedUrl('getObject', { Bucket: bucket, Key: prefix, Expires: 1800 }),
+      })
+    }
   },
 }
 
@@ -64,12 +95,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
   async createMolecularDB(source, { databaseDetails }, ctx): Promise<MolecularDbModel> {
     logger.info(`User ${ctx.user.id} is creating molecular database ${JSON.stringify(databaseDetails)}`)
+    const userId = ctx.user.id as string
     const groupId = databaseDetails.groupId as string
     await assertUserBelongsToGroup(ctx, groupId)
     validateInput(databaseDetails)
     await assertImportFileIsValid(databaseDetails.filePath)
 
-    const { id } = await smApiCreateDatabase({ ...databaseDetails, groupId })
+    const { id } = await smApiCreateDatabase({ ...databaseDetails, groupId, userId })
     return await ctx.entityManager.getCustomRepository(MolecularDbRepository).findDatabaseById(ctx, id)
   },
 

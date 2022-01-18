@@ -22,6 +22,7 @@
         :width="dimensions.width"
         :show-normalized-intensity="showNormalizedIntensity"
         :normalization-data="normalizationData"
+        :roi-info="roiInfo"
         :x-offset="imageLoaderSettings.imagePosition.xOffset"
         :y-offset="imageLoaderSettings.imagePosition.yOffset"
         :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
@@ -31,6 +32,7 @@
         :keep-pixel-selected="keepPixelSelected"
         @move="handleImageMove"
         @pixel-select="handlePixelSelect"
+        @roi-coordinate="handleRoiCoordinate"
       />
     </div>
     <div
@@ -115,7 +117,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, reactive, ref, toRefs, onMounted } from '@vue/composition-api'
+import { defineComponent, computed, reactive, ref, toRefs, onMounted, watch } from '@vue/composition-api'
 import { Image } from 'upng-js'
 import resize from 'vue-resize-directive'
 
@@ -130,7 +132,7 @@ import OpacitySettings from './OpacitySettings.vue'
 import viewerState, { resetImageViewerState } from './state'
 import { resetIonImageState } from './ionImageState'
 import useIonImages from './useIonImages'
-import fitImageToArea, { FitImageToAreaResult } from '../../lib/fitImageToArea'
+import fitImageToArea from '../../lib/fitImageToArea'
 import { ScaleType } from '../../lib/ionImageRendering'
 import config from '../../lib/config'
 
@@ -183,7 +185,6 @@ const ImageViewer = defineComponent<Props>({
       ionImagesLoading,
       ionImageDimensions,
     } = useIonImages(props)
-
     // don't think this is the best way to do it
     root.$store.watch((_, getters) => getters.filter.datasetIds, (datasetIds = [], previous) => {
       if (datasetIds.length !== 1 || (previous && previous[0] !== datasetIds[0])) {
@@ -223,6 +224,15 @@ const ImageViewer = defineComponent<Props>({
       return /Trident\/|MSIE/.test(window.navigator.userAgent)
     })
 
+    const roiInfo = computed(() => {
+      if (
+        props.annotation && props.annotation.dataset?.id && root.$store.state.roiInfo
+        && Object.keys(root.$store.state.roiInfo).includes(props.annotation.dataset.id)) {
+        return root.$store.state.roiInfo[props.annotation.dataset.id] || []
+      }
+      return []
+    })
+
     return {
       imageArea,
       dimensions,
@@ -246,6 +256,9 @@ const ImageViewer = defineComponent<Props>({
       handlePixelSelect({ x, y }: any) {
         emit('pixel-select', { x, y })
       },
+      handleRoiCoordinate({ x, y, isFixed }: any) {
+        emit('roi-coordinate', { x, y, isFixed })
+      },
       emitOpacity(value: number) {
         emit('opacity', value)
       },
@@ -256,6 +269,7 @@ const ImageViewer = defineComponent<Props>({
         root.$store.getters.settings.annotationView.normalization && root.$store.state.normalization
       && root.$store.state.normalization.error),
       showNormalizedIntensity: computed(() => root.$store.getters.settings.annotationView.normalization),
+      roiInfo,
       normalizationData: computed(() => root.$store.state.normalization),
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
       lockIntensityEnabled: config.features.lock_intensity,

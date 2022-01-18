@@ -1,4 +1,6 @@
 .dataset-comparison-page{
+  overflow: hidden;
+
   .ds-comparison-info{
     @apply flex items-center justify-center p-2 w-full;
     min-height: 50px;
@@ -6,7 +8,6 @@
 
   .dataset-comparison-item-header{
     background: #F1F5F8;
-    padding: 4px 8px;
     width: calc(100% - 16px);
     span{
       @apply mr-1;

@@ -80,6 +80,7 @@
     </table>
     <el-row>
       <el-button
+        ref="createBtn"
         style="float: right; margin: 10px 0;"
         @click="handleOpenCreateProjectDialog"
       >
@@ -201,6 +202,9 @@ export default class ProjectsTable extends Vue {
     }
 
     handleOpenCreateProjectDialog() {
+      // blur on open dialog, so the dialog button can be focused
+      const createBtn : any = this.$refs.createBtn as any
+      createBtn.$el.blur()
       this.showCreateProjectDialog = true
     }
 

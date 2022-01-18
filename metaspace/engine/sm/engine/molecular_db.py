@@ -129,6 +129,7 @@ def create(
     version: str = None,
     file_path: str = None,
     group_id: str = None,
+    user_id: str = None,
     is_public: bool = True,
     description: str = None,
     full_name: str = None,
@@ -138,9 +139,9 @@ def create(
     with transaction_context():
         moldb_insert = (
             'INSERT INTO molecular_db '
-            '   (name, version, created_dt, group_id, is_public, '
-            '   description, full_name, link, citation) '
-            'values (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'
+            '   (name, version, created_dt, group_id, user_id, is_public, '
+            '   description, full_name, link, citation, input_path ) '
+            'values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'
         )
         # pylint: disable=unbalanced-tuple-unpacking
         (moldb_id,) = DB().insert_return(
@@ -151,11 +152,13 @@ def create(
                     version,
                     datetime.now(),
                     group_id,
+                    user_id,
                     is_public,
                     description,
                     full_name,
                     link,
                     citation,
+                    file_path,
                 )
             ],
         )

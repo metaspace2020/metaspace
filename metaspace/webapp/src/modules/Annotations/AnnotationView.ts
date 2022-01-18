@@ -14,7 +14,7 @@ import { Component, Prop } from 'vue-property-decorator'
 import { Location } from 'vue-router'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import safeJsonParse from '../../lib/safeJsonParse'
-import { omit, pick, sortBy, throttle } from 'lodash-es'
+import { cloneDeep, omit, pick, sortBy, throttle } from 'lodash-es'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../Filters/filterSpecs'
 import { encodeParams } from '../Filters'
 import config from '../../lib/config'
@@ -120,6 +120,11 @@ export default class AnnotationView extends Vue {
 
    created() {
      this.onImageMove = throttle(this.onImageMove)
+     this.$store.commit('resetRoiInfo')
+   }
+
+   mounted() {
+     this.$store.commit('resetRoiInfo')
    }
 
    metadataDependentComponent(category: string): any {
@@ -146,6 +151,15 @@ export default class AnnotationView extends Vue {
 
    get ticData(): string {
      return this.$store.getters.settings.annotationView.normalization
+   }
+
+   get roiInfo(): any {
+     if (
+       this.annotation && this.annotation.dataset?.id && this.$store.state.roiInfo
+       && Object.keys(this.$store.state.roiInfo).includes(this.annotation.dataset.id)) {
+       return this.$store.state.roiInfo[this.annotation.dataset.id] || []
+     }
+     return []
    }
 
    get imageOpacityMode(): OpacityMode {
@@ -318,6 +332,50 @@ export default class AnnotationView extends Vue {
 
    setScaleBarColor(color: string | null) {
      this.scaleBarColor = color
+   }
+
+   addRoiCoordinate(roiPoint: any) {
+     const RADIUS = 2
+     const isInsideCircle = (x: number, y: number, centerX: number, centerY: number, radius: number) => {
+       return (x - centerX) ** 2 + (y - centerY) ** 2 < radius ** 2
+     }
+
+     const roi = this.roiInfo || []
+     const roiIndex = roi.length - 1
+     const coordinates : any[] = roi[roiIndex].coordinates
+     let isRepeatedPoint : boolean = false
+
+     if (roiPoint.isFixed) { // fixed draw point
+       if (coordinates.length === 0) {
+         coordinates.push(roiPoint)
+       } else {
+         if (roiPoint.x === coordinates[coordinates.length - 1].x
+         && roiPoint.y === coordinates[coordinates.length - 1].y && coordinates[coordinates.length - 1].isFixed) {
+           isRepeatedPoint = true
+         }
+         coordinates[coordinates.length - 1] = roiPoint
+       }
+       Vue.set(roi, roiIndex, { ...roi[roiIndex], coordinates })
+
+       coordinates.forEach((coordinate: any, index: number) => {
+         // stop ROI creation if line reach polygon draw point
+         if (
+           (index !== coordinates.length - 1 || isRepeatedPoint)
+           && isInsideCircle(roiPoint.x, roiPoint.y, coordinate.x, coordinate.y, RADIUS)) {
+           coordinates[coordinates.length - 1].isEndPoint = true
+           Vue.set(roi, roiIndex, { ...roi[roiIndex], isDrawing: false })
+         }
+       })
+     } else if (coordinates.length > 0) { // coordinates do adjust polygon line
+       if (coordinates[coordinates.length - 1].isFixed) {
+         coordinates.push(roiPoint)
+       } else {
+         coordinates[coordinates.length - 1] = roiPoint
+       }
+       Vue.set(roi, roiIndex, { ...roi[roiIndex], coordinates })
+     }
+
+     this.$store.commit('setRoiInfo', { key: this.annotation.dataset.id, roi })
    }
 
    filterColocSamples() {

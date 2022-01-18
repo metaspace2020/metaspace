@@ -141,6 +141,7 @@ exports[`DatasetItem should match snapshot 1`] = `
     class="ds-actions"
   >
     <mock-el-dialog
+      customclass="dataset-item-dialog"
       title="Provided metadata"
     >
       <div
