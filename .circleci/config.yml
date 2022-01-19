@@ -366,14 +366,20 @@ jobs:
       - run:
           name: Run scientific test
           command: |
-            # Select parameters based on which parallel run this is. If parallelism is commented out,
-            # then $CIRCLE_NODE_INDEX == 0
-            ANALYSIS_VERSION=$(( $CIRCLE_NODE_INDEX == 0 || $CIRCLE_NODE_INDEX == 1 ? 3 : 1 ))
-            LITHOPS=$(( $CIRCLE_NODE_INDEX == 0 || $CIRCLE_NODE_INDEX == 2 ? "" : "--lithops" ))
+            # Select parameters based on which parallel run this is. If parallelism is commented out, $CIRCLE_NODE_INDEX == 0
+            # $CIRCLE_NODE_INDEX is 0-based, so the "first" run (or default if not using parallelism) is 0, matching the * option
+            case $CIRCLE_NODE_INDEX in
+              1) PARAMS="--analysis-version=3 --lithops" ;;
+              2) PARAMS="--analysis-version=1" ;;
+              3) PARAMS="--analysis-version=1 --lithops" ;;
+              *) PARAMS="--analysis-version=3" ;;
+            esac
+            echo $PARAMS
+
             # Add current directory to the PYTHONPATH. Without this, Python can't find the sm.engine module,
             # even though it should be installed via egg-link.
             export PYTHONPATH="$PYTHONPATH:`pwd`"
-            python tests/sci_test/spheroid.py --database cm3 --analysis-version=$ANALYSIS_VERSION $LITHOPS
+            python tests/sci_test/spheroid.py --database cm3 $PARAMS
 
 workflows:
   version: 2
