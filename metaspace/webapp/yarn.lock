@@ -13890,6 +13890,11 @@ purgecss@^2.1.0:
     postcss "7.0.27"
     postcss-selector-parser "^6.0.2"
 
+px-brush@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/px-brush/-/px-brush-1.0.1.tgz#2dece551ff3fa87c6a0d026a4bd3bb41a42d8284"
+  integrity sha512-qoj7J6pJfNt4SCpxrUdeVRadhSPVHcNmXWWhRgiw17DqC+S/AojYKESfiIb514L4WgTfitByRpHMnnRp2fNNJw==
+
 q@^1.1.2:
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/q/-/q-1.5.1.tgz#7e32f75b41381291d04611f1bf14109ac00651d7"

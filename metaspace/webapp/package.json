@@ -61,6 +61,7 @@
     "numeric": "^1.2.6",
     "numpy-parser": "^1.2.3",
     "popper.js": "^1.14.7",
+    "px-brush": "^1.0.1",
     "querystring": "^0.2.0",
     "sanitize-html": "^2.3.2",
     "simple-statistics": "^7.0.2",
