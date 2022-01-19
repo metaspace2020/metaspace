@@ -1,4 +1,6 @@
-import numba
+# This file is currently unused - it's needed for the v2_chaos metric, which hasn't yet been
+# adopted/rejected as we ran out of time for evaluation.
+import numba  # pylint: disable=import-error  # numba is big and excluded from the main build
 import numpy as np
 
 

@@ -319,7 +319,7 @@ jobs:
          command: black --check .
 
   test-engine-sci:
-    resource_class: large
+    # resource_class: large
     parallelism: 4  # Uncomment to run all combinations of analysis-version & lithops
     docker:
       - image: metaspace2020/sm-engine:2.0.0
@@ -366,8 +366,10 @@ jobs:
       - run:
           name: Run scientific test
           command: |
-            # Select parameters based on which parallel run this is. If parallelism is commented out, $CIRCLE_NODE_INDEX == 0
-            # $CIRCLE_NODE_INDEX is 0-based, so the "first" run (or default if not using parallelism) is 0, matching the * option
+            # Select parameters based on which parallel run this is.
+            # If parallelism is commented out, $CIRCLE_NODE_INDEX == 0
+            # $CIRCLE_NODE_INDEX is 0-based, so the "first" run (or default if
+            # not using parallelism) is 0, matching the *) case
             case $CIRCLE_NODE_INDEX in
               1) PARAMS="--analysis-version=3 --lithops" ;;
               2) PARAMS="--analysis-version=1" ;;
