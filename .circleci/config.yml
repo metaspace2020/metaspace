@@ -319,8 +319,8 @@ jobs:
          command: black --check .
 
   test-engine-sci:
-    # resource_class: large
-    parallelism: 4  # Uncomment to run all combinations of analysis-version & lithops
+    # resource_class: large  # Needed when using --lithops
+    # parallelism: 4  # Uncomment to run all combinations of --analysis-version & --lithops
     docker:
       - image: metaspace2020/sm-engine:2.0.0
 
