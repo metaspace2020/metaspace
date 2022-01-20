@@ -1,16 +1,12 @@
-import { defineComponent, reactive } from '@vue/composition-api'
+import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-
 import FadeTransition from '../../components/FadeTransition'
-
 import DetailsForm from './DatabaseDetailsForm'
 import ArchiveForm from './ArchiveDatabaseForm'
 import DeleteForm from './DeleteDatabaseForm'
 import UploadDialog from './UploadDialog'
-
 import SecondaryIcon from '../../components/SecondaryIcon.vue'
 import ArrowSvg from '../../assets/inline/refactoring-ui/icon-arrow-thin-left-circle.svg'
-
 import {
   databaseDetailsQuery,
   DatabaseDetailsQuery,
@@ -20,6 +16,13 @@ import {
 } from '../../api/moldb'
 import { getDatabaseDetails } from './formatting'
 import reportError from '../../lib/reportError'
+import safeJsonParse from '../../lib/safeJsonParse'
+import './DatabaseDetails.scss'
+
+interface DownloadJson{
+  filename: string,
+  link: string
+}
 
 interface Props {
   id: number
@@ -73,6 +76,32 @@ const Details = defineComponent<Props>({
       await refetch()
     }
 
+    const downloadLink = computed<DownloadJson>(() => {
+      try {
+        const { database } = result.value
+        return safeJsonParse(database.downloadLink)
+      } catch (e) {
+        return null
+      }
+    })
+
+    const renderDownload = () => {
+      if (!downloadLink.value) {
+        return null
+      }
+      const { filename, link } = downloadLink.value
+      return (
+        <div class="margin-reset mt-12 mt-12">
+          <h2>Download database</h2>
+          <p>Download the original database TSV file.</p>
+          <a href={link} download={filename} class="el-button el-button--primary no-underline mt-5">
+            <span>
+              Download database
+            </span>
+          </a>
+        </div>)
+    }
+
     return () => {
       let content
 
@@ -86,7 +115,7 @@ const Details = defineComponent<Props>({
           id: props.id,
         }
         content = (
-          <div class="relative leading-6 h2-leading-12">
+          <div class="relative leading-6 h2-leading-12 database-details-container">
             <div class="absolute top-0 left-0 h-12 flex items-center">
               <a
                 class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"
@@ -121,6 +150,7 @@ const Details = defineComponent<Props>({
                 archived={database.archived || false}
                 submit={submitAndRefetch}
               />
+              {renderDownload()}
               { props.canDelete
                 && <DeleteForm
                   class="mt-12"

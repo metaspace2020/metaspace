@@ -3,7 +3,7 @@
 exports[`MolecularDatabases details view should match snapshot (archived) 1`] = `
 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
   <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
-    <div class="relative leading-6 h2-leading-12" mock-v-loading="true">
+    <div class="relative leading-6 h2-leading-12 database-details-container" mock-v-loading="true">
       <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"><span class="flex items-center"><i class="flex w-6 h-6 mr-1"><svg data-icon="icon-arrow-thin-left-circle"></svg></i><span class="leading-none mt-1">All databases</span></span></a></div>
       <div class="max-w-measure-3 mx-auto mt-6 mb-18">
         <div class="flex justify-between items-center">
@@ -79,7 +79,7 @@ exports[`MolecularDatabases details view should match snapshot (archived) 1`] = 
 exports[`MolecularDatabases details view should match snapshot (manager) 1`] = `
 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
   <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
-    <div class="relative leading-6 h2-leading-12" mock-v-loading="true">
+    <div class="relative leading-6 h2-leading-12 database-details-container" mock-v-loading="true">
       <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"><span class="flex items-center"><i class="flex w-6 h-6 mr-1"><svg data-icon="icon-arrow-thin-left-circle"></svg></i><span class="leading-none mt-1">All databases</span></span></a></div>
       <div class="max-w-measure-3 mx-auto mt-6 mb-18">
         <div class="flex justify-between items-center">
@@ -161,7 +161,7 @@ exports[`MolecularDatabases details view should match snapshot (manager) 1`] = `
 exports[`MolecularDatabases details view should match snapshot 1`] = `
 <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
   <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
-    <div class="relative leading-6 h2-leading-12" mock-v-loading="true">
+    <div class="relative leading-6 h2-leading-12 database-details-container" mock-v-loading="true">
       <div class="absolute top-0 left-0 h-12 flex items-center"><a href="#" class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"><span class="flex items-center"><i class="flex w-6 h-6 mr-1"><svg data-icon="icon-arrow-thin-left-circle"></svg></i><span class="leading-none mt-1">All databases</span></span></a></div>
       <div class="max-w-measure-3 mx-auto mt-6 mb-18">
         <div class="flex justify-between items-center">
@@ -250,14 +250,16 @@ exports[`MolecularDatabases should match snapshot 1`] = `
         <div></div>
         <div></div>
         <div></div>
+        <div></div>
       </div>
       <div class="el-table__header-wrapper">
-        <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 576px;">
+        <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 720px;">
           <colgroup>
             <col name="el-table_1_column_1" width="144">
             <col name="el-table_1_column_2" width="144">
             <col name="el-table_1_column_3" width="144">
             <col name="el-table_1_column_4" width="144">
+            <col name="el-table_1_column_5" width="144">
           </colgroup>
           <thead class="">
             <tr class="">
@@ -267,10 +269,13 @@ exports[`MolecularDatabases should match snapshot 1`] = `
               <th colspan="1" rowspan="1" class="el-table_1_column_2 descending    is-leaf is-sortable">
                 <div class="cell">Uploaded<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
               </th>
-              <th colspan="1" rowspan="1" class="el-table_1_column_3  is-center   is-leaf">
-                <div class="cell">Public annotations</div>
+              <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf is-sortable">
+                <div class="cell">Uploaded by<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
               </th>
               <th colspan="1" rowspan="1" class="el-table_1_column_4  is-center   is-leaf">
+                <div class="cell">Public annotations</div>
+              </th>
+              <th colspan="1" rowspan="1" class="el-table_1_column_5  is-center   is-leaf">
                 <div class="cell">Archived</div>
               </th>
             </tr>
@@ -278,12 +283,13 @@ exports[`MolecularDatabases should match snapshot 1`] = `
         </table>
       </div>
       <div class="el-table__body-wrapper is-scrolling-left">
-        <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 576px;">
+        <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 720px;">
           <colgroup>
             <col name="el-table_1_column_1" width="144">
             <col name="el-table_1_column_2" width="144">
             <col name="el-table_1_column_3" width="144">
             <col name="el-table_1_column_4" width="144">
+            <col name="el-table_1_column_5" width="144">
           </colgroup>
           <tbody>
             <tr class="el-table__row cursor-pointer">
@@ -295,10 +301,13 @@ exports[`MolecularDatabases should match snapshot 1`] = `
                   <mock-elapsed-time date="group.molecularDatabases.1.createdDT"></mock-elapsed-time>
                 </div>
               </td>
-              <td rowspan="1" colspan="1" class="el-table_1_column_3 is-center ">
-                <div class="cell"><span class="flex justify-center items-center h-5"><i class="flex w-6 h-6"><svg data-icon="icon-check"></svg></i></span></div>
+              <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                <div class="cell">group.molecularDatabases.1.user.name</div>
               </td>
               <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                <div class="cell"><span class="flex justify-center items-center h-5"><i class="flex w-6 h-6"><svg data-icon="icon-check"></svg></i></span></div>
+              </td>
+              <td rowspan="1" colspan="1" class="el-table_1_column_5 is-center ">
                 <div class="cell"><span class="flex justify-center items-center h-5"></span></div>
               </td>
             </tr>
@@ -311,10 +320,13 @@ exports[`MolecularDatabases should match snapshot 1`] = `
                   <mock-elapsed-time date="group.molecularDatabases.0.createdDT"></mock-elapsed-time>
                 </div>
               </td>
-              <td rowspan="1" colspan="1" class="el-table_1_column_3 is-center ">
-                <div class="cell"><span class="flex justify-center items-center h-5"></span></div>
+              <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                <div class="cell">group.molecularDatabases.0.user.name</div>
               </td>
               <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                <div class="cell"><span class="flex justify-center items-center h-5"></span></div>
+              </td>
+              <td rowspan="1" colspan="1" class="el-table_1_column_5 is-center ">
                 <div class="cell"><span class="flex justify-center items-center h-5"><i class="flex w-6 h-6"><svg data-icon="icon-check"></svg></i></span></div>
               </td>
             </tr>

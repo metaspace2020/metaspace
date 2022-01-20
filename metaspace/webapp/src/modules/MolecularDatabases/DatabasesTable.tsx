@@ -131,6 +131,12 @@ const DatabasesTable = defineComponent<Props>({
               },
             }}
           />
+          <el-table-column
+            prop="user.name"
+            label="Uploaded by"
+            minWidth={144}
+            sortable
+          />
           <CheckColumn
             prop="isPublic"
             label="Public annotations"
