@@ -18,6 +18,7 @@ import { getDatabaseDetails } from './formatting'
 import reportError from '../../lib/reportError'
 import safeJsonParse from '../../lib/safeJsonParse'
 import './DatabaseDetails.scss'
+import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 
 interface DownloadJson{
   filename: string,
@@ -43,6 +44,11 @@ const Details = defineComponent<Props>({
       { id: props.id },
       { fetchPolicy: 'no-cache' },
     )
+    const {
+      result: currentUserResult,
+      loading: userLoading,
+    } = useQuery<CurrentUserRoleResult|any>(currentUserRoleQuery)
+    const currentUser = computed(() => currentUserResult.value != null ? currentUserResult.value.currentUser : null)
 
     onResult(result => {
       if (result && result.errors) {
@@ -84,6 +90,16 @@ const Details = defineComponent<Props>({
         return null
       }
     })
+
+    const canDelete = () => {
+      try {
+        const { database } = result.value
+        const { user } = database
+        return props.canDelete || (currentUser.value.id === user!.id)
+      } catch (e) {
+        return props.canDelete
+      }
+    }
 
     const renderDownload = () => {
       if (!downloadLink.value) {
@@ -151,7 +167,7 @@ const Details = defineComponent<Props>({
                 submit={submitAndRefetch}
               />
               {renderDownload()}
-              { props.canDelete
+              {canDelete()
                 && <DeleteForm
                   class="mt-12"
                   db={database}
