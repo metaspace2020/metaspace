@@ -177,10 +177,12 @@
         v-if="!hidden('rhoSpatial')"
         key="rhoSpatial"
         property="rhoSpatial"
-        label="Spatial metric"
         sortable="custom"
-        min-width="120"
+        min-width="70"
       >
+        <span slot="header">
+          &rho;<sub>spatial</sub>
+        </span>
         <template slot-scope="props">
           <span> {{ props.row.rhoSpatial }} </span>
         </template>
@@ -190,10 +192,12 @@
         v-if="!hidden('rhoSpectral')"
         key="rhoSpectral"
         property="rhoSpectral"
-        label="Spectral metric"
         sortable="custom"
-        min-width="130"
+        min-width="80"
       >
+        <span slot="header">
+          &rho;<sub>spectral</sub>
+        </span>
         <template slot-scope="props">
           <span> {{ props.row.rhoSpectral }} </span>
         </template>
@@ -203,10 +207,12 @@
         v-if="!hidden('rhoChaos')"
         key="rhoChaos"
         property="rhoChaos"
-        label="Chaos metric"
         sortable="custom"
-        min-width="120"
+        min-width="70"
       >
+        <span slot="header">
+          &rho;<sub>chaos</sub>
+        </span>
         <template slot-scope="props">
           <span> {{ props.row.rhoChaos }} </span>
         </template>
@@ -277,7 +283,7 @@
         sortable="custom"
       >
         <template slot-scope="props">
-          {{ props.row.isotopeImages[0].maxIntensity.toFixed(4) }}
+          {{ props.row.isotopeImages[0].maxIntensity.toFixed(1) }}
         </template>
       </el-table-column>
 
@@ -290,7 +296,7 @@
         sortable="custom"
       >
         <template slot-scope="props">
-          {{ props.row.isotopeImages[0].totalIntensity.toFixed(4) }}
+          {{ props.row.isotopeImages[0].totalIntensity.toFixed(1) }}
         </template>
       </el-table-column>
 
@@ -365,7 +371,10 @@
       </div>
 
       <div class="flex w-full items-center justify-end flex-wrap">
-        <el-popover class="mt-1">
+        <el-popover
+          v-if="showCustomCols"
+          class="mt-1"
+        >
           <el-button slot="reference">
             Columns <i class="el-icon-arrow-down">
             </i>
@@ -385,7 +394,8 @@
                 v-else
                 class="el-icon-check invisible"
               />
-              {{ column.label }}
+              <span v-if="column.src.includes('rho')"> &rho;<sub>{{ column.label }}</sub> </span>
+              <span v-else>{{ column.label }}</span>
             </div>
           </div>
         </el-popover>
@@ -426,7 +436,10 @@
           </a>
         </el-popover>
 
-        <div class="ml-2 mt-1">
+        <div
+          v-if="showCustomCols"
+          class="ml-2 mt-1"
+        >
           <el-button
             v-if="isFullScreen"
             class="full-screen-btn"
@@ -534,6 +547,7 @@ export default Vue.extend({
       csvChunkSize: 1000,
       nextCurrentRowIndex: null,
       loadedSnapshotAnnotations: false,
+      showCustomCols: config.features.custom_cols,
       columns: [
         {
           label: 'Lab',
@@ -566,17 +580,17 @@ export default Vue.extend({
           selected: false,
         },
         {
-          label: 'Spatial metric',
+          label: 'spatial',
           src: 'rhoSpatial',
           selected: false,
         },
         {
-          label: 'Spectral metric',
+          label: 'spectral',
           src: 'rhoSpectral',
           selected: false,
         },
         {
-          label: 'Chaos metric',
+          label: 'chaos',
           src: 'rhoChaos',
           selected: false,
         },
@@ -782,6 +796,10 @@ export default Vue.extend({
     },
   },
   created() {
+    if (!this.showCustomCols) { // do not apply custom column settings
+      return
+    }
+
     const localColSettings = getLocalStorage('annotationTableCols')
     const columns = this.columns
     if (Array.isArray(localColSettings)) {
@@ -823,8 +841,8 @@ export default Vue.extend({
     },
 
     hidden(columnLabel) {
-      return this.columns.findIndex((col) => col.src === columnLabel) === -1
-        ? this.hideColumns.indexOf(columnLabel) >= 0
+      return (this.columns.findIndex((col) => col.src === columnLabel) === -1 || !this.showCustomCols)
+        ? (this.hideColumns.indexOf(columnLabel) >= 0 || !this.columns.find((col) => col.src === columnLabel)?.selected)
         : !this.columns.find((col) => col.src === columnLabel)?.selected
     },
 
@@ -947,7 +965,7 @@ export default Vue.extend({
     updateFilter(delta) {
       const filter = Object.assign({}, this.filter, delta)
       this.$store.commit('updateFilter', filter)
-      if (Object.keys(delta).includes('datasetIds')) { // hide dataset related filters if dataset filter added
+      if (Object.keys(delta).includes('datasetIds') && this.showCustomCols) { // hide dataset related filters if dataset filter added
         this.hideDatasetRelatedColumns()
       }
     },
