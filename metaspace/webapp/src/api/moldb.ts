@@ -5,6 +5,7 @@ export interface MolecularDB {
   name: string
   version: string
   isPublic: boolean
+  downloadLink?: string
   fullName?: string
   description?: string
   link?: string
@@ -12,6 +13,11 @@ export interface MolecularDB {
   group: {
     id: number
     shortName: string
+  }
+  user?: {
+    id: string;
+    name: string | null;
+    email: string | null;
   }
   createdDT: string
   archived: boolean
@@ -40,6 +46,8 @@ export const databaseDetailsQuery =
       group {
         id
       }
+      user { id name email}
+      downloadLink
     }
   }`
 
