@@ -226,7 +226,7 @@ export_df['pred_fdr'] = pd.concat(
     ]
 )
 
-export_df.to_csv('local/ml_scoring/prod_impl.csv', index=False)
+export_df.to_csv(data_dir / 'prod_impl.csv', index=False)
 
 #%% Save model to S3
 
