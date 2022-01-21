@@ -109,7 +109,7 @@ const Details = defineComponent<Props>({
       return (
         <div class="margin-reset mt-12 mt-12">
           <h2>Download database</h2>
-          <p>Download the original database TSV file.</p>
+          <p>Download the original database TSV file: <i>{filename}</i>.</p>
           <a href={link} download={filename} class="el-button el-button--primary no-underline mt-5">
             <span>
               Download database
