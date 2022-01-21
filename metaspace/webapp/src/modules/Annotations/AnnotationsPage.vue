@@ -17,12 +17,17 @@
         :xs="24"
         :sm="24"
         :md="24"
-        :lg="tableWidth"
+        :lg="hideImageViewer ? 24 : tableWidth"
       >
-        <annotation-table :hide-columns="hiddenColumns" />
+        <annotation-table
+          :hide-columns="hiddenColumns"
+          :is-full-screen="!hideImageViewer"
+          @screen="toggleHideImageViewer"
+        />
       </el-col>
 
       <el-col
+        v-if="!hideImageViewer"
         id="annot-view-container"
         :xs="24"
         :sm="24"
@@ -95,6 +100,11 @@ export default {
     AnnotationView,
     FilterPanel,
   },
+  data() {
+    return {
+      hideImageViewer: false,
+    }
+  },
   computed: {
     hiddenColumns() {
       const { group, database, datasetIds, colocalizedWith, fdrLevel } = this.filter
@@ -166,6 +176,11 @@ export default {
   destroyed() {
     this.$store.commit('setAnnotation', undefined)
     this.$store.commit('setSnapshotAnnotationIds', undefined)
+  },
+  methods: {
+    toggleHideImageViewer() {
+      this.hideImageViewer = !this.hideImageViewer
+    },
   },
 }
 </script>

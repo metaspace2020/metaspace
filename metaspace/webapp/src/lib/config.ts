@@ -9,6 +9,7 @@ interface Features {
   show_dataset_overview: boolean;
   roi: boolean;
   tic: boolean;
+  custom_cols: boolean;
   ion_thumbs: boolean;
   off_sample: boolean;
   off_sample_col: boolean; // Not a "feature" - just shows an extra column for debugging
@@ -59,6 +60,7 @@ const defaultConfig: ClientConfig = {
     show_dataset_overview: false,
     roi: false,
     tic: true,
+    custom_cols: false,
     ion_thumbs: true,
     off_sample: true,
     off_sample_col: false,
