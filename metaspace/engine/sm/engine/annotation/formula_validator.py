@@ -21,7 +21,19 @@ import pandas as pd
 from scipy.sparse import coo_matrix
 
 from sm.engine.annotation.imzml_reader import ImzMLReader
-from sm.engine.annotation.metrics import spatial_metric, chaos_metric, spectral_metric, mass_metrics
+from sm.engine.annotation.metrics import (
+    spatial_metric,
+    chaos_metric,
+    spectral_metric,
+    mass_metrics,
+    isotope_image_correlation_sd,
+    snr_img,
+    percent_zero,
+    spectra_int_diff,
+    quartile_pxl,
+    decile_pxl,
+    ratio_peaks,
+)
 from sm.engine.ds_config import DSConfig
 
 
@@ -65,6 +77,39 @@ class Metrics:
     # t_chaos: int = 0
     # t_spatial: int = 0
     # t_spectral: int = 0
+
+    # New metrics from previous attempt at ML MSM:
+    # https://github.com/anasilviacs/sm-engine/blob/master/sm/engine/extra_feats/formula_img_validator.py
+    image_corr_01: float = 0.0
+    image_corr_02: float = 0.0
+    image_corr_03: float = 0.0
+    image_corr_12: float = 0.0
+    image_corr_13: float = 0.0
+    image_corr_23: float = 0.0
+    snr: float = 0.0
+    percent_0s: float = 0.0
+    peak_int_diff_0: float = 0.0
+    peak_int_diff_1: float = 0.0
+    peak_int_diff_2: float = 0.0
+    peak_int_diff_3: float = 0.0
+    quart_1: float = 0.0
+    quart_2: float = 0.0
+    quart_3: float = 0.0
+    ratio_peak_01: float = 0.0
+    ratio_peak_02: float = 0.0
+    ratio_peak_03: float = 0.0
+    ratio_peak_12: float = 0.0
+    ratio_peak_13: float = 0.0
+    ratio_peak_23: float = 0.0
+    percentile_10: float = 0.0
+    percentile_20: float = 0.0
+    percentile_30: float = 0.0
+    percentile_40: float = 0.0
+    percentile_50: float = 0.0
+    percentile_60: float = 0.0
+    percentile_70: float = 0.0
+    percentile_80: float = 0.0
+    percentile_90: float = 0.0
 
 
 # Intensity metrics
@@ -172,6 +217,43 @@ def make_compute_image_metrics(
                 if (doc.spatial or 0.0) > 0.0 or calc_all:
                     # with benchmark('chaos'):
                     doc.chaos = chaos_metric(iso_imgs[0], n_levels)
+
+                    (
+                        doc.image_corr_01,
+                        doc.image_corr_02,
+                        doc.image_corr_03,
+                        doc.image_corr_12,
+                        doc.image_corr_13,
+                        doc.image_corr_23,
+                    ) = isotope_image_correlation_sd(iso_imgs_flat)
+                    doc.snr = snr_img(iso_imgs[0])
+                    doc.percent_0s = percent_zero(iso_imgs[0])
+                    (
+                        doc.peak_int_diff_0,
+                        doc.peak_int_diff_1,
+                        doc.peak_int_diff_2,
+                        doc.peak_int_diff_3,
+                    ) = spectra_int_diff(iso_imgs_flat, image_set.theo_ints)
+                    doc.quart_1, doc.quart_2, doc.quart_3 = quartile_pxl(iso_imgs[0])
+                    (
+                        doc.ratio_peak_01,
+                        doc.ratio_peak_02,
+                        doc.ratio_peak_03,
+                        doc.ratio_peak_12,
+                        doc.ratio_peak_13,
+                        doc.ratio_peak_23,
+                    ) = ratio_peaks(iso_imgs_flat)
+                    (
+                        doc.percentile_10,
+                        doc.percentile_20,
+                        doc.percentile_30,
+                        doc.percentile_40,
+                        doc.percentile_50,
+                        doc.percentile_60,
+                        doc.percentile_70,
+                        doc.percentile_80,
+                        doc.percentile_90,
+                    ) = decile_pxl(iso_imgs[0])
 
         doc.msm = (doc.chaos or 0.0) * (doc.spatial or 0.0) * (doc.spectral or 0.0)
 
