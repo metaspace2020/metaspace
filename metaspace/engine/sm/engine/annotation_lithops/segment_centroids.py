@@ -172,7 +172,7 @@ def segment_centroids(
         # and have roughly the same number of formulas.
         max_segm_span = max((formula_segms_df.hi - formula_segms_df.lo).max(), 3)
         if is_intensive_dataset:
-            max_segm_count = int(round(np.clip(centr_n / 1000, 1000, 5000)))
+            max_segm_count = int(round(np.clip(centr_n / 1000, 1000, 2500)))
         else:
             max_segm_count = int(round(np.clip(centr_n / 1000, 1000, 15000)))
         formula_i_groups = []
