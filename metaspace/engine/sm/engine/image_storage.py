@@ -6,6 +6,7 @@ import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
 from io import BytesIO
+from time import sleep
 from typing import List, Tuple, Callable, Dict, Protocol, Union, TYPE_CHECKING
 
 import PIL.Image
@@ -65,7 +66,15 @@ class ImageStorage:
     ) -> str:
         img_id = self._gen_id()
         obj = self._get_object(image_type, ds_id, img_id)
-        obj.put(Body=image_bytes)
+        try:
+            obj.put(Body=image_bytes)
+        except ClientError as e:
+            if 'SlowDown' in str(e):
+                logger.warning('Uploading images too fast. Trying again in 5 seconds')
+                sleep(5)
+                obj.put(Body=image_bytes)
+            else:
+                raise e
         return img_id
 
     def get_image(self, image_type: ImageType, ds_id: str, image_id: str) -> bytes:
