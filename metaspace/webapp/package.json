@@ -57,7 +57,7 @@
     "js-cookie": "^2.2.0",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.10",
-    "marked": "^0.7.0",
+    "marked": "^4.0.10",
     "numeric": "^1.2.6",
     "numpy-parser": "^1.2.3",
     "popper.js": "^1.14.7",

@@ -77,7 +77,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Component, Prop } from 'vue-property-decorator'
-import marked from 'marked'
+import { parse } from 'marked'
 import {
   ViewGroupResult,
 } from '../../api/group'
@@ -150,7 +150,7 @@ export default class GroupDescription extends Vue {
     }
 
     embedMarkdownAsHtml() {
-      return sanitizeIt(marked(this.groupDescriptionAsHtml))
+      return sanitizeIt(parse(this.groupDescriptionAsHtml))
     }
 }
 </script>
