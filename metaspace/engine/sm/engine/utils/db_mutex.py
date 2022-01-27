@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from zlib import adler32
+from hashlib import sha256
 
 from psycopg2 import connect
 
@@ -20,7 +20,10 @@ class DBMutex:
 
     @contextmanager
     def lock(self, resource_name, timeout=60):
-        resource_hash = adler32(resource_name.encode('utf-8'))
+        hash_bytes = sha256(resource_name.encode('utf-8')).digest()
+        # This must be 32-bit and signed. Postgres errors if it's not a valid 32-bit signed integer
+        resource_hash = int.from_bytes(hash_bytes[:4], byteorder='big', signed=True)
+
         conn = connect(**self._dbconfig)
         try:
             with conn.cursor() as curs:
