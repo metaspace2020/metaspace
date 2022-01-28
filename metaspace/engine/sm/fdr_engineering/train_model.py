@@ -1,7 +1,12 @@
 import logging
+import re
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
+from pathlib import Path
 from typing import List
+from urllib.request import urlretrieve
+
 import requests
 
 import numpy as np
@@ -10,7 +15,6 @@ from catboost import CatBoost, Pool
 from metaspace import SMInstance
 
 from sm.engine.annotation.diagnostics import (
-    get_dataset_diagnostics,
     DiagnosticType,
     DiagnosticImageFormat,
     DiagnosticImageKey,
@@ -21,57 +25,86 @@ from sm.engine.annotation.scoring_model import add_derived_features
 logger = logging.getLogger(__name__)
 
 
-def _unpack_fdr_diagnostics(fdr_diagnostic):
-    dfs = {
-        img['key']: pd.read_parquet(BytesIO(requests.get(img['url']).content))
-        for img in fdr_diagnostic['images']
-        if img['format'] == DiagnosticImageFormat.PARQUET
-    }
-    decoy_map_df = dfs[DiagnosticImageKey.DECOY_MAP_DF]
-    formula_map_df = dfs[DiagnosticImageKey.FORMULA_MAP_DF]
-    metrics_df = dfs[DiagnosticImageKey.METRICS_DF]
-    return decoy_map_df, formula_map_df, metrics_df
-
-
-def get_fdr_diagnostics_local(dataset_id):
-    diagnostics = get_dataset_diagnostics(dataset_id)
-    fdr_diagnostics = [diag for diag in diagnostics if diag['type'] == DiagnosticType.FDR_RESULTS]
-    assert len(fdr_diagnostics) == 1, 'This code only supports datasets run with a single molDB'
-
-    return _unpack_fdr_diagnostics(fdr_diagnostics[0])
-
-
-def get_fdr_diagnostics_remote(sm: SMInstance, dataset_id: str):
+def get_fdr_diagnostics(sm: SMInstance, dataset_id: str):
     diagnostics = sm.dataset(id=dataset_id).diagnostics(False)
-    fdr_diagnostics = [diag for diag in diagnostics if diag['type'] == DiagnosticType.FDR_RESULTS]
-    assert len(fdr_diagnostics) == 1, 'This code only supports datasets run with a single molDB'
+    for diag in diagnostics:
+        if diag['type'] == DiagnosticType.FDR_RESULTS:
+            db = diag['database']
+            db_name = f'{db.name}-{db.version}'
 
-    return _unpack_fdr_diagnostics(fdr_diagnostics[0])
+            dfs = {
+                img['key']: pd.read_parquet(BytesIO(requests.get(img['url']).content))
+                for img in diag['images']
+                if img['format'] == DiagnosticImageFormat.PARQUET
+            }
+            decoy_map_df = dfs[DiagnosticImageKey.DECOY_MAP_DF]
+            formula_map_df = dfs[DiagnosticImageKey.FORMULA_MAP_DF]
+            metrics_df = dfs[DiagnosticImageKey.METRICS_DF]
+            yield db_name, decoy_map_df, formula_map_df, metrics_df
 
 
 def get_many_fdr_diagnostics_remote(sm: SMInstance, dataset_ids: List[str]):
+    """Retrieves FDR diagnostics dataframes from a remote server."""
     errors = []
     with ThreadPoolExecutor() as executor:
 
         def _get_ds(i, ds_id):
             print(f'Retrieving dataset {i}/{len(dataset_ids)}: {ds_id}')
             try:
-                return ds_id, *get_fdr_diagnostics_remote(sm, ds_id)
+                for diag in get_fdr_diagnostics(sm, ds_id):
+                    yield ds_id, *diag
             except Exception as e:
                 logger.exception(f'Error retrieving dataset {ds_id}: {e}')
-                return ds_id, e
+                yield ds_id, e
 
-        for ret in executor.map(_get_ds, range(len(dataset_ids)), dataset_ids):
-            if not isinstance(ret[1], Exception):
-                yield ret
-            else:
-                errors.append(ret)
+        for diagset in executor.map(_get_ds, range(len(dataset_ids)), dataset_ids):
+            for diagitem in diagset:
+                if not isinstance(diagitem[1], Exception):
+                    yield diagitem
+                else:
+                    errors.append(diagitem)
     print('Errors:', errors)
 
 
-def get_ranking_data(ds_diags, features):
+def download_fdr_diagnostics(sm: SMInstance, dataset_ids: List[str], output_dir: Path):
+    for i, ds_id in enumerate(dataset_ids):
+        print(f'Downloading diagnostics {i}/{len(dataset_ids)}: {ds_id}')
+        try:
+            diagnostics = sm.dataset(id=ds_id).diagnostics(False)
+            for diag in diagnostics:
+                if diag['type'] == DiagnosticType.FDR_RESULTS:
+                    db = diag['database']
+                    db_name = f'{db.name}-{db.version}'
+                    db_dir = output_dir / db_name
+                    db_dir.mkdir(exist_ok=True, parents=True)
+
+                    for img in diag['images']:
+                        if img['format'] == DiagnosticImageFormat.PARQUET:
+                            img_path = db_dir / f"{ds_id}_{img['key']}.parquet"
+                            urlretrieve(img['url'], img_path)
+
+        except Exception as e:
+            logger.exception(f'Error downloading diagnostic for dataset {ds_id}: {e}')
+
+
+def load_fdr_diagnostics_from_files(path: Path):
+    found_files = defaultdict(dict)
+    for file in path.glob('*.parquet'):
+        m = re.match(r'(.*)_(DECOY_MAP_DF|FORMULA_MAP_DF|METRICS_DF)\.parquet', file.name)
+        if m:
+            ds_id, key = m.groups()
+            found_files[ds_id][key] = file
+
+    for ds_id, files in found_files.items():
+        decoy_map_df = pd.read_parquet(files['DECOY_MAP_DF'])
+        formula_map_df = pd.read_parquet(files['FORMULA_MAP_DF'])
+        metrics_df = pd.read_parquet(files['METRICS_DF'])
+        yield ds_id, path.name, decoy_map_df, formula_map_df, metrics_df
+
+
+def get_ranking_data(ds_diags, features=None, filter_bad_rankings=True):
     def _process_ds(args):
-        i, (ds_id, decoy_map_df, formula_map_df, metrics_df) = args
+        i, (ds_id, db_name, decoy_map_df, formula_map_df, metrics_df) = args
         print(f'Processing dataset {i}: {ds_id}')
         _groups = []
         rankings = list(decoy_map_df.groupby('tm'))
@@ -95,27 +128,16 @@ def get_ranking_data(ds_diags, features):
             # Sanity check: Skip this group if there are <10 annotations that would get FDR<=20%
             # as it's an indicator that the data is bad for some reason (e.g. this adduct shouldn't
             # form at all with this instrument/sample type)
-            all_df = pd.concat([target_df.assign(target=True), decoy_df.assign(target=False)])
-            all_df['fdr'] = run_fdr_ranking_labeled(
-                all_df.chaos * all_df.spatial * all_df.spectral,
-                all_df.target,
-                decoy_sample_size,
-                rule_of_succession=True,
-                monotonic=True,
-            )
-            if np.count_nonzero(all_df.fdr[all_df.target] <= 0.2) < 10:
+
+            if filter_bad_rankings and is_bad_ranking(target_df, decoy_df, decoy_sample_size):
                 print(
-                    f'Skipping {ds_id} {target_modifier} as there are less than 10 FDR<=20% targets'
-                )
-                continue
-            if np.count_nonzero(all_df.fdr[~all_df.target] <= 0.5) < 10:
-                print(
-                    f'Skipping {ds_id} {target_modifier} as there are less than 10 FDR<=50% decoys'
+                    f'Skipping {ds_id} {target_modifier} due to too few low-FDR targets or decoys'
                 )
                 continue
 
             # Add FDR metrics
-            add_derived_features(target_df, decoy_df, decoy_sample_size, features)
+            if features:
+                add_derived_features(target_df, decoy_df, decoy_sample_size, features)
             group_name = f'{ds_id},{target_modifier}'
             merged_df = pd.concat(
                 [
@@ -136,6 +158,22 @@ def get_ranking_data(ds_diags, features):
     groups_df['ds_id'] = groups_df.ds_id.astype('category')
     groups_df['group_name'] = groups_df.group_name.astype('category')
     return groups_df
+
+
+def is_bad_ranking(target_df, decoy_df, decoy_sample_size):
+    all_df = pd.concat([target_df.assign(target=True), decoy_df.assign(target=False)])
+    all_df['fdr'] = run_fdr_ranking_labeled(
+        all_df.chaos * all_df.spatial * all_df.spectral,
+        all_df.target,
+        decoy_sample_size,
+        rule_of_succession=True,
+        monotonic=True,
+    )
+    if np.count_nonzero(all_df.fdr[all_df.target] <= 0.2) < 10:
+        return True
+    if np.count_nonzero(all_df.fdr[~all_df.target] <= 0.5) < 10:
+        return True
+    return False
 
 
 def get_cv_splits(ds_ids, n_folds=5, n_shuffles=1):

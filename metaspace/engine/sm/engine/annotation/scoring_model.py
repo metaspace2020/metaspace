@@ -1,6 +1,7 @@
 import json
 import re
 import logging
+import shutil
 from datetime import datetime
 from hashlib import sha1
 from pathlib import Path
@@ -160,6 +161,36 @@ def load_scoring_model(name: Optional[str]) -> ScoringModel:
         return CatBoostScoringModel(name, model, params)
     else:
         raise ValueError(f'Unsupported scoring model type: {type_}')
+
+
+def save_catboost_scoring_model(
+    model: CatBoost, path_prefix: Union[str, Path], version: str = None
+):
+    """
+    Args:
+        model: The catboost model. Must be trained on a DataFrame so that feature names are included
+        path_prefix: Including model name, e.g. Path('../scoring-models/v3_foo')
+        version: Optional version string, if it has already been calculated
+    """
+    features = model.feature_names_
+    assert features, 'Model should have feature_names_ set'
+
+    with TemporaryDirectory() as tmpdir:
+        # Save CBM (small, faster to load) and JSON (in case it's needed for forward compatibility)
+        temp_path = Path(tmpdir) / 'model.cbm'
+        model.save_model(str(temp_path), format='cbm')
+
+        if version is None:
+            # Add a timestamp and hash to the model path as a crude versioning mechanism,
+            # so that it's possible to recover if the model is accidentally reuploaded
+            timestamp = model.get_metadata().get('train_finish_time', datetime.now().isoformat())
+            timestamp = timestamp.replace(':', '-')
+            version = f'{timestamp}-{sha1(temp_path.read_bytes()).hexdigest()[:8]}'
+
+        dest_path = Path(path_prefix) / f'model-{version}.cbm'
+        shutil.move(temp_path, dest_path)
+
+    return dest_path, version
 
 
 def upload_catboost_scoring_model(
