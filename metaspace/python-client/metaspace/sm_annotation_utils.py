@@ -1341,31 +1341,31 @@ class SMDataset(object):
                 ex.map(download_link, link['files'])
 
     def _get_diagnostic_image(self, image):
-        key = (image['url'], image['format'])
+        url = image['url']
+        fmt = image['format']
+        key = (url, fmt)
         if key not in self._diagnostic_images:
             try:
-                raw = BytesIO(self._session.get(image['url']).content)
+                raw = BytesIO(self._session.get(url).content)
             except Exception:
                 # Retry once in case of network error due to excessive parallelism
-                raw = BytesIO(self._session.get(image['url']).content)
+                raw = BytesIO(self._session.get(url).content)
             try:
-                if format == 'PNG':
+                if fmt == 'PNG':
                     import matplotlib.image as mpimg
 
                     image_content = mpimg.imread(raw)
-                elif format == 'NPY':
+                elif fmt == 'NPY':
                     image_content = np.load(raw, allow_pickle=False)  # type: ignore
-                elif format == 'JSON':
+                elif fmt == 'JSON':
                     image_content = json.load(raw)
-                elif format == 'PARQUET':
+                elif fmt == 'PARQUET':
                     image_content = pd.read_parquet(raw)
                 else:
-                    print(
-                        f'Warning: Unrecognized image format {format}, returning unparsed content'
-                    )
+                    print(f'Warning: Unrecognized format {fmt}, returning unparsed content')
                     image_content = raw
             except Exception as ex:
-                print(f'Warning: Could not parse image {image["url"]}: {ex}')
+                print(f'Warning: Could not parse image {url}: {ex}')
                 image_content = raw
 
             self._diagnostic_images[key] = image_content
@@ -1393,7 +1393,9 @@ class SMDataset(object):
         diagnostics = deepcopy(self._diagnostics)
 
         if include_images:
-            self._mixin_diagnostic_images(image for diag in diagnostics for image in diag['images'])
+            self._mixin_diagnostic_images(
+                [image for diag in diagnostics for image in diag.get('images') or []]
+            )
 
         return diagnostics
 
