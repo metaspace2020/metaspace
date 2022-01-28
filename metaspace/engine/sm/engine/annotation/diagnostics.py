@@ -249,6 +249,7 @@ def _run_diagnostic_fn(ds_id, type_, fn):
     for attempt in range(3):
         try:
             result = fn()
+            break
         except Exception:
             logger.exception(
                 f'Exception generating {type_} diagnostic after {attempt + 1} attempts',

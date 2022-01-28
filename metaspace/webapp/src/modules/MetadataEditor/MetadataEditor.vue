@@ -277,7 +277,7 @@ export default {
         decoySampleSize: isNew ? null : get(config, 'fdr.decoy_sample_size') || null,
         ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
         analysisVersion: isNew ? 1 : get(config, 'analysis_version') || 1,
-        scoringModel: isNew ? null : get(config, 'scoring_model') || null,
+        scoringModel: isNew ? null : get(config, 'fdr.scoring_model') || null,
       }
     },
 
