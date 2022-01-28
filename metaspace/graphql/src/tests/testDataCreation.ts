@@ -6,7 +6,7 @@ import { Project, UserProject as UserProjectModel, UserProjectRoleOptions as UPR
 import { PublicationStatusOptions as PSO } from '../modules/project/Publishing'
 import { PublicationStatus, UserGroupRole, UserProjectRole } from '../binding'
 import { Dataset, DatasetProject } from '../modules/dataset/model'
-import { EngineDataset } from '../modules/engine/model'
+import { DatasetDiagnostic, EngineDataset, Job } from '../modules/engine/model'
 import { Group, UserGroup as UserGroupModel } from '../modules/group/model'
 import { MolecularDB } from '../modules/moldb/model'
 import { isMemberOfGroup } from '../modules/dataset/operation/isMemberOfGroup'
@@ -152,6 +152,7 @@ export const createTestDataset = async(
 ): Promise<Dataset> => {
   return (await createTestDatasetWithEngineDataset(dataset, engineDataset)).dataset
 }
+
 export const createTestDatasetProject = async(
   projectId: string, datasetId: string, approved = true
 ): Promise<DatasetProject> => {
@@ -177,4 +178,26 @@ export const createTestMolecularDB = async(molecularDb: Partial<MolecularDB> = {
     createdDT: moment.utc(),
     ...molecularDb,
   }) as MolecularDB
+}
+
+type RequiredJobFields = Pick<Job, 'datasetId' | 'moldbId'>
+export const createTestJob = async(job: RequiredJobFields & Partial<Job>): Promise<Job> => {
+  return (await testEntityManager.save(Job, {
+    status: 'FINISHED',
+    start: moment.utc(),
+    finish: moment.utc(),
+    ...job,
+  })) as Job
+}
+
+export const createTestDatasetDiagnostic = async(
+  diag: Pick<DatasetDiagnostic, 'datasetId'> & Partial<DatasetDiagnostic>
+): Promise<DatasetDiagnostic> => {
+  const result = await testEntityManager.save(DatasetDiagnostic, {
+    type: 'TIC',
+    data: { min_tic: 2332547584.0, max_tic: 24486256640.0, sum_tic: 4962219196416.0, is_from_metadata: false },
+    images: [{ key: 'TIC', image_id: 'test_image_id', url: 'test_image_url', format: 'NPY' }],
+    ...diag,
+  })
+  return result as unknown as DatasetDiagnostic
 }
