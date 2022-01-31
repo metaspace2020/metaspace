@@ -117,6 +117,14 @@
                 :options="ANALYSIS_VERSION_OPTIONS"
                 @input="val => onInput('analysisVersion', val)"
               />
+              <form-field
+                type="select"
+                name="Scoring model"
+                :value="value.scoringModel || ''"
+                :error="error && error.scoringModel"
+                :options="scoringModelOptions"
+                @input="val => onInput('scoringModel', val ? val : null)"
+              />
             </el-col>
           </el-row>
           <el-row
@@ -211,6 +219,9 @@ export default class MetaspaceOptionsSection extends Vue {
     @Prop({ type: Array, required: true })
     adductOptions!: {value: string, label: string}[];
 
+    @Prop({ type: Array, required: true })
+    scoringModels!: {name: string}[];
+
     @Prop({ type: Boolean, required: true })
     isNewDataset!: boolean;
 
@@ -225,11 +236,20 @@ export default class MetaspaceOptionsSection extends Vue {
     MAX_CHEM_MODS = MAX_CHEM_MODS;
     ANALYSIS_VERSION_OPTIONS = [
       { value: 1, label: 'v1 (Stable)' },
-      { value: 2, label: 'v2 (Development)' },
+      { value: 2, label: 'v2 (Internal)' }, // Nobody uses v2, it can probably be hidden so that v3 can be "2.0"
+      { value: 3, label: 'v3 (ML-Driven)' },
     ];
 
     neutralLossOptions: string[] = [];
     chemModOptions: string[] = [];
+
+    get scoringModelOptions() {
+      return [
+        // FormField doesn't support nulls - using empty string instead, but it needs to be converted to/from null
+        { value: '', label: 'None' },
+        ...(this.scoringModels ?? []).map((m: any) => ({ value: m.name, label: m.name })),
+      ]
+    }
 
     get databaseOptions() {
       return this.databasesByGroup.map(({ shortName, molecularDatabases }) => ({

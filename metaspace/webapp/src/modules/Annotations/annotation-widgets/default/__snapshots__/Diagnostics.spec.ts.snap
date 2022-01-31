@@ -7,24 +7,11 @@ exports[`Diagnostics should match snapshot (no isobars) 1`] = `
   <!---->
   <div class="">
     <div class="el-row" id="scores-table">
-      <div class="msm-score-calc">
-        MSM score =
-        <span>0.657</span> =
-        <span>0.686</span>
-        (ρ<sub>spatial</sub>) ×
-        <span>0.959</span>
-        (ρ<sub>spectral</sub>) ×
-        <span>0.999</span>
-        (ρ<sub>chaos</sub>)
-      </div>
+      <div class="msm-score-calc" mock-v-loading="1">MSM score = <span>0.657</span> = 0.006 (ρ<sub>spatial</sub>) × 0.791 (ρ<sub>spectral</sub>) × 0.998 (ρ<sub>chaos</sub>)</div>
       <div>
         <mock-el-popover trigger="hover" open-delay="100">
-          <div slot-key="default">
-            Image analysis gave an off-sample probability of less than 10%.
-          </div>
-          <div slot-key="reference"><span class="on-sample-tag">
-        On-sample
-      </span></div>
+          <div slot-key="default">Image analysis gave an off-sample probability of less than 10%.</div>
+          <div slot-key="reference"><span class="on-sample-tag">On-sample</span></div>
         </mock-el-popover>
       </div>
     </div>
@@ -205,24 +192,11 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
   </div>
   <div class="ref-annotation-container">
     <div class="el-row" id="scores-table">
-      <div class="msm-score-calc">
-        MSM score =
-        <span>0.657</span> =
-        <span>0.686</span>
-        (ρ<sub>spatial</sub>) ×
-        <span>0.959</span>
-        (ρ<sub>spectral</sub>) ×
-        <span>0.999</span>
-        (ρ<sub>chaos</sub>)
-      </div>
+      <div class="msm-score-calc">MSM score = <span>0.657</span> = 0.006 (ρ<sub>spatial</sub>) × 0.791 (ρ<sub>spectral</sub>) × 0.998 (ρ<sub>chaos</sub>)</div>
       <div>
         <mock-el-popover trigger="hover" open-delay="100">
-          <div slot-key="default">
-            Image analysis gave an off-sample probability of less than 10%.
-          </div>
-          <div slot-key="reference"><span class="on-sample-tag">
-        On-sample
-      </span></div>
+          <div slot-key="default">Image analysis gave an off-sample probability of less than 10%.</div>
+          <div slot-key="reference"><span class="on-sample-tag">On-sample</span></div>
         </mock-el-popover>
       </div>
     </div>
@@ -259,24 +233,11 @@ exports[`Diagnostics should match snapshot (with isobar) 1`] = `
 </div>
 <div class="comp-annotation-container">
   <div class="el-row" id="scores-table">
-    <div class="msm-score-calc">
-      MSM score =
-      <span>0.657</span> =
-      <span>0.686</span>
-      (ρ<sub>spatial</sub>) ×
-      <span>0.959</span>
-      (ρ<sub>spectral</sub>) ×
-      <span>0.999</span>
-      (ρ<sub>chaos</sub>)
-    </div>
+    <div class="msm-score-calc" mock-v-loading="1">MSM score = <span>0.657</span> = 0.006 (ρ<sub>spatial</sub>) × 0.791 (ρ<sub>spectral</sub>) × 0.998 (ρ<sub>chaos</sub>)</div>
     <div>
       <mock-el-popover trigger="hover" open-delay="100">
-        <div slot-key="default">
-          Image analysis gave an off-sample probability of 88%.
-        </div>
-        <div slot-key="reference"><span class="off-sample-tag">
-        Off-sample
-      </span></div>
+        <div slot-key="default">Image analysis gave an off-sample probability of 88%.</div>
+        <div slot-key="reference"><span class="off-sample-tag">Off-sample</span></div>
       </mock-el-popover>
     </div>
   </div>

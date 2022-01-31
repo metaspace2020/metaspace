@@ -19,7 +19,7 @@ import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
-import { EngineDataset } from '../../engine/model'
+import { EngineDataset, ScoringModel } from '../../engine/model'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId'
@@ -110,7 +110,7 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
 
   if (update.adducts || update.neutralLosses || update.chemMods
     || update.ppm || update.numPeaks || update.decoySampleSize
-    || update.analysisVersion) {
+    || update.analysisVersion || update.scoringModel || update.computeUnusedMetrics != null) {
     procSettingsUpd = true
   }
 
@@ -247,6 +247,18 @@ const setDatabaseIdsInInput = async(
   }
 }
 
+const assertValidScoringModel = async(ctx: Context, scoringModel?: string | null) => {
+  if (scoringModel != null) {
+    const sm = await ctx.entityManager.findOne(ScoringModel, { where: { name: scoringModel } })
+    if (sm == null) {
+      throw new UserError(JSON.stringify({
+        type: 'failed_validation',
+        validation_errors: [{ dataPath: '.metaspaceOptions.scoringModel', message: 'Invalid Scoring Model' }],
+      }))
+    }
+  }
+}
+
 const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   const { input, priority, force, delFirst, skipValidation, useLithops } = args
   const datasetId = args.id || newDatasetId()
@@ -279,6 +291,7 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
 
   await setDatabaseIdsInInput(ctx.entityManager, input)
   await assertUserCanUseMolecularDBs(ctx, input.databaseIds as number[])
+  await assertValidScoringModel(ctx, input.scoringModel)
 
   // Only admins can specify the submitterId
   const submitterId = (ctx.isAdmin && input.submitterId) || (dataset && dataset.userId) || ctx.user.id

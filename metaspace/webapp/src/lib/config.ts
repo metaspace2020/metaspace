@@ -29,6 +29,7 @@ interface Features {
   multiple_ion_images: boolean;
   lock_intensity: boolean;
   lithops: boolean;
+  raw_fdr: boolean;
 }
 
 interface ClientConfig {
@@ -80,6 +81,7 @@ const defaultConfig: ClientConfig = {
     multiple_ion_images: true,
     lock_intensity: false,
     lithops: false,
+    raw_fdr: false,
   },
 }
 

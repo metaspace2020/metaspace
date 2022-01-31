@@ -3,9 +3,9 @@ import logging
 from datetime import datetime
 from typing import Dict
 
+from sm.engine.config import SMConfig
 from sm.engine.ds_config import DSConfig
 from sm.engine.errors import UnknownDSID
-from sm.engine.config import SMConfig
 
 logger = logging.getLogger('engine')
 
@@ -49,6 +49,8 @@ FLAT_DS_CONFIG_KEYS = frozenset(
         'decoy_sample_size',
         'neutral_losses',
         'chem_mods',
+        'compute_unused_metrics',
+        'scoring_model',
     }
 )
 
@@ -223,6 +225,7 @@ def _get_isotope_generation_from_metadata(metadata):
     return default_adducts, charge, isocalc_sigma, instrument
 
 
+# pylint: disable=too-many-arguments
 def generate_ds_config(
     metadata,
     analysis_version=None,
@@ -234,12 +237,15 @@ def generate_ds_config(
     decoy_sample_size=None,
     neutral_losses=None,
     chem_mods=None,
+    compute_unused_metrics=None,
+    scoring_model=None,
 ) -> DSConfig:
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
     analysis_version = analysis_version or 1
     iso_params = _get_isotope_generation_from_metadata(metadata)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
+    default_scoring_model = 'v3_default' if analysis_version >= 3 else None
 
     return {
         'database_ids': moldb_ids,
@@ -253,8 +259,16 @@ def generate_ds_config(
             'neutral_losses': neutral_losses or [],
             'chem_mods': chem_mods or [],
         },
-        'fdr': {'decoy_sample_size': decoy_sample_size or 20},
-        'image_generation': {'ppm': ppm or 3, 'n_levels': 30, 'min_px': min_px or 1},
+        'fdr': {
+            'decoy_sample_size': decoy_sample_size or 20,
+            'scoring_model': scoring_model or default_scoring_model,
+        },
+        'image_generation': {
+            'ppm': ppm or 3,
+            'n_levels': 30,
+            'min_px': min_px or 1,
+            'compute_unused_metrics': compute_unused_metrics or False,
+        },
     }
 
 
@@ -280,6 +294,8 @@ def update_ds_config(old_config, metadata, **kwargs):
         'decoy_sample_size': fdr.get('decoy_sample_size'),
         'ppm': image_generation.get('ppm'),
         'min_px': image_generation.get('min_px'),
+        'compute_unused_metrics': image_generation.get('compute_unused_metrics'),
+        'scoring_model': fdr.get('scoring_model'),
     }
 
     for k, v in old_vals.items():

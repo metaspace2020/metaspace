@@ -7,8 +7,9 @@ import {
   DatasetDiagnostic as DatasetDiagnosticModel,
   EngineDataset,
   OpticalImage as OpticalImageModel,
+  ScoringModel as ScoringModelModel,
 } from '../../engine/model'
-import { Dataset, OpticalImage, OpticalImageType } from '../../../binding'
+import { Dataset, OpticalImage, OpticalImageType, ScoringModel } from '../../../binding'
 import getScopeRoleForEsDataset from '../operation/getScopeRoleForEsDataset'
 import logger from '../../../utils/logger'
 import config from '../../../utils/config'
@@ -464,6 +465,17 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       })
     })
     return await dataloader.load(ds._source.ds_id)
+  },
+
+  async scoringModel(ds: DatasetSource, args, ctx: Context): Promise<ScoringModel | null> {
+    const name = ds._source.ds_config?.fdr?.scoring_model
+    if (name) {
+      return await ctx.contextCacheGet('getScoringModelByName', [name], async name => {
+        return ctx.entityManager.findOneOrFail(ScoringModelModel, { where: { name } })
+      })
+    } else {
+      return null
+    }
   },
 }
 

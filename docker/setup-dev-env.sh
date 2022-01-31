@@ -12,9 +12,10 @@ docker-compose up -d
 
 
 # set up molecular DB
+docker-compose run --rm api /sm-engine/install-dbs.sh
 
-# This is currently broken as the databases no longer pass validation
-# docker-compose run --rm api /sm-engine/install-dbs.sh
-
-# Mol images
+# download mol images (Excluded because it's slow and rarely needed)
 # ./fetch-mol-images.sh
+
+# set up ML Scoring Model
+docker-compose run --rm api /sm-engine/install-scoring-model.sh

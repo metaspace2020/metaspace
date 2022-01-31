@@ -25,6 +25,13 @@ describe('Diagnostics', () => {
       ints: [1, 0.6],
     },
   })
+
+  const metrics = {
+    chaos: 0.9976041666666666,
+    spatial: 0.005921380836044965,
+    spectral: 0.7906196869421936,
+  }
+  const metricsJson = JSON.stringify(metrics)
   const baseAnnotation = {
     id: '2019-10-15_17h02m31s_7277991',
     ion: 'C19H18N2O7S2-H+',
@@ -42,6 +49,10 @@ describe('Diagnostics', () => {
     dataset: {
       id: '2019-02-12_15h55m06s',
       name: 'Untreated_3_434',
+      scoringModel: null,
+      configJson: JSON.stringify({
+        fdr: { scoring_model: null },
+      }),
     },
     databaseDetails: {
       id: 24,
@@ -72,6 +83,7 @@ describe('Diagnostics', () => {
         totalIntensity: 10000,
       },
     ],
+    metricsJson,
   }
   const isobarAnnotation = {
     ...baseAnnotation,
@@ -113,7 +125,7 @@ describe('Diagnostics', () => {
     initMockGraphqlClient({
       Query: () => ({
         allAnnotations: () => ([]),
-        annotation: ({ id }: {id: string}) => ({ id, peakChartData }),
+        annotation: ({ id }: {id: string}) => ({ ...baseAnnotation, id, peakChartData }),
       }),
     })
     const propsData = {
@@ -133,7 +145,11 @@ describe('Diagnostics', () => {
     initMockGraphqlClient({
       Query: () => ({
         allAnnotations: () => ([isobarAnnotation]),
-        annotation: ({ id }: {id: string}) => ({ id, peakChartData }),
+        annotation: (_: any, { id }: {id: string}) => ({
+          ...(id === isobarAnnotation.id ? isobarAnnotation : baseAnnotation),
+          id,
+          peakChartData,
+        }),
       }),
     })
     const reportErrorFunc = jest.spyOn(reportErrorModule, 'default')

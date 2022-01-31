@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Dict, Tuple, Optional
+from typing import List, Tuple, Optional, Iterator, Any
 
 import numpy as np
 import pandas as pd
@@ -11,14 +11,15 @@ from scipy.sparse import coo_matrix
 from sm.engine.annotation.formula_validator import (
     compute_and_filter_metrics,
     make_compute_image_metrics,
-    MetricsDict,
-    METRICS,
+    Metrics,
+    EMPTY_METRICS_DF,
+    FormulaImageSet,
 )
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, load_cobj, CObj, load_cobjs
 from sm.engine.ds_config import DSConfig
-from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.utils.perf_profile import Profiler
 
 ImagesRow = Tuple[int, int, List[coo_matrix]]
@@ -28,23 +29,23 @@ logger = logging.getLogger('annotation-pipeline')
 class ImagesManager:
     """
     Collects ion images (in sparse coo_matrix format) and formula metrics.
-    Images are progressively saved to COS in chunks specified by `max_formula_images_size` to
-    prevent using too much memory.
+    Images are progressively saved to COS in chunks specified by `chunk_size` to
+    prevent using too much memory, and to control the batch size during PNG conversion.
     """
 
-    chunk_size = 100 * 1024 ** 2  # 100MB
+    chunk_size = 50 * 1024 ** 2  # 50MB
 
     def __init__(self, storage: Storage):
 
-        self._formula_metrics: Dict[int, MetricsDict] = {}
+        self._formula_metrics: List[Metrics] = []
         self._images_buffer: List[ImagesRow] = []
         self._images_dfs: List[pd.DataFrame] = []
 
         self._formula_images_size = 0
         self._storage = storage
 
-    def append(self, f_i: int, f_metrics: MetricsDict, f_images: Optional[List[coo_matrix]]):
-        self._formula_metrics[f_i] = f_metrics
+    def append(self, f_i: int, f_metrics: Metrics, f_images: Optional[List[coo_matrix]]):
+        self._formula_metrics.append(f_metrics)
 
         if f_images:
             size = ImagesManager.images_size(f_images)
@@ -86,10 +87,15 @@ class ImagesManager:
     def finish(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         self._flush_images()
         if len(self._formula_metrics) > 0:
-            formula_metrics_df = pd.DataFrame.from_dict(self._formula_metrics, orient='index')
+            formula_metrics_df = pd.DataFrame(self._formula_metrics)
+            unknown_fields = set(self._formula_metrics[0].__dict__.keys()) - set(
+                formula_metrics_df.columns
+            )
+            if unknown_fields:
+                print('Unknown fields: ' + "\n".join(sorted(unknown_fields)))
         else:
-            formula_metrics_df = pd.DataFrame([METRICS]).iloc[:0]
-        formula_metrics_df.index.name = 'formula_i'
+            formula_metrics_df = EMPTY_METRICS_DF
+        formula_metrics_df = formula_metrics_df.set_index('formula_i')
 
         if len(self._images_dfs) > 0:
             images_df = pd.concat(self._images_dfs)
@@ -101,42 +107,60 @@ class ImagesManager:
         return formula_metrics_df, images_df
 
 
-def gen_iso_image_sets(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc_wrapper, n_peaks):
+def gen_iso_image_sets(
+    sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, isocalc_wrapper, n_peaks
+) -> Iterator[FormulaImageSet]:
     # pylint: disable=too-many-locals
     # assume sp data is sorted by mz order ascending
 
     def yield_buffer(buffer):
-        while len(buffer) < n_peaks:
-            buffer.append((buffer[0][0], len(buffer) - 1, 0, None))
-        buffer = np.array(buffer)
-        buffer = buffer[buffer[:, 1].argsort()]  # sort order by peak ascending
-        buffer = pd.DataFrame(buffer, columns=['formula_i', 'peak_i', 'centr_ints', 'image'])
-        buffer.sort_values('peak_i', inplace=True)
-        return buffer.formula_i[0], buffer.centr_ints, buffer.image
+        buffer = sorted(buffer, key=lambda row: row[0].peak_i)
+        first_row = buffer[0][0]
+        image_set = FormulaImageSet(
+            formula_i=first_row.formula_i,
+            is_target=first_row.target,
+            targeted=first_row.targeted,
+            theo_mzs=[0.0] * n_peaks,
+            theo_ints=[0.0] * n_peaks,
+            images=[None] * n_peaks,
+            mz_images=[None] * n_peaks,
+        )
+
+        for row, ints_img, mz_img in buffer:
+            image_set.theo_mzs[row.peak_i] = row.mz
+            image_set.theo_ints[row.peak_i] = row.int
+            image_set.images[row.peak_i] = ints_img
+            image_set.mz_images[row.peak_i] = mz_img
+
+        return image_set
 
     if len(sp_inds) > 0:
         centr_df = centr_df.sort_values(['formula_i', 'peak_i'])
         lower_mz, upper_mz = isocalc_wrapper.mass_accuracy_bounds(centr_df.mz.values)
-        centr_df = centr_df.assign(
+        cols = ['formula_i', 'peak_i', 'int', 'mz', 'target', 'targeted']
+        centr_df = centr_df[cols].assign(
             lower_idx=np.searchsorted(sp_mzs, lower_mz, 'l'),
             upper_idx=np.searchsorted(sp_mzs, upper_mz, 'r'),
-        )[['formula_i', 'peak_i', 'int', 'lower_idx', 'upper_idx']]
+        )
 
-        buffer = []
-        for formula_i, peak_i, ints, lower_i, upper_i in centr_df.itertuples(False, None):
-            if len(buffer) != 0 and buffer[0][0] != formula_i:
+        buffer: List[Tuple[Any, coo_matrix, coo_matrix]] = []
+        for row in centr_df.itertuples(False):
+            if len(buffer) != 0 and buffer[0][0].formula_i != row.formula_i:
                 yield yield_buffer(buffer)
                 buffer = []
 
-            m = None
-            if upper_i > lower_i:
-                data = sp_ints[lower_i:upper_i]
-                inds = sp_inds[lower_i:upper_i]
-                row_inds, col_inds = np.divmod(inds, ncols)
-                row_inds = row_inds.astype(np.uint16)
-                col_inds = col_inds.astype(np.uint16)
-                m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
-            buffer.append((formula_i, peak_i, ints, m))
+            image = None
+            mz_image = None
+            if row.upper_idx > row.lower_idx:
+                # Copy arrays so that these slices don't pin the whole dataset segment in memory
+                ints = sp_ints[row.lower_idx : row.upper_idx].astype('f', copy=True)
+                mzs = sp_mzs[row.lower_idx : row.upper_idx].astype('f', copy=True)
+                inds = sp_inds[row.lower_idx : row.upper_idx]
+                row_inds, col_inds = np.divmod(inds, ncols, dtype='i')
+                # The row_inds/col_inds can be safely shared between the two coo_matrixes
+                image = coo_matrix((ints, (row_inds, col_inds)), shape=(nrows, ncols), copy=False)
+                mz_image = coo_matrix((mzs, (row_inds, col_inds)), shape=(nrows, ncols), copy=False)
+            buffer.append((row, image, mz_image))
 
         if len(buffer) != 0:
             yield yield_buffer(buffer)
@@ -226,10 +250,10 @@ def process_centr_segments(
     isocalc_wrapper = IsocalcWrapper(ds_config)
     image_gen_config = ds_config['image_generation']
     n_peaks = ds_config['isotope_generation']['n_peaks']
-    compute_metrics = make_compute_image_metrics(imzml_reader.mask, nrows, ncols, image_gen_config)
+    compute_metrics = make_compute_image_metrics(imzml_reader, ds_config)
     min_px = image_gen_config['min_px']
     # TODO: Get available memory from Lithops somehow so it updates if memory is increased on retry
-    pw_mem_mb = 2048 if is_intensive_dataset else 1024
+    pw_mem_mb = 4096 if is_intensive_dataset else 2048
 
     def process_centr_segment(
         db_segm_cobject: CObj[pd.DataFrame], *, storage: Storage, perf: Profiler
@@ -270,8 +294,6 @@ def process_centr_segments(
         for f_i, f_metrics, f_images in compute_and_filter_metrics(
             formula_image_set_it,
             compute_metrics,
-            target_formula_inds=set(centr_df.formula_i[centr_df.target]),
-            targeted_database_formula_inds=set(centr_df.formula_i[centr_df.targeted]),
             min_px=min_px,
         ):
             images_manager.append(f_i, f_metrics, f_images)
@@ -284,7 +306,11 @@ def process_centr_segments(
 
     logger.info('Annotating...')
     formula_metrics_list, image_lookups_list = fexec.map_unpack(
-        process_centr_segment, [(co,) for co in db_segms_cobjs], runtime_memory=pw_mem_mb
+        process_centr_segment,
+        [(co,) for co in db_segms_cobjs],
+        runtime_memory=pw_mem_mb,
+        max_memory=4096,
+        # debug_run_locally=True,
     )
     formula_metrics_df = pd.concat(formula_metrics_list)
     images_df = pd.concat(image_lookups_list)

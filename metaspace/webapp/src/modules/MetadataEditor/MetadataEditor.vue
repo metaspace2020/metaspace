@@ -83,6 +83,7 @@
           :default-db="defaultDb"
           :adduct-options="adductOptions"
           :is-new-dataset="isNew"
+          :scoring-models="scoringModels"
         />
         <form-section
           v-for="sectionKey in otherSections"
@@ -190,6 +191,7 @@ export default {
       defaultDb: null,
       molDBsByGroup: [],
       possibleAdducts: {},
+      scoringModels: [],
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
       submitter: null,
       initialValue: null,
@@ -275,6 +277,7 @@ export default {
         decoySampleSize: isNew ? null : get(config, 'fdr.decoy_sample_size') || null,
         ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
         analysisVersion: isNew ? 1 : get(config, 'analysis_version') || 1,
+        scoringModel: isNew ? null : get(config, 'fdr.scoring_model') || null,
       }
     },
 
@@ -414,11 +417,12 @@ export default {
       const metadata = this.importMetadata(loadedMetadata, mdType)
 
       // Load options
-      const { adducts, molecularDatabases } = options
+      const { adducts, molecularDatabases, scoringModels } = options
       this.possibleAdducts = {
         Positive: adducts.filter(a => a.charge > 0),
         Negative: adducts.filter(a => a.charge < 0),
       }
+      this.scoringModels = scoringModels
       this.defaultDb = molecularDatabases.find((db) => db.default) || {}
       this.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
       this.schema = deriveFullSchema(metadataSchemas[mdType])

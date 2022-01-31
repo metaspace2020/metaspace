@@ -310,8 +310,7 @@
         min-width="60"
       >
         <template slot-scope="props">
-          <span v-if="props.row.fdrLevel == null">&mdash;</span>
-          <span v-else>{{ Math.round(props.row.fdrLevel * 100) }}%</span>
+          <span>{{ formatFDR(props.row) }}</span>
         </template>
       </el-table-column>
 
@@ -866,6 +865,26 @@ export default Vue.extend({
     formatMSM: (row, col) => row.msmScore.toFixed(3),
     formatMZ: (row, col) => row.mz.toFixed(4),
     formatDatasetName: (row, col) => row.dataset.name,
+    formatFDR: ({ fdrLevel }) => {
+      if (fdrLevel == null) {
+        // Annotations in targeted DBs don't get FDR values
+        return '\u2014' // &mdash;
+      } else if (config.features.raw_fdr) {
+        if (fdrLevel <= 0.005) {
+          return '< 1%' // Never show "0%", as it's misleading
+        } else {
+          return Math.round(fdrLevel * 100) + '%'
+        }
+      } else {
+        // Snap to nearest FDR threshold
+        for (const level of [5, 10, 20, 50]) {
+          if (fdrLevel * 100 <= level + 0.1) {
+            return `${level}%`
+          }
+        }
+        return '> 50%'
+      }
+    },
 
     onSortChange(event) {
       this.clearCurrentRow()

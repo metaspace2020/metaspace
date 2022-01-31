@@ -210,6 +210,14 @@ export default {
             message: 'Please fix the highlighted fields and submit again',
             type: 'error',
           })
+        } else if (graphQLError && graphQLError.type === 'dataset_busy') {
+          if (this.currentUser && this.currentUser.role === 'admin' && await this.confirmForce()) {
+            return this.saveDataset(datasetId, payload, { ...options, force: true })
+          }
+          this.$message({
+            message: 'This dataset is busy. Please wait until it has finished processing before making changes.',
+            type: 'error',
+          })
         } else if (graphQLError && graphQLError.type === 'under_review_or_published') {
           this.errorMessage =
             'Your changes could not be saved because the dataset is under review or published.'
@@ -250,6 +258,22 @@ export default {
       try {
         await this.$confirm('There were validation errors. Save anyway?',
           'Validation errors',
+          {
+            type: 'warning',
+            confirmButtonText: 'Continue',
+            cancelButtonText: 'Cancel',
+          })
+        return true
+      } catch (e) {
+        // Ignore - user clicked cancel
+        return false
+      }
+    },
+
+    async confirmForce() {
+      try {
+        await this.$confirm('This dataset is queued or processing. Save anyway?',
+          'Dataset busy',
           {
             type: 'warning',
             confirmButtonText: 'Continue',

@@ -57,7 +57,8 @@
     </div>
     <div :class="comparisonAnnotationGroup ? 'ref-annotation-container' : ''">
       <diagnostics-metrics
-        :annotation="annotation"
+        :loading="loading"
+        :annotation="diagnosticsData"
       />
       <diagnostics-images
         :annotation="annotation"
@@ -95,7 +96,8 @@
       class="comp-annotation-container"
     >
       <diagnostics-metrics
-        :annotation="comparisonAnnotationGroup.annotations[0]"
+        :loading="comparisonLoading"
+        :annotation="comparisonDiagnosticsData"
       />
       <diagnostics-images
         :annotation="comparisonAnnotationGroup.annotations[0]"
@@ -122,7 +124,7 @@ import DiagnosticsImages from './DiagnosticsImages.vue'
 import DiagnosticsPlot from '../DiagnosticsPlot.vue'
 import CandidateMoleculesPopover from '../CandidateMoleculesPopover.vue'
 import { groupBy, intersection, sortBy, xor } from 'lodash-es'
-import { peakChartDataQuery, isobarsQuery } from '../../../../api/annotation'
+import { diagnosticsDataQuery, isobarsQuery } from '../../../../api/annotation'
 import { renderMassShift, renderMolFormula, renderMolFormulaHtml } from '../../../../lib/util'
 import safeJsonParse from '../../../../lib/safeJsonParse'
 import reportError from '../../../../lib/reportError'
@@ -145,21 +147,32 @@ interface AnnotationGroup {
     CandidateMoleculesPopover,
   },
   apollo: {
-    peakChartData: {
-      query: peakChartDataQuery,
+    diagnosticsData: {
+      query: diagnosticsDataQuery,
       loadingKey: 'loading',
       fetchPolicy: 'cache-first',
       update: (data: any) => {
-        const { annotation } = data
-        if (annotation != null) {
-          return safeJsonParse(annotation.peakChartData)
-        } else {
-          return null
-        }
+        return data.annotation
       },
       variables(): any {
         return {
           id: this.annotation.id,
+        }
+      },
+    },
+    comparisonDiagnosticsData: {
+      query: diagnosticsDataQuery,
+      loadingKey: 'comparisonLoading',
+      fetchPolicy: 'cache-first',
+      update: (data: any) => {
+        return data.annotation
+      },
+      skip() {
+        return this.comparisonAnnotationGroup?.annotations[0].id == null
+      },
+      variables(): any {
+        return {
+          id: this.comparisonAnnotationGroup?.annotations[0].id,
         }
       },
     },
@@ -197,7 +210,9 @@ export default class Diagnostics extends Vue {
     imageLoaderSettings: any;
 
     loading = 0;
-    peakChartData: any;
+    comparisonLoading = 0;
+    diagnosticsData: any;
+    comparisonDiagnosticsData: any;
     isobarAnnotations: any[] = [];
     // Keep track of the last ionFormula used for fetching isobars, so that discrepancies can be reported
     isobarAnnotationsIonFormula: string | null = null;
@@ -211,6 +226,10 @@ export default class Diagnostics extends Vue {
           && !this.annotationGroups.some(ag => ag.ionFormula === this.comparisonIonFormula)) {
         this.comparisonIonFormula = null
       }
+    }
+
+    get peakChartData() {
+      return this.diagnosticsData != null ? safeJsonParse(this.diagnosticsData.peakChartData) : null
     }
 
     get annotationGroups(): AnnotationGroup[] {

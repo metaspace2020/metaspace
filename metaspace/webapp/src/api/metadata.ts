@@ -87,9 +87,9 @@ export const fetchAutocompleteSuggestionsQuery =
 
 export const updateDatasetQuery =
   gql`mutation ($id: String!, $reprocess: Boolean, $skipValidation: Boolean, $input: DatasetUpdateInput!,
-                $useLithops: Boolean) {
+                $useLithops: Boolean, $force: Boolean) {
     updateDataset(id: $id, input: $input, reprocess: $reprocess, skipValidation: $skipValidation, priority: 1,
-                  useLithops: $useLithops)
+                  useLithops: $useLithops, force: $force)
   }`
 
 // TODO: use autocompletion for filter values, same as on the upload page
@@ -142,6 +142,7 @@ export const metadataOptionsQuery = gql`query metadataOptionsQuery {
     }
   }
   adducts: adductSuggestions{adduct, name, charge, default, hidden}
+  scoringModels {id, name}
 }`
 
 export const colocalizationAlgosQuery = gql`query colocalizationAlgosQuery {

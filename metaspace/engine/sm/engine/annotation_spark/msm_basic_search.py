@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from shutil import rmtree
-from typing import Tuple, List, Set, Iterable
+from typing import Tuple, List, Set, Iterable, Optional
 
 import numpy as np
 import pandas as pd
@@ -10,8 +10,12 @@ from pyspark.files import SparkFiles
 from pyspark.storagelevel import StorageLevel
 
 from sm.engine import molecular_db
+from sm.engine.annotation.diagnostics import FdrDiagnosticBundle
+from sm.engine.annotation.fdr import FDR
 from sm.engine.annotation.formula_centroids import CentroidsGenerator
-from sm.engine.annotation.imzml_reader import ImzMLReader
+from sm.engine.annotation.imzml_reader import FSImzMLReader
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation.scoring_model import ScoringModel, load_scoring_model
 from sm.engine.annotation_spark.formula_imager import create_process_segment
 from sm.engine.annotation_spark.segmenter import (
     calculate_centroids_segments_n,
@@ -23,12 +27,10 @@ from sm.engine.annotation_spark.segmenter import (
     segment_ds,
     spectra_sample_gen,
 )
-from sm.engine.ds_config import DSConfig
-from sm.engine.annotation.fdr import FDR
-from sm.engine.formula_parser import safe_generate_ion_formula
-from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
-from sm.engine.molecular_db import MolecularDB
 from sm.engine.config import SMConfig
+from sm.engine.ds_config import DSConfig
+from sm.engine.formula_parser import safe_generate_ion_formula
+from sm.engine.molecular_db import MolecularDB
 from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')
@@ -99,14 +101,21 @@ def _left_merge(df1, df2, on):
     return pd.merge(df1.reset_index(), df2, how='left', on=on).set_index(df1.index.name or 'index')
 
 
-def compute_fdr(fdr, formula_metrics_df, formula_map_df) -> pd.DataFrame:
+def compute_fdr(fdr, formula_metrics_df, formula_map_df, scoring_model) -> pd.DataFrame:
     """Compute fdr and filter formulas."""
 
     moldb_ion_metrics_df = _left_merge(formula_metrics_df, formula_map_df, on='ion_formula')
-    formula_fdr_df = fdr.estimate_fdr(moldb_ion_metrics_df[['formula', 'modifier', 'msm']])
+    formula_fdr_df = fdr.estimate_fdr(moldb_ion_metrics_df, scoring_model)
     # fdr is computed only for target modification ions
+    overwritten_cols = (
+        set(moldb_ion_metrics_df)
+        .intersection(formula_fdr_df.columns)
+        .difference({'formula', 'modifier'})
+    )
     moldb_ion_metrics_df = _left_merge(
-        moldb_ion_metrics_df, formula_fdr_df, on=['formula', 'modifier']
+        moldb_ion_metrics_df.drop(columns=overwritten_cols),
+        formula_fdr_df,
+        on=['formula', 'modifier'],
     )
     return moldb_ion_metrics_df
 
@@ -117,13 +126,15 @@ def compute_fdr_and_filter_results(
     ion_formula_map_df: pd.DataFrame,
     formula_metrics_df: pd.DataFrame,
     formula_images_rdd: pyspark.RDD,
-) -> Tuple[pd.DataFrame, pyspark.RDD]:
+    scoring_model: Optional[ScoringModel],
+) -> Tuple[pd.DataFrame, pyspark.RDD, FdrDiagnosticBundle]:
     """Compute FDR for database annotations and filter them."""
 
     moldb_formula_map_df = ion_formula_map_df[ion_formula_map_df.moldb_id == moldb.id].drop(
         'moldb_id', axis=1
     )
-    moldb_metrics_fdr_df = compute_fdr(fdr, formula_metrics_df, moldb_formula_map_df)
+    moldb_metrics_fdr_df = compute_fdr(fdr, formula_metrics_df, moldb_formula_map_df, scoring_model)
+
     if not moldb.targeted:
         max_fdr = 0.5
         moldb_metrics_fdr_df = moldb_metrics_fdr_df[moldb_metrics_fdr_df.fdr <= max_fdr]
@@ -137,14 +148,35 @@ def compute_fdr_and_filter_results(
     moldb_ion_metrics_df = moldb_metrics_fdr_df.merge(
         fdr.target_modifiers_df, left_on='modifier', right_index=True
     )
-    return moldb_ion_metrics_df, moldb_ion_images_rdd
+
+    # Extract the metrics for just this database, avoiding duplicates and handling missing rows
+    all_metrics_df = formula_metrics_df.merge(
+        moldb_formula_map_df.index.rename('formula_i').drop_duplicates().to_frame(index=True)[[]],
+        left_index=True,
+        right_index=True,
+        how='inner',
+    )
+
+    formula_map_df = (
+        moldb_formula_map_df.drop(columns=['ion_formula'])
+        .rename_axis(index='formula_i')
+        .reset_index()
+    )
+    fdr_bundle = FdrDiagnosticBundle(
+        decoy_sample_size=fdr.decoy_sample_size,
+        decoy_map_df=fdr.td_df,
+        formula_map_df=formula_map_df,
+        metrics_df=all_metrics_df,
+    )
+
+    return moldb_ion_metrics_df, moldb_ion_images_rdd, fdr_bundle
 
 
 class MSMSearch:
     def __init__(
         self,
         spark_context: pyspark.SparkContext,
-        imzml_reader: ImzMLReader,
+        imzml_reader: FSImzMLReader,
         moldbs: List[MolecularDB],
         ds_config: DSConfig,
         ds_data_path: Path,
@@ -260,13 +292,16 @@ class MSMSearch:
 
         return target_formula_inds, targeted_database_formula_inds
 
-    def search(self) -> Iterable[Tuple[pd.DataFrame, pyspark.RDD]]:
+    def search(self) -> Iterable[Tuple[pd.DataFrame, pyspark.RDD, FdrDiagnosticBundle]]:
         """Search, score, and compute FDR for all MolecularDB formulas.
 
         Yields:
             tuple of (ion metrics, ion images)
         """
         logger.info('Running molecule search')
+
+        scoring_model = load_scoring_model(self._ds_config['fdr'].get('scoring_model'))
+        self._perf.record_entry('loaded scoring model')
 
         ds_segments = self.define_segments_and_segment_ds(ds_segm_size_mb=20)
         self._perf.record_entry('segmented ds')
@@ -298,9 +333,7 @@ class MSMSearch:
 
         process_centr_segment = create_process_segment(
             ds_segments,
-            self._imzml_reader.mask,
-            self._imzml_reader.h,
-            self._imzml_reader.w,
+            self._imzml_reader,
             self._ds_config,
             target_formula_inds,
             targeted_database_formula_inds,
@@ -313,5 +346,10 @@ class MSMSearch:
 
         for moldb, fdr in moldb_fdr_list:
             yield compute_fdr_and_filter_results(
-                moldb, fdr, ion_formula_map_df, formula_metrics_df, formula_images_rdd
+                moldb,
+                fdr,
+                ion_formula_map_df,
+                formula_metrics_df,
+                formula_images_rdd,
+                scoring_model,
             )
