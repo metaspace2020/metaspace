@@ -247,6 +247,18 @@ export default {
         this.submitter = result.data.user
       }
     },
+    async 'metaspaceOptions.analysisVersion'(newAnalysisVersion) {
+      // Unset scoringModel if changing to analysis_version 1. Reset initial/default scoring model if changing back.
+      if (newAnalysisVersion === 1 && this.metaspaceOptions.scoringModel != null) {
+        this.metaspaceOptions.scoringModel = null
+      } else if (
+        newAnalysisVersion !== 1
+        && this.metaspaceOptions.scoringModel == null
+        && (this.initialMetaspaceOptions?.scoringModel != null || this.scoringModels.some(m => m.name === 'v3_default'))
+      ) {
+        this.metaspaceOptions.scoringModel = this.initialMetaspaceOptions?.scoringModel ?? 'v3_default'
+      }
+    },
   },
 
   created() {

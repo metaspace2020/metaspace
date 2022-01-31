@@ -22,6 +22,7 @@ interface Features {
   neutral_losses_new_ds: boolean; // False prevents neutral losses being set on the first upload
   chem_mods: boolean;
   advanced_ds_config: boolean;
+  v2: boolean;
   isomers: boolean;
   isobars: boolean;
   moldb_mgmt: boolean;
@@ -74,6 +75,7 @@ const defaultConfig: ClientConfig = {
     neutral_losses_new_ds: true,
     chem_mods: true,
     advanced_ds_config: false,
+    v2: true,
     isomers: true,
     isobars: true,
     moldb_mgmt: true,
