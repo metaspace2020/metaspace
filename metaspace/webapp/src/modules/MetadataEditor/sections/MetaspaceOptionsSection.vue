@@ -108,15 +108,22 @@
               v-if="features.advanced_ds_config || features.v2"
               :span="8"
             >
-              <form-field
-                type="select"
-                name="Analysis version"
-                :help="AnalysisVersionHelp"
-                :value="value.analysisVersion"
-                :error="error && error.analysisVersion"
-                :options="analysisVersionOptions"
-                @input="val => onInput('analysisVersion', val)"
-              />
+              <popup-anchor
+                feature-key="v2"
+                placement="top"
+                :show-until="new Date('2022-09-01')"
+                class="block"
+              >
+                <form-field
+                  type="select"
+                  name="Analysis version"
+                  :help="AnalysisVersionHelp"
+                  :value="value.analysisVersion"
+                  :error="error && error.analysisVersion"
+                  :options="analysisVersionOptions"
+                  @input="val => onInput('analysisVersion', val)"
+                />
+              </popup-anchor>
               <form-field
                 v-if="features.advanced_ds_config"
                 type="select"
