@@ -59,6 +59,7 @@ def global_setup(sm_config):
         populate_aws_env_vars(sm_config['aws'])
 
     image_storage.init(sm_config)
+    image_storage.configure_bucket(sm_config)
 
 
 @pytest.fixture()

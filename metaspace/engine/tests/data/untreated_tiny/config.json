@@ -1,0 +1,23 @@
+{
+    "image_generation": {
+        "n_levels": 30,
+        "ppm": 3.0,
+        "min_px": 1
+    },
+    "isotope_generation": {
+        "adducts": [
+            "+H", 
+            "+K", 
+            "+Na"
+        ], 
+        "charge": 1,
+        "isocalc_sigma": 0.000619,
+        "n_peaks": 4,
+        "neutral_losses": [],
+        "chem_mods": []
+    },
+    "fdr": {
+        "decoy_sample_size": 20
+    },
+    "databases": []
+}
