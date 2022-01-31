@@ -20,6 +20,8 @@ type MolecularDB {
   link: String
   citation: String
   group: GroupShortInfo
+  user: User
+  downloadLink: String
 }
 
 input CreateMolecularDBInput {
@@ -28,6 +30,7 @@ input CreateMolecularDBInput {
   filePath: String!  # s3://[BUCKET]/path/to-file.tsv
   isPublic: Boolean = False
   groupId: ID!
+  userId: ID
   fullName: String
   description: String # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
   link: String

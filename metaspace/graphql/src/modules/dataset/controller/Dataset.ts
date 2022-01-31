@@ -438,15 +438,29 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
             datasetId: In(datasetIds),
             error: IsNull(),
           },
-          relations: ['job', 'job.molecularDB'],
+          relations: ['job'],
         })
-        const formattedResults = results.map(diag => ({
-          ...diag,
-          data: JSON.stringify(diag.data),
-          database: diag.job?.molecularDB ?? null,
-          updatedDT: diag.updatedDT.toISOString(),
+        const molDbRepository = ctx.entityManager.getCustomRepository(MolecularDbRepository)
+
+        const formattedResults = await Promise.all(results.map(async diag => {
+          let database = null
+          // If user isn't allowed to see the moldb, don't let them see the diagnostic
+          if (diag.job != null) {
+            try {
+              database = await molDbRepository.findDatabaseById(ctx, diag.job.moldbId)
+            } catch {
+              return null
+            }
+          }
+          return {
+            ...diag,
+            data: JSON.stringify(diag.data),
+            database,
+            updatedDT: diag.updatedDT.toISOString(),
+          }
         }))
-        const keyedResults = _.groupBy(formattedResults, 'datasetId')
+
+        const keyedResults = _.groupBy(formattedResults.filter(d => d != null), 'datasetId')
         return datasetIds.map(id => keyedResults[id] || [])
       })
     })

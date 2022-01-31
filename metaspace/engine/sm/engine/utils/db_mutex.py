@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from zlib import adler32
+from hashlib import sha256
 
 from psycopg2 import connect
 
@@ -20,13 +20,10 @@ class DBMutex:
 
     @contextmanager
     def lock(self, resource_name, timeout=60):
-        # Postgres enforces that the lock keys can be stored as 32-bit signed integers,
-        # so the value is truncated to 31 bits for ease.
-        # Adler's not a great hash function, but it's good enough for this purpose (collisions can
-        # only cause delays) and is the most convenient way to get a small integer hash.
-        # Over a year of use, adler32 didn't return a value above 2^31-1. It was only when
-        # the format of resource_name changed that the signed integer limitation was discovered.
-        resource_hash = adler32(resource_name.encode('utf-8')) & 0x7FFFFFFF
+        hash_bytes = sha256(resource_name.encode('utf-8')).digest()
+        # This must be 32-bit and signed. Postgres errors if it's not a valid 32-bit signed integer
+        resource_hash = int.from_bytes(hash_bytes[:4], byteorder='big', signed=True)
+
         conn = connect(**self._dbconfig)
         try:
             with conn.cursor() as curs:

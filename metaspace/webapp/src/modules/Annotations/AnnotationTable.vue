@@ -65,8 +65,10 @@
       <el-table-column
         v-if="!hidden('Group')"
         key="lab"
+        property="dataset.group.name"
         label="Lab"
         min-width="95"
+        sortable="custom"
       >
         <template slot-scope="props">
           <div class="cell-wrapper">
@@ -91,6 +93,7 @@
         property="dataset.name"
         label="Dataset"
         min-width="140"
+        sortable="custom"
       >
         <template slot-scope="props">
           <div class="cell-wrapper">
@@ -108,6 +111,7 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('Annotation')"
         key="sumFormula"
         property="sumFormula"
         label="Annotation"
@@ -120,6 +124,20 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('Adduct')"
+        key="adduct"
+        property="adduct"
+        label="Adduct"
+        sortable="custom"
+        min-width="80"
+      >
+        <template slot-scope="props">
+          <span> {{ props.row.adduct }} </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('mz')"
         key="mz"
         property="mz"
         label="m/z"
@@ -147,19 +165,66 @@
         property="offSampleProb"
         label="Off-sample %"
         sortable="custom"
-        min-width="60"
+        min-width="120"
       >
         <template slot-scope="props">
-          <span> {{ (props.row.offSampleProb * 100).toFixed(0) }}% </span>
+          <span> {{ (props.row.offSampleProb === null || props.row.offSampleProb === undefined) ?
+            '-' : (props.row.offSampleProb * 100).toFixed(0) }} % </span>
         </template>
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('rhoSpatial')"
+        key="rhoSpatial"
+        property="rhoSpatial"
+        sortable="custom"
+        min-width="70"
+      >
+        <span slot="header">
+          &rho;<sub>spatial</sub>
+        </span>
+        <template slot-scope="props">
+          <span> {{ props.row.rhoSpatial }} </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('rhoSpectral')"
+        key="rhoSpectral"
+        property="rhoSpectral"
+        sortable="custom"
+        min-width="80"
+      >
+        <span slot="header">
+          &rho;<sub>spectral</sub>
+        </span>
+        <template slot-scope="props">
+          <span> {{ props.row.rhoSpectral }} </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('rhoChaos')"
+        key="rhoChaos"
+        property="rhoChaos"
+        sortable="custom"
+        min-width="70"
+      >
+        <span slot="header">
+          &rho;<sub>chaos</sub>
+        </span>
+        <template slot-scope="props">
+          <span> {{ props.row.rhoChaos }} </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('MSM')"
         key="msmScore"
         property="msmScore"
         label="MSM"
         sortable="custom"
-        min-width="60"
+        min-width="70"
       >
         <template slot-scope="props">
           <span>{{ formatMSM(props.row) }}</span>
@@ -167,12 +232,82 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('Database')"
+        key="database"
+        property="database"
+        label="Database"
+        sortable="custom"
+        min-width="90"
+      >
+        <template slot-scope="props">
+          <span> {{ props.row.database }} </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('Molecules')"
+        key="possibleCompounds"
+        property="possibleCompounds"
+        label="Molecules"
+        show-overflow-tooltip
+        min-width="90"
+      >
+        <template slot-scope="props">
+          <div class="long-text-col">
+            {{ props.row.possibleCompounds.map((molecule) => molecule.name).join(', ') }}
+          </div>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('Isos')"
+        key="isomers"
+        property="isomers"
+        label="Isomers/Isobars"
+        min-width="120"
+      >
+        <template slot-scope="props">
+          <i
+            v-if="props.row.isomers.length > 0 || props.row.isobars.length > 0"
+            class="el-icon-warning justify-center w-full flex"
+          />
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('maxIntensity')"
+        key="maxIntensity"
+        property="isotopeImages[0].maxIntensity"
+        label="Max Intensity"
+        min-width="120"
+        sortable="custom"
+      >
+        <template slot-scope="props">
+          {{ props.row.isotopeImages[0].maxIntensity.toFixed(1) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('totalIntensity')"
+        key="totalIntensity"
+        property="isotopeImages[0].totalIntensity"
+        label="Total Intensity"
+        min-width="120"
+        sortable="custom"
+      >
+        <template slot-scope="props">
+          {{ props.row.isotopeImages[0].totalIntensity.toFixed(1) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('FDR')"
         key="fdrLevel"
         property="fdrLevel"
         label="FDR"
         class-name="fdr-cell"
         sortable="custom"
-        min-width="40"
+        min-width="60"
       >
         <template slot-scope="props">
           <span>{{ formatFDR(props.row) }}</span>
@@ -197,7 +332,7 @@
     </el-table>
 
     <div class="flex justify-between items-start mt-2">
-      <div>
+      <div class="mt-1">
         <el-pagination
           v-if="!initialLoading"
           :total="totalCount"
@@ -234,38 +369,96 @@
         </div>
       </div>
 
-      <el-popover trigger="hover">
-        <div slot="reference">
-          <progress-button
-            v-if="isExporting && totalCount > 5000"
-            class="export-btn"
-            :width="130"
-            :height="40"
-            :percentage="exportProgress * 100"
-            @click="abortExport"
+      <div class="flex w-full items-center justify-end flex-wrap">
+        <el-popover
+          v-if="showCustomCols"
+          class="mt-1"
+        >
+          <el-button slot="reference">
+            Columns <i class="el-icon-arrow-down">
+            </i>
+          </el-button>
+          <div>
+            <div
+              v-for="(column, i) in columns"
+              :key="column.label"
+              class="cursor-pointer select-none"
+              @click="handleColumnClick(i)"
+            >
+              <i
+                v-if="column.selected"
+                class="el-icon-check"
+              />
+              <i
+                v-else
+                class="el-icon-check invisible"
+              />
+              <span v-if="column.src.includes('rho')"> &rho;<sub>{{ column.label }}</sub> </span>
+              <span v-else>{{ column.label }}</span>
+            </div>
+          </div>
+        </el-popover>
+
+        <el-popover
+          class="ml-2 mt-1"
+          trigger="hover"
+        >
+          <div slot="reference">
+            <progress-button
+              v-if="isExporting && totalCount > 5000"
+              class="export-btn"
+              :width="130"
+              :height="40"
+              :percentage="exportProgress * 100"
+              @click="abortExport"
+            >
+              Cancel
+            </progress-button>
+            <el-button
+              v-else
+              slot="reference"
+              class="export-btn"
+              :disabled="isExporting"
+              @click="startExport"
+            >
+              Export to CSV
+            </el-button>
+          </div>
+
+          Documentation for the CSV export is available
+          <a
+            href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
+            rel="noopener noreferrer nofollow"
+            target="_blank"
           >
-            Cancel
-          </progress-button>
+            here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
+          </a>
+        </el-popover>
+
+        <div
+          v-if="showCustomCols"
+          class="ml-2 mt-1"
+        >
+          <el-button
+            v-if="isFullScreen"
+            class="full-screen-btn"
+            @click="$emit('screen')"
+          >
+            <full-screen
+              class="full-screen-icon"
+            />
+          </el-button>
           <el-button
             v-else
-            slot="reference"
-            class="export-btn"
-            :disabled="isExporting"
-            @click="startExport"
+            class="full-screen-btn"
+            @click="$emit('screen')"
           >
-            Export to CSV
+            <exit-full-screen
+              class="full-screen-icon"
+            />
           </el-button>
         </div>
-
-        Documentation for the CSV export is available
-        <a
-          href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
-          rel="noopener noreferrer nofollow"
-          target="_blank"
-        >
-          here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
-        </a>
-      </el-popover>
+      </div>
     </div>
   </el-row>
 </template>
@@ -283,12 +476,15 @@ import {
 import Vue from 'vue'
 import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
-import { invert } from 'lodash-es'
+import { flatMap, invert } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
 import { getDatasetDiagnosticsQuery } from '../../api/dataset'
+import FullScreen from '../../assets/inline/full_screen.svg'
+import ExitFullScreen from '../../assets/inline/exit_full_screen.svg'
+import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -313,6 +509,16 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_FORMULA: 'sumFormula',
   ORDER_BY_OFF_SAMPLE: 'offSampleProb',
   ORDER_BY_COLOCALIZATION: 'colocalizationCoeff',
+  ORDER_BY_ADDUCT: 'adduct',
+  ORDER_BY_GROUP: 'dataset.group.name',
+  ORDER_BY_DATASET: 'dataset.name',
+  ORDER_BY_DATABASE: 'database',
+  ORDER_BY_CHAOS: 'rhoChaos',
+  ORDER_BY_SPATIAL: 'rhoSpatial',
+  ORDER_BY_SPECTRAL: 'rhoSpectral',
+  ORDER_BY_MAX_INT: 'isotopeImages[0].maxIntensity',
+  ORDER_BY_TOTAL_INT: 'isotopeImages[0].totalIntensity',
+  ORDER_BY_ISO: 'isomers',
 }
 const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
 
@@ -323,8 +529,10 @@ export default Vue.extend({
     AnnotationTableMolName,
     FilterIcon,
     ExternalWindowSvg,
+    ExitFullScreen,
+    FullScreen,
   },
-  props: ['hideColumns'],
+  props: ['hideColumns', 'isFullScreen'],
   data() {
     return {
       annotations: [],
@@ -338,6 +546,89 @@ export default Vue.extend({
       csvChunkSize: 1000,
       nextCurrentRowIndex: null,
       loadedSnapshotAnnotations: false,
+      showCustomCols: config.features.custom_cols,
+      columns: [
+        {
+          label: 'Lab',
+          src: 'Group',
+          selected: true,
+        },
+        {
+          label: 'Dataset',
+          src: 'Dataset',
+          selected: true,
+        },
+        {
+          label: 'Annotation',
+          src: 'Annotation',
+          selected: true,
+        },
+        {
+          label: 'Adduct',
+          src: 'Adduct',
+          selected: false,
+        },
+        {
+          label: 'm/z',
+          src: 'mz',
+          selected: true,
+        },
+        {
+          label: 'Off-sample probability %',
+          src: 'OffSampleProb',
+          selected: false,
+        },
+        {
+          label: 'spatial',
+          src: 'rhoSpatial',
+          selected: false,
+        },
+        {
+          label: 'spectral',
+          src: 'rhoSpectral',
+          selected: false,
+        },
+        {
+          label: 'chaos',
+          src: 'rhoChaos',
+          selected: false,
+        },
+        {
+          label: 'MSM',
+          src: 'MSM',
+          selected: true,
+        },
+        {
+          label: 'Database',
+          src: 'Database',
+          selected: false,
+        },
+        {
+          label: 'Molecules',
+          src: 'Molecules',
+          selected: false,
+        },
+        {
+          label: 'Isomers/Isobars',
+          src: 'Isos',
+          selected: false,
+        },
+        {
+          label: 'Max Intensity',
+          src: 'maxIntensity',
+          selected: false,
+        },
+        {
+          label: 'Total Intensity',
+          src: 'totalIntensity',
+          selected: false,
+        },
+        {
+          label: 'FDR',
+          src: 'FDR',
+          selected: true,
+        },
+      ],
     }
   },
   computed: {
@@ -503,7 +794,31 @@ export default Vue.extend({
       },
     },
   },
+  created() {
+    if (!this.showCustomCols) { // do not apply custom column settings
+      return
+    }
+
+    const localColSettings = getLocalStorage('annotationTableCols')
+    const columns = this.columns
+    if (Array.isArray(localColSettings)) {
+      localColSettings.forEach((colSetting) => {
+        const colIdx = columns.findIndex(col => col.src === colSetting.src)
+        if (colIdx !== -1) {
+          columns[colIdx].selected = colSetting.selected
+        }
+      })
+    }
+    this.columns = columns
+    this.hideDatasetRelatedColumns()
+  },
   methods: {
+    hideDatasetRelatedColumns() {
+      if (Array.isArray(this.filter.datasetIds) && this.filter.datasetIds.length > 0) {
+        this.columns.find((col) => col.src === 'Group').selected = false
+        this.columns.find((col) => col.src === 'Dataset').selected = false
+      }
+    },
     onPageSizeChange(newSize) {
       this.recordsPerPage = newSize
     },
@@ -525,7 +840,9 @@ export default Vue.extend({
     },
 
     hidden(columnLabel) {
-      return this.hideColumns.indexOf(columnLabel) >= 0
+      return (this.columns.findIndex((col) => col.src === columnLabel) === -1 || !this.showCustomCols)
+        ? (this.hideColumns.indexOf(columnLabel) >= 0 || !this.columns.find((col) => col.src === columnLabel)?.selected)
+        : !this.columns.find((col) => col.src === columnLabel)?.selected
     },
 
     getRowClass({ row }) {
@@ -667,6 +984,9 @@ export default Vue.extend({
     updateFilter(delta) {
       const filter = Object.assign({}, this.filter, delta)
       this.$store.commit('updateFilter', filter)
+      if (Object.keys(delta).includes('datasetIds') && this.showCustomCols) { // hide dataset related filters if dataset filter added
+        this.hideDatasetRelatedColumns()
+      }
     },
 
     async setNormalizationData(currentAnnotation) {
@@ -824,6 +1144,11 @@ export default Vue.extend({
       this.isExporting = false
       this.exportProgress = 0
     },
+
+    handleColumnClick(index) {
+      this.columns[index].selected = !this.columns[index].selected
+      setLocalStorage('annotationTableCols', this.columns)
+    },
   },
 })
 </script>
@@ -956,5 +1281,21 @@ export default Vue.extend({
 
  #annot-count {
    padding-left: 5px;
+ }
+ .long-text-col{
+   text-overflow: ellipsis !important;
+   overflow: hidden;
+   white-space: nowrap;
+ }
+ .full-screen-icon{
+   transform: scale(0.4);
+   margin: -13.5px -11.5px;
+ }
+ .full-screen-btn{
+   padding: 0;
+   margin: 0;
+ }
+ .el-table table {
+   width: 0px; // fix safari dynamic column size bug
  }
 </style>

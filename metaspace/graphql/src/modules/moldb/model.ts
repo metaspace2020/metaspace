@@ -11,6 +11,7 @@ import {
 import { Group } from '../group/model'
 import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
 import { Moment } from 'moment'
+import { User } from '../user/model'
 
 @Entity({ schema: 'public', name: 'molecular_db' })
 @Unique('molecular_db_uindex', ['groupId', 'name', 'version'])
@@ -63,8 +64,18 @@ export class MolecularDB {
   @JoinColumn({ name: 'group_id' })
   group: Group;
 
+  @Column({ type: 'uuid', nullable: true })
+  userId: string | null;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+
   @Column({ type: 'boolean', default: false })
   default: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  inputPath: string | null;
 }
 
 @Entity({ schema: 'public' })

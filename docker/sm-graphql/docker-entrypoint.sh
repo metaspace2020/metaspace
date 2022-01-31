@@ -18,7 +18,7 @@ export NODE_ENV=development
 cd /opt/dev/metaspace/metaspace/graphql
 
 yarn install
-npm rebuild bcrypt # Ensure the musl version is installed
+npm rebuild bcrypt --update-binary # Ensure the musl version is installed
 
 yarn run deref-schema
 yarn run gen-binding

@@ -189,6 +189,57 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
       sortTerm('ds_upload_dt', order),
       sortTerm('ds_last_finished', order),
     ]
+  } else if (orderBy === 'ORDER_BY_ADDUCT') {
+    return [sortTerm('adduct', order)]
+  } else if (orderBy === 'ORDER_BY_GROUP') {
+    return [sortTerm('ds_group_name', order)]
+  } else if (orderBy === 'ORDER_BY_DATABASE') {
+    return [sortTerm('db_name', order)]
+  } else if (orderBy === 'ORDER_BY_CHAOS') {
+    return [sortTerm('chaos', order)]
+  } else if (orderBy === 'ORDER_BY_SPATIAL') {
+    return [sortTerm('image_corr', order)]
+  } else if (orderBy === 'ORDER_BY_SPECTRAL') {
+    return [sortTerm('pattern_match', order)]
+  } else if (orderBy === 'ORDER_BY_MAX_INT') {
+    return [
+      {
+        _script: {
+          type: 'number',
+          script: {
+            lang: 'painless',
+            inline: 'params._source.max_iso_ints[0]',
+          },
+          order: order,
+        },
+      },
+    ]
+  } else if (orderBy === 'ORDER_BY_TOTAL_INT') {
+    return [
+      {
+        _script: {
+          type: 'number',
+          script: {
+            lang: 'painless',
+            inline: 'params._source.total_iso_ints[0]',
+          },
+          order: order,
+        },
+      },
+    ]
+  } else if (orderBy === 'ORDER_BY_ISO') {
+    return [
+      {
+        _script: {
+          type: 'number',
+          script: {
+            lang: 'painless',
+            inline: 'params._source.isobars.size() + params._source.isomer_ions.size()',
+          },
+          order: order,
+        },
+      },
+    ]
   }
 }
 

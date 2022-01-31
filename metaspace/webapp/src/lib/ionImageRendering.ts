@@ -2,6 +2,8 @@ import { decode, Image } from 'upng-js'
 import { quantile } from 'simple-statistics'
 import { range } from 'lodash-es'
 import { DEFAULT_SCALE_TYPE } from './constants'
+// @ts-ignore
+import PxBrush from 'px-brush'
 
 export interface IonImage {
   intensityValues: Float32Array;
@@ -406,6 +408,7 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
   roiInfo?: any[]) => {
   const ctx = canvas.getContext('2d')!
   ctx.clearRect(0, 0, width, height)
+  const pxBrush = new PxBrush(canvas)
 
   if (layers.length === 0) return
 
@@ -441,7 +444,6 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
     applyImageData(canvas, pixels, width, height)
 
     // ROI drawing
-    const RADIUS = 2
     if (roiInfo && roiInfo.length > 0) {
       roiInfo.forEach((roiItem: any) => {
         if (roiItem.visible && roiItem.coordinates.length > 0) {
@@ -451,16 +453,14 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
           ctx.lineWidth = 1
           ctx.moveTo(roiItem.coordinates[0].x, roiItem.coordinates[0].y)
 
-          if (roiItem.coordinates[0].isFixed) {
-            ctx.arc(roiItem.coordinates[0].x, roiItem.coordinates[0].y, RADIUS, 0, 2 * Math.PI)
-          }
-
           for (let index = 1; index < roiItem.coordinates.length; index++) {
-            ctx.lineTo(roiItem.coordinates[index].x, roiItem.coordinates[index].y)
-            if (roiItem.coordinates[index].isFixed) {
-              ctx.arc(roiItem.coordinates[index].x, roiItem.coordinates[index].y, RADIUS
-                , 0, 2 * Math.PI)
-            }
+            pxBrush.brush({
+              from: { x: roiItem.coordinates[index - 1].x, y: roiItem.coordinates[index - 1].y },
+              to: { x: roiItem.coordinates[index].x, y: roiItem.coordinates[index].y },
+              size: 1,
+              color: roiItem.rgb,
+            })
+            ctx.lineTo(roiItem.coordinates[index].x + 0.5, roiItem.coordinates[index].y + 0.5)
             if (roiItem.coordinates[index].isEndPoint) { // closes path if last point
               ctx.closePath()
             }
