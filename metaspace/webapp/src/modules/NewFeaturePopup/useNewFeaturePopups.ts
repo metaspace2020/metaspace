@@ -9,6 +9,7 @@ export const FEATURE_KEYS = [
   'uploadCustomDatabases',
   'groupDatabasesTab',
   'multipleIonImages',
+  'v2',
 ]
 
 function getDismissedPopups() {
@@ -29,7 +30,7 @@ const previousDismissedPopups = getDismissedPopups()
 
 const state = reactive({
   dismissed: [...previousDismissedPopups],
-  queued: [] as string[],
+  queued: [] as (string | null)[],
 })
 
 const activePopup = computed(() => state.queued[0])
@@ -37,6 +38,13 @@ const activePopup = computed(() => state.queued[0])
 function closeActivePopup() {
   const popup = state.queued.shift()
   state.dismissed.push(popup)
+  // WORKAROUND: Popper doesn't handle multiple instances - trying to open one Popper at the same time as closing
+  // the last one will cause layout to break. Use a placeholder item for a few frames to allow the old Popper to close
+  // before a new one is opened.
+  state.queued.unshift(null)
+  setTimeout(() => {
+    if (state.queued[0] === null) { state.queued.shift() }
+  }, 50)
   return popup
 }
 

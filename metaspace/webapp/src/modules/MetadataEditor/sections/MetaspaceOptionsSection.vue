@@ -105,19 +105,27 @@
               />
             </el-col>
             <el-col
-              v-if="features.advanced_ds_config"
+              v-if="features.advanced_ds_config || features.v2"
               :span="8"
             >
+              <popup-anchor
+                feature-key="v2"
+                placement="top"
+                :show-until="new Date('2022-09-01')"
+                class="block"
+              >
+                <form-field
+                  type="select"
+                  name="Analysis version"
+                  :help="AnalysisVersionHelp"
+                  :value="value.analysisVersion"
+                  :error="error && error.analysisVersion"
+                  :options="analysisVersionOptions"
+                  @input="val => onInput('analysisVersion', val)"
+                />
+              </popup-anchor>
               <form-field
-                type="select"
-                name="Analysis version"
-                :help="AnalysisVersionHelp"
-                :value="value.analysisVersion"
-                :error="error && error.analysisVersion"
-                :options="ANALYSIS_VERSION_OPTIONS"
-                @input="val => onInput('analysisVersion', val)"
-              />
-              <form-field
+                v-if="features.advanced_ds_config"
                 type="select"
                 name="Scoring model"
                 :value="value.scoringModel || ''"
@@ -234,14 +242,18 @@ export default class MetaspaceOptionsSection extends Vue {
     maxMolDBs = limits.maxMolDBs;
     MAX_NEUTRAL_LOSSES = MAX_NEUTRAL_LOSSES;
     MAX_CHEM_MODS = MAX_CHEM_MODS;
-    ANALYSIS_VERSION_OPTIONS = [
-      { value: 1, label: 'v1 (Stable)' },
-      { value: 2, label: 'v2 (Internal)' }, // Nobody uses v2, it can probably be hidden so that v3 can be "2.0"
-      { value: 3, label: 'v3 (ML-Driven)' },
-    ];
 
     neutralLossOptions: string[] = [];
     chemModOptions: string[] = [];
+
+    get analysisVersionOptions() {
+      const showV15 = config.features.advanced_ds_config || this.value.analysisVersion === 2
+      return [
+        { value: 1, label: 'v1 (Original MSM)' },
+        ...(showV15 ? [{ value: 2, label: 'v1.5 (Prototype for higher RPs)' }] : []),
+        { value: 3, label: 'v2 (ML-powered MSM)' },
+      ]
+    }
 
     get scoringModelOptions() {
       return [
