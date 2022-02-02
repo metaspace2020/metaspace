@@ -38,3 +38,18 @@
 }
 
 
+.ds-options-popper {
+  max-width: 30%;
+
+  .el-select-dropdown__wrap {
+    max-height: 186px !important;
+  }
+}
+
+.grid-popper {
+  max-width: 350px;
+
+  .el-select-dropdown__wrap {
+    max-height: 186px !important;
+  }
+}
