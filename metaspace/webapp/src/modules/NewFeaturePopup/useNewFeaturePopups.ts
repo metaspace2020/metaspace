@@ -9,6 +9,7 @@ export const FEATURE_KEYS = [
   'uploadCustomDatabases',
   'groupDatabasesTab',
   'multipleIonImages',
+  'v2',
 ]
 
 function getDismissedPopups() {
