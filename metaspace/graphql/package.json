@@ -119,6 +119,9 @@
     "ts-jest": "25.5.0",
     "ts-node-dev": "^1.1.8"
   },
+  "resolutions": {
+    "**/aws-sdk": "^2.814.0"
+  },
   "jest": {
     "roots": [
       "<rootDir>/src"
