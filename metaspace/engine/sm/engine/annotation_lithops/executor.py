@@ -270,7 +270,7 @@ class Executor:
 
             if (
                 isinstance(exc, (MemoryError, TimeoutError))
-                and runtime_memory < 32*1024
+                and runtime_memory < 32 * 1024
                 and (max_memory is None or runtime_memory < max_memory)
             ):
                 old_memory = runtime_memory
