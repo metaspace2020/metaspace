@@ -4,6 +4,7 @@ import { esFilterValueCountResults } from '../../../esConnector'
 import config from '../../utils/config'
 import { Context, ContextUser } from '../../context'
 import { IResolvers } from 'graphql-tools'
+import { ScoringModel } from '../engine/model'
 
 const getTopFieldValues = async(docType: 'dataset' | 'annotation',
   field: string,
@@ -81,6 +82,10 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   colocalizationAlgos() {
     return config.metadataLookups.colocalizationAlgos
       .map(([id, name]) => ({ id, name }))
+  },
+
+  async scoringModels(source, args, ctx: Context) {
+    return await ctx.entityManager.find(ScoringModel)
   },
 
 }

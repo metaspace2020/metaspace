@@ -3,7 +3,7 @@ coverage
 codecov
 pylint==2.7.0  # to prevent new pylint rules failing CI job
 black==20.8b1  # to prevent new black rules failing CI job
-boto3-stubs[s3]
+boto3-stubs[s3]==1.17.13  # Must match boto3. Install becomes very slow if not specified
 mypy_boto3_builder
 pytest-xdist
 fasteners

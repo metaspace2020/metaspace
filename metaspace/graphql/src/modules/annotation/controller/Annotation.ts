@@ -5,7 +5,7 @@ import { ESAnnotation } from '../../../../esConnector'
 import config from '../../../utils/config'
 import { ESAnnotationWithColoc } from '../queryFilters'
 import { AllHtmlEntities } from 'html-entities'
-import { MolecularDB as MolecularDbModel } from '../../moldb/model'
+import { MolecularDB, MolecularDB as MolecularDbModel } from '../../moldb/model'
 import { MolecularDbRepository } from '../../moldb/MolecularDbRepository'
 import { Context } from '../../../context'
 
@@ -17,14 +17,15 @@ const cleanMoleculeName = (name: string) =>
     // Clean up molecule names that end in ',' or ';'
     .replace(/[,;]*$/, '')
 
-const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithColoc> = {
-  id(hit) {
-    return hit._id
-  },
+const getMolecularDbById = async(ctx: Context, db_id: number): Promise<MolecularDB> => {
+  return await ctx.contextCacheGet('getMolecularDbById', [db_id],
+    (db_id: number) =>
+      ctx.entityManager.getCustomRepository(MolecularDbRepository)
+        .findDatabaseById(ctx, db_id)
+  )
+}
 
-  sumFormula(hit) {
-    return hit._source.formula
-  },
+const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithColoc> = {
 
   countPossibleCompounds(hit, args: {includeIsomers: boolean}) {
     if (args.includeIsomers) {
@@ -35,8 +36,7 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
   },
 
   async possibleCompounds(hit, _, ctx: Context) {
-    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
-      .findDatabaseById(ctx, hit._source.db_id)
+    const database = await getMolecularDbById(ctx, hit._source.db_id)
 
     const ids = hit._source.comp_ids
     const names = hit._source.comp_names
@@ -58,42 +58,14 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     return compounds
   },
 
-  adduct: (hit) => hit._source.adduct,
-
-  neutralLoss: (hit) => hit._source.neutral_loss || '',
-
-  chemMod: (hit) => hit._source.chem_mod || '',
-
-  ion: (hit) => hit._source.ion,
-
-  ionFormula: (hit) => hit._source.ion_formula || '', // TODO: Remove ' || ''' after prod has been migrated
-
   databaseDetails: async(hit, _, ctx) => {
-    return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
-      .findDatabaseById(ctx, hit._source.db_id)
+    return await getMolecularDbById(ctx, hit._source.db_id)
   },
 
   database: async(hit, _, ctx) => {
-    const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
-      .findDatabaseById(ctx, hit._source.db_id)
+    const database = await getMolecularDbById(ctx, hit._source.db_id)
     return database.name
   },
-
-  mz: (hit) => parseFloat(hit._source.centroid_mzs[0] as any),
-
-  fdrLevel: (hit) => hit._source.fdr > 0 ? hit._source.fdr : null,
-
-  msmScore: (hit) => hit._source.msm,
-
-  rhoSpatial: (hit) => hit._source.image_corr,
-
-  rhoSpectral: (hit) => hit._source.pattern_match,
-
-  rhoChaos: (hit) => hit._source.chaos,
-
-  offSample: (hit) => hit._source.off_sample_label == null ? null : hit._source.off_sample_label === 'off',
-
-  offSampleProb: (hit) => hit._source.off_sample_prob == null ? null : hit._source.off_sample_prob,
 
   dataset(hit) {
     return {
@@ -157,6 +129,19 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
         msmScore: msm,
         shouldWarn: msm > hit._source.msm - 0.5,
       }))
+  },
+
+  metricsJson(hit) {
+    if (hit._source.metrics != null) {
+      return JSON.stringify(hit._source.metrics)
+    } else {
+      // Remove after migration/reindexing has finished
+      return JSON.stringify({
+        chaos: hit._source.chaos,
+        spatial: hit._source.image_corr,
+        spectral: hit._source.pattern_match,
+      })
+    }
   },
 
   async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, ctx) {

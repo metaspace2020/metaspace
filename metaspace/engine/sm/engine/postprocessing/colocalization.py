@@ -257,7 +257,6 @@ def analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w, cluster
     cluster_max_images: int
         maximum number of images used for clustering
     """
-    assert images.ref.shape[1] >= 3
     assert images.ref.shape[0] == ion_ids.shape[0] == fdrs.shape[0], (
         images.ref.shape,
         ion_ids.shape,
@@ -265,6 +264,9 @@ def analyze_colocalization(ds_id, moldb_id, images, ion_ids, fdrs, h, w, cluster
     )
     start = datetime.now()
 
+    if images.ref.shape[1] < 3:
+        logger.warning('Not enough pixels per image to perform colocalization.')
+        return
     if len(ion_ids) < 2:
         logger.info('Not enough annotations to perform colocalization')
         return

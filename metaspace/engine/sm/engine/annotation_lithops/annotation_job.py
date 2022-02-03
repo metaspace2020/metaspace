@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
-from concurrent.futures.thread import ThreadPoolExecutor
+from contextlib import ExitStack
 from pathlib import Path
 from typing import Optional, Dict, List, Union
 
@@ -11,24 +10,27 @@ from ibm_boto3.s3.transfer import TransferConfig, MB
 from lithops.storage import Storage
 from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
 
-from sm.engine.annotation.diagnostics import extract_dataset_diagnostics, add_diagnostics
-from sm.engine.annotation.formula_validator import METRICS
+from sm.engine.annotation.diagnostics import (
+    extract_dataset_diagnostics,
+    add_diagnostics,
+    extract_job_diagnostics,
+)
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
 from sm.engine.annotation_lithops.pipeline import Pipeline
 from sm.engine.annotation_lithops.utils import jsonhash
 from sm.engine.annotation_spark.search_results import SearchResults
+from sm.engine.config import SMConfig
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 from sm.engine.es_export import ESExporter
 from sm.engine.molecular_db import read_moldb_file
-from sm.engine.util import split_s3_path, split_cos_path
-from sm.engine.config import SMConfig
-from sm.engine.utils.perf_profile import Profiler
 from sm.engine.storage import get_s3_client
-from sm.engine import image_storage
+from sm.engine.util import split_s3_path, split_cos_path
+from sm.engine.utils.db_mutex import DBMutex
+from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')
 
@@ -52,40 +54,47 @@ def _choose_cos_location(src_path, sm_storage, storage_type):
     return bucket, key
 
 
-def _upload_if_needed(src_path, storage, sm_storage, storage_type, s3_client=None):
+def _upload_if_needed(
+    src_path, storage, sm_storage, storage_type, s3_client=None, use_db_mutex=True
+):
     """
     Uploads the object from `src_path` if it doesn't already exist in its translated COS path.
     Returns a CloudObject for the COS object
     """
     bucket, key = _choose_cos_location(src_path, sm_storage, storage_type)
 
-    try:
-        storage.head_object(bucket, key)
-        logger.debug(f'{src_path} already uploaded')
-        return CloudObject(storage.backend, bucket, key)
-    except StorageNoSuchKeyError:
-        logger.info(f'Uploading {src_path}...')
-        if src_path.startswith('s3a://'):
-            assert s3_client, 'S3 client must be supplied to support s3a:// paths'
-            src_bucket, src_key = split_s3_path(src_path)
+    with ExitStack() as stack:
+        if use_db_mutex:
+            # Lock during upload to prevent parallel jobs upload the same file simultaneously
+            stack.enter_context(DBMutex().lock(bucket + key, timeout=1200))
 
-            obj = s3_client.get_object(Bucket=src_bucket, Key=src_key)
-            if hasattr(storage.get_client(), 'upload_fileobj'):
-                # Try streaming upload to IBM COS
-                transfer_config = TransferConfig(
-                    multipart_chunksize=20 * MB, max_concurrency=20, io_chunksize=1 * MB
-                )
-                storage.get_client().upload_fileobj(
-                    Fileobj=obj['Body'], Bucket=bucket, Key=key, Config=transfer_config
-                )
-                cobject = CloudObject(storage.backend, bucket, key)
+        try:
+            storage.head_object(bucket, key)
+            logger.debug(f'{src_path} already uploaded')
+            return CloudObject(storage.backend, bucket, key)
+        except StorageNoSuchKeyError:
+            logger.info(f'Uploading {src_path}...')
+            if src_path.startswith('s3a://'):
+                assert s3_client, 'S3 client must be supplied to support s3a:// paths'
+                src_bucket, src_key = split_s3_path(src_path)
+
+                obj = s3_client.get_object(Bucket=src_bucket, Key=src_key)
+                if hasattr(storage.get_client(), 'upload_fileobj'):
+                    # Try streaming upload to IBM COS
+                    transfer_config = TransferConfig(
+                        multipart_chunksize=20 * MB, max_concurrency=20, io_chunksize=1 * MB
+                    )
+                    storage.get_client().upload_fileobj(
+                        Fileobj=obj['Body'], Bucket=bucket, Key=key, Config=transfer_config
+                    )
+                    cobject = CloudObject(storage.backend, bucket, key)
+                else:
+                    # Fall back to buffering the entire object in memory for other backends
+                    cobject = storage.put_cloudobject(obj['Body'].read(), bucket, key)
             else:
-                # Fall back to buffering the entire object in memory for other backends
-                cobject = storage.put_cloudobject(obj['Body'].read(), bucket, key)
-        else:
-            cobject = storage.put_cloudobject(open(src_path, 'rb'), bucket, key)
-        logger.info(f'Uploading {src_path}...Done')
-        return cobject
+                cobject = storage.put_cloudobject(open(src_path, 'rb'), bucket, key)
+            logger.info(f'Uploading {src_path}...Done')
+            return cobject
 
 
 def _upload_imzmls_from_prefix_if_needed(src_path, storage, sm_storage, s3_client=None):
@@ -182,8 +191,12 @@ class LocalAnnotationJob:
         self.storage = Storage(config=sm_config['lithops'])
         sm_storage = sm_config['lithops']['sm_storage']
 
-        self.imzml_cobj = _upload_if_needed(imzml_file, self.storage, sm_storage, 'imzml')
-        self.ibd_cobj = _upload_if_needed(ibd_file, self.storage, sm_storage, 'imzml')
+        self.imzml_cobj = _upload_if_needed(
+            imzml_file, self.storage, sm_storage, 'imzml', use_db_mutex=False
+        )
+        self.ibd_cobj = _upload_if_needed(
+            ibd_file, self.storage, sm_storage, 'imzml', use_db_mutex=False
+        )
         if isinstance(moldb_files[0], int):
             self.moldb_defs = _upload_moldbs_from_db(moldb_files, self.storage, sm_storage)
         else:
@@ -205,12 +218,13 @@ class LocalAnnotationJob:
             self.ds_config,
             executor=executor,
             cache_key=cache_key,
+            use_db_cache=use_cache,
             use_db_mutex=False,
             lithops_config=sm_config['lithops'],
         )
 
     def run(self, save=True, **kwargs):
-        results_dfs, png_cobjs = self.pipe(**kwargs)
+        results_dfs, png_cobjs = self.pipe.run_pipeline(**kwargs)
         if save:
             for moldb_id, results_df in results_dfs.items():
                 results_df.to_csv(self.out_dir / f'results_{moldb_id}.csv')
@@ -245,6 +259,7 @@ class ServerAnnotationJob:
         perf: Profiler,
         sm_config: Optional[Dict] = None,
         use_cache=False,
+        store_images=True,
     ):
         """
         Args
@@ -259,6 +274,7 @@ class ServerAnnotationJob:
         self.s3_client = get_s3_client()
         self.ds = ds
         self.perf = perf
+        self.store_images = store_images
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = _upload_imzmls_from_prefix_if_needed(
@@ -286,31 +302,6 @@ class ServerAnnotationJob:
         self.png_cobjs = None
         self.db_formula_image_ids = None
 
-    def _store_images(self, all_results_dfs, formula_png_iter):
-        db_formula_image_ids = defaultdict(dict)
-        ds_id = self.ds.id
-
-        def _upload_images(formula_id, db_id, pngs):
-            image_ids = [
-                image_storage.post_image(image_storage.ISO, ds_id, png) if png is not None else None
-                for png in pngs
-            ]
-            db_formula_image_ids[db_id][formula_id] = {'iso_image_ids': image_ids}
-
-        with ThreadPoolExecutor(2) as executor:
-            for formula_png_chunk in formula_png_iter:
-                # Join results_df so that each formula_i is associated with one or more
-                # moldb_ids
-                tasks = (
-                    pd.DataFrame(formula_png_chunk, columns=['formula_i', 'pngs'])
-                    .set_index('formula_i')
-                    .join(all_results_dfs)[['moldb_id', 'pngs']]
-                    .itertuples(True, None)
-                )
-                list(executor.map(_upload_images, *zip(*tasks)))
-
-        return db_formula_image_ids
-
     def run(self, **kwargs):
         # TODO: Only run missing moldbs
         del_jobs(self.ds)
@@ -319,29 +310,41 @@ class ServerAnnotationJob:
             moldb_to_job_map[moldb_id] = insert_running_job(self.ds.id, moldb_id)
         self.perf.add_extra_data(moldb_ids=list(moldb_to_job_map.keys()))
 
+        n_peaks = self.ds.config['isotope_generation']['n_peaks']
+
         try:
-            self.results_dfs, self.png_cobjs = self.pipe(**kwargs)
-            self.db_formula_image_ids = self._store_images(
-                pd.concat(list(self.results_dfs.values())),
-                iter_cobjs_with_prefetch(self.storage, self.png_cobjs),
-            )
+            # Run annotation
+            self.results_dfs, self.png_cobjs = self.pipe.run_pipeline(**kwargs)
+
+            # Save images (if enabled)
+            if self.store_images:
+                self.db_formula_image_ids = self.pipe.store_images_to_s3(self.ds.id)
+            else:
+                self.db_formula_image_ids = {
+                    moldb_id: {formula_i: [None] * n_peaks for formula_i in result_df.index}
+                    for moldb_id, result_df in self.results_dfs.items()
+                }
+
+            fdr_bundles = self.pipe.get_fdr_bundles(moldb_to_job_map)
 
             # Save non-job-related diagnostics
             diagnostics = extract_dataset_diagnostics(self.ds.id, self.pipe.imzml_reader)
             add_diagnostics(diagnostics)
 
             for moldb_id, job_id in moldb_to_job_map.items():
+                logger.debug(f'Storing results for moldb {moldb_id}')
                 results_df = self.results_dfs[moldb_id]
                 formula_image_ids = self.db_formula_image_ids.get(moldb_id, {})
 
                 search_results = SearchResults(
                     ds_id=self.ds.id,
                     job_id=job_id,
-                    metric_names=METRICS.keys(),
-                    n_peaks=self.ds.config['isotope_generation']['n_peaks'],
+                    n_peaks=n_peaks,
                     charge=self.ds.config['isotope_generation']['charge'],
                 )
                 search_results.store_ion_metrics(results_df, formula_image_ids, self.db)
+
+                add_diagnostics(extract_job_diagnostics(self.ds.id, job_id, fdr_bundles[job_id]))
 
                 update_finished_job(job_id, JobStatus.FINISHED)
         except Exception:

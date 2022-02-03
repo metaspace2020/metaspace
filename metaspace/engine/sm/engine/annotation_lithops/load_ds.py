@@ -43,7 +43,11 @@ def _load_spectra(storage, imzml_reader):
 
 
 def _sort_spectra(imzml_reader, mzs, ints, sp_lens):
-    # Specify mergesort explicitly because numpy often chooses heapsort which is super slow
+    # Mergesort is used for 2 reasons:
+    # * It's much faster than the default quicksort, because m/z data is already partially sorted
+    #   and the underlying "Timsort" implementation is optimized for partially-sorted data.
+    # * It's a "stable sort", meaning it will preserve the ordering by spectrum index if mz values
+    #   are equal. The order of pixels affects some metrics, so this stability is important.
     by_mz = np.argsort(mzs, kind='mergesort')
 
     # The existing `mzs` and `ints` arrays can't be garbage-collected because the calling function

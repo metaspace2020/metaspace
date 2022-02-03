@@ -150,7 +150,10 @@ def run_diagnostics(sm_config, ds_ids, del_first, jobs):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Reindex or update dataset results')
+    parser = argparse.ArgumentParser(
+        description='Reindex or update dataset results. NOTE: FDR diagnostics are unsupported as '
+        'they require the dataset to be completely reprocessed.'
+    )
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
     parser.add_argument('--ds-id', help='DS id (or comma-separated list of ids)')
     parser.add_argument('--sql-where', help='SQL WHERE clause for datasets table')

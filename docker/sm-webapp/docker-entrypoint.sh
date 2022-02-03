@@ -19,6 +19,4 @@ yarn install
 npm rebuild node-sass # Ensure the musl version is installed
 yarn run deref-schema
 
-wait_for "nc -z redis 6379" "Redis"
-
 exec yarn run dev

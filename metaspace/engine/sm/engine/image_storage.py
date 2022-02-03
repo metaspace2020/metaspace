@@ -1,24 +1,27 @@
-from io import BytesIO
+from __future__ import annotations
+
 import json
 import logging
 import uuid
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
-from typing import List, Tuple, Callable, Dict, Protocol, Union
+from io import BytesIO
+from time import sleep
+from typing import List, Tuple, Callable, Dict, Protocol, Union, TYPE_CHECKING
 
+import PIL.Image
 import numpy as np
 from botocore.exceptions import ClientError
 from scipy.ndimage import zoom
-import PIL.Image
 
 from sm.engine.config import SMConfig
 from sm.engine.storage import get_s3_resource, create_bucket, get_s3_client
 from sm.engine.utils.retry_on_exception import retry_on_exception
 
-try:
+if TYPE_CHECKING:
     from mypy_boto3_s3.service_resource import S3ServiceResource
     from mypy_boto3_s3.client import S3Client
-except ImportError:
+else:
     S3ServiceResource = object
     S3Client = object
 
@@ -63,7 +66,15 @@ class ImageStorage:
     ) -> str:
         img_id = self._gen_id()
         obj = self._get_object(image_type, ds_id, img_id)
-        obj.put(Body=image_bytes)
+        try:
+            obj.put(Body=image_bytes)
+        except ClientError as e:
+            if 'SlowDown' in str(e):
+                logger.warning('Uploading images too fast. Trying again in 5 seconds')
+                sleep(5)
+                obj.put(Body=image_bytes)
+            else:
+                raise e
         return img_id
 
     def get_image(self, image_type: ImageType, ds_id: str, image_id: str) -> bytes:
@@ -208,7 +219,8 @@ get_ion_images_for_analysis: _GetIonImagesForAnalysis
 
 
 @retry_on_exception(ClientError)
-def _configure_bucket(sm_config: Dict):
+def configure_bucket(sm_config: Dict):
+    """Creates the image storage bucket if needed and sets the ACL."""
     bucket_name = sm_config['image_storage']['bucket']
     logger.info(f'Configuring image storage bucket: {bucket_name}')
 
@@ -244,8 +256,6 @@ def _configure_bucket(sm_config: Dict):
 
 
 def init(sm_config: Dict):
-    _configure_bucket(sm_config)
-
     # pylint: disable=global-statement
     global _instance, get_image, post_image, delete_image, delete_images, get_image_url
     global get_ion_images_for_analysis

@@ -1,4 +1,4 @@
-from typing import TypedDict, List
+from typing import TypedDict, List, Optional
 
 
 class DSConfigIsotopeGeneration(TypedDict):
@@ -13,12 +13,16 @@ class DSConfigIsotopeGeneration(TypedDict):
 
 class DSConfigFDR(TypedDict):
     decoy_sample_size: int
+    scoring_model: Optional[str]
 
 
 class DSConfigImageGeneration(TypedDict):
-    ppm: int
+    ppm: float
     n_levels: int
     min_px: int
+    # Disables an optimization where expensive metrics are skipped if cheap metrics already indicate
+    # the annotation will be rejected. Only useful for collecting data for model training.
+    compute_unused_metrics: Optional[bool]
 
 
 class DSConfig(TypedDict):

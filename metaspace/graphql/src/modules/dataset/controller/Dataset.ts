@@ -7,8 +7,9 @@ import {
   DatasetDiagnostic as DatasetDiagnosticModel,
   EngineDataset,
   OpticalImage as OpticalImageModel,
+  ScoringModel as ScoringModelModel,
 } from '../../engine/model'
-import { Dataset, OpticalImage, OpticalImageType } from '../../../binding'
+import { Dataset, OpticalImage, OpticalImageType, ScoringModel } from '../../../binding'
 import getScopeRoleForEsDataset from '../operation/getScopeRoleForEsDataset'
 import logger from '../../../utils/logger'
 import config from '../../../utils/config'
@@ -437,19 +438,44 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
             datasetId: In(datasetIds),
             error: IsNull(),
           },
-          relations: ['job', 'job.molecularDB'],
+          relations: ['job'],
         })
-        const formattedResults = results.map(diag => ({
-          ...diag,
-          data: JSON.stringify(diag.data),
-          database: diag.job?.molecularDB ?? null,
-          updatedDT: diag.updatedDT.toISOString(),
+        const molDbRepository = ctx.entityManager.getCustomRepository(MolecularDbRepository)
+
+        const formattedResults = await Promise.all(results.map(async diag => {
+          let database = null
+          // If user isn't allowed to see the moldb, don't let them see the diagnostic
+          if (diag.job != null) {
+            try {
+              database = await molDbRepository.findDatabaseById(ctx, diag.job.moldbId)
+            } catch {
+              return null
+            }
+          }
+          return {
+            ...diag,
+            data: JSON.stringify(diag.data),
+            database,
+            updatedDT: diag.updatedDT.toISOString(),
+          }
         }))
-        const keyedResults = _.groupBy(formattedResults, 'datasetId')
+
+        const keyedResults = _.groupBy(formattedResults.filter(d => d != null), 'datasetId')
         return datasetIds.map(id => keyedResults[id] || [])
       })
     })
     return await dataloader.load(ds._source.ds_id)
+  },
+
+  async scoringModel(ds: DatasetSource, args, ctx: Context): Promise<ScoringModel | null> {
+    const name = ds._source.ds_config?.fdr?.scoring_model
+    if (name) {
+      return await ctx.contextCacheGet('getScoringModelByName', [name], async name => {
+        return ctx.entityManager.findOneOrFail(ScoringModelModel, { where: { name } })
+      })
+    } else {
+      return null
+    }
   },
 }
 

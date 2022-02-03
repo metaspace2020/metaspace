@@ -1,11 +1,10 @@
 import logging
 from collections import defaultdict
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import numpy as np
 import cpyMSpec as cpyMSpec_0_4_2
 import cpyMSpec_0_3_5
-from pyMSpec.pyisocalc import pyisocalc
 
 from sm.engine.ds_config import DSConfig
 
@@ -80,8 +79,6 @@ class IsocalcWrapper:
             cpyMSpec = cpyMSpec_0_4_2  # pylint: disable=invalid-name
 
         try:
-            pyisocalc.parseSumFormula(formula)  # tests that formula is parsable
-
             iso_pattern = cpyMSpec.isotopePattern(str(formula))
             iso_pattern.addCharge(int(self.charge))
             fwhm = self.sigma * SIGMA_TO_FWHM
@@ -124,13 +121,32 @@ class IsocalcWrapper:
         return self._centroids_uncached(formula)
 
     def mass_accuracy_bounds(self, mzs):
-        if self.analysis_version < 2 or self.instrument == 'FTICR':
-            half_width = mzs * self.ppm * 1e-6
-        elif self.instrument == 'Orbitrap':
-            half_width = np.sqrt(mzs / BASE_MZ) * (BASE_MZ * self.ppm * 1e-6)
+        if self.analysis_version == 2:
+            # analysis_version==2 adjusts the width to scale with the same function as the
+            # instrument resolving power. This was not included in analysis_version==3 as we
+            # ran out of time to demonstrate whether it would improve the results.
+            half_width = mass_accuracy_half_width(mzs, self.instrument, self.ppm)
         else:
-            half_width = BASE_MZ * self.ppm * 1e-6
+            # analysis_version==1 and 3 use fixed-ppm imaging windows, which is the same scaling
+            # formula as TOF resolving power.
+            half_width = mass_accuracy_half_width(mzs, 'TOF', self.ppm)
 
         lower = mzs - half_width
         upper = mzs + half_width
         return lower, upper
+
+
+def mass_accuracy_half_width(mzs: Union[np.array, float], instrument: str, ppm: float):
+    """Returns the expected half-width of a window that is +/- `ppm` ppm at BASE_MZ (200)
+    and scales according to the peak-width scaling characteristics of the selected analyzer.
+    """
+    if instrument == 'TOF':
+        return mzs * ppm * 1e-6
+    elif instrument == 'Orbitrap':
+        return mzs ** 1.5 * (ppm * 1e-6 / BASE_MZ ** 0.5)
+    elif instrument == 'FTICR':
+        # NOTE: In previous versions the FTICR scaling was incorrect, however it only affected
+        # analysis_version==2
+        return mzs ** 2 * (ppm * 1e-6 / BASE_MZ)
+    else:
+        raise ValueError(f'Unknown instrument: {instrument}')

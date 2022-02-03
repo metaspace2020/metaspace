@@ -59,6 +59,7 @@ def global_setup(sm_config):
         populate_aws_env_vars(sm_config['aws'])
 
     image_storage.init(sm_config)
+    image_storage.configure_bucket(sm_config)
 
 
 @pytest.fixture()
@@ -265,5 +266,7 @@ def make_imzml_reader_mock(
             imzml_parser_mock().coordinates = coordinates
             imzml_parser_mock().getspectrum.side_effect = lambda i: spectra[i]
             imzml_parser_mock().mzPrecision = mz_precision
+            imzml_parser_mock().mzLengths = [len(mzs) for mzs, ints in spectra]
+            imzml_parser_mock().intensityLengths = [len(ints) for mzs, ints in spectra]
             imzml_parser_mock().spectrum_metadata_fields = spectrum_metadata_fields or {}
             return FSImzMLReader(Path('mock_input_path'))

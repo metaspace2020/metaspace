@@ -84,6 +84,13 @@ export interface ESAnnotationSource extends ESDatasetSource {
   chaos: number;
   image_corr: number;
   pattern_match: number;
+  metrics?: Record<string, any>;
+
+  theo_mz?: number[];
+  theo_ints?: number[];
+  mz_mean?: number[];
+  mz_stddev?: number[];
+
   fdr: number;
   msm: number;
   comp_ids: string[];
@@ -94,6 +101,13 @@ export interface ESAnnotationSource extends ESDatasetSource {
 
   off_sample_prob?: number;
   off_sample_label?: 'on' | 'off';
+}
+
+export interface ESAggAnnotationSource {
+  ion: string
+  dbId: number
+  datasetIds: string[]
+  annotations: ESAnnotation[]
 }
 
 const esConfig = () => {
@@ -174,6 +188,57 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
     return [
       sortTerm('ds_upload_dt', order),
       sortTerm('ds_last_finished', order),
+    ]
+  } else if (orderBy === 'ORDER_BY_ADDUCT') {
+    return [sortTerm('adduct', order)]
+  } else if (orderBy === 'ORDER_BY_GROUP') {
+    return [sortTerm('ds_group_name', order)]
+  } else if (orderBy === 'ORDER_BY_DATABASE') {
+    return [sortTerm('db_name', order)]
+  } else if (orderBy === 'ORDER_BY_CHAOS') {
+    return [sortTerm('chaos', order)]
+  } else if (orderBy === 'ORDER_BY_SPATIAL') {
+    return [sortTerm('image_corr', order)]
+  } else if (orderBy === 'ORDER_BY_SPECTRAL') {
+    return [sortTerm('pattern_match', order)]
+  } else if (orderBy === 'ORDER_BY_MAX_INT') {
+    return [
+      {
+        _script: {
+          type: 'number',
+          script: {
+            lang: 'painless',
+            inline: 'params._source.max_iso_ints[0]',
+          },
+          order: order,
+        },
+      },
+    ]
+  } else if (orderBy === 'ORDER_BY_TOTAL_INT') {
+    return [
+      {
+        _script: {
+          type: 'number',
+          script: {
+            lang: 'painless',
+            inline: 'params._source.total_iso_ints[0]',
+          },
+          order: order,
+        },
+      },
+    ]
+  } else if (orderBy === 'ORDER_BY_ISO') {
+    return [
+      {
+        _script: {
+          type: 'number',
+          script: {
+            lang: 'painless',
+            inline: 'params._source.isobars.size() + params._source.isomer_ions.size()',
+          },
+          order: order,
+        },
+      },
     ]
   }
 }
@@ -455,7 +520,7 @@ export const esCountGroupedResults = async(args: any, docType: DocType, user: Co
 }
 
 export const esRawAggregationResults = async(args: any, docType: DocType,
-  user: ContextUser): Promise<any> => {
+  user: ContextUser): Promise<ESAggAnnotationSource[]> => {
   const body = await constructESQuery(args, docType, user)
 
   const aggRequest = {
@@ -495,21 +560,17 @@ export const esRawAggregationResults = async(args: any, docType: DocType,
     size: 0,
   }
   const resp = await es.search(aggRequest)
-  const aggAnnotations : any[] = []
+  const aggAnnotations : ESAggAnnotationSource[] = []
 
   if (resp.aggregations) {
     resp.aggregations.unique_formulas.buckets.forEach((agg:any) => {
       agg.unique_db_ids.buckets.forEach((db: any) => {
-        const item : {
-          ion : string
-          dbId: number
-          datasetIds: string[]
-          annotations: any[]
-        } | any = {}
-        item.ion = agg.key
-        item.dbId = db.key
-        item.datasetIds = []
-        item.annotations = []
+        const item: ESAggAnnotationSource = {
+          ion: agg.key,
+          dbId: db.key,
+          datasetIds: [],
+          annotations: [],
+        }
         db.unique_ds_ids.buckets.forEach((ds: any) => {
           item.datasetIds.push(ds.key)
           item.annotations.push(ds.include_source.hits.hits[0])
@@ -577,7 +638,7 @@ const getFirst = async(args: any, docType: DocType, user: ContextUser, bypassAut
   return docs && docs[0] && docs[0]._source ? docs[0] : null
 }
 
-export const esAnnotationByID = async(id: string, user: ContextUser): Promise<ESAnnotationSource | null> => {
+export const esAnnotationByID = async(id: string, user: ContextUser): Promise<ESAnnotation | null> => {
   if (id) {
     return getFirst({ filter: { annotationId: id } }, 'annotation', user)
   }
@@ -586,7 +647,7 @@ export const esAnnotationByID = async(id: string, user: ContextUser): Promise<ES
 
 export const esAnnotationByIon = async(ion: string, datasetId: string,
   databaseId: string,
-  user: ContextUser): Promise<ESAnnotationSource | null> => {
+  user: ContextUser): Promise<ESAnnotation | null> => {
   if (ion) {
     return getFirst({ datasetFilter: { ids: datasetId }, filter: { ion, databaseId } },
       'annotation', user)

@@ -57,7 +57,7 @@ class MetadataMSAnalysis(TypedDict):
     Ionisation_Source: str
     Analyzer: str
     Detector_Resolving_Power: MetadataResolvingPower
-    Pixel_Size: str
+    Pixel_Size: MetadataPixelSize
 
 
 class Metadata(TypedDict):

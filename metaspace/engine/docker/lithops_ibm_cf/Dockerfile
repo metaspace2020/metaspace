@@ -16,7 +16,9 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
 
 COPY requirements.txt /tmp/requirements.txt
 RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow|scikit-learn|Pillow|boto3)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
-RUN pip install --no-cache-dir -r /tmp/requirements-lithops.txt
+# CatBoost installs large optional dependencies (plotly, matplotlib), so install it with --no-deps
+RUN grep -E "^(catboost)" /tmp/requirements.txt > /tmp/requirements-catboost.txt
+RUN pip install --no-cache-dir -r /tmp/requirements-lithops.txt && pip install --no-cache-dir -r /tmp/requirements-catboost.txt --no-deps
 
 # create action working directory
 RUN mkdir -p /action \

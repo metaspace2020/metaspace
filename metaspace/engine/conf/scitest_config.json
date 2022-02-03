@@ -116,7 +116,13 @@
         "level": "INFO"
       },
       "lithops": {
-        "level": "INFO"
+        "level": "WARNING"
+      },
+      "lithops.invokers": {
+        "level": "WARNING"
+      },
+      "lithops.executors": {
+        "level": "WARNING"
       }
     }
   },
@@ -127,7 +133,7 @@
     }
   },
   "storage": {
-    "endpoint_url": "http://storage:9000",
+    "endpoint_url": "http://localhost:9000",
     "access_key_id": "minioadmin",
     "secret_access_key": "minioadmin"
   },

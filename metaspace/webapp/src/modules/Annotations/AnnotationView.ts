@@ -120,11 +120,6 @@ export default class AnnotationView extends Vue {
 
    created() {
      this.onImageMove = throttle(this.onImageMove)
-     this.$store.commit('resetRoiInfo')
-   }
-
-   mounted() {
-     this.$store.commit('resetRoiInfo')
    }
 
    metadataDependentComponent(category: string): any {

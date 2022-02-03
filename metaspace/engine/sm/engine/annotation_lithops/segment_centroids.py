@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import math
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple
@@ -10,6 +9,7 @@ import numpy as np
 import pandas as pd
 from lithops.storage.utils import CloudObject
 
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation_lithops.annotate import choose_ds_segments
 from sm.engine.annotation_lithops.calculate_centroids import validate_formulas_not_in_multiple_segms
 from sm.engine.annotation_lithops.executor import Executor
@@ -19,7 +19,6 @@ from sm.engine.annotation_lithops.io import (
     load_cobj,
     load_cobjs,
 )
-from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 
 MIN_CENTR_SEGMS = 32
 
@@ -92,6 +91,20 @@ def define_centr_segments(
     return centr_segm_lower_bounds
 
 
+def choose_ds_segments_per_formula(ds_segments_bounds, centr_df, isocalc_wrapper):
+    centr_min_mz, centr_max_mz = isocalc_wrapper.mass_accuracy_bounds(centr_df.mz)
+    print(np.min(centr_min_mz), np.max(centr_max_mz))
+    lo_segm_i = np.searchsorted(ds_segments_bounds[:, 0], centr_min_mz, side='right') - 1
+    hi_segm_i = np.searchsorted(ds_segments_bounds[:, 1], centr_max_mz, side='left')
+    segm_i_df = (
+        pd.DataFrame({'formula_i': centr_df.index, 'lo': lo_segm_i, 'hi': hi_segm_i})
+        .groupby('formula_i')
+        .agg({'formula_i': 'first', 'lo': 'min', 'hi': 'max'})
+        .sort_values(['hi', 'lo'], ignore_index=True)
+    )
+    return segm_i_df
+
+
 def segment_centroids(
     fexec: Executor,
     peaks_cobjs: List[CObj[pd.DataFrame]],
@@ -101,8 +114,7 @@ def segment_centroids(
     is_intensive_dataset: bool,
     isocalc_wrapper: IsocalcWrapper,
 ) -> List[CObj[pd.DataFrame]]:
-    # pylint: disable=too-many-locals,too-many-statements
-    max_ds_segms_size_per_db_segm_mb = 2560 if is_intensive_dataset else 1536
+    # pylint: disable=too-many-locals
     mz_min, mz_max = ds_segms_bounds[0, 0], ds_segms_bounds[-1, 1]
 
     clip_centr_chunks_cobjs, centr_n = clip_centr_df(fexec, peaks_cobjs, mz_min, mz_max)
@@ -150,64 +162,37 @@ def segment_centroids(
         segment_centr_chunk, list(enumerate(clip_centr_chunks_cobjs)), runtime_memory=1024
     )
 
-    def merge_centr_df_segments(idx, segm_cobjs, *, storage):
-        def _second_level_segment(segm, sub_segms_n):
-            segm_bounds_q = [i * 1 / sub_segms_n for i in range(0, sub_segms_n)]
-            sub_segms_lower_bounds = np.quantile(segm[segm.peak_i == 0].mz.values, segm_bounds_q)
-            centr_segm_df = segment_centr_df(segm, sub_segms_lower_bounds)
+    def merge_centr_df_segments(segm_i, segm_cobjects, *, storage):
+        print(f'Merging segment {segm_i} clipped centroids chunks')
+        # Temporarily index by formula_i for faster filtering when saving
+        segm = pd.concat(load_cobjs(storage, segm_cobjects)).set_index('formula_i')
+        formula_segms_df = choose_ds_segments_per_formula(ds_segms_bounds, segm, isocalc_wrapper)
 
-            sub_segms = []
-            for _, df in centr_segm_df.groupby('segm_i'):
-                del df['segm_i']
-                sub_segms.append(df)
-            return sub_segms
+        # Try to balance formulas so that they all span roughly the same number of DS segments,
+        # and have roughly the same number of formulas.
+        max_segm_span = max((formula_segms_df.hi - formula_segms_df.lo).max(), 3)
+        if is_intensive_dataset:
+            max_segm_count = int(round(np.clip(centr_n / 1000, 1000, 5000)))
+        else:
+            max_segm_count = int(round(np.clip(centr_n / 1000, 1000, 15000)))
+        formula_i_groups = []
+        segm_lo_idx = 0
+        while segm_lo_idx < len(formula_segms_df):
+            max_segm_hi = formula_segms_df.lo[segm_lo_idx] + max_segm_span + 1
+            max_span_idx = np.searchsorted(formula_segms_df.hi, max_segm_hi, 'left')
+            segm_hi_idx = min(segm_lo_idx + max_segm_count, max_span_idx, len(formula_segms_df))
+            formula_i_groups.append(formula_segms_df.formula_i.values[segm_lo_idx:segm_hi_idx])
+            print(segm_lo_idx, segm_hi_idx)
+            segm_lo_idx = segm_hi_idx
 
-        print(f'Merging segment {idx} clipped centroids chunks')
-        segm = pd.concat(load_cobjs(storage, segm_cobjs))
-        init_segms = _second_level_segment(segm, len(centr_segm_lower_bounds[idx]))
+        def _second_level_upload(formula_is):
+            return save_cobj(storage, segm.loc[formula_is].sort_values('mz').reset_index())
 
-        segms = []
-        for init_segm in init_segms:
-            first_ds_segm_i, last_ds_segm_i = choose_ds_segments(
-                ds_segms_bounds, init_segm, isocalc_wrapper
-            )
-            ds_segms_to_download_n = last_ds_segm_i - first_ds_segm_i + 1
-            segms.append((ds_segms_to_download_n, init_segm))
-        segms = sorted(segms, key=lambda x: x[0], reverse=True)
-        max_ds_segms_to_download_n, max_segm = segms[0]
+        print(f'Storing {len(formula_i_groups)} centroids segments')
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            segms_cobjects = list(pool.map(_second_level_upload, formula_i_groups))
 
-        max_iterations_n = 100
-        iterations_n = 1
-        while (
-            max_ds_segms_to_download_n * ds_segm_size_mb > max_ds_segms_size_per_db_segm_mb
-            and iterations_n < max_iterations_n
-        ):
-
-            sub_segms = []
-            sub_segms_n = math.ceil(
-                max_ds_segms_to_download_n * ds_segm_size_mb / max_ds_segms_size_per_db_segm_mb
-            )
-            for sub_segm in _second_level_segment(max_segm, sub_segms_n):
-                first_ds_segm_i, last_ds_segm_i = choose_ds_segments(
-                    ds_segms_bounds, sub_segm, isocalc_wrapper
-                )
-                ds_segms_to_download_n = last_ds_segm_i - first_ds_segm_i + 1
-                sub_segms.append((ds_segms_to_download_n, sub_segm))
-
-            segms = sub_segms + segms[1:]
-            segms = sorted(segms, key=lambda x: x[0], reverse=True)
-            iterations_n += 1
-            max_ds_segms_to_download_n, max_segm = segms[0]
-
-        def _second_level_upload(df):
-            return save_cobj(storage, df)
-
-        print(f'Storing {len(segms)} centroids segments')
-        with ThreadPoolExecutor(max_workers=128) as pool:
-            segms = [df for _, df in segms]
-            segms_cobjs = list(pool.map(_second_level_upload, segms))
-
-        return segms_cobjs
+        return segms_cobjects
 
     second_level_segms_dict = defaultdict(list)
     for sub_segms_cobjs in first_level_segms_cobjs:
@@ -230,7 +215,7 @@ def validate_centroid_segments(fexec, db_segms_cobjs, ds_segms_bounds, isocalc_w
     def warn(message, df=None):
         warnings.append(message)
         logger.warning(message)
-        if df:
+        if df is not None:
             logger.warning(df)
 
     def get_segm_stats(segm_cobject, *, storage):
@@ -252,7 +237,7 @@ def validate_centroid_segments(fexec, db_segms_cobjs, ds_segms_bounds, isocalc_w
                 'missing_peaks': (
                     segm[segm.formula_i.isin(n_peaks.index[n_peaks != 4])]
                     .groupby('formula_i')
-                    .peak_i.apply(lambda peak_is: len(set(range(len(peak_is))) - set(peak_is)))
+                    .peak_i.apply(lambda peak_is: len(set(range(max(peak_is))) - set(peak_is)))
                     .sum()
                 ),
                 'is_sorted': segm.mz.is_monotonic,

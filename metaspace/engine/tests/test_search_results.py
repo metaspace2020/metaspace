@@ -24,16 +24,7 @@ def db_sel_side_effect(query, *args):
 
 @pytest.fixture
 def search_results():
-    metrics = [
-        'chaos',
-        'spatial',
-        'spectral',
-        'msm',
-        'total_iso_ints',
-        'min_iso_ints',
-        'max_iso_ints',
-    ]
-    res = SearchResults('ds-id', 0, metrics, 4, 1)
+    res = SearchResults('ds-id', 0, 4, 1)
     return res
 
 
@@ -77,7 +68,7 @@ def _mock_ion_metrics_df():
 
 
 def test_save_ion_img_metrics_correct_db_call(search_results):
-    ion_img_ids = {13: {'iso_image_ids': ['iso_image_1', None, None, None]}}
+    ion_img_ids = {13: ['iso_image_1', None, None, None]}
     ion_metrics_df = _mock_ion_metrics_df()
     db_mock.select.side_effect = db_sel_side_effect
 
@@ -90,12 +81,11 @@ def test_save_ion_img_metrics_correct_db_call(search_results):
                     'chaos',
                     'spatial',
                     'spectral',
-                    'msm',
                     'total_iso_ints',
                     'min_iso_ints',
                     'max_iso_ints',
                 ],
-                (0.9, 0.9, 0.9, 0.9 ** 3, [100, 10], [0, 0], [10, 1]),
+                (0.9, 0.9, 0.9, [100, 10], [0, 0], [10, 1]),
             )
         )
     )
@@ -130,13 +120,13 @@ def test_isotope_images_are_stored(post_image_mock, search_results, pysparkling_
     )
     ids = search_results._post_images_to_image_store(formula_images_rdd, mask, 4)
     assert ids == {
-        0: {'iso_image_ids': [img_id, None, img_id, None]},
-        1: {'iso_image_ids': [img_id, None, None, None]},
+        0: [img_id, None, img_id, None],
+        1: [img_id, None, None, None],
     }
 
 
 def test_non_native_python_number_types_handled(search_results):
-    ion_img_ids = {13: {'iso_image_ids': ['iso_image_1', None, None, None]}}
+    ion_img_ids = {13: ['iso_image_1', None, None, None]}
     metrics_df = _mock_ion_metrics_df()
     db_mock.select.side_effect = db_sel_side_effect
 
@@ -152,12 +142,11 @@ def test_non_native_python_number_types_handled(search_results):
                         'chaos',
                         'spatial',
                         'spectral',
-                        'msm',
                         'total_iso_ints',
                         'min_iso_ints',
                         'max_iso_ints',
                     ],
-                    (0.9, 0.9, 0.9, 0.9 ** 3, [100, 10], [0, 0], [10, 1]),
+                    (0.9, 0.9, 0.9, [100, 10], [0, 0], [10, 1]),
                 )
             )
         )

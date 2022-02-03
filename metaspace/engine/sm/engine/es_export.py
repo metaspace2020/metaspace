@@ -14,29 +14,24 @@ from elasticsearch import (
 from elasticsearch.client import IndicesClient, IngestClient
 from elasticsearch.helpers import parallel_bulk
 
-from sm.engine.utils.db_mutex import DBMutex
-from sm.engine.db import DB
-from sm.engine.annotation.fdr import FDR
-from sm.engine.formula_parser import format_ion_formula
-from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
-from sm.engine import molecular_db
-from sm.engine.molecular_db import MolecularDB
-from sm.engine.utils.retry_on_exception import retry_on_exception
-from sm.engine.config import SMConfig
 from sm.engine import image_storage
+from sm.engine import molecular_db
+from sm.engine.annotation.fdr import FDR
+from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
+from sm.engine.config import SMConfig
+from sm.engine.db import DB
+from sm.engine.formula_parser import format_ion_formula
+from sm.engine.molecular_db import MolecularDB
+from sm.engine.utils.db_mutex import DBMutex
+from sm.engine.utils.retry_on_exception import retry_on_exception
 
 logger = logging.getLogger('engine')
 
 ANNOTATIONS_SEL = '''SELECT
     m.id as annotation_id,
     m.formula AS formula,
-    COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
-    COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
-    COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
-    (m.stats -> 'total_iso_ints'::text) AS total_iso_ints,
-    (m.stats -> 'min_iso_ints'::text) AS min_iso_ints,
-    (m.stats -> 'max_iso_ints'::text) AS max_iso_ints,
-    COALESCE(m.msm, 0::real) AS msm,
+    m.stats as stats,
+    m.msm AS msm,
     m.adduct AS adduct,
     m.neutral_loss as neutral_loss,
     m.chem_mod as chem_mod,
@@ -334,6 +329,30 @@ class ESExporter:
             return mol_by_formula_dict
 
     @staticmethod
+    def _expand_stats_field(doc):
+        """Extracts the fixed-schema fields from doc['stats'] and adds them to doc,
+        leaving the dynamic/model-dependent metric values in doc['metrics'].
+        """
+        metrics = doc.pop('stats', {})
+        doc['metrics'] = metrics
+        # The 3 MSM metrics are copied out for backwards compatibility.
+        doc['chaos'] = metrics.get('chaos')
+        doc['image_corr'] = metrics.get('spatial')
+        doc['pattern_match'] = metrics.get('spectral')
+
+        # Non-metric statistics
+        doc['total_iso_ints'] = metrics.pop('total_iso_ints')
+        doc['min_iso_ints'] = metrics.pop('min_iso_ints')
+        doc['max_iso_ints'] = metrics.pop('max_iso_ints')
+
+        # Theoretical/observed stats only included in datasets processed after ML Scoring was added
+        if 'theo_mz' in metrics:
+            doc['theo_mz'] = metrics.pop('theo_mz')
+            doc['theo_ints'] = metrics.pop('theo_ints')
+            doc['mz_mean'] = metrics.pop('mz_mean')
+            doc['mz_stddev'] = metrics.pop('mz_stddev')
+
+    @staticmethod
     def _add_ds_fields_to_ann(ann_doc, ds_doc):
         for field in ds_doc:
             if field not in DS_COLUMNS_TO_SKIP_IN_ANN:
@@ -370,6 +389,7 @@ class ESExporter:
         annotation_counts = defaultdict(int)
         mol_by_formula = self._get_mol_by_formula_dict(moldb)
         for doc in annotation_docs:
+            self._expand_stats_field(doc)
             self._add_ds_fields_to_ann(doc, ds_doc)
             doc['db_id'] = moldb.id
             doc['db_name'] = moldb.name
@@ -390,7 +410,7 @@ class ESExporter:
                 for image_id in doc['iso_image_ids']
             ]
 
-            if moldb.targeted:
+            if moldb.targeted and ds_doc['ds_config'].get('analysis_version', 1) == 1:
                 fdr_level = doc['fdr'] = -1
             else:
                 fdr_level = FDR.nearest_fdr_level(doc['fdr'])

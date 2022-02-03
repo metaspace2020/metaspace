@@ -172,11 +172,13 @@ export default defineComponent<RoiSettingsProps>({
       const roiInfo = getRoi()
       const index = roiInfo.length % Object.keys(channels).length
       const channel : any = Object.values(channels)[index]
+
       roiInfo.push({
         coordinates: [],
         channel: Object.keys(channels)[index],
+        rgb: channel,
         color: channel.replace('rgb', 'rgba').replace(')', ', 0.4)'),
-        strokeColor: channel.replace('rgb', 'rgba').replace(')', ', 1)'),
+        strokeColor: channel.replace('rgb', 'rgba').replace(')', ', 0)'),
         name: `ROI ${index + 1}`,
         visible: true,
         edit: false,
@@ -225,7 +227,8 @@ export default defineComponent<RoiSettingsProps>({
       Vue.set(roiInfo, index, {
         ...roiInfo[index],
         channel,
-        strokeColor: channels[channel].replace('rgb', 'rgba').replace(')', ', 0.6)'),
+        rgb: channels[channel],
+        strokeColor: channels[channel].replace('rgb', 'rgba').replace(')', ', 0)'),
         color: channels[channel].replace('rgb', 'rgba').replace(')', ', 0.4)'),
       })
       $store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })

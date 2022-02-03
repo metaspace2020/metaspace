@@ -129,13 +129,14 @@ export class Job {
 }
 
 // Should match the literal in metaspace/engine/sm/engine/annotation/diagnostics.py
-export type DiagnosticType = 'TIC' | 'IMZML_METADATA'
+export type DiagnosticType = 'TIC' | 'IMZML_METADATA' | 'FDR_RESULTS'
 export const DiagnosticTypeOptions: {[k in DiagnosticType]: k} = {
   TIC: 'TIC',
   IMZML_METADATA: 'IMZML_METADATA',
+  FDR_RESULTS: 'FDR_RESULTS',
 }
 
-export type DiagnosticImageFormat = 'PNG' | 'NPY'
+export type DiagnosticImageFormat = 'PNG' | 'NPY' | 'JSON' | 'PARQUET'
 export interface DiagnosticImage {
   key: string;
   index?: number;
@@ -315,6 +316,26 @@ export class PerfProfileEntry {
   profile: PerfProfile;
 }
 
+@Entity({ schema: 'public' })
+export class ScoringModel {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  /** `name` is for finding models based on a dataset's `scoring_model` DSConfig value */
+  @Index({ unique: true })
+  @Column({ type: 'text' })
+  name: string;
+
+  /** `type` is hint for how to interpret `params`. sm-engine is responsible for managing the valid values. */
+  @Column({ type: 'text' })
+  type: string;
+
+  /** `params` is a JSON blob of anything sm-engine needs to load & use the model. It's intentionally schemaless,
+   as it's very likely that future model types will need to extend the structure. */
+  @Column({ type: 'json' })
+  params: any;
+}
+
 export const ENGINE_ENTITIES = [
   EngineDataset,
   OpticalImage,
@@ -323,4 +344,5 @@ export const ENGINE_ENTITIES = [
   Annotation,
   PerfProfile,
   PerfProfileEntry,
+  ScoringModel,
 ]

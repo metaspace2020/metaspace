@@ -194,6 +194,7 @@ export const getGroupDatabasesQuery =
         isPublic
         name
         version
+        user { id name email}
       }
     }
   }`

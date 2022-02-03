@@ -3,11 +3,11 @@ from __future__ import annotations
 import inspect
 import logging
 import resource
-import traceback
 from contextlib import ExitStack
 from datetime import datetime
 from itertools import chain
 from threading import Thread, current_thread
+from traceback import format_tb
 from typing import List, Callable, TypeVar, Iterable, Sequence, Dict, Optional
 
 import lithops
@@ -24,11 +24,11 @@ TRet = TypeVar('TRet')
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_CF_VPC = 'metaspace2020/metaspace-lithops:1.9.0'
+RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:2.0.1'
 RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:1.9.0'
 MEM_LIMITS = {
     'localhost': 32768,
-    'ibm_cf': 4096,
+    # 'ibm_cf': 4096,
     'ibm_vpc': 128 * 2 ** 30,
     'code_engine': 32768,
 }
@@ -96,7 +96,7 @@ def _save_subtask_perf(
     mem_afters = subtask_data.pop('mem after', [-1])
     perf_data = {
         'num_actions': len(exec_times),
-        'attempts': attempt,
+        'attempt': attempt,
         'runtime_memory': runtime_memory,
         'max_memory': np.max(mem_afters).item(),
         'max_time': np.max(exec_times).item(),
@@ -120,6 +120,21 @@ def _save_subtask_perf(
         else:
             subtask_summary = subtask_df.iloc[0].to_string()
         logger.debug(f'Subtasks:\n{subtask_summary}')
+
+
+def exception_to_json_obj(exc):
+    if exc is None:
+        return None
+
+    obj = {}
+    try:
+        obj['type'] = type(exc).__name__
+        obj['message'] = str(exc)
+        if hasattr(exc, '__traceback__'):
+            obj['traceback'] = format_tb(getattr(exc, '__traceback__'))
+    except Exception:
+        logger.warning(f'Failed to serialize exception {exc}', exc_info=True)
+    return obj
 
 
 class Executor:
@@ -189,6 +204,7 @@ class Executor:
         runtime_memory: int = None,
         include_modules=None,
         debug_run_locally=False,
+        max_memory: int = None,
         **lithops_kwargs,
     ) -> List[TRet]:
         if len(func_args) == 0:
@@ -246,13 +262,17 @@ class Executor:
                 func_name,
                 start_time,
                 datetime.now(),
-                error=traceback.format_exc(),
+                error=exception_to_json_obj(exc),
                 attempt=attempt,
                 runtime_memory=runtime_memory,
                 failed_activation_ids=failed_activation_ids,
             )
 
-            if isinstance(exc, (MemoryError, TimeoutError)) and runtime_memory <= 4096:
+            if (
+                isinstance(exc, (MemoryError, TimeoutError))
+                and runtime_memory <= 4096
+                and (max_memory is None or runtime_memory < max_memory)
+            ):
                 old_memory = runtime_memory
                 runtime_memory *= 2
                 attempt += 1
@@ -272,7 +292,7 @@ class Executor:
                     f'{func_name} raised an exception. '
                     f'Failed activation(s): {failed_idxs} '
                     f'ID(s): {failed_activation_ids}',
-                    exc_info=True,
+                    exc_info=exc,
                 )
                 raise exc
 

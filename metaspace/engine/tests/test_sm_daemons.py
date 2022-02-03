@@ -1,27 +1,27 @@
-import os
-from os.path import join, dirname
-import sys
 import logging
+import os
+import sys
+import time
 from collections import OrderedDict
 from functools import partial
+from os.path import join, dirname
 from pathlib import Path
 from unittest.mock import patch
-import time
 
+import numpy as np
+import pandas as pd
 import pytest
 from PIL import Image
 from fabric.api import local
 from fabric.context_managers import warn_only
-import numpy as np
-import pandas as pd
 
+from sm.engine.annotation.job import JobStatus
 from sm.engine.daemons.actions import DaemonAction
+from sm.engine.dataset import DatasetStatus
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.dataset import DatasetStatus
-from sm.engine.annotation.job import JobStatus
 from sm.engine.queue import QueueConsumer
-from .utils import create_test_molecular_db, create_test_ds
+from .utils import create_test_molecular_db, create_test_ds, create_test_fdr_diagnostics_bundle
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
 logger = logging.getLogger('annotate-daemon')
@@ -169,7 +169,14 @@ def test_sm_daemons(
         }
     ).set_index('formula_i')
     search_algo_mock = MSMSearchMock()
-    search_algo_mock.search.return_value = [(formula_metrics_df, [])]
+
+    def mock_search(*args):
+        # Read all spectra so that ImzML diagnostic fields are populated
+        imzml_reader = MSMSearchMock.call_args_list[-1][1]['imzml_reader']
+        _ = list(imzml_reader.iter_spectra(range(imzml_reader.n_spectra)))
+        return [(formula_metrics_df, [], create_test_fdr_diagnostics_bundle())]
+
+    search_algo_mock.search.side_effect = mock_search
     search_algo_mock.metrics = OrderedDict(
         [
             ('chaos', 0),
@@ -182,8 +189,8 @@ def test_sm_daemons(
         ]
     )
 
-    url_dict = {'iso_image_ids': ['iso_image_1', None, None, None]}
-    post_images_to_image_store_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
+    image_ids = ['iso_image_1', None, None, None]
+    post_images_to_image_store_mock.return_value = {0: image_ids, 1: image_ids, 2: image_ids}
 
     db = DB()
     es = ESExporter(db, local_sm_config)
@@ -224,20 +231,20 @@ def test_sm_daemons(
     assert start <= finish
 
     # image metrics asserts
-    rows = db.select('SELECT formula, adduct, stats, iso_image_ids FROM annotation')
+    rows = db.select('SELECT formula, adduct, msm, stats, iso_image_ids FROM annotation')
     rows = sorted(
         rows, key=lambda row: row[1]
     )  # Sort in Python because postgres sorts symbols inconsistently between locales
     assert len(rows) == 3
     for row, expected_adduct in zip(rows, ['+H', '+Na', '[M]+']):
-        formula, adduct, stats, iso_image_ids = row
+        formula, adduct, msm, stats, iso_image_ids = row
         assert formula == 'C12H24O'
         assert adduct == expected_adduct
+        assert np.isclose(msm, 0.9 ** 3)
         assert stats == {
             'chaos': 0.9,
             'spatial': 0.9,
             'spectral': 0.9,
-            'msm': 0.9 ** 3,
             'total_iso_ints': [100.0],
             'min_iso_ints': [0],
             'max_iso_ints': [10.0],
@@ -258,7 +265,7 @@ def test_sm_daemons(
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemons_annot_fails(
     MSMSearchMock,
-    post_images_to_annot_service_mock,
+    post_images_to_image_store_mock,
     test_db,
     es_dsl_search,
     clean_isotope_storage,
@@ -276,8 +283,8 @@ def test_sm_daemons_annot_fails(
     msm_algo_mock = MSMSearchMock()
     msm_algo_mock.search.side_effect = throw_exception_function
 
-    url_dict = {'iso_image_ids': ['iso_image_1', None, None, None]}
-    post_images_to_annot_service_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
+    image_ids = ['iso_image_1', None, None, None]
+    post_images_to_image_store_mock.return_value = {0: image_ids, 1: image_ids, 2: image_ids}
 
     db = DB()
     es = ESExporter(db, local_sm_config)
@@ -303,7 +310,7 @@ def test_sm_daemons_annot_fails(
 @patch('sm.engine.annotation_spark.annotation_job.MSMSearch')
 def test_sm_daemon_es_export_fails(
     MSMSearchMock,
-    post_images_to_annot_service_mock,
+    post_images_to_image_store_mock,
     test_db,
     es_dsl_search,
     clean_isotope_storage,
@@ -335,7 +342,9 @@ def test_sm_daemon_es_export_fails(
         }
     ).set_index('formula_i')
     search_algo_mock = MSMSearchMock()
-    search_algo_mock.search.return_value = [(formula_metrics_df, [])]
+    search_algo_mock.search.return_value = [
+        (formula_metrics_df, [], create_test_fdr_diagnostics_bundle())
+    ]
     search_algo_mock.metrics = OrderedDict(
         [
             ('chaos', 0),
@@ -347,8 +356,8 @@ def test_sm_daemon_es_export_fails(
             ('max_iso_ints', []),
         ]
     )
-    url_dict = {'iso_image_ids': ['iso_image_1', None, None, None]}
-    post_images_to_annot_service_mock.return_value = {0: url_dict, 1: url_dict, 2: url_dict}
+    image_ids = ['iso_image_1', None, None, None]
+    post_images_to_image_store_mock.return_value = {0: image_ids, 1: image_ids, 2: image_ids}
 
     db = DB()
 

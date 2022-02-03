@@ -42,7 +42,7 @@ import { schemeCategory10 as LegendColors } from 'd3-scale-chromatic'
 import DiagnosticsPlot from '../DiagnosticsPlot.vue'
 import PlotLegend from '../PlotLegend.vue'
 import XicPlot from './XicPlot.vue'
-import { peakChartDataQuery } from '../../../../api/annotation'
+import { diagnosticsDataQuery } from '../../../../api/annotation'
 import safeJsonParse from '../../../../lib/safeJsonParse'
 
 @Component({
@@ -54,7 +54,7 @@ import safeJsonParse from '../../../../lib/safeJsonParse'
   },
   apollo: {
     peakChartData: {
-      query: peakChartDataQuery,
+      query: diagnosticsDataQuery,
       fetchPolicy: 'cache-first',
       update: (data: any) => {
         const { annotation } = data

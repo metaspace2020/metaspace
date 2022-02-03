@@ -1,14 +1,19 @@
+import logging
 import time
 from pathlib import Path
 from pprint import pformat
 from shutil import copytree, rmtree
-import logging
 from typing import Optional, Dict
 
 from pyspark import SparkContext, SparkConf
 
+from sm.engine import molecular_db, storage
 from sm.engine.annotation.acq_geometry import make_acq_geometry
-from sm.engine.annotation.diagnostics import add_diagnostics, extract_dataset_diagnostics
+from sm.engine.annotation.diagnostics import (
+    add_diagnostics,
+    extract_dataset_diagnostics,
+    extract_job_diagnostics,
+)
 from sm.engine.annotation.imzml_reader import FSImzMLReader
 from sm.engine.annotation.job import (
     del_jobs,
@@ -17,15 +22,13 @@ from sm.engine.annotation.job import (
     get_ds_moldb_ids,
     JobStatus,
 )
-from sm.engine.annotation.formula_validator import METRICS
 from sm.engine.annotation_spark.msm_basic_search import MSMSearch
+from sm.engine.annotation_spark.search_results import SearchResults
+from sm.engine.config import SMConfig
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
-from sm.engine.annotation_spark.search_results import SearchResults
-from sm.engine.util import split_s3_path
-from sm.engine.config import SMConfig
 from sm.engine.es_export import ESExporter
-from sm.engine import molecular_db, storage
+from sm.engine.util import split_s3_path
 from sm.engine.utils.perf_profile import Profiler
 
 logger = logging.getLogger('engine')
@@ -93,7 +96,7 @@ class AnnotationJob:
             )
             search_results_it = search_alg.search()
 
-            for job_id, (moldb_ion_metrics_df, moldb_ion_images_rdd) in zip(
+            for job_id, (moldb_ion_metrics_df, moldb_ion_images_rdd, fdr_bundle) in zip(
                 job_ids, search_results_it
             ):
                 # Save results for each moldb
@@ -102,13 +105,14 @@ class AnnotationJob:
                     search_results = SearchResults(
                         ds_id=self._ds.id,
                         job_id=job_id,
-                        metric_names=METRICS.keys(),
                         n_peaks=self._ds.config['isotope_generation']['n_peaks'],
                         charge=self._ds.config['isotope_generation']['charge'],
                     )
                     search_results.store(
                         moldb_ion_metrics_df, moldb_ion_images_rdd, imzml_reader.mask, self._db
                     )
+                    add_diagnostics(extract_job_diagnostics(self._ds.id, job_id, fdr_bundle))
+
                     job_status = JobStatus.FINISHED
                 finally:
                     update_finished_job(job_id, job_status)

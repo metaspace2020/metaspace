@@ -40,6 +40,7 @@ describe('DatasetTable', () => {
     id: 'REPLACEME',
     status: 'FINISHED',
     metadataJson: mockMetadataJson,
+    description: null,
     databases: [
       { name: 'CHEBI', version: '', id: 2 },
       { name: 'HMDB', version: 'v2.5', id: 6 },
