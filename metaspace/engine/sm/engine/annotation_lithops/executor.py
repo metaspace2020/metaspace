@@ -24,13 +24,13 @@ TRet = TypeVar('TRet')
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:2.0.1'
-RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:1.9.0'
+RUNTIME_CF_VPC = 'metaspace2020/metaspace-lithops:2.0.1'
+RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:2.0.1'
 MEM_LIMITS = {
-    'localhost': 32768,
+    'localhost': 32 * 1024,
     # 'ibm_cf': 4096,
     'ibm_vpc': 128 * 2 ** 30,
-    'code_engine': 32768,
+    'code_engine': 32 * 1024,
 }
 
 
@@ -270,7 +270,7 @@ class Executor:
 
             if (
                 isinstance(exc, (MemoryError, TimeoutError))
-                and runtime_memory <= 4096
+                and runtime_memory < 32*1024
                 and (max_memory is None or runtime_memory < max_memory)
             ):
                 old_memory = runtime_memory
