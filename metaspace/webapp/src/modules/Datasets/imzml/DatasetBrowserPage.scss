@@ -5,6 +5,11 @@ $header-height: 64px;
   @apply flex flex-row flex-wrap p-0;
   min-height: calc(100vh - #{$header-height});
 
+  .dataset-browser-empty-spectrum{
+    @apply border-2 border-dashed border-gray-200 relative rounded m-6 p-2 flex flex-row items-center justify-center;
+    background: rgba(224,224,224,0.2);
+  }
+
   .label{
     width: 70px;
   }

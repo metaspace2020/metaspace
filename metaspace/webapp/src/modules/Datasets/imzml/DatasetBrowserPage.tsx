@@ -1,5 +1,5 @@
 import { computed, defineComponent, reactive } from '@vue/composition-api'
-import { Select, Option, RadioGroup, Radio, InputNumber, Input } from '../../../lib/element-ui'
+import { Select, Option, RadioGroup, Radio, InputNumber, Input, RadioButton } from '../../../lib/element-ui'
 import { useQuery } from '@vue/apollo-composable'
 import { GetDatasetByIdQuery, getDatasetByIdWithPathQuery, getDatasetDiagnosticsQuery } from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
@@ -11,6 +11,7 @@ import SimpleIonImageViewer from './SimpleIonImageViewer'
 import { calculateMzFromFormula, isFormulaValid } from '../../../lib/formulaParser'
 import reportError from '../../../lib/reportError'
 import { readNpy } from '../../../lib/npyHandler'
+import { DatasetBrowserKendrickPlot } from './DatasetBrowserKendrickPlot'
 
 interface DatasetBrowserProps {
   className: string
@@ -34,11 +35,17 @@ interface DatasetBrowserState {
   normalizationData: any
   x: number | undefined
   y: number | undefined
+  currentView: string
 }
 
 const PEAK_FILTER = {
   ALL: 1,
   FDR: 2,
+}
+
+const VIEWS = {
+  SPECTRUM: 'Peak chart',
+  KENDRICK: 'Kendrick plot',
 }
 
 export default defineComponent<DatasetBrowserProps>({
@@ -69,6 +76,7 @@ export default defineComponent<DatasetBrowserProps>({
       sampleData: [],
       normalizationData: {},
       invalidFormula: false,
+      currentView: VIEWS.KENDRICK,
     })
 
     const queryVariables = () => {
@@ -456,6 +464,20 @@ export default defineComponent<DatasetBrowserProps>({
       )
     }
 
+    const renderEmptySpectrum = () => {
+      return (
+        <div class='dataset-browser-empty-spectrum'>
+          <i class="el-icon-info info-icon mr-6"/>
+          <div class='flex flex-col text-xs w-3/4'>
+            <p class='font-semibold mb-2'>Steps:</p>
+            <p>1 - Select a pixel on the image viewer</p>
+            <p>2 - Apply the filter you desire</p>
+            <p>3 - The interaction is multi-way, so you can also update the ion image via spectrum interaction</p>
+          </div>
+        </div>
+      )
+    }
+
     return () => {
       const isEmpty = state.x === undefined && state.y === undefined
 
@@ -467,7 +489,37 @@ export default defineComponent<DatasetBrowserProps>({
                 Spectrum browser
               </div>
               {renderBrowsingFilters()}
+              <RadioGroup
+                size='small'
+                class='w-full flex' onInput={(value: any) => { state.currentView = value }} value={state.currentView}>
+                <RadioButton class='ml-2' label={VIEWS.SPECTRUM}/>
+                <RadioButton label={VIEWS.KENDRICK}/>
+              </RadioGroup>
+              {
+                isEmpty && !state.chartLoading
+                && renderEmptySpectrum()
+              }
+              <DatasetBrowserKendrickPlot
+                style={{
+                  visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
+                  height: state.currentView === VIEWS.KENDRICK ? '' : 0,
+                }}
+                isEmpty={isEmpty}
+                isLoading={state.chartLoading}
+                isDataLoading={annotationsLoading.value}
+                data={state.sampleData}
+                annotatedData={annotatedPeaks.value}
+                peakFilter={state.peakFilter}
+                onItemSelected={(mz: number) => {
+                  state.mzmScoreFilter = mz
+                  requestIonImage()
+                }}
+              />
               <DatasetBrowserSpectrumChart
+                style={{
+                  visibility: state.currentView === VIEWS.SPECTRUM ? '' : 'hidden',
+                  height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
+                }}
                 isEmpty={isEmpty}
                 isLoading={state.chartLoading}
                 isDataLoading={annotationsLoading.value}

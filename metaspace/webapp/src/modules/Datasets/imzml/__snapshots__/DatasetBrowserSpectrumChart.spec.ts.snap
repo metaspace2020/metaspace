@@ -4,33 +4,7 @@ exports[`DatasetBrowserSpectrumChart it should match snapshot when empty 1`] = `
 <div
   class="dataset-browser-spectrum-container"
   isempty="true"
->
-  <div
-    class="dataset-browser-empty-spectrum"
-  >
-    <i
-      class="el-icon-info info-icon mr-6"
-    />
-    <div
-      class="flex flex-col text-xs w-3/4"
-    >
-      <p
-        class="font-semibold mb-2"
-      >
-        Steps:
-      </p>
-      <p>
-        1 - Select a pixel on the image viewer
-      </p>
-      <p>
-        2 - Apply the filter you desire
-      </p>
-      <p>
-        3 - The interaction is multi-way, so you can also update the ion image via spectrum interaction
-      </p>
-    </div>
-  </div>
-</div>
+/>
 `;
 
 exports[`DatasetBrowserSpectrumChart it should match snapshot when loading chart data 1`] = `

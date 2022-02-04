@@ -7,6 +7,7 @@ import {
 } from 'echarts/renderers'
 import {
   BarChart,
+  ScatterChart,
   LineChart,
 } from 'echarts/charts'
 import {
@@ -16,12 +17,16 @@ import {
   LegendComponent,
   DataZoomComponent,
   MarkPointComponent,
+  TitleComponent,
+  VisualMapPiecewiseComponent,
+  VisualMapContinuousComponent,
 } from 'echarts/components'
-import './DatasetBrowserSpectrumChart.scss'
+import './DatasetBrowserKendrickPlot.scss'
 
 use([
   CanvasRenderer,
   BarChart,
+  ScatterChart,
   LineChart,
   GridComponent,
   TooltipComponent,
@@ -29,9 +34,12 @@ use([
   LegendComponent,
   DataZoomComponent,
   MarkPointComponent,
+  TitleComponent,
+  VisualMapPiecewiseComponent,
+  VisualMapContinuousComponent,
 ])
 
-interface DatasetBrowserSpectrumChartProps {
+interface DatasetBrowserKendrickPlotProps {
   isEmpty: boolean
   isLoading: boolean
   isDataLoading: boolean
@@ -40,7 +48,7 @@ interface DatasetBrowserSpectrumChartProps {
   peakFilter: number
 }
 
-interface DatasetBrowserSpectrumChartState {
+interface DatasetBrowserKendrickPlotState {
   scaleIntensity: boolean
   chartOptions: any
 }
@@ -50,8 +58,8 @@ const PEAK_FILTER = {
   FDR: 2,
 }
 
-export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectrumChartProps>({
-  name: 'DatasetBrowserSpectrumChart',
+export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrickPlotProps>({
+  name: 'DatasetBrowserKendrickPlot',
   props: {
     isEmpty: {
       type: Boolean,
@@ -80,7 +88,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
   },
   setup(props, { emit }) {
     const spectrumChart = ref(null)
-    const state = reactive<DatasetBrowserSpectrumChartState>({
+    const state = reactive<DatasetBrowserKendrickPlotState>({
       scaleIntensity: false,
       chartOptions: {
         grid: {
@@ -146,7 +154,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
           },
         },
         yAxis: {
-          name: 'Intensity',
+          name: 'Mass Defect',
           splitLine: {
             show: false,
           },
@@ -184,8 +192,11 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
         series: [
           {
             name: 'Unannotated',
-            type: 'bar',
             data: [],
+            type: 'scatter',
+            symbolSize: function(val: any) {
+              return val[2] * 2 || 20
+            },
             label: {
               show: true,
               position: 'top',
@@ -194,22 +205,13 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             labelLayout: {
               hideOverlap: true,
             },
-            barWidth: 2,
             itemStyle: {
               color: 'red',
-            },
-            markPoint: {
-              symbol: 'circle',
-              symbolSize: 10,
-              label: {
-                show: false,
-              },
-              data: [],
             },
           },
           {
             name: 'Annotated',
-            type: 'bar',
+            type: 'scatter',
             data: [],
             itemStyle: {
               color: 'blue',
@@ -227,11 +229,9 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
         return state.chartOptions
       }
 
-      console.log('HEY2')
       const auxOptions = state.chartOptions
       const data = []
       const annotatedTheoreticalMzs = annotatedMzs.value
-      const markPointData: any[] = []
       let minX
       let maxX
       let maxIntensity = Math.max(...chartData.value[0].ints)
@@ -254,12 +254,20 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
       }
 
       for (let i = 0; i < chartData.value[0].mzs.length; i++) {
-        const xAxis = chartData.value[0].mzs[i]
-        const yAxis =
+        // m_CH2=14.0156
+        const exactMass = 14.0156
+        const mz = chartData.value[0].mzs[i]
+        const xAxis = mz
+        const kendrickMass = mz * Math.round(exactMass) / exactMass
+        const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
+        const intensity =
           state.scaleIntensity
             ? chartData.value[0].ints[i] / maxIntensity * 100.0 : chartData.value[0].ints[i]
+        const yAxis = KendrickMassDefect
         let tooltip = `m/z: ${xAxis.toFixed(4)}`
         let isAnnotated = false
+        const threshold = 100
+        const radius = Math.log10(intensity / threshold)
 
         if (!minX || xAxis < minX) {
           minX = xAxis
@@ -292,17 +300,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             name: xAxis.toFixed(4),
             tooltip,
             mz: xAxis,
-            value: [xAxis, yAxis],
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-
-          markPointData.push({
-            label: tooltip,
-            mz: xAxis,
-            xAxis: xAxis,
-            yAxis: yAxis,
+            value: [xAxis, yAxis, radius],
             itemStyle: {
               color: isAnnotated ? 'blue' : 'red',
             },
@@ -314,17 +312,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             name: xAxis.toFixed(4),
             tooltip,
             mz: xAxis,
-            value: [xAxis, yAxis],
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-
-          markPointData.push({
-            label: tooltip,
-            mz: xAxis,
-            xAxis: xAxis,
-            yAxis: yAxis,
+            value: [xAxis, yAxis, radius],
             itemStyle: {
               color: isAnnotated ? 'blue' : 'red',
             },
@@ -334,9 +322,8 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
 
       auxOptions.xAxis.min = minX
       auxOptions.xAxis.max = maxX
-      auxOptions.yAxis.name = state.scaleIntensity ? 'Relative Intensity' : 'Intensity'
-      auxOptions.yAxis.max = state.scaleIntensity ? 100 : maxIntensity
-      auxOptions.series[0].markPoint.data = markPointData
+      // auxOptions.yAxis.name = state.scaleIntensity ? 'Relative Intensity' : 'Intensity'
+      // auxOptions.yAxis.max = state.scaleIntensity ? 100 : maxIntensity
       auxOptions.series[0].data = data
       // handleZoomReset()
       return auxOptions
@@ -410,7 +397,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
       const { isEmpty, isLoading } = props
 
       return (
-        <div class={'dataset-browser-spectrum-container'}>
+        <div class={'dataset-browser-kendrick-container'}>
           {
             (!isEmpty || isLoading)
             && renderSpectrum()
