@@ -28,9 +28,8 @@ RUNTIME_CF_VPC = 'metaspace2020/metaspace-lithops:2.0.1'
 RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:2.0.1'
 MEM_LIMITS = {
     'localhost': 32 * 1024,
-    # 'ibm_cf': 4096,
-    'ibm_vpc': 128 * 2 ** 30,
     'code_engine': 32 * 1024,
+    'ibm_vpc': 128 * 1024,
 }
 
 
@@ -144,8 +143,8 @@ class Executor:
     If a feature is successful, it should be upstreamed to Lithops as an RFC or PR.
 
     Current features:
-      * Switch to the Standalone executor if >4GB of memory is required
-      * Retry with 2x more memory if an execution fails due to an OOM
+      * Switch to the Standalone executor if >32GB of memory is required
+      * Retry with 3x more memory if an execution fails due to an OOM
       * Collect & record per-invocation performance statistics & custom data
         * A named kwarg `perf` of type `SubtaskPerf` will be injected if in the parameter list,
           allowing a function to supply more granular timing data and add custom data.
@@ -175,10 +174,6 @@ class Executor:
         else:
             self.is_hybrid = True
             self.executors = {
-                # 'ibm_cf': lithops.ServerlessExecutor(
-                #     config=lithops_config,
-                #     runtime=RUNTIME_CF_VPC
-                # ),
                 'code_engine': lithops.ServerlessExecutor(
                     config=lithops_config,
                     runtime=RUNTIME_CE,
@@ -364,8 +359,8 @@ class Executor:
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
         if executor.config['lithops']['mode'] == 'serverless':
-            # selected `CPU-intensive` combination between CPU and RAM
-            # if amount of RAM <= 16 GB. In case of 32 GB, switch on `Balanced`
+            # Selected `CPU-intensive` combination between CPU & RAM if amount of RAM <= 16 GB.
+            # In case of 32 GB, switch on `Balanced`
             # https://cloud.ibm.com/docs/codeengine?topic=codeengine-mem-cpu-combo
             if runtime_memory <= 16 * 1024:
                 runtime_cpu = runtime_memory / 1024 / 2.0
