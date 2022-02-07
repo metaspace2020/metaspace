@@ -6,6 +6,7 @@ import logger from '../../utils/logger'
 import { esAnnotationByID, esAnnotationByIon } from '../../../esConnector'
 import { ImageViewerSnapshot, Annotation } from '../../binding'
 import { ImageViewerSnapshot as ImageViewerSnapshotModel } from './model'
+import { unpackAnnotation } from '../annotation/controller/Query'
 
 export const Resolvers = {
   Query: {
@@ -14,10 +15,12 @@ export const Resolvers = {
       if (ivs) {
         // kept the ids query for now, in case there are permalinks without ionFormula even after the migration
         // i.e when the job does not exist anymore to extract the ion from the id
-        const annotations = ivs.ionFormulas && ivs.dbIds
-          ? await Promise.all(ivs.ionFormulas.map((ion, idx) => esAnnotationByIon(ion, datasetId,
-              ivs.dbIds[idx], ctx.user)))
-          : await Promise.all(ivs.annotationIds.map(id => esAnnotationByID(id, ctx.user)))
+        const annotation = (ann : any) : any => { return ann !== null ? unpackAnnotation(ann) : null }
+        let annotations = ivs.ionFormulas && ivs.dbIds
+          ? await Promise.all(ivs.ionFormulas.map((ion, idx) => (esAnnotationByIon(ion, datasetId,
+              ivs.dbIds[idx], ctx.user))))
+          : await Promise.all(ivs.annotationIds.map(id => (esAnnotationByID(id, ctx.user))))
+        annotations = annotations.map((ann) => annotation(ann))
         return {
           ...ivs,
           annotations: annotations.filter(a => a !== null) as unknown as Annotation[],

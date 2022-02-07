@@ -9,7 +9,7 @@ import {
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Query } from '../../../binding'
 
-const unpackAnnotation = (hit: ESAnnotation | ESAnnotationWithColoc) => {
+export const unpackAnnotation = (hit: ESAnnotation | ESAnnotationWithColoc) => {
   const { _id, _source } = hit
   // Extract all directly accessible fields in one place to reduce the overhead of GraphQL having to call lots of
   // per-field resolvers.
