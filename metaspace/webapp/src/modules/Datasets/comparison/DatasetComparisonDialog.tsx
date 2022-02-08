@@ -1,4 +1,4 @@
-import { computed, defineComponent, onMounted, reactive, watchEffect } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, reactive, ref, watchEffect } from '@vue/composition-api'
 import { Workflow, WorkflowStep } from '../../../components/Workflow'
 import { Select, Option, InputNumber, Button, Dialog } from '../../../lib/element-ui'
 import { ErrorLabelText } from '../../../components/Form'
@@ -44,7 +44,8 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
       default: () => [],
     },
   },
-  setup(props, { emit, root }) {
+  // @ts-ignore
+  setup(props, { refs, emit, root }) {
     const state = reactive<DatasetComparisonDialogState>({
       selectedDatasetIds: props.selectedDatasetIds,
       workflowStep: 1,
@@ -149,6 +150,21 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
       }, 0)
     }
 
+    const handleScroll = () => {
+      // update select poppers to follow dialog position reference
+      if (refs) {
+        Object.keys(refs).forEach((key) => {
+          if (key.includes('popper')) {
+            try {
+              refs[key].$refs.popper.updatePopper()
+            } catch (e) {
+              // pass
+            }
+          }
+        })
+      }
+    }
+
     return () => {
       const datasets : any[] = uniqBy(((options.value || []) as any[]).concat((dataset.value || []) as any[])
         , 'id')
@@ -157,7 +173,13 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
         <Dialog
           visible
           lockScroll={true}
+          customClass='w-11/12 lg:w-1/2 xl:w-5/12'
           onclose={() => emit('close')}
+          {...{
+            nativeOn: {
+              scroll: handleScroll,
+            },
+          }}
           class="dataset-comparison-dialog sm-content-page el-dialog-lean">
           <h1>Datasets Comparison</h1>
           <Workflow>
@@ -172,7 +194,10 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                 state.workflowStep === 1
                 && <form class='ds-comparison-step'>
                   <Select
+                    ref='popper-ds-names`'
                     class={`w-full ${state.firstStepError ? 'sm-form-error' : ''}`}
+                    popperClass='ds-options-popper'
+                    popperAppendToBody={false}
                     value={state.selectedDatasetIds}
                     multiple
                     filterable
@@ -191,18 +216,14 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                       })
                     }
                   </Select>
-                  {
-                    state.maxCellError
-                    && <ErrorLabelText class='mt-0'>
-                      Only up to {MAX_CELLS} datasets can be selected!
-                    </ErrorLabelText>
-                  }
-                  {
-                    state.firstStepError
-                    && <ErrorLabelText class='mt-0'>
-                      Please select at least two datasets to be compared!
-                    </ErrorLabelText>
-                  }
+                  <ErrorLabelText
+                    class='mt-0'
+                    style={{ visibility: (state.firstStepError || state.maxCellError) ? '' : 'hidden' }}>
+                    {
+                      state.firstStepError ? 'Please select at least two datasets to be compared!'
+                        : `Only up to ${MAX_CELLS} datasets can be selected!`
+                    }
+                  </ErrorLabelText>
                   <Button onClick={async() => {
                     if (state.selectedDatasetIds.length > MAX_CELLS) {
                       state.maxCellError = true
@@ -264,12 +285,9 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                         )
                       })}
                     </div>
-                    {
-                      state.secondStepError
-                    && <ErrorLabelText class='mt-0'>
+                    <ErrorLabelText class='mt-0' style={{ visibility: state.secondStepError ? '' : 'hidden' }}>
                       The grid must have enough cells to all datasets!
                     </ErrorLabelText>
-                    }
                     <Button onClick={() => { state.workflowStep = 1 }}>
                       Prev
                     </Button>
@@ -299,7 +317,12 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
               {
                 state.workflowStep === 3
                 && <form>
-                  <div class='dataset-comparison-dialog-grid'>
+                  <div class='dataset-comparison-dialog-grid'
+                    {...{
+                      on: {
+                        scroll: handleScroll,
+                      },
+                    }}>
                     {Array.from(Array(state.nRows).keys()).map((row) => {
                       return (
                         <div key={row} class='dataset-comparison-dialog-row'>
@@ -307,10 +330,14 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                             return (
                               <div key={col} class='dataset-comparison-dialog-col'>
                                 <Select
+                                  ref={`popper-${row}-${col}`}
                                   class={`dataset-cell ${state.finalStepError ? 'sm-form-error' : ''}`}
                                   value={state.arrangement[`${row}-${col}`]}
                                   placeholder=" "
                                   clearable
+                                  filterable
+                                  popperClass='grid-popper'
+                                  popperAppendToBody={false}
                                   onChange={(value: string) => { handleSelection(value, row, col) }}>
                                   {
                                     state.showOptions
@@ -332,12 +359,9 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                       )
                     })}
                   </div>
-                  {
-                    state.finalStepError
-                    && <ErrorLabelText class='mt-0'>
-                      Please place all the selected datasets on the grid!
-                    </ErrorLabelText>
-                  }
+                  <ErrorLabelText class='mt-0' style={{ visibility: state.finalStepError ? '' : 'hidden' }}>
+                    Please place all the selected datasets on the grid!
+                  </ErrorLabelText>
                   <Button onClick={() => {
                     state.arrangement = {}
                     state.workflowStep = 2

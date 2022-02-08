@@ -3,7 +3,7 @@
 exports[`DatasetComparisonDialog it should match snapshot 1`] = `
 <transition-stub name="dialog-fade" class="dataset-comparison-dialog sm-content-page el-dialog-lean" selecteddatasetids="2021-03-31_11h01m28s,2021-03-30_18h22m18s,2021-04-06_08h33m04s" style="z-index: 2001;">
   <div class="el-dialog__wrapper">
-    <div role="dialog" aria-modal="true" aria-label="dialog" class="el-dialog" style="margin-top: 15vh;">
+    <div role="dialog" aria-modal="true" aria-label="dialog" class="el-dialog w-11/12 lg:w-1/2 xl:w-5/12" style="margin-top: 15vh;">
       <div class="el-dialog__header"><span class="el-dialog__title"></span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
       <div class="el-dialog__body">
         <h1>Datasets Comparison</h1>
@@ -24,7 +24,7 @@ exports[`DatasetComparisonDialog it should match snapshot 1`] = `
                   <!---->
                 </div>
                 <transition-stub name="el-zoom-in-top">
-                  <div class="el-select-dropdown el-popper is-multiple" style="display: none;">
+                  <div class="el-select-dropdown el-popper is-multiple ds-options-popper" style="display: none;">
                     <div class="el-scrollbar" style="">
                       <div class="el-select-dropdown__wrap el-scrollbar__wrap el-scrollbar__wrap--hidden-default">
                         <ul class="el-scrollbar__view el-select-dropdown__list">
@@ -46,7 +46,7 @@ exports[`DatasetComparisonDialog it should match snapshot 1`] = `
                     <!---->
                   </div>
                 </transition-stub>
-              </div><button type="button" class="el-button el-button--primary">
+              </div><span class="block text-sm font-medium text-danger mt-0" style="visibility: hidden;">Only up to 10 datasets can be selected!</span><button type="button" class="el-button el-button--primary">
                 <!---->
                 <!----><span>Next</span></button>
             </form>

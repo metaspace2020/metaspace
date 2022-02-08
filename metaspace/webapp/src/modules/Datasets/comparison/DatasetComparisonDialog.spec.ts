@@ -99,7 +99,7 @@ describe('DatasetComparisonDialog', () => {
     wrapper.find('.el-button--primary').trigger('click')
     await Vue.nextTick()
 
-    expect(wrapper.find('.text-danger').exists()).toBe(true)
+    expect(wrapper.find('.text-danger').element.style.visibility).not.toBe('hidden')
     expect(wrapper.find('.text-danger').text())
       .toBe('Please select at least two datasets to be compared!')
   })
@@ -111,7 +111,7 @@ describe('DatasetComparisonDialog', () => {
     wrapper.find('.el-button--primary').trigger('click')
     await Vue.nextTick()
 
-    expect(wrapper.find('.text-danger').exists()).toBe(false)
+    expect(wrapper.find('.text-danger').element.style.visibility).toBe('hidden')
     expect(wrapper.findAll('.sm-workflow-step').at(1).classes()
       .includes('active')).toBe(true)
   })
@@ -139,7 +139,7 @@ describe('DatasetComparisonDialog', () => {
     wrapper.find('.el-button--primary').trigger('click')
     await Vue.nextTick()
 
-    expect(wrapper.find('.text-danger').exists()).toBe(true)
+    expect(wrapper.find('.text-danger').element.style.visibility).not.toBe('hidden')
     expect(wrapper.find('.text-danger').text())
       .toBe('The grid must have enough cells to all datasets!')
   })
@@ -156,7 +156,7 @@ describe('DatasetComparisonDialog', () => {
     wrapper.find('.el-button--primary').trigger('click')
     await Vue.nextTick()
 
-    expect(wrapper.find('.text-danger').exists()).toBe(true)
+    expect(wrapper.find('.text-danger').element.style.visibility).not.toBe('hidden')
     expect(wrapper.find('.text-danger').text())
       .toBe('Please place all the selected datasets on the grid!')
   })
@@ -190,7 +190,7 @@ describe('DatasetComparisonDialog', () => {
     wrapper.find('.el-button--primary').trigger('click')
     await Vue.nextTick()
 
-    expect(wrapper.find('.text-danger').exists()).toBe(false)
+    expect(wrapper.find('.text-danger').element.style.visibility).toBe('hidden')
     expect(mockAnnotationAgg).toHaveBeenCalledTimes(1)
     await Vue.nextTick()
 
