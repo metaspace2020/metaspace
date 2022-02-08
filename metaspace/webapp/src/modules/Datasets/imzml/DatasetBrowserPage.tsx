@@ -12,6 +12,7 @@ import { calculateMzFromFormula, isFormulaValid } from '../../../lib/formulaPars
 import reportError from '../../../lib/reportError'
 import { readNpy } from '../../../lib/npyHandler'
 import { DatasetBrowserKendrickPlot } from './DatasetBrowserKendrickPlot'
+import FadeTransition from '../../../components/FadeTransition'
 
 interface DatasetBrowserProps {
   className: string
@@ -30,6 +31,9 @@ interface DatasetBrowserState {
   chartLoading: boolean
   imageLoading: boolean
   invalidFormula: boolean
+  referenceFormula: any
+  invalidReferenceFormula: boolean
+  referenceFormulaMz: number
   metadata: any
   annotation: any
   normalizationData: any
@@ -76,6 +80,9 @@ export default defineComponent<DatasetBrowserProps>({
       sampleData: [],
       normalizationData: {},
       invalidFormula: false,
+      invalidReferenceFormula: false,
+      referenceFormula: undefined,
+      referenceFormulaMz: 14.0156, // m_CH2=14.0156,
       currentView: VIEWS.KENDRICK,
     })
 
@@ -304,7 +311,7 @@ export default defineComponent<DatasetBrowserProps>({
       return (
         <div class='dataset-browser-holder-filter-box'>
           <p class='font-semibold'>Browsing filters</p>
-          <div class='filter-holder'>
+          <div class='filter-holder justify-between'>
             <RadioGroup
               class='w-3/5'
               onInput={(value: any) => {
@@ -373,6 +380,41 @@ export default defineComponent<DatasetBrowserProps>({
               </Select>
             </div>
           </div>
+          <FadeTransition>
+            <div
+              class='flex flex-row w-full items-start mt-4'
+              style={{
+                visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
+              }}>
+              <span class='mass-ref-label mr-1'>Mass reference</span>
+              <div class='flex flex-1 flex-col'>
+                <Input
+                  class={'max-formula-input' + (state.invalidReferenceFormula ? ' formula-input-error' : '')}
+                  value={state.referenceFormula}
+                  onInput={(value: string) => {
+                    if (value && !isFormulaValid(value)) {
+                      state.invalidReferenceFormula = true
+                    } else {
+                      state.invalidReferenceFormula = false
+                    }
+                    state.referenceFormula = value
+                  }}
+                  onChange={() => {
+                    const { referenceFormula } : any = state
+                    if (!state.invalidReferenceFormula) {
+                      const newMz = calculateMzFromFormula(referenceFormula as string, dataset.value?.polarity)
+                      state.referenceFormulaMz = newMz
+                    }
+                  }}
+                  size='mini'
+                  placeholder='CH2'
+                />
+                <span class='error-message' style={{ visibility: !state.invalidReferenceFormula ? 'hidden' : '' }}>
+                Invalid formula!
+                </span>
+              </div>
+            </div>
+          </FadeTransition>
         </div>
       )
     }
@@ -491,7 +533,9 @@ export default defineComponent<DatasetBrowserProps>({
               {renderBrowsingFilters()}
               <RadioGroup
                 size='small'
-                class='w-full flex' onInput={(value: any) => { state.currentView = value }} value={state.currentView}>
+                class='w-full flex ml-4'
+                onInput={(value: any) => { state.currentView = value }}
+                value={state.currentView}>
                 <RadioButton class='ml-2' label={VIEWS.SPECTRUM}/>
                 <RadioButton label={VIEWS.KENDRICK}/>
               </RadioGroup>
@@ -510,6 +554,7 @@ export default defineComponent<DatasetBrowserProps>({
                 data={state.sampleData}
                 annotatedData={annotatedPeaks.value}
                 peakFilter={state.peakFilter}
+                referenceMz={state.referenceFormulaMz}
                 onItemSelected={(mz: number) => {
                   state.mzmScoreFilter = mz
                   requestIonImage()

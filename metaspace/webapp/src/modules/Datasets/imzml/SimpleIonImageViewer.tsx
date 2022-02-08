@@ -43,8 +43,6 @@ interface SimpleIonImageViewerProps {
 interface SimpleIonImageViewerState {
   scaleIntensity: boolean
   ionImageUrl: any
-  chartLoading: boolean
-  imageLoading: boolean
   ionImage: any
   rangeSliderStyle: any
   imageSettings: ImageSettings
@@ -79,8 +77,6 @@ export default defineComponent<SimpleIonImageViewerProps>({
     const state = reactive<SimpleIonImageViewerState>({
       ionImage: undefined,
       rangeSliderStyle: undefined,
-      chartLoading: false,
-      imageLoading: false,
       scaleIntensity: false,
       imageSettings: {
         isNormalized: !!$route.query.norm,

@@ -6,7 +6,6 @@ import {
   CanvasRenderer,
 } from 'echarts/renderers'
 import {
-  BarChart,
   ScatterChart,
   LineChart,
 } from 'echarts/charts'
@@ -25,7 +24,6 @@ import './DatasetBrowserKendrickPlot.scss'
 
 use([
   CanvasRenderer,
-  BarChart,
   ScatterChart,
   LineChart,
   GridComponent,
@@ -46,6 +44,7 @@ interface DatasetBrowserKendrickPlotProps {
   data: any[]
   annotatedData: any[]
   peakFilter: number
+  referenceMz: number
 }
 
 interface DatasetBrowserKendrickPlotState {
@@ -84,6 +83,10 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
     peakFilter: {
       type: Number,
       default: PEAK_FILTER.ALL,
+    },
+    referenceMz: {
+      type: Number,
+      default: 14.0156, // m_CH2=14.0156
     },
   },
   setup(props, { emit }) {
@@ -168,7 +171,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
           type: 'value',
           axisLabel: {
             formatter: function(value: any) {
-              return state.scaleIntensity ? value : value.toExponential(2)
+              return value
             },
           },
           boundaryGap: [0, '30%'],
@@ -188,6 +191,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
         ],
         legend: {
           selectedMode: false,
+          icon: 'roundRect',
         },
         series: [
           {
@@ -234,39 +238,20 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
       const annotatedTheoreticalMzs = annotatedMzs.value
       let minX
       let maxX
-      let maxIntensity = Math.max(...chartData.value[0].ints)
-
-      // maxIntensity if annotated
-      if (peakFilter.value !== PEAK_FILTER.ALL) {
-        const auxInts : number[] = []
-        for (let i = 0; i < chartData.value[0].mzs.length; i++) {
-          const xAxis = chartData.value[0].mzs[i]
-          annotatedTheoreticalMzs.forEach((annotation: any) => {
-            const theoreticalMz : number = annotation.mz
-            const highestMz = theoreticalMz * 1.000003
-            const lowestMz = theoreticalMz * 0.999997
-            if (xAxis >= lowestMz && xAxis <= highestMz) {
-              auxInts.push(chartData.value[0].ints[i])
-            }
-          })
-        }
-        maxIntensity = Math.max(...auxInts)
-      }
+      let maxY = 1
+      const exactMass = props.referenceMz
 
       for (let i = 0; i < chartData.value[0].mzs.length; i++) {
         // m_CH2=14.0156
-        const exactMass = 14.0156
         const mz = chartData.value[0].mzs[i]
         const xAxis = mz
         const kendrickMass = mz * Math.round(exactMass) / exactMass
         const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
-        const intensity =
-          state.scaleIntensity
-            ? chartData.value[0].ints[i] / maxIntensity * 100.0 : chartData.value[0].ints[i]
+        const intensity = chartData.value[0].ints[i]
         const yAxis = KendrickMassDefect
         let tooltip = `m/z: ${xAxis.toFixed(4)}`
         let isAnnotated = false
-        const threshold = 100
+        const threshold = 1000
         const radius = Math.log10(intensity / threshold)
 
         if (!minX || xAxis < minX) {
@@ -274,6 +259,9 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
         }
         if (!maxX || xAxis > maxX) {
           maxX = xAxis
+        }
+        if (!maxY || yAxis > maxY) {
+          maxY = yAxis
         }
         // check if is annotated
         let hasCompoundsHeader = false
@@ -322,8 +310,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
 
       auxOptions.xAxis.min = minX
       auxOptions.xAxis.max = maxX
-      // auxOptions.yAxis.name = state.scaleIntensity ? 'Relative Intensity' : 'Intensity'
-      // auxOptions.yAxis.max = state.scaleIntensity ? 100 : maxIntensity
+      auxOptions.yAxis.max = maxY * 1.1
       auxOptions.series[0].data = data
       // handleZoomReset()
       return auxOptions

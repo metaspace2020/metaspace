@@ -19,7 +19,7 @@
     @apply flex flex-col items-center justify-start relative;
     min-height: 500px;
     width: 100%;
-    background: rgba(0,0,0,0.01);
+    background: white;//rgba(0,0,0,0.01);
     height: 100%;
   }
 
@@ -27,7 +27,7 @@
     @apply absolute flex flex-row items-start justify-center;
     height: 100%;
     width: 100%;
-    background: rgba(0,0,0,0.02);
+    background: white;//rgba(0,0,0,0.02);
     padding-top: 30%;
   }
 

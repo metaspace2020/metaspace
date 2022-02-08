@@ -180,6 +180,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
         ],
         legend: {
           selectedMode: false,
+          icon: 'roundRect',
         },
         series: [
           {
@@ -227,7 +228,6 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
         return state.chartOptions
       }
 
-      console.log('HEY2')
       const auxOptions = state.chartOptions
       const data = []
       const annotatedTheoreticalMzs = annotatedMzs.value
