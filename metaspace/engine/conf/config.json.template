@@ -65,7 +65,7 @@
       "execution_timeout": 3600
     },
     "serverless": {
-      "backend": "ibm_cf",
+      "backend": "code_engine",
       "runtime_timeout": 1200,
       "runtime_memory": 2048
     },
@@ -82,6 +82,11 @@
       "endpoint": "https://eu-de.functions.cloud.ibm.com",
       "namespace": "{{ sm_lithops_cf_ns_name }}",
       "namespace_id": "{{ sm_lithops_cf_ns_id }}"
+    },
+    "code_engine": {
+      "region": "eu-de",
+      "namespace": "{{ sm_lithops_ce_namespace }}",
+      "runtime": ""
     },
     "ibm_vpc": {
       "endpoint": "https://eu-de.iaas.cloud.ibm.com",

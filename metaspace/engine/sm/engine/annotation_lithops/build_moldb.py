@@ -55,7 +55,6 @@ def _get_db_fdr_and_formulas(ds_config: DSConfig, mols: List[str]):
     formula_map_df = pd.DataFrame(
         formulas, columns=['formula', 'modifier', 'ion_formula', 'target']
     )
-
     formula_map_df = formula_map_df[~formula_map_df.ion_formula.isna()]
 
     return fdr, formula_map_df
@@ -141,4 +140,4 @@ def build_moldb(
 
         return formula_cobjs, db_data_cobjs
 
-    return executor.call(_build_moldb, (), runtime_memory=2048)
+    return executor.call(_build_moldb, (), runtime_memory=4096)

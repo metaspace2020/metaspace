@@ -24,11 +24,12 @@ TRet = TypeVar('TRet')
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_DOCKER_IMAGE = 'metaspace2020/metaspace-lithops:2.0.1'
+RUNTIME_CF_VPC = 'metaspace2020/metaspace-lithops:2.0.1'
+RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:2.0.1'
 MEM_LIMITS = {
-    'localhost': 32768,
-    'ibm_cf': 4096,
-    'ibm_vpc': 128 * 2 ** 30,
+    'localhost': 32 * 1024,
+    'code_engine': 32 * 1024,
+    'ibm_vpc': 128 * 1024,
 }
 
 
@@ -142,8 +143,8 @@ class Executor:
     If a feature is successful, it should be upstreamed to Lithops as an RFC or PR.
 
     Current features:
-      * Switch to the Standalone executor if >4GB of memory is required
-      * Retry with 2x more memory if an execution fails due to an OOM
+      * Switch to the Standalone executor if >32GB of memory is required
+      * Retry with 3x more memory if an execution fails due to an OOM
       * Collect & record per-invocation performance statistics & custom data
         * A named kwarg `perf` of type `SubtaskPerf` will be injected if in the parameter list,
           allowing a function to supply more granular timing data and add custom data.
@@ -167,18 +168,20 @@ class Executor:
                 'localhost': lithops.LocalhostExecutor(
                     config=lithops_config,
                     storage='localhost',
-                    runtime='python',  # Change to RUNTIME_DOCKER_IMAGE to run in a Docker container
+                    runtime='python',  # Change to RUNTIME_CF_VPC to run in a Docker container
                 )
             }
         else:
             self.is_hybrid = True
             self.executors = {
-                'ibm_cf': lithops.ServerlessExecutor(
-                    config=lithops_config, runtime=RUNTIME_DOCKER_IMAGE
+                'code_engine': lithops.ServerlessExecutor(
+                    config=lithops_config,
+                    runtime=RUNTIME_CE,
+                    backend='code_engine',
                 ),
                 'ibm_vpc': lithops.StandaloneExecutor(
                     config=lithops_config,
-                    runtime=RUNTIME_DOCKER_IMAGE,
+                    runtime=RUNTIME_CF_VPC,
                 ),
             }
 
@@ -262,7 +265,7 @@ class Executor:
 
             if (
                 isinstance(exc, (MemoryError, TimeoutError))
-                and runtime_memory <= 4096
+                and runtime_memory < 32 * 1024
                 and (max_memory is None or runtime_memory < max_memory)
             ):
                 old_memory = runtime_memory
@@ -355,6 +358,16 @@ class Executor:
             executor.config['lithops']['worker_processes'] = min(
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
+        if executor.config['lithops']['mode'] == 'serverless':
+            # Selected `CPU-intensive` combination between CPU & RAM if amount of RAM <= 16 GB.
+            # In case of 32 GB, switch on `Balanced`
+            # https://cloud.ibm.com/docs/codeengine?topic=codeengine-mem-cpu-combo
+            if runtime_memory <= 16 * 1024:
+                runtime_cpu = runtime_memory / 1024 / 2.0
+            else:
+                runtime_cpu = runtime_memory / 1024 / 4.0
+            executor.config['code_engine']['runtime_cpu'] = runtime_cpu
+            logger.info(f'Setup {runtime_cpu} CPUs and {runtime_memory} MB RAM')
 
         return executor
 

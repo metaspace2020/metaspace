@@ -135,12 +135,12 @@ def load_ds(
     # Guess the amount of memory needed. For the majority of datasets (no zero-intensity peaks,
     # separate m/z arrays per spectrum) approximately 3x the ibd file size is used during the
     # most memory-intense part (sorting the m/z array).
-    if ibd_size_mb * 3 + 512 < 4096:
-        logger.debug(f'Found {ibd_size_mb}MB .ibd file. Trying serverless load_ds')
-        runtime_memory = 4096
+    if ibd_size_mb * 3 + 512 < 32 * 1024:
+        logger.info(f'Found {ibd_size_mb}MB .ibd file. Trying serverless load_ds')
+        runtime_memory = int(2 ** np.ceil(np.log2(ibd_size_mb * 3 + 512)))
     else:
-        logger.debug(f'Found {ibd_size_mb}MB .ibd file. Using VM-based load_ds')
-        runtime_memory = 32768
+        logger.info(f'Found {ibd_size_mb}MB .ibd file. Using VM-based load_ds')
+        runtime_memory = 128 * 1024
 
     imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens = executor.call(
         _load_ds,
