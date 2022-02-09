@@ -137,7 +137,7 @@ def load_ds(
     # most memory-intense part (sorting the m/z array).
     if ibd_size_mb * 3 + 512 < 32 * 1024:
         logger.info(f'Found {ibd_size_mb}MB .ibd file. Trying serverless load_ds')
-        runtime_memory = int(2 ** np.ceil(np.log2(ibd_size_mb * 3 + 512)))
+        runtime_memory = max(2048, int(2 ** np.ceil(np.log2(ibd_size_mb * 3 + 512))))
     else:
         logger.info(f'Found {ibd_size_mb}MB .ibd file. Using VM-based load_ds')
         runtime_memory = 128 * 1024
