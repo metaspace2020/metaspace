@@ -182,6 +182,9 @@ The Prefix is necessary and should not have a leading or trailing slash
         },
         "lithops-daemon": {
             "level": "DEBUG"
+        },
+        "annotation-pipeline": {
+            "level": "INFO"
         }
     }
   },

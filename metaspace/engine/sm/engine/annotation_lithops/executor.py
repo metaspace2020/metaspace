@@ -144,7 +144,7 @@ class Executor:
 
     Current features:
       * Switch to the Standalone executor if >32GB of memory is required
-      * Retry with 3x more memory if an execution fails due to an OOM
+      * Retry with 2x more memory if an execution fails due to an OOM
       * Collect & record per-invocation performance statistics & custom data
         * A named kwarg `perf` of type `SubtaskPerf` will be injected if in the parameter list,
           allowing a function to supply more granular timing data and add custom data.
@@ -264,7 +264,7 @@ class Executor:
             )
 
             if (
-                isinstance(exc, (MemoryError, TimeoutError))
+                isinstance(exc, (MemoryError, TimeoutError, OSError))
                 and runtime_memory < 32 * 1024
                 and (max_memory is None or runtime_memory < max_memory)
             ):
