@@ -120,7 +120,7 @@
     "jest": "^24.9.0",
     "json-schema-deref-sync": "^0.10.1",
     "lint-staged": "^9.5.0",
-    "node-sass": "^6.0.1",
+    "node-sass": "^7.0.0",
     "sass-loader": "^10.2.0",
     "stats-webpack-plugin": "^0.7.0",
     "ts-jest": "^24.3.0",
