@@ -66,6 +66,27 @@
         </p>
       </li>
       <li>
+        <b><a href="https://go.drugbank.com/about">DrugBank</a>:</b>
+        A comprehensive, web-accessible database that brings together quantitative chemical, physical, pharmaceutical
+        and biological data about thousands of well-studied drugs and drug targets.
+        <div>
+          <el-popover
+            trigger="hover"
+            placement="bottom"
+          >
+            <div class="desc-cite-popover">
+              Wishart, David S., et al. DrugBank: a comprehensive resource for in silico drug discovery and
+              exploration. Nucleic acids research 34.suppl_1 (2006): D668-D672.
+              <a href="https://doi.org/10.1093/nar/gkj067">https://doi.org/10.1093/nar/gkj067</a>
+            </div>
+            <span
+              slot="reference"
+              class="desc-cite"
+            >Citation</span>
+          </el-popover>
+        </div>
+      </li>
+      <li>
         <b><a href="http://ecmdb.ca/about">E. coli Metabolome Database (ECMDB)</a>:</b>
         An expertly curated database containing extensive metabolomic data and metabolic pathway diagrams about
         Escherichia coli (strain K12, MG1655).
