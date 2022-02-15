@@ -351,6 +351,8 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       }
 
       newPage = newPage < 1 ? 1 : newPage
+      // reset to page 1 when page saved on url but not enough annotations (filter cases)
+      newPage = (((newPage - 1) * state.pageSize) + state.pageSize) >= state.processedAnnotations.length ? 1 : newPage
       state.offset = newPage
 
       $store.commit('setCurrentPage', newPage)
