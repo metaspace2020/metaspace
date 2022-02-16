@@ -127,6 +127,7 @@ def create_process_segment(
     ppm = ds_config['image_generation']['ppm']
     min_px = ds_config['image_generation']['min_px']
     n_peaks = ds_config['isotope_generation']['n_peaks']
+    compute_unused_metrics = ds_config['image_generation'].get('compute_unused_metrics')
     nrows, ncols = imzml_reader.h, imzml_reader.w
 
     def process_centr_segment(segm_i):
@@ -152,6 +153,7 @@ def create_process_segment(
                 targeted_database_formula_inds=targeted_database_formula_inds,
                 n_peaks=n_peaks,
                 min_px=min_px,
+                compute_unused_metrics=compute_unused_metrics,
             )
             logger.info(f'Segment {segm_i} finished')
         else:

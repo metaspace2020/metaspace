@@ -69,6 +69,7 @@ def test_formula_image_metrics(chaos_mock, spatial_mock, spectral_mock):
         targeted_database_formula_inds=set(),
         n_peaks=2,
         min_px=1,
+        compute_unused_metrics=False,
     )
 
     expected_stddev = weighted_stddev(mz_image1.data, image1.data)[1]
@@ -124,6 +125,7 @@ def test_targeted_database_metrics(chaos_mock, spatial_mock, spectral_mock):
         targeted_database_formula_inds={1, 2, 3, 4, 5},
         n_peaks=2,
         min_px=1,
+        compute_unused_metrics=False,
     )
 
     msm = 0.9 * 0.8 * 0.7
