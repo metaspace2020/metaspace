@@ -262,6 +262,7 @@ def compute_and_filter_metrics(
     formula_image_set_it: Iterable[FormulaImageSet],
     compute_metrics: Callable,
     min_px: int,
+    compute_unused_metrics: bool,
 ) -> Iterator[FormulaMetricSet]:
     """Compute isotope image metrics for each formula.
 
@@ -269,6 +270,7 @@ def compute_and_filter_metrics(
         formula_image_set_it: Iterator over tuples of
             (formula index, peak index, formula intensity, image).
         compute_metrics: Metrics function.
+        compute_unused_metrics: Used to force all metrics to be added
         min_px: Minimum number of pixels each image should have.
     """
     for image_set in formula_image_set_it:
@@ -278,10 +280,11 @@ def compute_and_filter_metrics(
                 image_set.mz_images[i] = None
 
         f_metrics = compute_metrics(image_set)
-        if image_set.is_target:
-            yield image_set.formula_i, f_metrics, image_set.images
-        else:
-            yield image_set.formula_i, f_metrics, None
+        if f_metrics.msm > 0 or image_set.targeted or compute_unused_metrics:
+            if image_set.is_target:
+                yield image_set.formula_i, f_metrics, image_set.images
+            else:
+                yield image_set.formula_i, f_metrics, None
 
 
 def collect_metrics_as_df(
@@ -311,6 +314,7 @@ def formula_image_metrics(
     targeted_database_formula_inds: Set[int],
     n_peaks: int,
     min_px: int,
+    compute_unused_metrics: bool,
 ) -> Tuple[pd.DataFrame, Dict]:
     formula_image_set_it = iter_images_in_sets(
         formula_images_it,
@@ -322,6 +326,7 @@ def formula_image_metrics(
         formula_image_set_it,
         compute_metrics,
         min_px,
+        compute_unused_metrics,
     )
     formula_metrics_df, formula_images = collect_metrics_as_df(metrics_it)
     return formula_metrics_df, formula_images

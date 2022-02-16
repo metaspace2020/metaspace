@@ -291,10 +291,12 @@ def process_centr_segments(
         )
 
         images_manager = ImagesManager(storage)
+        compute_unused_metrics = ds_config['image_generation'].get('compute_unused_metrics')
         for f_i, f_metrics, f_images in compute_and_filter_metrics(
             formula_image_set_it,
             compute_metrics,
             min_px=min_px,
+            compute_unused_metrics=compute_unused_metrics,
         ):
             images_manager.append(f_i, f_metrics, f_images)
         formula_metrics_df, image_lookups = images_manager.finish()
