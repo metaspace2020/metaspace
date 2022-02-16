@@ -10,4 +10,5 @@ docs/_templates
 /local/
 .dmypy.json
 /typings/
-/tests/reports/test-*.csv  # Local test results
+# Don't include reports from local sci-test runs
+/tests/reports/test-*.csv
