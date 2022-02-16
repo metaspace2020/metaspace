@@ -106,15 +106,15 @@ class CatBoostScoringModel(ScoringModel):
         target_df['msm'] = self.model.predict(target_df[self.features])
         decoy_df['msm'] = self.model.predict(decoy_df[self.features])
 
-        # WORKAROUND: Annotations with 0 spectral, spatial or chaos were excluded from training
+        # WORKAROUND: Annotations with 0/NaN spectral, spatial or chaos were excluded from training
         # because they seemed to reduce the overall performance of the models. Because of this,
         # models still give some valid score these annotations which sometimes leads to them
         # passing FDR filtering. Future work may be able to find a way to sometimes rescue these
         # annotations, but for now they just need to be excluded because the model doesn't know
         # how to handle them.
         # For now, just directly set their MSM to 0 to force their removal
-        target_df.loc[lambda df: df.spatial * df.spectral * df.chaos == 0, 'msm'] = 0
-        decoy_df.loc[lambda df: df.spatial * df.spectral * df.chaos == 0, 'msm'] = 0
+        target_df.loc[lambda df: (df.spatial * df.spectral * df.chaos).fillna(0) <= 0, 'msm'] = 0
+        decoy_df.loc[lambda df: (df.spatial * df.spectral * df.chaos).fillna(0) <= 0, 'msm'] = 0
 
         # The CatBoost models are normalized to 0-1 for the training data, but it's still possible
         # for the model to predict values outside this range for unseen data.
