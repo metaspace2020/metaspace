@@ -10,6 +10,8 @@ import Vue from 'vue'
 import safeJsonParse from '../../../../lib/safeJsonParse'
 import ImageSaver from '../../../ImageViewer/ImageSaver.vue'
 import { Input } from '../../../../lib/element-ui'
+import FadeTransition from '../../../../components/FadeTransition'
+import OpacitySettings from '../../../ImageViewer/OpacitySettings.vue'
 
 interface SimpleIonImageViewerProps {
   isActive: boolean
@@ -175,8 +177,9 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
             colorMap: createColormap(colorSettings[annotation.id].value,
               hasOpticalImage && props.showOpticalImage
                 ? 'linear' : 'constant',
-              hasOpticalImage && index === 0 && props.showOpticalImage
-                ? (imageSettings.annotImageOpacity || 1) : 1),
+              hasOpticalImage && props.showOpticalImage
+                ? (imageSettings.annotImageOpacity !== null && imageSettings.annotImageOpacity !== undefined
+                  ? imageSettings.annotImageOpacity : 1) : 1),
           })
         }
       }
@@ -271,8 +274,16 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       }
     }
 
+    const handleOpticalOpacityChange = (opacity: any) => {
+      state.imageSettings!.opticalOpacity = opacity
+    }
+
+    const handleOpacityChange = (opacity: any) => {
+      state.imageSettings!.annotImageOpacity = opacity
+    }
+
     return () => {
-      const { width, height, annotations } = props
+      const { width, height, annotations, showOpticalImage } = props
       const { imageSettings } = state
 
       if (!imageSettings || !imageSettings.ionImageLayers
@@ -322,6 +333,37 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
             class="absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
             domNode={container.value}
           />
+          <div class="flex absolute bottom-0 right-0 my-3 ml-3 dom-to-image-hidden">
+            <FadeTransition>
+              {
+                showOpticalImage
+                && annotations[0]?.dataset?.opticalImages[0]?.url
+                !== undefined
+                && <OpacitySettings
+                  key="opticalOpacity"
+                  label="Optical image visibility"
+                  class="ds-comparison-opacity-item m-1 sm-leading-trim mt-auto dom-to-image-hidden"
+                  opacity={imageSettings.opticalOpacity !== undefined
+                    ? imageSettings.opticalOpacity : 1}
+                  onOpacity={handleOpticalOpacityChange}
+                />
+              }
+            </FadeTransition>
+            <FadeTransition>
+              {
+                showOpticalImage
+                && annotations[0]?.dataset?.opticalImages[0]?.url
+                !== undefined
+                && <OpacitySettings
+                  key="opacity"
+                  class="ds-comparison-opacity-item m-1 sm-leading-trim mt-auto dom-to-image-hidden"
+                  opacity={imageSettings.annotImageOpacity !== undefined
+                    ? imageSettings.annotImageOpacity : 1}
+                  onOpacity={handleOpacityChange}
+                />
+              }
+            </FadeTransition>
+          </div>
         </div>
       )
     }
