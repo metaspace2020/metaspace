@@ -28,6 +28,7 @@ import CopyButton from '../../../components/CopyButton.vue'
 import { DatasetComparisonShareLink } from './DatasetComparisonShareLink'
 import { groupBy, isEqual, uniqBy, uniq } from 'lodash-es'
 import { readNpy } from '../../../lib/npyHandler'
+import { DatasetComparisonModeButton } from './DatasetComparisonModeButton'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -381,6 +382,10 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
     }
 
+    const handleModeChange = (mode: string = 'SINGLE') => {
+      console.log('mode', mode)
+    }
+
     const renderInfo = () => {
       const nCols = state.nCols
       const nRows = state.nRows
@@ -416,7 +421,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       </CandidateMoleculesPopover>
 
       return (
-        <div class='ds-comparison-info'>
+        <div class='ds-comparison-info relative'>
           {candidateMolecules()}
           <CopyButton
             class="ml-1"
@@ -447,6 +452,10 @@ export default defineComponent<DatasetComparisonPageProps>({
             name={$route.name}
             params={$route.params}
             query={$route.query}/>
+          <DatasetComparisonModeButton
+            class="absolute right-0 bottom-0 mr-5 mb-2"
+            onMode={handleModeChange}
+          />
         </div>
       )
     }
