@@ -12,6 +12,9 @@ import ImageSaver from '../../../ImageViewer/ImageSaver.vue'
 import { Input } from '../../../../lib/element-ui'
 import FadeTransition from '../../../../components/FadeTransition'
 import OpacitySettings from '../../../ImageViewer/OpacitySettings.vue'
+import RangeSlider from '../../../../components/Slider/RangeSlider.vue'
+import IonIntensity from '../../../ImageViewer/IonIntensity.vue'
+import { MultiChannelController } from './MultiChannelController'
 
 interface SimpleIonImageViewerProps {
   isActive: boolean
@@ -51,6 +54,9 @@ interface SimpleIonImageViewerState {
   imageSettings: ImageSettings | any,
   colorSettings: any
   ionImagePng: any
+  menuItems: any[]
+  imageHeight: number
+  imageWidth: number
 }
 
 const channels: any = {
@@ -107,6 +113,9 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       imageSettings: {},
       colorSettings: {},
       ionImagePng: null,
+      menuItems: [],
+      imageHeight: 0,
+      imageWidth: 0,
     })
 
     const container = ref(null)
@@ -170,8 +179,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           isNormalized && normalizationData
             ? normalizationData : null)
         const hasOpticalImage = annotation.dataset.opticalImages[0]?.url !== undefined
+        state.imageHeight = finalImage?.height || 0
+        state.imageWidth = finalImage?.width || 0
 
-        if (finalImage) {
+        if (finalImage && state.menuItems[index].settings.visible) {
           ionImages.push({
             ionImage: finalImage,
             colorMap: createColormap(colorSettings[annotation.id].value,
@@ -219,10 +230,33 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       yOffset: 0,
     })
 
+    const scaleBar = (index: number, id: string) => {
+      if (state.imageSettings.ionImageLayers && state.imageSettings.ionImageLayers[index]) {
+        return renderScaleBar(
+          state.imageSettings?.ionImageLayers[index]?.ionImage,
+          createColormap(state.colorSettings[id]?.value),
+          true,
+        )
+      } else {
+        return null
+      }
+    }
+
+    const minIntensity = (index: number) => {
+      const { scaledMinIntensity } = state.imageSettings?.ionImageLayers[index]?.ionImage || {}
+      return scaledMinIntensity
+    }
+
+    const maxIntensity = (index: number) => {
+      const { scaledMaxIntensity } = state.imageSettings?.ionImageLayers[index]?.ionImage || {}
+      return scaledMaxIntensity
+    }
+
     const startImageSettings = async() => {
       const { annotations, isActive } = props
       const annotation = annotations[0]
       const ionImagesPng = []
+      const menuItems = []
 
       const metadata = getMetadata(annotation)
       // eslint-disable-next-line camelcase
@@ -236,6 +270,30 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           ? props.colormap : Object.keys(channels)[i % Object.keys(channels).length])
         const ionImagePng = await loadPngFromUrl(annotationItem.isotopeImages[0].url)
         ionImagesPng.push(ionImagePng)
+
+        menuItems.push(
+          {
+            annotation: annotationItem,
+            scaleBar: computed(() => scaleBar(i, annotationItem.id)),
+            scaledMinIntensity: computed(() => minIntensity(i)),
+            scaledMaxIntensity: computed(() => maxIntensity(i)),
+            scaleBarUrl: state.imageSettings?.scaleBarUrl,
+            intensity: state.imageSettings?.intensity,
+            userScaling: state.imageSettings?.userScaling || [0, 1],
+            scaleRange: state.imageSettings?.userScaling || [0, 1],
+            state: {
+              maxIntensity: state.imageSettings?.intensity?.max?.scaled,
+              minIntensity: state.imageSettings?.intensity?.min?.scaled,
+              popover: null,
+              scaleRange: state.imageSettings?.userScaling,
+            },
+            settings: {
+              channel: state.colorSettings[annotationItem.id],
+              label: 'none',
+              visible: true,
+            },
+          },
+        )
       }
 
       state.ionImagePng = ionImagesPng
@@ -262,6 +320,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         imageScaledScaling: [0, 1],
         scaleBarUrl: computed(() => scaleBars()),
       })
+      state.menuItems = menuItems
       Vue.set(state, 'imageSettings', imageSettings)
     }
 
@@ -282,12 +341,16 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       state.imageSettings!.annotImageOpacity = opacity
     }
 
+    const toggleChannelVisibility = (index: any) => {
+      state.menuItems[index].settings.visible = !state.menuItems[index].settings.visible
+    }
+
     return () => {
-      const { width, height, annotations, showOpticalImage } = props
+      const { width, height, annotations, showOpticalImage, isActive } = props
       const { imageSettings } = state
 
       if (!imageSettings || !imageSettings.ionImageLayers
-        || imageSettings.ionImageLayers.length === 0 || !annotations) {
+        || !annotations) {
         return null
       }
 
@@ -315,8 +378,8 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
             pixelSizeY={imageSettings!.pixelSizeY}
             pixelAspectRatio={imageSettings!.pixelAspectRatio}
             opticalOpacity={imageSettings!.opticalOpacity}
-            imageHeight={imageSettings!.ionImageLayers[0]?.ionImage?.height }
-            imageWidth={imageSettings!.ionImageLayers[0]?.ionImage?.width }
+            imageHeight={imageSettings!.ionImageLayers[0]?.ionImage?.height || state.imageHeight }
+            imageWidth={imageSettings!.ionImageLayers[0]?.ionImage?.width || state.imageWidth}
             minZoom={imageSettings!.imageFit.imageZoom / 4}
             maxZoom={imageSettings!.imageFit.imageZoom * 20}
             opticalSrc={props.showOpticalImage
@@ -364,6 +427,15 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
               }
             </FadeTransition>
           </div>
+          <FadeTransition class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden">
+            {
+              imageSettings.userScaling
+              && <MultiChannelController
+                menuItems={state.menuItems}
+                onToggleVisibility={toggleChannelVisibility}
+              />
+            }
+          </FadeTransition>
         </div>
       )
     }

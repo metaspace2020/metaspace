@@ -12,6 +12,7 @@ import getColorScale from '../../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../../components/Slider'
 import { renderScaleBar } from '../../../../lib/ionImageRendering'
 import createColormap from '../../../../lib/createColormap'
+import './MultiChannelController.scss'
 
 interface MultiChannelControllerProps {
   menuItems: any[],
@@ -43,30 +44,20 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
     }
 
     const buildRangeSliderStyle = (item: any, key: number, scaleRange: number[] = [0, 1]) => {
-      console.log('dude1', refs)
-      console.log('dude1.x1', `range-slider-${key}`)
-      console.log('dude1.x', refs[`range-slider-${key}`])
-
       if (!refs[`range-slider-${key}`]) {
         return null
       }
 
-      console.log('dude', refs[`range-slider-${key}`])
-
       const width = refs[`range-slider-${key}`]?.offsetWidth + 30
-      const ionImage = item.ionImage
-      const { range } = getColorScale(item.settings.channel)
-      const { scaledMinIntensity, scaledMaxIntensity } = ionImage || {}
+      const { range } = getColorScale(item.settings.channel.value)
+      const scaledMinIntensity = item.scaledMinIntensity.value
+      const scaledMaxIntensity = item.scaledMaxIntensity.value
       const minColor = range[0]
       const maxColor = range[range.length - 1]
-      const scaleBarUrl = renderScaleBar(
-        ionImage,
-        createColormap(item.settings.channel),
-        true,
-      )
+      const scaleBarUrl = item.scaleBar.value
       const gradient = scaledMinIntensity === scaledMaxIntensity
         ? `linear-gradient(to right, ${range.join(',')})`
-        : ionImage ? `url(${scaleBarUrl})` : ''
+        : item.scaleBar.value ? `url(${scaleBarUrl})` : ''
       const [minScale, maxScale] = scaleRange
       const minStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * minScale))
       const maxStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * maxScale))
@@ -94,8 +85,8 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       </CandidateMoleculesPopover>
 
       return (
-        <div>
-          <p class="flex justify-between m-0 h-9 items-center flex-wrap">
+        <div class="flex flex-col justify-center p-2">
+          <p class="flex justify-between m-0 items-center flex-wrap">
             {candidateMolecules(item.annotation)}
             <Button
               title={item.settings.visible ? 'Hide layer' : 'Show layer'}
@@ -149,7 +140,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       const { activeLayer, menuItems } = props
 
       return (
-        <Overlay class="overflow-x-hidden overflow-y-auto px-0 sm-menu-items">
+        <Overlay class="multi-channel-ctrl-wrapper overflow-x-hidden overflow-y-auto px-0 sm-menu-items">
           {
             menuItems.map((item: any, itemIndex: number) => renderItem(item, itemIndex))
           }
