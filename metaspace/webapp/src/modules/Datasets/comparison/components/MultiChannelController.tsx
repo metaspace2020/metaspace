@@ -13,6 +13,7 @@ import { THUMB_WIDTH } from '../../../../components/Slider'
 import { renderScaleBar } from '../../../../lib/ionImageRendering'
 import createColormap from '../../../../lib/createColormap'
 import './MultiChannelController.scss'
+import ChannelSelector from '../../../ImageViewer/ChannelSelector.vue'
 
 interface MultiChannelControllerProps {
   menuItems: any[],
@@ -41,6 +42,14 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
 
     const handleToggleVisibility = (itemIndex: number) => {
       emit('toggleVisibility', itemIndex)
+    }
+
+    const removeLayer = (itemIndex: number) => {
+      emit('removeLayer', itemIndex)
+    }
+
+    const changeLayerColor = (value: string, itemIndex: number) => {
+      emit('changeLayer', value, itemIndex)
     }
 
     const buildRangeSliderStyle = (item: any, key: number, scaleRange: number[] = [0, 1]) => {
@@ -85,7 +94,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       </CandidateMoleculesPopover>
 
       return (
-        <div class="flex flex-col justify-center p-2">
+        <div class="flex flex-col justify-center p-2 relative">
           <p class="flex justify-between m-0 items-center flex-wrap">
             {candidateMolecules(item.annotation)}
             <Button
@@ -131,6 +140,12 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
               {/*  /> */}
               {/* </div> */}
             </div>
+            <ChannelSelector
+              class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
+              value={item.settings.channel.value}
+              onRemove={() => removeLayer(itemIndex)}
+              onInput={(value: any) => changeLayerColor(value, itemIndex)}
+            />
           </p>
         </div>
       )

@@ -121,7 +121,6 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     const container = ref(null)
 
     onMounted(() => {
-      console.log('start')
       startImageSettings()
     })
 
@@ -185,7 +184,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         if (finalImage && state.menuItems[index].settings.visible) {
           ionImages.push({
             ionImage: finalImage,
-            colorMap: createColormap(colorSettings[annotation.id].value,
+            colorMap: createColormap(state.menuItems[index]?.settings?.channel?.value || colorSettings[index].value,
               hasOpticalImage && props.showOpticalImage
                 ? 'linear' : 'constant',
               hasOpticalImage && props.showOpticalImage
@@ -200,7 +199,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
 
     const scaleBars = () => {
       const { annotations } = props
-      const { imageSettings, colorSettings } = state
+      const { imageSettings } = state
 
       return annotations.map((annotation: any, index: number) => {
         return renderScaleBar(
@@ -230,11 +229,11 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       yOffset: 0,
     })
 
-    const scaleBar = (index: number, id: string) => {
+    const scaleBar = (index: number) => {
       if (state.imageSettings.ionImageLayers && state.imageSettings.ionImageLayers[index]) {
         return renderScaleBar(
           state.imageSettings?.ionImageLayers[index]?.ionImage,
-          createColormap(state.colorSettings[id]?.value),
+          createColormap(state.menuItems[index]?.settings?.channel?.value || state.colorSettings[index]?.value),
           true,
         )
       } else {
@@ -266,7 +265,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
 
       for (let i = 0; i < annotations?.length; i++) {
         const annotationItem = annotations[i]
-        state.colorSettings[annotationItem.id] = computed(() => isActive
+        state.colorSettings[i] = computed(() => isActive
           ? props.colormap : Object.keys(channels)[i % Object.keys(channels).length])
         const ionImagePng = await loadPngFromUrl(annotationItem.isotopeImages[0].url)
         ionImagesPng.push(ionImagePng)
@@ -274,7 +273,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         menuItems.push(
           {
             annotation: annotationItem,
-            scaleBar: computed(() => scaleBar(i, annotationItem.id)),
+            scaleBar: computed(() => scaleBar(i)),
             scaledMinIntensity: computed(() => minIntensity(i)),
             scaledMaxIntensity: computed(() => maxIntensity(i)),
             scaleBarUrl: state.imageSettings?.scaleBarUrl,
@@ -288,7 +287,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
               scaleRange: state.imageSettings?.userScaling,
             },
             settings: {
-              channel: state.colorSettings[annotationItem.id],
+              channel: state.colorSettings[i],
               label: 'none',
               visible: true,
             },
@@ -343,6 +342,14 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
 
     const toggleChannelVisibility = (index: any) => {
       state.menuItems[index].settings.visible = !state.menuItems[index].settings.visible
+    }
+
+    const handleLayerColorChange = (channel: string, index: number) => {
+      state.menuItems[index].settings.channel = computed(() => channel)
+    }
+
+    const handleRemoveLayer = (index: number) => {
+      emit('removeLayer', index)
     }
 
     return () => {
@@ -433,6 +440,8 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
               && <MultiChannelController
                 menuItems={state.menuItems}
                 onToggleVisibility={toggleChannelVisibility}
+                onChangeLayer={handleLayerColorChange}
+                onRemoveLayer={handleRemoveLayer}
               />
             }
           </FadeTransition>

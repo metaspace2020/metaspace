@@ -853,6 +853,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 showOpticalImage={!!gridCell?.showOpticalImage}
                 resetViewPort={props.resetViewPort}
                 onResetViewPort={() => { emit('resetViewPort', false) }}
+                onRemoveLayer={() => { emit('resetViewPort', false) }}
               />
             }
             {
@@ -967,16 +968,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                         />
                       </div>
                     </div>
-                  }
-                  {
-                    state.refsLoaded
-                    && props.mode === 'MULTI'
-                    && gridCell != null
-                    && gridCell.userScaling
-                    && <MultiChannelController
-                      menuItems={menuItems}
-                      onToggleVisibility={(itemIndex: number) => toggleChannelVisibility(key, itemIndex)}
-                    />
                   }
                 </FadeTransition>
               </div>
