@@ -3,7 +3,7 @@ import './SimpleIonImageViewer.scss'
 import IonImageViewer from '../../../../components/IonImageViewer'
 import fitImageToArea, { FitImageToAreaResult } from '../../../../lib/fitImageToArea'
 import { ImagePosition } from '../../../ImageViewer/ionImageState'
-import { loadPngFromUrl, processIonImage, renderScaleBar } from '../../../../lib/ionImageRendering'
+import { IonImage, loadPngFromUrl, processIonImage, renderScaleBar } from '../../../../lib/ionImageRendering'
 import config from '../../../../lib/config'
 import createColormap from '../../../../lib/createColormap'
 import Vue from 'vue'
@@ -31,7 +31,7 @@ interface SimpleIonImageViewerProps {
 }
 
 interface ImageSettings {
-  intensity: any
+  intensities: any
   ionImagePng: any
   pixelSizeX: number
   pixelSizeY: number
@@ -174,7 +174,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
 
         const finalImage = ionImage(ionImagePng,
           annotation.isotopeImages[0],
-          props.scaleType, imageSettings.imageScaledScaling,
+          props.scaleType, state.menuItems[index].userScaling || imageSettings.imageScaledScaling,
           isNormalized && normalizationData
             ? normalizationData : null)
         const hasOpticalImage = annotation.dataset.opticalImages[0]?.url !== undefined
@@ -241,6 +241,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       }
     }
 
+    const getIntensities = (index: number) => {
+      return state.imageSettings?.intensities[index]
+    }
+
     const minIntensity = (index: number) => {
       const { scaledMinIntensity } = state.imageSettings?.ionImageLayers[index]?.ionImage || {}
       return scaledMinIntensity
@@ -249,6 +253,56 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     const maxIntensity = (index: number) => {
       const { scaledMaxIntensity } = state.imageSettings?.ionImageLayers[index]?.ionImage || {}
       return scaledMaxIntensity
+    }
+
+    const getIntensityData = (
+      image: number, clipped: number, scaled: number, user: number, quantile: number, isLocked?: boolean,
+    ) => {
+      const isClipped = quantile > 0 && quantile < 1 && user === image
+      return {
+        image,
+        clipped,
+        scaled,
+        user,
+        quantile,
+        status: isLocked ? 'LOCKED' : isClipped ? 'CLIPPED' : undefined,
+      }
+    }
+
+    const getIntensity = (ionImage: IonImage, lockedIntensities: any = []) => {
+      if (ionImage != null) {
+        const {
+          minIntensity, maxIntensity,
+          clippedMinIntensity, clippedMaxIntensity,
+          scaledMinIntensity, scaledMaxIntensity,
+          userMinIntensity, userMaxIntensity,
+          lowQuantile, highQuantile,
+        } = ionImage
+        const [lockedMin, lockedMax] = lockedIntensities
+
+        return {
+          min: getIntensityData(
+            minIntensity,
+            clippedMinIntensity,
+            scaledMinIntensity,
+            userMinIntensity,
+            lowQuantile,
+            lockedMin !== undefined,
+          ),
+          max: getIntensityData(
+            maxIntensity,
+            clippedMaxIntensity,
+            scaledMaxIntensity,
+            userMaxIntensity,
+            highQuantile,
+            lockedMax !== undefined,
+          ),
+        }
+      }
+      return {
+        min: getIntensityData(0, 0, 0, 0, 0, false),
+        max: getIntensityData(0, 0, 0, 0, 0, false),
+      }
     }
 
     const startImageSettings = async() => {
@@ -277,7 +331,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
             scaledMinIntensity: computed(() => minIntensity(i)),
             scaledMaxIntensity: computed(() => maxIntensity(i)),
             scaleBarUrl: state.imageSettings?.scaleBarUrl,
-            intensity: state.imageSettings?.intensity,
+            intensity: computed(() => getIntensities(i)),
             userScaling: state.imageSettings?.userScaling || [0, 1],
             scaleRange: state.imageSettings?.userScaling || [0, 1],
             state: {
@@ -298,7 +352,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       state.ionImagePng = ionImagesPng
 
       const imageSettings : ImageSettings = reactive({
-        intensity: null, // @ts-ignore // Gets set later, because ionImageLayers needs state.gridState[key] set
+        intensities: [], // @ts-ignore // Gets set later, because ionImageLayers needs state.gridState[key] set
         ionImagePng: ionImagesPng[0],
         pixelSizeX,
         pixelSizeY,
@@ -320,6 +374,13 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         scaleBarUrl: computed(() => scaleBars()),
       })
       state.menuItems = menuItems
+      menuItems.forEach((item: any, index: number) => {
+        const intensity = getIntensity(imageSettings.ionImageLayers[index]?.ionImage)
+        intensity.min.scaled = 0
+        intensity.max.scaled = (intensity.max.clipped || intensity.max.image)
+        imageSettings.intensities.push(intensity)
+      })
+
       Vue.set(state, 'imageSettings', imageSettings)
     }
 
@@ -350,6 +411,75 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
 
     const handleRemoveLayer = (index: number) => {
       emit('removeLayer', index)
+    }
+
+    const handleIntensityChange = (intensity: number | undefined, index: number, type: string) => {
+      if (state.imageSettings === null || intensity === undefined || state.menuItems === null) {
+        return
+      }
+      let minScale = state.menuItems[index].userScaling[0]
+      let maxScale = state.menuItems[index].userScaling[1]
+      const maxIntensity = state.imageSettings.intensities[index].max.clipped
+        || state.imageSettings.intensities[index].intensity.max.image
+
+      if (type === 'min') {
+        minScale = intensity / maxIntensity
+      } else {
+        maxScale = intensity / maxIntensity
+      }
+
+      handleUserScalingChange([minScale, maxScale], index)
+    }
+
+    const handleUserScalingChange = (userScaling: any, index: number, ignoreBoundaries: boolean = false) => {
+      if (state.imageSettings === null || state.menuItems === null) {
+        return
+      }
+
+      const intensity = state.imageSettings.intensities[index]
+      const maxIntensity =
+        intensity.max.clipped || intensity.max.image
+      const minScale =
+        intensity?.min?.status === 'LOCKED'
+          ? userScaling[0] * (1
+            - (intensity.min.user / maxIntensity))
+          + (intensity.min.user / maxIntensity)
+          : userScaling[0]
+
+      const maxScale = userScaling[1] * (intensity?.max?.status === 'LOCKED'
+        ? intensity.max.user / maxIntensity : 1)
+      const rangeSliderScale = userScaling.slice(0)
+
+      // added in order to keep consistency even with ignore boundaries
+      if (rangeSliderScale[0] < 0 || (intensity?.min?.status === 'LOCKED' && ignoreBoundaries)) {
+        rangeSliderScale[0] = 0
+      }
+      if (rangeSliderScale[1] > 1 || (intensity?.max?.status === 'LOCKED' && ignoreBoundaries)) {
+        rangeSliderScale[1] = 1
+      }
+
+      state.menuItems[index].userScaling = rangeSliderScale
+      state.menuItems[index].imageScaledScaling = [minScale, maxScale]
+
+      const maxScaleDisplay = (intensity.max.clipped || intensity.max.image)
+
+      const minScaleDisplay = 0
+
+      intensity.min.scaled =
+        intensity?.min?.status === 'LOCKED'
+        && maxIntensity * userScaling[0]
+        < intensity.min.user
+          ? minScaleDisplay
+          : maxIntensity * userScaling[0]
+
+      intensity.max.scaled =
+        intensity?.max?.status === 'LOCKED'
+        && maxIntensity * userScaling[1]
+        > intensity.max.user
+          ? maxScaleDisplay
+          : maxIntensity * userScaling[1]
+
+      emit('change', userScaling, index)
     }
 
     return () => {
@@ -442,6 +572,8 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
                 onToggleVisibility={toggleChannelVisibility}
                 onChangeLayer={handleLayerColorChange}
                 onRemoveLayer={handleRemoveLayer}
+                onChange={handleUserScalingChange}
+                onIntensityChange={handleIntensityChange}
               />
             }
           </FadeTransition>

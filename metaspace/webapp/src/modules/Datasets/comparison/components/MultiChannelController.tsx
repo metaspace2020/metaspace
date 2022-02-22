@@ -40,6 +40,14 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       state.refsLoaded = true
     })
 
+    const handleIonIntensityChange = (intensity: number | undefined, index: number, type: string) => {
+      emit('intensityChange', intensity, index, type)
+    }
+
+    const handleScalingChange = (userScaling: any, index: number) => {
+      emit('change', userScaling, index)
+    }
+
     const handleToggleVisibility = (itemIndex: number) => {
       emit('toggleVisibility', itemIndex)
     }
@@ -124,21 +132,32 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                   max={1}
                   step={0.01}
                   style={buildRangeSliderStyle(item, itemIndex)}
+                  onInput={(nextRange: number[]) =>
+                    handleScalingChange(nextRange, itemIndex)}
                 />
               }
-              {/* <div */}
-              {/*  class="ds-intensities-wrapper"> */}
-              {/*  <IonIntensity */}
-              {/*    intensities={item.intensity?.min} */}
-              {/*    label="Minimum intensity" */}
-              {/*    placeholder="min." */}
-              {/*  /> */}
-              {/*  <IonIntensity */}
-              {/*    intensities={item.intensity?.max} */}
-              {/*    label="Minimum intensity" */}
-              {/*    placeholder="min." */}
-              {/*  /> */}
-              {/* </div> */}
+              {
+                item.intensity.value
+                && <div
+                  class="ds-intensities-wrapper">
+                  <IonIntensity
+                    intensities={item.intensity?.value?.min}
+                    label="Minimum intensity"
+                    placeholder="min."
+                    onInput={(value: number) =>
+                      handleIonIntensityChange(value, itemIndex,
+                        'min')}
+                  />
+                  <IonIntensity
+                    intensities={item.intensity?.value?.max}
+                    label="Maximum intensity"
+                    placeholder="max."
+                    onInput={(value: number) =>
+                      handleIonIntensityChange(value, itemIndex,
+                        'max')}
+                  />
+                </div>
+              }
             </div>
             <ChannelSelector
               class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
