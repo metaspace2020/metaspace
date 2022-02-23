@@ -845,7 +845,11 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 height={dimensions.height}
                 width={dimensions.width}
                 scaleBarColor={props.scaleBarColor}
+                lockedIntensityTemplate={props.lockedIntensityTemplate}
+                globalLockedIntensities={props.globalLockedIntensities}
                 scaleType={props.scaleType}
+                onIntensitiesChange={(intensity: any) => { emit('intensitiesChange', intensity) }}
+                onLockAllIntensities={() => { emit('lockAllIntensities') }}
                 colormap={props.colormap}
                 isNormalized={props.isNormalized}
                 normalizationData={props.normalizationData

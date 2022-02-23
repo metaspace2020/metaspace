@@ -40,6 +40,10 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       state.refsLoaded = true
     })
 
+    const handleIonIntensityLockChange = (value: number | undefined, index: number, type: string) => {
+      emit('intensityLockChange', value, index, type)
+    }
+
     const handleIonIntensityChange = (intensity: number | undefined, index: number, type: string) => {
       emit('intensityChange', intensity, index, type)
     }
@@ -147,6 +151,8 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                     onInput={(value: number) =>
                       handleIonIntensityChange(value, itemIndex,
                         'min')}
+                    onLock={(value: number) =>
+                      handleIonIntensityLockChange(value, itemIndex, 'min')}
                   />
                   <IonIntensity
                     intensities={item.intensity?.value?.max}
@@ -155,6 +161,8 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                     onInput={(value: number) =>
                       handleIonIntensityChange(value, itemIndex,
                         'max')}
+                    onLock={(value: number) =>
+                      handleIonIntensityLockChange(value, itemIndex, 'max')}
                   />
                 </div>
               }
