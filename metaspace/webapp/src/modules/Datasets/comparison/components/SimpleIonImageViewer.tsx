@@ -9,11 +9,8 @@ import createColormap from '../../../../lib/createColormap'
 import Vue from 'vue'
 import safeJsonParse from '../../../../lib/safeJsonParse'
 import ImageSaver from '../../../ImageViewer/ImageSaver.vue'
-import { Input } from '../../../../lib/element-ui'
 import FadeTransition from '../../../../components/FadeTransition'
 import OpacitySettings from '../../../ImageViewer/OpacitySettings.vue'
-import RangeSlider from '../../../../components/Slider/RangeSlider.vue'
-import IonIntensity from '../../../ImageViewer/IonIntensity.vue'
 import { MultiChannelController } from './MultiChannelController'
 import { isEqual } from 'lodash'
 
@@ -31,20 +28,21 @@ interface SimpleIonImageViewerProps {
   colormap: string
   lockedIntensityTemplate: string
   globalLockedIntensities: [number | undefined, number | undefined]
+  channels: any[]
 }
 
 interface ImageSettings {
   intensities: any
   ionImagePng: any
-  pixelSizeX: number
-  pixelSizeY: number
+  pixelSizeX: any
+  pixelSizeY: any
   ionImageLayers: any
   imageFit: Readonly<FitImageToAreaResult>
   lockedIntensities: [number | undefined, number | undefined]
   annotImageOpacity: number
   opticalOpacity: number
   imagePosition: ImagePosition,
-  pixelAspectRatio: number
+  pixelAspectRatio: any
   imageZoom: number
   showOpticalImage: boolean
   userScaling: [number, number],
@@ -53,7 +51,6 @@ interface ImageSettings {
 }
 
 interface SimpleIonImageViewerState {
-  mode: string
   imageSettings: ImageSettings | any,
   colorSettings: any
   ionImagePng: any
@@ -84,6 +81,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     colormap: {
       type: String,
       default: 'Viridis',
+    },
+    channels: {
+      type: Array,
+      default: () => [],
     },
     scaleType: {
       type: String,
@@ -119,7 +120,6 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
   },
   setup(props, { emit }) {
     const state = reactive<SimpleIonImageViewerState>({
-      mode: props.isActive ? 'MULTI' : 'SINGLE',
       imageSettings: {},
       colorSettings: {},
       ionImagePng: null,
@@ -130,6 +130,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
 
     const container = ref(null)
     const globalLockedIntensities = computed(() => props.globalLockedIntensities)
+    const mode = computed(() => props.isActive ? 'MULTI' : 'SINGLE')
 
     onMounted(() => {
       startImageSettings()
@@ -150,6 +151,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     }
 
     const getMetadata = (annotation: any) => {
+      if (!annotation) {
+        return {}
+      }
+
       const datasetMetadataExternals = {
         Submitter: annotation.dataset.submitter,
         PI: annotation.dataset.principalInvestigator,
@@ -180,7 +185,14 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       const ionImages = []
 
       for (let index = 0; index < annotations?.length; index++) {
+        if (index > 0 && mode.value === 'SINGLE') {
+          break
+        }
         const annotation = annotations[index]
+
+        if (annotation.isEmpty) {
+          continue
+        }
         const ionImagePng = state.ionImagePng[index]
 
         const finalImage = ionImage(ionImagePng,
@@ -316,28 +328,45 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       }
     }
 
+    const pixelSizeX = computed(() => {
+      const { annotations } = props
+      const annotation = annotations.filter((item: any) => !item.isEmpty)[0]
+      const metadata = getMetadata(annotation)
+      // eslint-disable-next-line camelcase
+      return metadata?.MS_Analysis?.Pixel_Size?.Xaxis || 0
+    })
+
+    const pixelSizeY = computed(() => {
+      const { annotations } = props
+      const annotation = annotations.filter((item: any) => !item.isEmpty)[0]
+      const metadata = getMetadata(annotation)
+      // eslint-disable-next-line camelcase
+      return metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0
+    })
+
+    const pixelAspectRatio = computed(() => {
+      return config.features.ignore_pixel_aspect_ratio // @ts-ignore
+        ? 1 : pixelSizeX.value && pixelSizeY.value && pixelSizeX.value / pixelSizeY.value || 1
+    })
+
     const startImageSettings = async() => {
-      const { annotations, isActive } = props
-      const annotation = annotations[0]
+      const { annotations } = props
       const ionImagesPng = []
       const menuItems = []
 
-      const metadata = getMetadata(annotation)
-      // eslint-disable-next-line camelcase
-      const pixelSizeX = metadata?.MS_Analysis?.Pixel_Size?.Xaxis || 0
-      // eslint-disable-next-line camelcase
-      const pixelSizeY = metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0
-
       for (let i = 0; i < annotations?.length; i++) {
         const annotationItem = annotations[i]
-        state.colorSettings[i] = computed(() => isActive
-          ? props.colormap : Object.keys(channels)[i % Object.keys(channels).length])
+        const color = props.channels.length > i ? props.channels[i].settings.channel
+          : Object.keys(channels)[i % Object.keys(channels).length]
+        state.colorSettings[i] = computed(() => mode.value === 'SINGLE'
+          ? props.colormap : color)
         const ionImagePng = await loadPngFromUrl(annotationItem.isotopeImages[0].url)
         ionImagesPng.push(ionImagePng)
 
         menuItems.push(
           {
             annotation: annotationItem,
+            isEmpty: annotationItem.isEmpty,
             scaleBar: computed(() => scaleBar(i)),
             scaledMinIntensity: computed(() => minIntensity(i)),
             scaledMaxIntensity: computed(() => maxIntensity(i)),
@@ -376,9 +405,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         annotImageOpacity: 1.0,
         opticalOpacity: 1.0,
         imagePosition: defaultImagePosition(),
-        pixelAspectRatio:
-            config.features.ignore_pixel_aspect_ratio ? 1
-              : pixelSizeX && pixelSizeY && pixelSizeX / pixelSizeY || 1,
+        pixelAspectRatio,
         imageZoom: 1,
         showOpticalImage: props.showOpticalImage,
         userScaling: [0, 1],
@@ -440,6 +467,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       emit('removeLayer', index)
     }
 
+    const addLayer = (index: number) => {
+      emit('addLayer')
+    }
+
     const handleIntensityLockChange = (value: number | undefined, index: number, type: string) => {
       if (state.imageSettings === null) {
         return
@@ -480,6 +511,9 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     const handleIntensityLockChangeForAll = (value: number, index: number, type: string) => {
       // apply max lock to all grids
       state.imageSettings.intensities.forEach((intensity: any, intensityIndex: number) => {
+        if (mode.value === 'SINGLE' && intensityIndex > 0) {
+          return
+        }
         handleIntensityLockChange(value, intensityIndex, type)
 
         if (value && intensityIndex !== index) {
@@ -582,7 +616,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         && !isEqual(state.imageSettings.lockedIntensities, newValue)) {
         state.imageSettings.lockedIntensities = newValue as [number | undefined, number | undefined]
 
-        for (let index = 0; index < props.annotations?.length; index++) {
+        for (let index = 0; index < (mode.value === 'SINGLE' ? 1 : props.annotations?.length); index++) {
           await handleIntensityLockChange(state.imageSettings.lockedIntensities[0], index, 'min')
           await handleIntensityChange(state.imageSettings.lockedIntensities[0], index, 'min')
           await handleIntensityLockChange(state.imageSettings.lockedIntensities[1], index, 'max')
@@ -592,8 +626,9 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     })
 
     return () => {
-      const { width, height, annotations, showOpticalImage, isActive } = props
+      const { width, height, annotations, showOpticalImage } = props
       const { imageSettings } = state
+      const nonEmptyAnnotations = annotations.filter((item: any) => !item.isEmpty)
 
       if (!imageSettings || !imageSettings.ionImageLayers
         || !annotations) {
@@ -629,10 +664,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
             minZoom={imageSettings!.imageFit.imageZoom / 4}
             maxZoom={imageSettings!.imageFit.imageZoom * 20}
             opticalSrc={props.showOpticalImage
-              ? annotations[0]?.dataset?.opticalImages[0]?.url
+              ? nonEmptyAnnotations[0]?.dataset?.opticalImages[0]?.url
               : undefined}
             opticalTransform={props.showOpticalImage
-              ? annotations[0]?.dataset?.opticalImages[0]?.transform
+              ? nonEmptyAnnotations[0]?.dataset?.opticalImages[0]?.transform
               : undefined}
             scrollBlock
             showPixelIntensity
@@ -646,7 +681,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
             <FadeTransition>
               {
                 showOpticalImage
-                && annotations[0]?.dataset?.opticalImages[0]?.url
+                && nonEmptyAnnotations[0]?.dataset?.opticalImages[0]?.url
                 !== undefined
                 && <OpacitySettings
                   key="opticalOpacity"
@@ -661,7 +696,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
             <FadeTransition>
               {
                 showOpticalImage
-                && annotations[0]?.dataset?.opticalImages[0]?.url
+                && nonEmptyAnnotations[0]?.dataset?.opticalImages[0]?.url
                 !== undefined
                 && <OpacitySettings
                   key="opacity"
@@ -677,11 +712,13 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
             {
               imageSettings.userScaling
               && <MultiChannelController
-                menuItems={state.menuItems}
+                menuItems={mode.value === 'MULTI' ? state.menuItems : state.menuItems.slice(0, 1)}
+                mode={mode.value}
                 onToggleVisibility={toggleChannelVisibility}
                 onChangeLayer={handleLayerColorChange}
                 onRemoveLayer={handleRemoveLayer}
                 onChange={handleUserScalingChange}
+                onAddLayer={addLayer}
                 onIntensityChange={handleIntensityChange}
                 onIntensityLockChange={handleIntensityLockChangeForAll}
               />

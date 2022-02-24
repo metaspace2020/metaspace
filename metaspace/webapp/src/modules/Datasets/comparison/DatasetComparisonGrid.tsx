@@ -78,6 +78,18 @@ interface DatasetComparisonGridState {
   selectedAnnotation: number
 }
 
+const channels: any = {
+  magenta: 'rgb(255, 0, 255)',
+  green: 'rgb(0, 255, 0)',
+  blue: 'rgb(0, 0, 255)',
+  red: 'rgb(255, 0, 0)',
+  yellow: 'rgb(255, 255, 0)',
+  cyan: 'rgb(0, 255, 255)',
+  orange: 'rgb(255, 128, 0)',
+  violet: 'rgb(128, 0, 255)',
+  white: 'rgb(255, 255, 255)',
+}
+
 export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>({
   name: 'DatasetComparisonGrid',
   props: {
@@ -536,6 +548,14 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return value ? `${Math.round(value * 100)}%` : '-'
     }
 
+    const addLayer = () => {
+      const selectedAnnotationsLength = Object.keys($store.state.channels).length
+      const nOfChannels = Object.keys(channels).length
+      const channel = Object.keys(channels)[selectedAnnotationsLength % nOfChannels]
+
+      $store.commit('addChannel', { id: undefined, settings: { channel, visible: true } })
+    }
+
     const handleImageMove = ({ zoom, xOffset, yOffset }: any, key: string) => {
       const gridCell = state.gridState[key]
       if (gridCell != null) {
@@ -733,43 +753,59 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
     }
 
-    const renderDatasetName = (row: number, col: number) => {
-      const dataset =
-        props.datasets
-          ? props.datasets.find((dataset: any) => dataset.id === settings.value.grid[`${row}-${col}`])
-          : null
+    const renderDatasetName = (name: string) => {
       return (
         <div class='ds-comparison-item-line'>
-          <span class='dataset-comparison-grid-ds-name truncate'>{dataset?.name}</span>
+          <span class='dataset-comparison-grid-ds-name truncate'>{name}</span>
         </div>
       )
+    }
+
+    const getChannels = (dsId: string) => {
+      const channels : any[] = []
+      const annotations: any[] = []
+      $store.state.channels.forEach((channel: any) => {
+        const idx = (channel.annotations?.datasetIds || []).indexOf(dsId)
+        channels.push(channel)
+
+        if (idx !== -1) {
+          annotations.push(channel.annotations.annotations[idx])
+        } else if (channel.id) {
+          annotations.push({ ...channel.annotations.annotations[0], isEmpty: true })
+        }
+      })
+      return { annotations, channels }
     }
 
     const renderImageViewerHeaders = (row: number, col: number) => {
       const key = `${row}-${col}`
       const gridCell = state.gridState[key]
       const annData = state.annotationData[key]
-      const menuItems = state.menuItems[key]
+      const dataset =
+        props.datasets
+          ? props.datasets.find((dataset: any) => dataset.id === settings.value.grid[`${row}-${col}`])
+          : null
+      const { annotations, channels } = getChannels(dataset?.id)
+      const isEmpty = $store.state.mode === 'MULTI' ? annotations.filter((item: any) => !item.isEmpty).length === 0
+        : (!props.isLoading && annData === null && gridCell === null)
+          || (!props.isLoading && props.selectedAnnotation === -1)
+          || (props.selectedAnnotation >= props.annotations.length)
 
-      if (
-        (!props.isLoading && annData == null && gridCell == null)
-        || (!props.isLoading && props.selectedAnnotation === -1)
-        || (props.selectedAnnotation >= props.annotations.length)
-      ) {
+      if (isEmpty) {
         return (
           <div key={col} class='dataset-comparison-grid-col overflow-hidden items-center justify-start'
             style={{ height: 200, width: 200 }}>
-            {renderDatasetName(row, col)}
+            {renderDatasetName(dataset?.name)}
             <span>No data</span>
           </div>)
       }
 
-      if (props.isNormalized && annData && annData.dataset && annData.dataset.id
-        && props.normalizationData[annData.dataset.id] && props.normalizationData[annData.dataset.id].error) {
+      if (props.isNormalized && dataset && dataset.id
+        && props.normalizationData[dataset.id] && props.normalizationData[dataset.id].error) {
         return (
           <div key={col} class='dataset-comparison-grid-col overflow-hidden relative'
             style={{ height: 200, width: 200 }}>
-            {gridCell && renderDatasetName(row, col)}
+            {renderDatasetName(dataset?.name)}
             <div
               class="normalization-error-wrapper"
             >
@@ -784,7 +820,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return (
         <div key={col} class='dataset-comparison-grid-col overflow-hidden relative'
           style={{ height: 200, width: 200 }}>
-          {gridCell && renderDatasetName(row, col)}
+          {renderDatasetName(dataset?.name)}
           <MainImageHeader
             class='dataset-comparison-grid-item-header dom-to-image-hidden'
             annotation={annData}
@@ -838,9 +874,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
             }
             {
               !props.isLoading
-              && key === '0-0'
               && <SimpleIonImageViewer
-                annotations={[props.annotations[0].annotations[0], props.annotations[1].annotations[0]]}
+                annotations={annotations.length > 0 && $store.state.mode === 'MULTI' ? annotations : [annData]}
+                channels={channels}
+                isActive={$store.state.mode === 'MULTI'}
                 dataset={annData?.dataset}
                 height={dimensions.height}
                 width={dimensions.width}
@@ -853,135 +890,12 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 colormap={props.colormap}
                 isNormalized={props.isNormalized}
                 normalizationData={props.normalizationData
-                  ? props.normalizationData[props.annotations[0].annotations[0].dataset.id] : null}
+                  ? props.normalizationData[annData?.dataset?.id] : null}
                 showOpticalImage={!!gridCell?.showOpticalImage}
                 resetViewPort={props.resetViewPort}
                 onResetViewPort={() => { emit('resetViewPort', false) }}
                 onRemoveLayer={() => { emit('resetViewPort', false) }}
-              />
-            }
-            {
-              !props.isLoading
-              && key !== '0-0'
-              && gridCell
-              && gridCell.ionImageLayers
-              && <IonImageViewer
-                isLoading={props.isLoading || !state.firstLoaded}
-                ionImageLayers={gridCell.ionImageLayers}
-                scaleBarColor={props.scaleBarColor}
-                scaleType={props.scaleType}
-                pixelSizeX={gridCell.pixelSizeX}
-                pixelSizeY={gridCell.pixelSizeY}
-                pixelAspectRatio={gridCell.pixelAspectRatio}
-                opticalOpacity={gridCell.opticalOpacity}
-                imageHeight={gridCell.ionImageLayers[0]?.ionImage?.height }
-                imageWidth={gridCell.ionImageLayers[0]?.ionImage?.width }
-                height={dimensions.height}
-                width={dimensions.width}
-                zoom={gridCell.imagePosition?.zoom
-                * gridCell.imageFit.imageZoom}
-                minZoom={gridCell.imageFit.imageZoom / 4}
-                maxZoom={gridCell.imageFit.imageZoom * 20}
-                xOffset={gridCell.imagePosition?.xOffset || 0}
-                yOffset={gridCell.imagePosition?.yOffset || 0}
-                opticalSrc={gridCell.showOpticalImage
-                  ? annData?.dataset?.opticalImages[0]?.url
-                  : undefined}
-                opticalTransform={gridCell.showOpticalImage
-                  ? annData?.dataset?.opticalImages[0]?.transform
-                  : undefined}
-                scrollBlock
-                showPixelIntensity
-                onMove={(e: any) => handleImageMove(e, key)}
-              />
-            }
-            {
-              key !== '0-0'
-              && <div class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar">
-                <div class="flex absolute bottom-0 right-0 my-3 ml-3 dom-to-image-hidden">
-                  <FadeTransition>
-                    {
-                      gridCell?.showOpticalImage
-                      && annData?.dataset?.opticalImages[0]?.url
-                      !== undefined
-                      && <OpacitySettings
-                        key="opticalOpacity"
-                        label="Optical image visibility"
-                        class="ds-comparison-opacity-item m-1 sm-leading-trim mt-auto dom-to-image-hidden"
-                        opacity={gridCell.opticalOpacity !== undefined
-                          ? gridCell.opticalOpacity : 1}
-                        onOpacity={(opacity: number) => handleOpticalOpacityChange(opacity, key)}
-                      />
-                    }
-                  </FadeTransition>
-                  <FadeTransition>
-                    {
-                      gridCell?.showOpticalImage
-                      && annData?.dataset?.opticalImages[0]?.url
-                      !== undefined
-                      && <OpacitySettings
-                        key="opacity"
-                        class="ds-comparison-opacity-item m-1 sm-leading-trim mt-auto dom-to-image-hidden"
-                        opacity={gridCell.annotImageOpacity !== undefined
-                          ? gridCell.annotImageOpacity : 1}
-                        onOpacity={(opacity: number) => handleOpacityChange(opacity, key)}
-                      />
-                    }
-                  </FadeTransition>
-                </div>
-                <FadeTransition class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden">
-                  {
-                    state.refsLoaded
-                    && props.mode !== 'MULTI'
-                    && gridCell != null
-                    && gridCell.userScaling
-                    && <div
-                      class="p-3 bg-gray-100 rounded-lg box-border shadow-xs"
-                      ref={`range-slider-${row}-${col}`}>
-                      <RangeSlider
-                        class="ds-comparison-opacity-item"
-                        value={gridCell.userScaling}
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        style={buildRangeSliderStyle(key)}
-                        onInput={(nextRange: number[]) =>
-                          handleUserScalingChange(nextRange, key)}
-                      />
-                      <div
-                        class="ds-intensities-wrapper">
-                        <IonIntensity
-                          intensities={gridCell.intensity?.min}
-                          label="Minimum intensity"
-                          placeholder="min."
-                          onInput={(value: number) =>
-                            handleIonIntensityChange(value, key,
-                              'min')}
-                          onLock={(value: number) =>
-                            handleIonIntensityLockChangeForAll(value, key, 'min')}
-                        />
-                        <IonIntensity
-                          intensities={gridCell.intensity?.max}
-                          label="Minimum intensity"
-                          placeholder="min."
-                          onInput={(value: number) =>
-                            handleIonIntensityChange(value, key,
-                              'max')}
-                          onLock={(value: number) =>
-                            handleIonIntensityLockChangeForAll(value, key, 'max')}
-                        />
-                      </div>
-                    </div>
-                  }
-                </FadeTransition>
-              </div>
-            }
-            {
-              key !== '0-0'
-              && state.refsLoaded
-              && <ImageSaver
-                class="absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
-                domNode={refs[`image-${row}-${col}`]}
+                onAddLayer={addLayer}
               />
             }
           </div>

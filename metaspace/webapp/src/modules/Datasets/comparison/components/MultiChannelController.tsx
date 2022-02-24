@@ -10,14 +10,13 @@ import RangeSlider from '../../../../components/Slider/RangeSlider.vue'
 import IonIntensity from '../../../ImageViewer/IonIntensity.vue'
 import getColorScale from '../../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../../components/Slider'
-import { renderScaleBar } from '../../../../lib/ionImageRendering'
-import createColormap from '../../../../lib/createColormap'
 import './MultiChannelController.scss'
 import ChannelSelector from '../../../ImageViewer/ChannelSelector.vue'
 
 interface MultiChannelControllerProps {
   menuItems: any[],
-  activeLayer: any
+  activeLayer: any,
+  mode: string
 }
 
 interface MultiChannelControllerState {
@@ -29,6 +28,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
   props: {
     menuItems: { type: Array, default: () => [] },
     activeLayer: { type: Object },
+    mode: { type: String, default: 'MULTI' },
   },
   // @ts-ignore
   setup: function(props, { refs, emit, root }) {
@@ -65,11 +65,11 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
     }
 
     const buildRangeSliderStyle = (item: any, key: number, scaleRange: number[] = [0, 1]) => {
-      if (!refs[`range-slider-${key}`]) {
-        return null
-      }
+      // if (!refs[`range-slider-${key}`]) {
+      //   return null
+      // }
 
-      const width = refs[`range-slider-${key}`]?.offsetWidth + 30
+      const width = (refs[`range-slider-${key}`]?.offsetWidth || 200) + 30
       const { range } = getColorScale(item.settings.channel.value)
       const scaledMinIntensity = item.scaledMinIntensity.value
       const scaledMaxIntensity = item.scaledMaxIntensity.value
@@ -92,6 +92,8 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
     }
 
     const renderItem = (item: any, itemIndex: number) => {
+      const { mode } = props
+
       // @ts-ignore TS2604
       const candidateMolecules = (annotation) => <CandidateMoleculesPopover
         placement="right"
@@ -108,8 +110,8 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       return (
         <div class="flex flex-col justify-center p-2 relative">
           <p class="flex justify-between m-0 items-center flex-wrap">
-            {candidateMolecules(item.annotation)}
-            <Button
+            {mode === 'MULTI' && candidateMolecules(item.annotation)}
+            {mode === 'MULTI' && <Button
               title={item.settings.visible ? 'Hide layer' : 'Show layer'}
               class="button-reset h-5"
               onClick={() => { handleToggleVisibility(itemIndex) }}
@@ -122,7 +124,8 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                 !item.settings.visible
                 && <HiddenIcon class="fill-current w-5 h-5 text-gray-600"/>
               }
-            </Button>
+            </Button>}
+
             <div
               ref={`range-slider-${itemIndex}`}
               class="h-9 relative w-full">
@@ -167,47 +170,56 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                 </div>
               }
             </div>
-            <ChannelSelector
-              class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
-              value={item.settings.channel.value}
-              onRemove={() => removeLayer(itemIndex)}
-              onInput={(value: any) => changeLayerColor(value, itemIndex)}
-            />
+            {
+              mode === 'multi'
+              && <ChannelSelector
+                class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
+                value={item.settings.channel.value}
+                onRemove={() => removeLayer(itemIndex)}
+                onInput={(value: any) => changeLayerColor(value, itemIndex)}
+              />
+            }
           </p>
         </div>
       )
     }
 
     return () => {
-      const { activeLayer, menuItems } = props
+      const { activeLayer, menuItems, mode } = props
 
       return (
-        <Overlay class="multi-channel-ctrl-wrapper overflow-x-hidden overflow-y-auto px-0 sm-menu-items">
+        <Overlay class="multi-channel-ctrl-wrapper overflow-x-hidden overflow-y-auto sm-menu-items p-0">
           {
             menuItems.map((item: any, itemIndex: number) => renderItem(item, itemIndex))
           }
-          <Button
-            class={'button-reset p-3 h-12 w-full cursor-default text-gray-700 text-center m-0'} >
-            <FadeTransition className="text-xs tracking-wide font-medium text-inherit">
-              {
-                activeLayer
+          {
+            mode === 'MULTI'
+            && <Button
+              class={'button-reset p-3 h-12 w-full cursor-default text-gray-700 text-center m-0'}
+              onClick={() => { emit('addLayer') }}
+            >
+              <FadeTransition className="text-xs tracking-wide font-medium text-inherit">
+                {
+                  activeLayer
                   && <span
                     key="active"
                   >
                   Select annotation
                   </span>
-              }
-              {
-                !activeLayer
+                }
+                {
+                  !activeLayer
                   && <span
                     key="inactive"
                     class="flex items-center justify-center"
                   >
                   Add ion image
                   </span>
-              }
-            </FadeTransition>
-          </Button>
+                }
+              </FadeTransition>
+            </Button>
+          }
+
         </Overlay>
       )
     }

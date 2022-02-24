@@ -160,6 +160,25 @@ export default {
     state.normalization = normalizationMatrix;
   },
 
+  resetChannels(state) {
+    state.channels = [];
+  },
+
+  addChannel(state, {id, annotations, settings}) {
+    state.channels.push({id, annotations, settings});
+  },
+
+  updateChannel(state, {index, id, annotations, settings}) {
+    const aux = state.channels.slice(0)
+    aux[index] = {id, annotations, settings}
+    state.channels = aux
+  },
+
+  setViewerMode(state, mode = 'SINGLE') {
+    state.mode = mode;
+  },
+
+
   setRoiInfo(state, {key, roi}) {
     Vue.set(state.roiInfo, key, roi)
   },

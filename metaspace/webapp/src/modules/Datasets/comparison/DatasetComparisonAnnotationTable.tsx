@@ -391,7 +391,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     }
 
     const formatAnnotation = (row: any) => {
-      return <AnnotationTableMolName annotation={row}/>
+      return <AnnotationTableMolName annotation={row} highlightByIon/>
     }
 
     const formatMSM = (row: any) => {

@@ -47,7 +47,7 @@ interface DatasetComparisonPageProps {
 }
 
 interface DatasetComparisonPageState {
-  selectedAnnotation: number
+  currentAnnotationIdx: number
   gridState: any
   annotations: any
   datasets: any
@@ -65,6 +65,18 @@ interface DatasetComparisonPageState {
   offset: number
   rawAnnotations: any
   processedAnnotations: any
+}
+
+const channels: any = {
+  magenta: 'rgb(255, 0, 255)',
+  green: 'rgb(0, 255, 0)',
+  blue: 'rgb(0, 0, 255)',
+  red: 'rgb(255, 0, 0)',
+  yellow: 'rgb(255, 255, 0)',
+  cyan: 'rgb(0, 255, 255)',
+  orange: 'rgb(255, 128, 0)',
+  violet: 'rgb(128, 0, 255)',
+  white: 'rgb(255, 255, 255)',
 }
 
 const CHUNK_SIZE = 1000
@@ -97,7 +109,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     const gridNode = ref(null)
     const imageGrid = ref(null)
     const state = reactive<DatasetComparisonPageState>({
-      selectedAnnotation: -1,
+      currentAnnotationIdx: -1,
       gridState: {},
       databaseOptions: undefined,
       globalImageSettings: {
@@ -276,6 +288,8 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     onMounted(() => {
       state.refsLoaded = true
+      $store.commit('resetChannels')
+      $store.commit('setViewerMode', 'SINGLE')
 
       // add listener to query annotations again in case the filters change
       $store.watch((_, getters) => [getters.gqlAnnotationFilter,
@@ -375,7 +389,8 @@ export default defineComponent<DatasetComparisonPageProps>({
     const handleRowChange = (idx: number) => {
       if (idx !== -1) {
         state.isLoading = true
-        state.selectedAnnotation = idx
+        state.currentAnnotationIdx = idx
+        handleChannelHighlight()
         setTimeout(() => {
           state.isLoading = false
         }, 500)
@@ -383,7 +398,32 @@ export default defineComponent<DatasetComparisonPageProps>({
     }
 
     const handleModeChange = (mode: string = 'SINGLE') => {
-      console.log('mode', mode)
+      $store.commit('setViewerMode', mode)
+      handleChannelHighlight()
+    }
+
+    const handleChannelHighlight = () => {
+      if ($store.state.mode !== 'MULTI') {
+        return
+      }
+
+      const selectedAnnotationsLength = $store.state.channels.length
+      const nOfChannels = Object.keys(channels).length
+      const channel = Object.keys(channels)[selectedAnnotationsLength % nOfChannels]
+      const annotations = state.annotations[state.currentAnnotationIdx]
+      const id = annotations.ion
+      const index = $store.state.channels.length - 1
+
+      if ($store.state.channels.length === 0) {
+        $store.commit('addChannel', { id, annotations, settings: { channel, visible: true } })
+      } else if (!$store.state.channels.map((item: any) => item.id).includes(id)) {
+        $store.commit('updateChannel', {
+          index,
+          id,
+          annotations,
+          settings: { channel: $store.state.channels[index].settings.channel, visible: true },
+        })
+      }
     }
 
     const renderInfo = () => {
@@ -391,18 +431,18 @@ export default defineComponent<DatasetComparisonPageProps>({
       const nRows = state.nRows
 
       if (
-        state.selectedAnnotation === undefined
-        || state.selectedAnnotation === -1
-        || !state.annotations[state.selectedAnnotation]) {
+        state.currentAnnotationIdx === undefined
+        || state.currentAnnotationIdx === -1
+        || !state.annotations[state.currentAnnotationIdx]) {
         return <div class='ds-comparison-info'/>
       }
 
-      const selectedAnnotation = state.annotations[state.selectedAnnotation].annotations[0]
+      const selectedAnnotation = state.annotations[state.currentAnnotationIdx].annotations[0]
       let possibleCompounds : any = []
       let isomers : any = []
       let isobars : any = []
 
-      state.annotations[state.selectedAnnotation].annotations.forEach((annotation: any) => {
+      state.annotations[state.currentAnnotationIdx].annotations.forEach((annotation: any) => {
         possibleCompounds = possibleCompounds.concat(annotation.possibleCompounds)
         isomers = isomers.concat(annotation.isomers)
         isobars = isobars.concat(annotation.isobars)
@@ -447,7 +487,7 @@ export default defineComponent<DatasetComparisonPageProps>({
             scaleType={state.globalImageSettings.scaleType}
             colormap={state.globalImageSettings.colormap}
             settings={gridSettings.value?.snapshot}
-            selectedAnnotation={state.selectedAnnotation}
+            selectedAnnotation={state.currentAnnotationIdx}
             sourceDsId={sourceDsId}
             name={$route.name}
             params={$route.params}
@@ -512,7 +552,7 @@ export default defineComponent<DatasetComparisonPageProps>({
                 annotations={state.annotations || []}
                 normalizationData={state.normalizationData}
                 datasets={datasets.value || []}
-                selectedAnnotation={state.selectedAnnotation}
+                selectedAnnotation={state.currentAnnotationIdx}
                 isLoading={state.isLoading || annotationsLoading.value}
               />
             }
@@ -521,8 +561,8 @@ export default defineComponent<DatasetComparisonPageProps>({
     }
 
     const renderCompounds = () => {
-      const annotations = state.selectedAnnotation >= 0 && state.annotations[state.selectedAnnotation]
-        ? state.annotations[state.selectedAnnotation].annotations : []
+      const annotations = state.currentAnnotationIdx >= 0 && state.annotations[state.currentAnnotationIdx]
+        ? state.annotations[state.currentAnnotationIdx].annotations : []
 
       // @ts-ignore TS2604
       const relatedMolecules = () => <RelatedMolecules
