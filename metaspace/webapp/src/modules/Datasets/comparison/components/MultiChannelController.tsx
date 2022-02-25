@@ -65,10 +65,6 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
     }
 
     const buildRangeSliderStyle = (item: any, key: number, scaleRange: number[] = [0, 1]) => {
-      // if (!refs[`range-slider-${key}`]) {
-      //   return null
-      // }
-
       const width = (refs[`range-slider-${key}`]?.offsetWidth || 200) + 30
       const { range } = getColorScale(item.settings.channel.value)
       const scaledMinIntensity = item.scaledMinIntensity.value
@@ -112,26 +108,29 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
           <p class="flex justify-between m-0 items-center flex-wrap">
             {mode === 'MULTI' && candidateMolecules(item.annotation)}
             {mode === 'MULTI' && <Button
-              title={item.settings.visible ? 'Hide layer' : 'Show layer'}
+              title={item.settings.visible.value ? 'Hide layer' : 'Show layer'}
               class="button-reset h-5"
               onClick={() => { handleToggleVisibility(itemIndex) }}
             >
               {
-                item.settings.visible
+                item.settings.visible.value
                 && <VisibleIcon class="fill-current w-5 h-5 text-gray-800"/>
               }
               {
-                !item.settings.visible
+                !item.settings.visible.value
                 && <HiddenIcon class="fill-current w-5 h-5 text-gray-600"/>
               }
             </Button>}
-
             <div
               ref={`range-slider-${itemIndex}`}
-              class="h-9 relative w-full">
-
+              class="h-9 relative w-full text-center">
+              {
+                mode === 'MULTI'
+                && item.isEmpty
+                && <span class='text-base no-data-text'>No data</span>}
               {
                 state.refsLoaded
+                && !item.isEmpty
                 && <RangeSlider
                   class="ds-comparison-opacity-item"
                   value={item.userScaling}
@@ -145,6 +144,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
               }
               {
                 item.intensity.value
+                && !item.isEmpty
                 && <div
                   class="ds-intensities-wrapper">
                   <IonIntensity
@@ -171,7 +171,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
               }
             </div>
             {
-              mode === 'multi'
+              mode === 'MULTI'
               && <ChannelSelector
                 class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
                 value={item.settings.channel.value}
@@ -188,7 +188,10 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       const { activeLayer, menuItems, mode } = props
 
       return (
-        <Overlay class="multi-channel-ctrl-wrapper overflow-x-hidden overflow-y-auto sm-menu-items p-0">
+        <Overlay
+          class="multi-channel-ctrl-wrapper overflow-x-hidden overflow-y-auto sm-menu-items p-0"
+          style={{ paddingBottom: mode === 'MULTI' ? '' : 0 }}
+        >
           {
             menuItems.map((item: any, itemIndex: number) => renderItem(item, itemIndex))
           }

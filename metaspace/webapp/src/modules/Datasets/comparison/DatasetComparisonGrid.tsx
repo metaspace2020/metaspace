@@ -4,14 +4,8 @@ import MainImageHeader from '../../Annotations/annotation-widgets/default/MainIm
 import Vue from 'vue'
 import createColormap from '../../../lib/createColormap'
 import { IonImage, loadPngFromUrl, processIonImage, renderScaleBar } from '../../../lib/ionImageRendering'
-import IonImageViewer from '../../../components/IonImageViewer'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import fitImageToArea, { FitImageToAreaResult } from '../../../lib/fitImageToArea'
-import FadeTransition from '../../../components/FadeTransition'
-import OpacitySettings from '../../ImageViewer/OpacitySettings.vue'
-import RangeSlider from '../../../components/Slider/RangeSlider.vue'
-import IonIntensity from '../../ImageViewer/IonIntensity.vue'
-import ImageSaver from '../../ImageViewer/ImageSaver.vue'
 import getColorScale from '../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../components/Slider'
 import { encodeParams } from '../../Filters'
@@ -19,9 +13,8 @@ import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
 import { Popover } from '../../../lib/element-ui'
 import { ImagePosition } from '../../ImageViewer/ionImageState'
-import { cloneDeep, range } from 'lodash-es'
+import { range } from 'lodash-es'
 import config from '../../../lib/config'
-import { MultiChannelController } from './components/MultiChannelController'
 import { SimpleIonImageViewer } from './components/SimpleIonImageViewer'
 
 const RouterLink = Vue.component('router-link')
@@ -160,7 +153,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
   },
   // @ts-ignore
   setup: function(props, { refs, emit, root }) {
-    const { $route, $store } = root
+    const { $store } = root
 
     const state = reactive<DatasetComparisonGridState>({
       gridState: {},
@@ -556,13 +549,23 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       $store.commit('addChannel', { id: undefined, settings: { channel, visible: true } })
     }
 
-    const handleImageMove = ({ zoom, xOffset, yOffset }: any, key: string) => {
-      const gridCell = state.gridState[key]
-      if (gridCell != null) {
-        gridCell.imagePosition.zoom = zoom / gridCell.imageFit.imageZoom
-        gridCell.imagePosition.xOffset = xOffset
-        gridCell.imagePosition.yOffset = yOffset
-      }
+    const handleLayerColorChange = (channel: string, index: number) => {
+      $store.commit('updateChannel', {
+        ...$store.state.channels[index],
+        index,
+        settings: { channel: channel, visible: $store.state.channels[index].settings.visible },
+      })
+    }
+
+    const toggleChannelVisibility = (index: number) => {
+      $store.commit('updateChannel', {
+        ...$store.state.channels[index],
+        index,
+        settings: {
+          channel: $store.state.channels[index].settings.channel,
+          visible: !$store.state.channels[index].settings.visible,
+        },
+      })
     }
 
     const annotationsLink = (datasetId: string, database?: string, fdrLevel?: number) => {
@@ -584,14 +587,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         params: { dataset_id: datasetId },
         query: encodeParams(query),
       }
-    }
-
-    const handleOpacityChange = (opacity: any, key: string) => {
-      state.gridState[key]!.annotImageOpacity = opacity
-    }
-
-    const handleOpticalOpacityChange = (opacity: any, key: string) => {
-      state.gridState[key]!.opticalOpacity = opacity
     }
 
     const handleUserScalingChange = (userScaling: any, key: string, ignoreBoundaries: boolean = false) => {
@@ -641,10 +636,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         > gridCell.intensity.max.user
           ? maxScaleDisplay
           : maxIntensity * userScaling[1]
-    }
-
-    const toggleChannelVisibility = (key: string, index: number) => {
-      state.menuItems[key][index].settings.visible = !state.menuItems[key][index].settings.visible
     }
 
     const handleIonIntensityChange = (intensity: number | undefined, key: string, type: string,
@@ -710,22 +701,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
       gridCell.intensity = intensity
       gridCell.userScaling = [0, 1]
-    }
-
-    const handleIonIntensityLockChangeForAll = (value: number, key: string, type: string) => {
-      // apply max lock to all grids
-      Object.keys(state.gridState).forEach((gridKey) => {
-        handleIonIntensityLockChange(value, gridKey, type)
-
-        if (value && gridKey !== key) {
-          handleIonIntensityChange(value, gridKey, type, true)
-        }
-      })
-
-      // emit lock all (used to reset template lock if set)
-      if (props.lockedIntensityTemplate) {
-        emit('lockAllIntensities')
-      }
     }
 
     const handleIonIntensityLockAllByTemplate = async(dsId: string) => {
@@ -895,7 +870,9 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 resetViewPort={props.resetViewPort}
                 onResetViewPort={() => { emit('resetViewPort', false) }}
                 onRemoveLayer={() => { emit('resetViewPort', false) }}
+                onChangeLayer={handleLayerColorChange}
                 onAddLayer={addLayer}
+                onToggleVisibility={toggleChannelVisibility}
               />
             }
           </div>
