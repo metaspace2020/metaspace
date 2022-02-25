@@ -24,7 +24,10 @@ def spatial_metric(iso_imgs_flat, n_spectra, intensities, v1_impl=False):
     if v1_impl:
         # Ignore div-by-zero / NaN errors - they're handled internally
         with np.errstate(divide='ignore', invalid='ignore'):
-            return isotope_image_correlation(iso_imgs_flat, weights=intensities[1:])
+            if np.sum(intensities[1:]) == 0:
+                return 0
+            else:
+                return isotope_image_correlation(iso_imgs_flat, weights=intensities[1:])
 
     if (
         len(iso_imgs_flat) < 2
