@@ -541,6 +541,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return value ? `${Math.round(value * 100)}%` : '-'
     }
 
+    const removeLayer = (index: number) => {
+      $store.commit('removeChannel', { index })
+    }
+
     const addLayer = () => {
       const selectedAnnotationsLength = Object.keys($store.state.channels).length
       const nOfChannels = Object.keys(channels).length
@@ -869,7 +873,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 showOpticalImage={!!gridCell?.showOpticalImage}
                 resetViewPort={props.resetViewPort}
                 onResetViewPort={() => { emit('resetViewPort', false) }}
-                onRemoveLayer={() => { emit('resetViewPort', false) }}
+                onRemoveLayer={removeLayer}
                 onChangeLayer={handleLayerColorChange}
                 onAddLayer={addLayer}
                 onToggleVisibility={toggleChannelVisibility}
