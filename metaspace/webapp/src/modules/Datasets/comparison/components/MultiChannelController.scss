@@ -3,6 +3,6 @@
   padding-top: 0px;
   padding-left: 0px;
   padding-right: 0px;
-  @apply mr-1;
+  @apply p-0 bg-gray-100 rounded-lg box-border shadow-xs mr-1 overflow-x-hidden overflow-y-auto;
   max-height: calc(100% - 1.5rem);
 }

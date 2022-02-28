@@ -32,7 +32,7 @@
         </div>
         <button
           class="button-reset text-danger h-3 leading-none text-xs tracking-wide font-medium"
-          @click="$emit('remove')"
+          @click="isOpen = !isOpen;$emit('remove')"
         >
           remove
         </button>

@@ -1,5 +1,4 @@
-import { computed, defineComponent, onMounted, reactive } from '@vue/composition-api'
-import Overlay from '../../../../modules/ImageViewer/Overlay.vue'
+import { defineComponent, onMounted, reactive } from '@vue/composition-api'
 import FadeTransition from '../../../../components/FadeTransition'
 import { Button } from '../../../../lib/element-ui'
 import CandidateMoleculesPopover from '../../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
@@ -10,8 +9,8 @@ import RangeSlider from '../../../../components/Slider/RangeSlider.vue'
 import IonIntensity from '../../../ImageViewer/IonIntensity.vue'
 import getColorScale from '../../../../lib/getColorScale'
 import { THUMB_WIDTH } from '../../../../components/Slider'
-import './MultiChannelController.scss'
 import ChannelSelector from '../../../ImageViewer/ChannelSelector.vue'
+import './MultiChannelController.scss'
 
 interface MultiChannelControllerProps {
   menuItems: any[],
@@ -188,10 +187,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       const { activeLayer, menuItems, mode } = props
 
       return (
-        <Overlay
-          class="multi-channel-ctrl-wrapper overflow-x-hidden overflow-y-auto sm-menu-items p-0"
-          style={{ paddingBottom: mode === 'MULTI' ? '' : 0 }}
-        >
+        <div class="multi-channel-ctrl-wrapper" style={{ paddingBottom: mode === 'MULTI' ? '' : 0 }}>
           {
             menuItems.map((item: any, itemIndex: number) => renderItem(item, itemIndex))
           }
@@ -222,8 +218,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
               </FadeTransition>
             </Button>
           }
-
-        </Overlay>
+        </div>
       )
     }
   },

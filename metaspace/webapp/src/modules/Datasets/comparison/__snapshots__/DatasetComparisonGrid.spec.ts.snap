@@ -636,7 +636,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
             mode="out-in"
           >
             <div
-              class="p-3 bg-gray-100 rounded-lg box-border shadow-xs multi-channel-ctrl-wrapper overflow-x-hidden overflow-y-auto sm-menu-items p-0"
+              class="multi-channel-ctrl-wrapper"
               style="padding-bottom: 0px;"
             >
               <div
@@ -1362,7 +1362,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
             mode="out-in"
           >
             <div
-              class="p-3 bg-gray-100 rounded-lg box-border shadow-xs multi-channel-ctrl-wrapper overflow-x-hidden overflow-y-auto sm-menu-items p-0"
+              class="multi-channel-ctrl-wrapper"
               style="padding-bottom: 0px;"
             >
               <div
