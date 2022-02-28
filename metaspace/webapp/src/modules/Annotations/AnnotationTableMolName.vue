@@ -40,16 +40,13 @@
 </template>
 
 <script>
-import Vue from 'vue'
 import { defineComponent, computed } from '@vue/composition-api'
-
 import FilterIcon from '../../assets/inline/filter.svg'
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
 import { useChannelSwatches } from '../ImageViewer/ionImageState'
 import useFilter from '../../lib/useFilter'
 import MolecularFormula from '../../components/MolecularFormula'
-import viewerState from '@/modules/ImageViewer/state'
-import { channels as channelToRGB } from '@/lib/getColorScale'
+import { channels as channelToRGB } from '../../lib/getColorScale'
 
 const channelSwatches = useChannelSwatches()
 

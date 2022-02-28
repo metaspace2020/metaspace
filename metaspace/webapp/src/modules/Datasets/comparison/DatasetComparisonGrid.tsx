@@ -769,6 +769,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         : (!props.isLoading && annData === null && gridCell === null)
           || (!props.isLoading && props.selectedAnnotation === -1)
           || (props.selectedAnnotation >= props.annotations.length)
+          || (annotations && annotations[0]?.isEmpty)
 
       if (isEmpty) {
         return (

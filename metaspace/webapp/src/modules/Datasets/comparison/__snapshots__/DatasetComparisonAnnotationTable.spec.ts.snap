@@ -82,6 +82,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
                     </div>
                     <div slot-key="reference"><span>[C<sub class="leading-none">10</sub>H<sub class="leading-none">11</sub>NO + Na]⁺</span>
                       <!---->
+                      <!---->
                     </div>
                   </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>
                 </div>
@@ -117,6 +118,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
                       </div>
                     </div>
                     <div slot-key="reference"><span>[C<sub class="leading-none">23</sub>H<sub class="leading-none">45</sub>NO<sub class="leading-none">4</sub> + H]⁺</span>
+                      <!---->
                       <!---->
                     </div>
                   </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>

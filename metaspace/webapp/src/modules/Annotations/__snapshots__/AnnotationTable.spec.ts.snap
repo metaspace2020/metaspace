@@ -123,6 +123,7 @@ exports[`AnnotationTable should match snapshot 1`] = `
                     </div>
                     <div slot-key="reference"><span>[C<sub class="leading-none">19</sub>H<sub class="leading-none">18</sub>N<sub class="leading-none">2</sub>O<sub class="leading-none">7</sub>S<sub class="leading-none">2</sub> - H]⁺</span>
                       <!---->
+                      <!---->
                     </div>
                   </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>
                 </div>
@@ -311,6 +312,7 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
                       </div>
                     </div>
                     <div slot-key="reference"><span>[C<sub class="leading-none">19</sub>H<sub class="leading-none">18</sub>N<sub class="leading-none">2</sub>O<sub class="leading-none">7</sub>S<sub class="leading-none">2</sub> - H]⁺</span>
+                      <!---->
                       <!---->
                     </div>
                   </mock-el-popover> <svg data-icon="filter" class="cell-filter-button"></svg>

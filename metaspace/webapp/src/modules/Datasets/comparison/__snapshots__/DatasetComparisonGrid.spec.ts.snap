@@ -553,42 +553,62 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
         class="ds-wrapper relative"
       >
         <div
-          class="relative overflow-hidden"
-          mock-v-loading="false"
-          scaletype="linear"
-          style="width: 410px; height: 300px;"
+          class="ds-simple-ion-image-container relative"
+          dataset="[object Object]"
         >
           <div
-            class="scale-bar"
+            class="relative overflow-hidden"
+            mock-v-loading="false"
+            scaletype="linear"
+            style="width: 410px; height: 300px;"
           >
             <div
-              class="scale-bar-x"
-              style="color: rgb(0, 0, 0); border-color: #000000; width: 83.33333333333333px;"
+              data-test-key="ion-image-panel"
+              style="left: 0px; top: 0px; width: 410px; height: 300px; transform-origin: 0 0; transform: translate(205px, 150px) scale(1, 1);"
+            >
+              <canvas
+                class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
+                height="0"
+                width="0"
+              />
+              <div />
+            </div>
+            <div
+              class="scale-bar"
             >
               <div
-                class="scale-bar-x-text"
+                class="scale-bar-x"
+                style="color: rgb(0, 0, 0); border-color: #000000; width: 83.33333333333333px;"
               >
-                
+                <div
+                  class="scale-bar-x-text"
+                >
+                  
       1 mm
     
+                </div>
               </div>
+               
+              <!---->
             </div>
-             
-            <!---->
-          </div>
-          <div
-            class="absolute inset-0 z-30 pointer-events-none bg-body flex items-center justify-center opacity-0 duration-1000"
-          >
-            <p
-              class="relative block z-40 m-0 text-white text-2xl"
+            <div
+              class="absolute inset-0 z-30 pointer-events-none bg-body flex items-center justify-center opacity-0 duration-1000"
             >
-              Use CTRL + scroll wheel to zoom the image
-            </p>
+              <p
+                class="relative block z-40 m-0 text-white text-2xl"
+              >
+                Use CTRL + scroll wheel to zoom the image
+              </p>
+            </div>
           </div>
-        </div>
-        <div
-          class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar"
-        >
+          <button
+            class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
+            title="Export image"
+          >
+            <i
+              class="el-icon-download text-xl"
+            />
+          </button>
           <div
             class="flex absolute bottom-0 right-0 my-3 ml-3 dom-to-image-hidden"
           >
@@ -616,102 +636,107 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
             mode="out-in"
           >
             <div
-              class="p-3 bg-gray-100 rounded-lg box-border shadow-xs"
+              class="p-3 bg-gray-100 rounded-lg box-border shadow-xs multi-channel-ctrl-wrapper overflow-x-hidden overflow-y-auto sm-menu-items p-0"
+              style="padding-bottom: 0px;"
             >
               <div
-                class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer ds-comparison-opacity-item"
+                class="flex flex-col justify-center p-2 relative"
               >
-                <div
-                  class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
-                  style="left: -1px;"
-                  tabindex="0"
-                />
-                 
-                <div
-                  class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
-                  style="left: -11px;"
-                  tabindex="0"
-                />
-              </div>
-              <div
-                class="ds-intensities-wrapper"
-              >
-                <transition-stub
-                  enteractiveclass="duration-150 transition-opacity ease-in-out"
-                  enterclass="opacity-0"
-                  leaveactiveclass="duration-150 transition-opacity ease-in-out"
-                  leavetoclass="opacity-0"
-                  mode="out-in"
+                <p
+                  class="flex justify-between m-0 items-center flex-wrap"
                 >
                   <div
-                    class="h-5 flex items-center sm-flex-direction"
+                    class="h-9 relative w-full text-center"
                   >
-                    <button
-                      class="button-reset h-4 leading-5"
-                      title="Click to edit"
+                    <div
+                      class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer ds-comparison-opacity-item"
                     >
-                      
+                      <div
+                        class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                        style="left: -1px;"
+                        tabindex="0"
+                      />
+                       
+                      <div
+                        class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                        style="left: -11px;"
+                        tabindex="0"
+                      />
+                    </div>
+                    <div
+                      class="ds-intensities-wrapper"
+                    >
+                      <transition-stub
+                        enteractiveclass="duration-150 transition-opacity ease-in-out"
+                        enterclass="opacity-0"
+                        leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                        leavetoclass="opacity-0"
+                        mode="out-in"
+                      >
+                        <div
+                          class="h-5 flex items-center sm-flex-direction"
+                        >
+                          <button
+                            class="button-reset h-4 leading-5"
+                            title="Click to edit"
+                          >
+                            
       0.0e+0
     
-                    </button>
-                     
-                    <button
-                      class="button-reset h-4 mx-1"
-                      title="Lock intensity"
-                    >
-                      <svg
-                        class="fill-current text-gray-600"
-                        data-icon="icon-lock"
-                      />
-                    </button>
-                     
-                    <!---->
-                  </div>
-                </transition-stub>
-                <transition-stub
-                  enteractiveclass="duration-150 transition-opacity ease-in-out"
-                  enterclass="opacity-0"
-                  leaveactiveclass="duration-150 transition-opacity ease-in-out"
-                  leavetoclass="opacity-0"
-                  mode="out-in"
-                >
-                  <div
-                    class="h-5 flex items-center sm-flex-direction"
-                  >
-                    <button
-                      class="button-reset h-4 leading-5"
-                      title="Click to edit"
-                    >
-                      
+                          </button>
+                           
+                          <button
+                            class="button-reset h-4 mx-1"
+                            title="Lock intensity"
+                          >
+                            <svg
+                              class="fill-current text-gray-600"
+                              data-icon="icon-lock"
+                            />
+                          </button>
+                           
+                          <!---->
+                        </div>
+                      </transition-stub>
+                      <transition-stub
+                        enteractiveclass="duration-150 transition-opacity ease-in-out"
+                        enterclass="opacity-0"
+                        leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                        leavetoclass="opacity-0"
+                        mode="out-in"
+                      >
+                        <div
+                          class="h-5 flex items-center sm-flex-direction"
+                        >
+                          <button
+                            class="button-reset h-4 leading-5"
+                            title="Click to edit"
+                          >
+                            
       0.0e+0
     
-                    </button>
-                     
-                    <button
-                      class="button-reset h-4 mx-1"
-                      title="Lock intensity"
-                    >
-                      <svg
-                        class="fill-current text-gray-600"
-                        data-icon="icon-lock"
-                      />
-                    </button>
-                     
-                    <!---->
+                          </button>
+                           
+                          <button
+                            class="button-reset h-4 mx-1"
+                            title="Lock intensity"
+                          >
+                            <svg
+                              class="fill-current text-gray-600"
+                              data-icon="icon-lock"
+                            />
+                          </button>
+                           
+                          <!---->
+                        </div>
+                      </transition-stub>
+                    </div>
                   </div>
-                </transition-stub>
+                </p>
               </div>
             </div>
           </transition-stub>
         </div>
-        <button
-          class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
-          title="Export image"
-        >
-          <i
-            class="el-icon-download text-xl"
-          />
-        </button>
       </div>
     </div>
     <div
@@ -1254,42 +1279,62 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
         class="ds-wrapper relative"
       >
         <div
-          class="relative overflow-hidden"
-          mock-v-loading="false"
-          scaletype="linear"
-          style="width: 410px; height: 300px;"
+          class="ds-simple-ion-image-container relative"
+          dataset="[object Object]"
         >
           <div
-            class="scale-bar"
+            class="relative overflow-hidden"
+            mock-v-loading="false"
+            scaletype="linear"
+            style="width: 410px; height: 300px;"
           >
             <div
-              class="scale-bar-x"
-              style="color: rgb(0, 0, 0); border-color: #000000; width: 83.33333333333333px;"
+              data-test-key="ion-image-panel"
+              style="left: 0px; top: 0px; width: 410px; height: 300px; transform-origin: 0 0; transform: translate(205px, 150px) scale(1, 1);"
+            >
+              <canvas
+                class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
+                height="0"
+                width="0"
+              />
+              <div />
+            </div>
+            <div
+              class="scale-bar"
             >
               <div
-                class="scale-bar-x-text"
+                class="scale-bar-x"
+                style="color: rgb(0, 0, 0); border-color: #000000; width: 83.33333333333333px;"
               >
-                
+                <div
+                  class="scale-bar-x-text"
+                >
+                  
       1 mm
     
+                </div>
               </div>
+               
+              <!---->
             </div>
-             
-            <!---->
-          </div>
-          <div
-            class="absolute inset-0 z-30 pointer-events-none bg-body flex items-center justify-center opacity-0 duration-1000"
-          >
-            <p
-              class="relative block z-40 m-0 text-white text-2xl"
+            <div
+              class="absolute inset-0 z-30 pointer-events-none bg-body flex items-center justify-center opacity-0 duration-1000"
             >
-              Use CTRL + scroll wheel to zoom the image
-            </p>
+              <p
+                class="relative block z-40 m-0 text-white text-2xl"
+              >
+                Use CTRL + scroll wheel to zoom the image
+              </p>
+            </div>
           </div>
-        </div>
-        <div
-          class="ds-viewer-controls-wrapper  v-rhythm-3 sm-side-bar"
-        >
+          <button
+            class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
+            title="Export image"
+          >
+            <i
+              class="el-icon-download text-xl"
+            />
+          </button>
           <div
             class="flex absolute bottom-0 right-0 my-3 ml-3 dom-to-image-hidden"
           >
@@ -1317,102 +1362,107 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
             mode="out-in"
           >
             <div
-              class="p-3 bg-gray-100 rounded-lg box-border shadow-xs"
+              class="p-3 bg-gray-100 rounded-lg box-border shadow-xs multi-channel-ctrl-wrapper overflow-x-hidden overflow-y-auto sm-menu-items p-0"
+              style="padding-bottom: 0px;"
             >
               <div
-                class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer ds-comparison-opacity-item"
+                class="flex flex-col justify-center p-2 relative"
               >
-                <div
-                  class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
-                  style="left: -1px;"
-                  tabindex="0"
-                />
-                 
-                <div
-                  class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
-                  style="left: -11px;"
-                  tabindex="0"
-                />
-              </div>
-              <div
-                class="ds-intensities-wrapper"
-              >
-                <transition-stub
-                  enteractiveclass="duration-150 transition-opacity ease-in-out"
-                  enterclass="opacity-0"
-                  leaveactiveclass="duration-150 transition-opacity ease-in-out"
-                  leavetoclass="opacity-0"
-                  mode="out-in"
+                <p
+                  class="flex justify-between m-0 items-center flex-wrap"
                 >
                   <div
-                    class="h-5 flex items-center sm-flex-direction"
+                    class="h-9 relative w-full text-center"
                   >
-                    <button
-                      class="button-reset h-4 leading-5"
-                      title="Click to edit"
+                    <div
+                      class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer ds-comparison-opacity-item"
                     >
-                      
+                      <div
+                        class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                        style="left: -1px;"
+                        tabindex="0"
+                      />
+                       
+                      <div
+                        class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                        style="left: -11px;"
+                        tabindex="0"
+                      />
+                    </div>
+                    <div
+                      class="ds-intensities-wrapper"
+                    >
+                      <transition-stub
+                        enteractiveclass="duration-150 transition-opacity ease-in-out"
+                        enterclass="opacity-0"
+                        leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                        leavetoclass="opacity-0"
+                        mode="out-in"
+                      >
+                        <div
+                          class="h-5 flex items-center sm-flex-direction"
+                        >
+                          <button
+                            class="button-reset h-4 leading-5"
+                            title="Click to edit"
+                          >
+                            
       0.0e+0
     
-                    </button>
-                     
-                    <button
-                      class="button-reset h-4 mx-1"
-                      title="Lock intensity"
-                    >
-                      <svg
-                        class="fill-current text-gray-600"
-                        data-icon="icon-lock"
-                      />
-                    </button>
-                     
-                    <!---->
-                  </div>
-                </transition-stub>
-                <transition-stub
-                  enteractiveclass="duration-150 transition-opacity ease-in-out"
-                  enterclass="opacity-0"
-                  leaveactiveclass="duration-150 transition-opacity ease-in-out"
-                  leavetoclass="opacity-0"
-                  mode="out-in"
-                >
-                  <div
-                    class="h-5 flex items-center sm-flex-direction"
-                  >
-                    <button
-                      class="button-reset h-4 leading-5"
-                      title="Click to edit"
-                    >
-                      
+                          </button>
+                           
+                          <button
+                            class="button-reset h-4 mx-1"
+                            title="Lock intensity"
+                          >
+                            <svg
+                              class="fill-current text-gray-600"
+                              data-icon="icon-lock"
+                            />
+                          </button>
+                           
+                          <!---->
+                        </div>
+                      </transition-stub>
+                      <transition-stub
+                        enteractiveclass="duration-150 transition-opacity ease-in-out"
+                        enterclass="opacity-0"
+                        leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                        leavetoclass="opacity-0"
+                        mode="out-in"
+                      >
+                        <div
+                          class="h-5 flex items-center sm-flex-direction"
+                        >
+                          <button
+                            class="button-reset h-4 leading-5"
+                            title="Click to edit"
+                          >
+                            
       0.0e+0
     
-                    </button>
-                     
-                    <button
-                      class="button-reset h-4 mx-1"
-                      title="Lock intensity"
-                    >
-                      <svg
-                        class="fill-current text-gray-600"
-                        data-icon="icon-lock"
-                      />
-                    </button>
-                     
-                    <!---->
+                          </button>
+                           
+                          <button
+                            class="button-reset h-4 mx-1"
+                            title="Lock intensity"
+                          >
+                            <svg
+                              class="fill-current text-gray-600"
+                              data-icon="icon-lock"
+                            />
+                          </button>
+                           
+                          <!---->
+                        </div>
+                      </transition-stub>
+                    </div>
                   </div>
-                </transition-stub>
+                </p>
               </div>
             </div>
           </transition-stub>
         </div>
-        <button
-          class="button-reset rounded-full bg-gray-100 shadow-xs h-8 w-8 flex items-center justify-center cursor-not-allowed absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
-          title="Export image"
-        >
-          <i
-            class="el-icon-download text-xl"
-          />
-        </button>
       </div>
     </div>
   </div>

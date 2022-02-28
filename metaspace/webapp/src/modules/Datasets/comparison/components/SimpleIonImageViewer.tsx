@@ -351,7 +351,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     }
 
     const startImageSettings = async() => {
-      const { annotations, isActive } = props
+      const { annotations } = props
       const annotation = annotations.filter((item: any) => !item.isEmpty)[0]
       const ionImagesPng = []
       const menuItems = []
@@ -646,6 +646,25 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           await handleIntensityChange(state.imageSettings.lockedIntensities[0], index, 'min')
           await handleIntensityLockChange(state.imageSettings.lockedIntensities[1], index, 'max')
           await handleIntensityChange(state.imageSettings.lockedIntensities[1], index, 'max')
+        }
+      }
+    })
+    // set images and annotation related items when selected annotation changes
+    watch(() => props.annotations, async(newValue) => {
+      if (newValue && state.menuItems) {
+        const ids = props.annotations.map((annotation:any) => annotation.id)
+        const removedIds : number[] = []
+        const aux = state.menuItems || []
+        aux.forEach((item: any, index: number) => {
+          if (!ids.includes(item.annotation.id)) {
+            removedIds.push(index)
+          }
+        })
+        if (removedIds.length > 0) {
+          removedIds.forEach((index: number) => {
+            aux.splice(index, 1)
+          })
+          state.menuItems = aux
         }
       }
     })
