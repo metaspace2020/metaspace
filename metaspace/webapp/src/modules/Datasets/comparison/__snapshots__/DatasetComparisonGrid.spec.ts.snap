@@ -637,19 +637,20 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
           >
             <div
               class="multi-channel-ctrl-wrapper"
-              style="padding-bottom: 0px;"
+              style="padding-bottom: 0px; padding-top: 0px;"
             >
               <div
-                class="flex flex-col justify-center p-2 relative"
+                class="relative"
               >
-                <p
-                  class="flex justify-between m-0 items-center flex-wrap"
+                <div
+                  class="sm-menu-items flex flex-col justify-center p-2 relative"
+                  style="outline: none;"
                 >
                   <div
                     class="h-9 relative w-full text-center"
                   >
                     <div
-                      class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer ds-comparison-opacity-item"
+                      class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer"
                     >
                       <div
                         class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
@@ -732,7 +733,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                       </transition-stub>
                     </div>
                   </div>
-                </p>
+                </div>
               </div>
             </div>
           </transition-stub>
@@ -1363,19 +1364,20 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
           >
             <div
               class="multi-channel-ctrl-wrapper"
-              style="padding-bottom: 0px;"
+              style="padding-bottom: 0px; padding-top: 0px;"
             >
               <div
-                class="flex flex-col justify-center p-2 relative"
+                class="relative"
               >
-                <p
-                  class="flex justify-between m-0 items-center flex-wrap"
+                <div
+                  class="sm-menu-items flex flex-col justify-center p-2 relative"
+                  style="outline: none;"
                 >
                   <div
                     class="h-9 relative w-full text-center"
                   >
                     <div
-                      class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer ds-comparison-opacity-item"
+                      class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer"
                     >
                       <div
                         class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
@@ -1458,7 +1460,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                       </transition-stub>
                     </div>
                   </div>
-                </p>
+                </div>
               </div>
             </div>
           </transition-stub>

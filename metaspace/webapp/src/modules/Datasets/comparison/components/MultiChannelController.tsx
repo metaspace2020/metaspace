@@ -1,4 +1,4 @@
-import { defineComponent, onMounted, reactive } from '@vue/composition-api'
+import { defineComponent, onMounted, onUnmounted, reactive } from '@vue/composition-api'
 import FadeTransition from '../../../../components/FadeTransition'
 import { Button } from '../../../../lib/element-ui'
 import CandidateMoleculesPopover from '../../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
@@ -14,7 +14,7 @@ import './MultiChannelController.scss'
 
 interface MultiChannelControllerProps {
   menuItems: any[],
-  activeLayer: any,
+  activeLayer: boolean,
   mode: string
 }
 
@@ -26,7 +26,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
   name: 'MultiChannelController',
   props: {
     menuItems: { type: Array, default: () => [] },
-    activeLayer: { type: Object },
+    activeLayer: { type: Boolean, default: false },
     mode: { type: String, default: 'MULTI' },
   },
   // @ts-ignore
@@ -37,7 +37,16 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
 
     onMounted(() => {
       state.refsLoaded = true
+      window.addEventListener('resize', resizeHandler)
     })
+
+    onUnmounted(() => {
+      window.removeEventListener('resize', resizeHandler)
+    })
+
+    const resizeHandler = () => {
+      console.log('das')
+    }
 
     const handleIonIntensityLockChange = (value: number | undefined, index: number, type: string) => {
       emit('intensityLockChange', value, index, type)
@@ -103,23 +112,33 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       </CandidateMoleculesPopover>
 
       return (
-        <div class="flex flex-col justify-center p-2 relative">
-          <p class="flex justify-between m-0 items-center flex-wrap">
-            {mode === 'MULTI' && candidateMolecules(item.annotation)}
-            {mode === 'MULTI' && <Button
-              title={item.settings.visible.value ? 'Hide layer' : 'Show layer'}
-              class="button-reset h-5"
-              onClick={() => { handleToggleVisibility(itemIndex) }}
-            >
-              {
-                item.settings.visible.value
-                && <VisibleIcon class="fill-current w-5 h-5 text-gray-800"/>
-              }
-              {
-                !item.settings.visible.value
-                && <HiddenIcon class="fill-current w-5 h-5 text-gray-600"/>
-              }
-            </Button>}
+        <div class="relative">
+          <div
+            class={'sm-menu-items flex flex-col justify-center p-2 relative'}
+            style={{
+              border: props.mode === 'MULTI' ? '' : 'none',
+              outline: props.mode === 'MULTI' ? '' : 'none',
+            }}>
+            {
+              mode === 'MULTI'
+              && <p class="flex justify-between m-0 items-center flex-wrap">
+                {candidateMolecules(item.annotation)}
+                <Button
+                  title={item.settings.visible.value ? 'Hide layer' : 'Show layer'}
+                  class="button-reset h-5"
+                  onClick={() => { handleToggleVisibility(itemIndex) }}
+                >
+                  {
+                    item.settings.visible.value
+                    && <VisibleIcon class="fill-current w-5 h-5 text-gray-800"/>
+                  }
+                  {
+                    !item.settings.visible.value
+                    && <HiddenIcon class="fill-current w-5 h-5 text-gray-600"/>
+                  }
+                </Button>
+              </p>
+            }
             <div
               ref={`range-slider-${itemIndex}`}
               class="h-9 relative w-full text-center">
@@ -131,7 +150,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                 state.refsLoaded
                 && !item.isEmpty
                 && <RangeSlider
-                  class="ds-comparison-opacity-item"
+                  // class="ds-comparison-opacity-item"
                   value={item.userScaling}
                   min={0}
                   max={1}
@@ -169,16 +188,16 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                 </div>
               }
             </div>
-            {
-              mode === 'MULTI'
-              && <ChannelSelector
-                class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
-                value={item.settings.channel.value}
-                onRemove={() => removeLayer(itemIndex)}
-                onInput={(value: any) => changeLayerColor(value, itemIndex)}
-              />
-            }
-          </p>
+          </div>
+          {
+            mode === 'MULTI'
+            && <ChannelSelector
+              class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
+              value={item.settings.channel.value}
+              onRemove={() => removeLayer(itemIndex)}
+              onInput={(value: any) => changeLayerColor(value, itemIndex)}
+            />
+          }
         </div>
       )
     }
@@ -187,7 +206,13 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       const { activeLayer, menuItems, mode } = props
 
       return (
-        <div class="multi-channel-ctrl-wrapper" style={{ paddingBottom: mode === 'MULTI' ? '' : 0 }}>
+        <div
+          class="multi-channel-ctrl-wrapper"
+          style={{
+            paddingBottom: mode === 'MULTI' ? '' : 0,
+            paddingTop: mode === 'MULTI' ? '' : 0,
+          }}
+        >
           {
             menuItems.map((item: any, itemIndex: number) => renderItem(item, itemIndex))
           }

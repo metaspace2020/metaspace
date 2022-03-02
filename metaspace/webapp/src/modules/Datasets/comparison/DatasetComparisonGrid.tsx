@@ -61,7 +61,6 @@ interface DatasetComparisonGridState {
   gridState: Record<string, GridCellState | null>,
   grid: any,
   annotationData: any,
-  menuItems: any,
   annotations: any[],
   refsLoaded: boolean,
   showViewer: boolean,
@@ -160,7 +159,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       grid: undefined,
       annotations: [],
       annotationData: {},
-      menuItems: {},
       selectedAnnotation: props.selectedAnnotation,
       refsLoaded: false,
       showViewer: false,
@@ -291,30 +289,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           )),
         })
         Vue.set(state.gridState, key, gridCell)
-        Vue.set(state.menuItems, key, [
-          {
-            annotation: annotation,
-            colorBar: buildRangeSliderStyle(key),
-            id: annotation?.dataset?.id,
-            ionImage: gridCell?.ionImageLayers[0]?.ionImage,
-            scaleBarUrl: gridCell?.scaleBarUrl,
-            intensity: gridCell?.intensity,
-            userScaling: gridCell?.userScaling,
-            loading: props.isLoading,
-            scaleRange: gridCell?.userScaling,
-            settings: {
-              channel: 'green',
-              label: 'none',
-              visible: true,
-            },
-            state: {
-              maxIntensity: gridCell?.intensity?.max?.scaled,
-              minIntensity: gridCell?.intensity?.min?.scaled,
-              popover: null,
-              scaleRange: gridCell?.userScaling,
-            },
-          },
-        ])
       }
 
       const intensity = getIntensity(gridCell.ionImageLayers[0]?.ionImage)
@@ -342,7 +316,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       if (!grid || !props.annotations || props.annotations.length === 0 || annotationIdx === -1) {
         state.annotationData = {}
         state.gridState = {}
-        state.menuItems = {}
         state.firstLoaded = true
         return
       }
@@ -359,7 +332,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         } else {
           Vue.set(state.annotationData, key, null)
           Vue.set(state.gridState, key, null)
-          Vue.set(state.menuItems, key, null)
         }
       })
 
@@ -852,34 +824,31 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 />
               </div>
             }
-            {
-              !props.isLoading
-              && <SimpleIonImageViewer
-                annotations={annotations.length > 0 && $store.state.mode === 'MULTI' ? annotations : [annData]}
-                channels={channels}
-                isActive={$store.state.mode === 'MULTI'}
-                dataset={annData?.dataset}
-                height={dimensions.height}
-                width={dimensions.width}
-                scaleBarColor={props.scaleBarColor}
-                lockedIntensityTemplate={props.lockedIntensityTemplate}
-                globalLockedIntensities={props.globalLockedIntensities}
-                scaleType={props.scaleType}
-                onIntensitiesChange={(intensity: any) => { emit('intensitiesChange', intensity) }}
-                onLockAllIntensities={() => { emit('lockAllIntensities') }}
-                colormap={props.colormap}
-                isNormalized={props.isNormalized}
-                normalizationData={props.normalizationData
-                  ? props.normalizationData[annData?.dataset?.id] : null}
-                showOpticalImage={!!gridCell?.showOpticalImage}
-                resetViewPort={props.resetViewPort}
-                onResetViewPort={() => { emit('resetViewPort', false) }}
-                onRemoveLayer={removeLayer}
-                onChangeLayer={handleLayerColorChange}
-                onAddLayer={addLayer}
-                onToggleVisibility={toggleChannelVisibility}
-              />
-            }
+            <SimpleIonImageViewer
+              annotations={annotations.length > 0 && $store.state.mode === 'MULTI' ? annotations : [annData]}
+              channels={channels}
+              isActive={$store.state.mode === 'MULTI'}
+              dataset={annData?.dataset}
+              height={dimensions.height}
+              width={dimensions.width}
+              scaleBarColor={props.scaleBarColor}
+              lockedIntensityTemplate={props.lockedIntensityTemplate}
+              globalLockedIntensities={props.globalLockedIntensities}
+              scaleType={props.scaleType}
+              onIntensitiesChange={(intensity: any) => { emit('intensitiesChange', intensity) }}
+              onLockAllIntensities={() => { emit('lockAllIntensities') }}
+              colormap={props.colormap}
+              isNormalized={props.isNormalized}
+              normalizationData={props.normalizationData
+                ? props.normalizationData[annData?.dataset?.id] : null}
+              showOpticalImage={!!gridCell?.showOpticalImage}
+              resetViewPort={props.resetViewPort}
+              onResetViewPort={() => { emit('resetViewPort', false) }}
+              onRemoveLayer={removeLayer}
+              onChangeLayer={handleLayerColorChange}
+              onAddLayer={addLayer}
+              onToggleVisibility={toggleChannelVisibility}
+            />
           </div>
         </div>
       )
