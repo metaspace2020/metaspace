@@ -20,6 +20,7 @@ interface SimpleIonImageViewerProps {
   isNormalized: boolean
   showOpticalImage: boolean
   normalizationData: any
+  dataset: any
   width: number
   height: number
   annotations: any[]
@@ -114,6 +115,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     globalLockedIntensities: {
       type: Array,
       default: () => [undefined, undefined],
+    },
+    dataset: {
+      type: Object,
+      default: () => {},
     },
     lockedIntensityTemplate: {
       type: String,
@@ -499,7 +504,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     }
 
     const handleIntensityLockChange = (value: number | undefined, index: number, type: string) => {
-      if (state.imageSettings === null || state.menuItems[index]?.isEmpty) {
+      if (state.imageSettings === null || state.menuItems[index]?.isEmpty || !state.menuItems[index]) {
         return
       }
 
@@ -559,13 +564,12 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     const handleIntensityChange = (intensity: number | undefined, index: number, type: string,
       ignoreBoundaries : boolean = true) => {
       if (state.imageSettings === null || intensity === undefined || state.menuItems === null
-        || state.menuItems[index]?.isEmpty) {
+        || state.menuItems[index]?.isEmpty || !state.menuItems[index]) {
         return
       }
       const key = ionKeys.value[index]
       let minScale = state.menuItems[index].userScaling[0]
       let maxScale = state.menuItems[index].userScaling[1]
-      console.log('he', key, state.imageSettings.intensities)
       const maxIntensity = state.imageSettings.intensities[key].max.clipped
         || state.imageSettings.intensities[key].intensity.max.image
 
@@ -660,8 +664,16 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     // set images and annotation related items when selected annotation changes
     // // set images and annotation related items when selected annotation changes
     watch(() => props.annotations, async(newValue) => {
-      if (newValue && state.menuItems) {
-        startImageSettings()
+      if (
+        newValue
+        && state.menuItems
+        && state.menuItems.length > 0
+      ) {
+        const newIons = newValue.slice(0).map((item: any) => item?.ion)
+        const currentIons = state.menuItems.slice(0).map((item: any) => item?.annotation?.ion)
+        if (!isEqual(newIons, currentIons)) {
+          startImageSettings()
+        }
       }
     })
 

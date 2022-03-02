@@ -37,16 +37,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
 
     onMounted(() => {
       state.refsLoaded = true
-      window.addEventListener('resize', resizeHandler)
     })
-
-    onUnmounted(() => {
-      window.removeEventListener('resize', resizeHandler)
-    })
-
-    const resizeHandler = () => {
-      console.log('das')
-    }
 
     const handleIonIntensityLockChange = (value: number | undefined, index: number, type: string) => {
       emit('intensityLockChange', value, index, type)
@@ -95,6 +86,12 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       }
     }
 
+    const removeNewLayer = () => {
+      if (props.activeLayer) {
+        removeLayer(props.menuItems.length)
+      }
+    }
+
     const renderItem = (item: any, itemIndex: number) => {
       const { mode } = props
 
@@ -118,7 +115,8 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
             style={{
               border: props.mode === 'MULTI' ? '' : 'none',
               outline: props.mode === 'MULTI' ? '' : 'none',
-            }}>
+            }}
+            onClick={removeNewLayer}>
             {
               mode === 'MULTI'
               && <p class="flex justify-between m-0 items-center flex-wrap">
@@ -220,8 +218,13 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
             mode === 'MULTI'
             && <Button
               class={'button-reset p-3 h-12 w-full cursor-default text-gray-700 text-center m-0'}
-              onClick={() => { emit('addLayer') }}
-            >
+              onClick={() => {
+                if (activeLayer) {
+                  removeNewLayer()
+                } else {
+                  emit('addLayer')
+                }
+              }}>
               <FadeTransition className="text-xs tracking-wide font-medium text-inherit">
                 {
                   activeLayer

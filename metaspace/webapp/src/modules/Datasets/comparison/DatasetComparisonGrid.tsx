@@ -312,6 +312,22 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
     }
 
+    const getChannels = (dsId: string) => {
+      const channels : any[] = []
+      const annotations: any[] = []
+      $store.state.channels.forEach((channel: any) => {
+        const idx = (channel.annotations?.datasetIds || []).indexOf(dsId)
+        channels.push(channel)
+
+        if (idx !== -1) {
+          annotations.push(channel.annotations.annotations[idx])
+        } else if (channel.id) {
+          annotations.push({ ...channel.annotations.annotations[0], isEmpty: true })
+        }
+      })
+      return { annotations, channels }
+    }
+
     const updateAnnotationData = (grid: any, annotationIdx = 0) => {
       if (!grid || !props.annotations || props.annotations.length === 0 || annotationIdx === -1) {
         state.annotationData = {}
@@ -324,11 +340,18 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       const selectedAnnotation = props.annotations[annotationIdx]
       const settingPromises = Object.keys(auxGrid).map((key) => {
         const item = auxGrid[key]
-        const dsIndex = selectedAnnotation
+        let dsIndex = selectedAnnotation
           ? selectedAnnotation.datasetIds.findIndex((dsId: string) => dsId === item) : -1
+        const { annotations } = getChannels(item)
+        dsIndex = $store.state.mode === 'MULTI'
+          ? annotations.findIndex((item: any) => !item.isEmpty) : dsIndex
+
         if (dsIndex !== -1) {
-          Vue.set(state.annotationData, key, selectedAnnotation.annotations[dsIndex])
-          return startImageSettings(key, selectedAnnotation.annotations[dsIndex])
+          const selectedIonAnnotation = $store.state.mode === 'MULTI'
+            ? annotations[dsIndex] : selectedAnnotation.annotations[dsIndex]
+
+          Vue.set(state.annotationData, key, selectedIonAnnotation)
+          return startImageSettings(key, selectedIonAnnotation)
         } else {
           Vue.set(state.annotationData, key, null)
           Vue.set(state.gridState, key, null)
@@ -712,31 +735,15 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       )
     }
 
-    const getChannels = (dsId: string) => {
-      const channels : any[] = []
-      const annotations: any[] = []
-      $store.state.channels.forEach((channel: any) => {
-        const idx = (channel.annotations?.datasetIds || []).indexOf(dsId)
-        channels.push(channel)
-
-        if (idx !== -1) {
-          annotations.push(channel.annotations.annotations[idx])
-        } else if (channel.id) {
-          annotations.push({ ...channel.annotations.annotations[0], isEmpty: true })
-        }
-      })
-      return { annotations, channels }
-    }
-
     const renderImageViewerHeaders = (row: number, col: number) => {
       const key = `${row}-${col}`
       const gridCell = state.gridState[key]
-      const annData = state.annotationData[key]
       const dataset =
         props.datasets
           ? props.datasets.find((dataset: any) => dataset.id === settings.value.grid[`${row}-${col}`])
           : null
       const { annotations, channels } = getChannels(dataset?.id)
+      const annData = state.annotationData[key]
       const isEmpty = $store.state.mode === 'MULTI' ? annotations.filter((item: any) => !item.isEmpty).length === 0
         : (!props.isLoading && annData === null && gridCell === null)
           || (!props.isLoading && props.selectedAnnotation === -1)
@@ -769,6 +776,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           </div>
         )
       }
+
       return (
         <div key={col} class='dataset-comparison-grid-col overflow-hidden relative'
           style={{ height: 200, width: 200 }}>
