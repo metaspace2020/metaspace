@@ -115,10 +115,12 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
             style={{
               border: props.mode === 'MULTI' ? '' : 'none',
               outline: props.mode === 'MULTI' ? '' : 'none',
+              paddingBottom: props.mode === 'MULTI' ? '' : '2px',
             }}
             onClick={removeNewLayer}>
-            {
-              mode === 'MULTI'
+            <div class='menu-item'>
+              {
+                mode === 'MULTI'
               && <p class="flex justify-between m-0 items-center flex-wrap">
                 {candidateMolecules(item.annotation)}
                 <Button
@@ -136,16 +138,16 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                   }
                 </Button>
               </p>
-            }
-            <div
-              ref={`range-slider-${itemIndex}`}
-              class="h-9 relative w-full text-center">
-              {
-                mode === 'MULTI'
+              }
+              <div
+                ref={`range-slider-${itemIndex}`}
+                class="h-9 relative w-full text-center">
+                {
+                  mode === 'MULTI'
                 && item.isEmpty
                 && <span class='text-base no-data-text'>No data</span>}
-              {
-                state.refsLoaded
+                {
+                  state.refsLoaded
                 && !item.isEmpty
                 && <RangeSlider
                   // class="ds-comparison-opacity-item"
@@ -157,9 +159,9 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                   onInput={(nextRange: number[]) =>
                     handleScalingChange(nextRange, itemIndex)}
                 />
-              }
-              {
-                item.intensity.value
+                }
+                {
+                  item.intensity.value
                 && !item.isEmpty
                 && <div
                   class="ds-intensities-wrapper">
@@ -184,18 +186,19 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                       handleIonIntensityLockChange(value, itemIndex, 'max')}
                   />
                 </div>
-              }
+                }
+              </div>
             </div>
-          </div>
-          {
-            mode === 'MULTI'
+            {
+              mode === 'MULTI'
             && <ChannelSelector
               class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
               value={item.settings.channel.value}
               onRemove={() => removeLayer(itemIndex)}
               onInput={(value: any) => changeLayerColor(value, itemIndex)}
             />
-          }
+            }
+          </div>
         </div>
       )
     }

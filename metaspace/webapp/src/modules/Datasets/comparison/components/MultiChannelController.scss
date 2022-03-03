@@ -1,9 +1,5 @@
 .multi-channel-ctrl-wrapper{
-  width: 200px;
-  justify-content: center;
-  align-items: center;
-  display: flex;
-  flex-direction: column;
+  width: 250px;
   @apply py-3 bg-gray-100 rounded-lg box-border shadow-xs mr-1 overflow-x-hidden overflow-y-auto;
   max-height: calc(100% - 1.5rem);
 
@@ -17,8 +13,11 @@
     z-index: 20;
   }
 
+  .menu-item {
+    @apply px-1;
+  }
   .sm-menu-items {
-    width: 200px;
+    width: 250px;
     @apply px-3 box-border border-0 border-t border-solid border-gray-200;
 
     &:last-child {

@@ -559,11 +559,11 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
             class="relative overflow-hidden"
             mock-v-loading="false"
             scaletype="linear"
-            style="width: 200px; height: 300px;"
+            style="width: 410px; height: 300px;"
           >
             <div
               data-test-key="ion-image-panel"
-              style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(100px, 150px) scale(1, 1);"
+              style="left: 0px; top: 0px; width: 410px; height: 300px; transform-origin: 0 0; transform: translate(205px, 150px) scale(1, 1);"
             >
               <canvas
                 class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
@@ -643,93 +643,97 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
               >
                 <div
                   class="sm-menu-items flex flex-col justify-center p-2 relative"
-                  style="outline: none;"
+                  style="outline: none; padding-bottom: 2px;"
                 >
                   <div
-                    class="h-9 relative w-full text-center"
+                    class="menu-item"
                   >
                     <div
-                      class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer"
+                      class="h-9 relative w-full text-center"
                     >
                       <div
-                        class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
-                        style="left: -1px;"
-                        tabindex="0"
-                      />
-                       
+                        class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer"
+                      >
+                        <div
+                          class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                          style="left: -1px;"
+                          tabindex="0"
+                        />
+                         
+                        <div
+                          class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                          style="left: -11px;"
+                          tabindex="0"
+                        />
+                      </div>
                       <div
-                        class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
-                        style="left: 189px;"
-                        tabindex="0"
-                      />
-                    </div>
-                    <div
-                      class="ds-intensities-wrapper"
-                    >
-                      <transition-stub
-                        enteractiveclass="duration-150 transition-opacity ease-in-out"
-                        enterclass="opacity-0"
-                        leaveactiveclass="duration-150 transition-opacity ease-in-out"
-                        leavetoclass="opacity-0"
-                        mode="out-in"
+                        class="ds-intensities-wrapper"
                       >
-                        <div
-                          class="h-5 flex items-center sm-flex-direction"
+                        <transition-stub
+                          enteractiveclass="duration-150 transition-opacity ease-in-out"
+                          enterclass="opacity-0"
+                          leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                          leavetoclass="opacity-0"
+                          mode="out-in"
                         >
-                          <button
-                            class="button-reset h-4 leading-5"
-                            title="Click to edit"
+                          <div
+                            class="h-5 flex items-center sm-flex-direction"
                           >
-                            
+                            <button
+                              class="button-reset h-4 leading-5"
+                              title="Click to edit"
+                            >
+                              
       0.0e+0
     
-                          </button>
-                           
-                          <button
-                            class="button-reset h-4 mx-1"
-                            title="Lock intensity"
-                          >
-                            <svg
-                              class="fill-current text-gray-600"
-                              data-icon="icon-lock"
-                            />
-                          </button>
-                           
-                          <!---->
-                        </div>
-                      </transition-stub>
-                      <transition-stub
-                        enteractiveclass="duration-150 transition-opacity ease-in-out"
-                        enterclass="opacity-0"
-                        leaveactiveclass="duration-150 transition-opacity ease-in-out"
-                        leavetoclass="opacity-0"
-                        mode="out-in"
-                      >
-                        <div
-                          class="h-5 flex items-center sm-flex-direction"
+                            </button>
+                             
+                            <button
+                              class="button-reset h-4 mx-1"
+                              title="Lock intensity"
+                            >
+                              <svg
+                                class="fill-current text-gray-600"
+                                data-icon="icon-lock"
+                              />
+                            </button>
+                             
+                            <!---->
+                          </div>
+                        </transition-stub>
+                        <transition-stub
+                          enteractiveclass="duration-150 transition-opacity ease-in-out"
+                          enterclass="opacity-0"
+                          leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                          leavetoclass="opacity-0"
+                          mode="out-in"
                         >
-                          <button
-                            class="button-reset h-4 leading-5"
-                            title="Click to edit"
+                          <div
+                            class="h-5 flex items-center sm-flex-direction"
                           >
-                            
+                            <button
+                              class="button-reset h-4 leading-5"
+                              title="Click to edit"
+                            >
+                              
       0.0e+0
     
-                          </button>
-                           
-                          <button
-                            class="button-reset h-4 mx-1"
-                            title="Lock intensity"
-                          >
-                            <svg
-                              class="fill-current text-gray-600"
-                              data-icon="icon-lock"
-                            />
-                          </button>
-                           
-                          <!---->
-                        </div>
-                      </transition-stub>
+                            </button>
+                             
+                            <button
+                              class="button-reset h-4 mx-1"
+                              title="Lock intensity"
+                            >
+                              <svg
+                                class="fill-current text-gray-600"
+                                data-icon="icon-lock"
+                              />
+                            </button>
+                             
+                            <!---->
+                          </div>
+                        </transition-stub>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1285,11 +1289,11 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
             class="relative overflow-hidden"
             mock-v-loading="false"
             scaletype="linear"
-            style="width: 200px; height: 300px;"
+            style="width: 410px; height: 300px;"
           >
             <div
               data-test-key="ion-image-panel"
-              style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(100px, 150px) scale(1, 1);"
+              style="left: 0px; top: 0px; width: 410px; height: 300px; transform-origin: 0 0; transform: translate(205px, 150px) scale(1, 1);"
             >
               <canvas
                 class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
@@ -1369,93 +1373,97 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
               >
                 <div
                   class="sm-menu-items flex flex-col justify-center p-2 relative"
-                  style="outline: none;"
+                  style="outline: none; padding-bottom: 2px;"
                 >
                   <div
-                    class="h-9 relative w-full text-center"
+                    class="menu-item"
                   >
                     <div
-                      class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer"
+                      class="h-9 relative w-full text-center"
                     >
                       <div
-                        class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
-                        style="left: -1px;"
-                        tabindex="0"
-                      />
-                       
+                        class="box-border h-3 relative rounded-full bg-gray-100 sm-slider-track cursor-pointer"
+                      >
+                        <div
+                          class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                          style="left: -1px;"
+                          tabindex="0"
+                        />
+                         
+                        <div
+                          class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
+                          style="left: -11px;"
+                          tabindex="0"
+                        />
+                      </div>
                       <div
-                        class="box-border h-3 w-3 absolute bg-gray-100 border-2 border-solid border-gray-300 rounded-full cursor-pointer"
-                        style="left: 189px;"
-                        tabindex="0"
-                      />
-                    </div>
-                    <div
-                      class="ds-intensities-wrapper"
-                    >
-                      <transition-stub
-                        enteractiveclass="duration-150 transition-opacity ease-in-out"
-                        enterclass="opacity-0"
-                        leaveactiveclass="duration-150 transition-opacity ease-in-out"
-                        leavetoclass="opacity-0"
-                        mode="out-in"
+                        class="ds-intensities-wrapper"
                       >
-                        <div
-                          class="h-5 flex items-center sm-flex-direction"
+                        <transition-stub
+                          enteractiveclass="duration-150 transition-opacity ease-in-out"
+                          enterclass="opacity-0"
+                          leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                          leavetoclass="opacity-0"
+                          mode="out-in"
                         >
-                          <button
-                            class="button-reset h-4 leading-5"
-                            title="Click to edit"
+                          <div
+                            class="h-5 flex items-center sm-flex-direction"
                           >
-                            
+                            <button
+                              class="button-reset h-4 leading-5"
+                              title="Click to edit"
+                            >
+                              
       0.0e+0
     
-                          </button>
-                           
-                          <button
-                            class="button-reset h-4 mx-1"
-                            title="Lock intensity"
-                          >
-                            <svg
-                              class="fill-current text-gray-600"
-                              data-icon="icon-lock"
-                            />
-                          </button>
-                           
-                          <!---->
-                        </div>
-                      </transition-stub>
-                      <transition-stub
-                        enteractiveclass="duration-150 transition-opacity ease-in-out"
-                        enterclass="opacity-0"
-                        leaveactiveclass="duration-150 transition-opacity ease-in-out"
-                        leavetoclass="opacity-0"
-                        mode="out-in"
-                      >
-                        <div
-                          class="h-5 flex items-center sm-flex-direction"
+                            </button>
+                             
+                            <button
+                              class="button-reset h-4 mx-1"
+                              title="Lock intensity"
+                            >
+                              <svg
+                                class="fill-current text-gray-600"
+                                data-icon="icon-lock"
+                              />
+                            </button>
+                             
+                            <!---->
+                          </div>
+                        </transition-stub>
+                        <transition-stub
+                          enteractiveclass="duration-150 transition-opacity ease-in-out"
+                          enterclass="opacity-0"
+                          leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                          leavetoclass="opacity-0"
+                          mode="out-in"
                         >
-                          <button
-                            class="button-reset h-4 leading-5"
-                            title="Click to edit"
+                          <div
+                            class="h-5 flex items-center sm-flex-direction"
                           >
-                            
+                            <button
+                              class="button-reset h-4 leading-5"
+                              title="Click to edit"
+                            >
+                              
       0.0e+0
     
-                          </button>
-                           
-                          <button
-                            class="button-reset h-4 mx-1"
-                            title="Lock intensity"
-                          >
-                            <svg
-                              class="fill-current text-gray-600"
-                              data-icon="icon-lock"
-                            />
-                          </button>
-                           
-                          <!---->
-                        </div>
-                      </transition-stub>
+                            </button>
+                             
+                            <button
+                              class="button-reset h-4 mx-1"
+                              title="Lock intensity"
+                            >
+                              <svg
+                                class="fill-current text-gray-600"
+                                data-icon="icon-lock"
+                              />
+                            </button>
+                             
+                            <!---->
+                          </div>
+                        </transition-stub>
+                      </div>
                     </div>
                   </div>
                 </div>
