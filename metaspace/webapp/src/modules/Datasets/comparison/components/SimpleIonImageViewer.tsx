@@ -12,7 +12,7 @@ import ImageSaver from '../../../ImageViewer/ImageSaver.vue'
 import FadeTransition from '../../../../components/FadeTransition'
 import OpacitySettings from '../../../ImageViewer/OpacitySettings.vue'
 import { MultiChannelController } from './MultiChannelController'
-import { isEqual } from 'lodash'
+import { cloneDeep, isEqual } from 'lodash'
 
 interface SimpleIonImageViewerProps {
   isActive: boolean
@@ -372,6 +372,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       const pixelSizeY = metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0
       let nonEmptyIndex = 0
 
+      const hasPreviousSettings = state.imageSettings !== null
+      const intensitiesSnapshot = state.imageSettings?.intensities
+      const menuItemsSnapshot = cloneDeep(state.menuItems) || []
+
       for (let i = 0; i < annotations?.length; i++) {
         const annotationItem = annotations[i]
         if (!annotationItem) {
@@ -386,6 +390,8 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           nonEmptyIndex = i
         }
 
+        const oldItem = menuItemsSnapshot.find((item: any) => item.annotation.ion === annotationItem.ion)
+
         menuItems.push(
           {
             annotation: annotationItem,
@@ -395,9 +401,12 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
             scaledMaxIntensity: computed(() => maxIntensity(i)),
             scaleBarUrl: state.imageSettings?.scaleBarUrl,
             intensity: computed(() => getIntensities(i)),
-            userScaling: state.imageSettings?.userScaling || [0, 1],
-            imageScaledScaling: state.imageSettings?.imageScaledScaling || [0, 1],
-            scaleRange: state.imageSettings?.userScaling || [0, 1],
+            userScaling: hasPreviousSettings && oldItem
+              ? oldItem.userScaling : state.imageSettings?.userScaling || [0, 1],
+            imageScaledScaling: hasPreviousSettings && oldItem
+              ? oldItem.imageScaledScaling : state.imageSettings?.imageScaledScaling || [0, 1],
+            scaleRange: hasPreviousSettings && oldItem
+              ? oldItem.userScaling : state.imageSettings?.userScaling || [0, 1],
             state: {
               maxIntensity: state.imageSettings?.intensity?.max?.scaled,
               minIntensity: state.imageSettings?.intensity?.min?.scaled,
@@ -417,7 +426,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       }
 
       state.ionImagePng = ionImagesPng
-      const hasPreviousSettings = state.imageSettings !== null
+
       const imageSettings : any | ImageSettings = reactive({
         intensities: {}, // @ts-ignore // Gets set later, because ionImageLayers needs state.gridState[key] set
         ionImagePng: ionImagesPng[nonEmptyIndex],
@@ -428,9 +437,9 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         ionImageLayers: computed(() => ionImageLayers()),
         imageFit: computed(() => imageFit()),
         lockedIntensities: [undefined, undefined],
-        annotImageOpacity: 1.0,
-        opticalOpacity: 1.0,
-        imagePosition: defaultImagePosition(),
+        annotImageOpacity: hasPreviousSettings ? state.imageSettings.annotImageOpacity : 1.0,
+        opticalOpacity: hasPreviousSettings ? state.imageSettings.opticalOpacity : 1.0,
+        imagePosition: hasPreviousSettings ? state.imageSettings.imagePosition : defaultImagePosition(),
         pixelAspectRatio:
             config.features.ignore_pixel_aspect_ratio ? 1
               : pixelSizeX && pixelSizeY && pixelSizeX / pixelSizeY || 1,
@@ -457,7 +466,12 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         intensity.max.scaled = globalLockedIntensities.value && globalLockedIntensities.value[1]
           ? globalLockedIntensities.value[1] : (intensity.max.clipped || intensity.max.image)
 
-        Vue.set(state.imageSettings.intensities, key, intensity)
+        if (hasPreviousSettings && intensitiesSnapshot[key]) {
+          Vue.set(state.imageSettings.intensities, key, intensitiesSnapshot[key])
+        } else {
+          Vue.set(state.imageSettings.intensities, key, intensity)
+        }
+
         // persist ion intensity lock status
         if (state.imageSettings.lockedIntensities !== undefined) {
           if (state.imageSettings.lockedIntensities[0] !== undefined) {
