@@ -548,6 +548,24 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
             </div>
           </div>
         </mock-el-popover>
+        <button
+          class="el-button el-button--default active button-reset flex h-6 ml-1 channel-toggle"
+          title="Ion image controls"
+          type="button"
+        >
+          <!---->
+          <!---->
+          <span>
+            <i
+              class="flex active h-6 w-6 pointer-events-none"
+            >
+              <svg
+                class="fill-blue-700"
+                data-icon="icon-monitor"
+              />
+            </i>
+          </span>
+        </button>
       </div>
       <div
         class="ds-wrapper relative"
@@ -1278,6 +1296,24 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
             </div>
           </div>
         </mock-el-popover>
+        <button
+          class="el-button el-button--default active button-reset flex h-6 ml-1 channel-toggle"
+          title="Ion image controls"
+          type="button"
+        >
+          <!---->
+          <!---->
+          <span>
+            <i
+              class="flex active h-6 w-6 pointer-events-none"
+            >
+              <svg
+                class="fill-blue-700"
+                data-icon="icon-monitor"
+              />
+            </i>
+          </span>
+        </button>
       </div>
       <div
         class="ds-wrapper relative"

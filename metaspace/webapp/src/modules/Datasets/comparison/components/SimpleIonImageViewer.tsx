@@ -30,6 +30,7 @@ interface SimpleIonImageViewerProps {
   lockedIntensityTemplate: string
   globalLockedIntensities: [number | undefined, number | undefined]
   channels: any[]
+  showChannels: boolean
 }
 
 interface ImageSettings {
@@ -78,6 +79,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
   props: {
     annotations: { type: Array, default: () => [] },
     isActive: { type: Boolean, required: false, default: false },
+    showChannels: { type: Boolean, required: false, default: true },
     width: { type: Number, required: false },
     height: { type: Number, required: false },
     colormap: {
@@ -765,6 +767,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
             {
               imageSettings.userScaling
               && <MultiChannelController
+                style={{ display: !props.showChannels ? 'none' : '' }}
                 menuItems={mode.value === 'MULTI' ? state.menuItems : state.menuItems.slice(0, 1)}
                 mode={mode.value}
                 activeLayer={$store.state.channels[$store.state.channels.length - 1]

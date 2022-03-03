@@ -11,11 +11,12 @@ import { THUMB_WIDTH } from '../../../components/Slider'
 import { encodeParams } from '../../Filters'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
-import { Popover } from '../../../lib/element-ui'
+import { Button, Popover } from '../../../lib/element-ui'
 import { ImagePosition } from '../../ImageViewer/ionImageState'
 import { range } from 'lodash-es'
 import config from '../../../lib/config'
 import { SimpleIonImageViewer } from './components/SimpleIonImageViewer'
+import MonitorSvg from '../../../assets/inline/refactoring-ui/icon-monitor.svg'
 
 const RouterLink = Vue.component('router-link')
 
@@ -52,6 +53,7 @@ interface GridCellState {
   pixelAspectRatio: number
   imageZoom: number
   showOpticalImage: boolean
+  isActive: boolean
   userScaling: [number, number],
   imageScaledScaling: [number, number],
   scaleBarUrl: Readonly<string>,
@@ -280,6 +282,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
               : pixelSizeX && pixelSizeY && pixelSizeX / pixelSizeY || 1,
           imageZoom: 1,
           showOpticalImage: true,
+          isActive: true,
           userScaling: [0, 1],
           imageScaledScaling: [0, 1],
           scaleBarUrl: computed(() => renderScaleBar(
@@ -528,6 +531,15 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         gridCell.annotImageOpacity = gridCell.showOpticalImage ? gridCell.annotImageOpacity : 1
       }
     }
+
+    const toggleMenuButtons = (event: any, key: string) => {
+      event.stopPropagation()
+      const gridCell = state.gridState[key]
+      if (gridCell != null) {
+        gridCell.isActive = !gridCell.isActive
+      }
+    }
+
     const formatMSM = (value: number) => {
       return value.toFixed(3)
     }
@@ -821,6 +833,14 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 </div>
                 Individual dataset annotation page.
               </Popover>
+              <Button
+                title="Ion image controls"
+                class={`${gridCell?.isActive ? 'active' : ''} button-reset flex h-6 ml-1 channel-toggle`}
+                onClick={(e: any) => toggleMenuButtons(e, key)}>
+                <StatefulIcon class="h-6 w-6 pointer-events-none" active={gridCell?.isActive}>
+                  <MonitorSvg class='fill-blue-700'/>
+                </StatefulIcon>
+              </Button>
             </div>
           }
           <div ref={`image-${row}-${col}`} class='ds-wrapper relative'>
@@ -835,6 +855,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
             <SimpleIonImageViewer
               annotations={annotations.length > 0 && $store.state.mode === 'MULTI' ? annotations : [annData]}
               channels={channels}
+              showChannels={gridCell?.isActive}
               isActive={$store.state.mode === 'MULTI'}
               dataset={annData?.dataset}
               height={dimensions.height}
