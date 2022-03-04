@@ -9,9 +9,7 @@ import { encodeParams } from '../../Filters'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
 import { Button, Popover } from '../../../lib/element-ui'
-import { ImagePosition } from '../../ImageViewer/ionImageState'
 import { range } from 'lodash-es'
-import config from '../../../lib/config'
 import { SimpleIonImageViewer } from './components/SimpleIonImageViewer'
 import MonitorSvg from '../../../assets/inline/refactoring-ui/icon-monitor.svg'
 
@@ -39,15 +37,9 @@ interface DatasetComparisonGridProps {
 interface GridCellState {
   intensity: any
   ionImagePng: any
-  pixelSizeX: number
-  pixelSizeY: number
   ionImageLayers: any
   lockedIntensities: [number | undefined, number | undefined]
   annotImageOpacity: number
-  opticalOpacity: number
-  imagePosition: ImagePosition,
-  pixelAspectRatio: number
-  imageZoom: number
   showOpticalImage: boolean
   isActive: boolean
   userScaling: [number, number],
@@ -198,16 +190,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       window.removeEventListener('resize', resizeHandler)
     })
 
-    const getMetadata = (annotation: any) => {
-      const datasetMetadataExternals = {
-        Submitter: annotation.dataset.submitter,
-        PI: annotation.dataset.principalInvestigator,
-        Group: annotation.dataset.group,
-        Projects: annotation.dataset.projects,
-      }
-      return Object.assign(safeJsonParse(annotation.dataset.metadataJson), datasetMetadataExternals)
-    }
-
     const startImageSettings = async(key: string, annotation: any) => {
       const hasPreviousSettings = state.gridState[key] != null
       const ionImagePng = await loadPngFromUrl(annotation.isotopeImages[0].url)
@@ -217,27 +199,14 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         gridCell = state.gridState[key]!
         gridCell.ionImagePng = ionImagePng
       } else {
-        const metadata = getMetadata(annotation)
-        // eslint-disable-next-line camelcase
-        const pixelSizeX = metadata?.MS_Analysis?.Pixel_Size?.Xaxis || 0
-        // eslint-disable-next-line camelcase
-        const pixelSizeY = metadata?.MS_Analysis?.Pixel_Size?.Yaxis || 0
         gridCell = reactive({
           intensity: null, // @ts-ignore // Gets set later, because ionImageLayers needs state.gridState[key] set
           ionImagePng,
-          pixelSizeX,
-          pixelSizeY,
-          // ionImageLayers and imageFit rely on state.gridState[key] to be correctly set - avoid evaluating them
+          // ionImageLayers rely on state.gridState[key] to be correctly set - avoid evaluating them
           // until this has been inserted into state.gridState
           ionImageLayers: computed(() => ionImageLayers(key)),
           lockedIntensities: [undefined, undefined],
           annotImageOpacity: 1.0,
-          opticalOpacity: 1.0,
-          imagePosition: defaultImagePosition(),
-          pixelAspectRatio:
-            config.features.ignore_pixel_aspect_ratio ? 1
-              : pixelSizeX && pixelSizeY && pixelSizeX / pixelSizeY || 1,
-          imageZoom: 1,
           showOpticalImage: true,
           isActive: true,
           userScaling: [0, 1],
@@ -247,24 +216,11 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
 
       const intensity = getIntensity(gridCell.ionImageLayers[0]?.ionImage)
-
       intensity.min.scaled = 0
       intensity.max.scaled = globalLockedIntensities.value && globalLockedIntensities.value[1]
         ? globalLockedIntensities.value[1] : (intensity.max.clipped || intensity.max.image)
       gridCell.intensity = intensity
       gridCell.lockedIntensities = globalLockedIntensities.value as [number | undefined, number | undefined]
-
-      // persist ion intensity lock status
-      if (gridCell.lockedIntensities !== undefined) {
-        if (gridCell.lockedIntensities[0] !== undefined) {
-          await handleIonIntensityLockChange(gridCell.lockedIntensities[0], key, 'min')
-          await handleIonIntensityChange(gridCell.lockedIntensities[0], key, 'min')
-        }
-        if (gridCell.lockedIntensities[1] !== undefined) {
-          await handleIonIntensityLockChange(gridCell.lockedIntensities[1], key, 'max')
-          await handleIonIntensityChange(gridCell.lockedIntensities[1], key, 'max')
-        }
-      }
     }
 
     const getChannels = (dsId: string) => {
@@ -354,32 +310,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       })
     }
 
-    // set lock by template
-    watch(() => props.lockedIntensityTemplate, (newValue) => {
-      if (newValue) {
-        handleIonIntensityLockAllByTemplate(newValue)
-      } else if (newValue === undefined) {
-        handleIonIntensityUnLockAll()
-      }
-    })
-
-    // reset view port globally
-    watch(() => props.resetViewPort, (newValue) => {
-      if (newValue) {
-        // emit('resetViewPort', false)
-        Object.keys(state.gridState).forEach((key: string) => {
-          resetViewPort(null, key)
-        })
-      }
-    })
-
-    const defaultImagePosition = () => ({
-      // This is a function so that it always makes a separate copy for each image
-      zoom: 1,
-      xOffset: 0,
-      yOffset: 0,
-    })
-
     const getIntensityData = (
       image: number, clipped: number, scaled: number, user: number, quantile: number, isLocked?: boolean,
     ) => {
@@ -465,15 +395,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         }]
       }
       return []
-    }
-
-    const resetViewPort = (event: any, key: string) => {
-      if (event) {
-        event.stopPropagation()
-      }
-      if (state.gridState[key]) {
-        state.gridState[key]!.imagePosition = defaultImagePosition()
-      }
     }
 
     const toggleOpticalImage = (event: any, key: string) => {
@@ -692,6 +613,15 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
     }
 
+    // set lock by template
+    watch(() => props.lockedIntensityTemplate, (newValue) => {
+      if (newValue) {
+        handleIonIntensityLockAllByTemplate(newValue)
+      } else if (newValue === undefined) {
+        handleIonIntensityUnLockAll()
+      }
+    })
+
     const renderDatasetName = (name: string) => {
       return (
         <div class='ds-comparison-item-line'>
@@ -754,10 +684,10 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
             hideOptions={true}
             showOpticalImage={!!gridCell?.showOpticalImage}
             toggleOpticalImage={(e: any) => toggleOpticalImage(e, key)}
-            resetViewport={(e: any) => resetViewPort(e, key)}
             hasOpticalImage={
               annData?.dataset?.opticalImages[0]?.url
               !== undefined}
+            resetViewport={() => {}}
           />
           {
             annData
@@ -810,7 +740,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
               channels={channels}
               showChannels={gridCell?.isActive}
               isActive={$store.state.mode === 'MULTI'}
-              dataset={annData?.dataset}
+              dataset={dataset}
               height={dimensions.height}
               width={dimensions.width}
               scaleBarColor={props.scaleBarColor}

@@ -60,6 +60,7 @@ interface SimpleIonImageViewerState {
   menuItems: any[]
   imageHeight: number
   imageWidth: number
+  currentIon: any
 }
 
 const channels: any = {
@@ -136,6 +137,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       imageHeight: 0,
       imageWidth: 0,
       ionImagePosByKey: {},
+      currentIon: null,
     })
 
     const container = ref(null)
@@ -456,30 +458,31 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       let ionImagePosAux = 0
       for (let index = 0; index < menuItems?.length; index++) {
         const key = ionKeys.value[index]
-        const ionImagePos = state.ionImagePosByKey[key] || ionImagePosAux
-        const intensity = getIntensity(imageSettings.ionImageLayers[ionImagePos]?.ionImage)
-
-        if (!menuItems[index]?.isEmpty) {
-          ionImagePosAux += 1
-        }
-        intensity.min.scaled = 0
-        intensity.max.scaled = globalLockedIntensities.value && globalLockedIntensities.value[1]
-          ? globalLockedIntensities.value[1] : (intensity.max.clipped || intensity.max.image)
 
         if (hasPreviousSettings && intensitiesSnapshot[key]) {
           Vue.set(state.imageSettings.intensities, key, intensitiesSnapshot[key])
         } else {
+          const ionImagePos = state.ionImagePosByKey[key] || ionImagePosAux
+          const intensity = getIntensity(imageSettings.ionImageLayers[ionImagePos]?.ionImage)
+
+          if (!menuItems[index]?.isEmpty) {
+            ionImagePosAux += 1
+          }
+          intensity.min.scaled = 0
+          intensity.max.scaled = globalLockedIntensities.value && globalLockedIntensities.value[1]
+            ? globalLockedIntensities.value[1] : (intensity.max.clipped || intensity.max.image)
+
           Vue.set(state.imageSettings.intensities, key, intensity)
         }
 
         // persist ion intensity lock status
         if (state.imageSettings.lockedIntensities !== undefined) {
           if (state.imageSettings.lockedIntensities[0] !== undefined) {
-            await handleIntensityLockChange(state.imageSettings.lockedIntensities[0], index, 'min')
+            await handleIntensityLockChange(state.imageSettings.lockedIntensities[0], index, 'min', false)
             await handleIntensityChange(state.imageSettings.lockedIntensities[0], index, 'min')
           }
           if (state.imageSettings.lockedIntensities[1] !== undefined) {
-            await handleIntensityLockChange(state.imageSettings.lockedIntensities[1], index, 'max')
+            await handleIntensityLockChange(state.imageSettings.lockedIntensities[1], index, 'max', false)
             await handleIntensityChange(state.imageSettings.lockedIntensities[1], index, 'max')
           }
         }
@@ -519,7 +522,8 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       emit('addLayer')
     }
 
-    const handleIntensityLockChange = (value: number | undefined, index: number, type: string) => {
+    const handleIntensityLockChange = (value: number | undefined, index: number, type: string,
+      emitChange: boolean = true) => {
       if (state.imageSettings === null || state.menuItems[index]?.isEmpty || !state.menuItems[index]) {
         return
       }
@@ -552,7 +556,9 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       }
 
       state.imageSettings.lockedIntensities = [minLocked, maxLocked]
-      emit('intensitiesChange', [minLocked, maxLocked])
+      if (emitChange) {
+        emit('intensitiesChange', [minLocked, maxLocked])
+      }
 
       state.menuItems[index].userScaling = [0, 1]
       Vue.set(state.imageSettings.intensities, key, intensity)
@@ -579,15 +585,16 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
 
     const handleIntensityChange = (intensity: number | undefined, index: number, type: string,
       ignoreBoundaries : boolean = true) => {
+      const key = ionKeys.value[index]
+
       if (state.imageSettings === null || intensity === undefined || state.menuItems === null
-        || state.menuItems[index]?.isEmpty || !state.menuItems[index]) {
+        || state.menuItems[index]?.isEmpty || !state.menuItems[index] || !state.imageSettings.intensities[key]) {
         return
       }
-      const key = ionKeys.value[index]
       let minScale = state.menuItems[index].userScaling[0]
       let maxScale = state.menuItems[index].userScaling[1]
       const maxIntensity = state.imageSettings.intensities[key].max.clipped
-        || state.imageSettings.intensities[key].intensity.max.image
+        || state.imageSettings.intensities[key].max.image
 
       if (type === 'min') {
         minScale = intensity / maxIntensity
@@ -624,7 +631,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           : userScaling[0]
 
       const maxScale = userScaling[1] * (intensity?.max?.status === 'LOCKED'
-        ? intensity.max.user / maxIntensity : 1)
+        ? intensity?.max?.user / maxIntensity : 1)
       const rangeSliderScale = userScaling.slice(0)
 
       // added in order to keep consistency even with ignore boundaries
@@ -670,9 +677,9 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         state.imageSettings.lockedIntensities = newValue as [number | undefined, number | undefined]
 
         for (let index = 0; index < (mode.value === 'SINGLE' ? 1 : props.annotations?.length); index++) {
-          await handleIntensityLockChange(state.imageSettings.lockedIntensities[0], index, 'min')
+          await handleIntensityLockChange(state.imageSettings.lockedIntensities[0], index, 'min', false)
           await handleIntensityChange(state.imageSettings.lockedIntensities[0], index, 'min')
-          await handleIntensityLockChange(state.imageSettings.lockedIntensities[1], index, 'max')
+          await handleIntensityLockChange(state.imageSettings.lockedIntensities[1], index, 'max', false)
           await handleIntensityChange(state.imageSettings.lockedIntensities[1], index, 'max')
         }
       }
@@ -687,8 +694,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       ) {
         const newIons = newValue.slice(0).map((item: any) => item?.ion)
         const currentIons = state.menuItems.slice(0).map((item: any) => item?.annotation?.ion)
-        if (!isEqual(newIons, currentIons)) {
-          startImageSettings()
+        const currentIon = newIons[newIons.length - 1]
+        if (!isEqual(newIons, currentIons) && currentIon !== state.currentIon) {
+          state.currentIon = currentIon
+          await startImageSettings()
         }
       }
     })
