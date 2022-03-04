@@ -1,9 +1,6 @@
 import { computed, defineComponent, onMounted, onUnmounted, reactive, watch } from '@vue/composition-api'
-import './DatasetComparisonGrid.scss'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
 import Vue from 'vue'
-import createColormap from '../../../lib/createColormap'
-import { IonImage, loadPngFromUrl, processIonImage } from '../../../lib/ionImageRendering'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { encodeParams } from '../../Filters'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
@@ -12,6 +9,7 @@ import { Button, Popover } from '../../../lib/element-ui'
 import { range } from 'lodash-es'
 import { SimpleIonImageViewer } from './components/SimpleIonImageViewer'
 import MonitorSvg from '../../../assets/inline/refactoring-ui/icon-monitor.svg'
+import './DatasetComparisonGrid.scss'
 
 const RouterLink = Vue.component('router-link')
 
@@ -35,15 +33,8 @@ interface DatasetComparisonGridProps {
 }
 
 interface GridCellState {
-  intensity: any
-  ionImagePng: any
-  ionImageLayers: any
-  lockedIntensities: [number | undefined, number | undefined]
-  annotImageOpacity: number
   showOpticalImage: boolean
   isActive: boolean
-  userScaling: [number, number],
-  imageScaledScaling: [number, number],
 }
 
 interface DatasetComparisonGridState {
@@ -192,35 +183,17 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
     const startImageSettings = async(key: string, annotation: any) => {
       const hasPreviousSettings = state.gridState[key] != null
-      const ionImagePng = await loadPngFromUrl(annotation.isotopeImages[0].url)
       let gridCell: GridCellState
 
       if (hasPreviousSettings) {
         gridCell = state.gridState[key]!
-        gridCell.ionImagePng = ionImagePng
       } else {
         gridCell = reactive({
-          intensity: null, // @ts-ignore // Gets set later, because ionImageLayers needs state.gridState[key] set
-          ionImagePng,
-          // ionImageLayers rely on state.gridState[key] to be correctly set - avoid evaluating them
-          // until this has been inserted into state.gridState
-          ionImageLayers: computed(() => ionImageLayers(key)),
-          lockedIntensities: [undefined, undefined],
-          annotImageOpacity: 1.0,
           showOpticalImage: true,
           isActive: true,
-          userScaling: [0, 1],
-          imageScaledScaling: [0, 1],
         })
         Vue.set(state.gridState, key, gridCell)
       }
-
-      const intensity = getIntensity(gridCell.ionImageLayers[0]?.ionImage)
-      intensity.min.scaled = 0
-      intensity.max.scaled = globalLockedIntensities.value && globalLockedIntensities.value[1]
-        ? globalLockedIntensities.value[1] : (intensity.max.clipped || intensity.max.image)
-      gridCell.intensity = intensity
-      gridCell.lockedIntensities = globalLockedIntensities.value as [number | undefined, number | undefined]
     }
 
     const getChannels = (dsId: string) => {
@@ -273,9 +246,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       Promise.all(settingPromises)
         .catch(console.error)
         .finally(() => {
-          if (props.lockedIntensityTemplate) {
-            handleIonIntensityLockAllByTemplate(props.lockedIntensityTemplate)
-          }
           state.firstLoaded = true
           resizeHandler()
         })
@@ -288,121 +258,16 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return {}
     })
 
-    const globalLockedIntensities = computed(() => props.globalLockedIntensities)
-
     // set images and annotation related items when selected annotation changes
     watch(() => props.selectedAnnotation, async(newValue) => {
       await updateAnnotationData(settings.value.grid, newValue)
     })
-
-    const handleIonIntensityUnLockAll = () => {
-      // apply max lock to all grids
-      Object.keys(state.gridState).forEach((gridKey) => {
-        const gridCell : GridCellState = state.gridState[gridKey]!
-        if (gridCell) {
-          const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
-          const minIntensity = 0
-          handleIonIntensityLockChange(undefined, gridKey, 'min')
-          handleIonIntensityLockChange(undefined, gridKey, 'max')
-          handleIonIntensityChange(minIntensity, gridKey, 'min')
-          handleIonIntensityChange(maxIntensity, gridKey, 'max')
-        }
-      })
-    }
-
-    const getIntensityData = (
-      image: number, clipped: number, scaled: number, user: number, quantile: number, isLocked?: boolean,
-    ) => {
-      const isClipped = quantile > 0 && quantile < 1 && user === image
-      return {
-        image,
-        clipped,
-        scaled,
-        user,
-        quantile,
-        status: isLocked ? 'LOCKED' : isClipped ? 'CLIPPED' : undefined,
-      }
-    }
-
-    const getIntensity = (ionImage: IonImage, lockedIntensities: any = []) => {
-      if (ionImage != null) {
-        const {
-          minIntensity, maxIntensity,
-          clippedMinIntensity, clippedMaxIntensity,
-          scaledMinIntensity, scaledMaxIntensity,
-          userMinIntensity, userMaxIntensity,
-          lowQuantile, highQuantile,
-        } = ionImage
-        const [lockedMin, lockedMax] = lockedIntensities
-
-        return {
-          min: getIntensityData(
-            minIntensity,
-            clippedMinIntensity,
-            scaledMinIntensity,
-            userMinIntensity,
-            lowQuantile,
-            lockedMin !== undefined,
-          ),
-          max: getIntensityData(
-            maxIntensity,
-            clippedMaxIntensity,
-            scaledMaxIntensity,
-            userMaxIntensity,
-            highQuantile,
-            lockedMax !== undefined,
-          ),
-        }
-      }
-      return {
-        min: getIntensityData(0, 0, 0, 0, 0, false),
-        max: getIntensityData(0, 0, 0, 0, 0, false),
-      }
-    }
-
-    const ionImage = (ionImagePng: any, isotopeImage: any,
-      scaleType: any = 'linear', userScaling: any = [0, 1], normalizedData: any = null) => {
-      if (!isotopeImage || !ionImagePng) {
-        return null
-      }
-      const { minIntensity, maxIntensity } = isotopeImage
-      return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType
-        , userScaling, undefined, normalizedData)
-    }
-
-    const ionImageLayers = (key: string) => {
-      const annotation = state.annotationData[key]
-      const gridCell = state.gridState[key]
-
-      if (annotation == null || gridCell == null) {
-        return []
-      }
-      const finalImage = ionImage(gridCell.ionImagePng,
-        annotation.isotopeImages[0],
-        props.scaleType, gridCell.imageScaledScaling,
-        props.isNormalized && props.normalizationData
-          ? props.normalizationData[annotation.dataset.id] : null)
-      const hasOpticalImage = annotation.dataset.opticalImages[0]?.url !== undefined
-
-      if (finalImage) {
-        return [{
-          ionImage: finalImage,
-          colorMap: createColormap(props.colormap,
-            hasOpticalImage && gridCell.showOpticalImage
-              ? 'linear' : 'constant',
-            hasOpticalImage && gridCell.showOpticalImage
-              ? (gridCell.annotImageOpacity || 1) : 1),
-        }]
-      }
-      return []
-    }
 
     const toggleOpticalImage = (event: any, key: string) => {
       event.stopPropagation()
       const gridCell = state.gridState[key]
       if (gridCell != null) {
         gridCell.showOpticalImage = !gridCell.showOpticalImage
-        gridCell.annotImageOpacity = gridCell.showOpticalImage ? gridCell.annotImageOpacity : 1
       }
     }
 
@@ -473,154 +338,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         query: encodeParams(query),
       }
     }
-
-    const handleUserScalingChange = (userScaling: any, key: string, ignoreBoundaries: boolean = false) => {
-      const gridCell = state.gridState[key]
-      if (gridCell == null) {
-        return
-      }
-      const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
-      const minScale =
-        gridCell.intensity?.min?.status === 'LOCKED'
-          ? userScaling[0] * (1
-          - (gridCell.intensity.min.user / maxIntensity))
-          + (gridCell.intensity.min.user / maxIntensity)
-          : userScaling[0]
-
-      const maxScale = userScaling[1] * (gridCell.intensity?.max?.status === 'LOCKED'
-        ? gridCell.intensity.max.user / maxIntensity : 1)
-      const rangeSliderScale = userScaling.slice(0)
-
-      // added in order to keep consistency even with ignore boundaries
-      if (rangeSliderScale[0] < 0 || (gridCell.intensity?.min?.status === 'LOCKED' && ignoreBoundaries)) {
-        rangeSliderScale[0] = 0
-      }
-      if (rangeSliderScale[1] > 1 || (gridCell.intensity?.max?.status === 'LOCKED' && ignoreBoundaries)) {
-        rangeSliderScale[1] = 1
-      }
-
-      gridCell.userScaling = rangeSliderScale
-      gridCell.imageScaledScaling = [minScale, maxScale]
-
-      const maxScaleDisplay = globalLockedIntensities.value && globalLockedIntensities.value[1]
-        ? globalLockedIntensities.value[1] : (gridCell.intensity.max.clipped || gridCell.intensity.max.image)
-
-      const minScaleDisplay = globalLockedIntensities.value && globalLockedIntensities.value[0]
-        ? globalLockedIntensities.value[0] : 0
-
-      gridCell.intensity.min.scaled =
-        gridCell.intensity?.min?.status === 'LOCKED'
-        && maxIntensity * userScaling[0]
-        < gridCell.intensity.min.user
-          ? minScaleDisplay
-          : maxIntensity * userScaling[0]
-
-      gridCell.intensity.max.scaled =
-        gridCell.intensity?.max?.status === 'LOCKED'
-        && maxIntensity * userScaling[1]
-        > gridCell.intensity.max.user
-          ? maxScaleDisplay
-          : maxIntensity * userScaling[1]
-    }
-
-    const handleIonIntensityChange = (intensity: number | undefined, key: string, type: string,
-      ignoreBoundaries : boolean = true) => {
-      const gridCell = state.gridState[key]
-      if (gridCell == null || intensity === undefined) {
-        return
-      }
-      let minScale = gridCell.userScaling[0]
-      let maxScale = gridCell.userScaling[1]
-      const maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
-
-      if (type === 'min') {
-        minScale = intensity / maxIntensity
-      } else {
-        maxScale = intensity / maxIntensity
-      }
-
-      if (!ignoreBoundaries) {
-        minScale = minScale > 1 ? 1 : minScale
-        minScale = minScale > maxScale ? maxScale : minScale
-        minScale = minScale < 0 ? 0 : minScale
-        maxScale = maxScale > 1 ? 1 : maxScale
-        maxScale = maxScale < 0 ? 0 : maxScale
-        maxScale = maxScale < minScale ? minScale : maxScale
-      }
-
-      handleUserScalingChange([minScale, maxScale], key, ignoreBoundaries)
-    }
-
-    const handleIonIntensityLockChange = (value: number | undefined, key: string, type: string) => {
-      const gridCell = state.gridState[key]
-      if (gridCell == null) {
-        return
-      }
-
-      const minLocked = type === 'min' ? value : gridCell.lockedIntensities[0]
-      const maxLocked = type === 'max' ? value : gridCell.lockedIntensities[1]
-      const intensity = getIntensity(gridCell.ionImageLayers[0]?.ionImage, [minLocked, maxLocked])
-
-      if (intensity && intensity.max && maxLocked && intensity.max.status === 'LOCKED') {
-        intensity.max.scaled = maxLocked
-        intensity.max.user = maxLocked
-      }
-
-      if (intensity && intensity.min && minLocked && intensity.min.status === 'LOCKED') {
-        intensity.min.scaled = minLocked
-        intensity.min.user = minLocked
-      }
-
-      if (intensity && intensity.min !== undefined && intensity.min.status !== 'LOCKED'
-      ) {
-        intensity.min.scaled = 0
-        gridCell.imageScaledScaling = [0, gridCell.imageScaledScaling[1]]
-      }
-      if (intensity && intensity.max !== undefined && intensity.max.status !== 'LOCKED') {
-        intensity.max.scaled = intensity.max.clipped || intensity.max.image
-        gridCell.imageScaledScaling = [gridCell.imageScaledScaling[0], 1]
-      }
-
-      gridCell.lockedIntensities = [minLocked, maxLocked]
-      emit('intensitiesChange', [minLocked, maxLocked])
-
-      gridCell.intensity = intensity
-      gridCell.userScaling = [0, 1]
-    }
-
-    const handleIonIntensityLockAllByTemplate = async(dsId: string) => {
-      let maxIntensity
-      let minIntensity
-
-      Object.keys(settings.value.grid).map((key) => {
-        const cellId = settings.value.grid[key]
-        if (cellId === dsId) {
-          const gridCell : GridCellState = state.gridState[key]!
-          if (gridCell && gridCell.intensity) {
-            maxIntensity = gridCell.intensity.max.clipped || gridCell.intensity.max.image
-            minIntensity = 0
-            emit('intensitiesChange', [minIntensity, maxIntensity])
-          }
-        }
-      })
-
-      for (let i = 0; i < Object.keys(settings.value.grid).length; i++) {
-        const key = Object.keys(settings.value.grid)[i]
-        await handleIonIntensityLockChange(maxIntensity, key, 'max')
-        await handleIonIntensityLockChange(minIntensity, key, 'min')
-        handleIonIntensityChange(minIntensity, key, 'min', true)
-        handleIonIntensityChange(maxIntensity, key, 'max', true)
-      }
-    }
-
-    // set lock by template
-    watch(() => props.lockedIntensityTemplate, (newValue) => {
-      if (newValue) {
-        handleIonIntensityLockAllByTemplate(newValue)
-      } else if (newValue === undefined) {
-        handleIonIntensityUnLockAll()
-      }
-    })
 
     const renderDatasetName = (name: string) => {
       return (
@@ -735,32 +452,35 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                 />
               </div>
             }
-            <SimpleIonImageViewer
-              annotations={annotations.length > 0 && $store.state.mode === 'MULTI' ? annotations : [annData]}
-              channels={channels}
-              showChannels={gridCell?.isActive}
-              isActive={$store.state.mode === 'MULTI'}
-              dataset={dataset}
-              height={dimensions.height}
-              width={dimensions.width}
-              scaleBarColor={props.scaleBarColor}
-              lockedIntensityTemplate={props.lockedIntensityTemplate}
-              globalLockedIntensities={props.globalLockedIntensities}
-              scaleType={props.scaleType}
-              onIntensitiesChange={(intensity: any) => { emit('intensitiesChange', intensity) }}
-              onLockAllIntensities={() => { emit('lockAllIntensities') }}
-              colormap={props.colormap}
-              isNormalized={props.isNormalized}
-              normalizationData={props.normalizationData
-                ? props.normalizationData[annData?.dataset?.id] : null}
-              showOpticalImage={!!gridCell?.showOpticalImage}
-              resetViewPort={props.resetViewPort}
-              onResetViewPort={() => { emit('resetViewPort', false) }}
-              onRemoveLayer={removeLayer}
-              onChangeLayer={handleLayerColorChange}
-              onAddLayer={addLayer}
-              onToggleVisibility={toggleChannelVisibility}
-            />
+            {
+              dataset
+              && <SimpleIonImageViewer
+                annotations={annotations.length > 0 && $store.state.mode === 'MULTI' ? annotations : [annData]}
+                channels={channels}
+                showChannels={gridCell?.isActive}
+                isActive={$store.state.mode === 'MULTI'}
+                dataset={dataset}
+                height={dimensions.height}
+                width={dimensions.width}
+                scaleBarColor={props.scaleBarColor}
+                lockedIntensityTemplate={props.lockedIntensityTemplate}
+                globalLockedIntensities={props.globalLockedIntensities}
+                scaleType={props.scaleType}
+                onIntensitiesChange={(intensity: any) => { emit('intensitiesChange', intensity) }}
+                onLockAllIntensities={() => { emit('lockAllIntensities') }}
+                colormap={props.colormap}
+                isNormalized={props.isNormalized}
+                normalizationData={props.normalizationData
+                  ? props.normalizationData[annData?.dataset?.id] : null}
+                showOpticalImage={!!gridCell?.showOpticalImage}
+                resetViewPort={props.resetViewPort}
+                onResetViewPort={() => { emit('resetViewPort', false) }}
+                onRemoveLayer={removeLayer}
+                onChangeLayer={handleLayerColorChange}
+                onAddLayer={addLayer}
+                onToggleVisibility={toggleChannelVisibility}
+              />
+            }
           </div>
         </div>
       )

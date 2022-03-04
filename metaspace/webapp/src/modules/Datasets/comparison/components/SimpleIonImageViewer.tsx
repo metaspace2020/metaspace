@@ -487,6 +487,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           }
         }
       }
+
+      if (props.lockedIntensityTemplate && props.lockedIntensityTemplate === props.dataset.id) {
+        handleLockByTemplate()
+      }
     }
 
     const handleImageMove = ({ zoom, xOffset, yOffset }: any) => {
@@ -614,6 +618,17 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       handleUserScalingChange([minScale, maxScale], index, ignoreBoundaries)
     }
 
+    const handleLockByTemplate = async() => {
+      const key = ionKeys.value[0]
+      const intensity = (state.imageSettings?.intensities || {})[key]
+      if (!intensity) {
+        return
+      }
+      const maxIntensity = intensity.max.clipped || intensity.max.image
+      const minIntensity = 0
+      emit('intensitiesChange', [minIntensity, maxIntensity])
+    }
+
     const handleUserScalingChange = (userScaling: any, index: number, ignoreBoundaries: boolean = false) => {
       if (state.imageSettings === null || state.menuItems === null) {
         return
@@ -623,13 +638,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       const intensity = state.imageSettings.intensities[key]
       const maxIntensity =
         intensity.max.clipped || intensity.max.image
-      const minScale =
-        intensity?.min?.status === 'LOCKED'
-          ? userScaling[0] * (1
-            - (intensity.min.user / maxIntensity))
-          + (intensity.min.user / maxIntensity)
-          : userScaling[0]
-
+      const minScale = userScaling[0]
       const maxScale = userScaling[1] * (intensity?.max?.status === 'LOCKED'
         ? intensity?.max?.user / maxIntensity : 1)
       const rangeSliderScale = userScaling.slice(0)
@@ -675,7 +684,6 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         && state.imageSettings && state.imageSettings.ionImageLayers
         && !isEqual(state.imageSettings.lockedIntensities, newValue)) {
         state.imageSettings.lockedIntensities = newValue as [number | undefined, number | undefined]
-
         for (let index = 0; index < (mode.value === 'SINGLE' ? 1 : props.annotations?.length); index++) {
           await handleIntensityLockChange(state.imageSettings.lockedIntensities[0], index, 'min', false)
           await handleIntensityChange(state.imageSettings.lockedIntensities[0], index, 'min')
@@ -699,6 +707,14 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           state.currentIon = currentIon
           await startImageSettings()
         }
+      }
+    })
+    // set lock by template
+    watch(() => props.lockedIntensityTemplate, (newValue) => {
+      if (newValue && newValue === props.dataset.id) {
+        handleLockByTemplate()
+      } else if (newValue === undefined) {
+        emit('intensitiesChange', [undefined, undefined])
       }
     })
 
