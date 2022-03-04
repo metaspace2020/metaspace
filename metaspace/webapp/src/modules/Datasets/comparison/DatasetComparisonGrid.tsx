@@ -3,11 +3,8 @@ import './DatasetComparisonGrid.scss'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
 import Vue from 'vue'
 import createColormap from '../../../lib/createColormap'
-import { IonImage, loadPngFromUrl, processIonImage, renderScaleBar } from '../../../lib/ionImageRendering'
+import { IonImage, loadPngFromUrl, processIonImage } from '../../../lib/ionImageRendering'
 import safeJsonParse from '../../../lib/safeJsonParse'
-import fitImageToArea, { FitImageToAreaResult } from '../../../lib/fitImageToArea'
-import getColorScale from '../../../lib/getColorScale'
-import { THUMB_WIDTH } from '../../../components/Slider'
 import { encodeParams } from '../../Filters'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
@@ -45,7 +42,6 @@ interface GridCellState {
   pixelSizeX: number
   pixelSizeY: number
   ionImageLayers: any
-  imageFit: Readonly<FitImageToAreaResult>
   lockedIntensities: [number | undefined, number | undefined]
   annotImageOpacity: number
   opticalOpacity: number
@@ -56,7 +52,6 @@ interface GridCellState {
   isActive: boolean
   userScaling: [number, number],
   imageScaledScaling: [number, number],
-  scaleBarUrl: Readonly<string>,
 }
 
 interface DatasetComparisonGridState {
@@ -70,6 +65,7 @@ interface DatasetComparisonGridState {
   firstLoaded: boolean,
   filter: any
   selectedAnnotation: number
+  singleAnnotationId: any
 }
 
 const channels: any = {
@@ -167,6 +163,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       annotationLoading: true,
       firstLoaded: false,
       filter: $store?.getters?.filter,
+      singleAnnotationId: {},
     })
 
     const dimensions = reactive({
@@ -211,45 +208,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       return Object.assign(safeJsonParse(annotation.dataset.metadataJson), datasetMetadataExternals)
     }
 
-    const imageFit = (key: string) => {
-      const gridCell = state.gridState[key]
-      const { width = dimensions.width, height = dimensions.height } = gridCell?.ionImagePng || {}
-
-      return fitImageToArea({
-        imageWidth: width,
-        imageHeight: height / (gridCell?.pixelAspectRatio || 1),
-        areaWidth: dimensions.width,
-        areaHeight: dimensions.height,
-      })
-    }
-
-    const buildRangeSliderStyle = (key: string, scaleRange: number[] = [0, 1]) => {
-      const gridCell = state.gridState[key]
-      if (!refs[`range-slider-${key}`] || !gridCell) {
-        return null
-      }
-
-      const width = refs[`range-slider-${key}`]?.offsetWidth
-      const ionImage = gridCell?.ionImageLayers[0]?.ionImage
-      const { range } = getColorScale(props.colormap)
-      const { scaledMinIntensity, scaledMaxIntensity } = ionImage || {}
-      const minColor = range[0]
-      const maxColor = range[range.length - 1]
-      const gradient = scaledMinIntensity === scaledMaxIntensity
-        ? `linear-gradient(to right, ${range.join(',')})`
-        : ionImage ? `url(${gridCell?.scaleBarUrl})` : ''
-      const [minScale, maxScale] = scaleRange
-      const minStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * minScale))
-      const maxStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * maxScale))
-      return {
-        background: [
-          `0px / ${minStop}px 100% linear-gradient(${minColor},${minColor}) no-repeat`,
-          `${minStop}px / ${maxStop - minStop}px 100% ${gradient} repeat-y`,
-          `${minColor} ${maxStop}px / ${width - maxStop}px 100% linear-gradient(${maxColor},${maxColor}) no-repeat`,
-        ].join(','),
-      }
-    }
-
     const startImageSettings = async(key: string, annotation: any) => {
       const hasPreviousSettings = state.gridState[key] != null
       const ionImagePng = await loadPngFromUrl(annotation.isotopeImages[0].url)
@@ -272,7 +230,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           // ionImageLayers and imageFit rely on state.gridState[key] to be correctly set - avoid evaluating them
           // until this has been inserted into state.gridState
           ionImageLayers: computed(() => ionImageLayers(key)),
-          imageFit: computed(() => imageFit(key)),
           lockedIntensities: [undefined, undefined],
           annotImageOpacity: 1.0,
           opticalOpacity: 1.0,
@@ -285,11 +242,6 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           isActive: true,
           userScaling: [0, 1],
           imageScaledScaling: [0, 1],
-          scaleBarUrl: computed(() => renderScaleBar(
-            gridCell.ionImageLayers[0]?.ionImage,
-            createColormap(props.colormap),
-            true,
-          )),
         })
         Vue.set(state.gridState, key, gridCell)
       }
@@ -346,6 +298,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         let dsIndex = selectedAnnotation
           ? selectedAnnotation.datasetIds.findIndex((dsId: string) => dsId === item) : -1
         const { annotations } = getChannels(item)
+        state.singleAnnotationId[key] = dsIndex
         dsIndex = $store.state.mode === 'MULTI'
           ? annotations.findIndex((item: any) => !item.isEmpty) : dsIndex
 
@@ -760,6 +713,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         : (!props.isLoading && annData === null && gridCell === null)
           || (!props.isLoading && props.selectedAnnotation === -1)
           || (props.selectedAnnotation >= props.annotations.length)
+          || (state.singleAnnotationId[key] === -1)
 
       if (isEmpty) {
         return (
