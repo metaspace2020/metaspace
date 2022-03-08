@@ -58,6 +58,7 @@ interface DatasetComparisonPageState {
   annotationData: any
   refsLoaded: boolean
   showViewer: boolean
+  loadedSnapshot: boolean
   isLoading: any
   collapse: string[]
   databaseOptions: any
@@ -111,6 +112,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     const state = reactive<DatasetComparisonPageState>({
       currentAnnotationIdx: -1,
       gridState: {},
+      loadedSnapshot: false,
       databaseOptions: undefined,
       globalImageSettings: {
         resetViewPort: false,
@@ -209,6 +211,14 @@ export default defineComponent<DatasetComparisonPageProps>({
 
           state.annotations = processedAnnotations
           dsQueryOptions.enabled = true
+
+          if (!state.loadedSnapshot) {
+            const auxSettings = safeJsonParse(gridSettings.value.snapshot)
+            if (auxSettings.mode === 'MULTI') {
+              loadSnapshotChannels(auxSettings.channels)
+            }
+            state.loadedSnapshot = true
+          }
         }
       }
     })
@@ -301,6 +311,27 @@ export default defineComponent<DatasetComparisonPageProps>({
         }
       })
     })
+
+    const loadSnapshotChannels = (snapshotChannels: any) => {
+      const annotations = state.annotations
+      $store.commit('setViewerMode', 'MULTI')
+
+      snapshotChannels.forEach((channel: any, index: number) => {
+        const { id, settings } = channel
+        const annotationItem = annotations.find((annotation: any) => annotation.ion === id)
+        $store.commit('addChannel', {
+          index,
+          id,
+          annotations: annotationItem,
+          settings: { ...settings, visible: true },
+        })
+        if (!settings.visible) { // toggle visibility later, as the first intensity must be loaded
+          setTimeout(() => {
+            $store.commit('updateChannel', { index, id, annotations: annotationItem, settings })
+          }, 1000)
+        }
+      })
+    }
 
     watchEffect(async() => {
       if (!state.grid && gridSettings.value) {
@@ -490,6 +521,7 @@ export default defineComponent<DatasetComparisonPageProps>({
             query={$route.query}/>
           <DatasetComparisonModeButton
             class="absolute right-0 bottom-0 mr-5 mb-2"
+            isActive={$store.state.mode === 'MULTI'}
             onMode={handleModeChange}
           />
         </div>

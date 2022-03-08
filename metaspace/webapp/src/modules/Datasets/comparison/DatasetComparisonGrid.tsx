@@ -5,7 +5,7 @@ import safeJsonParse from '../../../lib/safeJsonParse'
 import { encodeParams } from '../../Filters'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
-import { Button, Popover } from '../../../lib/element-ui'
+import { Button, Pagination, Popover } from '../../../lib/element-ui'
 import { range } from 'lodash-es'
 import { SimpleIonImageViewer } from './components/SimpleIonImageViewer'
 import MonitorSvg from '../../../assets/inline/refactoring-ui/icon-monitor.svg'
@@ -247,7 +247,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         .catch(console.error)
         .finally(() => {
           state.firstLoaded = true
-          resizeHandler()
+          setTimeout(() => { resizeHandler() }, 100)
         })
     }
 

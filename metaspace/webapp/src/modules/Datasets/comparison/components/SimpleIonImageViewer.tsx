@@ -463,9 +463,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           Vue.set(state.imageSettings.intensities, key, intensitiesSnapshot[key])
         } else {
           const ionImagePos = state.ionImagePosByKey[key] || ionImagePosAux
-          const intensity = getIntensity(imageSettings.ionImageLayers[ionImagePos]?.ionImage)
 
+          const intensity = getIntensity(imageSettings.ionImageLayers[ionImagePos]?.ionImage)
           intensity.min.scaled = 0
+
           intensity.max.scaled = globalLockedIntensities.value && globalLockedIntensities.value[1]
             ? globalLockedIntensities.value[1] : (intensity.max.clipped || intensity.max.image)
 
