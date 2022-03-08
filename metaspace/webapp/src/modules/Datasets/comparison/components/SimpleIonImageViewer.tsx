@@ -465,14 +465,15 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           const ionImagePos = state.ionImagePosByKey[key] || ionImagePosAux
           const intensity = getIntensity(imageSettings.ionImageLayers[ionImagePos]?.ionImage)
 
-          if (!menuItems[index]?.isEmpty) {
-            ionImagePosAux += 1
-          }
           intensity.min.scaled = 0
           intensity.max.scaled = globalLockedIntensities.value && globalLockedIntensities.value[1]
             ? globalLockedIntensities.value[1] : (intensity.max.clipped || intensity.max.image)
 
           Vue.set(state.imageSettings.intensities, key, intensity)
+        }
+
+        if (!menuItems[index]?.isEmpty) {
+          ionImagePosAux += 1
         }
 
         // persist ion intensity lock status
@@ -703,7 +704,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         const newIons = newValue.slice(0).map((item: any) => item?.ion)
         const currentIons = state.menuItems.slice(0).map((item: any) => item?.annotation?.ion)
         const currentIon = newIons[newIons.length - 1]
-        if (!isEqual(newIons, currentIons) && currentIon !== state.currentIon) {
+        if (
+          newIons.length < currentIons.length
+          || (!isEqual(newIons, currentIons) && currentIon !== state.currentIon)
+        ) {
           state.currentIon = currentIon
           await startImageSettings()
         }
