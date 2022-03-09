@@ -103,7 +103,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
         isomers={annotation.isomers}
         isobars={annotation.isobars}>
         <MolecularFormula
-          class="truncate font-medium h-6 text-base"
+          class="truncate font-medium h-6 text-sm"
           ion={annotation.ion}
         />
       </CandidateMoleculesPopover>
@@ -130,11 +130,11 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                 >
                   {
                     item.settings.visible.value
-                    && <VisibleIcon class="fill-current w-5 h-5 text-gray-800"/>
+                    && <VisibleIcon class="fill-current w-4 h-4 text-gray-800"/>
                   }
                   {
                     !item.settings.visible.value
-                    && <HiddenIcon class="fill-current w-5 h-5 text-gray-600"/>
+                    && <HiddenIcon class="fill-current w-4 h-4 text-gray-600"/>
                   }
                 </Button>
               </p>
