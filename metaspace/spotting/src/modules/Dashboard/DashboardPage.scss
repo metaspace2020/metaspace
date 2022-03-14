@@ -8,6 +8,12 @@ $filter-color: #828282;
 .dashboard-container{
   @apply flex flex-wrap m-12 justify-between;
 
+  .el-tag{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
   .icon{
     @apply flex items-center justify-center cursor-pointer mt-1;
   }
