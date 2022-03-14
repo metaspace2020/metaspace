@@ -230,16 +230,16 @@ export default defineComponent({
       try {
         console.log('Downloading files')
         state.loading = true
-        const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/'
-        const response = await fetch(baseUrl + 'all_predictions_14-Dec-2021.json')
+        const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/new/'
+        const response = await fetch(baseUrl + 'all_predictions_14-03-22.json')
         const predictions = await response.json()
-        const datasetResponse = await fetch(baseUrl + 'datasets_updated.json')
+        const datasetResponse = await fetch(baseUrl + 'datasets_14-03-22.json')
         const datasets = await datasetResponse.json()
-        const chemClassResponse = await fetch(baseUrl + 'custom_classification.json')
+        const chemClassResponse = await fetch(baseUrl + 'custom_classification_14-03-22.json')
         const classification = await chemClassResponse.json()
-        const pathwayResponse = await fetch(baseUrl + 'pathways.json')
+        const pathwayResponse = await fetch(baseUrl + 'pathways_14-03-22.json')
         const pathways = await pathwayResponse.json()
-        const wellmapResponse = await fetch(baseUrl + 'wellmap.json')
+        const wellmapResponse = await fetch(baseUrl + 'wellmap_14-03-22.json')
         const wellmap = await wellmapResponse.json()
 
         state.predictions = predictions
