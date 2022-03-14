@@ -61,7 +61,7 @@ const AXIS_VALUES = [
   },
   {
     label: 'Molecule',
-    src: 'formula',
+    src: 'name_short',
   },
   {
     label: 'Technology',
@@ -69,7 +69,7 @@ const AXIS_VALUES = [
   },
   {
     label: 'Pathway',
-    src: 'name_short',
+    src: 'fine_path',
   },
   {
     label: 'Class',
@@ -129,7 +129,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'Pathway',
-    src: 'name_short',
+    src: 'fine_path',
   },
   {
     label: 'Class',
@@ -166,10 +166,11 @@ const PREDICTION_METRICS = {
   spot_intensity: true,
   pred_val: true,
   pred_twostate: true,
+  name_short: true,
 }
 
 const PATHWAY_METRICS = {
-  name_short: true,
+  fine_path: true,
 }
 
 const VALUE_METRICS = {
@@ -330,10 +331,9 @@ export default defineComponent({
       }
 
       if ($route.query.filterValue) {
-        const filterValue = state.filter[0].isBoolean ? parseInt($route.query.filterValue, 10)
-          : $route.query.filterValue
-
-        handleFilterValueChange(filterValue)
+        // const filterValue = state.filter[0].isBoolean ? parseInt($route.query.filterValue, 10)
+        //   : (!state.filter[0].isNumeric ? $route.query.filterValue.split(',') : $route.query.filterValue)
+        // handleFilterValueChange(filterValue)
       }
 
       buildValues()
@@ -374,7 +374,8 @@ export default defineComponent({
           filteredData = filteredData.filter((data: any) => {
             const filterValue = filter.value === 'None' ? null : filter.value
             return filter.isNumeric ? parseFloat(data[filter.src]) <= parseFloat(filter.value)
-              : data[filter.src] === filterValue
+              : (filter.isBoolean ? (data[filter.src] === filterValue)
+                : (filterValue.length === 0 || filterValue.includes(data[filter.src])))
           })
         }
       })
@@ -518,7 +519,14 @@ export default defineComponent({
 
     const handleFilterValueChange = (value: any, idx : any = 0) => {
       state.filter[idx].value = value
-      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filterValue: value } })
+      $router.replace({
+        name: 'dashboard',
+        query: {
+          ...getQueryParams(),
+          filterValue: Array.isArray(value)
+            ? value.join(',') : value,
+        },
+      })
 
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
@@ -616,6 +624,9 @@ export default defineComponent({
         state.yAxisValues = axis
       }
 
+      console.log('x length', state.xAxisValues.length)
+      console.log('y length', state.yAxisValues.length)
+
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
       }
@@ -702,14 +713,13 @@ export default defineComponent({
             {
               state.filter.map((filter: any, filterIdx: number) => {
                 return (
-                  <div class='flex flex-wrap justify-center items-center'>
+                  <div class='flex flex-wrap justify-center'>
                     <Select
                       class='select-box-mini mr-2'
                       value={filter.src}
                       onChange={(value: number) => {
                         handleFilterSrcChange(value, filterIdx)
                       }}
-                      clearable
                       disabled={state.loading}
                       placeholder='Neutral losses'
                       size='mini'>
@@ -733,6 +743,7 @@ export default defineComponent({
                         loading={state.loadingFilterOptions}
                         filterable
                         clearable
+                        multiple={!filter.isBoolean}
                         noDataText='No data'
                         onChange={(value: number) => {
                           handleFilterValueChange(value, filterIdx)

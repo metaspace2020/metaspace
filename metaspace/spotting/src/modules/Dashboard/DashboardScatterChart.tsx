@@ -155,6 +155,11 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           axisLine: {
             show: false,
           },
+          axisLabel: {
+            show: true,
+            // interval: 0,
+            // padding: [10, 0],
+          },
         },
         series: [{
           type: 'scatter',
