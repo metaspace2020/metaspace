@@ -1,12 +1,12 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
 import './DashboardPage.scss'
 import { Option, Select, Pagination, InputNumber, Button } from '../../lib/element-ui'
-import { cloneDeep, groupBy, keyBy, orderBy, uniq } from 'lodash-es'
+import { cloneDeep, groupBy, keyBy, orderBy, sortedUniq, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
-import { predictions } from '../../data/predictions'
+// import { predictions } from '../../data/predictions'
 import createColormap from '../../lib/createColormap'
 
 interface Options{
@@ -254,18 +254,18 @@ export default defineComponent({
         const wellmapById = groupBy(wellmap, 'name_short')
 
         let count = 0
-        const predWithDs = predictions.map((prediction: any) => {
+        const predWithDs : any = []
+
+        predictions.forEach((prediction: any) => {
           if (datasetsById[prediction.dataset_id]) {
-            return {
+            predWithDs.push({
               Polarity: datasetsById[prediction.dataset_id].Polarity,
               'Matrix short': datasetsById[prediction.dataset_id]['Matrix short'],
               'Matrix long': datasetsById[prediction.dataset_id]['Matrix long'],
               Technology: datasetsById[prediction.dataset_id].Technology,
               ...prediction,
-            }
+            })
           }
-
-          return prediction
         })
 
         const predWithClass : any = []
@@ -275,8 +275,6 @@ export default defineComponent({
               predWithClass.push({ ...classification, ...prediction })
             })
             count += chemClassById[prediction.name_short].length
-          } else {
-            predWithClass.push(prediction)
           }
         })
 
@@ -288,8 +286,6 @@ export default defineComponent({
               predWithPathway.push({ ...pathway, ...prediction })
             })
             count += pathwayById[prediction.name_short].length
-          } else {
-            predWithPathway.push(prediction)
           }
         })
 
@@ -301,8 +297,6 @@ export default defineComponent({
               predWithWellmap.push({ ...wellmap, ...prediction })
             })
             count += wellmapById[prediction.name_short].length
-          } else {
-            predWithWellmap.push(prediction)
           }
         })
         console.log('File loaded', predWithWellmap)
@@ -345,6 +339,27 @@ export default defineComponent({
       buildValues()
     })
 
+    const buildFilterOptions = (filter: any, filterIndex: number, data: any[]) => {
+      const filterSpec = FILTER_VALUES.find((filterItem: any) => filterItem.src === filter.src)
+      if (filterSpec && filterSpec.isNumeric) {
+        state.filter[filterIndex].isNumeric = true
+        state.filter[filterIndex].isBoolean = false
+        return
+      } else if (filterSpec && filterSpec.isBoolean) {
+        state.filter[filterIndex].isNumeric = false
+        state.filter[filterIndex].isBoolean = true
+      } else {
+        state.filter[filterIndex].isNumeric = false
+        state.filter[filterIndex].isBoolean = false
+      }
+      state.loadingFilterOptions = true
+
+      state.filter[filterIndex].options = uniq(data.map((item: any) => (item[filter.src] === null
+        || item[filter.src] === undefined || item[filter.src] === 'null') ? 'None' : item[filter.src])).sort()
+
+      state.loadingFilterOptions = false
+    }
+
     const buildValues = () => {
       let auxData : any = null
       let filteredData : any = state.rawData
@@ -352,10 +367,12 @@ export default defineComponent({
       let max : number = 1
       state.buildingChart = true
 
-      state.filter.forEach((filter: any) => {
-        if (filter.src && filter.value) {
+      state.filter.forEach((filter: any, filterIndex: number) => {
+        if (filter.src && !filter.value) {
+          buildFilterOptions(filter, filterIndex, filteredData)
+        } else if (filter.src && filter.value) {
           filteredData = filteredData.filter((data: any) => {
-            const filterValue = filter.value === 'null' ? null : filter.value
+            const filterValue = filter.value === 'None' ? null : filter.value
             return filter.isNumeric ? parseFloat(data[filter.src]) <= parseFloat(filter.value)
               : data[filter.src] === filterValue
           })
@@ -366,7 +383,6 @@ export default defineComponent({
       let maxValue : number = 1
       Object.keys(auxData).forEach((key: string) => {
         auxData[key] = groupBy(auxData[key], state.options.yAxis)
-
         Object.keys(auxData[key]).forEach((yKey: any) => {
           if (auxData[key][yKey].length > maxValue && state.xAxisValues.includes(key)) {
             maxValue = auxData[key][yKey].length
@@ -551,43 +567,10 @@ export default defineComponent({
 
     const handleFilterSrcChange = (value: any, idx : any = 0) => {
       state.filter[idx].src = value
-
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation
-        && state.filter[idx].value !== null && state.filter[idx].value !== undefined) {
-        handleFilterValueChange(null, idx)
-        buildValues()
-      }
-
       $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filter: value } })
-
-      let src : any = null
-      const filterSpec = FILTER_VALUES.find((filter: any) => filter.src === value)
-      if (filterSpec && filterSpec.isNumeric) {
-        state.filter[idx].isNumeric = true
-        state.filter[idx].isBoolean = false
-        return
-      } else if (filterSpec && filterSpec.isBoolean) {
-        state.filter[idx].isNumeric = false
-        state.filter[idx].isBoolean = true
-      } else {
-        state.filter[idx].isNumeric = false
-        state.filter[idx].isBoolean = false
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+        handleFilterValueChange(null, idx)
       }
-      state.loadingFilterOptions = true
-
-      if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
-        src = state.classification
-      } else if (Object.keys(DATASET_METRICS).includes(value)) {
-        src = state.datasets
-      } else if (Object.keys(PREDICTION_METRICS).includes(value)) {
-        src = state.predictions
-      } else if (Object.keys(PATHWAY_METRICS).includes(value)) {
-        src = state.pathways
-      }
-
-      state.filter[idx].options = Object.keys(keyBy(src, value)).sort().filter((option: any) => option !== null
-        && option !== undefined && option !== '')
-      state.loadingFilterOptions = false
     }
 
     const handleAxisChange = (value: any, isXAxis : boolean = true) => {
