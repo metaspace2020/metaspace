@@ -135,7 +135,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         xAxis: {
           type: 'category',
           data: [],
-          boundaryGap: false,
+          boundaryGap: true,
           splitLine: {
             show: false,
           },
