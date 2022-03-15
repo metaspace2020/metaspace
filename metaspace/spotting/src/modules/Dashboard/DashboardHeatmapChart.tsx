@@ -1,4 +1,4 @@
-import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from '@vue/composition-api'
 // @ts-ignore
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
@@ -51,11 +51,13 @@ interface DashboardHeatmapChartProps {
   yAxis: any[]
   annotatedData: any[]
   peakFilter: number
+  size: number
 }
 
 interface DashboardHeatmapChartState {
   scaleIntensity: boolean
   chartOptions: any
+  size: number
 }
 
 const PEAK_FILTER = {
@@ -75,6 +77,10 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
     isLoading: {
       type: Boolean,
       default: false,
+    },
+    size: {
+      type: Number,
+      default: 600,
     },
     isDataLoading: {
       type: Boolean,
@@ -112,6 +118,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
 
     const state = reactive<DashboardHeatmapChartState>({
       scaleIntensity: false,
+      size: 600,
       chartOptions: {
         tooltip: {
           position: 'top',
@@ -140,6 +147,11 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
           splitArea: {
             show: true,
           },
+          axisLabel: {
+            show: true,
+            interval: 0,
+            height: 30,
+          },
         },
         visualMap: {
           min: 0,
@@ -164,7 +176,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
             normal: {
               show: true,
               formatter: (param: any) => {
-                return param.data?.label?.molecule ? param.data?.label?.molecule : 'Not detected'
+                return param.data?.label?.molecule ? '' : 'Not detected'
               },
             },
           },
@@ -210,6 +222,12 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       window.removeEventListener('resize', handleChartResize)
     })
 
+    // set images and annotation related items when selected annotation changes
+    watch(() => props.size, async(newValue) => {
+      state.size = props.size < 600 ? 600 : props.size
+      setTimeout(() => handleChartResize(), 500)
+    })
+
     const handleZoomReset = () => {
       if (spectrumChart && spectrumChart.value) {
         // @ts-ignore
@@ -233,7 +251,8 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       const { isLoading, isDataLoading } = props
 
       return (
-        <div class='chart-holder'>
+        <div class='chart-holder'
+          style={{ height: `${state.size}px` }}>
           {
             (isLoading || isDataLoading)
             && <div class='loader-holder'>
@@ -254,6 +273,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
               },
             }}
             class='chart'
+            style={{ height: `${state.size}px` }}
             options={chartOptions.value}/>
         </div>
       )
