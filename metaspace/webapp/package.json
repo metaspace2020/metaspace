@@ -56,7 +56,7 @@
     "graphql-tag": "^2.10.1",
     "js-cookie": "^2.2.0",
     "lodash": "^4.17.21",
-    "lodash-es": "^4.17.10",
+    "lodash-es": "^4.17.21",
     "marked": "^4.0.10",
     "numeric": "^1.2.6",
     "numpy-parser": "^1.2.3",
