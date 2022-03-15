@@ -1,4 +1,4 @@
-import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from '@vue/composition-api'
 // @ts-ignore
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
@@ -49,11 +49,13 @@ interface DashboardScatterChartProps {
   yAxis: any[]
   annotatedData: any[]
   peakFilter: number
+  size: number
 }
 
 interface DashboardScatterChartState {
   scaleIntensity: boolean
   chartOptions: any
+  size: number
 }
 
 const PEAK_FILTER = {
@@ -100,6 +102,10 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       type: Number,
       default: PEAK_FILTER.ALL,
     },
+    size: {
+      type: Number,
+      default: 600,
+    },
   },
   setup(props, { emit }) {
     const spectrumChart = ref(null)
@@ -108,6 +114,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
 
     const state = reactive<DashboardScatterChartState>({
       scaleIntensity: false,
+      size: 600,
       chartOptions: {
         title: {
           text: '',
@@ -157,14 +164,17 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           },
           axisLabel: {
             show: true,
-            // interval: 0,
-            // padding: [10, 0],
+            interval: 0,
+            height: 30,
           },
         },
         series: [{
           type: 'scatter',
           symbolSize: function(val: any) {
             return val[2] * 2
+          },
+          itemStyle: {
+            borderColor: 'black',
           },
           data: [],
         }],
@@ -203,6 +213,12 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       window.removeEventListener('resize', handleChartResize)
     })
 
+    // set images and annotation related items when selected annotation changes
+    watch(() => props.size, async(newValue) => {
+      state.size = props.size < 600 ? 600 : props.size
+      setTimeout(() => handleChartResize(), 500)
+    })
+
     const handleZoomReset = () => {
       if (spectrumChart && spectrumChart.value) {
         // @ts-ignore
@@ -226,7 +242,8 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       const { isLoading, isDataLoading } = props
 
       return (
-        <div class='chart-holder'>
+        <div class='chart-holder'
+          style={{ height: `${state.size}px` }}>
           {
             (isLoading || isDataLoading)
             && <div class='loader-holder'>
@@ -247,6 +264,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
               },
             }}
             class='chart'
+            style={{ height: `${state.size}px` }}
             options={chartOptions.value}/>
         </div>
       )

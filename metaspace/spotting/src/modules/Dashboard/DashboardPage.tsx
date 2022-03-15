@@ -69,11 +69,11 @@ const AXIS_VALUES = [
   },
   {
     label: 'Pathway',
-    src: 'fine_path',
+    src: 'coarse_path',
   },
   {
     label: 'Class',
-    src: 'fine_class',
+    src: 'coarse_class',
   },
   {
     label: 'Dataset',
@@ -128,11 +128,19 @@ const FILTER_VALUES = [
     src: 'Technology',
   },
   {
-    label: 'Pathway',
+    label: 'Pathway class',
+    src: 'coarse_path',
+  },
+  {
+    label: 'Pathway subclass',
     src: 'fine_path',
   },
   {
     label: 'Class',
+    src: 'coarse_class',
+  },
+  {
+    label: 'Subclass',
     src: 'fine_class',
   },
   {
@@ -171,6 +179,7 @@ const PREDICTION_METRICS = {
 
 const PATHWAY_METRICS = {
   fine_path: true,
+  coarse_path: true,
 }
 
 const VALUE_METRICS = {
@@ -442,7 +451,7 @@ export default defineComponent({
       const colors : any = []
 
       if (!Array.isArray(colormap)) {
-        colormap = createColormap('Viridis').map((color: any) => {
+        colormap = createColormap('YlGnBu').map((color: any) => {
           return `rgba(${color.join(',')})`
         })
       }
@@ -623,9 +632,6 @@ export default defineComponent({
       } else {
         state.yAxisValues = axis
       }
-
-      console.log('x length', state.xAxisValues.length)
-      console.log('y length', state.yAxisValues.length)
 
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
@@ -865,6 +871,7 @@ export default defineComponent({
           <DashboardScatterChart
             xAxis={state.xAxisValues}
             yAxis={state.yAxisValues}
+            size={state.yAxisValues.length * 30}
             data={state.data}
             visualMap={state.visualMap}
           />
@@ -878,6 +885,7 @@ export default defineComponent({
           <DashboardHeatmapChart
             xAxis={state.xAxisValues}
             yAxis={state.yAxisValues}
+            size={state.yAxisValues.length * 30}
             data={state.data}
             visualMap={state.visualMap}
           />
