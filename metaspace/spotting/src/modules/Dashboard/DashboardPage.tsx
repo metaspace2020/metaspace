@@ -35,6 +35,8 @@ interface DashboardState {
   pathways : any
   wellmap : any
   pagination: any
+  hiddenYValues: any[]
+  hiddenXValues: any[]
 }
 
 const VIEW = {
@@ -89,6 +91,10 @@ const AGGREGATED_VALUES = [
   {
     label: 'Intensity',
     src: 'spot_intensity',
+  },
+  {
+    label: 'log10(Intensity)',
+    src: 'spot_intensity_log',
   },
   {
     label: 'Simple count',
@@ -208,6 +214,8 @@ export default defineComponent({
     const state = reactive<DashboardState>({
       colormap: null,
       filter: [cloneDeep(filterItem)],
+      hiddenYValues: [],
+      hiddenXValues: [],
       xAxisValues: [],
       yAxisValues: [],
       data: [],
@@ -402,6 +410,49 @@ export default defineComponent({
 
       const dotValues : any = []
       let availableAggregations : any = []
+      const xEmptyCounter : any = {}
+      const yEmptyCounter : any = {}
+
+      state.xAxisValues.forEach((xKey: any, xIndex: number) => {
+        state.yAxisValues.forEach((yKey: any, yIndex: number) => {
+          if (!(auxData[xKey] && auxData[xKey][yKey])) {
+            if (xEmptyCounter[xKey] === undefined) {
+              xEmptyCounter[xKey] = 0
+            }
+            if (yEmptyCounter[yKey] === undefined) {
+              yEmptyCounter[yKey] = 0
+            }
+            xEmptyCounter[xKey] += 1
+            yEmptyCounter[yKey] += 1
+          }
+        })
+      })
+
+      const toBeRemoved : any[] = []
+      const toBeRemovedX : any[] = []
+      const yAxisIdxMap : any = {}
+      const xAxisIdxMap : any = {}
+      let counter = 0
+      state.yAxisValues.forEach((yAxis: any) => {
+        if (yEmptyCounter[yAxis] === state.xAxisValues.length) {
+          toBeRemoved.push(yAxis)
+        } else {
+          yAxisIdxMap[yAxis] = counter
+          counter += 1
+        }
+      })
+      counter = 0
+      state.xAxisValues.forEach((xAxis: any) => {
+        if (xEmptyCounter[xAxis] === state.yAxisValues.length) {
+          toBeRemovedX.push(xAxis)
+        } else {
+          xAxisIdxMap[xAxis] = counter
+          counter += 1
+        }
+      })
+
+      state.hiddenYValues = toBeRemoved
+      state.hiddenXValues = toBeRemovedX
 
       state.xAxisValues.forEach((xKey: any, xIndex: number) => {
         let totalCount : number = 1
@@ -421,13 +472,19 @@ export default defineComponent({
 
         state.yAxisValues.forEach((yKey: any, yIndex: number) => {
           if (auxData[xKey] && auxData[xKey][yKey]) {
-            let pointAggregation : any = auxData[xKey][yKey][0][state.options.aggregation]
+            let pointAggregation : any =
+              state.options.aggregation === 'spot_intensity_log' ? (auxData[xKey][yKey][0].spot_intensity === 0
+                ? 0 : Math.log10(auxData[xKey][yKey][0].spot_intensity))
+                : auxData[xKey][yKey][0][state.options.aggregation]
 
             if (state.options.aggregation === 'pred_twostate') {
               const predAgg : any = groupBy(auxData[xKey][yKey],
                 state.options.aggregation)
               pointAggregation = (predAgg[0] || []).length + (predAgg[1] || []).length
               availableAggregations = availableAggregations.concat(pointAggregation)
+            } else if (state.options.aggregation === 'spot_intensity_log') {
+              availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
+                'spot_intensity')).map((item: any) => parseFloat(item) === 0 ? 0 : Math.log10(parseFloat(item))))
             } else {
               availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
                 state.options.aggregation)))
@@ -439,7 +496,7 @@ export default defineComponent({
               ? (value / maxValue) : (value / yMaxValue)
 
             dotValues.push({
-              value: [xIndex, yIndex, normalizedValue * 15, pointAggregation, value],
+              value: [xAxisIdxMap[xKey], yAxisIdxMap[yKey], normalizedValue * 15, pointAggregation, value],
               label: { key: yKey, molecule: auxData[xKey][yKey][0].formula },
             })
           }
@@ -625,10 +682,8 @@ export default defineComponent({
       axis = axis.filter((item: any) => item && item !== 'null' && item !== 'none')
 
       if (isXAxis) {
-        const start = ((state.pagination.currentPage - 1) * state.pagination.pageSize)
-        const end = ((state.pagination.currentPage - 1) * state.pagination.pageSize) + state.pagination.pageSize
         state.pagination.total = axis.length
-        state.xAxisValues = axis.slice(start, end)
+        state.xAxisValues = axis
       } else {
         state.yAxisValues = axis
       }
@@ -866,12 +921,18 @@ export default defineComponent({
     }
 
     const renderScatterChart = () => {
+      const yAxisValues : any[] = state.yAxisValues.filter((item: any) => !state.hiddenYValues.includes(item))
+      let xAxisValues : any[] = state.xAxisValues.filter((item: any) => !state.hiddenXValues.includes(item))
+      const start = ((state.pagination.currentPage - 1) * state.pagination.pageSize)
+      const end = ((state.pagination.currentPage - 1) * state.pagination.pageSize) + state.pagination.pageSize
+      xAxisValues = xAxisValues.slice(start, end)
+
       return (
         <div class='chart-container'>
           <DashboardScatterChart
-            xAxis={state.xAxisValues}
-            yAxis={state.yAxisValues}
-            size={state.yAxisValues.length * 30}
+            xAxis={xAxisValues}
+            yAxis={yAxisValues}
+            size={yAxisValues.length * 30}
             data={state.data}
             visualMap={state.visualMap}
           />
@@ -880,12 +941,18 @@ export default defineComponent({
       )
     }
     const renderHeatmapChart = () => {
+      const yAxisValues : any[] = state.yAxisValues.filter((item: any) => !state.hiddenYValues.includes(item))
+      let xAxisValues : any[] = state.xAxisValues.filter((item: any) => !state.hiddenXValues.includes(item))
+      const start = ((state.pagination.currentPage - 1) * state.pagination.pageSize)
+      const end = ((state.pagination.currentPage - 1) * state.pagination.pageSize) + state.pagination.pageSize
+      xAxisValues = xAxisValues.slice(start, end)
+
       return (
         <div class='chart-container'>
           <DashboardHeatmapChart
-            xAxis={state.xAxisValues}
-            yAxis={state.yAxisValues}
-            size={state.yAxisValues.length * 30}
+            xAxis={xAxisValues}
+            yAxis={yAxisValues}
+            size={yAxisValues.length * 30}
             data={state.data}
             visualMap={state.visualMap}
           />
