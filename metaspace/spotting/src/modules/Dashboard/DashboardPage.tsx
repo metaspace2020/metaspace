@@ -343,14 +343,24 @@ export default defineComponent({
       if ($route.query.agg) {
         handleAggregationChange($route.query.agg)
       }
+
       if ($route.query.filter) {
-        handleFilterSrcChange($route.query.filter)
+        const filterSrc : any[] = Array.isArray($route.query.filter)
+          ? $route.query.filter : $route.query.filter.split(',')
+        filterSrc.forEach((item: any, index: number) => {
+          if (index > 0) {
+            addFilterItem()
+          }
+          handleFilterSrcChange(item, index)
+        })
       }
 
       if ($route.query.filterValue) {
-        // const filterValue = state.filter[0].isBoolean ? parseInt($route.query.filterValue, 10)
-        //   : (!state.filter[0].isNumeric ? $route.query.filterValue.split(',') : $route.query.filterValue)
-        // handleFilterValueChange(filterValue)
+        $route.query.filterValue.split('|').forEach((item: any, index: number) => {
+          const value = state.filter[index].isBoolean
+            ? parseInt(item, 10) : (state.filter[index].isNumeric ? item : item.split('#'))
+          handleFilterValueChange(value, index)
+        })
       }
 
       buildValues()
@@ -585,12 +595,14 @@ export default defineComponent({
 
     const handleFilterValueChange = (value: any, idx : any = 0) => {
       state.filter[idx].value = value
+      const filterValueParams = state.filter.map((item: any) => Array.isArray(item.value)
+        ? item.value.join('#') : item.value).join('|')
+
       $router.replace({
         name: 'dashboard',
         query: {
           ...getQueryParams(),
-          filterValue: Array.isArray(value)
-            ? value.join(',') : value,
+          filterValue: filterValueParams,
         },
       })
 
@@ -620,8 +632,9 @@ export default defineComponent({
 
     const getQueryParams = () => {
       const queryObj : any = {
-        filter: state.filter[0].src,
-        filterValue: state.filter[0].value,
+        filter: state.filter.map((item: any) => item.src).join(','),
+        filterValue: state.filter.map((item: any) => Array.isArray(item.value)
+          ? item.value.join('#') : item.value).join('|'),
         xAxis: state.options.xAxis,
         yAxis: state.options.yAxis,
         agg: state.options.aggregation,
@@ -641,7 +654,8 @@ export default defineComponent({
 
     const handleFilterSrcChange = (value: any, idx : any = 0) => {
       state.filter[idx].src = value
-      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filter: value } })
+      const filterSrcParams = state.filter.map((item: any) => item.src).join(',')
+      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filter: filterSrcParams } })
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         handleFilterValueChange(null, idx)
       }
