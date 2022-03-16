@@ -74,8 +74,16 @@ const AXIS_VALUES = [
     src: 'coarse_path',
   },
   {
+    label: 'Pathway subclass',
+    src: 'fine_path',
+  },
+  {
     label: 'Class',
     src: 'coarse_class',
+  },
+  {
+    label: 'Subclass',
+    src: 'fine_class',
   },
   {
     label: 'Dataset',
@@ -518,7 +526,7 @@ export default defineComponent({
       const colors : any = []
 
       if (!Array.isArray(colormap)) {
-        colormap = createColormap('YlGnBu').map((color: any) => {
+        colormap = createColormap('-YlGnBu').map((color: any) => {
           return `rgba(${color.join(',')})`
         })
       }
