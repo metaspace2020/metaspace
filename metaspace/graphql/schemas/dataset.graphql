@@ -34,7 +34,7 @@ type Dataset {
   acquisitionGeometry: String
   metadataType: String!
 
-  status: JobStatus
+  status: String
   statusUpdateDT: String!
   inputPath: String
   uploadDateTime: String
@@ -192,7 +192,7 @@ input DatasetFilter {
   condition: String
   growthConditions: String
   metadataType: String
-  status: JobStatus
+  status: String # list of JobStatus separated by '|'
   hasAnnotationMatching: AnnotationFilter # Does not support some advanced filters e.g. the colocalization filters
 }
 
