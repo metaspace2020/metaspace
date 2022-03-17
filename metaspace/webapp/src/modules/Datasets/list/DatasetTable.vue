@@ -210,7 +210,7 @@ export default Vue.extend({
       return datasets
     },
     canSeeFailed() {
-      return this.currentUser != null && this.currentUser.role === 'admin'
+      return this.currentUser != null
     },
   },
   mounted() {

@@ -218,7 +218,31 @@ exports[`DatasetTable should match snapshot 1`] = `
           </span>
         </label>
          
-        <!---->
+        <label
+          class="el-checkbox cb-failed"
+        >
+          <span
+            class="el-checkbox__input"
+          >
+            <span
+              class="el-checkbox__inner"
+            />
+            <input
+              aria-hidden="false"
+              class="el-checkbox__original"
+              type="checkbox"
+              value="FAILED"
+            />
+          </span>
+          <span
+            class="el-checkbox__label"
+          >
+            
+          Failed (0)
+        
+            <!---->
+          </span>
+        </label>
       </div>
        
       <div
