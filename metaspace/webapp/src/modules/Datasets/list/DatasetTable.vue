@@ -217,7 +217,7 @@ export default Vue.extend({
       return datasets
     },
     canSeeFailed() {
-      return this.currentUser != null
+      return this.currentUser != null && (this.currentUser?.role === 'admin' || this.datasetCounts?.FAILED > 0)
     },
   },
   mounted() {

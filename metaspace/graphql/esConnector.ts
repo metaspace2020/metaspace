@@ -271,9 +271,24 @@ const constructDatasetAuthFilters = async(user: ContextUser) => {
     // Admins can see everything - don't filter
     return []
   } else {
-    // Public datasets
+    // Public datasets, except failed ones
     const datasetOrConditions: any[] = [
-      { term: { ds_is_public: true } },
+      {
+        bool: {
+          must: [
+            {
+              term: {
+                ds_is_public: true,
+              },
+            },
+            {
+              terms: {
+                ds_status: ['ANNOTATING', 'QUEUED', 'FINISHED'],
+              },
+            },
+          ],
+        },
+      },
     ]
     // User is owner
     if (user.id) {
