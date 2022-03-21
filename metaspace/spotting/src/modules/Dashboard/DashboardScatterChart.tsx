@@ -234,7 +234,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       if (item.targetType === 'axisName') {
         state.scaleIntensity = !state.scaleIntensity
       } else {
-        emit('itemSelected', item.data.mz)
+        emit('itemSelected', item)
       }
     }
 

@@ -207,6 +207,20 @@ const VALUE_METRICS = {
   },
 }
 
+const filterMap : any = {
+  adduct: 'add',
+  coarse_class: 'q',
+  fine_class: 'q',
+  coarse_path: 'q',
+  fine_path: 'q',
+  name_short: 'q',
+  dataset_id: 'ds',
+  neutral_loss: 'nl',
+  Polarity: 'mode',
+  'Matrix short': 'matrix',
+  Technology: 'matrix',
+}
+
 export default defineComponent({
   name: 'dashboard',
   setup: function(props, ctx) {
@@ -512,10 +526,17 @@ export default defineComponent({
               : (auxData[xKey][yKey].length / totalCount)
             const normalizedValue = state.options.valueMetric === VALUE_METRICS.count.src
               ? (value / maxValue) : (value / yMaxValue)
-
             dotValues.push({
               value: [xAxisIdxMap[xKey], yAxisIdxMap[yKey], normalizedValue * 15, pointAggregation, value],
-              label: { key: yKey, molecule: auxData[xKey][yKey][0].formula },
+              label: {
+                key: yKey,
+                molecule: auxData[xKey][yKey][0].formula,
+                x: xKey,
+                y: yKey,
+                datasetIds: uniq(auxData[xKey][yKey].map((item:any) => item.dataset_id)),
+                formulas: uniq(auxData[xKey][yKey].map((item:any) => item.formula)),
+                matrix: auxData[xKey][yKey][0]['Matrix long'],
+              },
             })
           }
         })
@@ -636,6 +657,31 @@ export default defineComponent({
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
       }
+    }
+
+    const handleItemClick = (item: any) => {
+      const baseUrl = 'https://metaspace2020.eu/annotations?db_id=304'
+      let url = baseUrl // + item.data.label.datasetIds.join(',')
+      const formulas : string = item.data.label.formulas.join('|')
+      const yAxisFilter : any = filterMap[state.options.yAxis]
+      const xAxisFilter : any = filterMap[state.options.xAxis]
+      if (yAxisFilter) {
+        const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'coarse_class'
+          || state.options.yAxis === 'name_short' || state.options.yAxis === 'coarse_path'
+          || state.options.yAxis === 'fine_path')
+          ? formulas : (yAxisFilter.includes('matrix') ? item.data.label.matrix : item.data.label.y)
+        url += `&${yAxisFilter}=${encodeURIComponent(value)}`
+      }
+      if (xAxisFilter) {
+        const value = (state.options.xAxis === 'fine_class' || state.options.xAxis === 'coarse_class'
+          || state.options.xAxis === 'name_short' || state.options.xAxis === 'coarse_path'
+          || state.options.xAxis === 'fine_path')
+          ? formulas : (xAxisFilter.includes('matrix') ? item.data.label.matrix : item.data.label.x)
+        url += `&${xAxisFilter}=${encodeURIComponent(value)}`
+      }
+      console.log('dd', url)
+      console.log('item', item)
+      window.open(url, '_blank')
     }
 
     const getQueryParams = () => {
@@ -957,6 +1003,7 @@ export default defineComponent({
             size={yAxisValues.length * 30}
             data={state.data}
             visualMap={state.visualMap}
+            onItemSelected={handleItemClick}
           />
           {!state.loading && renderPagination()}
         </div>
