@@ -1,7 +1,7 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
 import './DashboardPage.scss'
 import { Option, Select, Pagination, InputNumber, Button } from '../../lib/element-ui'
-import { cloneDeep, groupBy, keyBy, orderBy, sortedUniq, uniq } from 'lodash-es'
+import { cloneDeep, groupBy, keyBy, omit, orderBy, sortedUniq, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
@@ -281,13 +281,14 @@ export default defineComponent({
             fetch(baseUrl + `parts/prediction${idx}_21-03-22.json`).catch(err => err)))
           const ext = await Promise.all(data.map(res => res.json ? res.json().catch((err: any) => err) : res))
           predictions = ext.flat()
-          console.log('ans', predictions)
+          console.log('pred loaded')
+          // console.log('ans', predictions)
         } catch (err) {
           console.log('err', err)
         }
 
         const datasetResponse = await fetch(baseUrl + 'datasets_21-03-22.json')
-        let datasets = await datasetResponse.json()
+        const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification_14-03-22.json')
         const classification = await chemClassResponse.json()
         const pathwayResponse = await fetch(baseUrl + 'pathways_14-03-22.json')
@@ -295,9 +296,9 @@ export default defineComponent({
         const wellmapResponse = await fetch(baseUrl + 'wellmap_14-03-22.json')
         const wellmap = await wellmapResponse.json()
 
-        console.log('before', datasets.length)
-        datasets = datasets.filter((item:any) => item.Primary === 0)
-        console.log('after', datasets.length)
+        // console.log('before', datasets.length)
+        // datasets = datasets.filter((item:any) => item.Primary === 0)
+        // console.log('after', datasets.length)
 
         // state.datasets = datasets
         // state.classification = classification
@@ -313,6 +314,7 @@ export default defineComponent({
         const predWithDs : any = []
 
         // const auxPrediction : any = []
+        const omiKeys = Object.keys(predictions[0]).filter((key:any) => !Object.keys(PREDICTION_METRICS).includes(key))
         predictions.forEach((prediction: any) => {
           if (datasetsById[prediction.dataset_id]) {
             // auxPrediction.push(prediction)
@@ -321,7 +323,7 @@ export default defineComponent({
               'Matrix short': datasetsById[prediction.dataset_id]['Matrix short'],
               'Matrix long': datasetsById[prediction.dataset_id]['Matrix long'],
               Technology: datasetsById[prediction.dataset_id].Technology,
-              ...prediction,
+              ...omit(prediction, omiKeys),
             })
           }
         })
@@ -359,7 +361,8 @@ export default defineComponent({
             count += wellmapById[prediction.name_short].length
           }
         })
-        console.log('File loaded', predWithWellmap)
+        console.log('File loaded')
+        // console.log('File loaded', predWithWellmap)
         state.rawData = predWithWellmap
       } catch (e) {
         console.log('error', e)
