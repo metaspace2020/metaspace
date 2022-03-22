@@ -106,7 +106,7 @@ const AGGREGATED_VALUES = [
   },
   {
     label: 'Simple count',
-    src: 'pred_twostate',
+    src: 'pred_threestate',
   },
 ]
 
@@ -134,7 +134,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'State Prediction',
-    src: 'pred_twostate',
+    src: 'pred_threestate',
     isBoolean: true,
   },
   {
@@ -187,7 +187,7 @@ const PREDICTION_METRICS = {
   in_n_spots: true,
   spot_intensity: true,
   pred_val: true,
-  pred_twostate: true,
+  pred_threestate: true,
   name_short: true,
 }
 
@@ -402,8 +402,8 @@ export default defineComponent({
 
       if ($route.query.filterValue) {
         $route.query.filterValue.split('|').forEach((item: any, index: number) => {
-          const value = state.filter[index].isBoolean
-            ? parseInt(item, 10) : (state.filter[index].isNumeric ? item : item.split('#'))
+          const value = ((state.filter[index].isBoolean || state.filter[index].isNumeric)
+            ? item : item.split('#'))
           handleFilterValueChange(value, index)
         })
       }
@@ -446,7 +446,8 @@ export default defineComponent({
           filteredData = filteredData.filter((data: any) => {
             const filterValue = filter.value === 'None' ? null : filter.value
             return filter.isNumeric ? parseFloat(data[filter.src]) <= parseFloat(filter.value)
-              : (filter.isBoolean ? (data[filter.src] === filterValue)
+              : (filter.isBoolean ? (filterValue === 'True'
+                ? (data[filter.src] === 2) : data[filter.src] !== 2) // pred threestate
                 : (filterValue.length === 0 || filterValue.includes(data[filter.src])))
           })
         }
@@ -509,7 +510,7 @@ export default defineComponent({
       state.hiddenYValues = toBeRemoved
       state.hiddenXValues = toBeRemovedX
 
-      state.xAxisValues.forEach((xKey: any, xIndex: number) => {
+      state.xAxisValues.forEach((xKey: any) => {
         let totalCount : number = 1
         let yMaxValue : number = 0
 
@@ -525,17 +526,17 @@ export default defineComponent({
           yMaxValue = yMaxValue / totalCount
         }
 
-        state.yAxisValues.forEach((yKey: any, yIndex: number) => {
+        state.yAxisValues.forEach((yKey: any) => {
           if (auxData[xKey] && auxData[xKey][yKey]) {
             let pointAggregation : any =
               state.options.aggregation === 'spot_intensity_log' ? (auxData[xKey][yKey][0].spot_intensity === 0
                 ? 0 : Math.log10(auxData[xKey][yKey][0].spot_intensity))
                 : auxData[xKey][yKey][0][state.options.aggregation]
 
-            if (state.options.aggregation === 'pred_twostate') {
+            if (state.options.aggregation === 'pred_threestate') {
               const predAgg : any = groupBy(auxData[xKey][yKey],
                 state.options.aggregation)
-              pointAggregation = (predAgg[0] || []).length + (predAgg[1] || []).length
+              pointAggregation = (predAgg[2] || []).length
               availableAggregations = availableAggregations.concat(pointAggregation)
             } else if (state.options.aggregation === 'spot_intensity_log') {
               availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
@@ -640,7 +641,7 @@ export default defineComponent({
     }
 
     const parseBooleanLabel = (value: string) => {
-      if (parseInt(value, 10) === 0) {
+      if (parseInt(value, 10) === 0 || parseInt(value, 10) === 1) {
         return 'False'
       } else {
         return 'True'
@@ -888,10 +889,7 @@ export default defineComponent({
                       !filter.isNumeric
                       && <Select
                         class='select-box-mini mr-2'
-                        value={
-                          filter.isBoolean && filter.value
-                            ? parseInt(filter.value, 10) : filter.value
-                        }
+                        value={filter.value}
                         loading={state.loadingFilterOptions}
                         filterable
                         clearable
@@ -904,10 +902,10 @@ export default defineComponent({
                         placeholder='Adduct'
                         size='mini'>
                         {
-                          filter.options.map((option: any) => {
+                          (filter.isBoolean ? ['False', 'True'] : filter.options).map((option: any) => {
                             return <Option
-                              label={filter.isBoolean ? parseBooleanLabel(option) : option}
-                              value={filter.isBoolean ? parseInt(option, 10) : option}/>
+                              label={option}
+                              value={option}/>
                           })
                         }
                       </Select>
