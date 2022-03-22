@@ -511,19 +511,18 @@ export default defineComponent({
       state.hiddenXValues = toBeRemovedX
 
       state.xAxisValues.forEach((xKey: any) => {
-        let totalCount : number = 1
         let yMaxValue : number = 0
 
         if (auxData[xKey] && state.options.valueMetric === VALUE_METRICS.average.src) {
           Object.keys(auxData[xKey]).forEach((metricKey: string) => {
-            totalCount += auxData[xKey][metricKey].length
-          })
-          Object.keys(auxData[xKey]).forEach((metricKey: string) => {
-            if (auxData[xKey][metricKey].length > yMaxValue) {
-              yMaxValue = auxData[xKey][metricKey].length
+            const auxAgg : any = groupBy(auxData[xKey][metricKey], 'pred_threestate')
+            const totalAuxAgg : number = ((auxAgg[0] || []).length + (auxAgg[1] || []).length
+              + (auxAgg[2] || []).length) || 1
+            const countAuxAgg : number = (auxAgg[2] || []).length
+            if (totalAuxAgg && ((countAuxAgg / totalAuxAgg) > yMaxValue)) {
+              yMaxValue = countAuxAgg / totalAuxAgg
             }
           })
-          yMaxValue = yMaxValue / totalCount
         }
 
         state.yAxisValues.forEach((yKey: any) => {
@@ -532,12 +531,14 @@ export default defineComponent({
               state.options.aggregation === 'spot_intensity_log' ? (auxData[xKey][yKey][0].spot_intensity === 0
                 ? 0 : Math.log10(auxData[xKey][yKey][0].spot_intensity))
                 : auxData[xKey][yKey][0][state.options.aggregation]
+            const predAgg : any = groupBy(auxData[xKey][yKey], 'pred_threestate')
+            const predCount: number = (predAgg[2] || []).length
+            const totalCount : number = ((predAgg[0] || []).length + (predAgg[1] || []).length
+              + (predAgg[2] || []).length) || 1
 
             if (state.options.aggregation === 'pred_threestate') {
-              const predAgg : any = groupBy(auxData[xKey][yKey],
-                state.options.aggregation)
-              pointAggregation = (predAgg[2] || []).length
-              availableAggregations = availableAggregations.concat(pointAggregation)
+              pointAggregation = predCount
+              availableAggregations = availableAggregations.concat(predCount)
             } else if (state.options.aggregation === 'spot_intensity_log') {
               availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
                 'spot_intensity')).map((item: any) => parseFloat(item) === 0 ? 0 : Math.log10(parseFloat(item))))
@@ -547,9 +548,9 @@ export default defineComponent({
             }
 
             const value : number = state.options.valueMetric === VALUE_METRICS.count.src ? auxData[xKey][yKey].length
-              : (auxData[xKey][yKey].length / totalCount)
+              : (predCount / totalCount)
             const normalizedValue = state.options.valueMetric === VALUE_METRICS.count.src
-              ? (value / maxValue) : (value / yMaxValue)
+              ? (value / maxValue) : (yMaxValue === 0 ? 0 : (value / yMaxValue))
             dotValues.push({
               value: [xAxisIdxMap[xKey], yAxisIdxMap[yKey], normalizedValue * 15, pointAggregation, value],
               label: {
