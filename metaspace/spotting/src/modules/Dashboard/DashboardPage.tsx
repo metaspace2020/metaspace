@@ -271,10 +271,23 @@ export default defineComponent({
         console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/new/'
-        const response = await fetch(baseUrl + 'all_predictions_14-03-22.json')
-        const predictions = await response.json()
-        const datasetResponse = await fetch(baseUrl + 'datasets_14-03-22.json')
-        const datasets = await datasetResponse.json()
+        // const response = await fetch(baseUrl + 'all_predictions_21-03-22.json')
+        // const predictions = await response.json()
+
+        // download predictions
+        let predictions = []
+        try {
+          const data = await Promise.all(Array.from(Array(10).keys()).map((idx: number) =>
+            fetch(baseUrl + `parts/prediction${idx}_21-03-22.json`).catch(err => err)))
+          const ext = await Promise.all(data.map(res => res.json ? res.json().catch((err: any) => err) : res))
+          predictions = ext.flat()
+          console.log('ans', predictions)
+        } catch (err) {
+          console.log('err', err)
+        }
+
+        const datasetResponse = await fetch(baseUrl + 'datasets_21-03-22.json')
+        let datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification_14-03-22.json')
         const classification = await chemClassResponse.json()
         const pathwayResponse = await fetch(baseUrl + 'pathways_14-03-22.json')
@@ -282,13 +295,16 @@ export default defineComponent({
         const wellmapResponse = await fetch(baseUrl + 'wellmap_14-03-22.json')
         const wellmap = await wellmapResponse.json()
 
-        state.predictions = predictions
-        state.datasets = datasets
-        state.classification = classification
-        state.pathways = pathways
-        state.wellmap = wellmap
+        console.log('before', datasets.length)
+        datasets = datasets.filter((item:any) => item.Primary === 0)
+        console.log('after', datasets.length)
 
-        const datasetsById = keyBy(datasets, 'Clone ID')
+        // state.datasets = datasets
+        // state.classification = classification
+        // state.pathways = pathways
+        // state.wellmap = wellmap
+
+        const datasetsById = keyBy(datasets, 'Dataset ID')
         const chemClassById = groupBy(classification, 'name_short')
         const pathwayById = groupBy(pathways, 'name_short')
         const wellmapById = groupBy(wellmap, 'name_short')
@@ -296,8 +312,10 @@ export default defineComponent({
         let count = 0
         const predWithDs : any = []
 
+        // const auxPrediction : any = []
         predictions.forEach((prediction: any) => {
           if (datasetsById[prediction.dataset_id]) {
+            // auxPrediction.push(prediction)
             predWithDs.push({
               Polarity: datasetsById[prediction.dataset_id].Polarity,
               'Matrix short': datasetsById[prediction.dataset_id]['Matrix short'],
@@ -307,6 +325,8 @@ export default defineComponent({
             })
           }
         })
+
+        // state.predictions = auxPrediction
 
         const predWithClass : any = []
         predWithDs.forEach((prediction: any) => {
@@ -553,6 +573,8 @@ export default defineComponent({
       }
 
       availableAggregations = uniq(availableAggregations).sort()
+      availableAggregations = availableAggregations
+        .filter((agg:any) => agg !== null && agg !== undefined && agg !== 'undefined' && agg != 'null')
       colorSteps = availableAggregations.length
         ? (colormap.length / availableAggregations.length) : 1
       availableAggregations = availableAggregations.map((agg: any, aggIndex: number) => {
@@ -679,8 +701,6 @@ export default defineComponent({
           ? formulas : (xAxisFilter.includes('matrix') ? item.data.label.matrix : item.data.label.x)
         url += `&${xAxisFilter}=${encodeURIComponent(value)}`
       }
-      console.log('dd', url)
-      console.log('item', item)
       window.open(url, '_blank')
     }
 
@@ -717,7 +737,7 @@ export default defineComponent({
 
     const handleAxisChange = (value: any, isXAxis : boolean = true) => {
       let axis : any = []
-      let src : any = ''
+      const src : any = state.rawData
 
       if (isXAxis) {
         state.options.xAxis = value
@@ -727,15 +747,15 @@ export default defineComponent({
         $router.replace({ name: 'dashboard', query: { ...getQueryParams(), yAxis: value } })
       }
 
-      if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
-        src = state.classification
-      } else if (Object.keys(DATASET_METRICS).includes(value)) {
-        src = state.datasets
-      } else if (Object.keys(PREDICTION_METRICS).includes(value)) {
-        src = state.predictions
-      } else if (Object.keys(PATHWAY_METRICS).includes(value)) {
-        src = state.pathways
-      }
+      // if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
+      //   src = state.classification
+      // } else if (Object.keys(DATASET_METRICS).includes(value)) {
+      //   src = state.datasets
+      // } else if (Object.keys(PREDICTION_METRICS).includes(value)) {
+      //   src = state.predictions
+      // } else if (Object.keys(PATHWAY_METRICS).includes(value)) {
+      //   src = state.pathways
+      // }
 
       if (!src) {
         return
