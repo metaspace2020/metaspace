@@ -5,6 +5,10 @@ $header-height: 64px;
   @apply flex flex-row flex-wrap p-0;
   min-height: calc(100vh - #{$header-height});
 
+  .info{
+    @apply flex justify-center p-2 w-full flex-wrap;
+  }
+
   .mass-ref-label{
     width: 130px;
   }
@@ -113,8 +117,8 @@ $header-height: 64px;
   }
 
   .dataset-browser-holder-filter-box{
-    @apply p-2 max-w-4xl box-border mx-4 leading-6 text-base;
-    min-height: 168px;
+    @apply p-2 max-w-4xl box-border leading-6 text-base;
+    //min-height: 168px;
 
     p{
       @apply mb-2;

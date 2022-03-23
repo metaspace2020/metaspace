@@ -13,6 +13,9 @@ import reportError from '../../../lib/reportError'
 import { readNpy } from '../../../lib/npyHandler'
 import { DatasetBrowserKendrickPlot } from './DatasetBrowserKendrickPlot'
 import FadeTransition from '../../../components/FadeTransition'
+import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
+import MolecularFormula from '../../../components/MolecularFormula'
+import CopyButton from '../../../components/CopyButton.vue'
 
 interface DatasetBrowserProps {
   className: string
@@ -437,6 +440,50 @@ export default defineComponent<DatasetBrowserProps>({
       )
     }
 
+    const renderInfo = () => {
+      const { annotation } = state
+
+      if (!annotation) {
+        return null
+      }
+
+      // @ts-ignore TS2604
+      const candidateMolecules = () => <CandidateMoleculesPopover
+        placement="bottom"
+        possibleCompounds={annotation.possibleCompounds}
+        isomers={annotation.isomers}
+        isobars={annotation.isobars}>
+        <MolecularFormula
+          class="sf-big text-2xl"
+          ion={annotation.ion}
+        />
+      </CandidateMoleculesPopover>
+
+      return (
+        <div class='info'>
+          {candidateMolecules()}
+          <CopyButton
+            class="ml-1"
+            text={annotation.ion}>
+            Copy ion to clipboard
+          </CopyButton>
+          <span class="text-2xl flex items-baseline ml-4">
+            { annotation.mz.toFixed(4) }
+            <span class="ml-1 text-gray-700 text-sm">m/z</span>
+            <CopyButton
+              class="self-start"
+              text={annotation.mz.toFixed(4)}>
+              Copy m/z to clipboard
+            </CopyButton>
+          </span>
+          <div class="flex items-baseline ml-4 w-full justify-center items-center text-xl"
+            style={{ visibility: state.x === undefined && state.y === undefined ? 'hidden' : '' }}>
+            {`X: ${state.x}, Y: ${state.y}`}
+          </div>
+        </div>
+      )
+    }
+
     const renderImageFilters = () => {
       return (
         <div class='dataset-browser-holder-filter-box'>
@@ -602,6 +649,7 @@ export default defineComponent<DatasetBrowserProps>({
                 Image viewer
               </div>
               {renderImageFilters()}
+              {renderInfo()}
               <div class='ion-image-holder'>
                 {
                   (annotationsLoading.value || state.imageLoading)
