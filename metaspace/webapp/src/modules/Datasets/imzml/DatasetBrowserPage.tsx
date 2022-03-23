@@ -16,6 +16,7 @@ import FadeTransition from '../../../components/FadeTransition'
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
+import Vue from 'vue'
 
 interface DatasetBrowserProps {
   className: string
@@ -41,6 +42,7 @@ interface DatasetBrowserState {
   metadata: any
   annotation: any
   normalizationData: any
+  showFullTIC: boolean
   x: number | undefined
   y: number | undefined
   currentView: string
@@ -90,6 +92,7 @@ export default defineComponent<DatasetBrowserProps>({
       fixedMassReference: 14.01565006, // m_CH2=14.0156,
       referenceFormulaMz: 14.01565006, // m_CH2=14.0156,
       currentView: VIEWS.KENDRICK,
+      showFullTIC: true,
     })
 
     const queryVariables = () => {
@@ -136,7 +139,7 @@ export default defineComponent<DatasetBrowserProps>({
           shape,
           metadata: metadata,
           type: 'TIC',
-          showFullTIC: false,
+          showFullTIC: state.showFullTIC,
           error: false,
         }
       } catch (e) {
@@ -472,7 +475,7 @@ export default defineComponent<DatasetBrowserProps>({
             <span class="ml-1 text-gray-700 text-sm">m/z</span>
             <CopyButton
               class="self-start"
-              text={annotation.mz.toFixed(4)}>
+              text={state.showFullTIC ? 'TIC' : annotation.mz.toFixed(4)}>
               Copy m/z to clipboard
             </CopyButton>
           </span>
@@ -491,8 +494,12 @@ export default defineComponent<DatasetBrowserProps>({
           <div class='filter-holder'>
             <span class='label'>m/z</span>
             <InputNumber
-              value={state.mzmScoreFilter}
+              value={state.showFullTIC ? undefined : state.mzmScoreFilter}
               onInput={(value: number) => {
+                if (value) {
+                  state.showFullTIC = false
+                  Vue.set(state.normalizationData, 'showFullTIC', false)
+                }
                 state.mzmScoreFilter = value
               }}
               onChange={() => {
@@ -621,6 +628,8 @@ export default defineComponent<DatasetBrowserProps>({
                 peakFilter={state.peakFilter}
                 referenceMz={state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz}
                 onItemSelected={(mz: number) => {
+                  state.showFullTIC = false
+                  Vue.set(state.normalizationData, 'showFullTIC', false)
                   state.mzmScoreFilter = mz
                   requestIonImage()
                 }}
@@ -637,6 +646,8 @@ export default defineComponent<DatasetBrowserProps>({
                 annotatedData={annotatedPeaks.value}
                 peakFilter={state.peakFilter}
                 onItemSelected={(mz: number) => {
+                  state.showFullTIC = false
+                  Vue.set(state.normalizationData, 'showFullTIC', false)
                   state.mzmScoreFilter = mz
                   requestIonImage()
                 }}
@@ -669,6 +680,7 @@ export default defineComponent<DatasetBrowserProps>({
                     ionImageUrl={state.ionImageUrl}
                     pixelSizeX={getPixelSizeX()}
                     pixelSizeY={getPixelSizeY()}
+                    isNormalized={state.showFullTIC}
                     normalizationData={state.normalizationData}
                     onPixelSelected={handlePixelSelect}
                   />

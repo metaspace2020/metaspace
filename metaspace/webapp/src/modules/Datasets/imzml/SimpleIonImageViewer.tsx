@@ -1,4 +1,4 @@
-import { computed, defineComponent, onMounted, reactive } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, reactive, watch } from '@vue/composition-api'
 import config from '../../../lib/config'
 import MainImage from '../../Annotations/annotation-widgets/default/MainImage.vue'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
@@ -33,6 +33,7 @@ interface ImageSettings {
 }
 
 interface SimpleIonImageViewerProps {
+  isNormalized: boolean
   annotation: any
   normalizationData: any
   ionImageUrl: string | null
@@ -71,6 +72,10 @@ export default defineComponent<SimpleIonImageViewerProps>({
       type: Number,
       default: 0,
     },
+    isNormalized: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup: function(props, { emit, root }) {
     const { $route } = root
@@ -79,7 +84,7 @@ export default defineComponent<SimpleIonImageViewerProps>({
       rangeSliderStyle: undefined,
       scaleIntensity: false,
       imageSettings: {
-        isNormalized: !!$route.query.norm,
+        isNormalized: props.isNormalized || !!$route.query.norm,
         lockedIntensities: [undefined, undefined],
         annotImageOpacity: 1.0,
         opticalOpacity: 1.0,
@@ -331,7 +336,7 @@ export default defineComponent<SimpleIonImageViewerProps>({
 
     const startImageLoaderSettings = () => {
       state.imageSettings = {
-        isNormalized: !!$route.query.norm,
+        isNormalized: props.isNormalized || !!$route.query.norm,
         lockedIntensities: [undefined, undefined],
         annotImageOpacity: 1.0,
         opticalOpacity: 1.0,
@@ -353,6 +358,10 @@ export default defineComponent<SimpleIonImageViewerProps>({
       }
       setIonImage()
     }
+
+    watch(() => props.isNormalized, (newValue) => {
+      handleNormalizationChange(newValue)
+    })
 
     return () => {
       return (
