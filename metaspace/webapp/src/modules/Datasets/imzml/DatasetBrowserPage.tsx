@@ -33,6 +33,7 @@ interface DatasetBrowserState {
   invalidFormula: boolean
   referenceFormula: any
   invalidReferenceFormula: boolean
+  fixedMassReference: number
   referenceFormulaMz: number
   metadata: any
   annotation: any
@@ -83,7 +84,8 @@ export default defineComponent<DatasetBrowserProps>({
       invalidFormula: false,
       invalidReferenceFormula: false,
       referenceFormula: undefined,
-      referenceFormulaMz: 14.0156, // m_CH2=14.0156,
+      fixedMassReference: 14.01565006, // m_CH2=14.0156,
+      referenceFormulaMz: 14.01565006, // m_CH2=14.0156,
       currentView: VIEWS.KENDRICK,
     })
 
@@ -384,12 +386,26 @@ export default defineComponent<DatasetBrowserProps>({
           </div>
           <FadeTransition>
             <div
-              class='flex flex-row w-full items-start mt-4'
+              class='flex flex-row w-full items-start mt-4 flex-wrap'
               style={{
                 visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
               }}>
-              <span class='mass-ref-label mr-1'>Mass reference</span>
-              <div class='flex flex-1 flex-col'>
+              <p class='font-semibold w-full'>Mass reference</p>
+              <Select
+                class='select-box mr-4'
+                value={state.fixedMassReference}
+                onChange={(value: number) => {
+                  state.fixedMassReference = value
+                }}
+                placeholder='CH2'
+                size='mini'>
+                <Option label="CH2" value={14.01565006}/>
+                <Option label="13C" value={1.00335484}/>
+                <Option label="Unsaturation" value={2.015650064}/>
+                <Option label="Deuterium" value={1.006276745}/>
+                <Option label="Other" value={-1}/>
+              </Select>
+              <div class='flex flex-1 flex-col' style={{ visibility: state.fixedMassReference === -1 ? '' : 'hidden' }}>
                 <Input
                   class={'max-formula-input' + (state.invalidReferenceFormula ? ' formula-input-error' : '')}
                   value={state.referenceFormula}
@@ -409,7 +425,7 @@ export default defineComponent<DatasetBrowserProps>({
                     }
                   }}
                   size='mini'
-                  placeholder='CH2'
+                  placeholder='Type the formula'
                 />
                 <span class='error-message' style={{ visibility: !state.invalidReferenceFormula ? 'hidden' : '' }}>
                 Invalid formula!
@@ -556,7 +572,7 @@ export default defineComponent<DatasetBrowserProps>({
                 data={state.sampleData}
                 annotatedData={annotatedPeaks.value}
                 peakFilter={state.peakFilter}
-                referenceMz={state.referenceFormulaMz}
+                referenceMz={state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz}
                 onItemSelected={(mz: number) => {
                   state.mzmScoreFilter = mz
                   requestIonImage()
