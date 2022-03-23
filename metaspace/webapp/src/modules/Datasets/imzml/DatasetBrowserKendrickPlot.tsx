@@ -55,6 +55,7 @@ interface DatasetBrowserKendrickPlotState {
 const PEAK_FILTER = {
   ALL: 1,
   FDR: 2,
+  OFF: 3,
 }
 
 export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrickPlotProps>({
@@ -283,7 +284,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
           }
         })
 
-        if (peakFilter.value === PEAK_FILTER.ALL && !isAnnotated) { // add unnanotated peaks
+        if (peakFilter.value !== PEAK_FILTER.FDR && !isAnnotated) { // add unnanotated peaks
           data.push({
             name: xAxis.toFixed(4),
             tooltip,
@@ -295,7 +296,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
           })
         }
 
-        if (isAnnotated) {
+        if (peakFilter.value !== PEAK_FILTER.OFF && isAnnotated) {
           data.push({
             name: xAxis.toFixed(4),
             tooltip,

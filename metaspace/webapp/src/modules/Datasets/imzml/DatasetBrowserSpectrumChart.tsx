@@ -48,6 +48,7 @@ interface DatasetBrowserSpectrumChartState {
 const PEAK_FILTER = {
   ALL: 1,
   FDR: 2,
+  OFF: 3,
 }
 
 export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectrumChartProps>({
@@ -287,7 +288,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
           }
         })
 
-        if (peakFilter.value === PEAK_FILTER.ALL && !isAnnotated) { // add unnanotated peaks
+        if (peakFilter.value !== PEAK_FILTER.FDR && !isAnnotated) { // add unnanotated peaks
           data.push({
             name: xAxis.toFixed(4),
             tooltip,
@@ -309,7 +310,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
           })
         }
 
-        if (isAnnotated) {
+        if (peakFilter.value !== PEAK_FILTER.OFF && isAnnotated) {
           data.push({
             name: xAxis.toFixed(4),
             tooltip,

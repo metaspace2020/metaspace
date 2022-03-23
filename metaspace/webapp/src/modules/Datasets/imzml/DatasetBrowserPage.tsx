@@ -45,6 +45,7 @@ interface DatasetBrowserState {
 const PEAK_FILTER = {
   ALL: 1,
   FDR: 2,
+  OFF: 3,
 }
 
 const VIEWS = {
@@ -336,6 +337,7 @@ export default defineComponent<DatasetBrowserProps>({
               value={state.peakFilter}
               size='mini'>
               <Radio class='w-full' label={PEAK_FILTER.ALL}>All Peaks</Radio>
+              <Radio class='w-full mt-1 ' label={PEAK_FILTER.OFF}>Unannotated Peaks</Radio>
               <div>
                 <Radio label={PEAK_FILTER.FDR}>Show annotated at FDR</Radio>
                 <Select
