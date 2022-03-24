@@ -17,6 +17,7 @@ import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/Cand
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import Vue from 'vue'
+import FileSaver from 'file-saver'
 
 interface DatasetBrowserProps {
   className: string
@@ -211,6 +212,23 @@ export default defineComponent<DatasetBrowserProps>({
       } finally {
         state.chartLoading = false
       }
+    }
+
+    const handleDownload = () => {
+      const cols = ['dataset_name', 'dataset_id', 'x', 'y', 'mz', 'intensity', 'mass_reference', 'KMD']
+      const rows = [cols]
+
+      state.sampleData[0].mzs.forEach((mz: any, idx: number) => {
+        const exactMass = state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz
+        const kendrickMass = mz * Math.round(exactMass) / exactMass
+        const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
+        rows.push([dataset?.value?.name, dataset?.value?.id, state.sampleData[0].x,
+          state.sampleData[0].y, mz, state.sampleData[0].ints[idx], exactMass, KendrickMassDefect])
+      })
+
+      const csv = rows.map((e: any) => e.join(',')).join('\n')
+      const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+      FileSaver.saveAs(blob, `${dataset?.value?.name.replace(/\s/g, '_')}_plot.csv`)
     }
 
     const requestIonImage = async(mzValue : number | undefined = state.mzmScoreFilter) => {
@@ -450,6 +468,20 @@ export default defineComponent<DatasetBrowserProps>({
         return null
       }
 
+      if (state.showFullTIC) {
+        return (
+          <div class='info'>
+            <span class="text-2xl flex items-baseline ml-4">
+                TIC
+            </span>
+            <div class="flex items-baseline ml-4 w-full justify-center items-center text-xl"
+              style={{ visibility: state.x === undefined && state.y === undefined ? 'hidden' : '' }}>
+              {`X: ${state.x}, Y: ${state.y}`}
+            </div>
+          </div>
+        )
+      }
+
       // @ts-ignore TS2604
       const candidateMolecules = () => <CandidateMoleculesPopover
         placement="bottom"
@@ -475,7 +507,7 @@ export default defineComponent<DatasetBrowserProps>({
             <span class="ml-1 text-gray-700 text-sm">m/z</span>
             <CopyButton
               class="self-start"
-              text={state.showFullTIC ? 'TIC' : annotation.mz.toFixed(4)}>
+              text={annotation.mz.toFixed(4)}>
               Copy m/z to clipboard
             </CopyButton>
           </span>
@@ -633,6 +665,7 @@ export default defineComponent<DatasetBrowserProps>({
                   state.mzmScoreFilter = mz
                   requestIonImage()
                 }}
+                onDownload={handleDownload}
               />
               <DatasetBrowserSpectrumChart
                 style={{
@@ -651,6 +684,7 @@ export default defineComponent<DatasetBrowserProps>({
                   state.mzmScoreFilter = mz
                   requestIonImage()
                 }}
+                onDownload={handleDownload}
               />
             </div>
           </div>
