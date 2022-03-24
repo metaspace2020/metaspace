@@ -253,7 +253,8 @@ export default defineComponent<SimpleIonImageViewerProps>({
     }
 
     const handleNormalizationChange = (isNormalized: boolean) => {
-      state.imageSettings.isNormalized = isNormalized
+      emit('normalization', isNormalized)
+      state.imageSettings.isNormalized = props.isNormalized || isNormalized
     }
 
     const buildRangeSliderStyle = (scaleRange: number[] = [0, 1]) => {

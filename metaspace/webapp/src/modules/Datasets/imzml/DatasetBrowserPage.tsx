@@ -35,6 +35,7 @@ interface DatasetBrowserState {
   sampleData: any[]
   chartLoading: boolean
   imageLoading: boolean
+  isNormalized: boolean
   invalidFormula: boolean
   referenceFormula: any
   invalidReferenceFormula: boolean
@@ -47,6 +48,7 @@ interface DatasetBrowserState {
   x: number | undefined
   y: number | undefined
   currentView: string
+  normalization: number | undefined
 }
 
 const PEAK_FILTER = {
@@ -80,6 +82,7 @@ export default defineComponent<DatasetBrowserProps>({
       metadata: undefined,
       annotation: undefined,
       chartLoading: false,
+      isNormalized: false,
       imageLoading: false,
       moleculeFilter: undefined,
       x: undefined,
@@ -94,6 +97,7 @@ export default defineComponent<DatasetBrowserProps>({
       referenceFormulaMz: 14.01565006, // m_CH2=14.0156,
       currentView: VIEWS.KENDRICK,
       showFullTIC: true,
+      normalization: undefined,
     })
 
     const queryVariables = () => {
@@ -205,8 +209,12 @@ export default defineComponent<DatasetBrowserProps>({
         })
         const content = await response.json()
         state.sampleData = [content]
+
+        const i = (y * state.normalizationData.shape[1]) + x
+        const ticPixel = state.normalizationData.data[i]
         state.x = content.x
         state.y = content.y
+        state.normalization = ticPixel
       } catch (e) {
         reportError(e)
       } finally {
@@ -332,6 +340,10 @@ export default defineComponent<DatasetBrowserProps>({
 
     const handlePixelSelect = (coordinates: any) => {
       requestSpectrum(coordinates.x, coordinates.y)
+    }
+
+    const handleNormalization = (isNormalized: boolean) => {
+      state.isNormalized = !state.showFullTIC && isNormalized
     }
 
     const renderBrowsingFilters = () => {
@@ -472,7 +484,7 @@ export default defineComponent<DatasetBrowserProps>({
         return (
           <div class='info'>
             <span class="text-2xl flex items-baseline ml-4">
-                TIC
+                TIC image
             </span>
             <div class="flex items-baseline ml-4 w-full justify-center items-center text-xl"
               style={{ visibility: state.x === undefined && state.y === undefined ? 'hidden' : '' }}>
@@ -673,6 +685,7 @@ export default defineComponent<DatasetBrowserProps>({
                   height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
                 }}
                 isEmpty={isEmpty}
+                normalization={state.isNormalized ? state.normalization : undefined}
                 isLoading={state.chartLoading}
                 isDataLoading={annotationsLoading.value}
                 data={state.sampleData}
@@ -717,6 +730,7 @@ export default defineComponent<DatasetBrowserProps>({
                     isNormalized={state.showFullTIC}
                     normalizationData={state.normalizationData}
                     onPixelSelected={handlePixelSelect}
+                    onNormalization={handleNormalization}
                   />
                 }
               </div>

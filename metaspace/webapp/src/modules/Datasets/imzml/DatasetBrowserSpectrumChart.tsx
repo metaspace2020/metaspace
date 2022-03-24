@@ -38,6 +38,7 @@ interface DatasetBrowserSpectrumChartProps {
   data: any[]
   annotatedData: any[]
   peakFilter: number
+  normalization: number | undefined
 }
 
 interface DatasetBrowserSpectrumChartState {
@@ -77,6 +78,9 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
     peakFilter: {
       type: Number,
       default: PEAK_FILTER.ALL,
+    },
+    normalization: {
+      type: Number,
     },
   },
   setup(props, { emit }) {
@@ -230,6 +234,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
       },
     })
 
+    const normalization = computed(() => props.normalization)
     const chartData = computed(() => props.data)
     const annotatedMzs = computed(() => props.annotatedData)
     const peakFilter = computed(() => props.peakFilter)
@@ -246,6 +251,8 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
       let maxX
       let maxIntensity = Math.max(...chartData.value[0].ints)
 
+      maxIntensity = normalization.value ? (maxIntensity / normalization.value) : maxIntensity
+
       // maxIntensity if annotated
       if (peakFilter.value !== PEAK_FILTER.ALL) {
         const auxInts : number[] = []
@@ -256,7 +263,9 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             const highestMz = theoreticalMz * 1.000003
             const lowestMz = theoreticalMz * 0.999997
             if (xAxis >= lowestMz && xAxis <= highestMz) {
-              auxInts.push(chartData.value[0].ints[i])
+              const auxInt = normalization.value ? (chartData.value[0].ints[i] / normalization.value)
+                : chartData.value[0].ints[i]
+              auxInts.push(auxInt)
             }
           })
         }
@@ -265,9 +274,11 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
 
       for (let i = 0; i < chartData.value[0].mzs.length; i++) {
         const xAxis = chartData.value[0].mzs[i]
+        const auxInt = normalization.value ? (chartData.value[0].ints[i] / normalization.value)
+          : chartData.value[0].ints[i]
         const yAxis =
           state.scaleIntensity
-            ? chartData.value[0].ints[i] / maxIntensity * 100.0 : chartData.value[0].ints[i]
+            ? auxInt / maxIntensity * 100.0 : auxInt
         let tooltip = `m/z: ${xAxis.toFixed(4)}`
         let isAnnotated = false
 
