@@ -1,7 +1,7 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
 import './DashboardPage.scss'
 import { Option, Select, Pagination, InputNumber, Button } from '../../lib/element-ui'
-import { cloneDeep, groupBy, keyBy, omit, orderBy, sortedUniq, uniq } from 'lodash-es'
+import { cloneDeep, groupBy, keyBy, omit, orderBy, sortedUniq, uniq, uniqBy } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
@@ -35,6 +35,7 @@ interface DashboardState {
   pathways : any
   wellmap : any
   pagination: any
+  baseData: any
   hiddenYValues: any[]
   hiddenXValues: any[]
 }
@@ -161,6 +162,10 @@ const FILTER_VALUES = [
     label: 'Dataset',
     src: 'dataset_id',
   },
+  {
+    label: 'Primary',
+    src: 'Primary',
+  },
   // {
   //   label: 'Intensity',
   //   src: 'spot_intensity',
@@ -176,6 +181,7 @@ const DATASET_METRICS = {
   Polarity: true,
   Technology: true,
   'Matrix short': true,
+  Primary: true,
 }
 
 const PREDICTION_METRICS = {
@@ -202,7 +208,7 @@ const VALUE_METRICS = {
     src: 1,
   },
   average: {
-    label: 'Average',
+    label: 'Fraction',
     src: 2,
   },
 }
@@ -242,6 +248,7 @@ export default defineComponent({
       yAxisValues: [],
       data: [],
       rawData: undefined,
+      baseData: undefined,
       visualMap: {},
       options: {
         xAxis: null,
@@ -271,7 +278,7 @@ export default defineComponent({
         console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/new/'
-        // const response = await fetch(baseUrl + 'all_predictions_21-03-22.json')
+        // const response = await fetch(baseUrl + 'all_predictions_14-03-22.json')
         // const predictions = await response.json()
 
         // download predictions
@@ -293,36 +300,26 @@ export default defineComponent({
         const classification = await chemClassResponse.json()
         const pathwayResponse = await fetch(baseUrl + 'pathways_14-03-22.json')
         const pathways = await pathwayResponse.json()
-        const wellmapResponse = await fetch(baseUrl + 'wellmap_14-03-22.json')
-        const wellmap = await wellmapResponse.json()
-
-        // console.log('before', datasets.length)
-        // datasets = datasets.filter((item:any) => item.Primary === 0)
-        // console.log('after', datasets.length)
-
-        // state.datasets = datasets
-        // state.classification = classification
-        // state.pathways = pathways
-        // state.wellmap = wellmap
 
         const datasetsById = keyBy(datasets, 'Dataset ID')
+        delete datasetsById.null
         const chemClassById = groupBy(classification, 'name_short')
         const pathwayById = groupBy(pathways, 'name_short')
-        const wellmapById = groupBy(wellmap, 'name_short')
 
-        let count = 0
         const predWithDs : any = []
 
         // const auxPrediction : any = []
         const omiKeys = Object.keys(predictions[0]).filter((key:any) => !Object.keys(PREDICTION_METRICS).includes(key))
         predictions.forEach((prediction: any) => {
-          if (datasetsById[prediction.dataset_id]) {
+          const datasetItem = datasetsById[prediction.dataset_id]
+          if (datasetItem) {
             // auxPrediction.push(prediction)
             predWithDs.push({
-              Polarity: datasetsById[prediction.dataset_id].Polarity,
-              'Matrix short': datasetsById[prediction.dataset_id]['Matrix short'],
-              'Matrix long': datasetsById[prediction.dataset_id]['Matrix long'],
-              Technology: datasetsById[prediction.dataset_id].Technology,
+              Polarity: datasetItem.Polarity,
+              'Matrix short': datasetItem['Matrix short'],
+              'Matrix long': datasetItem['Matrix long'],
+              Technology: datasetItem.Technology,
+              Primary: datasetItem.Primary,
               ...omit(prediction, omiKeys),
             })
           }
@@ -336,34 +333,21 @@ export default defineComponent({
             chemClassById[prediction.name_short].forEach((classification: any) => {
               predWithClass.push({ ...classification, ...prediction })
             })
-            count += chemClassById[prediction.name_short].length
           }
         })
 
-        count = 0
         const predWithPathway : any = []
         predWithClass.forEach((prediction: any) => {
           if (pathwayById[prediction.name_short]) {
             pathwayById[prediction.name_short].forEach((pathway: any) => {
               predWithPathway.push({ ...pathway, ...prediction })
             })
-            count += pathwayById[prediction.name_short].length
           }
         })
 
-        count = 0
-        const predWithWellmap : any = []
-        predWithPathway.forEach((prediction: any) => {
-          if (wellmapById[prediction.name_short]) {
-            wellmapById[prediction.name_short].forEach((wellmap: any) => {
-              predWithWellmap.push({ ...wellmap, ...prediction })
-            })
-            count += wellmapById[prediction.name_short].length
-          }
-        })
         console.log('File loaded')
-        // console.log('File loaded', predWithWellmap)
-        state.rawData = predWithWellmap
+        // console.log('File loaded', predWithPathway)
+        state.rawData = predWithPathway
       } catch (e) {
         console.log('error', e)
       } finally {
@@ -433,6 +417,11 @@ export default defineComponent({
     }
 
     const buildValues = () => {
+      if (state.buildingChart) {
+        return
+      }
+      console.log('building')
+
       let auxData : any = null
       let filteredData : any = state.rawData
       let min : number = 0
@@ -516,9 +505,12 @@ export default defineComponent({
         if (auxData[xKey] && state.options.valueMetric === VALUE_METRICS.average.src) {
           Object.keys(auxData[xKey]).forEach((metricKey: string) => {
             const auxAgg : any = groupBy(auxData[xKey][metricKey], 'pred_threestate')
-            const totalAuxAgg : number = ((auxAgg[0] || []).length + (auxAgg[1] || []).length
-              + (auxAgg[2] || []).length) || 1
-            const countAuxAgg : number = (auxAgg[2] || []).length
+            const detected : any = uniq((auxAgg[2] || []).map((item:any) => item.name_short))
+            const nonDetected : any = uniq((auxAgg[0] || []).concat(auxAgg[1] || [])
+              .map((item:any) => item.name_short)).filter((item: any) => !detected.includes(item))
+            const totalAuxAgg : number = (detected.length
+              + nonDetected.length) || 1
+            const countAuxAgg : number = detected.length
             if (totalAuxAgg && ((countAuxAgg / totalAuxAgg) > yMaxValue)) {
               yMaxValue = countAuxAgg / totalAuxAgg
             }
@@ -531,14 +523,17 @@ export default defineComponent({
               state.options.aggregation === 'spot_intensity_log' ? (auxData[xKey][yKey][0].spot_intensity === 0
                 ? 0 : Math.log10(auxData[xKey][yKey][0].spot_intensity))
                 : auxData[xKey][yKey][0][state.options.aggregation]
+            const predAggX : any = groupBy(auxData[xKey][yKey], 'coarse_class')
             const predAgg : any = groupBy(auxData[xKey][yKey], 'pred_threestate')
-            const predCount: number = (predAgg[2] || []).length
-            const totalCount : number = ((predAgg[0] || []).length + (predAgg[1] || []).length
-              + (predAgg[2] || []).length) || 1
+            const detected : any = uniq((predAgg[2] || []).map((item:any) => item.name_short))
+            const nonDetected : any = uniq((predAgg[0] || []).concat(predAgg[1] || [])
+              .map((item:any) => item.name_short)).filter((item: any) => !detected.includes(item))
+            const totalCount : number = (detected.length
+              + nonDetected.length) || 1
 
             if (state.options.aggregation === 'pred_threestate') {
-              pointAggregation = predCount
-              availableAggregations = availableAggregations.concat(predCount)
+              pointAggregation = detected.length
+              availableAggregations = availableAggregations.concat(detected)
             } else if (state.options.aggregation === 'spot_intensity_log') {
               availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
                 'spot_intensity')).map((item: any) => parseFloat(item) === 0 ? 0 : Math.log10(parseFloat(item))))
@@ -548,9 +543,10 @@ export default defineComponent({
             }
 
             const value : number = state.options.valueMetric === VALUE_METRICS.count.src ? auxData[xKey][yKey].length
-              : (predCount / totalCount)
+              : (detected.length / totalCount)
             const normalizedValue = state.options.valueMetric === VALUE_METRICS.count.src
               ? (value / maxValue) : (yMaxValue === 0 ? 0 : (value / yMaxValue))
+
             dotValues.push({
               value: [xAxisIdxMap[xKey], yAxisIdxMap[yKey], normalizedValue * 15, pointAggregation, value],
               label: {
@@ -579,7 +575,7 @@ export default defineComponent({
 
       availableAggregations = uniq(availableAggregations).sort()
       availableAggregations = availableAggregations
-        .filter((agg:any) => agg !== null && agg !== undefined && agg !== 'undefined' && agg != 'null')
+        .filter((agg:any) => agg !== null && agg !== undefined && agg !== 'undefined' && agg !== 'null')
       colorSteps = availableAggregations.length
         ? (colormap.length / availableAggregations.length) : 1
       availableAggregations = availableAggregations.map((agg: any, aggIndex: number) => {
@@ -623,6 +619,7 @@ export default defineComponent({
       }
 
       state.buildingChart = false
+      console.log('built')
     }
 
     const handleAggregationChange = (value: any) => {
