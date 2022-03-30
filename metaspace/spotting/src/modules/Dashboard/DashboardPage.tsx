@@ -289,7 +289,7 @@ export default defineComponent({
           const ext = await Promise.all(data.map(res => res.json ? res.json().catch((err: any) => err) : res))
           predictions = ext.flat()
           console.log('pred loaded')
-          // console.log('ans', predictions)
+          console.log('ans', predictions)
         } catch (err) {
           console.log('err', err)
         }
@@ -425,7 +425,7 @@ export default defineComponent({
       let auxData : any = null
       let filteredData : any = state.rawData
       let min : number = 0
-      let max : number = 1
+      let max : number = 0
       state.buildingChart = true
 
       state.filter.forEach((filter: any, filterIndex: number) => {
@@ -519,11 +519,12 @@ export default defineComponent({
 
         state.yAxisValues.forEach((yKey: any) => {
           if (auxData[xKey] && auxData[xKey][yKey]) {
-            let pointAggregation : any =
-              state.options.aggregation === 'spot_intensity_log' ? (auxData[xKey][yKey][0].spot_intensity === 0
-                ? 0 : Math.log10(auxData[xKey][yKey][0].spot_intensity))
-                : auxData[xKey][yKey][0][state.options.aggregation]
-            const predAggX : any = groupBy(auxData[xKey][yKey], 'coarse_class')
+            const label = state.options.aggregation === 'spot_intensity_log' ? 'spot_intensity'
+              : state.options.aggregation
+            const sum = auxData[xKey][yKey].map((item: any) => item[label]).reduce((a:any, b:any) => a + b, 0)
+            const mean = (sum / auxData[xKey][yKey].length) || 0
+            const pointAggregation : any = state.options.aggregation === 'spot_intensity_log' ? Math.log10(sum + 1)
+              : mean
             const predAgg : any = groupBy(auxData[xKey][yKey], 'pred_threestate')
             const detected : any = uniq((predAgg[2] || []).map((item:any) => item.name_short))
             const nonDetected : any = uniq((predAgg[0] || []).concat(predAgg[1] || [])
@@ -531,16 +532,7 @@ export default defineComponent({
             const totalCount : number = (detected.length
               + nonDetected.length) || 1
 
-            if (state.options.aggregation === 'pred_threestate') {
-              pointAggregation = detected.length
-              availableAggregations = availableAggregations.concat(detected)
-            } else if (state.options.aggregation === 'spot_intensity_log') {
-              availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
-                'spot_intensity')).map((item: any) => parseFloat(item) === 0 ? 0 : Math.log10(parseFloat(item))))
-            } else {
-              availableAggregations = availableAggregations.concat(Object.keys(keyBy(auxData[xKey][yKey],
-                state.options.aggregation)))
-            }
+            availableAggregations.push(pointAggregation)
 
             const value : number = state.options.valueMetric === VALUE_METRICS.count.src ? auxData[xKey][yKey].length
               : (detected.length / totalCount)
@@ -604,7 +596,11 @@ export default defineComponent({
         orient: 'horizontal',
         min: 0,
         max: 1,
+        formatter: function(value: any) {
+          return value.toFixed(2)
+        },
       }
+
 
       if (state.visualMap.type === 'piecewise') {
         state.visualMap.pieces = availableAggregations
