@@ -163,8 +163,16 @@ const FILTER_VALUES = [
     src: 'dataset_id',
   },
   {
-    label: 'Primary',
-    src: 'Primary',
+    label: 'Lab',
+    src: 'Participant lab',
+  },
+  {
+    label: 'Molecule',
+    src: 'name_short',
+  },
+  {
+    label: 'Formula',
+    src: 'formula',
   },
   // {
   //   label: 'Intensity',
@@ -181,7 +189,7 @@ const DATASET_METRICS = {
   Polarity: true,
   Technology: true,
   'Matrix short': true,
-  Primary: true,
+  'Participant lab': true,
 }
 
 const PREDICTION_METRICS = {
@@ -294,7 +302,7 @@ export default defineComponent({
           console.log('err', err)
         }
 
-        const datasetResponse = await fetch(baseUrl + 'datasets_21-03-22.json')
+        const datasetResponse = await fetch(baseUrl + 'datasets_31-03-22.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification_14-03-22.json')
         const classification = await chemClassResponse.json()
@@ -319,7 +327,7 @@ export default defineComponent({
               'Matrix short': datasetItem['Matrix short'],
               'Matrix long': datasetItem['Matrix long'],
               Technology: datasetItem.Technology,
-              Primary: datasetItem.Primary,
+              'Participant lab': datasetItem['Participant lab'],
               ...omit(prediction, omiKeys),
             })
           }
@@ -426,6 +434,7 @@ export default defineComponent({
       let filteredData : any = state.rawData
       let min : number = 0
       let max : number = 0
+      const maxColormap : number = 100000
       state.buildingChart = true
 
       state.filter.forEach((filter: any, filterIndex: number) => {
@@ -523,7 +532,7 @@ export default defineComponent({
               : state.options.aggregation
             const sum = auxData[xKey][yKey].map((item: any) => item[label]).reduce((a:any, b:any) => a + b, 0)
             const mean = (sum / auxData[xKey][yKey].length) || 0
-            const pointAggregation : any = state.options.aggregation === 'spot_intensity_log' ? Math.log10(sum + 1)
+            let pointAggregation : any = state.options.aggregation === 'spot_intensity_log' ? Math.log10(sum + 1)
               : mean
             const predAgg : any = groupBy(auxData[xKey][yKey], 'pred_threestate')
             const detected : any = uniq((predAgg[2] || []).map((item:any) => item.name_short))
@@ -531,6 +540,10 @@ export default defineComponent({
               .map((item:any) => item.name_short)).filter((item: any) => !detected.includes(item))
             const totalCount : number = (detected.length
               + nonDetected.length) || 1
+
+            if (pointAggregation > maxColormap) { // set max
+              pointAggregation = maxColormap
+            }
 
             availableAggregations.push(pointAggregation)
 
@@ -600,7 +613,6 @@ export default defineComponent({
           return value.toFixed(2)
         },
       }
-
 
       if (state.visualMap.type === 'piecewise') {
         state.visualMap.pieces = availableAggregations
