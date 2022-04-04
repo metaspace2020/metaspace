@@ -59,10 +59,10 @@ const defaultConfig: ClientConfig = {
   metadataTypes: ['ims'],
   features: {
     coloc: true,
-    show_dataset_overview: false,
+    show_dataset_overview: true,
     roi: false,
     tic: true,
-    custom_cols: false,
+    custom_cols: true,
     ion_thumbs: true,
     off_sample: true,
     off_sample_col: false,
