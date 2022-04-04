@@ -442,7 +442,9 @@ export default defineComponent({
           buildFilterOptions(filter, filterIndex, filteredData)
         } else if (filter.src && filter.value) {
           filteredData = filteredData.filter((data: any) => {
-            const filterValue = filter.value === 'None' ? null : filter.value
+            const filterValue = Array.isArray(filter.value) && filter.value.includes('None')
+              ? filter.value.concat(['null', null, undefined, 'nan', 'Nan', 'None', 'none'])
+              : filter.value
             return filter.isNumeric ? parseFloat(data[filter.src]) <= parseFloat(filter.value)
               : (filter.isBoolean ? (filterValue === 'True'
                 ? (data[filter.src] === 2) : data[filter.src] !== 2) // pred threestate
@@ -541,7 +543,9 @@ export default defineComponent({
             const totalCount : number = (detected.length
               + nonDetected.length) || 1
 
-            if (pointAggregation > maxColormap) { // set max
+            if (state.options.aggregation === 'spot_intensity_log' && (sum + 1) > maxColormap) { // set max
+              pointAggregation = Math.log10(maxColormap)
+            } else if (pointAggregation > maxColormap) {
               pointAggregation = maxColormap
             }
 
@@ -601,6 +605,7 @@ export default defineComponent({
       state.visualMap = {
         type: state.options.aggregation !== 'coarse_class' ? 'continuous' : 'piecewise',
         show: true,
+        calculable: true,
         dimension: 3,
         left: 'center',
         inRange: {
