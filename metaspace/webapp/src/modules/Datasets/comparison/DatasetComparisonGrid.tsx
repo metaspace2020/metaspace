@@ -5,9 +5,9 @@ import safeJsonParse from '../../../lib/safeJsonParse'
 import { encodeParams } from '../../Filters'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
 import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
-import { Button, Pagination, Popover } from '../../../lib/element-ui'
+import { Button, Popover } from '../../../lib/element-ui'
 import { range } from 'lodash-es'
-import { SimpleIonImageViewer } from './components/SimpleIonImageViewer'
+import { SimpleIonImageViewer } from '../../../components/SimpleIonImageViewer/SimpleIonImageViewer'
 import MonitorSvg from '../../../assets/inline/refactoring-ui/icon-monitor.svg'
 import './DatasetComparisonGrid.scss'
 
@@ -321,6 +321,8 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           visible: !$store.state.channels[index].settings.visible,
         },
       })
+      Vue.nextTick()
+      resizeHandler()
     }
 
     const annotationsLink = (datasetId: string, database?: string, fdrLevel?: number) => {
