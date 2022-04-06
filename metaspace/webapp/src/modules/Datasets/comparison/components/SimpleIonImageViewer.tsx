@@ -61,6 +61,7 @@ interface SimpleIonImageViewerState {
   imageHeight: number
   imageWidth: number
   currentIon: any
+  mode: string
 }
 
 const channels: any = {
@@ -138,6 +139,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       imageWidth: 0,
       ionImagePosByKey: {},
       currentIon: null,
+      mode: 'SINGLE',
     })
 
     const container = ref(null)
@@ -222,8 +224,9 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         state.imageHeight = finalImage?.height || 0
         state.imageWidth = finalImage?.width || 0
 
-        if (finalImage && state.menuItems[index].settings.visible.value) {
+        if (finalImage) {
           ionImages.push({
+            visible: state.menuItems[index].settings.visible.value,
             ionImage: finalImage,
             colorMap: createColormap(state.menuItems[index]?.settings?.channel?.value || colorSettings[index].value,
               hasOpticalImage && props.showOpticalImage
@@ -705,11 +708,14 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         const newIons = newValue.slice(0).map((item: any) => item?.ion)
         const currentIons = state.menuItems.slice(0).map((item: any) => item?.annotation?.ion)
         const currentIon = newIons[newIons.length - 1]
+        const currentMode = mode.value
         if (
           newIons.length < currentIons.length
           || (!isEqual(newIons, currentIons) && currentIon !== state.currentIon)
+          || currentMode !== state.mode
         ) {
           state.currentIon = currentIon
+          state.mode = currentMode
           await startImageSettings()
         }
       }
@@ -751,7 +757,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
             xOffset={imageSettings!.imagePosition?.xOffset || 0}
             yOffset={imageSettings!.imagePosition?.yOffset || 0}
             isLoading={false}
-            ionImageLayers={imageSettings!.ionImageLayers}
+            ionImageLayers={imageSettings!.ionImageLayers.filter((item:any) => item.visible)}
             scaleBarColor={props.scaleBarColor}
             scaleType={props.scaleType}
             pixelSizeX={imageSettings!.pixelSizeX}

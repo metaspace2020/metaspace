@@ -192,8 +192,8 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           showOpticalImage: true,
           isActive: true,
         })
-        Vue.set(state.gridState, key, gridCell)
       }
+      Vue.set(state.gridState, key, gridCell)
     }
 
     const getChannels = (dsId: string) => {
@@ -247,7 +247,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
         .catch(console.error)
         .finally(() => {
           state.firstLoaded = true
-          setTimeout(() => { resizeHandler() }, 100)
+          setTimeout(() => { resizeHandler() }, 500)
         })
     }
 
@@ -261,6 +261,11 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     // set images and annotation related items when selected annotation changes
     watch(() => props.selectedAnnotation, async(newValue) => {
       await updateAnnotationData(settings.value.grid, newValue)
+    })
+
+    // set images and annotation related items when selected annotation changes
+    watch(() => props.mode, async(newValue) => {
+      await updateAnnotationData(settings.value.grid, props.selectedAnnotation)
     })
 
     const toggleOpticalImage = (event: any, key: string) => {
@@ -367,7 +372,18 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
           <div key={col} class='dataset-comparison-grid-col overflow-hidden items-center justify-start'
             style={{ height: 200, width: 200 }}>
             {renderDatasetName(dataset?.name)}
-            <span>No data</span>
+            {
+              !props.isLoading
+              && <span>No data</span>
+            }
+            {
+              props.isLoading
+              && <div class='absolute'>
+                <i
+                  class="el-icon-loading"
+                />
+              </div>
+            }
           </div>)
       }
 

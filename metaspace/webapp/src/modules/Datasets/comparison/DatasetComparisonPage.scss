@@ -1,6 +1,10 @@
 .dataset-comparison-page{
   overflow: hidden;
 
+  .dataset-comparison-wrapper{
+    min-height: 100px;
+  }
+
   .ds-comparison-info{
     @apply flex items-center justify-center p-2 w-full;
     min-height: 50px;

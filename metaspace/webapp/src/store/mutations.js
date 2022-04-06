@@ -168,6 +168,10 @@ export default {
     state.channels.push({id, annotations, settings});
   },
 
+  restoreChannels(state, channels) {
+    state.channels = channels;
+  },
+
   removeChannel(state, {index}) {
     const aux = state.channels.slice(0)
     aux.splice(index, 1)

@@ -29,6 +29,7 @@ import { DatasetComparisonShareLink } from './DatasetComparisonShareLink'
 import { groupBy, isEqual, uniqBy, uniq } from 'lodash-es'
 import { readNpy } from '../../../lib/npyHandler'
 import { DatasetComparisonModeButton } from './DatasetComparisonModeButton'
+import './DatasetComparisonPage.scss'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -66,6 +67,7 @@ interface DatasetComparisonPageState {
   offset: number
   rawAnnotations: any
   processedAnnotations: any
+  channelSnapshot: any
 }
 
 const channels: any = {
@@ -112,6 +114,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     const state = reactive<DatasetComparisonPageState>({
       currentAnnotationIdx: -1,
       gridState: {},
+      channelSnapshot: [],
       loadedSnapshot: false,
       databaseOptions: undefined,
       globalImageSettings: {
@@ -430,6 +433,12 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     const handleModeChange = (mode: string = 'SINGLE') => {
       $store.commit('setViewerMode', mode)
+      if (mode === 'SINGLE') {
+        state.channelSnapshot = $store.state.channels
+        $store.commit('resetChannels')
+      } else {
+        $store.commit('restoreChannels', state.channelSnapshot)
+      }
       handleChannelHighlight()
     }
 
@@ -568,6 +577,7 @@ export default defineComponent<DatasetComparisonPageProps>({
                 ref={imageGrid}
                 nCols={nCols}
                 nRows={nRows}
+                mode={$store.state.mode}
                 resetViewPort={globalImageSettings.resetViewPort}
                 onResetViewPort={resetViewPort}
                 onLockAllIntensities={handleTemplateChange}
@@ -626,6 +636,7 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     const renderAnnotationTableWrapper = () => {
       const { annotations } = state
+
       return (
         <div class='dataset-comparison-wrapper w-full md:w-6/12 relative'>
           {
