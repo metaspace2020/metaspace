@@ -21,6 +21,7 @@ interface DashboardState {
   filter: any[]
   xAxisValues: any
   rawData: any
+  usedData: any
   yAxisValues: any
   data: any
   visualMap: any
@@ -48,27 +49,27 @@ const VIEW = {
 const AXIS_VALUES = [
   {
     label: 'Polarity',
-    src: 'Polarity',
+    src: 'pol',
   },
   {
     label: 'Adducts',
-    src: 'adduct',
+    src: 'a',
   },
   {
     label: 'Neutral losses',
-    src: 'neutral_loss',
+    src: 'nl',
   },
   {
     label: 'Matrix',
-    src: 'Matrix short',
+    src: 'mS',
   },
   {
     label: 'Molecule',
-    src: 'name_short',
+    src: 'n',
   },
   {
     label: 'Technology',
-    src: 'Technology',
+    src: 'tech',
   },
   {
     label: 'Pathway',
@@ -88,59 +89,59 @@ const AXIS_VALUES = [
   },
   {
     label: 'Dataset',
-    src: 'dataset_id',
+    src: 'd',
   },
 ]
 
 const AGGREGATED_VALUES = [
-  {
-    label: 'Prediction',
-    src: 'pred_val',
-  },
+  // {
+  //   label: 'Prediction',
+  //   src: 'pred_val',
+  // },
   {
     label: 'Intensity',
-    src: 'spot_intensity',
+    src: 'v',
   },
   {
     label: 'log10(Intensity)',
-    src: 'spot_intensity_log',
+    src: 'v_log',
   },
-  {
-    label: 'Simple count',
-    src: 'pred_threestate',
-  },
+  // {
+  //   label: 'Simple count',
+  //   src: 'p',
+  // },
 ]
 
 const FILTER_VALUES = [
   {
     label: 'Polarity',
-    src: 'Polarity',
+    src: 'pol',
   },
   {
     label: 'Adducts',
-    src: 'adduct',
+    src: 'a',
   },
   {
     label: 'Neutral losses',
-    src: 'neutral_loss',
+    src: 'nl',
   },
   {
     label: 'Matrix',
-    src: 'Matrix short',
+    src: 'mS',
   },
   {
     label: 'Value Prediction',
-    src: 'pred_val',
+    src: 'pV',
     isNumeric: true,
   },
   {
     label: 'State Prediction',
-    src: 'pred_threestate',
+    src: 'p',
     isBoolean: true,
   },
   {
     label: 'Technology',
-    src: 'Technology',
+    src: 'tech',
   },
   {
     label: 'Pathway class',
@@ -160,24 +161,20 @@ const FILTER_VALUES = [
   },
   {
     label: 'Dataset',
-    src: 'dataset_id',
+    src: 'd',
   },
   {
     label: 'Lab',
-    src: 'Participant lab',
+    src: 'lab',
   },
   {
     label: 'Molecule',
-    src: 'name_short',
+    src: 'n',
   },
   {
     label: 'Formula',
-    src: 'formula',
+    src: 'f',
   },
-  // {
-  //   label: 'Intensity',
-  //   src: 'spot_intensity',
-  // },
 ]
 
 const CLASSIFICATION_METRICS = {
@@ -188,7 +185,7 @@ const CLASSIFICATION_METRICS = {
 const DATASET_METRICS = {
   Polarity: true,
   Technology: true,
-  'Matrix short': true,
+  mS: true,
   'Participant lab': true,
 }
 
@@ -222,17 +219,17 @@ const VALUE_METRICS = {
 }
 
 const filterMap : any = {
-  adduct: 'add',
+  a: 'add',
   coarse_class: 'q',
   fine_class: 'q',
   coarse_path: 'q',
   fine_path: 'q',
-  name_short: 'q',
-  dataset_id: 'ds',
-  neutral_loss: 'nl',
-  Polarity: 'mode',
-  'Matrix short': 'matrix',
-  Technology: 'matrix',
+  n: 'q',
+  d: 'ds',
+  nl: 'nl',
+  pol: 'mode',
+  mS: 'matrix',
+  tech: 'matrix',
 }
 
 export default defineComponent({
@@ -256,6 +253,7 @@ export default defineComponent({
       yAxisValues: [],
       data: [],
       rawData: undefined,
+      usedData: undefined,
       baseData: undefined,
       visualMap: {},
       options: {
@@ -286,76 +284,45 @@ export default defineComponent({
         console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/new/'
-        // const response = await fetch(baseUrl + 'all_predictions_14-03-22.json')
-        // const predictions = await response.json()
-
-        // download predictions
-        let predictions = []
-        try {
-          const data = await Promise.all(Array.from(Array(10).keys()).map((idx: number) =>
-            fetch(baseUrl + `parts/prediction${idx}_21-03-22.json`).catch(err => err)))
-          const ext = await Promise.all(data.map(res => res.json ? res.json().catch((err: any) => err) : res))
-          predictions = ext.flat()
-          console.log('pred loaded')
-          console.log('ans', predictions)
-        } catch (err) {
-          console.log('err', err)
-        }
-
+        const response = await fetch(baseUrl + 'all_predictions_08-04-22.json')
+        // const response = await fetch(baseUrl + 'all_predictions_11-Dec-reduced.json')
+        const predictions = await response.json()
         const datasetResponse = await fetch(baseUrl + 'datasets_31-03-22.json')
+        // const datasetResponse = await fetch(baseUrl + 'data_test.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification_14-03-22.json')
-        const classification = await chemClassResponse.json()
+        state.classification = await chemClassResponse.json()
         const pathwayResponse = await fetch(baseUrl + 'pathways_14-03-22.json')
-        const pathways = await pathwayResponse.json()
+        state.pathways = await pathwayResponse.json()
 
         const datasetsById = keyBy(datasets, 'Dataset ID')
         delete datasetsById.null
-        const chemClassById = groupBy(classification, 'name_short')
-        const pathwayById = groupBy(pathways, 'name_short')
 
         const predWithDs : any = []
-
-        // const auxPrediction : any = []
-        const omiKeys = Object.keys(predictions[0]).filter((key:any) => !Object.keys(PREDICTION_METRICS).includes(key))
         predictions.forEach((prediction: any) => {
-          const datasetItem = datasetsById[prediction.dataset_id]
+          const datasetItem = datasetsById[prediction.dsId]
           if (datasetItem) {
-            // auxPrediction.push(prediction)
             predWithDs.push({
-              Polarity: datasetItem.Polarity,
-              'Matrix short': datasetItem['Matrix short'],
-              'Matrix long': datasetItem['Matrix long'],
-              Technology: datasetItem.Technology,
-              'Participant lab': datasetItem['Participant lab'],
-              ...omit(prediction, omiKeys),
+              pol: datasetItem.Polarity,
+              mS: datasetItem['Matrix short'],
+              mL: datasetItem['Matrix long'],
+              tech: datasetItem.Technology,
+              lab: datasetItem['Participant lab'],
+              d: prediction.dsId,
+              f: prediction.f,
+              a: prediction.a,
+              nl: prediction.nL,
+              n: prediction.name,
+              nS: prediction.nS,
+              nSi: prediction.nSI,
+              pV: prediction.pV,
+              p: prediction.p,
+              v: prediction.v,
             })
           }
         })
-
-        // state.predictions = auxPrediction
-
-        const predWithClass : any = []
-        predWithDs.forEach((prediction: any) => {
-          if (chemClassById[prediction.name_short]) {
-            chemClassById[prediction.name_short].forEach((classification: any) => {
-              predWithClass.push({ ...classification, ...prediction })
-            })
-          }
-        })
-
-        const predWithPathway : any = []
-        predWithClass.forEach((prediction: any) => {
-          if (pathwayById[prediction.name_short]) {
-            pathwayById[prediction.name_short].forEach((pathway: any) => {
-              predWithPathway.push({ ...pathway, ...prediction })
-            })
-          }
-        })
-
-        console.log('File loaded')
-        // console.log('File loaded', predWithPathway)
-        state.rawData = predWithPathway
+        console.log('File loaded', predWithDs)
+        state.rawData = predWithDs
       } catch (e) {
         console.log('error', e)
       } finally {
@@ -405,11 +372,11 @@ export default defineComponent({
 
     const buildFilterOptions = (filter: any, filterIndex: number, data: any[]) => {
       const filterSpec = FILTER_VALUES.find((filterItem: any) => filterItem.src === filter.src)
-      if (filterSpec && filterSpec.isNumeric) {
+      if (filterSpec && filterSpec?.isNumeric) {
         state.filter[filterIndex].isNumeric = true
         state.filter[filterIndex].isBoolean = false
         return
-      } else if (filterSpec && filterSpec.isBoolean) {
+      } else if (filterSpec && filterSpec?.isBoolean) {
         state.filter[filterIndex].isNumeric = false
         state.filter[filterIndex].isBoolean = true
       } else {
@@ -420,7 +387,6 @@ export default defineComponent({
 
       state.filter[filterIndex].options = uniq(data.map((item: any) => (item[filter.src] === null
         || item[filter.src] === undefined || item[filter.src] === 'null') ? 'None' : item[filter.src])).sort()
-
       state.loadingFilterOptions = false
     }
 
@@ -431,7 +397,7 @@ export default defineComponent({
       console.log('building')
 
       let auxData : any = null
-      let filteredData : any = state.rawData
+      let filteredData : any = state.usedData
       let min : number = 0
       let max : number = 0
       const maxColormap : number = 100000
@@ -515,8 +481,8 @@ export default defineComponent({
 
         if (auxData[xKey] && state.options.valueMetric === VALUE_METRICS.average.src) {
           Object.keys(auxData[xKey]).forEach((metricKey: string) => {
-            const auxAgg : any = groupBy(auxData[xKey][metricKey], 'pred_threestate')
-            const detected : any = uniq((auxAgg[2] || []).map((item:any) => item.name_short))
+            const auxAgg : any = groupBy(auxData[xKey][metricKey], 'p') // pred_threestate
+            const detected : any = uniq((auxAgg[2] || []).map((item:any) => item.n))
             const nonDetected : any = uniq((auxAgg[0] || []).concat(auxAgg[1] || [])
               .map((item:any) => item.name_short)).filter((item: any) => !detected.includes(item))
             const totalAuxAgg : number = (detected.length
@@ -530,22 +496,40 @@ export default defineComponent({
 
         state.yAxisValues.forEach((yKey: any) => {
           if (auxData[xKey] && auxData[xKey][yKey]) {
-            const label = state.options.aggregation === 'spot_intensity_log' ? 'spot_intensity'
+            const label = state.options.aggregation === 'v_log' ? 'v'
               : state.options.aggregation
-            const sum = auxData[xKey][yKey].map((item: any) => item[label]).reduce((a:any, b:any) => a + b, 0)
-            const mean = (sum / auxData[xKey][yKey].length) || 0
-            let pointAggregation : any = state.options.aggregation === 'spot_intensity_log' ? Math.log10(sum + 1)
-              : mean
-            const predAgg : any = groupBy(auxData[xKey][yKey], 'pred_threestate')
-            const detected : any = uniq((predAgg[2] || []).map((item:any) => item.name_short))
-            const nonDetected : any = uniq((predAgg[0] || []).concat(predAgg[1] || [])
-              .map((item:any) => item.name_short)).filter((item: any) => !detected.includes(item))
+            const molecules : any = groupBy(auxData[xKey][yKey], 'n')
+            const moleculeAggregation : any = []
+            Object.keys(molecules).forEach((key: string) => {
+              let prediction = false
+              let intensity = 0
+              molecules[key].forEach((molecule: any) => {
+                intensity += molecule[label]
+                if (molecule.p === 2) {
+                  prediction = true
+                }
+              })
+              moleculeAggregation.push({
+                name: key,
+                [state.options.xAxis]: xKey,
+                [state.options.yAxis]: yKey,
+                prediction,
+                intensity: (state.options.aggregation === 'v_log' ? Math.log10(intensity + 1)
+                  : intensity),
+              })
+            })
+
+            const detected : any = uniq(moleculeAggregation.filter((molecule: any) => molecule.prediction))
+            const nonDetected : any = uniq(moleculeAggregation.filter((molecule: any) => !molecule.prediction))
             const totalCount : number = (detected.length
               + nonDetected.length) || 1
+            const classSize : number = totalCount
+            const sum = moleculeAggregation.map((item: any) => item.intensity).reduce((a:any, b:any) => a + b, 0)
+            let pointAggregation : any = (sum / classSize) || 0 // mean
 
-            if (state.options.aggregation === 'spot_intensity_log' && (sum + 1) > maxColormap) { // set max
+            if (state.options.aggregation === 'v_log' && pointAggregation > Math.log10(maxColormap)) { // set max
               pointAggregation = Math.log10(maxColormap)
-            } else if (pointAggregation > maxColormap) {
+            } else if (state.options.aggregation !== 'v_log' && pointAggregation > maxColormap) {
               pointAggregation = maxColormap
             }
 
@@ -565,7 +549,7 @@ export default defineComponent({
                 y: yKey,
                 datasetIds: uniq(auxData[xKey][yKey].map((item:any) => item.dataset_id)),
                 formulas: uniq(auxData[xKey][yKey].map((item:any) => item.formula)),
-                matrix: auxData[xKey][yKey][0]['Matrix long'],
+                matrix: auxData[xKey][yKey][0].mL,
               },
             })
           }
@@ -678,7 +662,11 @@ export default defineComponent({
     }
 
     const removeFilterItem = () => {
+      const value = state.filter[state.filter.length - 1].value
       state.filter.pop()
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && value) {
+        buildValues()
+      }
     }
 
     const addFilterItem = () => {
@@ -704,14 +692,14 @@ export default defineComponent({
       const xAxisFilter : any = filterMap[state.options.xAxis]
       if (yAxisFilter) {
         const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'coarse_class'
-          || state.options.yAxis === 'name_short' || state.options.yAxis === 'coarse_path'
+          || state.options.yAxis === 'n' || state.options.yAxis === 'coarse_path'
           || state.options.yAxis === 'fine_path')
           ? formulas : (yAxisFilter.includes('matrix') ? item.data.label.matrix : item.data.label.y)
         url += `&${yAxisFilter}=${encodeURIComponent(value)}`
       }
       if (xAxisFilter) {
         const value = (state.options.xAxis === 'fine_class' || state.options.xAxis === 'coarse_class'
-          || state.options.xAxis === 'name_short' || state.options.xAxis === 'coarse_path'
+          || state.options.xAxis === 'n' || state.options.xAxis === 'coarse_path'
           || state.options.xAxis === 'fine_path')
           ? formulas : (xAxisFilter.includes('matrix') ? item.data.label.matrix : item.data.label.x)
         url += `&${xAxisFilter}=${encodeURIComponent(value)}`
@@ -742,18 +730,21 @@ export default defineComponent({
     }
 
     const handleFilterSrcChange = (value: any, idx : any = 0) => {
+      const isNew = value !== state.filter[idx]?.src
       state.filter[idx].src = value
       const filterSrcParams = state.filter.map((item: any) => item.src).join(',')
       $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filter: filterSrcParams } })
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+      buildFilterOptions(state.filter[idx], idx, state.usedData)
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && isNew) {
         handleFilterValueChange(null, idx)
       }
     }
 
     const handleAxisChange = (value: any, isXAxis : boolean = true) => {
       let axis : any = []
-      const src : any = state.rawData
-
+      let src : any
+      const isNew : boolean = (isXAxis && value !== state.options.xAxis)
+      || (!isXAxis && value !== state.options.yAxis)
       if (isXAxis) {
         state.options.xAxis = value
         $router.replace({ name: 'dashboard', query: { ...getQueryParams(), xAxis: value } })
@@ -762,15 +753,13 @@ export default defineComponent({
         $router.replace({ name: 'dashboard', query: { ...getQueryParams(), yAxis: value } })
       }
 
-      // if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
-      //   src = state.classification
-      // } else if (Object.keys(DATASET_METRICS).includes(value)) {
-      //   src = state.datasets
-      // } else if (Object.keys(PREDICTION_METRICS).includes(value)) {
-      //   src = state.predictions
-      // } else if (Object.keys(PATHWAY_METRICS).includes(value)) {
-      //   src = state.pathways
-      // }
+      if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
+        src = state.classification
+      } else if (Object.keys(PREDICTION_METRICS).includes(value) || Object.keys(DATASET_METRICS).includes(value)) {
+        src = state.rawData
+      } else if (Object.keys(PATHWAY_METRICS).includes(value)) {
+        src = state.pathways
+      }
 
       if (!src) {
         return
@@ -789,6 +778,39 @@ export default defineComponent({
         state.xAxisValues = axis
       } else {
         state.yAxisValues = axis
+      }
+
+      let mergedData : any = state.rawData
+      if (state.options.xAxis && state.options.yAxis && isNew) {
+        if (
+          Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)
+          || Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)
+        ) {
+          const predWithClass : any = []
+          const chemClassById = groupBy(state.classification, 'name_short')
+          state.rawData.forEach((prediction: any) => {
+            if (chemClassById[prediction.n]) {
+              chemClassById[prediction.n].forEach((classification: any) => {
+                predWithClass.push({ ...classification, ...prediction })
+              })
+            }
+          })
+          mergedData = predWithClass
+        } else if (
+          Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
+          || Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)) {
+          const predWithClass : any = []
+          const chemClassById = groupBy(state.pathways, 'name_short')
+          state.rawData.forEach((prediction: any) => {
+            if (chemClassById[prediction.n]) {
+              chemClassById[prediction.n].forEach((classification: any) => {
+                predWithClass.push({ ...classification, ...prediction })
+              })
+            }
+          })
+          mergedData = predWithClass
+        }
+        state.usedData = mergedData
       }
 
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
@@ -884,7 +906,7 @@ export default defineComponent({
                       onChange={(value: number) => {
                         handleFilterSrcChange(value, filterIdx)
                       }}
-                      disabled={state.loading}
+                      disabled={state.loading || state.usedData === undefined}
                       placeholder='Neutral losses'
                       size='mini'>
                       {
