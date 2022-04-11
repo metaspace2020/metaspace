@@ -111,7 +111,9 @@ const DatasetItemActions = defineComponent({
       return null
     })
 
-    const canReprocess = computed(() => props.currentUser?.role === 'admin')
+    const canReprocess = computed(() => {
+      return props.currentUser?.role === 'admin' || (props.dataset?.status === 'FAILED' && props.dataset?.canEdit)
+    })
 
     const canViewPublicationStatus = computed(() =>
       props.dataset.status === 'FINISHED'

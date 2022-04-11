@@ -138,7 +138,6 @@ export default Vue.extend({
     return {
       recordsPerPage: 100,
       csvChunkSize: 1000,
-      totalCount: 0,
       categories: ['ANNOTATING', 'QUEUED', 'FINISHED'],
       isExporting: false,
       loading: 0,
@@ -158,6 +157,13 @@ export default Vue.extend({
           return
         }
         this.$store.commit('setCurrentPage', page)
+      },
+    },
+    totalCount: {
+      get() {
+        const counts = this.datasetCounts
+        return !counts ? 0 : Object.keys(counts)
+          .reduce((sum, key) => sum + (this.categories.includes(key) ? parseInt(counts[key] || 0, 10) : 0), 0)
       },
     },
 
@@ -187,6 +193,7 @@ export default Vue.extend({
         query: this.$store.getters.ftsQuery,
         inpFdrLvls: [10],
         checkLvl: 10,
+        limit: this.recordsPerPage,
         offset: (this.currentPage - 1) * this.recordsPerPage, // Math.max(0, (this.$store.getters.settings.datasets.page - 1) * 100),
         orderBy: this.orderBy,
         sortingOrder: this.sortingOrder,
@@ -210,7 +217,7 @@ export default Vue.extend({
       return datasets
     },
     canSeeFailed() {
-      return this.currentUser != null && this.currentUser.role === 'admin'
+      return this.currentUser != null && (this.currentUser?.role === 'admin' || this.datasetCounts?.FAILED > 0)
     },
   },
   mounted() {
@@ -282,7 +289,13 @@ export default Vue.extend({
       query: datasetDetailItemsQuery,
       throttle: 1000,
       variables() {
-        return this.queryVariables
+        return {
+          ...this.queryVariables,
+          dFilter: {
+            ...this.queryVariables.dFilter,
+            status: this.categories.join('|'),
+          },
+        }
       },
     },
     datasetCounts: {
@@ -291,9 +304,7 @@ export default Vue.extend({
       query: countDatasetsByStatusQuery,
       throttle: 1000,
       update(data) {
-        const counts = extractGroupedStatusCounts(data)
-        this.countSelected(counts)
-        return counts
+        return extractGroupedStatusCounts(data)
       },
       variables() {
         return {
@@ -319,11 +330,6 @@ export default Vue.extend({
       } else {
         return ''
       }
-    },
-
-    countSelected(counts) {
-      this.totalCount = !counts ? 0 : Object.keys(counts)
-        .reduce((sum, key) => sum + parseInt(counts[key] || 0, 10), 0)
     },
 
     async startExport() {

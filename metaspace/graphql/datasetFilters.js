@@ -86,6 +86,27 @@ class DatasetIdFilter extends AbstractDatasetFilter {
   }
 }
 
+class DatasetStatusFilter extends AbstractDatasetFilter {
+  constructor() {
+    super('', {})
+  }
+
+  esFilter(status) {
+    status = status.split('|')
+
+    if (status.length > 0) {
+      return { terms: { ds_status: status } }
+    } else {
+      return {}
+    }
+  }
+
+  pgFilter(q, status) {
+    status = status.split('|')
+    return q.whereIn('status', status)
+  }
+}
+
 class NotNullFilter extends AbstractDatasetFilter {
   constructor(schemaPath, options = {}) {
     super(schemaPath, options)
@@ -136,7 +157,7 @@ export const datasetFilters = {
   maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {}),
   name: new SubstringMatchFilter('', { esField: 'ds_name', pgField: 'name' }),
   ids: new DatasetIdFilter(),
-  status: new ExactMatchFilter('', { esField: 'ds_status', pgField: 'status' }),
+  status: new DatasetStatusFilter(),
   submitter: new ExactMatchFilter('', { esField: 'ds_submitter_id' }),
   hasGroup: new NotNullFilter('', { esField: 'ds_group_id' }),
   group: new GroupMatchFilter('', { esField: 'ds_group_id' }),
