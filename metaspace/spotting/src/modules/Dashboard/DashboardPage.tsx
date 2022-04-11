@@ -190,16 +190,15 @@ const DATASET_METRICS = {
 }
 
 const PREDICTION_METRICS = {
-  adduct: true,
-  dataset_name: true,
-  dataset_id: true,
-  formula: true,
-  neutral_loss: true,
-  in_n_spots: true,
-  spot_intensity: true,
-  pred_val: true,
-  pred_threestate: true,
-  name_short: true,
+  a: true,
+  d: true,
+  f: true,
+  nL: true,
+  nS: true,
+  nSI: true,
+  pV: true,
+  p: true,
+  n: true,
 }
 
 const PATHWAY_METRICS = {
@@ -484,7 +483,7 @@ export default defineComponent({
             const auxAgg : any = groupBy(auxData[xKey][metricKey], 'p') // pred_threestate
             const detected : any = uniq((auxAgg[2] || []).map((item:any) => item.n))
             const nonDetected : any = uniq((auxAgg[0] || []).concat(auxAgg[1] || [])
-              .map((item:any) => item.name_short)).filter((item: any) => !detected.includes(item))
+              .map((item:any) => item.n)).filter((item: any) => !detected.includes(item))
             const totalAuxAgg : number = (detected.length
               + nonDetected.length) || 1
             const countAuxAgg : number = detected.length
@@ -544,11 +543,11 @@ export default defineComponent({
               value: [xAxisIdxMap[xKey], yAxisIdxMap[yKey], normalizedValue * 15, pointAggregation, value],
               label: {
                 key: yKey,
-                molecule: auxData[xKey][yKey][0].formula,
+                molecule: auxData[xKey][yKey][0].f,
                 x: xKey,
                 y: yKey,
-                datasetIds: uniq(auxData[xKey][yKey].map((item:any) => item.dataset_id)),
-                formulas: uniq(auxData[xKey][yKey].map((item:any) => item.formula)),
+                datasetIds: uniq(auxData[xKey][yKey].map((item:any) => item.d)),
+                formulas: uniq(auxData[xKey][yKey].map((item:any) => item.f)),
                 matrix: auxData[xKey][yKey][0].mL,
               },
             })
