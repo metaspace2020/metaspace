@@ -58,13 +58,19 @@ export default defineComponent<Props>({
       result: currentUserResult,
       loading: userLoading,
     } = useQuery<CurrentUserRoleResult|any>(currentUserRoleQuery)
-    const currentUser = computed(() => currentUserResult.value != null ? currentUserResult.value.currentUser : null)
+    const currentUser = computed(() => currentUserResult.value != null ? currentUserResult.value.currentUser
+      : null)
 
     const projectLink = (projectIdOrSlug: string) => {
       return ({
         name: 'project',
         params: { projectIdOrSlug },
       })
+    }
+
+    const isValidMail = (email:string) => {
+      const re = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/
+      return re.test(String(email).toLowerCase())
     }
 
     return () => {
@@ -75,6 +81,8 @@ export default defineComponent<Props>({
       const { annotationLabel, detailLabel, projectLabel, inpFdrLvls } = props
       const showImageViewer = false
       const metadata = safeJsonParse(metadataJson) || {}
+      // eslint-disable-next-line camelcase
+      delete metadata?.Submitted_By
       const groupLink = $router.resolve({ name: 'group', params: { groupIdOrSlug: group?.id || '' } }).href
       const upDate = moment(moment(dataset?.value?.uploadDT)).isValid()
         ? moment(dataset?.value?.uploadDT).format('D MMMM, YYYY') : ''
@@ -131,7 +139,7 @@ export default defineComponent<Props>({
             <div class='dataset-overview-holder'>
               <p class='truncate'>{submitter?.name}
                 {group && <a class='ml-1' href={groupLink}>({group?.shortName})</a>}
-                {!group && submitter?.email
+                {!group && submitter?.email && isValidMail(submitter?.email)
                 && <a class='ml-1' href={`mailto:${submitter?.email}`}>{submitter?.email}</a>}
               </p>
               <div>{upDate}</div>
