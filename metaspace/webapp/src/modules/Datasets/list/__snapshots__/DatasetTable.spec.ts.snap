@@ -494,16 +494,32 @@ exports[`DatasetTable should match snapshot 1`] = `
           </a>
         </div>
         <div
-          class="ds-download"
+          class="featured-action"
         >
           <i
-            class="el-icon-download"
+            class="el-icon-data-analysis"
           />
-          <a
-            href="#"
+          <div
+            class="el-badge sm-feature-badge"
           >
-            Download
-          </a>
+            <a
+              class="mr-2"
+              href="/dataset/QUEUED1"
+            >
+              <span>
+                Dataset overview
+              </span>
+            </a>
+            <transition-stub
+              name="el-zoom-in-center"
+            >
+              <sup
+                class="el-badge__content el-badge__content--undefined is-fixed"
+              >
+                New
+              </sup>
+            </transition-stub>
+          </div>
         </div>
       </div>
     </div>
@@ -679,6 +695,20 @@ exports[`DatasetTable should match snapshot 1`] = `
             href="#"
           >
             Show full metadata
+          </a>
+        </div>
+        <div>
+          <i
+            class="el-icon-data-analysis"
+          />
+          <a
+            class=""
+            classname="mr-2"
+            href="/dataset/ANNOTATING1"
+          >
+            <span>
+              Dataset overview
+            </span>
           </a>
         </div>
       </div>
@@ -913,6 +943,20 @@ exports[`DatasetTable should match snapshot 1`] = `
             href="#"
           >
             Show full metadata
+          </a>
+        </div>
+        <div>
+          <i
+            class="el-icon-data-analysis"
+          />
+          <a
+            class=""
+            classname="mr-2"
+            href="/dataset/FINISHED1"
+          >
+            <span>
+              Dataset overview
+            </span>
           </a>
         </div>
       </div>

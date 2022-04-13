@@ -131,7 +131,8 @@ export default defineComponent<Props>({
             <div class='dataset-overview-holder'>
               <p class='truncate'>{submitter?.name}
                 {group && <a class='ml-1' href={groupLink}>({group?.shortName})</a>}
-                {!group && <a class='ml-1' href={groupLink}>(test)</a>}
+                {!group && submitter?.email
+                && <a class='ml-1' href={`mailto:${submitter?.email}`}>{submitter?.email}</a>}
               </p>
               <div>{upDate}</div>
               {

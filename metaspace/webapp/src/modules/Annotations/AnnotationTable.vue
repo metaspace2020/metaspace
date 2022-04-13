@@ -374,9 +374,19 @@
           v-if="showCustomCols"
           class="mt-1"
         >
-          <el-button slot="reference">
-            Columns <i class="el-icon-arrow-down">
-            </i>
+          <el-button
+            slot="reference"
+            @click="handleColSelectorClick"
+          >
+            <new-feature-badge
+              feature-key="custom-cols"
+              class="new-custom-badge"
+            >
+              <div>
+                Columns <i class="el-icon-arrow-down">
+                </i>
+              </div>
+            </new-feature-badge>
           </el-button>
           <div>
             <div
@@ -485,6 +495,7 @@ import { getDatasetDiagnosticsQuery } from '../../api/dataset'
 import FullScreen from '../../assets/inline/full_screen.svg'
 import ExitFullScreen from '../../assets/inline/exit_full_screen.svg'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
+import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -531,6 +542,7 @@ export default Vue.extend({
     ExternalWindowSvg,
     ExitFullScreen,
     FullScreen,
+    NewFeatureBadge,
   },
   props: ['hideColumns', 'isFullScreen'],
   data() {
@@ -1149,6 +1161,11 @@ export default Vue.extend({
       this.columns[index].selected = !this.columns[index].selected
       setLocalStorage('annotationTableCols', this.columns)
     },
+
+    handleColSelectorClick(e) {
+      e.stopPropagation()
+      hideFeatureBadge('custom-cols')
+    },
   },
 })
 </script>
@@ -1297,5 +1314,11 @@ export default Vue.extend({
  }
  .el-table table {
    width: 0px; // fix safari dynamic column size bug
+ }
+ .new-custom-badge{
+   .el-badge__content{
+     right: 10px !important;
+     top: -10px !important;
+   }
  }
 </style>

@@ -178,7 +178,32 @@ exports[`AnnotationTable should match snapshot 1`] = `
       </div>
     </div>
     <div class="flex w-full items-center justify-end flex-wrap">
-      <!---->
+      <mock-el-popover class="mt-1">
+        <div slot-key="default">
+          <div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>Lab</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>Dataset</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>Annotation</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Adduct</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>m/z</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Off-sample probability %</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span> ρ<sub>spatial</sub></span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span> ρ<sub>spectral</sub></span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span> ρ<sub>chaos</sub></span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>MSM</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Database</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Molecules</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Isomers/Isobars</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Max Intensity</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Total Intensity</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>FDR</span></div>
+          </div>
+        </div>
+        <div slot-key="reference"><button type="button" class="el-button el-button--default">
+            <!---->
+            <!----><span><div class="el-badge new-custom-badge sm-feature-badge"><div>
+              Columns <i class="el-icon-arrow-down"></i></div><transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div></span></button></div>
+      </mock-el-popover>
       <mock-el-popover trigger="hover" class="ml-2 mt-1">
         <div slot-key="default">
 
@@ -193,7 +218,9 @@ exports[`AnnotationTable should match snapshot 1`] = `
           </span></button></div>
         </div>
       </mock-el-popover>
-      <!---->
+      <div class="ml-2 mt-1"><button type="button" class="el-button full-screen-btn el-button--default">
+          <!---->
+          <!----><span><svg data-icon="exit_full_screen" class="full-screen-icon"></svg></span></button></div>
     </div>
   </div>
 </div>
@@ -367,7 +394,32 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
       </div>
     </div>
     <div class="flex w-full items-center justify-end flex-wrap">
-      <!---->
+      <mock-el-popover class="mt-1">
+        <div slot-key="default">
+          <div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>Lab</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>Dataset</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>Annotation</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Adduct</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>m/z</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Off-sample probability %</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span> ρ<sub>spatial</sub></span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span> ρ<sub>spectral</sub></span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span> ρ<sub>chaos</sub></span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>MSM</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Database</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Molecules</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Isomers/Isobars</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Max Intensity</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Total Intensity</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>FDR</span></div>
+          </div>
+        </div>
+        <div slot-key="reference"><button type="button" class="el-button el-button--default">
+            <!---->
+            <!----><span><div class="el-badge new-custom-badge sm-feature-badge"><div>
+              Columns <i class="el-icon-arrow-down"></i></div><transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div></span></button></div>
+      </mock-el-popover>
       <mock-el-popover trigger="hover" class="ml-2 mt-1">
         <div slot-key="default">
 
@@ -382,7 +434,9 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
           </span></button></div>
         </div>
       </mock-el-popover>
-      <!---->
+      <div class="ml-2 mt-1"><button type="button" class="el-button full-screen-btn el-button--default">
+          <!---->
+          <!----><span><svg data-icon="exit_full_screen" class="full-screen-icon"></svg></span></button></div>
     </div>
   </div>
 </div>
