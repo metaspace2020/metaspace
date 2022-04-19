@@ -28,6 +28,32 @@ $bgColor: hsl(208, 36%, 96%);
   }
 }
 
+.roi-btn{
+  margin-right: 14px;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: 8px;
+    bottom: -4px;
+    box-sizing: border-box;
+    border-style: solid;
+    border-color: transparent;
+  }
+
+}
+
+.active{
+  color: theme('colors.blue.700');
+
+  &::after {
+    border-bottom-width: 3px;
+    border-bottom-color: theme('colors.blue.700');
+  }
+}
+
 .roi-badge{
   @apply flex justify-center items-center;
 }

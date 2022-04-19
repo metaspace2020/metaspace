@@ -164,8 +164,12 @@ export default {
     Vue.set(state.roiInfo, key, roi)
   },
 
+  toggleRoiVisibility(state, visible) {
+    Vue.set(state.roiInfo, 'visible', visible)
+  },
+
   resetRoiInfo(state) {
-    state.roiInfo = {};
+    state.roiInfo = {visible:true};
   },
 
   setSnapshotAnnotationIds(state, annotation) {

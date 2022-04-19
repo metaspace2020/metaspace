@@ -444,7 +444,7 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
     applyImageData(canvas, pixels, width, height)
 
     // ROI drawing
-    if (roiInfo && roiInfo.length > 0) {
+    if (roiInfo && roiInfo.length > 0 && roiInfo[roiInfo.length - 1].allVisible) {
       roiInfo.forEach((roiItem: any) => {
         if (roiItem.visible && roiItem.coordinates.length > 0) {
           ctx.beginPath()
