@@ -68,11 +68,6 @@ export default defineComponent<Props>({
       })
     }
 
-    const isValidMail = (email:string) => {
-      const re = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/
-      return re.test(String(email).toLowerCase())
-    }
-
     return () => {
       const {
         name, submitter, group, projects, annotationCounts, metadataJson, id,
@@ -139,8 +134,6 @@ export default defineComponent<Props>({
             <div class='dataset-overview-holder'>
               <p class='truncate'>{submitter?.name}
                 {group && <a class='ml-1' href={groupLink}>({group?.shortName})</a>}
-                {!group && submitter?.email && isValidMail(submitter?.email)
-                && <a class='ml-1' href={`mailto:${submitter?.email}`}>{submitter?.email}</a>}
               </p>
               <div>{upDate}</div>
               {
