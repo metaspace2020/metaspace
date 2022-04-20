@@ -22,7 +22,7 @@ const store = new Vuex.Store({
     normalization: undefined,
 
     // roi settings
-    roiInfo: {visible:true},
+    roiInfo: {visible: false},
 
     // is annotation table loading?
     tableIsLoading: true,

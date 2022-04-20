@@ -1,6 +1,6 @@
 import VisibleIcon from '../assets/inline/refactoring-ui/icon-view-visible.svg'
 import HiddenIcon from '../assets/inline/refactoring-ui/icon-view-hidden.svg'
-import RoiIcon from '../assets/inline/roi-icon.svg'
+import RoiIcon from '../assets/inline/roi-icon2.svg'
 import { defineComponent, computed, ref, reactive } from '@vue/composition-api'
 import { Button, Input, Popover } from '../lib/element-ui'
 import Vue from 'vue'
@@ -187,7 +187,6 @@ export default defineComponent<RoiSettingsProps>({
         isDrawing: true,
       })
       $store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
-      toggleAllHidden(undefined, true)
     }
 
     const toggleAllHidden = (e: any = undefined, visible : boolean | any = undefined) => {
@@ -264,7 +263,8 @@ export default defineComponent<RoiSettingsProps>({
           popperClass='roi-popper'
           placement="bottom"
           width="200"
-          trigger="hover"
+          value={isVisible}
+          trigger="manual"
         >
           <div class='roi-content'>
             {

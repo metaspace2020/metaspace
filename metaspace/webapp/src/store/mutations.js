@@ -169,7 +169,7 @@ export default {
   },
 
   resetRoiInfo(state) {
-    state.roiInfo = {visible:true};
+    state.roiInfo = {visible: false};
   },
 
   setSnapshotAnnotationIds(state, annotation) {
