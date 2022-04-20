@@ -199,13 +199,18 @@ export default defineComponent<RoiSettingsProps>({
         : !$store.state.roiInfo.visible
       $store.commit('toggleRoiVisibility', isVisible)
 
-      const roiInfo = getRoi()
-      const index = roiInfo.length - 1
-      if (index < 0) {
-        return
-      }
-      Vue.set(roiInfo, index, { ...roiInfo[index], allVisible: isVisible })
-      $store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
+      // iterates through all datasets to ensure all are toggled and ion image is updated
+      Object.keys($store.state.roiInfo).forEach((key: string) => {
+        if (key !== 'visible') {
+          const roiInfo = $store.state.roiInfo[key]
+          const index = roiInfo.length - 1
+          if (index < 0) {
+            return
+          }
+          Vue.set(roiInfo, index, { ...roiInfo[index], allVisible: isVisible })
+          $store.commit('setRoiInfo', { key, roi: roiInfo })
+        }
+      })
     }
 
     const triggerDownload = () => {
