@@ -283,20 +283,17 @@ export default defineComponent({
         console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/new/'
-        const response = await fetch(baseUrl + 'all_predictions_08-04-22.json')
-        // const response = await fetch(baseUrl + 'all_predictions_11-Dec-reduced.json')
+        const response = await fetch(baseUrl + 'all_predictions_21-04-22.json')
         const predictions = await response.json()
-        const datasetResponse = await fetch(baseUrl + 'datasets_31-03-22.json')
-        // const datasetResponse = await fetch(baseUrl + 'data_test.json')
+        const datasetResponse = await fetch(baseUrl + 'datasets_21-04-22.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification_14-03-22.json')
         state.classification = await chemClassResponse.json()
         const pathwayResponse = await fetch(baseUrl + 'pathways_14-03-22.json')
         state.pathways = await pathwayResponse.json()
 
-        const datasetsById = keyBy(datasets, 'Dataset ID')
+        const datasetsById = keyBy(datasets, 'Clone ID')
         delete datasetsById.null
-
         const predWithDs : any = []
         predictions.forEach((prediction: any) => {
           const datasetItem = datasetsById[prediction.dsId]
@@ -312,8 +309,6 @@ export default defineComponent({
               a: prediction.a,
               nl: prediction.nL,
               n: prediction.name,
-              nS: prediction.nS,
-              nSi: prediction.nSI,
               pV: prediction.pV,
               p: prediction.p,
               v: prediction.v,
