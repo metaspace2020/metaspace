@@ -1,7 +1,7 @@
 import VisibleIcon from '../assets/inline/refactoring-ui/icon-view-visible.svg'
 import HiddenIcon from '../assets/inline/refactoring-ui/icon-view-hidden.svg'
 import RoiIcon from '../assets/inline/roi-icon2.svg'
-import { defineComponent, computed, ref, reactive } from '@vue/composition-api'
+import { defineComponent, computed, ref, reactive, onMounted, onUnmounted, watch } from '@vue/composition-api'
 import { Button, Input, Popover } from '../lib/element-ui'
 import Vue from 'vue'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
@@ -46,7 +46,7 @@ export default defineComponent<RoiSettingsProps>({
   },
   setup(props, { root }) {
     const { $store } = root
-    const popover = ref(null)
+    const popover = ref<any>(null)
     const state = reactive<RoiSettingsState>({
       offset: 0,
       rows: [],
@@ -101,6 +101,25 @@ export default defineComponent<RoiSettingsProps>({
           state.cols = []
         }
       }
+    })
+
+    onMounted(() => {
+      window.addEventListener('resize', resizeHandler)
+    })
+
+    onUnmounted(() => {
+      window.removeEventListener('resize', resizeHandler)
+    })
+
+    const resizeHandler = () => {
+      if (popover && popover.value) { // update popper position
+        popover.value.updatePopper()
+      }
+    }
+
+    watch(() => $store.getters.filter, () => {
+      // hack to update popper position when some filters change reduces table width and misplace its position
+      setTimeout(() => { resizeHandler() }, 100)
     })
 
     const ionImage = (ionImagePng: any, isotopeImage: any,
