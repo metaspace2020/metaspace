@@ -1,8 +1,8 @@
 import VisibleIcon from '../assets/inline/refactoring-ui/icon-view-visible.svg'
 import HiddenIcon from '../assets/inline/refactoring-ui/icon-view-hidden.svg'
-import RoiIcon from '../assets/inline/roi-icon2.svg'
+import RoiIcon from '../assets/inline/roi-icon.svg'
 import { defineComponent, computed, ref, reactive, onMounted, onUnmounted, watch } from '@vue/composition-api'
-import { Button, Input, Popover } from '../lib/element-ui'
+import { Button, Input, Popover, Tooltip } from '../lib/element-ui'
 import Vue from 'vue'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
 import './RoiSettings.scss'
@@ -357,17 +357,28 @@ export default defineComponent<RoiSettingsProps>({
             </Button>
           </div>
 
-          <Button
+          <Popover
+            trigger="hover"
+            placement="bottom"
             slot="reference"
-            class={`roi-btn button-reset flex h-6 mr-3 ${isVisible ? 'active' : ''}`}
-            onClick={toggleAllHidden}
+            disabled={isVisible}
           >
-            <StatefulIcon
-              class='roi-badge h-6 w-7'
-              active={isVisible}>
-              <RoiIcon class='roi-icon fill-current'/>
-            </StatefulIcon>
-          </Button>
+            <div slot="reference">
+              <Button
+                class={`roi-btn button-reset flex h-6 mr-3 ${isVisible ? 'active' : ''}`}
+                onClick={toggleAllHidden}
+              >
+                <StatefulIcon
+                  class='roi-badge h-6 w-7'
+                  active={isVisible}>
+                  <RoiIcon class='roi-icon fill-current'/>
+                </StatefulIcon>
+              </Button>
+            </div>
+            <div class="max-w-xs">
+              Create and save ROIs, export ROI pixels intensities.
+            </div>
+          </Popover>
         </Popover>
       )
     }

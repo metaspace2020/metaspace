@@ -213,7 +213,7 @@ export default class MainImageHeader extends Vue {
   justify-content: center;
   align-items: center;
   position: absolute;
-  right: 85px;
+  right: 50px;
   height: 25px;
 }
 
