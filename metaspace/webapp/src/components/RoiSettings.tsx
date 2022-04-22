@@ -365,7 +365,7 @@ export default defineComponent<RoiSettingsProps>({
           >
             <div slot="reference">
               <Button
-                class={`roi-btn button-reset flex h-6 mr-3 ${isVisible ? 'active' : ''}`}
+                class={`roi-btn button-reset flex h-6 w-6 mr-3 ${isVisible ? 'active' : ''}`}
                 onClick={toggleAllHidden}
               >
                 <StatefulIcon
