@@ -79,7 +79,7 @@
     "lodash": "^4.17.21",
     "merge-graphql-schemas": "^1.5.3",
     "mkdirp": "^0.5.1",
-    "moment": "^2.22.2",
+    "moment": "^2.29.2",
     "multer": "^1.4.2",
     "node-fetch": "^2.6.7",
     "passport": "^0.4.0",
