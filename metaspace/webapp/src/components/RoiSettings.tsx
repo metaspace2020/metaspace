@@ -1,8 +1,8 @@
 import VisibleIcon from '../assets/inline/refactoring-ui/icon-view-visible.svg'
 import HiddenIcon from '../assets/inline/refactoring-ui/icon-view-hidden.svg'
 import RoiIcon from '../assets/inline/roi-icon.svg'
-import { defineComponent, computed, ref, reactive } from '@vue/composition-api'
-import { Button, Input, Popover } from '../lib/element-ui'
+import { defineComponent, computed, ref, reactive, onMounted, onUnmounted, watch } from '@vue/composition-api'
+import { Button, Input, Popover, Tooltip } from '../lib/element-ui'
 import Vue from 'vue'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
 import './RoiSettings.scss'
@@ -12,6 +12,7 @@ import config from '../lib/config'
 import { loadPngFromUrl, processIonImage } from '../lib/ionImageRendering'
 import isInsidePolygon from '../lib/isInsidePolygon'
 import FileSaver from 'file-saver'
+import StatefulIcon from '../components/StatefulIcon.vue'
 
 interface RoiSettingsProps {
   annotation: any,
@@ -22,7 +23,6 @@ interface RoiSettingsState {
   offset: number,
   rows: any[],
   cols: any[],
-  isOpen: boolean,
 }
 
 const channels: any = {
@@ -46,13 +46,12 @@ export default defineComponent<RoiSettingsProps>({
   },
   setup(props, { root }) {
     const { $store } = root
-    const popover = ref(null)
+    const popover = ref<any>(null)
     const state = reactive<RoiSettingsState>({
       offset: 0,
       rows: [],
       cols: [],
       isDownloading: false,
-      isOpen: false,
     })
 
     const queryVariables = () => {
@@ -79,8 +78,6 @@ export default defineComponent<RoiSettingsProps>({
     }))
 
     const {
-      result: annotationsResult,
-      loading: annotationsLoading,
       onResult: onAnnotationsResult,
     } = useQuery<any>(annotationListQuery, queryVars, queryOptions)
 
@@ -104,6 +101,25 @@ export default defineComponent<RoiSettingsProps>({
           state.cols = []
         }
       }
+    })
+
+    onMounted(() => {
+      window.addEventListener('resize', resizeHandler)
+    })
+
+    onUnmounted(() => {
+      window.removeEventListener('resize', resizeHandler)
+    })
+
+    const resizeHandler = () => {
+      if (popover && popover.value) { // update popper position
+        popover.value.updatePopper()
+      }
+    }
+
+    watch(() => $store.getters.filter, () => {
+      // hack to update popper position when some filters change reduces table width and misplace its position
+      setTimeout(() => { resizeHandler() }, 100)
     })
 
     const ionImage = (ionImagePng: any, isotopeImage: any,
@@ -166,6 +182,10 @@ export default defineComponent<RoiSettingsProps>({
       return []
     }
 
+    const isRoiVisible = () => {
+      return $store.state.roiInfo.visible
+    }
+
     const addRoi = (e: any) => {
       e.stopPropagation()
       e.preventDefault()
@@ -181,16 +201,34 @@ export default defineComponent<RoiSettingsProps>({
         strokeColor: channel.replace('rgb', 'rgba').replace(')', ', 0)'),
         name: `ROI ${index + 1}`,
         visible: true,
+        allVisible: true,
         edit: false,
         isDrawing: true,
       })
       $store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
-    const openRoi = (e: any) => {
-      e.stopPropagation()
-      e.preventDefault()
-      state.isOpen = !state.isOpen
+    const toggleAllHidden = (e: any = undefined, visible : boolean | any = undefined) => {
+      if (e) {
+        e.stopPropagation()
+        e.preventDefault()
+      }
+      const isVisible = visible !== undefined ? visible
+        : !$store.state.roiInfo.visible
+      $store.commit('toggleRoiVisibility', isVisible)
+
+      // iterates through all datasets to ensure all are toggled and ion image is updated
+      Object.keys($store.state.roiInfo).forEach((key: string) => {
+        if (key !== 'visible') {
+          const roiInfo = $store.state.roiInfo[key]
+          const index = roiInfo.length - 1
+          if (index < 0) {
+            return
+          }
+          Vue.set(roiInfo, index, { ...roiInfo[index], allVisible: isVisible })
+          $store.commit('setRoiInfo', { key, roi: roiInfo })
+        }
+      })
     }
 
     const triggerDownload = () => {
@@ -236,6 +274,7 @@ export default defineComponent<RoiSettingsProps>({
 
     return () => {
       const roiInfo = getRoi()
+      const isVisible = isRoiVisible()
 
       return (
         <Popover
@@ -243,7 +282,8 @@ export default defineComponent<RoiSettingsProps>({
           popperClass='roi-popper'
           placement="bottom"
           width="200"
-          trigger="click"
+          value={isVisible}
+          trigger="manual"
         >
           <div class='roi-content'>
             {
@@ -317,15 +357,28 @@ export default defineComponent<RoiSettingsProps>({
             </Button>
           </div>
 
-          <Button
+          <Popover
+            trigger="hover"
+            placement="bottom"
             slot="reference"
-            class="button-reset h-9 rounded-lg flex items-center justify-center px-2 hover:bg-gray-100"
-            onClick={openRoi}
+            disabled={isVisible}
           >
-            <div class='roi-badge'>
-              <RoiIcon class='roi-icon fill-current'/>
+            <div slot="reference">
+              <Button
+                class={`roi-btn button-reset flex h-6 w-6 mr-3 ${isVisible ? 'active' : ''}`}
+                onClick={toggleAllHidden}
+              >
+                <StatefulIcon
+                  class='roi-badge h-6 w-7'
+                  active={isVisible}>
+                  <RoiIcon class='roi-icon fill-current'/>
+                </StatefulIcon>
+              </Button>
             </div>
-          </Button>
+            <div class="max-w-xs">
+              Create and save ROIs, export ROI pixels intensities.
+            </div>
+          </Popover>
         </Popover>
       )
     }

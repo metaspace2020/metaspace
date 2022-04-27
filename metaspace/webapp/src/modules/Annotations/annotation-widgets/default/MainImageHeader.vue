@@ -49,6 +49,16 @@
       >
         <AspectRatioIcon class="w-6 h-6 fill-current text-gray-900" />
       </button>
+      <fade-transition v-if="showRoi">
+        <div
+          v-if="isActive"
+          class="roi-container"
+        >
+          <roi-settings
+            :annotation="annotation"
+          />
+        </div>
+      </fade-transition>
       <button
         v-if="hasOpticalImage"
         class="button-reset av-icon-button"
@@ -67,16 +77,6 @@
         class="norm-badge"
       >
         TIC normalized
-      </div>
-    </fade-transition>
-    <fade-transition v-if="showRoi">
-      <div
-        v-if="isActive"
-        class="roi-container"
-      >
-        <roi-settings
-          :annotation="annotation"
-        />
       </div>
     </fade-transition>
     <fade-transition v-if="multiImageFlag">
@@ -200,8 +200,7 @@ export default class MainImageHeader extends Vue {
 }
 
 .roi-container{
-  position: absolute;
-  right: 40px;
+  margin-left: 16px;
 }
 
 .norm-badge{
@@ -214,7 +213,7 @@ export default class MainImageHeader extends Vue {
   justify-content: center;
   align-items: center;
   position: absolute;
-  right: 85px;
+  right: 50px;
   height: 25px;
 }
 
