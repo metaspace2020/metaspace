@@ -358,6 +358,35 @@ exports[`DatasetTable should match snapshot 1`] = `
               />
             </div>
           </mock-el-popover>
+          <mock-el-popover
+            class="ml-1"
+            placement="top"
+            popper-class="min-w-0"
+            trigger="hover"
+          >
+            <div
+              slot-key="default"
+            >
+               
+              <p
+                class="leading-none m-0"
+              >
+                Copy dataset id to clipboard
+              </p>
+            </div>
+            <div
+              slot-key="reference"
+            >
+              <button
+                class="button-reset flex w-6 h-6"
+              >
+                <svg
+                  class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"
+                  data-icon="copy-id"
+                />
+              </button>
+            </div>
+          </mock-el-popover>
         </div>
         <div
           class="ds-item-line text-gray-700"
@@ -562,6 +591,35 @@ exports[`DatasetTable should match snapshot 1`] = `
           >
             allDatasets.0.name
           </span>
+          <mock-el-popover
+            class="ml-1"
+            placement="top"
+            popper-class="min-w-0"
+            trigger="hover"
+          >
+            <div
+              slot-key="default"
+            >
+               
+              <p
+                class="leading-none m-0"
+              >
+                Copy dataset id to clipboard
+              </p>
+            </div>
+            <div
+              slot-key="reference"
+            >
+              <button
+                class="button-reset flex w-6 h-6"
+              >
+                <svg
+                  class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"
+                  data-icon="copy-id"
+                />
+              </button>
+            </div>
+          </mock-el-popover>
         </div>
         <div
           class="ds-item-line text-gray-700"
@@ -752,6 +810,35 @@ exports[`DatasetTable should match snapshot 1`] = `
           >
             allDatasets.2.name
           </span>
+          <mock-el-popover
+            class="ml-1"
+            placement="top"
+            popper-class="min-w-0"
+            trigger="hover"
+          >
+            <div
+              slot-key="default"
+            >
+               
+              <p
+                class="leading-none m-0"
+              >
+                Copy dataset id to clipboard
+              </p>
+            </div>
+            <div
+              slot-key="reference"
+            >
+              <button
+                class="button-reset flex w-6 h-6"
+              >
+                <svg
+                  class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"
+                  data-icon="copy-id"
+                />
+              </button>
+            </div>
+          </mock-el-popover>
         </div>
         <div
           class="ds-item-line text-gray-700"

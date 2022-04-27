@@ -8,10 +8,18 @@
   >
     <button
       slot="reference"
-      class="button-reset w-4 h-4 flex"
+      class="button-reset flex"
+      :class="isId ? 'w-6 h-6' : 'w-4 h-4'"
       @click="handleCopy"
     >
-      <duplicate-icon class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon" />
+      <copy-id-icon
+        v-if="isId"
+        class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"
+      />
+      <duplicate-icon
+        v-else
+        class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"
+      />
     </button>
     <p class="leading-none m-0">
       <span
@@ -31,6 +39,7 @@ import { defineComponent, ref } from '@vue/composition-api'
 
 import copyToClipboard from '../lib/copyToClipboard'
 import DuplicateIcon from '../assets/inline/refactoring-ui/icon-duplicate.svg'
+import CopyIdIcon from '../assets/inline/copy-id.svg'
 import FadeTransition from './FadeTransition'
 
 interface Props {
@@ -40,10 +49,12 @@ interface Props {
 export default defineComponent<Props>({
   components: {
     DuplicateIcon,
+    CopyIdIcon,
     FadeTransition,
   },
   props: {
     text: { type: String, required: true },
+    isId: { type: Boolean, required: false, default: false },
   },
   setup(props) {
     const copied = ref(false)
