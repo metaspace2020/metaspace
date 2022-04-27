@@ -49,11 +49,14 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     })
 
     const openDeleteDialog = async() => {
-      const force = props.currentUser != null
-        && props.currentUser?.role === 'admin'
-        && props.dataset?.status !== 'FINISHED'
+      const force = props.dataset?.status === 'QUEUED' || props.dataset?.status === 'ANNOTATING'
       try {
-        const msg = `Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${props.dataset.name}?`
+        let msg = `Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${props.dataset.name}?`
+        if (props.dataset.status !== 'FINISHED' && props.dataset.status !== 'FAILED') {
+          msg += '\nAs this dataset is currently processing, you may receive an annotation failure email - this can be '
+            + 'safely ignored.'
+        }
+
         await $confirm(msg, {
           type: force ? 'warning' : undefined,
           lockScroll: false,

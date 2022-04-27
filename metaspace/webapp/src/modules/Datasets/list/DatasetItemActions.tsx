@@ -35,7 +35,7 @@ const DatasetItemActions = defineComponent({
       try {
         let msg = `Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${props.dataset.name}?`
         if (props.dataset.status !== 'FINISHED' && props.dataset.status !== 'FAILED') {
-          msg += '\nAs this dataset is currently processing, you may receive an annotation failure email - this can be'
+          msg += '\nAs this dataset is currently processing, you may receive an annotation failure email - this can be '
             + 'safely ignored.'
         }
 
