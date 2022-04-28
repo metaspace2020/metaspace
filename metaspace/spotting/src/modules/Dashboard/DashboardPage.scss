@@ -6,7 +6,7 @@ $filter-color: #828282;
 
 
 .dashboard-container{
-  @apply flex flex-wrap m-12 justify-between;
+  @apply flex flex-wrap m-12 justify-between pb-1;
 
   .el-tag{
     white-space: nowrap;
@@ -64,7 +64,7 @@ $filter-color: #828282;
   }
 
   .content-container{
-    @apply flex relative flex-wrap border-2 border-solid border-gray-200 rounded w-full mt-6 overflow-hidden items-center justify-center;
+    @apply flex relative flex-wrap border-2 border-solid border-gray-200 rounded w-full mt-2 overflow-hidden items-center justify-center;
     min-height: 400px;
 
   }

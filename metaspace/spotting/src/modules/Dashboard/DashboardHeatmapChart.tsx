@@ -123,7 +123,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
-            return params.value[4].toFixed(2) + ' ' + params.data?.label?.key + ' in ' + props.xAxis[params.value[0]]
+            return params.value[4].toFixed(2) + ' ' + params.data?.label?.y + ' in ' + params.data?.label?.x
           },
         },
         grid: {

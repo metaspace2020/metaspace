@@ -1,6 +1,6 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
 import './DashboardPage.scss'
-import { Option, Select, Pagination, InputNumber, Button } from '../../lib/element-ui'
+import { Option, Select, Pagination, InputNumber, Button, RadioGroup, RadioButton } from '../../lib/element-ui'
 import { cloneDeep, groupBy, keyBy, omit, orderBy, sortedUniq, uniq, uniqBy } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
@@ -8,6 +8,7 @@ import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
 // import { predictions } from '../../data/predictions'
 import createColormap from '../../lib/createColormap'
+import Vue from 'vue'
 
 interface Options{
   xAxis: any
@@ -21,6 +22,7 @@ interface DashboardState {
   filter: any[]
   xAxisValues: any
   rawData: any
+  rawDataInter: any
   usedData: any
   yAxisValues: any
   data: any
@@ -33,6 +35,7 @@ interface DashboardState {
   predictions: any
   datasets : any
   classification : any
+  dataSource : any
   pathways : any
   wellmap : any
   pagination: any
@@ -251,7 +254,9 @@ export default defineComponent({
       xAxisValues: [],
       yAxisValues: [],
       data: [],
+      dataSource: 'Interlab',
       rawData: undefined,
+      rawDataInter: undefined,
       usedData: undefined,
       baseData: undefined,
       visualMap: {},
@@ -283,8 +288,10 @@ export default defineComponent({
         console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/new/'
-        const response = await fetch(baseUrl + 'all_predictions_21-04-22.json')
-        const predictions = await response.json()
+        const response = await fetch(baseUrl + 'matrix_predictions_27-04-22.json')
+        const matrixPredictions = await response.json()
+        const responseInterLab = await fetch(baseUrl + 'interlab_predictions_27-04-22.json')
+        const interLabPredictions = await responseInterLab.json()
         const datasetResponse = await fetch(baseUrl + 'datasets_21-04-22.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification_14-03-22.json')
@@ -295,7 +302,7 @@ export default defineComponent({
         const datasetsById = keyBy(datasets, 'Clone ID')
         delete datasetsById.null
         const predWithDs : any = []
-        predictions.forEach((prediction: any) => {
+        matrixPredictions.forEach((prediction: any) => {
           const datasetItem = datasetsById[prediction.dsId]
           if (datasetItem) {
             predWithDs.push({
@@ -315,8 +322,32 @@ export default defineComponent({
             })
           }
         })
-        console.log('File loaded', predWithDs)
+        const predWithDsInter : any = []
+        interLabPredictions.forEach((prediction: any) => {
+          const datasetItem = datasetsById[prediction.dsId]
+          if (datasetItem) {
+            predWithDsInter.push({
+              pol: datasetItem.Polarity,
+              mS: datasetItem['Matrix short'],
+              mL: datasetItem['Matrix long'],
+              tech: datasetItem.Technology,
+              lab: datasetItem['Participant lab'],
+              d: prediction.dsId,
+              f: prediction.f,
+              a: prediction.a,
+              nl: prediction.nL,
+              n: prediction.name,
+              pV: prediction.pV,
+              p: prediction.p,
+              v: prediction.v,
+            })
+          }
+        })
+        console.log('File loaded')
+        // console.log('File loaded', predWithDs)
+        // console.log('File loaded', predWithDsInter)
         state.rawData = predWithDs
+        state.rawDataInter = predWithDsInter
       } catch (e) {
         console.log('error', e)
       } finally {
@@ -734,7 +765,7 @@ export default defineComponent({
       }
     }
 
-    const handleAxisChange = (value: any, isXAxis : boolean = true) => {
+    const handleAxisChange = (value: any, isXAxis : boolean = true, buildChart : boolean = true) => {
       let axis : any = []
       let src : any
       const isNew : boolean = (isXAxis && value !== state.options.xAxis)
@@ -750,7 +781,7 @@ export default defineComponent({
       if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
         src = state.classification
       } else if (Object.keys(PREDICTION_METRICS).includes(value) || Object.keys(DATASET_METRICS).includes(value)) {
-        src = state.rawData
+        src = state.dataSource === 'Matrix' ? state.rawData : state.rawDataInter
       } else if (Object.keys(PATHWAY_METRICS).includes(value)) {
         src = state.pathways
       }
@@ -765,7 +796,7 @@ export default defineComponent({
         }
       })
       axis.sort()
-      axis = axis.filter((item: any) => item && item !== 'null' && item !== 'none')
+      axis = axis.filter((item: any) => item && item !== 'null' && item !== 'none' && item !== 'undefined')
 
       if (isXAxis) {
         state.pagination.total = axis.length
@@ -774,42 +805,46 @@ export default defineComponent({
         state.yAxisValues = axis
       }
 
-      let mergedData : any = state.rawData
       if (state.options.xAxis && state.options.yAxis && isNew) {
-        if (
-          Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)
-          || Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)
-        ) {
-          const predWithClass : any = []
-          const chemClassById = groupBy(state.classification, 'name_short')
-          state.rawData.forEach((prediction: any) => {
-            if (chemClassById[prediction.n]) {
-              chemClassById[prediction.n].forEach((classification: any) => {
-                predWithClass.push({ ...classification, ...prediction })
-              })
-            }
-          })
-          mergedData = predWithClass
-        } else if (
-          Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
-          || Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)) {
-          const predWithClass : any = []
-          const chemClassById = groupBy(state.pathways, 'name_short')
-          state.rawData.forEach((prediction: any) => {
-            if (chemClassById[prediction.n]) {
-              chemClassById[prediction.n].forEach((classification: any) => {
-                predWithClass.push({ ...classification, ...prediction })
-              })
-            }
-          })
-          mergedData = predWithClass
-        }
-        state.usedData = mergedData
+        setUsedData()
       }
 
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart) {
         buildValues()
       }
+    }
+
+    const setUsedData = (source:string = state.dataSource) => {
+      let mergedData : any = source === 'Matrix' ? state.rawData : state.rawDataInter
+      if (
+        Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)
+        || Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)
+      ) {
+        const predWithClass : any = []
+        const chemClassById = groupBy(state.classification, 'name_short')
+        mergedData.forEach((prediction: any) => {
+          if (chemClassById[prediction.n]) {
+            chemClassById[prediction.n].forEach((classification: any) => {
+              predWithClass.push({ ...classification, ...prediction })
+            })
+          }
+        })
+        mergedData = predWithClass
+      } else if (
+        Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
+        || Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)) {
+        const predWithClass : any = []
+        const chemClassById = groupBy(state.pathways, 'name_short')
+        mergedData.forEach((prediction: any) => {
+          if (chemClassById[prediction.n]) {
+            chemClassById[prediction.n].forEach((classification: any) => {
+              predWithClass.push({ ...classification, ...prediction })
+            })
+          }
+        })
+        mergedData = predWithClass
+      }
+      state.usedData = mergedData
     }
 
     const renderFilters = () => {
@@ -888,6 +923,34 @@ export default defineComponent({
             </Select>
           </div>
 
+          <div class='filter-box m-2'>
+            <span class='filter-label mb-3'>Data source</span>
+            <RadioGroup
+              disabled={state.loading}
+              value={state.dataSource}
+              size="mini"
+              onInput={(text:any) => {
+                const changedValue = text !== state.dataSource
+                state.dataSource = text
+                Vue.nextTick()
+                state.loading = true
+                if (state.options.xAxis && state.options.yAxis && changedValue) {
+                  setUsedData(text)
+                  state.filter = [cloneDeep(filterItem)]
+                }
+                if (state.options.xAxis && state.options.yAxis && state.options.aggregation
+                && changedValue) {
+                  handleAxisChange(state.options.xAxis, true, false)
+                  handleAxisChange(state.options.yAxis, false, false)
+                  buildValues()
+                }
+                state.loading = false
+              }}>
+              <RadioButton label='Matrix'/>
+              <RadioButton label='Interlab'/>
+            </RadioGroup>
+
+          </div>
           <div class='filter-box m-2'>
             <span class='filter-label mb-2'>Filters</span>
             {
@@ -978,7 +1041,7 @@ export default defineComponent({
 
     const renderVisualizations = () => {
       return (
-        <div class='visualization-container'>
+        <div class='visualization-container flex w-full justify-end'>
           <div class='visualization-selector'>
             <span class='filter-label'>Visualization</span>
             <div class={`icon-holder ${state.selectedView === VIEW.SCATTER ? 'selected' : ''}`}>
@@ -1020,11 +1083,11 @@ export default defineComponent({
       handleAxisChange(state.options.xAxis)
     }
 
-    const renderPagination = () => {
+    const renderPagination = (total: number) => {
       return (
         <div class="block">
           <Pagination
-            total={state.pagination.total}
+            total={total}
             pageSize={state.pagination.pageSize}
             pageSizes={pageSizes}
             currentPage={state.pagination.currentPage}
@@ -1036,44 +1099,32 @@ export default defineComponent({
       )
     }
 
-    const renderScatterChart = () => {
-      const yAxisValues : any[] = state.yAxisValues.filter((item: any) => !state.hiddenYValues.includes(item))
-      let xAxisValues : any[] = state.xAxisValues.filter((item: any) => !state.hiddenXValues.includes(item))
-      const start = ((state.pagination.currentPage - 1) * state.pagination.pageSize)
-      const end = ((state.pagination.currentPage - 1) * state.pagination.pageSize) + state.pagination.pageSize
-      xAxisValues = xAxisValues.slice(start, end)
-
+    const renderScatterChart = (yAxisValues: any, xAxisValues: any, total: number, chartData : any) => {
       return (
         <div class='chart-container'>
           <DashboardScatterChart
             xAxis={xAxisValues}
             yAxis={yAxisValues}
             size={yAxisValues.length * 30}
-            data={state.data}
+            data={chartData}
             visualMap={state.visualMap}
             onItemSelected={handleItemClick}
           />
-          {!state.loading && renderPagination()}
+          {!state.loading && renderPagination(total)}
         </div>
       )
     }
-    const renderHeatmapChart = () => {
-      const yAxisValues : any[] = state.yAxisValues.filter((item: any) => !state.hiddenYValues.includes(item))
-      let xAxisValues : any[] = state.xAxisValues.filter((item: any) => !state.hiddenXValues.includes(item))
-      const start = ((state.pagination.currentPage - 1) * state.pagination.pageSize)
-      const end = ((state.pagination.currentPage - 1) * state.pagination.pageSize) + state.pagination.pageSize
-      xAxisValues = xAxisValues.slice(start, end)
-
+    const renderHeatmapChart = (yAxisValues: any, xAxisValues: any, total: number, chartData : any) => {
       return (
         <div class='chart-container'>
           <DashboardHeatmapChart
             xAxis={xAxisValues}
             yAxis={yAxisValues}
             size={yAxisValues.length * 30}
-            data={state.data}
+            data={chartData}
             visualMap={state.visualMap}
           />
-          {!state.loading && renderPagination()}
+          {!state.loading && renderPagination(total)}
         </div>
       )
     }
@@ -1083,6 +1134,14 @@ export default defineComponent({
         ($route.query.xAxis && $route.query.yAxis && $route.query.agg)
         || (state.options.xAxis && state.options.yAxis && state.options.aggregation)
       const { selectedView } = state
+      const isLoading = (state.loading || state.buildingChart)
+      const yAxisValues : any[] = state.yAxisValues.filter((item: any) => !state.hiddenYValues.includes(item))
+      let xAxisValues : any[] = state.xAxisValues.filter((item: any) => !state.hiddenXValues.includes(item))
+      const total = xAxisValues.length
+      const start = ((state.pagination.currentPage - 1) * state.pagination.pageSize)
+      const end = ((state.pagination.currentPage - 1) * state.pagination.pageSize) + state.pagination.pageSize
+      xAxisValues = xAxisValues.slice(start, end)
+      const chartData = state.data.slice(yAxisValues.length * start)
 
       return (
         <div class='dashboard-container'>
@@ -1097,14 +1156,21 @@ export default defineComponent({
               </div>
             }
             {!showChart && renderDashboardInstructions()}
-            {showChart && selectedView === VIEW.SCATTER && renderScatterChart()}
-            {showChart && selectedView === VIEW.HEATMAP && renderHeatmapChart()}
-            {(state.loading || state.buildingChart)
-            && <div class='absolute'>
-              <i
-                class="el-icon-loading"
-              />
-            </div>
+            {
+              !isLoading && showChart && selectedView === VIEW.SCATTER
+              && renderScatterChart(yAxisValues, xAxisValues, total, chartData)
+            }
+            {
+              !isLoading && showChart && selectedView === VIEW.HEATMAP
+              && renderHeatmapChart(yAxisValues, xAxisValues, total, chartData)
+            }
+            {
+              isLoading
+              && <div class='absolute'>
+                <i
+                  class="el-icon-loading"
+                />
+              </div>
             }
           </div>
         </div>
