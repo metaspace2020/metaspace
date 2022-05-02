@@ -336,6 +336,77 @@ export class ScoringModel {
   params: any;
 }
 
+@Entity({ schema: 'public' })
+export class EnrichmentDB {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  /** `name` is for equivalent enrichment's reference db name */
+  @Index({ unique: true })
+  @Column({ type: 'text' })
+  name: string;
+}
+
+@Entity({ schema: 'public' })
+export class EnrichmentTerm {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  /** `id` is for equivalent enrichment's reference source id */
+  @Index({ unique: true })
+  @Column({ type: 'text' })
+  enrichmentId: string;
+
+  /** `name` is for equivalent enrichment's reference source name */
+  @Column({ type: 'text' })
+  enrichmentName: string;
+
+  @ManyToOne(() => EnrichmentDB, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'enrichment_db_id' })
+  enrichmentDB: EnrichmentDB;
+}
+
+@Entity({ schema: 'public' })
+export class EnrichmentDBMoleculeMapping {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  /** molecular db `name` for molecule to map with reference enrichment db */
+  @Column({ type: 'text' })
+  moleculeEnrichedName: string;
+
+  @ManyToOne(() => EnrichmentTerm, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'enrichment_term_id' })
+  enrichmentTerm: EnrichmentTerm;
+
+  @ManyToOne(() => MolecularDB, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'molecular_db_id' })
+  molecularDB: MolecularDB;
+}
+
+@Entity({ schema: 'public' })
+export class EnrichmentBootstrap {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'int' })
+  scenario: number;
+
+  @Column({ type: 'text' })
+  formulaAdduct: string;
+
+  @Column({ type: 'numeric', precision: 2, scale: 2 })
+  fdr: string;
+
+  @ManyToOne(() => Dataset)
+  @JoinColumn({ name: 'dataset_id' })
+  dataset: Dataset;
+
+  @ManyToOne(() => EnrichmentDBMoleculeMapping, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'enrichment_db_molecule_mapping_id' })
+  enrichmentDBMoleculeMapping: EnrichmentDBMoleculeMapping;
+}
+
 export const ENGINE_ENTITIES = [
   EngineDataset,
   OpticalImage,
@@ -345,4 +416,8 @@ export const ENGINE_ENTITIES = [
   PerfProfile,
   PerfProfileEntry,
   ScoringModel,
+  EnrichmentDB,
+  EnrichmentTerm,
+  EnrichmentDBMoleculeMapping,
+  EnrichmentBootstrap,
 ]
