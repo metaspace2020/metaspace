@@ -1,7 +1,9 @@
 import argparse
 import logging
 
-from sm.engine import molecular_db
+from sm.engine import enrichment_db
+from sm.engine import enrichment_term
+from sm.engine import enrichment_db_molecule_mapping
 from sm.engine.util import GlobalInit
 
 logger = logging.getLogger('engine')
@@ -17,7 +19,12 @@ def main():
         type=str,
         help=f'Path to a enrichment database names csv file. Required columns: {required_columns}. ',
     )
-    parser.add_argument('--sep', dest='sep', type=str, help='CSV file fields delimiter')
+    parser.add_argument('name_db', type=str, help='Database name')
+    parser.add_argument(
+        'json_file',
+        type=str,
+        help=f'Path to a enrichment database and molecular mapping.',
+    )
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', help='SM config path'
     )
@@ -25,7 +32,10 @@ def main():
     args = parser.parse_args()
 
     with GlobalInit(args.config_path):
-        molecular_db.create(args.name, args.csv_file)
+        db_df = enrichment_db.create(args.name)
+        enrichment_term.create(db_df.id, args.csv_file)
+        enrichment_db_molecule_mapping.create(db_df.id, args.name_db, args.json_file)
+
 
 
 if __name__ == "__main__":

@@ -72,7 +72,7 @@ def create(
             ],
         )
         enrichment_db = find_by_id(enrichment_db_id)
-        return moldb
+        return enrichment_db
 
 
 def delete(enrichment_db_id: int):
@@ -123,46 +123,10 @@ def find_by_name(name: str) -> EnrichmentDB:
     """Find enrichment database by name."""
 
     data = DB().select_one_with_fields(
-        'SELECT id, name FROM molecular_db WHERE name = %s',
+        'SELECT id, name FROM enrichment_db WHERE name = %s',
         params=(name,),
     )
 
     if not data:
         raise SMError(f'EnrichmentDB not found: {name}')
     return EnrichmentDB(**data)
-
-
-def find_by_name_version(name: str, version: str) -> MolecularDB:
-    data = DB().select_one_with_fields(
-        'SELECT id, name, version, targeted, group_id FROM molecular_db '
-        'WHERE name = %s AND version = %s',
-        params=(name, version),
-    )
-    if not data:
-        raise SMError(f'MolecularDB not found: {name}')
-    return MolecularDB(**data)
-
-
-def find_default() -> List[MolecularDB]:
-    data = DB().select_with_fields(
-        'SELECT id, name, version, targeted, group_id FROM molecular_db WHERE "default" = TRUE',
-    )
-    return [MolecularDB(**row) for row in data]
-
-
-def fetch_molecules(moldb_id: int) -> pd.DataFrame:
-    """Fetch all database molecules as a DataFrame."""
-
-    data = DB().select_with_fields(
-        'SELECT mol_id, mol_name, formula FROM molecule m WHERE m.moldb_id = %s', params=(moldb_id,)
-    )
-    return pd.DataFrame(data)
-
-
-def fetch_formulas(moldb_id: int) -> List[str]:
-    """Fetch all unique database formulas."""
-
-    data = DB().select(
-        'SELECT DISTINCT formula FROM molecule m WHERE m.moldb_id = %s', params=(moldb_id,)
-    )
-    return [row[0] for row in data]
