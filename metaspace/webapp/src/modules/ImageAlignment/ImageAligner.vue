@@ -4,16 +4,24 @@
     @mousemove="onMouseMove"
   >
     <div
+      ref="scan"
       v-loading="!opticalImageNaturalHeight"
-      class="optical-img-container"
+      class="optical-img-container overflow-hidden"
       style="border: 1px solid #ddf"
     >
-      <img
-        ref="scan"
+      <!--      <img-->
+      <!--        ref="scan"-->
+      <!--        :src="opticalSrc"-->
+      <!--        :style="opticalImageStyle"-->
+      <!--        @load="onOpticalImageLoad"-->
+      <!--      >-->
+      <optical-image-aligner
         :src="opticalSrc"
+        :enable-transform="layer === 0"
         :style="opticalImageStyle"
+        :external-drag="opticalImageDragEvent"
         @load="onOpticalImageLoad"
-      >
+      />
     </div>
 
     <div class="handles-container">
@@ -82,6 +90,7 @@
 import ImageLoader from '../../components/ImageLoader.vue'
 import { inv, dot, diag } from 'numeric'
 import { scrollDistance } from '../../lib/util'
+import { OpticalImageAligner } from './OpticalImageAligner'
 
 function computeTransform(src, dst) {
   // http://franklinta.com/2014/09/08/computing-css-matrix3d-transforms/
@@ -119,11 +128,16 @@ export default {
   name: 'ImageAligner',
   components: {
     ImageLoader,
+    OpticalImageAligner,
   },
   props: {
     opticalSrc: {
       // URL of an optical image
       type: String,
+    },
+    layer: {
+      type: Number,
+      default: 1,
     },
     ionImageSrc: {
       // URL of a grayscale image
@@ -149,6 +163,7 @@ export default {
   },
   data() {
     return {
+      opticalImageDragEvent: null,
       width: 0,
       height: 0,
       naturalWidth: 0,
@@ -294,15 +309,13 @@ export default {
       ]
     },
 
-    onOpticalImageLoad() {
+    onOpticalImageLoad({ width, height, naturalWidth, naturalHeight }) {
       // Ignore if the image loads after the user has left the page
-      if (this.$refs.scan != null) {
-        this.opticalImageWidth = this.$refs.scan.width
-        this.opticalImageHeight = this.$refs.scan.height
-        this.opticalImageNaturalWidth = this.$refs.scan.naturalWidth
-        this.opticalImageNaturalHeight = this.$refs.scan.naturalHeight
-        this.normalizedTransform = this.initialTransform
-      }
+      this.opticalImageWidth = width
+      this.opticalImageHeight = height
+      this.opticalImageNaturalWidth = naturalWidth
+      this.opticalImageNaturalHeight = naturalHeight
+      this.normalizedTransform = this.initialTransform
     },
 
     onResize() {
@@ -341,6 +354,10 @@ export default {
     },
 
     onWheel(event) {
+      if (this.layer === 0) {
+        return
+      }
+
       event.preventDefault()
 
       const zoom = 1 - scrollDistance(event) / 30.0
@@ -402,6 +419,11 @@ export default {
     },
 
     onMouseMove(event) {
+      if (this.layer === 0 && this.imageDrag === true) {
+        this.opticalImageDragEvent = event
+        return
+      }
+
       if (this.imageDrag === true) {
         this.onImageDrag(event)
       } else {
@@ -449,6 +471,10 @@ export default {
     },
 
     onImageMouseDown(event) {
+      if (this.layer === 0) {
+        return
+      }
+
       event.preventDefault()
       this.dragStartX = event.clientX
       this.dragStartY = event.clientY
@@ -458,6 +484,10 @@ export default {
     },
 
     onImageRightMouseDown(event) {
+      if (this.layer === 0) {
+        return
+      }
+
       event.preventDefault()
       this.imageDrag = false
       this.startRotationAngle = this.rotationAngleDegrees
@@ -512,5 +542,6 @@ export default {
 
  .optical-img-container, .handles-container {
    line-height: 0;
+   padding: 10px;
  }
 </style>

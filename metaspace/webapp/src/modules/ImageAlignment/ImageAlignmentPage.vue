@@ -84,6 +84,19 @@
         </div>
 
         <div class="sliders-box">
+          Select image layer:
+          <el-radio-group
+            v-model="layer"
+            class="w-full"
+          >
+            <el-radio :label="0">
+              Optical image
+            </el-radio>
+            <el-radio :label="1">
+              Ion image
+            </el-radio>
+          </el-radio-group>
+
           Optical image padding, px:
           <el-slider
             v-model="padding"
@@ -210,6 +223,7 @@
       :padding="padding"
       :rotation-angle-degrees="angle"
       :ion-image-src="massSpecSrc"
+      :layer="layer"
       @updateRotationAngle="updateAngle"
     />
     <div
@@ -271,6 +285,7 @@ export default {
       alreadyUploaded: false,
       initialTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
       padding: 100,
+      layer: 1,
       angle: 0,
       enableNormalization: false,
       showFullTIC: false,
@@ -679,10 +694,16 @@ export default {
   .mouse-hint-icon {
     width:  20px;
     height: 20px;
+    margin-right: 8px;
   }
 
   .hint-list{
     list-style-type: none;
+    padding: 8px;
+  }
+  .hint-list > li{
+    @apply flex items-center;
+    margin-bottom: 8px;
   }
 
   .normalization-error-wrapper{
