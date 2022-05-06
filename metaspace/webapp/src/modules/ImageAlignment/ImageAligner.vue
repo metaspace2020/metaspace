@@ -9,16 +9,11 @@
       class="optical-img-container overflow-hidden"
       style="border: 1px solid #ddf"
     >
-      <!--      <img-->
-      <!--        ref="scan"-->
-      <!--        :src="opticalSrc"-->
-      <!--        :style="opticalImageStyle"-->
-      <!--        @load="onOpticalImageLoad"-->
-      <!--      >-->
       <optical-image-aligner
         :src="opticalSrc"
         :enable-transform="layer === 0"
         :external-drag="opticalImageDragEvent"
+        :disable-internal-controller="true"
         @load="onOpticalImageLoad"
       />
     </div>
@@ -123,6 +118,11 @@ function computeHandlePositions(transformationMatrix, src) {
   return src.map(transformFunc)
 }
 
+const LAYER = {
+  OPTICAL_IMAGE: 0,
+  ION_IMAGE: 1,
+}
+
 export default {
   name: 'ImageAligner',
   components: {
@@ -178,6 +178,9 @@ export default {
       dragStartY: null,
       dragThrottled: false,
       resizeThrottled: false,
+      isGloballyDragging: false,
+      globalDragStartX: null,
+      globalDragStartY: null,
       normalizedTransform: this.initialTransform,
       lastRotationAngle: this.rotationAngleDegrees,
       startRotationAngle: null,
@@ -271,12 +274,6 @@ export default {
   },
 
   watch: {
-    padding() {
-      this.$nextTick(() => {
-        this.onResize()
-      })
-    },
-
     rotationAngleDegrees(deg) {
       this.normalizedTransform = dot(
         this.normalizedTransform,
@@ -291,11 +288,13 @@ export default {
   },
 
   mounted: function() {
-    window.addEventListener('resize', this.onResize)
+    document.addEventListener('mousedown', this.onGlobalMouseDown)
+    document.addEventListener('mouseup', this.onGlobalMouseUp)
   },
 
   beforeDestroy: function() {
-    window.removeEventListener('resize', this.onResize)
+    window.removeEventListener('mousedown', this.onGlobalMouseUp)
+    window.removeEventListener('mouseup', this.onGlobalMouseUp)
   },
 
   methods: {
@@ -308,13 +307,15 @@ export default {
       ]
     },
 
-    onOpticalImageLoad({ width, height, naturalWidth, naturalHeight }) {
+    onOpticalImageLoad({ width, height, naturalWidth, naturalHeight, resetTransform = true }) {
       // Ignore if the image loads after the user has left the page
       this.opticalImageWidth = width
       this.opticalImageHeight = height
       this.opticalImageNaturalWidth = naturalWidth
       this.opticalImageNaturalHeight = naturalHeight
-      this.normalizedTransform = this.initialTransform
+      if (resetTransform) {
+        this.normalizedTransform = this.initialTransform
+      }
     },
 
     onLoad({ width, height, naturalWidth, naturalHeight }) {
@@ -335,7 +336,7 @@ export default {
     },
 
     onWheel(event) {
-      if (this.layer === 0) {
+      if (this.layer === LAYER.OPTICAL_IMAGE) {
         return
       }
 
@@ -383,10 +384,13 @@ export default {
     },
 
     onMouseUp(event) {
+      document.removeEventListener('mouseup', this.onMouseUp)
+      if (this.layer === LAYER.OPTICAL_IMAGE) {
+        return
+      }
       this.updateHandlePosition(event)
       this.draggedHandle = null
       this.dragThrottled = false
-      document.removeEventListener('mouseup', this.onMouseUp)
       this.dragStartX = this.dragStartY = null
     },
 
@@ -400,16 +404,30 @@ export default {
     },
 
     onMouseMove(event) {
-      if (this.layer === 0 && this.imageDrag === true) {
-        this.opticalImageDragEvent = event
-        return
-      }
-
-      if (this.imageDrag === true) {
+      if (this.isGloballyDragging === true && this.layer === LAYER.OPTICAL_IMAGE) { // drag optical image, but ion image above
+        this.opticalImageDragEvent = {
+          deltaX: event.clientX - this.globalDragStartX,
+          deltaY: event.clientY - this.globalDragStartY,
+        }
+        this.globalDragStartX = event.clientX
+        this.globalDragStartY = event.clientY
+      } else if (this.imageDrag === true && this.layer === LAYER.ION_IMAGE) {
         this.onImageDrag(event)
-      } else {
+      } else if (this.layer === LAYER.ION_IMAGE) {
         this.onImageRotate(event)
       }
+    },
+
+    onGlobalMouseDown(event) {
+      this.isGloballyDragging = true
+      this.globalDragStartX = event.clientX
+      this.globalDragStartY = event.clientY
+    },
+
+    onGlobalMouseUp(event) {
+      this.isGloballyDragging = false
+      this.globalDragStartX = event.clientX
+      this.globalDragStartY = event.clientY
     },
 
     onImageDrag(event) {
@@ -452,7 +470,7 @@ export default {
     },
 
     onImageMouseDown(event) {
-      if (this.layer === 0) {
+      if (this.layer === LAYER.OPTICAL_IMAGE) {
         return
       }
 
@@ -465,7 +483,7 @@ export default {
     },
 
     onImageRightMouseDown(event) {
-      if (this.layer === 0) {
+      if (this.layer === LAYER.OPTICAL_IMAGE) {
         return
       }
 

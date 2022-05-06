@@ -17,6 +17,7 @@ interface OpticalImageAlignerProps {
   src: string
   enableTransform: boolean
   externalDrag: any
+  disableInternalController: boolean
 }
 
 interface OpticalImageAlignerState {
@@ -43,8 +44,12 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
       type: Boolean,
       default: true,
     },
+    disableInternalController: {
+      type: Boolean,
+      default: false,
+    },
     externalDrag: {
-      type: MouseEvent,
+      type: Object,
       default: () => {},
     },
   },
@@ -64,49 +69,39 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
     })
     const canvasSrc = ref<any>(null)
 
-    watch(() => props.src, () => {
-      console.log('props', props.src, canvasSrc.value)
+    watch(() => props.src, () => { // src image updated
+      if (props.src && canvasSrc.value) {
+        state.normalizedTransform = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        loadImg(true)
+      }
     })
 
     watch(() => props.externalDrag, () => {
-      // console.log('externalDrag', props.externalDrag)
-      if (props.externalDrag) {
-        handleMouseMove(props.externalDrag)
+      if (
+        props.externalDrag
+        && props.externalDrag.deltaX
+        && props.externalDrag.deltaY && props.disableInternalController) {
+        handleDeltaUpdate(props.externalDrag)
       }
     })
 
     onMounted(() => {
-      loadImg()
-      window.addEventListener('resize', loadImg)
+      loadImg(true)
+      window.addEventListener('resize', () => { loadImg() })
     })
 
     onUnmounted(() => {
-      window.removeEventListener('resize', loadImg)
+      window.removeEventListener('resize', () => { loadImg() })
     })
 
-    const loadImg = () => {
+    const loadImg = (resetTransform = false) => {
       const canvas = canvasSrc.value
       const context = canvas.getContext('2d')
       const imageObj = new Image()
       imageObj.src = props.src
       imageObj.onload = function() {
-        console.log('here')
-        let imgWidth = imageObj.naturalWidth
-        const screenWidth = window.innerWidth - 40 // remove margin padding to fit (20px)
-        let scaleX = 1
-        if (imgWidth > screenWidth) { scaleX = screenWidth / imgWidth }
-        let imgHeight = imageObj.naturalHeight
-        const screenHeight = window.innerHeight
-        let scaleY = 1
-        if (imgHeight > screenHeight) { scaleY = screenHeight / imgHeight }
-        let scale = scaleY
-        if (scaleX < scaleY) { scale = scaleX }
-        if (scale < 1) {
-          imgHeight = imgHeight * scale
-          imgWidth = imgWidth * scale
-        }
-
-        console.log('to aqui', imgHeight, imgWidth)
+        const imgWidth = window.innerWidth - 40 // remove margin from total width (20px)
+        const imgHeight = imageObj.naturalHeight * imgWidth / imageObj.naturalWidth // scale height according to width
         canvas.height = imgHeight
         canvas.width = imgWidth
         context.imageSmoothingEnabled = false
@@ -121,6 +116,7 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
           height: imgHeight,
           naturalWidth: imageObj.naturalWidth,
           naturalHeight: imageObj.naturalHeight,
+          resetTransform,
         })
       }
     }
@@ -175,7 +171,24 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
       }
     }
 
+    const handleDeltaUpdate = ({ deltaX, deltaY } : { deltaX:number, deltaY:number}) => {
+      const m = [[1, 0, deltaX],
+        [0, 1, deltaY],
+        [0, 0, 1]]
+      state.normalizedTransform = dot(m, state.normalizedTransform)
+      loadImg()
+    }
+
     return () => {
+      const dragControllers = props.disableInternalController ? {} : {
+        on: {
+          mousedown: handleMouseDown,
+          mouseup: handleMouseUp,
+          mouseout: handleMouseUp,
+          mousemove: handleMouseMove,
+        },
+      }
+
       return (
         <div
           class='optical-image-aligner flex items-center justify-center'
@@ -183,14 +196,11 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
         >
           <canvas
             ref={canvasSrc}
-            onmousedown={handleMouseDown}
-            onmouseup={handleMouseUp}
-            onmouseout={handleMouseUp}
-            onmousemove={handleMouseMove}
             width={window.innerWidth} height={900}
             style={{
               transform: formatMatrix3d(state.normalizedTransform),
             }}
+            {...dragControllers}
           />
         </div>
       )

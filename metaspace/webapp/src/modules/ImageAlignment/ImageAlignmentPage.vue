@@ -215,7 +215,7 @@
     <image-aligner
       v-if="opticalImgUrl && !hasNormalizationError"
       ref="aligner"
-      style="position:relative;top:0px;z-index:1;"
+      style="position:relative;top:-10px;z-index:1;"
       :annot-image-opacity="annotImageOpacity"
       :optical-src="opticalImgUrl"
       :tic-data="normalizationData"
@@ -284,7 +284,7 @@ export default {
       ticData: null,
       alreadyUploaded: false,
       initialTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
-      padding: 0,//100,
+      padding: 0, // 100,
       layer: 1,
       angle: 0,
       enableNormalization: false,
