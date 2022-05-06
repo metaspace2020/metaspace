@@ -87,7 +87,7 @@
           Select image layer:
           <el-radio-group
             v-model="layer"
-            class="w-full"
+            class="w-full my-2"
           >
             <el-radio :label="0">
               Optical image
@@ -96,14 +96,6 @@
               Ion image
             </el-radio>
           </el-radio-group>
-
-          Optical image padding, px:
-          <el-slider
-            v-model="padding"
-            :min="0"
-            :max="500"
-            :step="10"
-          />
 
           IMS image opacity:
           <el-slider
