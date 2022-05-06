@@ -18,7 +18,6 @@
       <optical-image-aligner
         :src="opticalSrc"
         :enable-transform="layer === 0"
-        :style="opticalImageStyle"
         :external-drag="opticalImageDragEvent"
         @load="onOpticalImageLoad"
       />
@@ -318,24 +317,6 @@ export default {
       this.normalizedTransform = this.initialTransform
     },
 
-    onResize() {
-      if (this.resizeThrottled) {
-        return
-      }
-
-      this.resizeThrottled = true
-      setTimeout(() => { this.resizeThrottled = false }, 50)
-
-      if (!this.$refs.scan) {
-        return
-      }
-
-      this.opticalImageWidth = this.$refs.scan.width
-      this.opticalImageHeight = this.$refs.scan.height
-      this.opticalImageNaturalWidth = this.$refs.scan.naturalWidth
-      this.opticalImageNaturalHeight = this.$refs.scan.naturalHeight
-    },
-
     onLoad({ width, height, naturalWidth, naturalHeight }) {
       this.width = width
       this.height = height
@@ -542,6 +523,5 @@ export default {
 
  .optical-img-container, .handles-container {
    line-height: 0;
-   padding: 10px;
  }
 </style>

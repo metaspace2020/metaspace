@@ -1,4 +1,13 @@
-import { computed, defineComponent, onMounted, reactive, ref, watch, watchEffect } from '@vue/composition-api'
+import {
+  computed,
+  defineComponent,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch,
+  watchEffect,
+} from '@vue/composition-api'
 import './OpticalImageAligner.scss'
 import { scrollDistance } from '../../lib/util'
 // @ts-ignore
@@ -67,17 +76,27 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
     })
 
     onMounted(() => {
+      loadImg()
+      window.addEventListener('resize', loadImg)
+    })
+
+    onUnmounted(() => {
+      window.removeEventListener('resize', loadImg)
+    })
+
+    const loadImg = () => {
       const canvas = canvasSrc.value
       const context = canvas.getContext('2d')
       const imageObj = new Image()
       imageObj.src = props.src
       imageObj.onload = function() {
+        console.log('here')
         let imgWidth = imageObj.naturalWidth
-        const screenWidth = canvas.width
+        const screenWidth = window.innerWidth - 40 // remove margin padding to fit (20px)
         let scaleX = 1
         if (imgWidth > screenWidth) { scaleX = screenWidth / imgWidth }
         let imgHeight = imageObj.naturalHeight
-        const screenHeight = canvas.height
+        const screenHeight = window.innerHeight
         let scaleY = 1
         if (imgHeight > screenHeight) { scaleY = screenHeight / imgHeight }
         let scale = scaleY
@@ -87,6 +106,7 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
           imgWidth = imgWidth * scale
         }
 
+        console.log('to aqui', imgHeight, imgWidth)
         canvas.height = imgHeight
         canvas.width = imgWidth
         context.imageSmoothingEnabled = false
@@ -103,7 +123,7 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
           naturalHeight: imageObj.naturalHeight,
         })
       }
-    })
+    }
 
     const formatMatrix3d = (t: readonly number[][]) =>
       `matrix3d(${t[0][0]}, ${t[1][0]}, 0, ${t[2][0]},
@@ -158,7 +178,7 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
     return () => {
       return (
         <div
-          class='flex items-center justify-center'
+          class='optical-image-aligner flex items-center justify-center'
           onWheel={handleMouseWheel}
         >
           <canvas
@@ -167,7 +187,7 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
             onmouseup={handleMouseUp}
             onmouseout={handleMouseUp}
             onmousemove={handleMouseMove}
-            width={window.innerWidth - 100} height={900}
+            width={window.innerWidth} height={900}
             style={{
               transform: formatMatrix3d(state.normalizedTransform),
             }}
