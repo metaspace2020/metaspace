@@ -1,22 +1,21 @@
 import {
-  computed,
   defineComponent,
   onMounted,
   onUnmounted,
   reactive,
   ref,
   watch,
-  watchEffect,
 } from '@vue/composition-api'
-import './OpticalImageAligner.scss'
 import { scrollDistance } from '../../lib/util'
 // @ts-ignore
 import { inv, dot, diag } from 'numeric'
+import './OpticalImageAligner.scss'
 
 interface OpticalImageAlignerProps {
   src: string
   enableTransform: boolean
   externalDrag: any
+  externalZoom: number
   disableInternalController: boolean
 }
 
@@ -52,6 +51,10 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
       type: Object,
       default: () => {},
     },
+    externalZoom: {
+      type: Number,
+      default: 1,
+    },
   },
   // @ts-ignore
   setup(props, { emit }) {
@@ -69,14 +72,20 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
     })
     const canvasSrc = ref<any>(null)
 
-    watch(() => props.src, () => { // src image updated
+    watch(() => props.src, () => { // check for src image update
       if (props.src && canvasSrc.value) {
         state.normalizedTransform = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
         loadImg(true)
       }
     })
 
-    watch(() => props.externalDrag, () => {
+    watch(() => props.externalZoom, () => { // check for external zoom update
+      if (props.externalZoom && props.disableInternalController) {
+        handleZoomChange(props.externalZoom)
+      }
+    })
+
+    watch(() => props.externalDrag, () => { // check for external drag mouse x,y update
       if (
         props.externalDrag
         && props.externalDrag.deltaX
@@ -133,6 +142,10 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
       }
       event.preventDefault()
       const zoom = 1 - scrollDistance(event) / 30.0
+      handleZoomChange(zoom)
+    }
+
+    const handleZoomChange = (zoom:number) => {
       const m = [[zoom, 0, 0],
         [0, zoom, 0],
         [0, 0, 1]]
@@ -188,11 +201,16 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
           mousemove: handleMouseMove,
         },
       }
+      const zoomController = props.disableInternalController ? {} : {
+        on: {
+          wheel: handleMouseWheel,
+        },
+      }
 
       return (
         <div
           class='optical-image-aligner flex items-center justify-center'
-          onWheel={handleMouseWheel}
+          {...zoomController}
         >
           <canvas
             ref={canvasSrc}

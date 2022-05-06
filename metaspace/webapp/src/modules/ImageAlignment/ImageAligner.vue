@@ -2,6 +2,7 @@
   <div
     class="image-alignment-box"
     @mousemove="onMouseMove"
+    @wheel="onGlobalWheel"
   >
     <div
       ref="scan"
@@ -12,7 +13,8 @@
       <optical-image-aligner
         :src="opticalSrc"
         :enable-transform="layer === 0"
-        :external-drag="opticalImageDragEvent"
+        :external-drag="opticalImageDrag"
+        :external-zoom="opticalImageZoom"
         :disable-internal-controller="true"
         @load="onOpticalImageLoad"
       />
@@ -162,7 +164,8 @@ export default {
   },
   data() {
     return {
-      opticalImageDragEvent: null,
+      opticalImageDrag: null,
+      opticalImageZoom: null,
       width: 0,
       height: 0,
       naturalWidth: 0,
@@ -243,14 +246,6 @@ export default {
         'vertical-align': 'top',
         width: '500px', // fixed width to simplify calculations
         'z-index': 8,
-      }
-    },
-
-    opticalImageStyle() {
-      return {
-        'z-index': 1,
-        margin: this.padding + 'px',
-        width: `calc(100% - ${this.padding * 2}px)`,
       }
     },
 
@@ -384,7 +379,6 @@ export default {
     },
 
     onMouseUp(event) {
-      document.removeEventListener('mouseup', this.onMouseUp)
       if (this.layer === LAYER.OPTICAL_IMAGE) {
         return
       }
@@ -392,6 +386,7 @@ export default {
       this.draggedHandle = null
       this.dragThrottled = false
       this.dragStartX = this.dragStartY = null
+      document.removeEventListener('mouseup', this.onMouseUp)
     },
 
     onRightMouseUp(event) {
@@ -405,7 +400,7 @@ export default {
 
     onMouseMove(event) {
       if (this.isGloballyDragging === true && this.layer === LAYER.OPTICAL_IMAGE) { // drag optical image, but ion image above
-        this.opticalImageDragEvent = {
+        this.opticalImageDrag = {
           deltaX: event.clientX - this.globalDragStartX,
           deltaY: event.clientY - this.globalDragStartY,
         }
@@ -428,6 +423,14 @@ export default {
       this.isGloballyDragging = false
       this.globalDragStartX = event.clientX
       this.globalDragStartY = event.clientY
+    },
+
+    onGlobalWheel(event) {
+      if (this.layer === LAYER.OPTICAL_IMAGE) {
+        event.preventDefault()
+        const zoom = 1 - scrollDistance(event) / 30.0
+        this.opticalImageZoom = zoom
+      }
     },
 
     onImageDrag(event) {
