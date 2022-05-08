@@ -75,10 +75,10 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs,
     ds_segm_lens = np.diff(segm_bounds)
     ds_segments_bounds = np.column_stack([mzs[segm_bounds[:-1]], mzs[segm_bounds[1:] - 1]])
 
-    if s3_client:
-        s3_client.put_object(
-            Bucket='sm-engine-browser-staging', key='test/test.npy', Body=mzs.tobytes()
-        )
+    s3_client = get_s3_client()
+    s3_client.put_object(
+        Bucket='sm-engine-browser-staging', Key='test/test.npy', Body=mzs.tobytes()
+    )
 
     def upload_segm(start_end):
         start, end = start_end
@@ -91,6 +91,10 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs,
     with ThreadPoolExecutor(2) as executor:
         ds_segms_cobjs = list(executor.map(upload_segm, segm_ranges))
     return ds_segms_cobjs, ds_segments_bounds, ds_segm_lens
+
+
+def upload_sorted_peaks_by_mz(storage, mzs):
+    link = save_cobj(storage, mzs, key='peaks_sorted_by_mz.bin')
 
 
 def _load_ds(
@@ -121,9 +125,13 @@ def _load_ds(
 
     logger.info('Uploading segments')
     ds_segms_cobjs, ds_segments_bounds, ds_segm_lens = _upload_segments(
-        storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs, s3_client
+        storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs
     )
     perf.record_entry('uploaded segments', n_segms=len(ds_segms_cobjs))
+
+    logger.info('Uploading sorted peaks by mz')
+    upload_sorted_peaks_by_mz(storage, mzs, ints, sp_idxs)
+    perf.record_entry('uploaded sorted keaks by mz')
 
     return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
 
@@ -133,7 +141,6 @@ def load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
-    s3_client,
 ) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
     try:
         ibd_head = executor.storage.head_object(ibd_cobject.bucket, ibd_cobject.key)
@@ -154,7 +161,7 @@ def load_ds(
 
     imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens = executor.call(
         _load_ds,
-        (imzml_cobject, ibd_cobject, ds_segm_size_mb, s3_client),
+        (imzml_cobject, ibd_cobject, ds_segm_size_mb),
         runtime_memory=runtime_memory,
     )
 
