@@ -65,7 +65,7 @@ def _sort_spectra(imzml_reader, mzs, ints, sp_lens):
     return mzs, ints, sp_idxs
 
 
-def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs):
+def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs, s3_client):
     # Split into segments no larger than ds_segm_size_mb
     total_n_mz = len(sp_idxs)
     row_size = (4 if imzml_reader.mz_precision == 'f' else 8) + 4 + 4
@@ -74,6 +74,11 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs)
     segm_ranges = list(zip(segm_bounds[:-1], segm_bounds[1:]))
     ds_segm_lens = np.diff(segm_bounds)
     ds_segments_bounds = np.column_stack([mzs[segm_bounds[:-1]], mzs[segm_bounds[1:] - 1]])
+
+    if s3_client:
+        s3_client.put_object(
+            Bucket='sm-engine-browser-staging', key='test/test.npy', Body=mzs.tobytes()
+        )
 
     def upload_segm(start_end):
         start, end = start_end
@@ -92,6 +97,7 @@ def _load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
+    s3_client,
     *,
     storage: Storage,
     perf: SubtaskProfiler,
@@ -115,7 +121,7 @@ def _load_ds(
 
     logger.info('Uploading segments')
     ds_segms_cobjs, ds_segments_bounds, ds_segm_lens = _upload_segments(
-        storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs
+        storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs, s3_client
     )
     perf.record_entry('uploaded segments', n_segms=len(ds_segms_cobjs))
 
@@ -123,7 +129,11 @@ def _load_ds(
 
 
 def load_ds(
-    executor: Executor, imzml_cobject: CloudObject, ibd_cobject: CloudObject, ds_segm_size_mb: int
+    executor: Executor,
+    imzml_cobject: CloudObject,
+    ibd_cobject: CloudObject,
+    ds_segm_size_mb: int,
+    s3_client,
 ) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
     try:
         ibd_head = executor.storage.head_object(ibd_cobject.bucket, ibd_cobject.key)
@@ -144,7 +154,7 @@ def load_ds(
 
     imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens = executor.call(
         _load_ds,
-        (imzml_cobject, ibd_cobject, ds_segm_size_mb),
+        (imzml_cobject, ibd_cobject, ds_segm_size_mb, s3_client),
         runtime_memory=runtime_memory,
     )
 

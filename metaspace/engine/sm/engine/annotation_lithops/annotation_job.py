@@ -294,6 +294,7 @@ class ServerAnnotationJob:
             self.ibd_cobj,
             self.moldb_defs,
             self.ds.config,
+            s3_client=self.s3_client,
             cache_key=cache_key,
             executor=executor,
         )
