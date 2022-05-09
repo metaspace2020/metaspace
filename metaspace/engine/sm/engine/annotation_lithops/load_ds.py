@@ -65,7 +65,7 @@ def _sort_spectra(imzml_reader, mzs, ints, sp_lens):
     return mzs, ints, sp_idxs
 
 
-def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs, s3_client):
+def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs):
     # Split into segments no larger than ds_segm_size_mb
     total_n_mz = len(sp_idxs)
     row_size = (4 if imzml_reader.mz_precision == 'f' else 8) + 4 + 4
@@ -74,11 +74,6 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs,
     segm_ranges = list(zip(segm_bounds[:-1], segm_bounds[1:]))
     ds_segm_lens = np.diff(segm_bounds)
     ds_segments_bounds = np.column_stack([mzs[segm_bounds[:-1]], mzs[segm_bounds[1:] - 1]])
-
-    s3_client = get_s3_client()
-    s3_client.put_object(
-        Bucket='sm-engine-browser-staging', Key='test/test.npy', Body=mzs.tobytes()
-    )
 
     def upload_segm(start_end):
         start, end = start_end
@@ -93,15 +88,32 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs,
     return ds_segms_cobjs, ds_segments_bounds, ds_segm_lens
 
 
-def upload_sorted_peaks_by_mz(storage, mzs):
-    link = save_cobj(storage, mzs, key='peaks_sorted_by_mz.bin')
+def _upload_imzml_browser_files_to_s3(storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs):
+
+    CHUNK_RECORDS_N = 1024
+
+    imzml_browser_cobjs = []
+    prefix = f'imzml_browser/{imzml_cobject.key.split("/")[1]}'
+
+    key = f'{prefix}/peaks_sorted_by_mz.bin'
+    data = np.stack([mzs, ints, sp_idxs]).T.astype('f')
+    imzml_browser_cobjs.append(save_cobj(storage, data, key=key))
+
+    key = f'{prefix}/coordinates.bin'
+    data = np.array(imzml_reader.imzml_reader.coordinates, dtype='i')
+    imzml_browser_cobjs.append(save_cobj(storage, data, key=key))
+
+    key = f'{prefix}/mz_index.bin'
+    data = mzs[::CHUNK_RECORDS_N]
+    imzml_browser_cobjs.append(save_cobj(storage, data, key=key))
+
+    return imzml_browser_cobjs
 
 
 def _load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
-    s3_client,
     *,
     storage: Storage,
     perf: SubtaskProfiler,
@@ -130,8 +142,10 @@ def _load_ds(
     perf.record_entry('uploaded segments', n_segms=len(ds_segms_cobjs))
 
     logger.info('Uploading sorted peaks by mz')
-    upload_sorted_peaks_by_mz(storage, mzs, ints, sp_idxs)
-    perf.record_entry('uploaded sorted keaks by mz')
+    imzml_browser_cobjs = _upload_imzml_browser_files_to_s3(
+        storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs
+    )
+    perf.record_entry('uploaded sorted peaks by mz')
 
     return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
 
