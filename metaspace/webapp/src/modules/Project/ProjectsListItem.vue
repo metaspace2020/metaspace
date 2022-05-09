@@ -6,7 +6,7 @@
     />
     <div class="item-body">
       <div class="info">
-        <div class="info-line project-name pr-5 flex items-baseline">
+        <div class="info-line project-name pr-5 flex items-start">
           <router-link
             :to="projectLink"
             class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2"
@@ -18,6 +18,13 @@
             class="el-icon-lock ml-2 text-xl"
             title="This project is only visible to its members and METASPACE administrators"
           />
+          <copy-button
+            class="ml-1"
+            is-id
+            :text="project.id"
+          >
+            Copy project id to clipboard
+          </copy-button>
         </div>
         <div>
           <div class="info-line">
@@ -107,6 +114,7 @@ import ConfirmAsync from '../../components/ConfirmAsync'
 import { plural } from '../../lib/vueFilters'
 import { ProjectRoleOptions as UPRO } from '../../api/project'
 import ElapsedTime from '../../components/ElapsedTime'
+import CopyButton from '../../components/CopyButton.vue'
 
   interface managerGroupName {
     user: {
@@ -127,6 +135,7 @@ import ElapsedTime from '../../components/ElapsedTime'
     },
     components: {
       ElapsedTime,
+      CopyButton,
     },
   })
 
