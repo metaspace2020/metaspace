@@ -6,7 +6,7 @@ export class LipidsEnrichment1651227148235 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "public"."enrichment_db" ("id" SERIAL NOT NULL PRIMARY KEY, "name" text NOT NULL UNIQUE)`);
         await queryRunner.query(`CREATE TABLE "public"."enrichment_term" ("id" SERIAL NOT NULL PRIMARY KEY, "enrichment_id" text NOT NULL UNIQUE, "enrichment_name" text NOT NULL, "enrichment_db_id" integer REFERENCES "public"."enrichment_db"("id"))`);
-        await queryRunner.query(`CREATE TABLE "public"."enrichment_db_molecule_mapping" ("id" SERIAL NOT NULL PRIMARY KEY, "molecule_enriched_name" text NOT NULL, "enrichment_term_id" integer REFERENCES "public"."enrichment_term"("id"), "molecular_db_id" integer REFERENCES "public"."molecular_db"("id"))`);
+        await queryRunner.query(`CREATE TABLE "public"."enrichment_db_molecule_mapping" ("id" SERIAL NOT NULL PRIMARY KEY, "molecule_enriched_name" text NOT NULL, "formula" text NOT NULL, "enrichment_term_id" integer REFERENCES "public"."enrichment_term"("id"), "molecule_id" integer REFERENCES "public"."molecule"("id"), "molecular_db_id" integer REFERENCES "public"."molecular_db"("id"))`);
         await queryRunner.query(`CREATE TABLE "public"."enrichment_bootstrap" ("id" SERIAL NOT NULL PRIMARY KEY, "scenario" integer NOT NULL, "formula_adduct" text NOT NULL, "fdr" numeric(2,2) NOT NULL, "dataset_id" text REFERENCES "public"."dataset"("id"), "enrichment_db_molecule_mapping_id" integer REFERENCES "public"."enrichment_db_molecule_mapping"("id"))`);
 
     }
