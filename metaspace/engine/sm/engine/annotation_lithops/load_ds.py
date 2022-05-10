@@ -89,7 +89,7 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs)
 
 
 def _upload_imzml_browser_files_to_s3(storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs):
-
+    #
     CHUNK_RECORDS_N = 1024
 
     imzml_browser_cobjs = []
@@ -117,7 +117,7 @@ def _load_ds(
     *,
     storage: Storage,
     perf: SubtaskProfiler,
-) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
+) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray, List[CObj]]:
     logger.info('Loading .imzML file...')
     imzml_reader = LithopsImzMLReader(storage, imzml_cobject, ibd_cobject)
     perf.record_entry(
@@ -141,13 +141,13 @@ def _load_ds(
     )
     perf.record_entry('uploaded segments', n_segms=len(ds_segms_cobjs))
 
-    logger.info('Uploading sorted peaks by mz')
+    logger.info('Uploading related to imzml browser files')
     imzml_browser_cobjs = _upload_imzml_browser_files_to_s3(
         storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs
     )
-    perf.record_entry('uploaded sorted peaks by mz')
+    perf.record_entry('uploaded related to imzml browser files')
 
-    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
+    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, imzml_browser_cobjs
 
 
 def load_ds(
@@ -173,7 +173,13 @@ def load_ds(
         logger.info(f'Found {ibd_size_mb}MB .ibd file. Using VM-based load_ds')
         runtime_memory = 128 * 1024
 
-    imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens = executor.call(
+    (
+        imzml_reader,
+        ds_segments_bounds,
+        ds_segms_cobjs,
+        ds_segm_lens,
+        imzml_browser_cobjs,
+    ) = executor.call(
         _load_ds,
         (imzml_cobject, ibd_cobject, ds_segm_size_mb),
         runtime_memory=runtime_memory,
