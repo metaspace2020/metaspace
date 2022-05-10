@@ -31,6 +31,7 @@ from sm.engine.config import SMConfig
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 
+
 logger = logging.getLogger('annotation-pipeline')
 
 
@@ -88,21 +89,25 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     def run_pipeline(
         self, debug_validate=False, use_cache=True
     ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]]]:
-
+        print('load db')
         # pylint: disable=unexpected-keyword-arg
         self.prepare_moldb(debug_validate=debug_validate)
-
+        print('load ds')
         self.load_ds(use_cache=use_cache)
         if debug_validate:
             self.validate_load_ds()
-
+        print('load seg')
         self.segment_centroids(use_cache=use_cache)
         if debug_validate:
             self.validate_segment_centroids()
-
+        print('annotate')
         self.annotate(use_cache=use_cache)
+        print('fdr')
         self.run_fdr(use_cache=use_cache)
+        print('prepare results')
         self.prepare_results(use_cache=use_cache)
+        print('enrichment')
+        self.run_enrichment(use_cache=use_cache)
 
         return self.results_dfs, self.png_cobjs
 
@@ -178,6 +183,11 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.fdrs = run_fdr(
             self.executor, self.formula_metrics_df, self.db_data_cobjs, self.ds_config
         )
+
+
+    @use_pipeline_cache
+    def run_enrichment(self):
+        print('calculating enrichment')
 
     @use_pipeline_cache
     def prepare_results(self):

@@ -42,6 +42,7 @@ class EnrichmentDB:
     ):
         self.id = id
         self.name = name
+        self._sm_config = SMConfig.get_conf()
 
     def __repr__(self):
         return '<{}>'.format(self.name)

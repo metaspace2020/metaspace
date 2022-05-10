@@ -48,7 +48,7 @@ class EnrichmentTerm:
         self.enrichment_db_id = enrichment_db_id
 
     def __repr__(self):
-        return '<{}>'.format(self.name)
+        return '<{}>'.format(self.enrichment_id)
 
     def to_dict(self):
         return {
@@ -115,3 +115,15 @@ def find_by_enrichment_id(id: str, db_id: int) -> EnrichmentTerm:
     if not data:
         raise SMError(f'EnrichmentTerm not found: {id}')
     return EnrichmentTerm(**data)
+
+
+# pylint: disable=redefined-builtin
+def find_by_enrichment_db_id(db_id: int) -> List[EnrichmentTerm]:
+    """Find enrichment database by enrichment database id."""
+
+    data = DB().select_with_fields(
+        'SELECT id, enrichment_id, enrichment_name, enrichment_db_id FROM enrichment_term WHERE enrichment_db_id = %s', params=(db_id)
+    )
+    if not data:
+        raise SMError(f'EnrichmentTerm not found: {id}')
+    return [EnrichmentTerm(**row) for row in data]

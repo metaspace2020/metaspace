@@ -18,6 +18,7 @@ from sm.engine.util import split_s3_path
 
 from sm.engine import enrichment_term
 from sm.engine import molecular_db
+from sm.engine.ion_mapping import find_mol_by_name
 
 logger = logging.getLogger('engine')
 
@@ -85,7 +86,8 @@ def read_json_file(db_name, enrichment_db_id, file_path):
     except ValueError as e:
         raise MalformedCSV(f'Malformed CSV: {e}') from e
 
-    df = pd.DataFrame(columns=['molecule_enriched_name', 'enrichment_term_id', 'molecular_db_id'])
+    df = pd.DataFrame(columns=['molecule_enriched_name', 'formula', 'enrichment_term_id', 'molecule_id'
+        , 'molecular_db_id'])
     counter = 0
     for enrichment_id in translate_json.keys():
         if enrichment_id != 'all':
@@ -93,7 +95,8 @@ def read_json_file(db_name, enrichment_db_id, file_path):
             moldb = molecular_db.find_by_name(db_name)
             enrichment_names = translate_json[enrichment_id]
             for name in enrichment_names:
-                df.loc[counter] = [name, term.id,  moldb.id]
+                mol = find_mol_by_name(DB(), moldb.id, name)
+                df.loc[counter] = [name, mol[3], term.id,  mol[0], moldb.id]
                 counter = counter + 1
                 if counter > 100:
                     break
@@ -105,10 +108,22 @@ def read_json_file(db_name, enrichment_db_id, file_path):
 def _import_mappings(mappings_df):
     logger.info(f'importing {len(mappings_df)} mappings')
 
-    columns = ['molecule_enriched_name', 'enrichment_term_id', 'molecular_db_id']
+    columns = ['molecule_enriched_name', 'formula', 'enrichment_term_id', 'molecule_id'
+        , 'molecular_db_id']
     buffer = StringIO()
     mappings_df[columns].to_csv(buffer, sep='\t', index=False, header=False)
     buffer.seek(0)
     DB().copy(buffer, sep='\t', table='enrichment_db_molecule_mapping', columns=columns)
     logger.info(f'inserted {len(mappings_df)} mappings')
+
+# def get_term_count(term_id: str) -> int:
+#     """Find enrichment database by id."""
+#
+#     data = DB().select_with_fields(
+#         'SELECT COUNT(*) FROM enrichment_db_molecule_mapping WHERE id = %s', params=(id,)
+#     )
+#     if not data:
+#         raise SMError(f'EnrichmentDB not found: {id}')
+#     return EnrichmentDB(**data)
+
 
