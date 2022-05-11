@@ -15,6 +15,7 @@ from sm.engine.annotation.diagnostics import (
     add_diagnostics,
     extract_job_diagnostics,
 )
+from sm.engine.annotation.enrichment import add_enrichment, DatasetEnrichment
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
@@ -55,7 +56,7 @@ def _choose_cos_location(src_path, sm_storage, storage_type):
 
 
 def _upload_if_needed(
-    src_path, storage, sm_storage, storage_type, s3_client=None, use_db_mutex=True
+        src_path, storage, sm_storage, storage_type, s3_client=None, use_db_mutex=True
 ):
     """
     Uploads the object from `src_path` if it doesn't already exist in its translated COS path.
@@ -99,7 +100,7 @@ def _upload_if_needed(
 
 def _upload_imzmls_from_prefix_if_needed(src_path, storage, sm_storage, s3_client=None):
     if src_path.startswith('cos://'):
-        bucket, prefix = src_path[len('cos://') :].split('/', maxsplit=1)
+        bucket, prefix = src_path[len('cos://'):].split('/', maxsplit=1)
         keys = [f'cos://{bucket}/{key}' for key in storage.list_keys(bucket, prefix)]
     elif src_path.startswith('s3a://'):
         bucket, prefix = split_s3_path(src_path)
@@ -177,15 +178,15 @@ class LocalAnnotationJob:
     """
 
     def __init__(
-        self,
-        imzml_file: str,
-        ibd_file: str,
-        moldb_files: Union[List[int], List[str]],
-        ds_config: DSConfig,
-        sm_config: Optional[Dict] = None,
-        use_cache=True,
-        out_dir: Optional[str] = None,
-        executor: Optional[Executor] = None,
+            self,
+            imzml_file: str,
+            ibd_file: str,
+            moldb_files: Union[List[int], List[str]],
+            ds_config: DSConfig,
+            sm_config: Optional[Dict] = None,
+            use_cache=True,
+            out_dir: Optional[str] = None,
+            executor: Optional[Executor] = None,
     ):
         sm_config = sm_config or SMConfig.get_conf()
         self.storage = Storage(config=sm_config['lithops'])
@@ -231,10 +232,10 @@ class LocalAnnotationJob:
             all_results = pd.concat(list(results_dfs.values()))
             all_results = all_results[~all_results.index.duplicated()]
             image_names = (
-                all_results.formula
-                + all_results.chem_mod.fillna('')
-                + all_results.neutral_loss.fillna('')
-                + all_results.adduct
+                    all_results.formula
+                    + all_results.chem_mod.fillna('')
+                    + all_results.neutral_loss.fillna('')
+                    + all_results.adduct
             )
 
             self.out_dir.mkdir(exist_ok=True)
@@ -253,13 +254,13 @@ class ServerAnnotationJob:
     """
 
     def __init__(
-        self,
-        executor: Executor,
-        ds: Dataset,
-        perf: Profiler,
-        sm_config: Optional[Dict] = None,
-        use_cache=False,
-        store_images=True,
+            self,
+            executor: Executor,
+            ds: Dataset,
+            perf: Profiler,
+            sm_config: Optional[Dict] = None,
+            use_cache=False,
+            store_images=True,
     ):
         """
         Args
@@ -268,6 +269,7 @@ class ServerAnnotationJob:
         use_cache: For development - cache the results after each pipeline step so that it's easier
                    to quickly re-run specific steps.
         """
+        self.enrichment_data = None
         sm_config = sm_config or SMConfig.get_conf()
         self.sm_storage = sm_config['lithops']['sm_storage']
         self.storage = Storage(sm_config['lithops'])
@@ -314,7 +316,7 @@ class ServerAnnotationJob:
 
         try:
             # Run annotation
-            self.results_dfs, self.png_cobjs = self.pipe.run_pipeline(**kwargs)
+            self.results_dfs, self.png_cobjs, self.enrichment_data = self.pipe.run_pipeline(**kwargs)
 
             # Save images (if enabled)
             if self.store_images:
@@ -334,6 +336,7 @@ class ServerAnnotationJob:
             for moldb_id, job_id in moldb_to_job_map.items():
                 logger.debug(f'Storing results for moldb {moldb_id}')
                 results_df = self.results_dfs[moldb_id]
+                bootstrap_df = self.enrichment_data[moldb_id]
                 formula_image_ids = self.db_formula_image_ids.get(moldb_id, {})
 
                 search_results = SearchResults(
@@ -345,6 +348,8 @@ class ServerAnnotationJob:
                 search_results.store_ion_metrics(results_df, formula_image_ids, self.db)
 
                 add_diagnostics(extract_job_diagnostics(self.ds.id, job_id, fdr_bundles[job_id]))
+
+                add_enrichment(DatasetEnrichment(ds_id=self.ds.id, bootstrap_data=bootstrap_df))
 
                 update_finished_job(job_id, JobStatus.FINISHED)
         except Exception:

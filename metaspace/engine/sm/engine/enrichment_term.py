@@ -2,12 +2,9 @@ import logging
 import re
 from io import StringIO
 from pathlib import Path
-from typing import List, Iterable
-from datetime import datetime
+from typing import List
 
 import pandas as pd
-from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
-from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 
 from sm.engine.config import SMConfig
 from sm.engine.db import DB, transaction_context
@@ -22,13 +19,6 @@ class MalformedCSV(SMError):
     def __init__(self, message):
         super().__init__(message)
         self.message = message
-
-
-class BadData(SMError):
-    def __init__(self, message, *errors):
-        super().__init__(message, *errors)
-        self.message = message
-        self.errors = errors
 
 
 class EnrichmentTerm:

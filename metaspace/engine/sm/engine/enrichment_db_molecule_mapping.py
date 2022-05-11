@@ -2,13 +2,10 @@ import logging
 import re
 from io import StringIO
 from pathlib import Path
-from typing import List, Iterable
-from datetime import datetime
+from typing import List
 import json
 
 import pandas as pd
-from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
-from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 
 from sm.engine.config import SMConfig
 from sm.engine.db import DB, transaction_context
@@ -29,50 +26,50 @@ class MalformedCSV(SMError):
         self.message = message
 
 
-class BadData(SMError):
-    def __init__(self, message, *errors):
-        super().__init__(message, *errors)
-        self.message = message
-        self.errors = errors
-
-
 class EnrichmentDBMoleculeMapping:
     """Represents an enrichment database to make enrichment against."""
 
     # pylint: disable=redefined-builtin
     def __init__(
-        self,
-        id: int,
-        molecule_enriched_name: str,
-        enrichment_term_id: int,
-        molecular_db_id: int,
+            self,
+            id: int,
+            molecule_enriched_name: str,
+            formula: str,
+            enrichment_term_id: int,
+            molecule_id: int,
+            molecular_db_id: int,
     ):
         self.id = id
         self.molecule_enriched_name = molecule_enriched_name
+        self.formula = formula
         self.enrichment_term_id = enrichment_term_id
+        self.molecule_id = molecule_id
         self.molecular_db_id = molecular_db_id
 
     def __repr__(self):
-        return '<{}>'.format(self.name)
+        return '{}'.format(self.__dict__)
 
     def to_dict(self):
         return {
             'id': self.id,
             'molecule_enriched_name': self.molecule_enriched_name,
+            'formula': self.formula,
             'enrichment_term_id': self.enrichment_term_id,
+            'molecule_id': self.molecule_id,
             'molecular_db_id': self.molecular_db_id,
         }
 
 
 def create(
-    enrichment_db_id: int = None,
-    db_name: str = None,
-    file_path: str = None,
+        enrichment_db_id: int = None,
+        db_name: str = None,
+        file_path: str = None,
 ) -> EnrichmentDBMoleculeMapping:
     with transaction_context():
         logger.info(f'Received request: {db_name}')
         read_json_file(db_name, enrichment_db_id, file_path)
         return db_name
+
 
 def read_json_file(db_name, enrichment_db_id, file_path):
     try:
@@ -96,14 +93,15 @@ def read_json_file(db_name, enrichment_db_id, file_path):
             enrichment_names = translate_json[enrichment_id]
             for name in enrichment_names:
                 mol = find_mol_by_name(DB(), moldb.id, name)
-                df.loc[counter] = [name, mol[3], term.id,  mol[0], moldb.id]
+                df.loc[counter] = [name, mol[3], term.id, mol[0], moldb.id]
                 counter = counter + 1
-                if counter > 100:
+                if counter > 300:
                     break
     logger.info(f'Received request: {len(df)}')
     _import_mappings(df)
 
     return translate_json
+
 
 def _import_mappings(mappings_df):
     logger.info(f'importing {len(mappings_df)} mappings')
@@ -116,14 +114,25 @@ def _import_mappings(mappings_df):
     DB().copy(buffer, sep='\t', table='enrichment_db_molecule_mapping', columns=columns)
     logger.info(f'inserted {len(mappings_df)} mappings')
 
-# def get_term_count(term_id: str) -> int:
-#     """Find enrichment database by id."""
-#
-#     data = DB().select_with_fields(
-#         'SELECT COUNT(*) FROM enrichment_db_molecule_mapping WHERE id = %s', params=(id,)
-#     )
-#     if not data:
-#         raise SMError(f'EnrichmentDB not found: {id}')
-#     return EnrichmentDB(**data)
+
+def get_mappings_by_mol_db_id(moldb_id: str) -> List[EnrichmentDBMoleculeMapping]:
+    """Find enrichment database by id."""
+
+    data = DB().select_with_fields(
+        'SELECT * FROM enrichment_db_molecule_mapping WHERE molecular_db_id = %s', params=(moldb_id)
+    )
+    if not data:
+        raise SMError(f'EnrichmentDBMoleculeMapping not found: {moldb_id}')
+    return [EnrichmentDBMoleculeMapping(**row) for row in data]
 
 
+def get_mappings_by_formula(formula: str, moldb_id: str) -> EnrichmentDBMoleculeMapping:
+    """Find enrichment database by id."""
+
+    data = DB().select_one_with_fields(
+        'SELECT * FROM enrichment_db_molecule_mapping WHERE formula = %s and molecular_db_id = %s',
+        params=(formula, moldb_id)
+    )
+    if not data:
+        raise SMError(f'EnrichmentDBMoleculeMapping not found: {moldb_id}')
+    return EnrichmentDBMoleculeMapping(**data)
