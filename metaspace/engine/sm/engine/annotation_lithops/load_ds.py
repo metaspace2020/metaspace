@@ -6,12 +6,15 @@ from typing import Tuple, List
 
 import numpy as np
 import pandas as pd
+from ibm_boto3.s3.transfer import TransferConfig, MB
 from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj
+from sm.engine.config import SMConfig
+from sm.engine.storage import get_s3_client
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
 logger = logging.getLogger('annotation-pipeline')
@@ -150,11 +153,30 @@ def _load_ds(
     return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, imzml_browser_cobjs
 
 
+def _upload_imzml_browser_files(storage: Storage, imzml_browser_cobjs: List[CObj]):
+    """Move files from COS to S3"""
+    conf = SMConfig.get_conf()
+    s3_client = get_s3_client(sm_config=conf)
+    transfer_config = TransferConfig(
+        multipart_chunksize=20 * MB, max_concurrency=20, io_chunksize=1 * MB
+    )
+    for cobjec in imzml_browser_cobjs:
+        logger.info(f'Uploading {cobjec.key}')
+        file_object = storage.get_cloudobject(cobjec, stream=True)
+        s3_client.upload_fileobj(
+            Bucket='sm-imzml-browser-staging',  ## Fix this
+            Key=cobjec.key.split('/', 1)[-1],
+            Fileobj=file_object,
+            Config=transfer_config,
+        )
+
+
 def load_ds(
     executor: Executor,
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
+    storage: Storage,
 ) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
     try:
         ibd_head = executor.storage.head_object(ibd_cobject.bucket, ibd_cobject.key)
@@ -184,8 +206,10 @@ def load_ds(
         (imzml_cobject, ibd_cobject, ds_segm_size_mb),
         runtime_memory=runtime_memory,
     )
-
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
+
+    _upload_imzml_browser_files(storage, imzml_browser_cobjs)
+    logger.info('Moved imzml browser files to S3')
 
     return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
 

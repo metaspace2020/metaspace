@@ -5,6 +5,7 @@ from typing import List, Tuple, Optional, Dict
 
 import numpy as np
 import pandas as pd
+from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 
 from sm.engine.annotation.diagnostics import FdrDiagnosticBundle
@@ -124,7 +125,9 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
-        ) = load_ds(self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb)
+        ) = load_ds(
+            self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, self.storage
+        )
 
         self.is_intensive_dataset = len(self.ds_segms_cobjs) * self.ds_segm_size_mb > 5000
 
