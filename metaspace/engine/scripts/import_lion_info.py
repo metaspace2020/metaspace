@@ -1,6 +1,5 @@
 import argparse
 import logging
-
 from sm.engine import enrichment_db
 from sm.engine import enrichment_term
 from sm.engine import enrichment_db_molecule_mapping
@@ -31,13 +30,9 @@ def main():
     parser.set_defaults(sep=',', confirmed=False)
     args = parser.parse_args()
     with GlobalInit(args.config_path):
-    # with GlobalInit(f'{prefix}../conf/config.json'):
-    #     db_df = enrichment_db.create(args.name)
-    #     enrichment_term.create(db_df.id, args.csv_file)
-    #     enrichment_db_molecule_mapping.create(db_df.id, args.name_db, args.json_file)
-        lion_db = enrichment_db.find_by_name('LION')
-        enrichment_terms = enrichment_term.find_by_enrichment_db_id(str(lion_db.id))
-        print(enrichment_terms)
+        db_df = enrichment_db.create(args.name)
+        enrichment_term.create(db_df.id, args.csv_file)
+        enrichment_db_molecule_mapping.create(db_df.id, args.name_db, args.json_file)
 
 if __name__ == "__main__":
     main()

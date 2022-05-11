@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional, Dict, Any
 
 import numpy as np
 import pandas as pd
 from lithops.storage.utils import CloudObject
+from pandas import DataFrame
 
 from sm.engine.annotation.diagnostics import FdrDiagnosticBundle
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
@@ -31,6 +32,11 @@ from sm.engine.config import SMConfig
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 
+from sm.engine import enrichment_db
+from sm.engine import enrichment_term
+from sm.engine import enrichment_db_molecule_mapping
+from sm.engine import enrichment_bootstrap
+import random
 
 logger = logging.getLogger('annotation-pipeline')
 
@@ -63,6 +69,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         use_db_cache=True,
         use_db_mutex=True,
     ):
+        self.enrichment_data = None
         lithops_config = lithops_config or SMConfig.get_conf()['lithops']
         self.lithops_config = lithops_config
         self._db = DB()
@@ -88,28 +95,24 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     def run_pipeline(
         self, debug_validate=False, use_cache=True
-    ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]]]:
-        print('load db')
+    ) -> Tuple[Dict[int, DataFrame], List[CObj[List[Tuple[int, bytes]]]], Any]:
         # pylint: disable=unexpected-keyword-arg
         self.prepare_moldb(debug_validate=debug_validate)
-        print('load ds')
+
         self.load_ds(use_cache=use_cache)
         if debug_validate:
             self.validate_load_ds()
-        print('load seg')
+
         self.segment_centroids(use_cache=use_cache)
         if debug_validate:
             self.validate_segment_centroids()
-        print('annotate')
+
         self.annotate(use_cache=use_cache)
-        print('fdr')
         self.run_fdr(use_cache=use_cache)
-        print('prepare results')
         self.prepare_results(use_cache=use_cache)
-        print('enrichment')
         self.run_enrichment(use_cache=use_cache)
 
-        return self.results_dfs, self.png_cobjs
+        return self.results_dfs, self.png_cobjs, self.enrichment_data
 
     def prepare_moldb(self, debug_validate=False):
         self.db_data_cobjs, self.peaks_cobjs = get_moldb_centroids(
@@ -189,7 +192,44 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     @use_pipeline_cache
     def run_enrichment(self):
-        print('calculating enrichment')
+        bootstrap_hash = {}
+        for moldb_id in self.results_dfs:
+            molecules = self.results_dfs[moldb_id]
+            data = []
+            hash_id = {}
+            for index, row in molecules.iterrows():
+                try:
+                    term = enrichment_db_molecule_mapping.get_mappings_by_formula(row['formula'], str(moldb_id))
+                    ion = str(row['formula']) + (str(row['modifier']) if row['modifier'] is not np.nan else '')
+                    data.append([ion, term.molecule_enriched_name])
+                    hash_id[row['formula']] = term.id
+                except:
+                    pass
+            dataset_metabolites = pd.DataFrame(
+                data, columns=['formula_adduct', 'molecule_name']
+            )
+
+            # bootstrapping
+            hash_mol = {}
+            for index, row in dataset_metabolites.iterrows():
+                if row['formula_adduct'] not in hash_mol.keys():
+                    hash_mol[row['formula_adduct']] = []
+                hash_mol[row['formula_adduct']].append(row['molecule_name'])
+
+            boot_n = 100  # times bootstrapping
+            bootstrap_sublist = []
+            for n in range(boot_n):
+                bootstrap_dict_aux = {}
+                for index, row in molecules.iterrows():
+                    ion = str(row['formula']) + str(row['modifier'])
+                    if ion in hash_mol.keys():
+                        bootstrap_dict_aux[ion] = random.choice(hash_mol[ion])
+                        bootstrap_sublist.append([n, ion, row['fdr'], hash_id[row['formula']]])
+
+            bootstrap_hash[moldb_id] = pd.DataFrame(
+                bootstrap_sublist, columns=['scenario', 'formula_adduct', 'fdr', 'enrichment_db_molecule_mapping_id']
+            )
+        self.enrichment_data = bootstrap_hash
 
     @use_pipeline_cache
     def prepare_results(self):
