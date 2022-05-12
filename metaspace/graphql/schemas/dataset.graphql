@@ -338,6 +338,8 @@ type Query {
 
   countDatasetsPerGroup(query: DatasetCountPerGroupInput!): DatasetCountPerGroup!
 
+  lipidEnrichment(datasetId: String!, molDbId: Int, fdr: Float): String
+
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
   rawOpticalImage(datasetId: String!): RawOpticalImage  # @deprecated(reason: "Use Dataset.opticalImages instead")

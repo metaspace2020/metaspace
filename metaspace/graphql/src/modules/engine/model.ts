@@ -72,6 +72,9 @@ export class EngineDataset {
 
   @OneToMany(() => DatasetDiagnostic, datasetDiagnostic => datasetDiagnostic.engineDataset)
   datasetDiagnostics: DatasetDiagnostic[];
+
+  @OneToMany(() => EnrichmentBootstrap, enrichmentBootstrap => enrichmentBootstrap.engineDataset)
+  enrichmentBootstrap: EnrichmentBootstrap[];
 }
 
 @Entity({ schema: 'public' })
@@ -361,6 +364,9 @@ export class EnrichmentTerm {
   @Column({ type: 'text' })
   enrichmentName: string;
 
+  @Column({ type: 'int' })
+  enrichmentDbId: number;
+
   @ManyToOne(() => EnrichmentDB, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'enrichment_db_id' })
   enrichmentDB: EnrichmentDB;
@@ -374,6 +380,12 @@ export class EnrichmentDBMoleculeMapping {
   /** molecular db `name` for molecule to map with reference enrichment db */
   @Column({ type: 'text' })
   moleculeEnrichedName: string;
+
+  @Column({ type: 'int' })
+  enrichmentTermId: number;
+
+  @Column({ type: 'int' })
+  molecularDbId: number;
 
   @ManyToOne(() => EnrichmentTerm, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'enrichment_term_id' })
@@ -395,12 +407,20 @@ export class EnrichmentBootstrap {
   @Column({ type: 'text' })
   formulaAdduct: string;
 
+  @Column({ name: 'dataset_id' })
+  datasetId: string;
+
   @Column({ type: 'numeric', precision: 2, scale: 2 })
   fdr: string;
 
-  @ManyToOne(() => Dataset)
+  // This table is a child table of public.dataset, not graphql.dataset, so avoid making an FK
+  @ManyToOne(() => Dataset, { createForeignKeyConstraints: false })
   @JoinColumn({ name: 'dataset_id' })
   dataset: Dataset;
+
+  @ManyToOne(() => EngineDataset, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'dataset_id' })
+  engineDataset: EngineDataset;
 
   @ManyToOne(() => EnrichmentDBMoleculeMapping, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'enrichment_db_molecule_mapping_id' })
