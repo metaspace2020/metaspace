@@ -81,7 +81,8 @@ def read_terms_file(enrichment_db_id, file_path):
         )
 
     term_df['enrichment_db_id'] = enrichment_db_id
-    term_df.rename({'LION_ID': 'enrichment_id', 'LION_name': 'enrichment_name'}, axis='columns', inplace=True)
+    term_df.rename({'LION_ID': 'enrichment_id', 'LION_name': 'enrichment_name'},
+                   axis='columns', inplace=True)
     return term_df
 
 def _import_terms(term_df):
@@ -100,7 +101,8 @@ def find_by_enrichment_id(id: str, db_id: int) -> EnrichmentTerm:
     """Find enrichment database by id."""
 
     data = DB().select_one_with_fields(
-        'SELECT id, enrichment_id, enrichment_name, enrichment_db_id FROM enrichment_term WHERE enrichment_id = %s AND enrichment_db_id = %s', params=(id, db_id)
+        'SELECT id, enrichment_id, enrichment_name, enrichment_db_id FROM enrichment_term '
+        'WHERE enrichment_id = %s AND enrichment_db_id = %s', params=(id, db_id)
     )
     if not data:
         raise SMError(f'EnrichmentTerm not found: {id}')
@@ -112,7 +114,8 @@ def find_by_enrichment_db_id(db_id: int) -> List[EnrichmentTerm]:
     """Find enrichment database by enrichment database id."""
 
     data = DB().select_with_fields(
-        'SELECT id, enrichment_id, enrichment_name, enrichment_db_id FROM enrichment_term WHERE enrichment_db_id = %s', params=(db_id)
+        'SELECT id, enrichment_id, enrichment_name, enrichment_db_id FROM enrichment_term '
+        'WHERE enrichment_db_id = %s', params=(db_id)
     )
     if not data:
         raise SMError(f'EnrichmentTerm not found: {id}')

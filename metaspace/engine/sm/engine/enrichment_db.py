@@ -70,7 +70,8 @@ def update(
         update_fields = [f'{field} = %s' for field in kwargs.keys()]
         update_values = list(kwargs.values())
 
-        enrichment_db_update = 'UPDATE enrichment_db SET {} WHERE id = %s'.format(', '.join(update_fields))
+        enrichment_db_update = 'UPDATE enrichment_db SET {} WHERE id = %s'\
+            .format(', '.join(update_fields))
         DB().alter(enrichment_db_update, params=[*update_values, enrichment_db_id])
 
     return find_by_id(enrichment_db_id)

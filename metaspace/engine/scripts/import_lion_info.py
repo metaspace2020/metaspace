@@ -16,13 +16,14 @@ def main():
     parser.add_argument(
         'csv_file',
         type=str,
-        help=f'Path to a enrichment database names csv file. Required columns: {required_columns}. ',
+        help=f'Path to a enrichment database names csv file. '
+             f'Required columns: {required_columns}. ',
     )
     parser.add_argument('name_db', type=str, help='Database name')
     parser.add_argument(
         'json_file',
         type=str,
-        help=f'Path to a enrichment database and molecular mapping.',
+        help='Path to a enrichment database and molecular mapping.',
     )
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', help='SM config path'

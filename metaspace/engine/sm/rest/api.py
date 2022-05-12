@@ -7,12 +7,11 @@ import pandas as pd
 from scipy.stats import fisher_exact
 from statsmodels.stats import multitest
 
-
 import bottle
 
 from sm.engine.util import GlobalInit
 from sm.rest import isotopic_pattern, datasets, databases
-from sm.rest.utils import make_response, OK, INTERNAL_ERROR, body_to_json
+from sm.rest.utils import make_response, OK, INTERNAL_ERROR
 
 logger = logging.getLogger('api')
 
@@ -37,7 +36,7 @@ def generate(ion, instr, res_power, at_mz, charge):
 
 
 @app.post('/v1/calculate_enrichment')
-def calculateEnrichment():
+def calculate_enrichment():
     try:
         body = json.loads(bottle.request.body.read().decode('utf-8'))
         enrichment_sets = body['enrichedSets']
@@ -58,15 +57,16 @@ def calculateEnrichment():
         for key in enrichment_analysis_input.keys():
             if key == 'all':
                 continue
-            id = key
-            n = np.median(enrichment_analysis_input[key]['sublist'])
+
             observed = np.median(enrichment_analysis_input[key]['sublist']) / np.median(
                 enrichment_analysis_input['all']['sublist'])
-            expected = enrichment_analysis_input[key]['background'] / enrichment_analysis_input['all']['background']
+            expected = enrichment_analysis_input[key]['background'] \
+                       / enrichment_analysis_input['all']['background']
             fold_enrichment_median = observed / expected  ## median fold enrichment
-            fold_enrichment_SD = np.std((np.array(enrichment_analysis_input[key]['sublist']) / np.array(
-                enrichment_analysis_input['all']['sublist'])) / expected)
-            oddsratio, pvalue = fisher_exact([
+            fold_enrichment_sd = np.std((np.array(enrichment_analysis_input[key]['sublist'])
+                                         / np.array(
+                        enrichment_analysis_input['all']['sublist'])) / expected)
+            _, pvalue = fisher_exact([
                 [
                     np.median(enrichment_analysis_input[key]['sublist']),
                     np.median(enrichment_analysis_input['all']['sublist'])],
@@ -75,13 +75,21 @@ def calculateEnrichment():
             ],
                 alternative="greater")
             name = terms_hash[key]
-            data.append([name, id, n, observed, expected, fold_enrichment_median, fold_enrichment_SD, pvalue])
+            data.append([name, key, np.median(enrichment_analysis_input[key]['sublist']),
+                         observed, expected, fold_enrichment_median,
+                         fold_enrichment_sd, pvalue])
 
-        enrichment_analysis = pd.DataFrame(data, columns=['name', 'id', 'n', 'observed', 'expected',
-                                                          'fold_enrichment_median', 'fold_enrichment_SD', 'pvalue'])
-        enrichment_analysis['qvalue'] = multitest.multipletests(enrichment_analysis['pvalue'].values,
-                                                                                  method='fdr_bh')[1]
-        filtered_enrichment = enrichment_analysis[(enrichment_analysis['n'] >= 2)].sort_values(
+        enrichment_analysis = pd.DataFrame(data, columns=['name', 'id', 'n',
+                                                          'observed', 'expected',
+                                                          'fold_enrichment_median',
+                                                          'fold_enrichment_SD',
+                                                          'pvalue'])
+        enrichment_analysis['qvalue'] = \
+            multitest.multipletests(enrichment_analysis['pvalue'].values,
+                                    method='fdr_bh')[1]
+
+        filtered_enrichment = enrichment_analysis[(enrichment_analysis['n'] >= 2)]\
+            .sort_values(
             by='fold_enrichment_median', ascending=False)
 
         return make_response(OK, data=filtered_enrichment.to_json(orient="records"))

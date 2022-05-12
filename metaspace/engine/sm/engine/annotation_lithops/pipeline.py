@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import List, Tuple, Optional, Dict, Any
 
+import random
 import numpy as np
 import pandas as pd
 from lithops.storage.utils import CloudObject
@@ -32,11 +33,7 @@ from sm.engine.config import SMConfig
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 
-from sm.engine import enrichment_db
-from sm.engine import enrichment_term
 from sm.engine import enrichment_db_molecule_mapping
-from sm.engine import enrichment_bootstrap
-import random
 
 logger = logging.getLogger('annotation-pipeline')
 
@@ -195,10 +192,12 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             molecules = self.results_dfs[moldb_id]
             data = []
             hash_id = {}
-            for index, row in molecules.iterrows():
+            for _, row in molecules.iterrows():
                 try:
-                    term = enrichment_db_molecule_mapping.get_mappings_by_formula(row['formula'], str(moldb_id))
-                    ion = str(row['formula']) + (str(row['modifier']) if row['modifier'] is not np.nan else '')
+                    term = enrichment_db_molecule_mapping.get_mappings_by_formula(row['formula'],
+                                                                                  str(moldb_id))
+                    ion = str(row['formula']) + (str(row['modifier'])
+                                                 if row['modifier'] is not np.nan else '')
                     data.append([ion, term.molecule_enriched_name])
                     hash_id[row['formula']] = term.id
                 except:
@@ -225,7 +224,9 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
                         bootstrap_sublist.append([n, ion, row['fdr'], hash_id[row['formula']]])
 
             bootstrap_hash[moldb_id] = pd.DataFrame(
-                bootstrap_sublist, columns=['scenario', 'formula_adduct', 'fdr', 'enrichment_db_molecule_mapping_id']
+                bootstrap_sublist, columns=['scenario',
+                                            'formula_adduct', 'fdr',
+                                            'enrichment_db_molecule_mapping_id']
             )
         self.enrichment_data = bootstrap_hash
 

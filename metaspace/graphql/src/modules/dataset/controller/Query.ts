@@ -11,8 +11,6 @@ import {
   EnrichmentBootstrap,
   EnrichmentDBMoleculeMapping, EnrichmentTerm,
 } from '../../engine/model'
-import config from '../../../utils/config'
-import fetch from 'node-fetch'
 import { smApiJsonPost } from '../../../utils/smApi/smApiCall'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
@@ -95,6 +93,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
             },
             where: (qb : any) => {
               qb.where('bootstrap.datasetId = :datasetId', { datasetId })
+                .andWhere('bootstrap.fdr <= :fdr', { fdr })
                 .andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
                 .orderBy('bootstrap.scenario', 'ASC')
             },
