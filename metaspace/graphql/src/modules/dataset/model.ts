@@ -3,7 +3,7 @@ import { Group } from '../group/model'
 import { User } from '../user/model'
 import { Project } from '../project/model'
 import { ExternalLink } from '../project/ExternalLink'
-import { DatasetDiagnostic, EngineDataset } from '../engine/model'
+import { DatasetDiagnostic, EngineDataset, EnrichmentBootstrap } from '../engine/model'
 
 @Entity()
 export class Dataset {
@@ -51,6 +51,9 @@ export class Dataset {
 
   @OneToMany(() => DatasetDiagnostic, datasetDiagnostic => datasetDiagnostic.dataset)
   datasetDiagnostics: DatasetDiagnostic[];
+
+  @OneToMany(() => EnrichmentBootstrap, enrichmentBootstrap => enrichmentBootstrap.dataset)
+  enrichmentBootstrap: EnrichmentBootstrap[];
 }
 
 @Entity({ name: 'dataset_project' })

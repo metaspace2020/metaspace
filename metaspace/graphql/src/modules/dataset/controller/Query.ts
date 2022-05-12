@@ -6,9 +6,13 @@ import { UserGroup as UserGroupModel, UserGroupRoleOptions } from '../../group/m
 import { Context } from '../../../context'
 import { thumbnailOpticalImageUrl, rawOpticalImage } from './Dataset'
 import { applyQueryFilters } from '../../annotation/queryFilters'
-import { OpticalImage } from '../../engine/model'
+import {
+  OpticalImage,
+  EnrichmentBootstrap,
+  EnrichmentDBMoleculeMapping, EnrichmentTerm,
+} from '../../engine/model'
+import { smApiJsonPost, smApiJsonGet } from '../../../utils/smApi/smApiCall'
 import { smApiDatasetRequest } from '../../../utils'
-import { smApiJsonGet } from '../../../utils/smApi/smApiCall'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER
@@ -75,6 +79,81 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       const opticalImage = await ctx.entityManager.getRepository(OpticalImage)
         .findOne({ datasetId, zoom: intZoom })
       return (opticalImage) ? `/fs/optical_images/${opticalImage.id}` : null
+    }
+    return null
+  },
+
+  async lipidEnrichment(source, { datasetId, molDbId, fdr = 0.5 }, ctx) {
+    if (await esDatasetByID(datasetId, ctx.user)) { // check if user has access
+      try {
+        const bootstrap = await ctx.entityManager
+          .find(EnrichmentBootstrap, {
+            join: {
+              alias: 'bootstrap',
+              leftJoin: { enrichmentDBMoleculeMapping: 'bootstrap.enrichmentDBMoleculeMapping' },
+            },
+            where: (qb : any) => {
+              qb.where('bootstrap.datasetId = :datasetId', { datasetId })
+                .andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
+                .orderBy('bootstrap.scenario', 'ASC')
+            },
+            relations: [
+              'enrichmentDBMoleculeMapping',
+            ],
+          })
+
+        const enrichmentTermsMapping = await ctx.entityManager.createQueryBuilder(EnrichmentDBMoleculeMapping,
+          'mapping')
+          .leftJoin('mapping.enrichmentTerm', 'terms')
+          .where('mapping.molecularDbId = :molDbId', { molDbId })
+          .groupBy('terms.enrichmentId')
+          .select('terms.enrichmentId', 'enrichmentId')
+          .addSelect('array_agg(mapping.moleculeEnrichedName)', 'names')
+          .getRawMany()
+
+        const enrichedTerms = await ctx.entityManager
+          .find(EnrichmentTerm, {
+            where: { enrichmentDbId: 1 }, // LION
+          })
+
+        const bootstrappedSublist : any = []
+        const enrichedSets : any = {}
+        const termsHash : any = {}
+        let termNames : any = []
+        if (bootstrap) {
+          bootstrap.forEach((bootItem: any) => {
+            if (!bootstrappedSublist[bootItem.scenario]) {
+              bootstrappedSublist[bootItem.scenario] = {}
+            }
+            bootstrappedSublist[bootItem.scenario][bootItem.formulaAdduct] =
+              bootItem.enrichmentDBMoleculeMapping.moleculeEnrichedName
+          })
+        }
+        if (enrichmentTermsMapping) {
+          enrichmentTermsMapping.forEach((enrichedItem: any) => {
+            enrichedSets[enrichedItem.enrichmentId] = enrichedItem.names
+            termNames = termNames.concat(enrichedItem.names)
+          })
+        }
+        termNames = termNames.sort().filter((item:any, pos:any, ary:any) => {
+          return !pos || item !== ary[pos - 1]
+        })
+        enrichedSets.all = termNames
+        if (enrichedTerms) {
+          enrichedTerms.forEach((termItem: any) => {
+            termsHash[termItem.enrichmentId] = termItem.enrichmentName
+          })
+        }
+
+        const { content } = await smApiJsonPost('/v1/calculate_enrichment', {
+          enrichedSets,
+          termsHash,
+          bootstrappedSublist,
+        })
+        return JSON.stringify(content.data)
+      } catch (e) {
+        return e
+      }
     }
     return null
   },

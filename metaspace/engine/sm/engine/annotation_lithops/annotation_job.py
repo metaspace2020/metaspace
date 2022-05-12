@@ -225,7 +225,8 @@ class LocalAnnotationJob:
         )
 
     def run(self, save=True, **kwargs):
-        results_dfs, png_cobjs = self.pipe.run_pipeline(**kwargs)
+        results_dfs, png_cobjs, enrichment_data  = self.pipe.run_pipeline(**kwargs)
+
         if save:
             for moldb_id, results_df in results_dfs.items():
                 results_df.to_csv(self.out_dir / f'results_{moldb_id}.csv')
