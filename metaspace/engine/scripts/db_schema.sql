@@ -291,7 +291,7 @@ CREATE TABLE "public"."enrichment_term" (
   "id" SERIAL NOT NULL, 
   "enrichment_id" text NOT NULL, 
   "enrichment_name" text NOT NULL, 
-  "enrichment_db_id" integer, 
+  "enrichment_db_id" integer NOT NULL, 
   CONSTRAINT "PK_64aded8fc4c4da6f3594ecedfe5" PRIMARY KEY ("id")
 );
 
@@ -302,8 +302,8 @@ CREATE UNIQUE INDEX "IDX_5b1fe80fe8ad658adc4fbe5dda" ON "public"."enrichment_ter
 CREATE TABLE "public"."enrichment_db_molecule_mapping" (
   "id" SERIAL NOT NULL, 
   "molecule_enriched_name" text NOT NULL, 
-  "enrichment_term_id" integer, 
-  "molecular_db_id" integer, 
+  "enrichment_term_id" integer NOT NULL, 
+  "molecular_db_id" integer NOT NULL, 
   CONSTRAINT "PK_afb8cc016ffdeceb23c753a9b90" PRIMARY KEY ("id")
 );
 
@@ -311,8 +311,8 @@ CREATE TABLE "public"."enrichment_bootstrap" (
   "id" SERIAL NOT NULL, 
   "scenario" integer NOT NULL, 
   "formula_adduct" text NOT NULL, 
+  "dataset_id" text NOT NULL, 
   "fdr" numeric(2,2) NOT NULL, 
-  "dataset_id" text, 
   "enrichment_db_molecule_mapping_id" integer, 
   CONSTRAINT "PK_14d9602f2d10c780127809d98d5" PRIMARY KEY ("id")
 );
@@ -447,8 +447,8 @@ ALTER TABLE "public"."enrichment_db_molecule_mapping" ADD CONSTRAINT "FK_6ced7d2
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."enrichment_bootstrap" ADD CONSTRAINT "FK_13fecbfd955b4924736ffddd185" FOREIGN KEY (
-  "dataset_id") REFERENCES "graphql"."dataset"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
+  "dataset_id") REFERENCES "public"."dataset"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."enrichment_bootstrap" ADD CONSTRAINT "FK_ad0924d2bfb498840a188820a8e" FOREIGN KEY (
   "enrichment_db_molecule_mapping_id") REFERENCES "public"."enrichment_db_molecule_mapping"("id"
