@@ -55,7 +55,7 @@ def create(
             'values (%s, %s, %s, %s, %s) RETURNING id'
         )
         # pylint: disable=unbalanced-tuple-unpacking
-        (id,) = DB().insert_return(
+        (bootstrap_id,) = DB().insert_return(
             enrichment_db_insert,
             rows=[
                 (
@@ -63,7 +63,7 @@ def create(
                 )
             ],
         )
-        enrichment_db = find_by_id(id)
+        enrichment_db = find_by_id(bootstrap_id)
         return enrichment_db
 
 
@@ -72,7 +72,8 @@ def find_by_id(id: int) -> EnrichmentBootstrap:
     """Find enrichment database by id."""
 
     data = DB().select_one_with_fields(
-        'SELECT scenario, formula_adduct, fdr, dataset_id, enrichment_db_molecule_mapping_id FROM enrichment_bootstrap WHERE id = %s', params=(id,)
+        'SELECT scenario, formula_adduct, fdr, dataset_id, enrichment_db_molecule_mapping_id '
+        'FROM enrichment_bootstrap WHERE id = %s', params=(id,)
     )
     if not data:
         raise SMError(f'EnrichmentDB not found: {id}')

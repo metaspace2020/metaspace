@@ -83,19 +83,24 @@ def read_json_file(db_name, enrichment_db_id, file_path):
     except ValueError as e:
         raise MalformedCSV(f'Malformed CSV: {e}') from e
 
-    df = pd.DataFrame(columns=['molecule_enriched_name', 'formula', 'enrichment_term_id', 'molecule_id'
-        , 'molecular_db_id'])
+    df = pd.DataFrame(columns=['molecule_enriched_name', 'formula', 'enrichment_term_id',
+                               'molecule_id', 'molecular_db_id'])
     counter = 0
     for enrichment_id in translate_json.keys():
         if enrichment_id != 'all':
+            logger.info(f'Adding term: {enrichment_id}')
             term = enrichment_term.find_by_enrichment_id(enrichment_id, enrichment_db_id)
             moldb = molecular_db.find_by_name(db_name)
             enrichment_names = translate_json[enrichment_id]
+            idx = 0
             for name in enrichment_names:
+                logger.info(f'Adding term: {enrichment_id} index: {idx}')
+                idx = idx + 1
                 mol = find_mol_by_name(DB(), moldb.id, name)
-                df.loc[counter] = [name, mol[3], term.id, mol[0], moldb.id]
-                counter = counter + 1
-                if counter > 300:
+                if mol and mol[3] and mol[0]:
+                    df.loc[counter] = [name, mol[3], term.id, mol[0], moldb.id]
+                    counter = counter + 1
+                if idx > 1000:
                     break
     logger.info(f'Received request: {len(df)}')
     _import_mappings(df)

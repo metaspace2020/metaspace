@@ -225,7 +225,8 @@ class LocalAnnotationJob:
         )
 
     def run(self, save=True, **kwargs):
-        results_dfs, png_cobjs, enrichment_data  = self.pipe.run_pipeline(**kwargs)
+        results_dfs, png_cobjs,\
+            _ = self.pipe.run_pipeline(**kwargs)
 
         if save:
             for moldb_id, results_df in results_dfs.items():
@@ -317,7 +318,8 @@ class ServerAnnotationJob:
 
         try:
             # Run annotation
-            self.results_dfs, self.png_cobjs, self.enrichment_data = self.pipe.run_pipeline(**kwargs)
+            self.results_dfs, self.png_cobjs, \
+                self.enrichment_data = self.pipe.run_pipeline(**kwargs)
 
             # Save images (if enabled)
             if self.store_images:

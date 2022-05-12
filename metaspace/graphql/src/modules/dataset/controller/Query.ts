@@ -94,6 +94,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
             },
             where: (qb : any) => {
               qb.where('bootstrap.datasetId = :datasetId', { datasetId })
+                .andWhere('bootstrap.fdr <= :fdr', { fdr })
                 .andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
                 .orderBy('bootstrap.scenario', 'ASC')
             },
