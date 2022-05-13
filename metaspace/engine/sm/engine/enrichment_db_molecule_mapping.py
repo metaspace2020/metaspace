@@ -2,7 +2,7 @@ import logging
 import re
 from io import StringIO
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 import json
 
 import pandas as pd
@@ -64,14 +64,15 @@ def create(
         enrichment_db_id: int = None,
         db_name: str = None,
         file_path: str = None,
-) -> EnrichmentDBMoleculeMapping:
+        filter_file_path: str = None,
+) -> Optional[str]:
     with transaction_context():
         logger.info(f'Received request: {db_name}')
-        read_json_file(db_name, enrichment_db_id, file_path)
+        read_json_file(db_name, enrichment_db_id, file_path, filter_file_path)
         return db_name
 
 
-def read_json_file(db_name, enrichment_db_id, file_path):
+def read_json_file(db_name, enrichment_db_id, file_path, filter_file_path):
     try:
         if re.findall(r'^s3a?://', file_path):
             bucket_name, key = split_s3_path(file_path)
@@ -85,9 +86,10 @@ def read_json_file(db_name, enrichment_db_id, file_path):
 
     df = pd.DataFrame(columns=['molecule_enriched_name', 'formula', 'enrichment_term_id',
                                'molecule_id', 'molecular_db_id'])
+    filter_terms = pd.read_csv(filter_file_path)
     counter = 0
     for enrichment_id in translate_json.keys():
-        if enrichment_id != 'all':
+        if enrichment_id != 'all' and enrichment_id in filter_terms['LION_ID'].values:
             logger.info(f'Adding term: {enrichment_id}')
             term = enrichment_term.find_by_enrichment_id(enrichment_id, enrichment_db_id)
             moldb = molecular_db.find_by_name(db_name)
@@ -95,12 +97,12 @@ def read_json_file(db_name, enrichment_db_id, file_path):
             idx = 0
             for name in enrichment_names:
                 logger.info(f'Adding term: {enrichment_id} index: {idx}')
-                idx = idx + 1
                 mol = find_mol_by_name(DB(), moldb.id, name)
                 if mol and mol[3] and mol[0]:
                     df.loc[counter] = [name, mol[3], term.id, mol[0], moldb.id]
                     counter = counter + 1
-                if idx > 1000:
+                    idx = idx + 1
+                if idx > 300:
                     break
     logger.info(f'Received request: {len(df)}')
     _import_mappings(df)
@@ -131,13 +133,13 @@ def get_mappings_by_mol_db_id(moldb_id: str) -> List[EnrichmentDBMoleculeMapping
     return [EnrichmentDBMoleculeMapping(**row) for row in data]
 
 
-def get_mappings_by_formula(formula: str, moldb_id: str) -> EnrichmentDBMoleculeMapping:
+def get_mappings_by_formula(formula: str, moldb_id: str) -> List[EnrichmentDBMoleculeMapping]:
     """Find enrichment database by id."""
 
-    data = DB().select_one_with_fields(
+    data = DB().select_with_fields(
         'SELECT * FROM enrichment_db_molecule_mapping WHERE formula = %s and molecular_db_id = %s',
         params=(formula, moldb_id)
     )
     if not data:
         raise SMError(f'EnrichmentDBMoleculeMapping not found: {moldb_id}')
-    return EnrichmentDBMoleculeMapping(**data)
+    return[EnrichmentDBMoleculeMapping(**row) for row in data]
