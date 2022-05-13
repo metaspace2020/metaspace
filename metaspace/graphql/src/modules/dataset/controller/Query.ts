@@ -150,12 +150,12 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           termsHash,
           bootstrappedSublist,
         })
-        return JSON.stringify(content.data)
+        return JSON.parse(content.data)
       } catch (e) {
         return e
       }
     }
-    return null
+    return []
   },
 
   // TODO: deprecated, remove

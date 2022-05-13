@@ -81,16 +81,16 @@ def calculate_enrichment():
 
         enrichment_analysis = pd.DataFrame(data, columns=['name', 'id', 'n',
                                                           'observed', 'expected',
-                                                          'fold_enrichment_median',
-                                                          'fold_enrichment_SD',
-                                                          'pvalue'])
-        enrichment_analysis['qvalue'] = \
-            multitest.multipletests(enrichment_analysis['pvalue'].values,
+                                                          'median',
+                                                          'std',
+                                                          'pValue'])
+        enrichment_analysis['qValue'] = \
+            multitest.multipletests(enrichment_analysis['pValue'].values,
                                     method='fdr_bh')[1]
 
         filtered_enrichment = enrichment_analysis[(enrichment_analysis['n'] >= 2)]\
             .sort_values(
-            by='fold_enrichment_median', ascending=False)
+            by='median', ascending=False)
 
         return make_response(OK, data=filtered_enrichment.to_json(orient="records"))
     except Exception as e:

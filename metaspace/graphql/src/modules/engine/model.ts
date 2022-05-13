@@ -381,8 +381,14 @@ export class EnrichmentDBMoleculeMapping {
   @Column({ type: 'text' })
   moleculeEnrichedName: string;
 
+  @Column({ type: 'text' })
+  formula: string;
+
   @Column({ type: 'int' })
   enrichmentTermId: number;
+
+  @Column({ type: 'int' })
+  moleculeId: number;
 
   @Column({ type: 'int' })
   molecularDbId: number;
@@ -412,6 +418,9 @@ export class EnrichmentBootstrap {
 
   @Column({ type: 'numeric', precision: 2, scale: 2 })
   fdr: string;
+
+  @Column({ type: 'int' })
+  enrichmentDbMoleculeMappingId: number;
 
   // This table is a child table of public.dataset, not graphql.dataset, so avoid making an FK
   @ManyToOne(() => Dataset, { createForeignKeyConstraints: false })

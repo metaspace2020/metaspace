@@ -301,6 +301,20 @@ type DatasetRelationship {
   id: String!
   name: String!
 }
+
+
+type Enrichment {
+  name: String
+  id: String
+  n: Float
+  observed: Float
+  expected: Float
+  median: Float
+  std: Float
+  pValue: Float
+  qValue: Float
+}
+
 enum DatasetAction {
   ANNOTATE
   UPDATE
@@ -338,7 +352,7 @@ type Query {
 
   countDatasetsPerGroup(query: DatasetCountPerGroupInput!): DatasetCountPerGroup!
 
-  lipidEnrichment(datasetId: String!, molDbId: Int, fdr: Float): String
+  lipidEnrichment(datasetId: String!, molDbId: Int, fdr: Float): [Enrichment]
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
