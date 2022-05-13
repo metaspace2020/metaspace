@@ -35,6 +35,8 @@ from sm.engine.ds_config import DSConfig
 
 from sm.engine import enrichment_db_molecule_mapping
 
+from sm.engine.errors import SMError
+
 logger = logging.getLogger('annotation-pipeline')
 
 
@@ -55,16 +57,16 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     png_cobjs: List[CObj[List[Tuple[int, bytes]]]]
 
     def __init__(
-        self,
-        imzml_cobject: CloudObject,
-        ibd_cobject: CloudObject,
-        moldbs: List[InputMolDb],
-        ds_config: DSConfig,
-        executor: Executor = None,
-        lithops_config=None,
-        cache_key=None,
-        use_db_cache=True,
-        use_db_mutex=True,
+            self,
+            imzml_cobject: CloudObject,
+            ibd_cobject: CloudObject,
+            moldbs: List[InputMolDb],
+            ds_config: DSConfig,
+            executor: Executor = None,
+            lithops_config=None,
+            cache_key=None,
+            use_db_cache=True,
+            use_db_mutex=True,
     ):
         self.enrichment_data = None
         lithops_config = lithops_config or SMConfig.get_conf()['lithops']
@@ -91,7 +93,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.ds_segm_size_mb = 128
 
     def run_pipeline(
-        self, debug_validate=False, use_cache=True
+            self, debug_validate=False, use_cache=True
     ) -> Tuple[Dict[int, DataFrame], List[CObj[List[Tuple[int, bytes]]]], Any]:
         # pylint: disable=unexpected-keyword-arg
         self.prepare_moldb(debug_validate=debug_validate)
@@ -184,44 +186,43 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.executor, self.formula_metrics_df, self.db_data_cobjs, self.ds_config
         )
 
-
     @use_pipeline_cache
     def run_enrichment(self):
         bootstrap_hash = {}
         for moldb_id in self.results_dfs:
             molecules = self.results_dfs[moldb_id]
             data = []
-            hash_id = {}
             for _, row in molecules.iterrows():
                 try:
-                    term = enrichment_db_molecule_mapping.get_mappings_by_formula(row['formula'],
+                    terms = enrichment_db_molecule_mapping.get_mappings_by_formula(row['formula'],
                                                                                   str(moldb_id))
-                    ion = str(row['formula']) + (str(row['modifier'])
-                                                 if row['modifier'] is not np.nan else '')
-                    data.append([ion, term.molecule_enriched_name])
-                    hash_id[row['formula']] = term.id
-                except:
+                    for term in terms:
+                        ion = str(row['formula']) + (str(row['modifier'])
+                                                     if row['modifier'] is not np.nan else '')
+                        data.append([ion, term.molecule_enriched_name, term.id])
+                except SMError:
                     pass
             dataset_metabolites = pd.DataFrame(
-                data, columns=['formula_adduct', 'molecule_name']
+                data, columns=['formula_adduct', 'molecule_name', 'term_id']
             )
 
             # bootstrapping
             hash_mol = {}
-            for index, row in dataset_metabolites.iterrows():
+            for idx, row in dataset_metabolites.iterrows():
                 if row['formula_adduct'] not in hash_mol.keys():
                     hash_mol[row['formula_adduct']] = []
-                hash_mol[row['formula_adduct']].append(row['molecule_name'])
+                hash_mol[row['formula_adduct']].append({'mol_name': row['molecule_name'],
+                                                        'mol_id': row['term_id']})
 
             boot_n = 100  # times bootstrapping
             bootstrap_sublist = []
             for n in range(boot_n):
                 bootstrap_dict_aux = {}
-                for index, row in molecules.iterrows():
+                for _, row in molecules.iterrows():
                     ion = str(row['formula']) + str(row['modifier'])
                     if ion in hash_mol.keys():
                         bootstrap_dict_aux[ion] = random.choice(hash_mol[ion])
-                        bootstrap_sublist.append([n, ion, row['fdr'], hash_id[row['formula']]])
+                        bootstrap_sublist.append([n, ion, row['fdr'], bootstrap_dict_aux[ion]['mol_id']])
 
             bootstrap_hash[moldb_id] = pd.DataFrame(
                 bootstrap_sublist, columns=['scenario',

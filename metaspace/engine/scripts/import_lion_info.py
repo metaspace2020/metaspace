@@ -28,12 +28,18 @@ def main():
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', help='SM config path'
     )
+    parser.add_argument(
+        'filter_csv_file',
+        type=str,
+        help=f'Path to filtered enrichment terms. '
+             f'Required columns: {required_columns}. ',
+    )
     parser.set_defaults(sep=',', confirmed=False)
     args = parser.parse_args()
     with GlobalInit(args.config_path):
         db_df = enrichment_db.create(args.name)
         enrichment_term.create(db_df.id, args.csv_file)
-        enrichment_db_molecule_mapping.create(db_df.id, args.name_db, args.json_file)
+        enrichment_db_molecule_mapping.create(db_df.id, args.name_db, args.json_file, args.filter_csv_file)
 
 if __name__ == "__main__":
     main()

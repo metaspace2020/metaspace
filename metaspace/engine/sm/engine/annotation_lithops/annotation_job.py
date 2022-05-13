@@ -249,6 +249,7 @@ class LocalAnnotationJob:
                             out_file.open('wb').write(img)
 
 
+# pylint: disable=too-many-instance-attributes
 class ServerAnnotationJob:
     """
     Runs an annotation job for a dataset in the database, saving the results back to the database
