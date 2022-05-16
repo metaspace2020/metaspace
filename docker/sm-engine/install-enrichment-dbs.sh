@@ -5,9 +5,39 @@ cd /opt/dev/metaspace/metaspace/engine
 pip install -qr requirements.txt
 pip install -e .
 
-# TODO: This doesn't include all databases, and the only way to exclude databases is to comment them out.
-# It would be much better as a Python script that interactively allowed databases to be selected.
+curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/LION-LUT.csv -o /tmp/LION-LUT.csv \
+ && curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/lipidmaps.json -o /tmp/lipidmaps.json \
+ && curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/LION_METASPACE_list.csv -o /tmp/LION_METASPACE_list.csv \
+ && python scripts/import_lion_info.py LION /tmp/LION-LUT.csv LipidMaps 2017-12-12 /tmp/lipidmaps.json \
+ /tmp/LION_METASPACE_list.csv \
+ && rm /tmp/LION-LUT.csv \
+ && rm /tmp/lipidmaps.json \
+ && rm /tmp/LION_METASPACE_list.csv
 
 curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/LION-LUT.csv -o /tmp/LION-LUT.csv \
- && python scripts/import_lion_info.py LION /tmp/LION-LUT.csv \
- && rm /tmp/LION-LUT.csv
+ && curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/HMDB.json -o /tmp/HMDB.json \
+ && curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/LION_METASPACE_list.csv -o /tmp/LION_METASPACE_list.csv \
+ && python scripts/import_lion_info.py LION /tmp/LION-LUT.csv HMDB v4 /tmp/HMDB.json \
+ /tmp/LION_METASPACE_list.csv \
+ && rm /tmp/LION-LUT.csv \
+ && rm /tmp/HMDB.json \
+ && rm /tmp/LION_METASPACE_list.csv
+
+curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/LION-LUT.csv -o /tmp/LION-LUT.csv \
+ && curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/swisslipids.json -o /tmp/swisslipids.json \
+ && curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/LION_METASPACE_list.csv -o /tmp/LION_METASPACE_list.csv \
+ && python scripts/import_lion_info.py LION /tmp/LION-LUT.csv SwissLipids 2018-02-02 /tmp/swisslipids.json \
+ /tmp/LION_METASPACE_list.csv \
+ && rm /tmp/LION-LUT.csv \
+ && rm /tmp/swisslipids.json \
+ && rm /tmp/LION_METASPACE_list.csv
+
+curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/LION-LUT.csv -o /tmp/LION-LUT.csv \
+ && curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/core_metabolome.json -o /tmp/core_metabolome.json \
+ && curl https://sm-lion-project.s3.eu-west-1.amazonaws.com/LION_METASPACE_list.csv -o /tmp/LION_METASPACE_list.csv \
+ && python scripts/import_lion_info.py LION /tmp/LION-LUT.csv CoreMetabolome v3 /tmp/core_metabolome.json \
+ /tmp/LION_METASPACE_list.csv \
+ && rm /tmp/LION-LUT.csv \
+ && rm /tmp/core_metabolome.json \
+ && rm /tmp/LION_METASPACE_list.csv
+
