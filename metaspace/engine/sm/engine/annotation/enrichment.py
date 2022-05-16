@@ -12,12 +12,9 @@ class DatasetEnrichment(TypedDict, total=False):
 
 
 def add_enrichment(enrichment: DatasetEnrichment):
-    """Upserts dataset diagnostics, overwriting existing values with the same ds_id, job_id, type"""
-    # Validate input, as postgres can't enforce the JSON columns have the correct schema,
-    # and many places (graphql, python client, etc.) rely on these structures.
+    """Add enrichment bootstrap data"""
 
     ds_id = enrichment['ds_id']
-    enrichment_bootstrap.delete_by_ds_id(ds_id)
     for _, row in enrichment['bootstrap_data'].iterrows():
         enrichment_bootstrap.create(scenario=row['scenario'],
                                     formula_adduct=row['formula_adduct'],
@@ -25,3 +22,9 @@ def add_enrichment(enrichment: DatasetEnrichment):
                                     dataset_id=ds_id,
                                     enrichment_db_molecule_mapping_id=
                                     row['enrichment_db_molecule_mapping_id'])
+
+
+def delete_ds_enrichments(ds_id: str):
+    """Delete asssociated enrichment bootstrap"""
+
+    enrichment_bootstrap.delete_by_ds_id(ds_id)

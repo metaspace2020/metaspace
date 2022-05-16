@@ -18,7 +18,7 @@ ION_SEL = (
 MOL_SEL = (
     'SELECT id, mol_id, mol_name, formula '
     'FROM public.molecule '
-    'WHERE moldb_id = %s AND mol_name = %s'
+    'WHERE moldb_id = %s AND mol_name = %s LIMIT 1'
 )
 
 

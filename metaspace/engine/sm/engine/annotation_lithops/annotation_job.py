@@ -15,7 +15,7 @@ from sm.engine.annotation.diagnostics import (
     add_diagnostics,
     extract_job_diagnostics,
 )
-from sm.engine.annotation.enrichment import add_enrichment, DatasetEnrichment
+from sm.engine.annotation.enrichment import add_enrichment, DatasetEnrichment, delete_ds_enrichments
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
@@ -32,6 +32,7 @@ from sm.engine.storage import get_s3_client
 from sm.engine.util import split_s3_path, split_cos_path
 from sm.engine.utils.db_mutex import DBMutex
 from sm.engine.utils.perf_profile import Profiler
+
 
 logger = logging.getLogger('engine')
 
@@ -336,6 +337,9 @@ class ServerAnnotationJob:
             # Save non-job-related diagnostics
             diagnostics = extract_dataset_diagnostics(self.ds.id, self.pipe.imzml_reader)
             add_diagnostics(diagnostics)
+
+            # delete pre calculated enrichments if already exists
+            delete_ds_enrichments(self.ds.id)
 
             for moldb_id, job_id in moldb_to_job_map.items():
                 logger.debug(f'Storing results for moldb {moldb_id}')

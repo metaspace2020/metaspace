@@ -63,16 +63,17 @@ class EnrichmentDBMoleculeMapping:
 def create(
         enrichment_db_id: int = None,
         db_name: str = None,
+        db_version: str = None,
         file_path: str = None,
         filter_file_path: str = None,
 ) -> Optional[str]:
     with transaction_context():
         logger.info(f'Received request: {db_name}')
-        read_json_file(db_name, enrichment_db_id, file_path, filter_file_path)
+        read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file_path)
         return db_name
 
 
-def read_json_file(db_name, enrichment_db_id, file_path, filter_file_path):
+def read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file_path):
     try:
         if re.findall(r'^s3a?://', file_path):
             bucket_name, key = split_s3_path(file_path)
@@ -88,22 +89,26 @@ def read_json_file(db_name, enrichment_db_id, file_path, filter_file_path):
                                'molecule_id', 'molecular_db_id'])
     filter_terms = pd.read_csv(filter_file_path)
     counter = 0
+    moldb = molecular_db.find_by_name_version(db_name, db_version)
+
     for enrichment_id in translate_json.keys():
         if enrichment_id != 'all' and enrichment_id in filter_terms['LION_ID'].values:
             logger.info(f'Adding term: {enrichment_id}')
             term = enrichment_term.find_by_enrichment_id(enrichment_id, enrichment_db_id)
-            moldb = molecular_db.find_by_name(db_name)
             enrichment_names = translate_json[enrichment_id]
             idx = 0
             for name in enrichment_names:
                 logger.info(f'Adding term: {enrichment_id} index: {idx}')
-                mol = find_mol_by_name(DB(), moldb.id, name)
-                if mol and mol[3] and mol[0]:
-                    df.loc[counter] = [name, mol[3], term.id, mol[0], moldb.id]
-                    counter = counter + 1
-                    idx = idx + 1
-                if idx > 300:
-                    break
+                try:
+                    mol = find_mol_by_name(DB(), moldb.id, name)
+                    if mol and mol[3] and mol[0]:
+                        df.loc[counter] = [name, mol[3], term.id, mol[0], moldb.id]
+                        counter = counter + 1
+                        idx = idx + 1
+                    if idx > 300:
+                        break
+                except SMError:
+                    logger.info(f'Term: {enrichment_id} name: {name} not found on database')
     logger.info(f'Received request: {len(df)}')
     _import_mappings(df)
 
