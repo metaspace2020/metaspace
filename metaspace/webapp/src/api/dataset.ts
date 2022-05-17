@@ -401,9 +401,24 @@ export interface GetDatabaseStatusQuery {
     status: GqlJobStatus | null
   }
 }
+
 export const getDatasetStatusQuery =
   gql`query getDatasetStatusQuery($id: String!) {
     dataset(id: $id) { id status }
+  }`
+
+export const getDatasetEnrichmentQuery =
+  gql`query getDatasetStatusQuery($id: String!, $dbId: Int = 3, $fdr: Float = 0.1) {
+    lipidEnrichment(datasetId: $id, molDbId: $dbId, fdr: $fdr) {
+      name
+      n
+      observed
+      expected
+      median
+      std
+      pValue
+      qValue
+    }
   }`
 
 export const checkIfHasBrowserFiles =
