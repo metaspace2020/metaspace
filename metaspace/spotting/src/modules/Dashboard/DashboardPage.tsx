@@ -186,10 +186,10 @@ const CLASSIFICATION_METRICS = {
 }
 
 const DATASET_METRICS = {
-  Polarity: true,
-  Technology: true,
+  pol: true,
+  tech: true,
   mS: true,
-  'Participant lab': true,
+  lab: true,
 }
 
 const PREDICTION_METRICS = {
@@ -345,7 +345,7 @@ export default defineComponent({
         })
         console.log('File loaded')
         // console.log('File loaded', predWithDs)
-        // console.log('File loaded', predWithDsInter)
+        // console.log('File loaded inter', predWithDsInter)
         state.rawData = predWithDs
         state.rawDataInter = predWithDsInter
       } catch (e) {
@@ -795,9 +795,9 @@ export default defineComponent({
           axis.push(row[value])
         }
       })
+
       axis.sort()
       axis = axis.filter((item: any) => item && item !== 'null' && item !== 'none' && item !== 'undefined')
-
       if (isXAxis) {
         state.pagination.total = axis.length
         state.xAxisValues = axis
@@ -1141,7 +1141,10 @@ export default defineComponent({
       const start = ((state.pagination.currentPage - 1) * state.pagination.pageSize)
       const end = ((state.pagination.currentPage - 1) * state.pagination.pageSize) + state.pagination.pageSize
       xAxisValues = xAxisValues.slice(start, end)
-      const chartData = state.data.slice(yAxisValues.length * start)
+      const chartData = state.data.slice(yAxisValues.length * start, yAxisValues.length * end).map((item: any) => {
+        item.value[0] = item.value[0] - start
+        return item
+      })
 
       return (
         <div class='dashboard-container'>
