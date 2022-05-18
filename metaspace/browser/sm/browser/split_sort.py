@@ -69,7 +69,7 @@ def read_spectra_chunk(spectrum_reader: ImzMLReader, chunk_sp_idxs):
 def segment_spectra_chunk(
     spectra_chunk: np.ndarray, segment_bounds: List[List], segments_path: pathlib.Path
 ):
-    segm_left_bounds, segm_right_bounds = zip(*segment_bounds) # гарниці по mz для лівого та правого сегментів
+    segm_left_bounds, segm_right_bounds = zip(*segment_bounds)
     segm_first_idx = np.searchsorted(spectra_chunk[:, 0], segm_left_bounds)
     segm_last_idx = np.searchsorted(spectra_chunk[:, 0], segm_right_bounds)
 
