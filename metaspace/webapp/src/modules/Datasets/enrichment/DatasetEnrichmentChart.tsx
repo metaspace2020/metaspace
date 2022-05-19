@@ -129,8 +129,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
             },
             label: {
               show: true,
-              position: 'right',
-              distance: 40,
+              position: 'inside',
               formatter: (params: any) => {
                 return `n=${params?.data?.label?.n}`
               },

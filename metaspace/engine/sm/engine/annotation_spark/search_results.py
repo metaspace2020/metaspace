@@ -20,6 +20,11 @@ METRICS_INS = (
     ') '
     'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
 )
+ANNOTATION_SEL = (
+    'SELECT * FROM annotation '
+    ' WHERE job_id = %s'
+)
+
 METRICS_FIELDS = [
     *[f.name for f in [*fields(Metrics)] if f.name != 'formula_i' and f.name != 'msm'],
     'chaos_fdr',
@@ -80,6 +85,9 @@ class SearchResults:
             self.job_id, ion_metrics_df.reset_index(), ion_image_ids, ion_mapping
         )
         db.insert(METRICS_INS, list(rows))
+
+    def get_annotations_ids(self, db):
+        return db.select_with_fields(ANNOTATION_SEL, (self.job_id, ))
 
     def _post_images_to_image_store(self, ion_images_rdd, alpha_channel, n_peaks):
         logger.info('Posting iso images to image store')

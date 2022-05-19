@@ -67,10 +67,9 @@ def create(
         file_path: str = None,
         filter_file_path: str = None,
 ) -> Optional[str]:
-    with transaction_context():
-        logger.info(f'Received request: {db_name}')
-        read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file_path)
-        return db_name
+    logger.info(f'Received request: {db_name}')
+    read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file_path)
+    return db_name
 
 
 def read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file_path):
@@ -105,7 +104,7 @@ def read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file
                         df.loc[counter] = [name, mol[3], term.id, mol[0], moldb.id]
                         counter = counter + 1
                         idx = idx + 1
-                    if idx > 300:
+                    if idx > 1000:
                         break
                 except SMError:
                     logger.info(f'Term: {enrichment_id} name: {name} not found on database')
