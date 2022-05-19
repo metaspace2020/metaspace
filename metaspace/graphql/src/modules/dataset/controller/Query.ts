@@ -113,7 +113,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
         const enrichedTerms = await ctx.entityManager
           .find(EnrichmentTerm, {
-            where: { enrichmentDbId: 3 }, // LION
+            where: { enrichmentDbId: 1 }, // LION
           })
 
         const bootstrappedSublist : any = []
@@ -130,6 +130,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
               bootItem.enrichmentDBMoleculeMapping.moleculeEnrichedName
           })
         }
+
+        console.log('bootstrap', bootstrap[0])
 
         if (enrichmentTermsMapping) {
           enrichmentTermsMapping.forEach((enrichedItem: any) => {
