@@ -23,6 +23,7 @@ import {
 import './DatasetEnrichmentChart.scss'
 import createColormap from '../../../lib/createColormap'
 import { uniq } from 'lodash-es'
+import getColorScale from '../../../lib/getColorScale'
 
 use([
   CanvasRenderer,
@@ -79,7 +80,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
     const state = reactive<DatasetEnrichmentChartState>({
       size: 600,
       chartOptions: {
-        grid: { containLabel: true },
+        grid: { containLabel: false, width: '70%', right: '7%', top: '2%', bottom: '10%' },
         xAxis: {
           name: 'overrepresentation in dataset vs. database',
           bottom: 'center',
@@ -92,14 +93,13 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
         yAxis: {
           type: 'category',
           data: [],
-          name: '-10LogPvalue',
-          nameLocation: 'middle',
-          nameTextStyle: {
-            fontSize: 13,
-            padding: [0, 30, -820, 0],
-          },
           splitLine: {
             show: true,
+          },
+          axisLabel: {
+            fontSize: 10,
+            overflow: 'break',
+            width: 140,
           },
         },
         visualMap: {
@@ -115,6 +115,9 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
           inRange: {
             color: ['#65B581', '#FFCE34', '#FD665F'],
           },
+          formatter: function(value: any) {
+            return value.toFixed(2)
+          },
         },
         series: [
           {
@@ -124,11 +127,20 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
             itemStyle: {
               color: '#77bef7',
             },
+            label: {
+              show: true,
+              position: 'right',
+              distance: 40,
+              formatter: (params: any) => {
+                return `n=${params?.data?.label?.n}`
+              },
+            },
             markLine: {
               symbolSize: 0,
               label: { show: false },
               data: [{ xAxis: 1, name: 'Avg' }],
             },
+            barWidth: 20,
           },
           {
             type: 'custom',
@@ -137,11 +149,11 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
               borderWidth: 1.5,
             },
             renderItem: (params : any, api : any) => {
-              var xValue = api.value(0)
-              var highPoint = api.coord([api.value(1), xValue])
-              var lowPoint = api.coord([api.value(2), xValue])
-              var halfWidth = api.size([1, 0])[0] * 0.05
-              var style = api.style({
+              const xValue = api.value(0)
+              const highPoint = api.coord([api.value(1), xValue])
+              const lowPoint = api.coord([api.value(2), xValue])
+              const halfWidth = 4 // api.size([1, 0])[0] * 0.04
+              const style = api.style({
                 stroke: 'black',
                 fill: undefined,
               })
@@ -203,15 +215,6 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
       const categoryData : string[] = []
       const errorData : any = []
       const rawData : any = chartData.value
-      let colormap : any = '-Viridis'
-      let colorSteps : number = 1
-      const colors : any = []
-
-      if (!Array.isArray(colormap)) {
-        colormap = createColormap(colormap).map((color: any) => {
-          return `rgba(${color.join(',')})`
-        })
-      }
 
       rawData
         .reverse()
@@ -224,23 +227,12 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
             item.median - item.std,
             item.median + item.std,
           ])
-          barData.push([item.median, index, intensity])
+          barData.push({ value: [item.median, index, intensity], label: item })
 
           if (item.median + item.std > maxX) {
-            maxX = item.median + item.std
+            maxX = Math.ceil(item.median + item.std)
           }
         })
-
-      const availableAggregations = uniq(barData.map((item: any) => item[2])).sort()
-      colorSteps = availableAggregations.length
-        ? (colormap.length / availableAggregations.length) : 1
-      availableAggregations.forEach((agg: any, aggIndex: number) => {
-        colors.push(colormap[Math.floor(aggIndex * colorSteps)])
-        return {
-          label: agg,
-          value: agg,
-        }
-      })
 
       const newSize = categoryData.length * 30
       state.size = newSize < 600 ? 600 : newSize
@@ -248,7 +240,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
       chartOptions.xAxis.max = maxX
       chartOptions.series[0].data = barData
       chartOptions.series[1].data = errorData
-      chartOptions.visualMap.inRange.color = colors
+      chartOptions.visualMap.inRange.color = getColorScale('-Viridis').range
       setTimeout(() => { handleChartResize() }, 100)
 
       return chartOptions
@@ -306,7 +298,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
       const { isLoading, isDataLoading } = props
 
       return (
-        <div class='chart-holder'
+        <div class='chart-holder relative'
           style={{ height: `${state.size}px` }}>
           {
             (isLoading || isDataLoading)
@@ -330,6 +322,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
             class='chart'
             style={{ height: `${state.size}px` }}
             options={chartOptions.value}/>
+          <span class='heat-text'>-10log10Pvalue</span>
         </div>
       )
     }
@@ -338,7 +331,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
       const { isEmpty, isLoading } = props
 
       return (
-        <div class={'dataset-browser-spectrum-container'}>
+        <div class={'dataset-enrichment-chart-container'}>
           {
             isEmpty && !isLoading
             && renderEmptySpectrum()
