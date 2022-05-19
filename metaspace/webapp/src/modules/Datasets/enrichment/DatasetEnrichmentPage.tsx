@@ -7,6 +7,8 @@ import config from '../../../lib/config'
 import { useQuery } from '@vue/apollo-composable'
 import { getDatasetEnrichmentQuery } from '../../../api/dataset'
 import { DatasetEnrichmentChart } from './DatasetEnrichmentChart'
+import { DatasetEnrichmentTable } from './DatasetEnrichmentTable'
+import './DatasetEnrichmentPage.scss'
 
 interface DatasetEnrichmentPageProps {
   className: string
@@ -14,6 +16,8 @@ interface DatasetEnrichmentPageProps {
 
 interface DatasetEnrichmentPageState {
   showChart: boolean
+  offset: number
+  pageSize: number
 }
 
 export default defineComponent<DatasetEnrichmentPageProps>({
@@ -30,6 +34,8 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     const { $route, $store } = root
     const state = reactive<DatasetEnrichmentPageState>({
       showChart: true,
+      offset: 0,
+      pageSize: 15,
     })
     const { dataset_id: sourceDsId } = $route.params
 
@@ -59,16 +65,35 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       return null
     })
 
+    const handlePageChange = (offset: number) => {
+      state.offset = offset
+    }
+    const handleSizeChange = (pageSize: number) => {
+      state.pageSize = pageSize
+    }
+
     return () => {
       const { showChart } = state
-      const data = Array.isArray(enrichment.value) ? enrichment.value.slice(0, 15) : []
+      const dataStart = ((state.offset - 1) * state.pageSize)
+      const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
+      const data = Array.isArray(enrichment.value) ? enrichment.value : []
+      const pagedData = data.slice(dataStart, dataEnd)
 
       return (
         <div class='dataset-enrichment-page'>
-          {
-            !enrichmentLoading.value
-            && <DatasetEnrichmentChart data={data}/>
-          }
+          <div class={'dataset-enrichment-wrapper'}>
+            <DatasetEnrichmentTable
+              data={data}
+              onPageChange={handlePageChange}
+              onSizeChange={handleSizeChange}
+            />
+          </div>
+          <div class={'dataset-enrichment-wrapper'}>
+            {
+              !enrichmentLoading.value
+              && <DatasetEnrichmentChart data={pagedData}/>
+            }
+          </div>
         </div>
       )
     }
