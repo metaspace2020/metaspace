@@ -18,6 +18,7 @@ interface DatasetEnrichmentPageState {
   showChart: boolean
   offset: number
   pageSize: number
+  sortedData: any
 }
 
 export default defineComponent<DatasetEnrichmentPageProps>({
@@ -36,6 +37,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       showChart: true,
       offset: 0,
       pageSize: 15,
+      sortedData: undefined,
     })
     const { dataset_id: sourceDsId } = $route.params
 
@@ -68,15 +70,23 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     const handlePageChange = (offset: number) => {
       state.offset = offset
     }
+
     const handleSizeChange = (pageSize: number) => {
       state.pageSize = pageSize
     }
 
+    const handleSortChange = (newData: number) => {
+      state.sortedData = newData
+    }
+
     return () => {
+      if (!enrichment.value) {
+        return
+      }
       const { showChart } = state
       const dataStart = ((state.offset - 1) * state.pageSize)
       const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
-      const data = Array.isArray(enrichment.value) ? enrichment.value : []
+      const data = state.sortedData ? state.sortedData : enrichment.value
       const pagedData = data.slice(dataStart, dataEnd)
 
       return (
@@ -86,6 +96,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
               data={data}
               onPageChange={handlePageChange}
               onSizeChange={handleSizeChange}
+              onSortChange={handleSortChange}
             />
           </div>
           <div class={'dataset-enrichment-wrapper'}>

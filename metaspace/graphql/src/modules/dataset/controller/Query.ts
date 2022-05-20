@@ -13,6 +13,8 @@ import {
 } from '../../engine/model'
 import { smApiJsonPost, smApiJsonGet } from '../../../utils/smApi/smApiCall'
 import { smApiDatasetRequest } from '../../../utils'
+import { uniq } from 'lodash'
+import { unpackAnnotation } from '../../annotation/controller/Query'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER
@@ -132,8 +134,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           })
         }
 
-        console.log('bootstrap', bootstrap[0])
-
         if (enrichmentTermsMapping) {
           enrichmentTermsMapping.forEach((enrichedItem: any) => {
             enrichedSets[enrichedItem.enrichmentId] = enrichedItem.names
@@ -155,7 +155,36 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           termsHash,
           bootstrappedSublist,
         })
-        return JSON.parse(content.data)
+        const data = JSON.parse(content.data)
+
+        for (let i = 0; i < data.enrichment.length; i++) {
+          const item = data.enrichment[i]
+          const mols = uniq(data.molecules
+            .filter((term: any) => term.id === item.id)
+            .map((term:any) => term.mols).flat())
+          const bootstrapItems = await ctx.entityManager
+            .find(EnrichmentBootstrap, {
+              join: {
+                alias: 'bootstrap',
+                leftJoin: { enrichmentDBMoleculeMapping: 'bootstrap.enrichmentDBMoleculeMapping' },
+              },
+              where: (qb : any) => {
+                qb.where('bootstrap.datasetId = :datasetId', { datasetId })
+                  .andWhere('bootstrap.fdr <= :fdr', { fdr })
+                  .andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
+                  .andWhere('enrichmentDBMoleculeMapping.moleculeEnrichedName IN (:...names)', { names: mols })
+                  .orderBy('bootstrap.scenario', 'ASC')
+              },
+              relations: [
+                'enrichmentDBMoleculeMapping',
+              ],
+            })
+          const ionIds = uniq(bootstrapItems.map((bItem: any) => `${datasetId}_${bItem.annotationId}`)).join('|')
+          const annotations = await esSearchResults({ filter: { annotationId: ionIds } }
+            , 'annotation', ctx.user)
+          item.annotations = annotations.map(unpackAnnotation)
+        }
+        return data.enrichment
       } catch (e) {
         return e
       }

@@ -320,6 +320,7 @@ type Enrichment {
   std: Float
   pValue: Float
   qValue: Float
+  annotations: [Annotation]
 }
 
 enum DatasetAction {

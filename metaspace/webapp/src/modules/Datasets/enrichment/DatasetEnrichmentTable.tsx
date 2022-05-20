@@ -34,11 +34,10 @@ const KEY_TO_ACTION = {
 }
 
 const SORT_ORDER_TO_COLUMN = {
-  ORDER_BY_MZ: 'mz',
-  ORDER_BY_MSM: 'msmscore',
-  ORDER_BY_FDR_MSM: 'fdrlevel',
-  ORDER_BY_FORMULA: 'sumformula',
-  ORDER_BY_DS_COUNT: 'datasetcount',
+  ORDER_BY_ID: 'id',
+  ORDER_BY_NAME: 'name',
+  ORDER_BY_N: 'n',
+  ORDER_BY_FDR_MSM: 'qValue',
 }
 
 export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProps>({
@@ -283,24 +282,24 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
         sortMolecule(a, b, order === 'ascending' ? 1 : -1)))
     }
 
-    const handleSortMZ = (order: string) => {
+    const handleSortName = (order: string) => {
       state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.mz - b.mz)))
+        (order === 'ascending' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name))))
     }
 
-    const handleSortMSM = (order: string) => {
+    const handleSortId = (order: string) => {
       state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.msmScore - b.msmScore)))
+        (order === 'ascending' ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id))))
     }
 
-    const handleSortDsCount = (order: string) => {
+    const handleSortN = (order: string) => {
       state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.datasetcount - b.datasetcount)))
+        (order === 'ascending' ? 1 : -1) * (a.n - b.n)))
     }
 
     const handleSortFdr = (order: string) => {
       state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.fdrLevel - b.fdrLevel)))
+        (order === 'ascending' ? 1 : -1) * (a.qValue - b.qValue)))
     }
 
     const handleSortChange = (settings: any, setCurrentRow: boolean = true) => {
@@ -308,22 +307,22 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
 
       if (!order) {
         state.processedAnnotations = computed(() => props.data)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_FORMULA) {
-        handleSortFormula(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_MSM) {
-        handleSortMSM(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_ID) {
+        handleSortId(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_NAME) {
+        handleSortName(order)
       } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM) {
         handleSortFdr(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_DS_COUNT) {
-        handleSortDsCount(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_MZ) {
-        handleSortMZ(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_N) {
+        handleSortN(order)
       }
 
       $store.commit('setSortOrder', {
         by: prop,
         dir: order?.toUpperCase(),
       })
+
+      emit('sortChange', !order ? null : state.processedAnnotations)
 
       if (setCurrentRow) {
         state.selectedRow = state.processedAnnotations[0]
