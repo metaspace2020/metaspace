@@ -43,13 +43,16 @@ def calculate_enrichment():
         bootstrapped_sublist = body['bootstrappedSublist']
         terms_hash = body['termsHash']
         enrichment_analysis_input = {}
+        mols = []
         for key in enrichment_sets.keys():
             db_items = set(enrichment_sets[key])
             enrichment_analysis_input[key] = {}
             enrichment_analysis_input[key]['background'] = len(enrichment_sets[key])
             enrichment_analysis_input[key]['sublist'] = []
-            for bootstrap_item in bootstrapped_sublist:
-                items_sum = len(db_items.intersection(set(bootstrap_item.values())))
+            for index, bootstrap_item in enumerate(bootstrapped_sublist):
+                intersection = db_items.intersection(set(bootstrap_item.values()))
+                mols.append([key, index, list(intersection)])
+                items_sum = len(intersection)
                 enrichment_analysis_input[key]['sublist'].append(items_sum)
 
         data = []
@@ -84,15 +87,16 @@ def calculate_enrichment():
                                                           'median',
                                                           'std',
                                                           'pValue'])
+        molecules = pd.DataFrame(mols, columns=['id', 'n', 'mols'])
         enrichment_analysis['qValue'] = \
             multitest.multipletests(enrichment_analysis['pValue'].values,
                                     method='fdr_bh')[1]
-
         filtered_enrichment = enrichment_analysis[(enrichment_analysis['n'] >= 2)]\
             .sort_values(
             by='median', ascending=False)
 
-        return make_response(OK, data=filtered_enrichment.to_json(orient="records"))
+        return make_response(OK, data=json.dumps({'enrichment': filtered_enrichment.to_dict(orient='records'),
+                                                  'molecules': molecules.to_dict(orient='records')}))
     except Exception as e:
         logger.warning(f'({e}')
         return make_response(INTERNAL_ERROR)
