@@ -573,6 +573,7 @@ export default defineComponent<DatasetComparisonPageProps>({
           <div class='dataset-comparison-grid' ref={gridNode}>
             {
               collapse.includes('images')
+              && !annotationsLoading.value
               && <DatasetComparisonGrid
                 ref={imageGrid}
                 nCols={nCols}
@@ -595,6 +596,15 @@ export default defineComponent<DatasetComparisonPageProps>({
                 selectedAnnotation={currentAnnotationIdx}
                 isLoading={isLoading || annotationsLoading.value}
               />
+            }
+            {
+              collapse.includes('images')
+              && annotationsLoading.value
+              && <div class='w-full text-center'>
+                <i
+                  class="el-icon-loading"
+                />
+              </div>
             }
           </div>
         </CollapseItem>)
