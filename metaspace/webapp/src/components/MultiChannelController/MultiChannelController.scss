@@ -1,0 +1,37 @@
+.multi-channel-ctrl-wrapper{
+  width: 185px;
+  @apply py-3 bg-gray-100 rounded-lg box-border shadow-xs mr-1 overflow-x-hidden overflow-y-auto;
+  max-height: calc(100% - 1.5rem);
+
+  .channel-popover{
+    @apply w-11/12;
+  }
+
+  .sm-more-button {
+    margin-bottom: 4px;
+    padding: 0 1px;
+    z-index: 20;
+  }
+
+  .menu-item {
+    @apply px-1;
+  }
+  .sm-menu-items {
+    width: 185px;
+    @apply px-3 box-border border-0 border-t border-solid border-gray-200;
+
+    &:last-child {
+      @apply border-b;
+    }
+    &:hover {
+      outline: 1px solid theme('colors.primary');
+      outline-offset: -1px;
+    }
+  }
+
+  .sm-menu-items >>> > .focus-visible {
+    outline: 2px solid theme('colors.primary');
+    outline-offset: -2px;
+  }
+
+}

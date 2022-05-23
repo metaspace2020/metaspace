@@ -28,6 +28,8 @@ import CopyButton from '../../../components/CopyButton.vue'
 import { DatasetComparisonShareLink } from './DatasetComparisonShareLink'
 import { groupBy, isEqual, uniqBy, uniq } from 'lodash-es'
 import { readNpy } from '../../../lib/npyHandler'
+import { DatasetComparisonModeButton } from './DatasetComparisonModeButton'
+import './DatasetComparisonPage.scss'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -46,7 +48,7 @@ interface DatasetComparisonPageProps {
 }
 
 interface DatasetComparisonPageState {
-  selectedAnnotation: number
+  currentAnnotationIdx: number
   gridState: any
   annotations: any
   datasets: any
@@ -57,6 +59,7 @@ interface DatasetComparisonPageState {
   annotationData: any
   refsLoaded: boolean
   showViewer: boolean
+  loadedSnapshot: boolean
   isLoading: any
   collapse: string[]
   databaseOptions: any
@@ -64,6 +67,19 @@ interface DatasetComparisonPageState {
   offset: number
   rawAnnotations: any
   processedAnnotations: any
+  channelSnapshot: any
+}
+
+const channels: any = {
+  magenta: 'rgb(255, 0, 255)',
+  green: 'rgb(0, 255, 0)',
+  blue: 'rgb(0, 0, 255)',
+  red: 'rgb(255, 0, 0)',
+  yellow: 'rgb(255, 255, 0)',
+  cyan: 'rgb(0, 255, 255)',
+  orange: 'rgb(255, 128, 0)',
+  violet: 'rgb(128, 0, 255)',
+  white: 'rgb(255, 255, 255)',
 }
 
 const CHUNK_SIZE = 1000
@@ -96,8 +112,10 @@ export default defineComponent<DatasetComparisonPageProps>({
     const gridNode = ref(null)
     const imageGrid = ref(null)
     const state = reactive<DatasetComparisonPageState>({
-      selectedAnnotation: -1,
+      currentAnnotationIdx: -1,
       gridState: {},
+      channelSnapshot: [],
+      loadedSnapshot: false,
       databaseOptions: undefined,
       globalImageSettings: {
         resetViewPort: false,
@@ -196,6 +214,14 @@ export default defineComponent<DatasetComparisonPageProps>({
 
           state.annotations = processedAnnotations
           dsQueryOptions.enabled = true
+
+          if (!state.loadedSnapshot) {
+            const auxSettings = safeJsonParse(gridSettings.value.snapshot)
+            if (auxSettings.mode === 'MULTI') {
+              loadSnapshotChannels(auxSettings.channels)
+            }
+            state.loadedSnapshot = true
+          }
         }
       }
     })
@@ -275,6 +301,8 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     onMounted(() => {
       state.refsLoaded = true
+      $store.commit('resetChannels')
+      $store.commit('setViewerMode', 'SINGLE')
 
       // add listener to query annotations again in case the filters change
       $store.watch((_, getters) => [getters.gqlAnnotationFilter,
@@ -286,6 +314,27 @@ export default defineComponent<DatasetComparisonPageProps>({
         }
       })
     })
+
+    const loadSnapshotChannels = (snapshotChannels: any) => {
+      const annotations = state.annotations
+      $store.commit('setViewerMode', 'MULTI')
+
+      snapshotChannels.forEach((channel: any, index: number) => {
+        const { id, settings } = channel
+        const annotationItem = annotations.find((annotation: any) => annotation.ion === id)
+        $store.commit('addChannel', {
+          index,
+          id,
+          annotations: annotationItem,
+          settings: { ...settings, visible: true },
+        })
+        if (!settings.visible) { // toggle visibility later, as the first intensity must be loaded
+          setTimeout(() => {
+            $store.commit('updateChannel', { index, id, annotations: annotationItem, settings })
+          }, 1000)
+        }
+      })
+    }
 
     watchEffect(async() => {
       if (!state.grid && gridSettings.value) {
@@ -374,30 +423,62 @@ export default defineComponent<DatasetComparisonPageProps>({
     const handleRowChange = (idx: number) => {
       if (idx !== -1) {
         state.isLoading = true
-        state.selectedAnnotation = idx
+        state.currentAnnotationIdx = idx
+        handleChannelHighlight()
         setTimeout(() => {
           state.isLoading = false
         }, 500)
       }
     }
 
-    const renderInfo = () => {
-      const nCols = state.nCols
-      const nRows = state.nRows
+    const handleModeChange = (mode: string = 'SINGLE') => {
+      $store.commit('setViewerMode', mode)
+      if (mode === 'SINGLE') {
+        state.channelSnapshot = $store.state.channels
+        $store.commit('resetChannels')
+      } else {
+        $store.commit('restoreChannels', state.channelSnapshot)
+      }
+      handleChannelHighlight()
+    }
 
-      if (
-        state.selectedAnnotation === undefined
-        || state.selectedAnnotation === -1
-        || !state.annotations[state.selectedAnnotation]) {
-        return <div class='ds-comparison-info'/>
+    const handleChannelHighlight = () => {
+      if ($store.state.mode !== 'MULTI') {
+        return
       }
 
-      const selectedAnnotation = state.annotations[state.selectedAnnotation].annotations[0]
+      const selectedAnnotationsLength = $store.state.channels.length
+      const nOfChannels = Object.keys(channels).length
+      const channel = Object.keys(channels)[selectedAnnotationsLength % nOfChannels]
+      const annotations = state.annotations[state.currentAnnotationIdx]
+      const id = annotations.ion
+      const index = $store.state.channels.length - 1
+
+      if ($store.state.channels.length === 0) {
+        $store.commit('addChannel', { id, annotations, settings: { channel, visible: true } })
+      } else if (!$store.state.channels.map((item: any) => item.id).includes(id)) {
+        $store.commit('updateChannel', {
+          index,
+          id,
+          annotations,
+          settings: { channel: $store.state.channels[index].settings.channel, visible: true },
+        })
+      }
+    }
+
+    const handleCollapse = (activeNames: string[]) => {
+      state.collapse = activeNames
+    }
+
+    const renderInfo = () => {
+      const { annotations, currentAnnotationIdx, globalImageSettings, nCols, nRows } = state
+
+      const selectedAnnotation = annotations[currentAnnotationIdx].annotations[0]
       let possibleCompounds : any = []
       let isomers : any = []
       let isobars : any = []
 
-      state.annotations[state.selectedAnnotation].annotations.forEach((annotation: any) => {
+      annotations[currentAnnotationIdx].annotations.forEach((annotation: any) => {
         possibleCompounds = possibleCompounds.concat(annotation.possibleCompounds)
         isomers = isomers.concat(annotation.isomers)
         isobars = isobars.concat(annotation.isobars)
@@ -416,7 +497,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       </CandidateMoleculesPopover>
 
       return (
-        <div class='ds-comparison-info'>
+        <div class='ds-comparison-info relative'>
           {candidateMolecules()}
           <CopyButton
             class="ml-1"
@@ -436,22 +517,29 @@ export default defineComponent<DatasetComparisonPageProps>({
             viewId={snapshotId}
             nCols={nCols}
             nRows={nRows}
-            lockedIntensityTemplate={state.globalImageSettings.selectedLockTemplate}
-            globalLockedIntensities={state.globalImageSettings.globalLockedIntensities}
-            scaleBarColor={state.globalImageSettings.scaleBarColor}
-            scaleType={state.globalImageSettings.scaleType}
-            colormap={state.globalImageSettings.colormap}
+            lockedIntensityTemplate={globalImageSettings.selectedLockTemplate}
+            globalLockedIntensities={globalImageSettings.globalLockedIntensities}
+            scaleBarColor={globalImageSettings.scaleBarColor}
+            scaleType={globalImageSettings.scaleType}
+            colormap={globalImageSettings.colormap}
             settings={gridSettings.value?.snapshot}
-            selectedAnnotation={state.selectedAnnotation}
+            selectedAnnotation={currentAnnotationIdx}
             sourceDsId={sourceDsId}
             name={$route.name}
             params={$route.params}
             query={$route.query}/>
+          <DatasetComparisonModeButton
+            class="absolute right-0 bottom-0 mr-5 mb-2"
+            isActive={$store.state.mode === 'MULTI'}
+            onMode={handleModeChange}
+          />
         </div>
       )
     }
 
     const renderImageGallery = (nCols: number, nRows: number) => {
+      const { annotations, collapse, currentAnnotationIdx, globalImageSettings, normalizationData, isLoading } = state
+
       return (
         <CollapseItem
           id="annot-img-collapse"
@@ -461,16 +549,16 @@ export default defineComponent<DatasetComparisonPageProps>({
             class='dataset-comparison-item-header dom-to-image-hidden'
             slot="title"
             isActive={false}
-            scaleBarColor={state.globalImageSettings?.scaleBarColor}
+            scaleBarColor={globalImageSettings?.scaleBarColor}
             onScaleBarColorChange={handleScaleBarColorChange}
-            scaleType={state.globalImageSettings?.scaleType}
+            scaleType={globalImageSettings?.scaleType}
             onScaleTypeChange={handleScaleTypeChange}
             showIntensityTemplate={true}
-            showNormalizedBadge={state.collapse.includes('images') && state.globalImageSettings.isNormalized}
+            showNormalizedBadge={collapse.includes('images') && globalImageSettings.isNormalized}
             onNormalizationChange={handleNormalizationChange}
-            colormap={state.globalImageSettings?.colormap}
+            colormap={globalImageSettings?.colormap}
             onColormapChange={handleColormapChange}
-            lockedTemplate={state.globalImageSettings.selectedLockTemplate}
+            lockedTemplate={globalImageSettings.selectedLockTemplate}
             onTemplateChange={handleTemplateChange}
             showOpticalImage={false}
             hasOpticalImage={false}
@@ -484,42 +572,54 @@ export default defineComponent<DatasetComparisonPageProps>({
           />
           <div class='dataset-comparison-grid' ref={gridNode}>
             {
-              state.collapse.includes('images')
+              collapse.includes('images')
+              && !annotationsLoading.value
               && <DatasetComparisonGrid
                 ref={imageGrid}
                 nCols={nCols}
                 nRows={nRows}
-                resetViewPort={state.globalImageSettings.resetViewPort}
+                mode={$store.state.mode}
+                resetViewPort={globalImageSettings.resetViewPort}
                 onResetViewPort={resetViewPort}
                 onLockAllIntensities={handleTemplateChange}
                 onIntensitiesChange={handleIntensitiesChange}
-                lockedIntensityTemplate={state.globalImageSettings.selectedLockTemplate}
-                globalLockedIntensities={state.globalImageSettings.globalLockedIntensities}
-                scaleBarColor={state.globalImageSettings.scaleBarColor}
-                scaleType={state.globalImageSettings.scaleType}
-                colormap={state.globalImageSettings.colormap}
-                isNormalized={state.globalImageSettings.isNormalized}
+                lockedIntensityTemplate={globalImageSettings.selectedLockTemplate}
+                globalLockedIntensities={globalImageSettings.globalLockedIntensities}
+                scaleBarColor={globalImageSettings.scaleBarColor}
+                scaleType={globalImageSettings.scaleType}
+                colormap={globalImageSettings.colormap}
+                isNormalized={globalImageSettings.isNormalized}
                 settings={gridSettings}
-                annotations={state.annotations || []}
-                normalizationData={state.normalizationData}
+                annotations={annotations || []}
+                normalizationData={normalizationData}
                 datasets={datasets.value || []}
-                selectedAnnotation={state.selectedAnnotation}
-                isLoading={state.isLoading || annotationsLoading.value}
+                selectedAnnotation={currentAnnotationIdx}
+                isLoading={isLoading || annotationsLoading.value}
               />
+            }
+            {
+              collapse.includes('images')
+              && annotationsLoading.value
+              && <div class='w-full text-center'>
+                <i
+                  class="el-icon-loading"
+                />
+              </div>
             }
           </div>
         </CollapseItem>)
     }
 
     const renderCompounds = () => {
-      const annotations = state.selectedAnnotation >= 0 && state.annotations[state.selectedAnnotation]
-        ? state.annotations[state.selectedAnnotation].annotations : []
+      const { annotations, collapse, currentAnnotationIdx, isLoading } = state
+      const selectedAnnotations = currentAnnotationIdx >= 0 && annotations[currentAnnotationIdx]
+        ? annotations[currentAnnotationIdx].annotations : []
 
       // @ts-ignore TS2604
       const relatedMolecules = () => <RelatedMolecules
         query="isomers"
-        annotation={annotations[0]}
-        annotations={annotations}
+        annotation={selectedAnnotations[0]}
+        annotations={selectedAnnotations}
         databaseId={$store.getters.filter.database || 1}
         hideFdr
       />
@@ -530,30 +630,86 @@ export default defineComponent<DatasetComparisonPageProps>({
         title="Molecules"
         class="ds-collapse el-collapse-item--no-padding relative">
         {
-          !state.isLoading
-          && state.collapse.includes('compounds')
-          && (Array.isArray(annotations) && annotations.length > 0)
+          !isLoading
+          && collapse.includes('compounds')
+          && (Array.isArray(selectedAnnotations) && selectedAnnotations.length > 0)
           && relatedMolecules()
         }
         {
-          !state.isLoading
-          && state.collapse.includes('compounds')
-          && (!Array.isArray(annotations) || annotations.length < 1)
+          !isLoading
+          && collapse.includes('compounds')
+          && (!Array.isArray(selectedAnnotations) || selectedAnnotations.length < 1)
           && <div class='flex w-full items-center justify-center'>No data</div>
         }
       </CollapseItem>)
     }
 
-    return () => {
-      const nCols = state.nCols
-      const nRows = state.nRows
+    const renderAnnotationTableWrapper = () => {
+      const { annotations } = state
 
+      return (
+        <div class='dataset-comparison-wrapper w-full md:w-6/12 relative'>
+          {
+            annotations
+            && <DatasetComparisonAnnotationTable
+              isLoading={annotationsLoading.value}
+              annotations={annotations.map((ion: any) => {
+                return {
+                  ...ion.annotations[0],
+                  msmScore: Math.max(...ion.annotations.map((annot: any) => annot.msmScore)),
+                  fdrlevel: Math.min(...ion.annotations.map((annot: any) => annot.fdrlevel)),
+                  datasetcount: (ion.datasetIds || []).length,
+                  rawAnnotations: ion.annotations,
+                }
+              })}
+              onRowChange={handleRowChange}
+            />
+          }
+          {
+            !annotations
+            && annotationsLoading.value
+            && <div class='w-full absolute text-center top-0'>
+              <i
+                class="el-icon-loading"
+              />
+            </div>
+          }
+        </div>
+      )
+    }
+
+    const renderAnnotationInfoWrapper = () => {
+      const { nCols, nRows, collapse, currentAnnotationIdx, annotations } = state
+
+      if (
+        currentAnnotationIdx === undefined
+        || currentAnnotationIdx === -1
+        || !annotations[currentAnnotationIdx]) {
+        return <div class='dataset-comparison-wrapper  w-full  md:w-6/12'/>
+      }
+
+      return (
+        <div class='dataset-comparison-wrapper  w-full  md:w-6/12'>
+          <Collapse
+            value={collapse}
+            id="annot-content"
+            class="border-0"
+            onChange={handleCollapse}>
+            {renderInfo()}
+            {renderImageGallery(nCols, nRows)}
+            {renderCompounds()}
+          </Collapse>
+        </div>)
+    }
+
+    return () => {
       if (!snapshotId) {
         return (
           <div class='dataset-comparison-page w-full flex flex-wrap flex-row items-center justify-center'>
             Not found
           </div>)
       }
+
       return (
         <div class='dataset-comparison-page w-full flex flex-wrap flex-row'>
           <FilterPanel
@@ -562,46 +718,8 @@ export default defineComponent<DatasetComparisonPageProps>({
             hiddenFilters={['datasetIds']}
             fixedOptions={state.databaseOptions}
           />
-          <div class='dataset-comparison-wrapper w-full md:w-6/12 relative'>
-            {
-              state.annotations
-              && <DatasetComparisonAnnotationTable
-                isLoading={annotationsLoading.value}
-                annotations={state.annotations.map((ion: any) => {
-                  return {
-                    ...ion.annotations[0],
-                    msmScore: Math.max(...ion.annotations.map((annot: any) => annot.msmScore)),
-                    fdrlevel: Math.min(...ion.annotations.map((annot: any) => annot.fdrlevel)),
-                    datasetcount: (ion.datasetIds || []).length,
-                    rawAnnotations: ion.annotations,
-                  }
-                })}
-                onRowChange={handleRowChange}
-              />
-            }
-            {
-              !state.annotations
-              && annotationsLoading.value
-              && <div class='w-full absolute text-center top-0'>
-                <i
-                  class="el-icon-loading"
-                />
-              </div>
-            }
-          </div>
-          <div class='dataset-comparison-wrapper  w-full  md:w-6/12'>
-            <Collapse
-              value={state.collapse}
-              id="annot-content"
-              class="border-0"
-              onChange={(activeNames: string[]) => {
-                state.collapse = activeNames
-              }}>
-              {renderInfo()}
-              {renderImageGallery(nCols, nRows)}
-              {renderCompounds()}
-            </Collapse>
-          </div>
+          {renderAnnotationTableWrapper()}
+          {renderAnnotationInfoWrapper()}
         </div>
       )
     }
