@@ -8,7 +8,7 @@ import json
 import pandas as pd
 
 from sm.engine.config import SMConfig
-from sm.engine.db import DB, transaction_context
+from sm.engine.db import DB
 from sm.engine.errors import SMError
 from sm.engine.storage import get_s3_bucket
 from sm.engine.util import split_s3_path
@@ -73,6 +73,7 @@ def create(
 
 
 def read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file_path):
+    # pylint: disable=too-many-locals
     try:
         if re.findall(r'^s3a?://', file_path):
             bucket_name, key = split_s3_path(file_path)
