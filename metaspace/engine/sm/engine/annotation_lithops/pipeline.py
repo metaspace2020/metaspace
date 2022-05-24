@@ -212,7 +212,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
             # bootstrapping
             hash_mol = {}
-            for idx, row in dataset_metabolites.iterrows():
+            for _, row in dataset_metabolites.iterrows():
                 if row['formula_adduct'] not in hash_mol.keys():
                     hash_mol[row['formula_adduct']] = []
                 hash_mol[row['formula_adduct']].append({'mol_name': row['molecule_name'],
@@ -226,7 +226,9 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
                     ion = str(row['formula']) + str(row['modifier'])
                     if ion in hash_mol.keys():
                         bootstrap_dict_aux[ion] = random.choice(hash_mol[ion])
-                        bootstrap_sublist.append([n, ion, row['fdr'], bootstrap_dict_aux[ion]['mol_id']])
+                        bootstrap_sublist.append([n, ion,
+                                                  row['fdr'],
+                                                  bootstrap_dict_aux[ion]['mol_id']])
 
             bootstrap_hash[moldb_id] = pd.DataFrame(
                 bootstrap_sublist, columns=['scenario',
