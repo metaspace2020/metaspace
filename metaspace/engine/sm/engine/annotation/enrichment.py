@@ -17,7 +17,8 @@ def add_enrichment(enrichment: DatasetEnrichment, annotations: Any):
     ds_id = enrichment['ds_id']
     for _, row in enrichment['bootstrap_data'].iterrows():
         # get annotation id
-        annotation = [x for x in annotations if x['formula'] + x['adduct'] == row['formula_adduct']][0]
+        annotation = [x for x in annotations
+                      if x['formula'] + x['adduct'] == row['formula_adduct']][0]
         enrichment_bootstrap.create(scenario=row['scenario'],
                                     formula_adduct=row['formula_adduct'],
                                     fdr=row['fdr'],

@@ -36,7 +36,7 @@ def generate(ion, instr, res_power, at_mz, charge):
 
 
 @app.post('/v1/calculate_enrichment')
-def calculate_enrichment():
+def calculate_enrichment(): # pylint: disable=too-many-locals
     try:
         body = json.loads(bottle.request.body.read().decode('utf-8'))
         enrichment_sets = body['enrichedSets']
@@ -95,8 +95,9 @@ def calculate_enrichment():
             .sort_values(
             by='median', ascending=False)
 
-        return make_response(OK, data=json.dumps({'enrichment': filtered_enrichment.to_dict(orient='records'),
-                                                  'molecules': molecules.to_dict(orient='records')}))
+        return make_response(OK, data=json.dumps({
+            'enrichment': filtered_enrichment.to_dict(orient='records'),
+            'molecules': molecules.to_dict(orient='records')}))
     except Exception as e:
         logger.warning(f'({e}')
         return make_response(INTERNAL_ERROR)

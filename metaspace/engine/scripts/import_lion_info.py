@@ -1,17 +1,17 @@
 import argparse
 import logging
+from psycopg2.errorcodes import UNIQUE_VIOLATION
+from psycopg2 import errors
 from sm.engine import enrichment_db
 from sm.engine import molecular_db
 from sm.engine import enrichment_term
 from sm.engine import enrichment_db_molecule_mapping
 from sm.engine.errors import SMError
 from sm.engine.util import GlobalInit
-from psycopg2.errorcodes import UNIQUE_VIOLATION
-from psycopg2 import errors
 
 logger = logging.getLogger('engine')
 
-
+# pylint: disable=inconsistent-return-statements
 def main():
     help_msg = 'Import a new enrichment database'
     parser = argparse.ArgumentParser(description=help_msg)
@@ -46,7 +46,7 @@ def main():
         try:
             molecular_db.find_by_name_version(args.db_name, args.db_version)
         except SMError:
-            logger.info(f'Molecular database not found. Enrichment mapping failed...')
+            logger.info('Molecular database not found. Enrichment mapping failed...')
             return -1
 
         # check if enrichment db exists, if so it uses it, otherwise a new one is created
@@ -59,14 +59,14 @@ def main():
         try:
             enrichment_term.create(db_df.id, args.csv_file)
         except errors.lookup(UNIQUE_VIOLATION):
-            logger.info(f'Enrichment terms were already loaded...')
+            logger.info('Enrichment terms were already loaded...')
 
         # create association between enrichment terms and molecular db
         try:
             enrichment_db_molecule_mapping.create(db_df.id, args.db_name, args.db_version,
                                                   args.json_file, args.filter_csv_file)
         except SMError:
-            logger.info(f'Molecular database not found. Enrichment mapping failed...')
+            logger.info('Molecular database not found. Enrichment mapping failed...')
 
 
 if __name__ == "__main__":

@@ -55,7 +55,8 @@ def create(
     with transaction_context():
         enrichment_db_insert = (
             'INSERT INTO enrichment_bootstrap '
-            '   (scenario, formula_adduct, fdr, dataset_id, enrichment_db_molecule_mapping_id, annotation_id) '
+            '   (scenario, formula_adduct, fdr, dataset_id, '
+            ' enrichment_db_molecule_mapping_id, annotation_id) '
             'values (%s, %s, %s, %s, %s, %s) RETURNING id'
         )
         # pylint: disable=unbalanced-tuple-unpacking
@@ -77,7 +78,8 @@ def find_by_id(id: int) -> EnrichmentBootstrap:
     """Find enrichment database by id."""
 
     data = DB().select_one_with_fields(
-        'SELECT scenario, formula_adduct, fdr, dataset_id, enrichment_db_molecule_mapping_id, annotation_id '
+        'SELECT scenario, formula_adduct, fdr, dataset_id, '
+        ' enrichment_db_molecule_mapping_id, annotation_id '
         'FROM enrichment_bootstrap WHERE id = %s', params=(id,)
     )
     if not data:
