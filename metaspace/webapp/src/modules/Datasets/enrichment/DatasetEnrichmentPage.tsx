@@ -40,6 +40,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       sortedData: undefined,
     })
     const { dataset_id: sourceDsId } = $route.params
+    const { db_id: dbId } = $route.query
 
     const queryVariables = () => {
       const filter = $store.getters.gqlAnnotationFilter
@@ -59,7 +60,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     const {
       result: enrichmentResult,
       loading: enrichmentLoading,
-    } = useQuery<any>(getDatasetEnrichmentQuery, { id: sourceDsId })
+    } = useQuery<any>(getDatasetEnrichmentQuery, { id: sourceDsId, dbId: parseInt(dbId, 10) })
     const enrichment = computed(() => {
       if (enrichmentResult.value) {
         return enrichmentResult.value.lipidEnrichment
@@ -86,7 +87,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       const { showChart } = state
       const dataStart = ((state.offset - 1) * state.pageSize)
       const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
-      const data = state.sortedData ? state.sortedData : enrichment.value
+      const data = enrichment.value || []
       const pagedData = data.slice(dataStart, dataEnd)
 
       return (
