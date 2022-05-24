@@ -288,7 +288,7 @@ export default defineComponent({
         console.log('Downloading files')
         state.loading = true
         const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/new/'
-        const response = await fetch(baseUrl + 'matrix_predictions_27-04-22.json')
+        const response = await fetch(baseUrl + 'matrix_predictions_24-05-22.json')
         const matrixPredictions = await response.json()
         const responseInterLab = await fetch(baseUrl + 'interlab_predictions_27-04-22.json')
         const interLabPredictions = await responseInterLab.json()

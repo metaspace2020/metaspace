@@ -139,6 +139,11 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
           splitArea: {
             show: true,
           },
+          axisLabel: {
+            show: true,
+            interval: 0,
+            rotate: 30,
+          },
           position: 'top',
         },
         yAxis: {
