@@ -360,37 +360,6 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       handleCurrentRowChange(state.selectedRow)
     }
 
-    const renderMSMHeader = () => {
-      return <div class="msm-header">
-        Best MSM
-        <Popover
-          trigger="hover"
-          placement="right"
-        >
-          <i
-            slot="reference"
-            class="el-icon-question metadata-help-icon ml-1"
-          />
-          Highest MSM among the datasets.
-        </Popover>
-      </div>
-    }
-    const renderFDRHeader = () => {
-      return <div class="msm-header">
-        Best FDR
-        <Popover
-          trigger="hover"
-          placement="right"
-        >
-          <i
-            slot="reference"
-            class="el-icon-question metadata-help-icon ml-1"
-          />
-          Lowest FDR among the datasets.
-        </Popover>
-      </div>
-    }
-
     const formatFDR = (row: any) => {
       return row.qValue ? <span>{Math.round(row.qValue * 100)}%</span> : <span>&mdash;</span>
     }
@@ -537,7 +506,6 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
             id="annot-table"
             ref={table}
             data={state.processedAnnotations.slice(dataStart, dataEnd)}
-            rowClassName={getRowClass}
             size="mini"
             border
             current
@@ -579,7 +547,7 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
             <TableColumn
               key="qValue"
               property="qValue"
-              label="FDR"
+              label="qValue"
               className="fdr-cell"
               sortable="custom"
               minWidth="80"
@@ -601,23 +569,6 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
                 id="annot-count"
                 class="mt-2">
                 <b>{ totalCount }</b> matching { totalCount === 1 ? 'record' : 'records' }
-              </div>
-              <div class="mt-2">
-                <div class="fdr-legend-header">
-                  FDR levels:
-                </div>
-                <div class="fdr-legend fdr-5">
-                  5%
-                </div>
-                <div class="fdr-legend fdr-10">
-                  10%
-                </div>
-                <div class="fdr-legend fdr-20">
-                  20%
-                </div>
-                <div class="fdr-legend fdr-50">
-                  50%
-                </div>
               </div>
             </div>
             <Popover trigger="hover">
