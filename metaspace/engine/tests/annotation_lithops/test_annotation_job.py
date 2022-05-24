@@ -238,7 +238,7 @@ def test_local_annotation_job(executor: Executor, sm_config, ds_config):
                     out_dir=out_dir,
                 )
 
-                job.run(debug_validate=True)
+                job.run(debug_validate=True, perform_enrichment=False)
 
                 output_files = list(Path(out_dir).glob('*.png'))
                 assert len(output_files) == len(MOCK_FORMULAS) * 4
