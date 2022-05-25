@@ -32,7 +32,7 @@ class EnrichmentDB:
 
 def create(name: str = None,) -> EnrichmentDB:
     with transaction_context():
-        enrichment_db_insert = 'INSERT INTO enrichment_db ' '   (name) ' 'values (%s) RETURNING id'
+        enrichment_db_insert = 'INSERT INTO enrichment_db (name) values (%s) RETURNING id'
         # pylint: disable=unbalanced-tuple-unpacking
         (enrichment_db_id,) = DB().insert_return(enrichment_db_insert, rows=[(name,)],)
         enrichment_db = find_by_id(enrichment_db_id)

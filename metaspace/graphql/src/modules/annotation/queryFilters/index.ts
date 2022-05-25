@@ -1,6 +1,7 @@
 import { Context } from '../../../context'
 import { QueryFilterArgs, QueryFilterResult, PostProcessFunc } from './types'
 import { applyColocalizationSamplesFilter } from './colocalizationSamples'
+import { applyEnrichmentTermFilter } from './enrichment'
 import { applyColocalizedWithFilter } from './colocalizedWith'
 import * as _ from 'lodash'
 import { applyHasAnnotationMatchingFilter } from './hasAnnotationMatching'
@@ -14,6 +15,7 @@ const queryFilters = [
   applyColocalizationSamplesFilter,
   applyColocalizedWithFilter,
   applyHasAnnotationMatchingFilter,
+  applyEnrichmentTermFilter,
 ]
 
 const setDatabaseIdInAnnotationFilter = async(entityManager: EntityManager, filter: AnnotationFilter | undefined) => {
