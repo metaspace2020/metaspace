@@ -17,8 +17,10 @@ class DatasetFiles:
         self._sm_config = SMConfig.get_conf()
         self.s3_client = get_s3_client(sm_config=self._sm_config)
 
-        self.bucket, self.uuid = self._get_bucket_and_uuid()
+        self.browser_bucket = self._sm_config['imzml_browser_storage']['bucket']
+        self.upload_bucket, self.uuid = self._get_bucket_and_uuid()
 
+        self._find_imzml_ibd_name()
         self.ds_coordinates_key = f'{self.uuid}/coordinates.bin'
         self.mz_index_key = f'{self.uuid}/mz_index.bin'
         self.mz_sorted_peaks_key = f'{self.uuid}/peaks_sorted_by_mz.bin'
@@ -32,17 +34,33 @@ class DatasetFiles:
 
         return bucket, uuid
 
+    def _find_imzml_ibd_name(self):
+        for obj in self.s3_client.list_objects(Bucket=self.upload_bucket, Prefix=self.uuid)[
+            'Contents'
+        ]:
+            key = obj['Key'].lower()
+            if key.endswith('.imzml'):
+                self.imzml_key = key
+            elif key.endswith('.ibd'):
+                self.ibd_key = key
+
+    def read_imzml_file(self):
+        s3_object = self.s3_client.get_object(Bucket=self.browser_bucket, Key=self.imzml_key)
+        return s3_object['Body'].read()
+
     def read_coordinates(self) -> bytes:
-        s3_object = self.s3_client.get_object(Bucket=self.bucket, Key=self.ds_coordinates_key)
+        s3_object = self.s3_client.get_object(
+            Bucket=self.upload_bucket, Key=self.ds_coordinates_key
+        )
         return s3_object['Body'].read()
 
     def read_mz_index(self) -> bytes:
-        s3_object = self.s3_client.get_object(Bucket=self.bucket, Key=self.mz_index_key)
+        s3_object = self.s3_client.get_object(Bucket=self.upload_bucket, Key=self.mz_index_key)
         return s3_object['Body'].read()
 
     def read_mz_peaks(self, offset, bytes_to_read):
         s3_object = self.s3_client.get_object(
-            Bucket=self.bucket,
+            Bucket=self.upload_bucket,
             Key=self.mz_sorted_peaks_key,
             Range=f'bytes={offset}-{offset + bytes_to_read - 1}',
         )

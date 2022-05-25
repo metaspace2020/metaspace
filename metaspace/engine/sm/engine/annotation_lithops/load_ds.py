@@ -164,7 +164,7 @@ def _upload_imzml_browser_files(storage: Storage, imzml_browser_cobjs: List[CObj
         logger.info(f'Uploading {cobjec.key}')
         file_object = storage.get_cloudobject(cobjec, stream=True)
         s3_client.upload_fileobj(
-            Bucket=conf['imzml_browser_storage'],
+            Bucket=conf['imzml_browser_storage']['bucket'],
             Key=cobjec.key.split('/', 1)[-1],
             Fileobj=file_object,
             Config=transfer_config,
