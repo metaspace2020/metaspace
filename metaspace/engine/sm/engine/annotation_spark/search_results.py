@@ -20,7 +20,7 @@ METRICS_INS = (
     ') '
     'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
 )
-ANNOTATION_SEL = 'SELECT * FROM annotation ' ' WHERE job_id = %s'
+ANNOTATION_SEL = 'SELECT * FROM annotation WHERE job_id = %s'
 
 METRICS_FIELDS = [
     *[f.name for f in [*fields(Metrics)] if f.name != 'formula_i' and f.name != 'msm'],

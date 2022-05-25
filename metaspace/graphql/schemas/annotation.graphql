@@ -128,6 +128,7 @@ input AnnotationFilter {
   database: String  # @deprecated(reason: "This field will be removed. Use \"databaseId\" instead.")
   datasetName: String
   mzFilter: NumericRange
+  termId: Int
   msmScoreFilter: NumericRange
   compoundQuery: String
   fdrLevel: Float

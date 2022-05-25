@@ -1,6 +1,10 @@
 import { Context } from '../../context'
 import { EnrichmentDb, EnrichmentTerm, Query } from '../../binding'
-import { EnrichmentDB as EnrichmentDbModel, EnrichmentTerm as EnrichmentTermModel } from './model'
+import {
+  EnrichmentDB as EnrichmentDbModel,
+  EnrichmentTerm as EnrichmentTermModel,
+  EnrichmentDBMoleculeMapping as EnrichmentDBMoleculeMappingModel, EnrichmentDBMoleculeMapping,
+} from './model'
 import { FieldResolversFor } from '../../bindingTypes'
 import { IResolvers } from 'graphql-tools'
 
@@ -32,6 +36,22 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
     if (enrichmentTerms) {
       return enrichmentTerms
+    }
+    return null
+  },
+  async allFormulasByEnrichmentTerm(_: any, {
+    termId,
+  }: any, ctx: Context): Promise<EnrichmentTerm[] | null> {
+    const enrichmentTermsMapping = await ctx.entityManager.createQueryBuilder(EnrichmentDBMoleculeMappingModel,
+      'mapping')
+      .leftJoin('mapping.enrichmentTerm', 'terms')
+      .select(['mapping.formula'])
+      .distinct(true)
+      .where('mapping.enrichmentTermId = :termId', { termId })
+      .getRawMany()
+
+    if (enrichmentTermsMapping) {
+      return enrichmentTermsMapping.map((term: any) => term.mapping_formula)
     }
     return null
   },
