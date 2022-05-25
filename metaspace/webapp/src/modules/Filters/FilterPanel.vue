@@ -58,6 +58,7 @@ const orderedFilterKeys = [
   'simpleFilter',
   'datasetOwner',
   'metadataType',
+  'molClass',
 ]
 
 const dsAnnotationHiddenFilters = [

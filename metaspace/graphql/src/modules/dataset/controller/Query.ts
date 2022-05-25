@@ -8,9 +8,12 @@ import { thumbnailOpticalImageUrl, rawOpticalImage } from './Dataset'
 import { applyQueryFilters } from '../../annotation/queryFilters'
 import {
   OpticalImage,
-  EnrichmentBootstrap,
-  EnrichmentDBMoleculeMapping, EnrichmentTerm,
 } from '../../engine/model'
+import {
+  EnrichmentBootstrap,
+  EnrichmentDBMoleculeMapping,
+  EnrichmentTerm,
+} from '../../enrichmentdb/model'
 import { smApiJsonPost } from '../../../utils/smApi/smApiCall'
 import { uniq } from 'lodash'
 import { unpackAnnotation } from '../../annotation/controller/Query'
