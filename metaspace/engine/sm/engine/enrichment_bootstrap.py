@@ -64,8 +64,12 @@ def create(
             enrichment_db_insert,
             rows=[
                 (
-                    scenario, formula_adduct, fdr, dataset_id, enrichment_db_molecule_mapping_id,
-                    annotation_id
+                    scenario,
+                    formula_adduct,
+                    fdr,
+                    dataset_id,
+                    enrichment_db_molecule_mapping_id,
+                    annotation_id,
                 )
             ],
         )
@@ -80,7 +84,8 @@ def find_by_id(id: int) -> EnrichmentBootstrap:
     data = DB().select_one_with_fields(
         'SELECT scenario, formula_adduct, fdr, dataset_id, '
         ' enrichment_db_molecule_mapping_id, annotation_id '
-        'FROM enrichment_bootstrap WHERE id = %s', params=(id,)
+        'FROM enrichment_bootstrap WHERE id = %s',
+        params=(id,),
     )
     if not data:
         raise SMError(f'EnrichmentDB not found: {id}')

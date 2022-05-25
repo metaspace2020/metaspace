@@ -37,7 +37,7 @@ def generate(ion, instr, res_power, at_mz, charge):
 
 
 @app.post('/v1/calculate_enrichment')
-def calculate_enrichment(): # pylint: disable=too-many-locals
+def calculate_enrichment():  # pylint: disable=too-many-locals
     try:
         body = json.loads(bottle.request.body.read().decode('utf-8'))
         enrichment_sets = body['enrichedSets']
@@ -63,42 +63,67 @@ def calculate_enrichment(): # pylint: disable=too-many-locals
                 continue
 
             observed = np.median(enrichment_analysis_input[key]['sublist']) / np.median(
-                enrichment_analysis_input['all']['sublist'])
-            expected = enrichment_analysis_input[key]['background'] \
-                       / enrichment_analysis_input['all']['background']
+                enrichment_analysis_input['all']['sublist']
+            )
+            expected = (
+                enrichment_analysis_input[key]['background']
+                / enrichment_analysis_input['all']['background']
+            )
             fold_enrichment_median = observed / expected  ## median fold enrichment
-            fold_enrichment_sd = np.std((np.array(enrichment_analysis_input[key]['sublist'])
-                                         / np.array(
-                        enrichment_analysis_input['all']['sublist'])) / expected)
-            _, pvalue = fisher_exact([
+            fold_enrichment_sd = np.std(
+                (
+                    np.array(enrichment_analysis_input[key]['sublist'])
+                    / np.array(enrichment_analysis_input['all']['sublist'])
+                )
+                / expected
+            )
+            _, pvalue = fisher_exact(
                 [
-                    np.median(enrichment_analysis_input[key]['sublist']),
-                    np.median(enrichment_analysis_input['all']['sublist'])],
-                [enrichment_analysis_input[key]['background'],
-                 enrichment_analysis_input['all']['background']]
-            ],
-                alternative="greater")
+                    [
+                        np.median(enrichment_analysis_input[key]['sublist']),
+                        np.median(enrichment_analysis_input['all']['sublist']),
+                    ],
+                    [
+                        enrichment_analysis_input[key]['background'],
+                        enrichment_analysis_input['all']['background'],
+                    ],
+                ],
+                alternative="greater",
+            )
             name = terms_hash[key]
-            data.append([name, key, np.median(enrichment_analysis_input[key]['sublist']),
-                         observed, expected, fold_enrichment_median,
-                         fold_enrichment_sd, pvalue])
+            data.append(
+                [
+                    name,
+                    key,
+                    np.median(enrichment_analysis_input[key]['sublist']),
+                    observed,
+                    expected,
+                    fold_enrichment_median,
+                    fold_enrichment_sd,
+                    pvalue,
+                ]
+            )
 
-        enrichment_analysis = pd.DataFrame(data, columns=['name', 'id', 'n',
-                                                          'observed', 'expected',
-                                                          'median',
-                                                          'std',
-                                                          'pValue'])
+        enrichment_analysis = pd.DataFrame(
+            data, columns=['name', 'id', 'n', 'observed', 'expected', 'median', 'std', 'pValue']
+        )
         molecules = pd.DataFrame(mols, columns=['id', 'n', 'mols'])
-        enrichment_analysis['qValue'] = \
-            multitest.multipletests(enrichment_analysis['pValue'].values,
-                                    method='fdr_bh')[1]
-        filtered_enrichment = enrichment_analysis[(enrichment_analysis['n'] >= 2)]\
-            .sort_values(
-            by='median', ascending=False)
+        enrichment_analysis['qValue'] = multitest.multipletests(
+            enrichment_analysis['pValue'].values, method='fdr_bh'
+        )[1]
+        filtered_enrichment = enrichment_analysis[(enrichment_analysis['n'] >= 2)].sort_values(
+            by='median', ascending=False
+        )
 
-        return make_response(OK, data=json.dumps({
-            'enrichment': filtered_enrichment.to_dict(orient='records'),
-            'molecules': molecules.to_dict(orient='records')}))
+        return make_response(
+            OK,
+            data=json.dumps(
+                {
+                    'enrichment': filtered_enrichment.to_dict(orient='records'),
+                    'molecules': molecules.to_dict(orient='records'),
+                }
+            ),
+        )
     except Exception as e:
         logger.warning(f'({e}')
         return make_response(INTERNAL_ERROR)

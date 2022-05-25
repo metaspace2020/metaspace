@@ -26,11 +26,7 @@ class EnrichmentTerm:
 
     # pylint: disable=redefined-builtin
     def __init__(
-        self,
-        id: int,
-        enrichment_id: str,
-        enrichment_name: str,
-        enrichment_db_id: int,
+        self, id: int, enrichment_id: str, enrichment_name: str, enrichment_db_id: int,
     ):
         self.id = id
         self.enrichment_id = enrichment_id
@@ -49,15 +45,13 @@ class EnrichmentTerm:
         }
 
 
-def create(
-    enrichment_db_id: int = None,
-    file_path: str = None,
-) -> EnrichmentTerm:
+def create(enrichment_db_id: int = None, file_path: str = None,) -> EnrichmentTerm:
     with transaction_context():
         term_df = read_terms_file(enrichment_db_id, file_path)
         logger.info(f'Received request: {term_df}')
         _import_terms(term_df)
         return term_df
+
 
 def read_terms_file(enrichment_db_id, file_path):
     try:
@@ -81,9 +75,11 @@ def read_terms_file(enrichment_db_id, file_path):
         )
 
     term_df['enrichment_db_id'] = enrichment_db_id
-    term_df.rename({'LION_ID': 'enrichment_id', 'LION_name': 'enrichment_name'},
-                   axis='columns', inplace=True)
+    term_df.rename(
+        {'LION_ID': 'enrichment_id', 'LION_name': 'enrichment_name'}, axis='columns', inplace=True
+    )
     return term_df
+
 
 def _import_terms(term_df):
     logger.info(f'importing {len(term_df)} terms')
@@ -102,7 +98,8 @@ def find_by_enrichment_id(id: str, db_id: int) -> EnrichmentTerm:
 
     data = DB().select_one_with_fields(
         'SELECT id, enrichment_id, enrichment_name, enrichment_db_id FROM enrichment_term '
-        'WHERE enrichment_id = %s AND enrichment_db_id = %s', params=(id, db_id)
+        'WHERE enrichment_id = %s AND enrichment_db_id = %s',
+        params=(id, db_id),
     )
     if not data:
         raise SMError(f'EnrichmentTerm not found: {id}')
@@ -115,7 +112,8 @@ def find_by_enrichment_db_id(db_id: int) -> List[EnrichmentTerm]:
 
     data = DB().select_with_fields(
         'SELECT id, enrichment_id, enrichment_name, enrichment_db_id FROM enrichment_term '
-        'WHERE enrichment_db_id = %s', params=(db_id)
+        'WHERE enrichment_db_id = %s',
+        params=(db_id),
     )
     if not data:
         raise SMError(f'EnrichmentTerm not found: {id}')

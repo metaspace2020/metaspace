@@ -21,20 +21,17 @@ def main():
         'csv_file',
         type=str,
         help=f'Path to a enrichment database names csv file. '
-             f'Required columns: {required_columns}. ',
+        f'Required columns: {required_columns}. ',
     )
     parser.add_argument('db_name', type=str, help='Database name')
     parser.add_argument('db_version', type=str, help='Database version')
     parser.add_argument(
-        'json_file',
-        type=str,
-        help='Path to a enrichment database and molecular mapping.',
+        'json_file', type=str, help='Path to a enrichment database and molecular mapping.',
     )
     parser.add_argument(
         'filter_csv_file',
         type=str,
-        help=f'Path to filtered enrichment terms. '
-             f'Required columns: {required_columns}. ',
+        help=f'Path to filtered enrichment terms. ' f'Required columns: {required_columns}. ',
     )
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', help='SM config path'
@@ -63,8 +60,9 @@ def main():
 
         # create association between enrichment terms and molecular db
         try:
-            enrichment_db_molecule_mapping.create(db_df.id, args.db_name, args.db_version,
-                                                  args.json_file, args.filter_csv_file)
+            enrichment_db_molecule_mapping.create(
+                db_df.id, args.db_name, args.db_version, args.json_file, args.filter_csv_file
+            )
         except SMError:
             logger.info('Molecular database not found. Enrichment mapping failed...')
 

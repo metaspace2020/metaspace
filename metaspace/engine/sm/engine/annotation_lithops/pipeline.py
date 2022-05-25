@@ -57,16 +57,16 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     png_cobjs: List[CObj[List[Tuple[int, bytes]]]]
 
     def __init__(
-            self,
-            imzml_cobject: CloudObject,
-            ibd_cobject: CloudObject,
-            moldbs: List[InputMolDb],
-            ds_config: DSConfig,
-            executor: Executor = None,
-            lithops_config=None,
-            cache_key=None,
-            use_db_cache=True,
-            use_db_mutex=True,
+        self,
+        imzml_cobject: CloudObject,
+        ibd_cobject: CloudObject,
+        moldbs: List[InputMolDb],
+        ds_config: DSConfig,
+        executor: Executor = None,
+        lithops_config=None,
+        cache_key=None,
+        use_db_cache=True,
+        use_db_mutex=True,
     ):
         self.enrichment_data = None
         lithops_config = lithops_config or SMConfig.get_conf()['lithops']
@@ -93,7 +93,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.ds_segm_size_mb = 128
 
     def run_pipeline(
-            self, debug_validate=False, use_cache=True, perform_enrichment=True
+        self, debug_validate=False, use_cache=True, perform_enrichment=True
     ) -> Tuple[Dict[int, DataFrame], List[CObj[List[Tuple[int, bytes]]]], Any]:
         # pylint: disable=unexpected-keyword-arg
         self.prepare_moldb(debug_validate=debug_validate)
@@ -163,10 +163,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     def validate_segment_centroids(self):
         validate_centroid_segments(
-            self.executor,
-            self.db_segms_cobjs,
-            self.ds_segments_bounds,
-            self.isocalc_wrapper,
+            self.executor, self.db_segms_cobjs, self.ds_segments_bounds, self.isocalc_wrapper,
         )
 
     @use_pipeline_cache
@@ -198,11 +195,13 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             data = []
             for _, row in molecules.iterrows():
                 try:
-                    terms = enrichment_db_molecule_mapping.get_mappings_by_formula(row['formula'],
-                                                                                  str(moldb_id))
+                    terms = enrichment_db_molecule_mapping.get_mappings_by_formula(
+                        row['formula'], str(moldb_id)
+                    )
                     for term in terms:
-                        ion = str(row['formula']) + (str(row['modifier'])
-                                                     if row['modifier'] is not np.nan else '')
+                        ion = str(row['formula']) + (
+                            str(row['modifier']) if row['modifier'] is not np.nan else ''
+                        )
                         data.append([ion, term.molecule_enriched_name, term.id])
                 except SMError:
                     pass
@@ -215,8 +214,9 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             for _, row in dataset_metabolites.iterrows():
                 if row['formula_adduct'] not in hash_mol.keys():
                     hash_mol[row['formula_adduct']] = []
-                hash_mol[row['formula_adduct']].append({'mol_name': row['molecule_name'],
-                                                        'mol_id': row['term_id']})
+                hash_mol[row['formula_adduct']].append(
+                    {'mol_name': row['molecule_name'], 'mol_id': row['term_id']}
+                )
 
             boot_n = 100  # times bootstrapping
             bootstrap_sublist = []
@@ -226,14 +226,13 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
                     ion = str(row['formula']) + str(row['modifier'])
                     if ion in hash_mol.keys():
                         bootstrap_dict_aux[ion] = random.choice(hash_mol[ion])
-                        bootstrap_sublist.append([n, ion,
-                                                  row['fdr'],
-                                                  bootstrap_dict_aux[ion]['mol_id']])
+                        bootstrap_sublist.append(
+                            [n, ion, row['fdr'], bootstrap_dict_aux[ion]['mol_id']]
+                        )
 
             bootstrap_hash[moldb_id] = pd.DataFrame(
-                bootstrap_sublist, columns=['scenario',
-                                            'formula_adduct', 'fdr',
-                                            'enrichment_db_molecule_mapping_id']
+                bootstrap_sublist,
+                columns=['scenario', 'formula_adduct', 'fdr', 'enrichment_db_molecule_mapping_id'],
             )
         self.enrichment_data = bootstrap_hash
 
@@ -252,12 +251,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         """Stores ion images to S3 ImageStorage. Not part of run_pipeline because this is unwanted
         when running from a LocalAnnotationJob."""
         formula_i_to_db_id = pd.concat([df.moldb_id for df in self.results_dfs.values()])
-        return store_images_to_s3(
-            self.executor,
-            ds_id,
-            formula_i_to_db_id,
-            self.png_cobjs,
-        )
+        return store_images_to_s3(self.executor, ds_id, formula_i_to_db_id, self.png_cobjs,)
 
     def get_fdr_bundles(self, db_id_to_job_id: Dict[int, int]) -> Dict[int, FdrDiagnosticBundle]:
         return get_fdr_bundles(
