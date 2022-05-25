@@ -57,7 +57,7 @@ def _choose_cos_location(src_path, sm_storage, storage_type):
 
 
 def _upload_if_needed(
-        src_path, storage, sm_storage, storage_type, s3_client=None, use_db_mutex=True
+    src_path, storage, sm_storage, storage_type, s3_client=None, use_db_mutex=True
 ):
     """
     Uploads the object from `src_path` if it doesn't already exist in its translated COS path.
@@ -101,7 +101,7 @@ def _upload_if_needed(
 
 def _upload_imzmls_from_prefix_if_needed(src_path, storage, sm_storage, s3_client=None):
     if src_path.startswith('cos://'):
-        bucket, prefix = src_path[len('cos://'):].split('/', maxsplit=1)
+        bucket, prefix = src_path[len('cos://') :].split('/', maxsplit=1)
         keys = [f'cos://{bucket}/{key}' for key in storage.list_keys(bucket, prefix)]
     elif src_path.startswith('s3a://'):
         bucket, prefix = split_s3_path(src_path)
@@ -179,15 +179,15 @@ class LocalAnnotationJob:
     """
 
     def __init__(
-            self,
-            imzml_file: str,
-            ibd_file: str,
-            moldb_files: Union[List[int], List[str]],
-            ds_config: DSConfig,
-            sm_config: Optional[Dict] = None,
-            use_cache=True,
-            out_dir: Optional[str] = None,
-            executor: Optional[Executor] = None,
+        self,
+        imzml_file: str,
+        ibd_file: str,
+        moldb_files: Union[List[int], List[str]],
+        ds_config: DSConfig,
+        sm_config: Optional[Dict] = None,
+        use_cache=True,
+        out_dir: Optional[str] = None,
+        executor: Optional[Executor] = None,
     ):
         sm_config = sm_config or SMConfig.get_conf()
         self.storage = Storage(config=sm_config['lithops'])
@@ -226,8 +226,7 @@ class LocalAnnotationJob:
         )
 
     def run(self, save=True, **kwargs):
-        results_dfs, png_cobjs,\
-            _ = self.pipe.run_pipeline(**kwargs)
+        results_dfs, png_cobjs, _ = self.pipe.run_pipeline(**kwargs)
 
         if save:
             for moldb_id, results_df in results_dfs.items():
@@ -235,10 +234,10 @@ class LocalAnnotationJob:
             all_results = pd.concat(list(results_dfs.values()))
             all_results = all_results[~all_results.index.duplicated()]
             image_names = (
-                    all_results.formula
-                    + all_results.chem_mod.fillna('')
-                    + all_results.neutral_loss.fillna('')
-                    + all_results.adduct
+                all_results.formula
+                + all_results.chem_mod.fillna('')
+                + all_results.neutral_loss.fillna('')
+                + all_results.adduct
             )
 
             self.out_dir.mkdir(exist_ok=True)
@@ -258,13 +257,13 @@ class ServerAnnotationJob:
     """
 
     def __init__(
-            self,
-            executor: Executor,
-            ds: Dataset,
-            perf: Profiler,
-            sm_config: Optional[Dict] = None,
-            use_cache=False,
-            store_images=True,
+        self,
+        executor: Executor,
+        ds: Dataset,
+        perf: Profiler,
+        sm_config: Optional[Dict] = None,
+        use_cache=False,
+        store_images=True,
     ):
         """
         Args
@@ -320,8 +319,9 @@ class ServerAnnotationJob:
 
         try:
             # Run annotation
-            self.results_dfs, self.png_cobjs, \
-                self.enrichment_data = self.pipe.run_pipeline(**kwargs)
+            self.results_dfs, self.png_cobjs, self.enrichment_data = self.pipe.run_pipeline(
+                **kwargs
+            )
 
             # Save images (if enabled)
             if self.store_images:
@@ -360,8 +360,9 @@ class ServerAnnotationJob:
 
                 add_diagnostics(extract_job_diagnostics(self.ds.id, job_id, fdr_bundles[job_id]))
 
-                add_enrichment(DatasetEnrichment(ds_id=self.ds.id,
-                                                 bootstrap_data=bootstrap_df), annot_ids)
+                add_enrichment(
+                    DatasetEnrichment(ds_id=self.ds.id, bootstrap_data=bootstrap_df), annot_ids
+                )
 
                 update_finished_job(job_id, JobStatus.FINISHED)
         except Exception:

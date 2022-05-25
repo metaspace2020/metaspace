@@ -31,13 +31,13 @@ class EnrichmentDBMoleculeMapping:
 
     # pylint: disable=redefined-builtin
     def __init__(
-            self,
-            id: int,
-            molecule_enriched_name: str,
-            formula: str,
-            enrichment_term_id: int,
-            molecule_id: int,
-            molecular_db_id: int,
+        self,
+        id: int,
+        molecule_enriched_name: str,
+        formula: str,
+        enrichment_term_id: int,
+        molecule_id: int,
+        molecular_db_id: int,
     ):
         self.id = id
         self.molecule_enriched_name = molecule_enriched_name
@@ -61,11 +61,11 @@ class EnrichmentDBMoleculeMapping:
 
 
 def create(
-        enrichment_db_id: int = None,
-        db_name: str = None,
-        db_version: str = None,
-        file_path: str = None,
-        filter_file_path: str = None,
+    enrichment_db_id: int = None,
+    db_name: str = None,
+    db_version: str = None,
+    file_path: str = None,
+    filter_file_path: str = None,
 ) -> Optional[str]:
     logger.info(f'Received request: {db_name}')
     read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file_path)
@@ -85,8 +85,15 @@ def read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file
     except ValueError as e:
         raise MalformedCSV(f'Malformed CSV: {e}') from e
 
-    df = pd.DataFrame(columns=['molecule_enriched_name', 'formula', 'enrichment_term_id',
-                               'molecule_id', 'molecular_db_id'])
+    df = pd.DataFrame(
+        columns=[
+            'molecule_enriched_name',
+            'formula',
+            'enrichment_term_id',
+            'molecule_id',
+            'molecular_db_id',
+        ]
+    )
     filter_terms = pd.read_csv(filter_file_path)
     counter = 0
     moldb = molecular_db.find_by_name_version(db_name, db_version)
@@ -118,8 +125,13 @@ def read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file
 def _import_mappings(mappings_df):
     logger.info(f'importing {len(mappings_df)} mappings')
 
-    columns = ['molecule_enriched_name', 'formula', 'enrichment_term_id', 'molecule_id'
-        , 'molecular_db_id']
+    columns = [
+        'molecule_enriched_name',
+        'formula',
+        'enrichment_term_id',
+        'molecule_id',
+        'molecular_db_id',
+    ]
     buffer = StringIO()
     mappings_df[columns].to_csv(buffer, sep='\t', index=False, header=False)
     buffer.seek(0)
@@ -143,8 +155,8 @@ def get_mappings_by_formula(formula: str, moldb_id: str) -> List[EnrichmentDBMol
 
     data = DB().select_with_fields(
         'SELECT * FROM enrichment_db_molecule_mapping WHERE formula = %s and molecular_db_id = %s',
-        params=(formula, moldb_id)
+        params=(formula, moldb_id),
     )
     if not data:
         raise SMError(f'EnrichmentDBMoleculeMapping not found: {moldb_id}')
-    return[EnrichmentDBMoleculeMapping(**row) for row in data]
+    return [EnrichmentDBMoleculeMapping(**row) for row in data]
