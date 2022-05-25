@@ -11,6 +11,7 @@ import SimpleFilterBox from './filter-components/SimpleFilterBox.vue'
 import BooleanFilter from './filter-components/BooleanFilter.vue'
 import config from '../../lib/config'
 import AdductFilter from './filter-components/AdductFilter.vue'
+import ClassFilter from './filter-components/ClassFilter.vue'
 import DatabaseFilter from './filter-components/DatabaseFilter.vue'
 import { SingleSelectFilterType } from '../../lib/filterTypes'
 import isSnapshot from '../../lib/isSnapshot'
@@ -25,7 +26,7 @@ export type FilterKey = 'annotationIds' | 'database' | 'datasetIds' | 'minMSM' |
   | 'chemMod' | 'neutralLoss' | 'adduct' | 'mz' | 'fdrLevel'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
   | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
-  | 'colocalizedWith' | 'colocalizationSamples' | 'offSample' | 'datasetOwner';
+  | 'colocalizedWith' | 'colocalizationSamples' | 'offSample' | 'datasetOwner' | 'molClass' | 'term';
 
 export type MetadataLists = Record<string, any[]>;
 
@@ -176,6 +177,23 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     initialValue: undefined,
     options: lists => lists.adducts.filter(a => config.features.all_adducts || !a.hidden),
     isMultiFilter: true,
+  },
+
+  molClass: {
+    type: ClassFilter,
+    name: 'Class',
+    description: 'Select class',
+    levels: ['annotation'],
+    initialValue: undefined,
+    isMultiFilter: true,
+  },
+
+  term: {
+    type: InputFilter,
+    name: 'Term',
+    levels: ['annotation'],
+    initialValue: undefined,
+    multiFilterParent: 'molClass',
   },
 
   mz: {

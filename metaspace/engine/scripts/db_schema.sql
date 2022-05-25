@@ -147,6 +147,49 @@ CREATE UNIQUE INDEX "IDX_f538e62b7f815edf1a79aa1ee5" ON "graphql"."ion" (
   "charge"
 ) ;
 
+CREATE TABLE "public"."enrichment_db" (
+  "id" SERIAL NOT NULL, 
+  "name" text NOT NULL, 
+  CONSTRAINT "PK_84f68c150f085f0bc866f19382e" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX "IDX_dd61671da802a306c685ef903a" ON "public"."enrichment_db" (
+  "name"
+) ;
+
+CREATE TABLE "public"."enrichment_term" (
+  "id" SERIAL NOT NULL, 
+  "enrichment_id" text NOT NULL, 
+  "enrichment_name" text NOT NULL, 
+  "enrichment_db_id" integer NOT NULL, 
+  CONSTRAINT "PK_64aded8fc4c4da6f3594ecedfe5" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX "IDX_5b1fe80fe8ad658adc4fbe5dda" ON "public"."enrichment_term" (
+  "enrichment_id"
+) ;
+
+CREATE TABLE "public"."enrichment_db_molecule_mapping" (
+  "id" SERIAL NOT NULL, 
+  "molecule_enriched_name" text NOT NULL, 
+  "formula" text NOT NULL, 
+  "enrichment_term_id" integer NOT NULL, 
+  "molecule_id" integer NOT NULL, 
+  "molecular_db_id" integer NOT NULL, 
+  CONSTRAINT "PK_afb8cc016ffdeceb23c753a9b90" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."enrichment_bootstrap" (
+  "id" SERIAL NOT NULL, 
+  "scenario" integer NOT NULL, 
+  "formula_adduct" text NOT NULL, 
+  "dataset_id" text NOT NULL, 
+  "annotation_id" character varying NOT NULL, 
+  "fdr" numeric(2,2) NOT NULL, 
+  "enrichment_db_molecule_mapping_id" integer NOT NULL, 
+  CONSTRAINT "PK_14d9602f2d10c780127809d98d5" PRIMARY KEY ("id")
+);
+
 CREATE TABLE "public"."dataset" (
   "id" text NOT NULL, 
   "name" text, 
@@ -277,49 +320,6 @@ CREATE UNIQUE INDEX "IDX_842e010e1dfd01fc0005c8ff8c" ON "public"."scoring_model"
   "name"
 ) ;
 
-CREATE TABLE "public"."enrichment_db" (
-  "id" SERIAL NOT NULL, 
-  "name" text NOT NULL, 
-  CONSTRAINT "PK_84f68c150f085f0bc866f19382e" PRIMARY KEY ("id")
-);
-
-CREATE UNIQUE INDEX "IDX_dd61671da802a306c685ef903a" ON "public"."enrichment_db" (
-  "name"
-) ;
-
-CREATE TABLE "public"."enrichment_term" (
-  "id" SERIAL NOT NULL, 
-  "enrichment_id" text NOT NULL, 
-  "enrichment_name" text NOT NULL, 
-  "enrichment_db_id" integer NOT NULL, 
-  CONSTRAINT "PK_64aded8fc4c4da6f3594ecedfe5" PRIMARY KEY ("id")
-);
-
-CREATE UNIQUE INDEX "IDX_5b1fe80fe8ad658adc4fbe5dda" ON "public"."enrichment_term" (
-  "enrichment_id"
-) ;
-
-CREATE TABLE "public"."enrichment_db_molecule_mapping" (
-  "id" SERIAL NOT NULL, 
-  "molecule_enriched_name" text NOT NULL, 
-  "formula" text NOT NULL, 
-  "enrichment_term_id" integer NOT NULL, 
-  "molecule_id" integer NOT NULL, 
-  "molecular_db_id" integer NOT NULL, 
-  CONSTRAINT "PK_afb8cc016ffdeceb23c753a9b90" PRIMARY KEY ("id")
-);
-
-CREATE TABLE "public"."enrichment_bootstrap" (
-  "id" SERIAL NOT NULL, 
-  "scenario" integer NOT NULL, 
-  "formula_adduct" text NOT NULL, 
-  "dataset_id" text NOT NULL, 
-  "annotation_id" character varying NOT NULL, 
-  "fdr" numeric(2,2) NOT NULL, 
-  "enrichment_db_molecule_mapping_id" integer NOT NULL, 
-  CONSTRAINT "PK_14d9602f2d10c780127809d98d5" PRIMARY KEY ("id")
-);
-
 CREATE TABLE "graphql"."dataset" (
   "id" text NOT NULL, 
   "user_id" uuid NOT NULL, 
@@ -401,6 +401,26 @@ ALTER TABLE "graphql"."coloc_annotation" ADD CONSTRAINT "FK_09673424d3aceab89f93
   "coloc_job_id") REFERENCES "graphql"."coloc_job"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
+ALTER TABLE "public"."enrichment_term" ADD CONSTRAINT "FK_7ce50b386cd1030899475d2f91e" FOREIGN KEY (
+  "enrichment_db_id") REFERENCES "public"."enrichment_db"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."enrichment_db_molecule_mapping" ADD CONSTRAINT "FK_fbcf90985f2a84dd06c57f400c4" FOREIGN KEY (
+  "enrichment_term_id") REFERENCES "public"."enrichment_term"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."enrichment_db_molecule_mapping" ADD CONSTRAINT "FK_6ced7d2a85b58c518523359e2a4" FOREIGN KEY (
+  "molecular_db_id") REFERENCES "public"."molecular_db"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."enrichment_bootstrap" ADD CONSTRAINT "FK_13fecbfd955b4924736ffddd185" FOREIGN KEY (
+  "dataset_id") REFERENCES "public"."dataset"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."enrichment_bootstrap" ADD CONSTRAINT "FK_ad0924d2bfb498840a188820a8e" FOREIGN KEY (
+  "enrichment_db_molecule_mapping_id") REFERENCES "public"."enrichment_db_molecule_mapping"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
 ALTER TABLE "public"."optical_image" ADD CONSTRAINT "FK_124906daa616c8e1b88645baef0" FOREIGN KEY (
   "ds_id") REFERENCES "public"."dataset"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -435,26 +455,6 @@ ALTER TABLE "public"."perf_profile" ADD CONSTRAINT "FK_cea05d4819bacc949a4236b4a
 
 ALTER TABLE "public"."perf_profile_entry" ADD CONSTRAINT "FK_67cf1a415a181173f111690c70a" FOREIGN KEY (
   "profile_id") REFERENCES "public"."perf_profile"("id"
-) ON DELETE CASCADE ON UPDATE NO ACTION;
-
-ALTER TABLE "public"."enrichment_term" ADD CONSTRAINT "FK_7ce50b386cd1030899475d2f91e" FOREIGN KEY (
-  "enrichment_db_id") REFERENCES "public"."enrichment_db"("id"
-) ON DELETE CASCADE ON UPDATE NO ACTION;
-
-ALTER TABLE "public"."enrichment_db_molecule_mapping" ADD CONSTRAINT "FK_fbcf90985f2a84dd06c57f400c4" FOREIGN KEY (
-  "enrichment_term_id") REFERENCES "public"."enrichment_term"("id"
-) ON DELETE CASCADE ON UPDATE NO ACTION;
-
-ALTER TABLE "public"."enrichment_db_molecule_mapping" ADD CONSTRAINT "FK_6ced7d2a85b58c518523359e2a4" FOREIGN KEY (
-  "molecular_db_id") REFERENCES "public"."molecular_db"("id"
-) ON DELETE CASCADE ON UPDATE NO ACTION;
-
-ALTER TABLE "public"."enrichment_bootstrap" ADD CONSTRAINT "FK_13fecbfd955b4924736ffddd185" FOREIGN KEY (
-  "dataset_id") REFERENCES "public"."dataset"("id"
-) ON DELETE CASCADE ON UPDATE NO ACTION;
-
-ALTER TABLE "public"."enrichment_bootstrap" ADD CONSTRAINT "FK_ad0924d2bfb498840a188820a8e" FOREIGN KEY (
-  "enrichment_db_molecule_mapping_id") REFERENCES "public"."enrichment_db_molecule_mapping"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "graphql"."dataset" ADD CONSTRAINT "FK_d890658f7d5c8961e0a0cbdbe41" FOREIGN KEY (

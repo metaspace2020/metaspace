@@ -3,7 +3,8 @@ import { Group } from '../group/model'
 import { User } from '../user/model'
 import { Project } from '../project/model'
 import { ExternalLink } from '../project/ExternalLink'
-import { DatasetDiagnostic, EngineDataset, EnrichmentBootstrap } from '../engine/model'
+import { DatasetDiagnostic, EngineDataset } from '../engine/model'
+import { EnrichmentBootstrap } from '../enrichmentdb/model'
 
 @Entity()
 export class Dataset {
