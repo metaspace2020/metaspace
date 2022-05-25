@@ -46,14 +46,17 @@ $bgColor: hsl(208, 36%, 96%);
 
 }
 
-.active{
-  color: theme('colors.blue.300') !important;
+.roi-container{
+  .active{
+    color: theme('colors.blue.300') !important;
 
-  &::after {
-    border-bottom-width: 3px;
-    border-bottom-color: theme('colors.blue.700');
+    &::after {
+      border-bottom-width: 3px;
+      border-bottom-color: theme('colors.blue.700');
+    }
   }
 }
+
 
 .roi-badge{
   color: transparent;
