@@ -78,8 +78,8 @@ import { EnrichmentDB, EnrichmentTerm } from '../../../api/enrichmentdb'
         update: data => data.allEnrichmentDatabases,
       },
       termOptions: {
-        query: gql`query EnrichmentTerms($databaseId: Int, $enrichmentName: String) {
-          allEnrichmentTerms(databaseId: $databaseId, enrichmentName: $enrichmentName) {
+        query: gql`query EnrichmentTerms($databaseId: Int, $id: Int, $enrichmentName: String) {
+          allEnrichmentTerms(databaseId: $databaseId, id: $id, enrichmentName: $enrichmentName) {
             id
             enrichmentName
           }
@@ -88,6 +88,7 @@ import { EnrichmentDB, EnrichmentTerm } from '../../../api/enrichmentdb'
         loadingKey: 'termOptionsLoading',
         variables() {
           return {
+            id: this.filterValues.term && !this.termNameQuery ? parseInt(this.filterValues.term, 10) : undefined,
             enrichmentName: this.termNameQuery,
             databaseId: parseInt(this.filterValues.molClass, 10),
           }

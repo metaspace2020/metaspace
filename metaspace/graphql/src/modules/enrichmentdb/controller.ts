@@ -21,6 +21,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     databaseId,
     enrichmentName,
     enrichmentId,
+    id,
     limit,
   }: any, ctx: Context): Promise<EnrichmentTerm[] | null> {
     const enrichmentTerms = await ctx.entityManager
@@ -34,6 +35,10 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         if (enrichmentId) {
           qb.andWhere('terms.enrichmentId = :enrichmentId',
             { enrichmentName: enrichmentId })
+        }
+        if (id) {
+          qb.andWhere('terms.id = :id',
+            { id })
         }
         qb.orderBy('terms.enrichmentName', 'ASC')
         qb.take(limit)

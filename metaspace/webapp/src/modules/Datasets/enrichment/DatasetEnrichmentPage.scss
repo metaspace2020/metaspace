@@ -9,4 +9,11 @@
     }
 
   }
+
+
+}
+
+.dataset-enrichment-loading{
+  @apply w-full absolute text-center top-0 flex items-center justify-center flex-col;
+  height: calc(100vh - 10px);
 }
