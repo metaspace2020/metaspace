@@ -32,7 +32,7 @@ export default {
 
     const f = {
       compoundQuery: filter.compoundName,
-      termId: parseInt(filter.term, 10),
+      termId: filter.term ? parseInt(filter.term, 10) : undefined,
       chemMod: noneToEmptyString(filter.chemMod),
       neutralLoss: noneToEmptyString(filter.neutralLoss),
       adduct: filter.adduct,

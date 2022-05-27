@@ -26,7 +26,9 @@ def main():
     parser.add_argument('db_name', type=str, help='Database name')
     parser.add_argument('db_version', type=str, help='Database version')
     parser.add_argument(
-        'json_file', type=str, help='Path to a enrichment database and molecular mapping.',
+        'json_file',
+        type=str,
+        help='Path to a enrichment database and molecular mapping.',
     )
     parser.add_argument(
         'filter_csv_file',

@@ -306,6 +306,7 @@ type DatasetRelationship {
 type Enrichment {
   name: String
   id: String
+  termId: Int
   n: Float
   observed: Float
   expected: Float

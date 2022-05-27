@@ -383,15 +383,11 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
     })
   }
   if (ion != null) {
-    filters.push(constructTermOrTermsFilter('ion', Array.isArray(sumFormula)
-      ? ion
-      : ion.split('|')))
+    filters.push(constructTermOrTermsFilter('ion', ion))
   }
 
   if (sumFormula != null) {
-    filters.push(constructTermOrTermsFilter('formula', Array.isArray(sumFormula)
-      ? sumFormula
-      : sumFormula.split('|')))
+    filters.push(constructTermOrTermsFilter('formula', sumFormula))
   }
 
   if (ionFormula != null) {

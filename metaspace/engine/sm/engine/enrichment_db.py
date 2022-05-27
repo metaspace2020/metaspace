@@ -14,7 +14,9 @@ class EnrichmentDB:
 
     # pylint: disable=redefined-builtin
     def __init__(
-        self, id: int, name: str,
+        self,
+        id: int,
+        name: str,
     ):
         self.id = id
         self.name = name
@@ -30,11 +32,16 @@ class EnrichmentDB:
         }
 
 
-def create(name: str = None,) -> EnrichmentDB:
+def create(
+    name: str = None,
+) -> EnrichmentDB:
     with transaction_context():
         enrichment_db_insert = 'INSERT INTO enrichment_db (name) values (%s) RETURNING id'
         # pylint: disable=unbalanced-tuple-unpacking
-        (enrichment_db_id,) = DB().insert_return(enrichment_db_insert, rows=[(name,)],)
+        (enrichment_db_id,) = DB().insert_return(
+            enrichment_db_insert,
+            rows=[(name,)],
+        )
         enrichment_db = find_by_id(enrichment_db_id)
         return enrichment_db
 
@@ -44,7 +51,10 @@ def delete(enrichment_db_id: int):
 
 
 # pylint: disable=unused-argument
-def update(enrichment_db_id: int, name: str = None,) -> EnrichmentDB:
+def update(
+    enrichment_db_id: int,
+    name: str = None,
+) -> EnrichmentDB:
     kwargs = {k: v for k, v in locals().items() if v is not None}
     kwargs.pop('enrichment_db_id')
 
@@ -76,7 +86,8 @@ def find_by_ids(ids: Iterable[int]) -> List[EnrichmentDB]:
     """Find multiple enrichment databases by ids."""
 
     data = DB().select_with_fields(
-        'SELECT id, name FROM enrichment_db WHERE id = ANY (%s)', params=(list(ids),),
+        'SELECT id, name FROM enrichment_db WHERE id = ANY (%s)',
+        params=(list(ids),),
     )
     return [EnrichmentDB(**row) for row in data]
 
@@ -85,7 +96,8 @@ def find_by_name(name: str) -> EnrichmentDB:
     """Find enrichment database by name."""
 
     data = DB().select_one_with_fields(
-        'SELECT id, name FROM enrichment_db WHERE name = %s', params=(name,),
+        'SELECT id, name FROM enrichment_db WHERE name = %s',
+        params=(name,),
     )
 
     if not data:

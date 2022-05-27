@@ -26,7 +26,11 @@ class EnrichmentTerm:
 
     # pylint: disable=redefined-builtin
     def __init__(
-        self, id: int, enrichment_id: str, enrichment_name: str, enrichment_db_id: int,
+        self,
+        id: int,
+        enrichment_id: str,
+        enrichment_name: str,
+        enrichment_db_id: int,
     ):
         self.id = id
         self.enrichment_id = enrichment_id
@@ -45,7 +49,10 @@ class EnrichmentTerm:
         }
 
 
-def create(enrichment_db_id: int = None, file_path: str = None,) -> EnrichmentTerm:
+def create(
+    enrichment_db_id: int = None,
+    file_path: str = None,
+) -> EnrichmentTerm:
     with transaction_context():
         term_df = read_terms_file(enrichment_db_id, file_path)
         logger.info(f'Received request: {term_df}')
