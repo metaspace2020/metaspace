@@ -32,7 +32,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
 
   // @ts-ignore
   setup(props, { refs, root }) {
-    const { $route, $store } = root
+    const { $route, $store, $router } = root
     const state = reactive<DatasetEnrichmentPageState>({
       showChart: true,
       offset: 0,
@@ -80,6 +80,14 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       state.sortedData = newData
     }
 
+    const handleItemClick = (item: any) => {
+      const routeData = $router.resolve({
+        name: 'annotations',
+        query: { term: item?.termId, ds: sourceDsId, db_id: dbId },
+      })
+      window.open(routeData.href, '_blank')
+    }
+
     return () => {
       if (!enrichment.value) {
         return
@@ -103,7 +111,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
           <div class={'dataset-enrichment-wrapper'}>
             {
               !enrichmentLoading.value
-              && <DatasetEnrichmentChart data={pagedData}/>
+              && <DatasetEnrichmentChart data={pagedData} onItemSelected={handleItemClick}/>
             }
           </div>
         </div>

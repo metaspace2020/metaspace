@@ -126,6 +126,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         const enrichedSets : any = {}
         const termsHash : any = {}
         let termNames : any = []
+        const termsIdHash : any = {}
 
         if (bootstrap) {
           bootstrap.forEach((bootItem: any) => {
@@ -150,6 +151,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         if (enrichedTerms) {
           enrichedTerms.forEach((termItem: any) => {
             termsHash[termItem.enrichmentId] = termItem.enrichmentName
+            termsIdHash[termItem.enrichmentId] = termItem.id
           })
         }
 
@@ -186,6 +188,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           const annotations = await esSearchResults({ filter: { annotationId: ionIds } }
             , 'annotation', ctx.user)
           item.annotations = annotations.map(unpackAnnotation)
+          item.termId = termsIdHash[item.id]
         }
         return data.enrichment
       } catch (e) {

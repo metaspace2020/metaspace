@@ -3,7 +3,7 @@ import { EnrichmentDb, EnrichmentTerm, Query } from '../../binding'
 import {
   EnrichmentDB as EnrichmentDbModel,
   EnrichmentTerm as EnrichmentTermModel,
-  EnrichmentDBMoleculeMapping as EnrichmentDBMoleculeMappingModel, EnrichmentDBMoleculeMapping,
+  EnrichmentDBMoleculeMapping as EnrichmentDBMoleculeMappingModel,
 } from './model'
 import { FieldResolversFor } from '../../bindingTypes'
 import { IResolvers } from 'graphql-tools'
@@ -19,7 +19,9 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   },
   async allEnrichmentTerms(_: any, {
     databaseId,
-    enrichmentName, limit,
+    enrichmentName,
+    enrichmentId,
+    limit,
   }: any, ctx: Context): Promise<EnrichmentTerm[] | null> {
     const enrichmentTerms = await ctx.entityManager
       .createQueryBuilder(EnrichmentTermModel, 'terms')
@@ -28,6 +30,10 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         if (enrichmentName) {
           qb.andWhere('LOWER(terms.enrichmentName) like LOWER(:enrichmentName)',
             { enrichmentName: `%${enrichmentName.trim()}%` })
+        }
+        if (enrichmentId) {
+          qb.andWhere('terms.enrichmentId = :enrichmentId',
+            { enrichmentName: enrichmentId })
         }
         qb.orderBy('terms.enrichmentName', 'ASC')
         qb.take(limit)

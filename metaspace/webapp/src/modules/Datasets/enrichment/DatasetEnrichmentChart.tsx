@@ -92,6 +92,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
         },
         yAxis: {
           type: 'category',
+          triggerEvent: true,
           data: [],
           splitLine: {
             show: true,
@@ -272,10 +273,9 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
     }
 
     const handleItemSelect = (item: any) => {
-      if (item.targetType === 'axisName') {
-        console.log('item')
-      } else {
-        emit('itemSelected', item.data.mz)
+      if (item.targetType === 'axisLabel' && item.componentType === 'yAxis') {
+        const itemClicked = chartData.value.find((dataItem: any) => dataItem.name === item.value)
+        emit('itemSelected', itemClicked)
       }
     }
 

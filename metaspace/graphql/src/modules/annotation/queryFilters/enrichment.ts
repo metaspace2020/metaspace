@@ -5,12 +5,12 @@ import {
   EnrichmentDBMoleculeMapping as EnrichmentDBMoleculeMappingModel,
 } from '../../enrichmentdb/model'
 import { uniq } from 'lodash'
+import { setOrMerge } from '../../../utils/setOrMerge'
 
 export const applyEnrichmentTermFilter =
     async(context: Context, args: QueryFilterArgs): Promise<QueryFilterResult> => {
-      const { filter, datasetFilter, ...otherArgs } = args
-
-      if (filter?.termId) {
+      const termId = args.filter && args.filter.termId
+      if (termId) {
         let adducts: any = []
 
         const enrichmentTermsMapping = await context.entityManager.createQueryBuilder(EnrichmentDBMoleculeMappingModel,
@@ -18,12 +18,13 @@ export const applyEnrichmentTermFilter =
           .leftJoin('mapping.enrichmentTerm', 'terms')
           .select(['mapping.formula', 'mapping.id'])
           .distinct(true)
-          .where('mapping.enrichmentTermId = :termId', { termId: filter.termId })
+          .where('mapping.enrichmentTermId = :termId', { termId: termId })
           .getRawMany()
         const formulas = enrichmentTermsMapping.map((term: any) => term.mapping_formula)
+        const ids : any = (args?.datasetFilter?.ids || []).slice(0)
 
         // restrict to used adducts if dataset id filter passed (based on bootstrapping)
-        if (datasetFilter?.ids) {
+        if (ids) {
           const bootstrap = await context.entityManager
             .createQueryBuilder(EnrichmentBootstrap,
               'bootstrap')
@@ -31,7 +32,7 @@ export const applyEnrichmentTermFilter =
             .select(['bootstrap.formulaAdduct'])
             .distinct(true)
             .where((qb : any) => {
-              qb.where('bootstrap.datasetId  IN (:...ids)', { ids: datasetFilter?.ids?.split('|') })
+              qb.where('bootstrap.datasetId  IN (:...ids)', { ids: ids.split('|') })
                 .andWhere('bootstrap.enrichmentDbMoleculeMappingId  IN (:...termIds)',
                   { termIds: enrichmentTermsMapping.map((term: any) => term.mapping_id) })
             })
@@ -46,28 +47,10 @@ export const applyEnrichmentTermFilter =
             return auxAdduct
           })
           adducts = uniq(adducts)
-          return {
-            args: {
-              ...otherArgs,
-              ...datasetFilter,
-              filter: {
-                ...filter,
-                ion: adducts.join('|'),
-              },
-            },
-          }
+          return { args: setOrMerge(args, 'filter.ion', adducts) }
         }
 
-        return {
-          args: {
-            ...otherArgs,
-            ...datasetFilter,
-            filter: {
-              ...filter,
-              sumFormula: formulas.join('|'),
-            },
-          },
-        }
+        return { args: setOrMerge(args, 'filter.sumFormula', formulas) }
       }
       return { args }
     }
