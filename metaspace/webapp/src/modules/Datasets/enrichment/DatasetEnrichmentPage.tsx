@@ -3,7 +3,6 @@ import {
   defineComponent,
   reactive,
 } from '@vue/composition-api'
-import config from '../../../lib/config'
 import { useQuery } from '@vue/apollo-composable'
 import { getDatasetEnrichmentQuery } from '../../../api/dataset'
 import { DatasetEnrichmentChart } from './DatasetEnrichmentChart'
@@ -15,7 +14,6 @@ interface DatasetEnrichmentPageProps {
 }
 
 interface DatasetEnrichmentPageState {
-  showChart: boolean
   offset: number
   pageSize: number
   sortedData: any
@@ -32,30 +30,14 @@ export default defineComponent<DatasetEnrichmentPageProps>({
 
   // @ts-ignore
   setup(props, { refs, root }) {
-    const { $route, $store, $router } = root
+    const { $route, $router } = root
     const state = reactive<DatasetEnrichmentPageState>({
-      showChart: true,
       offset: 0,
       pageSize: 15,
       sortedData: undefined,
     })
     const { dataset_id: sourceDsId } = $route.params
     const { db_id: dbId } = $route.query
-
-    const queryVariables = () => {
-      const filter = $store.getters.gqlAnnotationFilter
-      const dFilter = $store.getters.gqlDatasetFilter
-      const colocalizationCoeffFilter = $store.getters.gqlColocalizationFilter
-      const query = $store.getters.ftsQuery
-
-      return {
-        filter,
-        dFilter,
-        query,
-        colocalizationCoeffFilter,
-        countIsomerCompounds: config.features.isomers,
-      }
-    }
 
     const {
       result: enrichmentResult,
@@ -83,20 +65,27 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     const handleItemClick = (item: any) => {
       const routeData = $router.resolve({
         name: 'annotations',
-        query: { term: item?.termId, ds: sourceDsId, db_id: dbId },
+        query: { term: item?.termId, ds: sourceDsId, db_id: dbId, mol_class: '1' },
       })
       window.open(routeData.href, '_blank')
     }
 
     return () => {
-      if (!enrichment.value) {
-        return
-      }
-      const { showChart } = state
       const dataStart = ((state.offset - 1) * state.pageSize)
       const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
       const data = enrichment.value || []
       const pagedData = data.slice(dataStart, dataEnd)
+
+      console.log('enrichmentLoading', enrichmentLoading.value)
+
+      if (enrichmentLoading.value) {
+        return <div class='dataset-enrichment-loading'>
+          <i
+            class="el-icon-loading"
+          />
+          <span>Loading...</span>
+        </div>
+      }
 
       return (
         <div class='dataset-enrichment-page'>
@@ -109,10 +98,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
             />
           </div>
           <div class={'dataset-enrichment-wrapper'}>
-            {
-              !enrichmentLoading.value
-              && <DatasetEnrichmentChart data={pagedData} onItemSelected={handleItemClick}/>
-            }
+            <DatasetEnrichmentChart data={pagedData} onItemSelected={handleItemClick}/>
           </div>
         </div>
       )
