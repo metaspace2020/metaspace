@@ -10,6 +10,7 @@ import { setOrMerge } from '../../../utils/setOrMerge'
 export const applyEnrichmentTermFilter =
     async(context: Context, args: QueryFilterArgs): Promise<QueryFilterResult> => {
       const termId = args.filter && args.filter.termId
+      const databaseId = args.filter && args.filter.databaseId
       if (termId) {
         let adducts: any = []
 
@@ -21,10 +22,10 @@ export const applyEnrichmentTermFilter =
           .where('mapping.enrichmentTermId = :termId', { termId: termId })
           .getRawMany()
         const formulas = enrichmentTermsMapping.map((term: any) => term.mapping_formula)
-        const ids : any = (args?.datasetFilter?.ids || []).slice(0)
+        const ids : any = args?.datasetFilter?.ids
 
         // restrict to used adducts if dataset id filter passed (based on bootstrapping)
-        if (ids) {
+        if (ids && databaseId) {
           const bootstrap = await context.entityManager
             .createQueryBuilder(EnrichmentBootstrap,
               'bootstrap')
@@ -35,6 +36,8 @@ export const applyEnrichmentTermFilter =
               qb.where('bootstrap.datasetId  IN (:...ids)', { ids: ids.split('|') })
                 .andWhere('bootstrap.enrichmentDbMoleculeMappingId  IN (:...termIds)',
                   { termIds: enrichmentTermsMapping.map((term: any) => term.mapping_id) })
+                .andWhere('enrichmentDBMoleculeMapping.molecularDbId  = :dbId',
+                  { dbId: databaseId })
             })
             .getRawMany()
           bootstrap.forEach((item: any) => {

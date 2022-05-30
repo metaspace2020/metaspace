@@ -22,6 +22,7 @@ interface DatasetActionsDropdownProps {
   downloadActionLabel: string
   compareActionLabel: string
   browserActionLabel: string
+  enrichmentActionLabel: string
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
 }
@@ -41,6 +42,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     editActionLabel: { type: String, default: 'Edit metadata' },
     compareActionLabel: { type: String, default: 'Compare with other datasets...' },
     browserActionLabel: { type: String, default: 'Imzml Browser' },
+    enrichmentActionLabel: { type: String, default: 'Lipid enrichment' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
@@ -158,6 +160,13 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
             params: { dataset_id: props.dataset?.id },
           })
           break
+        case 'enrichment':
+          $router.push({
+            name: 'dataset-enrichment',
+            params: { dataset_id: props.dataset?.id },
+            query: { db_id: '1' },
+          })
+          break
         case 'browser':
           if (hasBrowserFiles.value) {
             $router.push({
@@ -189,7 +198,8 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     return () => {
       const {
         actionLabel, currentUser, dataset, editActionLabel, deleteActionLabel,
-        downloadActionLabel, reprocessActionLabel, compareActionLabel, browserActionLabel,
+        downloadActionLabel, reprocessActionLabel, compareActionLabel,
+        enrichmentActionLabel, browserActionLabel,
       } = props
       const { role } = currentUser || {}
       const { canEdit, canDelete, canDownload, id, name } = dataset || {}
@@ -219,6 +229,10 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
             {
               config.features.imzml_browser
               && <DropdownItem command="browser">{browserActionLabel}</DropdownItem>
+            }
+            {
+              config.features.enrichment
+              && <DropdownItem command="enrichment">{enrichmentActionLabel}</DropdownItem>
             }
             {
               canDelete

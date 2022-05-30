@@ -4,7 +4,7 @@ import {
   reactive,
 } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
-import { getDatasetEnrichmentQuery } from '../../../api/dataset'
+import { getDatasetByIdQuery, GetDatasetByIdQuery, getDatasetEnrichmentQuery } from '../../../api/dataset'
 import { DatasetEnrichmentChart } from './DatasetEnrichmentChart'
 import { DatasetEnrichmentTable } from './DatasetEnrichmentTable'
 import './DatasetEnrichmentPage.scss'
@@ -36,13 +36,18 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       pageSize: 15,
       sortedData: undefined,
     })
-    const { dataset_id: sourceDsId } = $route.params
+    const datasetId = computed(() => $route.params.dataset_id)
     const { db_id: dbId } = $route.query
 
     const {
+      result: datasetResult,
+      loading: datasetLoading,
+    } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId })
+    const dataset = computed(() => datasetResult.value != null ? datasetResult.value.dataset : null)
+    const {
       result: enrichmentResult,
       loading: enrichmentLoading,
-    } = useQuery<any>(getDatasetEnrichmentQuery, { id: sourceDsId, dbId: parseInt(dbId, 10) })
+    } = useQuery<any>(getDatasetEnrichmentQuery, { id: datasetId, dbId: parseInt(dbId, 10) })
     const enrichment = computed(() => {
       if (enrichmentResult.value) {
         return enrichmentResult.value.lipidEnrichment
@@ -65,7 +70,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     const handleItemClick = (item: any) => {
       const routeData = $router.resolve({
         name: 'annotations',
-        query: { term: item?.termId, ds: sourceDsId, db_id: dbId, mol_class: '1' },
+        query: { term: item?.termId, ds: datasetId.value, db_id: dbId, mol_class: '1' },
       })
       window.open(routeData.href, '_blank')
     }
@@ -75,8 +80,6 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
       const data = enrichment.value || []
       const pagedData = data.slice(dataStart, dataEnd)
-
-      console.log('enrichmentLoading', enrichmentLoading.value)
 
       if (enrichmentLoading.value) {
         return <div class='dataset-enrichment-loading'>
@@ -97,8 +100,12 @@ export default defineComponent<DatasetEnrichmentPageProps>({
               onSortChange={handleSortChange}
             />
           </div>
-          <div class={'dataset-enrichment-wrapper'}>
-            <DatasetEnrichmentChart data={pagedData} onItemSelected={handleItemClick}/>
+          <div class={'dataset-enrichment-wrapper text-center'}>
+            {dataset.value?.name} - enrichment
+            {
+              !(!data || (data || []).length === 0)
+              && <DatasetEnrichmentChart data={pagedData} onItemSelected={handleItemClick}/>
+            }
           </div>
         </div>
       )
