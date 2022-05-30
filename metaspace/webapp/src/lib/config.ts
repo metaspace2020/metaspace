@@ -6,6 +6,7 @@ const fileConfig = require('../clientConfig.json')
 
 interface Features {
   coloc: boolean;
+  enrichment: boolean;
   show_dataset_overview: boolean;
   roi: boolean;
   tic: boolean;
@@ -59,6 +60,7 @@ const defaultConfig: ClientConfig = {
   metadataTypes: ['ims'],
   features: {
     coloc: true,
+    enrichment: false,
     show_dataset_overview: true,
     roi: true,
     tic: true,

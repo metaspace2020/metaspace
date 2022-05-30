@@ -15,6 +15,7 @@ interface DatasetActionsDropdownProps {
   reprocessActionLabel: string
   downloadActionLabel: string
   compareActionLabel: string
+  enrichmentActionLabel: string
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
 }
@@ -33,6 +34,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     deleteActionLabel: { type: String, default: 'Delete' },
     editActionLabel: { type: String, default: 'Edit metadata' },
     compareActionLabel: { type: String, default: 'Compare with other datasets...' },
+    enrichmentActionLabel: { type: String, default: 'Lipid enrichment' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
@@ -127,6 +129,13 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
             params: { dataset_id: props.dataset?.id },
           })
           break
+        case 'enrichment':
+          $router.push({
+            name: 'dataset-enrichment',
+            params: { dataset_id: props.dataset?.id },
+            query: { db_id: '1' },
+          })
+          break
         case 'delete':
           openDeleteDialog()
           break
@@ -149,6 +158,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       const {
         actionLabel, currentUser, dataset, editActionLabel, deleteActionLabel,
         downloadActionLabel, reprocessActionLabel, compareActionLabel,
+        enrichmentActionLabel,
       } = props
       const { role } = currentUser || {}
       const { canEdit, canDelete, canDownload, id, name } = dataset || {}
@@ -175,6 +185,10 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
               && <DropdownItem command="download">{downloadActionLabel}</DropdownItem>
             }
             <DropdownItem command="compare">{compareActionLabel}</DropdownItem>
+            {
+              config.features.enrichment
+              && <DropdownItem command="enrichment">{enrichmentActionLabel}</DropdownItem>
+            }
             {
               canDelete
               && <DropdownItem class='text-red-500' command="delete">{deleteActionLabel}</DropdownItem>
