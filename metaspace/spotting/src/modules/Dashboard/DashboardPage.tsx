@@ -72,7 +72,7 @@ const AXIS_VALUES = [
   },
   {
     label: 'Technology',
-    src: 'tech',
+    src: 't',
   },
   {
     label: 'Pathway',
@@ -93,6 +93,22 @@ const AXIS_VALUES = [
   {
     label: 'Dataset',
     src: 'd',
+  },
+  {
+    label: 'Lab',
+    src: 'lab',
+  },
+  {
+    label: 'Ionisation source',
+    src: 'sT',
+  },
+  {
+    label: 'Mass analyser',
+    src: 'an',
+  },
+  {
+    label: 'Vacuum level',
+    src: 'sP',
   },
 ]
 
@@ -144,7 +160,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'Technology',
-    src: 'tech',
+    src: 't',
   },
   {
     label: 'Pathway class',
@@ -187,9 +203,12 @@ const CLASSIFICATION_METRICS = {
 
 const DATASET_METRICS = {
   pol: true,
-  tech: true,
+  t: true,
   mS: true,
   lab: true,
+  sT: true,
+  an: true,
+  sP: true,
 }
 
 const PREDICTION_METRICS = {
@@ -231,7 +250,7 @@ const filterMap : any = {
   nl: 'nl',
   pol: 'mode',
   mS: 'matrix',
-  tech: 'matrix',
+  t: 'matrix',
 }
 
 export default defineComponent({
@@ -292,7 +311,7 @@ export default defineComponent({
         const matrixPredictions = await response.json()
         const responseInterLab = await fetch(baseUrl + 'interlab_predictions_27-04-22.json')
         const interLabPredictions = await responseInterLab.json()
-        const datasetResponse = await fetch(baseUrl + 'datasets_21-04-22.json')
+        const datasetResponse = await fetch(baseUrl + 'datasets_30-05-22.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification_14-03-22.json')
         state.classification = await chemClassResponse.json()
@@ -309,8 +328,11 @@ export default defineComponent({
               pol: datasetItem.Polarity,
               mS: datasetItem['Matrix short'],
               mL: datasetItem['Matrix long'],
-              tech: datasetItem.Technology,
+              t: datasetItem.nology,
               lab: datasetItem['Participant lab'],
+              sT: datasetItem['Source Type'],
+              sP: datasetItem['Source Pressure'],
+              an: datasetItem.Analyzer,
               d: prediction.dsId,
               f: prediction.f,
               a: prediction.a,
@@ -330,8 +352,11 @@ export default defineComponent({
               pol: datasetItem.Polarity,
               mS: datasetItem['Matrix short'],
               mL: datasetItem['Matrix long'],
-              tech: datasetItem.Technology,
+              t: datasetItem.nology,
               lab: datasetItem['Participant lab'],
+              sT: datasetItem['Source Type'],
+              sP: datasetItem['Source Pressure'],
+              an: datasetItem.Analyzer,
               d: prediction.dsId,
               f: prediction.f,
               a: prediction.a,
@@ -344,8 +369,8 @@ export default defineComponent({
           }
         })
         console.log('File loaded')
-        // console.log('File loaded', predWithDs)
-        // console.log('File loaded inter', predWithDsInter)
+        console.log('File loaded', predWithDs)
+        console.log('File loaded inter', predWithDsInter)
         state.rawData = predWithDs
         state.rawDataInter = predWithDsInter
       } catch (e) {
