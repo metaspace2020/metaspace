@@ -311,14 +311,14 @@ export default defineComponent({
         const matrixPredictions = await response.json()
         const responseInterLab = await fetch(baseUrl + 'interlab_predictions_27-04-22.json')
         const interLabPredictions = await responseInterLab.json()
-        const datasetResponse = await fetch(baseUrl + 'datasets_30-05-22.json')
+        const datasetResponse = await fetch(baseUrl + 'datasets_31-05-22.json')
         const datasets = await datasetResponse.json()
         const chemClassResponse = await fetch(baseUrl + 'custom_classification_14-03-22.json')
         state.classification = await chemClassResponse.json()
         const pathwayResponse = await fetch(baseUrl + 'pathways_14-03-22.json')
         state.pathways = await pathwayResponse.json()
 
-        const datasetsById = keyBy(datasets, 'Clone ID')
+        const datasetsById = keyBy(datasets, 'Dataset ID')
         delete datasetsById.null
         const predWithDs : any = []
         matrixPredictions.forEach((prediction: any) => {
@@ -369,8 +369,8 @@ export default defineComponent({
           }
         })
         console.log('File loaded')
-        console.log('File loaded', predWithDs)
-        console.log('File loaded inter', predWithDsInter)
+        // console.log('File loaded', predWithDs)
+        // console.log('File loaded inter', predWithDsInter)
         state.rawData = predWithDs
         state.rawDataInter = predWithDsInter
       } catch (e) {
@@ -472,7 +472,13 @@ export default defineComponent({
       auxData = groupBy(filteredData, state.options.xAxis)
       let maxValue : number = 1
       Object.keys(auxData).forEach((key: string) => {
-        auxData[key] = groupBy(auxData[key], state.options.yAxis)
+        if (state.options.yAxis === 'coarse_class') {
+          auxData[key] = groupBy(auxData[key], (item: any) => {
+            return item.coarse_class + ' -agg- ' + item.fine_class
+          })
+        } else {
+          auxData[key] = groupBy(auxData[key], state.options.yAxis)
+        }
         Object.keys(auxData[key]).forEach((yKey: any) => {
           if (auxData[key][yKey].length > maxValue && state.xAxisValues.includes(key)) {
             maxValue = auxData[key][yKey].length
@@ -817,11 +823,24 @@ export default defineComponent({
 
       src.forEach((row: any) => {
         if (!axis.includes(row[value])) {
-          axis.push(row[value])
+          let auxValue = row[value]
+          if (!isXAxis && value === 'coarse_class') {
+            auxValue += ` -agg- ${row.fine_class}`
+          }
+          axis.push(auxValue)
         }
       })
 
-      axis.sort()
+      axis = uniq(axis)
+      axis.sort((a:string, b:string) => {
+        if (a > b) {
+          return -1
+        }
+        if (b > a) {
+          return 1
+        }
+        return 0
+      })
       axis = axis.filter((item: any) => item && item !== 'null' && item !== 'none' && item !== 'undefined')
       if (isXAxis) {
         state.pagination.total = axis.length

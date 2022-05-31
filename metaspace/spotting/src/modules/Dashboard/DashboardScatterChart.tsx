@@ -20,6 +20,7 @@ import {
   TitleComponent,
   VisualMapPiecewiseComponent,
   VisualMapContinuousComponent,
+  MarkLineComponent,
 } from 'echarts/components'
 import './DashboardScatterChart.scss'
 
@@ -36,6 +37,7 @@ use([
   MarkPointComponent,
   TitleComponent,
   VisualMapPiecewiseComponent,
+  MarkLineComponent,
   VisualMapContinuousComponent,
 ])
 
@@ -135,7 +137,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         grid: {
           left: 2,
           top: 20,
-          right: 20,
+          right: 100,
           bottom: 40,
           containLabel: true,
         },
@@ -170,6 +172,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         },
         series: [{
           type: 'scatter',
+          markLine: {},
           symbolSize: function(val: any) {
             return val[2] * 2
           },
@@ -189,9 +192,37 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       }
 
       const auxOptions = state.chartOptions
+      const globalCategories : any = {}
+      const markData : any = []
+      yAxisData.value.forEach((label: string, idx: number) => {
+        const re = /(.+)\s-agg-\s(.+)/
+        const found = label.match(re)
+        const cat = label.replace(re, '$1')
+        if (found) {
+          globalCategories[cat] = idx
+        }
+      })
+      Object.keys(globalCategories).map((key: string) => {
+        markData.push({
+          name: key,
+          yAxis: globalCategories[key],
+          label: {
+            formatter: key,
+            position: 'end',
+            width: 100,
+            overflow: 'break',
+          },
+          lineStyle: {
+            color: 'transparent',
+          },
+        })
+      })
+
       auxOptions.xAxis.data = xAxisData.value
       auxOptions.yAxis.data = yAxisData.value
+        .map((label: string) => label.replace(/.+-agg-\s(.+)/, '$1'))
       auxOptions.series[0].data = chartData.value
+      auxOptions.series[0].markLine.data = markData
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }
