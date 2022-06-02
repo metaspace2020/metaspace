@@ -184,7 +184,6 @@ CREATE TABLE "public"."enrichment_bootstrap" (
   "scenario" integer NOT NULL, 
   "formula_adduct" text NOT NULL, 
   "dataset_id" text NOT NULL, 
-  "annotation_id" character varying NOT NULL, 
   "fdr" numeric(2,2) NOT NULL, 
   "enrichment_db_molecule_mapping_id" integer NOT NULL, 
   CONSTRAINT "PK_14d9602f2d10c780127809d98d5" PRIMARY KEY ("id")
