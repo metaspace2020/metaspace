@@ -13,6 +13,8 @@ import { DatasetComparisonDialog } from '../comparison/DatasetComparisonDialog'
 import config from '../../../lib/config'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
 import { useQuery } from '@vue/apollo-composable'
+import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
+import { DatasetEnrichmentDialog } from '../enrichment/DatasetEnrichmentDialog'
 
 interface DatasetActionsDropdownProps {
   actionLabel: string
@@ -31,6 +33,7 @@ interface DatasetActionsDropdownState{
   disabled: boolean
   showMetadataDialog: boolean
   showCompareDialog: boolean
+  showEnrichmentDialog: boolean
   showDownloadDialog: boolean
 }
 
@@ -55,8 +58,15 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       disabled: false,
       showMetadataDialog: false,
       showCompareDialog: false,
+      showEnrichmentDialog: false,
       showDownloadDialog: false,
     })
+
+    const {
+      result: enrichmentResult,
+    } = useQuery<any>(checkIfEnrichmentRequested, { id: props.dataset?.id })
+    const enrichmentRequested = computed(() => enrichmentResult.value != null
+      ? enrichmentResult.value.enrichmentRequested : null)
 
     const {
       result: browserResult,
@@ -112,8 +122,21 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       state.showCompareDialog = true
     }
 
+    const openEnrichmentDialog = () => {
+      state.showEnrichmentDialog = true
+    }
+
     const closeCompareDialog = () => {
       state.showCompareDialog = false
+    }
+
+    const closeEnrichmentDialog = () => {
+      state.showEnrichmentDialog = false
+    }
+
+    const handleEnrichmentRequest = () => {
+      closeEnrichmentDialog()
+      handleReprocess()
     }
 
     const handleReprocess = async() => {
@@ -124,6 +147,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           variables: {
             id: props.dataset?.id,
             useLithops: config.features.lithops,
+            performEnrichment: true,
           },
         })
         $notify.success('Dataset sent for reprocessing')
@@ -161,11 +185,15 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           })
           break
         case 'enrichment':
-          $router.push({
-            name: 'dataset-enrichment',
-            params: { dataset_id: props.dataset?.id },
-            query: { db_id: '1' },
-          })
+          if (enrichmentRequested.value) {
+            $router.push({
+              name: 'dataset-enrichment',
+              params: { dataset_id: props.dataset?.id },
+              query: { db_id: '1' },
+            })
+          } else {
+            openEnrichmentDialog()
+          }
           break
         case 'browser':
           if (hasBrowserFiles.value) {
@@ -256,6 +284,14 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
             && <DatasetComparisonDialog
               selectedDatasetIds={[id]}
               onClose={closeCompareDialog}
+            />
+          }
+          {
+            state.showEnrichmentDialog
+            && <DatasetEnrichmentDialog
+              dataset={dataset}
+              onClose={closeEnrichmentDialog}
+              onEnrich={handleEnrichmentRequest}
             />
           }
         </Dropdown>

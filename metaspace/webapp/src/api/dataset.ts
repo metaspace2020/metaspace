@@ -254,8 +254,8 @@ export const deleteDatasetQuery =
   }`
 
 export const reprocessDatasetQuery =
-  gql`mutation ($id: String!, $useLithops: Boolean) {
-    reprocessDataset(id: $id, useLithops: $useLithops)
+  gql`mutation ($id: String!, $useLithops: Boolean, $performEnrichment: Boolean) {
+    reprocessDataset(id: $id, useLithops: $useLithops, performEnrichment: $performEnrichment)
   }`
 
 export const addOpticalImageQuery =

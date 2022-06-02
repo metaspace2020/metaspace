@@ -79,15 +79,25 @@ describe('DatasetActionsDropdown', () => {
     },
   })
 
+  const graphqlWithData = () => {
+    initMockGraphqlClient({
+      Query: () => ({
+        enrichmentRequested: () => {
+          return false
+        },
+        checkIfHasBrowserFiles: () => {
+          return false
+        },
+      }),
+    })
+  }
+
   beforeAll(() => {
     Vue.use(Vuex)
     sync(store, router)
-    initMockGraphqlClient({
-      Query: () => ({
-        checkIfHasBrowserFiles: () => false, // Prevent automatic mocking
-      }),
-    })
+    graphqlWithData()
   })
+
 
   it('it should match snapshot', async() => {
     const wrapper = shallowMount(testHarness, { store, router, apolloProvider, propsData })

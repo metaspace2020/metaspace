@@ -413,6 +413,7 @@ type Mutation {
     priority: Int=0,
     delFirst: Boolean=false,
     useLithops: Boolean=true
+    performEnrichment: Boolean=false,
   ): String!
 
   addOpticalImage(input: AddOpticalImageInput!): String!

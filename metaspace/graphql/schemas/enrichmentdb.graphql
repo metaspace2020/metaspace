@@ -16,4 +16,5 @@ type Query {
     allEnrichmentTerms(databaseId: Int, enrichmentName: String,
         enrichmentId: String, id: Int, limit: Int = 10) : [EnrichmentTerm]
     allFormulasByEnrichmentTerm(termId: Int) : [String]
+    enrichmentRequested(datasetId: String) : Boolean
 }

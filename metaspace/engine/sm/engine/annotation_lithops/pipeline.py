@@ -93,7 +93,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.ds_segm_size_mb = 128
 
     def run_pipeline(
-        self, debug_validate=False, use_cache=True, perform_enrichment=True
+        self, debug_validate=False, use_cache=True, perform_enrichment=False
     ) -> Tuple[Dict[int, DataFrame], List[CObj[List[Tuple[int, bytes]]]], Any]:
         # pylint: disable=unexpected-keyword-arg
         self.prepare_moldb(debug_validate=debug_validate)
@@ -109,6 +109,8 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.annotate(use_cache=use_cache)
         self.run_fdr(use_cache=use_cache)
         self.prepare_results(use_cache=use_cache)
+
+        logger.info(f'perform_enrichment: {perform_enrichment}')
 
         if perform_enrichment:
             self.run_enrichment(use_cache=use_cache)

@@ -263,6 +263,7 @@ class ServerAnnotationJob:
         perf: Profiler,
         sm_config: Optional[Dict] = None,
         use_cache=False,
+        perform_enrichment=False,
         store_images=True,
     ):
         """
@@ -273,6 +274,8 @@ class ServerAnnotationJob:
                    to quickly re-run specific steps.
         """
         self.enrichment_data = None
+        logger.info(f'perform_enrichment {perform_enrichment}...')
+        self.perform_enrichment = perform_enrichment
         sm_config = sm_config or SMConfig.get_conf()
         self.sm_storage = sm_config['lithops']['sm_storage']
         self.storage = Storage(sm_config['lithops'])
@@ -320,7 +323,7 @@ class ServerAnnotationJob:
         try:
             # Run annotation
             self.results_dfs, self.png_cobjs, self.enrichment_data = self.pipe.run_pipeline(
-                **kwargs
+                perform_enrichment=self.perform_enrichment, **kwargs
             )
 
             # Save images (if enabled)
@@ -344,7 +347,7 @@ class ServerAnnotationJob:
             for moldb_id, job_id in moldb_to_job_map.items():
                 logger.debug(f'Storing results for moldb {moldb_id}')
                 results_df = self.results_dfs[moldb_id]
-                bootstrap_df = self.enrichment_data[moldb_id]
+
                 formula_image_ids = self.db_formula_image_ids.get(moldb_id, {})
 
                 search_results = SearchResults(
@@ -357,9 +360,16 @@ class ServerAnnotationJob:
 
                 add_diagnostics(extract_job_diagnostics(self.ds.id, job_id, fdr_bundles[job_id]))
 
-                add_enrichment(
-                    DatasetEnrichment(ds_id=self.ds.id, bootstrap_data=bootstrap_df)
-                )
+                if (
+                    self.perform_enrichment
+                    and self.enrichment_data
+                    and moldb_id in self.enrichment_data.keys()
+                    and not self.enrichment_data[moldb_id].empty
+                ):
+                    bootstrap_df = self.enrichment_data[moldb_id]
+                    add_enrichment(
+                        DatasetEnrichment(ds_id=self.ds.id, bootstrap_data=bootstrap_df), moldb_id
+                    )
 
                 update_finished_job(job_id, JobStatus.FINISHED)
         except Exception:

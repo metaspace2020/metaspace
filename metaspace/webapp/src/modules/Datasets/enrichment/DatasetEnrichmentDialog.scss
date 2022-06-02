@@ -1,0 +1,30 @@
+.dataset-enrichment-dialog{
+  .dataset-enrichment-dialog-grid{
+    width: 100%;
+    min-height: 200px;
+    overflow-x: auto;
+  }
+  .dataset-enrichment-dialog-row{
+    @apply flex flex-row m-1;
+    height: 100px;
+  }
+
+  .dataset-enrichment-dialog-col{
+    @apply flex items-center justify-center ml-1 mb-1;
+    border: 1px solid black;
+    width: 100%;
+    height: 100px;
+    min-width: 100px;
+  }
+
+
+  .sm-form-error{
+    input{
+      border-color: red;
+    }
+  }
+
+  .text-danger{
+    @apply mt-0 text-right;
+  }
+}
