@@ -4,6 +4,7 @@ import {
   EnrichmentDB as EnrichmentDbModel,
   EnrichmentTerm as EnrichmentTermModel,
   EnrichmentDBMoleculeMapping as EnrichmentDBMoleculeMappingModel,
+  DatasetEnrichment as DatasetEnrichmentModel,
 } from './model'
 import { FieldResolversFor } from '../../bindingTypes'
 import { IResolvers } from 'graphql-tools'
@@ -65,6 +66,19 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return enrichmentTermsMapping.map((term: any) => term.mapping_formula)
     }
     return null
+  },
+  async enrichmentRequested(_: any, {
+    datasetId,
+  }: any, ctx: Context): Promise<boolean> {
+    const datasetEnrichment = await ctx.entityManager.createQueryBuilder(DatasetEnrichmentModel,
+      'dsEnrichment')
+      .where('dsEnrichment.datasetId = :datasetId', { datasetId })
+      .getOne()
+
+    if (datasetEnrichment) {
+      return true
+    }
+    return false
   },
 }
 

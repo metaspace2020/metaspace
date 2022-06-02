@@ -1,6 +1,8 @@
 import logging
 from typing import Any, Union, TypedDict
 from sm.engine import enrichment_bootstrap
+from sm.engine import dataset_enrichment
+from datetime import datetime
 
 logger = logging.getLogger('engine')
 
@@ -11,10 +13,12 @@ class DatasetEnrichment(TypedDict, total=False):
     error: Union[str, None]
 
 
-def add_enrichment(enrichment: DatasetEnrichment):
+def add_enrichment(enrichment: DatasetEnrichment, moldb_id: int):
     """Add enrichment bootstrap data"""
 
     ds_id = enrichment['ds_id']
+    logger.debug(f'Inserting bootstrap for dataset {ds_id} and database {moldb_id}')
+
     for _, row in enrichment['bootstrap_data'].iterrows():
         enrichment_bootstrap.create(
             scenario=row['scenario'],
@@ -23,9 +27,20 @@ def add_enrichment(enrichment: DatasetEnrichment):
             dataset_id=ds_id,
             enrichment_db_molecule_mapping_id=row['enrichment_db_molecule_mapping_id'],
         )
+    logger.debug(f'Bootstrap inserted')
+    logger.debug(f'Inserting enrichment for dataset {ds_id}')
+
+    dataset_enrichment.create(
+        dataset_id=ds_id,
+        enrichment_db_id=1,
+        molecular_db_id=moldb_id,
+        processing_dt=datetime.now(),
+    )
+    logger.debug(f'Enrichment inserted')
 
 
 def delete_ds_enrichments(ds_id: str):
     """Delete asssociated enrichment bootstrap"""
 
     enrichment_bootstrap.delete_by_ds_id(ds_id)
+    dataset_enrichment.delete_by_ds_id(ds_id)

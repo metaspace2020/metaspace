@@ -144,4 +144,5 @@ export const ENRICHMENT_DB_ENTITIES = [
   EnrichmentTerm,
   EnrichmentDBMoleculeMapping,
   EnrichmentBootstrap,
+  DatasetEnrichment,
 ]

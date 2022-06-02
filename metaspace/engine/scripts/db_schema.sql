@@ -189,6 +189,15 @@ CREATE TABLE "public"."enrichment_bootstrap" (
   CONSTRAINT "PK_14d9602f2d10c780127809d98d5" PRIMARY KEY ("id")
 );
 
+CREATE TABLE "public"."dataset_enrichment" (
+  "id" SERIAL NOT NULL, 
+  "dataset_id" text NOT NULL, 
+  "enrichment_db_id" integer NOT NULL, 
+  "processing_dt" TIMESTAMP, 
+  "molecular_db_id" integer NOT NULL, 
+  CONSTRAINT "PK_26d09337b9ce1ca5754b2230714" PRIMARY KEY ("id")
+);
+
 CREATE TABLE "public"."dataset" (
   "id" text NOT NULL, 
   "name" text, 
@@ -418,6 +427,14 @@ ALTER TABLE "public"."enrichment_bootstrap" ADD CONSTRAINT "FK_13fecbfd955b49247
 
 ALTER TABLE "public"."enrichment_bootstrap" ADD CONSTRAINT "FK_ad0924d2bfb498840a188820a8e" FOREIGN KEY (
   "enrichment_db_molecule_mapping_id") REFERENCES "public"."enrichment_db_molecule_mapping"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."dataset_enrichment" ADD CONSTRAINT "FK_761384e09b39bc9b94b499b4a5b" FOREIGN KEY (
+  "molecular_db_id") REFERENCES "public"."molecular_db"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."dataset_enrichment" ADD CONSTRAINT "FK_1a66721d97ea7590002cabc33c0" FOREIGN KEY (
+  "enrichment_db_id") REFERENCES "public"."enrichment_db"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."optical_image" ADD CONSTRAINT "FK_124906daa616c8e1b88645baef0" FOREIGN KEY (

@@ -104,6 +104,7 @@ def add(ds_man, ds_id=None, params=None):
         email=params.get('email', None),
         priority=params.get('priority', DatasetActionPriority.DEFAULT),
         use_lithops=params.get('use_lithops', False),
+        perform_enrichment=params.get('perform_enrichment', False),
     )
     return {'ds_id': ds_id}
 

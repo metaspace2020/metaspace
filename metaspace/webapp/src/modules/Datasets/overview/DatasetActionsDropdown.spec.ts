@@ -5,9 +5,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import { sync } from 'vuex-router-sync'
 import { DatasetActionsDropdown } from './DatasetActionsDropdown'
-
-Vue.use(Vuex)
-sync(store, router)
+import { initMockGraphqlClient } from '../../../../tests/utils/mockGraphqlClient'
 
 describe('DatasetActionsDropdown', () => {
   const mockDataset = {
@@ -78,6 +76,22 @@ describe('DatasetActionsDropdown', () => {
     render(h) {
       return h(DatasetActionsDropdown, { props: this.$attrs })
     },
+  })
+
+  const graphqlWithData = () => {
+    initMockGraphqlClient({
+      Query: () => ({
+        enrichmentRequested: () => {
+          return false
+        },
+      }),
+    })
+  }
+
+  beforeAll(() => {
+    Vue.use(Vuex)
+    sync(store, router)
+    graphqlWithData()
   })
 
   it('it should match snapshot', async() => {
