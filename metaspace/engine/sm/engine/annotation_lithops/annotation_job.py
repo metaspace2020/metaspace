@@ -355,13 +355,10 @@ class ServerAnnotationJob:
                 )
                 search_results.store_ion_metrics(results_df, formula_image_ids, self.db)
 
-                # get annotations ids to be used later on to speed up enrichment routes
-                annot_ids = search_results.get_annotations_ids(self.db)
-
                 add_diagnostics(extract_job_diagnostics(self.ds.id, job_id, fdr_bundles[job_id]))
 
                 add_enrichment(
-                    DatasetEnrichment(ds_id=self.ds.id, bootstrap_data=bootstrap_df), annot_ids
+                    DatasetEnrichment(ds_id=self.ds.id, bootstrap_data=bootstrap_df)
                 )
 
                 update_finished_job(job_id, JobStatus.FINISHED)

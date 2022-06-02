@@ -79,7 +79,8 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       const dataStart = ((state.offset - 1) * state.pageSize)
       const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
       const data = enrichment.value || []
-      const pagedData = data.slice(dataStart, dataEnd)
+      const usedData = state.sortedData ? state.sortedData : data
+      const pagedData = usedData.slice(dataStart, dataEnd)
 
       if (enrichmentLoading.value) {
         return <div class='dataset-enrichment-loading'>

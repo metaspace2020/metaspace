@@ -17,7 +17,6 @@ class EnrichmentBootstrap:
         formula_adduct: str,
         fdr: str,
         dataset_id: str,
-        annotation_id: str,
         enrichment_db_molecule_mapping_id: str,
     ):
         self.id = id
@@ -25,7 +24,6 @@ class EnrichmentBootstrap:
         self.formula_adduct = formula_adduct
         self.fdr = fdr
         self.dataset_id = dataset_id
-        self.annotation_id = annotation_id
         self.enrichment_db_molecule_mapping_id = enrichment_db_molecule_mapping_id
         self._sm_config = SMConfig.get_conf()
 
@@ -39,7 +37,6 @@ class EnrichmentBootstrap:
             'formula_adduct': self.formula_adduct,
             'fdr': self.fdr,
             'dataset_id': self.dataset_id,
-            'annotation_id': self.annotation_id,
             'enrichment_db_molecule_mapping_id': self.enrichment_db_molecule_mapping_id,
         }
 
@@ -49,15 +46,14 @@ def create(
     formula_adduct: str,
     fdr: str,
     dataset_id: str,
-    annotation_id: str,
     enrichment_db_molecule_mapping_id: str,
 ) -> EnrichmentBootstrap:
     with transaction_context():
         enrichment_db_insert = (
             'INSERT INTO enrichment_bootstrap '
             '   (scenario, formula_adduct, fdr, dataset_id, '
-            ' enrichment_db_molecule_mapping_id, annotation_id) '
-            'values (%s, %s, %s, %s, %s, %s) RETURNING id'
+            ' enrichment_db_molecule_mapping_id) '
+            'values (%s, %s, %s, %s, %s) RETURNING id'
         )
         # pylint: disable=unbalanced-tuple-unpacking
         (bootstrap_id,) = DB().insert_return(
@@ -69,7 +65,6 @@ def create(
                     fdr,
                     dataset_id,
                     enrichment_db_molecule_mapping_id,
-                    annotation_id,
                 )
             ],
         )
@@ -83,7 +78,7 @@ def find_by_id(id: int) -> EnrichmentBootstrap:
 
     data = DB().select_one_with_fields(
         'SELECT scenario, formula_adduct, fdr, dataset_id, '
-        ' enrichment_db_molecule_mapping_id, annotation_id '
+        ' enrichment_db_molecule_mapping_id '
         'FROM enrichment_bootstrap WHERE id = %s',
         params=(id,),
     )

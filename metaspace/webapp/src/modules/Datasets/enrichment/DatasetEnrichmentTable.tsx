@@ -36,8 +36,6 @@ const KEY_TO_ACTION = {
 const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_ID: 'id',
   ORDER_BY_NAME: 'name',
-  ORDER_BY_N: 'n',
-  ORDER_BY_FDR_MSM: 'qValue',
 }
 
 export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProps>({
@@ -143,8 +141,8 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
 
     const initializeTable = () => {
       const { sort, row, page } = $route.query
-      const order = sort?.indexOf('-') === 0 ? 'descending' : 'ascending'
-      const prop = sort ? sort.replace('-', '') : SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM
+      const order = sort ? (sort.indexOf('-') === 0 ? 'descending' : 'ascending') : 'descending'
+      const prop = sort ? sort.replace('-', '') : 'median'
       handleSortChange({ order, prop }, false)
 
       state.selectedRow = row ? props.data[parseInt(row, 10)]
@@ -210,11 +208,9 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
     }
 
     const getDefaultTableSort = () => {
-      const { sort } = $route.query
-
       return {
-        prop: sort ? sort.replace('-', '') : SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM,
-        order: sort?.indexOf('-') === 0 ? 'descending' : 'ascending',
+        prop: 'median',
+        order: 'descending',
       }
     }
 
@@ -277,11 +273,6 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       }
     }
 
-    const handleSortFormula = (order: string) => {
-      state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
-        sortMolecule(a, b, order === 'ascending' ? 1 : -1)))
-    }
-
     const handleSortName = (order: string) => {
       state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
         (order === 'ascending' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name))))
@@ -292,14 +283,9 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
         (order === 'ascending' ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id))))
     }
 
-    const handleSortN = (order: string) => {
+    const handleSortNumber = (prop: number, order: string) => {
       state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.n - b.n)))
-    }
-
-    const handleSortFdr = (order: string) => {
-      state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.qValue - b.qValue)))
+        (order === 'ascending' ? 1 : -1) * (a[prop] - b[prop])))
     }
 
     const handleSortChange = (settings: any, setCurrentRow: boolean = true) => {
@@ -311,10 +297,8 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
         handleSortId(order)
       } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_NAME) {
         handleSortName(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM) {
-        handleSortFdr(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_N) {
-        handleSortN(order)
+      } else {
+        handleSortNumber(prop, order)
       }
 
       $store.commit('setSortOrder', {
@@ -360,8 +344,12 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       handleCurrentRowChange(state.selectedRow)
     }
 
-    const formatFDR = (row: any) => {
-      return row.qValue ? <span>{Math.round(row.qValue * 100)}%</span> : <span>&mdash;</span>
+    const formatPercentage = (value: any) => {
+      return value ? <span>{Math.round(value * 100)}%</span> : <span>&mdash;</span>
+    }
+
+    const formatFloat = (value: any) => {
+      return value ? <span>{parseFloat(value).toFixed(4)}</span> : <span>&mdash;</span>
     }
 
     const getRowClass = (info: any) => {
@@ -527,7 +515,6 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
               property="id"
               label="ID"
               sortable={'custom'}
-              sortMethod={handleSortFormula}
               minWidth="100"
             />
             <TableColumn
@@ -545,13 +532,56 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
               minWidth="40"
             />
             <TableColumn
-              key="qValue"
-              property="qValue"
-              label="qValue"
+              key="observed"
+              property="observed"
+              label="observed"
+              sortable="custom"
+              minWidth="80"
+              formatter={(row: any) => formatFloat(row.observed)}
+
+            />
+            <TableColumn
+              key="expected"
+              property="expected"
+              label="expected"
+              sortable="custom"
+              minWidth="80"
+              formatter={(row: any) => formatFloat(row.expected)}
+
+            />
+            <TableColumn
+              key="median"
+              property="median"
+              label="median"
+              sortable="custom"
+              minWidth="80"
+              formatter={(row: any) => formatFloat(row.median)}
+
+            />
+            <TableColumn
+              key="std"
+              property="std"
+              label="std"
               className="fdr-cell"
               sortable="custom"
               minWidth="80"
-              formatter={(row: any) => formatFDR(row)}
+              formatter={(row: any) => formatFloat(row.std)}
+            />
+            <TableColumn
+              key="pValue"
+              property="pValue"
+              label="pValue"
+              sortable="custom"
+              minWidth="80"
+              formatter={(row: any) => formatPercentage(row.pValue)}
+            />
+            <TableColumn
+              key="qValue"
+              property="qValue"
+              label="qValue"
+              sortable="custom"
+              minWidth="80"
+              formatter={(row: any) => formatPercentage(row.qValue)}
             />
           </Table>
           <div class="flex justify-between items-start mt-2">

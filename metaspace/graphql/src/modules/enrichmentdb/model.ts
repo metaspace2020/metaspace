@@ -9,6 +9,7 @@ import {
 import { MolecularDB } from '../moldb/model'
 import { Dataset } from '../dataset/model'
 import { EngineDataset } from '../engine/model'
+import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
 
 @Entity({ schema: 'public' })
 export class EnrichmentDB {
@@ -87,9 +88,6 @@ export class EnrichmentBootstrap {
   @Column({ name: 'dataset_id' })
   datasetId: string;
 
-  @Column({ name: 'annotation_id' })
-  annotationId: string;
-
   @Column({ type: 'numeric', precision: 2, scale: 2 })
   fdr: string;
 
@@ -108,6 +106,37 @@ export class EnrichmentBootstrap {
   @ManyToOne(() => EnrichmentDBMoleculeMapping, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'enrichment_db_molecule_mapping_id' })
   enrichmentDBMoleculeMapping: EnrichmentDBMoleculeMapping;
+}
+
+@Entity({ schema: 'public' })
+export class DatasetEnrichment {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ name: 'dataset_id' })
+  datasetId: string;
+
+  @Column({ type: 'int' })
+  enrichmentDbId: number;
+
+  @Column({ type: 'timestamp without time zone', nullable: true, transformer: new MomentValueTransformer() })
+  processingDt: Date | null;
+
+  @Column({ type: 'int' })
+  molecularDbId: number;
+
+  // This table is a child table of public.dataset, not graphql.dataset, so avoid making an FK
+  @ManyToOne(() => Dataset, { createForeignKeyConstraints: false })
+  @JoinColumn({ name: 'dataset_id' })
+  dataset: Dataset;
+
+  @ManyToOne(() => MolecularDB, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'molecular_db_id' })
+  molecularDB: MolecularDB;
+
+  @ManyToOne(() => EnrichmentDB, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'enrichment_db_id' })
+  enrichmentDB: EnrichmentDB;
 }
 
 export const ENRICHMENT_DB_ENTITIES = [

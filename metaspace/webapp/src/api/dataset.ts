@@ -419,49 +419,5 @@ export const getDatasetEnrichmentQuery =
       std
       pValue
       qValue
-      annotations {
-        id
-        sumFormula
-        adduct
-        ion
-        ionFormula
-        database
-        msmScore
-        rhoSpatial
-        rhoSpectral
-        rhoChaos
-        fdrLevel
-        mz
-        offSample
-        offSampleProb
-        databaseDetails {
-          id
-        }
-        isotopeImages {
-          mz
-          url
-          minIntensity
-          maxIntensity
-          totalIntensity
-        }
-        isomers {
-          ion
-        }
-        isobars {
-          ion
-          ionFormula
-          peakNs
-          shouldWarn
-        }
-        possibleCompounds {
-          name
-          imageURL
-          information {
-            database
-            url
-            databaseId
-          }
-        }
-      }
     }
   }`
