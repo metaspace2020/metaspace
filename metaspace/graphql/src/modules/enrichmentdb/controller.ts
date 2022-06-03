@@ -1,5 +1,5 @@
 import { Context } from '../../context'
-import { EnrichmentDb, EnrichmentTerm, Query } from '../../binding'
+import { EnrichmentDb, EnrichmentTerm, Query, MolecularDB } from '../../binding'
 import {
   EnrichmentDB as EnrichmentDbModel,
   EnrichmentTerm as EnrichmentTermModel,
@@ -79,6 +79,28 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return true
     }
     return false
+  },
+  async allEnrichedMolDatabases(_: any, {
+    datasetId,
+  }: any, ctx: Context): Promise<MolecularDB[] | null> {
+    const molDatabases = await ctx.entityManager
+      .find(DatasetEnrichmentModel, {
+        join: {
+          alias: 'dsEnrichment',
+          leftJoin: { molecularDB: 'dsEnrichment.molecularDB' },
+        },
+        where: (qb : any) => {
+          qb.where('dsEnrichment.datasetId = :datasetId', { datasetId })
+        },
+        relations: [
+          'molecularDB',
+        ],
+      })
+
+    if (molDatabases) {
+      return molDatabases.map((item: any) => item.molecularDB)
+    }
+    return null
   },
 }
 

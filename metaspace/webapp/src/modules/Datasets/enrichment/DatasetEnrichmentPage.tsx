@@ -8,6 +8,7 @@ import { getDatasetByIdQuery, GetDatasetByIdQuery, getDatasetEnrichmentQuery } f
 import { DatasetEnrichmentChart } from './DatasetEnrichmentChart'
 import { DatasetEnrichmentTable } from './DatasetEnrichmentTable'
 import './DatasetEnrichmentPage.scss'
+import { getEnrichedMolDatabasesQuery } from '../../../api/enrichmentdb'
 
 interface DatasetEnrichmentPageProps {
   className: string
@@ -44,6 +45,12 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       loading: datasetLoading,
     } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId })
     const dataset = computed(() => datasetResult.value != null ? datasetResult.value.dataset : null)
+    const {
+      result: databasesResult,
+      loading: databasesLoading,
+    } = useQuery<any>(getEnrichedMolDatabasesQuery, { id: datasetId })
+    const databases = computed(() => databasesResult.value != null
+      ? databasesResult.value.allEnrichedMolDatabases : null)
     const {
       result: enrichmentResult,
       loading: enrichmentLoading,

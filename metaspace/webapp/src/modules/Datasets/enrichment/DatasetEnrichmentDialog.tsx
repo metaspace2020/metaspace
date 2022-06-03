@@ -34,11 +34,14 @@ export const DatasetEnrichmentDialog = defineComponent<DatasetEnrichmentDialogPr
               !(dataset.status !== 'FINISHED' && dataset.status !== 'FAILED')
               && <span> Apply enrichment?  </span>
             }
-            <div class='w-full flex justify-end items-center'>
-              <Button onClick={() => emit('enrich')} type="primary">
-                Apply
-              </Button>
-            </div>
+            {
+              !(dataset.status !== 'FINISHED' && dataset.status !== 'FAILED')
+              && <div class='w-full flex justify-end items-center'>
+                <Button onClick={() => emit('enrich')} type="primary">
+                  Apply
+                </Button>
+              </div>
+            }
           </div>
         </Dialog>
       )
