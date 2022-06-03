@@ -1,12 +1,11 @@
 import logging
 
+logger = logging.getLogger('engine')
 
 from sm.engine.config import SMConfig
 from sm.engine.db import DB, transaction_context
 
 from datetime import datetime
-
-logger = logging.getLogger('engine')
 
 
 class DatasetEnrichment:
@@ -49,7 +48,8 @@ def create(
 ) -> int:
     with transaction_context():
         enrichment_db_insert = 'INSERT INTO dataset_enrichment (dataset_id, enrichment_db_id, ' \
-                               'molecular_db_id, processing_dt) values (%s, %s, %s, %s) RETURNING id'
+                               'molecular_db_id, processing_dt) values ' \
+                               '(%s, %s, %s, %s) RETURNING id'
         # pylint: disable=unbalanced-tuple-unpacking
         (enrichment_db_id,) = DB().insert_return(
             enrichment_db_insert,

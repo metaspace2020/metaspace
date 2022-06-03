@@ -7,7 +7,7 @@
     <div slot="edit">
       <el-select
         :value="filterValues.molClass ? parseInt(filterValues.molClass, 10) : undefined"
-        placeholder="Select molecular class"
+        placeholder="Select molecular ontology"
         filterable
         clearable
         remote

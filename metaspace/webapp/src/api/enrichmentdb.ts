@@ -16,3 +16,11 @@ export const checkIfEnrichmentRequested =
 gql`query enrichmentRequested($id: String!) {
   enrichmentRequested(datasetId: $id)
 }`
+
+export const getEnrichedMolDatabasesQuery =
+gql`query allEnrichedMolDatabases($id: String!) {
+  allEnrichedMolDatabases(datasetId: $id) {
+    id
+    name
+  }
+}`

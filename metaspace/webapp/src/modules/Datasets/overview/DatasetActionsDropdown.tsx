@@ -127,18 +127,18 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
 
     const handleEnrichmentRequest = () => {
       closeEnrichmentDialog()
-      handleReprocess()
+      handleReprocess(true)
     }
 
-    const handleReprocess = async() => {
+    const handleReprocess = async(performEnrichment = false) => {
       try {
         state.disabled = true
         await $apollo.mutate({
           mutation: reprocessDatasetQuery,
           variables: {
             id: props.dataset?.id,
-            useLithops: true, // config.features.lithops,
-            performEnrichment: true,
+            useLithops: true, // performEnrichment || config.features.lithops,
+            performEnrichment: performEnrichment,
           },
         })
         $notify.success('Dataset sent for reprocessing')

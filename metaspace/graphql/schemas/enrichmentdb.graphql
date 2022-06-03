@@ -17,4 +17,5 @@ type Query {
         enrichmentId: String, id: Int, limit: Int = 10) : [EnrichmentTerm]
     allFormulasByEnrichmentTerm(termId: Int) : [String]
     enrichmentRequested(datasetId: String) : Boolean
+    allEnrichedMolDatabases(datasetId: String): [MolecularDB]
 }

@@ -1,8 +1,8 @@
 import logging
 from typing import Any, Union, TypedDict
+from datetime import datetime
 from sm.engine import enrichment_bootstrap
 from sm.engine import dataset_enrichment
-from datetime import datetime
 
 logger = logging.getLogger('engine')
 
@@ -27,7 +27,7 @@ def add_enrichment(enrichment: DatasetEnrichment, moldb_id: int):
             dataset_id=ds_id,
             enrichment_db_molecule_mapping_id=row['enrichment_db_molecule_mapping_id'],
         )
-    logger.debug(f'Bootstrap inserted')
+    logger.debug('Bootstrap inserted')
     logger.debug(f'Inserting enrichment for dataset {ds_id}')
 
     dataset_enrichment.create(
@@ -36,7 +36,7 @@ def add_enrichment(enrichment: DatasetEnrichment, moldb_id: int):
         molecular_db_id=moldb_id,
         processing_dt=datetime.now(),
     )
-    logger.debug(f'Enrichment inserted')
+    logger.debug('Enrichment inserted')
 
 
 def delete_ds_enrichments(ds_id: str):
