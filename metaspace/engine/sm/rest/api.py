@@ -5,7 +5,7 @@ import bottle
 
 from sm.engine.util import GlobalInit
 from sm.rest import isotopic_pattern, datasets, databases, imzml_browser
-from sm.rest.utils import body_to_json, make_response, OK, INTERNAL_ERROR
+from sm.rest.utils import make_response, OK, INTERNAL_ERROR
 
 logger = logging.getLogger('api')
 

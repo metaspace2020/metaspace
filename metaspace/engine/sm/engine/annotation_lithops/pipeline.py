@@ -5,7 +5,6 @@ from typing import List, Tuple, Optional, Dict
 
 import numpy as np
 import pandas as pd
-from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 
 from sm.engine.annotation.diagnostics import FdrDiagnosticBundle

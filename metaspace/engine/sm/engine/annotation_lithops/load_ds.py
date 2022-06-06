@@ -93,7 +93,7 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs)
 
 def _upload_imzml_browser_files_to_s3(storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs):
     #
-    CHUNK_RECORDS_N = 1024
+    chunk_records_number = 1024
 
     imzml_browser_cobjs = []
     prefix = f'imzml_browser/{imzml_cobject.key.split("/")[1]}'
@@ -107,7 +107,7 @@ def _upload_imzml_browser_files_to_s3(storage, imzml_cobject, imzml_reader, mzs,
     imzml_browser_cobjs.append(save_cobj(storage, data, key=key))
 
     key = f'{prefix}/mz_index.bin'
-    data = mzs[::CHUNK_RECORDS_N]
+    data = mzs[::chunk_records_number]
     imzml_browser_cobjs.append(save_cobj(storage, data, key=key))
 
     return imzml_browser_cobjs

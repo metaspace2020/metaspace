@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from sm.rest.imzml_browser_manager import DatasetBrowser
-from sm.rest.utils import body_to_json
+from sm.rest.utils import body_to_json, make_response, INTERNAL_ERROR
 
 
 logger = logging.getLogger('api')
@@ -67,4 +67,5 @@ def get_intensity_by_mz_ppm():
         headers = {'Content-Type': 'image/png'}
         return bottle.HTTPResponse(body, **headers)
     except Exception as e:
-        logger.error(f'{bottle.request} - {e}')
+        logger.warning(f'{bottle.request} - {e}')
+        return make_response(INTERNAL_ERROR)
