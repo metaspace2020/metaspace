@@ -136,5 +136,8 @@
   },
   "image_storage": {
     "bucket": "sm-image-storage-test"
+  },
+  "imzml_browser_storage": {
+    "bucket": "sm-imzml-browser-test"
   }
 }
