@@ -218,6 +218,7 @@ def test_server_annotation_job(test_db, executor: Executor, sm_config, ds_config
     assert len(profiles) == 1
     assert len(profile_entries) > 10
 
+
 @patch('sm.engine.annotation.fdr.DECOY_ADDUCTS', MOCK_DECOY_ADDUCTS)
 @patch('sm.engine.annotation_lithops.segment_centroids.MIN_CENTR_SEGMS', 2)  # Reduce log spam
 def test_local_annotation_job(executor: Executor, sm_config, ds_config):
