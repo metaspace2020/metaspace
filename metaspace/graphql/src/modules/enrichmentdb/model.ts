@@ -88,6 +88,9 @@ export class EnrichmentBootstrap {
   @Column({ name: 'dataset_id' })
   datasetId: string;
 
+  @Column({ name: 'annotation_id' })
+  annotationId: string;
+
   @Column({ type: 'numeric', precision: 2, scale: 2 })
   fdr: string;
 

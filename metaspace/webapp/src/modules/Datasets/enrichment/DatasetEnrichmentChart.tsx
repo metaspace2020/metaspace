@@ -90,6 +90,14 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
             show: true,
           },
         },
+
+        toolbox: {
+          feature: {
+            saveAsImage: {
+              title: 'Download',
+            },
+          },
+        },
         yAxis: {
           type: 'category',
           triggerEvent: true,
