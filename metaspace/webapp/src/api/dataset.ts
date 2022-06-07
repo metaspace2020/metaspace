@@ -407,8 +407,8 @@ export const getDatasetStatusQuery =
   }`
 
 export const getDatasetEnrichmentQuery =
-  gql`query getDatasetEnrichmentQuery($id: String!, $dbId: Int = 3, $fdr: Float = 0.1) {
-    lipidEnrichment(datasetId: $id, molDbId: $dbId, fdr: $fdr) {
+  gql`query getDatasetEnrichmentQuery($id: String!, $dbId: Int = 3, $fdr: Float = 0.5, $offSample: Boolean = false) {
+    lipidEnrichment(datasetId: $id, molDbId: $dbId, fdr: $fdr, offSample: $offSample) {
       id
       termId
       name
@@ -419,5 +419,49 @@ export const getDatasetEnrichmentQuery =
       std
       pValue
       qValue
+            annotations {
+        id
+        sumFormula
+        adduct
+        ion
+        ionFormula
+        database
+        msmScore
+        rhoSpatial
+        rhoSpectral
+        rhoChaos
+        fdrLevel
+        mz
+        offSample
+        offSampleProb
+        databaseDetails {
+          id
+        }
+        isotopeImages {
+          mz
+          url
+          minIntensity
+          maxIntensity
+          totalIntensity
+        }
+        isomers {
+          ion
+        }
+        isobars {
+          ion
+          ionFormula
+          peakNs
+          shouldWarn
+        }
+        possibleCompounds {
+          name
+          imageURL
+          information {
+            database
+            url
+            databaseId
+          }
+        }
+      }
     }
   }`

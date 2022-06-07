@@ -314,6 +314,7 @@ type Enrichment {
   std: Float
   pValue: Float
   qValue: Float
+  annotations: [Annotation]
 }
 
 enum DatasetAction {
@@ -353,7 +354,7 @@ type Query {
 
   countDatasetsPerGroup(query: DatasetCountPerGroupInput!): DatasetCountPerGroup!
 
-  lipidEnrichment(datasetId: String!, molDbId: Int, fdr: Float): [Enrichment]
+  lipidEnrichment(datasetId: String!, molDbId: Int, fdr: Float, offSample: Boolean): [Enrichment]
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 

@@ -366,9 +366,12 @@ class ServerAnnotationJob:
                     and moldb_id in self.enrichment_data.keys()
                     and not self.enrichment_data[moldb_id].empty
                 ):
+                    # get annotations ids to be used later on to speed up enrichment routes
+                    annot_ids = search_results.get_annotations_ids(self.db)
                     bootstrap_df = self.enrichment_data[moldb_id]
                     add_enrichment(
-                        DatasetEnrichment(ds_id=self.ds.id, bootstrap_data=bootstrap_df), moldb_id
+                        DatasetEnrichment(ds_id=self.ds.id, bootstrap_data=bootstrap_df),
+                        moldb_id, annot_ids
                     )
 
                 update_finished_job(job_id, JobStatus.FINISHED)

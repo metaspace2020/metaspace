@@ -10,11 +10,13 @@ import {
   OpticalImage,
 } from '../../engine/model'
 import {
-  EnrichmentBootstrap,
+  EnrichmentBootstrap, EnrichmentDBMoleculeMapping as EnrichmentDBMoleculeMappingModel,
   EnrichmentDBMoleculeMapping,
   EnrichmentTerm,
 } from '../../enrichmentdb/model'
 import { smApiJsonPost } from '../../../utils/smApi/smApiCall'
+import { uniq } from 'lodash'
+import { unpackAnnotation } from '../../annotation/controller/Query'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER
@@ -85,9 +87,24 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     return null
   },
 
-  async lipidEnrichment(source, { datasetId, molDbId, fdr = 0.5 }, ctx) {
+  async lipidEnrichment(source, {
+    datasetId, molDbId, fdr = 0.5,
+    offSample = false,
+  }, ctx) {
     if (await esDatasetByID(datasetId, ctx.user)) { // check if user has access
       try {
+        let idsWithOffSampleFilter : any = []
+
+        if (offSample) { // get only on sample molecules
+          const offSampleIons = await esSearchResults({
+            datasetFilter: { ids: datasetId },
+            filter: { databaseId: molDbId, offSample: true },
+          }
+          , 'annotation', ctx.user)
+          // console.log('dude', offSampleIons)
+          idsWithOffSampleFilter = uniq(offSampleIons.map((item: any) => item._source?.annotation_id))
+        }
+
         const bootstrap = await ctx.entityManager
           .find(EnrichmentBootstrap, {
             join: {
@@ -96,9 +113,12 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
             },
             where: (qb : any) => {
               qb.where('bootstrap.datasetId = :datasetId', { datasetId })
-                .andWhere('bootstrap.fdr <= :fdr', { fdr })
-                .andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
-                .orderBy('bootstrap.scenario', 'ASC')
+              qb.andWhere('bootstrap.fdr <= :fdr', { fdr })
+              if (offSample) {
+                qb.andWhere('bootstrap.annotationId IN (:...idsWithOffSampleFilter)', { idsWithOffSampleFilter })
+              }
+              qb.andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
+              qb.orderBy('bootstrap.scenario', 'ASC')
             },
             relations: [
               'enrichmentDBMoleculeMapping',
@@ -161,6 +181,30 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
         for (let i = 0; i < data.enrichment.length; i++) {
           const item = data.enrichment[i]
+          const mols = uniq(data.molecules
+            .filter((term: any) => term.id === item.id)
+            .map((term:any) => term.mols).flat())
+          const bootstrapItems = await ctx.entityManager
+            .find(EnrichmentBootstrap, {
+              join: {
+                alias: 'bootstrap',
+                leftJoin: { enrichmentDBMoleculeMapping: 'bootstrap.enrichmentDBMoleculeMapping' },
+              },
+              where: (qb : any) => {
+                qb.where('bootstrap.datasetId = :datasetId', { datasetId })
+                  .andWhere('bootstrap.fdr <= :fdr', { fdr })
+                  .andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
+                  .andWhere('enrichmentDBMoleculeMapping.moleculeEnrichedName IN (:...names)', { names: mols })
+                  .orderBy('bootstrap.scenario', 'ASC')
+              },
+              relations: [
+                'enrichmentDBMoleculeMapping',
+              ],
+            })
+          const ionIds = uniq(bootstrapItems.map((bItem: any) => `${datasetId}_${bItem.annotationId}`)).join('|')
+          const annotations = await esSearchResults({ filter: { annotationId: ionIds } }
+            , 'annotation', ctx.user)
+          item.annotations = annotations.map(unpackAnnotation)
           item.termId = termsIdHash[item.id]
         }
         return data.enrichment
