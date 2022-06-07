@@ -104,22 +104,10 @@
       "endpoint": "http://storage:9000"
     },
     "sm_storage": {
-      "imzml": [
-        "DATA_BUCKET",
-        "imzml"
-      ],
-      "moldb": [
-        "DATA_BUCKET",
-        "moldb"
-      ],
-      "centroids": [
-        "DATA_BUCKET",
-        "centroids"
-      ],
-      "pipeline_cache": [
-        "TEMP_BUCKET",
-        "pipeline_cache"
-      ]
+      "imzml": ["DATA_BUCKET", "imzml"],
+      "moldb": ["DATA_BUCKET", "moldb"],
+      "centroids": ["DATA_BUCKET", "centroids"],
+      "pipeline_cache": ["TEMP_BUCKET", "pipeline_cache"]
     }
   },
   "slack": {
@@ -182,17 +170,7 @@
     }
   },
   "ds_config_defaults": {
-    "adducts": {
-      "+": [
-        "+H",
-        "+Na",
-        "+K"
-      ],
-      "-": [
-        "-H",
-        "+Cl"
-      ]
-    }
+    "adducts": {"+": ["+H", "+Na", "+K"], "-": ["-H", "+Cl"]}
   },
   "storage": {
     "endpoint_url": "http://storage:9000",
@@ -201,5 +179,8 @@
   },
   "image_storage": {
     "bucket": "sm-image-storage-dev"
+  },
+  "imzml_browser_storage": {
+    "bucket": "sm-imzml-browser-dev"
   }
 }

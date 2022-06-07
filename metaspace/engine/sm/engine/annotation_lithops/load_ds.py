@@ -91,8 +91,8 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs)
     return ds_segms_cobjs, ds_segments_bounds, ds_segm_lens
 
 
-def _upload_imzml_browser_files_to_s3(storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs):
-    #
+def _upload_imzml_browser_files_to_cos(storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs):
+    """Save imzml browser files on COS"""
     chunk_records_number = 1024
 
     imzml_browser_cobjs = []
@@ -145,10 +145,10 @@ def _load_ds(
     perf.record_entry('uploaded segments', n_segms=len(ds_segms_cobjs))
 
     logger.info('Uploading related to imzml browser files')
-    imzml_browser_cobjs = _upload_imzml_browser_files_to_s3(
+    imzml_browser_cobjs = _upload_imzml_browser_files_to_cos(
         storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs
     )
-    perf.record_entry('uploaded related to imzml browser files')
+    perf.record_entry('uploaded imzml browser files')
 
     return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, imzml_browser_cobjs
 

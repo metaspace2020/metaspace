@@ -48,22 +48,10 @@
     },
     "localhost": {},
     "sm_storage": {
-      "imzml": [
-        "lithops_test",
-        "imzml"
-      ],
-      "moldb": [
-        "lithops_test",
-        "moldb"
-      ],
-      "centroids": [
-        "lithops_test",
-        "centroids"
-      ],
-      "pipeline_cache": [
-        "lithops_test",
-        "pipeline_cache"
-      ]
+      "imzml": ["lithops_test", "imzml"],
+      "moldb": ["lithops_test", "moldb"],
+      "centroids": ["lithops_test", "centroids"],
+      "pipeline_cache": ["lithops_test", "pipeline_cache"]
     }
   },
   "slack": {},
@@ -117,17 +105,7 @@
     }
   },
   "ds_config_defaults": {
-    "adducts": {
-      "+": [
-        "+H",
-        "+Na",
-        "+K"
-      ],
-      "-": [
-        "-H",
-        "+Cl"
-      ]
-    }
+    "adducts": {"+": ["+H", "+Na", "+K"], "-": ["-H", "+Cl"]}
   },
   "storage": {
     "endpoint_url": "http://localhost:9000",
@@ -138,6 +116,6 @@
     "bucket": "sm-image-storage-test"
   },
   "imzml_browser_storage": {
-    "bucket": "sm-imzml-browser"
+    "bucket": "sm-imzml-browser-test"
   }
 }
