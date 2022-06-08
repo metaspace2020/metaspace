@@ -426,9 +426,9 @@ export default defineComponent<DatasetBrowserProps>({
               style={{
                 visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
               }}>
-              <p class='font-semibold w-full'>Mass reference</p>
+              <div class='font-semibold w-full'>Mass reference</div>
               <Select
-                class='select-box mr-4'
+                class='reference-box mr-4'
                 value={state.fixedMassReference}
                 onChange={(value: number) => {
                   state.fixedMassReference = value
