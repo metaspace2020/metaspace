@@ -24,9 +24,11 @@ from sm.engine.util import populate_aws_env_vars
 from sm.engine.config import proj_root, init_loggers, SMConfig
 from sm.engine.es_export import ESIndexManager
 from sm.engine.annotation.imzml_reader import FSImzMLReader
+from sm.engine.storage import get_s3_client, create_bucket
 from .utils import TEST_METADATA, TEST_DS_CONFIG, create_test_molecular_db
 
 TEST_CONFIG_PATH = 'conf/test_config.json'
+IMZML_BROWSER_BUCKET_NAME = 'sm-imzml-browser-test'
 
 
 @pytest.fixture(scope='session')
@@ -60,6 +62,9 @@ def global_setup(sm_config):
 
     image_storage.init(sm_config)
     image_storage.configure_bucket(sm_config)
+
+    s3_client = get_s3_client()
+    create_bucket(IMZML_BROWSER_BUCKET_NAME, s3_client)
 
 
 @pytest.fixture()
