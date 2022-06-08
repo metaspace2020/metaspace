@@ -371,7 +371,8 @@ class ServerAnnotationJob:
                     bootstrap_df = self.enrichment_data[moldb_id]
                     add_enrichment(
                         DatasetEnrichment(ds_id=self.ds.id, bootstrap_data=bootstrap_df),
-                        moldb_id, annot_ids
+                        moldb_id,
+                        annot_ids,
                     )
 
                 update_finished_job(job_id, JobStatus.FINISHED)
