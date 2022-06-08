@@ -318,9 +318,9 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
         }
       }
 
-      auxOptions.xAxis.min = minX
+      auxOptions.xAxis.min = minX - (100) // decrease 100 to give space between axis start and first point
       auxOptions.xAxis.max = maxX
-      auxOptions.yAxis.max = maxY * 1.1
+      auxOptions.yAxis.max = 1 // maxY * 1.1
       auxOptions.series[0].data = data
       // handleZoomReset()
       return auxOptions
