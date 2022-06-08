@@ -10,7 +10,7 @@ import {
   OpticalImage,
 } from '../../engine/model'
 import {
-  EnrichmentBootstrap, EnrichmentDBMoleculeMapping as EnrichmentDBMoleculeMappingModel,
+  EnrichmentBootstrap,
   EnrichmentDBMoleculeMapping,
   EnrichmentTerm,
 } from '../../enrichmentdb/model'
