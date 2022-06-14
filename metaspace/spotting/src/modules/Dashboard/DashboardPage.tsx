@@ -1,7 +1,7 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
 import './DashboardPage.scss'
 import { Option, Select, Pagination, InputNumber, Button, RadioGroup, RadioButton } from '../../lib/element-ui'
-import { cloneDeep, groupBy, keyBy, omit, orderBy, sortedUniq, uniq, uniqBy } from 'lodash-es'
+import { cloneDeep, groupBy, keyBy, maxBy, omit, orderBy, sortedUniq, uniq, uniqBy } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
@@ -9,6 +9,8 @@ import { ChartSettings } from './ChartSettings'
 // import { predictions } from '../../data/predictions'
 import createColormap from '../../lib/createColormap'
 import Vue from 'vue'
+import getColorScale from '../../lib/getColorScale'
+import { isEqual } from 'lodash'
 
 interface Options{
   xAxis: any
@@ -52,7 +54,7 @@ const VIEW = {
 const AXIS_VALUES = [
   {
     label: 'Polarity',
-    src: 'pol',
+    src: 'Polarity',
   },
   {
     label: 'Adducts',
@@ -64,7 +66,7 @@ const AXIS_VALUES = [
   },
   {
     label: 'Matrix',
-    src: 'mS',
+    src: 'Matrix short',
   },
   {
     label: 'Molecule',
@@ -72,7 +74,7 @@ const AXIS_VALUES = [
   },
   {
     label: 'Technology',
-    src: 't',
+    src: 'Technology',
   },
   {
     label: 'Pathway',
@@ -92,23 +94,23 @@ const AXIS_VALUES = [
   },
   {
     label: 'Dataset',
-    src: 'd',
+    src: 'dsId',
   },
   {
     label: 'Lab',
-    src: 'lab',
+    src: 'Participant lab',
   },
   {
     label: 'Ionisation source',
-    src: 'sT',
+    src: 'Source Type',
   },
   {
     label: 'Mass analyser',
-    src: 'an',
+    src: 'Analyzer',
   },
   {
     label: 'Vacuum level',
-    src: 'sP',
+    src: 'Source Pressure',
   },
 ]
 
@@ -134,7 +136,7 @@ const AGGREGATED_VALUES = [
 const FILTER_VALUES = [
   {
     label: 'Polarity',
-    src: 'pol',
+    src: 'Polarity',
   },
   {
     label: 'Adducts',
@@ -146,7 +148,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'Matrix',
-    src: 'mS',
+    src: 'Matrix short',
   },
   {
     label: 'Value Prediction',
@@ -160,7 +162,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'Technology',
-    src: 't',
+    src: 'Technology',
   },
   {
     label: 'Pathway class',
@@ -180,11 +182,11 @@ const FILTER_VALUES = [
   },
   {
     label: 'Dataset',
-    src: 'd',
+    src: 'dsId',
   },
   {
     label: 'Lab',
-    src: 'lab',
+    src: 'Participant lab',
   },
   {
     label: 'Molecule',
@@ -266,7 +268,7 @@ export default defineComponent({
       options: [],
     }
     const state = reactive<DashboardState>({
-      colormap: null,
+      colormap: '-YlGnBu',
       filter: [cloneDeep(filterItem)],
       hiddenYValues: [],
       hiddenXValues: [],
@@ -302,83 +304,7 @@ export default defineComponent({
       wellmap: null,
     })
 
-    onMounted(async() => {
-      try {
-        console.log('Downloading files')
-        state.loading = true
-        const baseUrl = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/new/'
-        const response = await fetch(baseUrl + 'matrix_predictions_24-05-22.json')
-        const matrixPredictions = await response.json()
-        const responseInterLab = await fetch(baseUrl + 'interlab_predictions_27-04-22.json')
-        const interLabPredictions = await responseInterLab.json()
-        const datasetResponse = await fetch(baseUrl + 'datasets_31-05-22.json')
-        const datasets = await datasetResponse.json()
-        const chemClassResponse = await fetch(baseUrl + 'custom_classification_14-03-22.json')
-        state.classification = await chemClassResponse.json()
-        const pathwayResponse = await fetch(baseUrl + 'pathways_14-03-22.json')
-        state.pathways = await pathwayResponse.json()
-
-        const datasetsById = keyBy(datasets, 'Dataset ID')
-        delete datasetsById.null
-        const predWithDs : any = []
-        matrixPredictions.forEach((prediction: any) => {
-          const datasetItem = datasetsById[prediction.dsId]
-          if (datasetItem) {
-            predWithDs.push({
-              pol: datasetItem.Polarity,
-              mS: datasetItem['Matrix short'],
-              mL: datasetItem['Matrix long'],
-              t: datasetItem.nology,
-              lab: datasetItem['Participant lab'],
-              sT: datasetItem['Source Type'],
-              sP: datasetItem['Source Pressure'],
-              an: datasetItem.Analyzer,
-              d: prediction.dsId,
-              f: prediction.f,
-              a: prediction.a,
-              nl: prediction.nL,
-              n: prediction.name,
-              pV: prediction.pV,
-              p: prediction.p,
-              v: prediction.v,
-            })
-          }
-        })
-        const predWithDsInter : any = []
-        interLabPredictions.forEach((prediction: any) => {
-          const datasetItem = datasetsById[prediction.dsId]
-          if (datasetItem) {
-            predWithDsInter.push({
-              pol: datasetItem.Polarity,
-              mS: datasetItem['Matrix short'],
-              mL: datasetItem['Matrix long'],
-              t: datasetItem.nology,
-              lab: datasetItem['Participant lab'],
-              sT: datasetItem['Source Type'],
-              sP: datasetItem['Source Pressure'],
-              an: datasetItem.Analyzer,
-              d: prediction.dsId,
-              f: prediction.f,
-              a: prediction.a,
-              nl: prediction.nL,
-              n: prediction.name,
-              pV: prediction.pV,
-              p: prediction.p,
-              v: prediction.v,
-            })
-          }
-        })
-        console.log('File loaded')
-        // console.log('File loaded', predWithDs)
-        // console.log('File loaded inter', predWithDsInter)
-        state.rawData = predWithDs
-        state.rawDataInter = predWithDsInter
-      } catch (e) {
-        console.log('error', e)
-      } finally {
-        state.loading = false
-      }
-
+    const initializeState = async() => {
       if ($route.query.page) {
         state.pagination.currentPage = parseInt($route.query.page, 10)
       }
@@ -389,13 +315,16 @@ export default defineComponent({
         state.options.valueMetric = parseInt($route.query.metric, 10)
       }
       if ($route.query.xAxis) {
-        handleAxisChange($route.query.xAxis)
+        await handleAxisChange($route.query.xAxis, true, false)
       }
       if ($route.query.yAxis) {
-        handleAxisChange($route.query.yAxis, false)
+        await handleAxisChange($route.query.yAxis, false, false)
       }
       if ($route.query.agg) {
-        handleAggregationChange($route.query.agg)
+        handleAggregationChange($route.query.agg, false)
+      }
+      if ($route.query.src) {
+        handleDataSrcChange($route.query.src, false)
       }
 
       if ($route.query.filter) {
@@ -405,7 +334,7 @@ export default defineComponent({
           if (index > 0) {
             addFilterItem()
           }
-          handleFilterSrcChange(item, index)
+          handleFilterSrcChange(item, index, false)
         })
       }
 
@@ -413,15 +342,24 @@ export default defineComponent({
         $route.query.filterValue.split('|').forEach((item: any, index: number) => {
           const value = ((state.filter[index].isBoolean || state.filter[index].isNumeric)
             ? item : item.split('#'))
-          handleFilterValueChange(value, index)
+          if (!Array.isArray(value) || (value.length > 0 && value[0])) {
+            handleFilterValueChange(value, index, false)
+          }
         })
       }
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+        await loadData()
+        buildValues()
+      }
+    }
 
-      buildValues()
+    onMounted(() => {
+      initializeState()
     })
 
-    const buildFilterOptions = (filter: any, filterIndex: number, data: any[]) => {
-      const filterSpec = FILTER_VALUES.find((filterItem: any) => filterItem.src === filter.src)
+    const buildFilterOptions = async(filterIndex: number) => {
+      const filterSpec = FILTER_VALUES.find((filterItem: any) => filterItem.src
+        === state.filter[filterIndex].src)
       if (filterSpec && filterSpec?.isNumeric) {
         state.filter[filterIndex].isNumeric = true
         state.filter[filterIndex].isBoolean = false
@@ -433,252 +371,168 @@ export default defineComponent({
         state.filter[filterIndex].isNumeric = false
         state.filter[filterIndex].isBoolean = false
       }
-      state.loadingFilterOptions = true
+      state.filter[filterIndex].loadingFilterOptions = true
 
-      state.filter[filterIndex].options = uniq(data.map((item: any) => (item[filter.src] === null
-        || item[filter.src] === undefined || item[filter.src] === 'null') ? 'None' : item[filter.src])).sort()
-      state.loadingFilterOptions = false
+      const options = await loadFilterValues(state.filter[filterIndex].src)
+      state.filter[filterIndex].options = uniq(options.map((item: any) => (item === null
+        || item === undefined || item === 'null') ? 'None' : item)).sort()
+      state.filter[filterIndex].loadingFilterOptions = false
     }
 
-    const buildValues = () => {
-      if (state.buildingChart) {
-        return
+    const loadData = async() => {
+      try {
+        state.loading = true
+        console.log('loading data')
+        // load data
+        const params : any = {
+          isMatrix: state.dataSource === 'Matrix',
+          xAxis: state.options.xAxis,
+          yAxis: state.options.yAxis,
+          loadPathway: Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
+            || Object.keys(PATHWAY_METRICS).includes(state.options.yAxis),
+          loadClass: Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)
+            || Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis),
+          queryType: 'data',
+          filter: (state.filter || []).map((item: any) => item.src).join(','),
+          filterValues: (state.filter || []).map((item: any) => Array.isArray(item.value)
+            ? item.value.join('#') : item.value).filter((x:any) => x).join('|'),
+        }
+
+        const query = Object.keys(params)
+          .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+          .join('&')
+
+        const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws'
+        const response = await fetch(baseUrl + '?' + query)
+        state.usedData = await response.json()
+      } catch (e) {
+        state.usedData = {}
+        state.data = []
+      } finally {
+        state.loading = false
       }
-      console.log('building')
+    }
 
-      let auxData : any = null
-      let filteredData : any = state.usedData
-      let min : number = 0
-      let max : number = 0
-      const maxColormap : number = 100000
-      state.buildingChart = true
-
-      state.filter.forEach((filter: any, filterIndex: number) => {
-        if (filter.src && !filter.value) {
-          buildFilterOptions(filter, filterIndex, filteredData)
-        } else if (filter.src && filter.value) {
-          filteredData = filteredData.filter((data: any) => {
-            const filterValue = Array.isArray(filter.value) && filter.value.includes('None')
-              ? filter.value.concat(['null', null, undefined, 'nan', 'Nan', 'None', 'none'])
-              : filter.value
-            return filter.isNumeric ? parseFloat(data[filter.src]) <= parseFloat(filter.value)
-              : (filter.isBoolean ? (filterValue === 'True'
-                ? (data[filter.src] === 2) : data[filter.src] !== 2) // pred threestate
-                : (filterValue.length === 0 || filterValue.includes(data[filter.src])))
-          })
+    const loadFilterValues = async(filter:any) => {
+      try {
+        console.log('loading filter data')
+        // load data
+        const params : any = {
+          isMatrix: state.dataSource === 'Matrix',
+          xAxis: state.options.xAxis,
+          yAxis: state.options.yAxis,
+          loadPathway: Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
+            || Object.keys(PATHWAY_METRICS).includes(state.options.yAxis),
+          loadClass: Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)
+            || Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis),
+          filter,
+          queryType: 'filterValues',
         }
-      })
 
-      auxData = groupBy(filteredData, state.options.xAxis)
-      let maxValue : number = 1
-      Object.keys(auxData).forEach((key: string) => {
-        if (state.options.yAxis === 'coarse_class') {
-          auxData[key] = groupBy(auxData[key], (item: any) => {
-            return item.coarse_class + ' -agg- ' + item.fine_class
-          })
-        } else {
-          auxData[key] = groupBy(auxData[key], state.options.yAxis)
-        }
-        Object.keys(auxData[key]).forEach((yKey: any) => {
-          if (auxData[key][yKey].length > maxValue && state.xAxisValues.includes(key)) {
-            maxValue = auxData[key][yKey].length
-          }
+        const query = Object.keys(params)
+          .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+          .join('&')
+
+        const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws'
+        const response = await fetch(baseUrl + '?' + query)
+        const filterJson = await response.json()
+        return filterJson.values
+      } catch (e) {
+        return null
+      }
+    }
+
+    const buildValues = async() => {
+      try {
+        const chartData = state.usedData
+        const data = chartData.data
+        const xAxisValues = chartData.xAxis
+        const yAxisValues = chartData.yAxis
+
+        const auxData : any = groupBy(data, state.options.xAxis)
+        Object.keys(auxData).forEach((key: string) => {
+          auxData[key] = keyBy(auxData[key], state.options.yAxis === 'coarse_class'
+            ? 'class_full' : state.options.yAxis)
         })
-      })
 
-      const dotValues : any = []
-      let availableAggregations : any = []
-      const xEmptyCounter : any = {}
-      const yEmptyCounter : any = {}
+        const dotValues : any = []
+        const maxColormap : number = state.options.aggregation === 'v_log'
+          ? Math.log10(100000) : 100000
+        const yMaxValue : any = state.options.valueMetric === VALUE_METRICS.count.src // @ts-ignore
+          ? maxBy(data, 'class_size')!.class_size // @ts-ignore
+          : maxBy(data, 'fraction_detected')!.fraction_detected
 
-      state.xAxisValues.forEach((xKey: any, xIndex: number) => {
-        state.yAxisValues.forEach((yKey: any, yIndex: number) => {
-          if (!(auxData[xKey] && auxData[xKey][yKey])) {
-            if (xEmptyCounter[xKey] === undefined) {
-              xEmptyCounter[xKey] = 0
-            }
-            if (yEmptyCounter[yKey] === undefined) {
-              yEmptyCounter[yKey] = 0
-            }
-            xEmptyCounter[xKey] += 1
-            yEmptyCounter[yKey] += 1
-          }
-        })
-      })
+        // build chart
+        xAxisValues.forEach((xKey: any, xIndex: number) => {
+          yAxisValues.forEach((yKey: any, yIndex: number) => {
+            const isEmpty : any = auxData[xKey][yKey] === undefined
+            const item : any = auxData[xKey][yKey] || {}
+            let pointAggregation : any = isEmpty ? 0 : (state.options.aggregation === 'v_log' ? item.log
+              : item.v)
 
-      const toBeRemoved : any[] = []
-      const toBeRemovedX : any[] = []
-      const yAxisIdxMap : any = {}
-      const xAxisIdxMap : any = {}
-      let counter = 0
-      state.yAxisValues.forEach((yAxis: any) => {
-        if (yEmptyCounter[yAxis] === state.xAxisValues.length) {
-          toBeRemoved.push(yAxis)
-        } else {
-          yAxisIdxMap[yAxis] = counter
-          counter += 1
-        }
-      })
-      counter = 0
-      state.xAxisValues.forEach((xAxis: any) => {
-        if (xEmptyCounter[xAxis] === state.yAxisValues.length) {
-          toBeRemovedX.push(xAxis)
-        } else {
-          xAxisIdxMap[xAxis] = counter
-          counter += 1
-        }
-      })
-
-      state.hiddenYValues = toBeRemoved
-      state.hiddenXValues = toBeRemovedX
-
-      state.xAxisValues.forEach((xKey: any) => {
-        let yMaxValue : number = 0
-
-        if (auxData[xKey] && state.options.valueMetric === VALUE_METRICS.average.src) {
-          Object.keys(auxData[xKey]).forEach((metricKey: string) => {
-            const auxAgg : any = groupBy(auxData[xKey][metricKey], 'p') // pred_threestate
-            const detected : any = uniq((auxAgg[2] || []).map((item:any) => item.n))
-            const nonDetected : any = uniq((auxAgg[0] || []).concat(auxAgg[1] || [])
-              .map((item:any) => item.n)).filter((item: any) => !detected.includes(item))
-            const totalAuxAgg : number = (detected.length
-              + nonDetected.length) || 1
-            const countAuxAgg : number = detected.length
-            if (totalAuxAgg && ((countAuxAgg / totalAuxAgg) > yMaxValue)) {
-              yMaxValue = countAuxAgg / totalAuxAgg
-            }
-          })
-        }
-
-        state.yAxisValues.forEach((yKey: any) => {
-          if (auxData[xKey] && auxData[xKey][yKey]) {
-            const label = state.options.aggregation === 'v_log' ? 'v'
-              : state.options.aggregation
-            const molecules : any = groupBy(auxData[xKey][yKey], 'n')
-            const moleculeAggregation : any = []
-            Object.keys(molecules).forEach((key: string) => {
-              let prediction = false
-              let intensity = 0
-              molecules[key].forEach((molecule: any) => {
-                intensity += molecule[label]
-                if (molecule.p === 2) {
-                  prediction = true
-                }
-              })
-              moleculeAggregation.push({
-                name: key,
-                [state.options.xAxis]: xKey,
-                [state.options.yAxis]: yKey,
-                prediction,
-                intensity: (state.options.aggregation === 'v_log' ? Math.log10(intensity + 1)
-                  : intensity),
-              })
-            })
-
-            const detected : any = uniq(moleculeAggregation.filter((molecule: any) => molecule.prediction))
-            const nonDetected : any = uniq(moleculeAggregation.filter((molecule: any) => !molecule.prediction))
-            const totalCount : number = (detected.length
-              + nonDetected.length) || 1
-            const classSize : number = totalCount
-            const sum = moleculeAggregation.map((item: any) => item.intensity).reduce((a:any, b:any) => a + b, 0)
-            let pointAggregation : any = (sum / classSize) || 0 // mean
-
-            if (state.options.aggregation === 'v_log' && pointAggregation > Math.log10(maxColormap)) { // set max
-              pointAggregation = Math.log10(maxColormap)
-            } else if (state.options.aggregation !== 'v_log' && pointAggregation > maxColormap) {
+            if (pointAggregation > maxColormap) {
               pointAggregation = maxColormap
             }
 
-            availableAggregations.push(pointAggregation)
-
-            const value : number = state.options.valueMetric === VALUE_METRICS.count.src ? auxData[xKey][yKey].length
-              : (detected.length / totalCount)
-            const normalizedValue = state.options.valueMetric === VALUE_METRICS.count.src
-              ? (value / maxValue) : (yMaxValue === 0 ? 0 : (value / yMaxValue))
-
+            const value : number = isEmpty ? 0 : (state.options.valueMetric === VALUE_METRICS.count.src
+              ? item.class_size
+              : item.fraction_detected)
+            const normalizedValue = isEmpty ? 0 : (state.options.valueMetric === VALUE_METRICS.count.src
+              ? (value / yMaxValue) : (yMaxValue === 0 ? 0 : (value / yMaxValue)))
             dotValues.push({
-              value: [xAxisIdxMap[xKey], yAxisIdxMap[yKey], normalizedValue * 15, pointAggregation, value],
+              value: [xIndex, yIndex, normalizedValue * 15, pointAggregation, value],
               label: {
                 key: yKey,
-                molecule: auxData[xKey][yKey][0].f,
+                molecule: item.formulas ? item.formulas.split(',')[0] : undefined,
                 x: xKey,
                 y: yKey,
-                datasetIds: uniq(auxData[xKey][yKey].map((item:any) => item.d)),
-                formulas: uniq(auxData[xKey][yKey].map((item:any) => item.f)),
-                matrix: auxData[xKey][yKey][0].mL,
+                datasetIds: item.dataset_ids ? item.dataset_ids.split(',') : undefined,
+                formulas: item.formulas ? item.formulas.split(',') : undefined,
+                matrix: item.matrixes ? item.matrixes.split(',') : undefined,
               },
             })
-          }
+          })
         })
-      })
 
-      let colormap : any = state.colormap
-      let colorSteps : number = 1
-      const colors : any = []
-
-      if (!Array.isArray(colormap)) {
-        colormap = createColormap('-YlGnBu').map((color: any) => {
-          return `rgba(${color.join(',')})`
-        })
-      }
-
-      availableAggregations = uniq(availableAggregations).sort()
-      availableAggregations = availableAggregations
-        .filter((agg:any) => agg !== null && agg !== undefined && agg !== 'undefined' && agg !== 'null')
-      colorSteps = availableAggregations.length
-        ? (colormap.length / availableAggregations.length) : 1
-      availableAggregations = availableAggregations.map((agg: any, aggIndex: number) => {
-        if (agg < min) {
-          min = agg
-        }
-        if (agg > max) {
-          max = agg
+        state.visualMap = {
+          type: state.options.aggregation !== 'coarse_class' ? 'continuous' : 'piecewise',
+          show: true,
+          calculable: true,
+          dimension: 3,
+          left: 'center',
+          inRange: {
+            color: getColorScale(state.colormap).range,
+          },
+          orient: 'horizontal',
+          min: 0,
+          max: maxColormap,
+          formatter: function(value: any) {
+            return value.toFixed(2)
+          },
         }
 
-        colors.push(colormap[Math.floor(aggIndex * colorSteps)])
-        return {
-          label: agg,
-          value: agg,
+        state.data = dotValues
+        if (state.data.length === 0) {
+          state.visualMap = { show: false }
         }
-      })
 
-      state.visualMap = {
-        type: state.options.aggregation !== 'coarse_class' ? 'continuous' : 'piecewise',
-        show: true,
-        calculable: true,
-        dimension: 3,
-        left: 'center',
-        inRange: {
-          color: colors,
-        },
-        orient: 'horizontal',
-        min: 0,
-        max: 1,
-        formatter: function(value: any) {
-          return value.toFixed(2)
-        },
-      }
+        state.pagination.total = xAxisValues.length
+        state.xAxisValues = xAxisValues
+        state.yAxisValues = yAxisValues
 
-      if (state.visualMap.type === 'piecewise') {
-        state.visualMap.pieces = availableAggregations
-        state.visualMap.show = availableAggregations.length > 0
-      } else {
-        state.visualMap.min = min
-        state.visualMap.max = max
+        state.buildingChart = false
+        console.log('built')
+      } catch (e) {
+        console.log('e', e)
+      } finally {
+        state.loading = false
       }
-      state.data = dotValues
-      if (state.data.length === 0) {
-        state.visualMap = { show: false }
-      }
-
-      state.buildingChart = false
-      console.log('built')
     }
 
-    const handleAggregationChange = (value: any) => {
+    const handleAggregationChange = (value: any, buildChart: boolean = true) => {
       state.options.aggregation = value
       $router.replace({ name: 'dashboard', query: { ...getQueryParams(), agg: value } })
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart) {
         buildValues()
       }
     }
@@ -699,7 +553,7 @@ export default defineComponent({
       }
     }
 
-    const handleFilterValueChange = (value: any, idx : any = 0) => {
+    const handleFilterValueChange = async(value: any, idx : any = 0, buildChart: boolean = true) => {
       state.filter[idx].value = value
       const filterValueParams = state.filter.map((item: any) => Array.isArray(item.value)
         ? item.value.join('#') : item.value).join('|')
@@ -712,7 +566,8 @@ export default defineComponent({
         },
       })
 
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart) {
+        await loadData()
         buildValues()
       }
     }
@@ -731,10 +586,8 @@ export default defineComponent({
       state.filter = filters
     }
 
-    const handleColormapChange = (colors: any) => {
-      state.colormap = colors.map((color: any) => {
-        return `rgba(${color.join(',')})`
-      })
+    const handleColormapChange = (color: any) => {
+      state.colormap = '-' + color.replace('-', '')
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
       }
@@ -750,14 +603,14 @@ export default defineComponent({
         const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'coarse_class'
           || state.options.yAxis === 'n' || state.options.yAxis === 'coarse_path'
           || state.options.yAxis === 'fine_path')
-          ? formulas : (yAxisFilter.includes('matrix') ? item.data.label.matrix : item.data.label.y)
+          ? formulas : (yAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.y)
         url += `&${yAxisFilter}=${encodeURIComponent(value)}`
       }
       if (xAxisFilter) {
         const value = (state.options.xAxis === 'fine_class' || state.options.xAxis === 'coarse_class'
           || state.options.xAxis === 'n' || state.options.xAxis === 'coarse_path'
           || state.options.xAxis === 'fine_path')
-          ? formulas : (xAxisFilter.includes('matrix') ? item.data.label.matrix : item.data.label.x)
+          ? formulas : (xAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.x)
         url += `&${xAxisFilter}=${encodeURIComponent(value)}`
       }
       window.open(url, '_blank')
@@ -774,6 +627,7 @@ export default defineComponent({
         metric: state.options.valueMetric,
         page: state.pagination.currentPage,
         pageSize: state.pagination.pageSize,
+        src: state.dataSource,
       }
 
       Object.keys(queryObj).forEach((key: string) => {
@@ -785,20 +639,36 @@ export default defineComponent({
       return queryObj
     }
 
-    const handleFilterSrcChange = (value: any, idx : any = 0) => {
-      const isNew = value !== state.filter[idx]?.src
-      state.filter[idx].src = value
-      const filterSrcParams = state.filter.map((item: any) => item.src).join(',')
-      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filter: filterSrcParams } })
-      buildFilterOptions(state.filter[idx], idx, state.usedData)
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && isNew) {
-        handleFilterValueChange(null, idx)
+    const handleDataSrcChange = async(text: any, buildChart: boolean = true) => {
+      const changedValue = text !== state.dataSource
+      state.dataSource = text
+      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), src: text } })
+
+      if (state.options.xAxis && state.options.yAxis && changedValue) {
+        state.filter = [cloneDeep(filterItem)]
+      }
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation
+        && changedValue && buildChart) {
+        await loadData()
+        await handleAxisChange(state.options.xAxis, true, false)
+        await handleAxisChange(state.options.yAxis, false, false)
+        await buildValues()
       }
     }
 
-    const handleAxisChange = (value: any, isXAxis : boolean = true, buildChart : boolean = true) => {
-      let axis : any = []
-      let src : any
+    const handleFilterSrcChange = (value: any, idx : any = 0, buildChart: boolean = true) => {
+      const isNew = value !== state.filter[idx]?.src
+      const shouldLoad = isNew && state.filter[idx]?.value
+      state.filter[idx].src = value
+      const filterSrcParams = state.filter.map((item: any) => item.src).join(',')
+      $router.replace({ name: 'dashboard', query: { ...getQueryParams(), filter: filterSrcParams } })
+      buildFilterOptions(idx)
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && isNew) {
+        handleFilterValueChange(null, idx, buildChart ? shouldLoad : false)
+      }
+    }
+
+    const handleAxisChange = async(value: any, isXAxis : boolean = true, buildChart : boolean = true) => {
       const isNew : boolean = (isXAxis && value !== state.options.xAxis)
       || (!isXAxis && value !== state.options.yAxis)
       if (isXAxis) {
@@ -808,87 +678,12 @@ export default defineComponent({
         state.options.yAxis = value
         $router.replace({ name: 'dashboard', query: { ...getQueryParams(), yAxis: value } })
       }
-
-      if (Object.keys(CLASSIFICATION_METRICS).includes(value)) {
-        src = state.classification
-      } else if (Object.keys(PREDICTION_METRICS).includes(value) || Object.keys(DATASET_METRICS).includes(value)) {
-        src = state.dataSource === 'Matrix' ? state.rawData : state.rawDataInter
-      } else if (Object.keys(PATHWAY_METRICS).includes(value)) {
-        src = state.pathways
+      if (state.options.xAxis && state.options.yAxis && isNew && buildChart) {
+        await loadData()
       }
-
-      if (!src) {
-        return
-      }
-
-      src.forEach((row: any) => {
-        if (!axis.includes(row[value])) {
-          let auxValue = row[value]
-          if (!isXAxis && value === 'coarse_class') {
-            auxValue += ` -agg- ${row.fine_class}`
-          }
-          axis.push(auxValue)
-        }
-      })
-
-      axis = uniq(axis)
-      axis.sort((a:string, b:string) => {
-        if (a > b) {
-          return -1
-        }
-        if (b > a) {
-          return 1
-        }
-        return 0
-      })
-      axis = axis.filter((item: any) => item && item !== 'null' && item !== 'none' && item !== 'undefined')
-      if (isXAxis) {
-        state.pagination.total = axis.length
-        state.xAxisValues = axis
-      } else {
-        state.yAxisValues = axis
-      }
-
-      if (state.options.xAxis && state.options.yAxis && isNew) {
-        setUsedData()
-      }
-
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart) {
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart && isNew) {
         buildValues()
       }
-    }
-
-    const setUsedData = (source:string = state.dataSource) => {
-      let mergedData : any = source === 'Matrix' ? state.rawData : state.rawDataInter
-      if (
-        Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)
-        || Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)
-      ) {
-        const predWithClass : any = []
-        const chemClassById = groupBy(state.classification, 'name_short')
-        mergedData.forEach((prediction: any) => {
-          if (chemClassById[prediction.n]) {
-            chemClassById[prediction.n].forEach((classification: any) => {
-              predWithClass.push({ ...classification, ...prediction })
-            })
-          }
-        })
-        mergedData = predWithClass
-      } else if (
-        Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
-        || Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)) {
-        const predWithClass : any = []
-        const chemClassById = groupBy(state.pathways, 'name_short')
-        mergedData.forEach((prediction: any) => {
-          if (chemClassById[prediction.n]) {
-            chemClassById[prediction.n].forEach((classification: any) => {
-              predWithClass.push({ ...classification, ...prediction })
-            })
-          }
-        })
-        mergedData = predWithClass
-      }
-      state.usedData = mergedData
     }
 
     const renderFilters = () => {
@@ -973,22 +768,8 @@ export default defineComponent({
               disabled={state.loading}
               value={state.dataSource}
               size="mini"
-              onInput={(text:any) => {
-                const changedValue = text !== state.dataSource
-                state.dataSource = text
-                Vue.nextTick()
-                state.loading = true
-                if (state.options.xAxis && state.options.yAxis && changedValue) {
-                  setUsedData(text)
-                  state.filter = [cloneDeep(filterItem)]
-                }
-                if (state.options.xAxis && state.options.yAxis && state.options.aggregation
-                && changedValue) {
-                  handleAxisChange(state.options.xAxis, true, false)
-                  handleAxisChange(state.options.yAxis, false, false)
-                  buildValues()
-                }
-                state.loading = false
+              onInput={async(text:any) => {
+                handleDataSrcChange(text)
               }}>
               <RadioButton label='Matrix'/>
               <RadioButton label='Interlab'/>
@@ -1024,7 +805,7 @@ export default defineComponent({
                       && <Select
                         class='select-box-mini mr-2'
                         value={filter.value}
-                        loading={state.loadingFilterOptions}
+                        loading={state.filter[filterIdx].loadingFilterOptions}
                         filterable
                         clearable
                         multiple={!filter.isBoolean}
@@ -1054,7 +835,7 @@ export default defineComponent({
                         max={1}
                         step={0.001}
                         value={parseFloat(state.filter[0].value)}
-                        loading={state.loadingFilterOptions}
+                        loading={state.filter[filterIdx].loadingFilterOptions}
                         disabled={state.loading}
                         onChange={(value: number) => {
                           handleFilterValueChange(value, filterIdx)
@@ -1118,13 +899,11 @@ export default defineComponent({
     const onPageChange = (newPage: number) => {
       state.pagination.currentPage = newPage
       $router.replace({ name: 'dashboard', query: { ...getQueryParams(), page: newPage.toString() } })
-      handleAxisChange(state.options.xAxis)
     }
 
     const onPageSizeChange = (newSize: number) => {
       state.pagination.pageSize = newSize
       $router.replace({ name: 'dashboard', query: { ...getQueryParams(), pageSize: newSize.toString() } })
-      handleAxisChange(state.options.xAxis)
     }
 
     const renderPagination = (total: number) => {
@@ -1179,16 +958,18 @@ export default defineComponent({
         || (state.options.xAxis && state.options.yAxis && state.options.aggregation)
       const { selectedView } = state
       const isLoading = (state.loading || state.buildingChart)
-      const yAxisValues : any[] = state.yAxisValues.filter((item: any) => !state.hiddenYValues.includes(item))
-      let xAxisValues : any[] = state.xAxisValues.filter((item: any) => !state.hiddenXValues.includes(item))
+      const yAxisValues : any[] = state.yAxisValues
+      let xAxisValues : any[] = state.xAxisValues
       const total = xAxisValues.length
       const start = ((state.pagination.currentPage - 1) * state.pagination.pageSize)
       const end = ((state.pagination.currentPage - 1) * state.pagination.pageSize) + state.pagination.pageSize
       xAxisValues = xAxisValues.slice(start, end)
-      const chartData = state.data.slice(yAxisValues.length * start, yAxisValues.length * end).map((item: any) => {
-        item.value[0] = item.value[0] - start
-        return item
-      })
+      const chartData = cloneDeep(state.data)
+        .slice(yAxisValues.length * start, yAxisValues.length * end)
+        .map((item: any) => {
+          item.value[0] = item.value[0] - start
+          return item
+        })
 
       return (
         <div class='dashboard-container'>
