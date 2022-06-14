@@ -23,8 +23,7 @@ export const ChartSettings = defineComponent({
 
     const handleColormapChange = (value: string) => {
       state.colormap = value
-      const colors = createColormap(value)
-      emit('color', colors)
+      emit('color', value)
     }
 
     return () => {

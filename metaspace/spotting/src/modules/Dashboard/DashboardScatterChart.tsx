@@ -131,7 +131,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
-            return params.value[4].toFixed(2) + ' ' + params.data?.label?.y + ' in ' + params.data?.label?.x
+            return (params.value[4] || 0).toFixed(2) + ' ' + params.data?.label?.y + ' in ' + params.data?.label?.x
           },
         },
         grid: {
@@ -230,9 +230,9 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
     })
 
     const handleChartResize = () => {
-      if (spectrumChart && spectrumChart.value) {
-        // @ts-ignore
-        spectrumChart.value.chart.resize()
+      const chartRef : any = spectrumChart.value
+      if (chartRef && chartRef.chart) {
+        chartRef.chart.resize()
       }
     }
 
