@@ -112,9 +112,18 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project one
-              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i></div>
+              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i>
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
+            </div>
             <div>
               <div class="info-line">
                 <!---->
@@ -143,10 +152,18 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project two
               </a>
               <!---->
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
             </div>
             <div>
               <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 datasets</span></a>,
@@ -292,9 +309,18 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project one
-              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i></div>
+              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i>
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
+            </div>
             <div>
               <div class="info-line">
                 <!---->
@@ -322,10 +348,18 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project two
               </a>
               <!---->
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
             </div>
             <div>
               <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 datasets</span></a>,
@@ -471,9 +505,18 @@ exports[`ProjectsListPage should match snapshot 1`] = `
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project one
-              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i></div>
+              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i>
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
+            </div>
             <div>
               <div class="info-line">
                 <!---->
@@ -501,10 +544,18 @@ exports[`ProjectsListPage should match snapshot 1`] = `
       <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
         <div class="item-body">
           <div class="info">
-            <div class="info-line project-name pr-5 flex items-baseline"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
                 project two
               </a>
               <!---->
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
             </div>
             <div>
               <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 datasets</span></a>,

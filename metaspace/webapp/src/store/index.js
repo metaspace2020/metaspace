@@ -22,7 +22,7 @@ const store = new Vuex.Store({
     normalization: undefined,
 
     // roi settings
-    roiInfo: {},
+    roiInfo: {visible: false},
 
     // is annotation table loading?
     tableIsLoading: true,
@@ -31,7 +31,11 @@ const store = new Vuex.Store({
 
     currentTour: null,
 
-    currentUser: {}
+    currentUser: {},
+
+    // ion image global viewer settings
+    channels: [],
+    mode: 'SINGLE'
   },
 
   getters,

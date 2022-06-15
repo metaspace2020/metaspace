@@ -60,7 +60,7 @@ const defaultConfig: ClientConfig = {
   features: {
     coloc: true,
     show_dataset_overview: true,
-    roi: false,
+    roi: true,
     tic: true,
     custom_cols: true,
     ion_thumbs: true,

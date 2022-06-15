@@ -9,6 +9,7 @@ import gql from 'graphql-tag'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import reportError from '../../../lib/reportError'
 import useOutClick from '../../../lib/useOutClick'
+import { omit } from 'lodash-es'
 
 const RouterLink = Vue.component('router-link')
 const saveSettings = gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
@@ -77,7 +78,6 @@ export const DatasetComparisonShareLink = defineComponent<DatasetComparisonShare
         const settings = safeJsonParse(props.settings)
         const grid = settings.grid
         const datasetIds = Object.values(grid)
-
         const variables : any = {
           input: {
             version: 1,
@@ -95,6 +95,9 @@ export const DatasetComparisonShareLink = defineComponent<DatasetComparisonShare
               globalLockedIntensities: props.globalLockedIntensities,
               grid,
               filter,
+              mode: $store.state.mode,
+              channels: $store.state.mode === 'MULTI'
+                ? $store.state.channels.map((annotation: any) => omit(annotation, 'annotations')) : [],
             }),
             datasetId: props.sourceDsId,
           },

@@ -160,12 +160,45 @@ export default {
     state.normalization = normalizationMatrix;
   },
 
+  resetChannels(state) {
+    state.channels = [];
+  },
+
+  addChannel(state, {id, annotations, settings}) {
+    state.channels.push({id, annotations, settings});
+  },
+
+  restoreChannels(state, channels) {
+    state.channels = channels;
+  },
+
+  removeChannel(state, {index}) {
+    const aux = state.channels.slice(0)
+    aux.splice(index, 1)
+    state.channels = aux
+  },
+
+  updateChannel(state, {index, id, annotations, settings}) {
+    const aux = state.channels.slice(0)
+    aux[index] = {id, annotations, settings}
+    state.channels = aux
+  },
+
+  setViewerMode(state, mode = 'SINGLE') {
+    state.mode = mode;
+  },
+
+
   setRoiInfo(state, {key, roi}) {
     Vue.set(state.roiInfo, key, roi)
   },
 
+  toggleRoiVisibility(state, visible) {
+    Vue.set(state.roiInfo, 'visible', visible)
+  },
+
   resetRoiInfo(state) {
-    state.roiInfo = {};
+    state.roiInfo = {visible: false};
   },
 
   setSnapshotAnnotationIds(state, annotation) {

@@ -19,6 +19,15 @@
           :style="{ background: channelSwatches[annotation.id] }"
         />
       </span>
+      <span
+        v-if="highlightByIon && annotation.ion in channelSwatchesByIon"
+        class="flex"
+      >
+        <i
+          class="block mt-1 w-3 h-3 mx-1 box-content border border-solid border-gray-400 rounded-full"
+          :style="{ background: channelSwatchesByIon[annotation.ion] }"
+        />
+      </span>
     </candidate-molecules-popover>
     <filter-icon
       v-if="!hasCompoundNameFilter"
@@ -31,14 +40,13 @@
 </template>
 
 <script>
-import Vue from 'vue'
 import { defineComponent, computed } from '@vue/composition-api'
-
 import FilterIcon from '../../assets/inline/filter.svg'
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
 import { useChannelSwatches } from '../ImageViewer/ionImageState'
 import useFilter from '../../lib/useFilter'
 import MolecularFormula from '../../components/MolecularFormula'
+import { channels as channelToRGB } from '../../lib/getColorScale'
 
 const channelSwatches = useChannelSwatches()
 
@@ -56,15 +64,27 @@ export default defineComponent({
     MolecularFormula,
     FilterIcon,
   },
-  props: ['annotation'],
+  props: ['annotation', 'highlightByIon'],
   setup(props, { root }) {
-    const compoundNameFilter = useFilter(root.$store, 'compoundName')
+    const { $store } = root
+    const compoundNameFilter = useFilter($store, 'compoundName')
     const hasCompoundNameFilter = computed(() => compoundNameFilter.value != null)
     const handleFilter = () => { compoundNameFilter.value = props.annotation.sumFormula }
+    const orderedLayers = computed(() => $store.state.channels)
+    const channelSwatchesByIon = computed(() => {
+      const swatches = {}
+      if ($store.state.mode === 'MULTI' && props.highlightByIon) {
+        for (const layer of orderedLayers.value) {
+          swatches[layer.id] = channelToRGB[layer.settings.channel]
+        }
+      }
+      return swatches
+    })
 
     return {
       hasCompoundNameFilter,
       channelSwatches,
+      channelSwatchesByIon,
       handleFilter,
     }
   },

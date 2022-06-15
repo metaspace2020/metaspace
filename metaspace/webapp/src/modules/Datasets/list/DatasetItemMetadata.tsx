@@ -6,6 +6,7 @@ import { DatasetDetailItem } from '../../../api/dataset'
 import { capitalize, get } from 'lodash-es'
 import FilterLink from './FilterLink'
 import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
+import CopyButton from '../../../components/CopyButton.vue'
 
 type FilterField = keyof DatasetDetailItem | 'analyzerType';
 
@@ -77,8 +78,13 @@ const DatasetItemMetadata = defineComponent({
               class="font-bold truncate"
             >{dataset.name}</span>
             {!dataset.isPublic && <VisibilityBadge datasetId={dataset.id} />}
+            <CopyButton
+              class="ml-1"
+              isId
+              text={dataset.id}>
+              Copy dataset id to clipboard
+            </CopyButton>
           </div>
-
           <div class="ds-item-line text-gray-700">
             {filterableItem('organism', 'species', dataset.organism || '')}
             {', '}
