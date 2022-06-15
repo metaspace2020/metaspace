@@ -67,5 +67,5 @@ def get_intensity_by_mz_ppm():
         headers = {'Content-Type': 'image/png'}
         return bottle.HTTPResponse(body, **headers)
     except Exception as e:
-        logger.warning(f'{bottle.request} - {e}')
+        logger.exception(f'{bottle.request} - {e}')
         return make_response(INTERNAL_ERROR)

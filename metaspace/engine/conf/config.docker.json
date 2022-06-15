@@ -166,6 +166,9 @@
       },
       "lithops": {
         "level": "INFO"
+      },
+      "annotation-pipeline": {
+        "level": "INFO"
       }
     }
   },
