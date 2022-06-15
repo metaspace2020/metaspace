@@ -1851,7 +1851,7 @@ class SMInstance(object):
         e.g. to update a dataset's adducts:
 
         >>> sm.update_dataset(
-        >>>     dataset_id='2018-11-07_14h15m28s',
+        >>>     id='2018-11-07_14h15m28s',
         >>>     adducts=['[M]+', '+H', '+K', '+Na'],
         >>> )
 
@@ -1900,15 +1900,15 @@ class SMInstance(object):
         if chem_mods is not None:
             input_field['chemMods'] = chem_mods
         if is_public is not None:
-            input_field['is_public'] = is_public
+            input_field['isPublic'] = is_public
         if ppm is not None:
             input_field['ppm'] = ppm
         if num_isotopic_peaks is not None:
-            input_field['num_isotopic_peaks'] = num_isotopic_peaks
+            input_field['numPeaks'] = num_isotopic_peaks
         if decoy_sample_size is not None:
-            input_field['decoy_sample_size'] = decoy_sample_size
+            input_field['decoySampleSize'] = decoy_sample_size
         if analysis_version is not None:
-            input_field['analysis_version'] = analysis_version
+            input_field['analysisVersion'] = analysis_version
 
         try:
             self._gqclient.update_dataset(id, input_field, reprocess or False, force)
