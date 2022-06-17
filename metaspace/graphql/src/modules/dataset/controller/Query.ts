@@ -90,22 +90,23 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
   async lipidEnrichment(source, {
     datasetId, molDbId, fdr = 0.5,
-    offSample = false,
+    offSample = undefined,
   }, ctx) {
     if (await esDatasetByID(datasetId, ctx.user)) { // check if user has access
       try {
         let idsWithOffSampleFilter : any = []
 
-        if (offSample) { // get only on sample molecules
+        // get molecules by dsId and off sample filter
+        if (offSample !== undefined) {
           const offSampleIons = await esSearchResults({
             datasetFilter: { ids: datasetId },
-            filter: { databaseId: molDbId, offSample: true },
+            filter: { databaseId: molDbId, offSample: offSample },
           }
           , 'annotation', ctx.user)
-          // console.log('dude', offSampleIons)
           idsWithOffSampleFilter = uniq(offSampleIons.map((item: any) => item._source?.annotation_id))
         }
 
+        // get pre-calculate bootstrap with desired filters
         const bootstrap = await ctx.entityManager
           .find(EnrichmentBootstrap, {
             join: {
@@ -115,7 +116,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
             where: (qb : any) => {
               qb.where('bootstrap.datasetId = :datasetId', { datasetId })
               qb.andWhere('bootstrap.fdr <= :fdr', { fdr })
-              if (offSample) {
+              if (offSample !== undefined) {
                 qb.andWhere('bootstrap.annotationId IN (:...idsWithOffSampleFilter)', { idsWithOffSampleFilter })
               }
               qb.andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
@@ -180,6 +181,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         })
         const data = JSON.parse(content.data)
 
+        // get annotations associated to enrichment
         for (let i = 0; i < data.enrichment.length; i++) {
           const item = data.enrichment[i]
           const mols = uniq(data.molecules
@@ -208,6 +210,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           item.annotations = annotations.map(unpackAnnotation)
           item.termId = termsIdHash[item.id]
         }
+
         return data.enrichment
       } catch (e) {
         return e

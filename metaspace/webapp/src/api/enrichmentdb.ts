@@ -22,5 +22,11 @@ gql`query allEnrichedMolDatabases($id: String!) {
   allEnrichedMolDatabases(datasetId: $id) {
     id
     name
+    version
+    archived
+    group {
+      id
+      shortName
+    }
   }
 }`
