@@ -352,7 +352,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   },
 
   updateDataset: async(source, args, ctx: Context) => {
-    const { id: datasetId, input: update, reprocess, skipValidation, delFirst, force, priority, useLithops } = args
+    const {
+      id: datasetId, input: update, reprocess, skipValidation, delFirst, force, priority, useLithops,
+      performEnrichment,
+    } = args
 
     logger.info(`User '${ctx.user.id}' updating '${datasetId}' dataset...`)
     const dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId)
@@ -406,6 +409,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         del_first: procSettingsUpd || delFirst, // delete old results if processing settings changed
         priority: priority,
         use_lithops: useLithops,
+        perform_enrichment: performEnrichment,
         force: force,
         email: ctx.user.email,
       })

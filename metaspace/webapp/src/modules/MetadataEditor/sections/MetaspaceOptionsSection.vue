@@ -175,6 +175,28 @@
               />
             </el-col>
           </el-row>
+          <el-row
+            v-if="features.enrichment"
+            :gutter="8"
+          >
+            <el-col :span="8">
+              <popup-anchor
+                feature-key="v2"
+                placement="top"
+                :show-until="new Date('2022-09-01')"
+                class="block"
+              >
+                <form-field
+                  type="switch"
+                  name="LION enrichment"
+                  :help="EnrichmentHelp"
+                  :value="value.performEnrichment"
+                  :error="error && error.performEnrichment"
+                  @input="val => onInput('performEnrichment', val)"
+                />
+              </popup-anchor>
+            </el-col>
+          </el-row>
         </el-col>
       </el-row>
     </el-form>
@@ -187,6 +209,7 @@ import { Component, Prop } from 'vue-property-decorator'
 import FormField from '../inputs/FormField.vue'
 import DatabaseHelpLink from '../inputs/DatabaseHelpLink.vue'
 import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
+import EnrichmentHelp from '../inputs/EnrichmentHelp.vue'
 import AdductsHelp from '../inputs/AdductsHelp.vue'
 import NeutralLossesHelp from '../inputs/NeutralLossesHelp.vue'
 import ChemModsHelp from '../inputs/ChemModsHelp.vue'
@@ -236,6 +259,7 @@ export default class MetaspaceOptionsSection extends Vue {
     features = config.features;
     dbHelp = DatabaseHelpLink;
     AnalysisVersionHelp = AnalysisVersionHelp;
+    EnrichmentHelp = EnrichmentHelp;
     NeutralLossesHelp = NeutralLossesHelp;
     ChemModsHelp = ChemModsHelp;
     AdductsHelp = AdductsHelp;

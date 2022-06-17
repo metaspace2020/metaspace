@@ -137,7 +137,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           mutation: reprocessDatasetQuery,
           variables: {
             id: props.dataset?.id,
-            useLithops: true, // performEnrichment || config.features.lithops,
+            useLithops: config.features.lithops,
             performEnrichment: performEnrichment,
           },
         })
