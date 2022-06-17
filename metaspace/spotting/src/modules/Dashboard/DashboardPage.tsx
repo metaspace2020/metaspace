@@ -1,16 +1,12 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
 import './DashboardPage.scss'
-import { Option, Select, Pagination, InputNumber, Button, RadioGroup, RadioButton } from '../../lib/element-ui'
-import { cloneDeep, groupBy, keyBy, maxBy, omit, orderBy, sortedUniq, uniq, uniqBy } from 'lodash-es'
+import { Option, Select, Pagination, InputNumber, RadioGroup, RadioButton } from '../../lib/element-ui'
+import { cloneDeep, groupBy, keyBy, maxBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
-// import { predictions } from '../../data/predictions'
-import createColormap from '../../lib/createColormap'
-import Vue from 'vue'
 import getColorScale from '../../lib/getColorScale'
-import { isEqual } from 'lodash'
 
 interface Options{
   xAxis: any
@@ -115,10 +111,6 @@ const AXIS_VALUES = [
 ]
 
 const AGGREGATED_VALUES = [
-  // {
-  //   label: 'Prediction',
-  //   src: 'pred_val',
-  // },
   {
     label: 'Intensity',
     src: 'v',
@@ -127,10 +119,6 @@ const AGGREGATED_VALUES = [
     label: 'log10(Intensity)',
     src: 'v_log',
   },
-  // {
-  //   label: 'Simple count',
-  //   src: 'p',
-  // },
 ]
 
 const FILTER_VALUES = [
@@ -201,28 +189,6 @@ const FILTER_VALUES = [
 const CLASSIFICATION_METRICS = {
   fine_class: true,
   coarse_class: true,
-}
-
-const DATASET_METRICS = {
-  pol: true,
-  t: true,
-  mS: true,
-  lab: true,
-  sT: true,
-  an: true,
-  sP: true,
-}
-
-const PREDICTION_METRICS = {
-  a: true,
-  d: true,
-  f: true,
-  nL: true,
-  nS: true,
-  nSI: true,
-  pV: true,
-  p: true,
-  n: true,
 }
 
 const PATHWAY_METRICS = {
@@ -593,9 +559,9 @@ export default defineComponent({
       }
     }
 
-    const handleItemClick = (item: any) => {
+    const handleItemClick = (item: any) => { // get info from clicked chart item and open on a metaspace url
       const baseUrl = 'https://metaspace2020.eu/annotations?db_id=304'
-      let url = baseUrl // + item.data.label.datasetIds.join(',')
+      let url = baseUrl
       const formulas : string = item.data.label.formulas.join('|')
       const yAxisFilter : any = filterMap[state.options.yAxis]
       const xAxisFilter : any = filterMap[state.options.xAxis]
@@ -958,6 +924,8 @@ export default defineComponent({
         || (state.options.xAxis && state.options.yAxis && state.options.aggregation)
       const { selectedView } = state
       const isLoading = (state.loading || state.buildingChart)
+
+      // paginate data on client-side
       const yAxisValues : any[] = state.yAxisValues
       let xAxisValues : any[] = state.xAxisValues
       const total = xAxisValues.length
@@ -967,7 +935,7 @@ export default defineComponent({
       const chartData = cloneDeep(state.data)
         .slice(yAxisValues.length * start, yAxisValues.length * end)
         .map((item: any) => {
-          item.value[0] = item.value[0] - start
+          item.value[0] = item.value[0] - start // remove pages offset from chart values index
           return item
         })
 
