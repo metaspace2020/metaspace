@@ -166,6 +166,15 @@
       @input="onInput"
     />
 
+    <el-switch
+      v-else-if="type === 'switch'"
+      :value="value"
+      :error="typeof error !== 'string' ? error : null"
+      :required="required"
+      v-bind="$attrs"
+      @input="onInput"
+    />
+
     <div
       v-else
       style="color: red"

@@ -49,6 +49,7 @@ export interface FormSchema extends JsonSchemaProperty {
 export interface MetaspaceOptions {
   name: string;
   isPublic: boolean;
+  performEnrichment: boolean;
   databaseIds: number[];
   adducts: string[];
   neutralLosses: string[];

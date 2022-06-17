@@ -244,8 +244,8 @@ export const rawOpticalImageQuery =
   }`
 
 export const createDatasetQuery =
-  gql`mutation ($input: DatasetCreateInput!, $useLithops: Boolean) {
-      createDataset(input: $input, priority: 1, useLithops: $useLithops)
+  gql`mutation ($input: DatasetCreateInput!, $useLithops: Boolean, $performEnrichment: Boolean) {
+      createDataset(input: $input, priority: 1, useLithops: $useLithops, performEnrichment: $performEnrichment)
   }`
 
 export const deleteDatasetQuery =
