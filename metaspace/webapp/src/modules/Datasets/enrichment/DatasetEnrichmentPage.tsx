@@ -9,6 +9,7 @@ import { DatasetEnrichmentChart } from './DatasetEnrichmentChart'
 import { DatasetEnrichmentTable } from './DatasetEnrichmentTable'
 import './DatasetEnrichmentPage.scss'
 import { getEnrichedMolDatabasesQuery } from '../../../api/enrichmentdb'
+import FilterPanel from '../../Filters/FilterPanel.vue'
 
 interface DatasetEnrichmentPageProps {
   className: string
@@ -31,7 +32,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
 
   // @ts-ignore
   setup(props, { refs, root }) {
-    const { $route, $router } = root
+    const { $route, $router, $store } = root
     const state = reactive<DatasetEnrichmentPageState>({
       offset: 0,
       pageSize: 15,
@@ -54,7 +55,15 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     const {
       result: enrichmentResult,
       loading: enrichmentLoading,
-    } = useQuery<any>(getDatasetEnrichmentQuery, { id: datasetId, dbId: parseInt(dbId, 10) })
+    } = useQuery<any>(getDatasetEnrichmentQuery, computed(() => ({
+      id: datasetId,
+      dbId: $store.getters.gqlAnnotationFilter.databaseId,
+      fdr: $store.getters.gqlAnnotationFilter.fdrLevel,
+      offSample: ($store.getters.gqlAnnotationFilter.offSample === null
+      || $store.getters.gqlAnnotationFilter.offSample === undefined)
+        ? undefined : !!$store.getters.gqlAnnotationFilter.offSample,
+    })), { fetchPolicy: 'no-cache' as const })
+
     const enrichment = computed(() => {
       if (enrichmentResult.value) {
         return enrichmentResult.value.lipidEnrichment
@@ -89,32 +98,48 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       const usedData = state.sortedData ? state.sortedData : data
       const pagedData = usedData.slice(dataStart, dataEnd)
 
-      if (enrichmentLoading.value) {
-        return <div class='dataset-enrichment-loading'>
-          <i
-            class="el-icon-loading"
-          />
-          <span>Loading...</span>
-        </div>
-      }
-
       return (
         <div class='dataset-enrichment-page'>
-          <div class={'dataset-enrichment-wrapper'}>
-            <DatasetEnrichmentTable
-              data={data}
-              onPageChange={handlePageChange}
-              onSizeChange={handleSizeChange}
-              onSortChange={handleSortChange}
+          {
+            databases.value
+            && <FilterPanel
+              class='w-full'
+              level='enrichment'
+              fixedOptions={{ database: (databases.value || []) }}
             />
-          </div>
-          <div class={'dataset-enrichment-wrapper text-center'}>
-            {dataset.value?.name} - enrichment
-            {
-              !(!data || (data || []).length === 0)
-              && <DatasetEnrichmentChart data={pagedData} onItemSelected={handleItemClick}/>
-            }
-          </div>
+          }
+          {
+            enrichmentLoading.value
+            && <div class='dataset-enrichment-loading'>
+              <i
+                class="el-icon-loading"
+              />
+              <span>Loading...</span>
+            </div>
+          }
+          {
+            !enrichmentLoading.value
+            && <div class={'dataset-enrichment-wrapper'}>
+              <DatasetEnrichmentTable
+                data={data}
+                filename={`${dataset.value?.name}_${databases.value.find((database:any) => database.id
+                  === $store.getters.gqlAnnotationFilter.databaseId).name}_enrichment.csv`}
+                onPageChange={handlePageChange}
+                onSizeChange={handleSizeChange}
+                onSortChange={handleSortChange}
+              />
+            </div>
+          }
+          {
+            !enrichmentLoading.value
+            && <div class={'dataset-enrichment-wrapper text-center'}>
+              {dataset.value?.name} - enrichment
+              {
+                !(!data || (data || []).length === 0)
+                && <DatasetEnrichmentChart data={pagedData} onItemSelected={handleItemClick}/>
+              }
+            </div>
+          }
         </div>
       )
     }

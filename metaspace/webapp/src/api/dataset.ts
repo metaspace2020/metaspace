@@ -407,7 +407,7 @@ export const getDatasetStatusQuery =
   }`
 
 export const getDatasetEnrichmentQuery =
-  gql`query getDatasetEnrichmentQuery($id: String!, $dbId: Int = 3, $fdr: Float = 0.5, $offSample: Boolean = false) {
+  gql`query getDatasetEnrichmentQuery($id: String!, $dbId: Int = 3, $fdr: Float = 0.5, $offSample: Boolean) {
     lipidEnrichment(datasetId: $id, molDbId: $dbId, fdr: $fdr, offSample: $offSample) {
       id
       termId

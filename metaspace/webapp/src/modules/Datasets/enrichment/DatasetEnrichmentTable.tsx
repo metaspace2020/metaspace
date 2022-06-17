@@ -13,6 +13,7 @@ interface DatasetEnrichmentTableProps {
   data: any[]
   isLoading: boolean
   filter: any
+  filename: string
 }
 
 interface DatasetEnrichmentTableState {
@@ -47,6 +48,10 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
     },
     isLoading: {
       type: Boolean,
+    },
+    filename: {
+      type: String,
+      default: 'enrichment.csv',
     },
   },
   setup: function(props, { emit, root }) {
@@ -382,90 +387,47 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
     }
 
     const startExport = async() => {
-      const includeColoc = false
-      const includeOffSample = config.features.off_sample
-      const includeIsomers = config.features.isomers
-      const includeIsobars = config.features.isobars
-      const includeNeutralLosses = config.features.neutral_losses
-      const includeChemMods = config.features.chem_mods
-      const colocalizedWith = props.filter?.colocalizedWith
-
       let csv = csvExportHeader()
 
-      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct',
-        ...(includeChemMods ? ['chemMod'] : []),
-        ...(includeNeutralLosses ? ['neutralLoss'] : []),
-        'ion', 'mz', 'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
-        'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity']
-      if (includeColoc) {
-        columns.push('colocalizationCoeff')
-      }
-      if (includeOffSample) {
-        columns.push('offSample', 'rawOffSampleProb')
-      }
-      if (includeIsomers) {
-        columns.push('isomerIons')
-      }
-      if (includeIsobars) {
-        columns.push('isobarIons')
-      }
+      const columns = ['id', 'median', 'expected', 'name', 'observed', 'pValue', 'qValue', 'std']
 
       csv += formatCsvRow(columns)
 
-      function databaseId(compound : any) {
-        return compound.information[0].databaseId
-      }
-
       function formatRow(row : any) {
         const {
-          dataset, sumFormula, adduct, chemMod, neutralLoss, ion, mz,
-          msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
-          isotopeImages, isomers, isobars,
-          offSample, offSampleProb, colocalizationCoeff,
+          id,
+          median,
+          expected,
+          name,
+          observed,
+          pValue,
+          qValue,
+          std,
         } = row
         const cells = [
-          dataset.groupApproved && dataset.group ? dataset.group.name : '',
-          dataset.name,
-          dataset.id,
-          sumFormula, 'M' + adduct,
-          ...(includeChemMods ? [chemMod] : []),
-          ...(includeNeutralLosses ? [neutralLoss] : []),
-          ion, mz,
-          msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
-          formatCsvTextArray(possibleCompounds.map((m: any) => m.name)),
-          formatCsvTextArray(possibleCompounds.map(databaseId)),
-          isotopeImages[0] && isotopeImages[0].minIntensity,
-          isotopeImages[0] && isotopeImages[0].maxIntensity,
-          isotopeImages[0] && isotopeImages[0].totalIntensity,
+          id,
+          median,
+          expected,
+          name,
+          observed,
+          pValue,
+          qValue,
+          std,
         ]
-        if (includeColoc) {
-          cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff)
-        }
-        if (includeOffSample) {
-          cells.push(offSample, offSampleProb)
-        }
-        if (includeIsomers) {
-          cells.push(formatCsvTextArray(isomers.map((isomer : any) => isomer.ion)))
-        }
-        if (includeIsobars) {
-          cells.push(formatCsvTextArray(isobars.map((isobar : any) => isobar.ion)))
-        }
 
         return formatCsvRow(cells)
       }
 
       state.isExporting = true
 
-      state.processedAnnotations.forEach((annotation: any) => {
-        csv += annotation.rawAnnotations.map(formatRow).join('')
-      })
+      csv += props.data.map(formatRow).join('')
 
       if (state.isExporting) {
         state.isExporting = false
         state.exportProgress = 0
 
         const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
-        FileSaver.saveAs(blob, 'metaspace_annotations.csv')
+        FileSaver.saveAs(blob, props.filename)
       }
     }
 
@@ -568,7 +530,7 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
               formatter={(row: any) => formatFloat(row.std)}
             />
             <TableColumn
-              key="pValue"
+              key="p-value"
               property="pValue"
               label="pValue"
               sortable="custom"
@@ -578,7 +540,7 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
             <TableColumn
               key="qValue"
               property="qValue"
-              label="qValue"
+              label="q-value"
               sortable="custom"
               minWidth="80"
               formatter={(row: any) => formatPercentage(row.qValue)}

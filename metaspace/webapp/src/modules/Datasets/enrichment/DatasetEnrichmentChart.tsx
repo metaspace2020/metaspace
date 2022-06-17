@@ -255,9 +255,9 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
     })
 
     const handleChartResize = () => {
-      if (spectrumChart && spectrumChart.value) {
-        // @ts-ignore
-        spectrumChart.value.chart.resize()
+      const chartRef : any = spectrumChart.value
+      if (chartRef && chartRef.chart) {
+        chartRef.resize()
       }
     }
 

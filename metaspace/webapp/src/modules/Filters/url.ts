@@ -55,6 +55,7 @@ const PATH_TO_LEVEL: [RegExp, Level][] = [
   [/^\/datasets\/\S+\/enrichment/i, 'dataset'],
   [/^\/datasets\/\S+\/comparison/i, 'annotation'],
   [/^\/dataset\/\S+\/annotations/i, 'dataset-annotation'],
+  [/^\/dataset\/\S+\/enrichment/i, 'enrichment'],
   [/^\/datasets/i, 'dataset'],
   [/^\/datasets\/summary/i, 'dataset'],
   [/^\/upload/i, 'upload'],
