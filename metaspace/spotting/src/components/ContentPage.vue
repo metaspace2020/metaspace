@@ -45,7 +45,7 @@
 
 .sm-content-page ol.sm-ordered-list > li::before {
   @apply absolute w-6 h-6 rounded-full bg-blue-100 text-blue-700
-    font-bold text-sm flex items-baseline justify-center;
+  font-bold text-sm flex items-baseline justify-center;
 
   counter-increment: primary-nums;
   content: counter(primary-nums);

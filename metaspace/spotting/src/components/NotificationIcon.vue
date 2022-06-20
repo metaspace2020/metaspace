@@ -21,10 +21,10 @@ export default Vue.extend({
 })
 </script>
 <style scoped>
-  .notification:before {
-    @apply w-2 h-2 bg-danger rounded-full ml-1;
-    content: '';
-    display: inline-block;
-    vertical-align: middle;
-  }
+.notification:before {
+  @apply w-2 h-2 bg-danger rounded-full ml-1;
+  content: '';
+  display: inline-block;
+  vertical-align: middle;
+}
 </style>
