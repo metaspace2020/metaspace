@@ -1,5 +1,4 @@
 import apolloClient from '../api/graphqlClient';
-import {fetchOptionListsQuery} from '../api/metadata';
 import {computed} from "@vue/composition-api";
 import store from "../store/index";
 export default {
@@ -11,7 +10,6 @@ export default {
     context.commit('setFilterListsLoading');
 
     const response = await apolloClient.query({
-      query: fetchOptionListsQuery,
       fetchPolicy: 'cache-first',
     });
 
