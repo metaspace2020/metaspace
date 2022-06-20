@@ -412,8 +412,10 @@ export default defineComponent({
       try {
         const chartData = state.usedData
         const data = chartData.data
-        const xAxisValues = chartData.xAxis
-        const yAxisValues = chartData.yAxis
+        const xAxisValues : string[] = chartData.xAxis
+        let yAxisValues : string[] = chartData.yAxis
+
+        yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], ['desc'])
 
         const auxData : any = groupBy(data, state.options.xAxis)
         Object.keys(auxData).forEach((key: string) => {
