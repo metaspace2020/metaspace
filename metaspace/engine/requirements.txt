@@ -14,7 +14,7 @@ elasticsearch-dsl>=5.0.0,<6.0.0
 pika==0.13.1
 bottle
 Pillow==9.0.1
-numpy==1.19.5
+numpy==1.22.0
 scipy==1.6.0
 pandas==1.2.0
 cffi
