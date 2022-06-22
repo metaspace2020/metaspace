@@ -137,9 +137,13 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           .getRawMany()
 
         const enrichedTerms = await ctx.entityManager
-          .find(EnrichmentTerm, {
-            where: { enrichmentDbId: 1 }, // LION
-          })
+          .find(EnrichmentTerm)
+
+        // TODO: change to use this where clause when another enrichment_dbs are added
+        // const enrichedTerms = await ctx.entityManager
+        //   .find(EnrichmentTerm, {
+        //     where: { enrichmentDbId: enrichmentDbId }, // LION
+        //   })
 
         const bootstrappedSublist : any = []
         const enrichedSets : any = {}
