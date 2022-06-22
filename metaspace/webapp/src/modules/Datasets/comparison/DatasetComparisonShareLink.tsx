@@ -96,8 +96,10 @@ export const DatasetComparisonShareLink = defineComponent<DatasetComparisonShare
               grid,
               filter,
               mode: $store.state.mode,
-              channels: $store.state.mode === 'MULTI'
-                ? $store.state.channels.map((annotation: any) => omit(annotation, 'annotations')) : [],
+              channels: $store.state.mode === 'MULTI' && Array.isArray($store.state.channels)
+                ? $store.state.channels.map((annotation: any) => {
+                  return annotation ? omit(annotation, 'annotations') : {}
+                }) : [],
             }),
             datasetId: props.sourceDsId,
           },

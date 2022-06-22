@@ -205,7 +205,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
 
         if (idx !== -1) {
           annotations.push(channel.annotations.annotations[idx])
-        } else if (channel.id) {
+        } else if (channel.id && channel.annotations && Array.isArray(channel.annotations.annotations)) {
           annotations.push({ ...channel.annotations.annotations[0], isEmpty: true })
         }
       })
@@ -285,7 +285,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
     }
 
     const formatMSM = (value: number) => {
-      return value.toFixed(3)
+      return value ? value.toFixed(3) : '-'
     }
 
     const formatFDR = (value: number) => {
@@ -346,7 +346,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
       }
     }
 
-    const renderDatasetName = (name: string) => {
+    const renderDatasetName = (name: string = '-') => {
       return (
         <div class='ds-comparison-item-line'>
           <span class='dataset-comparison-grid-ds-name truncate'>{name}</span>
@@ -424,43 +424,39 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
               !== undefined}
             resetViewport={() => {}}
           />
-          {
-            annData
-            && annData.msmScore
-            && <div class="dataset-comparison-extra dom-to-image-hidden">
-              <div class="dataset-comparison-msm-badge">
-                MSM <b>{formatMSM(annData.msmScore)}</b>
-              </div>
-              <div class="dataset-comparison-fdr-badge">
-                FDR <b>{formatFDR(annData.fdrLevel)}</b>
-              </div>
-              <Popover
-                trigger="hover"
-                placement="right"
-              >
-                <div slot="reference" class="dataset-comparison-link">
-                  <RouterLink
-                    target='_blank'
-                    to={annotationsLink(annData.dataset.id.toString(),
-                      annData.databaseDetails.id.toString(),
-                      annData.databaseDetails.fdrLevel)}>
-                    <StatefulIcon className="h-6 w-6 pointer-events-none">
-                      <ExternalWindowSvg/>
-                    </StatefulIcon>
-                  </RouterLink>
-                </div>
-                Individual dataset annotation page.
-              </Popover>
-              <Button
-                title="Ion image controls"
-                class={`${gridCell?.isActive ? 'active' : ''} button-reset flex h-6 ml-1 channel-toggle`}
-                onClick={(e: any) => toggleMenuButtons(e, key)}>
-                <StatefulIcon class="h-6 w-6 pointer-events-none" active={gridCell?.isActive}>
-                  <MonitorSvg class='fill-blue-700'/>
-                </StatefulIcon>
-              </Button>
+          <div class="dataset-comparison-extra dom-to-image-hidden">
+            <div class="dataset-comparison-msm-badge">
+                MSM <b>{formatMSM(annData?.msmScore)}</b>
             </div>
-          }
+            <div class="dataset-comparison-fdr-badge">
+                FDR <b>{formatFDR(annData?.fdrLevel)}</b>
+            </div>
+            <Popover
+              trigger="hover"
+              placement="right"
+            >
+              <div slot="reference" class="dataset-comparison-link">
+                <RouterLink
+                  target='_blank'
+                  to={annotationsLink(annData?.dataset?.id?.toString(),
+                    annData?.databaseDetails?.id?.toString(),
+                    annData?.databaseDetails?.fdrLevel)}>
+                  <StatefulIcon className="h-6 w-6 pointer-events-none">
+                    <ExternalWindowSvg/>
+                  </StatefulIcon>
+                </RouterLink>
+              </div>
+                Individual dataset annotation page.
+            </Popover>
+            <Button
+              title="Ion image controls"
+              class={`${gridCell?.isActive ? 'active' : ''} button-reset flex h-6 ml-1 channel-toggle`}
+              onClick={(e: any) => toggleMenuButtons(e, key)}>
+              <StatefulIcon class="h-6 w-6 pointer-events-none" active={gridCell?.isActive}>
+                <MonitorSvg class='fill-blue-700'/>
+              </StatefulIcon>
+            </Button>
+          </div>
           <div ref={`image-${row}-${col}`} class='ds-wrapper relative'>
             {
               props.isLoading
