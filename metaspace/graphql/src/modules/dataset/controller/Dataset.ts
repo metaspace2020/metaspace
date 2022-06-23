@@ -81,6 +81,7 @@ export const rawOpticalImage = async(datasetId: string, ctx: Context) => {
       return {
         url: `/fs/raw_optical_images/${engineDataset.opticalImage}`,
         transform: engineDataset.transform,
+        opticalImageTransform: engineDataset.opticalImageTransform,
       }
     }
   }

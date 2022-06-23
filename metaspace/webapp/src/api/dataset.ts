@@ -239,6 +239,7 @@ export const rawOpticalImageQuery =
     rawOpticalImage(datasetId: $ds_id) {
       url
       transform
+      opticalImageTransform
     }
   }`
 
@@ -259,9 +260,9 @@ export const reprocessDatasetQuery =
 
 export const addOpticalImageQuery =
   gql`mutation ($imageUrl: String!,
-                $datasetId: String!, $transform: [[Float]]!) {
+                $datasetId: String!, $transform: [[Float]]!, $opticalImageTransform: [[Float]]!) {
     addOpticalImage(input: {datasetId: $datasetId,
-                            imageUrl: $imageUrl, transform: $transform})
+                            imageUrl: $imageUrl, transform: $transform, opticalImageTransform: $opticalImageTransform})
   }`
 
 export const deleteOpticalImageQuery =

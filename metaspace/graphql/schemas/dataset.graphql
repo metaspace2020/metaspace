@@ -285,6 +285,7 @@ type OpticalImage {
 type RawOpticalImage {
     url: String
     transform: [[Float]]
+    opticalImageTransform: [[Float]]
 }
 
 input AddOpticalImageInput {
@@ -294,6 +295,10 @@ input AddOpticalImageInput {
   # 3x3 transformation matrix in row-major order
   # (acting in homogeneous coordinates)
   transform: [[Float]]!
+
+  # 3x3 transformation matrix in row-major order
+  # (acting in homogeneous coordinates)
+  opticalImageTransform: [[Float]]!
 }
 
 type DatasetRelationship {

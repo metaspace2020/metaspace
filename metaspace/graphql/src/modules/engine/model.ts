@@ -40,6 +40,8 @@ export class EngineDataset {
   opticalImage: string | null;
   @Column({ type: 'double precision', array: true, nullable: true })
   transform: number[] | null;
+  @Column({ type: 'double precision', array: true, nullable: true })
+  opticalImageTransform: number[] | null;
   @Column({ type: 'boolean', default: true })
   isPublic: boolean;
   @Column({ type: 'json', nullable: true })

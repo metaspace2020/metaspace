@@ -437,7 +437,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   },
 
   addOpticalImage: async(source, { input }, ctx: Context) => {
-    const { datasetId, transform } = input
+    const { datasetId, transform, opticalImageTransform } = input
     const { imageUrl } = input
 
     logger.info(`User '${ctx.getUserIdOrFail()}' adding optical image to '${datasetId}' dataset...`)
@@ -445,7 +445,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     // TODO support image storage running on a separate host
     const url = `http://${config.img_storage_host}:${config.img_storage_port}${imageUrl}`
     const resp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/add-optical-image`, {
-      url, transform,
+      url, transform, opticalImageTransform,
     })
 
     logger.info(`Optical image was added to '${datasetId}' dataset`)

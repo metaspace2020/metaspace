@@ -15,7 +15,9 @@
         :enable-transform="layer === 0"
         :external-drag="opticalImageDrag"
         :external-zoom="opticalImageZoom"
+        :initial-transform="opticalNormalizedTransform"
         :disable-internal-controller="true"
+        @update="updateOpticalTransform"
         @load="onOpticalImageLoad"
       />
     </div>
@@ -160,6 +162,10 @@ export default {
       type: Array,
       default: () => [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
     },
+    initialOpticalTransform: {
+      type: Array,
+      default: () => [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    },
     ticData: { type: Object },
   },
   data() {
@@ -185,6 +191,7 @@ export default {
       globalDragStartX: null,
       globalDragStartY: null,
       normalizedTransform: this.initialTransform,
+      opticalNormalizedTransform: this.initialOpticalTransform,
       lastRotationAngle: this.rotationAngleDegrees,
       startRotationAngle: null,
       fineTune: false,
@@ -280,6 +287,10 @@ export default {
     initialTransform() {
       this.normalizedTransform = this.initialTransform
     },
+
+    initialOpticalTransform() {
+      this.opticalNormalizedTransform = this.initialOpticalTransform
+    },
   },
 
   mounted: function() {
@@ -311,6 +322,10 @@ export default {
       if (resetTransform) {
         this.normalizedTransform = this.initialTransform
       }
+    },
+
+    updateOpticalTransform(opticalNormalizedTransform) {
+      this.opticalNormalizedTransform = opticalNormalizedTransform
     },
 
     onLoad({ width, height, naturalWidth, naturalHeight }) {

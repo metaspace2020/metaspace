@@ -212,6 +212,7 @@
       :optical-src="opticalImgUrl"
       :tic-data="normalizationData"
       :initial-transform="initialTransform"
+      :initial-optical-transform="initialOpticalTransform"
       :padding="padding"
       :rotation-angle-degrees="angle"
       :ion-image-src="massSpecSrc"
@@ -276,6 +277,7 @@ export default {
       ticData: null,
       alreadyUploaded: false,
       initialTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+      initialOpticalTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
       padding: 0, // 100,
       layer: 1,
       angle: 0,
@@ -296,10 +298,13 @@ export default {
         return { ds_id: this.datasetId }
       },
       update(data) {
-        if (data.rawOpticalImage != null && data.rawOpticalImage.transform != null) {
-          const { url, transform } = data.rawOpticalImage
+        if (
+          data.rawOpticalImage != null && data.rawOpticalImage.transform != null
+          && data.rawOpticalImage.opticalImageTransform != null) {
+          const { url, transform, opticalImageTransform } = data.rawOpticalImage
           this.opticalImgUrl = url
           this.initialTransform = transform
+          this.initialOpticalTransform = opticalImageTransform
           this.angle = 0
           this.alreadyUploaded = true
         }
@@ -444,6 +449,7 @@ export default {
       this.opticalImgUrl = window.URL.createObjectURL(this.file)
       this.angle = 0
       this.initialTransform = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+      this.initialOpticalTransform = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
       this.alreadyUploaded = false
       document.querySelector('.input-optical-image').value = ''
     },
@@ -551,6 +557,7 @@ export default {
           datasetId: this.datasetId,
           imageUrl,
           transform: this.$refs.aligner.normalizedTransform,
+          opticalImageTransform: this.$refs.aligner.opticalNormalizedTransform,
         },
       })
       // Reset the GraphQL cache because thumbnails are cached.

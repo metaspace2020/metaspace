@@ -158,6 +158,7 @@ CREATE TABLE "public"."dataset" (
   "status_update_dt" TIMESTAMP NOT NULL, 
   "optical_image" text, 
   "transform" double precision array, 
+  "optical_image_transform" double precision array, 
   "is_public" boolean NOT NULL DEFAULT true, 
   "acq_geometry" json, 
   "ion_img_storage_type" text NOT NULL DEFAULT 'fs', 

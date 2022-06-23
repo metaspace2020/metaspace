@@ -17,6 +17,7 @@ interface OpticalImageAlignerProps {
   externalDrag: any
   externalZoom: number
   disableInternalController: boolean
+  initialTransform: number[][],
 }
 
 interface OpticalImageAlignerState {
@@ -55,6 +56,10 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
       type: Number,
       default: 1,
     },
+    initialTransform: {
+      type: Array,
+      default: () => [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    },
   },
   // @ts-ignore
   setup(props, { emit }) {
@@ -64,7 +69,7 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
       opticalImageNaturalWidth: 0,
       opticalImageNaturalHeight: 0,
       zoom: 1,
-      normalizedTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+      normalizedTransform: props.initialTransform,
       isDragging: false,
       dragThrottled: false,
       dragStartX: 0,
@@ -74,7 +79,7 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
 
     watch(() => props.src, () => { // check for src image update
       if (props.src && canvasSrc.value) {
-        state.normalizedTransform = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        state.normalizedTransform = props.initialTransform
         loadImg(true)
       }
     })
@@ -151,6 +156,7 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
         [0, 0, 1]]
       state.zoom = zoom
       state.normalizedTransform = dot(m, state.normalizedTransform)
+      emit('update', state.normalizedTransform)
     }
 
     const handleMouseDown = (event:any) => {
@@ -179,6 +185,7 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
           [0, 1, y],
           [0, 0, 1]]
         state.normalizedTransform = dot(m, state.normalizedTransform)
+        emit('update', state.normalizedTransform)
         state.dragStartX = event.clientX
         state.dragStartY = event.clientY
       }
@@ -189,6 +196,7 @@ export const OpticalImageAligner = defineComponent<OpticalImageAlignerProps>({
         [0, 1, deltaY],
         [0, 0, 1]]
       state.normalizedTransform = dot(m, state.normalizedTransform)
+      emit('update', state.normalizedTransform)
       loadImg()
     }
 

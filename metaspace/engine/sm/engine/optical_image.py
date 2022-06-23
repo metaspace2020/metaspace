@@ -10,7 +10,7 @@ from sm.engine.dataset import Dataset
 
 SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
 UPD_DATASET_RAW_OPTICAL_IMAGE = (
-    'update dataset set optical_image = %s, transform = %s WHERE id = %s'
+    'update dataset set optical_image = %s, transform = %s, optical_image_transform = %s WHERE id = %s'
 )
 DEL_DATASET_RAW_OPTICAL_IMAGE = (
     'update dataset set optical_image = NULL, transform = NULL WHERE id = %s'
@@ -107,14 +107,14 @@ def _save_jpeg(img):
     return buf
 
 
-def _add_raw_optical_image(db, ds, img_id, transform):
+def _add_raw_optical_image(db, ds, img_id, transform, optical_image_transform):
     logger.debug(f'Saving raw optical image info: {img_id}, {transform}')
     row = db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
     if row:
         old_img_id = row[0]
         if old_img_id and old_img_id != img_id:
             image_storage.delete_image(image_storage.OPTICAL, ds.id, old_img_id)
-    db.alter(UPD_DATASET_RAW_OPTICAL_IMAGE, params=(img_id, transform, ds.id))
+    db.alter(UPD_DATASET_RAW_OPTICAL_IMAGE, params=(img_id, transform, optical_image_transform, ds.id))
 
 
 def _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels):
@@ -179,7 +179,7 @@ def _add_thumbnail_optical_image(db, ds, dims, optical_img, transform):
     db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(img_thumb_id, img_thumb_url, ds.id))
 
 
-def add_optical_image(db, ds_id, url, transform, zoom_levels=(1, 2, 4, 8)):
+def add_optical_image(db, ds_id, url, transform, optical_image_transform, zoom_levels=(1, 2, 4, 8)):
     """Add optical image to dataset.
 
     Generates scaled and transformed versions of the provided optical image + creates the thumbnail
@@ -192,7 +192,7 @@ def add_optical_image(db, ds_id, url, transform, zoom_levels=(1, 2, 4, 8)):
     optical_img = Image.open(io.BytesIO(resp.content))
 
     raw_optical_img_id = url.split('/')[-1]
-    _add_raw_optical_image(db, ds, raw_optical_img_id, transform)
+    _add_raw_optical_image(db, ds, raw_optical_img_id, transform, optical_image_transform)
     _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels)
     _add_thumbnail_optical_image(db, ds, dims, optical_img, transform)
 

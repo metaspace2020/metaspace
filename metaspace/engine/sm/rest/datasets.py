@@ -168,10 +168,11 @@ def add_optical_image(ds_man, ds_id, params):
     :param params: {
         url
         transform
+        opticalImageTransform
     }
     :return:
     """
-    ds_man.add_optical_image(ds_id, params['url'], params['transform'])
+    ds_man.add_optical_image(ds_id, params['url'], params['transform'], params['opticalImageTransform'])
 
 
 @app.post('/<ds_id>/del-optical-image')

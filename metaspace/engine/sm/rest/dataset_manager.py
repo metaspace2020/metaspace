@@ -121,13 +121,13 @@ class SMapiDatasetManager:
             **kwargs,
         )
 
-    def add_optical_image(self, ds_id, url, transform, zoom_levels=(1, 2, 4, 8)):
+    def add_optical_image(self, ds_id, url, transform, optical_image_transform, zoom_levels=(1, 2, 4, 8)):
         """Add optical image to dataset.
 
         Generates scaled and transformed versions of the provided optical image
         + creates the thumbnail
         """
-        add_optical_image(self._db, ds_id, url, transform, zoom_levels)
+        add_optical_image(self._db, ds_id, url, transform, optical_image_transform, zoom_levels)
 
     def del_optical_image(self, ds_id):
         """Delete raw and zoomed optical images from DB and FS."""
