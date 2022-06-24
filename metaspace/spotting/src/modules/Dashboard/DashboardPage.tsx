@@ -58,7 +58,7 @@ const AXIS_VALUES = [
   },
   {
     label: 'Neutral losses',
-    src: 'nl',
+    src: 'nL',
   },
   {
     label: 'Matrix',
@@ -132,7 +132,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'Neutral losses',
-    src: 'nl',
+    src: 'nL',
   },
   {
     label: 'Matrix',
@@ -215,7 +215,7 @@ const filterMap : any = {
   fine_path: 'q',
   n: 'q',
   d: 'ds',
-  nl: 'nl',
+  nL: 'nl',
   pol: 'mode',
   mS: 'matrix',
   t: 'matrix',
@@ -241,7 +241,7 @@ export default defineComponent({
       xAxisValues: [],
       yAxisValues: [],
       data: [],
-      dataSource: 'Interlab',
+      dataSource: 'EMBL',
       rawData: undefined,
       rawDataInter: undefined,
       usedData: undefined,
@@ -351,7 +351,7 @@ export default defineComponent({
         console.log('loading data')
         // load data
         const params : any = {
-          isMatrix: state.dataSource === 'Matrix',
+          predType: state.dataSource.toUpperCase(),
           xAxis: state.options.xAxis,
           yAxis: state.options.yAxis,
           loadPathway: Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
@@ -384,7 +384,7 @@ export default defineComponent({
         console.log('loading filter data')
         // load data
         const params : any = {
-          isMatrix: state.dataSource === 'Matrix',
+          predType: state.dataSource.toUpperCase(),
           xAxis: state.options.xAxis,
           yAxis: state.options.yAxis,
           loadPathway: Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
@@ -595,7 +595,7 @@ export default defineComponent({
         metric: state.options.valueMetric,
         page: state.pagination.currentPage,
         pageSize: state.pagination.pageSize,
-        src: state.dataSource,
+        src: state.dataSource.toUpperCase(),
       }
 
       Object.keys(queryObj).forEach((key: string) => {
@@ -609,7 +609,7 @@ export default defineComponent({
 
     const handleDataSrcChange = async(text: any, buildChart: boolean = true) => {
       const changedValue = text !== state.dataSource
-      state.dataSource = text
+      state.dataSource = text.toUpperCase()
       $router.replace({ name: 'dashboard', query: { ...getQueryParams(), src: text } })
 
       if (state.options.xAxis && state.options.yAxis && changedValue) {
@@ -739,8 +739,9 @@ export default defineComponent({
               onInput={async(text:any) => {
                 handleDataSrcChange(text)
               }}>
-              <RadioButton label='Matrix'/>
-              <RadioButton label='Interlab'/>
+              <RadioButton label='EMBL'/>
+              <RadioButton label='ALL'/>
+              <RadioButton label='INTERLAB'/>
             </RadioGroup>
 
           </div>
