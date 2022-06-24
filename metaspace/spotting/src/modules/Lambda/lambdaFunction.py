@@ -113,6 +113,17 @@ def summarise_data(spotting_data, x_axis, y_axis, intensity_col_name, prediction
     # add log columns to support the pre-calculation log10(intensity), as it is an
     # available option at the dashboard
     spotting_data['log'] = spotting_data[intensity_col_name]
+
+    # compile data info based on select x_axis and y_axis
+    # i.e if we have x_axis = dsId and y_axis as class and a table
+    # dsId  class   intensity_col_name  prediction_col_name
+    # ds1   amine   10                   2
+    # ds1   amine   20                   0
+    # ds2   amine   39                   2
+    # we expect to be summarized as
+    # dsId  class   intensity_col_name  log         prediction_col_name class_size dataset_ids formulas matrixes
+    # ds1   amine   30                  log10(31)   1                   2          ds1         formulas matrixes
+    # ds2   amine   39                  log10(39)   1                   1          ds2         formulas matrixes
     data = spotting_data.pivot_table(
         index=[x_axis],
         columns=y_axis,
@@ -234,6 +245,13 @@ def filter_processing(query_filter_src, query_filter_values):
     print(f'query filter source: {query_filter_src}')
     print(f'query filter values: {query_filter_values}')
 
+    # builds the filter according to the positions passed in filter_values
+    # and filter_src. As the filter logic is shared with the frontend, so that will
+    # load according to the url. The filter follows this standard:
+    # filter_src=src1,src2,src3
+    # filter_values=value1_src1#value2_src1,value1_src2,value1_src3
+    # * note that the filter positions are split by ',', and that each position
+    # can be split by '#', as the filter can have multiple values
     filter_src, filter_values, filter_hash = [], [], {}
     if query_filter_src and query_filter_values:
         filter_src = urllib.parse.unquote(query_filter_src).split(',')
