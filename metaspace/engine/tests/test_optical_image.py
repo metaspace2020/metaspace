@@ -40,7 +40,8 @@ def test_add_optical_image(image_storage_mock, requests_mock, fill_db, metadata,
     zoom_levels = [1, 2, 3]
     raw_img_id = 'raw_opt_img_id'
     add_optical_image(
-        db, ds.id, raw_img_id, [[1, 0, 0], [0, 1, 0], [0, 0, 1]], zoom_levels=zoom_levels
+        db, ds.id, raw_img_id, [[1, 0, 0], [0, 1, 0], [0, 0, 1]], [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        zoom_levels=zoom_levels
     )
 
     optical_images = db.select(f"SELECT ds_id, type, zoom FROM optical_image")
