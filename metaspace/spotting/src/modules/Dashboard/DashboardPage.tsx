@@ -66,7 +66,7 @@ const AXIS_VALUES = [
   },
   {
     label: 'Molecule',
-    src: 'n',
+    src: 'name',
   },
   {
     label: 'Technology',
@@ -178,7 +178,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'Molecule',
-    src: 'n',
+    src: 'name',
   },
   {
     label: 'Formula',
@@ -419,7 +419,7 @@ export default defineComponent({
 
         const auxData : any = groupBy(data, state.options.xAxis)
         Object.keys(auxData).forEach((key: string) => {
-          auxData[key] = keyBy(auxData[key], state.options.yAxis === 'coarse_class'
+          auxData[key] = keyBy(auxData[key], state.options.yAxis === 'fine_class'
             ? 'class_full' : state.options.yAxis)
         })
 
@@ -569,14 +569,14 @@ export default defineComponent({
       const xAxisFilter : any = filterMap[state.options.xAxis]
       if (yAxisFilter) {
         const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'coarse_class'
-          || state.options.yAxis === 'n' || state.options.yAxis === 'coarse_path'
+          || state.options.yAxis === 'name' || state.options.yAxis === 'coarse_path'
           || state.options.yAxis === 'fine_path')
           ? formulas : (yAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.y)
         url += `&${yAxisFilter}=${encodeURIComponent(value)}`
       }
       if (xAxisFilter) {
         const value = (state.options.xAxis === 'fine_class' || state.options.xAxis === 'coarse_class'
-          || state.options.xAxis === 'n' || state.options.xAxis === 'coarse_path'
+          || state.options.xAxis === 'name' || state.options.xAxis === 'coarse_path'
           || state.options.xAxis === 'fine_path')
           ? formulas : (xAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.x)
         url += `&${xAxisFilter}=${encodeURIComponent(value)}`
@@ -788,7 +788,7 @@ export default defineComponent({
                         {
                           (filter.isBoolean ? ['False', 'True'] : filter.options).map((option: any) => {
                             return <Option
-                              label={option}
+                              label={!option ? 'None' : option}
                               value={option}/>
                           })
                         }
