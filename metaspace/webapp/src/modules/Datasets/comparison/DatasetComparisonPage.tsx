@@ -443,7 +443,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     }
 
     const handleChannelHighlight = () => {
-      if ($store.state.mode !== 'MULTI') {
+      if ($store.state.mode !== 'MULTI' || !state.annotations) {
         return
       }
 
@@ -473,7 +473,9 @@ export default defineComponent<DatasetComparisonPageProps>({
     const renderInfo = () => {
       const { annotations, currentAnnotationIdx, globalImageSettings, nCols, nRows } = state
 
-      const selectedAnnotation = annotations[currentAnnotationIdx].annotations[0]
+      const selectedAnnotation = annotations && annotations[currentAnnotationIdx]
+      && Array.isArray(annotations[currentAnnotationIdx].annotations)
+        ? annotations[currentAnnotationIdx].annotations[0] : null
       let possibleCompounds : any = []
       let isomers : any = []
       let isobars : any = []
@@ -485,31 +487,37 @@ export default defineComponent<DatasetComparisonPageProps>({
       })
 
       // @ts-ignore TS2604
-      const candidateMolecules = () => <CandidateMoleculesPopover
+      const candidateMolecules = (annotation: any) => <CandidateMoleculesPopover
         placement="bottom"
         possibleCompounds={possibleCompounds}
         isomers={isomers}
         isobars={isobars}>
         <MolecularFormula
           class="sf-big text-2xl"
-          ion={selectedAnnotation.ion}
+          ion={annotation.ion}
         />
       </CandidateMoleculesPopover>
 
       return (
         <div class='ds-comparison-info relative'>
-          {candidateMolecules()}
-          <CopyButton
-            class="ml-1"
-            text={selectedAnnotation.ion}>
-            Copy ion to clipboard
-          </CopyButton>
+          {
+            selectedAnnotation !== null
+            && candidateMolecules(selectedAnnotation)
+          }
+          {
+            selectedAnnotation !== null
+            && <CopyButton
+              class="ml-1"
+              text={selectedAnnotation?.ion}>
+                Copy ion to clipboard
+            </CopyButton>
+          }
           <span class="text-2xl flex items-baseline ml-4">
-            { selectedAnnotation.mz.toFixed(4) }
+            { selectedAnnotation && selectedAnnotation.mz ? selectedAnnotation.mz.toFixed(4) : '-'}
             <span class="ml-1 text-gray-700 text-sm">m/z</span>
             <CopyButton
               class="self-start"
-              text={selectedAnnotation.mz.toFixed(4)}>
+              text={selectedAnnotation && selectedAnnotation.mz ? selectedAnnotation.mz.toFixed(4) : '-'}>
               Copy m/z to clipboard
             </CopyButton>
           </span>
