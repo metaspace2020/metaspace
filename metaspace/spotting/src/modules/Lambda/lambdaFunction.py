@@ -1,16 +1,9 @@
 # %%
 import json
-import time
-import pyarrow
 import urllib.parse
+import pyarrow
 import pandas as pd
 import numpy as np
-
-
-def spent_time(start):
-    """Calculates spent time on task"""
-
-    return round(time.time() - start, 2)
 
 
 # pylint: disable=too-many-locals
@@ -26,31 +19,23 @@ def load_data(pred_type='embl', load_pathway=False, load_class=False, filters=No
     chem_class_file = 'custom_classification_24-06-22.parquet'
 
     # Load predictions, format neutral loss column
-    start = time.time()
     if pred_type == 'EMBL':
         predictions = pd.read_parquet(f'{url_prefix}/{embl_pred_file}')
     elif pred_type == 'INTERLAB':
         predictions = pd.read_parquet(f'{url_prefix}/{interlab_pred_file}')
     else:
         predictions = pd.read_parquet(f'{url_prefix}/{all_pred_file}')
-    print(f'Download embl/interlab/all file {spent_time(start)}')
 
-    start = time.time()
     predictions.nL.fillna('', inplace=True)
-    print(f'Reading embl/interlab/all file {spent_time(start)}')
 
     # Get a subset of most relevant information from Datasets file
-    start = time.time()
     datasets = pd.read_parquet(f'{url_prefix}/{datasets_file}')
     datasets_info = datasets.groupby('Dataset ID').first()
-    print(f'Load datasets file {spent_time(start)}')
 
     # Merge with predictions and classification
-    start = time.time()
     spotting_data = pd.merge(
         predictions, datasets_info, left_on='dsId', right_on='Dataset ID', how='left'
     )
-    print(f'Merge spotting_datas {spent_time(start)}')
 
     # merge with pathway
     if load_pathway:
@@ -151,16 +136,11 @@ def summarise_data(spotting_data, x_axis, y_axis, intensity_col_name, prediction
     data = data.stack(level=1, dropna=False).reset_index()
 
     for index, row in data.iterrows():
-        detected = spotting_data[
-            (spotting_data[x_axis] == row[x_axis])
-            & (spotting_data[prediction_col_name] == 2)
-            & (spotting_data[y_axis] == row[y_axis])
-        ]['name'].unique()
-        non_detected = spotting_data[
-            (spotting_data[x_axis] == row[x_axis])
-            & (spotting_data[prediction_col_name] != 2)
-            & (spotting_data[y_axis] == row[y_axis])
-        ]['name'].unique()
+        aux_axis_df = spotting_data[
+            (spotting_data[x_axis] == row[x_axis]) & (spotting_data[y_axis] == row[y_axis])
+        ]
+        detected = aux_axis_df[aux_axis_df[prediction_col_name] == 2]['name'].unique()
+        non_detected = aux_axis_df[aux_axis_df[prediction_col_name] != 2]['name'].unique()
         non_detected = list(set(non_detected) - set(detected))
         total = (
             1 if (len(detected) + len(non_detected) == 0) else (len(detected) + len(non_detected))
@@ -177,9 +157,9 @@ def parse_event(event):
 
     :param str xAxis: Metric to be plotted as X axis
     :param str yAxis: Metric to be plotted as Y axis
-    :param str/bool loadPathway:
+    :param str loadPathway:
         If True indicates that pathway file should be merged to compile the information
-    :param str/bool loadClass:
+    :param str loadClass:
         If True indicates that class file should be merged to compile the information
     :param bool predType:
         Indicate use of embl, interlab or all project (file) [EMBL, ITERLAB, ALL]
@@ -209,16 +189,8 @@ def parse_event(event):
 
     x_axis = parameter['xAxis']
     y_axis = parameter['yAxis']
-    load_pathway = (
-        parameter['loadPathway']
-        if isinstance(parameter['loadPathway'], bool)
-        else json.loads(parameter['loadPathway'].lower())
-    )
-    load_class = (
-        parameter['loadClass']
-        if isinstance(parameter['loadClass'], bool)
-        else json.loads(parameter['loadClass'].lower())
-    )
+    load_pathway = json.loads(parameter['loadPathway'].lower())
+    load_class = json.loads(parameter['loadClass'].lower())
     pred_type = parameter['predType']
     query_type = parameter['queryType']
     query_filter_src = parameter['filter']
@@ -284,9 +256,7 @@ def lambda_handler(event, context):
     )
 
     # load base data
-    start = time.time()
     base_data = load_data(pred_type, load_pathway, load_class, filter_hash)
-    print(f'Load data {spent_time(start)}')
 
     # get filter values
     if query_type == 'filterValues':
@@ -298,9 +268,9 @@ def lambda_handler(event, context):
             },
         }
 
-    # if y_axis is coarse_class, compose aggregation to show fine_class on
+    # if y_axis is fine_class, compose aggregation to show coarse_class groups on
     # sub axis
-    if y_axis == 'coarse_class':
+    if y_axis == 'fine_class':
         base_data['class_full'] = base_data['coarse_class'] + ' -agg- ' + base_data['fine_class']
         y_axis = 'class_full'
 
@@ -309,9 +279,7 @@ def lambda_handler(event, context):
     prediction_col_name = 'p'
 
     # Summarise data per molecule (intensities of its detected ions are summed)
-    start = time.time()
     data = summarise_data(base_data, x_axis, y_axis, intensity_col_name, prediction_col_name)
-    print(f'Summarise data {spent_time(start)}')
 
     return {
         'statusCode': 200,
