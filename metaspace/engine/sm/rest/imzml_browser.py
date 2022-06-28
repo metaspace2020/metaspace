@@ -6,6 +6,7 @@ import PIL
 import numpy as np
 from matplotlib import pyplot as plt
 
+from sm.engine.annotation_lithops.io import deserialize
 from sm.rest.imzml_browser_manager import DatasetFiles, DatasetBrowser
 from sm.rest.utils import body_to_json, make_response, INTERNAL_ERROR
 
@@ -71,8 +72,6 @@ def get_intensity_by_mz_ppm():
 @app.post('/peaks_from_pixel')
 def get_peaks_from_pixel():
     try:
-        from sm.engine.annotation_lithops.io import deserialize
-
         params = body_to_json(bottle.request)
         logger.info(f'Received `peak_from_pixel` request: {params}')
         assert params.get('ds_id')
@@ -119,7 +118,6 @@ def get_peaks_from_pixel():
             'ints': ints.tolist(),
         }
         return bottle.HTTPResponse(body, **headers)
-        # return {'mzs': mz.tolist(), 'ints': intensity.tolist()}
 
     except Exception as e:
         logger.exception(f'{bottle.request} - {e}')

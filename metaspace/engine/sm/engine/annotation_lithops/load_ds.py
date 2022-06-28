@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import pickle
 from concurrent.futures import ThreadPoolExecutor
 from typing import Tuple, List
 
@@ -104,25 +103,18 @@ def _upload_imzml_browser_files_to_cos(storage, imzml_cobject, imzml_reader, mzs
     imzml_browser_cobjs.append(
         storage.put_cloudobject(data.tobytes(), key=f'{prefix}/peaks_sorted_by_mz.npy')
     )
-    # imzml_browser_cobjs.append(save_cobj(storage, data, key=key))
 
     key = f'{prefix}/coordinates.bin'
     data = np.array(imzml_reader.imzml_reader.coordinates, dtype='i')[:, :2]
-    print('coordinates')
-    print(data.shape)
-    for i in data:
-        print(i)
     imzml_browser_cobjs.append(
         storage.put_cloudobject(data.tobytes(), key=f'{prefix}/coordinates.npy')
     )
-    # imzml_browser_cobjs.append(save_cobj(storage, data, key=key))
 
     key = f'{prefix}/mz_index.bin'
     data = mzs[::chunk_records_number].astype('f')
     imzml_browser_cobjs.append(
         storage.put_cloudobject(data.tobytes(), key=f'{prefix}/mz_index.npy')
     )
-    # imzml_browser_cobjs.append(save_cobj(storage, data, key=key))
 
     key = f'{prefix}/portable_spectrum_reader.pickle'
     data = imzml_reader.imzml_reader
