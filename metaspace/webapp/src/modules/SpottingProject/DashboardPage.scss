@@ -1,0 +1,108 @@
+$x-axis-color: #EB5757;
+$y-axis-color: #27AE60;
+$aggregation-color: #56CCF2;
+$metric-color: #BB6BD9;
+$filter-color: #828282;
+
+
+.dashboard-container{
+  @apply flex flex-wrap m-12 justify-between pb-1;
+
+  .el-tag{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .icon{
+    @apply flex items-center justify-center cursor-pointer mt-1;
+  }
+
+  .select-box-mini{
+    @apply mt-1;
+    width: 10rem;
+  }
+
+  .filter-container{
+    @apply flex font-bold flex-wrap;
+
+    .filter-box{
+      @apply flex flex-col;
+    }
+  }
+
+  .visualization-container{
+    @apply flex flex-wrap overflow-hidden items-end	;
+
+  }
+
+  .visualization-selector{
+    @apply flex flex-wrap font-bold border-2 border-solid border-gray-200 rounded p-2 overflow-hidden items-center;
+    background: #E0E0E0;
+    height: 20px;
+
+    .selected{
+      color: #1287EE;
+    }
+
+    .icon-holder{
+      text-align: center;
+      height: 20px;
+      width: 40px;
+    }
+
+    .vis-icon{
+      @apply m-0 cursor-pointer	;
+      font-size: 20px;
+    }
+  }
+  .feature-box{
+    @apply flex flex-wrap absolute cursor-pointer items-center justify-center;
+    top: 6px;
+    right: 32px;
+    z-index: 2;
+  }
+
+  .content-container{
+    @apply flex relative flex-wrap border-2 border-solid border-gray-200 rounded w-full mt-2 overflow-hidden items-center justify-center;
+    min-height: 400px;
+
+  }
+  .chart-container{
+    @apply w-full h-full border-2 border-dashed border-gray-300 relative;
+    min-height: 500px;
+
+  }
+
+  .x-axis-label{
+    color: $x-axis-color;
+  }
+  .y-axis-label{
+    color: $y-axis-color;
+  }
+  .filter-label{
+    color: $filter-color;
+  }
+  .aggregation-label{
+    color: $aggregation-color;
+  }
+
+  .metric-label{
+    color: $metric-color;
+  }
+
+  .dashboard-instructions{
+    @apply w-full border-2 border-dashed border-gray-200 relative rounded m-16 p-2 flex flex-row items-center justify-center;
+    background: rgba(224,224,224,0.2);
+    color: #828282;
+
+    .instruction-title{
+      @apply font-bold text-lg italic mb-4;
+    }
+
+    p{
+      @apply text-lg font-light m-0 mb-2;
+    }
+  }
+}
+

@@ -19,6 +19,7 @@ const asyncPagesFreelyTyped = {
   DatasetOverviewPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ './modules/Datasets/overview/DatasetOverviewPage.vue'),
   DatasetComparisonPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ './modules/Datasets/comparison/DatasetComparisonPage.vue'),
   DatasetBrowserPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ './modules/Datasets/imzml/DatasetBrowserPage'),
+  SpottingProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ './modules/SpottingProject/DashboardPage'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Datasets/list/DatasetTable.vue'),
@@ -114,6 +115,8 @@ const router = new VueRouter({
     { path: '/design/icons', component: asyncPages.DesignIcons, meta: { footer: true, flex: true } },
     { path: '/design/components', component: asyncPages.DesignComponents, meta: { footer: true, flex: true } },
     { path: '/design/forms', component: asyncPages.DesignForms, meta: { footer: true, flex: true } },
+
+    { path: '/spotting', name: 'spotting', component: asyncPages.SpottingProjectPage },
 
     { path: '*', component: NotFoundPage, meta: { footer: true, flex: true } },
   ],

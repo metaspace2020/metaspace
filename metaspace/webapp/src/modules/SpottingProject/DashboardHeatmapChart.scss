@@ -1,0 +1,36 @@
+.dataset-browser-spectrum-container{
+  .echarts {
+    width: 100%;
+    height: 500px;
+  }
+
+  .chart{
+    @apply flex flex-row items-center justify-center;
+    height: 600px;
+    width: 100%;
+  }
+
+  .dataset-browser-empty-spectrum{
+    @apply border-2 border-dashed border-gray-200 relative rounded m-6 p-2 flex flex-row items-center justify-center;
+    background: rgba(224,224,224,0.2);
+  }
+
+  .chart-holder{
+    @apply flex flex-col items-center justify-start relative;
+    min-height: 500px;
+    width: 100%;
+    background: rgba(0,0,0,0.01);
+    height: 100%;
+  }
+
+  .loader-holder{
+    @apply absolute flex flex-row items-start justify-center;
+    height: 100%;
+    width: 100%;
+    background: rgba(0,0,0,0.02);
+    padding-top: 30%;
+  }
+
+}
+
+
