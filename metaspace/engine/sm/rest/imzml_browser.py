@@ -6,7 +6,7 @@ import PIL
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sm.rest.imzml_browser_manager import DatasetBrowser
+from sm.rest.imzml_browser_manager import DatasetFiles, DatasetBrowser
 from sm.rest.utils import body_to_json, make_response, INTERNAL_ERROR
 
 
@@ -15,25 +15,22 @@ app = bottle.Bottle()
 
 
 def create_mz_image(mz_peaks, coordinates):
-    min_x, min_y = np.amin(coordinates, axis=0)
-    max_x, max_y = np.amax(coordinates, axis=0)
-    nrows, ncols = max_y - min_y + 1, max_x - min_x + 1
+    """Calculate the total intensity for each pixel and normalize the resulting intensity"""
+    coordinates = coordinates - np.min(coordinates, axis=0)
+    width, height = np.max(coordinates, axis=0) + 1
+    mz_image = np.zeros(width * height, dtype='f')
 
-    alpha = np.zeros(shape=(nrows, ncols))
-    all_xs, all_ys = zip(*coordinates)
-    all_xs -= min_x
-    all_ys -= min_y
-    alpha[all_ys, all_xs] = 1
+    # suboptimal option, it is desirable to rewrite using numpy
+    for _, intensity, index in mz_peaks:
+        mz_image[int(index)] += intensity
 
-    image_coord_idxs = mz_peaks[:, 2].astype('i')
-    xs = all_xs[image_coord_idxs]
-    ys = all_ys[image_coord_idxs]
-    mz_image = np.zeros(shape=(nrows, ncols))
-    np.add.at(mz_image, [ys, xs], mz_peaks[:, 1])  # warning
     if mz_image.max() > 0:
         mz_image /= mz_image.max()
 
-    return mz_image, alpha
+    # ?
+    alpha = np.ones(shape=(height, width))
+
+    return mz_image.reshape(height, width), alpha
 
 
 def create_rgba_image(mz_image, alpha):
@@ -50,11 +47,11 @@ def create_png_image(rgba_image):
     return fp
 
 
-@app.post('/search')
+@app.post('/intensity_by_mz')
 def get_intensity_by_mz_ppm():
     try:
         params = body_to_json(bottle.request)
-        logger.info(f'Received `search` request: {params}')
+        logger.info(f'Received `get_intensity_by_mz` request: {params}')
         assert params.get('ds_id')
         assert params.get('mz_low')
         assert params.get('mz_high')
@@ -66,6 +63,64 @@ def get_intensity_by_mz_ppm():
         body = create_png_image(rgba_image)
         headers = {'Content-Type': 'image/png'}
         return bottle.HTTPResponse(body, **headers)
+    except Exception as e:
+        logger.exception(f'{bottle.request} - {e}')
+        return make_response(INTERNAL_ERROR)
+
+
+@app.post('/peaks_from_pixel')
+def get_peaks_from_pixel():
+    try:
+        from sm.engine.annotation_lithops.io import deserialize
+
+        params = body_to_json(bottle.request)
+        logger.info(f'Received `peak_from_pixel` request: {params}')
+        assert params.get('ds_id')
+
+        ds_files = DatasetFiles(params['ds_id'])
+        imzml_parser = deserialize(ds_files.read_portable_spectrum_reader())
+
+        coordinates = np.array(imzml_parser.coordinates)[:, :2]
+        coordinates -= np.min(coordinates, axis=0)
+        coord_mapping = {(c[0], c[1]): i for i, c in enumerate(coordinates)}
+
+        precision = {'f': 4, 'd': 8}
+        if (params['x'], params['y']) in coord_mapping:
+            index = coord_mapping[(params['x'], params['y'])]
+            mz_offset = imzml_parser.mzOffsets[index]
+            mz_length = imzml_parser.mzLengths[index] * precision[imzml_parser.mzPrecision]
+            intensity_offset = imzml_parser.intensityOffsets[index]
+            intensity_lenght = (
+                imzml_parser.intensityLengths[index] * precision[imzml_parser.intensityPrecision]
+            )
+
+            s3_object = ds_files.s3_client.get_object(
+                Bucket=ds_files.upload_bucket,
+                Key=ds_files.ibd_key,
+                Range=f'bytes={mz_offset}-{mz_offset + mz_length - 1}',
+            )
+            mzs = np.frombuffer(s3_object['Body'].read(), dtype=imzml_parser.mzPrecision)
+
+            s3_object = ds_files.s3_client.get_object(
+                Bucket=ds_files.upload_bucket,
+                Key=ds_files.ibd_key,
+                Range=f'bytes={intensity_offset}-{intensity_offset + intensity_lenght - 1}',
+            )
+            ints = np.frombuffer(s3_object['Body'].read(), dtype=imzml_parser.intensityPrecision)
+
+        else:
+            mzs, ints = np.array([]), np.array([])
+
+        headers = {'Content-Type': 'application/json'}
+        body = {
+            'x': params['x'],
+            'y': params['y'],
+            'mzs': mzs.tolist(),
+            'ints': ints.tolist(),
+        }
+        return bottle.HTTPResponse(body, **headers)
+        # return {'mzs': mz.tolist(), 'ints': intensity.tolist()}
+
     except Exception as e:
         logger.exception(f'{bottle.request} - {e}')
         return make_response(INTERNAL_ERROR)

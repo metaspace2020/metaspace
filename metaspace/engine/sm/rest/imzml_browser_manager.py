@@ -42,9 +42,9 @@ class DatasetFiles:
         ]:
             key = obj['Key'].lower()
             if key.endswith('.imzml'):
-                self.imzml_key = key
+                self.imzml_key = obj['Key']
             elif key.endswith('.ibd'):
-                self.ibd_key = key
+                self.ibd_key = obj['Key']
 
     # def read_imzml_file(self):
     #     s3_object = self.s3_client.get_object(Bucket=self.browser_bucket, Key=self.imzml_key)
