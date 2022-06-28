@@ -59,6 +59,12 @@
 
         <div class="header-items">
           <header-link
+            v-if="showSpotting"
+            to="/spotting"
+          >
+            Spotting
+          </header-link>
+          <header-link
             to="/help"
           >
             Help
@@ -170,6 +176,7 @@ import { refreshLoginStatus } from '../../api/graphqlClient'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { datasetStatusUpdatedQuery } from '../../api/dataset'
 import { HeaderLink, HeaderButton } from './HeaderLink'
+import config from '../../lib/config'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 const MetaspaceHeader = {
@@ -182,6 +189,10 @@ const MetaspaceHeader = {
   },
 
   computed: {
+    showSpotting() {
+      return config.features.spotting
+    },
+
     uploadHref() {
       return this.href('/upload')
     },
