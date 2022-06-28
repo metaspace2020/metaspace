@@ -1,7 +1,6 @@
 # %%
 import json
 import urllib.parse
-import pyarrow
 import pandas as pd
 import numpy as np
 
