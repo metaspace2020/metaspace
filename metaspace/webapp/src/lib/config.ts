@@ -7,6 +7,7 @@ const fileConfig = require('../clientConfig.json')
 interface Features {
   coloc: boolean;
   show_dataset_overview: boolean;
+  spotting: boolean;
   tic: boolean;
   ion_thumbs: boolean;
   off_sample: boolean;
@@ -56,6 +57,7 @@ const defaultConfig: ClientConfig = {
   features: {
     coloc: true,
     show_dataset_overview: false,
+    spotting: false,
     tic: false,
     ion_thumbs: true,
     off_sample: true,
