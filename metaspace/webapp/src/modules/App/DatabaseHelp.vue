@@ -206,19 +206,30 @@
         Database containing naturally occurring N-linked glycans. This DB is based on glycans reported in the
         GlyConnect platform and is filtered to include only N-linked glycans.
         We recommend selecting only +Na adduct when using this database.
-        <p class="m-0 text-sm">
-          <span class="text-gray-700 font-medium">
-            Citation TBC
-          </span>
+        <div>
+          <el-popover
+            trigger="hover"
+            placement="bottom"
+          >
+            <div class="desc-cite-popover">
+              Veličković, Dušan, et al. "Rapid automated annotation and analysis of N-glycan mass spectrometry imaging
+              data sets using NGlycDB in METASPACE." Analytical Chemistry 93.40 (2021): 13421-13425.
+              <a href="https://doi.org/10.1021/acs.analchem.1c02347">10.1021/acs.analchem.1c02347</a>
+            </div>
+            <span
+              slot="reference"
+              class="desc-cite"
+            >Citation</span>
+          </el-popover>
           <a
             href="https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files_2021/nglyc/nglyc_v1.tsv"
-            class="ml-3"
+            class="ml-3 text-sm"
             target="_blank"
             rel="noopener"
           >
             Download N-linked glycan list
           </a>
-        </p>
+        </div>
       </li>
       <li>
         <b><a href="http://pseudomonas.umaryland.edu/PAMDB">Pseudomonas aeruginosa Metabolome Database (PAMDB)</a>:</b>
