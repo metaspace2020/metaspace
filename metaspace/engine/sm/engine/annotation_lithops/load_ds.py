@@ -95,30 +95,18 @@ def _upload_imzml_browser_files_to_cos(storage, imzml_cobject, imzml_reader, mzs
     """Save imzml browser files on COS"""
     chunk_records_number = 1024
 
-    imzml_browser_cobjs = []
-    prefix = f'imzml_browser/{imzml_cobject.key.split("/")[1]}'
+    cobjs = []
+    pref = f'imzml_browser/{imzml_cobject.key.split("/")[1]}'
 
-    key = f'{prefix}/peaks_sorted_by_mz.bin'
-    data = np.stack([mzs, ints, sp_idxs]).T.astype('f')
-    imzml_browser_cobjs.append(
-        storage.put_cloudobject(data.tobytes(), key=f'{prefix}/peaks_sorted_by_mz.npy')
-    )
+    cobjs.append(storage.put_cloudobject(mzs.astype('f').tobytes(), key=f'{pref}/mzs.npy'))
+    cobjs.append(storage.put_cloudobject(ints.astype('f').tobytes(), key=f'{pref}/ints.npy'))
+    cobjs.append(storage.put_cloudobject(sp_idxs.astype('f').tobytes(), key=f'{pref}/sp_idxs.npy'))
 
-    key = f'{prefix}/coordinates.bin'
-    data = np.array(imzml_reader.imzml_reader.coordinates, dtype='i')[:, :2]
-    imzml_browser_cobjs.append(
-        storage.put_cloudobject(data.tobytes(), key=f'{prefix}/coordinates.npy')
-    )
-
-    key = f'{prefix}/mz_index.bin'
     data = mzs[::chunk_records_number].astype('f')
-    imzml_browser_cobjs.append(
-        storage.put_cloudobject(data.tobytes(), key=f'{prefix}/mz_index.npy')
-    )
+    cobjs.append(storage.put_cloudobject(data.tobytes(), key=f'{pref}/mz_index.npy'))
 
-    key = f'{prefix}/portable_spectrum_reader.pickle'
     data = imzml_reader.imzml_reader
-    imzml_browser_cobjs.append(save_cobj(storage, data, key=key))
+    cobjs.append(save_cobj(storage, data, key=f'{pref}/portable_spectrum_reader.pickle'))
 
     return imzml_browser_cobjs
 
