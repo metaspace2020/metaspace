@@ -219,6 +219,7 @@ export interface OpticalImage {
   type: OpticalImageType;
   zoom: number;
   transform: number[][];
+  opticalImageTransform: number[][];
 }
 export const opticalImagesQuery =
   gql`query ($datasetId: String!, $type: OpticalImageType) {
@@ -230,6 +231,7 @@ export const opticalImagesQuery =
         type
         zoom
         transform
+        opticalImageTransform
       }
     }
   }`

@@ -9,9 +9,8 @@ from sm.engine.dataset import Dataset
 
 
 SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
-UPD_DATASET_RAW_OPTICAL_IMAGE = (
-    'update dataset set optical_image = %s, transform = %s, optical_image_transform = %s WHERE id = %s'
-)
+UPD_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = %s, transform = %s, ' \
+                                'optical_image_transform = %s WHERE id = %s'
 DEL_DATASET_RAW_OPTICAL_IMAGE = (
     'update dataset set optical_image = NULL, transform = NULL WHERE id = %s'
 )
@@ -28,8 +27,9 @@ IMG_URLS_BY_ID_SEL = (
 )
 
 INS_OPTICAL_IMAGE = (
-    'INSERT INTO optical_image (id, ds_id, type, zoom, width, height, transform, url) '
-    'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
+    'INSERT INTO optical_image (id, ds_id, type, zoom, width, height, transform, '
+    'url, optical_image_transform) '
+    'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
 )
 SEL_OPTICAL_IMAGE = 'SELECT id FROM optical_image WHERE ds_id = %s'
 SEL_OPTICAL_IMAGE_THUMBNAIL = 'SELECT thumbnail FROM dataset WHERE id = %s'
@@ -57,7 +57,7 @@ def _annotation_image_shape(db, ds):
     return result
 
 
-def _transform_image_to_ion_space(scan, transform_, dims, zoom):
+def _transform_image_to_ion_space(scan, transform_, optical_image_transform_, dims, zoom):
     # zoom is relative to the web application viewport size and not to the ion image dimensions,
     # i.e. zoom = 1 is what the user sees by default, and zooming into the image triggers
     # fetching higher-resolution images from the server
@@ -79,10 +79,19 @@ def _transform_image_to_ion_space(scan, transform_, dims, zoom):
     img = scan.transform(new_dims, Image.PERSPECTIVE, coeffs, Image.BICUBIC)
     transform_to_ion_space = np.diag([1 / scale_factor, 1 / scale_factor, 1])
 
-    return img, new_dims, transform_to_ion_space.tolist()
+    transform = np.array(optical_image_transform_)
+    assert transform.shape == (3, 3)
+    transform = transform / transform[2, 2]
+    transform[:, :2] /= scale_factor
+    coeffs = transform.flat[:8]
+    new_dims = int(round(dims[0] * scale_factor)), int(round(dims[1] * scale_factor))
+    img = scan.transform(new_dims, Image.PERSPECTIVE, coeffs, Image.BICUBIC)
+    optical_transform_to_ion_space = np.diag([1 / scale_factor, 1 / scale_factor, 1])
+
+    return img, new_dims, transform_to_ion_space.tolist(), optical_transform_to_ion_space.tolist()
 
 
-def _scale_image(scan, transform_, zoom):
+def _scale_image(scan, transform_, optical_image_transform_, zoom):
     # zoom is relative to the web application viewport size and not to the ion image dimensions,
     # i.e. zoom = 1 is what the user sees by default, and zooming into the image triggers
     # fetching higher-resolution images from the server
@@ -93,11 +102,16 @@ def _scale_image(scan, transform_, zoom):
     img = scan.resize(new_dims, True)
 
     transform_to_ion_space = np.linalg.pinv(np.array(transform_))
+    optical_transform_to_ion_space = np.linalg.pinv(np.array(optical_image_transform_))
     transform_to_ion_space = np.dot(
         transform_to_ion_space, np.diag([1 / scale_factor, 1 / scale_factor, 1])
     )
 
-    return img, new_dims, transform_to_ion_space.tolist()
+    optical_transform_to_ion_space = np.dot(
+        transform_to_ion_space, np.diag([1 / scale_factor, 1 / scale_factor, 1])
+    )
+
+    return img, new_dims, transform_to_ion_space.tolist(), optical_transform_to_ion_space.tolist()
 
 
 def _save_jpeg(img):
@@ -114,10 +128,14 @@ def _add_raw_optical_image(db, ds, img_id, transform, optical_image_transform):
         old_img_id = row[0]
         if old_img_id and old_img_id != img_id:
             image_storage.delete_image(image_storage.OPTICAL, ds.id, old_img_id)
-    db.alter(UPD_DATASET_RAW_OPTICAL_IMAGE, params=(img_id, transform, optical_image_transform, ds.id))
+    db.alter(
+        UPD_DATASET_RAW_OPTICAL_IMAGE, params=(img_id, transform, optical_image_transform, ds.id)
+    )
 
 
-def _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels):
+def _add_zoom_optical_images(
+    db, ds, dims, optical_img, transform, optical_image_transform, zoom_levels
+):
     logger.debug(f'Saving zoom optical images: {optical_img}')
 
     def save_image(img):
@@ -128,7 +146,9 @@ def _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels):
 
     rows = []
     for zoom in zoom_levels:
-        img, (width, height), transform_to_ion_space = _scale_image(optical_img, transform, zoom)
+        img, (width, height), transform_to_ion_space, optical_transform_to_ion_space = _scale_image(
+            optical_img, transform, optical_image_transform, zoom
+        )
         scaled_img_id, scaled_img_url = save_image(img)
         rows.append(
             (
@@ -140,11 +160,17 @@ def _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels):
                 height,
                 transform_to_ion_space,
                 scaled_img_url,
+                optical_transform_to_ion_space,
             )
         )
 
-        img, (width, height), transform_to_ion_space = _transform_image_to_ion_space(
-            optical_img, transform, dims, zoom
+        (
+            img,
+            (width, height),
+            transform_to_ion_space,
+            optical_transform_to_ion_space,
+        ) = _transform_image_to_ion_space(
+            optical_img, transform, optical_image_transform, dims, zoom
         )
         scaled_img_id, scaled_img_url = save_image(img)
         rows.append(
@@ -157,6 +183,7 @@ def _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels):
                 height,
                 transform_to_ion_space,
                 scaled_img_url,
+                optical_transform_to_ion_space,
             )
         )
 
@@ -167,11 +194,13 @@ def _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels):
     db.insert(INS_OPTICAL_IMAGE, rows=rows)
 
 
-def _add_thumbnail_optical_image(db, ds, dims, optical_img, transform):
+def _add_thumbnail_optical_image(db, ds, dims, optical_img, transform, optical_image_transform):
     logger.debug(f'Saving optical image thumbnail: {optical_img}')
     thumbnail_size = (200, 200)
     db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(None, None, ds.id))
-    img = _transform_image_to_ion_space(optical_img, transform, dims, zoom=1)[0]
+    img = _transform_image_to_ion_space(
+        optical_img, transform, optical_image_transform, dims, zoom=1
+    )[0]
     img.thumbnail(thumbnail_size, Image.ANTIALIAS)
     buf = _save_jpeg(img)
     img_thumb_id = image_storage.post_image(image_storage.OPTICAL, ds.id, buf.read())
@@ -193,8 +222,10 @@ def add_optical_image(db, ds_id, url, transform, optical_image_transform, zoom_l
 
     raw_optical_img_id = url.split('/')[-1]
     _add_raw_optical_image(db, ds, raw_optical_img_id, transform, optical_image_transform)
-    _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels)
-    _add_thumbnail_optical_image(db, ds, dims, optical_img, transform)
+    _add_zoom_optical_images(
+        db, ds, dims, optical_img, transform, optical_image_transform, zoom_levels
+    )
+    _add_thumbnail_optical_image(db, ds, dims, optical_img, transform, optical_image_transform)
 
 
 def del_optical_image(db, ds_id):

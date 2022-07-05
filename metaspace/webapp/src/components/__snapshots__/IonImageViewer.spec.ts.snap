@@ -23,7 +23,9 @@ exports[`IonImageViewer should match snapshot (with channels tooltip) 1`] = `
       height="300"
       width="200"
     />
-    <div />
+    <div
+      style="background: red;"
+    />
   </div>
   <div>
     <mock-el-tooltip
@@ -112,7 +114,9 @@ exports[`IonImageViewer should match snapshot (with normalization) 1`] = `
       height="300"
       width="200"
     />
-    <div />
+    <div
+      style="background: red;"
+    />
   </div>
   <div>
     <mock-el-tooltip
@@ -225,7 +229,9 @@ exports[`IonImageViewer should match snapshot 1`] = `
       height="300"
       width="200"
     />
-    <div />
+    <div
+      style="background: red;"
+    />
   </div>
 </div>
 `;

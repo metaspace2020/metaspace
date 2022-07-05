@@ -18,7 +18,9 @@ exports[`ImageLoader should match snapshot (minimal) 1`] = `
         height="300"
         width="200"
       />
-      <div />
+      <div
+        style="background: red;"
+      />
     </div>
   </div>
 </div>
@@ -43,16 +45,10 @@ exports[`ImageLoader should match snapshot (with everything turned on) 1`] = `
         height="300"
         width="200"
       />
-      <div>
-        <img
-          class="absolute top-0 left-0 -z-10 origin-top-left"
-          crossorigin="anonymous"
-          src="http://placekitten.com/200/300"
-          style="transform: matrix3d(1, 4, 0, 7,
-             2, 5, 0, 8,
-                      0,          0, 1,          0,
-             3, 6, 0, 9);"
-        />
+      <div
+        style="background: red;"
+      >
+        <canvas />
       </div>
     </div>
     <div>

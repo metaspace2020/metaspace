@@ -27,6 +27,7 @@ gql`fragment AnnotationDetailItem on Annotation {
     name
     polarity
     metadataJson
+    opticalImageTransform
     isPublic
     opticalImages(type: $type) {
       id

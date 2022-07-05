@@ -368,11 +368,38 @@ const usePanAndZoom = (
   return { viewBoxStyle, handleZoom, handlePanStart }
 }
 
-const useBufferedOpticalImage = (props: Props) => {
+const useBufferedOpticalImage = (props: Props, imageSize: Ref<{ width: number, height: number }>) => {
   const opticalImageStyle = computed(() => ({
     transform: (props.opticalTransform ? formatMatrix3d(props.opticalTransform) : ''),
   }))
   const opticalImageUrl = computed(() => props.opticalSrc ? (config.imageStorage || '') + props.opticalSrc : null)
+  const canvasImgRef = templateRef<HTMLCanvasElement>('opticalImgCanvas')
+
+  const loadImg = (resetTransform = false) => {
+    const canvas : any = canvasImgRef.value
+    if (!canvas) {
+      return null
+    }
+
+    const context = canvas.getContext('2d')
+    const imageObj : any = new Image()
+    imageObj.src = opticalImageUrl.value
+    imageObj.onload = function() {
+      const imgWidth = width // window.innerWidth - 40 // remove margin from total width (20px)
+      const imgHeight = imageObj.naturalHeight * imgWidth / imageObj.naturalWidth // scale height according to width
+      canvas.height = imgHeight
+      canvas.width = imgWidth
+      context.imageSmoothingEnabled = false
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      context.drawImage(imageObj, 0, 0, imageObj.naturalWidth, imageObj.naturalHeight, 0, 0, imgWidth, imgHeight)
+    }
+  }
+
+  watch(opticalImageUrl, () => {
+    if (opticalImageUrl.value) {
+      loadImg()
+    }
+  })
 
   const state = reactive({
     // Cache the last loaded optical image so that it doesn't flicker when changing zoom levels
@@ -380,44 +407,66 @@ const useBufferedOpticalImage = (props: Props) => {
     loadedOpticalImageStyle: {
       transform: (props.opticalTransform ? formatMatrix3d(props.opticalTransform) : ''),
     },
+    imageSize: imageSize,
   })
+
+  const { width, height } = imageSize.value
+
   const onOpticalImageLoaded = () => {
     state.loadedOpticalImageUrl = opticalImageUrl.value
     state.loadedOpticalImageStyle = opticalImageStyle.value
+    // loadImg()
   }
+
   // The key for the currently loaded image can shift between the two img virtual-DOM nodes, which causes
   // Vue to transfer the real DOM node from one virtual-DOM node to the other. This allows the following code to
   // seamlessly switch between zoom levels that have different images and different transforms.
   // Always test against IE11 when touching this code - IE11's @load event doesn't always fire on img elements.
   const renderOpticalImage = () => (
-    <div>
-      {opticalImageUrl.value
-      && <img
-        key={state.loadedOpticalImageUrl}
-        crossOrigin="anonymous"
-        src={state.loadedOpticalImageUrl}
-        class="absolute top-0 left-0 -z-10 origin-top-left"
-        style={{
-          ...state.loadedOpticalImageStyle,
-          filter: props.opticalOpacity !== undefined ? `brightness(${100 - ((1 - props.opticalOpacity) * 100
-              * 0.75)}%) grayscale(${(1 - (props.opticalOpacity || 0)) * 100}%)` : '',
-        }}
-      />}
+    <div
+      style={{
+        background: 'red',
+      }}
+    >
+      {
+        opticalImageUrl.value
+        && <canvas
+          ref="opticalImgCanvas"
+          width={width}
+          height={height}
+          // class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
+          // style={{
+          //   transform: (props.opticalTransform ? formatMatrix3d(props.opticalTransform) : ''),
+          // }}
+        />
+      }
+      {/* {opticalImageUrl.value */}
+      {/* && <img */}
+      {/*  key={state.loadedOpticalImageUrl} */}
+      {/*  crossOrigin="anonymous" */}
+      {/*  src={state.loadedOpticalImageUrl} */}
+      {/*  class="absolute top-0 left-0 -z-10 origin-top-left" */}
+      {/*  style={{ */}
+      {/*    ...state.loadedOpticalImageStyle, */}
+      {/*    filter: props.opticalOpacity !== undefined ? `brightness(${100 - ((1 - props.opticalOpacity) * 100 */}
+      {/*        * 0.75)}%) grayscale(${(1 - (props.opticalOpacity || 0)) * 100}%)` : '', */}
+      {/*  }} */}
+      {/* />} */}
 
-      {opticalImageUrl.value
-      && state.loadedOpticalImageUrl !== opticalImageUrl.value
-      && <img
-        key={opticalImageUrl.value}
-        crossOrigin="anonymous"
-        src={opticalImageUrl.value}
-        class="absolute top-0 left-0 -z-20 origin-top-left opacity-1"
-        style={{
-          ...opticalImageStyle.value,
-          filter: props.opticalOpacity !== undefined ? `brightness(${100 - ((1 - props.opticalOpacity) * 100
-              * 0.75)}%) grayscale(${(1 - (props.opticalOpacity || 0)) * 100}%)` : '',
-        }}
-        onLoad={onOpticalImageLoaded}
-      />}
+      {/* {opticalImageUrl.value */}
+      {/* && state.loadedOpticalImageUrl !== opticalImageUrl.value */}
+      {/* && <img */}
+      {/*  key={opticalImageUrl.value} */}
+      {/*  crossOrigin="anonymous" */}
+      {/*  src={opticalImageUrl.value} */}
+      {/*  class="absolute top-0 left-0 -z-20 origin-top-left opacity-1" */}
+      {/*  style={{ */}
+      {/*    ...opticalImageStyle.value, */}
+      {/*    filter: props.opticalOpacity !== undefined ? `brightness(${100 - ((1 - props.opticalOpacity) * 100 */}
+      {/*        * 0.75)}%) grayscale(${(1 - (props.opticalOpacity || 0)) * 100}%)` : '', */}
+      {/*  }} */}
+      {/*  onLoad={onOpticalImageLoaded} */}
+      {/* />} */}
     </div>)
   return { renderOpticalImage }
 }
@@ -553,7 +602,7 @@ export default defineComponent<Props>({
     const { renderPixelIntensity, movePixelIntensity } = usePixelIntensityDisplay(props, imageLoaderRef, emit)
     const { viewBoxStyle, handleZoom, handlePanStart } = usePanAndZoom(props, imageLoaderRef, emit, imageSize)
     const { renderIonImageView } = useIonImageView(props, imageSize, imageLoaderRef, emit)
-    const { renderOpticalImage } = useBufferedOpticalImage(props)
+    const { renderOpticalImage } = useBufferedOpticalImage(props, imageSize)
 
     const onWheel = (event: WheelEventCompat) => {
       // TODO: add pinch event handler for mobile devices

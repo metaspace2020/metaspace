@@ -208,7 +208,7 @@ export default class AnnotationView extends Vue {
        opacityMode: this.imageOpacityMode,
        imagePosition: this.imagePosition,
        opticalSrc: this.showOpticalImage && optImg && optImg.url || null,
-       opticalTransform: optImg && optImg.transform,
+       opticalTransform: optImg && optImg.opticalImageTransform,
        pixelAspectRatio: config.features.ignore_pixel_aspect_ratio ? 1
          : this.pixelSizeX && this.pixelSizeY && this.pixelSizeX / this.pixelSizeY || 1,
      }
