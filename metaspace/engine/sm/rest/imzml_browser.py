@@ -1,5 +1,6 @@
 import io
 import logging
+import time
 
 import bottle
 import PIL
@@ -9,7 +10,6 @@ from matplotlib import pyplot as plt
 from sm.engine.annotation_lithops.io import deserialize
 from sm.rest.imzml_browser_manager import DatasetFiles, DatasetBrowser
 from sm.rest.utils import body_to_json, make_response, INTERNAL_ERROR
-
 
 logger = logging.getLogger('api')
 app = bottle.Bottle()
@@ -48,20 +48,52 @@ def create_png_image(rgba_image):
     return fp
 
 
+def get_mzs_ints(x, y, coord_mapping, parser, ds_files):
+    precision = {'f': 4, 'd': 8}
+    ibd_key = ds_files.ibd_key
+    bucket = ds_files.upload_bucket
+
+    if (x, y) in coord_mapping:
+        index = coord_mapping[(x, y)]
+
+        mz_offset = parser.mzOffsets[index]
+        mz_length = parser.mzLengths[index] * precision[parser.mzPrecision]
+        mzs = np.frombuffer(
+            ds_files.read_file_partially(mz_offset, mz_length, ibd_key, bucket=bucket),
+            dtype=parser.mzPrecision,
+        )
+
+        intensity_offset = parser.intensityOffsets[index]
+        intensity_length = parser.intensityLengths[index] * precision[parser.intensityPrecision]
+        ints = np.frombuffer(
+            ds_files.read_file_partially(
+                intensity_offset,
+                intensity_length,
+                ibd_key,
+                bucket,
+            ),
+            dtype=parser.intensityPrecision,
+        )
+
+    else:
+        mzs, ints = np.array([]), np.array([])
+
+    return mzs, ints
+
+
 @app.post('/intensity_by_mz')
 def get_intensity_by_mz_ppm():
     try:
         params = body_to_json(bottle.request)
         logger.info(f'Received `get_intensity_by_mz` request: {params}')
-        assert params.get('ds_id')
-        assert params.get('mz_low')
-        assert params.get('mz_high')
-
         ds = DatasetBrowser(params['ds_id'], params['mz_low'], params['mz_high'])
 
+        start = time.time()
         mz_image, alpha = create_mz_image(ds.mz_peaks, ds.coordinates)
         rgba_image = create_rgba_image(mz_image, alpha)
         body = create_png_image(rgba_image)
+        logger.info(f'Creating an image in {round(time.time() - start, 2)} sec')
+
         headers = {'Content-Type': 'image/png'}
         return bottle.HTTPResponse(body, **headers)
     except Exception as e:
@@ -73,42 +105,15 @@ def get_intensity_by_mz_ppm():
 def get_peaks_from_pixel():
     try:
         params = body_to_json(bottle.request)
-        logger.info(f'Received `peak_from_pixel` request: {params}')
-        assert params.get('ds_id')
-
+        logger.info(f'Received `peaks_from_pixel` request: {params}')
         ds_files = DatasetFiles(params['ds_id'])
-        imzml_parser = deserialize(ds_files.read_portable_spectrum_reader())
+        imzml_parser = deserialize(ds_files.read_file(ds_files.portable_spectrum_reader_key))
 
         coordinates = np.array(imzml_parser.coordinates)[:, :2]
         coordinates -= np.min(coordinates, axis=0)
         coord_mapping = {(c[0], c[1]): i for i, c in enumerate(coordinates)}
 
-        precision = {'f': 4, 'd': 8}
-        if (params['x'], params['y']) in coord_mapping:
-            index = coord_mapping[(params['x'], params['y'])]
-            mz_offset = imzml_parser.mzOffsets[index]
-            mz_length = imzml_parser.mzLengths[index] * precision[imzml_parser.mzPrecision]
-            intensity_offset = imzml_parser.intensityOffsets[index]
-            intensity_lenght = (
-                imzml_parser.intensityLengths[index] * precision[imzml_parser.intensityPrecision]
-            )
-
-            s3_object = ds_files.s3_client.get_object(
-                Bucket=ds_files.upload_bucket,
-                Key=ds_files.ibd_key,
-                Range=f'bytes={mz_offset}-{mz_offset + mz_length - 1}',
-            )
-            mzs = np.frombuffer(s3_object['Body'].read(), dtype=imzml_parser.mzPrecision)
-
-            s3_object = ds_files.s3_client.get_object(
-                Bucket=ds_files.upload_bucket,
-                Key=ds_files.ibd_key,
-                Range=f'bytes={intensity_offset}-{intensity_offset + intensity_lenght - 1}',
-            )
-            ints = np.frombuffer(s3_object['Body'].read(), dtype=imzml_parser.intensityPrecision)
-
-        else:
-            mzs, ints = np.array([]), np.array([])
+        mzs, ints = get_mzs_ints(params['x'], params['y'], coord_mapping, imzml_parser, ds_files)
 
         headers = {'Content-Type': 'application/json'}
         body = {

@@ -108,7 +108,7 @@ def _upload_imzml_browser_files_to_cos(storage, imzml_cobject, imzml_reader, mzs
     data = imzml_reader.imzml_reader
     cobjs.append(save_cobj(storage, data, key=f'{pref}/portable_spectrum_reader.pickle'))
 
-    return imzml_browser_cobjs
+    return cobjs
 
 
 def _load_ds(

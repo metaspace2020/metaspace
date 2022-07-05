@@ -17,26 +17,24 @@ class DatasetFiles:
         self._db = DB()
         self._sm_config = SMConfig.get_conf()
         self.s3_client = get_s3_client(sm_config=self._sm_config)
-
         self.browser_bucket = self._sm_config['imzml_browser_storage']['bucket']
-        self.upload_bucket, self.uuid = self._get_bucket_and_uuid()
+        self._get_bucket_and_uuid()
+        self._find_imzml_ibd_keys()
 
-        self._find_imzml_ibd_name()
-        self.ds_coordinates_key = f'{self.uuid}/coordinates.npy'
         self.mz_index_key = f'{self.uuid}/mz_index.npy'
-        self.mz_sorted_peaks_key = f'{self.uuid}/peaks_sorted_by_mz.npy'
-        self.portable_spectrum_reader = f'{self.uuid}/portable_spectrum_reader.pickle'
+        self.mzs_key = f'{self.uuid}/mzs.npy'
+        self.ints_key = f'{self.uuid}/ints.npy'
+        self.sp_idxs_key = f'{self.uuid}/sp_idxs.npy'
+        self.portable_spectrum_reader_key = f'{self.uuid}/portable_spectrum_reader.pickle'
 
-    def _get_bucket_and_uuid(self):
+    def _get_bucket_and_uuid(self) -> None:
         with ConnectionPool(self._sm_config['db']):
             # add exception for non existed ds_id
             res = self._db.select_one(DatasetFiles.DS_SEL, params=(self.ds_id,))
-            uuid = res[0].split('/')[-1]
-            bucket = res[0].split('/')[-2]
+            self.uuid = res[0].split('/')[-1]
+            self.upload_bucket = res[0].split('/')[-2]
 
-        return bucket, uuid
-
-    def _find_imzml_ibd_name(self):
+    def _find_imzml_ibd_keys(self) -> None:
         for obj in self.s3_client.list_objects(Bucket=self.upload_bucket, Prefix=self.uuid)[
             'Contents'
         ]:
@@ -46,32 +44,21 @@ class DatasetFiles:
             elif key.endswith('.ibd'):
                 self.ibd_key = obj['Key']
 
-    # def read_imzml_file(self):
-    #     s3_object = self.s3_client.get_object(Bucket=self.browser_bucket, Key=self.imzml_key)
-    #     return s3_object['Body'].read()
-
-    def read_coordinates(self) -> bytes:
-        s3_object = self.s3_client.get_object(
-            Bucket=self.browser_bucket, Key=self.ds_coordinates_key
-        )
+    def read_file(self, key: str, bucket: str = '') -> bytes:
+        if not bucket:
+            bucket = self.browser_bucket
+        s3_object = self.s3_client.get_object(Bucket=bucket, Key=key)
         return s3_object['Body'].read()
 
-    def read_mz_index(self) -> bytes:
-        s3_object = self.s3_client.get_object(Bucket=self.browser_bucket, Key=self.mz_index_key)
-        return s3_object['Body'].read()
-
-    def read_mz_peaks(self, offset, bytes_to_read):
+    def read_file_partially(
+        self, offset: int, bytes_to_read: int, key: str, bucket: str = ''
+    ) -> bytes:
+        if not bucket:
+            bucket = self.browser_bucket
         s3_object = self.s3_client.get_object(
-            Bucket=self.browser_bucket,
-            Key=self.mz_sorted_peaks_key,
+            Bucket=bucket,
+            Key=key,
             Range=f'bytes={offset}-{offset + bytes_to_read - 1}',
-        )
-        return s3_object['Body'].read()
-
-    def read_portable_spectrum_reader(self):
-        print(f'{self.portable_spectrum_reader}')
-        s3_object = self.s3_client.get_object(
-            Bucket=self.browser_bucket, Key=self.portable_spectrum_reader
         )
         return s3_object['Body'].read()
 
@@ -82,35 +69,52 @@ class DatasetBrowser:
         self.mz_low = mz_low
         self.mz_high = mz_high
 
-        self.ds_files = DatasetFiles(ds_id)
-
-        # self.coordinates = deserialize(self.ds_files.read_coordinates()).reshape(-1, 2)
-        self.coordinates = np.frombuffer(self.ds_files.read_coordinates(), dtype='i').reshape(-1, 2)
-        # self.mz_index = deserialize(self.ds_files.read_mz_index())
-        self.mz_index = np.frombuffer(self.ds_files.read_mz_index(), dtype='f')
+        self.ds = DatasetFiles(ds_id)
+        self.mz_index = np.frombuffer(self.ds.read_file(self.ds.mz_index_key), dtype='f')
+        self.portable_reader = deserialize(self.ds.read_file(self.ds.portable_spectrum_reader_key))
+        self.coordinates = np.array(self.portable_reader.coordinates, dtype='i')[:, :2]
         self.mz_peaks = self.get_mz_peaks()
-        self.portable_reader = deserialize(self.ds_files.read_portable_spectrum_reader())
 
     def get_mz_peaks(self):
+        """Return an array of records mz, int, sp_idx located between mz_low and mz_high
+
+        Based on the mz_low and mz_high values, we calculate the index of chunks
+        and offsets in bytes to read from the files of these chunks.
+        The resulting combined arrays are filtered by mz_low/mz_high and returned.
+        """
+
+        # calculate the index of the lower and upper chunk
         mz_low_chunk_idx, mz_high_chunk_idx = np.searchsorted(
             self.mz_index, [self.mz_low, self.mz_high]
         )
         if mz_high_chunk_idx == 0:
             return np.zeros((0, 3), dtype='f')
-
         # previous chunk actually includes value
-        mz_low_chunk_idx -= 1
+        if mz_low_chunk_idx > 0:
+            mz_low_chunk_idx -= 1
 
-        chunk_size = 3 * 4 * 1024  # num of elements, element in bytes, chunk record size
+        chunk_size = 4 * 1024  # element in bytes, chunk record size
         offset = mz_low_chunk_idx * chunk_size
         bytes_to_read = (mz_high_chunk_idx - mz_low_chunk_idx + 1) * chunk_size
-        print(offset, bytes_to_read)
-        mz_chunks_array = np.frombuffer(
-            self.ds_files.read_mz_peaks(offset, bytes_to_read), dtype='f'
-        ).reshape(-1, 3)
 
-        index_low, index_high = np.searchsorted(mz_chunks_array[:, 0], [self.mz_low, self.mz_high])
+        mz_chunks_array = np.frombuffer(
+            self.ds.read_file_partially(offset, bytes_to_read, self.ds.mzs_key),
+            dtype='f',
+        )
+        int_chucks_array = np.frombuffer(
+            self.ds.read_file_partially(offset, bytes_to_read, self.ds.ints_key),
+            dtype='f',
+        )
+        sp_idxs_chunk_array = np.frombuffer(
+            self.ds.read_file_partially(offset, bytes_to_read, self.ds.sp_idxs_key),
+            dtype='f',
+        )
+
+        peaks_chunk_array = np.stack([mz_chunks_array, int_chucks_array, sp_idxs_chunk_array]).T
+        index_low, index_high = np.searchsorted(
+            peaks_chunk_array[:, 0], [self.mz_low, self.mz_high]
+        )
         # index_high equals to index after last valid element
-        mz_peaks = mz_chunks_array[index_low:index_high]
+        mz_peaks = peaks_chunk_array[index_low:index_high]
 
         return mz_peaks
