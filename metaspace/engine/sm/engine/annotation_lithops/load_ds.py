@@ -146,6 +146,7 @@ def load_ds(
         _load_ds,
         (imzml_cobject, ibd_cobject, ds_segm_size_mb),
         runtime_memory=runtime_memory,
+        timeout=1200,
     )
 
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
