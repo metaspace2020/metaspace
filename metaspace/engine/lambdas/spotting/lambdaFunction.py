@@ -3,19 +3,33 @@ import json
 import urllib.parse
 import pandas as pd
 import numpy as np
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qsl
 
+
+def calculate_detected_intensities(df, threshold=0.8):
+    '''
+    Make a column with background corrected intensities for detected compounds, and 0s for not detected compounds
+    Change any negative values to zero
+    Also add detectability column, where compounds with prediction value above threshold=0.8 are labelled as detected (1)
+    '''
+
+    df['detectability'] = df.pV >= threshold
+    vals = df.v * df.detectability
+    df['effective_intensity'] = np.clip(vals, 0, None)
+    return df
 
 # pylint: disable=too-many-locals
-def load_data(pred_type='embl', load_pathway=False, load_class=False, filters=None):
+def load_data(pred_type='EMBL', load_pathway=False, load_class=False, filters=None):
     """Load spotting related data and apply filters"""
 
-    url_prefix = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data'
-    all_pred_file = 'all_predictions_24-06-22.parquet'
-    interlab_pred_file = 'interlab_predictions_24-06-22.parquet'
-    embl_pred_file = 'embl_predictions_24-06-22.parquet'
-    datasets_file = 'datasets_24-06-22.parquet'
-    pathways_file = 'pathways_24-06-22.parquet'
-    chem_class_file = 'custom_classification_24-06-22.parquet'
+    url_prefix = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v2'
+    all_pred_file = 'all_predictions_05-07-22.parquet'
+    interlab_pred_file = 'interlab_predictions_05-07-22.parquet'
+    embl_pred_file = 'embl_predictions_05-07-22.parquet'
+    datasets_file = 'datasets_05-07-22.parquet'
+    pathways_file = 'pathways_05-07-22.parquet'
+    chem_class_file = 'custom_classification_05-07-22.parquet'
 
     # Load predictions, format neutral loss column
     if pred_type == 'EMBL':
@@ -29,24 +43,24 @@ def load_data(pred_type='embl', load_pathway=False, load_class=False, filters=No
 
     # Get a subset of most relevant information from Datasets file
     datasets = pd.read_parquet(f'{url_prefix}/{datasets_file}')
-    datasets_info = datasets.groupby('Dataset ID').first()
+    datasets_info = datasets.groupby('Dataset ID').first()[['Polarity', 'Matrix short', 'Matrix long', 'Slide code', pred_type]]
 
     # Merge with predictions and classification
-    spotting_data = pd.merge(
+    df = pd.merge(
         predictions, datasets_info, left_on='dsId', right_on='Dataset ID', how='left'
     )
 
     # merge with pathway
     if load_pathway:
         pathways = pd.read_parquet(f'{url_prefix}/{pathways_file}')
-        spotting_data = spotting_data.merge(
+        df = df.merge(
             pathways, left_on='name', right_on='name_short', how='left'
         )
 
     # merge with class
     if load_class:
         chem_class = pd.read_parquet(f'{url_prefix}/{chem_class_file}')
-        spotting_data = spotting_data.merge(
+        df = df.merge(
             chem_class, left_on='name', right_on='name_short', how='left'
         )
 
@@ -58,15 +72,22 @@ def load_data(pred_type='embl', load_pathway=False, load_class=False, filters=No
         for filter_key in filters.keys():
             if filter_key == 'p':
                 values = [2] if filters[filter_key][0] == 'True' else [0, 1]
-                spotting_data = spotting_data[spotting_data[filter_key].isin(values)]
+                df = df[df[filter_key].isin(values)]
             elif filter_key in numeric_filters:
-                spotting_data = spotting_data[
-                    spotting_data[filter_key] <= float(filters[filter_key][0])
+                df = df[
+                    df[filter_key] <= float(filters[filter_key][0])
                 ]
             else:
-                spotting_data = spotting_data[spotting_data[filter_key].isin(filters[filter_key])]
+                df = df[df[filter_key].isin(filters[filter_key])]
 
-    return spotting_data
+
+    df = df[df[pred_type]]
+
+    # Filter to keep only datasets chosen for plots about matrix comparison
+    df = calculate_detected_intensities(df, threshold=0.8)
+    spotting_data = df[df.detectability]
+
+    return spotting_data, df.name.nunique()
 
 
 def summarise_data(spotting_data, x_axis, y_axis, intensity_col_name, prediction_col_name):
@@ -255,7 +276,7 @@ def lambda_handler(event, context):
     )
 
     # load base data
-    base_data = load_data(pred_type, load_pathway, load_class, filter_hash)
+    base_data, n_metabolites = load_data(pred_type, load_pathway, load_class, filter_hash)
 
     # get filter values
     if query_type == 'filterValues':
@@ -267,6 +288,8 @@ def lambda_handler(event, context):
             },
         }
 
+
+
     # if y_axis is fine_class, compose aggregation to show coarse_class groups on
     # sub axis
     if y_axis == 'fine_class':
@@ -276,6 +299,28 @@ def lambda_handler(event, context):
     # set intensity and prediction identifiers
     intensity_col_name = 'v'
     prediction_col_name = 'p'
+
+    # Aggregate data from individual ions per metabolite ('name_short'), per dataset ('dataset_id') and axis values
+    step1 = base_data.pivot_table(index=['dsId', 'name', x_axis, y_axis],
+                             values=['effective_intensity', 'detectability'],
+                             aggfunc=
+                             {'effective_intensity': lambda series: np.log10(sum(series) + 1),  # sum,
+                              'detectability': max})
+
+    # Aggregate data per dataset and axis values
+    # Calculate what fraction metabolites in this dataset were detected with a given X, Y axis value
+    # There are 172 metaboites in total
+    step2 = step1.groupby(['dsId', x_axis, y_axis]).agg({
+        'effective_intensity': 'mean',
+        'detectability': lambda x: sum(x) / n_metabolites})
+
+    # Finally, take the average of results of all datasets
+
+    step3 = step2.groupby([x_axis, y_axis]).agg({
+        'effective_intensity': 'mean',
+        'detectability': 'mean'})
+
+    step3['log10_intensity'] = np.log10(step3['effective_intensity'] + 1)
 
     # Summarise data per molecule (intensities of its detected ions are summed)
     data = summarise_data(base_data, x_axis, y_axis, intensity_col_name, prediction_col_name)
@@ -292,19 +337,52 @@ def lambda_handler(event, context):
     }
 
 
+class MyServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+
+        print('url')
+        url = self.path
+        parsed_url = urlparse(url)
+        query = parse_qsl(parsed_url.query)
+        print(query)
+        print(dict(query))
+
+        payload = lambda_handler(
+            dict(query),
+            None,
+        )
+
+        json_to_pass = json.dumps(payload)
+        self.send_response(code=200, message='here is your token')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header(keyword='Content-type', value='application/json')
+        self.end_headers()
+        self.wfile.write(json_to_pass.encode('utf-8'))
+
+
 if __name__ == "__main__":
+    # webServer = HTTPServer(('localhost', 8080), MyServer)
+    # print("Yang's local server started at port 8080")
+    # try:
+    #     webServer.serve_forever()
+    # except KeyboardInterrupt:
+    #     pass
+    #
+    # webServer.server_close()
+    # print("Server stopped.")
     payload = lambda_handler(
         {
             'predType': 'EMBL',
             'xAxis': 'a',
-            'yAxis': 'coarse_class',
+            'yAxis': 'Matrix short',
             'loadPathway': 'false',
-            'loadClass': 'true',
+            'loadClass': 'false',
             'queryType': 'data',
-            'filter': 'a,dsId',
-            'filterValues': '+Cl',
+            'filter': '',
+            'filterValues': '',
         },
         None,
     )
     print(payload)
+
 # %%
