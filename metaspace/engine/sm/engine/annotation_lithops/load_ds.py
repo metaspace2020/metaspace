@@ -86,27 +86,28 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs)
         )
         return save_cobj(storage, df)
 
-    with ThreadPoolExecutor(2) as executor:
+    with ThreadPoolExecutor(4) as executor:
         ds_segms_cobjs = list(executor.map(upload_segm, segm_ranges))
     return ds_segms_cobjs, ds_segments_bounds, ds_segm_lens
 
 
 def _upload_imzml_browser_files_to_cos(storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs):
     """Save imzml browser files on COS"""
+
+    def upload_file(data, key):
+        return storage.put_cloudobject(data.astype('f').tobytes(), key=key)
+
+    prefix = f'imzml_browser/{imzml_cobject.key.split("/")[1]}'
+    keys = [f'{prefix}/{var}.npy' for var in ['mzs', 'ints', 'sp_idxs']]
+    with ThreadPoolExecutor(3) as executor:
+        cobjs = list(executor.map(upload_file, [mzs, ints, sp_idxs], keys))
+
     chunk_records_number = 1024
-
-    cobjs = []
-    pref = f'imzml_browser/{imzml_cobject.key.split("/")[1]}'
-
-    cobjs.append(storage.put_cloudobject(mzs.astype('f').tobytes(), key=f'{pref}/mzs.npy'))
-    cobjs.append(storage.put_cloudobject(ints.astype('f').tobytes(), key=f'{pref}/ints.npy'))
-    cobjs.append(storage.put_cloudobject(sp_idxs.astype('f').tobytes(), key=f'{pref}/sp_idxs.npy'))
-
     data = mzs[::chunk_records_number].astype('f')
-    cobjs.append(storage.put_cloudobject(data.tobytes(), key=f'{pref}/mz_index.npy'))
+    cobjs.append(storage.put_cloudobject(data.tobytes(), key=f'{prefix}/mz_index.npy'))
 
     data = imzml_reader.imzml_reader
-    cobjs.append(save_cobj(storage, data, key=f'{pref}/portable_spectrum_reader.pickle'))
+    cobjs.append(save_cobj(storage, data, key=f'{prefix}/portable_spectrum_reader.pickle'))
 
     return cobjs
 
@@ -156,17 +157,22 @@ def _upload_imzml_browser_files(storage: Storage, imzml_browser_cobjs: List[CObj
     conf = SMConfig.get_conf()
     s3_client = get_s3_client(sm_config=conf)
     transfer_config = TransferConfig(
-        multipart_chunksize=20 * MB, max_concurrency=20, io_chunksize=1 * MB
+        multipart_chunksize=20 * MB, max_concurrency=10, io_chunksize=1 * MB
     )
-    for cobjec in imzml_browser_cobjs:
-        logger.info(f'Uploading {cobjec.key}')
-        file_object = storage.get_cloudobject(cobjec, stream=True)
+
+    def upload_file(cobj):
+        logger.info(f'Uploading {cobj.key}')
+        file_object = storage.get_cloudobject(cobj, stream=True)
         s3_client.upload_fileobj(
             Bucket=conf['imzml_browser_storage']['bucket'],
-            Key=cobjec.key.split('/', 1)[-1],
+            Key=cobj.key.split('/', 1)[-1],
             Fileobj=file_object,
             Config=transfer_config,
         )
+
+    with ThreadPoolExecutor(3) as executor:
+        for _ in executor.map(upload_file, imzml_browser_cobjs):
+            pass
 
 
 def load_ds(
