@@ -19,16 +19,14 @@ def create_mz_image(mz_peaks, coordinates):
     """Calculate the total intensity for each pixel and normalize the resulting intensity"""
     coordinates = coordinates - np.min(coordinates, axis=0)
     width, height = np.max(coordinates, axis=0) + 1
-    mz_image = np.zeros(width * height, dtype='f')
 
-    # suboptimal option, it is desirable to rewrite using numpy
-    for _, intensity, index in mz_peaks:
-        mz_image[int(index)] += intensity
+    # calculate the total intensity of all peaks for each pixel
+    mz_image = np.zeros(width * height, dtype='f')
+    np.add.at(mz_image, mz_peaks[:, 2].astype(np.int), mz_peaks[:, 1])
 
     if mz_image.max() > 0:
         mz_image /= mz_image.max()
 
-    # ?
     alpha = np.ones(shape=(height, width))
 
     return mz_image.reshape(height, width), alpha
