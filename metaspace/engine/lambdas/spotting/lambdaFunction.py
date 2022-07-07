@@ -1,17 +1,19 @@
 # %%
 import json
 import urllib.parse
-import pandas as pd
-import numpy as np
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qsl
+import pandas as pd
+import numpy as np
 
 
 def calculate_detected_intensities(df, threshold=0.8):
     '''
-    Make a column with background corrected intensities for detected compounds, and 0s for not detected compounds
+    Make a column with background corrected intensities for detected compounds, and 0s
+     for not detected compounds
     Change any negative values to zero
-    Also add detectability column, where compounds with prediction value above threshold=0.8 are labelled as detected (1)
+    Also add detectability column, where compounds with prediction value above
+     threshold=0.8 are labelled as detected (1)
     '''
 
     df['detectability'] = df.pV >= threshold
@@ -19,8 +21,11 @@ def calculate_detected_intensities(df, threshold=0.8):
     df['effective_intensity'] = np.clip(vals, 0, None)
     return df
 
+
 # pylint: disable=too-many-locals
-def load_data(pred_type='EMBL', load_pathway=False, load_class=False, filters=None):
+def load_data(
+    pred_type='EMBL', load_pathway=False, load_class=False, filters=None, x_axis=None, y_axis=None
+):
     """Load spotting related data and apply filters"""
 
     url_prefix = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v2'
@@ -43,25 +48,51 @@ def load_data(pred_type='EMBL', load_pathway=False, load_class=False, filters=No
 
     # Get a subset of most relevant information from Datasets file
     datasets = pd.read_parquet(f'{url_prefix}/{datasets_file}')
-    datasets_info = datasets.groupby('Dataset ID').first()[['Polarity', 'Matrix short', 'Matrix long', 'Slide code', pred_type]]
+    datasets.rename(columns={'All': 'ALL', 'Interlab': 'INTERLAB'}, inplace=True)
+    datasets_info = datasets.groupby('Dataset ID').first()[
+        ['Polarity', 'Matrix short', 'Matrix long', 'Slide code', pred_type]
+    ]
 
     # Merge with predictions and classification
-    df = pd.merge(
-        predictions, datasets_info, left_on='dsId', right_on='Dataset ID', how='left'
-    )
+    df = pd.merge(predictions, datasets_info, left_on='dsId', right_on='Dataset ID', how='left')
 
     # merge with pathway
     if load_pathway:
         pathways = pd.read_parquet(f'{url_prefix}/{pathways_file}')
-        df = df.merge(
-            pathways, left_on='name', right_on='name_short', how='left'
-        )
+        df = df.merge(pathways, left_on='name', right_on='name_short', how='left')
+
+    df = df[df[pred_type]]
+
+    # dsIds, formulas and matrix columns are needed to generate url to metaspace with filter
+    # the columns are duplicated and renamed, in case the x_axis or y_axis also having the same name
+    # would throw an error
+    df['dataset_ids'] = df['dsId']
+    df['formulas'] = df['f']
+    df['matrixes'] = df['Matrix long']
+
+    # Filter to keep only datasets chosen for plots about matrix comparison
+    df = calculate_detected_intensities(df, threshold=0.8)
+    spotting_data = df[df.detectability]
 
     # merge with class
     if load_class:
-        chem_class = pd.read_parquet(f'{url_prefix}/{chem_class_file}')
-        df = df.merge(
-            chem_class, left_on='name', right_on='name_short', how='left'
+        classes1 = pd.read_parquet(f'{url_prefix}/{chem_class_file}')
+
+        if y_axis != 'main_coarse_class' and x_axis != 'main_coarse_class':
+            chem_subclass = classes1[
+                ['name_short', 'coarse_class', 'fine_class']
+            ].drop_duplicates()  # coarse class here is to do sorting if you want
+            chem = chem_subclass[chem_subclass.coarse_class != 'Thermometers']
+            sizes = chem_subclass.fine_class.value_counts()
+            chem['class_size'] = [sizes[k] for k in chem.fine_class]
+        else:
+            chem_class = classes1[['name_short', 'main_coarse_class']].drop_duplicates()
+            chem = chem_class[chem_class.main_coarse_class != 'Thermometers']
+            sizes = chem_class.main_coarse_class.value_counts()
+            chem['class_size'] = [sizes[k] for k in chem.main_coarse_class]
+
+        spotting_data = spotting_data.merge(
+            chem, left_on='name', right_on='name_short', how='right'
         )
 
     # filter types definitions
@@ -72,104 +103,152 @@ def load_data(pred_type='EMBL', load_pathway=False, load_class=False, filters=No
         for filter_key in filters.keys():
             if filter_key == 'p':
                 values = [2] if filters[filter_key][0] == 'True' else [0, 1]
-                df = df[df[filter_key].isin(values)]
+                spotting_data = spotting_data[spotting_data[filter_key].isin(values)]
             elif filter_key in numeric_filters:
-                df = df[
-                    df[filter_key] <= float(filters[filter_key][0])
+                spotting_data = spotting_data[
+                    spotting_data[filter_key] <= float(filters[filter_key][0])
                 ]
             else:
-                df = df[df[filter_key].isin(filters[filter_key])]
+                spotting_data = spotting_data[spotting_data[filter_key].isin(filters[filter_key])]
+
+    return spotting_data, spotting_data.name.nunique()
 
 
-    df = df[df[pred_type]]
-
-    # Filter to keep only datasets chosen for plots about matrix comparison
-    df = calculate_detected_intensities(df, threshold=0.8)
-    spotting_data = df[df.detectability]
-
-    return spotting_data, df.name.nunique()
-
-
-def summarise_data(spotting_data, x_axis, y_axis, intensity_col_name, prediction_col_name):
+def summarise_data_w_class(spotting_data, x_axis, y_axis):
     """
-    Summarise spotting data by aggregating it by given x and y axis metrics.
+    Summarise spotting data with class.
     """
-
-    # aggregator to calculate how many items were predicted (predictino_col_name == 2)
-    intensity_aggregation_func = (
-        lambda x: 0
-        if True not in (x == 2).value_counts().index
-        else (x == 2).value_counts().loc[True]
-    )
 
     # merge array items with comma, as it will be used to generate metaspace url
-    ds_aggregation_func = lambda x: ','.join(pd.unique(x))
+    join_aggregation_func = lambda x: ','.join(pd.unique(x))
 
-    # initialize class size
-    spotting_data['class_size'] = 1
+    step1_indexes = ['dsId', 'name', x_axis, y_axis]
+    step2_indexes = ['dsId', x_axis, y_axis]
+    if x_axis == 'dsId' or y_axis == 'dsId':
+        step1_indexes.pop(0)
+        step2_indexes.pop(0)
 
-    # dsIds, formulas and matrix columns are needed to generate url to metaspace with filter
-    # the columns are duplicated and renamed, in case the x_axis or y_axis also having the same name
-    # would throw an error
-    spotting_data['dataset_ids'] = spotting_data['dsId']
-    spotting_data['formulas'] = spotting_data['f']
-    spotting_data['matrixes'] = spotting_data['Matrix long']
-
-    # add log columns to support the pre-calculation log10(intensity), as it is an
-    # available option at the dashboard
-    spotting_data['log'] = spotting_data[intensity_col_name]
-
-    # compile data info based on select x_axis and y_axis
-    # i.e if we have x_axis = dsId and y_axis as class and a table
-    # dsId  class   intensity_col_name  prediction_col_name
-    # ds1   amine   10                   2
-    # ds1   amine   20                   0
-    # ds2   amine   39                   2
-    # we expect to be summarized as
-    # dsId  class   intensity_col_name  log         prediction_col_name class_size dataset_ids formulas matrixes
-    # ds1   amine   30                  log10(31)   1                   2          ds1         formulas matrixes
-    # ds2   amine   39                  log10(39)   1                   1          ds2         formulas matrixes
-    data = spotting_data.pivot_table(
-        index=[x_axis],
-        columns=y_axis,
+    # First step is to  aggregate per metabolite, dataset and axes values
+    step1 = spotting_data.pivot_table(
+        index=step1_indexes,
         values=[
-            intensity_col_name,
-            prediction_col_name,
+            'effective_intensity',
+            'detectability',
             'class_size',
-            'log',
             'dataset_ids',
             'formulas',
             'matrixes',
         ],
         aggfunc={
-            'class_size': sum,
-            intensity_col_name: lambda x: sum(x),
-            'log': lambda x: np.log10(sum(x) + 1),
-            prediction_col_name: intensity_aggregation_func,
-            'dataset_ids': ds_aggregation_func,
-            'formulas': ds_aggregation_func,
-            'matrixes': ds_aggregation_func,
+            'effective_intensity': 'sum',
+            'detectability': 'max',
+            'class_size': 'first',
+            'dataset_ids': join_aggregation_func,
+            'formulas': join_aggregation_func,
+            'matrixes': join_aggregation_func,
         },
         fill_value=0,
     )
 
-    data = data.stack(level=1, dropna=False).reset_index()
+    # Next, aggregare per dataset and axes values
 
-    for index, row in data.iterrows():
-        aux_axis_df = spotting_data[
-            (spotting_data[x_axis] == row[x_axis]) & (spotting_data[y_axis] == row[y_axis])
-        ]
-        detected = aux_axis_df[aux_axis_df[prediction_col_name] == 2]['name'].unique()
-        non_detected = aux_axis_df[aux_axis_df[prediction_col_name] != 2]['name'].unique()
-        non_detected = list(set(non_detected) - set(detected))
-        total = (
-            1 if (len(detected) + len(non_detected) == 0) else (len(detected) + len(non_detected))
-        )
-        data.loc[index, 'detected'] = len(detected)
-        data.loc[index, 'non_detected'] = len(non_detected)
-        data.loc[index, 'fraction_detected'] = len(detected) / total
+    step2 = step1.pivot_table(
+        index=step2_indexes,
+        values=[
+            'effective_intensity',
+            'detectability',
+            'class_size',
+            'dataset_ids',
+            'formulas',
+            'matrixes',
+        ],
+        aggfunc={
+            'class_size': 'first',
+            'effective_intensity': 'mean',  # only when considering only 'detected' data
+            'detectability': 'sum',
+            'dataset_ids': join_aggregation_func,
+            'formulas': join_aggregation_func,
+            'matrixes': join_aggregation_func,
+        },
+        fill_value=0,
+    )
 
-    return data[(data['class_size'] != 0) & (data['p'] != 0) & (data['v'] != 0)]
+    step2['fraction_detected'] = step2.detectability / step2.class_size
+
+    # Finally, take the average of results of all datasets
+
+    step3 = step2.groupby([x_axis, y_axis]).agg(
+        {
+            'dataset_ids': join_aggregation_func,
+            'formulas': join_aggregation_func,
+            'matrixes': join_aggregation_func,
+            'effective_intensity': 'mean',
+            'fraction_detected': 'mean',
+        }
+    )
+
+    step3['log10_intensity'] = step3['effective_intensity'].apply(lambda x: np.log10(x + 1))
+
+    return step3.reset_index(level=[x_axis, y_axis])
+
+
+def summarise_data(spotting_data, n_metabolites, x_axis, y_axis):
+    """
+    Summarise spotting data without class.
+    """
+
+    # merge array items with comma, as it will be used to generate metaspace url
+    join_aggregation_func = lambda x: ','.join(pd.unique(x))
+
+    step1_indexes = ['dsId', 'name', x_axis, y_axis]
+    step2_indexes = ['dsId', x_axis, y_axis]
+    if x_axis == 'dsId' or y_axis == 'dsId':
+        step1_indexes.pop(0)
+        step2_indexes.pop(0)
+
+    # Aggregate data from individual ions per metabolite ('name_short'),
+    # per dataset ('dataset_id') and axis values
+    step1 = spotting_data.pivot_table(
+        index=step1_indexes,
+        values=['effective_intensity', 'detectability', 'dataset_ids', 'formulas', 'matrixes'],
+        aggfunc={
+            'effective_intensity': sum,
+            'detectability': max,
+            'dataset_ids': join_aggregation_func,
+            'formulas': join_aggregation_func,
+            'matrixes': join_aggregation_func,
+        },
+    )
+
+    # Aggregate data per dataset and axis values
+    # Calculate what fraction metabolites in this dataset were detected with a given X, Y axis value
+    # There are 172 metaboites in total
+    step2 = step1.groupby(step2_indexes).agg(
+        {
+            'dataset_ids': join_aggregation_func,
+            'formulas': join_aggregation_func,
+            'matrixes': join_aggregation_func,
+            'effective_intensity': 'mean',
+            'detectability': lambda x: sum(x) / n_metabolites,
+        }
+    )
+
+    # Finally, take the average of results of all datasets
+
+    step3 = step2.groupby([x_axis, y_axis]).agg(
+        {
+            'dataset_ids': join_aggregation_func,
+            'formulas': join_aggregation_func,
+            'matrixes': join_aggregation_func,
+            'effective_intensity': 'mean',
+            'detectability': 'mean',
+        }
+    )
+
+    step3.rename(columns={'detectability': 'fraction_detected'}, inplace=True)
+    step3['log10_intensity'] = np.log10(step3['effective_intensity'] + 1)
+
+    return step3.reset_index(level=[x_axis, y_axis])
 
 
 def parse_event(event):
@@ -276,7 +355,9 @@ def lambda_handler(event, context):
     )
 
     # load base data
-    base_data, n_metabolites = load_data(pred_type, load_pathway, load_class, filter_hash)
+    base_data, n_metabolites = load_data(
+        pred_type, load_pathway, load_class, filter_hash, x_axis, y_axis
+    )
 
     # get filter values
     if query_type == 'filterValues':
@@ -288,42 +369,17 @@ def lambda_handler(event, context):
             },
         }
 
-
-
     # if y_axis is fine_class, compose aggregation to show coarse_class groups on
     # sub axis
     if y_axis == 'fine_class':
         base_data['class_full'] = base_data['coarse_class'] + ' -agg- ' + base_data['fine_class']
         y_axis = 'class_full'
 
-    # set intensity and prediction identifiers
-    intensity_col_name = 'v'
-    prediction_col_name = 'p'
-
-    # Aggregate data from individual ions per metabolite ('name_short'), per dataset ('dataset_id') and axis values
-    step1 = base_data.pivot_table(index=['dsId', 'name', x_axis, y_axis],
-                             values=['effective_intensity', 'detectability'],
-                             aggfunc=
-                             {'effective_intensity': lambda series: np.log10(sum(series) + 1),  # sum,
-                              'detectability': max})
-
-    # Aggregate data per dataset and axis values
-    # Calculate what fraction metabolites in this dataset were detected with a given X, Y axis value
-    # There are 172 metaboites in total
-    step2 = step1.groupby(['dsId', x_axis, y_axis]).agg({
-        'effective_intensity': 'mean',
-        'detectability': lambda x: sum(x) / n_metabolites})
-
-    # Finally, take the average of results of all datasets
-
-    step3 = step2.groupby([x_axis, y_axis]).agg({
-        'effective_intensity': 'mean',
-        'detectability': 'mean'})
-
-    step3['log10_intensity'] = np.log10(step3['effective_intensity'] + 1)
-
     # Summarise data per molecule (intensities of its detected ions are summed)
-    data = summarise_data(base_data, x_axis, y_axis, intensity_col_name, prediction_col_name)
+    if not load_pathway and not load_class:
+        data = summarise_data(base_data, n_metabolites, x_axis, y_axis)
+    else:
+        data = summarise_data_w_class(base_data, x_axis, y_axis)
 
     return {
         'statusCode': 200,
@@ -338,6 +394,7 @@ def lambda_handler(event, context):
 
 
 class MyServer(BaseHTTPRequestHandler):
+    # pylint: disable=invalid-name
     def do_GET(self):
 
         print('url')
@@ -361,28 +418,28 @@ class MyServer(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    # webServer = HTTPServer(('localhost', 8080), MyServer)
-    # print("Yang's local server started at port 8080")
-    # try:
-    #     webServer.serve_forever()
-    # except KeyboardInterrupt:
-    #     pass
-    #
-    # webServer.server_close()
-    # print("Server stopped.")
-    payload = lambda_handler(
-        {
-            'predType': 'EMBL',
-            'xAxis': 'a',
-            'yAxis': 'Matrix short',
-            'loadPathway': 'false',
-            'loadClass': 'false',
-            'queryType': 'data',
-            'filter': '',
-            'filterValues': '',
-        },
-        None,
-    )
-    print(payload)
+    webServer = HTTPServer(('localhost', 8080), MyServer)
+    print("Yang's local server started at port 8080")
+    try:
+        webServer.serve_forever()
+    except KeyboardInterrupt:
+        pass
+
+    webServer.server_close()
+    print("Server stopped.")
+    # payload = lambda_handler(
+    #     {
+    #         'predType': 'EMBL',
+    #         'xAxis': 'Matrix short',
+    #         'yAxis': 'dsId',
+    #         'loadPathway': 'false',
+    #         'loadClass': 'false',
+    #         'queryType': 'data',
+    #         'filter': '',
+    #         'filterValues': '',
+    #     },
+    #     None,
+    # )
+    # print(payload)
 
 # %%
