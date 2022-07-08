@@ -95,15 +95,13 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
   async hasImzmlFiles(source, { datasetId }) {
     try {
-      const resp = await smApiDatasetRequest('/v1/browser/peaks_from_pixel', {
+      await smApiDatasetRequest('/v1/browser/peaks_from_pixel', {
         ds_id: datasetId,
         x: 0,
         y: 0,
       })
-      console.log('resp', resp)
       return true
     } catch (e) {
-      console.log('e', e)
       return false
     }
   },
@@ -114,10 +112,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         mz_low: mzLow,
         mz_high: mzHigh,
       })
-      console.log('resp', resp)
       return resp.image
     } catch (e) {
-      console.log('e', e)
       return null
     }
   },
@@ -128,10 +124,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         x,
         y,
       })
-      console.log('resp', resp)
       return resp
     } catch (e) {
-      console.log('e', e)
       return null
     }
   },

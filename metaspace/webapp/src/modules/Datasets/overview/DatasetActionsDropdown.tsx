@@ -121,7 +121,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           mutation: reprocessDatasetQuery,
           variables: {
             id: props.dataset?.id,
-            useLithops: config.features.lithops,
+            useLithops: true, // config.features.lithops,
           },
         })
         $notify.success('Dataset sent for reprocessing')
@@ -133,7 +133,24 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       }
     }
 
-    const handleCommand = (command: string) => {
+    const confirmReprocess = async() => {
+      try {
+        await $confirm('The changes to the analysis options require the dataset to be reprocessed. '
+          + 'This dataset will be unavailable until reprocessing has completed. Do you wish to continue?',
+        'Reprocessing required',
+        {
+          type: 'warning',
+          confirmButtonText: 'Continue',
+          cancelButtonText: 'Cancel',
+        })
+        return true
+      } catch (e) {
+        // Ignore - user clicked cancel
+        return false
+      }
+    }
+
+    const handleCommand = async(command: string) => {
       switch (command) {
         case 'edit':
           $router.push({
@@ -142,10 +159,14 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           })
           break
         case 'browser':
-          $router.push({
-            name: 'dataset-browser',
-            params: { dataset_id: props.dataset?.id },
-          })
+          if (hasBrowserFiles.value) {
+            $router.push({
+              name: 'dataset-browser',
+              params: { dataset_id: props.dataset?.id },
+            })
+          } else if (await confirmReprocess()) {
+            handleReprocess()
+          }
           break
         case 'delete':
           openDeleteDialog()

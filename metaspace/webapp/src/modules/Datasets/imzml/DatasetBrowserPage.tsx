@@ -199,6 +199,7 @@ export default defineComponent<DatasetBrowserProps>({
       if (result && result.data && result.data.pixelSpectrum) {
         state.sampleData = [{ ints: result.data.pixelSpectrum.ints, mzs: result.data.pixelSpectrum.mzs }]
       }
+      state.chartLoading = false
     })
 
     const b64toBlob = (b64Data: any, contentType = '', sliceSize = 512) => {
@@ -272,8 +273,6 @@ export default defineComponent<DatasetBrowserProps>({
         state.normalization = ticPixel
       } catch (e) {
         reportError(e)
-      } finally {
-        state.chartLoading = false
       }
     }
 
