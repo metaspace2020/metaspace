@@ -1,5 +1,10 @@
 import { computed, defineComponent, reactive } from '@vue/composition-api'
-import { DatasetDetailItem, deleteDatasetQuery, reprocessDatasetQuery } from '../../../api/dataset'
+import {
+  checkIfHasBrowserFiles,
+  DatasetDetailItem,
+  deleteDatasetQuery,
+  reprocessDatasetQuery,
+} from '../../../api/dataset'
 import { CurrentUserRoleResult } from '../../../api/user'
 import { Dropdown, DropdownItem, DropdownMenu, Button } from '../../../lib/element-ui'
 import reportError from '../../../lib/reportError'
@@ -7,6 +12,7 @@ import DownloadDialog from '../list/DownloadDialog'
 import { DatasetComparisonDialog } from '../comparison/DatasetComparisonDialog'
 import config from '../../../lib/config'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
+import { useQuery } from '@vue/apollo-composable'
 
 interface DatasetActionsDropdownProps {
   actionLabel: string
@@ -15,6 +21,7 @@ interface DatasetActionsDropdownProps {
   reprocessActionLabel: string
   downloadActionLabel: string
   compareActionLabel: string
+  browserActionLabel: string
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
 }
@@ -33,6 +40,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     deleteActionLabel: { type: String, default: 'Delete' },
     editActionLabel: { type: String, default: 'Edit metadata' },
     compareActionLabel: { type: String, default: 'Compare with other datasets...' },
+    browserActionLabel: { type: String, default: 'Imzml Browser' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
@@ -47,6 +55,12 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       showCompareDialog: false,
       showDownloadDialog: false,
     })
+
+    const {
+      result: browserResult,
+    } = useQuery<any>(checkIfHasBrowserFiles, { datasetId: props.dataset?.id })
+    const hasBrowserFiles = computed(() => browserResult.value != null
+      ? browserResult.value.hasImzmlFiles : null)
 
     const openDeleteDialog = async() => {
       const force = props.dataset?.status === 'QUEUED' || props.dataset?.status === 'ANNOTATING'
@@ -127,6 +141,12 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
             params: { dataset_id: props.dataset?.id },
           })
           break
+        case 'browser':
+          $router.push({
+            name: 'dataset-browser',
+            params: { dataset_id: props.dataset?.id },
+          })
+          break
         case 'delete':
           openDeleteDialog()
           break
@@ -148,7 +168,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     return () => {
       const {
         actionLabel, currentUser, dataset, editActionLabel, deleteActionLabel,
-        downloadActionLabel, reprocessActionLabel, compareActionLabel,
+        downloadActionLabel, reprocessActionLabel, compareActionLabel, browserActionLabel,
       } = props
       const { role } = currentUser || {}
       const { canEdit, canDelete, canDownload, id, name } = dataset || {}
@@ -175,6 +195,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
               && <DropdownItem command="download">{downloadActionLabel}</DropdownItem>
             }
             <DropdownItem command="compare">{compareActionLabel}</DropdownItem>
+            <DropdownItem command="browser">{browserActionLabel}</DropdownItem>
             {
               canDelete
               && <DropdownItem class='text-red-500' command="delete">{deleteActionLabel}</DropdownItem>

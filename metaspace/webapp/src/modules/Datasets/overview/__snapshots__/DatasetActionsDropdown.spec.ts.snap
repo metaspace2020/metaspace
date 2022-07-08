@@ -9,6 +9,7 @@ exports[`DatasetActionsDropdown it should match snapshot 1`] = `
     <eldropdownitem-stub command="edit">Edit metadata</eldropdownitem-stub>
     <eldropdownitem-stub command="download">Download</eldropdownitem-stub>
     <eldropdownitem-stub command="compare">Compare with other datasets...</eldropdownitem-stub>
+    <eldropdownitem-stub command="browser">Imzml Browser</eldropdownitem-stub>
     <eldropdownitem-stub command="delete" class="text-red-500">Delete</eldropdownitem-stub>
     <eldropdownitem-stub command="reprocess" class="text-red-500">Reprocess data</eldropdownitem-stub>
   </eldropdownmenu-stub>

@@ -5,9 +5,8 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import { sync } from 'vuex-router-sync'
 import { DatasetActionsDropdown } from './DatasetActionsDropdown'
-
-Vue.use(Vuex)
-sync(store, router)
+import { checkIfHasBrowserFiles } from '../../../api/dataset'
+import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/mockGraphqlClient'
 
 describe('DatasetActionsDropdown', () => {
   const mockDataset = {
@@ -80,35 +79,45 @@ describe('DatasetActionsDropdown', () => {
     },
   })
 
+  beforeAll(() => {
+    Vue.use(Vuex)
+    sync(store, router)
+    initMockGraphqlClient({
+      Query: () => ({
+        checkIfHasBrowserFiles: () => false, // Prevent automatic mocking
+      }),
+    })
+  })
+
   it('it should match snapshot', async() => {
-    const wrapper = shallowMount(testHarness, { store, router, propsData })
+    const wrapper = shallowMount(testHarness, { store, router, apolloProvider, propsData })
 
     expect(wrapper).toMatchSnapshot()
   })
 
   it('it show all options to the admin', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
+    const wrapper = mount(testHarness, { store, router, apolloProvider, propsData })
     await Vue.nextTick()
-    expect(wrapper.findAll('li').length).toBe(5)
+    expect(wrapper.findAll('li').length).toBe(6)
   })
 
   it('it show all options except reprocess if user is the ds owner, but not admin', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData: propsDataOwner })
+    const wrapper = mount(testHarness, { store, router, apolloProvider, propsData: propsDataOwner })
     await Vue.nextTick()
-    expect(wrapper.findAll('li').length).toBe(4)
+    expect(wrapper.findAll('li').length).toBe(5)
   })
 
   it('it show only canDownload option for normalUser', async() => {
     const wrapper = mount(testHarness, { store, router, propsData: propsDataNormal })
     await Vue.nextTick()
-    expect(wrapper.findAll('li').length).toBe(2)
+    expect(wrapper.findAll('li').length).toBe(3)
   })
 
   it('it show only canDownload option for normalUser', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData: propsDataNormalNoOptions })
+    const wrapper = mount(testHarness, { store, router, apolloProvider, propsData: propsDataNormalNoOptions })
     await Vue.nextTick()
 
-    expect(wrapper.findAll('li').length).toBe(1)
+    expect(wrapper.findAll('li').length).toBe(2)
     expect(wrapper.find('.el-dropdown').element.style.visibility).toBe('hidden')
   })
 })

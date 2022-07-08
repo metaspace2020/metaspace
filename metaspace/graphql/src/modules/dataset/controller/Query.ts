@@ -7,6 +7,7 @@ import { Context } from '../../../context'
 import { thumbnailOpticalImageUrl, rawOpticalImage } from './Dataset'
 import { applyQueryFilters } from '../../annotation/queryFilters'
 import { OpticalImage } from '../../engine/model'
+import { smApiDatasetRequest } from '../../../utils'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER
@@ -92,6 +93,48 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     return await thumbnailOpticalImageUrl(ctx, datasetId)
   },
 
+  async hasImzmlFiles(source, { datasetId }) {
+    try {
+      const resp = await smApiDatasetRequest('/v1/browser/peaks_from_pixel', {
+        ds_id: datasetId,
+        x: 0,
+        y: 0,
+      })
+      console.log('resp', resp)
+      return true
+    } catch (e) {
+      console.log('e', e)
+      return false
+    }
+  },
+  async browserImage(source, { datasetId, mzLow, mzHigh }) {
+    try {
+      const resp = await smApiDatasetRequest('/v1/browser/intensity_by_mz', {
+        ds_id: datasetId,
+        mz_low: mzLow,
+        mz_high: mzHigh,
+      })
+      console.log('resp', resp)
+      return resp.image
+    } catch (e) {
+      console.log('e', e)
+      return null
+    }
+  },
+  async pixelSpectrum(source, { datasetId, x, y }) {
+    try {
+      const resp = await smApiDatasetRequest('/v1/browser/peaks_from_pixel', {
+        ds_id: datasetId,
+        x,
+        y,
+      })
+      console.log('resp', resp)
+      return resp
+    } catch (e) {
+      console.log('e', e)
+      return null
+    }
+  },
   async currentUserLastSubmittedDataset(source, args, ctx): Promise<DatasetSource | null> {
     if (ctx.user.id) {
       const results = await esSearchResults({

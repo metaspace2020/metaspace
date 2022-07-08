@@ -1,7 +1,12 @@
 import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { Select, Option, RadioGroup, Radio, InputNumber, Input, RadioButton } from '../../../lib/element-ui'
 import { useQuery } from '@vue/apollo-composable'
-import { GetDatasetByIdQuery, getDatasetByIdWithPathQuery, getDatasetDiagnosticsQuery } from '../../../api/dataset'
+import {
+  checkIfHasBrowserFiles, getBrowserImage,
+  GetDatasetByIdQuery,
+  getDatasetByIdWithPathQuery,
+  getDatasetDiagnosticsQuery, getSpectrum,
+} from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
 import safeJsonParse from '../../../lib/safeJsonParse'
@@ -49,6 +54,10 @@ interface DatasetBrowserState {
   y: number | undefined
   currentView: string
   normalization: number | undefined
+  mz: number | undefined,
+  mzLow: number | undefined,
+  mzHigh: number | undefined,
+  enableImageQuery: boolean,
 }
 
 const PEAK_FILTER = {
@@ -98,6 +107,10 @@ export default defineComponent<DatasetBrowserProps>({
       currentView: VIEWS.KENDRICK,
       showFullTIC: true,
       normalization: undefined,
+      mz: undefined,
+      mzLow: undefined,
+      mzHigh: undefined,
+      enableImageQuery: false,
     })
 
     const queryVariables = () => {
@@ -166,6 +179,66 @@ export default defineComponent<DatasetBrowserProps>({
       dFilter: { ...queryVariables().dFilter, ids: datasetId },
     }))
 
+    const imageQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+
+    const {
+      result: browserResult,
+      onResult: onImageResult,
+    } = useQuery<any>(getBrowserImage, () => ({ datasetId: datasetId, mzLow: state.mzLow, mzHigh: state.mzHigh }),
+      imageQueryOptions)
+
+    const spectrumQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+
+    const {
+      result: spectrumResult,
+      onResult: onSpectrumResult,
+    } = useQuery<any>(getSpectrum, () => ({ datasetId: datasetId, x: state.x, y: state.y }),
+      spectrumQueryOptions)
+
+    onSpectrumResult(async(result) => {
+      if (result && result.data && result.data.pixelSpectrum) {
+        state.sampleData = [{ ints: result.data.pixelSpectrum.ints, mzs: result.data.pixelSpectrum.mzs }]
+      }
+    })
+
+    const b64toBlob = (b64Data: any, contentType = '', sliceSize = 512) => {
+      const byteCharacters = atob(b64Data)
+      const byteArrays = []
+
+      for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        const slice = byteCharacters.slice(offset, offset + sliceSize)
+
+        const byteNumbers = new Array(slice.length)
+        for (let i = 0; i < slice.length; i++) {
+          byteNumbers[i] = slice.charCodeAt(i)
+        }
+
+        const byteArray = new Uint8Array(byteNumbers)
+        byteArrays.push(byteArray)
+      }
+
+      const blob = new Blob(byteArrays, { type: contentType })
+      return blob
+    }
+
+    onImageResult(async(result) => {
+      if (result?.data?.browserImage) {
+        const blob = b64toBlob(result?.data?.browserImage.replace('data:image/png;base64,', ''), 'image/png')
+        state.ionImageUrl = URL.createObjectURL(blob)
+        state.annotation = {
+          ...annotations.value[0],
+          mz: state.mz,
+          isotopeImages: [
+            {
+              ...annotations.value[0].isotopeImages[0],
+              mz: state.mz,
+              url: state.ionImageUrl,
+            },
+          ],
+        }
+      }
+    })
+
     const {
       result: annotationsResult,
       loading: annotationsLoading,
@@ -189,31 +262,13 @@ export default defineComponent<DatasetBrowserProps>({
     })
 
     const requestSpectrum = async(x: number = 0, y: number = 0) => {
-      // @ts-ignore
-      const inputPath: string = dataset.value.inputPath.replace('s3a:', 's3:')
-      const url = 'http://127.0.0.1:8000/search_pixel'
-
       try {
         state.chartLoading = true
-        const response = await fetch(url, {
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          method: 'POST',
-          body: JSON.stringify({
-            s3_path: inputPath,
-            x,
-            y,
-          }),
-        })
-        const content = await response.json()
-        state.sampleData = [content]
-
+        state.x = x
+        state.y = y
+        spectrumQueryOptions.enabled = true
         const i = (y * state.normalizationData.shape[1]) + x
         const ticPixel = state.normalizationData.data[i]
-        state.x = content.x
-        state.y = content.y
         state.normalization = ticPixel
       } catch (e) {
         reportError(e)
@@ -240,37 +295,12 @@ export default defineComponent<DatasetBrowserProps>({
     }
 
     const requestIonImage = async(mzValue : number | undefined = state.mzmScoreFilter) => {
-      // @ts-ignore
-      const inputPath: string = dataset.value.inputPath.replace('s3a:', 's3:')
-      const url = 'http://127.0.0.1:8000/search'
       try {
         state.imageLoading = true
-        const response = await fetch(url, {
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          method: 'POST',
-          body: JSON.stringify({
-            s3_path: inputPath,
-            mz: mzValue,
-            ppm: state.mzmPolarityFilter,
-          }),
-        })
-
-        const content = await response.blob()
-        state.ionImageUrl = URL.createObjectURL(content)
-        state.annotation = {
-          ...annotations.value[0],
-          mz: mzValue,
-          isotopeImages: [
-            {
-              ...annotations.value[0].isotopeImages[0],
-              mz: mzValue,
-              url: state.ionImageUrl,
-            },
-          ],
-        }
+        state.mz = mzValue
+        state.mzLow = mzValue! - state.mzmPolarityFilter!
+        state.mzHigh = mzValue! + state.mzmPolarityFilter!
+        imageQueryOptions.enabled = true
       } catch (e) {
         reportError(e)
       } finally {
@@ -638,7 +668,6 @@ export default defineComponent<DatasetBrowserProps>({
 
     return () => {
       const isEmpty = state.x === undefined && state.y === undefined
-
       return (
         <div class={'dataset-browser-container'}>
           <div class={'dataset-browser-wrapper w-full lg:w-1/2'}>

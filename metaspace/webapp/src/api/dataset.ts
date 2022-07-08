@@ -404,3 +404,23 @@ export const getDatasetStatusQuery =
   gql`query getDatasetStatusQuery($id: String!) {
     dataset(id: $id) { id status }
   }`
+
+export const checkIfHasBrowserFiles =
+gql`query checkIfHasBrowserFilesQuery($datasetId: String!) {
+  hasImzmlFiles(datasetId: $datasetId)
+}`
+
+export const getBrowserImage =
+gql`query gerBrowserImageQuery($datasetId: String!, $mzLow: Float!, $mzHigh: Float!) {
+  browserImage(datasetId: $datasetId, mzLow: $mzLow, mzHigh: $mzHigh)
+}`
+
+export const getSpectrum =
+gql`query getSpectrumQuery($datasetId: String!, $x: Int!, $y: Int!) {
+  pixelSpectrum(datasetId: $datasetId, x: $x, y: $y){
+    x
+    y
+    mzs
+    ints
+  }
+}`
