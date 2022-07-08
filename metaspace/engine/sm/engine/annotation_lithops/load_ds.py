@@ -142,11 +142,14 @@ def load_ds(
         logger.info(f'Found {ibd_size_mb}MB .ibd file. Using VM-based load_ds')
         runtime_memory = 128 * 1024
 
+    # default CE timeout is 600 seconds. For large datasets, sometimes this is not enough.
+    lithops_kwargs = {'timeout': 900}
+
     imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens = executor.call(
         _load_ds,
         (imzml_cobject, ibd_cobject, ds_segm_size_mb),
         runtime_memory=runtime_memory,
-        timeout=1200,
+        **lithops_kwargs,
     )
 
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
