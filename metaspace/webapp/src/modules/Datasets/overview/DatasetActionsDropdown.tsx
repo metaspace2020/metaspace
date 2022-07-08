@@ -121,7 +121,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           mutation: reprocessDatasetQuery,
           variables: {
             id: props.dataset?.id,
-            useLithops: true, // config.features.lithops,
+            useLithops: config.features.lithops,
           },
         })
         $notify.success('Dataset sent for reprocessing')
@@ -216,7 +216,10 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
               && <DropdownItem command="download">{downloadActionLabel}</DropdownItem>
             }
             <DropdownItem command="compare">{compareActionLabel}</DropdownItem>
-            <DropdownItem command="browser">{browserActionLabel}</DropdownItem>
+            {
+              config.features.imzml_browser
+              && <DropdownItem command="browser">{browserActionLabel}</DropdownItem>
+            }
             {
               canDelete
               && <DropdownItem class='text-red-500' command="delete">{deleteActionLabel}</DropdownItem>
