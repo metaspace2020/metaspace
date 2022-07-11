@@ -95,9 +95,7 @@ def get_intensity_by_mz_ppm():
         logger.info(f'Creating an image in {round(time.time() - start, 2)} sec')
 
         headers = {'Content-Type': 'application/json'}
-        body = {
-            'image': body,
-        }
+        body = {'image': body}
         return bottle.HTTPResponse(body, **headers)
     except Exception as e:
         logger.exception(f'{bottle.request} - {e}')

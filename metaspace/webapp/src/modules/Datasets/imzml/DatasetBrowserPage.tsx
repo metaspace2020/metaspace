@@ -2,10 +2,10 @@ import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { Select, Option, RadioGroup, Radio, InputNumber, Input, RadioButton } from '../../../lib/element-ui'
 import { useQuery } from '@vue/apollo-composable'
 import {
-  checkIfHasBrowserFiles, getBrowserImage,
+  getBrowserImage,
   GetDatasetByIdQuery,
   getDatasetByIdWithPathQuery,
-  getDatasetDiagnosticsQuery, getSpectrum,
+  getSpectrum,
 } from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
@@ -23,6 +23,7 @@ import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import Vue from 'vue'
 import FileSaver from 'file-saver'
+import { mzFilterPrecision } from '../../../lib/util'
 
 interface DatasetBrowserProps {
   className: string
@@ -34,7 +35,7 @@ interface DatasetBrowserState {
   moleculeFilter: string | undefined
   databaseFilter: number | string | undefined
   mzmScoreFilter: number | undefined
-  mzmPolarityFilter: number | undefined
+  mzmShiftFilter: number | undefined
   mzmScaleFilter: string | undefined
   ionImageUrl: any
   sampleData: any[]
@@ -86,7 +87,7 @@ export default defineComponent<DatasetBrowserProps>({
       fdrFilter: undefined,
       databaseFilter: undefined,
       mzmScoreFilter: undefined,
-      mzmPolarityFilter: undefined,
+      mzmShiftFilter: undefined,
       mzmScaleFilter: undefined,
       metadata: undefined,
       annotation: undefined,
@@ -184,8 +185,12 @@ export default defineComponent<DatasetBrowserProps>({
     const {
       result: browserResult,
       onResult: onImageResult,
-    } = useQuery<any>(getBrowserImage, () => ({ datasetId: datasetId, mzLow: state.mzLow, mzHigh: state.mzHigh }),
-      imageQueryOptions)
+    } = useQuery<any>(getBrowserImage, () => ({
+      datasetId: datasetId,
+      mzLow: state.mzLow,
+      mzHigh: state.mzHigh,
+    }),
+    imageQueryOptions)
 
     const spectrumQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
 
@@ -226,8 +231,18 @@ export default defineComponent<DatasetBrowserProps>({
       if (result?.data?.browserImage) {
         const blob = b64toBlob(result?.data?.browserImage.replace('data:image/png;base64,', ''), 'image/png')
         state.ionImageUrl = URL.createObjectURL(blob)
+
+        let currentAnnotation = {}
+        if (annotations.value) {
+          const theoreticalMz = state.mz as number
+          const highestMz = theoreticalMz * 1.000003
+          const lowestMz = theoreticalMz * 0.999997
+          currentAnnotation = annotations.value
+            .find((annotation: any) => annotation.mz >= lowestMz && annotation.mz <= highestMz)
+        }
+
         state.annotation = {
-          ...annotations.value[0],
+          ...currentAnnotation,
           mz: state.mz,
           isotopeImages: [
             {
@@ -269,8 +284,7 @@ export default defineComponent<DatasetBrowserProps>({
         state.y = y
         spectrumQueryOptions.enabled = true
         const i = (y * state.normalizationData.shape[1]) + x
-        const ticPixel = state.normalizationData.data[i]
-        state.normalization = ticPixel
+        state.normalization = state.normalizationData.data[i] // ticPixel
       } catch (e) {
         reportError(e)
       }
@@ -297,8 +311,8 @@ export default defineComponent<DatasetBrowserProps>({
       try {
         state.imageLoading = true
         state.mz = mzValue
-        state.mzLow = mzValue! - state.mzmPolarityFilter!
-        state.mzHigh = mzValue! + state.mzmPolarityFilter!
+        state.mzLow = mzValue! - (mzValue! * state.mzmShiftFilter! * 1e-6) // ppm
+        state.mzHigh = mzValue! + (mzValue! * state.mzmShiftFilter! * 1e-6) // ppm
         imageQueryOptions.enabled = true
       } catch (e) {
         reportError(e)
@@ -313,7 +327,7 @@ export default defineComponent<DatasetBrowserProps>({
           const mz = result.data.allAnnotations[0].mz
           const ppm = 3
           state.mzmScoreFilter = mz
-          state.mzmPolarityFilter = ppm
+          state.mzmShiftFilter = ppm
           state.mzmScaleFilter = 'ppm'
         }
         await requestIonImage()
@@ -526,12 +540,13 @@ export default defineComponent<DatasetBrowserProps>({
       // @ts-ignore TS2604
       const candidateMolecules = () => <CandidateMoleculesPopover
         placement="bottom"
-        possibleCompounds={annotation.possibleCompounds}
-        isomers={annotation.isomers}
-        isobars={annotation.isobars}>
+        style={{ display: !annotation?.ion ? 'none' : '' }}
+        possibleCompounds={annotation?.possibleCompounds || []}
+        isomers={annotation?.isomers}
+        isobars={annotation?.isobars}>
         <MolecularFormula
           class="sf-big text-2xl"
-          ion={annotation.ion}
+          ion={annotation?.ion || '-'}
         />
       </CandidateMoleculesPopover>
 
@@ -540,7 +555,8 @@ export default defineComponent<DatasetBrowserProps>({
           {candidateMolecules()}
           <CopyButton
             class="ml-1"
-            text={annotation.ion}>
+            style={{ display: !annotation?.ion ? 'none' : '' }}
+            text={annotation?.ion || '-'}>
             Copy ion to clipboard
           </CopyButton>
           <span class="text-2xl flex items-baseline ml-4">
@@ -590,16 +606,16 @@ export default defineComponent<DatasetBrowserProps>({
             <span class='mx-1'>+-</span>
             <InputNumber
               class='mr-2 select-box'
-              value={state.mzmPolarityFilter}
+              value={state.mzmShiftFilter}
               onInput={(value: number) => {
-                state.mzmPolarityFilter = value
+                state.mzmShiftFilter = value
                 state.moleculeFilter = undefined
               }}
               onChange={() => {
                 requestIonImage()
               }}
-              precision={2}
-              step={0.01}
+              precision={0}
+              step={1}
               size='mini'
               placeholder='2.5'
             />
@@ -613,7 +629,6 @@ export default defineComponent<DatasetBrowserProps>({
               }}
               size='mini'
               placeholder='ppm'>
-              <Option label="DA" value='DA'/>
               <Option label="ppm" value='ppm'/>
             </Select>
           </div>
