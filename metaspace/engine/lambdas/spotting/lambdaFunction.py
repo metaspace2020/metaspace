@@ -1,13 +1,13 @@
 # %%
 import json
 import urllib.parse
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler  # , HTTPServer
 from urllib.parse import urlparse, parse_qsl
 import pandas as pd
 import numpy as np
 
 
-def calculate_detected_intensities(df, threshold=0.8):
+def calculate_detected_intensities(source_df, threshold=0.8):
     '''
     Make a column with background corrected intensities for detected compounds, and 0s
      for not detected compounds
@@ -16,10 +16,10 @@ def calculate_detected_intensities(df, threshold=0.8):
      threshold=0.8 are labelled as detected (1)
     '''
 
-    df['detectability'] = df.pV >= threshold
-    vals = df.v * df.detectability
-    df['effective_intensity'] = np.clip(vals, 0, None)
-    return df
+    source_df['detectability'] = source_df.pV >= threshold
+    vals = source_df.v * source_df.detectability
+    source_df['effective_intensity'] = np.clip(vals, 0, None)
+    return source_df
 
 
 # pylint: disable=too-many-locals, too-many-arguments
@@ -52,25 +52,27 @@ def load_data(
     datasets_info = datasets.groupby('Dataset ID').first()
 
     # Merge with predictions and classification
-    df = pd.merge(predictions, datasets_info, left_on='dsId', right_on='Dataset ID', how='left')
+    source_df = pd.merge(
+        predictions, datasets_info, left_on='dsId', right_on='Dataset ID', how='left'
+    )
 
     # merge with pathway
     if load_pathway:
         pathways = pd.read_parquet(f'{url_prefix}/{pathways_file}')
-        df = df.merge(pathways, left_on='name', right_on='name_short', how='left')
+        source_df = source_df.merge(pathways, left_on='name', right_on='name_short', how='left')
 
-    df = df[df[pred_type]]
+    source_df = source_df[source_df[pred_type]]
 
     # dsIds, formulas and matrix columns are needed to generate url to metaspace with filter
     # the columns are duplicated and renamed, in case the x_axis or y_axis also having the same name
     # would throw an error
-    df['dataset_ids'] = df['dsId']
-    df['formulas'] = df['f']
-    df['matrixes'] = df['Matrix long']
+    source_df['dataset_ids'] = source_df['dsId']
+    source_df['formulas'] = source_df['f']
+    source_df['matrixes'] = source_df['Matrix long']
 
     # Filter to keep only datasets chosen for plots about matrix comparison
-    df = calculate_detected_intensities(df, threshold=0.8)
-    spotting_data = df[df.detectability]
+    source_df = calculate_detected_intensities(source_df, threshold=0.8)
+    spotting_data = source_df[source_df.detectability]
 
     # merge with class
     if load_class:
@@ -419,12 +421,7 @@ class MyServer(BaseHTTPRequestHandler):
         print(query)
         print(dict(query))
 
-        payload = lambda_handler(
-            dict(query),
-            None,
-        )
-
-        json_to_pass = json.dumps(payload)
+        json_to_pass = json.dumps(lambda_handler(dict(query), None,))
         self.send_response(code=200, message='here is your token')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header(keyword='Content-type', value='application/json')
