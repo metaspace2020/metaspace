@@ -22,7 +22,7 @@ def calculate_detected_intensities(df, threshold=0.8):
     return df
 
 
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals, too-many-arguments
 def load_data(
     pred_type='EMBL', load_pathway=False, load_class=False, filters=None, x_axis=None, y_axis=None
 ):
@@ -32,7 +32,7 @@ def load_data(
     all_pred_file = 'all_predictions_05-07-22.parquet'
     interlab_pred_file = 'interlab_predictions_05-07-22.parquet'
     embl_pred_file = 'embl_predictions_05-07-22.parquet'
-    datasets_file = 'datasets_05-07-22.parquet'
+    datasets_file = 'datasets_11-07-22.parquet'
     pathways_file = 'pathways_05-07-22.parquet'
     chem_class_file = 'custom_classification_05-07-22.parquet'
 
@@ -49,9 +49,7 @@ def load_data(
     # Get a subset of most relevant information from Datasets file
     datasets = pd.read_parquet(f'{url_prefix}/{datasets_file}')
     datasets.rename(columns={'All': 'ALL', 'Interlab': 'INTERLAB'}, inplace=True)
-    datasets_info = datasets.groupby('Dataset ID').first()[
-        ['Polarity', 'Matrix short', 'Matrix long', 'Slide code', pred_type]
-    ]
+    datasets_info = datasets.groupby('Dataset ID').first()
 
     # Merge with predictions and classification
     df = pd.merge(predictions, datasets_info, left_on='dsId', right_on='Dataset ID', how='left')
@@ -132,6 +130,7 @@ def summarise_data_w_class(spotting_data, x_axis, y_axis):
     step1 = spotting_data.pivot_table(
         index=step1_indexes,
         values=[
+            'spot_intensity_tic_norm',
             'effective_intensity',
             'detectability',
             'class_size',
@@ -140,6 +139,7 @@ def summarise_data_w_class(spotting_data, x_axis, y_axis):
             'matrixes',
         ],
         aggfunc={
+            'spot_intensity_tic_norm': 'sum',
             'effective_intensity': 'sum',
             'detectability': 'max',
             'class_size': 'first',
@@ -155,6 +155,7 @@ def summarise_data_w_class(spotting_data, x_axis, y_axis):
     step2 = step1.pivot_table(
         index=step2_indexes,
         values=[
+            'spot_intensity_tic_norm',
             'effective_intensity',
             'detectability',
             'class_size',
@@ -164,6 +165,7 @@ def summarise_data_w_class(spotting_data, x_axis, y_axis):
         ],
         aggfunc={
             'class_size': 'first',
+            'spot_intensity_tic_norm': 'mean',  # only when considering only 'detected' data
             'effective_intensity': 'mean',  # only when considering only 'detected' data
             'detectability': 'sum',
             'dataset_ids': join_aggregation_func,
@@ -182,13 +184,14 @@ def summarise_data_w_class(spotting_data, x_axis, y_axis):
             'dataset_ids': join_aggregation_func,
             'formulas': join_aggregation_func,
             'matrixes': join_aggregation_func,
+            'spot_intensity_tic_norm': 'mean',
             'effective_intensity': 'mean',
             'fraction_detected': 'mean',
         }
     )
 
     step3['log10_intensity'] = step3['effective_intensity'].apply(lambda x: np.log10(x + 1))
-
+    step3.rename(columns={'spot_intensity_tic_norm': 'tic'}, inplace=True)
     return step3.reset_index(level=[x_axis, y_axis])
 
 
@@ -210,8 +213,16 @@ def summarise_data(spotting_data, n_metabolites, x_axis, y_axis):
     # per dataset ('dataset_id') and axis values
     step1 = spotting_data.pivot_table(
         index=step1_indexes,
-        values=['effective_intensity', 'detectability', 'dataset_ids', 'formulas', 'matrixes'],
+        values=[
+            'spot_intensity_tic_norm',
+            'effective_intensity',
+            'detectability',
+            'dataset_ids',
+            'formulas',
+            'matrixes',
+        ],
         aggfunc={
+            'spot_intensity_tic_norm': sum,
             'effective_intensity': sum,
             'detectability': max,
             'dataset_ids': join_aggregation_func,
@@ -229,6 +240,7 @@ def summarise_data(spotting_data, n_metabolites, x_axis, y_axis):
             'formulas': join_aggregation_func,
             'matrixes': join_aggregation_func,
             'effective_intensity': 'mean',
+            'spot_intensity_tic_norm': 'mean',
             'detectability': lambda x: sum(x) / n_metabolites,
         }
     )
@@ -241,11 +253,15 @@ def summarise_data(spotting_data, n_metabolites, x_axis, y_axis):
             'formulas': join_aggregation_func,
             'matrixes': join_aggregation_func,
             'effective_intensity': 'mean',
+            'spot_intensity_tic_norm': 'mean',
             'detectability': 'mean',
         }
     )
 
-    step3.rename(columns={'detectability': 'fraction_detected'}, inplace=True)
+    step3.rename(
+        columns={'detectability': 'fraction_detected', 'spot_intensity_tic_norm': 'tic'},
+        inplace=True,
+    )
     step3['log10_intensity'] = np.log10(step3['effective_intensity'] + 1)
 
     return step3.reset_index(level=[x_axis, y_axis])
@@ -396,7 +412,6 @@ def lambda_handler(event, context):
 class MyServer(BaseHTTPRequestHandler):
     # pylint: disable=invalid-name
     def do_GET(self):
-
         print('url')
         url = self.path
         parsed_url = urlparse(url)
@@ -418,28 +433,31 @@ class MyServer(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    webServer = HTTPServer(('localhost', 8080), MyServer)
-    print("Yang's local server started at port 8080")
-    try:
-        webServer.serve_forever()
-    except KeyboardInterrupt:
-        pass
+    # Local server testing
+    # webServer = HTTPServer(('localhost', 8080), MyServer)
+    # print("Yang's local server started at port 8080")
+    # try:
+    #     webServer.serve_forever()
+    # except KeyboardInterrupt:
+    #     pass
+    #
+    # webServer.server_close()
+    # print("Server stopped.")
 
-    webServer.server_close()
-    print("Server stopped.")
-    # payload = lambda_handler(
-    #     {
-    #         'predType': 'EMBL',
-    #         'xAxis': 'Matrix short',
-    #         'yAxis': 'dsId',
-    #         'loadPathway': 'false',
-    #         'loadClass': 'false',
-    #         'queryType': 'data',
-    #         'filter': '',
-    #         'filterValues': '',
-    #     },
-    #     None,
-    # )
-    # print(payload)
+    # script testing
+    payload = lambda_handler(
+        {
+            'predType': 'EMBL',
+            'xAxis': 'a',
+            'yAxis': 'Participant lab',
+            'loadPathway': 'false',
+            'loadClass': 'false',
+            'queryType': 'data',
+            'filter': '',
+            'filterValues': '',
+        },
+        None,
+    )
+    print(payload)
 
 # %%

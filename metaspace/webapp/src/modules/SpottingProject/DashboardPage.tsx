@@ -29,6 +29,7 @@ interface DashboardState {
   selectedView: number
   loading: boolean
   loadingFilterOptions: boolean
+  isEmpty: boolean
   buildingChart: boolean
   predictions: any
   datasets : any
@@ -208,7 +209,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Ionisation source',
-      src: 'Source Type',
+      src: 'Ionisation source',
     },
     {
       label: 'Mass analyser',
@@ -270,7 +271,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Ionisation source',
-      src: 'Source Type',
+      src: 'Ionisation source',
     },
     {
       label: 'Mass analyser',
@@ -392,10 +393,10 @@ const PATHWAY_METRICS = {
 }
 
 const VALUE_METRICS = {
-  count: {
-    label: 'Count',
-    src: 1,
-  },
+  // count: {
+  //   label: 'Count',
+  //   src: 1,
+  // },
   average: {
     label: 'Fraction detected',
     src: 2,
@@ -440,6 +441,7 @@ export default defineComponent({
       rawData: undefined,
       rawDataInter: undefined,
       usedData: undefined,
+      isEmpty: false,
       baseData: undefined,
       visualMap: {},
       options: {
@@ -567,11 +569,12 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws'
-        const baseUrl = 'http://localhost:8080'
+        // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
+        // const baseUrl = 'http://localhost:8080' // local
+        const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
         const response = await fetch(baseUrl + '?' + query)
         const parsedResponse = await response.json()
-        state.usedData = parsedResponse.body
+        state.usedData = parsedResponse // .body
       } catch (e) {
         state.usedData = {}
         state.data = []
@@ -628,9 +631,7 @@ export default defineComponent({
         })
 
         const dotValues : any = []
-        const yMaxValue : any = state.options.valueMetric === VALUE_METRICS.count.src // @ts-ignore
-          ? maxBy(data, 'effective_intensity')!.effective_intensity // @ts-ignore
-          : maxBy(data, 'fraction_detected')!.fraction_detected
+        const yMaxValue : any = (maxBy(data!, 'fraction_detected')! as any)!.fraction_detected
         let maxColor : number = 0
 
         // build chart
@@ -642,11 +643,8 @@ export default defineComponent({
 
             maxColor = pointAggregation > maxColor ? pointAggregation : maxColor
 
-            const value : number = isEmpty ? 0 : (state.options.valueMetric === VALUE_METRICS.count.src
-              ? item.effective_intensity
-              : item.fraction_detected)
-            const normalizedValue = isEmpty ? 0 : (state.options.valueMetric === VALUE_METRICS.count.src
-              ? (value / yMaxValue) : (yMaxValue === 0 ? 0 : (value / yMaxValue)))
+            const value : number = isEmpty ? 0 : item.fraction_detected
+            const normalizedValue = isEmpty ? 0 : (yMaxValue === 0 ? 0 : (value / yMaxValue))
             dotValues.push({
               value: [xIndex, yIndex, normalizedValue * 15, pointAggregation, value],
               label: {
@@ -816,6 +814,7 @@ export default defineComponent({
         state.options.yAxis = undefined
         state.options.aggregation = undefined
         $router.replace({ name: 'spotting', query: { src: text } })
+        state.isEmpty = true
       } else {
         $router.replace({ name: 'spotting', query: { ...getQueryParams(), src: text } })
       }
@@ -825,6 +824,7 @@ export default defineComponent({
       }
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation
         && changedValue && buildChart) {
+        state.isEmpty = false
         await loadData()
         await handleAxisChange(state.options.xAxis, true, false)
         await handleAxisChange(state.options.yAxis, false, false)
@@ -933,26 +933,6 @@ export default defineComponent({
                 orderBy(AGGREGATED_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
                   return <Option label={option.label} value={option.src}/>
                 })
-              }
-            </Select>
-          </div>
-          <div class='filter-box m-2'>
-            <span class='metric-label mb-2'>Radius</span>
-            <Select
-              class='select-box-mini'
-              value={state.options.valueMetric}
-              onChange={(value: number) => {
-                handleValueMetricChange(value)
-              }}
-              disabled={state.loading}
-              placeholder='Method'
-              size='mini'>
-              {
-                orderBy(VALUE_METRICS, ['label'], ['asc'])
-                  .filter((option: any) => option.src === VALUE_METRICS.average.src || (loadPathway || loadClass))
-                  .map((option: any) => {
-                    return <Option label={option.label} value={option.src}/>
-                  })
               }
             </Select>
           </div>
@@ -1084,9 +1064,8 @@ export default defineComponent({
             <p class='instruction-title mb-2'>Steps:</p>
             <p>1 - Select the x axis metric in the <span class='x-axis-label'>red</span> zone;</p>
             <p>2 - Select the y axis metric in the <span class='y-axis-label'>green</span> zone;</p>
-            <p>3 - Select the aggregated method (color) in the <span class='aggregation-label'>blue</span> zone;</p>
-            <p>4 - Select the value metric (radius size) in the <span class='metric-label'>purple</span> zone;</p>
-            <p>5 - Apply the filters you desire.</p>
+            <p>3 - Select the color in the <span class='aggregation-label'>blue</span> zone;</p>
+            <p>4 - Apply the filters you desire.</p>
           </div>
         </div>
       )
@@ -1149,9 +1128,8 @@ export default defineComponent({
     }
 
     return () => {
-      const showChart =
-        ($route.query.xAxis && $route.query.yAxis && $route.query.agg)
-        || (state.options.xAxis && state.options.yAxis && state.options.aggregation)
+      const showChart = (($route.query.xAxis && $route.query.yAxis && $route.query.agg)
+          || (state.options.xAxis && state.options.yAxis && state.options.aggregation))
       const { selectedView } = state
       const isLoading = (state.loading || state.buildingChart)
 
