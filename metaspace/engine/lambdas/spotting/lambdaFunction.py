@@ -8,13 +8,13 @@ import numpy as np
 
 
 def calculate_detected_intensities(source_df, threshold=0.8):
-    '''
+    """
     Make a column with background corrected intensities for detected compounds, and 0s
      for not detected compounds
     Change any negative values to zero
     Also add detectability column, where compounds with prediction value above
      threshold=0.8 are labelled as detected (1)
-    '''
+    """
 
     source_df['detectability'] = source_df.pV >= threshold
     vals = source_df.v * source_df.detectability
@@ -421,7 +421,12 @@ class MyServer(BaseHTTPRequestHandler):
         print(query)
         print(dict(query))
 
-        json_to_pass = json.dumps(lambda_handler(dict(query), None,))
+        json_to_pass = json.dumps(
+            lambda_handler(
+                dict(query),
+                None,
+            )
+        )
         self.send_response(code=200, message='here is your token')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header(keyword='Content-type', value='application/json')
