@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`PublicationsPage should match snapshot (logged out) 1`] = `
+exports[`PublicationsPage should match snapshot 1`] = `
 <div class="sm-content-page">
   <h1>Relevant Publications</h1>
   <h2 id="ours">

@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import PublicationsPage from './PublicationsPage.vue'
+import MetaspaceFooter from './MetaspaceFooter.vue'
 import router from '../../router'
 import store from '../../store/index'
 import Vue from 'vue'
@@ -9,9 +9,9 @@ import { sync } from 'vuex-router-sync'
 Vue.use(Vuex)
 sync(store, router)
 
-describe('PublicationsPage', () => {
+describe('MetaspaceFooter', () => {
   it('should match snapshot', async() => {
-    const wrapper = mount(PublicationsPage, { store, router })
+    const wrapper = mount(MetaspaceFooter, { store, router })
     await Vue.nextTick()
 
     expect(wrapper).toMatchSnapshot()
