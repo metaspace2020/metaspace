@@ -1,6 +1,7 @@
 import io
 import logging
 import time
+import base64
 
 import bottle
 import PIL
@@ -43,7 +44,8 @@ def create_png_image(rgba_image):
     fp = io.BytesIO()
     image.save(fp, format='PNG')
     fp.seek(0)
-    return fp
+    img_str = base64.b64encode(fp.getvalue())
+    return "data:image/png;base64," + img_str.decode()
 
 
 def get_mzs_ints(x, y, coord_mapping, parser, ds_files):
@@ -92,7 +94,8 @@ def get_intensity_by_mz_ppm():
         body = create_png_image(rgba_image)
         logger.info(f'Creating an image in {round(time.time() - start, 2)} sec')
 
-        headers = {'Content-Type': 'image/png'}
+        headers = {'Content-Type': 'application/json'}
+        body = {'image': body}
         return bottle.HTTPResponse(body, **headers)
     except Exception as e:
         logger.exception(f'{bottle.request} - {e}')

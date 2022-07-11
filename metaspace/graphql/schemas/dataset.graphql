@@ -287,6 +287,13 @@ type RawOpticalImage {
     transform: [[Float]]
 }
 
+type PixelSpectrum {
+    x: Int
+    y: Int
+    mzs: [Float]
+    ints: [Float]
+}
+
 input AddOpticalImageInput {
   datasetId: String!
   imageUrl: String!
@@ -347,6 +354,12 @@ type Query {
   thumbnailOpticalImageUrl(datasetId: String!): String  # @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
 
   currentUserLastSubmittedDataset: Dataset
+
+  hasImzmlFiles(datasetId: String!): Boolean
+
+  browserImage(datasetId: String!, mzLow: Float!, mzHigh: Float!): String
+
+  pixelSpectrum(datasetId: String!, x: Int!, y: Int!): PixelSpectrum
 }
 
 type Mutation {
