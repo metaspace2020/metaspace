@@ -1,7 +1,7 @@
 import numpy as np
 
 from sm.engine.config import SMConfig
-from sm.engine.db import DB, ConnectionPool
+from sm.engine.db import DB
 from sm.engine.storage import get_s3_client
 from sm.engine.annotation_lithops.io import deserialize
 
