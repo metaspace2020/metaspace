@@ -28,11 +28,10 @@ class DatasetFiles:
         self.portable_spectrum_reader_key = f'{self.uuid}/portable_spectrum_reader.pickle'
 
     def _get_bucket_and_uuid(self) -> None:
-        with ConnectionPool(self._sm_config['db']):
-            # add exception for non existed ds_id
-            res = self._db.select_one(DatasetFiles.DS_SEL, params=(self.ds_id,))
-            self.uuid = res[0].split('/')[-1]
-            self.upload_bucket = res[0].split('/')[-2]
+        # add exception for non existed ds_id
+        res = self._db.select_one(DatasetFiles.DS_SEL, params=(self.ds_id,))
+        self.uuid = res[0].split('/')[-1]
+        self.upload_bucket = res[0].split('/')[-2]
 
     def _find_imzml_ibd_keys(self) -> None:
         for obj in self.s3_client.list_objects(Bucket=self.upload_bucket, Prefix=self.uuid)[
