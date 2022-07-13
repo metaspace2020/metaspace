@@ -157,6 +157,13 @@ export interface CurrentUserRoleResult {
   role: UserRole;
 }
 
+export interface CurrentUserRoleWithGroupResult {
+  id: string;
+  name: string;
+  role: UserRole;
+  groups: any;
+}
+
 // Always use fetchPolicy: 'cache-first' for this
 export const currentUserRoleQuery =
   gql`query CurrentUserRoleQuery {

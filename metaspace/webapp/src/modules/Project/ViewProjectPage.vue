@@ -7,6 +7,12 @@
       v-if="project != null"
       class="page-content"
     >
+      <datasets-dialog
+        :visible="true"
+        :refresh-data="refetch"
+        :current-user="currentUser"
+        :project="project"
+      />
       <project-datasets-dialog
         :visible="showProjectDatasetsDialog && currentUser != null"
         :current-user-id="currentUser && currentUser.id"
@@ -212,7 +218,7 @@ import ConfirmAsync from '../../components/ConfirmAsync'
 import confirmPrompt from '../../components/confirmPrompt'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import reportError from '../../lib/reportError'
-import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
+import { currentUserRoleWithGroupQuery, CurrentUserRoleWithGroupResult } from '../../api/user'
 import isUuid from '../../lib/isUuid'
 import ProjectMembersList from './ProjectMembersList.vue'
 import ProjectSettings from './ProjectSettings.vue'
@@ -222,6 +228,7 @@ import RichText from '../../components/RichText'
 import Publishing from './publishing'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import { ProjectDatasetsDialog } from '../Project/ProjectDatasetsDialog'
+import { DatasetsDialog } from './DatasetsDialog'
 
   interface ViewProjectPageData {
     allDatasets: DatasetDetailItem[];
@@ -230,6 +237,7 @@ import { ProjectDatasetsDialog } from '../Project/ProjectDatasetsDialog'
 
   @Component<ViewProjectPage>({
     components: {
+      DatasetsDialog,
       DatasetList,
       ProjectMembersList,
       ProjectSettings,
@@ -245,7 +253,7 @@ import { ProjectDatasetsDialog } from '../Project/ProjectDatasetsDialog'
     },
     apollo: {
       currentUser: {
-        query: currentUserRoleQuery,
+        query: currentUserRoleWithGroupQuery,
         fetchPolicy: 'cache-first',
       },
       project: {
@@ -323,7 +331,7 @@ export default class ViewProjectPage extends Vue {
     projectLoaded = false;
     loaded = false;
     isAcceptingInvite = false;
-    currentUser: CurrentUserRoleResult | null = null;
+    currentUser: CurrentUserRoleWithGroupResult | null = null;
     project: ViewProjectResult | null = null;
     data: ViewProjectPageData | null = null;
     showProjectDatasetsDialog: boolean = false;

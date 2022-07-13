@@ -178,6 +178,7 @@ export const datasetListItemsQuery =
       id
       name
       uploadDT
+      submitter { name }
     }
   }`
 
