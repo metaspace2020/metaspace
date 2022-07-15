@@ -8,17 +8,11 @@
       class="page-content"
     >
       <datasets-dialog
-        :visible="true"
+        :visible="showProjectDatasetsDialog && currentUser != null"
         :refresh-data="refetch"
         :current-user="currentUser"
         :project="project"
-      />
-      <project-datasets-dialog
-        :visible="showProjectDatasetsDialog && currentUser != null"
-        :current-user-id="currentUser && currentUser.id"
-        :project="project"
         :is-manager="isManager"
-        :refresh-data="refetch"
         @close="handleCloseProjectDatasetsDialog"
         @update="handleCloseProjectDatasetsDialog"
       />
