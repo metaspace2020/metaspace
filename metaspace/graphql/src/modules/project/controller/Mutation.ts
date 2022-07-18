@@ -30,6 +30,7 @@ import { addExternalLink, removeExternalLink, ExternalLinkProviderOptions as ELP
 import { validateUrlSlugChange } from '../../groupOrProject/urlSlug'
 import { validateTiptapJson } from '../../../utils/tiptap'
 import { getDatasetForEditing } from '../../dataset/operation/getDatasetForEditing'
+import { EngineDataset } from '../../engine/model'
 import moment = require('moment')
 
 const asyncAssertCanEditProject = async(ctx: Context, projectId: string) => {
@@ -226,14 +227,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       (datasetIds != null && datasetIds.length > 0)
         || (removedDatasetIds != null && removedDatasetIds.length > 0)
     ) {
-      // Verify user is allowed to edit the datasets
-      await Promise.all((datasetIds || []).map(async(dsId: string) => {
-        await getDatasetForEditing(ctx.entityManager, ctx.user, dsId)
-      }))
-
-      // Verify user is allowed to edit the datasets to ber removed
-      await Promise.all((removedDatasetIds || []).map(async(dsId: string) => {
-        await getDatasetForEditing(ctx.entityManager, ctx.user, dsId, { removeFromProjectId: projectId })
+      // Verify user is allowed to add/remove the datasets from the project
+      await Promise.all((datasetIds || []).concat(removedDatasetIds || []).map(async(dsId: string) => {
+        const dataset = await ctx.entityManager.getRepository(EngineDataset).findOne({
+          id: dsId,
+        })
+        if (dataset?.isPublic === false) { // if ds is private, user can only add/remove if it is from the project
+          const project = await ctx.entityManager.getRepository(DatasetProjectModel).findOne({
+            datasetId: dsId,
+            projectId: projectId,
+          })
+          if (!project) { // if ds not in the project, check if user can edit it
+            await getDatasetForEditing(ctx.entityManager, ctx.user, dsId)
+          }
+        }
       }))
 
       const approved = ([UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole) || ctx.isAdmin)
