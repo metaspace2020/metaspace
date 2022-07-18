@@ -45,14 +45,11 @@ Object {
   "databaseIds": Array [
     1,
   ],
-  "decoySampleSize": null,
-  "description": null,
   "groupId": "123",
   "isPublic": true,
   "name": "dataset.name",
   "neutralLosses": Array [],
-  "numPeaks": null,
-  "ppm": null,
+  "ppm": 3,
   "principalInvestigator": Object {
     "email": "dataset.principalInvestigator.email",
     "name": "dataset.principalInvestigator.name",
@@ -61,7 +58,6 @@ Object {
     "dataset.projects.0.id",
     "dataset.projects.1.id",
   ],
-  "scoringModel": null,
   "submitterId": "123",
 }
 `;
@@ -1040,7 +1036,42 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   <!---->
                 </div>
               </div>
-              <!---->
+              <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>m/z tolerance (ppm)</span><span style="color: red;">*</span>
+                      <mock-el-popover trigger="hover" placement="right">
+                        <div slot-key="default">
+                          <div style="max-width: 500px;">
+                            <p>
+                              The usage of ppm = 10 is recommended when the resolving power is below 7000.
+                              Please keep in mind the ambiguity of isobars and isomers when adjusting the ppm.
+                            </p>
+                          </div>
+                        </div>
+                        <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+                      </mock-el-popover>
+                      </span></label>
+                    <div class="el-form-item__content">
+                      <div class="el-input-number-overrides el-input-number el-input-number--medium is-without-controls" required="required">
+                        <!---->
+                        <!---->
+                        <div class="el-input el-input--medium">
+                          <!----><input type="text" autocomplete="off" max="50" min="0.01" class="el-input__inner" role="spinbutton" aria-valuemax="50" aria-valuemin="0.01" aria-valuenow="3" aria-disabled="false">
+                          <!---->
+                          <!---->
+                          <!---->
+                          <!---->
+                        </div>
+                      </div>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+                <!---->
+                <!---->
+              </div>
             </div>
           </div>
         </form>
