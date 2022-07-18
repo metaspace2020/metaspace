@@ -306,10 +306,11 @@ describe('modules/project/controller (membership-related mutations)', () => {
         datasetsForUserIds: [userId],
       })
 
-      // if manager, should not be able to add datasets from another user
+      // if manager, should not be able to add datasets from another user, if dataset is private
       if (role === UPRO.MANAGER) {
         const anotherUser = await createTestUser()
-        const datasetFromAnotherUser = await createTestDataset({ userId: anotherUser.id })
+        const datasetFromAnotherUser = await createTestDataset({ userId: anotherUser.id },
+          { isPublic: false })
         const anotherUserDatasetId = datasetFromAnotherUser.id
 
         let accessError
