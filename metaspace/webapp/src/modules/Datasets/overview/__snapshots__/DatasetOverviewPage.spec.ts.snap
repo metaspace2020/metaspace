@@ -7,25 +7,7 @@ exports[`DatasetOverviewPage should match snapshot when dataset exist 1`] = `
   <div class="dataset-overview-wrapper max-w-4xl w-full  ">
     <div class="dataset-overview-header">
       <h1 class="text-center truncate">JD_Sampe<span class="text-base align-middle"></span></h1>
-      <div class="el-dropdown">
-        <div class="el-badge sm-feature-badge el-dropdown-selfdefine" aria-haspopup="list" aria-controls="dropdown-menu-1247" role="button" tabindex="0"><button type="button" class="el-button el-button--primary p-1">
-            <!---->
-            <!----><span><span class="ml-2">Actions</span><i class="el-icon-arrow-down el-icon--right"></i></span></button>
-          <transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub>
-        </div>
-        <transition-stub name="el-zoom-in-top" class="dataset-overview-menu p-2" id="dropdown-menu-1247">
-          <ul class="el-dropdown-menu el-popper" style="display: none;">
-            <li tabindex="-1" class="el-dropdown-menu__item">
-              <!---->Edit metadata</li>
-            <li tabindex="-1" class="el-dropdown-menu__item">
-              <!---->Download</li>
-            <li tabindex="-1" class="el-dropdown-menu__item">
-              <!---->Compare with other datasets...</li>
-            <li tabindex="-1" class="el-dropdown-menu__item text-red-500">
-              <!---->Delete</li>
-          </ul>
-        </transition-stub>
-      </div>
+      <!---->
     </div>
     <div class="dataset-overview-holder">
       <p class="truncate">John Doe<a href="/group/gxxxx" class="ml-1">(TG)</a></p>

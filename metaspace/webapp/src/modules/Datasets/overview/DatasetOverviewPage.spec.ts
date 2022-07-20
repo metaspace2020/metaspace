@@ -6,7 +6,8 @@ import { sync } from 'vuex-router-sync'
 import store from '../../../store'
 import router from '../../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/mockGraphqlClient'
-import { getDatasetByIdQuery } from '../../../api/dataset'
+
+jest.mock('./DatasetActionsDropdown', () => ({ default: jest.fn() }))
 
 describe('DatasetOverviewPage', () => {
   const mockDataset = {
