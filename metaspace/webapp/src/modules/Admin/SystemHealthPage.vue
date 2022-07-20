@@ -49,7 +49,8 @@ import { getSystemHealthQuery, getSystemHealthSubscribeToMore, updateSystemHealt
 import reportError from '../../lib/reportError'
 import { currentUserRoleQuery } from '../../api/user'
 
-export default {
+/** @type {ComponentOptions<Vue> & Vue} */
+const SystemHealthPage = {
   name: 'SystemHealthPage',
   data() {
     return {
@@ -110,6 +111,8 @@ export default {
     },
   },
 }
+
+export default SystemHealthPage
 </script>
 
 <style scoped>
