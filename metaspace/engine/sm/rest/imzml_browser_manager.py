@@ -34,7 +34,7 @@ class DatasetFiles:
             self.uuid = res[0].split('/')[-1]
             self.upload_bucket = res[0].split('/')[-2]
         except IndexError:
-            raise ValueError(f'Dataset {self.ds_id} does not exist')
+            raise ValueError(f'Dataset {self.ds_id} does not exist')  # pylint: disable=W0707
 
     def find_ibd_key(self) -> None:
         for obj in self.s3_client.list_objects(Bucket=self.upload_bucket, Prefix=self.uuid)[
