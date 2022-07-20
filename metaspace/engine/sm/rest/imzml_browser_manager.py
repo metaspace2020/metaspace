@@ -30,10 +30,11 @@ class DatasetFiles:
 
     def _get_bucket_and_uuid(self) -> None:
         res = self._db.select_one(DatasetFiles.DS_SEL, params=(self.ds_id,))
-        if not res:
+        try:
+            self.uuid = res[0].split('/')[-1]
+            self.upload_bucket = res[0].split('/')[-2]
+        except IndexError:
             raise ValueError(f'Dataset {self.ds_id} does not exist')
-        self.uuid = res[0].split('/')[-1]
-        self.upload_bucket = res[0].split('/')[-2]
 
     def find_ibd_key(self) -> None:
         for obj in self.s3_client.list_objects(Bucket=self.upload_bucket, Prefix=self.uuid)[
@@ -43,10 +44,11 @@ class DatasetFiles:
                 self.ibd_key = obj['Key']
 
     def check_imzml_browser_files(self):
+        """Checking for the presence of all 5 files required for imzml browser"""
         status = False
         response = self.s3_client.list_objects(Bucket=self.browser_bucket, Prefix=self.uuid)
         if response.get('Contents'):
-            objects = {[item['Key'] for item in response['Contents']]}
+            objects = {item['Key'] for item in response['Contents']}
             files = {
                 self.mz_index_key,
                 self.mzs_key,
