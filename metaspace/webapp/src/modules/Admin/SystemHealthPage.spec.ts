@@ -8,15 +8,23 @@ import router from '../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient'
 
 describe('SystemHealthPage', () => {
-  const mockUpdateUserMutation = jest.fn((src: any, args: any, ctx: any) => ({}))
-
   const adminQuery = () => {
     initMockGraphqlClient({
       Query: () => ({
         currentUser: () => ({ id: 'userid', role: 'admin' }),
       }),
       Mutation: () => ({
-        updateSystemHealthMutation: mockUpdateUserMutation,
+        updateSystemHealth: () => true,
+      }),
+    })
+  }
+  const updateErrorQuery = () => {
+    initMockGraphqlClient({
+      Query: () => ({
+        currentUser: () => ({ id: 'userid', role: 'admin' }),
+      }),
+      Mutation: () => ({
+        updateSystemHealth: () => new Error('dude'),
       }),
     })
   }
@@ -117,5 +125,16 @@ describe('SystemHealthPage', () => {
     wrapper.find('.el-button').trigger('click')
     await Vue.nextTick()
     expect(wrapper.find('.el-button').text()).toBe('Updated')
+  })
+
+  it('should display update error', async() => {
+    updateErrorQuery()
+    const wrapper = mount(SystemHealthPage, { store, router, apolloProvider })
+    await Vue.nextTick()
+
+    expect(wrapper.find('.el-button').text()).toBe('Update')
+    wrapper.find('.el-button').trigger('click')
+    await Vue.nextTick()
+    expect(wrapper.find('.el-button').text()).toBe('Error')
   })
 })

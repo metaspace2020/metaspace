@@ -12,6 +12,7 @@ import { currentUserRoleQuery, CurrentUserRoleResult } from '../../../api/user'
 import { DatasetOverviewGallery } from './DatasetOverviewGallery'
 import RichText from '../../../components/RichText'
 import isValidTiptapJson from '../../../lib/isValidTiptapJson'
+import './DatasetOverviewPage.scss'
 
 interface Props {
   className: string
@@ -21,7 +22,7 @@ interface Props {
   inpFdrLvls: number[]
 }
 
-export default defineComponent<Props>({
+const DatasetOverviewPage = defineComponent<Props>({
   name: 'DatasetOverviewPage',
   props: {
     className: {
@@ -94,7 +95,8 @@ export default defineComponent<Props>({
       })
       const dsDescription = isValidTiptapJson(safeJsonParse(description))
         ? safeJsonParse(description) : null
-      const canViewPublicationStatus = (status === 'FINISHED' && canEdit && publicationStatus?.value != null)
+      const canViewPublicationStatus = (dataset.value?.status === 'FINISHED' && canEdit
+        && publicationStatus?.value != null)
       const diagnosticData = reactive([
         {
           id: 'ionPreview',
@@ -198,3 +200,5 @@ export default defineComponent<Props>({
     }
   },
 })
+
+export default DatasetOverviewPage

@@ -1,5 +1,4 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
-import './DashboardPage.scss'
 import { Option, Select, Pagination, InputNumber, RadioGroup, RadioButton } from '../../lib/element-ui'
 import { cloneDeep, groupBy, keyBy, maxBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
@@ -7,6 +6,7 @@ import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
 import getColorScale from '../../lib/getColorScale'
+import './DashboardPage.scss'
 
 interface Options{
   xAxis: any
