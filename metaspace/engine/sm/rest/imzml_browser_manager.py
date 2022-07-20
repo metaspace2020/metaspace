@@ -46,7 +46,7 @@ class DatasetFiles:
         status = False
         response = self.s3_client.list_objects(Bucket=self.browser_bucket, Prefix=self.uuid)
         if response.get('Contents'):
-            objects = set([item['Key'] for item in response['Contents']])
+            objects = {[item['Key'] for item in response['Contents']]}
             files = {
                 self.mz_index_key,
                 self.mzs_key,
