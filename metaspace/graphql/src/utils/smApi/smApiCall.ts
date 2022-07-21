@@ -2,6 +2,7 @@ import { Semaphore } from 'await-semaphore'
 import fetch from 'node-fetch'
 import config from '../config'
 import logger from '../logger'
+import { UserError } from 'graphql-errors'
 
 /**
  * Semaphore to limit the maximum number of parallel requests to sm-api. Having too many parallel requests can result in
@@ -29,5 +30,29 @@ export const smApiJsonPost = async(path: string, requestDoc: any) => {
     }
 
     return { response, content }
+  })
+}
+
+export const smApiJsonGet = async(path: string) => {
+  return smApiSemaphore.use(async() => {
+    const response = await fetch(`http://${config.services.sm_engine_api_host}${path}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    let content
+    try {
+      content = await response.json()
+    } catch (ex) {
+      logger.error(ex)
+      content = null
+    }
+
+    if (!response.ok) {
+      throw new UserError(`Get request to sm-api failed: ${JSON.stringify(content)}`)
+    } else {
+      logger.info(`Successful ${path}`)
+      return content
+    }
   })
 }
