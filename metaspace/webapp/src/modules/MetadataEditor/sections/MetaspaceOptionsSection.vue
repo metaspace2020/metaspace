@@ -146,7 +146,9 @@
                 :value="value.ppm"
                 :error="error && error.ppm"
                 :help="PpmHelp"
-                :min="0.01"
+                :min="1"
+                :step="1"
+                :step-strictly="true"
                 :max="50"
                 @input="val => onInput('ppm', val)"
               />
