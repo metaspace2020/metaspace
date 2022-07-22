@@ -213,7 +213,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Mass analyser',
-      src: 'Analyzer',
+      src: 'Mass analyser',
     },
     {
       label: 'Source Pressure',
@@ -275,7 +275,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Mass analyser',
-      src: 'Analyzer',
+      src: 'Mass analyser',
     },
     {
       label: 'Source Pressure',
@@ -334,16 +334,16 @@ const FILTER_VALUES = [
     label: 'Matrix',
     src: 'Matrix short',
   },
-  {
-    label: 'Value Prediction',
-    src: 'pV',
-    isNumeric: true,
-  },
-  {
-    label: 'State Prediction',
-    src: 'p',
-    isBoolean: true,
-  },
+  // {
+  //   label: 'Value Prediction',
+  //   src: 'pV',
+  //   isNumeric: true,
+  // },
+  // {
+  //   label: 'State Prediction',
+  //   src: 'p',
+  //   isBoolean: true,
+  // },
   {
     label: 'Technology',
     src: 'Technology',
@@ -376,10 +376,10 @@ const FILTER_VALUES = [
     label: 'Molecule',
     src: 'name',
   },
-  {
-    label: 'Formula',
-    src: 'f',
-  },
+  // {
+  //   label: 'Formula',
+  //   src: 'f',
+  // },
 ]
 
 const CLASSIFICATION_METRICS = {
@@ -521,23 +521,23 @@ export default defineComponent({
     })
 
     const buildFilterOptions = async(filterIndex: number) => {
-      const filterSpec = FILTER_VALUES.find((filterItem: any) => filterItem.src
-        === state.filter[filterIndex].src)
-      if (filterSpec && filterSpec?.isNumeric) {
-        state.filter[filterIndex].isNumeric = true
-        state.filter[filterIndex].isBoolean = false
-        return
-      } else if (filterSpec && filterSpec?.isBoolean) {
-        state.filter[filterIndex].isNumeric = false
-        state.filter[filterIndex].isBoolean = true
-      } else {
-        state.filter[filterIndex].isNumeric = false
-        state.filter[filterIndex].isBoolean = false
-      }
+      // const filterSpec = FILTER_VALUES.find((filterItem: any) => filterItem.src
+      //   === state.filter[filterIndex].src)
+      // if (filterSpec && filterSpec?.isNumeric) {
+      //   state.filter[filterIndex].isNumeric = true
+      //   state.filter[filterIndex].isBoolean = false
+      //   return
+      // } else if (filterSpec && filterSpec?.isBoolean) {
+      //   state.filter[filterIndex].isNumeric = false
+      //   state.filter[filterIndex].isBoolean = true
+      // } else {
+      //   state.filter[filterIndex].isNumeric = false
+      //   state.filter[filterIndex].isBoolean = false
+      // }
       state.filter[filterIndex].loadingFilterOptions = true
 
       const options = await loadFilterValues(state.filter[filterIndex].src)
-      state.filter[filterIndex].options = uniq(options.map((item: any) => (item === null
+      state.filter[filterIndex].options = uniq((options || []).map((item: any) => (item === null
         || item === undefined || item === 'null') ? 'None' : item)).sort()
       state.filter[filterIndex].loadingFilterOptions = false
     }
@@ -569,9 +569,9 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
+        const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
         // const baseUrl = 'http://localhost:8080' // local
-        const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
+        // const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
         const response = await fetch(baseUrl + '?' + query)
         const parsedResponse = await response.json()
         state.usedData = parsedResponse // .body
@@ -626,7 +626,8 @@ export default defineComponent({
 
         const auxData : any = groupBy(data, state.options.xAxis)
         Object.keys(auxData).forEach((key: string) => {
-          auxData[key] = keyBy(auxData[key], state.options.yAxis === 'fine_class'
+          auxData[key] = keyBy(auxData[key], (state.options.yAxis === 'fine_class'
+            || state.options.yAxis === 'fine_path')
             ? 'class_full' : state.options.yAxis)
         })
 
@@ -665,6 +666,7 @@ export default defineComponent({
           show: true,
           calculable: true,
           dimension: 3,
+          bottom: 0,
           left: 'center',
           inRange: {
             color: getColorScale(state.colormap).range,
@@ -876,11 +878,15 @@ export default defineComponent({
             <span class='x-axis-label mb-2'>X axis</span>
             <Select
               class='select-box-mini'
+              clearable
               value={state.options.xAxis}
+              onClear={() => {
+                state.options.xAxis = null
+              }}
               onChange={(value: number) => {
                 handleAxisChange(value)
               }}
-              placeholder='Class'
+              placeholder='Select axis'
               disabled={state.loading}
               size='mini'>
               {
@@ -898,13 +904,17 @@ export default defineComponent({
           <div class='filter-box m-2'>
             <span class='y-axis-label mb-2'>Y axis</span>
             <Select
+              clearable
               class='select-box-mini'
               value={state.options.yAxis}
+              onClear={() => {
+                state.options.yAxis = null
+              }}
               onChange={(value: number) => {
                 handleAxisChange(value, false)
               }}
               disabled={state.loading}
-              placeholder='Method'
+              placeholder='Select axis'
               size='mini'>
               {
                 orderBy(AXIS_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
@@ -921,13 +931,17 @@ export default defineComponent({
           <div class='filter-box m-2'>
             <span class='aggregation-label mb-2'>Color</span>
             <Select
+              clearable
               class='select-box-mini'
               value={state.options.aggregation}
+              onClear={() => {
+                state.options.aggregation = null
+              }}
               onChange={(value: number) => {
                 handleAggregationChange(value)
               }}
               disabled={state.loading}
-              placeholder='Method'
+              placeholder='Select color metric'
               size='mini'>
               {
                 orderBy(AGGREGATED_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
@@ -959,13 +973,14 @@ export default defineComponent({
                 return (
                   <div class='flex flex-wrap justify-center'>
                     <Select
+                      clearable
                       class='select-box-mini mr-2'
                       value={filter.src}
                       onChange={(value: number) => {
                         handleFilterSrcChange(value, filterIdx)
                       }}
                       disabled={state.loading || state.usedData === undefined}
-                      placeholder='Neutral losses'
+                      placeholder='Select filter metric'
                       size='mini'>
                       {
                         orderBy(FILTER_VALUES, ['label'], ['asc']).map((option: any) => {
@@ -990,7 +1005,7 @@ export default defineComponent({
                           handleFilterValueChange(value, filterIdx)
                         }}
                         disabled={state.loading}
-                        placeholder='Adduct'
+                        placeholder='Select filter value'
                         size='mini'>
                         {
                           (filter.isBoolean ? ['False', 'True'] : filter.options).map((option: any) => {
@@ -1101,6 +1116,8 @@ export default defineComponent({
       return (
         <div class='chart-container'>
           <DashboardScatterChart
+            xOption={state.options.xAxis}
+            yOption={state.options.yAxis}
             xAxis={xAxisValues}
             yAxis={yAxisValues}
             size={yAxisValues.length * 30}
@@ -1116,6 +1133,8 @@ export default defineComponent({
       return (
         <div class='chart-container'>
           <DashboardHeatmapChart
+            xOption={state.options.xAxis}
+            yOption={state.options.yAxis}
             xAxis={xAxisValues}
             yAxis={yAxisValues}
             size={yAxisValues.length * 30}
@@ -1148,14 +1167,14 @@ export default defineComponent({
         })
 
       return (
-        <div class='dashboard-container'>
+        <div class='dashboard-container mb-4'>
           {renderFilters()}
           {renderVisualizations()}
           <div class='content-container'>
             {
               showChart
               && <div class='feature-box'>
-                <ShareLink name='dashboard' query={getQueryParams()}/>
+                <ShareLink name='spotting' query={getQueryParams()}/>
                 <ChartSettings onColor={handleColormapChange}/>
               </div>
             }

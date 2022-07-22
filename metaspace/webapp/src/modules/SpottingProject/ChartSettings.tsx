@@ -9,7 +9,8 @@ interface ChartSettingsState {
   status: string
 }
 
-const availableScales: string[] = ['Viridis', 'Cividis', 'Hot', 'YlGnBu', 'Portland', 'Greys', 'Inferno', 'Turbo']
+const availableScales: string[] = ['-Viridis', '-Cividis', '-Hot', '-YlGnBu', '-Portland', '-Greys',
+  '-Inferno', '-Turbo']
 
 export const ChartSettings = defineComponent({
   name: 'ChartSettings',

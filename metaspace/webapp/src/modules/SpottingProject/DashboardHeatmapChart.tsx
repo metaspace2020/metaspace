@@ -52,6 +52,8 @@ interface DashboardHeatmapChartProps {
   annotatedData: any[]
   peakFilter: number
   size: number
+  xOption: string
+  yOption: string
 }
 
 interface DashboardHeatmapChartState {
@@ -110,6 +112,12 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       type: Number,
       default: PEAK_FILTER.ALL,
     },
+    xOption: {
+      type: String,
+    },
+    yOption: {
+      type: String,
+    },
   },
   setup(props, { emit }) {
     const spectrumChart = ref(null)
@@ -123,14 +131,15 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
-            return params.value[4].toFixed(2) + ' ' + params.data?.label?.y + ' in ' + params.data?.label?.x
+            return params.value[4].toFixed(2) + ' ' + params.data?.label?.y + ' in '
+              + params.data?.label?.x
           },
         },
         grid: {
-          left: 2,
+          left: '5%',
           top: 20,
-          right: 20,
-          bottom: 40,
+          right: '5%',
+          bottom: 60,
           containLabel: true,
         },
         xAxis: {
@@ -176,6 +185,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
         series: [{
           name: 'Punch Card',
           type: 'heatmap',
+          markLine: {},
           data: [],
           label: {
             normal: {
@@ -203,12 +213,49 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       }
 
       const auxOptions = state.chartOptions
+      const globalCategories : any = {}
+      const markData : any = []
+      yAxisData.value.forEach((label: string, idx: number) => {
+        const re = /(.+)\s-agg-\s(.+)/
+        const found = label.match(re)
+        const cat = label.replace(re, '$1')
+        if (found) {
+          globalCategories[cat] = idx
+        }
+      })
+      Object.keys(globalCategories).map((key: string) => {
+        markData.push({
+          name: key,
+          yAxis: globalCategories[key],
+          label: {
+            formatter: key,
+            position: 'end',
+            width: 100,
+            overflow: 'break',
+          },
+          lineStyle: {
+            color: 'transparent',
+          },
+        })
+      })
+
+      if (props.yOption === 'fine_class' || props.yOption === 'fine_path') {
+        auxOptions.grid.left = 2
+        auxOptions.grid.right = 100
+      } else {
+        auxOptions.grid.left = '5%'
+        auxOptions.grid.right = '5%'
+      }
+
       auxOptions.xAxis.data = xAxisData.value
       auxOptions.yAxis.data = yAxisData.value
+        .map((label: string) => label.replace(/.+-agg-\s(.+)/, '$1'))
       auxOptions.series[0].data = chartData.value
+      auxOptions.series[0].markLine.data = markData
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }
+
       return state.chartOptions
     })
 
