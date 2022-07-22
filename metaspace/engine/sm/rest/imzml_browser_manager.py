@@ -13,13 +13,11 @@ class DatasetFiles:
 
     def __init__(self, ds_id):
         self.ds_id = ds_id
-
         self._db = DB()
         self._sm_config = SMConfig.get_conf()
         self.s3_client = get_s3_client(sm_config=self._sm_config)
         self.browser_bucket = self._sm_config['imzml_browser_storage']['bucket']
         self._get_bucket_and_uuid()
-        self._find_imzml_ibd_keys()
 
         self.mz_index_key = f'{self.uuid}/mz_index.npy'
         self.mzs_key = f'{self.uuid}/mzs.npy'
@@ -27,21 +25,41 @@ class DatasetFiles:
         self.sp_idxs_key = f'{self.uuid}/sp_idxs.npy'
         self.portable_spectrum_reader_key = f'{self.uuid}/portable_spectrum_reader.pickle'
 
-    def _get_bucket_and_uuid(self) -> None:
-        # add exception for non existed ds_id
-        res = self._db.select_one(DatasetFiles.DS_SEL, params=(self.ds_id,))
-        self.uuid = res[0].split('/')[-1]
-        self.upload_bucket = res[0].split('/')[-2]
+        self.find_ibd_key()
+        self.check_imzml_browser_files()
 
-    def _find_imzml_ibd_keys(self) -> None:
+    def _get_bucket_and_uuid(self) -> None:
+        res = self._db.select_one(DatasetFiles.DS_SEL, params=(self.ds_id,))
+        try:
+            self.uuid = res[0].split('/')[-1]
+            self.upload_bucket = res[0].split('/')[-2]
+        except IndexError:
+            raise ValueError(f'Dataset {self.ds_id} does not exist')  # pylint: disable=W0707
+
+    def find_ibd_key(self) -> None:
         for obj in self.s3_client.list_objects(Bucket=self.upload_bucket, Prefix=self.uuid)[
             'Contents'
         ]:
-            key = obj['Key'].lower()
-            if key.endswith('.imzml'):
-                self.imzml_key = obj['Key']
-            elif key.endswith('.ibd'):
+            if obj['Key'].lower().endswith('.ibd'):
                 self.ibd_key = obj['Key']
+
+    def check_imzml_browser_files(self):
+        """Checking for the presence of all 5 files required for imzml browser"""
+        status = False
+        response = self.s3_client.list_objects(Bucket=self.browser_bucket, Prefix=self.uuid)
+        if response.get('Contents'):
+            objects = {item['Key'] for item in response['Contents']}
+            files = {
+                self.mz_index_key,
+                self.mzs_key,
+                self.ints_key,
+                self.sp_idxs_key,
+                self.portable_spectrum_reader_key,
+            }
+            if len(objects) == 5 and (objects - files) == set():
+                status = True
+
+        return status
 
     def read_file(self, key: str, bucket: str = '') -> bytes:
         if not bucket:

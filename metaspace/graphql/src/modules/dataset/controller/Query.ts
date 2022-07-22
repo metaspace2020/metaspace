@@ -8,6 +8,7 @@ import { thumbnailOpticalImageUrl, rawOpticalImage } from './Dataset'
 import { applyQueryFilters } from '../../annotation/queryFilters'
 import { OpticalImage } from '../../engine/model'
 import { smApiDatasetRequest } from '../../../utils'
+import { smApiJsonGet } from '../../../utils/smApi/smApiCall'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER
@@ -95,12 +96,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
   async hasImzmlFiles(source, { datasetId }) {
     try {
-      await smApiDatasetRequest('/v1/browser/peaks_from_pixel', {
-        ds_id: datasetId,
-        x: 0,
-        y: 0,
-      })
-      return true
+      const resp = await smApiJsonGet(`/v1/browser/files/${datasetId}`)
+      return resp.is_exist
     } catch (e) {
       return false
     }

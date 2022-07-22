@@ -45,11 +45,12 @@ def create_png_image(rgba_image):
     image.save(fp, format='PNG')
     fp.seek(0)
     img_str = base64.b64encode(fp.getvalue())
-    return "data:image/png;base64," + img_str.decode()
+    return 'data:image/png;base64,' + img_str.decode()
 
 
 def get_mzs_ints(x, y, coord_mapping, parser, ds_files):
     precision = {'f': 4, 'd': 8}
+    ds_files.find_ibd_key()
     ibd_key = ds_files.ibd_key
     bucket = ds_files.upload_bucket
 
@@ -127,4 +128,18 @@ def get_peaks_from_pixel():
 
     except Exception as e:
         logger.exception(f'{bottle.request} - {e}')
+        return make_response(INTERNAL_ERROR)
+
+
+@app.get('/files/<dataset_id>')
+def check_files(dataset_id):
+    try:
+        logger.info(f'Received `files` request for {dataset_id} dataset')
+        ds_files = DatasetFiles(dataset_id)
+        status = ds_files.check_imzml_browser_files()
+        headers = {'Content-Type': 'application/json'}
+        body = {'is_exist': status}
+        return bottle.HTTPResponse(body, **headers)
+    except Exception as e:
+        logger.warning(e.args[0])
         return make_response(INTERNAL_ERROR)
