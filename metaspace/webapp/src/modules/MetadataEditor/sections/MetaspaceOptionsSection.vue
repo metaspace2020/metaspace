@@ -136,21 +136,27 @@
             </el-col>
           </el-row>
           <el-row
-            v-if="features.advanced_ds_config"
             :gutter="8"
           >
             <el-col :span="8">
               <form-field
                 type="number"
                 name="m/z tolerance (ppm)"
+                required
                 :value="value.ppm"
                 :error="error && error.ppm"
-                :min="0.01"
+                :help="PpmHelp"
+                :min="1"
+                :step="1"
+                :step-strictly="true"
                 :max="50"
                 @input="val => onInput('ppm', val)"
               />
             </el-col>
-            <el-col :span="8">
+            <el-col
+              v-if="features.advanced_ds_config"
+              :span="8"
+            >
               <form-field
                 type="number"
                 name="Isotopic peaks per formula"
@@ -162,7 +168,10 @@
                 @input="val => onInput('numPeaks', val)"
               />
             </el-col>
-            <el-col :span="8">
+            <el-col
+              v-if="features.advanced_ds_config"
+              :span="8"
+            >
               <form-field
                 type="number"
                 name="Decoy adducts per formula"
@@ -189,6 +198,7 @@ import DatabaseHelpLink from '../inputs/DatabaseHelpLink.vue'
 import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
 import AdductsHelp from '../inputs/AdductsHelp.vue'
 import NeutralLossesHelp from '../inputs/NeutralLossesHelp.vue'
+import PpmHelp from '../inputs/PpmHelp.vue'
 import ChemModsHelp from '../inputs/ChemModsHelp.vue'
 import { MetaspaceOptions } from '../formStructure'
 import { MAX_CHEM_MODS, MAX_NEUTRAL_LOSSES } from '../../../lib/constants'
@@ -237,6 +247,7 @@ export default class MetaspaceOptionsSection extends Vue {
     dbHelp = DatabaseHelpLink;
     AnalysisVersionHelp = AnalysisVersionHelp;
     NeutralLossesHelp = NeutralLossesHelp;
+    PpmHelp = PpmHelp;
     ChemModsHelp = ChemModsHelp;
     AdductsHelp = AdductsHelp;
     maxMolDBs = limits.maxMolDBs;

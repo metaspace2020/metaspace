@@ -124,10 +124,10 @@
 import { defaultMetadataType, metadataSchemas } from '../../lib/metadataRegistry'
 import { deriveFullSchema } from './formStructure'
 import {
-  get, set, cloneDeep, defaults,
+  get, set, cloneDeep, forOwn, defaultTo, defaults,
   isEmpty, isEqual, isPlainObject,
   mapValues, forEach, without, omit,
-  uniq,
+  uniq, isUndefined, isNull, omitBy, isNil,
 } from 'lodash-es'
 import {
   newDatasetQuery,
@@ -166,6 +166,7 @@ const defaultMetaspaceOptions = {
   submitterId: null,
   groupId: null,
   projectIds: [],
+  ppm: 3,
 }
 
 export default {
@@ -421,7 +422,7 @@ export default {
 
     async loadForm(dataset, options, mdType) {
       const loadedMetadata = dataset.metadata
-      const metaspaceOptions = defaults({}, dataset.metaspaceOptions, defaultMetaspaceOptions)
+      const metaspaceOptions = defaults({}, omitBy(dataset.metaspaceOptions, isNil), defaultMetaspaceOptions)
 
       // in case user just opened a link to metadata editing page w/o navigation in web-app,
       // filters are not set up
@@ -508,7 +509,7 @@ export default {
     validate() {
       const errors = {}
 
-      const { databaseIds, adducts, name, groupId, principalInvestigator } = this.metaspaceOptions
+      const { databaseIds, adducts, name, groupId, principalInvestigator, ppm } = this.metaspaceOptions
 
       if (isEmpty(databaseIds)) {
         set(errors, ['metaspaceOptions', 'databaseIds'], 'should have at least 1 selection')
@@ -521,7 +522,9 @@ export default {
       } else if (name.length > 250) {
         set(errors, ['metaspaceOptions', 'name'], 'should be no more than 250 characters')
       }
-
+      if (!ppm) {
+        set(errors, ['metaspaceOptions', 'ppm'], 'ppm cannot be blank')
+      }
       if (groupId == null && principalInvestigator == null) {
         set(errors, ['metaspaceOptions', 'groupId'], 'select a group')
       }
@@ -562,6 +565,13 @@ export default {
     onInput(path, val) {
       set(this.value, path, val)
 
+      // recommend ppm to 10 if resolving power below 70000 and 3 if greater than 70000
+      if (isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power']) && val.Resolving_Power < 70000) {
+        this.metaspaceOptions.ppm = 10
+      } else if (isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power']) && val.Resolving_Power >= 70000) {
+        this.metaspaceOptions.ppm = 3
+      }
+
       if (isEqual(path, ['MS_Analysis', 'Polarity'])) {
         this.updateCurrentAdductOptions()
       }
@@ -572,7 +582,7 @@ export default {
     },
 
     updateCurrentAdductOptions() {
-      const selectedAdducts = this.metaspaceOptions.adducts
+      const selectedAdducts = this.metaspaceOptions.adducts || []
       let newAdducts = selectedAdducts.filter(adduct => this.adductOptions.some(option => option.value === adduct))
       // If no selected adducts are still valid, reset to the default adducts
       if (newAdducts.length === 0) {
