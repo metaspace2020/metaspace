@@ -139,7 +139,8 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
-            return (params.value[4] || 0).toFixed(2) + ' ' + params.data?.label?.y + ' in ' + params.data?.label?.x
+            return 'Fraction detected: ' + (params.value[4] || 0).toFixed(2) + ' '
+              + params.data?.label?.y + ' in ' + params.data?.label?.x
           },
         },
         grid: {

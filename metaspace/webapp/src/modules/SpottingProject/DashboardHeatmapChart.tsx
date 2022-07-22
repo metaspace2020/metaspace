@@ -131,7 +131,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
-            return params.value[4].toFixed(2) + ' ' + params.data?.label?.y + ' in '
+            return 'Fraction detected: ' + params.value[4].toFixed(2) + ' ' + params.data?.label?.y + ' in '
               + params.data?.label?.x
           },
         },

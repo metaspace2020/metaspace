@@ -123,7 +123,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Class',
-      src: 'coarse_class',
+      src: 'main_coarse_class',
     },
     {
       label: 'Dataset',
@@ -143,7 +143,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Pathway',
-      src: 'coarse_path',
+      src: 'main_coarse_path',
     },
     {
       label: 'Pathway subclass',
@@ -185,7 +185,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Pathway',
-      src: 'coarse_path',
+      src: 'main_coarse_path',
     },
     {
       label: 'Pathway subclass',
@@ -193,7 +193,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Class',
-      src: 'coarse_class',
+      src: 'main_coarse_class',
     },
     {
       label: 'Subclass',
@@ -247,7 +247,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Pathway',
-      src: 'coarse_path',
+      src: 'main_coarse_path',
     },
     {
       label: 'Pathway subclass',
@@ -255,7 +255,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Class',
-      src: 'coarse_class',
+      src: 'main_coarse_class',
     },
     {
       label: 'Subclass',
@@ -350,7 +350,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'Pathway class',
-    src: 'coarse_path',
+    src: 'main_coarse_path',
   },
   {
     label: 'Pathway subclass',
@@ -358,7 +358,7 @@ const FILTER_VALUES = [
   },
   {
     label: 'Class',
-    src: 'coarse_class',
+    src: 'main_coarse_class',
   },
   {
     label: 'Subclass',
@@ -384,12 +384,12 @@ const FILTER_VALUES = [
 
 const CLASSIFICATION_METRICS = {
   fine_class: true,
-  coarse_class: true,
+  main_coarse_class: true,
 }
 
 const PATHWAY_METRICS = {
   fine_path: true,
-  coarse_path: true,
+  main_coarse_path: true,
 }
 
 const VALUE_METRICS = {
@@ -405,9 +405,9 @@ const VALUE_METRICS = {
 
 const filterMap : any = {
   a: 'add',
-  coarse_class: 'q',
+  main_coarse_class: 'q',
   fine_class: 'q',
-  coarse_path: 'q',
+  main_coarse_path: 'q',
   fine_path: 'q',
   n: 'q',
   d: 'ds',
@@ -662,7 +662,7 @@ export default defineComponent({
         })
 
         state.visualMap = {
-          type: state.options.aggregation !== 'coarse_class' ? 'continuous' : 'piecewise',
+          type: state.options.aggregation !== 'main_coarse_class' ? 'continuous' : 'piecewise',
           show: true,
           calculable: true,
           dimension: 3,
@@ -767,15 +767,15 @@ export default defineComponent({
       const yAxisFilter : any = filterMap[state.options.yAxis]
       const xAxisFilter : any = filterMap[state.options.xAxis]
       if (yAxisFilter) {
-        const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'coarse_class'
-          || state.options.yAxis === 'name' || state.options.yAxis === 'coarse_path'
+        const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'main_coarse_class'
+          || state.options.yAxis === 'name' || state.options.yAxis === 'main_coarse_path'
           || state.options.yAxis === 'fine_path')
           ? formulas : (yAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.y)
         url += `&${yAxisFilter}=${encodeURIComponent(value)}`
       }
       if (xAxisFilter) {
-        const value = (state.options.xAxis === 'fine_class' || state.options.xAxis === 'coarse_class'
-          || state.options.xAxis === 'name' || state.options.xAxis === 'coarse_path'
+        const value = (state.options.xAxis === 'fine_class' || state.options.xAxis === 'main_coarse_class'
+          || state.options.xAxis === 'name' || state.options.xAxis === 'main_coarse_path'
           || state.options.xAxis === 'fine_path')
           ? formulas : (xAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.x)
         url += `&${xAxisFilter}=${encodeURIComponent(value)}`
