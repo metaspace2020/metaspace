@@ -1043,8 +1043,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <div slot-key="default">
                           <div style="max-width: 500px;">
                             <p>
-                              The usage of ppm = 10 is recommended when the resolving power is below 7000.
-                              Please keep in mind the ambiguity of isobars and isomers when adjusting the ppm.
+                              For mass resolving power below 70K, we recommend using higher m/z tolerance of 5-10 ppm. Please keep in mind that
+                              increasing tolerance leads to increased ambiguity, often lower numbers of annotations at fixed FDR, and increased
+                              numbers of isobaric annotations.
                             </p>
                           </div>
                         </div>

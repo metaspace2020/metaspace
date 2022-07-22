@@ -565,10 +565,10 @@ export default {
     onInput(path, val) {
       set(this.value, path, val)
 
-      // recommend ppm to 10 if resolving power below 7000 and 3 if greater than 7000
-      if (isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power']) && val.Resolving_Power < 7000) {
+      // recommend ppm to 10 if resolving power below 70000 and 3 if greater than 70000
+      if (isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power']) && val.Resolving_Power < 70000) {
         this.metaspaceOptions.ppm = 10
-      } else if (isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power']) && val.Resolving_Power >= 7000) {
+      } else if (isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power']) && val.Resolving_Power >= 70000) {
         this.metaspaceOptions.ppm = 3
       }
 
