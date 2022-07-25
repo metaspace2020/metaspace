@@ -3,10 +3,10 @@
 exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
-    <transition-stub name="dialog-fade" class="project-datasets-dialog">
+    <transition-stub name="dialog-fade">
       <div class="el-dialog__wrapper" style="display: none;">
-        <div role="dialog" aria-modal="true" aria-label="Manage project name\`s datasets" class="el-dialog" style="margin-top: 15vh;">
-          <div class="el-dialog__header"><span class="el-dialog__title">Manage project name\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
           <!---->
           <!---->
         </div>
@@ -69,10 +69,10 @@ exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
 exports[`ViewProjectPage members tab should match snapshot (invited) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
-    <transition-stub name="dialog-fade" class="project-datasets-dialog">
+    <transition-stub name="dialog-fade">
       <div class="el-dialog__wrapper" style="display: none;">
-        <div role="dialog" aria-modal="true" aria-label="Manage project name\`s datasets" class="el-dialog" style="margin-top: 15vh;">
-          <div class="el-dialog__header"><span class="el-dialog__title">Manage project name\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
           <!---->
           <!---->
         </div>
@@ -152,10 +152,10 @@ exports[`ViewProjectPage members tab should match snapshot (invited) 1`] = `
 exports[`ViewProjectPage members tab should match snapshot (manager, including table) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
-    <transition-stub name="dialog-fade" class="project-datasets-dialog">
+    <transition-stub name="dialog-fade">
       <div class="el-dialog__wrapper" style="display: none;">
-        <div role="dialog" aria-modal="true" aria-label="Manage project name\`s datasets" class="el-dialog" style="margin-top: 15vh;">
-          <div class="el-dialog__header"><span class="el-dialog__title">Manage project name\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
           <!---->
           <!---->
         </div>
@@ -416,10 +416,10 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
 exports[`ViewProjectPage members tab should match snapshot (member) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
-    <transition-stub name="dialog-fade" class="project-datasets-dialog">
+    <transition-stub name="dialog-fade">
       <div class="el-dialog__wrapper" style="display: none;">
-        <div role="dialog" aria-modal="true" aria-label="Manage project name\`s datasets" class="el-dialog" style="margin-top: 15vh;">
-          <div class="el-dialog__header"><span class="el-dialog__title">Manage project name\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
           <!---->
           <!---->
         </div>
@@ -474,10 +474,10 @@ exports[`ViewProjectPage members tab should match snapshot (member) 1`] = `
 exports[`ViewProjectPage members tab should match snapshot (non-member) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
-    <transition-stub name="dialog-fade" class="project-datasets-dialog">
+    <transition-stub name="dialog-fade">
       <div class="el-dialog__wrapper" style="display: none;">
-        <div role="dialog" aria-modal="true" aria-label="Manage project name\`s datasets" class="el-dialog" style="margin-top: 15vh;">
-          <div class="el-dialog__header"><span class="el-dialog__title">Manage project name\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
           <!---->
           <!---->
         </div>
@@ -537,10 +537,10 @@ exports[`ViewProjectPage members tab should match snapshot (non-member) 1`] = `
 exports[`ViewProjectPage publishing tab should match snapshot (published) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
-    <transition-stub name="dialog-fade" class="project-datasets-dialog">
+    <transition-stub name="dialog-fade">
       <div class="el-dialog__wrapper" style="display: none;">
-        <div role="dialog" aria-modal="true" aria-label="Manage project name\`s datasets" class="el-dialog" style="margin-top: 15vh;">
-          <div class="el-dialog__header"><span class="el-dialog__title">Manage project name\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
           <!---->
           <!---->
         </div>
@@ -602,10 +602,10 @@ exports[`ViewProjectPage publishing tab should match snapshot (published) 1`] = 
 exports[`ViewProjectPage publishing tab should match snapshot (under review) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
-    <transition-stub name="dialog-fade" class="project-datasets-dialog">
+    <transition-stub name="dialog-fade">
       <div class="el-dialog__wrapper" style="display: none;">
-        <div role="dialog" aria-modal="true" aria-label="Manage project name\`s datasets" class="el-dialog" style="margin-top: 15vh;">
-          <div class="el-dialog__header"><span class="el-dialog__title">Manage project name\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
           <!---->
           <!---->
         </div>
@@ -720,10 +720,10 @@ exports[`ViewProjectPage publishing tab should match snapshot (under review) 1`]
 exports[`ViewProjectPage publishing tab should match snapshot (unpublished) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
-    <transition-stub name="dialog-fade" class="project-datasets-dialog">
+    <transition-stub name="dialog-fade">
       <div class="el-dialog__wrapper" style="display: none;">
-        <div role="dialog" aria-modal="true" aria-label="Manage project name\`s datasets" class="el-dialog" style="margin-top: 15vh;">
-          <div class="el-dialog__header"><span class="el-dialog__title">Manage project name\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
           <!---->
           <!---->
         </div>
@@ -826,10 +826,10 @@ exports[`ViewProjectPage publishing tab should match snapshot (unpublished) 1`] 
 exports[`ViewProjectPage settings tab should disable actions when published 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
-    <transition-stub name="dialog-fade" class="project-datasets-dialog">
+    <transition-stub name="dialog-fade">
       <div class="el-dialog__wrapper" style="display: none;">
-        <div role="dialog" aria-modal="true" aria-label="Manage project name\`s datasets" class="el-dialog" style="margin-top: 15vh;">
-          <div class="el-dialog__header"><span class="el-dialog__title">Manage project name\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
           <!---->
           <!---->
         </div>
@@ -953,10 +953,10 @@ exports[`ViewProjectPage settings tab should disable actions when published 1`] 
 exports[`ViewProjectPage settings tab should disable actions when under review 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
-    <transition-stub name="dialog-fade" class="project-datasets-dialog">
+    <transition-stub name="dialog-fade">
       <div class="el-dialog__wrapper" style="display: none;">
-        <div role="dialog" aria-modal="true" aria-label="Manage project name\`s datasets" class="el-dialog" style="margin-top: 15vh;">
-          <div class="el-dialog__header"><span class="el-dialog__title">Manage project name\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
           <!---->
           <!---->
         </div>
@@ -1073,10 +1073,10 @@ exports[`ViewProjectPage settings tab should disable actions when under review 1
 exports[`ViewProjectPage settings tab should match snapshot 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
-    <transition-stub name="dialog-fade" class="project-datasets-dialog">
+    <transition-stub name="dialog-fade">
       <div class="el-dialog__wrapper" style="display: none;">
-        <div role="dialog" aria-modal="true" aria-label="Manage project name\`s datasets" class="el-dialog" style="margin-top: 15vh;">
-          <div class="el-dialog__header"><span class="el-dialog__title">Manage project name\`s datasets</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
           <!---->
           <!---->
         </div>
