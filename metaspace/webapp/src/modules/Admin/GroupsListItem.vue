@@ -22,13 +22,19 @@
       <div class="actions">
         <div>
           <i class="el-icon-picture" />
-          <router-link :to="datasetsLink">
+          <router-link
+            data-test-key="dataset-link"
+            :to="datasetsLink"
+          >
             Browse datasets
           </router-link>
         </div>
         <div>
           <i class="el-icon-edit" />
-          <router-link :to="manageLink">
+          <router-link
+            data-test-key="manage-link"
+            :to="manageLink"
+          >
             Manage group
           </router-link>
         </div>

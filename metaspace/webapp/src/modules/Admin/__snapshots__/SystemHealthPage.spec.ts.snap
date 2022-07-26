@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SystemHealthPage should match snapshot logged as admin 1`] = `
+<div class="mx-auto max-w-4xl" mock-v-loading="0">
+  <form class="el-form el-form--label-top">
+    <div class="el-form-item">
+      <!---->
+      <div class="el-form-item__content">
+        <div role="radiogroup" class="el-radio-group"><label role="radio" aria-checked="true" tabindex="0" class="el-radio is-bordered is-checked"><span class="el-radio__input is-checked"><span class="el-radio__inner"></span><input type="radio" aria-hidden="true" tabindex="-1" class="el-radio__original" value="0"></span><span class="el-radio__label">
+          Enable everything
+        <!----></span></label> <label role="radio" tabindex="-1" class="el-radio is-bordered"><span class="el-radio__input"><span class="el-radio__inner"></span><input type="radio" aria-hidden="true" tabindex="-1" class="el-radio__original" value="1"></span><span class="el-radio__label">
+          Disable dataset upload/reprocessing
+        <!----></span></label> <label role="radio" tabindex="-1" class="el-radio is-bordered"><span class="el-radio__input"><span class="el-radio__inner"></span><input type="radio" aria-hidden="true" tabindex="-1" class="el-radio__original" value="2"></span><span class="el-radio__label">
+          Read-only mode
+        <!----></span></label></div>
+        <transition-stub name="el-zoom-in-top">
+          <!---->
+        </transition-stub>
+      </div>
+    </div>
+    <div class="el-form-item"><label class="el-form-item__label">Maintenance message (optional)</label>
+      <div class="el-form-item__content">
+        <div class="el-input" style="width: 450px;">
+          <!----><input type="text" autocomplete="off" class="el-input__inner">
+          <!---->
+          <!---->
+          <!---->
+          <!---->
+        </div>
+        <transition-stub name="el-zoom-in-top">
+          <!---->
+        </transition-stub>
+      </div>
+    </div> <button type="button" class="el-button el-button--primary">
+      <!---->
+      <!----><span>
+      Update
+    </span></button>
+  </form>
+</div>
+`;
+
+exports[`SystemHealthPage should match snapshot logged as non-admin 1`] = ``;
