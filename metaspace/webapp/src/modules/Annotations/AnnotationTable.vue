@@ -315,7 +315,7 @@
       </el-table-column>
 
       <el-table-column
-        v-if="!hidden('ColocalizationCoeff')"
+        v-if="!hidden('colocalizationCoeff')"
         key="colocalizationCoeff"
         property="colocalizationCoeff"
         label="Coloc."
@@ -639,6 +639,11 @@ export default Vue.extend({
           label: 'FDR',
           src: 'FDR',
           selected: true,
+        },
+        {
+          label: 'Co-localization coefficient',
+          src: 'colocalizationCoeff',
+          selected: false,
         },
       ],
     }
@@ -1060,7 +1065,7 @@ export default Vue.extend({
 
     async startExport() {
       const chunkSize = this.csvChunkSize
-      const includeColoc = !this.hidden('ColocalizationCoeff')
+      const includeColoc = !this.hidden('colocalizationCoeff')
       const includeOffSample = config.features.off_sample
       const includeIsomers = config.features.isomers
       const includeIsobars = config.features.isobars
