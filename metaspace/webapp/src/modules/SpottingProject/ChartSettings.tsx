@@ -10,14 +10,20 @@ interface ChartSettingsState {
 }
 
 const availableScales: string[] = ['-Viridis', '-Cividis', '-Hot', '-YlGnBu', '-Portland', '-Greys',
-  '-Inferno', '-Turbo']
+  '-Inferno', '-Turbo', 'Viridis']
 
 export const ChartSettings = defineComponent({
   name: 'ChartSettings',
+  props: {
+    defaultColormap: {
+      type: String,
+      default: '-YlGnBu',
+    },
+  },
   setup(props, ctx) {
     const { emit } = ctx
     const state = reactive<ChartSettingsState>({
-      colormap: 'Viridis',
+      colormap: props.defaultColormap,
       status: 'CLOSED',
     })
 

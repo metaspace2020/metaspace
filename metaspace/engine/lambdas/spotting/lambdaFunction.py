@@ -22,7 +22,16 @@ def calculate_detected_intensities(source_df, threshold=0.8):
     return source_df
 
 
-# pylint: disable=too-many-locals, too-many-arguments
+def get_class_size(metadata, class_column):
+    """
+    Calculate class size to be used with load_classes or load_pathways
+    """
+    sizes = metadata[class_column].value_counts()
+    metadata['class_size'] = [sizes[k] for k in metadata[class_column]]
+    return metadata
+
+
+# pylint: disable=too-many-locals, too-many-arguments, too-many-statements, too-many-branches
 def load_data(
     pred_type='EMBL', load_pathway=False, load_class=False, filters=None, x_axis=None, y_axis=None
 ):
@@ -31,7 +40,7 @@ def load_data(
     url_prefix = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v2'
     all_pred_file = 'all_predictions_05-07-22.parquet'
     interlab_pred_file = 'interlab_predictions_05-07-22.parquet'
-    embl_pred_file = 'embl_predictions_05-07-22.parquet'
+    embl_pred_file = 'embl_predictions_19-07-22.parquet'
     datasets_file = 'datasets_11-07-22.parquet'
     pathways_file = 'pathways_05-07-22.parquet'
     chem_class_file = 'custom_classification_05-07-22.parquet'
@@ -39,9 +48,12 @@ def load_data(
     # Load predictions, format neutral loss column
     if pred_type == 'EMBL':
         predictions = pd.read_parquet(f'{url_prefix}/{embl_pred_file}')
+        print('embl', len(predictions))
     elif pred_type == 'INTERLAB':
+        print('interlab')
         predictions = pd.read_parquet(f'{url_prefix}/{interlab_pred_file}')
     else:
+        print('all')
         predictions = pd.read_parquet(f'{url_prefix}/{all_pred_file}')
 
     predictions.nL.fillna('', inplace=True)
@@ -55,11 +67,6 @@ def load_data(
     source_df = pd.merge(
         predictions, datasets_info, left_on='dsId', right_on='Dataset ID', how='left'
     )
-
-    # merge with pathway
-    if load_pathway:
-        pathways = pd.read_parquet(f'{url_prefix}/{pathways_file}')
-        source_df = source_df.merge(pathways, left_on='name', right_on='name_short', how='left')
 
     source_df = source_df[source_df[pred_type]]
 
@@ -79,17 +86,28 @@ def load_data(
         classes1 = pd.read_parquet(f'{url_prefix}/{chem_class_file}')
 
         if y_axis != 'main_coarse_class' and x_axis != 'main_coarse_class':
-            chem_subclass = classes1[
-                ['name_short', 'coarse_class', 'fine_class']
-            ].drop_duplicates()  # coarse class here is to do sorting if you want
-            chem = chem_subclass[chem_subclass.coarse_class != 'Thermometers']
-            sizes = chem_subclass.fine_class.value_counts()
-            chem['class_size'] = [sizes[k] for k in chem.fine_class]
+            chem = get_class_size(
+                classes1[['name_short', 'fine_class', 'coarse_class']], 'fine_class'
+            )
         else:
-            chem_class = classes1[['name_short', 'main_coarse_class']].drop_duplicates()
-            chem = chem_class[chem_class.main_coarse_class != 'Thermometers']
-            sizes = chem_class.main_coarse_class.value_counts()
-            chem['class_size'] = [sizes[k] for k in chem.main_coarse_class]
+            chem = get_class_size(
+                classes1[['name_short', 'main_coarse_class']].drop_duplicates(), 'main_coarse_class'
+            )
+
+        spotting_data = spotting_data.merge(
+            chem, left_on='name', right_on='name_short', how='right'
+        )
+
+    # merge with pathway
+    if load_pathway:
+        classes1 = pd.read_parquet(f'{url_prefix}/{pathways_file}')
+
+        if y_axis != 'main_coarse_path' and x_axis != 'main_coarse_path':
+            chem = get_class_size(classes1[['name_short', 'fine_path', 'coarse_path']], 'fine_path')
+        else:
+            chem = get_class_size(
+                classes1[['name_short', 'main_coarse_path']].drop_duplicates(), 'main_coarse_path'
+            )
 
         spotting_data = spotting_data.merge(
             chem, left_on='name', right_on='name_short', how='right'
@@ -124,6 +142,8 @@ def summarise_data_w_class(spotting_data, x_axis, y_axis):
 
     step1_indexes = ['dsId', 'name', x_axis, y_axis]
     step2_indexes = ['dsId', x_axis, y_axis]
+    if x_axis == 'name' or y_axis == 'name':
+        step1_indexes.pop(1)
     if x_axis == 'dsId' or y_axis == 'dsId':
         step1_indexes.pop(0)
         step2_indexes.pop(0)
@@ -207,6 +227,8 @@ def summarise_data(spotting_data, n_metabolites, x_axis, y_axis):
 
     step1_indexes = ['dsId', 'name', x_axis, y_axis]
     step2_indexes = ['dsId', x_axis, y_axis]
+    if x_axis == 'name' or y_axis == 'name':
+        step1_indexes.pop(1)
     if x_axis == 'dsId' or y_axis == 'dsId':
         step1_indexes.pop(0)
         step2_indexes.pop(0)
@@ -383,7 +405,7 @@ def lambda_handler(event, context):
             'statusCode': 200,
             'body': {
                 'src': query_filter_src,
-                'values': base_data[query_filter_src].unique().tolist(),
+                'values': base_data[query_filter_src].dropna().unique().tolist(),
             },
         }
 
@@ -391,6 +413,9 @@ def lambda_handler(event, context):
     # sub axis
     if y_axis == 'fine_class':
         base_data['class_full'] = base_data['coarse_class'] + ' -agg- ' + base_data['fine_class']
+        y_axis = 'class_full'
+    if y_axis == 'fine_path':
+        base_data['class_full'] = base_data['coarse_path'] + ' -agg- ' + base_data['fine_path']
         y_axis = 'class_full'
 
     # Summarise data per molecule (intensities of its detected ions are summed)

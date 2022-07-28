@@ -50,65 +50,69 @@ const VIEW = {
 
 const ALLOWED_COMBINATIONS: any = {
   EMBL: {
-    Adducts: ['Class', 'Dataset', 'Matrix', 'Molecule', 'Neutral losses', 'Pathway',
+    Adducts: ['Class', 'Dataset id', 'Dataset name', 'Matrix', 'Molecule', 'Neutral losses', 'Pathway',
       'Pathway subclass', 'Polarity', 'Subclass'],
-    Class: ['Adducts', 'Dataset', 'Matrix', 'Neutral losses', 'Polarity'],
-    Dataset: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway',
+    Class: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
+    'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway',
+      'Pathway subclass', 'Subclass'],
+    'Dataset name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway',
       'Pathway subclass', 'Subclass'],
     Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Molecule: ['Adducts', 'Dataset', 'Matrix', 'Neutral losses', 'Polarity'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset', 'Matrix', 'Molecule',
+    Molecule: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
+    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Dataset name', 'Matrix', 'Molecule',
       'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Pathway: ['Adducts', 'Dataset', 'Matrix', 'Neutral losses', 'Polarity'],
-    'Pathway subclass': ['Adducts', 'Dataset', 'Matrix', 'Neutral losses',
+    Pathway: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
+    'Pathway subclass': ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses',
       'Polarity'],
     Polarity: ['Adducts', 'Class', 'Matrix', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass'],
-    Subclass: ['Adducts', 'Dataset', 'Matrix', 'Neutral losses', 'Polarity'],
+    Subclass: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
   },
   ALL: {
-    Adducts: ['Class', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser',
+    Adducts: ['Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
       'Matrix', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass',
       'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Class: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser',
+    Class: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
       'Matrix', 'Neutral losses', 'Polarity', 'Technology'],
-    Dataset: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
+    'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
+    'Dataset name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Ionisation source': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     Lab: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Mass analyser': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Molecule: ['Adducts', 'Dataset', 'Lab', 'Matrix', 'Neutral losses'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset', 'Ionisation source', 'Lab',
+    Molecule: ['Adducts', 'Dataset id', 'Dataset name', 'Lab', 'Matrix', 'Neutral losses'],
+    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab',
       'Mass analyser', 'Matrix', 'Molecule', 'Pathway', 'Pathway subclass', 'Polarity',
       'Subclass', 'Technology', 'Source Pressure'],
-    Pathway: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Pathway: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
       'Neutral losses', 'Polarity', 'Technology'],
-    'Pathway subclass': ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser',
+    'Pathway subclass': ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
       'Matrix', 'Neutral losses', 'Polarity', 'Technology'],
     Polarity: ['Adducts', 'Class', 'Matrix', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Subclass: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Subclass: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
       'Neutral losses', 'Polarity', 'Technology'],
     Technology: ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Source Pressure': ['Adducts', 'Neutral losses'],
   },
   INTERLAB: {
-    Adducts: ['Class', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix', 'Molecule',
+    Adducts: ['Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix', 'Molecule',
       'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Class: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Class: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
       'Neutral losses', 'Polarity', 'Technology'],
-    Dataset: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
+    'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
+    'Dataset name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Ionisation source': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     Lab: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Mass analyser': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Molecule: ['Adducts', 'Dataset', 'Lab', 'Matrix', 'Neutral losses'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser',
+    Molecule: ['Adducts', 'Dataset id', 'Dataset name', 'Lab', 'Matrix', 'Neutral losses'],
+    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
       'Matrix', 'Molecule', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Pathway: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix', 'Neutral losses',
-      'Polarity', 'Technology'],
-    'Pathway subclass': ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Pathway: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+      'Neutral losses', 'Polarity', 'Technology'],
+    'Pathway subclass': ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
       'Neutral losses', 'Polarity', 'Technology'],
     Polarity: ['Adducts', 'Class', 'Matrix', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Subclass: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Subclass: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
       'Neutral losses', 'Polarity', 'Technology'],
     Technology: ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Source Pressure': ['Adducts', 'Neutral losses'],
@@ -126,8 +130,12 @@ const AXIS_VALUES : any = {
       src: 'main_coarse_class',
     },
     {
-      label: 'Dataset',
+      label: 'Dataset id',
       src: 'dsId',
+    },
+    {
+      label: 'Dataset name',
+      src: 'Dataset name',
     },
     {
       label: 'Matrix',
@@ -200,8 +208,12 @@ const AXIS_VALUES : any = {
       src: 'fine_class',
     },
     {
-      label: 'Dataset',
+      label: 'Dataset id',
       src: 'dsId',
+    },
+    {
+      label: 'Dataset name',
+      src: 'Dataset name',
     },
     {
       label: 'Lab',
@@ -262,8 +274,12 @@ const AXIS_VALUES : any = {
       src: 'fine_class',
     },
     {
-      label: 'Dataset',
+      label: 'Dataset id',
       src: 'dsId',
+    },
+    {
+      label: 'Dataset name',
+      src: 'Dataset name',
     },
     {
       label: 'Lab',
@@ -365,8 +381,12 @@ const FILTER_VALUES = [
     src: 'fine_class',
   },
   {
-    label: 'Dataset',
+    label: 'Dataset id',
     src: 'dsId',
+  },
+  {
+    label: 'Dataset name',
+    src: 'Dataset name',
   },
   {
     label: 'Lab',
@@ -766,6 +786,12 @@ export default defineComponent({
       const formulas : string = item.data.label.formulas.join('|')
       const yAxisFilter : any = filterMap[state.options.yAxis]
       const xAxisFilter : any = filterMap[state.options.xAxis]
+
+      // set dataset ids filter
+      if ((item?.data?.label?.datasetIds || []).length > 0) {
+        url += `&ds=${(item?.data?.label?.datasetIds || []).join(',')}`
+      }
+
       if (yAxisFilter) {
         const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'main_coarse_class'
           || state.options.yAxis === 'name' || state.options.yAxis === 'main_coarse_path'

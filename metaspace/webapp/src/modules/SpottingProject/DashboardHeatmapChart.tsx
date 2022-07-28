@@ -240,10 +240,8 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       })
 
       if (props.yOption === 'fine_class' || props.yOption === 'fine_path') {
-        auxOptions.grid.left = 2
         auxOptions.grid.right = 100
       } else {
-        auxOptions.grid.left = '5%'
         auxOptions.grid.right = '5%'
       }
 
