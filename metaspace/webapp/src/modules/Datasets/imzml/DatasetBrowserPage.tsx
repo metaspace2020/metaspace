@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from '@vue/composition-api'
 import { Select, Option, RadioGroup, Radio, InputNumber, Input, RadioButton } from '../../../lib/element-ui'
 import { useQuery } from '@vue/apollo-composable'
 import {
@@ -12,7 +12,7 @@ import config from '../../../lib/config'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { DatasetBrowserSpectrumChart } from './DatasetBrowserSpectrumChart'
 import './DatasetBrowserPage.scss'
-import SimpleIonImageViewer from './SimpleIonImageViewer'
+import { SimpleIonImageViewer } from '../../../components/SimpleIonImageViewer/SimpleIonImageViewer'
 import { calculateMzFromFormula, isFormulaValid } from '../../../lib/formulaParser'
 import reportError from '../../../lib/reportError'
 import { readNpy } from '../../../lib/npyHandler'
@@ -23,7 +23,19 @@ import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import Vue from 'vue'
 import FileSaver from 'file-saver'
-import { mzFilterPrecision } from '../../../lib/util'
+import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
+import { cloneDeep } from 'lodash-es'
+
+interface GlobalImageSettings {
+  resetViewPort: boolean
+  isNormalized: boolean
+  scaleBarColor: string
+  scaleType: string
+  colormap: string
+  selectedLockTemplate: string | null
+  globalLockedIntensities: [number | undefined, number | undefined]
+  showOpticalImage: boolean
+}
 
 interface DatasetBrowserProps {
   className: string
@@ -41,8 +53,8 @@ interface DatasetBrowserState {
   sampleData: any[]
   chartLoading: boolean
   imageLoading: boolean
-  isNormalized: boolean
   invalidFormula: boolean
+  showOpticalImage: boolean
   referenceFormula: any
   invalidReferenceFormula: boolean
   fixedMassReference: number
@@ -55,10 +67,11 @@ interface DatasetBrowserState {
   y: number | undefined
   currentView: string
   normalization: number | undefined
-  mz: number | undefined,
-  mzLow: number | undefined,
-  mzHigh: number | undefined,
-  enableImageQuery: boolean,
+  mz: number | undefined
+  mzLow: number | undefined
+  mzHigh: number | undefined
+  enableImageQuery: boolean
+  globalImageSettings: GlobalImageSettings
 }
 
 const PEAK_FILTER = {
@@ -92,8 +105,8 @@ export default defineComponent<DatasetBrowserProps>({
       metadata: undefined,
       annotation: undefined,
       chartLoading: false,
-      isNormalized: false,
       imageLoading: false,
+      showOpticalImage: true,
       moleculeFilter: undefined,
       x: undefined,
       y: undefined,
@@ -105,14 +118,26 @@ export default defineComponent<DatasetBrowserProps>({
       referenceFormula: undefined,
       fixedMassReference: 14.01565006, // m_CH2=14.0156,
       referenceFormulaMz: 14.01565006, // m_CH2=14.0156,
-      currentView: VIEWS.KENDRICK,
+      currentView: VIEWS.SPECTRUM,
       showFullTIC: true,
       normalization: undefined,
       mz: undefined,
       mzLow: undefined,
       mzHigh: undefined,
       enableImageQuery: false,
+      globalImageSettings: {
+        resetViewPort: false,
+        isNormalized: true,
+        scaleBarColor: '#000000',
+        scaleType: 'linear',
+        colormap: 'Viridis',
+        showOpticalImage: false,
+        selectedLockTemplate: null,
+        globalLockedIntensities: [undefined, undefined],
+      },
     })
+
+    const container = ref<any>(null)
 
     const queryVariables = () => {
       const filter = $store.getters.gqlAnnotationFilter
@@ -192,7 +217,7 @@ export default defineComponent<DatasetBrowserProps>({
     }),
     imageQueryOptions)
 
-    const spectrumQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+    const spectrumQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const, debounce: 1000 })
 
     const {
       result: spectrumResult,
@@ -206,6 +231,35 @@ export default defineComponent<DatasetBrowserProps>({
       }
       state.chartLoading = false
     })
+
+    onMounted(() => {
+      resizeHandler()
+      window.addEventListener('resize', resizeHandler)
+    })
+
+    onUnmounted(() => {
+      window.removeEventListener('resize', resizeHandler)
+    })
+
+    const dimensions = reactive({
+      width: 600,
+      height: 500,
+    })
+
+    const resizeHandler = () => {
+      let width = 0
+      let height = 0
+      if (container.value && container.value.clientWidth > width) {
+        width = container.value.clientWidth
+      }
+      if (container && container.value.clientHeight > height) {
+        height = container.value.clientHeight
+      }
+      if (width !== 0 && height !== 0) {
+        dimensions.width = width
+        // dimensions.height = height
+      }
+    }
 
     const b64toBlob = (b64Data: any, contentType = '', sliceSize = 512) => {
       const byteCharacters = atob(b64Data)
@@ -232,7 +286,7 @@ export default defineComponent<DatasetBrowserProps>({
         const blob = b64toBlob(result?.data?.browserImage.replace('data:image/png;base64,', ''), 'image/png')
         state.ionImageUrl = URL.createObjectURL(blob)
 
-        let currentAnnotation = {}
+        let currentAnnotation : any = {}
         if (annotations.value) {
           const theoreticalMz = state.mz as number
           const highestMz = theoreticalMz * 1.000003
@@ -241,12 +295,15 @@ export default defineComponent<DatasetBrowserProps>({
             .find((annotation: any) => annotation.mz >= lowestMz && annotation.mz <= highestMz)
         }
 
+        if (!currentAnnotation) { // not annotated
+          currentAnnotation = { dataset: annotations.value[0].dataset }
+        }
         state.annotation = {
-          ...currentAnnotation,
+          ...cloneDeep(currentAnnotation),
           mz: state.mz,
           isotopeImages: [
             {
-              ...annotations.value[0].isotopeImages[0],
+              ...cloneDeep(annotations.value[0].isotopeImages[0]),
               mz: state.mz,
               url: state.ionImageUrl,
             },
@@ -385,8 +442,28 @@ export default defineComponent<DatasetBrowserProps>({
       requestSpectrum(coordinates.x, coordinates.y)
     }
 
+    const handleColormapChange = (colormap: any) => {
+      state.globalImageSettings.colormap = colormap
+    }
+
+    const handleScaleBarColorChange = (scaleBarColor: any) => {
+      state.globalImageSettings.scaleBarColor = scaleBarColor
+    }
+
+    const handleScaleTypeChange = (scaleType: any) => {
+      state.globalImageSettings.scaleType = scaleType
+    }
+
+    const handleNormalizationChange = (isNormalized: any) => {
+      state.globalImageSettings.isNormalized = isNormalized
+    }
+
+    const toggleOpticalImage = () => {
+      state.showOpticalImage = !state.showOpticalImage
+    }
+
     const handleNormalization = (isNormalized: boolean) => {
-      state.isNormalized = !state.showFullTIC && isNormalized
+      state.globalImageSettings.isNormalized = !state.showFullTIC && isNormalized
     }
 
     const renderBrowsingFilters = () => {
@@ -520,7 +597,7 @@ export default defineComponent<DatasetBrowserProps>({
       const { annotation } = state
 
       if (!annotation) {
-        return null
+        return <div class='info'/>
       }
 
       if (state.showFullTIC) {
@@ -728,7 +805,7 @@ export default defineComponent<DatasetBrowserProps>({
                   height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
                 }}
                 isEmpty={isEmpty}
-                normalization={state.isNormalized ? state.normalization : undefined}
+                normalization={state.globalImageSettings.isNormalized ? state.normalization : undefined}
                 isLoading={state.chartLoading}
                 isDataLoading={annotationsLoading.value}
                 data={state.sampleData}
@@ -751,9 +828,35 @@ export default defineComponent<DatasetBrowserProps>({
               </div>
               {renderImageFilters()}
               {renderInfo()}
-              <div class='ion-image-holder'>
+              <MainImageHeader
+                class='viewer-item-header dom-to-image-hidden'
+                annotation={state.annotation}
+                slot="title"
+                isActive={false}
+                hideOptions={false}
+                hideTitle
+                hideNormalization
+                showOpticalImage={state.showOpticalImage}
+                toggleOpticalImage={toggleOpticalImage}
+                onColormapChange={handleColormapChange}
+                onScaleBarColorChange={handleScaleBarColorChange}
+                onScaleTypeChange={handleScaleTypeChange}
+                onNormalizationChange={handleNormalizationChange}
+                lockedIntensityTemplate={state.globalImageSettings.selectedLockTemplate}
+                globalLockedIntensities={state.globalImageSettings.globalLockedIntensities}
+                hasOpticalImage={
+                  state.annotation?.dataset?.opticalImages[0]?.url
+                  !== undefined}
+                resetViewport={() => {
+                  state.globalImageSettings.resetViewPort = true
+                  setTimeout(() => { state.globalImageSettings.resetViewPort = false }, 500)
+                }}
+              />
+              <div
+                ref={container}
+                class='ion-image-holder'>
                 {
-                  (annotationsLoading.value || state.imageLoading)
+                  (annotationsLoading.value || state.imageLoading || state.chartLoading)
                   && <div class='loader-holder'>
                     <div>
                       <i
@@ -765,15 +868,24 @@ export default defineComponent<DatasetBrowserProps>({
                 {
                   state.annotation
                   && <SimpleIonImageViewer
-                    annotation={state.annotation}
+                    annotations={[state.annotation]}
+                    forceUpdate
                     dataset={dataset.value}
+                    height={dimensions.height}
+                    width={dimensions.width}
                     ionImageUrl={state.ionImageUrl}
                     pixelSizeX={getPixelSizeX()}
                     pixelSizeY={getPixelSizeY()}
-                    isNormalized={state.showFullTIC}
                     normalizationData={state.normalizationData}
+                    keepPixelSelected
+                    resetViewPort={state.globalImageSettings.resetViewPort}
+                    showOpticalImage={state.showOpticalImage}
                     onPixelSelected={handlePixelSelect}
                     onNormalization={handleNormalization}
+                    colormap={state.globalImageSettings.colormap}
+                    scaleType={state.globalImageSettings.scaleType}
+                    scaleBarColor={state.globalImageSettings.scaleBarColor}
+                    isNormalized={state.showFullTIC || state.globalImageSettings.isNormalized}
                   />
                 }
               </div>
