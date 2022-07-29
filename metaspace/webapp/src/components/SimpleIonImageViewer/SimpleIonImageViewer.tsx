@@ -18,6 +18,8 @@ interface SimpleIonImageViewerProps {
   isActive: boolean
   resetViewPort: boolean
   isNormalized: boolean
+  forceUpdate: boolean
+  keepPixelSelected: boolean
   showOpticalImage: boolean
   normalizationData: any
   dataset: any
@@ -81,6 +83,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
   props: {
     annotations: { type: Array, default: () => [] },
     isActive: { type: Boolean, required: false, default: false },
+    keepPixelSelected: { type: Boolean, required: false, default: false },
     showChannels: { type: Boolean, required: false, default: true },
     width: { type: Number, required: false },
     height: { type: Number, required: false },
@@ -99,6 +102,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     scaleBarColor: {
       type: String,
       default: '#000000',
+    },
+    forceUpdate: {
+      type: Boolean,
+      default: false,
     },
     showOpticalImage: {
       type: Boolean,
@@ -175,10 +182,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       }
 
       const datasetMetadataExternals = {
-        Submitter: annotation.dataset.submitter,
-        PI: annotation.dataset.principalInvestigator,
-        Group: annotation.dataset.group,
-        Projects: annotation.dataset.projects,
+        Submitter: annotation.dataset?.submitter,
+        PI: annotation.dataset?.principalInvestigator,
+        Group: annotation.dataset?.group,
+        Projects: annotation.dataset?.projects,
       }
       return Object.assign(safeJsonParse(annotation.dataset.metadataJson), datasetMetadataExternals)
     }
@@ -220,7 +227,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           props.scaleType, state.menuItems[index]?.imageScaledScaling,
           isNormalized && normalizationData
             ? normalizationData : null)
-        const hasOpticalImage = annotation.dataset.opticalImages[0]?.url !== undefined
+        const hasOpticalImage = annotation?.dataset?.opticalImages[0]?.url !== undefined
         state.imageHeight = finalImage?.height || 0
         state.imageWidth = finalImage?.width || 0
 
@@ -507,6 +514,10 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       }
     }
 
+    const handlePixelSelect = (coordinates: any) => {
+      emit('pixelSelected', coordinates)
+    }
+
     const handleOpticalOpacityChange = (opacity: any) => {
       state.imageSettings!.opticalOpacity = opacity
     }
@@ -700,7 +711,9 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     // set images and annotation related items when selected annotation changes
     // // set images and annotation related items when selected annotation changes
     watch(() => props.annotations, async(newValue) => {
-      if (
+      if (props.forceUpdate) {
+        await startImageSettings()
+      } else if (
         newValue
         && state.menuItems
         && state.menuItems.length > 0
@@ -776,7 +789,13 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
               : undefined}
             scrollBlock
             showPixelIntensity
-            onMove={handleImageMove}
+            keepPixelSelected={props.keepPixelSelected}
+            {...{
+              on: {
+                move: handleImageMove,
+                'pixel-select': handlePixelSelect,
+              },
+            }}
           />
           <ImageSaver
             class="absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
