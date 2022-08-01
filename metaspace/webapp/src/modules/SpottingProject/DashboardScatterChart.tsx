@@ -52,6 +52,8 @@ interface DashboardScatterChartProps {
   annotatedData: any[]
   peakFilter: number
   size: number
+  xOption: string
+  yOption: string
 }
 
 interface DashboardScatterChartState {
@@ -108,6 +110,12 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       type: Number,
       default: 600,
     },
+    xOption: {
+      type: String,
+    },
+    yOption: {
+      type: String,
+    },
   },
   setup(props, { emit }) {
     const spectrumChart = ref(null)
@@ -131,14 +139,15 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
-            return (params.value[4] || 0).toFixed(2) + ' ' + params.data?.label?.y + ' in ' + params.data?.label?.x
+            return 'Fraction detected: ' + (params.value[4] || 0).toFixed(2) + ' '
+              + params.data?.label?.y + ' in ' + params.data?.label?.x
           },
         },
         grid: {
-          left: 2,
+          left: '5%',
           top: 20,
-          right: 100,
-          bottom: 40,
+          right: '5%',
+          bottom: 60,
           containLabel: true,
         },
         xAxis: {
@@ -217,6 +226,12 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           },
         })
       })
+
+      if (props.yOption === 'fine_class' || props.yOption === 'fine_path') {
+        auxOptions.grid.right = 100
+      } else {
+        auxOptions.grid.right = '5%'
+      }
 
       auxOptions.xAxis.data = xAxisData.value
       auxOptions.yAxis.data = yAxisData.value

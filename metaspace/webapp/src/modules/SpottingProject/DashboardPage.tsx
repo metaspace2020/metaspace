@@ -50,65 +50,69 @@ const VIEW = {
 
 const ALLOWED_COMBINATIONS: any = {
   EMBL: {
-    Adducts: ['Class', 'Dataset', 'Matrix', 'Molecule', 'Neutral losses', 'Pathway',
+    Adducts: ['Class', 'Dataset id', 'Dataset name', 'Matrix', 'Molecule', 'Neutral losses', 'Pathway',
       'Pathway subclass', 'Polarity', 'Subclass'],
-    Class: ['Adducts', 'Dataset', 'Matrix', 'Neutral losses', 'Polarity'],
-    Dataset: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway',
+    Class: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
+    'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway',
+      'Pathway subclass', 'Subclass'],
+    'Dataset name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway',
       'Pathway subclass', 'Subclass'],
     Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Molecule: ['Adducts', 'Dataset', 'Matrix', 'Neutral losses', 'Polarity'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset', 'Matrix', 'Molecule',
+    Molecule: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
+    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Dataset name', 'Matrix', 'Molecule',
       'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Pathway: ['Adducts', 'Dataset', 'Matrix', 'Neutral losses', 'Polarity'],
-    'Pathway subclass': ['Adducts', 'Dataset', 'Matrix', 'Neutral losses',
+    Pathway: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
+    'Pathway subclass': ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses',
       'Polarity'],
     Polarity: ['Adducts', 'Class', 'Matrix', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass'],
-    Subclass: ['Adducts', 'Dataset', 'Matrix', 'Neutral losses', 'Polarity'],
+    Subclass: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
   },
   ALL: {
-    Adducts: ['Class', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser',
+    Adducts: ['Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
       'Matrix', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass',
       'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Class: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser',
+    Class: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
       'Matrix', 'Neutral losses', 'Polarity', 'Technology'],
-    Dataset: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
+    'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
+    'Dataset name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Ionisation source': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     Lab: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Mass analyser': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Molecule: ['Adducts', 'Dataset', 'Lab', 'Matrix', 'Neutral losses'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset', 'Ionisation source', 'Lab',
+    Molecule: ['Adducts', 'Dataset id', 'Dataset name', 'Lab', 'Matrix', 'Neutral losses'],
+    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab',
       'Mass analyser', 'Matrix', 'Molecule', 'Pathway', 'Pathway subclass', 'Polarity',
       'Subclass', 'Technology', 'Source Pressure'],
-    Pathway: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Pathway: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
       'Neutral losses', 'Polarity', 'Technology'],
-    'Pathway subclass': ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser',
+    'Pathway subclass': ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
       'Matrix', 'Neutral losses', 'Polarity', 'Technology'],
     Polarity: ['Adducts', 'Class', 'Matrix', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Subclass: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Subclass: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
       'Neutral losses', 'Polarity', 'Technology'],
     Technology: ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Source Pressure': ['Adducts', 'Neutral losses'],
   },
   INTERLAB: {
-    Adducts: ['Class', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix', 'Molecule',
+    Adducts: ['Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix', 'Molecule',
       'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Class: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Class: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
       'Neutral losses', 'Polarity', 'Technology'],
-    Dataset: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
+    'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
+    'Dataset name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Ionisation source': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     Lab: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Mass analyser': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Molecule: ['Adducts', 'Dataset', 'Lab', 'Matrix', 'Neutral losses'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser',
+    Molecule: ['Adducts', 'Dataset id', 'Dataset name', 'Lab', 'Matrix', 'Neutral losses'],
+    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
       'Matrix', 'Molecule', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Pathway: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix', 'Neutral losses',
-      'Polarity', 'Technology'],
-    'Pathway subclass': ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Pathway: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+      'Neutral losses', 'Polarity', 'Technology'],
+    'Pathway subclass': ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
       'Neutral losses', 'Polarity', 'Technology'],
     Polarity: ['Adducts', 'Class', 'Matrix', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Subclass: ['Adducts', 'Dataset', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Subclass: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
       'Neutral losses', 'Polarity', 'Technology'],
     Technology: ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Source Pressure': ['Adducts', 'Neutral losses'],
@@ -123,11 +127,15 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Class',
-      src: 'coarse_class',
+      src: 'main_coarse_class',
     },
     {
-      label: 'Dataset',
+      label: 'Dataset id',
       src: 'dsId',
+    },
+    {
+      label: 'Dataset name',
+      src: 'Dataset name',
     },
     {
       label: 'Matrix',
@@ -143,7 +151,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Pathway',
-      src: 'coarse_path',
+      src: 'main_coarse_path',
     },
     {
       label: 'Pathway subclass',
@@ -185,7 +193,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Pathway',
-      src: 'coarse_path',
+      src: 'main_coarse_path',
     },
     {
       label: 'Pathway subclass',
@@ -193,15 +201,19 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Class',
-      src: 'coarse_class',
+      src: 'main_coarse_class',
     },
     {
       label: 'Subclass',
       src: 'fine_class',
     },
     {
-      label: 'Dataset',
+      label: 'Dataset id',
       src: 'dsId',
+    },
+    {
+      label: 'Dataset name',
+      src: 'Dataset name',
     },
     {
       label: 'Lab',
@@ -213,7 +225,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Mass analyser',
-      src: 'Analyzer',
+      src: 'Mass analyser',
     },
     {
       label: 'Source Pressure',
@@ -247,7 +259,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Pathway',
-      src: 'coarse_path',
+      src: 'main_coarse_path',
     },
     {
       label: 'Pathway subclass',
@@ -255,15 +267,19 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Class',
-      src: 'coarse_class',
+      src: 'main_coarse_class',
     },
     {
       label: 'Subclass',
       src: 'fine_class',
     },
     {
-      label: 'Dataset',
+      label: 'Dataset id',
       src: 'dsId',
+    },
+    {
+      label: 'Dataset name',
+      src: 'Dataset name',
     },
     {
       label: 'Lab',
@@ -275,7 +291,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Mass analyser',
-      src: 'Analyzer',
+      src: 'Mass analyser',
     },
     {
       label: 'Source Pressure',
@@ -334,23 +350,23 @@ const FILTER_VALUES = [
     label: 'Matrix',
     src: 'Matrix short',
   },
-  {
-    label: 'Value Prediction',
-    src: 'pV',
-    isNumeric: true,
-  },
-  {
-    label: 'State Prediction',
-    src: 'p',
-    isBoolean: true,
-  },
+  // {
+  //   label: 'Value Prediction',
+  //   src: 'pV',
+  //   isNumeric: true,
+  // },
+  // {
+  //   label: 'State Prediction',
+  //   src: 'p',
+  //   isBoolean: true,
+  // },
   {
     label: 'Technology',
     src: 'Technology',
   },
   {
     label: 'Pathway class',
-    src: 'coarse_path',
+    src: 'main_coarse_path',
   },
   {
     label: 'Pathway subclass',
@@ -358,15 +374,19 @@ const FILTER_VALUES = [
   },
   {
     label: 'Class',
-    src: 'coarse_class',
+    src: 'main_coarse_class',
   },
   {
     label: 'Subclass',
     src: 'fine_class',
   },
   {
-    label: 'Dataset',
+    label: 'Dataset id',
     src: 'dsId',
+  },
+  {
+    label: 'Dataset name',
+    src: 'Dataset name',
   },
   {
     label: 'Lab',
@@ -376,20 +396,20 @@ const FILTER_VALUES = [
     label: 'Molecule',
     src: 'name',
   },
-  {
-    label: 'Formula',
-    src: 'f',
-  },
+  // {
+  //   label: 'Formula',
+  //   src: 'f',
+  // },
 ]
 
 const CLASSIFICATION_METRICS = {
   fine_class: true,
-  coarse_class: true,
+  main_coarse_class: true,
 }
 
 const PATHWAY_METRICS = {
   fine_path: true,
-  coarse_path: true,
+  main_coarse_path: true,
 }
 
 const VALUE_METRICS = {
@@ -405,9 +425,9 @@ const VALUE_METRICS = {
 
 const filterMap : any = {
   a: 'add',
-  coarse_class: 'q',
+  main_coarse_class: 'q',
   fine_class: 'q',
-  coarse_path: 'q',
+  main_coarse_path: 'q',
   fine_path: 'q',
   n: 'q',
   d: 'ds',
@@ -521,23 +541,23 @@ export default defineComponent({
     })
 
     const buildFilterOptions = async(filterIndex: number) => {
-      const filterSpec = FILTER_VALUES.find((filterItem: any) => filterItem.src
-        === state.filter[filterIndex].src)
-      if (filterSpec && filterSpec?.isNumeric) {
-        state.filter[filterIndex].isNumeric = true
-        state.filter[filterIndex].isBoolean = false
-        return
-      } else if (filterSpec && filterSpec?.isBoolean) {
-        state.filter[filterIndex].isNumeric = false
-        state.filter[filterIndex].isBoolean = true
-      } else {
-        state.filter[filterIndex].isNumeric = false
-        state.filter[filterIndex].isBoolean = false
-      }
+      // const filterSpec = FILTER_VALUES.find((filterItem: any) => filterItem.src
+      //   === state.filter[filterIndex].src)
+      // if (filterSpec && filterSpec?.isNumeric) {
+      //   state.filter[filterIndex].isNumeric = true
+      //   state.filter[filterIndex].isBoolean = false
+      //   return
+      // } else if (filterSpec && filterSpec?.isBoolean) {
+      //   state.filter[filterIndex].isNumeric = false
+      //   state.filter[filterIndex].isBoolean = true
+      // } else {
+      //   state.filter[filterIndex].isNumeric = false
+      //   state.filter[filterIndex].isBoolean = false
+      // }
       state.filter[filterIndex].loadingFilterOptions = true
 
       const options = await loadFilterValues(state.filter[filterIndex].src)
-      state.filter[filterIndex].options = uniq(options.map((item: any) => (item === null
+      state.filter[filterIndex].options = uniq((options || []).map((item: any) => (item === null
         || item === undefined || item === 'null') ? 'None' : item)).sort()
       state.filter[filterIndex].loadingFilterOptions = false
     }
@@ -569,9 +589,9 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
+        const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
         // const baseUrl = 'http://localhost:8080' // local
-        const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
+        // const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
         const response = await fetch(baseUrl + '?' + query)
         const parsedResponse = await response.json()
         state.usedData = parsedResponse // .body
@@ -626,7 +646,8 @@ export default defineComponent({
 
         const auxData : any = groupBy(data, state.options.xAxis)
         Object.keys(auxData).forEach((key: string) => {
-          auxData[key] = keyBy(auxData[key], state.options.yAxis === 'fine_class'
+          auxData[key] = keyBy(auxData[key], (state.options.yAxis === 'fine_class'
+            || state.options.yAxis === 'fine_path')
             ? 'class_full' : state.options.yAxis)
         })
 
@@ -661,10 +682,11 @@ export default defineComponent({
         })
 
         state.visualMap = {
-          type: state.options.aggregation !== 'coarse_class' ? 'continuous' : 'piecewise',
+          type: state.options.aggregation !== 'main_coarse_class' ? 'continuous' : 'piecewise',
           show: true,
           calculable: true,
           dimension: 3,
+          bottom: 0,
           left: 'center',
           inRange: {
             color: getColorScale(state.colormap).range,
@@ -764,16 +786,22 @@ export default defineComponent({
       const formulas : string = item.data.label.formulas.join('|')
       const yAxisFilter : any = filterMap[state.options.yAxis]
       const xAxisFilter : any = filterMap[state.options.xAxis]
+
+      // set dataset ids filter
+      if ((item?.data?.label?.datasetIds || []).length > 0) {
+        url += `&ds=${(item?.data?.label?.datasetIds || []).join(',')}`
+      }
+
       if (yAxisFilter) {
-        const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'coarse_class'
-          || state.options.yAxis === 'name' || state.options.yAxis === 'coarse_path'
+        const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'main_coarse_class'
+          || state.options.yAxis === 'name' || state.options.yAxis === 'main_coarse_path'
           || state.options.yAxis === 'fine_path')
           ? formulas : (yAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.y)
         url += `&${yAxisFilter}=${encodeURIComponent(value)}`
       }
       if (xAxisFilter) {
-        const value = (state.options.xAxis === 'fine_class' || state.options.xAxis === 'coarse_class'
-          || state.options.xAxis === 'name' || state.options.xAxis === 'coarse_path'
+        const value = (state.options.xAxis === 'fine_class' || state.options.xAxis === 'main_coarse_class'
+          || state.options.xAxis === 'name' || state.options.xAxis === 'main_coarse_path'
           || state.options.xAxis === 'fine_path')
           ? formulas : (xAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.x)
         url += `&${xAxisFilter}=${encodeURIComponent(value)}`
@@ -876,11 +904,15 @@ export default defineComponent({
             <span class='x-axis-label mb-2'>X axis</span>
             <Select
               class='select-box-mini'
+              clearable
               value={state.options.xAxis}
+              onClear={() => {
+                state.options.xAxis = null
+              }}
               onChange={(value: number) => {
                 handleAxisChange(value)
               }}
-              placeholder='Class'
+              placeholder='Select axis'
               disabled={state.loading}
               size='mini'>
               {
@@ -898,13 +930,17 @@ export default defineComponent({
           <div class='filter-box m-2'>
             <span class='y-axis-label mb-2'>Y axis</span>
             <Select
+              clearable
               class='select-box-mini'
               value={state.options.yAxis}
+              onClear={() => {
+                state.options.yAxis = null
+              }}
               onChange={(value: number) => {
                 handleAxisChange(value, false)
               }}
               disabled={state.loading}
-              placeholder='Method'
+              placeholder='Select axis'
               size='mini'>
               {
                 orderBy(AXIS_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
@@ -921,13 +957,17 @@ export default defineComponent({
           <div class='filter-box m-2'>
             <span class='aggregation-label mb-2'>Color</span>
             <Select
+              clearable
               class='select-box-mini'
               value={state.options.aggregation}
+              onClear={() => {
+                state.options.aggregation = null
+              }}
               onChange={(value: number) => {
                 handleAggregationChange(value)
               }}
               disabled={state.loading}
-              placeholder='Method'
+              placeholder='Select color metric'
               size='mini'>
               {
                 orderBy(AGGREGATED_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
@@ -959,13 +999,14 @@ export default defineComponent({
                 return (
                   <div class='flex flex-wrap justify-center'>
                     <Select
+                      clearable
                       class='select-box-mini mr-2'
                       value={filter.src}
                       onChange={(value: number) => {
                         handleFilterSrcChange(value, filterIdx)
                       }}
                       disabled={state.loading || state.usedData === undefined}
-                      placeholder='Neutral losses'
+                      placeholder='Select filter metric'
                       size='mini'>
                       {
                         orderBy(FILTER_VALUES, ['label'], ['asc']).map((option: any) => {
@@ -990,7 +1031,7 @@ export default defineComponent({
                           handleFilterValueChange(value, filterIdx)
                         }}
                         disabled={state.loading}
-                        placeholder='Adduct'
+                        placeholder='Select filter value'
                         size='mini'>
                         {
                           (filter.isBoolean ? ['False', 'True'] : filter.options).map((option: any) => {
@@ -1101,6 +1142,8 @@ export default defineComponent({
       return (
         <div class='chart-container'>
           <DashboardScatterChart
+            xOption={state.options.xAxis}
+            yOption={state.options.yAxis}
             xAxis={xAxisValues}
             yAxis={yAxisValues}
             size={yAxisValues.length * 30}
@@ -1116,6 +1159,8 @@ export default defineComponent({
       return (
         <div class='chart-container'>
           <DashboardHeatmapChart
+            xOption={state.options.xAxis}
+            yOption={state.options.yAxis}
             xAxis={xAxisValues}
             yAxis={yAxisValues}
             size={yAxisValues.length * 30}
@@ -1148,14 +1193,14 @@ export default defineComponent({
         })
 
       return (
-        <div class='dashboard-container'>
+        <div class='dashboard-container mb-4'>
           {renderFilters()}
           {renderVisualizations()}
           <div class='content-container'>
             {
               showChart
               && <div class='feature-box'>
-                <ShareLink name='dashboard' query={getQueryParams()}/>
+                <ShareLink name='spotting' query={getQueryParams()}/>
                 <ChartSettings onColor={handleColormapChange}/>
               </div>
             }
