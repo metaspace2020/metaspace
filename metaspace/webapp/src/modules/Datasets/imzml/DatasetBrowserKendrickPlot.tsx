@@ -3,7 +3,7 @@ import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
 import {
-  CanvasRenderer,
+  SVGRenderer,
 } from 'echarts/renderers'
 import {
   ScatterChart,
@@ -23,7 +23,7 @@ import {
 import './DatasetBrowserKendrickPlot.scss'
 
 use([
-  CanvasRenderer,
+  SVGRenderer,
   ScatterChart,
   LineChart,
   GridComponent,
