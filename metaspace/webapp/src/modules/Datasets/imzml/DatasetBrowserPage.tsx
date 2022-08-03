@@ -286,28 +286,30 @@ export default defineComponent<DatasetBrowserProps>({
         const blob = b64toBlob(result?.data?.browserImage.replace('data:image/png;base64,', ''), 'image/png')
         state.ionImageUrl = URL.createObjectURL(blob)
 
-        let currentAnnotation : any = {}
+        let currentAnnotationIdx : number = -1
+
         if (annotations.value) {
           const theoreticalMz = state.mz as number
           const highestMz = theoreticalMz * 1.000003
           const lowestMz = theoreticalMz * 0.999997
-          currentAnnotation = annotations.value
-            .find((annotation: any) => annotation.mz >= lowestMz && annotation.mz <= highestMz)
+          currentAnnotationIdx = annotations.value
+            .findIndex((annotation: any) => annotation.mz >= lowestMz && annotation.mz <= highestMz)
         }
 
-        if (!currentAnnotation) { // not annotated
-          currentAnnotation = { dataset: annotations.value[0].dataset }
-        }
-        state.annotation = {
-          ...cloneDeep(currentAnnotation),
-          mz: state.mz,
-          isotopeImages: [
-            {
-              ...cloneDeep(annotations.value[0].isotopeImages[0]),
-              mz: state.mz,
-              url: state.ionImageUrl,
-            },
-          ],
+        if (currentAnnotationIdx === -1) { // not annotated
+          state.annotation = {
+            dataset: annotations.value[0].dataset,
+            mz: state.mz,
+            isotopeImages: [
+              {
+                ...cloneDeep(annotations.value[0].isotopeImages[0]),
+                mz: state.mz,
+                url: state.ionImageUrl,
+              },
+            ],
+          }
+        } else {
+          state.annotation = annotations.value[currentAnnotationIdx]
         }
       }
     })
@@ -340,8 +342,10 @@ export default defineComponent<DatasetBrowserProps>({
         state.x = x
         state.y = y
         spectrumQueryOptions.enabled = true
-        const i = (y * state.normalizationData.shape[1]) + x
-        state.normalization = state.normalizationData.data[i] // ticPixel
+        if (state.showFullTIC) {
+          const i = (y * state.normalizationData.shape[1]) + x
+          state.normalization = state.normalizationData.data[i] // ticPixel
+        }
       } catch (e) {
         reportError(e)
       }
@@ -387,6 +391,7 @@ export default defineComponent<DatasetBrowserProps>({
           state.mzmShiftFilter = ppm
           state.mzmScaleFilter = 'ppm'
         }
+
         await requestIonImage()
         buildMetadata(dataset.value)
         if (state.x !== undefined && state.y !== undefined) {
@@ -664,7 +669,14 @@ export default defineComponent<DatasetBrowserProps>({
               onInput={(value: number) => {
                 if (value) {
                   state.showFullTIC = false
-                  Vue.set(state.normalizationData, 'showFullTIC', false)
+                  state.normalizationData = {
+                    data: null,
+                    shape: null,
+                    metadata: null,
+                    showFullTIC: null,
+                    type: 'TIC',
+                    error: true,
+                  }
                 }
                 state.mzmScoreFilter = value
               }}
