@@ -3,7 +3,7 @@ import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
 import {
-  CanvasRenderer,
+  SVGRenderer,
 } from 'echarts/renderers'
 import {
   BarChart,
@@ -20,7 +20,7 @@ import {
 import './DatasetBrowserSpectrumChart.scss'
 
 use([
-  CanvasRenderer,
+  SVGRenderer,
   BarChart,
   LineChart,
   GridComponent,
@@ -135,6 +135,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
                 zoom: 'Zoom',
                 back: 'Zoom reset',
               },
+              filterMode: 'none',
             },
             saveAsImage: {
               title: 'Download',
@@ -183,12 +184,12 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
           {
             type: 'inside',
             xAxisIndex: 0,
-            filterMode: 'empty',
+            filterMode: 'none',
           },
           {
             type: 'slider',
             yAxisIndex: 0,
-            filterMode: 'empty',
+            filterMode: 'none',
             right: 16,
           },
         ],

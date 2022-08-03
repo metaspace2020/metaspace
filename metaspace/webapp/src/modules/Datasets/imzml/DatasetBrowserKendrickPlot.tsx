@@ -3,7 +3,7 @@ import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
 import {
-  CanvasRenderer,
+  SVGRenderer,
 } from 'echarts/renderers'
 import {
   ScatterChart,
@@ -23,7 +23,7 @@ import {
 import './DatasetBrowserKendrickPlot.scss'
 
 use([
-  CanvasRenderer,
+  SVGRenderer,
   ScatterChart,
   LineChart,
   GridComponent,
@@ -142,6 +142,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
                 zoom: 'Zoom',
                 back: 'Zoom reset',
               },
+              filterMode: 'none',
             },
             saveAsImage: {
               title: 'Download',
@@ -190,13 +191,13 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
           {
             type: 'inside',
             xAxisIndex: 0,
-            filterMode: 'empty',
+            filterMode: 'none',
           },
           {
             type: 'slider',
             yAxisIndex: 0,
-            filterMode: 'empty',
             right: 16,
+            filterMode: 'none',
           },
         ],
         legend: {
