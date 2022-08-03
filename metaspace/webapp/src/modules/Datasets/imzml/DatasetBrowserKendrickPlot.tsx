@@ -142,6 +142,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
                 zoom: 'Zoom',
                 back: 'Zoom reset',
               },
+              filterMode: 'none',
             },
             saveAsImage: {
               title: 'Download',
@@ -190,13 +191,13 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
           {
             type: 'inside',
             xAxisIndex: 0,
-            filterMode: 'empty',
+            filterMode: 'none',
           },
           {
             type: 'slider',
             yAxisIndex: 0,
-            filterMode: 'empty',
             right: 16,
+            filterMode: 'none',
           },
         ],
         legend: {

@@ -135,6 +135,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
                 zoom: 'Zoom',
                 back: 'Zoom reset',
               },
+              filterMode: 'none',
             },
             saveAsImage: {
               title: 'Download',
@@ -183,12 +184,12 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
           {
             type: 'inside',
             xAxisIndex: 0,
-            filterMode: 'empty',
+            filterMode: 'none',
           },
           {
             type: 'slider',
             yAxisIndex: 0,
-            filterMode: 'empty',
+            filterMode: 'none',
             right: 16,
           },
         ],
