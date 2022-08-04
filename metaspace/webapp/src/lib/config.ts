@@ -6,6 +6,7 @@ const fileConfig = require('../clientConfig.json')
 
 interface Features {
   coloc: boolean;
+  export_int: boolean;
   show_dataset_overview: boolean;
   imzml_browser: boolean;
   spotting: boolean;
@@ -61,6 +62,7 @@ const defaultConfig: ClientConfig = {
   metadataTypes: ['ims'],
   features: {
     coloc: true,
+    export_int: false,
     show_dataset_overview: true,
     imzml_browser: false,
     spotting: false,

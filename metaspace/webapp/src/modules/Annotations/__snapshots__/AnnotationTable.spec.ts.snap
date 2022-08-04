@@ -201,11 +201,14 @@ exports[`AnnotationTable should match snapshot 1`] = `
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Co-localization coefficient</span></div>
           </div>
         </div>
-        <div slot-key="reference"><button type="button" class="el-button el-button--default">
+        <div slot-key="reference"><button type="button" class="el-button select-btn-wrapper relative el-button--default">
             <!---->
-            <!----><span><div class="el-badge new-custom-badge sm-feature-badge"><div>
-              Columns <i class="el-icon-arrow-down"></i></div><transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div></span></button></div>
+            <!----><span><div class="el-badge new-custom-badge sm-feature-badge">
+            Columns
+          <transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div> <i class="el-icon-arrow-down select-btn-icon"></i></span></button></div>
       </mock-el-popover>
+      <!---->
+      <!---->
       <mock-el-popover trigger="hover" class="ml-2 mt-1">
         <div slot-key="default">
 
@@ -213,7 +216,7 @@ exports[`AnnotationTable should match snapshot 1`] = `
           <a href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export" rel="noopener noreferrer nofollow" target="_blank">
             here<svg data-icon="icon-external-window" class="inline h-4 w-4 -mb-1 fill-current text-gray-800"></svg></a></div>
         <div slot-key="reference">
-          <div><button type="button" class="el-button export-btn el-button--default" slot="reference">
+          <div class="select-btn-wrapper"><button type="button" class="el-button export-btn select-btn-wrapper el-button--default" slot="reference" width="146" height="42">
               <!---->
               <!----><span>
             Export to CSV
@@ -419,11 +422,14 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Co-localization coefficient</span></div>
           </div>
         </div>
-        <div slot-key="reference"><button type="button" class="el-button el-button--default">
+        <div slot-key="reference"><button type="button" class="el-button select-btn-wrapper relative el-button--default">
             <!---->
-            <!----><span><div class="el-badge new-custom-badge sm-feature-badge"><div>
-              Columns <i class="el-icon-arrow-down"></i></div><transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div></span></button></div>
+            <!----><span><div class="el-badge new-custom-badge sm-feature-badge">
+            Columns
+          <transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div> <i class="el-icon-arrow-down select-btn-icon"></i></span></button></div>
       </mock-el-popover>
+      <!---->
+      <!---->
       <mock-el-popover trigger="hover" class="ml-2 mt-1">
         <div slot-key="default">
 
@@ -431,7 +437,7 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
           <a href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export" rel="noopener noreferrer nofollow" target="_blank">
             here<svg data-icon="icon-external-window" class="inline h-4 w-4 -mb-1 fill-current text-gray-800"></svg></a></div>
         <div slot-key="reference">
-          <div><button type="button" class="el-button export-btn el-button--default" slot="reference">
+          <div class="select-btn-wrapper"><button type="button" class="el-button export-btn select-btn-wrapper el-button--default" slot="reference" width="146" height="42">
               <!---->
               <!----><span>
             Export to CSV

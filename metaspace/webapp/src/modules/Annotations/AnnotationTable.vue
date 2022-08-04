@@ -335,6 +335,7 @@
       <div class="mt-1">
         <el-pagination
           v-if="!initialLoading"
+          :small="false"
           :total="totalCount"
           :page-size="recordsPerPage"
           :page-sizes="pageSizes"
@@ -376,17 +377,16 @@
         >
           <el-button
             slot="reference"
+            class="select-btn-wrapper relative"
             @click="handleColSelectorClick"
           >
             <new-feature-badge
               feature-key="custom-cols"
               class="new-custom-badge"
             >
-              <div>
-                Columns <i class="el-icon-arrow-down">
-                </i>
-              </div>
+              Columns
             </new-feature-badge>
+            <i class="el-icon-arrow-down select-btn-icon" />
           </el-button>
           <div>
             <div
@@ -409,16 +409,66 @@
           </div>
         </el-popover>
 
+        <div
+          v-if="showIntExport && isExporting"
+          class="select-btn-wrapper ml-2 mt-1"
+        >
+          <progress-button
+            class="export-btn"
+            :width="146"
+            :height="42"
+            :percentage="exportProgress * 100"
+            @click="abortExport"
+          >
+            Cancel
+          </progress-button>
+        </div>
+
         <el-popover
+          v-if="showIntExport && !isExporting"
+          ref="exportPop"
+          class="select-btn-wrapper ml-2 mt-1"
+          popper-class="export-pop"
+        >
+          <div slot="reference">
+            <el-button
+              class="select-btn-wrapper relative"
+              :width="146"
+              :height="42"
+            >
+              Export to CSV
+              <i class="el-icon-arrow-down select-btn-icon" />
+            </el-button>
+          </div>
+
+          <p
+            class="export-option"
+            @click="startExport"
+          >
+            Export Information
+          </p>
+          <p
+            class="export-option"
+            @click="startIntensitiesExport"
+          >
+            Export Intensities
+          </p>
+        </el-popover>
+
+        <el-popover
+          v-if="!showIntExport"
           class="ml-2 mt-1"
           trigger="hover"
         >
-          <div slot="reference">
+          <div
+            slot="reference"
+            class="select-btn-wrapper"
+          >
             <progress-button
               v-if="isExporting && totalCount > 5000"
               class="export-btn"
-              :width="130"
-              :height="40"
+              :width="146"
+              :height="42"
               :percentage="exportProgress * 100"
               @click="abortExport"
             >
@@ -427,7 +477,9 @@
             <el-button
               v-else
               slot="reference"
-              class="export-btn"
+              class="export-btn select-btn-wrapper"
+              :width="146"
+              :height="42"
               :disabled="isExporting"
               @click="startExport"
             >
@@ -486,7 +538,7 @@ import {
 import Vue from 'vue'
 import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
-import { flatMap, invert } from 'lodash-es'
+import { invert } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
@@ -496,6 +548,7 @@ import FullScreen from '../../assets/inline/full_screen.svg'
 import ExitFullScreen from '../../assets/inline/exit_full_screen.svg'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
+import { getIonImage, loadPngFromUrl } from '../../lib/ionImageRendering'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -559,6 +612,7 @@ export default Vue.extend({
       nextCurrentRowIndex: null,
       loadedSnapshotAnnotations: false,
       showCustomCols: config.features.custom_cols,
+      showIntExport: config.features.export_int,
       columns: [
         {
           label: 'Lab',
@@ -1063,7 +1117,82 @@ export default Vue.extend({
       this.updateFilter({ mz: row.mz.toFixed(4) })
     },
 
+    async startIntensitiesExport() {
+      if (this.$refs.exportPop) {
+        this.$refs.exportPop.doClose()
+      }
+
+      async function formatIntensitiesRow(annotation) {
+        const { isotopeImages, ionFormula: molFormula, possibleCompounds, adduct, mz, dataset } = annotation
+        const isotopeImage = isotopeImages[0]
+        const ionImagePng = await loadPngFromUrl(isotopeImage.url)
+        const molName = possibleCompounds.map((m) => m.name).join(',')
+        const molIds = possibleCompounds.map((m) => m.information[0].databaseId).join(',')
+        const finalImage = getIonImage(ionImagePng, isotopeImages[0])
+        const row = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
+        const { width, height, intensityValues } = finalImage
+        const cols = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
+
+        for (let x = 0; x < width; x++) {
+          for (let y = 0; y < height; y++) {
+            cols.push(`x${x}_y${y}`)
+            const idx = y * width + x
+            row.push(intensityValues[idx])
+          }
+        }
+
+        return { cols, row, dsId: dataset.id, dsName: dataset.name }
+      }
+
+      const queryVariables = { ...this.queryVariables }
+      const chunkSize = this.csvChunkSize
+      let offset = 0
+      this.isExporting = true
+      const exportHash = {}
+
+      while (this.isExporting && offset < this.totalCount) {
+        const resp = await this.$apollo.query({
+          query: annotationListQuery,
+          variables: { ...queryVariables, limit: chunkSize, offset },
+        })
+        for (let i = 0; i < resp.data.allAnnotations.length; i++) {
+          if (!this.isExporting) {
+            return
+          }
+          offset += 1
+          this.exportProgress = offset / this.totalCount
+
+          const annotation = resp.data.allAnnotations[i]
+          const { cols, row, dsId, dsName } = await formatIntensitiesRow(annotation)
+          if (!exportHash[dsId]) {
+            exportHash[dsId] = {
+              fileName: `${dsName.replace(/\s/g, '_')}_pixel_intensities.csv`,
+              cols: formatCsvRow(cols),
+              rows: formatCsvRow(row),
+            }
+          } else {
+            exportHash[dsId].rows += formatCsvRow(row)
+          }
+        }
+      }
+
+      if (this.isExporting) {
+        this.isExporting = false
+        this.exportProgress = 0
+
+        Object.values(exportHash).map((intensityCsv) => {
+          const csv = intensityCsv.cols + intensityCsv.rows
+          const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+          FileSaver.saveAs(blob, intensityCsv.fileName)
+        })
+      }
+    },
+
     async startExport() {
+      if (this.$refs.exportPop) {
+        this.$refs.exportPop.doClose()
+      }
+
       const chunkSize = this.csvChunkSize
       const includeColoc = !this.hidden('colocalizationCoeff')
       const includeOffSample = config.features.off_sample
@@ -1316,6 +1445,8 @@ export default Vue.extend({
  .full-screen-btn{
    padding: 0;
    margin: 0;
+   height: 42px;
+   width: 42px;
  }
  .el-table table {
    width: 0px; // fix safari dynamic column size bug
@@ -1325,5 +1456,24 @@ export default Vue.extend({
      right: 10px !important;
      top: -10px !important;
    }
+ }
+ .select-btn-wrapper{
+   width: 146px;
+   height: 42px;
+ }
+
+ .export-pop{
+   @apply p-0;
+ }
+ .export-option{
+   @apply cursor-pointer p-4 m-0 select-none;
+
+   &:hover{
+     @apply bg-blue-100;
+   }
+ }
+ .select-btn-icon{
+   position: absolute;
+   right: 8px;
  }
 </style>

@@ -488,3 +488,13 @@ export const renderScaleBar = (ionImage: IonImage, cmap: ColorMap, horizontal: b
     return createDataUrl(outputBytes, 1, 256)
   }
 }
+
+export const getIonImage = (ionImagePng: any, isotopeImage: any,
+  scaleType: any = 'linear', userScaling: any = [0, 1], normalizedData: any = null) => {
+  if (!isotopeImage || !ionImagePng) {
+    return null
+  }
+  const { minIntensity, maxIntensity } = isotopeImage
+  return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType
+    , userScaling, undefined, normalizedData)
+}
