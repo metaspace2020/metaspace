@@ -16,6 +16,13 @@ export const csvExportHeader = () => {
   + `# URL: ${window.location.href}\n`
 }
 
+export const csvExportIntensityHeader = () => {
+  const dateStr = new Date().toLocaleString().replace(/,/g, '')
+  return `# Generated at ${dateStr}. Hot-spot removal has been applied and the intensity values might
+  differ from the api results\n`
+  + `# URL: ${window.location.href}\n`
+}
+
 /**
  * For arrays of text values, primarily molecule names, follow the pattern defined in /docs/csv_export.md for
  * unambiguously encoding list items: Separate items with `, `, and ensure that items do not contain `, `

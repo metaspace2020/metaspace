@@ -445,13 +445,13 @@
             class="export-option"
             @click="startExport"
           >
-            Export Information
+            Annotations table
           </p>
           <p
             class="export-option"
             @click="startIntensitiesExport"
           >
-            Export Intensities
+            Pixel intensities
           </p>
         </el-popover>
 
@@ -537,7 +537,7 @@ import {
 
 import Vue from 'vue'
 import FileSaver from 'file-saver'
-import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
+import formatCsvRow, { csvExportHeader, formatCsvTextArray, csvExportIntensityHeader } from '../../lib/formatCsvRow'
 import { invert } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
@@ -1122,6 +1122,10 @@ export default Vue.extend({
         this.$refs.exportPop.doClose()
       }
 
+      if (!this.$store.state.annotation?.dataset?.id) { // no annotation selected
+        return
+      }
+
       async function formatIntensitiesRow(annotation) {
         const { isotopeImages, ionFormula: molFormula, possibleCompounds, adduct, mz, dataset } = annotation
         const isotopeImage = isotopeImages[0]
@@ -1141,50 +1145,52 @@ export default Vue.extend({
           }
         }
 
-        return { cols, row, dsId: dataset.id, dsName: dataset.name }
+        return { cols, row, dsName: dataset.name }
       }
 
-      const queryVariables = { ...this.queryVariables }
+      const queryVariables = {
+        ...this.queryVariables,
+        dFilter: {
+          ...this.queryVariables.dFilter,
+          ids: this.$store.state.annotation?.dataset?.id,
+        },
+      }
       const chunkSize = this.csvChunkSize
       let offset = 0
       this.isExporting = true
-      const exportHash = {}
+      let totalCount = 1
+      let fileCols
+      let fileName
+      let rows
 
-      while (this.isExporting && offset < this.totalCount) {
+      while (this.isExporting && offset < totalCount) {
         const resp = await this.$apollo.query({
           query: annotationListQuery,
           variables: { ...queryVariables, limit: chunkSize, offset },
         })
+        totalCount = resp.data.countAnnotations
         for (let i = 0; i < resp.data.allAnnotations.length; i++) {
           if (!this.isExporting) {
             return
           }
           offset += 1
-          this.exportProgress = offset / this.totalCount
-
+          this.exportProgress = offset / totalCount
           const annotation = resp.data.allAnnotations[i]
-          const { cols, row, dsId, dsName } = await formatIntensitiesRow(annotation)
-          if (!exportHash[dsId]) {
-            exportHash[dsId] = {
-              fileName: `${dsName.replace(/\s/g, '_')}_pixel_intensities.csv`,
-              cols: formatCsvRow(cols),
-              rows: formatCsvRow(row),
-            }
-          } else {
-            exportHash[dsId].rows += formatCsvRow(row)
+          const { cols, row, dsName } = await formatIntensitiesRow(annotation)
+          if (!fileCols) {
+            fileCols = formatCsvRow(cols)
+            fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities.csv`
           }
+          rows += formatCsvRow(row)
         }
       }
 
       if (this.isExporting) {
         this.isExporting = false
         this.exportProgress = 0
-
-        Object.values(exportHash).map((intensityCsv) => {
-          const csv = intensityCsv.cols + intensityCsv.rows
-          const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
-          FileSaver.saveAs(blob, intensityCsv.fileName)
-        })
+        const csv = csvExportIntensityHeader() + fileCols + rows
+        const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+        FileSaver.saveAs(blob, fileName)
       }
     },
 
