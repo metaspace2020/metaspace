@@ -410,7 +410,7 @@
         </el-popover>
 
         <div
-          v-if="showIntExport && isExporting"
+          v-if="isExporting"
           class="select-btn-wrapper ml-2 mt-1"
         >
           <progress-button
@@ -425,7 +425,7 @@
         </div>
 
         <el-popover
-          v-if="showIntExport && !isExporting"
+          v-else
           ref="exportPop"
           class="select-btn-wrapper ml-2 mt-1"
           popper-class="export-pop"
@@ -453,48 +453,6 @@
           >
             Pixel intensities
           </p>
-        </el-popover>
-
-        <el-popover
-          v-if="!showIntExport"
-          class="ml-2 mt-1"
-          trigger="hover"
-        >
-          <div
-            slot="reference"
-            class="select-btn-wrapper"
-          >
-            <progress-button
-              v-if="isExporting && totalCount > 5000"
-              class="export-btn"
-              :width="146"
-              :height="42"
-              :percentage="exportProgress * 100"
-              @click="abortExport"
-            >
-              Cancel
-            </progress-button>
-            <el-button
-              v-else
-              slot="reference"
-              class="export-btn select-btn-wrapper"
-              :width="146"
-              :height="42"
-              :disabled="isExporting"
-              @click="startExport"
-            >
-              Export to CSV
-            </el-button>
-          </div>
-
-          Documentation for the CSV export is available
-          <a
-            href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
-            rel="noopener noreferrer nofollow"
-            target="_blank"
-          >
-            here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
-          </a>
         </el-popover>
 
         <div
@@ -529,7 +487,6 @@
 import ProgressButton from './ProgressButton.vue'
 import AnnotationTableMolName from './AnnotationTableMolName.vue'
 import FilterIcon from '../../assets/inline/filter.svg'
-import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg'
 import {
   annotationListQuery,
   tableExportQuery,
@@ -592,7 +549,6 @@ export default Vue.extend({
     ProgressButton,
     AnnotationTableMolName,
     FilterIcon,
-    ExternalWindowSvg,
     ExitFullScreen,
     FullScreen,
     NewFeatureBadge,
@@ -612,7 +568,6 @@ export default Vue.extend({
       nextCurrentRowIndex: null,
       loadedSnapshotAnnotations: false,
       showCustomCols: config.features.custom_cols,
-      showIntExport: config.features.export_int,
       columns: [
         {
           label: 'Lab',
@@ -1118,7 +1073,7 @@ export default Vue.extend({
     },
 
     async startIntensitiesExport() {
-      if (this.$refs.exportPop) {
+      if (this.$refs.exportPop && typeof this.$refs.exportPop.doClose === 'function') {
         this.$refs.exportPop.doClose()
       }
 
@@ -1195,7 +1150,7 @@ export default Vue.extend({
     },
 
     async startExport() {
-      if (this.$refs.exportPop) {
+      if (this.$refs.exportPop && typeof this.$refs.exportPop.doClose === 'function') {
         this.$refs.exportPop.doClose()
       }
 

@@ -207,20 +207,21 @@ exports[`AnnotationTable should match snapshot 1`] = `
             Columns
           <transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div> <i class="el-icon-arrow-down select-btn-icon"></i></span></button></div>
       </mock-el-popover>
-      <!---->
-      <!---->
-      <mock-el-popover trigger="hover" class="ml-2 mt-1">
+      <mock-el-popover popper-class="export-pop" class="select-btn-wrapper ml-2 mt-1">
         <div slot-key="default">
-
-          Documentation for the CSV export is available
-          <a href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export" rel="noopener noreferrer nofollow" target="_blank">
-            here<svg data-icon="icon-external-window" class="inline h-4 w-4 -mb-1 fill-current text-gray-800"></svg></a></div>
+          <p class="export-option">
+            Annotations table
+          </p>
+          <p class="export-option">
+            Pixel intensities
+          </p>
+        </div>
         <div slot-key="reference">
-          <div class="select-btn-wrapper"><button type="button" class="el-button export-btn select-btn-wrapper el-button--default" slot="reference" width="146" height="42">
+          <div><button type="button" class="el-button select-btn-wrapper relative el-button--default" width="146" height="42">
               <!---->
               <!----><span>
             Export to CSV
-          </span></button></div>
+            <i class="el-icon-arrow-down select-btn-icon"></i></span></button></div>
         </div>
       </mock-el-popover>
       <div class="ml-2 mt-1"><button type="button" class="el-button full-screen-btn el-button--default">
@@ -428,20 +429,21 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
             Columns
           <transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div> <i class="el-icon-arrow-down select-btn-icon"></i></span></button></div>
       </mock-el-popover>
-      <!---->
-      <!---->
-      <mock-el-popover trigger="hover" class="ml-2 mt-1">
+      <mock-el-popover popper-class="export-pop" class="select-btn-wrapper ml-2 mt-1">
         <div slot-key="default">
-
-          Documentation for the CSV export is available
-          <a href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export" rel="noopener noreferrer nofollow" target="_blank">
-            here<svg data-icon="icon-external-window" class="inline h-4 w-4 -mb-1 fill-current text-gray-800"></svg></a></div>
+          <p class="export-option">
+            Annotations table
+          </p>
+          <p class="export-option">
+            Pixel intensities
+          </p>
+        </div>
         <div slot-key="reference">
-          <div class="select-btn-wrapper"><button type="button" class="el-button export-btn select-btn-wrapper el-button--default" slot="reference" width="146" height="42">
+          <div><button type="button" class="el-button select-btn-wrapper relative el-button--default" width="146" height="42">
               <!---->
               <!----><span>
             Export to CSV
-          </span></button></div>
+            <i class="el-icon-arrow-down select-btn-icon"></i></span></button></div>
         </div>
       </mock-el-popover>
       <div class="ml-2 mt-1"><button type="button" class="el-button full-screen-btn el-button--default">
