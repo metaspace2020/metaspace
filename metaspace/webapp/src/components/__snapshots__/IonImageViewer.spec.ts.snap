@@ -142,7 +142,7 @@ exports[`IonImageViewer should match snapshot (with normalization) 1`] = `
                   Intensity: 
                 </span>
                 <span>
-                  9.6e+3
+                  9.3e+1
                 </span>
               </div>
               <div
@@ -152,7 +152,7 @@ exports[`IonImageViewer should match snapshot (with normalization) 1`] = `
                   TIC-relative intensity: 
                 </span>
                 <span>
-                  1.0e+6
+                  9.6e+3
                 </span>
               </div>
             </div>
@@ -172,7 +172,7 @@ exports[`IonImageViewer should match snapshot (with normalization) 1`] = `
                   Intensity: 
                 </span>
                 <span>
-                  9.6e+3
+                  9.3e+1
                 </span>
               </div>
               <div
@@ -182,7 +182,7 @@ exports[`IonImageViewer should match snapshot (with normalization) 1`] = `
                   TIC-relative intensity: 
                 </span>
                 <span>
-                  1.0e+6
+                  9.6e+3
                 </span>
               </div>
             </div>

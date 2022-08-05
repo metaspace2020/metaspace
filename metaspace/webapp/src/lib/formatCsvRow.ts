@@ -16,10 +16,10 @@ export const csvExportHeader = () => {
   + `# URL: ${window.location.href}\n`
 }
 
-export const csvExportIntensityHeader = () => {
+export const csvExportIntensityHeader = (isNormalized: boolean = false) => {
   const dateStr = new Date().toLocaleString().replace(/,/g, '')
   return `# Generated at ${dateStr}. Hot-spot removal has been applied and the intensity values might
-  differ from the api results\n`
+  differ from the api results.${isNormalized ? 'The intensities were TIC normalized' : ''}\n`
   + `# URL: ${window.location.href}\n`
 }
 

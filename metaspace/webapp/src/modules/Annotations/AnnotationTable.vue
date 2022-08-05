@@ -663,6 +663,10 @@ export default Vue.extend({
       return this.$store.state.tableIsLoading
     },
 
+    isNormalized() {
+      return this.$store.getters.settings?.annotationView?.normalization
+    },
+
     filter() {
       return this.$store.getters.filter
     },
@@ -1081,13 +1085,14 @@ export default Vue.extend({
         return
       }
 
-      async function formatIntensitiesRow(annotation) {
+      async function formatIntensitiesRow(annotation, normalizationData) {
         const { isotopeImages, ionFormula: molFormula, possibleCompounds, adduct, mz, dataset } = annotation
         const isotopeImage = isotopeImages[0]
         const ionImagePng = await loadPngFromUrl(isotopeImage.url)
         const molName = possibleCompounds.map((m) => m.name).join(',')
         const molIds = possibleCompounds.map((m) => m.information[0].databaseId).join(',')
-        const finalImage = getIonImage(ionImagePng, isotopeImages[0])
+        const finalImage = getIonImage(ionImagePng, isotopeImages[0], undefined,
+          undefined, normalizationData)
         const row = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
         const { width, height, intensityValues } = finalImage
         const cols = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
@@ -1116,7 +1121,7 @@ export default Vue.extend({
       let totalCount = 1
       let fileCols
       let fileName
-      let rows
+      let rows = ''
 
       while (this.isExporting && offset < totalCount) {
         const resp = await this.$apollo.query({
@@ -1131,10 +1136,13 @@ export default Vue.extend({
           offset += 1
           this.exportProgress = offset / totalCount
           const annotation = resp.data.allAnnotations[i]
-          const { cols, row, dsName } = await formatIntensitiesRow(annotation)
+          const { cols, row, dsName } = await formatIntensitiesRow(annotation,
+            this.$store.getters.settings?.annotationView?.normalization
+              ? this.$store.state.normalization : undefined)
           if (!fileCols) {
             fileCols = formatCsvRow(cols)
-            fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities.csv`
+            fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${this.isNormalized
+              ? '_tic_normalized' : ''}.csv`
           }
           rows += formatCsvRow(row)
         }
@@ -1143,7 +1151,7 @@ export default Vue.extend({
       if (this.isExporting) {
         this.isExporting = false
         this.exportProgress = 0
-        const csv = csvExportIntensityHeader() + fileCols + rows
+        const csv = csvExportIntensityHeader(this.isNormalized) + fileCols + rows
         const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
         FileSaver.saveAs(blob, fileName)
       }
