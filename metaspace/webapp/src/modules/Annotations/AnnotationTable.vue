@@ -1137,7 +1137,7 @@ export default Vue.extend({
           this.exportProgress = offset / totalCount
           const annotation = resp.data.allAnnotations[i]
           const { cols, row, dsName } = await formatIntensitiesRow(annotation,
-            this.$store.getters.settings?.annotationView?.normalization
+            this.isNormalized
               ? this.$store.state.normalization : undefined)
           if (!fileCols) {
             fileCols = formatCsvRow(cols)
