@@ -25,6 +25,7 @@ import Vue from 'vue'
 import FileSaver from 'file-saver'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
 import { cloneDeep } from 'lodash-es'
+import moment from 'moment'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -42,6 +43,7 @@ interface DatasetBrowserProps {
 }
 
 interface DatasetBrowserState {
+  dataRange: any
   peakFilter: number
   fdrFilter: number | undefined
   moleculeFilter: string | undefined
@@ -51,6 +53,7 @@ interface DatasetBrowserState {
   mzmScaleFilter: string | undefined
   ionImageUrl: any
   sampleData: any[]
+  chartData: any[]
   chartLoading: boolean
   imageLoading: boolean
   invalidFormula: boolean
@@ -96,8 +99,9 @@ export default defineComponent<DatasetBrowserProps>({
   setup: function(props, ctx) {
     const { $route, $store } = ctx.root
     const state = reactive<DatasetBrowserState>({
+      dataRange: { maxMz: 0, maxInt: 0, minMz: 0, minInt: 0 },
       peakFilter: PEAK_FILTER.ALL,
-      fdrFilter: undefined,
+      fdrFilter: 0.05,
       databaseFilter: undefined,
       mzmScoreFilter: undefined,
       mzmShiftFilter: undefined,
@@ -112,6 +116,7 @@ export default defineComponent<DatasetBrowserProps>({
       y: undefined,
       ionImageUrl: undefined,
       sampleData: [],
+      chartData: [],
       normalizationData: {},
       invalidFormula: false,
       invalidReferenceFormula: false,
@@ -153,8 +158,8 @@ export default defineComponent<DatasetBrowserProps>({
         countIsomerCompounds: config.features.isomers,
         limit: 10000,
         offset: 0,
-        orderBy: 'ORDER_BY_FDR_MSM',
-        sortingOrder: 'DESCENDING',
+        orderBy: 'ORDER_BY_MZ',
+        sortingOrder: 'ASCENDING',
       }
     }
 
@@ -169,6 +174,10 @@ export default defineComponent<DatasetBrowserProps>({
     onDatasetsResult(async(result) => {
       try {
         const dataset = result!.data.dataset
+
+        if (dataset && state.databaseFilter === undefined) {
+          state.databaseFilter = dataset.databases[0].id
+        }
         const tics = dataset.diagnostics.filter((diagnostic: any) => diagnostic.type === 'TIC')
         const tic = tics[0].images.filter((image: any) => image.key === 'TIC' && image.format === 'NPY')
         const { data, shape } = await readNpy(tic[0].url)
@@ -201,7 +210,11 @@ export default defineComponent<DatasetBrowserProps>({
     const queryOptions = reactive({ enabled: true, fetchPolicy: 'no-cache' as const })
     const queryVars = computed(() => ({
       ...queryVariables(),
-      filter: { ...queryVariables().filter, fdrLevel: state.fdrFilter, databaseId: state.databaseFilter },
+      filter: {
+        ...queryVariables().filter,
+        fdrLevel: state.fdrFilter,
+        databaseId: state.databaseFilter,
+      },
       dFilter: { ...queryVariables().dFilter, ids: datasetId },
     }))
 
@@ -225,9 +238,109 @@ export default defineComponent<DatasetBrowserProps>({
     } = useQuery<any>(getSpectrum, () => ({ datasetId: datasetId, x: state.x, y: state.y }),
       spectrumQueryOptions)
 
+    const buildChartData = (ints: any, mzs: any) => {
+      let maxMz : number = 0
+      let minMz : number = 0
+      let maxInt : number = 0
+      let minInt : number = 0
+      const addedIndexes : number[] = []
+      const auxData : any[] = []
+      const unAnnotItemStyle : any = {
+        color: 'red',
+      }
+      const annotItemStyle : any = {
+        color: 'blue',
+      }
+
+      if (state.peakFilter !== PEAK_FILTER.OFF) {
+        annotations.value.forEach((annotation: any, index: number) => {
+          const mz : number = annotation.mz
+          const mzLow : number = mz - (mz * state.mzmShiftFilter! * 1e-6) // ppm
+          const mzHigh : number = mz + (mz * state.mzmShiftFilter! * 1e-6) // ppm
+          const inRangeIdx : number = mzs.findIndex((value: number) => { return value >= mzLow && value <= mzHigh })
+          if (inRangeIdx !== -1) {
+            const int : number = ints[inRangeIdx]
+            let tooltip : string = '<br>Candidate molecules: <br>'
+
+            if (mz > maxMz) {
+              maxMz = mz
+            }
+            if (mz < minMz) {
+              minMz = mz
+            }
+            if (int > maxInt) {
+              maxInt = int
+            }
+            if (int < minInt) {
+              minInt = int
+            }
+
+            addedIndexes.push(inRangeIdx)
+            annotation.possibleCompounds.forEach((compound: any) => {
+              tooltip += compound.name + '<br>'
+            })
+            auxData.push({
+              isAnnotated: true,
+              dot: {
+                name: mz.toFixed(4),
+                tooltip,
+                mz: mz,
+                value: [mz, int],
+                itemStyle: annotItemStyle,
+              },
+              line: {
+                label: tooltip,
+                mz: mz,
+                xAxis: mz,
+                yAxis: int,
+                itemStyle: annotItemStyle,
+              },
+            })
+          }
+        })
+      }
+      if (state.peakFilter !== PEAK_FILTER.FDR) {
+        mzs.forEach((mz:any, index: any) => {
+          if (!addedIndexes.includes(index)) {
+            const int : number = ints[index]
+            if (mz > maxMz) {
+              maxMz = mz
+            }
+            if (mz < minMz) {
+              minMz = mz
+            }
+            if (int > maxInt) {
+              maxInt = int
+            }
+            if (int < minInt) {
+              minInt = int
+            }
+            auxData.push({
+              dot: {
+                name: mz.toFixed(4),
+                tooltip: `m/z: ${mz.toFixed(4)}`,
+                mz: mz,
+                value: [mz, int],
+                itemStyle: unAnnotItemStyle,
+              },
+              line: {
+                mz: mz,
+                xAxis: mz,
+                yAxis: int,
+                itemStyle: unAnnotItemStyle,
+              },
+            })
+          }
+        })
+      }
+
+      state.sampleData = auxData
+      state.dataRange = { maxMz, maxInt, minMz, minInt }
+    }
+
     onSpectrumResult(async(result) => {
       if (result && result.data && result.data.pixelSpectrum) {
-        state.sampleData = [{ ints: result.data.pixelSpectrum.ints, mzs: result.data.pixelSpectrum.mzs }]
+        buildChartData(result.data.pixelSpectrum.ints, result.data.pixelSpectrum.mzs)
       }
       state.chartLoading = false
     })
@@ -338,7 +451,11 @@ export default defineComponent<DatasetBrowserProps>({
 
     const requestSpectrum = async(x: number = 0, y: number = 0) => {
       try {
-        state.chartLoading = true
+        if (x !== state.x || y !== state.y) {
+          state.chartLoading = true
+        } else if (spectrumResult.value) {
+          buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+        }
         state.x = x
         state.y = y
         spectrumQueryOptions.enabled = true
@@ -396,6 +513,8 @@ export default defineComponent<DatasetBrowserProps>({
         buildMetadata(dataset.value)
         if (state.x !== undefined && state.y !== undefined) {
           await requestSpectrum(state.x, state.y)
+        } else {
+          state.chartLoading = false
         }
       }
       queryOptions.enabled = false
@@ -791,26 +910,29 @@ export default defineComponent<DatasetBrowserProps>({
                 isEmpty && !state.chartLoading
                 && renderEmptySpectrum()
               }
-              <DatasetBrowserKendrickPlot
-                style={{
-                  visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
-                  height: state.currentView === VIEWS.KENDRICK ? '' : 0,
-                }}
-                isEmpty={isEmpty}
-                isLoading={state.chartLoading}
-                isDataLoading={annotationsLoading.value}
-                data={state.sampleData}
-                annotatedData={annotatedPeaks.value}
-                peakFilter={state.peakFilter}
-                referenceMz={state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz}
-                onItemSelected={(mz: number) => {
-                  state.showFullTIC = false
-                  Vue.set(state.normalizationData, 'showFullTIC', false)
-                  state.mzmScoreFilter = mz
-                  requestIonImage()
-                }}
-                onDownload={handleDownload}
-              />
+              {
+                state.currentView === VIEWS.KENDRICK
+                && <DatasetBrowserKendrickPlot
+                  style={{
+                    visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
+                    height: state.currentView === VIEWS.KENDRICK ? '' : 0,
+                  }}
+                  isEmpty={isEmpty}
+                  isLoading={state.chartLoading}
+                  isDataLoading={annotationsLoading.value}
+                  data={state.sampleData}
+                  annotatedData={annotatedPeaks.value}
+                  peakFilter={state.peakFilter}
+                  referenceMz={state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz}
+                  onItemSelected={(mz: number) => {
+                    state.showFullTIC = false
+                    Vue.set(state.normalizationData, 'showFullTIC', false)
+                    state.mzmScoreFilter = mz
+                    requestIonImage()
+                  }}
+                  onDownload={handleDownload}
+                />
+              }
               <DatasetBrowserSpectrumChart
                 style={{
                   visibility: state.currentView === VIEWS.SPECTRUM ? '' : 'hidden',
@@ -823,6 +945,7 @@ export default defineComponent<DatasetBrowserProps>({
                 data={state.sampleData}
                 annotatedData={annotatedPeaks.value}
                 peakFilter={state.peakFilter}
+                dataRange={state.dataRange}
                 onItemSelected={(mz: number) => {
                   state.showFullTIC = false
                   Vue.set(state.normalizationData, 'showFullTIC', false)
