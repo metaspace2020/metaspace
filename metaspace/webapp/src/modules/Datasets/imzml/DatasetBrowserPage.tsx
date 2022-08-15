@@ -99,7 +99,7 @@ export default defineComponent<DatasetBrowserProps>({
   setup: function(props, ctx) {
     const { $route, $store } = ctx.root
     const state = reactive<DatasetBrowserState>({
-      dataRange: { maxMz: 0, maxInt: 0, minMz: 0, minInt: 0 },
+      dataRange: { maxX: 0, maxY: 0, minX: 0, minY: 0 },
       peakFilter: PEAK_FILTER.ALL,
       fdrFilter: 0.05,
       databaseFilter: undefined,
@@ -239,10 +239,10 @@ export default defineComponent<DatasetBrowserProps>({
       spectrumQueryOptions)
 
     const buildChartData = (ints: any, mzs: any) => {
-      let maxMz : number = 0
-      let minMz : number = 0
-      let maxInt : number = 0
-      let minInt : number = 0
+      let maxX : number = 0
+      let minX : number = -1
+      let maxY : number = 0
+      let minY : number = -1
       const addedIndexes : number[] = []
       const auxData : any[] = []
       const unAnnotItemStyle : any = {
@@ -251,6 +251,8 @@ export default defineComponent<DatasetBrowserProps>({
       const annotItemStyle : any = {
         color: 'blue',
       }
+      const exactMass : number = state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz
+      const threshold : number = 1000
 
       if (state.peakFilter !== PEAK_FILTER.OFF) {
         annotations.value.forEach((annotation: any, index: number) => {
@@ -260,42 +262,59 @@ export default defineComponent<DatasetBrowserProps>({
           const inRangeIdx : number = mzs.findIndex((value: number) => { return value >= mzLow && value <= mzHigh })
           if (inRangeIdx !== -1) {
             const int : number = ints[inRangeIdx]
+            const kendrickMass = mz * Math.round(exactMass) / exactMass
+            const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
+            const radius = Math.log10(int / threshold)
             let tooltip : string = '<br>Candidate molecules: <br>'
 
-            if (mz > maxMz) {
-              maxMz = mz
+            if (mz > maxX) {
+              maxX = mz
             }
-            if (mz < minMz) {
-              minMz = mz
+            if (mz < minX || minX === -1) {
+              minX = mz
             }
-            if (int > maxInt) {
-              maxInt = int
+            if (int > maxY) {
+              maxY = int
             }
-            if (int < minInt) {
-              minInt = int
+            if (int < minY || minY === -1) {
+              minY = int
             }
 
             addedIndexes.push(inRangeIdx)
             annotation.possibleCompounds.forEach((compound: any) => {
               tooltip += compound.name + '<br>'
             })
-            auxData.push({
-              isAnnotated: true,
-              dot: {
-                name: mz.toFixed(4),
-                tooltip,
-                mz: mz,
-                value: [mz, int],
-                itemStyle: annotItemStyle,
-              },
-              line: {
-                label: tooltip,
-                mz: mz,
-                xAxis: mz,
-                yAxis: int,
-                itemStyle: annotItemStyle,
-              },
-            })
+
+            if (state.currentView === VIEWS.KENDRICK) {
+              auxData.push({
+                isAnnotated: true,
+                dot: {
+                  name: mz.toFixed(4),
+                  tooltip,
+                  mz: mz,
+                  value: [mz, KendrickMassDefect, radius],
+                  itemStyle: annotItemStyle,
+                },
+              })
+            } else {
+              auxData.push({
+                isAnnotated: true,
+                dot: {
+                  name: mz.toFixed(4),
+                  tooltip,
+                  mz: mz,
+                  value: [mz, int],
+                  itemStyle: annotItemStyle,
+                },
+                line: {
+                  label: tooltip,
+                  mz: mz,
+                  xAxis: mz,
+                  yAxis: int,
+                  itemStyle: annotItemStyle,
+                },
+              })
+            }
           }
         })
       }
@@ -303,39 +322,57 @@ export default defineComponent<DatasetBrowserProps>({
         mzs.forEach((mz:any, index: any) => {
           if (!addedIndexes.includes(index)) {
             const int : number = ints[index]
-            if (mz > maxMz) {
-              maxMz = mz
+            const kendrickMass = mz * Math.round(exactMass) / exactMass
+            const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
+            const radius = Math.log10(int / threshold)
+
+            if (mz > maxX) {
+              maxX = mz
             }
-            if (mz < minMz) {
-              minMz = mz
+            if (mz < minX || minX === -1) {
+              minX = mz
             }
-            if (int > maxInt) {
-              maxInt = int
+            if (int > maxY) {
+              maxY = int
             }
-            if (int < minInt) {
-              minInt = int
+            if (int < minY || minY === -1) {
+              minY = int
             }
-            auxData.push({
-              dot: {
-                name: mz.toFixed(4),
-                tooltip: `m/z: ${mz.toFixed(4)}`,
-                mz: mz,
-                value: [mz, int],
-                itemStyle: unAnnotItemStyle,
-              },
-              line: {
-                mz: mz,
-                xAxis: mz,
-                yAxis: int,
-                itemStyle: unAnnotItemStyle,
-              },
-            })
+            if (state.currentView === VIEWS.KENDRICK) {
+              auxData.push({
+                isAnnotated: true,
+                dot: {
+                  name: mz.toFixed(4),
+                  tooltip: `m/z: ${mz.toFixed(4)}`,
+                  mz: mz,
+                  value: [mz, KendrickMassDefect, radius],
+                  itemStyle: unAnnotItemStyle,
+                },
+              })
+            } else {
+              auxData.push({
+                isAnnotated: true,
+                dot: {
+                  name: mz.toFixed(4),
+                  tooltip: `m/z: ${mz.toFixed(4)}`,
+                  mz: mz,
+                  value: [mz, int],
+                  itemStyle: unAnnotItemStyle,
+                },
+                line: {
+                  mz: mz,
+                  xAxis: mz,
+                  yAxis: int,
+                  itemStyle: unAnnotItemStyle,
+                },
+              })
+            }
           }
         })
       }
 
       state.sampleData = auxData
-      state.dataRange = { maxMz, maxInt, minMz, minInt }
+      state.dataRange = { maxX, maxY, minX, minY }
     }
 
     onSpectrumResult(async(result) => {
@@ -423,6 +460,10 @@ export default defineComponent<DatasetBrowserProps>({
           }
         } else {
           state.annotation = annotations.value[currentAnnotationIdx]
+        }
+
+        if (spectrumResult.value) {
+          buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
         }
       }
     })
@@ -676,6 +717,9 @@ export default defineComponent<DatasetBrowserProps>({
                 value={state.fixedMassReference}
                 onChange={(value: number) => {
                   state.fixedMassReference = value
+                  if (value !== -1) {
+                    buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+                  }
                 }}
                 placeholder='CH2'
                 size='mini'>
@@ -702,6 +746,7 @@ export default defineComponent<DatasetBrowserProps>({
                     if (!state.invalidReferenceFormula) {
                       const newMz = calculateMzFromFormula(referenceFormula as string, dataset.value?.polarity)
                       state.referenceFormulaMz = newMz
+                      buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
                     }
                   }}
                   size='mini'
@@ -901,7 +946,10 @@ export default defineComponent<DatasetBrowserProps>({
               <RadioGroup
                 size='small'
                 class='w-full flex ml-4'
-                onInput={(value: any) => { state.currentView = value }}
+                onInput={(value: any) => {
+                  state.currentView = value
+                  buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+                }}
                 value={state.currentView}>
                 <RadioButton class='ml-2' label={VIEWS.SPECTRUM}/>
                 <RadioButton label={VIEWS.KENDRICK}/>
@@ -921,6 +969,7 @@ export default defineComponent<DatasetBrowserProps>({
                   isLoading={state.chartLoading}
                   isDataLoading={annotationsLoading.value}
                   data={state.sampleData}
+                  dataRange={state.dataRange}
                   annotatedData={annotatedPeaks.value}
                   peakFilter={state.peakFilter}
                   referenceMz={state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz}
@@ -933,27 +982,30 @@ export default defineComponent<DatasetBrowserProps>({
                   onDownload={handleDownload}
                 />
               }
-              <DatasetBrowserSpectrumChart
-                style={{
-                  visibility: state.currentView === VIEWS.SPECTRUM ? '' : 'hidden',
-                  height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
-                }}
-                isEmpty={isEmpty}
-                normalization={state.globalImageSettings.isNormalized ? state.normalization : undefined}
-                isLoading={state.chartLoading}
-                isDataLoading={annotationsLoading.value}
-                data={state.sampleData}
-                annotatedData={annotatedPeaks.value}
-                peakFilter={state.peakFilter}
-                dataRange={state.dataRange}
-                onItemSelected={(mz: number) => {
-                  state.showFullTIC = false
-                  Vue.set(state.normalizationData, 'showFullTIC', false)
-                  state.mzmScoreFilter = mz
-                  requestIonImage()
-                }}
-                onDownload={handleDownload}
-              />
+              {
+                state.currentView === VIEWS.SPECTRUM
+                && <DatasetBrowserSpectrumChart
+                  style={{
+                    visibility: state.currentView === VIEWS.SPECTRUM ? '' : 'hidden',
+                    height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
+                  }}
+                  isEmpty={isEmpty}
+                  normalization={state.globalImageSettings.isNormalized ? state.normalization : undefined}
+                  isLoading={state.chartLoading}
+                  isDataLoading={annotationsLoading.value}
+                  data={state.sampleData}
+                  annotatedData={annotatedPeaks.value}
+                  peakFilter={state.peakFilter}
+                  dataRange={state.dataRange}
+                  onItemSelected={(mz: number) => {
+                    state.showFullTIC = false
+                    Vue.set(state.normalizationData, 'showFullTIC', false)
+                    state.mzmScoreFilter = mz
+                    requestIonImage()
+                  }}
+                  onDownload={handleDownload}
+                />
+              }
             </div>
           </div>
           <div class='dataset-browser-wrapper w-full lg:w-1/2'>

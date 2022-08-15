@@ -75,7 +75,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
     },
     dataRange: {
       type: Object,
-      default: () => { return { maxMz: 0, maxInt: 0, minMz: 0, minInt: 0 } },
+      default: () => { return { maxX: 0, maxY: 0, minX: 0, minY: 0 } },
     },
     annotatedData: {
       type: Array,
@@ -241,18 +241,15 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
       },
     })
 
-    const normalization = computed(() => props.normalization)
-    // const chartData = computed(() => props.data)
-    const annotatedMzs = computed(() => props.annotatedData)
-    const peakFilter = computed(() => props.peakFilter)
     const chartOptions = computed(() => {
+      const OFFSET : number = 20
       const auxOptions = state.chartOptions
       auxOptions.series[0].markPoint.data = props.data.map((data: any) => data.line)
       auxOptions.series[0].data = props.data.map((data: any) => data.dot)
-      auxOptions.xAxis.min = props.dataRange?.minMz
-      auxOptions.xAxis.max = props.dataRange?.maxMz
+      auxOptions.xAxis.min = props.dataRange?.minX ? props.dataRange?.minX - OFFSET : 0
+      auxOptions.xAxis.max = props.dataRange?.maxX ? props.dataRange?.maxX + OFFSET : 0
       auxOptions.yAxis.name = state.scaleIntensity ? 'Relative Intensity' : 'Intensity'
-      auxOptions.yAxis.max = state.scaleIntensity ? 100 : props.dataRange?.maxInt
+      auxOptions.yAxis.max = state.scaleIntensity ? 100 : (props.dataRange?.maxY + OFFSET)
       return auxOptions
     })
 
