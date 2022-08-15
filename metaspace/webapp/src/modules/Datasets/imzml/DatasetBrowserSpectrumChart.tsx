@@ -154,7 +154,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             show: false,
           },
           nameLocation: 'center',
-          nameGap: 30,
+          nameGap: 20,
           nameTextStyle: {
             fontWeight: 'bold',
             fontSize: 14,
@@ -197,6 +197,11 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             yAxisIndex: 0,
             filterMode: 'none',
             right: 16,
+          },
+          {
+            type: 'slider',
+            xAxisIndex: 0,
+            filterMode: 'none',
           },
         ],
         legend: {
@@ -244,8 +249,23 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
     const chartOptions = computed(() => {
       const OFFSET : number = 20
       const auxOptions = state.chartOptions
-      auxOptions.series[0].markPoint.data = props.data.map((data: any) => data.line)
-      auxOptions.series[0].data = props.data.map((data: any) => data.dot)
+      if (state.scaleIntensity) {
+        auxOptions.series[0].data = props.data.map((data: any) => {
+          return {
+            ...data.dot,
+            value: [data.dot.value[0], data.dot.value[1] / props.dataRange?.maxY * 100],
+          }
+        })
+        auxOptions.series[0].markPoint.data = props.data.map((data: any) => {
+          return {
+            ...data.line,
+            yAxis: data.line.yAxis / props.dataRange?.maxY * 100,
+          }
+        })
+      } else {
+        auxOptions.series[0].markPoint.data = props.data.map((data: any) => data.line)
+        auxOptions.series[0].data = props.data.map((data: any) => data.dot)
+      }
       auxOptions.xAxis.min = props.dataRange?.minX ? props.dataRange?.minX - OFFSET : 0
       auxOptions.xAxis.max = props.dataRange?.maxX ? props.dataRange?.maxX + OFFSET : 0
       auxOptions.yAxis.name = state.scaleIntensity ? 'Relative Intensity' : 'Intensity'

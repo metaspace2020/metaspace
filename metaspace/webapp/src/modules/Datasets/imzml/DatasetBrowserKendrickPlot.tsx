@@ -160,7 +160,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
             show: false,
           },
           nameLocation: 'center',
-          nameGap: 30,
+          nameGap: 20,
           nameTextStyle: {
             fontWeight: 'bold',
             fontSize: 14,
@@ -202,6 +202,11 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
             type: 'slider',
             yAxisIndex: 0,
             right: 16,
+            filterMode: 'none',
+          },
+          {
+            type: 'slider',
+            xAxisIndex: 0,
             filterMode: 'none',
           },
         ],

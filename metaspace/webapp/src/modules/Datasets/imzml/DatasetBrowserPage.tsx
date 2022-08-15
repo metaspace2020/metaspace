@@ -252,7 +252,7 @@ export default defineComponent<DatasetBrowserProps>({
         color: 'blue',
       }
       const exactMass : number = state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz
-      const threshold : number = 1000
+      const threshold : number = 1
 
       if (state.peakFilter !== PEAK_FILTER.OFF) {
         annotations.value.forEach((annotation: any, index: number) => {
@@ -340,7 +340,7 @@ export default defineComponent<DatasetBrowserProps>({
             }
             if (state.currentView === VIEWS.KENDRICK) {
               auxData.push({
-                isAnnotated: true,
+                isAnnotated: false,
                 dot: {
                   name: mz.toFixed(4),
                   tooltip: `m/z: ${mz.toFixed(4)}`,
@@ -351,7 +351,7 @@ export default defineComponent<DatasetBrowserProps>({
               })
             } else {
               auxData.push({
-                isAnnotated: true,
+                isAnnotated: false,
                 dot: {
                   name: mz.toFixed(4),
                   tooltip: `m/z: ${mz.toFixed(4)}`,
@@ -510,15 +510,17 @@ export default defineComponent<DatasetBrowserProps>({
     }
 
     const handleDownload = () => {
-      const cols = ['dataset_name', 'dataset_id', 'x', 'y', 'mz', 'intensity', 'mass_reference', 'KMD']
-      const rows = [cols]
+      const cols = ['dataset_name', 'dataset_id', 'x', 'y', 'mz', 'intensity', 'KMD', 'is_annotated']
+      const rows : any = [cols]
 
-      state.sampleData[0].mzs.forEach((mz: any, idx: number) => {
+      state.sampleData.forEach((item: any, idx: number) => {
+        const mz : number = item.dot.mz
+        const int : number = item.dot.value[1]
         const exactMass = state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz
         const kendrickMass = mz * Math.round(exactMass) / exactMass
         const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
-        rows.push([dataset?.value?.name, dataset?.value?.id, state.sampleData[0].x,
-          state.sampleData[0].y, mz, state.sampleData[0].ints[idx], exactMass, KendrickMassDefect])
+        rows.push([dataset?.value?.name, dataset?.value?.id, state.x,
+          state.y, mz, int, KendrickMassDefect, item.isAnnotated])
       })
 
       const csv = rows.map((e: any) => e.join(',')).join('\n')
