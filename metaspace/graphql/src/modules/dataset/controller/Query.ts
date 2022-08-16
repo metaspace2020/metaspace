@@ -109,7 +109,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         mz_low: mzLow,
         mz_high: mzHigh,
       })
-      return resp.image
+      return { image: resp.image, maxIntensity: resp.max_intensity }
     } catch (e) {
       return null
     }

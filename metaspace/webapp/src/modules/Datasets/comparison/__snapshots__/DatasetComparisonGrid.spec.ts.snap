@@ -725,38 +725,71 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                             <!---->
                           </div>
                         </transition-stub>
-                        <transition-stub
-                          enteractiveclass="duration-150 transition-opacity ease-in-out"
-                          enterclass="opacity-0"
-                          leaveactiveclass="duration-150 transition-opacity ease-in-out"
-                          leavetoclass="opacity-0"
-                          mode="out-in"
+                        <mock-el-popover
+                          class="block"
+                          placement="bottom"
+                          popper-class="w-full max-w-measure-1 text-left text-sm leading-5"
+                          trigger="hover"
                         >
                           <div
-                            class="h-5 flex items-center sm-flex-direction"
+                            slot-key="default"
                           >
-                            <button
-                              class="button-reset h-4 leading-5"
-                              title="Click to edit"
+                            <p
+                              class="m-0"
                             >
-                              
+                              <span>
+                                <b>
+                                  Hot-spot removal has been applied to this image
+                                </b>
+                                .
+    Intensities above the 99ᵗʰ percentile, 0.0e+0,
+    have been reduced to 0.0e+0.
+    The highest intensity before hot-spot removal was 0.0e+0.
+  
+                              </span>
+                               
+                              <!---->
+                               
+                              <!---->
+                            </p>
+                          </div>
+                          <div
+                            slot-key="reference"
+                          >
+                            <transition-stub
+                              enteractiveclass="duration-150 transition-opacity ease-in-out"
+                              enterclass="opacity-0"
+                              leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                              leavetoclass="opacity-0"
+                              mode="out-in"
+                            >
+                              <div
+                                class="h-5 flex items-center sm-flex-direction"
+                              >
+                                <button
+                                  class="button-reset h-4 leading-5"
+                                  title="Click to edit"
+                                >
+                                  
       0.0e+0
     
-                            </button>
-                             
-                            <button
-                              class="button-reset h-4 mx-1"
-                              title="Lock intensity"
-                            >
-                              <svg
-                                class="fill-current text-gray-600"
-                                data-icon="icon-lock"
-                              />
-                            </button>
-                             
-                            <!---->
+                                </button>
+                                 
+                                <button
+                                  class="button-reset h-4 mx-1"
+                                  title="Lock intensity"
+                                >
+                                  <svg
+                                    class="fill-current text-gray-600"
+                                    data-icon="icon-lock"
+                                  />
+                                </button>
+                                 
+                                <!---->
+                              </div>
+                            </transition-stub>
                           </div>
-                        </transition-stub>
+                        </mock-el-popover>
                       </div>
                     </div>
                   </div>
@@ -1479,38 +1512,71 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
                             <!---->
                           </div>
                         </transition-stub>
-                        <transition-stub
-                          enteractiveclass="duration-150 transition-opacity ease-in-out"
-                          enterclass="opacity-0"
-                          leaveactiveclass="duration-150 transition-opacity ease-in-out"
-                          leavetoclass="opacity-0"
-                          mode="out-in"
+                        <mock-el-popover
+                          class="block"
+                          placement="bottom"
+                          popper-class="w-full max-w-measure-1 text-left text-sm leading-5"
+                          trigger="hover"
                         >
                           <div
-                            class="h-5 flex items-center sm-flex-direction"
+                            slot-key="default"
                           >
-                            <button
-                              class="button-reset h-4 leading-5"
-                              title="Click to edit"
+                            <p
+                              class="m-0"
                             >
-                              
+                              <span>
+                                <b>
+                                  Hot-spot removal has been applied to this image
+                                </b>
+                                .
+    Intensities above the 99ᵗʰ percentile, 0.0e+0,
+    have been reduced to 0.0e+0.
+    The highest intensity before hot-spot removal was 0.0e+0.
+  
+                              </span>
+                               
+                              <!---->
+                               
+                              <!---->
+                            </p>
+                          </div>
+                          <div
+                            slot-key="reference"
+                          >
+                            <transition-stub
+                              enteractiveclass="duration-150 transition-opacity ease-in-out"
+                              enterclass="opacity-0"
+                              leaveactiveclass="duration-150 transition-opacity ease-in-out"
+                              leavetoclass="opacity-0"
+                              mode="out-in"
+                            >
+                              <div
+                                class="h-5 flex items-center sm-flex-direction"
+                              >
+                                <button
+                                  class="button-reset h-4 leading-5"
+                                  title="Click to edit"
+                                >
+                                  
       0.0e+0
     
-                            </button>
-                             
-                            <button
-                              class="button-reset h-4 mx-1"
-                              title="Lock intensity"
-                            >
-                              <svg
-                                class="fill-current text-gray-600"
-                                data-icon="icon-lock"
-                              />
-                            </button>
-                             
-                            <!---->
+                                </button>
+                                 
+                                <button
+                                  class="button-reset h-4 mx-1"
+                                  title="Lock intensity"
+                                >
+                                  <svg
+                                    class="fill-current text-gray-600"
+                                    data-icon="icon-lock"
+                                  />
+                                </button>
+                                 
+                                <!---->
+                              </div>
+                            </transition-stub>
                           </div>
-                        </transition-stub>
+                        </mock-el-popover>
                       </div>
                     </div>
                   </div>

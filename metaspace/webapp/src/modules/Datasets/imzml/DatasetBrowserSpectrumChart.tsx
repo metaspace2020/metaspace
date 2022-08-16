@@ -205,13 +205,14 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
           },
         ],
         legend: {
+          data: [{ name: 'Unannotated', icon: 'diamond' }, { name: 'Annotated', icon: 'circle' }],
           selectedMode: false,
-          icon: 'roundRect',
         },
         series: [
           {
             name: 'Unannotated',
             type: 'bar',
+            symbol: 'diamond',
             data: [],
             label: {
               show: true,

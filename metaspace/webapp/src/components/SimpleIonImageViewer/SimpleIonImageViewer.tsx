@@ -17,6 +17,7 @@ import { cloneDeep, isEqual } from 'lodash'
 interface SimpleIonImageViewerProps {
   isActive: boolean
   resetViewPort: boolean
+  hideClipping: boolean
   isNormalized: boolean
   forceUpdate: boolean
   keepPixelSelected: boolean
@@ -82,6 +83,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
   name: 'SimpleIonImageViewer',
   props: {
     annotations: { type: Array, default: () => [] },
+    hideClipping: { type: Boolean, required: false, default: false },
     isActive: { type: Boolean, required: false, default: false },
     keepPixelSelected: { type: Boolean, required: false, default: false },
     showChannels: { type: Boolean, required: false, default: true },
@@ -469,7 +471,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       for (let index = 0; index < menuItems?.length; index++) {
         const key = ionKeys.value[index]
 
-        if (hasPreviousSettings && intensitiesSnapshot[key]) {
+        if (!props.forceUpdate && hasPreviousSettings && intensitiesSnapshot[key]) {
           Vue.set(state.imageSettings.intensities, key, intensitiesSnapshot[key])
         } else {
           const ionImagePos = state.ionImagePosByKey[key] || ionImagePosAux
@@ -837,6 +839,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
               imageSettings.userScaling
               && <MultiChannelController
                 style={{ display: !props.showChannels ? 'none' : '' }}
+                showClippingNotice={!props.hideClipping && props.scaleType === 'linear'}
                 menuItems={mode.value === 'MULTI' ? state.menuItems : state.menuItems.slice(0, 1)}
                 mode={mode.value}
                 activeLayer={$store.state.channels[$store.state.channels.length - 1]

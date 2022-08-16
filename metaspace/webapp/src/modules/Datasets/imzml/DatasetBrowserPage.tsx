@@ -84,7 +84,7 @@ const PEAK_FILTER = {
 }
 
 const VIEWS = {
-  SPECTRUM: 'Peak chart',
+  SPECTRUM: 'Mass spectrum',
   KENDRICK: 'Kendrick plot',
 }
 
@@ -346,6 +346,7 @@ export default defineComponent<DatasetBrowserProps>({
                   tooltip: `m/z: ${mz.toFixed(4)}`,
                   mz: mz,
                   value: [mz, KendrickMassDefect, radius],
+                  symbol: 'diamond',
                   itemStyle: unAnnotItemStyle,
                 },
               })
@@ -363,6 +364,7 @@ export default defineComponent<DatasetBrowserProps>({
                   mz: mz,
                   xAxis: mz,
                   yAxis: int,
+                  symbol: 'diamond',
                   itemStyle: unAnnotItemStyle,
                 },
               })
@@ -371,7 +373,7 @@ export default defineComponent<DatasetBrowserProps>({
         })
       }
 
-      state.sampleData = auxData
+      state.sampleData = auxData.reverse() // reverse to show annotated after
       state.dataRange = { maxX, maxY, minX, minY }
     }
 
@@ -432,8 +434,8 @@ export default defineComponent<DatasetBrowserProps>({
     }
 
     onImageResult(async(result) => {
-      if (result?.data?.browserImage) {
-        const blob = b64toBlob(result?.data?.browserImage.replace('data:image/png;base64,', ''), 'image/png')
+      if (result?.data?.browserImage?.image) {
+        const blob = b64toBlob(result?.data?.browserImage?.image.replace('data:image/png;base64,', ''), 'image/png')
         state.ionImageUrl = URL.createObjectURL(blob)
 
         let currentAnnotationIdx : number = -1
@@ -448,13 +450,14 @@ export default defineComponent<DatasetBrowserProps>({
 
         if (currentAnnotationIdx === -1) { // not annotated
           state.annotation = {
-            dataset: annotations.value[0].dataset,
+            dataset: annotations.value[0]?.dataset,
             mz: state.mz,
             isotopeImages: [
               {
-                ...cloneDeep(annotations.value[0].isotopeImages[0]),
                 mz: state.mz,
                 url: state.ionImageUrl,
+                minIntensity: 0,
+                maxIntensity: browserResult?.value?.browserImage?.maxIntensity,
               },
             ],
           }
@@ -1059,6 +1062,7 @@ export default defineComponent<DatasetBrowserProps>({
                   && <SimpleIonImageViewer
                     annotations={[state.annotation]}
                     forceUpdate
+                    hideClipping={state.showFullTIC}
                     dataset={dataset.value}
                     height={dimensions.height}
                     width={dimensions.width}

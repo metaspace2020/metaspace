@@ -212,7 +212,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
         ],
         legend: {
           selectedMode: false,
-          icon: 'roundRect',
+          data: [{ name: 'Unannotated', icon: 'diamond' }, { name: 'Annotated', icon: 'circle' }],
         },
         series: [
           {
