@@ -1,3 +1,5 @@
+import moment from 'moment'
+
 export default (values: string[]): string => {
   const escaped = values.map(v => {
     if (v != null) {
@@ -11,15 +13,15 @@ export default (values: string[]): string => {
 }
 
 export const csvExportHeader = () => {
-  const dateStr = new Date().toLocaleString().replace(/,/g, '')
+  const dateStr = moment().format('YYYY-MM-DD HH:mm:ss')
   return `# Generated at ${dateStr}. For help see https://bit.ly/3Bzs6Z4\n`
   + `# URL: ${window.location.href}\n`
 }
 
 export const csvExportIntensityHeader = (isNormalized: boolean = false) => {
-  const dateStr = new Date().toLocaleString().replace(/,/g, '')
-  return `# Generated at ${dateStr}. Hot-spot removal has been applied and the intensity values might
-  differ from the api results.${isNormalized ? 'The intensities were TIC normalized' : ''}\n`
+  const dateStr = moment().format('YYYY-MM-DD HH:mm:ss')
+  return `# Generated at ${dateStr}. Hot-spot removal has been applied and the intensity values might `
+  + `differ from the api results.${isNormalized ? 'The intensities were TIC normalized' : ''}\n`
   + `# URL: ${window.location.href}\n`
 }
 
