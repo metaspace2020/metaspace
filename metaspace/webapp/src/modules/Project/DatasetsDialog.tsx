@@ -90,8 +90,10 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
 
     const setDefaultSelectedDatasets = () => {
       state.selectedDatasets.forEach((dataset: any) => {
-          // @ts-ignore
-          table.value!.toggleRowSelection(datasets.value.find((row: any) => row?.id === dataset?.id), true)
+        if (Array.isArray(datasets.value) && datasets.value.find((row: any) => row?.id === dataset?.id)) {
+            // @ts-ignore
+            table.value!.toggleRowSelection(datasets.value.find((row: any) => row?.id === dataset?.id), true)
+        }
       })
     }
 
