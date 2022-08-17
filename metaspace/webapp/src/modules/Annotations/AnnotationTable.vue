@@ -335,6 +335,7 @@
       <div class="mt-1">
         <el-pagination
           v-if="!initialLoading"
+          :small="false"
           :total="totalCount"
           :page-size="recordsPerPage"
           :page-sizes="pageSizes"
@@ -376,17 +377,16 @@
         >
           <el-button
             slot="reference"
+            class="select-btn-wrapper relative"
             @click="handleColSelectorClick"
           >
             <new-feature-badge
               feature-key="custom-cols"
               class="new-custom-badge"
             >
-              <div>
-                Columns <i class="el-icon-arrow-down">
-                </i>
-              </div>
+              Columns
             </new-feature-badge>
+            <i class="el-icon-arrow-down select-btn-icon" />
           </el-button>
           <div>
             <div
@@ -409,40 +409,50 @@
           </div>
         </el-popover>
 
+        <div
+          v-if="isExporting"
+          class="select-btn-wrapper ml-2 mt-1"
+        >
+          <progress-button
+            class="export-btn"
+            :width="146"
+            :height="42"
+            :percentage="exportProgress * 100"
+            @click="abortExport"
+          >
+            Cancel
+          </progress-button>
+        </div>
+
         <el-popover
-          class="ml-2 mt-1"
-          trigger="hover"
+          v-else
+          ref="exportPop"
+          class="select-btn-wrapper ml-2 mt-1"
+          popper-class="export-pop"
         >
           <div slot="reference">
-            <progress-button
-              v-if="isExporting && totalCount > 5000"
-              class="export-btn"
-              :width="130"
-              :height="40"
-              :percentage="exportProgress * 100"
-              @click="abortExport"
-            >
-              Cancel
-            </progress-button>
             <el-button
-              v-else
-              slot="reference"
-              class="export-btn"
-              :disabled="isExporting"
-              @click="startExport"
+              class="select-btn-wrapper relative"
+              :width="146"
+              :height="42"
             >
               Export to CSV
+              <i class="el-icon-arrow-down select-btn-icon" />
             </el-button>
           </div>
 
-          Documentation for the CSV export is available
-          <a
-            href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
-            rel="noopener noreferrer nofollow"
-            target="_blank"
+          <p
+            class="export-option"
+            @click="startExport"
           >
-            here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
-          </a>
+            Annotations table
+          </p>
+          <p
+            class="export-option"
+            @click="startIntensitiesExport"
+          >
+            Pixel intensities
+          </p>
         </el-popover>
 
         <div
@@ -477,7 +487,6 @@
 import ProgressButton from './ProgressButton.vue'
 import AnnotationTableMolName from './AnnotationTableMolName.vue'
 import FilterIcon from '../../assets/inline/filter.svg'
-import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg'
 import {
   annotationListQuery,
   tableExportQuery,
@@ -485,8 +494,8 @@ import {
 
 import Vue from 'vue'
 import FileSaver from 'file-saver'
-import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../lib/formatCsvRow'
-import { flatMap, invert } from 'lodash-es'
+import formatCsvRow, { csvExportHeader, formatCsvTextArray, csvExportIntensityHeader } from '../../lib/formatCsvRow'
+import { invert } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
@@ -496,6 +505,7 @@ import FullScreen from '../../assets/inline/full_screen.svg'
 import ExitFullScreen from '../../assets/inline/exit_full_screen.svg'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
+import { getIonImage, loadPngFromUrl } from '../../lib/ionImageRendering'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -539,7 +549,6 @@ export default Vue.extend({
     ProgressButton,
     AnnotationTableMolName,
     FilterIcon,
-    ExternalWindowSvg,
     ExitFullScreen,
     FullScreen,
     NewFeatureBadge,
@@ -652,6 +661,10 @@ export default Vue.extend({
 
     isLoading() {
       return this.$store.state.tableIsLoading
+    },
+
+    isNormalized() {
+      return this.$store.getters.settings?.annotationView?.normalization
     },
 
     filter() {
@@ -1063,7 +1076,92 @@ export default Vue.extend({
       this.updateFilter({ mz: row.mz.toFixed(4) })
     },
 
+    async startIntensitiesExport() {
+      if (this.$refs.exportPop && typeof this.$refs.exportPop.doClose === 'function') {
+        this.$refs.exportPop.doClose()
+      }
+
+      if (!this.$store.state.annotation?.dataset?.id) { // no annotation selected
+        return
+      }
+
+      async function formatIntensitiesRow(annotation, normalizationData) {
+        const { isotopeImages, ionFormula: molFormula, possibleCompounds, adduct, mz, dataset } = annotation
+        const isotopeImage = isotopeImages[0]
+        const ionImagePng = await loadPngFromUrl(isotopeImage.url)
+        const molName = possibleCompounds.map((m) => m.name).join(',')
+        const molIds = possibleCompounds.map((m) => m.information[0].databaseId).join(',')
+        const finalImage = getIonImage(ionImagePng, isotopeImages[0], undefined,
+          undefined, normalizationData)
+        const row = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
+        const { width, height, intensityValues } = finalImage
+        const cols = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
+
+        for (let x = 0; x < width; x++) {
+          for (let y = 0; y < height; y++) {
+            cols.push(`x${x}_y${y}`)
+            const idx = y * width + x
+            row.push(intensityValues[idx])
+          }
+        }
+
+        return { cols, row, dsName: dataset.name }
+      }
+
+      const queryVariables = {
+        ...this.queryVariables,
+        dFilter: {
+          ...this.queryVariables.dFilter,
+          ids: this.$store.state.annotation?.dataset?.id,
+        },
+      }
+      const chunkSize = this.csvChunkSize
+      let offset = 0
+      this.isExporting = true
+      let totalCount = 1
+      let fileCols
+      let fileName
+      let rows = ''
+
+      while (this.isExporting && offset < totalCount) {
+        const resp = await this.$apollo.query({
+          query: annotationListQuery,
+          variables: { ...queryVariables, limit: chunkSize, offset },
+        })
+        totalCount = resp.data.countAnnotations
+        for (let i = 0; i < resp.data.allAnnotations.length; i++) {
+          if (!this.isExporting) {
+            return
+          }
+          offset += 1
+          this.exportProgress = offset / totalCount
+          const annotation = resp.data.allAnnotations[i]
+          const { cols, row, dsName } = await formatIntensitiesRow(annotation,
+            this.isNormalized
+              ? this.$store.state.normalization : undefined)
+          if (!fileCols) {
+            fileCols = formatCsvRow(cols)
+            fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${this.isNormalized
+              ? '_tic_normalized' : ''}.csv`
+          }
+          rows += formatCsvRow(row)
+        }
+      }
+
+      if (this.isExporting) {
+        this.isExporting = false
+        this.exportProgress = 0
+        const csv = csvExportIntensityHeader(this.isNormalized) + fileCols + rows
+        const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+        FileSaver.saveAs(blob, fileName)
+      }
+    },
+
     async startExport() {
+      if (this.$refs.exportPop && typeof this.$refs.exportPop.doClose === 'function') {
+        this.$refs.exportPop.doClose()
+      }
+
       const chunkSize = this.csvChunkSize
       const includeColoc = !this.hidden('colocalizationCoeff')
       const includeOffSample = config.features.off_sample
@@ -1316,6 +1414,8 @@ export default Vue.extend({
  .full-screen-btn{
    padding: 0;
    margin: 0;
+   height: 42px;
+   width: 42px;
  }
  .el-table table {
    width: 0px; // fix safari dynamic column size bug
@@ -1325,5 +1425,24 @@ export default Vue.extend({
      right: 10px !important;
      top: -10px !important;
    }
+ }
+ .select-btn-wrapper{
+   width: 146px;
+   height: 42px;
+ }
+
+ .export-pop{
+   @apply p-0;
+ }
+ .export-option{
+   @apply cursor-pointer p-4 m-0 select-none;
+
+   &:hover{
+     @apply bg-blue-100;
+   }
+ }
+ .select-btn-icon{
+   position: absolute;
+   right: 8px;
  }
 </style>

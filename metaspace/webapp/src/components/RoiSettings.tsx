@@ -69,6 +69,8 @@ export default defineComponent<RoiSettingsProps>({
       }
     }
 
+    const isNormalized = computed(() => $store.getters.settings?.annotationView?.normalization)
+
     const queryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const queryVars = computed(() => ({
       ...queryVariables(),
@@ -85,7 +87,7 @@ export default defineComponent<RoiSettingsProps>({
       if (result && result.data) {
         for (let i = 0; i < result.data.allAnnotations.length; i++) {
           const annotation = result.data.allAnnotations[i]
-          await formatRow(annotation)
+          await formatRow(annotation, isNormalized.value ? $store.state.normalization : undefined)
         }
 
         if (state.offset < result.data.countAnnotations) {
@@ -94,7 +96,8 @@ export default defineComponent<RoiSettingsProps>({
           queryOptions.enabled = false
           const csv = state.rows.map((e: any) => e.join(',')).join('\n')
           const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
-          FileSaver.saveAs(blob, `${props.annotation.dataset.name.replace(/\s/g, '_')}_ROI.csv`)
+          FileSaver.saveAs(blob, `${props.annotation.dataset.name.replace(/\s/g, '_')}_ROI${isNormalized.value
+            ? '_tic_normalized' : ''}.csv`)
           state.isDownloading = false
           state.offset = 0
           state.rows = []
@@ -132,7 +135,7 @@ export default defineComponent<RoiSettingsProps>({
         , userScaling, undefined, normalizedData)
     }
 
-    const formatRow = async(annotation: any) => {
+    const formatRow = async(annotation: any, normalizationData: any) => {
       const [isotopeImage] = annotation.isotopeImages
       const ionImagePng = await loadPngFromUrl(isotopeImage.url)
       const molFormula : any = annotation.ionFormula
@@ -140,7 +143,8 @@ export default defineComponent<RoiSettingsProps>({
       const molIds : any = annotation.possibleCompounds.map((m : any) => m.information[0].databaseId).join(',')
       const adduct : any = annotation.adduct
       const mz : any = annotation.mz
-      const finalImage : any = ionImage(ionImagePng, annotation.isotopeImages[0])
+      const finalImage : any = ionImage(ionImagePng, annotation.isotopeImages[0], undefined,
+        undefined, normalizationData)
       const row : any = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
       const roiInfo = getRoi()
       const { width, height, intensityValues } = finalImage

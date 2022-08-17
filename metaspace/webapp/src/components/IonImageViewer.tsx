@@ -131,6 +131,7 @@ const usePixelIntensityDisplay = (
   const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
   const cursorOverLayers = computed(() => {
     const layers = []
+    const TIC_MULTIPLIER = 1000000
     if (props.ionImageLayers.length && cursorPixelPos.value != null) {
       const [x, y] = cursorPixelPos.value
       for (const { ionImage, colorMap } of props.ionImageLayers) {
@@ -140,12 +141,10 @@ const usePixelIntensityDisplay = (
           && mask[y * width + x] !== 0) {
           const idx = y * width + x
           const [r, g, b] = colorMap[colorMap.length - 1]
-          const validNormalization = props.normalizationData && props.normalizationData.data
-            && props.normalizationData.data[idx] && !isNaN(props.normalizationData.data[idx])
           layers.push({
-            intensity: intensityValues[idx].toExponential(1),
-            normalizedIntensity: !validNormalization ? 0
-              : (intensityValues[idx] / props.normalizationData?.data?.[idx] * 1000000).toExponential(1),
+            intensity: (props.showNormalizedIntensity ? ((intensityValues[idx] / TIC_MULTIPLIER)
+              * props.normalizationData?.data?.[idx]) : intensityValues[idx]).toExponential(1),
+            normalizedIntensity: intensityValues[idx].toExponential(1),
             color: props.ionImageLayers.length > 1 ? `rgb(${r},${g},${b})` : null,
           })
         }
