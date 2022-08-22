@@ -46,7 +46,7 @@ def main():
             molecular_db.find_by_name_version(args.db_name, args.db_version)
         except SMError:
             logger.info('Molecular database not found. Enrichment mapping failed...')
-            return -1
+            return
 
         # check if enrichment db exists, if so it uses it, otherwise a new one is created
         try:
@@ -65,8 +65,8 @@ def main():
             enrichment_db_molecule_mapping.create(
                 db_df.id, args.db_name, args.db_version, args.json_file, args.filter_csv_file
             )
-        except SMError:
-            logger.info('Molecular database not found. Enrichment mapping failed...')
+        except errors.lookup(UNIQUE_VIOLATION):
+            logger.info('Enrichment mapping were already loaded...')
 
 
 if __name__ == "__main__":
