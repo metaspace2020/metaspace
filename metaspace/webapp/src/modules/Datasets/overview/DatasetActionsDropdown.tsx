@@ -68,6 +68,23 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     const enrichmentRequested = computed(() => enrichmentResult.value != null
       ? enrichmentResult.value.enrichmentRequested : null)
 
+    const confirmReprocessEnrichment = async() => {
+      try {
+        await $confirm('The changes to the analysis options require the dataset to be reprocessed. '
+          + 'This dataset will be unavailable until reprocessing has completed. Do you wish to continue?',
+        'Reprocessing required',
+        {
+          type: 'warning',
+          confirmButtonText: 'Continue',
+          cancelButtonText: 'Cancel',
+        })
+        return true
+      } catch (e) {
+        // Ignore - user clicked cancel
+        return false
+      }
+    }
+
     const {
       result: browserResult,
     } = useQuery<any>(checkIfHasBrowserFiles, { datasetId: props.dataset?.id })
@@ -122,21 +139,14 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       state.showCompareDialog = true
     }
 
-    const openEnrichmentDialog = () => {
-      state.showEnrichmentDialog = true
-    }
-
     const closeCompareDialog = () => {
       state.showCompareDialog = false
     }
 
-    const closeEnrichmentDialog = () => {
-      state.showEnrichmentDialog = false
-    }
-
-    const handleEnrichmentRequest = () => {
-      closeEnrichmentDialog()
-      handleReprocess(true)
+    const handleEnrichmentRequest = async() => {
+      if (await confirmReprocessEnrichment()) {
+        handleReprocess(true)
+      }
     }
 
     const handleReprocess = async(performEnrichment = false) => {
@@ -192,7 +202,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
               query: { db_id: '1' },
             })
           } else {
-            openEnrichmentDialog()
+            handleEnrichmentRequest()
           }
           break
         case 'browser':
@@ -260,6 +270,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
             }
             {
               config.features.enrichment
+              && (enrichmentRequested.value || canEdit)
               && <DropdownItem command="enrichment">{enrichmentActionLabel}</DropdownItem>
             }
             {
@@ -284,14 +295,6 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
             && <DatasetComparisonDialog
               selectedDatasetIds={[id]}
               onClose={closeCompareDialog}
-            />
-          }
-          {
-            state.showEnrichmentDialog
-            && <DatasetEnrichmentDialog
-              dataset={dataset}
-              onClose={closeEnrichmentDialog}
-              onEnrich={handleEnrichmentRequest}
             />
           }
         </Dropdown>
