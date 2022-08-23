@@ -19,7 +19,7 @@ app = bottle.Bottle()
 def calculate_enrichment():  # pylint: disable=too-many-locals
     try:
         body = json.loads(bottle.request.body.read().decode('utf-8'))
-        logger.info(f'Received `calculate_enrichment` request:')
+        logger.info('Received `calculate_enrichment` request')
 
         start = time.time()
         enrichment_sets = body['enrichedSets']
