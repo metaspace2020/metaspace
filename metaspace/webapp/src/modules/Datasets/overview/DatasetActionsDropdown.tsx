@@ -14,7 +14,6 @@ import config from '../../../lib/config'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
 import { useQuery } from '@vue/apollo-composable'
 import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
-import { DatasetEnrichmentDialog } from '../enrichment/DatasetEnrichmentDialog'
 
 interface DatasetActionsDropdownProps {
   actionLabel: string
