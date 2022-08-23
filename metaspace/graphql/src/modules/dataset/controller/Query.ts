@@ -178,7 +178,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           })
         }
 
-        const { content } = await smApiJsonPost('/v1/calculate_enrichment', {
+        const { content } = await smApiJsonPost('/v1/enrichment/calculate_enrichment', {
           enrichedSets,
           termsHash,
           bootstrappedSublist,
