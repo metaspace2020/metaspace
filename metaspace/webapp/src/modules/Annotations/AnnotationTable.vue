@@ -332,7 +332,7 @@
         label="Coloc."
         class-name="coloc-cell"
         sortable="custom"
-        min-width="40"
+        min-width="70"
       >
         <template slot-scope="props">
           <span v-if="props.row.colocalizationCoeff != null">
