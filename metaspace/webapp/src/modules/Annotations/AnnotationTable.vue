@@ -315,7 +315,7 @@
       </el-table-column>
 
       <el-table-column
-        v-if="!hidden('colocalizationCoeff')"
+        v-if="showColocCol"
         key="colocalizationCoeff"
         property="colocalizationCoeff"
         label="Coloc."
@@ -395,16 +395,18 @@
               class="cursor-pointer select-none"
               @click="handleColumnClick(i)"
             >
-              <i
-                v-if="column.selected"
-                class="el-icon-check"
-              />
-              <i
-                v-else
-                class="el-icon-check invisible"
-              />
-              <span v-if="column.src.includes('rho')"> &rho;<sub>{{ column.label }}</sub> </span>
-              <span v-else>{{ column.label }}</span>
+              <template v-if="!column.hide">
+                <i
+                  v-if="column.selected"
+                  class="el-icon-check"
+                />
+                <i
+                  v-else
+                  class="el-icon-check invisible"
+                />
+                <span v-if="column.src.includes('rho')"> &rho;<sub>{{ column.label }}</sub> </span>
+                <span v-else>{{ column.label }}</span>
+              </template>
             </div>
           </div>
         </el-popover>
@@ -653,6 +655,7 @@ export default Vue.extend({
           label: 'Co-localization coefficient',
           src: 'colocalizationCoeff',
           selected: false,
+          hide: true,
         },
       ],
     }
@@ -765,6 +768,23 @@ export default Vue.extend({
       return (this.queryVariables.filter.colocalizedWith || this.queryVariables.filter.colocalizationSamples)
          && this.$store.getters.filter.datasetIds != null
          && this.$store.getters.filter.datasetIds.length > 1
+    },
+
+    showColocCol() {
+      return this.$route.query.colo !== undefined
+    },
+  },
+  watch: {
+    '$route.query'() {
+      // sort table to update selected sort ui when coloc filter applied from annotation view
+      if (
+        this.orderBy === 'ORDER_BY_COLOCALIZATION'
+        && this.$refs.table
+        && typeof this.$refs.table.sort === 'function') {
+        setTimeout(
+          () => this.$refs.table.sort(SORT_ORDER_TO_COLUMN[this.orderBy], this.sortingOrder.toLowerCase()),
+          0)
+      }
     },
   },
   mounted() {

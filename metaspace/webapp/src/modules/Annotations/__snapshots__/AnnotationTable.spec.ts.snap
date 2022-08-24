@@ -198,7 +198,9 @@ exports[`AnnotationTable should match snapshot 1`] = `
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Max Intensity</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Total Intensity</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>FDR</span></div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Co-localization coefficient</span></div>
+            <div class="cursor-pointer select-none">
+              <!---->
+            </div>
           </div>
         </div>
         <div slot-key="reference"><button type="button" class="el-button select-btn-wrapper relative el-button--default">
@@ -420,7 +422,9 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Max Intensity</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Total Intensity</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>FDR</span></div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Co-localization coefficient</span></div>
+            <div class="cursor-pointer select-none">
+              <!---->
+            </div>
           </div>
         </div>
         <div slot-key="reference"><button type="button" class="el-button select-btn-wrapper relative el-button--default">
