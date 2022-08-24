@@ -29,6 +29,7 @@ exports[`AnnotationTable should match snapshot 1`] = `
       <!---->
       <!---->
       <!---->
+      <!---->
       <div></div>
       <!---->
     </div>
@@ -194,7 +195,8 @@ exports[`AnnotationTable should match snapshot 1`] = `
             <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>MSM</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Database</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Molecules</span></div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Isomers/Isobars</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Isomers</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Isobars</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Max Intensity</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Total Intensity</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>FDR</span></div>
@@ -248,6 +250,7 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
       <!---->
       <!---->
       <div></div>
+      <!---->
       <!---->
       <!---->
       <!---->
@@ -418,7 +421,8 @@ exports[`AnnotationTable should match snapshot when loading snapshot 1`] = `
             <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>MSM</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Database</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Molecules</span></div>
-            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Isomers/Isobars</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Isomers</span></div>
+            <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Isobars</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Max Intensity</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check invisible"></i> <span>Total Intensity</span></div>
             <div class="cursor-pointer select-none"><i class="el-icon-check"></i> <span>FDR</span></div>

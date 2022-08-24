@@ -227,14 +227,27 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
         },
       },
     ]
-  } else if (orderBy === 'ORDER_BY_ISO') {
+  } else if (orderBy === 'ORDER_BY_ISOMERS') {
     return [
       {
         _script: {
           type: 'number',
           script: {
             lang: 'painless',
-            inline: 'params._source.isobars.size() + params._source.isomer_ions.size()',
+            inline: 'params._source.comps_count_with_isomers',
+          },
+          order: order,
+        },
+      },
+    ]
+  } else if (orderBy === 'ORDER_BY_ISOBARS') {
+    return [
+      {
+        _script: {
+          type: 'number',
+          script: {
+            lang: 'painless',
+            inline: 'params._source.isobars.size()',
           },
           order: order,
         },
@@ -452,6 +465,7 @@ export const esSearchResults = async(args: any, docType: DocType,
     size: args.limit,
   }
   const resp = await es.search(request)
+
   return resp.hits.hits
 }
 

@@ -260,17 +260,28 @@
       </el-table-column>
 
       <el-table-column
-        v-if="!hidden('Isos')"
+        v-if="!hidden('isomers')"
         key="isomers"
         property="isomers"
-        label="Isomers/Isobars"
-        min-width="120"
+        label="Isomers"
+        min-width="80"
+        sortable="custom"
       >
         <template slot-scope="props">
-          <i
-            v-if="props.row.isomers.length > 0 || props.row.isobars.length > 0"
-            class="el-icon-warning justify-center w-full flex"
-          />
+          {{ props.row.isomers.length + props.row.possibleCompounds.length }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('isobars')"
+        key="isobars"
+        property="isobars"
+        label="Isobars"
+        min-width="80"
+        sortable="custom"
+      >
+        <template slot-scope="props">
+          {{ props.row.isobars.length }}
         </template>
       </el-table-column>
 
@@ -541,7 +552,8 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_SPECTRAL: 'rhoSpectral',
   ORDER_BY_MAX_INT: 'isotopeImages[0].maxIntensity',
   ORDER_BY_TOTAL_INT: 'isotopeImages[0].totalIntensity',
-  ORDER_BY_ISO: 'isomers',
+  ORDER_BY_ISOMERS: 'isomers',
+  ORDER_BY_ISOBARS: 'isobars',
 }
 const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
 
@@ -632,8 +644,13 @@ export default Vue.extend({
           selected: false,
         },
         {
-          label: 'Isomers/Isobars',
-          src: 'Isos',
+          label: 'Isomers',
+          src: 'isomers',
+          selected: false,
+        },
+        {
+          label: 'Isobars',
+          src: 'isobars',
           selected: false,
         },
         {
