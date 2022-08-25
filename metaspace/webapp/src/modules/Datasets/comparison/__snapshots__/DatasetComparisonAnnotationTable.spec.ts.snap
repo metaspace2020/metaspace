@@ -13,13 +13,13 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
       <div></div>
     </div>
     <div class="el-table__header-wrapper">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 480px;">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 520px;">
         <colgroup>
           <col name="el-table_1_column_1" width="120">
-          <col name="el-table_1_column_2" width="100">
+          <col name="el-table_1_column_2" width="120">
           <col name="el-table_1_column_3" width="60">
           <col name="el-table_1_column_4" width="100">
-          <col name="el-table_1_column_5" width="100">
+          <col name="el-table_1_column_5" width="120">
         </colgroup>
         <thead class="">
           <tr class="">
@@ -55,13 +55,13 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
       </table>
     </div>
     <div class="el-table__body-wrapper is-scrolling-left">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 480px;">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 520px;">
         <colgroup>
           <col name="el-table_1_column_1" width="120">
-          <col name="el-table_1_column_2" width="100">
+          <col name="el-table_1_column_2" width="120">
           <col name="el-table_1_column_3" width="60">
           <col name="el-table_1_column_4" width="100">
-          <col name="el-table_1_column_5" width="100">
+          <col name="el-table_1_column_5" width="120">
         </colgroup>
         <tbody>
           <tr class="el-table__row fdr-5 ">
@@ -162,6 +162,24 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
         <div class="fdr-legend fdr-50">50%</div>
       </div>
     </div>
+    <mock-el-popover>
+      <div slot-key="default">
+        <div class="cursor-pointer select-none">
+          <div><i class="el-icon-check"></i><span>Annotation</span></div>
+          <div><i class="el-icon-check invisible"></i><span>Adduct</span></div>
+          <div><i class="el-icon-check"></i><span>Best MSM</span></div>
+          <div><i class="el-icon-check"></i><span>m/z</span></div>
+          <div><i class="el-icon-check"></i><span>Datasets #</span></div>
+          <div><i class="el-icon-check invisible"></i><span>Isomers</span></div>
+          <div><i class="el-icon-check invisible"></i><span>Isobars</span></div>
+          <div><i class="el-icon-check invisible"></i><span>Max Intensity</span></div>
+          <div><i class="el-icon-check"></i><span>Best FDR</span></div>
+        </div>
+      </div>
+      <div slot-key="reference"><button type="button" class="el-button el-button--default select-btn-wrapper relative">
+          <!---->
+          <!----><span>Columns<i class="el-icon-arrow-down select-btn-icon"></i></span></button></div>
+    </mock-el-popover>
     <mock-el-popover trigger="hover">
       <div slot-key="default">Documentation for the CSV export is available <a href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export" rel="noopener noreferrer nofollow" target="_blank">here<svg data-icon="icon-external-window" class="inline h-4 w-4 -mb-1 fill-current text-gray-800"></svg></a></div>
       <div slot-key="reference">

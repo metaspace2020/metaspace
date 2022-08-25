@@ -654,16 +654,18 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     const renderAnnotationTableWrapper = () => {
       const { annotations } = state
-
       return (
         <div class='dataset-comparison-wrapper w-full md:w-6/12 relative'>
           {
             annotations
             && <DatasetComparisonAnnotationTable
               isLoading={annotationsLoading.value}
-              annotations={annotations.map((ion: any) => {
+              annotations={annotations.map((ion: any, idx: number) => {
                 return {
                   ...ion.annotations[0],
+                  isomersCount: ion.annotations[0].countPossibleCompounds,
+                  isobarsCount: ion.annotations[0].isobars.length,
+                  maxIntensity: Math.max(...ion.annotations.map((annot: any) => annot.isotopeImages[0].maxIntensity)),
                   msmScore: Math.max(...ion.annotations.map((annot: any) => annot.msmScore)),
                   fdrlevel: Math.min(...ion.annotations.map((annot: any) => annot.fdrlevel)),
                   datasetcount: (ion.datasetIds || []).length,
