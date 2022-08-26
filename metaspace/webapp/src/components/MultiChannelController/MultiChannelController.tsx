@@ -1,6 +1,6 @@
-import { defineComponent, onMounted, onUnmounted, reactive } from '@vue/composition-api'
+import { defineComponent, onMounted, onUnmounted, reactive, ref } from '@vue/composition-api'
 import FadeTransition from '../FadeTransition'
-import { Button } from '../../lib/element-ui'
+import { Button, Popover } from '../../lib/element-ui'
 import CandidateMoleculesPopover from '../../modules/Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../MolecularFormula'
 import VisibleIcon from '../../assets/inline/refactoring-ui/icon-view-visible.svg'
@@ -10,11 +10,13 @@ import IonIntensity from '../../modules/ImageViewer/IonIntensity.vue'
 import getColorScale from '../../lib/getColorScale'
 import { THUMB_WIDTH } from '../Slider'
 import ChannelSelector from '../../modules/ImageViewer/ChannelSelector.vue'
+import ClippingNotice from '../../modules/ImageViewer/ClippingNotice.vue'
 import './MultiChannelController.scss'
 
 interface MultiChannelControllerProps {
   menuItems: any[],
   activeLayer: boolean,
+  showClippingNotice: boolean,
   mode: string
 }
 
@@ -27,6 +29,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
   props: {
     menuItems: { type: Array, default: () => [] },
     activeLayer: { type: Boolean, default: false },
+    showClippingNotice: { type: Boolean, default: false },
     mode: { type: String, default: 'MULTI' },
   },
   // @ts-ignore
@@ -34,6 +37,8 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
     const state = reactive<MultiChannelControllerState>({
       refsLoaded: false,
     })
+
+    const popover = ref<any>(null)
 
     onMounted(() => {
       state.refsLoaded = true
@@ -175,16 +180,39 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                     onLock={(value: number) =>
                       handleIonIntensityLockChange(value, itemIndex, 'min')}
                   />
-                  <IonIntensity
-                    intensities={item.intensity?.value?.max}
-                    label="Maximum intensity"
-                    placeholder="max."
-                    onInput={(value: number) =>
-                      handleIonIntensityChange(value, itemIndex,
-                        'max')}
-                    onLock={(value: number) =>
-                      handleIonIntensityLockChange(value, itemIndex, 'max')}
-                  />
+                  <Popover
+                    ref={popover}
+                    class="block"
+                    placement="bottom"
+                    trigger="hover"
+                    disabled={!props.showClippingNotice || mode === 'MULTI'}
+                    popper-class="w-full max-w-measure-1 text-left text-sm leading-5">
+                    <IonIntensity
+                      slot="reference"
+                      intensities={item.intensity?.value?.max}
+                      label="Maximum intensity"
+                      placeholder="max."
+                      {...{
+                        on: {
+                          'hide-popover': () => {
+                            if (popover && popover.value && typeof popover.value.doClose === 'function') {
+                              popover.value.doClose()
+                            }
+                          },
+                        },
+                      }}
+                      onInput={(value: number) =>
+                        handleIonIntensityChange(value, itemIndex,
+                          'max')}
+                      onLock={(value: number) =>
+                        handleIonIntensityLockChange(value, itemIndex, 'max')}
+                    />
+                    <ClippingNotice
+                      type="hotspot-removal"
+                      intensity={item.intensity.value}
+                    />
+                  </Popover>
+
                 </div>
                 }
               </div>

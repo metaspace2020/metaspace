@@ -30,7 +30,7 @@ def create_mz_image(mz_peaks, coordinates):
 
     alpha = np.ones(shape=(height, width))
 
-    return mz_image.reshape(height, width), alpha
+    return mz_image.reshape(height, width), alpha, np.max(mz_peaks)
 
 
 def create_rgba_image(mz_image, alpha):
@@ -90,13 +90,13 @@ def get_intensity_by_mz_ppm():
         ds = DatasetBrowser(params['ds_id'], params['mz_low'], params['mz_high'])
 
         start = time.time()
-        mz_image, alpha = create_mz_image(ds.mz_peaks, ds.coordinates)
+        mz_image, alpha, max_int = create_mz_image(ds.mz_peaks, ds.coordinates)
         rgba_image = create_rgba_image(mz_image, alpha)
         body = create_png_image(rgba_image)
         logger.info(f'Creating an image in {round(time.time() - start, 2)} sec')
 
         headers = {'Content-Type': 'application/json'}
-        body = {'image': body}
+        body = {'image': body, 'max_intensity': str(max_int)}
         return bottle.HTTPResponse(body, **headers)
     except Exception as e:
         logger.exception(f'{bottle.request} - {e}')

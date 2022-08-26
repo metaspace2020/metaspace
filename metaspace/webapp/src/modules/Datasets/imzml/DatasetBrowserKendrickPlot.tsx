@@ -45,6 +45,7 @@ interface DatasetBrowserKendrickPlotProps {
   annotatedData: any[]
   peakFilter: number
   referenceMz: number
+  dataRange: any
 }
 
 interface DatasetBrowserKendrickPlotState {
@@ -88,6 +89,10 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
     referenceMz: {
       type: Number,
       default: 14.0156, // m_CH2=14.0156
+    },
+    dataRange: {
+      type: Object,
+      default: () => { return { maxX: 0, maxY: 0, minX: 0, minY: 0 } },
     },
   },
   setup(props, { emit }) {
@@ -155,7 +160,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
             show: false,
           },
           nameLocation: 'center',
-          nameGap: 30,
+          nameGap: 20,
           nameTextStyle: {
             fontWeight: 'bold',
             fontSize: 14,
@@ -199,10 +204,15 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
             right: 16,
             filterMode: 'none',
           },
+          {
+            type: 'slider',
+            xAxisIndex: 0,
+            filterMode: 'none',
+          },
         ],
         legend: {
           selectedMode: false,
-          icon: 'roundRect',
+          data: [{ name: 'Unannotated', icon: 'diamond' }, { name: 'Annotated', icon: 'circle' }],
         },
         series: [
           {
@@ -236,94 +246,13 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
       },
     })
 
-    const chartData = computed(() => props.data)
-    const annotatedMzs = computed(() => props.annotatedData)
-    const peakFilter = computed(() => props.peakFilter)
     const chartOptions = computed(() => {
-      if (!chartData.value || (Array.isArray(chartData.value) && chartData.value.length === 0)) {
-        return state.chartOptions
-      }
-
+      const OFFSET : number = 20
       const auxOptions = state.chartOptions
-      const data = []
-      const annotatedTheoreticalMzs = annotatedMzs.value
-      let minX
-      let maxX
-      let maxY = 1
-      const exactMass = props.referenceMz
-
-      for (let i = 0; i < chartData.value[0].mzs.length; i++) {
-        // m_CH2=14.0156
-        const mz = chartData.value[0].mzs[i]
-        const xAxis = mz
-        const kendrickMass = mz * Math.round(exactMass) / exactMass
-        const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
-        const intensity = chartData.value[0].ints[i]
-        const yAxis = KendrickMassDefect
-        let tooltip = `m/z: ${xAxis.toFixed(4)}`
-        let isAnnotated = false
-        const threshold = 1000
-        const radius = Math.log10(intensity / threshold)
-
-        if (!minX || xAxis < minX) {
-          minX = xAxis
-        }
-        if (!maxX || xAxis > maxX) {
-          maxX = xAxis
-        }
-        if (!maxY || yAxis > maxY) {
-          maxY = yAxis
-        }
-        // check if is annotated
-        let hasCompoundsHeader = false
-        annotatedTheoreticalMzs.forEach((annotation: any) => {
-          const theoreticalMz : number = annotation.mz
-          const highestMz = theoreticalMz * 1.000003
-          const lowestMz = theoreticalMz * 0.999997
-          if (xAxis >= lowestMz && xAxis <= highestMz) {
-            isAnnotated = true
-
-            if (annotation.possibleCompounds.length > 0 && !hasCompoundsHeader) {
-              tooltip += '<br>Candidate molecules: <br>'
-              hasCompoundsHeader = true
-            }
-
-            annotation.possibleCompounds.forEach((compound: any) => {
-              tooltip += compound.name + '<br>'
-            })
-          }
-        })
-
-        if (peakFilter.value !== PEAK_FILTER.FDR && !isAnnotated) { // add unnanotated peaks
-          data.push({
-            name: xAxis.toFixed(4),
-            tooltip,
-            mz: xAxis,
-            value: [xAxis, yAxis, radius],
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-        }
-
-        if (peakFilter.value !== PEAK_FILTER.OFF && isAnnotated) {
-          data.push({
-            name: xAxis.toFixed(4),
-            tooltip,
-            mz: xAxis,
-            value: [xAxis, yAxis, radius],
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-        }
-      }
-
-      auxOptions.xAxis.min = minX - (100) // decrease 100 to give space between axis start and first point
-      auxOptions.xAxis.max = maxX
-      auxOptions.yAxis.max = 1 // maxY * 1.1
-      auxOptions.series[0].data = data
-      // handleZoomReset()
+      auxOptions.series[0].data = props.data.map((data: any) => data.dot)
+      auxOptions.xAxis.min = props.dataRange?.minX ? props.dataRange?.minX - OFFSET : 0
+      auxOptions.xAxis.max = props.dataRange?.maxX ? props.dataRange?.maxX + OFFSET : 0
+      auxOptions.yAxis.max = 1
       return auxOptions
     })
 

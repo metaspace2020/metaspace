@@ -413,7 +413,10 @@ gql`query checkIfHasBrowserFilesQuery($datasetId: String!) {
 
 export const getBrowserImage =
 gql`query gerBrowserImageQuery($datasetId: String!, $mzLow: Float!, $mzHigh: Float!) {
-  browserImage(datasetId: $datasetId, mzLow: $mzLow, mzHigh: $mzHigh)
+  browserImage(datasetId: $datasetId, mzLow: $mzLow, mzHigh: $mzHigh){
+    image
+    maxIntensity
+  }
 }`
 
 export const getSpectrum =

@@ -3,7 +3,7 @@ import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
 import {
-  SVGRenderer,
+  CanvasRenderer,
 } from 'echarts/renderers'
 import {
   BarChart,
@@ -18,9 +18,10 @@ import {
   MarkPointComponent,
 } from 'echarts/components'
 import './DatasetBrowserSpectrumChart.scss'
+import moment from 'moment'
 
 use([
-  SVGRenderer,
+  CanvasRenderer,
   BarChart,
   LineChart,
   GridComponent,
@@ -39,6 +40,7 @@ interface DatasetBrowserSpectrumChartProps {
   annotatedData: any[]
   peakFilter: number
   normalization: number | undefined
+  dataRange: any
 }
 
 interface DatasetBrowserSpectrumChartState {
@@ -70,6 +72,10 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
     data: {
       type: Array,
       default: () => [],
+    },
+    dataRange: {
+      type: Object,
+      default: () => { return { maxX: 0, maxY: 0, minX: 0, minY: 0 } },
     },
     annotatedData: {
       type: Array,
@@ -148,7 +154,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             show: false,
           },
           nameLocation: 'center',
-          nameGap: 30,
+          nameGap: 20,
           nameTextStyle: {
             fontWeight: 'bold',
             fontSize: 14,
@@ -192,15 +198,21 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             filterMode: 'none',
             right: 16,
           },
+          {
+            type: 'slider',
+            xAxisIndex: 0,
+            filterMode: 'none',
+          },
         ],
         legend: {
+          data: [{ name: 'Unannotated', icon: 'diamond' }, { name: 'Annotated', icon: 'circle' }],
           selectedMode: false,
-          icon: 'roundRect',
         },
         series: [
           {
             name: 'Unannotated',
             type: 'bar',
+            symbol: 'diamond',
             data: [],
             label: {
               show: true,
@@ -235,132 +247,30 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
       },
     })
 
-    const normalization = computed(() => props.normalization)
-    const chartData = computed(() => props.data)
-    const annotatedMzs = computed(() => props.annotatedData)
-    const peakFilter = computed(() => props.peakFilter)
     const chartOptions = computed(() => {
-      if (!chartData.value || (Array.isArray(chartData.value) && chartData.value.length === 0)) {
-        return state.chartOptions
-      }
-
+      const OFFSET : number = 20
       const auxOptions = state.chartOptions
-      const data = []
-      const annotatedTheoreticalMzs = annotatedMzs.value
-      const markPointData: any[] = []
-      let minX
-      let maxX
-      let maxIntensity = Math.max(...chartData.value[0].ints)
-
-      maxIntensity = normalization.value ? (maxIntensity / normalization.value) : maxIntensity
-
-      // maxIntensity if annotated
-      if (peakFilter.value !== PEAK_FILTER.ALL) {
-        const auxInts : number[] = []
-        for (let i = 0; i < chartData.value[0].mzs.length; i++) {
-          const xAxis = chartData.value[0].mzs[i]
-          annotatedTheoreticalMzs.forEach((annotation: any) => {
-            const theoreticalMz : number = annotation.mz
-            const highestMz = theoreticalMz * 1.000003
-            const lowestMz = theoreticalMz * 0.999997
-            if (xAxis >= lowestMz && xAxis <= highestMz) {
-              const auxInt = normalization.value ? (chartData.value[0].ints[i] / normalization.value)
-                : chartData.value[0].ints[i]
-              auxInts.push(auxInt)
-            }
-          })
-        }
-        maxIntensity = Math.max(...auxInts)
-      }
-
-      for (let i = 0; i < chartData.value[0].mzs.length; i++) {
-        const xAxis = chartData.value[0].mzs[i]
-        const auxInt = normalization.value ? (chartData.value[0].ints[i] / normalization.value)
-          : chartData.value[0].ints[i]
-        const yAxis =
-          state.scaleIntensity
-            ? auxInt / maxIntensity * 100.0 : auxInt
-        let tooltip = `m/z: ${xAxis.toFixed(4)}`
-        let isAnnotated = false
-
-        if (!minX || xAxis < minX) {
-          minX = xAxis
-        }
-        if (!maxX || xAxis > maxX) {
-          maxX = xAxis
-        }
-        // check if is annotated
-        let hasCompoundsHeader = false
-        annotatedTheoreticalMzs.forEach((annotation: any) => {
-          const theoreticalMz : number = annotation.mz
-          const highestMz = theoreticalMz * 1.000003
-          const lowestMz = theoreticalMz * 0.999997
-          if (xAxis >= lowestMz && xAxis <= highestMz) {
-            isAnnotated = true
-
-            if (annotation.possibleCompounds.length > 0 && !hasCompoundsHeader) {
-              tooltip += '<br>Candidate molecules: <br>'
-              hasCompoundsHeader = true
-            }
-
-            annotation.possibleCompounds.forEach((compound: any) => {
-              tooltip += compound.name + '<br>'
-            })
+      if (state.scaleIntensity) {
+        auxOptions.series[0].data = props.data.map((data: any) => {
+          return {
+            ...data.dot,
+            value: [data.dot.value[0], data.dot.value[1] / props.dataRange?.maxY * 100],
           }
         })
-
-        if (peakFilter.value !== PEAK_FILTER.FDR && !isAnnotated) { // add unnanotated peaks
-          data.push({
-            name: xAxis.toFixed(4),
-            tooltip,
-            mz: xAxis,
-            value: [xAxis, yAxis],
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-
-          markPointData.push({
-            label: tooltip,
-            mz: xAxis,
-            xAxis: xAxis,
-            yAxis: yAxis,
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-        }
-
-        if (peakFilter.value !== PEAK_FILTER.OFF && isAnnotated) {
-          data.push({
-            name: xAxis.toFixed(4),
-            tooltip,
-            mz: xAxis,
-            value: [xAxis, yAxis],
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-
-          markPointData.push({
-            label: tooltip,
-            mz: xAxis,
-            xAxis: xAxis,
-            yAxis: yAxis,
-            itemStyle: {
-              color: isAnnotated ? 'blue' : 'red',
-            },
-          })
-        }
+        auxOptions.series[0].markPoint.data = props.data.map((data: any) => {
+          return {
+            ...data.line,
+            yAxis: data.line.yAxis / props.dataRange?.maxY * 100,
+          }
+        })
+      } else {
+        auxOptions.series[0].markPoint.data = props.data.map((data: any) => data.line)
+        auxOptions.series[0].data = props.data.map((data: any) => data.dot)
       }
-
-      auxOptions.xAxis.min = minX
-      auxOptions.xAxis.max = maxX
+      auxOptions.xAxis.min = props.dataRange?.minX ? props.dataRange?.minX - OFFSET : 0
+      auxOptions.xAxis.max = props.dataRange?.maxX ? props.dataRange?.maxX + OFFSET : 0
       auxOptions.yAxis.name = state.scaleIntensity ? 'Relative Intensity' : 'Intensity'
-      auxOptions.yAxis.max = state.scaleIntensity ? 100 : maxIntensity
-      auxOptions.series[0].markPoint.data = markPointData
-      auxOptions.series[0].data = data
-      // handleZoomReset()
+      auxOptions.yAxis.max = state.scaleIntensity ? 100 : (props.dataRange?.maxY + OFFSET)
       return auxOptions
     })
 

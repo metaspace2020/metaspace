@@ -25,6 +25,7 @@ import Vue from 'vue'
 import FileSaver from 'file-saver'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
 import { cloneDeep } from 'lodash-es'
+import moment from 'moment'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -42,6 +43,7 @@ interface DatasetBrowserProps {
 }
 
 interface DatasetBrowserState {
+  dataRange: any
   peakFilter: number
   fdrFilter: number | undefined
   moleculeFilter: string | undefined
@@ -51,6 +53,7 @@ interface DatasetBrowserState {
   mzmScaleFilter: string | undefined
   ionImageUrl: any
   sampleData: any[]
+  chartData: any[]
   chartLoading: boolean
   imageLoading: boolean
   invalidFormula: boolean
@@ -81,7 +84,7 @@ const PEAK_FILTER = {
 }
 
 const VIEWS = {
-  SPECTRUM: 'Peak chart',
+  SPECTRUM: 'Mass spectrum',
   KENDRICK: 'Kendrick plot',
 }
 
@@ -96,8 +99,9 @@ export default defineComponent<DatasetBrowserProps>({
   setup: function(props, ctx) {
     const { $route, $store } = ctx.root
     const state = reactive<DatasetBrowserState>({
+      dataRange: { maxX: 0, maxY: 0, minX: 0, minY: 0 },
       peakFilter: PEAK_FILTER.ALL,
-      fdrFilter: undefined,
+      fdrFilter: 0.05,
       databaseFilter: undefined,
       mzmScoreFilter: undefined,
       mzmShiftFilter: undefined,
@@ -112,6 +116,7 @@ export default defineComponent<DatasetBrowserProps>({
       y: undefined,
       ionImageUrl: undefined,
       sampleData: [],
+      chartData: [],
       normalizationData: {},
       invalidFormula: false,
       invalidReferenceFormula: false,
@@ -153,8 +158,8 @@ export default defineComponent<DatasetBrowserProps>({
         countIsomerCompounds: config.features.isomers,
         limit: 10000,
         offset: 0,
-        orderBy: 'ORDER_BY_FDR_MSM',
-        sortingOrder: 'DESCENDING',
+        orderBy: 'ORDER_BY_MZ',
+        sortingOrder: 'ASCENDING',
       }
     }
 
@@ -169,6 +174,10 @@ export default defineComponent<DatasetBrowserProps>({
     onDatasetsResult(async(result) => {
       try {
         const dataset = result!.data.dataset
+
+        if (dataset && state.databaseFilter === undefined) {
+          state.databaseFilter = dataset.databases[0].id
+        }
         const tics = dataset.diagnostics.filter((diagnostic: any) => diagnostic.type === 'TIC')
         const tic = tics[0].images.filter((image: any) => image.key === 'TIC' && image.format === 'NPY')
         const { data, shape } = await readNpy(tic[0].url)
@@ -201,7 +210,11 @@ export default defineComponent<DatasetBrowserProps>({
     const queryOptions = reactive({ enabled: true, fetchPolicy: 'no-cache' as const })
     const queryVars = computed(() => ({
       ...queryVariables(),
-      filter: { ...queryVariables().filter, fdrLevel: state.fdrFilter, databaseId: state.databaseFilter },
+      filter: {
+        ...queryVariables().filter,
+        fdrLevel: state.fdrFilter,
+        databaseId: state.databaseFilter,
+      },
       dFilter: { ...queryVariables().dFilter, ids: datasetId },
     }))
 
@@ -225,9 +238,148 @@ export default defineComponent<DatasetBrowserProps>({
     } = useQuery<any>(getSpectrum, () => ({ datasetId: datasetId, x: state.x, y: state.y }),
       spectrumQueryOptions)
 
+    const buildChartData = (ints: any, mzs: any) => {
+      let maxX : number = 0
+      let minX : number = -1
+      let maxY : number = 0
+      let minY : number = -1
+      const addedIndexes : number[] = []
+      const auxData : any[] = []
+      const unAnnotItemStyle : any = {
+        color: 'red',
+      }
+      const annotItemStyle : any = {
+        color: 'blue',
+      }
+      const exactMass : number = state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz
+      const threshold : number = 1
+
+      if (state.peakFilter !== PEAK_FILTER.OFF) {
+        annotations.value.forEach((annotation: any, index: number) => {
+          const mz : number = annotation.mz
+          const mzLow : number = mz - (mz * state.mzmShiftFilter! * 1e-6) // ppm
+          const mzHigh : number = mz + (mz * state.mzmShiftFilter! * 1e-6) // ppm
+          const inRangeIdx : number = mzs.findIndex((value: number) => { return value >= mzLow && value <= mzHigh })
+          if (inRangeIdx !== -1) {
+            const int : number = ints[inRangeIdx]
+            const kendrickMass = mz * Math.round(exactMass) / exactMass
+            const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
+            const radius = Math.log10(int / threshold)
+            let tooltip : string = '<br>Candidate molecules: <br>'
+
+            if (mz > maxX) {
+              maxX = mz
+            }
+            if (mz < minX || minX === -1) {
+              minX = mz
+            }
+            if (int > maxY) {
+              maxY = int
+            }
+            if (int < minY || minY === -1) {
+              minY = int
+            }
+
+            addedIndexes.push(inRangeIdx)
+            annotation.possibleCompounds.forEach((compound: any) => {
+              tooltip += compound.name + '<br>'
+            })
+
+            if (state.currentView === VIEWS.KENDRICK) {
+              auxData.push({
+                isAnnotated: true,
+                dot: {
+                  name: mz.toFixed(4),
+                  tooltip,
+                  mz: mz,
+                  value: [mz, KendrickMassDefect, radius],
+                  itemStyle: annotItemStyle,
+                },
+              })
+            } else {
+              auxData.push({
+                isAnnotated: true,
+                dot: {
+                  name: mz.toFixed(4),
+                  tooltip,
+                  mz: mz,
+                  value: [mz, int],
+                  itemStyle: annotItemStyle,
+                },
+                line: {
+                  label: tooltip,
+                  mz: mz,
+                  xAxis: mz,
+                  yAxis: int,
+                  itemStyle: annotItemStyle,
+                },
+              })
+            }
+          }
+        })
+      }
+      if (state.peakFilter !== PEAK_FILTER.FDR) {
+        mzs.forEach((mz:any, index: any) => {
+          if (!addedIndexes.includes(index)) {
+            const int : number = ints[index]
+            const kendrickMass = mz * Math.round(exactMass) / exactMass
+            const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
+            const radius = Math.log10(int / threshold)
+
+            if (mz > maxX) {
+              maxX = mz
+            }
+            if (mz < minX || minX === -1) {
+              minX = mz
+            }
+            if (int > maxY) {
+              maxY = int
+            }
+            if (int < minY || minY === -1) {
+              minY = int
+            }
+            if (state.currentView === VIEWS.KENDRICK) {
+              auxData.push({
+                isAnnotated: false,
+                dot: {
+                  name: mz.toFixed(4),
+                  tooltip: `m/z: ${mz.toFixed(4)}`,
+                  mz: mz,
+                  value: [mz, KendrickMassDefect, radius],
+                  symbol: 'diamond',
+                  itemStyle: unAnnotItemStyle,
+                },
+              })
+            } else {
+              auxData.push({
+                isAnnotated: false,
+                dot: {
+                  name: mz.toFixed(4),
+                  tooltip: `m/z: ${mz.toFixed(4)}`,
+                  mz: mz,
+                  value: [mz, int],
+                  itemStyle: unAnnotItemStyle,
+                },
+                line: {
+                  mz: mz,
+                  xAxis: mz,
+                  yAxis: int,
+                  symbol: 'diamond',
+                  itemStyle: unAnnotItemStyle,
+                },
+              })
+            }
+          }
+        })
+      }
+
+      state.sampleData = auxData.reverse() // reverse to show annotated after
+      state.dataRange = { maxX, maxY, minX, minY }
+    }
+
     onSpectrumResult(async(result) => {
       if (result && result.data && result.data.pixelSpectrum) {
-        state.sampleData = [{ ints: result.data.pixelSpectrum.ints, mzs: result.data.pixelSpectrum.mzs }]
+        buildChartData(result.data.pixelSpectrum.ints, result.data.pixelSpectrum.mzs)
       }
       state.chartLoading = false
     })
@@ -282,8 +434,8 @@ export default defineComponent<DatasetBrowserProps>({
     }
 
     onImageResult(async(result) => {
-      if (result?.data?.browserImage) {
-        const blob = b64toBlob(result?.data?.browserImage.replace('data:image/png;base64,', ''), 'image/png')
+      if (result?.data?.browserImage?.image) {
+        const blob = b64toBlob(result?.data?.browserImage?.image.replace('data:image/png;base64,', ''), 'image/png')
         state.ionImageUrl = URL.createObjectURL(blob)
 
         let currentAnnotationIdx : number = -1
@@ -298,18 +450,23 @@ export default defineComponent<DatasetBrowserProps>({
 
         if (currentAnnotationIdx === -1) { // not annotated
           state.annotation = {
-            dataset: annotations.value[0].dataset,
+            dataset: annotations.value[0]?.dataset,
             mz: state.mz,
             isotopeImages: [
               {
-                ...cloneDeep(annotations.value[0].isotopeImages[0]),
                 mz: state.mz,
                 url: state.ionImageUrl,
+                minIntensity: 0,
+                maxIntensity: browserResult?.value?.browserImage?.maxIntensity,
               },
             ],
           }
         } else {
           state.annotation = annotations.value[currentAnnotationIdx]
+        }
+
+        if (spectrumResult.value) {
+          buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
         }
       }
     })
@@ -338,7 +495,11 @@ export default defineComponent<DatasetBrowserProps>({
 
     const requestSpectrum = async(x: number = 0, y: number = 0) => {
       try {
-        state.chartLoading = true
+        if (x !== state.x || y !== state.y) {
+          state.chartLoading = true
+        } else if (spectrumResult.value) {
+          buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+        }
         state.x = x
         state.y = y
         spectrumQueryOptions.enabled = true
@@ -352,15 +513,17 @@ export default defineComponent<DatasetBrowserProps>({
     }
 
     const handleDownload = () => {
-      const cols = ['dataset_name', 'dataset_id', 'x', 'y', 'mz', 'intensity', 'mass_reference', 'KMD']
-      const rows = [cols]
+      const cols = ['dataset_name', 'dataset_id', 'x', 'y', 'mz', 'intensity', 'KMD', 'is_annotated']
+      const rows : any = [cols]
 
-      state.sampleData[0].mzs.forEach((mz: any, idx: number) => {
+      state.sampleData.forEach((item: any, idx: number) => {
+        const mz : number = item.dot.mz
+        const int : number = item.dot.value[1]
         const exactMass = state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz
         const kendrickMass = mz * Math.round(exactMass) / exactMass
         const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
-        rows.push([dataset?.value?.name, dataset?.value?.id, state.sampleData[0].x,
-          state.sampleData[0].y, mz, state.sampleData[0].ints[idx], exactMass, KendrickMassDefect])
+        rows.push([dataset?.value?.name, dataset?.value?.id, state.x,
+          state.y, mz, int, KendrickMassDefect, item.isAnnotated])
       })
 
       const csv = rows.map((e: any) => e.join(',')).join('\n')
@@ -396,6 +559,8 @@ export default defineComponent<DatasetBrowserProps>({
         buildMetadata(dataset.value)
         if (state.x !== undefined && state.y !== undefined) {
           await requestSpectrum(state.x, state.y)
+        } else {
+          state.chartLoading = false
         }
       }
       queryOptions.enabled = false
@@ -557,6 +722,9 @@ export default defineComponent<DatasetBrowserProps>({
                 value={state.fixedMassReference}
                 onChange={(value: number) => {
                   state.fixedMassReference = value
+                  if (value !== -1) {
+                    buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+                  }
                 }}
                 placeholder='CH2'
                 size='mini'>
@@ -583,6 +751,7 @@ export default defineComponent<DatasetBrowserProps>({
                     if (!state.invalidReferenceFormula) {
                       const newMz = calculateMzFromFormula(referenceFormula as string, dataset.value?.polarity)
                       state.referenceFormulaMz = newMz
+                      buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
                     }
                   }}
                   size='mini'
@@ -782,7 +951,10 @@ export default defineComponent<DatasetBrowserProps>({
               <RadioGroup
                 size='small'
                 class='w-full flex ml-4'
-                onInput={(value: any) => { state.currentView = value }}
+                onInput={(value: any) => {
+                  state.currentView = value
+                  buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+                }}
                 value={state.currentView}>
                 <RadioButton class='ml-2' label={VIEWS.SPECTRUM}/>
                 <RadioButton label={VIEWS.KENDRICK}/>
@@ -791,46 +963,54 @@ export default defineComponent<DatasetBrowserProps>({
                 isEmpty && !state.chartLoading
                 && renderEmptySpectrum()
               }
-              <DatasetBrowserKendrickPlot
-                style={{
-                  visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
-                  height: state.currentView === VIEWS.KENDRICK ? '' : 0,
-                }}
-                isEmpty={isEmpty}
-                isLoading={state.chartLoading}
-                isDataLoading={annotationsLoading.value}
-                data={state.sampleData}
-                annotatedData={annotatedPeaks.value}
-                peakFilter={state.peakFilter}
-                referenceMz={state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz}
-                onItemSelected={(mz: number) => {
-                  state.showFullTIC = false
-                  Vue.set(state.normalizationData, 'showFullTIC', false)
-                  state.mzmScoreFilter = mz
-                  requestIonImage()
-                }}
-                onDownload={handleDownload}
-              />
-              <DatasetBrowserSpectrumChart
-                style={{
-                  visibility: state.currentView === VIEWS.SPECTRUM ? '' : 'hidden',
-                  height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
-                }}
-                isEmpty={isEmpty}
-                normalization={state.globalImageSettings.isNormalized ? state.normalization : undefined}
-                isLoading={state.chartLoading}
-                isDataLoading={annotationsLoading.value}
-                data={state.sampleData}
-                annotatedData={annotatedPeaks.value}
-                peakFilter={state.peakFilter}
-                onItemSelected={(mz: number) => {
-                  state.showFullTIC = false
-                  Vue.set(state.normalizationData, 'showFullTIC', false)
-                  state.mzmScoreFilter = mz
-                  requestIonImage()
-                }}
-                onDownload={handleDownload}
-              />
+              {
+                state.currentView === VIEWS.KENDRICK
+                && <DatasetBrowserKendrickPlot
+                  style={{
+                    visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
+                    height: state.currentView === VIEWS.KENDRICK ? '' : 0,
+                  }}
+                  isEmpty={isEmpty}
+                  isLoading={state.chartLoading}
+                  isDataLoading={annotationsLoading.value}
+                  data={state.sampleData}
+                  dataRange={state.dataRange}
+                  annotatedData={annotatedPeaks.value}
+                  peakFilter={state.peakFilter}
+                  referenceMz={state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz}
+                  onItemSelected={(mz: number) => {
+                    state.showFullTIC = false
+                    Vue.set(state.normalizationData, 'showFullTIC', false)
+                    state.mzmScoreFilter = mz
+                    requestIonImage()
+                  }}
+                  onDownload={handleDownload}
+                />
+              }
+              {
+                state.currentView === VIEWS.SPECTRUM
+                && <DatasetBrowserSpectrumChart
+                  style={{
+                    visibility: state.currentView === VIEWS.SPECTRUM ? '' : 'hidden',
+                    height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
+                  }}
+                  isEmpty={isEmpty}
+                  normalization={state.globalImageSettings.isNormalized ? state.normalization : undefined}
+                  isLoading={state.chartLoading}
+                  isDataLoading={annotationsLoading.value}
+                  data={state.sampleData}
+                  annotatedData={annotatedPeaks.value}
+                  peakFilter={state.peakFilter}
+                  dataRange={state.dataRange}
+                  onItemSelected={(mz: number) => {
+                    state.showFullTIC = false
+                    Vue.set(state.normalizationData, 'showFullTIC', false)
+                    state.mzmScoreFilter = mz
+                    requestIonImage()
+                  }}
+                  onDownload={handleDownload}
+                />
+              }
             </div>
           </div>
           <div class='dataset-browser-wrapper w-full lg:w-1/2'>
@@ -882,6 +1062,7 @@ export default defineComponent<DatasetBrowserProps>({
                   && <SimpleIonImageViewer
                     annotations={[state.annotation]}
                     forceUpdate
+                    hideClipping={state.showFullTIC}
                     dataset={dataset.value}
                     height={dimensions.height}
                     width={dimensions.width}

@@ -333,6 +333,11 @@ type DatasetDeletion {
   id: String!
 }
 
+type SpectrumImage {
+  image: String
+  maxIntensity: Float!
+}
+
 type Query {
   dataset(id: String!): Dataset
 
@@ -357,7 +362,7 @@ type Query {
 
   hasImzmlFiles(datasetId: String!): Boolean
 
-  browserImage(datasetId: String!, mzLow: Float!, mzHigh: Float!): String
+  browserImage(datasetId: String!, mzLow: Float!, mzHigh: Float!): SpectrumImage
 
   pixelSpectrum(datasetId: String!, x: Int!, y: Int!): PixelSpectrum
 }
