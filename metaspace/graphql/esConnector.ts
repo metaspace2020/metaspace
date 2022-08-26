@@ -228,18 +228,7 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
       },
     ]
   } else if (orderBy === 'ORDER_BY_ISOMERS') {
-    return [
-      {
-        _script: {
-          type: 'number',
-          script: {
-            lang: 'painless',
-            inline: 'params._source.comps_count_with_isomers',
-          },
-          order: order,
-        },
-      },
-    ]
+    return [sortTerm('comps_count_with_isomers', order)]
   } else if (orderBy === 'ORDER_BY_ISOBARS') {
     return [
       {

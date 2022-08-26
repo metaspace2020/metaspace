@@ -264,7 +264,7 @@
         key="isomers"
         property="isomers"
         label="Isomers"
-        min-width="80"
+        min-width="90"
         sortable="custom"
       >
         <template slot-scope="props">
@@ -1202,7 +1202,6 @@ export default Vue.extend({
       const chunkSize = this.csvChunkSize
       const includeColoc = !this.hidden('colocalizationCoeff')
       const includeOffSample = config.features.off_sample
-      const includeIsomers = config.features.isomers
       const includeIsobars = config.features.isobars
       const includeNeutralLosses = config.features.neutral_losses
       const includeChemMods = config.features.chem_mods
