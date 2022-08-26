@@ -60,6 +60,7 @@ interface DatasetComparisonPageState {
   refsLoaded: boolean
   showViewer: boolean
   loadedSnapshot: boolean
+  tableFullScreen: boolean
   isLoading: any
   collapse: string[]
   databaseOptions: any
@@ -116,6 +117,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       gridState: {},
       channelSnapshot: [],
       loadedSnapshot: false,
+      tableFullScreen: false,
       databaseOptions: undefined,
       globalImageSettings: {
         resetViewPort: false,
@@ -431,6 +433,10 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
     }
 
+    const handleScreenChange = (isFullScreen: boolean) => {
+      state.tableFullScreen = isFullScreen
+    }
+
     const handleModeChange = (mode: string = 'SINGLE') => {
       $store.commit('setViewerMode', mode)
       if (mode === 'SINGLE') {
@@ -655,7 +661,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     const renderAnnotationTableWrapper = () => {
       const { annotations } = state
       return (
-        <div class='dataset-comparison-wrapper w-full md:w-6/12 relative'>
+        <div class={`dataset-comparison-wrapper w-full ${state.tableFullScreen ? 'w-full' : 'md:w-6/12'} relative`}>
           {
             annotations
             && <DatasetComparisonAnnotationTable
@@ -673,6 +679,7 @@ export default defineComponent<DatasetComparisonPageProps>({
                 }
               })}
               onRowChange={handleRowChange}
+              onScreen={handleScreenChange}
             />
           }
           {
@@ -729,7 +736,7 @@ export default defineComponent<DatasetComparisonPageProps>({
             fixedOptions={state.databaseOptions}
           />
           {renderAnnotationTableWrapper()}
-          {renderAnnotationInfoWrapper()}
+          {!state.tableFullScreen && renderAnnotationInfoWrapper()}
         </div>
       )
     }

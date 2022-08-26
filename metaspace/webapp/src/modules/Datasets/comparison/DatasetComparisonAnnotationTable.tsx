@@ -9,6 +9,8 @@ import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../../lib/formatCsvRow'
 import ExternalWindowSvg from '../../../assets/inline/refactoring-ui/icon-external-window.svg'
 import { getLocalStorage, setLocalStorage } from '../../../lib/localStorage'
+import FullScreen from '../../../assets/inline/full_screen.svg'
+import ExitFullScreen from '../../../assets/inline/exit_full_screen.svg'
 
 interface DatasetComparisonAnnotationTableProps {
   annotations: any[]
@@ -24,6 +26,7 @@ interface DatasetComparisonAnnotationTableState {
   offset: number
   keyListenerAdded: boolean
   isExporting: boolean
+  isFullScreen: boolean
   exportProgress: number
   columns: any
 }
@@ -134,6 +137,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       processedAnnotations: computed(() => props.annotations.slice()),
       keyListenerAdded: false,
       isExporting: false,
+      isFullScreen: false,
       exportProgress: 0,
       columns: COMPARISON_TABLE_COLUMNS,
     })
@@ -304,6 +308,11 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         prop: sort ? sort.replace('-', '') : SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM,
         order: sort?.indexOf('-') === 0 ? 'descending' : 'ascending',
       }
+    }
+
+    const handleFullScreenChange = () => {
+      state.isFullScreen = !state.isFullScreen
+      emit('screen', state.isFullScreen)
     }
 
     const handleSelectCol = (src: string) => {
@@ -851,81 +860,112 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
               </div>
             </div>
 
-            <Popover>
-              <Button
-                slot="reference"
-                class="select-btn-wrapper relative"
-              >
-                Columns
-                <i class="el-icon-arrow-down select-btn-icon" />
-              </Button>
-              <div
-                class="cursor-pointer select-none"
-              >
-                {
-                  Object.values(state.columns).map((column: any) => {
-                    if (column.hide) {
-                      return null
-                    }
-                    return <div onClick={() => { handleSelectCol(column.src) }}
-                    >
-                      {
-                        column.selected
-                        && <i
-                          class="el-icon-check"
-                        />
-                      }
-                      {
-                        !column.selected
-                        && <i
-                          class="el-icon-check invisible"
-                        />
-                      }
-                      <span>{column.label}</span>
-                    </div>
-                  })
-                }
-              </div>
-
-            </Popover>
-
-            <Popover trigger="hover">
-              <div slot="reference">
-                {
-                  state.isExporting
-                && totalCount > 5000
-                && <ProgressButton
-                  class="export-btn"
-                  width={130}
-                  height={40}
-                  percentage={state.exportProgress * 100}
-                  onClick={abortExport}
+            <div class="flex w-full items-center justify-end flex-wrap">
+              <Popover class="mt-1">
+                <Button
+                  slot="reference"
+                  class="select-btn-wrapper relative"
                 >
-                  Cancel
-                </ProgressButton>
-                }
-                {
-                  !(state.isExporting
-                  && totalCount > 5000)
-                && <Button
-                  class="export-btn"
-                  disabled={state.isExporting}
-                  onClick={startExport}
-                >
-                  Export to CSV
+                  Columns
+                  <i class="el-icon-arrow-down select-btn-icon" />
                 </Button>
+                <div
+                  class="cursor-pointer select-none"
+                >
+                  {
+                    Object.values(state.columns).map((column: any) => {
+                      if (column.hide) {
+                        return null
+                      }
+                      return <div onClick={() => { handleSelectCol(column.src) }}
+                      >
+                        {
+                          column.selected
+                          && <i
+                            class="el-icon-check"
+                          />
+                        }
+                        {
+                          !column.selected
+                          && <i
+                            class="el-icon-check invisible"
+                          />
+                        }
+                        <span>{column.label}</span>
+                      </div>
+                    })
+                  }
+                </div>
+
+              </Popover>
+              <Popover trigger="hover">
+                <div slot="reference"
+                  class="select-btn-wrapper ml-2 mt-1">
+                  {
+                    state.isExporting
+                    && totalCount > 5000
+                    && <ProgressButton
+                      class="export-btn"
+                      width={146}
+                      height={42}
+                      percentage={state.exportProgress * 100}
+                      onClick={abortExport}
+                    >
+                      Cancel
+                    </ProgressButton>
+                  }
+                  {
+                    !(state.isExporting
+                      && totalCount > 5000)
+                    && <Button
+                      class="export-btn select-btn-wrapper"
+                      width={146}
+                      height={42}
+                      disabled={state.isExporting}
+                      onClick={startExport}
+                    >
+                      Export to CSV
+                    </Button>
+                  }
+                </div>
+
+                Documentation for the CSV export is available{' '}
+                <a
+                  href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
+                  rel="noopener noreferrer nofollow"
+                  target="_blank"
+                >
+                  here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
+                </a>
+              </Popover>
+
+              <div
+                class="ml-2 mt-1"
+              >
+                {
+                  state.isFullScreen
+                  && <Button
+                    class="full-screen-btn"
+                    onClick={handleFullScreenChange}
+                  >
+                    <FullScreen
+                      class="full-screen-icon"
+                    />
+                  </Button>
+                }
+                {
+                  !state.isFullScreen
+                  && <Button
+                    class="full-screen-btn"
+                    onClick={handleFullScreenChange}
+                  >
+                    <ExitFullScreen
+                      class="full-screen-icon"
+                    />
+                  </Button>
                 }
               </div>
-
-              Documentation for the CSV export is available{' '}
-              <a
-                href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
-                rel="noopener noreferrer nofollow"
-                target="_blank"
-              >
-                here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
-              </a>
-            </Popover>
+            </div>
           </div>
         </div>
       )
