@@ -1212,15 +1212,12 @@ export default Vue.extend({
         ...(includeChemMods ? ['chemMod'] : []),
         ...(includeNeutralLosses ? ['neutralLoss'] : []),
         'ion', 'mz', 'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
-        'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity']
+        'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity', 'isomers', 'isobars']
       if (includeColoc) {
         columns.push('colocalizationCoeff')
       }
       if (includeOffSample) {
         columns.push('offSample', 'rawOffSampleProb')
-      }
-      if (includeIsomers) {
-        columns.push('isomerIons')
       }
       if (includeIsobars) {
         columns.push('isobarIons')
@@ -1252,15 +1249,14 @@ export default Vue.extend({
           isotopeImages[0] && isotopeImages[0].minIntensity,
           isotopeImages[0] && isotopeImages[0].maxIntensity,
           isotopeImages[0] && isotopeImages[0].totalIntensity,
+          isomers.length + possibleCompounds.length,
+          isobars.length,
         ]
         if (includeColoc) {
           cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff)
         }
         if (includeOffSample) {
           cells.push(offSample, offSampleProb)
-        }
-        if (includeIsomers) {
-          cells.push(formatCsvTextArray(isomers.map(isomer => isomer.ion)))
         }
         if (includeIsobars) {
           cells.push(formatCsvTextArray(isobars.map(isobar => isobar.ion)))
