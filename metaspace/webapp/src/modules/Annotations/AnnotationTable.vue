@@ -260,17 +260,28 @@
       </el-table-column>
 
       <el-table-column
-        v-if="!hidden('Isos')"
+        v-if="!hidden('isomers')"
         key="isomers"
         property="isomers"
-        label="Isomers/Isobars"
-        min-width="120"
+        label="Isomers"
+        min-width="90"
+        sortable="custom"
       >
         <template slot-scope="props">
-          <i
-            v-if="props.row.isomers.length > 0 || props.row.isobars.length > 0"
-            class="el-icon-warning justify-center w-full flex"
-          />
+          {{ props.row.possibleCompounds.length }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-if="!hidden('isobars')"
+        key="isobars"
+        property="isobars"
+        label="Isobars"
+        min-width="80"
+        sortable="custom"
+      >
+        <template slot-scope="props">
+          {{ props.row.isobars.length }}
         </template>
       </el-table-column>
 
@@ -315,13 +326,13 @@
       </el-table-column>
 
       <el-table-column
-        v-if="!hidden('colocalizationCoeff')"
+        v-if="showColocCol"
         key="colocalizationCoeff"
         property="colocalizationCoeff"
         label="Coloc."
         class-name="coloc-cell"
         sortable="custom"
-        min-width="40"
+        min-width="70"
       >
         <template slot-scope="props">
           <span v-if="props.row.colocalizationCoeff != null">
@@ -395,16 +406,18 @@
               class="cursor-pointer select-none"
               @click="handleColumnClick(i)"
             >
-              <i
-                v-if="column.selected"
-                class="el-icon-check"
-              />
-              <i
-                v-else
-                class="el-icon-check invisible"
-              />
-              <span v-if="column.src.includes('rho')"> &rho;<sub>{{ column.label }}</sub> </span>
-              <span v-else>{{ column.label }}</span>
+              <template v-if="!column.hide">
+                <i
+                  v-if="column.selected"
+                  class="el-icon-check"
+                />
+                <i
+                  v-else
+                  class="el-icon-check invisible"
+                />
+                <span v-if="column.src.includes('rho')"> &rho;<sub>{{ column.label }}</sub> </span>
+                <span v-else>{{ column.label }}</span>
+              </template>
             </div>
           </div>
         </el-popover>
@@ -539,7 +552,8 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_SPECTRAL: 'rhoSpectral',
   ORDER_BY_MAX_INT: 'isotopeImages[0].maxIntensity',
   ORDER_BY_TOTAL_INT: 'isotopeImages[0].totalIntensity',
-  ORDER_BY_ISO: 'isomers',
+  ORDER_BY_ISOMERS: 'isomers',
+  ORDER_BY_ISOBARS: 'isobars',
 }
 const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
 
@@ -630,8 +644,13 @@ export default Vue.extend({
           selected: false,
         },
         {
-          label: 'Isomers/Isobars',
-          src: 'Isos',
+          label: 'Isomers',
+          src: 'isomers',
+          selected: false,
+        },
+        {
+          label: 'Isobars',
+          src: 'isobars',
           selected: false,
         },
         {
@@ -653,6 +672,7 @@ export default Vue.extend({
           label: 'Co-localization coefficient',
           src: 'colocalizationCoeff',
           selected: false,
+          hide: true,
         },
       ],
     }
@@ -765,6 +785,23 @@ export default Vue.extend({
       return (this.queryVariables.filter.colocalizedWith || this.queryVariables.filter.colocalizationSamples)
          && this.$store.getters.filter.datasetIds != null
          && this.$store.getters.filter.datasetIds.length > 1
+    },
+
+    showColocCol() {
+      return this.$route.query.colo !== undefined
+    },
+  },
+  watch: {
+    '$route.query'() {
+      // sort table to update selected sort ui when coloc filter applied from annotation view
+      if (
+        this.orderBy === 'ORDER_BY_COLOCALIZATION'
+        && this.$refs.table
+        && typeof this.$refs.table.sort === 'function') {
+        setTimeout(
+          () => this.$refs.table.sort(SORT_ORDER_TO_COLUMN[this.orderBy], this.sortingOrder.toLowerCase()),
+          0)
+      }
     },
   },
   mounted() {
@@ -1165,7 +1202,6 @@ export default Vue.extend({
       const chunkSize = this.csvChunkSize
       const includeColoc = !this.hidden('colocalizationCoeff')
       const includeOffSample = config.features.off_sample
-      const includeIsomers = config.features.isomers
       const includeIsobars = config.features.isobars
       const includeNeutralLosses = config.features.neutral_losses
       const includeChemMods = config.features.chem_mods
@@ -1175,15 +1211,12 @@ export default Vue.extend({
         ...(includeChemMods ? ['chemMod'] : []),
         ...(includeNeutralLosses ? ['neutralLoss'] : []),
         'ion', 'mz', 'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
-        'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity']
+        'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity', 'isomers', 'isobars']
       if (includeColoc) {
         columns.push('colocalizationCoeff')
       }
       if (includeOffSample) {
         columns.push('offSample', 'rawOffSampleProb')
-      }
-      if (includeIsomers) {
-        columns.push('isomerIons')
       }
       if (includeIsobars) {
         columns.push('isobarIons')
@@ -1215,15 +1248,14 @@ export default Vue.extend({
           isotopeImages[0] && isotopeImages[0].minIntensity,
           isotopeImages[0] && isotopeImages[0].maxIntensity,
           isotopeImages[0] && isotopeImages[0].totalIntensity,
+          possibleCompounds.length,
+          isobars.length,
         ]
         if (includeColoc) {
           cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff)
         }
         if (includeOffSample) {
           cells.push(offSample, offSampleProb)
-        }
-        if (includeIsomers) {
-          cells.push(formatCsvTextArray(isomers.map(isomer => isomer.ion)))
         }
         if (includeIsobars) {
           cells.push(formatCsvTextArray(isobars.map(isobar => isobar.ion)))
