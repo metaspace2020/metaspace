@@ -268,7 +268,7 @@
         sortable="custom"
       >
         <template slot-scope="props">
-          {{ props.row.isomers.length + props.row.possibleCompounds.length }}
+          {{ props.row.possibleCompounds.length }}
         </template>
       </el-table-column>
 
@@ -1248,7 +1248,7 @@ export default Vue.extend({
           isotopeImages[0] && isotopeImages[0].minIntensity,
           isotopeImages[0] && isotopeImages[0].maxIntensity,
           isotopeImages[0] && isotopeImages[0].totalIntensity,
-          isomers.length + possibleCompounds.length,
+          possibleCompounds.length,
           isobars.length,
         ]
         if (includeColoc) {

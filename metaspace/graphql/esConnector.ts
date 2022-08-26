@@ -234,7 +234,7 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
           type: 'number',
           script: {
             lang: 'painless',
-            inline: 'params._source.comps_count_with_isomers',
+            inline: 'params._source.comp_names.size()',
           },
           order: order,
         },
