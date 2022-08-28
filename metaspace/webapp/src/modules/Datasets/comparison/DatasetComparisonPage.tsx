@@ -501,19 +501,19 @@ export default defineComponent<DatasetComparisonPageProps>({
       let offset = 0
       state.isExporting = true
       const annotations = state.annotations.map((annotation: any) => annotation.annotations).flat()
-      const totalCount = annotations.length
+      const totalCount = annotations?.length || 1
       const datasetIds : string[] = Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid || {})
       const annotationsByDsId : any = groupBy(annotations, 'dataset.id')
 
       // generate one file per dataset
-      for (let j : number = 0; j < datasetIds.length; j++) {
+      for (let j : number = 0; j < datasetIds?.length; j++) {
         const datasetId : string = datasetIds[j]
         const currentAnnotations : any[] = annotationsByDsId[datasetId]
         let fileName : string = ''
         let rows = ''
         let fileCols
 
-        for (let i : number = 0; i < currentAnnotations.length; i++) {
+        for (let i : number = 0; i < currentAnnotations?.length; i++) {
           if (!state.isExporting) {
             state.exportProgress = 0
             return
@@ -533,7 +533,7 @@ export default defineComponent<DatasetComparisonPageProps>({
         }
 
         if (state.isExporting) {
-          if (j === datasetIds.length - 1) {
+          if (j === datasetIds?.length - 1) {
             state.isExporting = false
             state.exportProgress = 0
           }
