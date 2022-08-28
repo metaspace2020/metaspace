@@ -30,6 +30,9 @@ import { groupBy, isEqual, uniqBy, uniq } from 'lodash-es'
 import { readNpy } from '../../../lib/npyHandler'
 import { DatasetComparisonModeButton } from './DatasetComparisonModeButton'
 import './DatasetComparisonPage.scss'
+import { getIonImage, loadPngFromUrl } from '../../../lib/ionImageRendering'
+import formatCsvRow, { csvExportIntensityHeader } from '../../../lib/formatCsvRow'
+import FileSaver from 'file-saver'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -61,6 +64,8 @@ interface DatasetComparisonPageState {
   showViewer: boolean
   loadedSnapshot: boolean
   tableFullScreen: boolean
+  isExporting: boolean
+  exportProgress: number
   isLoading: any
   collapse: string[]
   databaseOptions: any
@@ -118,6 +123,8 @@ export default defineComponent<DatasetComparisonPageProps>({
       channelSnapshot: [],
       loadedSnapshot: false,
       tableFullScreen: false,
+      isExporting: false,
+      exportProgress: 0,
       databaseOptions: undefined,
       globalImageSettings: {
         resetViewPort: false,
@@ -437,6 +444,81 @@ export default defineComponent<DatasetComparisonPageProps>({
       state.tableFullScreen = isFullScreen
     }
 
+    const handleAbort = () => {
+      state.isExporting = false
+      state.exportProgress = 0
+    }
+
+    const startIntensitiesExport = async() => {
+      async function formatIntensitiesRow(annotation: any, normalizationData: any) {
+        const { isotopeImages, ionFormula: molFormula, possibleCompounds, adduct, mz, dataset } = annotation
+        const isotopeImage = isotopeImages[0]
+        const ionImagePng = await loadPngFromUrl(isotopeImage.url)
+        const molName = possibleCompounds.map((m: any) => m.name).join(',')
+        const molIds = possibleCompounds.map((m: any) => m.information[0].databaseId).join(',')
+        const finalImage : any = getIonImage(ionImagePng, isotopeImages[0], undefined,
+          undefined, normalizationData)
+        const row = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
+        const { width, height, intensityValues } = finalImage
+        const cols = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
+
+        for (let x = 0; x < width; x++) {
+          for (let y = 0; y < height; y++) {
+            cols.push(`x${x}_y${y}`)
+            const idx = y * width + x
+            row.push(intensityValues[idx])
+          }
+        }
+
+        return { cols, row, dsName: dataset.name }
+      }
+
+      let offset = 0
+      state.isExporting = true
+      const annotations = state.annotations.map((annotation: any) => annotation.annotations).flat()
+      const totalCount = annotations.length
+      const datasetIds : string[] = Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid || {})
+      const annotationsByDsId : any = groupBy(annotations, 'dataset.id')
+
+      // generate one file per dataset
+      for (let j : number = 0; j < datasetIds.length; j++) {
+        const datasetId : string = datasetIds[j]
+        const currentAnnotations : any[] = annotationsByDsId[datasetId]
+        let fileName : string = ''
+        let rows = ''
+        let fileCols
+
+        for (let i : number = 0; i < currentAnnotations.length; i++) {
+          if (!state.isExporting) {
+            state.exportProgress = 0
+            return
+          }
+          const annotation : any = currentAnnotations[i]
+          offset += 1
+          state.exportProgress = offset / totalCount
+          const { cols, row, dsName } = await formatIntensitiesRow(annotation,
+            state.globalImageSettings.isNormalized
+              ? state.normalizationData[annotation.dataset.id] : undefined)
+          if (!fileCols) {
+            fileCols = formatCsvRow(cols)
+            fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${state.globalImageSettings.isNormalized
+              ? '_tic_normalized' : ''}.csv`
+          }
+          rows += formatCsvRow(row)
+        }
+
+        if (state.isExporting) {
+          if (j === datasetIds.length - 1) {
+            state.isExporting = false
+            state.exportProgress = 0
+          }
+          const csv = csvExportIntensityHeader(state.globalImageSettings.isNormalized) + fileCols + rows
+          const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+          FileSaver.saveAs(blob, fileName)
+        }
+      }
+    }
+
     const handleModeChange = (mode: string = 'SINGLE') => {
       $store.commit('setViewerMode', mode)
       if (mode === 'SINGLE') {
@@ -553,7 +635,6 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     const renderImageGallery = (nCols: number, nRows: number) => {
       const { annotations, collapse, currentAnnotationIdx, globalImageSettings, normalizationData, isLoading } = state
-
       return (
         <CollapseItem
           id="annot-img-collapse"
@@ -678,8 +759,12 @@ export default defineComponent<DatasetComparisonPageProps>({
                   rawAnnotations: ion.annotations,
                 }
               })}
+              exportProgress={state.exportProgress}
+              isExporting={state.isExporting}
               onRowChange={handleRowChange}
               onScreen={handleScreenChange}
+              onExport={startIntensitiesExport}
+              onAbort={handleAbort}
             />
           }
           {

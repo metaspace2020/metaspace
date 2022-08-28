@@ -181,12 +181,15 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
             <!---->
             <!----><span>Columns<i class="el-icon-arrow-down select-btn-icon"></i></span></button></div>
       </mock-el-popover>
-      <mock-el-popover trigger="hover">
-        <div slot-key="default">Documentation for the CSV export is available <a href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export" rel="noopener noreferrer nofollow" target="_blank">here<svg data-icon="icon-external-window" class="inline h-4 w-4 -mb-1 fill-current text-gray-800"></svg></a></div>
+      <mock-el-popover popper-class="export-pop" class="select-btn-wrapper ml-2 mt-1">
+        <div slot-key="default">
+          <p class="export-option">Annotations table</p>
+          <p class="export-option">Pixel intensities</p>
+        </div>
         <div slot-key="reference">
-          <div class="select-btn-wrapper ml-2 mt-1"><button type="button" class="el-button el-button--default export-btn select-btn-wrapper" width="146" height="42">
+          <div><button type="button" class="el-button el-button--default select-btn-wrapper relative" width="146" height="42">
               <!---->
-              <!----><span>Export to CSV</span></button></div>
+              <!----><span>Export to CSV<i class="el-icon-arrow-down select-btn-icon"></i></span></button></div>
         </div>
       </mock-el-popover>
       <div class="ml-2 mt-1"><button type="button" class="el-button el-button--default full-screen-btn">

@@ -162,3 +162,13 @@
   width: 100%;
 }
 
+.export-pop{
+  @apply p-0;
+}
+.export-option{
+  @apply cursor-pointer p-4 m-0 select-none;
+
+  &:hover{
+    @apply bg-blue-100;
+  }
+}

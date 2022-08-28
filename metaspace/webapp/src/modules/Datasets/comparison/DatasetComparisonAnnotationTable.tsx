@@ -6,16 +6,17 @@ import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue
 import { findIndex, orderBy } from 'lodash-es'
 import config from '../../../lib/config'
 import FileSaver from 'file-saver'
-import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../../lib/formatCsvRow'
-import ExternalWindowSvg from '../../../assets/inline/refactoring-ui/icon-external-window.svg'
+import formatCsvRow, { csvExportHeader, csvExportIntensityHeader, formatCsvTextArray } from '../../../lib/formatCsvRow'
 import { getLocalStorage, setLocalStorage } from '../../../lib/localStorage'
 import FullScreen from '../../../assets/inline/full_screen.svg'
 import ExitFullScreen from '../../../assets/inline/exit_full_screen.svg'
 
 interface DatasetComparisonAnnotationTableProps {
   annotations: any[]
+  isExporting: boolean
   isLoading: boolean
   filter: any
+  exportProgress: number
 }
 
 interface DatasetComparisonAnnotationTableState {
@@ -121,13 +122,22 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       type: Array,
       default: () => [],
     },
+    exportProgress: {
+      type: Number,
+      default: 0,
+    },
     isLoading: {
       type: Boolean,
+    },
+    isExporting: {
+      type: Boolean,
+      default: false,
     },
   },
   setup: function(props, { emit, root }) {
     const { $store, $route } = root
     const table = ref(null)
+    const exportPop :any = ref<any>(null)
     const pageSizes = [15, 20, 25, 30]
     const state = reactive<DatasetComparisonAnnotationTableState>({
       selectedRow: props.annotations[0],
@@ -206,8 +216,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
           }
         })
       }
-      console.log('localColSettings', localColSettings)
-      console.log('columns', columns)
       state.columns = columns
     }
 
@@ -324,7 +332,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
     const handleCurrentRowChange = (row: any) => {
       if (row) {
-        console.log('row', row)
         state.selectedRow = row
         const currentIndex = findIndex(props.annotations,
           (annotation) => { return row.id === annotation.id })
@@ -593,7 +600,18 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       return 'prev,pager,next,sizes'
     }
 
+    const startIntensitiesExport = async() => {
+      if (exportPop && exportPop.value && typeof exportPop.value.doClose === 'function') {
+        exportPop.value.doClose()
+      }
+      emit('export')
+    }
+
     const startExport = async() => {
+      if (exportPop && exportPop.value && typeof exportPop.value.doClose === 'function') {
+        exportPop.value.doClose()
+      }
+
       const includeColoc = false
       const includeOffSample = config.features.off_sample
       const includeIsomers = config.features.isomers
@@ -684,6 +702,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     const abortExport = () => {
       state.isExporting = false
       state.exportProgress = 0
+      emit('abort')
     }
 
     return () => {
@@ -898,47 +917,50 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                 </div>
 
               </Popover>
-              <Popover trigger="hover">
-                <div slot="reference"
-                  class="select-btn-wrapper ml-2 mt-1">
-                  {
-                    state.isExporting
-                    && totalCount > 5000
-                    && <ProgressButton
-                      class="export-btn"
+              {
+                (state.isExporting || props.isExporting)
+                && <div class="select-btn-wrapper ml-2 mt-1">
+                  <ProgressButton
+                    class="export-btn"
+                    width={146}
+                    height={42}
+                    percentage={(props.exportProgress || state.exportProgress) * 100}
+                    onClick={abortExport}
+                  >
+                    Cancel
+                  </ProgressButton>
+                </div>
+              }
+              {
+                !(state.isExporting || props.isExporting)
+                && <Popover
+                  ref={exportPop}
+                  class="select-btn-wrapper ml-2 mt-1"
+                  popper-class="export-pop">
+                  <div slot="reference">
+                    <Button
+                      class="select-btn-wrapper relative"
                       width={146}
                       height={42}
-                      percentage={state.exportProgress * 100}
-                      onClick={abortExport}
-                    >
-                      Cancel
-                    </ProgressButton>
-                  }
-                  {
-                    !(state.isExporting
-                      && totalCount > 5000)
-                    && <Button
-                      class="export-btn select-btn-wrapper"
-                      width={146}
-                      height={42}
-                      disabled={state.isExporting}
-                      onClick={startExport}
                     >
                       Export to CSV
+                      <i class="el-icon-arrow-down select-btn-icon" />
                     </Button>
-                  }
-                </div>
-
-                Documentation for the CSV export is available{' '}
-                <a
-                  href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
-                  rel="noopener noreferrer nofollow"
-                  target="_blank"
-                >
-                  here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
-                </a>
-              </Popover>
-
+                  </div>
+                  <p
+                    class="export-option"
+                    onClick={startExport}
+                  >
+                    Annotations table
+                  </p>
+                  <p
+                    class="export-option"
+                    onClick={startIntensitiesExport}
+                  >
+                    Pixel intensities
+                  </p>
+                </Popover>
+              }
               <div
                 class="ml-2 mt-1"
               >
