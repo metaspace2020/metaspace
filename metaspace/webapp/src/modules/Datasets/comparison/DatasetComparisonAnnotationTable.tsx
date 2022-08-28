@@ -10,11 +10,13 @@ import formatCsvRow, { csvExportHeader, csvExportIntensityHeader, formatCsvTextA
 import { getLocalStorage, setLocalStorage } from '../../../lib/localStorage'
 import FullScreen from '../../../assets/inline/full_screen.svg'
 import ExitFullScreen from '../../../assets/inline/exit_full_screen.svg'
+import Vue from 'vue'
 
 interface DatasetComparisonAnnotationTableProps {
   annotations: any[]
   isExporting: boolean
   isLoading: boolean
+  coloc: boolean
   filter: any
   exportProgress: number
 }
@@ -49,6 +51,7 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_ISOBARS: 'isobarsCount',
   ORDER_BY_ISOMERS: 'isomersCount',
   ORDER_BY_FDR_MSM: 'fdrlevel',
+  ORDER_BY_COLOCALIZATION: 'colocalizationCoeff',
 }
 
 const COMPARISON_TABLE_COLUMNS = {
@@ -108,7 +111,7 @@ const COMPARISON_TABLE_COLUMNS = {
     },
   colocalizationCoeff:
     {
-      label: 'Co-localization coefficient',
+      label: 'Coloc.',
       src: 'colocalizationCoeff',
       selected: false,
       hide: true,
@@ -130,6 +133,10 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       type: Boolean,
     },
     isExporting: {
+      type: Boolean,
+      default: false,
+    },
+    coloc: {
       type: Boolean,
       default: false,
     },
@@ -238,6 +245,157 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     watch(() => props.isLoading, (newValue, oldValue) => {
       if (newValue === true && oldValue === false) { // check for filter updates to re-render
         initializeTable()
+      }
+    })
+
+    const sortMolecule = (a: any, b: any, order: number) => {
+      const re = /(\D+\d*)/i
+      const reA = /[^a-zA-Z]/g
+      const reN = /[^0-9]/g
+      let aFormula = a.ionFormula
+      let bFormula = b.ionFormula
+      let aMatch = aFormula.match(re)
+      let bMatch = bFormula.match(re)
+      let aMolecule = aMatch[1]
+      let bMolecule = bMatch[1]
+
+      while (aFormula && bFormula && aMolecule === bMolecule) { // if equal evaluate next molecule until not equal
+        aFormula = aFormula.substring(aMatch.length + 1, aFormula.length)
+        bFormula = bFormula.substring(bMatch.length + 1, bFormula.length)
+        aMatch = aFormula.match(re)
+        bMatch = bFormula.match(re)
+
+        if (!bMatch) { // return shortest as first, if different matches are over
+          return -(order)
+        } else if (!aMatch) {
+          return order
+        }
+
+        aMolecule = aMatch[1]
+        bMolecule = bMatch[1]
+      }
+
+      const aA = aMolecule.replace(reA, '')
+      const bA = bMolecule.replace(reA, '')
+
+      if (aA === bA) {
+        const aN = parseInt(aMolecule.replace(reN, ''), 10)
+        const bN = parseInt(bMolecule.replace(reN, ''), 10)
+        return aN === bN ? 0 : aN > bN ? (order) : -(order)
+      } else {
+        return aA > bA ? order : -(order)
+      }
+    }
+
+    const handleSortFormula = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        sortMolecule(a, b, order === 'ascending' ? 1 : -1)))
+    }
+
+    const handleSortMZ = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.mz - b.mz)))
+    }
+
+    const handleSortIntensity = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.maxIntensity - b.maxIntensity)))
+    }
+
+    const handleSortIsobars = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.isobarsCount - b.isobarsCount)))
+    }
+
+    const handleSortIsomers = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.isomersCount - b.isomersCount)))
+    }
+
+    const handleSortColoc = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.colocalizationCoeff - b.colocalizationCoeff)))
+    }
+
+    const handleSortMSM = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.msmScore - b.msmScore)))
+    }
+    const handleSortAdduct = (order: string) => {
+      state.processedAnnotations = computed(() =>
+        orderBy(props.annotations, [(annotation: any) => annotation.adduct.toLowerCase()
+          .replace('+', '').replace('-', '')], [order === 'ascending'
+          ? 'asc' : 'desc']))
+    }
+
+    const handleSortDsCount = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.datasetcount - b.datasetcount)))
+    }
+
+    const handleSortFdr = (order: string) => {
+      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
+        (order === 'ascending' ? 1 : -1) * (a.fdrLevel - b.fdrLevel)))
+    }
+
+    const handleSortChange = (settings: any, setCurrentRow: boolean = true) => {
+      const { prop, order } = settings
+      if (!order) {
+        state.processedAnnotations = computed(() => props.annotations)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_FORMULA) {
+        handleSortFormula(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_ADDUCT) {
+        handleSortAdduct(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_MSM) {
+        handleSortMSM(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM) {
+        handleSortFdr(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_DS_COUNT) {
+        handleSortDsCount(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_MZ) {
+        handleSortMZ(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_INTENSITY) {
+        handleSortIntensity(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_ISOBARS) {
+        handleSortIsobars(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_ISOMERS) {
+        handleSortIsomers(order)
+      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_COLOCALIZATION) {
+        handleSortColoc(order)
+      }
+
+      $store.commit('setSortOrder', {
+        by: prop,
+        dir: order?.toUpperCase(),
+      })
+
+      if (setCurrentRow) {
+        state.selectedRow = state.processedAnnotations[0]
+        onPageChange(1)
+      }
+    }
+
+    watch(() => props.coloc, (newValue, oldValue) => {
+      if (props.coloc) {
+        Vue.set(state, 'columns', {
+          ...state.columns,
+          colocalizationCoeff: {
+            ...state.columns.colocalizationCoeff,
+            hide: false,
+            selected: true,
+          },
+        })
+        setLocalStorage('comparisonTableCols', state.columns)
+      } else {
+        Vue.set(state, 'columns', {
+          ...state.columns,
+          colocalizationCoeff: {
+            ...state.columns.colocalizationCoeff,
+            hide: true,
+            selected: false,
+          },
+        })
+        setLocalStorage('comparisonTableCols', state.columns)
       }
     })
 
@@ -351,127 +509,6 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       }
     }
 
-    const sortMolecule = (a: any, b: any, order: number) => {
-      const re = /(\D+\d*)/i
-      const reA = /[^a-zA-Z]/g
-      const reN = /[^0-9]/g
-      let aFormula = a.ionFormula
-      let bFormula = b.ionFormula
-      let aMatch = aFormula.match(re)
-      let bMatch = bFormula.match(re)
-      let aMolecule = aMatch[1]
-      let bMolecule = bMatch[1]
-
-      while (aFormula && bFormula && aMolecule === bMolecule) { // if equal evaluate next molecule until not equal
-        aFormula = aFormula.substring(aMatch.length + 1, aFormula.length)
-        bFormula = bFormula.substring(bMatch.length + 1, bFormula.length)
-        aMatch = aFormula.match(re)
-        bMatch = bFormula.match(re)
-
-        if (!bMatch) { // return shortest as first, if different matches are over
-          return -(order)
-        } else if (!aMatch) {
-          return order
-        }
-
-        aMolecule = aMatch[1]
-        bMolecule = bMatch[1]
-      }
-
-      const aA = aMolecule.replace(reA, '')
-      const bA = bMolecule.replace(reA, '')
-
-      if (aA === bA) {
-        const aN = parseInt(aMolecule.replace(reN, ''), 10)
-        const bN = parseInt(bMolecule.replace(reN, ''), 10)
-        return aN === bN ? 0 : aN > bN ? (order) : -(order)
-      } else {
-        return aA > bA ? order : -(order)
-      }
-    }
-
-    const handleSortFormula = (order: string) => {
-      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
-        sortMolecule(a, b, order === 'ascending' ? 1 : -1)))
-    }
-
-    const handleSortMZ = (order: string) => {
-      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.mz - b.mz)))
-    }
-
-    const handleSortIntensity = (order: string) => {
-      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.maxIntensity - b.maxIntensity)))
-    }
-
-    const handleSortIsobars = (order: string) => {
-      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.isobarsCount - b.isobarsCount)))
-    }
-
-    const handleSortIsomers = (order: string) => {
-      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.isomersCount - b.isomersCount)))
-    }
-
-    const handleSortMSM = (order: string) => {
-      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.msmScore - b.msmScore)))
-    }
-    const handleSortAdduct = (order: string) => {
-      state.processedAnnotations = computed(() =>
-        orderBy(props.annotations, [(annotation: any) => annotation.adduct.toLowerCase()
-          .replace('+', '').replace('-', '')], [order === 'ascending'
-          ? 'asc' : 'desc']))
-    }
-
-    const handleSortDsCount = (order: string) => {
-      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.datasetcount - b.datasetcount)))
-    }
-
-    const handleSortFdr = (order: string) => {
-      state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.fdrLevel - b.fdrLevel)))
-    }
-
-    const handleSortChange = (settings: any, setCurrentRow: boolean = true) => {
-      const { prop, order } = settings
-
-      if (!order) {
-        state.processedAnnotations = computed(() => props.annotations)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_FORMULA) {
-        handleSortFormula(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_ADDUCT) {
-        handleSortAdduct(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_MSM) {
-        handleSortMSM(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM) {
-        handleSortFdr(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_DS_COUNT) {
-        handleSortDsCount(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_MZ) {
-        handleSortMZ(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_INTENSITY) {
-        handleSortIntensity(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_ISOBARS) {
-        handleSortIsobars(order)
-      } else if (prop === SORT_ORDER_TO_COLUMN.ORDER_BY_ISOMERS) {
-        handleSortIsomers(order)
-      }
-
-      $store.commit('setSortOrder', {
-        by: prop,
-        dir: order?.toUpperCase(),
-      })
-
-      if (setCurrentRow) {
-        state.selectedRow = state.processedAnnotations[0]
-        onPageChange(1)
-      }
-    }
-
     const onPageSizeChange = (newSize: number) => {
       state.pageSize = newSize
     }
@@ -552,6 +589,22 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       </div>
     }
 
+    const renderMaxColocHeader = () => {
+      return <div class="msm-header">
+        Best {state.columns.colocalizationCoeff?.label}
+        <Popover
+          trigger="hover"
+          placement="right"
+        >
+          <i
+            slot="reference"
+            class="el-icon-question metadata-help-icon ml-1"
+          />
+          Highest {state.columns.colocalizationCoeff?.label} among the datasets.
+        </Popover>
+      </div>
+    }
+
     const formatAnnotation = (row: any) => {
       return <AnnotationTableMolName annotation={row} highlightByIon/>
     }
@@ -581,7 +634,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
               : fdrLevel <= 0.201 ? 'fdr-20'
                 : 'fdr-50'
       const colocClass =
-        colocalizationCoeff == null ? ''
+        (colocalizationCoeff === null || colocalizationCoeff === 0) ? ''
           : colocalizationCoeff >= 0.949 ? 'coloc-95'
             : colocalizationCoeff >= 0.899 ? 'coloc-90'
               : colocalizationCoeff >= 0.799 ? 'coloc-80'
@@ -828,6 +881,18 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                 minWidth="200"
                 renderHeader={renderMaxIntensityHeader}
                 formatter={(row: any) => formatMaxIntensity(row)}
+              />
+            }
+            {
+              isColSelected('colocalizationCoeff')
+              && <TableColumn
+                key="colocalizationCoeff"
+                property="colocalizationCoeff"
+                label={state.columns.colocalizationCoeff?.label}
+                class-name="coloc-cell"
+                sortable="custom"
+                minWidth="140"
+                renderHeader={renderMaxColocHeader}
               />
             }
             {

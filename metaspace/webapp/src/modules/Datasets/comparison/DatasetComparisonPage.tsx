@@ -1,4 +1,4 @@
-import { Collapse, CollapseItem } from '../../../lib/element-ui'
+import { Button, Collapse, CollapseItem, Popover } from '../../../lib/element-ui'
 import {
   computed,
   defineComponent,
@@ -26,13 +26,15 @@ import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/Cand
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import { DatasetComparisonShareLink } from './DatasetComparisonShareLink'
-import { groupBy, isEqual, uniqBy, uniq } from 'lodash-es'
+import { groupBy, isEqual, uniqBy, uniq, omit } from 'lodash-es'
 import { readNpy } from '../../../lib/npyHandler'
 import { DatasetComparisonModeButton } from './DatasetComparisonModeButton'
 import './DatasetComparisonPage.scss'
 import { getIonImage, loadPngFromUrl } from '../../../lib/ionImageRendering'
 import formatCsvRow, { csvExportIntensityHeader } from '../../../lib/formatCsvRow'
 import FileSaver from 'file-saver'
+import FilterIcon from '../../../assets/inline/filter.svg'
+import { ANNOTATION_SPECIFIC_FILTERS } from '../../Filters/filterSpecs'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -74,6 +76,7 @@ interface DatasetComparisonPageState {
   rawAnnotations: any
   processedAnnotations: any
   channelSnapshot: any
+  coloc: boolean
 }
 
 const channels: any = {
@@ -146,6 +149,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       refsLoaded: false,
       showViewer: false,
       isLoading: false,
+      coloc: false,
       normalizationData: {},
       offset: 0,
       rawAnnotations: [],
@@ -317,6 +321,12 @@ export default defineComponent<DatasetComparisonPageProps>({
       $store.watch((_, getters) => [getters.gqlAnnotationFilter,
         $store.getters.gqlDatasetFilter, $store.getters.gqlColocalizationFilter, $store.getters.ftsQuery],
       (filter, previousFilter) => {
+        if (filter[0].colocalizedWith) {
+          state.coloc = true
+        } else {
+          state.coloc = false
+        }
+
         if (state.annotations && !isEqual(filter, previousFilter)) {
           state.offset = 0
           annotationQueryOptions.enabled = true
@@ -423,6 +433,21 @@ export default defineComponent<DatasetComparisonPageProps>({
     const handleTemplateChange = (dsId: string) => {
       state.globalImageSettings.selectedLockTemplate = dsId
       $store.commit('setLockTemplate', dsId)
+    }
+
+    const filterColocalized = () => {
+      const { annotations, currentAnnotationIdx } = state
+      const selectedAnnotation = annotations && annotations[currentAnnotationIdx]
+      state.coloc = true
+
+      $store.commit('updateFilter', {
+        ...omit($store.getters.filter, ANNOTATION_SPECIFIC_FILTERS),
+        colocalizedWith: selectedAnnotation?.ion,
+      })
+      $store.commit('setSortOrder', {
+        by: 'colocalization',
+        dir: 'descending',
+      })
     }
 
     const handleIntensitiesChange = (intensities: [number | undefined, number | undefined]) => {
@@ -665,6 +690,23 @@ export default defineComponent<DatasetComparisonPageProps>({
             class="absolute top-0 right-0 mt-2 mr-2 dom-to-image-hidden"
             domNode={gridNode.value}
           />
+          <Popover
+            trigger="hover"
+            placement="bottom"
+          >
+            <div slot='reference' class='coloc-filter-wrapper dom-to-image-hidden'>
+              <Button
+                class="w-5 h-5 button-reset av-icon-button"
+                title="Show in list"
+                onClick={filterColocalized}
+              >
+                <FilterIcon class="w-5 h-5 fill-current"/>
+              </Button>
+            </div>
+            <span>
+              Filter by colocalized annotations
+            </span>
+          </Popover>
           <div class='dataset-comparison-grid' ref={gridNode}>
             {
               collapse.includes('images')
@@ -754,11 +796,13 @@ export default defineComponent<DatasetComparisonPageProps>({
                   isobarsCount: ion.annotations[0].isobars.length,
                   maxIntensity: Math.max(...ion.annotations.map((annot: any) => annot.isotopeImages[0].maxIntensity)),
                   msmScore: Math.max(...ion.annotations.map((annot: any) => annot.msmScore)),
+                  colocalizationCoeff: Math.max(...ion.annotations.map((annot: any) => annot.colocalizationCoeff)),
                   fdrlevel: Math.min(...ion.annotations.map((annot: any) => annot.fdrlevel)),
                   datasetcount: (ion.datasetIds || []).length,
                   rawAnnotations: ion.annotations,
                 }
               })}
+              coloc={state.coloc}
               exportProgress={state.exportProgress}
               isExporting={state.isExporting}
               onRowChange={handleRowChange}
