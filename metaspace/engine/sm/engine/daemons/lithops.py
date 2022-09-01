@@ -8,7 +8,7 @@ from sm.engine.annotation_lithops.executor import LithopsStalledException
 from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
-from sm.engine.errors import AnnotationError
+from sm.engine.errors import AnnotationError, ImzMLError
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.rest.dataset_manager import DatasetActionPriority
 
@@ -45,6 +45,19 @@ class LithopsDaemon:
 
     # pylint: disable=unused-argument
     def _on_failure(self, msg, e):
+
+        # Stop processing in case of problem with imzML file
+        if isinstance(e, ImzMLError):
+            self._manager.post_to_slack(
+                'bomb',
+                f" [x] Annotation failed, ImzMLError: {json.dumps(msg)}\n```{e.traceback}```",
+            )
+            if 'email' in msg:
+                self._manager.send_failed_email(msg, e.traceback)
+
+            os.kill(os.getpid(), signal.SIGINT)
+            return
+
         exc = format_exc(limit=10)
         # Requeue the message so it retries
         if msg.get('retry_attempt', 0) < 1:
@@ -98,6 +111,8 @@ class LithopsDaemon:
 
             self._manager.set_ds_status(ds, DatasetStatus.FINISHED)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.FINISHED)
+        except ImzMLError:
+            raise
         except LithopsStalledException:
             raise
         except Exception as e:
