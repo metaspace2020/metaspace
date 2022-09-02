@@ -64,7 +64,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
           <col name="el-table_1_column_5" width="120">
         </colgroup>
         <tbody>
-          <tr class="el-table__row fdr-5 ">
+          <tr class="el-table__row fdr-5 coloc-50">
             <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
               <div class="cell">
                 <div class="cell-wrapper">
@@ -101,7 +101,7 @@ exports[`DatasetComparisonAnnotationTable it should match snapshot 1`] = `
               <div class="cell"><span>5%</span></div>
             </td>
           </tr>
-          <tr class="el-table__row el-table__row--striped fdr-5 ">
+          <tr class="el-table__row el-table__row--striped fdr-5 coloc-50">
             <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
               <div class="cell">
                 <div class="cell-wrapper">

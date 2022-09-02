@@ -6,7 +6,7 @@ import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue
 import { findIndex, orderBy } from 'lodash-es'
 import config from '../../../lib/config'
 import FileSaver from 'file-saver'
-import formatCsvRow, { csvExportHeader, csvExportIntensityHeader, formatCsvTextArray } from '../../../lib/formatCsvRow'
+import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../../lib/formatCsvRow'
 import { getLocalStorage, setLocalStorage } from '../../../lib/localStorage'
 import FullScreen from '../../../assets/inline/full_screen.svg'
 import ExitFullScreen from '../../../assets/inline/exit_full_screen.svg'
@@ -51,7 +51,7 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_ISOBARS: 'isobarsCount',
   ORDER_BY_ISOMERS: 'isomersCount',
   ORDER_BY_FDR_MSM: 'fdrlevel',
-  ORDER_BY_COLOCALIZATION: 'colocalizationCoeff',
+  ORDER_BY_COLOCALIZATION: 'colocalization',
 }
 
 const COMPARISON_TABLE_COLUMNS = {
@@ -109,10 +109,10 @@ const COMPARISON_TABLE_COLUMNS = {
       src: 'fdrlevel',
       selected: true,
     },
-  colocalizationCoeff:
+  colocalization:
     {
       label: 'Coloc.',
-      src: 'colocalizationCoeff',
+      src: 'colocalization',
       selected: false,
       hide: true,
     },
@@ -143,7 +143,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
   },
   setup: function(props, { emit, root }) {
     const { $store, $route } = root
-    const table = ref(null)
+    const table : any = ref(null)
     const exportPop :any = ref<any>(null)
     const pageSizes = [15, 20, 25, 30]
     const state = reactive<DatasetComparisonAnnotationTableState>({
@@ -314,7 +314,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
     const handleSortColoc = (order: string) => {
       state.processedAnnotations = computed(() => props.annotations.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a.colocalizationCoeff - b.colocalizationCoeff)))
+        (order === 'ascending' ? 1 : -1) * (a.colocalization - b.colocalization)))
     }
 
     const handleSortMSM = (order: string) => {
@@ -375,27 +375,46 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       }
     }
 
+    const forceSortUiUpdate = (order: string, prop: string) => {
+      setTimeout(() => {
+        handleSortChange({ order: order, prop: prop })
+        Vue.nextTick()
+        if (
+          table.value
+          && typeof table.value.sort === 'function') {
+          table.value.sort(prop, order)
+        }
+      }, 1000)
+    }
+
     watch(() => props.coloc, (newValue, oldValue) => {
       if (props.coloc) {
         Vue.set(state, 'columns', {
           ...state.columns,
-          colocalizationCoeff: {
-            ...state.columns.colocalizationCoeff,
+          colocalization: {
+            ...state.columns.colocalization,
             hide: false,
             selected: true,
           },
         })
         setLocalStorage('comparisonTableCols', state.columns)
+        forceSortUiUpdate('descending', SORT_ORDER_TO_COLUMN.ORDER_BY_COLOCALIZATION)
       } else {
+        const { sort } = $route.query
         Vue.set(state, 'columns', {
           ...state.columns,
-          colocalizationCoeff: {
-            ...state.columns.colocalizationCoeff,
+          colocalization: {
+            ...state.columns.colocalization,
             hide: true,
             selected: false,
           },
         })
         setLocalStorage('comparisonTableCols', state.columns)
+        if (
+          (oldValue && !newValue)
+          || (sort && sort.replace('-', '') === SORT_ORDER_TO_COLUMN.ORDER_BY_COLOCALIZATION)) {
+          forceSortUiUpdate('ascending', SORT_ORDER_TO_COLUMN.ORDER_BY_FDR_MSM)
+        }
       }
     })
 
@@ -591,7 +610,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
 
     const renderMaxColocHeader = () => {
       return <div class="msm-header">
-        Best {state.columns.colocalizationCoeff?.label}
+        Best {state.columns.colocalization?.label}
         <Popover
           trigger="hover"
           placement="right"
@@ -600,7 +619,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
             slot="reference"
             class="el-icon-question metadata-help-icon ml-1"
           />
-          Highest {state.columns.colocalizationCoeff?.label} among the datasets.
+          Highest {state.columns.colocalization?.label} among the datasets.
         </Popover>
       </div>
     }
@@ -620,13 +639,18 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
     const formatFDR = (row: any) => {
       return row.fdrLevel ? <span>{Math.round(row.fdrLevel * 100)}%</span> : <span>&mdash;</span>
     }
+
     const formatMaxIntensity = (row: any) => {
       return <span>{row.maxIntensity?.toFixed(1)}</span>
     }
 
+    const formatColoc = (row: any) => {
+      return <span>{row.colocalization?.toFixed(2)}</span>
+    }
+
     const getRowClass = (info: any) => {
       const { row } = info
-      const { fdrLevel, colocalizationCoeff } = row
+      const { fdrLevel, colocalization } = row
       const fdrClass =
         fdrLevel == null ? 'fdr-null'
           : fdrLevel <= 0.051 ? 'fdr-5'
@@ -634,10 +658,10 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
               : fdrLevel <= 0.201 ? 'fdr-20'
                 : 'fdr-50'
       const colocClass =
-        (colocalizationCoeff === null || colocalizationCoeff === 0) ? ''
-          : colocalizationCoeff >= 0.949 ? 'coloc-95'
-            : colocalizationCoeff >= 0.899 ? 'coloc-90'
-              : colocalizationCoeff >= 0.799 ? 'coloc-80'
+        (colocalization === null || colocalization === 0) ? ''
+          : colocalization >= 0.949 ? 'coloc-95'
+            : colocalization >= 0.899 ? 'coloc-90'
+              : colocalization >= 0.799 ? 'coloc-80'
                 : 'coloc-50'
 
       return `${fdrClass} ${colocClass}`
@@ -681,7 +705,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
         'ion', 'mz', 'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
         'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity']
       if (includeColoc) {
-        columns.push('colocalizationCoeff')
+        columns.push('colocalization')
       }
       if (includeOffSample) {
         columns.push('offSample', 'rawOffSampleProb')
@@ -704,7 +728,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
           dataset, sumFormula, adduct, chemMod, neutralLoss, ion, mz,
           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
           isotopeImages, isomers, isobars,
-          offSample, offSampleProb, colocalizationCoeff,
+          offSample, offSampleProb, colocalization,
         } = row
         const cells = [
           dataset.groupApproved && dataset.group ? dataset.group.name : '',
@@ -722,7 +746,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
           isotopeImages[0] && isotopeImages[0].totalIntensity,
         ]
         if (includeColoc) {
-          cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff)
+          cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalization)
         }
         if (includeOffSample) {
           cells.push(offSample, offSampleProb)
@@ -884,15 +908,16 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
               />
             }
             {
-              isColSelected('colocalizationCoeff')
+              isColSelected('colocalization')
               && <TableColumn
-                key="colocalizationCoeff"
-                property="colocalizationCoeff"
-                label={state.columns.colocalizationCoeff?.label}
+                key="colocalization"
+                property="colocalization"
+                label={state.columns.colocalization?.label}
                 class-name="coloc-cell"
                 sortable="custom"
                 minWidth="140"
                 renderHeader={renderMaxColocHeader}
+                formatter={(row: any) => formatColoc(row)}
               />
             }
             {
