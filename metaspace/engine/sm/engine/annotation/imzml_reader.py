@@ -138,12 +138,15 @@ class FSImzMLReader(ImzMLReader):
 
 class LithopsImzMLReader(ImzMLReader):
     def __init__(self, storage: Storage, imzml_cobject: CloudObject, ibd_cobject: CloudObject):
-        imzml_parser = ImzMLParser(
-            storage.get_cloudobject(imzml_cobject, stream=True),
-            ibd_file=None,
-            parse_lib='ElementTree',
-            include_spectra_metadata=METADATA_FIELDS,
-        )
+        try:
+            imzml_parser = ImzMLParser(
+                storage.get_cloudobject(imzml_cobject, stream=True),
+                ibd_file=None,
+                parse_lib='ElementTree',
+                include_spectra_metadata=METADATA_FIELDS,
+            )
+        except Exception as e:
+            raise ImzMLError(format_exc()) from e
 
         self._ibd_cobject = ibd_cobject
         self.imzml_reader = imzml_parser.portable_spectrum_reader()
