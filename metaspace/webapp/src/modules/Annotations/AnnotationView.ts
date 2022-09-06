@@ -238,6 +238,15 @@ export default class AnnotationView extends Vue {
      return Object.assign(safeJsonParse(this.annotation.dataset.metadataJson), datasetMetadataExternals)
    }
 
+   get additionalSettings() {
+     try {
+       const configJson = JSON.parse(this.annotation.dataset.configJson)
+       return configJson
+     } catch (e) {
+       return {}
+     }
+   }
+
    get pixelSizeX() {
      if (this.metadata.MS_Analysis != null
        && this.metadata.MS_Analysis.Pixel_Size != null) {

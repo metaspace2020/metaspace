@@ -20,7 +20,7 @@ import { getLocalStorage, setLocalStorage } from '../lib/localStorage'
 
 export default Vue.extend({
   name: 'DatasetInfo',
-  props: ['metadata', 'expandedKeys', 'currentUser'],
+  props: ['metadata', 'expandedKeys', 'currentUser', 'additionalSettings'],
   data() {
     return {
       expandedTreeNodes: getLocalStorage('expandedTreeNodes') || [],
@@ -53,6 +53,12 @@ export default Vue.extend({
 
     treeData() {
       const metadata = this.metadata
+      const {
+        image_generation: imageGeneration, isotope_generation: isotopeGeneration,
+        analysis_version: analysisVersion,
+      } = (this.additionalSettings || {})
+      const { chem_mods: chemMods, adducts, neutral_losses: neutralLosses } = (isotopeGeneration || {})
+
       delete metadata.Additional_Information
       const schemaBasedVals = this.objToTreeNode(null, metadata, this.schema)
       // The current user may be allowed by the API to see the submitter & PI's email address due to being members
@@ -65,6 +71,23 @@ export default Vue.extend({
       const dataManagementChilds = [
         { id: 'Submitter', label: `Submitter: ${submitter}` },
       ]
+      const annotationSettingsChildren = [
+        { id: 'AnalysisVersion', label: `Analysis version: ${this.getAnalysisVersion(analysisVersion)}` },
+        { id: 'PPM', label: `m/z tolerance (ppm): ${imageGeneration?.ppm}` },
+      ]
+
+      if (Array.isArray(adducts) && adducts.length > 0) {
+        annotationSettingsChildren.push({ id: 'Adducts', label: `Adducts: ${adducts.join(', ')}` })
+      }
+
+      if (Array.isArray(neutralLosses) && neutralLosses.length > 0) {
+        annotationSettingsChildren.push({ id: 'NeutralLosses', label: `Neutral losses: ${neutralLosses.join(', ')}` })
+      }
+
+      if (Array.isArray(chemMods) && chemMods.length > 0) {
+        annotationSettingsChildren.push({ id: 'ChemMods', label: `Chemical modifications: ${chemMods.join(', ')}` })
+      }
+
       if (this.dsPI != null) {
         const pi = optionalSuffixInParens(this.dsPI.name, canSeeEmailAddresses ? this.dsPI.email : null)
         dataManagementChilds.push({ id: 'Principal Investigator', label: `Principal Investigator: ${pi}` })
@@ -77,6 +100,11 @@ export default Vue.extend({
         dataManagementChilds.push({ id: 'Projects', label: `Projects: ${allProjects}` })
       }
       schemaBasedVals.push({ id: 'Data Management', label: 'Data Management', children: dataManagementChilds })
+      schemaBasedVals.push({
+        id: 'Annotation settings',
+        label: 'Annotation settings',
+        children: annotationSettingsChildren,
+      })
       return schemaBasedVals
     },
   },
@@ -96,6 +124,17 @@ export default Vue.extend({
         }
       }
       setLocalStorage('expandedTreeNodes', this.expandedTreeNodes)
+    },
+
+    getAnalysisVersion(analysisVersion) {
+      switch (analysisVersion) {
+        case 3:
+          return 'v2 (ML-powered MSM)'
+        case 2:
+          return 'v1.5 (Prototype for higher RPs)'
+        default:
+          return 'v1 (Original MSM)'
+      }
     },
 
     handleNodeExpand(node) {

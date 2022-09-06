@@ -19,6 +19,7 @@ const DatasetItemActions = defineComponent({
     showOverview: { type: Boolean, default: config.features.show_dataset_overview },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     metadata: { type: Object as () => any, required: true },
+    additionalSettings: { type: Object as () => any, default: () => {} },
     currentUser: { type: Object as () => any },
     idx: { type: Number },
   },
@@ -162,7 +163,7 @@ const DatasetItemActions = defineComponent({
     }
 
     return () => {
-      const { dataset, metadata, currentUser } = props
+      const { dataset, metadata, currentUser, additionalSettings } = props
       const description = getDescriptionAsTree()
 
       return (
@@ -176,6 +177,7 @@ const DatasetItemActions = defineComponent({
           >
             <DatasetInfo
               metadata={metadata}
+              additionalSettings={additionalSettings}
               currentUser={currentUser}
             />
             {
