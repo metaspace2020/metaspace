@@ -167,6 +167,18 @@ exports[`DatasetOverviewPage should match snapshot when dataset exist 1`] = `
       </div>
     </div>
     <div class="dataset-overview-holder">
+      <div class="flex flex-wrap relative -m-3">
+        <div class="flex-grow box-border min-w-64 p-3 break-words">
+          <h3 class="m-0 my-2">Additional settings</h3>
+          <ul class="list-none p-0 m-0 max-h-40 overflow-y-auto">
+            <li><b>Analysis version:</b> v2 (ML-powered MSM)</li>
+            <li><b>Adducts:</b> +H</li>
+            <li><b>m/z tolerance (ppm):</b> 3</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="dataset-overview-holder">
       <h1 class="truncate">Projects</h1>
       <div class="flex-grow box-border min-w-64 p-0 break-words">
         <ul class="list-none p-0 py-3 m-0 max-h-40 overflow-y-auto">

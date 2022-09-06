@@ -4,6 +4,7 @@ import { GetDatasetByIdQuery, getDatasetByIdQuery } from '../../../api/dataset'
 import { AnnotationCountTable } from './AnnotationCountTable'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { DatasetMetadataViewer } from './DatasetMetadataViewer'
+import { DatasetConfigViewer } from './DatasetConfigViewer'
 import moment from 'moment'
 import { isEmpty } from 'lodash'
 import VisibilityBadge from '../common/VisibilityBadge'
@@ -72,11 +73,13 @@ const DatasetOverviewPage = defineComponent<Props>({
     return () => {
       const {
         name, submitter, group, projects, annotationCounts, metadataJson, id,
-        isPublic, description, canEdit,
+        isPublic, description, canEdit, configJson,
       } = dataset?.value || {} as any
       const { annotationLabel, detailLabel, projectLabel, inpFdrLvls } = props
       const showImageViewer = false
       const metadata = safeJsonParse(metadataJson) || {}
+      const config = safeJsonParse(configJson) || {}
+
       // eslint-disable-next-line camelcase
       delete metadata?.Submitted_By
       const groupLink = $router.resolve({ name: 'group', params: { groupIdOrSlug: group?.id || '' } }).href
@@ -157,6 +160,12 @@ const DatasetOverviewPage = defineComponent<Props>({
               && <div class='dataset-overview-holder'>
                 <h1 class='truncate'>{detailLabel}</h1>
                 <DatasetMetadataViewer metadata={metadata}/>
+              </div>
+            }
+            {
+              !isEmpty(configJson)
+              && <div class='dataset-overview-holder'>
+                <DatasetConfigViewer data={config}/>
               </div>
             }
             {

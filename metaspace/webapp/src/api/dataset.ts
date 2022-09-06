@@ -52,6 +52,7 @@ export interface DatasetDetailItem {
   condition: string | null;
   growthConditions: string | null;
   metadataJson: string;
+  configJson: string;
   isPublic: boolean;
   molDBs: string[];
   databases: MolecularDB[];
@@ -98,6 +99,7 @@ export const datasetDetailItemFragment =
     condition
     growthConditions
     metadataJson
+    configJson
     isPublic
     databases {
       id
