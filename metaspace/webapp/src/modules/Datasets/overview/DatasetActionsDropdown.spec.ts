@@ -5,7 +5,6 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import { sync } from 'vuex-router-sync'
 import { DatasetActionsDropdown } from './DatasetActionsDropdown'
-import { checkIfHasBrowserFiles } from '../../../api/dataset'
 import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/mockGraphqlClient'
 
 describe('DatasetActionsDropdown', () => {
@@ -97,7 +96,6 @@ describe('DatasetActionsDropdown', () => {
     sync(store, router)
     graphqlWithData()
   })
-
 
   it('it should match snapshot', async() => {
     const wrapper = shallowMount(testHarness, { store, router, apolloProvider, propsData })
