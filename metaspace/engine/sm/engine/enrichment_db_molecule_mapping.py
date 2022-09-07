@@ -1,21 +1,16 @@
-import logging
-import re
-from io import StringIO
-from pathlib import Path
-from typing import List, Optional
 import json
+import logging
+import time
+from io import StringIO
+from typing import List, Tuple
 
 import pandas as pd
 
-from sm.engine.config import SMConfig
-from sm.engine.db import DB
-from sm.engine.errors import SMError
-from sm.engine.storage import get_s3_bucket
-from sm.engine.util import split_s3_path
-
 from sm.engine import enrichment_term
 from sm.engine import molecular_db
-from sm.engine.ion_mapping import find_mol_by_name
+from sm.engine.db import DB
+from sm.engine.errors import SMError
+from sm.engine.ion_mapping import find_all_mol
 
 logger = logging.getLogger('engine')
 
@@ -46,84 +41,48 @@ class EnrichmentDBMoleculeMapping:
         self.molecule_id = molecule_id
         self.molecular_db_id = molecular_db_id
 
-    def __repr__(self):
-        return '{}'.format(self.__dict__)
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'molecule_enriched_name': self.molecule_enriched_name,
-            'formula': self.formula,
-            'enrichment_term_id': self.enrichment_term_id,
-            'molecule_id': self.molecule_id,
-            'molecular_db_id': self.molecular_db_id,
-        }
+def read_files(matching_file_path: str, filter_file_path: str) -> Tuple[dict, set]:
+    # correspondence file between LION_ID and ion names
+    with open(matching_file_path, 'r') as f:
+        matching_enrichment_id_names = json.load(f)
+        matching_enrichment_id_names.pop('all')  # TODO: delete from an original file
 
+    # correspondence file between ? and ?
+    df = pd.read_csv(filter_file_path)
+    filter_terms = set(df['LION_ID'].values)
 
-def create(
-    enrichment_db_id: int = None,
-    db_name: str = None,
-    db_version: str = None,
-    file_path: str = None,
-    filter_file_path: str = None,
-) -> Optional[str]:
-    logger.info(f'Received request: {db_name}')
-    read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file_path)
-    return db_name
+    return matching_enrichment_id_names, filter_terms
 
 
-def read_json_file(db_name, db_version, enrichment_db_id, file_path, filter_file_path):
-    # pylint: disable=too-many-locals
-    try:
-        if re.findall(r'^s3a?://', file_path):
-            bucket_name, key = split_s3_path(file_path)
-            sm_config = SMConfig.get_conf()
-            buffer = get_s3_bucket(bucket_name, sm_config).Object(key).get()['Body']
-        else:
-            buffer = Path(file_path).open()
-        translate_json = json.load(buffer)
-    except ValueError as e:
-        raise MalformedCSV(f'Malformed CSV: {e}') from e
-
-    df = pd.DataFrame(
-        columns=[
-            'molecule_enriched_name',
-            'formula',
-            'enrichment_term_id',
-            'molecule_id',
-            'molecular_db_id',
-        ]
-    )
-    filter_terms = pd.read_csv(filter_file_path)
-    counter = 0
+def preparing_data(
+    db_name: str,
+    db_version: str,
+    enrichment_db_id: int,
+    matching_enrichment_id_names: dict,
+    filter_terms: set,
+) -> pd.DataFrame:
+    """"""
     moldb = molecular_db.find_by_name_version(db_name, db_version)
+    mol_from_db = {
+        mol[2]: {'id': mol[0], 'mol_id': mol[1], 'mol_name': mol[2], 'formula': mol[3]}
+        for mol in find_all_mol(DB(), moldb.id)
+    }
 
-    for enrichment_id in translate_json.keys():
-        if enrichment_id != 'all' and enrichment_id in filter_terms['LION_ID'].values:
+    data = []
+    start = time.time()
+    for enrichment_id, enrichment_names in matching_enrichment_id_names.items():
+        if enrichment_id in filter_terms:
             logger.info(f'Adding term: {enrichment_id}')
             term = enrichment_term.find_by_enrichment_id(enrichment_id, enrichment_db_id)
-            enrichment_names = translate_json[enrichment_id]
-            idx = 0
+
             for name in enrichment_names:
-                logger.info(f'Adding term: {enrichment_id} index: {idx}')
-                try:
-                    mol = find_mol_by_name(DB(), moldb.id, name)
-                    if mol and mol[3] and mol[0]:
-                        df.loc[counter] = [name, mol[3], term.id, mol[0], moldb.id]
-                        counter = counter + 1
-                        idx = idx + 1
-                    if idx > 1000:
-                        break
-                except SMError:
+                mol = mol_from_db.get(name)
+                # TODO: why we check mol.get('id') and mol.get('formula')
+                if mol and mol.get('id') and mol.get('formula'):
+                    data.append((name, mol['formula'], term.id, mol['id'], moldb.id))
+                else:
                     logger.info(f'Term: {enrichment_id} name: {name} not found on database')
-    logger.info(f'Received request: {len(df)}')
-    _import_mappings(df)
-
-    return translate_json
-
-
-def _import_mappings(mappings_df):
-    logger.info(f'importing {len(mappings_df)} mappings')
 
     columns = [
         'molecule_enriched_name',
@@ -132,11 +91,32 @@ def _import_mappings(mappings_df):
         'molecule_id',
         'molecular_db_id',
     ]
+    print(f'Time is {int(time.time() - start)} sec')
+    return pd.DataFrame.from_records(data, columns=columns)
+
+
+def import_mappings(df: pd.DataFrame) -> None:
+    logger.info(f'Importing {len(df)} mappings')
     buffer = StringIO()
-    mappings_df[columns].to_csv(buffer, sep='\t', index=False, header=False)
+    df.to_csv(buffer, sep='\t', index=False, header=False)
     buffer.seek(0)
-    DB().copy(buffer, sep='\t', table='enrichment_db_molecule_mapping', columns=columns)
-    logger.info(f'inserted {len(mappings_df)} mappings')
+    DB().copy(buffer, sep='\t', table='enrichment_db_molecule_mapping', columns=list(df.columns))
+    logger.info(f'Inserted {len(df)} mappings')
+
+
+def create(
+    enrichment_db_id: int,
+    db_name: str,
+    db_version: str,
+    file_path: str,
+    filter_file_path: str,
+) -> None:
+    logger.info(f'Received request: {db_name}')
+    matching_enrichment_id_names, filter_terms = read_files(file_path, filter_file_path)
+    df = preparing_data(
+        db_name, db_version, enrichment_db_id, matching_enrichment_id_names, filter_terms
+    )
+    import_mappings(df)
 
 
 def get_mappings_by_mol_db_id(moldb_id: str) -> List[EnrichmentDBMoleculeMapping]:

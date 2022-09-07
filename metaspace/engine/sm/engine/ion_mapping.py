@@ -21,6 +21,8 @@ MOL_SEL = (
     'WHERE moldb_id = %s AND mol_name = %s LIMIT 1'
 )
 
+MOL_SEL_ALL = 'SELECT id, mol_id, mol_name, formula FROM public.molecule WHERE moldb_id = %s'
+
 
 def get_ion_id_mapping(db, ion_tuples, charge):
     """Get a mapping of ions to ion ids, adding missing ions to the database if necessary
@@ -52,6 +54,10 @@ def get_ion_id_mapping(db, ion_tuples, charge):
         ion_to_id.update((row[1:5], id) for id, row in zip(ids, rows))
 
     return ion_to_id
+
+
+def find_all_mol(db, moldb_id):
+    return db.select(MOL_SEL_ALL, [moldb_id])
 
 
 def find_mol_by_name(db, moldb_id, mol_name):
