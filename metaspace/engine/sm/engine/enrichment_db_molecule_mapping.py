@@ -62,7 +62,6 @@ def preparing_data(
     matching_enrichment_id_names: dict,
     filter_terms: set,
 ) -> pd.DataFrame:
-    """"""
     moldb = molecular_db.find_by_name_version(db_name, db_version)
     mol_from_db = {
         mol[2]: {'id': mol[0], 'mol_id': mol[1], 'mol_name': mol[2], 'formula': mol[3]}
