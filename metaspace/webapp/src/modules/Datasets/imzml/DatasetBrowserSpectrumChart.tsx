@@ -3,7 +3,7 @@ import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
 import {
-  CanvasRenderer,
+  SVGRenderer,
 } from 'echarts/renderers'
 import {
   BarChart,
@@ -21,7 +21,7 @@ import './DatasetBrowserSpectrumChart.scss'
 import moment from 'moment'
 
 use([
-  CanvasRenderer,
+  SVGRenderer,
   BarChart,
   LineChart,
   GridComponent,
@@ -213,6 +213,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             name: 'Unannotated',
             type: 'bar',
             symbol: 'diamond',
+            sampling: 'lttb',
             data: [],
             label: {
               show: true,
