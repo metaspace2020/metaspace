@@ -674,14 +674,15 @@ class GraphQLClient(object):
         resp.raise_for_status()
         return resp.json()
 
-    def create_dataset(self, input_params, ds_id=None):
+    def create_dataset(self, input_params, perform_enrichment=False, ds_id=None):
         query = """
-            mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int, $useLithops: Boolean) {
+            mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int, $useLithops: Boolean, $performEnrichment: Boolean) {
                 createDataset(
                   id: $id,
                   input: $input,
                   priority: $priority,
                   useLithops: $useLithops,
+                  performEnrichment: $performEnrichment,
                 )
             }
         """
@@ -689,6 +690,7 @@ class GraphQLClient(object):
             'id': ds_id,
             'input': input_params,
             'useLithops': True,
+            'performEnrichment': perform_enrichment,
         }
         return self.query(query, variables)['createDataset']
 
@@ -1733,6 +1735,7 @@ class SMInstance(object):
         analysis_version: Optional[int] = None,
         input_path: Optional[str] = None,
         description: Optional[str] = None,
+        perform_enrichment: Optional[bool] = False,
     ) -> str:
         """Submit a dataset for processing in METASPACE.
 
@@ -1760,8 +1763,9 @@ class SMInstance(object):
         :param analysis_version:
         :param input_path: To clone an existing dataset, specify input_path using the value of the
             existing dataset's "s3dir".
-            When input_path is suppled, imzml_fn and ibd_fn can be set to none None.
+            When input_path is suppled, imzml_fn and ibd_fn can be set to None.
         :param description: Optional text to describe the dataset
+        :param perform_enrichment: Optional enable LION for dataset.
 
         :return: The newly created dataset ID
 
@@ -1818,7 +1822,8 @@ class SMInstance(object):
                 'groupId': primary_group_id,
                 'projectIds': project_ids,
                 'isPublic': is_public,
-            }
+            },
+            perform_enrichment=perform_enrichment,
         )
         return json.loads(graphql_response)['datasetId']
 

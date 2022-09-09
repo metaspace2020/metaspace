@@ -1,18 +1,21 @@
-from typing import Dict
 import logging
 import random
+import time
+from typing import Dict
+
 import numpy as np
 import pandas as pd
+
 from sm.engine import enrichment_db_molecule_mapping
 from sm.engine.errors import SMError
 
 logger = logging.getLogger('annotation-pipeline')
 
 
-def run_enrichment(results_dfs: Dict[int, pd.DataFrame]):
+def run_enrichment(results_dfs: Dict[int, pd.DataFrame]) -> Dict[int, pd.DataFrame]:
+    start = time.time()
     bootstrap_hash = {}
     for moldb_id in results_dfs:
-        print(f'Building enrichment data for moldb id {moldb_id}')
         molecules = results_dfs[moldb_id]
         data = []
         for _, row in molecules.iterrows():
@@ -31,8 +34,6 @@ def run_enrichment(results_dfs: Dict[int, pd.DataFrame]):
             data, columns=['formula_adduct', 'molecule_name', 'term_id']
         )
 
-        logger.info('Molecular mappings loaded...')
-
         # bootstrapping
         hash_mol = {}
         for _, row in dataset_metabolites.iterrows():
@@ -44,7 +45,6 @@ def run_enrichment(results_dfs: Dict[int, pd.DataFrame]):
 
         boot_n = 100  # times bootstrapping
         bootstrap_sublist = []
-        logger.info('Bootstraping scenarios...')
         for n in range(boot_n):
             bootstrap_dict_aux = {}
             for _, row in molecules.iterrows():
@@ -55,11 +55,11 @@ def run_enrichment(results_dfs: Dict[int, pd.DataFrame]):
                         [n, ion, row['fdr'], bootstrap_dict_aux[ion]['mol_id']]
                     )
 
-        logger.info('Bootstraping generated...')
-
         bootstrap_hash[moldb_id] = pd.DataFrame(
             bootstrap_sublist,
             columns=['scenario', 'formula_adduct', 'fdr', 'enrichment_db_molecule_mapping_id'],
         )
+
+        logger.info(f'Bootstraping generated for {moldb_id=} - {round(time.time()-start, 3)}s')
 
     return bootstrap_hash

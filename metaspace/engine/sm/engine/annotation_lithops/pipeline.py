@@ -64,7 +64,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         use_db_cache=True,
         use_db_mutex=True,
     ):
-        self.enrichment_data = None
         lithops_config = lithops_config or SMConfig.get_conf()['lithops']
         self.lithops_config = lithops_config
         self._db = DB()
@@ -88,6 +87,8 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.use_db_mutex = use_db_mutex
         self.ds_segm_size_mb = 128
 
+        self.enrichment_data = None
+
     def run_pipeline(
         self, debug_validate=False, use_cache=True, perform_enrichment=False
     ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]], Any]:
@@ -105,8 +106,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.annotate(use_cache=use_cache)
         self.run_fdr(use_cache=use_cache)
         self.prepare_results(use_cache=use_cache)
-
-        logger.info(f'perform_enrichment: {perform_enrichment}')
 
         if perform_enrichment:
             self.run_enrichment(use_cache=use_cache)
