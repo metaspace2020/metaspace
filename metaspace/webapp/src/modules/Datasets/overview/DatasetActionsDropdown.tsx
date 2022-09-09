@@ -198,7 +198,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
             $router.push({
               name: 'dataset-enrichment',
               params: { dataset_id: props.dataset?.id },
-              query: { db_id: '1' },
+              query: { db_id: props.dataset?.databases[0]?.id?.toString() },
             })
           } else {
             handleEnrichmentRequest()

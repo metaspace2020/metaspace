@@ -123,7 +123,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
               <DatasetEnrichmentTable
                 data={data}
                 filename={`${dataset.value?.name}_${databases.value.find((database:any) => database.id
-                  === $store.getters.gqlAnnotationFilter.databaseId).name}_enrichment.csv`}
+                  === $store.getters.gqlAnnotationFilter.databaseId)?.name}_enrichment.csv`}
                 onPageChange={handlePageChange}
                 onSizeChange={handleSizeChange}
                 onSortChange={handleSortChange}
