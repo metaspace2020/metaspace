@@ -245,6 +245,7 @@
           <dataset-info
             v-if="activeSections.includes('metadata')"
             :metadata="metadata"
+            :additional-settings="additionalSettings"
             :current-user="currentUser"
           />
         </el-collapse-item>

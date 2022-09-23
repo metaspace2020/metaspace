@@ -49,6 +49,33 @@ describe('DatasetOverviewPage', () => {
         Detector_Resolving_Power: { mz: 1234, Resolving_Power: 123456 },
       },
     }),
+    configJson: JSON.stringify({
+      database_ids: [
+        1,
+      ],
+      analysis_version: 3,
+      isotope_generation: {
+        adducts: [
+          '+H',
+        ],
+        charge: 1,
+        isocalc_sigma: 0.001238,
+        instrument: 'Orbitrap',
+        n_peaks: 4,
+        neutral_losses: [],
+        chem_mods: [],
+      },
+      fdr: {
+        decoy_sample_size: 20,
+        scoring_model: 'v3_default',
+      },
+      image_generation: {
+        ppm: 3,
+        n_levels: 30,
+        min_px: 1,
+        compute_unused_metrics: false,
+      },
+    }),
     description: JSON.stringify({
       type: 'doc',
       content: [

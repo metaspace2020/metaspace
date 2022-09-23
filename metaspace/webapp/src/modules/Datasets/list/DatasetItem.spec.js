@@ -24,6 +24,9 @@ describe('DatasetItem', () => {
         Detector_Resolving_Power: { mz: 1234, Resolving_Power: 123456 },
       },
     }),
+    configJson: JSON.stringify({
+      fdr: { scoring_model: null },
+    }),
     databases: [
       { name: 'CHEBI', id: 2 },
       { name: 'HMDB-v2.5', id: 6 },
