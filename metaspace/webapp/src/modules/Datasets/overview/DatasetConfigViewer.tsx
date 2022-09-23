@@ -34,22 +34,6 @@ export const DatasetConfigViewer = defineComponent<DatasetConfigViewerProps>({
           <div class="flex-grow box-border min-w-64 p-3 break-words">
             <h3 class='m-0 my-2'>Annotation settings</h3>
             <ul class="list-none p-0 m-0 max-h-40 overflow-y-auto">
-              <li ><b>Analysis version:</b> {getAnalysisVersion(analysisVersion)}</li>
-              {
-                Array.isArray(adducts)
-                && adducts.length > 0
-                && <li ><b>Adducts:</b> {adducts?.join(', ')}</li>
-              }
-              {
-                Array.isArray(neutralLosses)
-                && neutralLosses.length > 0
-                && <li ><b>Neutral losses:</b> {neutralLosses?.join(', ')}</li>
-              }
-              {
-                Array.isArray(chemMods)
-                && chemMods.length > 0
-                && <li ><b>Chemical modifications:</b> {chemMods?.join(', ')}</li>
-              }
               <li ><b>m/z tolerance (ppm):</b> {imageGeneration?.ppm}</li>
             </ul>
           </div>

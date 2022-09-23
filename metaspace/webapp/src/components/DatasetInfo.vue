@@ -54,10 +54,8 @@ export default Vue.extend({
     treeData() {
       const metadata = this.metadata
       const {
-        image_generation: imageGeneration, isotope_generation: isotopeGeneration,
-        analysis_version: analysisVersion,
+        image_generation: imageGeneration,
       } = (this.additionalSettings || {})
-      const { chem_mods: chemMods, adducts, neutral_losses: neutralLosses } = (isotopeGeneration || {})
 
       delete metadata.Additional_Information
       const schemaBasedVals = this.objToTreeNode(null, metadata, this.schema)
@@ -72,21 +70,8 @@ export default Vue.extend({
         { id: 'Submitter', label: `Submitter: ${submitter}` },
       ]
       const annotationSettingsChildren = [
-        { id: 'AnalysisVersion', label: `Analysis version: ${this.getAnalysisVersion(analysisVersion)}` },
         { id: 'PPM', label: `m/z tolerance (ppm): ${imageGeneration?.ppm}` },
       ]
-
-      if (Array.isArray(adducts) && adducts.length > 0) {
-        annotationSettingsChildren.push({ id: 'Adducts', label: `Adducts: ${adducts.join(', ')}` })
-      }
-
-      if (Array.isArray(neutralLosses) && neutralLosses.length > 0) {
-        annotationSettingsChildren.push({ id: 'NeutralLosses', label: `Neutral losses: ${neutralLosses.join(', ')}` })
-      }
-
-      if (Array.isArray(chemMods) && chemMods.length > 0) {
-        annotationSettingsChildren.push({ id: 'ChemMods', label: `Chemical modifications: ${chemMods.join(', ')}` })
-      }
 
       if (this.dsPI != null) {
         const pi = optionalSuffixInParens(this.dsPI.name, canSeeEmailAddresses ? this.dsPI.email : null)
