@@ -1,6 +1,7 @@
 import VisibleIcon from '../assets/inline/refactoring-ui/icon-view-visible.svg'
 import HiddenIcon from '../assets/inline/refactoring-ui/icon-view-hidden.svg'
 import RoiIcon from '../assets/inline/roi-icon.svg'
+import SaveIcon from '../assets/inline/save-icon.svg'
 import { defineComponent, computed, ref, reactive, onMounted, onUnmounted, watch } from '@vue/composition-api'
 import { Button, Input, Popover, Tooltip } from '../lib/element-ui'
 import Vue from 'vue'
@@ -16,6 +17,7 @@ import StatefulIcon from '../components/StatefulIcon.vue'
 
 interface RoiSettingsProps {
   annotation: any,
+  canSave: boolean,
 }
 
 interface RoiSettingsState {
@@ -43,6 +45,7 @@ export default defineComponent<RoiSettingsProps>({
   name: 'RoiSettings',
   props: {
     annotation: { type: Object, default: () => {} },
+    canSave: { type: Boolean, default: true },
   },
   setup(props, { root }) {
     const { $store } = root
@@ -235,6 +238,42 @@ export default defineComponent<RoiSettingsProps>({
       })
     }
 
+    const handleSave = () => {
+      if (!props.canSave) {
+        return
+      }
+
+      Object.keys($store.state.roiInfo).forEach((key: string) => {
+        const roiInfo = $store.state.roiInfo[key]
+        const geoJson : any = {
+          type: 'FeatureCollection',
+          features: [],
+        }
+
+        if (Array.isArray(roiInfo)) {
+          roiInfo.forEach((roi: any) => {
+            if (roi && !roi.isDrawing) {
+              geoJson.features.push({
+                type: 'Feature',
+                properties: {
+                  ...roi,
+                  stroke: roi.rgb,
+                  'stroke-width': 1,
+                  'stroke-opacity': 0,
+                  fill: roi.rgb,
+                  'fill-opacity': 0.4,
+                },
+                geometry: {
+                  type: 'Polygon',
+                  coordinates: roi.coordinates.map((coord: any) => [coord.x, coord.y]),
+                },
+              })
+            }
+          })
+        }
+      })
+    }
+
     const triggerDownload = () => {
       queryOptions.enabled = true
       state.isDownloading = true
@@ -290,20 +329,31 @@ export default defineComponent<RoiSettingsProps>({
           trigger="manual"
         >
           <div class='roi-content'>
-            {
-              roiInfo.length > 0
-              && !state.isDownloading
-              && <Button
-                class="button-reset h-5"
-                icon="el-icon-download"
-                onClick={triggerDownload}/>
-            }
-            {
-              state.isDownloading
-              && <div>
-                <i class="el-icon-loading" />
-              </div>
-            }
+            <div class='roi-options'>
+              {
+                !state.isDownloading
+                  && <Button
+                    class="button-reset roi-download-icon"
+                    icon="el-icon-download"
+                    onClick={triggerDownload}/>
+              }
+              {
+                state.isDownloading
+                  && <div class="button-reset roi-download-icon">
+                    <i class="el-icon-loading" />
+                  </div>
+              }
+              <Button
+                class={`button-reset roi-save-icon-wrapper ${props.canSave ? '' : 'save-disabled'}`}
+                onClick={handleSave}
+              >
+                <StatefulIcon
+                  class='roi-save-icon-wrapper'
+                  active={props.canSave}>
+                  <SaveIcon class='roi-save-icon fill-current'/>
+                </StatefulIcon>
+              </Button>
+            </div>
             {
               roiInfo.map((roi: any, roiIndex: number) => {
                 return (

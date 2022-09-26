@@ -4,6 +4,30 @@ $bgColor: hsl(208, 36%, 96%);
 .roi-content{
   @apply flex flex-col flex-wrap justify-center items-center;
 
+  .roi-options{
+    @apply flex flex-row flex-wrap justify-end items-center w-full pb-1;
+    border-bottom: 1px solid lightgray;
+  }
+
+  .save-disabled{
+    @apply cursor-not-allowed;
+    opacity: 0.5;
+  }
+
+  .roi-save-icon-wrapper{
+    @apply flex justify-center items-center h-6 w-6;
+    margin-left: 3px !important;
+    margin-right: -2px;
+  }
+
+  .roi-save-icon{
+    scale: 0.8;
+  }
+
+  .roi-download-icon{
+    @apply flex justify-center items-center h-6 w-6;
+  }
+
   .roi-label{
     @apply font-bold;
   }
