@@ -65,6 +65,7 @@
         <external-window-svg />
       </stateful-icon>
     </a>
+    <cite-metaspace />
   </content-page>
 </template>
 <script>
@@ -72,6 +73,7 @@ import ContentPage from '../../components/ContentPage.vue'
 import PublicationItem from './PublicationItem'
 import StatefulIcon from '../../components/StatefulIcon.vue'
 import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg'
+import { CiteMetaspace } from './CiteMetaspace'
 
 /*
 Script to parse Paperpile lists
@@ -104,6 +106,7 @@ export default {
     PublicationItem,
     StatefulIcon,
     ExternalWindowSvg,
+    CiteMetaspace,
   },
 }
 </script>
