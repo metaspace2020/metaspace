@@ -15,7 +15,7 @@ from sm.engine.annotation.diagnostics import (
     add_diagnostics,
     extract_job_diagnostics,
 )
-from sm.engine.annotation.enrichment import add_enrichment, DatasetEnrichment, delete_ds_enrichments
+from sm.engine.annotation.enrichment import add_enrichment, delete_ds_enrichments
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
@@ -342,7 +342,7 @@ class ServerAnnotationJob:
             add_diagnostics(diagnostics)
 
             # delete pre calculated enrichments if already exists
-            delete_ds_enrichments(self.ds.id)
+            delete_ds_enrichments(self.ds.id, self.db)
 
             for moldb_id, job_id in moldb_to_job_map.items():
                 logger.debug(f'Storing results for moldb {moldb_id}')
@@ -369,11 +369,7 @@ class ServerAnnotationJob:
                     # get annotations ids to be used later on to speed up enrichment routes
                     annot_ids = search_results.get_annotations_ids(self.db)
                     bootstrap_df = self.enrichment_data[moldb_id]
-                    add_enrichment(
-                        DatasetEnrichment(ds_id=self.ds.id, bootstrap_data=bootstrap_df),
-                        moldb_id,
-                        annot_ids,
-                    )
+                    add_enrichment(self.ds.id, moldb_id, bootstrap_df, annot_ids, self.db)
 
                 update_finished_job(job_id, JobStatus.FINISHED)
         except Exception:

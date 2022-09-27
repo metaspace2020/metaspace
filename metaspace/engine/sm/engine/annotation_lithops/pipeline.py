@@ -188,10 +188,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         )
 
     @use_pipeline_cache
-    def run_enrichment(self):
-        self.enrichment_data = run_enrichment(self.results_dfs)
-
-    @use_pipeline_cache
     def prepare_results(self):
         self.results_dfs, self.png_cobjs = filter_results_and_make_pngs(
             self.executor,
@@ -201,6 +197,10 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.images_df,
             self.imzml_reader,
         )
+
+    @use_pipeline_cache
+    def run_enrichment(self):
+        self.enrichment_data = run_enrichment(self.results_dfs)
 
     def store_images_to_s3(self, ds_id: str):
         """Stores ion images to S3 ImageStorage. Not part of run_pipeline because this is unwanted

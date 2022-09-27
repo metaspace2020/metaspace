@@ -60,7 +60,7 @@ def create(
             'values (%s, %s, %s, %s, %s, %s) RETURNING id'
         )
         # pylint: disable=unbalanced-tuple-unpacking
-        (bootstrap_id,) = DB().insert_return(
+        DB().insert_return(
             enrichment_db_insert,
             rows=[
                 (
@@ -73,8 +73,6 @@ def create(
                 )
             ],
         )
-        enrichment_db = find_by_id(bootstrap_id)
-        return enrichment_db
 
 
 # pylint: disable=redefined-builtin

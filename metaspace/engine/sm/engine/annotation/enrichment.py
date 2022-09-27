@@ -1,51 +1,62 @@
 import logging
-from typing import Any, Union, TypedDict
 from datetime import datetime
-from sm.engine import enrichment_bootstrap
-from sm.engine import dataset_enrichment
+
+import pandas as pd
+
+from sm.engine.db import DB
 
 logger = logging.getLogger('engine')
 
 
-class DatasetEnrichment(TypedDict, total=False):
-    ds_id: str  # required
-    bootstrap_data: Any  # required
-    error: Union[str, None]
+ENRICHMENT_BOOTSTRAP_DEL = 'DELETE FROM enrichment_bootstrap WHERE dataset_id = %s'
+ENRICHMENT_BOOTSTRAP_INS = (
+    'INSERT INTO enrichment_bootstrap '
+    ' (scenario, formula_adduct, fdr, dataset_id, '
+    ' annotation_id, enrichment_db_molecule_mapping_id) '
+    'values (%s, %s, %s, %s, %s, %s)'
+)
+
+DATASET_ENRICHMENT_DEL = 'DELETE FROM dataset_enrichment WHERE dataset_id = %s'
+DATASET_ENRICHMENT_INS = (
+    'INSERT INTO dataset_enrichment (dataset_id, enrichment_db_id, '
+    'molecular_db_id, processing_dt) values (%s, %s, %s, %s)'
+)
 
 
-def add_enrichment(enrichment: DatasetEnrichment, moldb_id: int, annotations: Any):
+def add_enrichment(
+    ds_id: str, moldb_id: int, bootstrap_data: pd.DataFrame, annotations: list, db: DB
+):
     """Add enrichment bootstrap data"""
-
-    ds_id = enrichment['ds_id']
     logger.debug(f'Inserting bootstrap for dataset {ds_id} and database {moldb_id}')
+    logger.debug(f'Size of annotations is {len(annotations)}')
+    logger.debug(f'Type {type(annotations)}, type of element {type(annotations[0])}')
+    logger.debug(annotations[0])
 
-    for _, row in enrichment['bootstrap_data'].iterrows():
-        # get annotation id
-        annotation = [
-            x for x in annotations if x['formula'] + x['adduct'] == row['formula_adduct']
-        ][0]
-        enrichment_bootstrap.create(
-            scenario=row['scenario'],
-            formula_adduct=row['formula_adduct'],
-            fdr=row['fdr'],
-            dataset_id=ds_id,
-            annotation_id=annotation['id'],
-            enrichment_db_molecule_mapping_id=row['enrichment_db_molecule_mapping_id'],
+    data = []
+    annotations_hash = {f'{a["formula"]}{a["adduct"]}': a['id'] for a in annotations}
+    for _, row in bootstrap_data.iterrows():
+        annotation_id = annotations_hash.get(row['formula_adduct'])
+        data.append(
+            (
+                row['scenario'],
+                row['formula_adduct'],
+                row['fdr'],
+                ds_id,
+                annotation_id,
+                row['enrichment_db_molecule_mapping_id'],
+            )
         )
-    logger.debug('Bootstrap inserted')
-    logger.debug(f'Inserting enrichment for dataset {ds_id}')
 
-    dataset_enrichment.create(
-        dataset_id=ds_id,
-        enrichment_db_id=1,
-        molecular_db_id=moldb_id,
-        processing_dt=datetime.now(),
-    )
+    db.insert(ENRICHMENT_BOOTSTRAP_INS, rows=data)
+    logger.debug('Bootstrap inserted')
+
+    logger.debug(f'Inserting enrichment for dataset {ds_id}')
+    db.insert(DATASET_ENRICHMENT_INS, rows=[(ds_id, 1, moldb_id, datetime.now())])
     logger.debug('Enrichment inserted')
 
 
-def delete_ds_enrichments(ds_id: str):
+def delete_ds_enrichments(ds_id: str, db):
     """Delete asssociated enrichment bootstrap"""
 
-    enrichment_bootstrap.delete_by_ds_id(ds_id)
-    dataset_enrichment.delete_by_ds_id(ds_id)
+    db.alter(ENRICHMENT_BOOTSTRAP_DEL, params=(ds_id,))
+    db.alter(DATASET_ENRICHMENT_DEL, params=(ds_id,))
