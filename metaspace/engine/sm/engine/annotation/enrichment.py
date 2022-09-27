@@ -56,7 +56,7 @@ def add_enrichment(
 
 
 def delete_ds_enrichments(ds_id: str, db):
-    """Delete asssociated enrichment bootstrap"""
+    """Delete associated enrichment bootstrap"""
 
     db.alter(ENRICHMENT_BOOTSTRAP_DEL, params=(ds_id,))
     db.alter(DATASET_ENRICHMENT_DEL, params=(ds_id,))
