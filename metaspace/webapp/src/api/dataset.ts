@@ -184,6 +184,14 @@ export const datasetListItemsQuery =
     }
   }`
 
+export const getRoisQuery =
+gql`query ($datasetId: String!) {
+  dataset(id: $datasetId) {
+    id
+    roiJson
+  }
+}`
+
 export const datasetListItemsWithDiagnosticsQuery =
   gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $limit: Int = 10000) {
     allDatasets(offset: 0, limit: $limit, filter: $dFilter, simpleQuery: $query) {

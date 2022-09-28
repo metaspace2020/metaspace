@@ -15,6 +15,7 @@ import isInsidePolygon from '../lib/isInsidePolygon'
 import FileSaver from 'file-saver'
 import StatefulIcon from '../components/StatefulIcon.vue'
 import { addRoiMutation } from '../api/dataset'
+import reportError from '../lib/reportError'
 
 interface RoiSettingsProps {
   annotation: any,
@@ -253,40 +254,42 @@ export default defineComponent<RoiSettingsProps>({
 
       state.isUpdatingRoi = true
 
-      Object.keys($store.state.roiInfo).forEach((key: string) => {
-        const roiInfo = $store.state.roiInfo[key]
-        const geoJson : any = {
-          type: 'FeatureCollection',
-          features: [],
-        }
+      try {
+        Object.keys($store.state.roiInfo).forEach((key: string) => {
+          const roiInfo = $store.state.roiInfo[key]
+          const geoJson : any = {
+            type: 'FeatureCollection',
+            features: [],
+          }
 
-        if (Array.isArray(roiInfo)) {
-          roiInfo.forEach((roi: any) => {
-            if (roi && !roi.isDrawing) {
-              geoJson.features.push({
-                type: 'Feature',
-                properties: {
-                  ...roi,
-                  stroke: roi.rgb,
-                  'stroke-width': 1,
-                  'stroke-opacity': 0,
-                  fill: roi.rgb,
-                  'fill-opacity': 0.4,
-                },
-                geometry: {
-                  type: 'Polygon',
-                  coordinates: roi.coordinates.map((coord: any) => [coord.x, coord.y]),
-                },
-              })
-            }
-          })
-
-          updateRois({ datasetId: props.annotation?.dataset?.id, geoJson })
-          // console.log('geoJson', geoJson)
-        }
-      })
-
-      state.isUpdatingRoi = false
+          if (Array.isArray(roiInfo) && key === props.annotation?.dataset?.id) {
+            roiInfo.forEach((roi: any) => {
+              if (roi && !roi.isDrawing) {
+                geoJson.features.push({
+                  type: 'Feature',
+                  properties: {
+                    ...roi,
+                    stroke: roi.rgb,
+                    'stroke-width': 1,
+                    'stroke-opacity': 0,
+                    fill: roi.rgb,
+                    'fill-opacity': 0.4,
+                  },
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: roi.coordinates.map((coord: any) => [coord.x, coord.y]),
+                  },
+                })
+              }
+            })
+            updateRois({ datasetId: props.annotation?.dataset?.id, geoJson })
+          }
+        })
+      } catch (e) {
+        reportError(new Error(`Error saving ROI: ${JSON.stringify(e)}`), null)
+      } finally {
+        state.isUpdatingRoi = false
+      }
     }
 
     const triggerDownload = () => {
@@ -362,7 +365,8 @@ export default defineComponent<RoiSettingsProps>({
               }
               <Tooltip
                 popperClass='roi-save-tooltip'
-                content="Save the ROI so all can users can see it! You need to be owner of this dataset to do it."
+                content={'Save the ROIs so all can users can see it! You must be the owner '
+              + 'or have permission to perform this action.'}
                 placement="top">
                 {
                   !state.isUpdatingRoi
