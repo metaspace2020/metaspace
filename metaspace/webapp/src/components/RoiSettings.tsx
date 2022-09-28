@@ -282,7 +282,7 @@ export default defineComponent<RoiSettingsProps>({
           })
 
           updateRois({ datasetId: props.annotation?.dataset?.id, geoJson })
-          console.log('geoJson', geoJson)
+          // console.log('geoJson', geoJson)
         }
       })
 
