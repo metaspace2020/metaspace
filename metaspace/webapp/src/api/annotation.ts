@@ -29,6 +29,7 @@ gql`fragment AnnotationDetailItem on Annotation {
     metadataJson
     configJson
     isPublic
+    canEdit
     opticalImages(type: $type) {
       id
       url

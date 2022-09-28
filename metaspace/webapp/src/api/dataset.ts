@@ -267,6 +267,11 @@ export const addOpticalImageQuery =
                             imageUrl: $imageUrl, transform: $transform})
   }`
 
+export const addRoiMutation =
+  gql`mutation ($datasetId: String!, $geoJson: GeoJson!) {
+    addRoi(datasetId: $datasetId, geoJson: $geoJson)
+  }`
+
 export const deleteOpticalImageQuery =
   gql`mutation ($id: String!) {
     deleteOpticalImage(datasetId: $id)

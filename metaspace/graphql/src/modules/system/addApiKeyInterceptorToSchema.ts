@@ -10,6 +10,7 @@ const ALLOWED_MUTATIONS = new Set([
   'deleteDataset',
   'reprocessDataset',
   'addOpticalImage',
+  'addRoi',
   'deleteOpticalImage',
   'createProject',
   'updateProject',
