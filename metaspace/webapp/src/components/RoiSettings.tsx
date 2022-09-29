@@ -365,8 +365,8 @@ export default defineComponent<RoiSettingsProps>({
               }
               <Tooltip
                 popperClass='roi-save-tooltip'
-                content={'Save the ROIs so all can users can see it! You must be the owner '
-              + 'or have permission to perform this action.'}
+                content={'Click to save the ROIs. This requires being the owner or having the '
+                  + 'edit access to this dataset.'}
                 placement="top">
                 {
                   !state.isUpdatingRoi
