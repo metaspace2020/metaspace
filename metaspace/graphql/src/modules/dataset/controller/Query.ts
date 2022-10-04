@@ -17,7 +17,7 @@ import {
 import { smApiJsonPost, smApiJsonGet } from '../../../utils/smApi/smApiCall'
 import { smApiDatasetRequest } from '../../../utils'
 import { uniq } from 'lodash'
-import { unpackAnnotation } from '../../annotation/controller/Query'
+// import { unpackAnnotation } from '../../annotation/controller/Query'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER
