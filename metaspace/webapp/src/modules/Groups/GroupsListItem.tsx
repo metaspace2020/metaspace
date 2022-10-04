@@ -17,10 +17,6 @@ interface GroupListItemProps {
   numMembers: number
 }
 
-interface GroupListItemState {
-  groupNameFilter: string | undefined
-}
-
 export default defineComponent<GroupListItemProps>({
   name: 'GroupsListItem',
   props: {
@@ -41,10 +37,7 @@ export default defineComponent<GroupListItemProps>({
     },
   },
   setup: function(props, ctx) {
-    const { $route, $store } = ctx.root
-    const state = reactive<GroupListItemState>({
-      groupNameFilter: '',
-    })
+    const { $router } = ctx.root
 
     const queryVars = computed(() => ({
       groupId: props.id,
@@ -55,21 +48,27 @@ export default defineComponent<GroupListItemProps>({
     const datasetCount = computed(() => countDatasetsResult.value != null ? countDatasetsResult.value.countDatasets
       : null)
 
-    const groupLink = (id: String, urlSlug: String) => {
+    const groupLink = () => {
+      const { id, urlSlug } = props
+
       return {
         name: 'group',
         params: { groupIdOrSlug: urlSlug || id },
       }
     }
 
-    const datasetsLink = (id: String) => {
+    const datasetsLink = () => {
+      const { id } = props
+
       return {
         path: '/datasets',
         query: encodeParams({ group: id }),
       }
     }
 
-    const managementLink = (id: String, urlSlug: String) => {
+    const managementLink = () => {
+      const { id, urlSlug } = props
+
       return {
         name: 'group',
         params: { groupIdOrSlug: urlSlug || id },
@@ -78,14 +77,14 @@ export default defineComponent<GroupListItemProps>({
     }
 
     return () => {
-      const { id, name, shortName, urlSlug, numMembers } = props
+      const { id, name, shortName, numMembers } = props
       const nOfDatasets : number = (datasetCount.value || 0) as unknown as number
 
       return (
         <div class='group-item'>
           <div class="group-item-info">
             <div class="group-item-title-wrapper group-item-info-line">
-              <RouterLink to={groupLink(id, urlSlug)} class='group-item-title'>
+              <RouterLink to={groupLink()} class='group-item-title'>
                 {name}{shortName ? <span class='group-item-short-name'> ({shortName})</span> : ''}
               </RouterLink>
               <CopyButton
@@ -98,7 +97,7 @@ export default defineComponent<GroupListItemProps>({
             <div class="group-item-info-line">
               {
                 nOfDatasets > 0
-                && <RouterLink to={datasetsLink(id)} class='group-item-title'>
+                && <RouterLink to={datasetsLink()} class='group-item-title'>
                   {plural(nOfDatasets, 'Dataset', 'Datasets')},
                 </RouterLink>
               }
@@ -108,13 +107,13 @@ export default defineComponent<GroupListItemProps>({
           <div class="group-item-actions">
             <div>
               <i class="el-icon-picture"/>
-              <RouterLink to={datasetsLink(id)} class='ml-1'>
+              <RouterLink to={datasetsLink()} class='ml-1'>
                 Browse datasets
               </RouterLink>
             </div>
             <div>
               <i class="el-icon-edit" />
-              <RouterLink to={managementLink(id, urlSlug)} class='ml-1'>
+              <RouterLink to={managementLink()} class='ml-1'>
                 Manage group
               </RouterLink>
             </div>

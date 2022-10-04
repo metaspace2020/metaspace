@@ -24,7 +24,7 @@ export default defineComponent<GroupListPageProps>({
     },
   },
   setup: function(props, ctx) {
-    const { $route, $store } = ctx.root
+    const { $router } = ctx.root
     const state = reactive<GroupListPageState>({
       groupNameFilter: '',
     })
@@ -40,7 +40,7 @@ export default defineComponent<GroupListPageProps>({
       : null)
 
     const handleCreateGroup = () => {
-
+      $router.push('/group/create')
     }
 
     return () => {

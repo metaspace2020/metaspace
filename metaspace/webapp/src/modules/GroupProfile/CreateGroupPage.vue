@@ -3,8 +3,8 @@
     v-if="canCreate"
     class="page"
   >
-    <div class="page-content">
-      <div class="header-row">
+    <div class="page-content  max-w-4xl px-5">
+      <div class="header-row px-18 py-2">
         <h1>Create Group</h1>
         <div class="flex-spacer" />
 
@@ -20,6 +20,7 @@
       </div>
       <edit-group-form
         ref="form"
+        class="px-18"
         :model="model"
         :disabled="isSaving"
         show-group-admin
@@ -77,14 +78,13 @@ export default class CreateGroupPage extends Vue {
       try {
         await (this.$refs.form as any).validate()
         try {
-          const { data } = await this.$apollo.mutate({
+          await this.$apollo.mutate({
             mutation: createGroupMutation,
             variables: { groupDetails: this.model },
           })
-          this.$message({ message: `${this.model.name} was created`, type: 'success' })
+          this.$message({ message: `${this.model.name} was created`, type: 'success', offset: 80 })
           this.$router.push({
-            name: 'edit-group',
-            params: { groupIdOrSlug: data!.createGroup.id },
+            path: '/groups',
           })
         } catch (err) {
           reportError(err)
