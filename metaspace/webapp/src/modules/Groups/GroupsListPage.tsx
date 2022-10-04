@@ -1,12 +1,18 @@
-import { defineComponent, reactive } from '@vue/composition-api'
+import { computed, defineComponent, reactive } from '@vue/composition-api'
 import './GroupsListPage.scss'
+import { Button, Input } from '../../lib/element-ui'
+import { calculateMzFromFormula, isFormulaValid } from '../../lib/formulaParser'
+import { useQuery } from '@vue/apollo-composable'
+import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
+import { getUserGroupsQuery, ViewGroupResult } from '../../api/group'
+import GroupsListItem from './GroupsListItem'
 
 interface GroupListPageProps {
   className: string
 }
 
 interface GroupListPageState {
-  dataRange: any
+  groupNameFilter: string | undefined
 }
 
 export default defineComponent<GroupListPageProps>({
@@ -20,13 +26,73 @@ export default defineComponent<GroupListPageProps>({
   setup: function(props, ctx) {
     const { $route, $store } = ctx.root
     const state = reactive<GroupListPageState>({
-      dataRange: { maxX: 0, maxY: 0, minX: 0, minY: 0 },
+      groupNameFilter: '',
     })
+
+    const queryVars = computed(() => ({
+      query: state.groupNameFilter,
+    }))
+    const {
+      result: groupsResult,
+      loading: groupsLoading,
+    } = useQuery<ViewGroupResult|any>(getUserGroupsQuery, queryVars)
+    const groups = computed(() => groupsResult.value != null ? groupsResult.value.allGroups
+      : null)
+
+    const handleCreateGroup = () => {
+
+    }
 
     return () => {
       return (
-        <div class={'groups-list-container'}>
-          hey
+        <div class='groups-list-container'>
+          <div class='groups-list-wrapper'>
+            <div class='groups-list-header'>
+              <Input
+                class='group-name-filter tf-outer w-auto'
+                value={state.groupNameFilter}
+                onInput={(value: string) => {
+                  state.groupNameFilter = value
+                }}
+                placeholder='Enter keywords'
+              >
+                <i
+                  slot="prepend"
+                  class="el-icon-search -mx-1"
+                />
+              </Input>
+              <Button
+                type="primary"
+                class='group-list-create-btn'
+                onClick={handleCreateGroup}
+              >
+                Create group
+              </Button>
+            </div>
+            <div class='groups-list-content'>
+              {
+                groups.value?.length === 0
+                && !groupsLoading.value
+                && <p>Group not found!</p>
+              }
+              {
+                groups.value?.length > 0
+                && !groupsLoading.value
+                && groups.value?.map((group: any) => {
+                  return <GroupsListItem
+                    id={group.id}
+                    name={group.name}
+                    shortName={group.shortName}
+                    urlSlug={group.urlSlug}
+                    numMembers={group.numMembers}/>
+                })
+              }
+              {
+                groupsLoading.value
+                && <p><i class="el-icon-loading"/></p>
+              }
+            </div>
+          </div>
         </div>
       )
     }

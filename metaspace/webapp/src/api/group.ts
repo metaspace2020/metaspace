@@ -198,3 +198,13 @@ export const getGroupDatabasesQuery =
       }
     }
   }`
+
+export const getUserGroupsQuery =
+  gql`query GetUserGroupsQuery($query: String!) {
+    allGroups(query: $query, limit: 1000) {
+      ...ViewGroupFragment
+    }
+  }${ViewGroupFragment}`
+
+export const countGroupDatasets =
+  gql`query ($groupId: ID!) { countDatasets(filter: { group: $groupId }) }`
