@@ -48,6 +48,12 @@
           </header-link>
 
           <header-link
+            to="/groups"
+          >
+            Groups
+          </header-link>
+
+          <header-link
             v-if="currentUser && currentUser.primaryGroup"
             :to="primaryGroupHref"
           >

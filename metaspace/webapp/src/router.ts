@@ -29,6 +29,7 @@ const asyncPagesFreelyTyped = {
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ProjectsListPage.vue'),
   SystemHealthPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/SystemHealthPage.vue'),
   GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/GroupsListPage.vue'),
+  UserGroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Groups/GroupsListPage'),
   PrivacyPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PrivacyPage.vue'),
   TermsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/TermsPage.vue'),
   PublicationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PublicationsPage.vue'),
@@ -96,6 +97,7 @@ const router = new VueRouter({
     { path: '/account/forgot-password', component: DialogPage, props: { dialog: 'forgotPassword' } },
     { path: '/account/reset-password', component: ResetPasswordPage },
 
+    { path: '/groups', component: asyncPages.UserGroupsListPage },
     { path: '/group/create', component: asyncPages.CreateGroupPage },
     { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
 
