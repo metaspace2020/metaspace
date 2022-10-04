@@ -186,34 +186,34 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         const data = JSON.parse(content.data)
 
         // get annotations associated to enrichment
-        for (let i = 0; i < data.enrichment.length; i++) {
-          const item = data.enrichment[i]
-          const mols = uniq(data.molecules
-            .filter((term: any) => term.id === item.id)
-            .map((term:any) => term.mols).flat())
-          const bootstrapItems = await ctx.entityManager
-            .find(EnrichmentBootstrap, {
-              join: {
-                alias: 'bootstrap',
-                leftJoin: { enrichmentDBMoleculeMapping: 'bootstrap.enrichmentDBMoleculeMapping' },
-              },
-              where: (qb : any) => {
-                qb.where('bootstrap.datasetId = :datasetId', { datasetId })
-                  .andWhere('bootstrap.fdr <= :fdr', { fdr })
-                  .andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
-                  .andWhere('enrichmentDBMoleculeMapping.moleculeEnrichedName IN (:...names)', { names: mols })
-                  .orderBy('bootstrap.scenario', 'ASC')
-              },
-              relations: [
-                'enrichmentDBMoleculeMapping',
-              ],
-            })
-          const ionIds = uniq(bootstrapItems.map((bItem: any) => `${datasetId}_${bItem.annotationId}`)).join('|')
-          const annotations = await esSearchResults({ filter: { annotationId: ionIds } }
-            , 'annotation', ctx.user)
-          item.annotations = annotations.map(unpackAnnotation)
-          item.termId = termsIdHash[item.id]
-        }
+        // for (let i = 0; i < data.enrichment.length; i++) {
+        //   const item = data.enrichment[i]
+        //   const mols = uniq(data.molecules
+        //     .filter((term: any) => term.id === item.id)
+        //     .map((term:any) => term.mols).flat())
+        //   const bootstrapItems = await ctx.entityManager
+        //     .find(EnrichmentBootstrap, {
+        //       join: {
+        //         alias: 'bootstrap',
+        //         leftJoin: { enrichmentDBMoleculeMapping: 'bootstrap.enrichmentDBMoleculeMapping' },
+        //       },
+        //       where: (qb : any) => {
+        //         qb.where('bootstrap.datasetId = :datasetId', { datasetId })
+        //           .andWhere('bootstrap.fdr <= :fdr', { fdr })
+        //           .andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
+        //           .andWhere('enrichmentDBMoleculeMapping.moleculeEnrichedName IN (:...names)', { names: mols })
+        //           .orderBy('bootstrap.scenario', 'ASC')
+        //       },
+        //       relations: [
+        //         'enrichmentDBMoleculeMapping',
+        //       ],
+        //     })
+        //   const ionIds = uniq(bootstrapItems.map((bItem: any) => `${datasetId}_${bItem.annotationId}`)).join('|')
+        //   const annotations = await esSearchResults({ filter: { annotationId: ionIds } }
+        //     , 'annotation', ctx.user)
+        //   item.annotations = annotations.map(unpackAnnotation)
+        //   item.termId = termsIdHash[item.id]
+        // }
 
         return data.enrichment
       } catch (e) {
