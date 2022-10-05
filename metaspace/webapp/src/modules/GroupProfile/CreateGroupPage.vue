@@ -69,8 +69,8 @@ export default class CreateGroupPage extends Vue {
       INVITED: 'Invited',
     };
 
-    get canCreate(): boolean {
-      return this.currentUser && this.currentUser.role === 'admin' || false
+    get canCreate() {
+      return this.currentUser && this.currentUser.id // this.currentUser.role === 'admin' || false
     }
 
     async handleSave() {

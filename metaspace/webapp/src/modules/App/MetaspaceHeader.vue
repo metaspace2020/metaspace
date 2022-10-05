@@ -48,18 +48,10 @@
           </header-link>
 
           <header-link
+            v-if="loadingUser === 0 && currentUser != null"
             to="/groups"
           >
             Groups
-          </header-link>
-
-          <header-link
-            v-if="currentUser && currentUser.primaryGroup"
-            :to="primaryGroupHref"
-          >
-            <div class="limit-width">
-              {{ currentUser.primaryGroup.group.shortName }}
-            </div>
           </header-link>
         </div>
 

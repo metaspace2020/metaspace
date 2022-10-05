@@ -29,6 +29,12 @@ export default defineComponent<GroupListPageProps>({
       groupNameFilter: '',
     })
 
+    const {
+      result: currentUserResult,
+    } = useQuery<CurrentUserRoleResult|any>(currentUserRoleQuery)
+    const currentUser = computed(() => currentUserResult.value != null ? currentUserResult.value.currentUser
+      : null)
+
     const queryVars = computed(() => ({
       query: state.groupNameFilter,
     }))
@@ -44,6 +50,10 @@ export default defineComponent<GroupListPageProps>({
     }
 
     return () => {
+      if (!currentUser.value) {
+        return null
+      }
+
       return (
         <div class='groups-list-container'>
           <div class='groups-list-wrapper'>
@@ -84,6 +94,7 @@ export default defineComponent<GroupListPageProps>({
                     name={group.name}
                     shortName={group.shortName}
                     urlSlug={group.urlSlug}
+                    currentUserRole={group.currentUserRole}
                     numMembers={group.numMembers}/>
                 })
               }

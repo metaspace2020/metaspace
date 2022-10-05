@@ -4,7 +4,7 @@ import Vue from 'vue'
 import { encodeParams } from '../Filters'
 import CopyButton from '../../components/CopyButton.vue'
 import { useQuery } from '@vue/apollo-composable'
-import { countGroupDatasets, getUserGroupsQuery, ViewGroupResult } from '../../api/group'
+import { countGroupDatasets, getUserGroupsQuery, UserGroupRoleOptions, ViewGroupResult } from '../../api/group'
 import { plural } from '../../lib/vueFilters'
 
 const RouterLink = Vue.component('router-link')
@@ -13,6 +13,7 @@ interface GroupListItemProps {
   id: string
   name: string
   shortName: string
+  currentUserRole: string
   urlSlug: string
   numMembers: number
 }
@@ -30,6 +31,9 @@ export default defineComponent<GroupListItemProps>({
       type: String,
     },
     urlSlug: {
+      type: String,
+    },
+    currentUserRole: {
       type: String,
     },
     numMembers: {
@@ -66,18 +70,18 @@ export default defineComponent<GroupListItemProps>({
       }
     }
 
-    const managementLink = () => {
+    const managementLink = (isAdmin:boolean = false) => {
       const { id, urlSlug } = props
 
       return {
         name: 'group',
         params: { groupIdOrSlug: urlSlug || id },
-        query: { tab: 'settings' },
+        query: { tab: isAdmin ? 'settings' : 'members' },
       }
     }
 
     return () => {
-      const { id, name, shortName, numMembers } = props
+      const { id, name, shortName, numMembers, currentUserRole } = props
       const nOfDatasets : number = (datasetCount.value || 0) as unknown as number
 
       return (
@@ -113,8 +117,8 @@ export default defineComponent<GroupListItemProps>({
             </div>
             <div>
               <i class="el-icon-edit" />
-              <RouterLink to={managementLink()} class='ml-1'>
-                Manage group
+              <RouterLink to={managementLink(currentUserRole === UserGroupRoleOptions.GROUP_ADMIN)} class='ml-1'>
+                {currentUserRole === UserGroupRoleOptions.GROUP_ADMIN ? 'Manage' : 'Browse'} group
               </RouterLink>
             </div>
           </div>
