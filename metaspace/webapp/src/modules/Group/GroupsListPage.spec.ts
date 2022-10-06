@@ -46,6 +46,15 @@ describe('GroupsListPage', () => {
     })
   }
 
+  const userNoDataQuery = () => {
+    initMockGraphqlClient({
+      Query: () => ({
+        currentUser: () => ({ id: 'userid', role: 'user' }),
+        allGroups: () => [],
+      }),
+    })
+  }
+
   const noUserQuery = () => {
     initMockGraphqlClient({
       Query: () => ({
@@ -65,6 +74,14 @@ describe('GroupsListPage', () => {
 
   it('should match snapshot not logged', async() => {
     noUserQuery()
+    const wrapper = mount(testHarness, { store, router, apolloProvider })
+    await Vue.nextTick()
+
+    expect(wrapper).toMatchSnapshot()
+  })
+
+  it('should match snapshot no data', async() => {
+    userNoDataQuery()
     const wrapper = mount(testHarness, { store, router, apolloProvider })
     await Vue.nextTick()
 

@@ -54,4 +54,31 @@ exports[`GroupsListPage should match snapshot logged 1`] = `
 </div>
 `;
 
-exports[`GroupsListPage should match snapshot not logged 1`] = ``;
+exports[`GroupsListPage should match snapshot no data 1`] = `
+<div class="groups-list-container">
+  <div class="groups-list-wrapper">
+    <div class="groups-list-header">
+      <div class="el-input el-input-group el-input-group--prepend group-name-filter tf-outer w-auto">
+        <div class="el-input-group__prepend"><i class="el-icon-search -mx-1"></i></div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+      </div><button type="button" class="el-button el-button--primary group-list-create-btn">
+        <!---->
+        <!----><span>Create group</span></button>
+    </div>
+    <div class="groups-list-content">
+      <p>Group not found!</p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`GroupsListPage should match snapshot not logged 1`] = `
+<div class="groups-list-container">
+  <div class="groups-list-wrapper">
+    <p class="font-normal text-center">Create an account/login, to create groups and make your work reach more people!</p>
+  </div>
+</div>
+`;

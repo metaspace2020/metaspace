@@ -48,7 +48,6 @@
           </header-link>
 
           <header-link
-            v-if="loadingUser === 0 && currentUser != null"
             to="/groups"
           >
             Groups

@@ -51,7 +51,14 @@ export default defineComponent<GroupListPageProps>({
 
     return () => {
       if (!currentUser.value) {
-        return null
+        return (
+          <div class='groups-list-container'>
+            <div class='groups-list-wrapper'>
+              <p class='font-normal text-center'>
+                Create an account/login, to create groups and make your work reach more people!
+              </p>
+            </div>
+          </div>)
       }
 
       return (

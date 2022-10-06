@@ -125,9 +125,15 @@ exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
   border border-solid border-transparent
 ">
           Projects
-        </a>
-        <!---->
-      </div>
+        </a> <a href="/groups" class="
+  mx-1 px-3 py-2 rounded-md no-underline
+  text-sm font-medium text-white lg:tracking-wide
+  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  transition-colors duration-150 ease-in-out
+  border border-solid border-transparent
+">
+          Groups
+        </a></div>
       <div class="header-items">
         <!----> <a href="/help" class="
   mx-1 px-3 py-2 rounded-md no-underline
