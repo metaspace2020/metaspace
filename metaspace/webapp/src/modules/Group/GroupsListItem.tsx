@@ -41,8 +41,6 @@ export default defineComponent<GroupListItemProps>({
     },
   },
   setup: function(props, ctx) {
-    const { $router } = ctx.root
-
     const queryVars = computed(() => ({
       groupId: props.id,
     }))
@@ -88,7 +86,10 @@ export default defineComponent<GroupListItemProps>({
         <div class='group-item'>
           <div class="group-item-info">
             <div class="group-item-title-wrapper group-item-info-line">
-              <RouterLink to={groupLink()} class='group-item-title'>
+              <RouterLink
+                dataTestKey="group-link"
+                to={groupLink()}
+                class='group-item-title'>
                 {name}{shortName ? <span class='group-item-short-name'> ({shortName})</span> : ''}
               </RouterLink>
               <CopyButton
@@ -111,13 +112,17 @@ export default defineComponent<GroupListItemProps>({
           <div class="group-item-actions">
             <div>
               <i class="el-icon-picture"/>
-              <RouterLink to={datasetsLink()} class='ml-1'>
+              <RouterLink
+                dataTestKey="dataset-link"
+                to={datasetsLink()} class='ml-1'>
                 Browse datasets
               </RouterLink>
             </div>
             <div>
               <i class="el-icon-edit" />
-              <RouterLink to={managementLink(currentUserRole === UserGroupRoleOptions.GROUP_ADMIN)} class='ml-1'>
+              <RouterLink
+                dataTestKey="manage-link"
+                to={managementLink(currentUserRole === UserGroupRoleOptions.GROUP_ADMIN)} class='ml-1'>
                 {currentUserRole === UserGroupRoleOptions.GROUP_ADMIN ? 'Manage' : 'Browse'} group
               </RouterLink>
             </div>
