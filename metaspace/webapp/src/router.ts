@@ -25,17 +25,16 @@ const asyncPagesFreelyTyped = {
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Datasets/list/DatasetTable.vue'),
   HelpPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/HelpPage.vue'),
   EditUserPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/UserProfile/EditUserPage.vue'),
-  CreateGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/GroupProfile/CreateGroupPage.vue'),
+  CreateGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Group/CreateGroupPage.vue'),
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ProjectsListPage.vue'),
   SystemHealthPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/SystemHealthPage.vue'),
-  GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/GroupsListPage.vue'),
-  UserGroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Groups/GroupsListPage'),
+  GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Group/GroupsListPage'),
   PrivacyPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PrivacyPage.vue'),
   TermsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/TermsPage.vue'),
   PublicationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PublicationsPage.vue'),
 
   // These pages use sanitizeHtml, which is big
-  ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/GroupProfile/ViewGroupPage.vue'),
+  ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/Group/ViewGroupPage.vue'),
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/Project/ViewProjectPage.vue'),
 
   // Separate bundle for design docs
@@ -89,7 +88,6 @@ const router = new VueRouter({
     { path: '/user/me', component: asyncPages.EditUserPage },
 
     { path: '/admin/health', component: asyncPages.SystemHealthPage },
-    { path: '/admin/groups', component: asyncPages.GroupsListPage },
 
     { path: '/account/sign-in', component: DialogPage, props: { dialog: 'signIn' } },
     { path: '/account/sign-in-success', redirect: redirectAfterSignIn },
@@ -97,7 +95,7 @@ const router = new VueRouter({
     { path: '/account/forgot-password', component: DialogPage, props: { dialog: 'forgotPassword' } },
     { path: '/account/reset-password', component: ResetPasswordPage },
 
-    { path: '/groups', component: asyncPages.UserGroupsListPage },
+    { path: '/groups', component: asyncPages.GroupsListPage },
     { path: '/group/create', component: asyncPages.CreateGroupPage },
     { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
 

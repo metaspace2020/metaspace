@@ -124,7 +124,7 @@ import { parseS3Url } from '../../lib/util'
 import config from '../../lib/config'
 import gql from 'graphql-tag'
 import { ViewGroupFragment } from '@/api/group'
-import { RequestedAccessDialog } from '../../modules/GroupProfile/RequestedAccessDialog'
+import { RequestedAccessDialog } from '../Group/RequestedAccessDialog'
 
 const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
