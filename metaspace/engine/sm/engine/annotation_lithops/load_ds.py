@@ -149,6 +149,12 @@ def _load_ds(
     )
     perf.record_entry('uploaded imzml browser files')
 
+    import psutil
+
+    print(psutil.cpu_count())
+    print(psutil.cpu_freq(percpu=True))
+    print(psutil.cpu_times(percpu=True))
+
     return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, imzml_browser_cobjs
 
 

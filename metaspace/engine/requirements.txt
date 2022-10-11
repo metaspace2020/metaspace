@@ -17,6 +17,7 @@ Pillow==9.0.1
 numpy==1.19.5
 scipy==1.6.0
 pandas==1.2.0
+psutil
 cffi
 psycopg2-binary==2.8.6
 cherrypy<9

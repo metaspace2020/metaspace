@@ -45,6 +45,7 @@ def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
             subtask_perf.add_extra_data(
                 **{
                     'inner time': (datetime.now() - start_time).total_seconds(),
+                    'cpu_time': resource.getrusage(resource.RUSAGE_SELF).ru_utime,
                     'mem before': mem_before,
                     'mem after': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                 }
