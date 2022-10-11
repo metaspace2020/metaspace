@@ -62,22 +62,21 @@ class LithopsDaemon:
         # Requeue the message so it retries
         if msg.get('retry_attempt', 0) < 0:
             self.logger.warning(f'Lithops annotation failed, retrying.\n{exc}')
-            # self._lithops_queue_pub.publish(
-            #    {**msg, 'retry_attempt': msg.get('retry_attempt', 0) + 1}
-            # )
-            # self._manager.post_to_slack(
-            #    'bomb',
-            #    f" [x] Annotation failed, retrying: {json.dumps(msg)}\n```{exc}```",
-            # )
+            self._lithops_queue_pub.publish(
+                {**msg, 'retry_attempt': msg.get('retry_attempt', 0) + 1}
+            )
+            self._manager.post_to_slack(
+                'bomb',
+                f" [x] Annotation failed, retrying: {json.dumps(msg)}\n```{exc}```",
+            )
         else:
-            pass
-            # self.logger.critical(f'Lithops annotation failed. Falling back to Spark\n{exc}')
-            # self._annot_queue_pub.publish(msg)
+            self.logger.critical(f'Lithops annotation failed. Falling back to Spark\n{exc}')
+            self._annot_queue_pub.publish(msg)
 
-            # self._manager.post_to_slack(
-            #    'bomb',
-            #    f" [x] Annotation failed, retrying on Spark: {json.dumps(msg)}\n```{exc}```",
-            # )
+            self._manager.post_to_slack(
+                'bomb',
+                f" [x] Annotation failed, retrying on Spark: {json.dumps(msg)}\n```{exc}```",
+            )
 
         # Exit the process and let supervisor restart it, in case Lithops was left in
         # an unrecoverable state
