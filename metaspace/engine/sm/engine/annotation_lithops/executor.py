@@ -269,7 +269,7 @@ class Executor:
                 and (max_memory is None or runtime_memory < max_memory)
             ):
                 old_memory = runtime_memory
-                runtime_memory *= 2
+                runtime_memory *= 2 if old_memory < 32 * 1024 else 128 * 1024
                 attempt += 1
 
                 logger.warning(
@@ -351,7 +351,7 @@ class Executor:
         ]
         assert valid_executors, f'Could not find an executor supporting {runtime_memory}MB'
         executor_type, executor = valid_executors[0]
-        logger.info(f'Selected executor {executor_type}')
+        logger.debug(f'Selected executor {executor_type}')
 
         if executor.config['lithops']['mode'] == 'standalone':
             # Set number of parallel workers based on memory requirements
