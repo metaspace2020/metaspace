@@ -589,12 +589,12 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
-        // const baseUrl = 'http://localhost:8080' // local
+        // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
+        const baseUrl = 'http://localhost:8080' // local
         // const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
         const response = await fetch(baseUrl + '?' + query)
         const parsedResponse = await response.json()
-        state.usedData = parsedResponse // .body
+        state.usedData = parsedResponse.body
       } catch (e) {
         state.usedData = {}
         state.data = []
@@ -639,10 +639,12 @@ export default defineComponent({
       try {
         const chartData = state.usedData
         const data = chartData.data
-        const xAxisValues : string[] = chartData.xAxis
-        let yAxisValues : string[] = chartData.yAxis
+        const xAxisValues : string[] = chartData.xAxisSorting ? chartData.xAxisSorting : chartData.xAxis
+        let yAxisValues : string[] = chartData.yAxisSorting ? chartData.yAxisSorting : chartData.yAxis
 
-        yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], ['desc'])
+        if (!chartData.yAxisSorting) {
+          yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], ['desc'])
+        }
 
         const auxData : any = groupBy(data, state.options.xAxis)
         Object.keys(auxData).forEach((key: string) => {

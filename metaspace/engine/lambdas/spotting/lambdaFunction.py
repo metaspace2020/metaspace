@@ -1,11 +1,35 @@
 # %%
 import json
 import urllib.parse
-from http.server import BaseHTTPRequestHandler  # , HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer  # , HTTPServer
 from urllib.parse import urlparse, parse_qsl
 import pandas as pd
 import numpy as np
+from scipy.spatial.distance import pdist
+from seriate import seriate
 
+
+def sort_axis(data, x_axis, y_axis):
+    """
+        Transform data dataframe to numpy matrix, then use the
+        seriation algorithm, which is an approach for ordering
+        elements in a set so that the sum of the sequential pairwise
+        distances is minimal.
+    """
+    matrix = np.zeros((len(data[y_axis].unique()), len(data[x_axis].unique())))
+    for row_idx, row in enumerate(data[y_axis].unique()):
+        for col_idx, col in enumerate(data[x_axis].unique()):
+            try:
+                fraction = data[(data[y_axis] == row) & (data[x_axis] == col)]['fraction_detected'].values[0]
+            except:
+                fraction = 1
+            matrix[row_idx][col_idx] = fraction
+
+    y_axis_sort = seriate(pdist(matrix))
+    y_axis_sort = list(map(lambda n: data[y_axis].unique()[n], y_axis_sort))
+    x_axis_sort = seriate(pdist(matrix.T))
+    x_axis_sort = list(map(lambda n: data[x_axis].unique()[n], x_axis_sort))
+    return x_axis_sort, y_axis_sort
 
 def calculate_detected_intensities(source_df, threshold=0.8):
     """
@@ -424,6 +448,9 @@ def lambda_handler(event, context):
     else:
         data = summarise_data_w_class(base_data, x_axis, y_axis)
 
+    # sort matrix axis by using seriate
+    x_axis_sort, y_axis_sort = sort_axis(data, x_axis, y_axis)
+
     return {
         'statusCode': 200,
         'body': {
@@ -432,6 +459,8 @@ def lambda_handler(event, context):
             'yAxis': list(data[y_axis].unique()),
             'filterSrc': list(filter_src),
             'filterValues': list(filter_values),
+            'xAxisSorting': x_axis_sort,
+            'yAxisSorting': y_axis_sort
         },
     }
 
