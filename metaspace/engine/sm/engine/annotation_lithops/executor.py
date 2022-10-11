@@ -45,7 +45,6 @@ def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
             subtask_perf.add_extra_data(
                 **{
                     'inner time': (datetime.now() - start_time).total_seconds(),
-                    'cpu_time': resource.getrusage(resource.RUSAGE_SELF).ru_utime,
                     'mem before': mem_before,
                     'mem after': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                 }
@@ -266,7 +265,7 @@ class Executor:
 
             if (
                 isinstance(exc, (MemoryError, TimeoutError, OSError))
-                and runtime_memory < 32 * 1024
+                and runtime_memory <= 32 * 1024
                 and (max_memory is None or runtime_memory < max_memory)
             ):
                 old_memory = runtime_memory
@@ -352,7 +351,7 @@ class Executor:
         ]
         assert valid_executors, f'Could not find an executor supporting {runtime_memory}MB'
         executor_type, executor = valid_executors[0]
-        logger.debug(f'Selected executor {executor_type}')
+        logger.info(f'Selected executor {executor_type}')
 
         if executor.config['lithops']['mode'] == 'standalone':
             # Set number of parallel workers based on memory requirements
