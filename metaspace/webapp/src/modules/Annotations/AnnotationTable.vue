@@ -827,6 +827,14 @@ export default Vue.extend({
           0)
       }
     },
+    '$store.getters.filter.datasetIds'() {
+      // hide dataset related filters if dataset filter added
+      if (this.$store.getters.filter.datasetIds && this.showCustomCols) {
+        this.hideDatasetRelatedColumns()
+      } else if (this.showCustomCols) { // show dataset related filters if dataset filter added
+        this.showDatasetRelatedColumns()
+      }
+    },
     '$route.query.cols'() {
       if (this.$route.query.cols) {
         const columns = this.columns
@@ -932,6 +940,10 @@ export default Vue.extend({
         this.columns.find((col) => col.src === 'Group').selected = false
         this.columns.find((col) => col.src === 'Dataset').selected = false
       }
+    },
+    showDatasetRelatedColumns() {
+      this.columns.find((col) => col.src === 'Group').selected = true
+      this.columns.find((col) => col.src === 'Dataset').selected = true
     },
     onPageSizeChange(newSize) {
       this.recordsPerPage = newSize
@@ -1098,9 +1110,6 @@ export default Vue.extend({
     updateFilter(delta) {
       const filter = Object.assign({}, this.filter, delta)
       this.$store.commit('updateFilter', filter)
-      if (Object.keys(delta).includes('datasetIds') && this.showCustomCols) { // hide dataset related filters if dataset filter added
-        this.hideDatasetRelatedColumns()
-      }
     },
 
     async setNormalizationData(currentAnnotation) {
