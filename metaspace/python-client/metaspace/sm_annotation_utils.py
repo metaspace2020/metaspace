@@ -1010,7 +1010,9 @@ class SMDataset(object):
                     lambda lst: [item['name'] for item in lst]
                 ),
                 moleculeIds=df.possibleCompounds.apply(get_compound_database_ids),
-                intensity=df.isotopeImages.apply(lambda imgs: imgs[0]['maxIntensity']),
+                min_intensity=df.isotopeImages.apply(lambda imgs: imgs[0]['minIntensity']),
+                max_intensity=df.isotopeImages.apply(lambda imgs: imgs[0]['maxIntensity']),
+                total_intensity=df.isotopeImages.apply(lambda imgs: imgs[0]['totalIntensity']),
             )
             .drop(
                 columns=[
