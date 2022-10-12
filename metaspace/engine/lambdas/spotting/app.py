@@ -1,8 +1,9 @@
 # %%
 import json
 import urllib.parse
-from http.server import BaseHTTPRequestHandler, HTTPServer  # , HTTPServer
-from urllib.parse import urlparse, parse_qsl
+
+# from http.server import BaseHTTPRequestHandler, HTTPServer
+# from urllib.parse import urlparse, parse_qsl
 import pandas as pd
 import numpy as np
 from scipy.spatial.distance import pdist
@@ -11,16 +12,18 @@ from seriate import seriate
 
 def sort_axis(data, x_axis, y_axis):
     """
-        Transform data dataframe to numpy matrix, then use the
-        seriation algorithm, which is an approach for ordering
-        elements in a set so that the sum of the sequential pairwise
-        distances is minimal.
+    Transform data dataframe to numpy matrix, then use the
+    seriation algorithm, which is an approach for ordering
+    elements in a set so that the sum of the sequential pairwise
+    distances is minimal.
     """
     matrix = np.zeros((len(data[y_axis].unique()), len(data[x_axis].unique())))
     for row_idx, row in enumerate(data[y_axis].unique()):
         for col_idx, col in enumerate(data[x_axis].unique()):
             try:
-                fraction = data[(data[y_axis] == row) & (data[x_axis] == col)]['fraction_detected'].values[0]
+                fraction = data[(data[y_axis] == row) & (data[x_axis] == col)][
+                    'fraction_detected'
+                ].values[0]
             except:
                 fraction = 1
             matrix[row_idx][col_idx] = fraction
@@ -30,6 +33,7 @@ def sort_axis(data, x_axis, y_axis):
     x_axis_sort = seriate(pdist(matrix.T))
     x_axis_sort = list(map(lambda n: data[x_axis].unique()[n], x_axis_sort))
     return x_axis_sort, y_axis_sort
+
 
 def calculate_detected_intensities(source_df, threshold=0.8):
     """
@@ -63,7 +67,7 @@ def load_data(
 
     url_prefix = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v2'
     all_pred_file = 'all_predictions_05-07-22.parquet'
-    interlab_pred_file = 'interlab_predictions_05-07-22.parquet'
+    interlab_pred_file = 'interlab_predictions_12-10-22.parquet'
     embl_pred_file = 'embl_predictions_19-07-22.parquet'
     datasets_file = 'datasets_11-07-22.parquet'
     pathways_file = 'pathways_05-07-22.parquet'
@@ -460,60 +464,60 @@ def lambda_handler(event, context):
             'filterSrc': list(filter_src),
             'filterValues': list(filter_values),
             'xAxisSorting': x_axis_sort,
-            'yAxisSorting': y_axis_sort
+            'yAxisSorting': y_axis_sort,
         },
     }
 
 
-class MyServer(BaseHTTPRequestHandler):
-    # pylint: disable=invalid-name
-    def do_GET(self):
-        print('url')
-        url = self.path
-        parsed_url = urlparse(url)
-        query = parse_qsl(parsed_url.query)
-        print(query)
-        print(dict(query))
+# class MyServer(BaseHTTPRequestHandler):
+#     # pylint: disable=invalid-name
+#     def do_GET(self):
+#         print('url')
+#         url = self.path
+#         parsed_url = urlparse(url)
+#         query = parse_qsl(parsed_url.query)
+#         print(query)
+#         print(dict(query))
+#
+#         json_to_pass = json.dumps(
+#             lambda_handler(
+#                 dict(query),
+#                 None,
+#             )
+#         )
+#         self.send_response(code=200, message='here is your token')
+#         self.send_header('Access-Control-Allow-Origin', '*')
+#         self.send_header(keyword='Content-type', value='application/json')
+#         self.end_headers()
+#         self.wfile.write(json_to_pass.encode('utf-8'))
 
-        json_to_pass = json.dumps(
-            lambda_handler(
-                dict(query),
-                None,
-            )
-        )
-        self.send_response(code=200, message='here is your token')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header(keyword='Content-type', value='application/json')
-        self.end_headers()
-        self.wfile.write(json_to_pass.encode('utf-8'))
 
+# if __name__ == "__main__":
+#     # Local server testing
+#     webServer = HTTPServer(('localhost', 8080), MyServer)
+#     print("Yang's local server started at port 8080")
+#     try:
+#         webServer.serve_forever()
+#     except KeyboardInterrupt:
+#         pass
+#
+#     webServer.server_close()
+#     print("Server stopped.")
 
-if __name__ == "__main__":
-    # Local server testing
-    # webServer = HTTPServer(('localhost', 8080), MyServer)
-    # print("Yang's local server started at port 8080")
-    # try:
-    #     webServer.serve_forever()
-    # except KeyboardInterrupt:
-    #     pass
-    #
-    # webServer.server_close()
-    # print("Server stopped.")
-
-    # script testing
-    payload = lambda_handler(
-        {
-            'predType': 'EMBL',
-            'xAxis': 'a',
-            'yAxis': 'Participant lab',
-            'loadPathway': 'false',
-            'loadClass': 'false',
-            'queryType': 'data',
-            'filter': '',
-            'filterValues': '',
-        },
-        None,
-    )
-    print(payload)
+# script testing
+# payload = lambda_handler(
+#     {
+#         'predType': 'EMBL',
+#         'xAxis': 'a',
+#         'yAxis': 'Participant lab',
+#         'loadPathway': 'false',
+#         'loadClass': 'false',
+#         'queryType': 'data',
+#         'filter': '',
+#         'filterValues': '',
+#     },
+#     None,
+# )
+# print(payload)
 
 # %%

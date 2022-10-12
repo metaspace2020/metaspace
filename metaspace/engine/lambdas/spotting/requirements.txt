@@ -1,0 +1,8 @@
+requests==2.26.0
+numpy==1.19.5
+scipy==1.6.0
+pandas==1.2.0
+urllib3
+pyarrow==1.0.1
+protobuf==3.19.4
+seriate==1.1.2

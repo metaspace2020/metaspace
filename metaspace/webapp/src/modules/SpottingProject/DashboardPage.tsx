@@ -589,12 +589,13 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
+        const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
         // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
-        const baseUrl = 'http://localhost:8080' // local
+        // const baseUrl = 'http://localhost:8080' // local
         // const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
         const response = await fetch(baseUrl + '?' + query)
         const parsedResponse = await response.json()
-        state.usedData = parsedResponse.body
+        state.usedData = parsedResponse // .body
       } catch (e) {
         state.usedData = {}
         state.data = []
