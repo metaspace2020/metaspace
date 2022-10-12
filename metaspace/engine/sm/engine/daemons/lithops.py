@@ -60,7 +60,7 @@ class LithopsDaemon:
 
         exc = format_exc(limit=10)
         # Requeue the message so it retries
-        if msg.get('retry_attempt', 0) < 0:
+        if msg.get('retry_attempt', 0) < 1:
             self.logger.warning(f'Lithops annotation failed, retrying.\n{exc}')
             self._lithops_queue_pub.publish(
                 {**msg, 'retry_attempt': msg.get('retry_attempt', 0) + 1}
