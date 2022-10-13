@@ -183,20 +183,29 @@ def load_ds(
     storage: Storage,
 ) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
     try:
+        imzml_head = executor.storage.head_object(imzml_cobject.bucket, imzml_cobject.key)
         ibd_head = executor.storage.head_object(ibd_cobject.bucket, ibd_cobject.key)
+        imzml_size_mb = int(imzml_head['content-length']) / 1024 // 1024
         ibd_size_mb = int(ibd_head['content-length']) / 1024 // 1024
     except Exception:
-        logger.warning("Couldn't read ibd size", exc_info=True)
+        logger.warning("Couldn't read ibd or imzml size", exc_info=True)
         ibd_size_mb = 1024
 
     # Guess the amount of memory needed. For the majority of datasets (no zero-intensity peaks,
     # separate m/z arrays per spectrum) approximately 3x the ibd file size is used during the
-    # most memory-intense part (sorting the m/z array).
+    # most memory-intense part (sorting the m/z array). Also for uploading imzml browser files
+    # need plus 1x the ibd file size RAM.
     if ibd_size_mb * 3 + 512 < 32 * 1024:
-        logger.info(f'Found {ibd_size_mb}MB .ibd file. Trying serverless load_ds')
+        logger.info(
+            f'Found {ibd_size_mb}MB .ibd and {imzml_size_mb}MB .imzML files. ',
+            'Trying serverless load_ds',
+        )
         runtime_memory = max(2048, int(2 ** np.ceil(np.log2(ibd_size_mb * 3 + 512))))
     else:
-        logger.info(f'Found {ibd_size_mb}MB .ibd file. Using VM-based load_ds')
+        logger.info(
+            f'Found {ibd_size_mb}MB .ibd and {imzml_size_mb}MB .imzML files. ',
+            'Using VM-based load_ds',
+        )
         runtime_memory = 128 * 1024
 
     (
