@@ -63,7 +63,7 @@ class MolecularDB:
 
 def _validate_moldb_df(df):
     errors = []
-    max_value_length = 500
+    max_value_length = 2500  # based on the max inchi in lipds uploaded
     for idx, row in df.iterrows():
         line_n = idx + 2
         for col in df.columns:
