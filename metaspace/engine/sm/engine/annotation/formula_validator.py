@@ -156,7 +156,7 @@ def make_compute_image_metrics(
         doc.mz_mean = np.nan_to_num(mz_mean)
         doc.mz_stddev = np.nan_to_num(mz_stddev)
         doc.mz_err_abs = np.nan_to_num(mz_err_abs)
-        doc.mz_err_rel = np.nan_to_num(mz_err_abs)
+        doc.mz_err_rel = np.nan_to_num(mz_err_rel)
 
         # For non-targeted databases, image sets that don't have at least 2 images will
         is_complete_set = (
