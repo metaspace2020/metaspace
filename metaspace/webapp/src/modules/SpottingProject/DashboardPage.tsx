@@ -580,7 +580,9 @@ export default defineComponent({
             || (state.filter || [])
               .findIndex((item: any) => Object.keys(CLASSIFICATION_METRICS).includes(item.src)) !== -1,
           queryType: 'data',
-          filter: (state.filter || []).map((item: any) => item.src).join(','),
+          filter: (state.filter || []).map((item: any) => item.src).join(',')
+            .replace('main_coarse_class', 'coarse_class')
+            .replace('main_coarse_path', 'coarse_path'),
           filterValues: (state.filter || []).map((item: any) => Array.isArray(item.value)
             ? item.value.join('#') : item.value).filter((x:any) => x).join('|'),
         }
@@ -607,6 +609,9 @@ export default defineComponent({
     const loadFilterValues = async(filter:any) => {
       try {
         // load data
+
+        filter = filter === 'main_coarse_class' ? 'coarse_class' : filter
+        filter = filter === 'main_coarse_path' ? 'coarse_path' : filter
         const params : any = {
           predType: state.dataSource.toUpperCase(),
           xAxis: state.options.xAxis,
