@@ -141,15 +141,22 @@ def make_compute_image_metrics(
 
         doc = Metrics(formula_i=image_set.formula_i)
 
-        doc.total_iso_ints = np.float32([img.sum() for img in iso_imgs_flat])
-        doc.min_iso_ints = np.float32([img.min(initial=0) for img in iso_imgs_flat])
-        doc.max_iso_ints = np.float32([img.max(initial=0) for img in iso_imgs_flat])
-
         doc.theo_mz = np.float32(image_set.theo_mzs)
         doc.theo_ints = np.float32(image_set.theo_ints)
-        doc.mz_mean, doc.mz_stddev, doc.mz_err_abs, doc.mz_err_rel = mass_metrics(
+
+        # Some pixels in images have values of infinity or np.nan.
+        # JSON does not support such values, so we replace them with the max possible val and zero
+        doc.total_iso_ints = np.nan_to_num(np.float32([img.sum() for img in iso_imgs_flat]))
+        doc.min_iso_ints = np.nan_to_num(np.float32([img.min(initial=0) for img in iso_imgs_flat]))
+        doc.max_iso_ints = np.nan_to_num(np.float32([img.max(initial=0) for img in iso_imgs_flat]))
+
+        mz_mean, mz_stddev, mz_err_abs, mz_err_rel = mass_metrics(
             image_set.images, image_set.mz_images, image_set.theo_mzs, image_set.theo_ints
         )
+        doc.mz_mean = np.nan_to_num(mz_mean)
+        doc.mz_stddev = np.nan_to_num(mz_stddev)
+        doc.mz_err_abs = np.nan_to_num(mz_err_abs)
+        doc.mz_err_rel = np.nan_to_num(mz_err_abs)
 
         # For non-targeted databases, image sets that don't have at least 2 images will
         is_complete_set = (
