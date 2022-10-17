@@ -63,11 +63,20 @@ class MolecularDB:
 
 def _validate_moldb_df(df):
     errors = []
+    max_value_length = 2500  # based on the max inchi in lipds uploaded
     for idx, row in df.iterrows():
         line_n = idx + 2
         for col in df.columns:
             if not row[col] or row[col].isspace():
                 errors.append({'line': line_n, 'row': row.values.tolist(), 'error': 'Empty value'})
+            elif len(row[col]) > max_value_length:
+                errors.append(
+                    {
+                        'line': line_n,
+                        'row': [row[col]],
+                        'error': 'Value exceeded the maximum number ' 'of characters.',
+                    }
+                )
 
         try:
             if '.' in row.formula:
