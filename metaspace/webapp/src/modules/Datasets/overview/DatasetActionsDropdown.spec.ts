@@ -98,26 +98,26 @@ describe('DatasetActionsDropdown', () => {
   it('it show all options to the admin', async() => {
     const wrapper = mount(testHarness, { store, router, apolloProvider, propsData })
     await Vue.nextTick()
-    expect(wrapper.findAll('li').length).toBe(5)
+    expect(wrapper.findAll('li').length).toBe(6)
   })
 
   it('it show all options except reprocess if user is the ds owner, but not admin', async() => {
     const wrapper = mount(testHarness, { store, router, apolloProvider, propsData: propsDataOwner })
     await Vue.nextTick()
-    expect(wrapper.findAll('li').length).toBe(4)
+    expect(wrapper.findAll('li').length).toBe(5)
   })
 
   it('it show only canDownload option for normalUser', async() => {
     const wrapper = mount(testHarness, { store, router, propsData: propsDataNormal })
     await Vue.nextTick()
-    expect(wrapper.findAll('li').length).toBe(2)
+    expect(wrapper.findAll('li').length).toBe(3)
   })
 
   it('it show only canDownload option for normalUser', async() => {
     const wrapper = mount(testHarness, { store, router, apolloProvider, propsData: propsDataNormalNoOptions })
     await Vue.nextTick()
 
-    expect(wrapper.findAll('li').length).toBe(1)
+    expect(wrapper.findAll('li').length).toBe(2)
     expect(wrapper.find('.el-dropdown').element.style.visibility).toBe('hidden')
   })
 })
