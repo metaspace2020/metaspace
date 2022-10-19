@@ -390,13 +390,12 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SingleSelectFilter,
     name: '',
     description: 'Show/hide datasets with optical images',
-    helpComponent: OffSampleHelp,
     levels: ['annotation', 'dataset'],
     defaultInLevels: [],
     initialValue: false,
     options: [true, false],
     encoding: 'bool',
-    optionFormatter: option => `${option ? 'Without' : 'With'} optical images only`,
+    optionFormatter: option => `${option ? 'With' : 'Without'} optical images only`,
   },
 }
 

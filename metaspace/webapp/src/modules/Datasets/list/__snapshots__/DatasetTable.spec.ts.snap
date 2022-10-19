@@ -83,6 +83,10 @@ exports[`DatasetTable should match snapshot 1`] = `
         label="Select data type"
         value="metadataType"
       />
+      <mock-el-option
+        label="Show/hide datasets with optical images"
+        value="opticalImage"
+      />
     </mock-el-select>
      
   </div>
