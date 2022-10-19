@@ -152,6 +152,7 @@ CREATE TABLE "public"."dataset" (
   "name" text, 
   "input_path" text, 
   "metadata" json, 
+  "roi" json, 
   "config" json, 
   "upload_dt" TIMESTAMP, 
   "status" text, 
