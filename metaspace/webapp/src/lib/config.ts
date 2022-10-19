@@ -62,7 +62,7 @@ const defaultConfig: ClientConfig = {
   features: {
     coloc: true,
     show_dataset_overview: true,
-    imzml_browser: false,
+    imzml_browser: true,
     spotting: false,
     roi: true,
     tic: true,

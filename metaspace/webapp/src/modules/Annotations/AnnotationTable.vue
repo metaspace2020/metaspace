@@ -508,7 +508,7 @@ import {
 import Vue from 'vue'
 import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray, csvExportIntensityHeader } from '../../lib/formatCsvRow'
-import { invert, uniqBy } from 'lodash-es'
+import { invert, uniqBy, isEqual } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
@@ -584,91 +584,115 @@ export default Vue.extend({
       showCustomCols: config.features.custom_cols,
       columns: [
         {
+          id: 1,
           label: 'Lab',
           src: 'Group',
           selected: true,
+          default: true,
         },
         {
+          id: 2,
           label: 'Dataset',
           src: 'Dataset',
           selected: true,
+          default: true,
         },
         {
+          id: 3,
           label: 'Annotation',
           src: 'Annotation',
           selected: true,
+          default: true,
         },
         {
+          id: 4,
           label: 'Adduct',
           src: 'Adduct',
           selected: false,
         },
         {
+          id: 5,
           label: 'm/z',
           src: 'mz',
           selected: true,
+          default: true,
         },
         {
+          id: 6,
           label: 'Off-sample probability %',
           src: 'OffSampleProb',
           selected: false,
         },
         {
+          id: 7,
           label: 'spatial',
           src: 'rhoSpatial',
           selected: false,
         },
         {
+          id: 8,
           label: 'spectral',
           src: 'rhoSpectral',
           selected: false,
         },
         {
+          id: 9,
           label: 'chaos',
           src: 'rhoChaos',
           selected: false,
         },
         {
+          id: 10,
           label: 'MSM',
           src: 'MSM',
           selected: true,
+          default: true,
         },
         {
+          id: 11,
           label: 'Database',
           src: 'Database',
           selected: false,
         },
         {
+          id: 12,
           label: 'Molecules',
           src: 'Molecules',
           selected: false,
         },
         {
+          id: 13,
           label: 'Isomers',
           src: 'isomers',
           selected: false,
         },
         {
+          id: 14,
           label: 'Isobars',
           src: 'isobars',
           selected: false,
         },
         {
+          id: 15,
           label: 'Max Intensity',
           src: 'maxIntensity',
           selected: false,
         },
         {
+          id: 16,
           label: 'Total Intensity',
           src: 'totalIntensity',
           selected: false,
         },
         {
+          id: 17,
           label: 'FDR',
           src: 'FDR',
           selected: true,
+          default: true,
         },
         {
+          id: 18,
           label: 'Co-localization coefficient',
           src: 'colocalizationCoeff',
           selected: false,
@@ -803,6 +827,26 @@ export default Vue.extend({
           0)
       }
     },
+    '$store.getters.filter.datasetIds'() {
+      // hide dataset related filters if dataset filter added
+      if (this.$store.getters.filter.datasetIds && this.showCustomCols) {
+        this.hideDatasetRelatedColumns()
+      } else if (this.showCustomCols) { // show dataset related filters if dataset filter added
+        this.showDatasetRelatedColumns()
+      }
+    },
+    '$route.query.cols'() {
+      if (this.$route.query.cols) {
+        const columns = this.columns
+        const persistedCols = this.$route.query.cols.split(',')
+        columns.forEach((column, colIdx) => {
+          if (persistedCols.includes(column.id.toString())) {
+            columns[colIdx].selected = true
+          }
+        })
+        this.columns = columns
+      }
+    },
   },
   mounted() {
     var nCells = (window.innerHeight - 150) / 43
@@ -869,16 +913,27 @@ export default Vue.extend({
       return
     }
 
-    const localColSettings = getLocalStorage('annotationTableCols')
     const columns = this.columns
-    if (Array.isArray(localColSettings)) {
-      localColSettings.forEach((colSetting) => {
-        const colIdx = columns.findIndex(col => col.src === colSetting.src)
-        if (colIdx !== -1) {
-          columns[colIdx].selected = colSetting.selected
+
+    if (this.$route.query.cols && Array.isArray(this.$route.query.cols.split(','))) { // load cols from url
+      const persistedCols = this.$route.query.cols.split(',')
+      columns.forEach((column, colIdx) => {
+        if (persistedCols.includes(column.id.toString())) {
+          columns[colIdx].selected = true
         }
       })
+    } else { // load cols from local storage - legacy
+      const localColSettings = getLocalStorage('annotationTableCols')
+      if (Array.isArray(localColSettings)) {
+        localColSettings.forEach((colSetting) => {
+          const colIdx = columns.findIndex(col => col.src === colSetting.src)
+          if (colIdx !== -1) {
+            columns[colIdx].selected = colSetting.selected
+          }
+        })
+      }
     }
+
     this.columns = columns
     this.hideDatasetRelatedColumns()
   },
@@ -888,6 +943,10 @@ export default Vue.extend({
         this.columns.find((col) => col.src === 'Group').selected = false
         this.columns.find((col) => col.src === 'Dataset').selected = false
       }
+    },
+    showDatasetRelatedColumns() {
+      this.columns.find((col) => col.src === 'Group').selected = true
+      this.columns.find((col) => col.src === 'Dataset').selected = true
     },
     onPageSizeChange(newSize) {
       this.recordsPerPage = newSize
@@ -902,7 +961,7 @@ export default Vue.extend({
     },
 
     setCurrentRow(rowIndex, rows = this.annotations) {
-      if (this.$refs.table && rows.length) {
+      if (this.$refs.table && rows && rows.length) {
         this.$refs.table.setCurrentRow(null)
         const nextIndex = rowIndex < 0 ? 0 : Math.min(rowIndex, rows.length - 1)
         this.$refs.table.setCurrentRow(rows[nextIndex])
@@ -1080,9 +1139,6 @@ export default Vue.extend({
     updateFilter(delta) {
       const filter = Object.assign({}, this.filter, delta)
       this.$store.commit('updateFilter', filter)
-      if (Object.keys(delta).includes('datasetIds') && this.showCustomCols) { // hide dataset related filters if dataset filter added
-        this.hideDatasetRelatedColumns()
-      }
     },
 
     async setNormalizationData(currentAnnotation) {
@@ -1323,6 +1379,14 @@ export default Vue.extend({
 
     handleColumnClick(index) {
       this.columns[index].selected = !this.columns[index].selected
+      const defaultCols = this.columns.filter((column) => column.default).map((column) => column.id)
+      const selectedCols = this.columns.filter((column) => column.selected).map((column) => column.id)
+      if (!isEqual(defaultCols, selectedCols)) {
+        this.$router.push({ path: this.$route.fullPath, query: { cols: selectedCols.join(',') } })
+      } else {
+        this.$router.push({ path: this.$route.fullPath, query: { cols: undefined } })
+      }
+
       setLocalStorage('annotationTableCols', this.columns)
     },
 

@@ -1,0 +1,21 @@
+.cite-meta-wrapper{
+  margin-top: 3rem !important;
+
+  h3 {
+    @apply font-display font-medium leading-6 text-2xl tracking-snug py-3 m-0;
+  }
+
+  .cite-meta-p {
+    @apply m-0 mb-6;
+    margin-bottom: 1.5rem !important;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+  }
+
+  strong {
+    @apply font-medium;
+  }
+}

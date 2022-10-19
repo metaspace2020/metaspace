@@ -37,6 +37,16 @@ export default async($apollo: any, id: string, datasetId: string) => {
     const parsed = JSON.parse(snapshot)
     let filter = store.getters.filter
 
+    if (parsed.query.cols) {
+      router.replace({
+        query: {
+          // @ts-ignore
+          ...router.history.current.query,
+          cols: parsed.query.cols,
+        },
+      })
+    }
+
     store.commit('setSnapshotAnnotationIds', annotations.map((annotation: any) => annotation.id))
 
     // set snapshot filters

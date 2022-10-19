@@ -121,7 +121,7 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
                     Copy project id to clipboard
                   </p>
                 </div>
-                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
               </mock-el-popover>
             </div>
             <div>
@@ -162,7 +162,7 @@ exports[`ProjectsListPage should change actions for projects under review 1`] = 
                     Copy project id to clipboard
                   </p>
                 </div>
-                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
               </mock-el-popover>
             </div>
             <div>
@@ -318,7 +318,7 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
                     Copy project id to clipboard
                   </p>
                 </div>
-                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
               </mock-el-popover>
             </div>
             <div>
@@ -358,7 +358,7 @@ exports[`ProjectsListPage should change actions for published projects 1`] = `
                     Copy project id to clipboard
                   </p>
                 </div>
-                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
               </mock-el-popover>
             </div>
             <div>
@@ -514,7 +514,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
                     Copy project id to clipboard
                   </p>
                 </div>
-                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
               </mock-el-popover>
             </div>
             <div>
@@ -554,7 +554,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
                     Copy project id to clipboard
                   </p>
                 </div>
-                <div slot-key="reference"><button class="button-reset flex w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
               </mock-el-popover>
             </div>
             <div>

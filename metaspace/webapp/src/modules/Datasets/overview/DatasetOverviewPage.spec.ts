@@ -8,6 +8,7 @@ import router from '../../../router'
 import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/mockGraphqlClient'
 
 jest.mock('./DatasetActionsDropdown', () => ({ default: jest.fn() }))
+jest.mock('../../../components/NewFeatureBadge', () => ({ default: jest.fn() }))
 
 describe('DatasetOverviewPage', () => {
   const mockDataset = {

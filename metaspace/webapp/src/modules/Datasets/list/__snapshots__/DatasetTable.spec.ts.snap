@@ -378,7 +378,7 @@ exports[`DatasetTable should match snapshot 1`] = `
               slot-key="reference"
             >
               <button
-                class="button-reset flex w-6 h-6"
+                class="button-reset flex  w-6 h-6"
               >
                 <svg
                   class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"
@@ -611,7 +611,7 @@ exports[`DatasetTable should match snapshot 1`] = `
               slot-key="reference"
             >
               <button
-                class="button-reset flex w-6 h-6"
+                class="button-reset flex  w-6 h-6"
               >
                 <svg
                   class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"
@@ -830,7 +830,7 @@ exports[`DatasetTable should match snapshot 1`] = `
               slot-key="reference"
             >
               <button
-                class="button-reset flex w-6 h-6"
+                class="button-reset flex  w-6 h-6"
               >
                 <svg
                   class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"

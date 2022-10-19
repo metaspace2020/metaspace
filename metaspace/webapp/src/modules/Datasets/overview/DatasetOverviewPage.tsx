@@ -13,6 +13,7 @@ import { currentUserRoleQuery, CurrentUserRoleResult } from '../../../api/user'
 import { DatasetOverviewGallery } from './DatasetOverviewGallery'
 import RichText from '../../../components/RichText'
 import isValidTiptapJson from '../../../lib/isValidTiptapJson'
+import NewFeatureBadge from '../../../components/NewFeatureBadge'
 import './DatasetOverviewPage.scss'
 
 interface Props {
@@ -134,7 +135,11 @@ const DatasetOverviewPage = defineComponent<Props>({
                   }
                 </span>
               </h1>
-              <DatasetActionsDropdown dataset={dataset?.value} currentUser={currentUser?.value}/>
+              <NewFeatureBadge
+                featureKey="imzmlBrowser"
+              >
+                <DatasetActionsDropdown dataset={dataset?.value} currentUser={currentUser?.value}/>
+              </NewFeatureBadge>
             </div>
             <div class='dataset-overview-holder'>
               <p class='truncate'>{submitter?.name}
