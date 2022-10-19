@@ -197,14 +197,14 @@ def load_ds(
     # need plus 1x the ibd file size RAM.
     if ibd_size_mb * 3 + 512 < 32 * 1024:
         logger.info(
-            f'Found {ibd_size_mb}MB .ibd and {imzml_size_mb}MB .imzML files. ',
-            'Trying serverless load_ds',
+            f'Found {ibd_size_mb}MB .ibd and {imzml_size_mb}MB .imzML files. '
+            + 'Trying serverless load_ds',
         )
         runtime_memory = max(2048, int(2 ** np.ceil(np.log2(ibd_size_mb * 3 + 512))))
     else:
         logger.info(
-            f'Found {ibd_size_mb}MB .ibd and {imzml_size_mb}MB .imzML files. ',
-            'Using VM-based load_ds',
+            f'Found {ibd_size_mb}MB .ibd and {imzml_size_mb}MB .imzML files. '
+            + 'Using VM-based load_ds',
         )
         runtime_memory = 128 * 1024
 
