@@ -36,7 +36,7 @@ def run_fdr(
             fdr.estimate_fdr(formula_msm, scoring_model)
             .assign(moldb_id=moldb_id)
             .set_index('formula_i')
-            .merge(modifiers, left_on='modifier', right_index=True, how='outer')
+            .merge(modifiers, left_on='modifier', right_index=True, how='inner')
         )
 
         return db_data['id'], results_df
