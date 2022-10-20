@@ -86,7 +86,8 @@
     "code_engine": {
       "region": "eu-de",
       "namespace": "{{ sm_lithops_ce_namespace }}",
-      "runtime": ""
+      "runtime": "",
+      "connection_retries": 10
     },
     "ibm_vpc": {
       "endpoint": "https://eu-de.iaas.cloud.ibm.com",
