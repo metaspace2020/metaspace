@@ -195,6 +195,7 @@ input DatasetFilter {
   metadataType: String
   status: String # list of JobStatus separated by '|'
   hasAnnotationMatching: AnnotationFilter # Does not support some advanced filters e.g. the colocalization filters
+  opticalImage: Boolean
 }
 
 input DatasetCountPerGroupInput {

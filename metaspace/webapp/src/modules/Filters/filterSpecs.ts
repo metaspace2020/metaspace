@@ -25,7 +25,7 @@ export type FilterKey = 'annotationIds' | 'database' | 'datasetIds' | 'minMSM' |
   | 'chemMod' | 'neutralLoss' | 'adduct' | 'mz' | 'fdrLevel'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
   | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
-  | 'colocalizedWith' | 'colocalizationSamples' | 'offSample' | 'datasetOwner';
+  | 'colocalizedWith' | 'colocalizationSamples' | 'offSample' | 'datasetOwner' | 'opticalImage';
 
 export type MetadataLists = Record<string, any[]>;
 
@@ -385,15 +385,28 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     optionFormatter: option => `${option ? 'Off' : 'On'}-sample only`,
     hidden: () => !config.features.off_sample,
   },
+
+  opticalImage: {
+    type: SingleSelectFilter,
+    name: '',
+    description: 'Show/hide datasets with optical images',
+    levels: ['annotation', 'dataset'],
+    defaultInLevels: [],
+    initialValue: false,
+    options: [true, false],
+    encoding: 'bool',
+    optionFormatter: option => `${option ? 'With' : 'Without'} optical images only`,
+  },
 }
 
 export const DATASET_FILTERS: FilterKey[] = [
   'datasetIds', 'group', 'project', 'submitter', 'polarity', 'organism', 'organismPart', 'condition',
-  'growthConditions', 'ionisationSource', 'maldiMatrix', 'analyzerType', 'metadataType', 'datasetOwner',
+  'growthConditions', 'ionisationSource', 'maldiMatrix', 'analyzerType', 'metadataType', 'datasetOwner', 'opticalImage',
 ]
 /** = all annotation-affecting filters - dataset-affecting filters */
 export const ANNOTATION_FILTERS: FilterKey[] = [
   'annotationIds', 'database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample',
+  'opticalImage',
 ]
 /** Filters that are very specific to particular annotations and should be cleared when navigating to other annotations */
 export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = [

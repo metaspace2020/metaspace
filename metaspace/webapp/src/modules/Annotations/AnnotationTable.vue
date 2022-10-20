@@ -829,7 +829,9 @@ export default Vue.extend({
     },
     '$store.getters.filter.datasetIds'() {
       // hide dataset related filters if dataset filter added
-      if (this.$store.getters.filter.datasetIds && this.showCustomCols) {
+      if (Array.isArray(this.$store.getters.filter.datasetIds)
+        && this.$store.getters.filter.datasetIds.length === 1
+        && this.showCustomCols) {
         this.hideDatasetRelatedColumns()
       } else if (this.showCustomCols) { // show dataset related filters if dataset filter added
         this.showDatasetRelatedColumns()
