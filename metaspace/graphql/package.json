@@ -82,7 +82,7 @@
     "moment": "^2.29.4",
     "multer": "^1.4.2",
     "node-fetch": "^2.6.7",
-    "passport": "^0.4.0",
+    "passport": "^0.6.0",
     "passport-anonymous": "^1.0.1",
     "passport-google-oauth20": "^1.0.0",
     "passport-headerapikey": "^1.2.0",
