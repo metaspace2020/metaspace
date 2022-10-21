@@ -1,4 +1,4 @@
-FROM  --platform=linux/amd64 public.ecr.aws/lambda/python:3.8
+FROM  public.ecr.aws/lambda/python:3.8
 
 # Copy function code
 COPY app.py ${LAMBDA_TASK_ROOT}

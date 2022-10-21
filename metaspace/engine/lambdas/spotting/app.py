@@ -20,12 +20,8 @@ def sort_axis(data, x_axis, y_axis):
     matrix = np.zeros((len(data[y_axis].unique()), len(data[x_axis].unique())))
     for row_idx, row in enumerate(data[y_axis].unique()):
         for col_idx, col in enumerate(data[x_axis].unique()):
-            try:
-                fraction = data[(data[y_axis] == row) & (data[x_axis] == col)][
-                    'fraction_detected'
-                ].values[0]
-            except:
-                fraction = 1
+            aux_df = data[(data[y_axis] == row) & (data[x_axis] == col)]['fraction_detected']
+            fraction = aux_df.values[0] if aux_df.size else 1  # df.size return a number
             matrix[row_idx][col_idx] = fraction
 
     y_axis_sort = seriate(pdist(matrix))
@@ -61,7 +57,14 @@ def get_class_size(metadata, class_column):
 
 # pylint: disable=too-many-locals, too-many-arguments, too-many-statements, too-many-branches
 def load_data(
-    pred_type='EMBL', load_pathway=False, load_class=False, filters=None, x_axis=None, y_axis=None
+    pred_type='EMBL',
+    load_pathway=False,
+    load_class=False,
+    filters=None,
+    x_axis=None,
+    y_axis=None,
+    load_fine_class=False,
+    load_fine_path=False,
 ):
     """Load spotting related data and apply filters"""
 
@@ -112,34 +115,52 @@ def load_data(
     # merge with class
     if load_class:
         classes1 = pd.read_parquet(f'{url_prefix}/{chem_class_file}')
+        class_src = ['fine_class', 'main_coarse_class', 'coarse_class']
 
-        if y_axis != 'main_coarse_class' and x_axis != 'main_coarse_class':
-            chem = get_class_size(
-                classes1[['name_short', 'fine_class', 'coarse_class']], 'fine_class'
-            )
-        else:
-            chem = get_class_size(
-                classes1[['name_short', 'main_coarse_class']].drop_duplicates(), 'main_coarse_class'
-            )
+        # calculate class size based on pathway only if axis contains one of the selected sources
+        if (y_axis in class_src) or (x_axis in class_src):
+            if load_fine_class:
+                chem = get_class_size(
+                    classes1[['name_short', 'fine_class', 'coarse_class']], 'fine_class'
+                )
+            else:
+                chem = get_class_size(
+                    classes1[['name_short', 'main_coarse_class']].drop_duplicates(),
+                    'main_coarse_class',
+                )
 
-        spotting_data = spotting_data.merge(
-            chem, left_on='name', right_on='name_short', how='right'
-        )
+            spotting_data = spotting_data.merge(
+                chem, left_on='name', right_on='name_short', how='right'
+            )
+        else:  # merge class if not in axis but in filter
+            spotting_data = spotting_data.merge(
+                classes1, left_on='name', right_on='name_short', how='right'
+            )
 
     # merge with pathway
     if load_pathway:
         classes1 = pd.read_parquet(f'{url_prefix}/{pathways_file}')
+        pathway_src = ['fine_path', 'main_coarse_path', 'coarse_path']
 
-        if y_axis != 'main_coarse_path' and x_axis != 'main_coarse_path':
-            chem = get_class_size(classes1[['name_short', 'fine_path', 'coarse_path']], 'fine_path')
-        else:
-            chem = get_class_size(
-                classes1[['name_short', 'main_coarse_path']].drop_duplicates(), 'main_coarse_path'
+        # calculate pathway size based on pathway only if axis contains one of the selected sources
+        if (y_axis in pathway_src) or (x_axis in pathway_src):
+            if load_fine_path:
+                chem = get_class_size(
+                    classes1[['name_short', 'fine_path', 'coarse_path']], 'fine_path'
+                )
+            else:
+                chem = get_class_size(
+                    classes1[['name_short', 'main_coarse_path']].drop_duplicates(),
+                    'main_coarse_path',
+                )
+
+            spotting_data = spotting_data.merge(
+                chem, left_on='name', right_on='name_short', how='right'
             )
-
-        spotting_data = spotting_data.merge(
-            chem, left_on='name', right_on='name_short', how='right'
-        )
+        else:  # merge pathway if not in axis but in filter
+            spotting_data = spotting_data.merge(
+                classes1, left_on='name', right_on='name_short', how='right'
+            )
 
     # filter types definitions
     numeric_filters = ['pV']
@@ -360,7 +381,7 @@ def parse_event(event):
     load_class = json.loads(parameter['loadClass'].lower())
     pred_type = parameter['predType']
     query_type = parameter['queryType']
-    query_filter_src = parameter['filter']
+    query_filter_src = parameter['filter'] if 'filter' in parameter.keys() else ''
     if parameter.get('filterValues'):
         query_filter_values = parameter['filterValues']
     else:
@@ -424,7 +445,16 @@ def lambda_handler(event, context):
 
     # load base data
     base_data, n_metabolites = load_data(
-        pred_type, load_pathway, load_class, filter_hash, x_axis, y_axis
+        pred_type,
+        load_pathway,
+        load_class,
+        filter_hash,
+        x_axis,
+        y_axis,
+        (y_axis != 'main_coarse_class' and x_axis != 'main_coarse_class')
+        or (query_type == 'filterValues' and query_filter_src == 'fine_class'),
+        (y_axis != 'main_coarse_path' and x_axis != 'main_coarse_path')
+        or (query_type == 'filterValues' and query_filter_src == 'fine_path'),
     )
 
     # get filter values

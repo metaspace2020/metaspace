@@ -133,6 +133,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           feature: {
             saveAsImage: {
               title: ' ',
+              name: 'spotting',
             },
           },
         },
@@ -160,6 +161,9 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           axisLine: {
             show: false,
           },
+          axisTick: {
+            show: false,
+          },
           axisLabel: {
             show: true,
             interval: 0,
@@ -173,17 +177,20 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           axisLine: {
             show: false,
           },
+          axisTick: {
+            show: false,
+          },
           axisLabel: {
             show: true,
             interval: 0,
-            height: 30,
+            height: 40,
           },
         },
         series: [{
           type: 'scatter',
           markLine: {},
           symbolSize: function(val: any) {
-            return val[2] * 2
+            return val[2] * 30
           },
           itemStyle: {
             borderColor: 'black',
@@ -234,8 +241,38 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       }
 
       auxOptions.xAxis.data = xAxisData.value
+
+      if (auxOptions.xAxis.data.length > 30) {
+        auxOptions.xAxis.axisLabel.rotate = 90
+        auxOptions.series[0].symbolSize = function(val: any) {
+          return val[2] * 10
+        }
+      } else {
+        auxOptions.xAxis.axisLabel.rotate = 30
+        auxOptions.series[0].symbolSize = function(val: any) {
+          return val[2] * 30
+        }
+      }
+
+      // add no Neutral label
+      if (props.xOption === 'nL') {
+        const nullIdx = auxOptions.xAxis.data.findIndex((label: string) => label === '')
+        if (nullIdx !== -1) {
+          auxOptions.xAxis.data[nullIdx] = 'no neutral loss'
+        }
+      }
+
       auxOptions.yAxis.data = yAxisData.value
         .map((label: string) => label.replace(/.+-agg-\s(.+)/, '$1'))
+
+      // add no Neutral label
+      if (props.yOption === 'nL') {
+        const nullIdx = auxOptions.yAxis.data.findIndex((label: string) => label === '')
+        if (nullIdx !== -1) {
+          auxOptions.yAxis.data[nullIdx] = 'no neutral loss'
+        }
+      }
+
       auxOptions.series[0].data = chartData.value
       auxOptions.series[0].markLine.data = markData
       if (visualMap.value && visualMap.value.type) {

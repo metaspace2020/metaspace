@@ -6,6 +6,7 @@ import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
 import getColorScale from '../../lib/getColorScale'
+import ScatterChart from '../../assets/inline/scatter_chart.svg'
 import './DashboardPage.scss'
 
 interface Options{
@@ -46,6 +47,15 @@ interface DashboardState {
 const VIEW = {
   SCATTER: 1,
   HEATMAP: 2,
+}
+
+const FILTER_DISABLED_COMBINATIONS: any = {
+  main_coarse_class: ['coarse_class', 'fine_class'],
+  coarse_class: ['main_coarse_class'],
+  fine_class: ['main_coarse_class'],
+  main_coarse_path: ['coarse_path', 'fine_path'],
+  coarse_path: ['main_coarse_path'],
+  fine_path: ['main_coarse_path'],
 }
 
 const ALLOWED_COMBINATIONS: any = {
@@ -566,6 +576,14 @@ export default defineComponent({
       try {
         state.loading = true
 
+        const nonEmptyFilters = (state.filter || []).filter((item: any) => Array.isArray(item.value)
+          ? item.value.join('#') : item.value)
+        const filter = nonEmptyFilters.map((item: any) => item.src).join(',')
+        // .replace('main_coarse_class', 'coarse_class')
+        // .replace('main_coarse_path', 'coarse_path')
+        const filterValues = nonEmptyFilters.map((item: any) => Array.isArray(item.value)
+          ? item.value.join('#') : item.value).filter((x:any) => x).join('|')
+
         // load data
         const params : any = {
           predType: state.dataSource.toUpperCase(),
@@ -580,24 +598,21 @@ export default defineComponent({
             || (state.filter || [])
               .findIndex((item: any) => Object.keys(CLASSIFICATION_METRICS).includes(item.src)) !== -1,
           queryType: 'data',
-          filter: (state.filter || []).map((item: any) => item.src).join(',')
-            .replace('main_coarse_class', 'coarse_class')
-            .replace('main_coarse_path', 'coarse_path'),
-          filterValues: (state.filter || []).map((item: any) => Array.isArray(item.value)
-            ? item.value.join('#') : item.value).filter((x:any) => x).join('|'),
+          filter,
+          filterValues,
         }
 
         const query = Object.keys(params)
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
+        // const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
         // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
-        // const baseUrl = 'http://localhost:8080' // local
+        const baseUrl = 'http://localhost:8080' // local
         // const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
         const response = await fetch(baseUrl + '?' + query)
         const parsedResponse = await response.json()
-        state.usedData = parsedResponse // .body
+        state.usedData = parsedResponse.body
       } catch (e) {
         state.usedData = {}
         state.data = []
@@ -610,8 +625,8 @@ export default defineComponent({
       try {
         // load data
 
-        filter = filter === 'main_coarse_class' ? 'coarse_class' : filter
-        filter = filter === 'main_coarse_path' ? 'coarse_path' : filter
+        // filter = filter === 'main_coarse_class' ? 'coarse_class' : filter
+        // filter = filter === 'main_coarse_path' ? 'coarse_path' : filter
         const params : any = {
           predType: state.dataSource.toUpperCase(),
           xAxis: state.options.xAxis,
@@ -632,10 +647,12 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws'
+        // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws'
+        const baseUrl = 'http://localhost:8080' // local
+
         const response = await fetch(baseUrl + '?' + query)
         const filterJson = await response.json()
-        return filterJson.values
+        return filterJson.body.values
       } catch (e) {
         return null
       }
@@ -675,7 +692,7 @@ export default defineComponent({
             const value : number = isEmpty ? 0 : item.fraction_detected
             const normalizedValue = isEmpty ? 0 : (yMaxValue === 0 ? 0 : (value / yMaxValue))
             dotValues.push({
-              value: [xIndex, yIndex, normalizedValue * 15, pointAggregation, value],
+              value: [xIndex, yIndex, normalizedValue, pointAggregation, value],
               label: {
                 key: yKey,
                 molecule: item.formulas ? item.formulas.split(',')[0] : undefined,
@@ -698,6 +715,10 @@ export default defineComponent({
           left: 'center',
           inRange: {
             color: getColorScale(state.colormap).range,
+          },
+          handleStyle: {
+            borderColor: '#000',
+            borderWidth: 1,
           },
           orient: 'horizontal',
           min: 0,
@@ -782,7 +803,7 @@ export default defineComponent({
     }
 
     const handleColormapChange = (color: any) => {
-      state.colormap = '-' + color.replace('-', '')
+      state.colormap = color
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
       }
@@ -865,6 +886,8 @@ export default defineComponent({
         await handleAxisChange(state.options.xAxis, true, false)
         await handleAxisChange(state.options.yAxis, false, false)
         await buildValues()
+      } else if (changedValue) {
+        state.isEmpty = true
       }
     }
 
@@ -1019,7 +1042,12 @@ export default defineComponent({
                       {
                         orderBy(FILTER_VALUES, ['label'], ['asc']).map((option: any) => {
                           return <Option
-                            disabled={state.filter.map((item: any) => item.src).includes(option.src)}
+                            disabled={state.filter.map((item: any) => item.src).includes(option.src)
+                            || (FILTER_DISABLED_COMBINATIONS[state.options.yAxis]
+                                && FILTER_DISABLED_COMBINATIONS[state.options.yAxis].includes(option.src))
+                            || (FILTER_DISABLED_COMBINATIONS[state.options.xAxis]
+                                && FILTER_DISABLED_COMBINATIONS[state.options.xAxis].includes(option.src))
+                            }
                             label={option.label}
                             value={option.src}/>
                         })
@@ -1094,8 +1122,8 @@ export default defineComponent({
         <div class='visualization-container flex w-full justify-end'>
           <div class='visualization-selector'>
             <span class='filter-label'>Visualization</span>
-            <div class={`icon-holder ${state.selectedView === VIEW.SCATTER ? 'selected' : ''}`}>
-              <i class="vis-icon el-icon-s-data mr-6 text-4xl" onClick={() => { state.selectedView = VIEW.SCATTER }}/>
+            <div class={`ml-2 icon-holder ${state.selectedView === VIEW.SCATTER ? 'selected' : ''}`}>
+              <ScatterChart class='roi-icon fill-current' onClick={() => { state.selectedView = VIEW.SCATTER }}/>
             </div>
             <div class={`icon-holder ${state.selectedView === VIEW.HEATMAP ? 'selected' : ''}`}>
               <i class="vis-icon el-icon-s-grid mr-6 text-4xl" onClick={() => { state.selectedView = VIEW.HEATMAP }}/>
@@ -1154,7 +1182,7 @@ export default defineComponent({
             yOption={state.options.yAxis}
             xAxis={xAxisValues}
             yAxis={yAxisValues}
-            size={yAxisValues.length * 30}
+            size={yAxisValues.length * 40}
             data={chartData}
             visualMap={state.visualMap}
             onItemSelected={handleItemClick}
@@ -1171,7 +1199,7 @@ export default defineComponent({
             yOption={state.options.yAxis}
             xAxis={xAxisValues}
             yAxis={yAxisValues}
-            size={yAxisValues.length * 30}
+            size={yAxisValues.length * 40}
             data={chartData}
             visualMap={state.visualMap}
           />
