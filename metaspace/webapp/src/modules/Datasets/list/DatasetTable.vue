@@ -53,7 +53,7 @@
         <div class="flex flex-row items-center justify-between flex-1">
           <sort-dropdown
             class="p-2"
-            :on-sort-change="handleSortChange"
+            @sort="handleSortChange"
           />
 
           <el-button

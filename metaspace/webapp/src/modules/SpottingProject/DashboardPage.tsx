@@ -8,6 +8,7 @@ import { ChartSettings } from './ChartSettings'
 import getColorScale from '../../lib/getColorScale'
 import ScatterChart from '../../assets/inline/scatter_chart.svg'
 import './DashboardPage.scss'
+import { SortDropdown } from '../../components/SortDropdown/SortDropdown'
 
 interface Options{
   xAxis: any
@@ -17,6 +18,8 @@ interface Options{
 }
 
 interface DashboardState {
+  orderBy: string,
+  sortingOrder:string,
   colormap: any
   filter: any[]
   xAxisValues: any
@@ -360,16 +363,6 @@ const FILTER_VALUES = [
     label: 'Matrix',
     src: 'Matrix short',
   },
-  // {
-  //   label: 'Value Prediction',
-  //   src: 'pV',
-  //   isNumeric: true,
-  // },
-  // {
-  //   label: 'State Prediction',
-  //   src: 'p',
-  //   isBoolean: true,
-  // },
   {
     label: 'Technology',
     src: 'Technology',
@@ -447,6 +440,17 @@ const filterMap : any = {
   t: 'matrix',
 }
 
+const sortingOptions: any[] = [
+  {
+    value: 'ORDER_BY_SERIATE',
+    label: 'Seriate ',
+  },
+  {
+    value: 'ORDER_BY_NAME',
+    label: 'Name',
+  },
+]
+
 export default defineComponent({
   name: 'spotting',
   setup: function(props, ctx) {
@@ -455,13 +459,13 @@ export default defineComponent({
     const filterItem = {
       src: null,
       value: null,
-      isNumeric: false,
-      isBoolean: false,
       options: [],
     }
     const state = reactive<DashboardState>({
       colormap: '-YlGnBu',
       filter: [cloneDeep(filterItem)],
+      orderBy: 'ORDER_BY_SERIATE',
+      sortingOrder: 'DESCENDING',
       hiddenYValues: [],
       hiddenXValues: [],
       xAxisValues: [],
@@ -533,8 +537,7 @@ export default defineComponent({
 
       if ($route.query.filterValue) {
         $route.query.filterValue.split('|').forEach((item: any, index: number) => {
-          const value = ((state.filter[index].isBoolean || state.filter[index].isNumeric)
-            ? item : item.split('#'))
+          const value = item.split('#')
           if (!Array.isArray(value) || (value.length > 0 && value[0])) {
             handleFilterValueChange(value, index, false)
           }
@@ -551,19 +554,6 @@ export default defineComponent({
     })
 
     const buildFilterOptions = async(filterIndex: number) => {
-      // const filterSpec = FILTER_VALUES.find((filterItem: any) => filterItem.src
-      //   === state.filter[filterIndex].src)
-      // if (filterSpec && filterSpec?.isNumeric) {
-      //   state.filter[filterIndex].isNumeric = true
-      //   state.filter[filterIndex].isBoolean = false
-      //   return
-      // } else if (filterSpec && filterSpec?.isBoolean) {
-      //   state.filter[filterIndex].isNumeric = false
-      //   state.filter[filterIndex].isBoolean = true
-      // } else {
-      //   state.filter[filterIndex].isNumeric = false
-      //   state.filter[filterIndex].isBoolean = false
-      // }
       state.filter[filterIndex].loadingFilterOptions = true
 
       const options = await loadFilterValues(state.filter[filterIndex].src)
@@ -606,13 +596,13 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        // const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
+        const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
         // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
-        const baseUrl = 'http://localhost:8080' // local
+        // const baseUrl = 'http://localhost:8080' // local
         // const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
         const response = await fetch(baseUrl + '?' + query)
         const parsedResponse = await response.json()
-        state.usedData = parsedResponse.body
+        state.usedData = parsedResponse // .body
       } catch (e) {
         state.usedData = {}
         state.data = []
@@ -647,12 +637,13 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
+        const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
         // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws'
-        const baseUrl = 'http://localhost:8080' // local
+        // const baseUrl = 'http://localhost:8080' // local
 
         const response = await fetch(baseUrl + '?' + query)
         const filterJson = await response.json()
-        return filterJson.body.values
+        return filterJson.values // .body.values
       } catch (e) {
         return null
       }
@@ -662,11 +653,17 @@ export default defineComponent({
       try {
         const chartData = state.usedData
         const data = chartData.data
-        const xAxisValues : string[] = chartData.xAxisSorting ? chartData.xAxisSorting : chartData.xAxis
+        let xAxisValues : string[] = chartData.xAxisSorting ? chartData.xAxisSorting : chartData.xAxis
         let yAxisValues : string[] = chartData.yAxisSorting ? chartData.yAxisSorting : chartData.yAxis
 
-        if (!chartData.yAxisSorting) {
-          yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], ['desc'])
+        if (!chartData.yAxisSorting || state.orderBy === 'ORDER_BY_NAME') {
+          yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
+            ? 'desc' : 'asc'])
+          xAxisValues = orderBy(xAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
+            ? 'desc' : 'asc'])
+        } else if (state.sortingOrder === 'DESCENDING') {
+          yAxisValues = cloneDeep(yAxisValues).reverse()
+          xAxisValues = cloneDeep(xAxisValues).reverse()
         }
 
         const auxData : any = groupBy(data, state.options.xAxis)
@@ -861,6 +858,14 @@ export default defineComponent({
       return queryObj
     }
 
+    const handleSortChange = (value: string, sortingOrder: string) => {
+      state.orderBy = !value ? 'ORDER_BY_SERIATE' : value
+      state.sortingOrder = !sortingOrder ? 'DESCENDING' : sortingOrder
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+        buildValues()
+      }
+    }
+
     const handleDataSrcChange = async(text: any, buildChart: boolean = true) => {
       const changedValue = text !== state.dataSource
       const changedFromEmbl = changedValue && (text.toUpperCase() === 'EMBL' || state.dataSource === 'EMBL')
@@ -1009,6 +1014,20 @@ export default defineComponent({
           </div>
 
           <div class='filter-box m-2'>
+            <span class='filter-label mb-3'>Sorting </span>
+            <SortDropdown
+              class="pb-2"
+              size="mini"
+              tooltipPlacement='bottom'
+              defaultOption={state.orderBy}
+              defaultSorting={state.sortingOrder}
+              options={sortingOptions}
+              clearable={false}
+              onSort={handleSortChange}
+            />
+          </div>
+
+          <div class='filter-box m-2'>
             <span class='filter-label mb-3'>Data source</span>
             <RadioGroup
               disabled={state.loading}
@@ -1021,8 +1040,8 @@ export default defineComponent({
               <RadioButton label='ALL'/>
               <RadioButton label='INTERLAB'/>
             </RadioGroup>
-
           </div>
+
           <div class='filter-box m-2'>
             <span class='filter-label mb-2'>Filters</span>
             {
@@ -1053,47 +1072,28 @@ export default defineComponent({
                         })
                       }
                     </Select>
-                    {
-                      !filter.isNumeric
-                      && <Select
-                        class='select-box-mini mr-2'
-                        value={filter.value}
-                        loading={state.filter[filterIdx].loadingFilterOptions}
-                        filterable
-                        clearable
-                        multiple={!filter.isBoolean}
-                        noDataText='No data'
-                        onChange={(value: number) => {
-                          handleFilterValueChange(value, filterIdx)
-                        }}
-                        disabled={state.loading}
-                        placeholder='Select filter value'
-                        size='mini'>
-                        {
-                          (filter.isBoolean ? ['False', 'True'] : filter.options).map((option: any) => {
-                            return <Option
-                              label={!option ? 'None' : option}
-                              value={option}/>
-                          })
-                        }
-                      </Select>
-                    }
-                    {
-                      filter.isNumeric
-                      && !filter.isBoolean
-                      && <InputNumber
-                        class='select-box-mini mr-2'
-                        size="mini"
-                        min={0}
-                        max={1}
-                        step={0.001}
-                        value={parseFloat(state.filter[0].value)}
-                        loading={state.filter[filterIdx].loadingFilterOptions}
-                        disabled={state.loading}
-                        onChange={(value: number) => {
-                          handleFilterValueChange(value, filterIdx)
-                        }}/>
-                    }
+                    <Select
+                      class='select-box-mini mr-2'
+                      value={filter.value}
+                      loading={state.filter[filterIdx].loadingFilterOptions}
+                      filterable
+                      clearable
+                      multiple
+                      noDataText='No data'
+                      onChange={(value: number) => {
+                        handleFilterValueChange(value, filterIdx)
+                      }}
+                      disabled={state.loading}
+                      placeholder='Select filter value'
+                      size='mini'>
+                      {
+                        filter.options.map((option: any) => {
+                          return <Option
+                            label={!option ? 'None' : option}
+                            value={option}/>
+                        })
+                      }
+                    </Select>
                     <div class='flex' style={{ visibility: filterIdx !== 0 ? 'hidden' : '' }}>
                       <div
                         class='icon'
@@ -1143,6 +1143,7 @@ export default defineComponent({
             <p>2 - Select the y axis metric in the <span class='y-axis-label'>green</span> zone;</p>
             <p>3 - Select the color in the <span class='aggregation-label'>blue</span> zone;</p>
             <p>4 - Apply the filters you desire.</p>
+            <p>5 - Click on the dots to be redirected to the corresponding annotations in METASPACE.</p>
           </div>
         </div>
       )
@@ -1191,6 +1192,7 @@ export default defineComponent({
         </div>
       )
     }
+
     const renderHeatmapChart = (yAxisValues: any, xAxisValues: any, total: number, chartData : any) => {
       return (
         <div class='chart-container'>

@@ -451,9 +451,17 @@ def lambda_handler(event, context):
         filter_hash,
         x_axis,
         y_axis,
-        (y_axis != 'main_coarse_class' and x_axis != 'main_coarse_class')
+        (
+            y_axis != 'main_coarse_class'
+            and x_axis != 'main_coarse_class'
+            and 'main_coarse_class' not in filter_src
+        )
         or (query_type == 'filterValues' and query_filter_src == 'fine_class'),
-        (y_axis != 'main_coarse_path' and x_axis != 'main_coarse_path')
+        (
+            y_axis != 'main_coarse_path'
+            and x_axis != 'main_coarse_path'
+            and 'main_coarse_path' not in filter_src
+        )
         or (query_type == 'filterValues' and query_filter_src == 'fine_path'),
     )
 
@@ -467,6 +475,13 @@ def lambda_handler(event, context):
             },
         }
 
+    # check if should summarize data based on pathway or class size
+    class_src = ['fine_class', 'main_coarse_class', 'coarse_class']
+    pathway_src = ['fine_path', 'main_coarse_path', 'coarse_path']
+    summarize_w_class = (
+        y_axis in class_src or y_axis in pathway_src or x_axis in class_src or x_axis in pathway_src
+    )
+
     # if y_axis is fine_class, compose aggregation to show coarse_class groups on
     # sub axis
     if y_axis == 'fine_class':
@@ -477,7 +492,8 @@ def lambda_handler(event, context):
         y_axis = 'class_full'
 
     # Summarise data per molecule (intensities of its detected ions are summed)
-    if not load_pathway and not load_class:
+
+    if not summarize_w_class:
         data = summarise_data(base_data, n_metabolites, x_axis, y_axis)
     else:
         data = summarise_data_w_class(base_data, x_axis, y_axis)
