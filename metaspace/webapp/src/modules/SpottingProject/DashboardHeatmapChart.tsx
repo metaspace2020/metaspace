@@ -152,6 +152,9 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
             show: true,
             interval: 0,
             rotate: 30,
+            formatter: function(value :string) {
+              return value?.length > 25 ? value.substring(0, 25) + '...' : value
+            },
           },
           axisTick: {
             show: false,

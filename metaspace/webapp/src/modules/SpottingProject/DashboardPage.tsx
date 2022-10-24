@@ -1,5 +1,5 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
-import { Option, Select, Pagination, InputNumber, RadioGroup, RadioButton } from '../../lib/element-ui'
+import { Option, Select, Pagination, InputNumber, RadioGroup, RadioButton, Tooltip } from '../../lib/element-ui'
 import { cloneDeep, groupBy, keyBy, maxBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
@@ -596,13 +596,13 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
+        // const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
         // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
-        // const baseUrl = 'http://localhost:8080' // local
+        const baseUrl = 'http://localhost:8080' // local
         // const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
         const response = await fetch(baseUrl + '?' + query)
         const parsedResponse = await response.json()
-        state.usedData = parsedResponse // .body
+        state.usedData = parsedResponse.body
       } catch (e) {
         state.usedData = {}
         state.data = []
@@ -637,13 +637,13 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
+        // const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
         // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws'
-        // const baseUrl = 'http://localhost:8080' // local
+        const baseUrl = 'http://localhost:8080' // local
 
         const response = await fetch(baseUrl + '?' + query)
         const filterJson = await response.json()
-        return filterJson.values // .body.values
+        return filterJson.body.values
       } catch (e) {
         return null
       }
@@ -926,14 +926,7 @@ export default defineComponent({
       }
     }
 
-    const renderFilters = () => {
-      const yLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.yAxis)
-      const xLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.xAxis)
-      const loadPathway: boolean = Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
-      || Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)
-      const loadClass: boolean = Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)
-      || Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)
-
+    const renderFilters = (xLabelItem: string, yLabelItem: string) => {
       return (
         <div class='filter-container'>
           <div class='filter-box m-2'>
@@ -957,8 +950,8 @@ export default defineComponent({
                     label={option.label}
                     value={option.src}
                     disabled={state.options.yAxis && state.dataSource && ALLOWED_COMBINATIONS[state.dataSource]
-                      && yLabelItem && yLabelItem.label
-                      && !ALLOWED_COMBINATIONS[state.dataSource][yLabelItem.label].includes(option.label)}/>
+                      && yLabelItem
+                      && !ALLOWED_COMBINATIONS[state.dataSource][yLabelItem].includes(option.label)}/>
                 })
               }
             </Select>
@@ -984,8 +977,8 @@ export default defineComponent({
                     label={option.label}
                     value={option.src}
                     disabled={state.options.xAxis && state.dataSource && ALLOWED_COMBINATIONS[state.dataSource]
-                      && xLabelItem && xLabelItem.label
-                      && !ALLOWED_COMBINATIONS[state.dataSource][xLabelItem.label].includes(option.label)}/>
+                      && xLabelItem
+                      && !ALLOWED_COMBINATIONS[state.dataSource][xLabelItem].includes(option.label)}/>
                 })
               }
             </Select>
@@ -1018,7 +1011,7 @@ export default defineComponent({
             <SortDropdown
               class="pb-2"
               size="mini"
-              tooltipPlacement='bottom'
+              tooltipPlacement='top'
               defaultOption={state.orderBy}
               defaultSorting={state.sortingOrder}
               options={sortingOptions}
@@ -1028,7 +1021,12 @@ export default defineComponent({
           </div>
 
           <div class='filter-box m-2'>
-            <span class='filter-label mb-3'>Data source</span>
+            <span class='filter-label mb-3'>
+              Data source
+              <Tooltip content="Select between the labs where the data was gathered from." placement="top">
+                <i class="el-icon-question help-icon text-sm ml-1 cursor-pointer"/>
+              </Tooltip>
+            </span>
             <RadioGroup
               disabled={state.loading}
               value={state.dataSource}
@@ -1117,9 +1115,10 @@ export default defineComponent({
       )
     }
 
-    const renderVisualizations = () => {
+    const renderVisualizations = (xLabelItem: string, yLabelItem: string, showChart: boolean) => {
       return (
-        <div class='visualization-container flex w-full justify-end'>
+        <div class='visualization-container'>
+          {showChart && renderHelp(xLabelItem, yLabelItem)}
           <div class='visualization-selector'>
             <span class='filter-label'>Visualization</span>
             <div class={`ml-2 icon-holder ${state.selectedView === VIEW.SCATTER ? 'selected' : ''}`}>
@@ -1129,6 +1128,15 @@ export default defineComponent({
               <i class="vis-icon el-icon-s-grid mr-6 text-4xl" onClick={() => { state.selectedView = VIEW.HEATMAP }}/>
             </div>
           </div>
+        </div>
+      )
+    }
+
+    const renderHelp = (xLabelItem: string, yLabelItem: string) => {
+      return (
+        <div class='help-container'>
+          <i class="el-icon-question help-icon" />
+          You are looking at Color (average intensity) of ions broken down by X ({xLabelItem}) in Y ({yLabelItem})
         </div>
       )
     }
@@ -1159,6 +1167,42 @@ export default defineComponent({
       $router.replace({ name: 'spotting', query: { ...getQueryParams(), pageSize: newSize.toString() } })
     }
 
+    const renderRadiusHelp = () => {
+      return (
+        <div class='radius-help'>
+          Fraction of compounds detects per class
+          <div class='dot-legend'>
+            <div class='dot-container'>
+              <span class="dot h-0.5 w-0.5"/>
+              <span class='dot-text'>0</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-1 w-1"/>
+              <span class='dot-text'>0.2</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-2 w-2"/>
+              <span class='dot-text'>0.4</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-3 w-3"/>
+              <span class='dot-text'>0.6</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-4 w-4"/>
+              <span class='dot-text'>0.8</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-5 w-5"/>
+              <span class='dot-text'>1.0</span>
+            </div>
+          </div>
+          <div class='flex items-center mt-1'>
+          </div>
+        </div>
+      )
+    }
+
     const renderPagination = (total: number) => {
       return (
         <div class="block">
@@ -1171,6 +1215,7 @@ export default defineComponent({
             {...{ on: { 'update:pageSize': onPageSizeChange } }}
             layout='prev,pager,next,sizes'
           />
+          {state.selectedView === VIEW.SCATTER && renderRadiusHelp()}
         </div>
       )
     }
@@ -1215,6 +1260,8 @@ export default defineComponent({
           || (state.options.xAxis && state.options.yAxis && state.options.aggregation))
       const { selectedView } = state
       const isLoading = (state.loading || state.buildingChart)
+      const yLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.yAxis)
+      const xLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.xAxis)
 
       // paginate data on client-side
       const yAxisValues : any[] = state.yAxisValues
@@ -1232,8 +1279,8 @@ export default defineComponent({
 
       return (
         <div class='dashboard-container mb-4'>
-          {renderFilters()}
-          {renderVisualizations()}
+          {renderFilters(xLabelItem?.label, yLabelItem?.label)}
+          {renderVisualizations(xLabelItem?.label, yLabelItem?.label, showChart)}
           <div class='content-container'>
             {
               showChart
