@@ -59,16 +59,14 @@
       "storage_bucket": "TEMP_BUCKET",
       "storage": "localhost",
       "mode": "localhost",
-      "include_modules": [
-        "engine/sm"
-      ],
+      "include_modules": ["engine/sm"],
       "data_cleaner": true,
       "data_limit": false,
       "workers": 4,
       "execution_timeout": 2400
     },
     "serverless": {
-      "backend": "ibm_cf",
+      "backend": "code_engine",
       "runtime_timeout": 1200,
       "runtime_memory": 2048
     },
@@ -79,10 +77,11 @@
     "ibm": {
       "iam_api_key": ""
     },
-    "ibm_cf": {
-      "endpoint": "https://eu-de.functions.cloud.ibm.com",
+    "code_engine": {
+      "region": "eu-de",
       "namespace": "",
-      "namespace_id": ""
+      "runtime": "",
+      "connection_retries": 10
     },
     "ibm_vpc": {
       "endpoint": "https://eu-de.iaas.cloud.ibm.com",
