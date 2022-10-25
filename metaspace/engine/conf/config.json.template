@@ -62,7 +62,7 @@
       "data_cleaner": true,
       "data_limit": false,
       "workers": 1000,
-      "execution_timeout": 3600
+      "execution_timeout": 7200
     },
     "serverless": {
       "backend": "code_engine",

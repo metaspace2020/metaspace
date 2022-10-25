@@ -187,7 +187,7 @@ class Executor:
 
         self.storage = Storage(lithops_config)
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
-        self._execution_timeout = lithops_config['lithops'].get('execution_timeout', 3600) + 60
+        self._execution_timeout = lithops_config['lithops'].get('execution_timeout', 7200) + 60
         self._perf = perf or NullProfiler()
 
     def map(
