@@ -21,6 +21,7 @@ import {
   VisualMapPiecewiseComponent,
   VisualMapContinuousComponent,
   MarkLineComponent,
+  MarkAreaComponent,
 } from 'echarts/components'
 import './DashboardScatterChart.scss'
 
@@ -39,6 +40,7 @@ use([
   VisualMapPiecewiseComponent,
   MarkLineComponent,
   VisualMapContinuousComponent,
+  MarkAreaComponent,
 ])
 
 interface DashboardScatterChartProps {
@@ -58,6 +60,7 @@ interface DashboardScatterChartProps {
 
 interface DashboardScatterChartState {
   scaleIntensity: boolean
+  markArea: any
   chartOptions: any
   size: number
 }
@@ -66,6 +69,8 @@ const PEAK_FILTER = {
   ALL: 1,
   FDR: 2,
 }
+
+const markAreaPalette = ['#9b5fe0', '#16a4d8', '#60dbe8', '#8bd346', '#efdf48', '#f9a52c', '#d64e12']
 
 export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>({
   name: 'DashboardScatterChart',
@@ -125,6 +130,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
     const state = reactive<DashboardScatterChartState>({
       scaleIntensity: false,
       size: 600,
+      markArea: undefined,
       chartOptions: {
         title: {
           text: '',
@@ -141,7 +147,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           position: 'top',
           formatter: function(params: any) {
             return 'Fraction detected: ' + (params.value[4] || 0).toFixed(2) + ' '
-              + params.data?.label?.y + ' in ' + params.data?.label?.x
+              + (params.data?.label?.y || '') + ' in ' + (params.data?.label?.x || '')
           },
         },
         grid: {
@@ -189,8 +195,9 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
             height: 40,
           },
         },
-        series: [{
+        series: {
           type: 'scatter',
+          animation: false,
           markLine: {},
           symbolSize: function(val: any) {
             return val[2] * 30
@@ -199,7 +206,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
             borderColor: 'black',
           },
           data: [],
-        }],
+        },
       },
     })
 
@@ -221,10 +228,11 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           globalCategories[cat] = idx
         }
       })
-      Object.keys(globalCategories).map((key: string) => {
+      Object.keys(globalCategories).map((key: string, idx: number) => {
         markData.push({
           name: key,
           yAxis: globalCategories[key],
+          color: markAreaPalette[idx % markAreaPalette.length],
           label: {
             formatter: key,
             position: 'end',
@@ -247,12 +255,12 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
 
       if (auxOptions.xAxis.data.length > 30) {
         auxOptions.xAxis.axisLabel.rotate = 90
-        auxOptions.series[0].symbolSize = function(val: any) {
+        auxOptions.series.symbolSize = function(val: any) {
           return val[2] * 10
         }
       } else {
         auxOptions.xAxis.axisLabel.rotate = 30
-        auxOptions.series[0].symbolSize = function(val: any) {
+        auxOptions.series.symbolSize = function(val: any) {
           return val[2] * 30
         }
       }
@@ -276,11 +284,13 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         }
       }
 
-      auxOptions.series[0].data = chartData.value
-      auxOptions.series[0].markLine.data = markData
+      auxOptions.series.data = chartData.value
+      auxOptions.series.markLine.data = markData
+      auxOptions.series.markArea = {}
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }
+
       return auxOptions
     })
 
@@ -324,6 +334,36 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       }
     }
 
+    const handleChartRendered = () => {
+      const chartRef : any = spectrumChart.value
+      if (
+        chartRef
+        && chartRef.chart
+        && !state.markArea
+        && !(props.isLoading || props.isDataLoading)
+        && chartOptions.value?.series?.markLine?.data?.length > 0
+      ) {
+        const auxOptions : any = chartOptions.value
+        if (auxOptions) {
+          const markArea : any = { silent: true, data: [] }
+          const offset = ((state.size - 110) / (yAxisData.value?.length || 1)) / 2
+          auxOptions.series.data.forEach((item: any, idx: number) => {
+            if (item.value[0] === 0) {
+              const [chartX, chartY] = chartRef.convertToPixel({ seriesIndex: 0 }, [item.value[0], item.value[1]])
+              const re = /(.+)\s-agg-\s(.+)/
+              const label = item.label.key
+              const cat = label.replace(re, '$1')
+              const markLine : any = auxOptions.series.markLine.data.find((markLine: any) => markLine.name === cat)
+              markArea.data.push([{ y: chartY + offset, itemStyle: { color: markLine.color, opacity: 0.1 } },
+                { y: chartY - offset }])
+            }
+          })
+          chartRef.chart.setOption({ series: { ...chartOptions.value.series, markArea } }, { replaceMerge: ['series'] })
+          state.markArea = markArea
+        }
+      }
+    }
+
     const renderSpectrum = () => {
       const { isLoading, isDataLoading } = props
 
@@ -347,6 +387,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
               on: {
                 'zr:dblclick': handleZoomReset,
                 click: handleItemSelect,
+                finished: handleChartRendered,
               },
             }}
             class='chart'

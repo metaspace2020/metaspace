@@ -666,6 +666,11 @@ export default defineComponent({
           xAxisValues = cloneDeep(xAxisValues).reverse()
         }
 
+        if (state.options.yAxis === 'fine_class' || state.options.yAxis === 'fine_path') {
+          yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
+            ? 'desc' : 'asc'])
+        }
+
         const auxData : any = groupBy(data, state.options.xAxis)
         Object.keys(auxData).forEach((key: string) => {
           auxData[key] = keyBy(auxData[key], (state.options.yAxis === 'fine_class'
@@ -862,7 +867,8 @@ export default defineComponent({
       state.orderBy = !value ? 'ORDER_BY_SERIATE' : value
       state.sortingOrder = !sortingOrder ? 'DESCENDING' : sortingOrder
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
-        buildValues()
+        state.loading = true
+        setTimeout(() => { buildValues() }, 1000)
       }
     }
 
