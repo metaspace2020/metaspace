@@ -133,8 +133,8 @@ def get_mappings_by_formula(formula: str, moldb_id: str) -> List[EnrichmentDBMol
     """Find enrichment database by id."""
 
     data = DB().select_with_fields(
-        'SELECT * FROM enrichment_db_molecule_mapping WHERE formula = %s and molecular_db_id = %s',
-        params=(formula, moldb_id),
+        'SELECT * FROM enrichment_db_molecule_mapping WHERE molecular_db_id = %s and formula = %s',
+        params=(moldb_id, formula),
     )
     if not data:
         raise SMError(f'EnrichmentDBMoleculeMapping not found: {moldb_id}')

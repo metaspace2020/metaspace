@@ -179,6 +179,11 @@ CREATE TABLE "public"."enrichment_db_molecule_mapping" (
   CONSTRAINT "PK_afb8cc016ffdeceb23c753a9b90" PRIMARY KEY ("id")
 );
 
+CREATE INDEX "IDX_7e43bccc5bea9f70406c03a141" ON "public"."enrichment_db_molecule_mapping" (
+  "molecular_db_id", 
+  "formula"
+) ;
+
 CREATE TABLE "public"."enrichment_bootstrap" (
   "id" SERIAL NOT NULL, 
   "scenario" integer NOT NULL, 

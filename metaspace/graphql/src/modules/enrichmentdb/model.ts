@@ -45,6 +45,7 @@ export class EnrichmentTerm {
 }
 
 @Entity({ schema: 'public' })
+@Index(['molecularDbId', 'formula'])
 export class EnrichmentDBMoleculeMapping {
   @PrimaryGeneratedColumn()
   id: number;

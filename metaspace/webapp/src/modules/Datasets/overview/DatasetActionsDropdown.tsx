@@ -63,7 +63,9 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
 
     const {
       result: enrichmentResult,
-    } = useQuery<any>(checkIfEnrichmentRequested, { id: props.dataset?.id })
+      refetch: enrichmentRefetch,
+    } = useQuery<any>(checkIfEnrichmentRequested, { id: props.dataset?.id },
+      { fetchPolicy: 'no-cache' })
     const enrichmentRequested = computed(() => enrichmentResult.value != null
       ? enrichmentResult.value.enrichmentRequested : null)
 
@@ -194,6 +196,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           })
           break
         case 'enrichment':
+          await enrichmentRefetch()
           if (enrichmentRequested.value) {
             $router.push({
               name: 'dataset-enrichment',
