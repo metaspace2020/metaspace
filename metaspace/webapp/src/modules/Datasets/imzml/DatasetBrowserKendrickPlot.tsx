@@ -114,6 +114,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
           },
         },
         toolbox: {
+          right: 20,
           feature: {
             myTool1: {
               show: true,
@@ -133,6 +134,13 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
                 handleZoomReset()
               },
             },
+            dataZoom: {
+              title: {
+                zoom: 'Zoom',
+                back: 'Zoom reset',
+              },
+              filterMode: 'none',
+            },
             myTool2: {
               show: true,
               title: 'Download data',
@@ -141,13 +149,6 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
               onclick: () => {
                 emit('download')
               },
-            },
-            dataZoom: {
-              title: {
-                zoom: 'Zoom',
-                back: 'Zoom reset',
-              },
-              filterMode: 'none',
             },
             saveAsImage: {
               title: 'Download',
@@ -231,7 +232,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
               hideOverlap: true,
             },
             itemStyle: {
-              color: 'red',
+              color: '#DC3220',
             },
           },
           {
@@ -239,7 +240,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
             type: 'scatter',
             data: [],
             itemStyle: {
-              color: 'blue',
+              color: '#005AB5',
             },
           },
         ],

@@ -749,6 +749,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       const { imageSettings } = state
       const nonEmptyAnnotations = annotations.filter((item: any) => !item?.isEmpty)
       const nonEmptyAnnotationIndex = annotations.findIndex((item: any) => !item?.isEmpty)
+      const viewerWrapper : any = container.value || {}
 
       if (!imageSettings || !imageSettings.ionImageLayers
         || !annotations) {
@@ -757,7 +758,6 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
 
       return (
         <div
-          ref={container}
           class={'ds-simple-ion-image-container relative'}
           style={{
             width,
@@ -765,6 +765,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           }}
         >
           <IonImageViewer
+            ref={container}
             height={height}
             width={width}
             zoom={imageSettings!.imagePosition?.zoom
@@ -801,7 +802,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           />
           <ImageSaver
             class="absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
-            domNode={container.value}
+            domNode={viewerWrapper.$el}
           />
           <div class="flex absolute bottom-0 right-0 my-3 ml-3 dom-to-image-hidden">
             <FadeTransition>
