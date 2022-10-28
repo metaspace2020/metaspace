@@ -265,12 +265,15 @@ class Executor:
 
             if (
                 isinstance(exc, (MemoryError, TimeoutError, OSError))
-                and runtime_memory < 32 * 1024
+                and runtime_memory <= 32 * 1024
                 and (max_memory is None or runtime_memory < max_memory)
             ):
-                old_memory = runtime_memory
-                runtime_memory *= 2
                 attempt += 1
+                old_memory = runtime_memory
+                if old_memory < 32 * 1024:
+                    runtime_memory *= 2
+                else:
+                    runtime_memory = 128 * 1024  # switch to VPC
 
                 logger.warning(
                     f'{func_name} raised {type(exc)} with {old_memory}MB, retrying with '

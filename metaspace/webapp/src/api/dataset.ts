@@ -184,6 +184,14 @@ export const datasetListItemsQuery =
     }
   }`
 
+export const getRoisQuery =
+gql`query ($datasetId: String!) {
+  dataset(id: $datasetId) {
+    id
+    roiJson
+  }
+}`
+
 export const datasetListItemsWithDiagnosticsQuery =
   gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $limit: Int = 10000) {
     allDatasets(offset: 0, limit: $limit, filter: $dFilter, simpleQuery: $query) {
@@ -265,6 +273,11 @@ export const addOpticalImageQuery =
                 $datasetId: String!, $transform: [[Float]]!) {
     addOpticalImage(input: {datasetId: $datasetId,
                             imageUrl: $imageUrl, transform: $transform})
+  }`
+
+export const addRoiMutation =
+  gql`mutation ($datasetId: String!, $geoJson: GeoJson!) {
+    addRoi(datasetId: $datasetId, geoJson: $geoJson)
   }`
 
 export const deleteOpticalImageQuery =

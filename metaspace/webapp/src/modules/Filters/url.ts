@@ -44,6 +44,7 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   colocalizedWith: 'colo',
   colocalizationSamples: 'locs',
   offSample: 'offs',
+  opticalImage: 'opt_img',
 }
 
 const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>

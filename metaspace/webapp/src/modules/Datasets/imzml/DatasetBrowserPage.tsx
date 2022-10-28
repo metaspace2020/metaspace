@@ -24,7 +24,7 @@ import CopyButton from '../../../components/CopyButton.vue'
 import Vue from 'vue'
 import FileSaver from 'file-saver'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
-import { cloneDeep } from 'lodash-es'
+import { cloneDeep, uniq } from 'lodash-es'
 import moment from 'moment'
 
 interface GlobalImageSettings {
@@ -204,10 +204,12 @@ export default defineComponent<DatasetBrowserProps>({
           type: 'TIC',
           error: true,
         }
+      } finally {
+        queryOptions.enabled = true
       }
     })
 
-    const queryOptions = reactive({ enabled: true, fetchPolicy: 'no-cache' as const })
+    const queryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const queryVars = computed(() => ({
       ...queryVariables(),
       filter: {
@@ -245,6 +247,7 @@ export default defineComponent<DatasetBrowserProps>({
       let minY : number = -1
       const addedIndexes : number[] = []
       const auxData : any[] = []
+      const annotatedPeaks : any = {}
       const unAnnotItemStyle : any = {
         color: 'red',
       }
@@ -265,7 +268,7 @@ export default defineComponent<DatasetBrowserProps>({
             const kendrickMass = mz * Math.round(exactMass) / exactMass
             const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
             const radius = Math.log10(int / threshold)
-            let tooltip : string = '<br>Candidate molecules: <br>'
+            let tooltip : string = ''
 
             if (mz > maxX) {
               maxX = mz
@@ -282,7 +285,36 @@ export default defineComponent<DatasetBrowserProps>({
 
             addedIndexes.push(inRangeIdx)
             annotation.possibleCompounds.forEach((compound: any) => {
-              tooltip += compound.name + '<br>'
+              tooltip += compound.name.substring(0, 100) + (compound.name.length > 100 ? '...' : '') + '<br>'
+            })
+
+            if (!annotatedPeaks[annotation.database]) {
+              annotatedPeaks[annotation.database] = {}
+              annotatedPeaks[annotation.database][mz] =
+                Object.keys(annotatedPeaks).length === 1 ? `Candidate molecules ${annotation.database}: <br>` + tooltip
+                  : `<br>Candidate molecules ${annotation.database}: <br>` + tooltip
+            } else {
+              annotatedPeaks[annotation.database][mz] = tooltip
+            }
+
+            tooltip = ''
+            Object.keys(annotatedPeaks).forEach((db: any) => {
+              const auxItem : any = annotatedPeaks[db]
+              Object.values(auxItem).forEach((text:any) => {
+                tooltip += text
+              })
+            })
+
+            const dbs : any = tooltip.split('Candidate molecules ')
+            let finalTooltip: any = ''
+            dbs.forEach((db: any, dbIdx: number) => {
+              const mols : any = uniq(db.split('<br>'))
+              if (mols[0]) {
+                finalTooltip += dbIdx > 1 ? `<br>Candidate molecules ${mols[0]}<br>`
+                  : `Candidate molecules ${mols[0]}<br>`
+                finalTooltip += mols.slice(1, 6).join('<br>')
+                  + `${mols.length > 6 ? `<br>and more ${(mols.length - 6)}...` : ''}<br>`
+              }
             })
 
             if (state.currentView === VIEWS.KENDRICK) {
@@ -290,7 +322,7 @@ export default defineComponent<DatasetBrowserProps>({
                 isAnnotated: true,
                 dot: {
                   name: mz.toFixed(4),
-                  tooltip,
+                  tooltip: finalTooltip,
                   mz: mz,
                   value: [mz, KendrickMassDefect, radius],
                   itemStyle: annotItemStyle,
@@ -301,13 +333,13 @@ export default defineComponent<DatasetBrowserProps>({
                 isAnnotated: true,
                 dot: {
                   name: mz.toFixed(4),
-                  tooltip,
+                  tooltip: finalTooltip,
                   mz: mz,
                   value: [mz, int],
                   itemStyle: annotItemStyle,
                 },
                 line: {
-                  label: tooltip,
+                  tooltip: finalTooltip,
                   mz: mz,
                   xAxis: mz,
                   yAxis: int,
@@ -318,6 +350,7 @@ export default defineComponent<DatasetBrowserProps>({
           }
         })
       }
+
       if (state.peakFilter !== PEAK_FILTER.FDR) {
         mzs.forEach((mz:any, index: any) => {
           if (!addedIndexes.includes(index)) {
@@ -707,6 +740,7 @@ export default defineComponent<DatasetBrowserProps>({
                     )
                   })
                 }
+                <Option label='All databases' value={undefined}/>
               </Select>
             </div>
           </div>

@@ -79,7 +79,7 @@ export default {
     const { group, project, submitter, datasetIds, polarity,
       organism, organismPart, condition, growthConditions,
       ionisationSource, analyzerType, maldiMatrix, metadataType,
-      compoundName, datasetOwner } = filter;
+      compoundName, datasetOwner, opticalImage } = filter;
     const level = getters.filterLevel;
     const isLogged = state.currentUser && state.currentUser.id
     const hasAnnotationMatching = level === 'dataset' && compoundName ? { compoundQuery: compoundName } : undefined;
@@ -92,6 +92,7 @@ export default {
       ids: datasetIds ? datasetIds.join("|") : null,
 
       organism,
+      opticalImage,
       organismPart,
       condition,
       growthConditions,

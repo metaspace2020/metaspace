@@ -9,7 +9,7 @@
     <button
       slot="reference"
       class="button-reset flex"
-      :class="isId ? 'w-6 h-6' : 'w-4 h-4'"
+      :class="`${customClass ? customClass : ''} ${isId ? 'w-6 h-6' : 'w-4 h-4'}`"
       @click="handleCopy"
     >
       <copy-id-icon
@@ -54,6 +54,7 @@ export default defineComponent<Props>({
   },
   props: {
     text: { type: String, required: true },
+    customClass: { type: String },
     isId: { type: Boolean, required: false, default: false },
   },
   setup(props) {

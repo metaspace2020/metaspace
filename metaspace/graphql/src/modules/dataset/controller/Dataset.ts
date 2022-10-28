@@ -28,6 +28,7 @@ import canDeleteEsDataset from '../operation/canDeleteEsDataset'
 
 interface DbDataset {
   id: string;
+  roi: any | null;
   thumbnail: string | null;
   thumbnail_url: string | null;
   ion_thumbnail: string | null;
@@ -40,7 +41,7 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
     return new DataLoader(async(datasetIds: string[]): Promise<any[]> => {
       const results = await ctx.entityManager.query(`
       SELECT ds.id, ds.thumbnail_url, ds.ion_thumbnail_url, 
-             ds.transform, gds.external_links
+             ds.transform, ds.roi, gds.external_links
       FROM public.dataset ds
       JOIN graphql.dataset gds on ds.id = gds.id
       WHERE ds.id = ANY($1)`,
@@ -115,6 +116,11 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   metadataJson(ds) {
     return JSON.stringify(ds._source.ds_meta)
+  },
+
+  async roiJson(ds, args, ctx) {
+    const result = await getDbDatasetById(ctx, ds._source.ds_id)
+    return result?.roi ? JSON.stringify(result?.roi) : null
   },
 
   isPublic(ds) {

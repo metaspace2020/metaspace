@@ -24,6 +24,7 @@ type Dataset {
   scoringModel: ScoringModel
   # full metadata JSON conforming to schema published at
   # https://github.com/metaspace2020/metaspace/tree/master/metaspace/metadata
+  roiJson: String
   metadataJson: String!
   isPublic: Boolean!
   databases: [MolecularDB!]!
@@ -194,6 +195,7 @@ input DatasetFilter {
   metadataType: String
   status: String # list of JobStatus separated by '|'
   hasAnnotationMatching: AnnotationFilter # Does not support some advanced filters e.g. the colocalization filters
+  opticalImage: Boolean
 }
 
 input DatasetCountPerGroupInput {
@@ -303,6 +305,13 @@ input AddOpticalImageInput {
   transform: [[Float]]!
 }
 
+scalar GeoJsonFeature
+
+input GeoJson {
+  type: String!
+  features: [GeoJsonFeature]
+}
+
 type DatasetRelationship {
   type: String!
   id: String!
@@ -399,6 +408,8 @@ type Mutation {
   ): String!
 
   addOpticalImage(input: AddOpticalImageInput!): String!
+
+  addRoi(datasetId: String!, geoJson: GeoJson!): String
 
   deleteOpticalImage(datasetId: String!): String!
 

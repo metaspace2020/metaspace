@@ -73,20 +73,15 @@
       "backend": "ibm_vpc",
       "soft_dismantle_timeout": 30
     },
-    "localhost": {
-    },
+    "localhost": {},
     "ibm": {
       "iam_api_key": "{{ sm_lithops_iam_api_key }}"
-    },
-    "ibm_cf": {
-      "endpoint": "https://eu-de.functions.cloud.ibm.com",
-      "namespace": "{{ sm_lithops_cf_ns_name }}",
-      "namespace_id": "{{ sm_lithops_cf_ns_id }}"
     },
     "code_engine": {
       "region": "eu-de",
       "namespace": "{{ sm_lithops_ce_namespace }}",
-      "runtime": ""
+      "runtime": "",
+      "connection_retries": 10
     },
     "ibm_vpc": {
       "endpoint": "https://eu-de.iaas.cloud.ibm.com",

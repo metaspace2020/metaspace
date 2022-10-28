@@ -508,12 +508,12 @@ import {
 import Vue from 'vue'
 import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray, csvExportIntensityHeader } from '../../lib/formatCsvRow'
-import { invert, isEqual } from 'lodash-es'
+import { invert, uniqBy, isEqual } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
-import { getDatasetDiagnosticsQuery } from '../../api/dataset'
+import { getDatasetDiagnosticsQuery, getRoisQuery } from '../../api/dataset'
 import FullScreen from '../../assets/inline/full_screen.svg'
 import ExitFullScreen from '../../assets/inline/exit_full_screen.svg'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
@@ -827,6 +827,16 @@ export default Vue.extend({
           0)
       }
     },
+    '$store.getters.filter.datasetIds'() {
+      // hide dataset related filters if dataset filter added
+      if (Array.isArray(this.$store.getters.filter.datasetIds)
+        && this.$store.getters.filter.datasetIds.length === 1
+        && this.showCustomCols) {
+        this.hideDatasetRelatedColumns()
+      } else if (this.showCustomCols) { // show dataset related filters if dataset filter added
+        this.showDatasetRelatedColumns()
+      }
+    },
     '$route.query.cols'() {
       if (this.$route.query.cols) {
         const columns = this.columns
@@ -889,6 +899,9 @@ export default Vue.extend({
           }
         })
 
+        // load ROIs from db
+        this.loadRois(uniqBy(data.allAnnotations, 'dataset.id').map((annotation) => annotation?.dataset.id))
+
         this.totalCount = data.countAnnotations
         this.initialLoading = false
       },
@@ -933,6 +946,10 @@ export default Vue.extend({
         this.columns.find((col) => col.src === 'Dataset').selected = false
       }
     },
+    showDatasetRelatedColumns() {
+      this.columns.find((col) => col.src === 'Group').selected = true
+      this.columns.find((col) => col.src === 'Dataset').selected = true
+    },
     onPageSizeChange(newSize) {
       this.recordsPerPage = newSize
     },
@@ -951,6 +968,32 @@ export default Vue.extend({
         const nextIndex = rowIndex < 0 ? 0 : Math.min(rowIndex, rows.length - 1)
         this.$refs.table.setCurrentRow(rows[nextIndex])
       }
+    },
+
+    loadRois(datasetIds) {
+      datasetIds.map(async(datasetId) => {
+        try {
+          const resp = await this.$apollo.query({
+            query: getRoisQuery,
+            variables: {
+              datasetId,
+            },
+            fetchPolicy: 'cache-first',
+          })
+          const roi = safeJsonParse(resp?.data?.dataset?.roiJson)
+          if (roi && Array.isArray(roi.features) && !this.$store.state.roiInfo[datasetId]) {
+            this.$store.commit('setRoiInfo', {
+              key: datasetId,
+              roi: roi.features.map((feature) => {
+                return feature?.properties
+                  ? { ...feature?.properties, allVisible: this.$store.state.roiInfo?.visible } : {}
+              }),
+            })
+          }
+        } catch (e) {
+          // pass
+        }
+      })
     },
 
     hidden(columnLabel) {
@@ -1098,9 +1141,6 @@ export default Vue.extend({
     updateFilter(delta) {
       const filter = Object.assign({}, this.filter, delta)
       this.$store.commit('updateFilter', filter)
-      if (Object.keys(delta).includes('datasetIds') && this.showCustomCols) { // hide dataset related filters if dataset filter added
-        this.hideDatasetRelatedColumns()
-      }
     },
 
     async setNormalizationData(currentAnnotation) {

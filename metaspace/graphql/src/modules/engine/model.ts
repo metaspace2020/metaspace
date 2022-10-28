@@ -29,6 +29,8 @@ export class EngineDataset {
   @Column({ type: 'json', nullable: true })
   metadata: any;
   @Column({ type: 'json', nullable: true })
+  roi: any;
+  @Column({ type: 'json', nullable: true })
   config: any;
   @Column({ type: 'timestamp without time zone', nullable: true, transformer: new MomentValueTransformer() })
   uploadDt: Date | null;
