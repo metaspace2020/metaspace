@@ -62,7 +62,7 @@
       "data_cleaner": true,
       "data_limit": false,
       "workers": 1000,
-      "execution_timeout": 3600
+      "execution_timeout": 7200
     },
     "serverless": {
       "backend": "code_engine",
@@ -71,7 +71,8 @@
     },
     "standalone": {
       "backend": "ibm_vpc",
-      "soft_dismantle_timeout": 30
+      "soft_dismantle_timeout": 30,
+      "hard_dismantle_timeout": 7200
     },
     "localhost": {},
     "ibm": {
