@@ -59,7 +59,9 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
 
     const {
       result: browserResult,
-    } = useQuery<any>(checkIfHasBrowserFiles, { datasetId: props.dataset?.id })
+      refetch: browserRefetch,
+    } = useQuery<any>(checkIfHasBrowserFiles, { datasetId: props.dataset?.id },
+      { fetchPolicy: 'no-cache' as const })
     const hasBrowserFiles = computed(() => browserResult.value != null
       ? browserResult.value.hasImzmlFiles : null)
 
@@ -160,6 +162,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           })
           break
         case 'browser':
+          await browserRefetch()
           hideFeatureBadge('imzmlBrowser')
           if (hasBrowserFiles.value) {
             $router.push({
