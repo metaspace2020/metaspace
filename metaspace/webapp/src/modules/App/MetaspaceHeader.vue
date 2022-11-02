@@ -48,12 +48,9 @@
           </header-link>
 
           <header-link
-            v-if="currentUser && currentUser.primaryGroup"
-            :to="primaryGroupHref"
+            to="/groups"
           >
-            <div class="limit-width">
-              {{ currentUser.primaryGroup.group.shortName }}
-            </div>
+            Groups
           </header-link>
         </div>
 

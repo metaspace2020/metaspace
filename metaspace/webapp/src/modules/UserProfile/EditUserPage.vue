@@ -254,7 +254,7 @@ import {
 import reportError from '../../lib/reportError'
 import { refreshLoginStatus } from '../../api/graphqlClient'
 import { ElForm } from 'element-ui/types/form'
-import { TransferDatasetsDialog } from '../GroupProfile/index'
+import { TransferDatasetsDialog } from '../Group/index'
 import emailRegex from '../../lib/emailRegex'
 import GroupsTable from './GroupsTable'
 import ProjectsTable from './ProjectsTable.vue'

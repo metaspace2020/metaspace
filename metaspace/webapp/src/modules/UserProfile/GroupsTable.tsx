@@ -6,7 +6,7 @@ import { defineComponent, reactive, computed } from '@vue/composition-api'
 
 import confirmPrompt from '../../components/confirmPrompt'
 import NotificationIcon from '../../components/NotificationIcon.vue'
-import { TransferDatasetsDialog } from '../GroupProfile'
+import { TransferDatasetsDialog } from '../Group'
 
 import { UserProfileQuery } from '../../api/user'
 import {
