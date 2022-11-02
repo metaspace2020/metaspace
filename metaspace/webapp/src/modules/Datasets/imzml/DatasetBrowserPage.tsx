@@ -24,8 +24,7 @@ import CopyButton from '../../../components/CopyButton.vue'
 import Vue from 'vue'
 import FileSaver from 'file-saver'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
-import { cloneDeep } from 'lodash-es'
-import moment from 'moment'
+import { uniq } from 'lodash-es'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -74,6 +73,7 @@ interface DatasetBrowserState {
   mzLow: number | undefined
   mzHigh: number | undefined
   enableImageQuery: boolean
+  noData: boolean
   globalImageSettings: GlobalImageSettings
 }
 
@@ -108,6 +108,7 @@ export default defineComponent<DatasetBrowserProps>({
       mzmScaleFilter: undefined,
       metadata: undefined,
       annotation: undefined,
+      noData: false,
       chartLoading: false,
       imageLoading: false,
       showOpticalImage: true,
@@ -204,10 +205,12 @@ export default defineComponent<DatasetBrowserProps>({
           type: 'TIC',
           error: true,
         }
+      } finally {
+        queryOptions.enabled = true
       }
     })
 
-    const queryOptions = reactive({ enabled: true, fetchPolicy: 'no-cache' as const })
+    const queryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const queryVars = computed(() => ({
       ...queryVariables(),
       filter: {
@@ -230,7 +233,7 @@ export default defineComponent<DatasetBrowserProps>({
     }),
     imageQueryOptions)
 
-    const spectrumQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const, debounce: 1000 })
+    const spectrumQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
 
     const {
       result: spectrumResult,
@@ -246,16 +249,40 @@ export default defineComponent<DatasetBrowserProps>({
       const addedIndexes : number[] = []
       const auxData : any[] = []
       const unAnnotItemStyle : any = {
-        color: 'red',
+        color: '#DC3220',
       }
       const annotItemStyle : any = {
-        color: 'blue',
+        color: '#005AB5',
       }
       const exactMass : number = state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz
       const threshold : number = 1
 
       if (state.peakFilter !== PEAK_FILTER.OFF) {
-        annotations.value.forEach((annotation: any, index: number) => {
+        const annotatedPeaks : any = {}
+
+        // build tooltips databases
+        annotations.value.forEach((annotation: any) => {
+          let tooltip : string = ''
+          const mz : number = annotation.mz
+
+          annotation.possibleCompounds.forEach((compound: any) => {
+            tooltip += compound.name.substring(0, 50) + (compound.name.length > 50 ? '...' : '') + '<br>'
+          })
+
+          if (!annotatedPeaks[annotation.database]) {
+            annotatedPeaks[annotation.database] = {}
+          }
+
+          if (!annotatedPeaks[annotation.database][mz]) {
+            annotatedPeaks[annotation.database][mz] =
+              Object.keys(annotatedPeaks).length === 1 ? `Candidate molecules ${annotation.database}: <br>` + tooltip
+                : `<br>Candidate molecules ${annotation.database}: <br>` + tooltip
+          } else {
+            annotatedPeaks[annotation.database][mz] = tooltip
+          }
+        })
+
+        annotations.value.forEach((annotation: any) => {
           const mz : number = annotation.mz
           const mzLow : number = mz - (mz * state.mzmShiftFilter! * 1e-6) // ppm
           const mzHigh : number = mz + (mz * state.mzmShiftFilter! * 1e-6) // ppm
@@ -265,7 +292,6 @@ export default defineComponent<DatasetBrowserProps>({
             const kendrickMass = mz * Math.round(exactMass) / exactMass
             const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
             const radius = Math.log10(int / threshold)
-            let tooltip : string = '<br>Candidate molecules: <br>'
 
             if (mz > maxX) {
               maxX = mz
@@ -281,8 +307,27 @@ export default defineComponent<DatasetBrowserProps>({
             }
 
             addedIndexes.push(inRangeIdx)
-            annotation.possibleCompounds.forEach((compound: any) => {
-              tooltip += compound.name + '<br>'
+
+            let tooltip = ''
+            Object.keys(annotatedPeaks).forEach((db: any) => {
+              const auxItem : any = annotatedPeaks[db]
+              Object.keys(auxItem).forEach((hashMz:any) => {
+                if (parseFloat(hashMz) === mz) {
+                  tooltip += auxItem[hashMz]
+                }
+              })
+            })
+
+            const dbs : any = tooltip.split('Candidate molecules ')
+            let finalTooltip: any = ''
+            dbs.forEach((db: any, dbIdx: number) => {
+              const mols : any = uniq(db.split('<br>'))
+              if (mols[0]) {
+                finalTooltip += dbIdx > 1 ? `<br>Candidate molecules ${mols[0]}<br>`
+                  : `Candidate molecules ${mols[0]}<br>`
+                finalTooltip += mols.slice(1, 6).join('<br>')
+                  + `${mols.length > 7 ? `<br>and more ${(mols.length - 7)}...` : ''}<br>`
+              }
             })
 
             if (state.currentView === VIEWS.KENDRICK) {
@@ -290,7 +335,7 @@ export default defineComponent<DatasetBrowserProps>({
                 isAnnotated: true,
                 dot: {
                   name: mz.toFixed(4),
-                  tooltip,
+                  tooltip: finalTooltip,
                   mz: mz,
                   value: [mz, KendrickMassDefect, radius],
                   itemStyle: annotItemStyle,
@@ -301,13 +346,13 @@ export default defineComponent<DatasetBrowserProps>({
                 isAnnotated: true,
                 dot: {
                   name: mz.toFixed(4),
-                  tooltip,
+                  tooltip: finalTooltip,
                   mz: mz,
                   value: [mz, int],
                   itemStyle: annotItemStyle,
                 },
                 line: {
-                  label: tooltip,
+                  tooltip: finalTooltip,
                   mz: mz,
                   xAxis: mz,
                   yAxis: int,
@@ -318,6 +363,7 @@ export default defineComponent<DatasetBrowserProps>({
           }
         })
       }
+
       if (state.peakFilter !== PEAK_FILTER.FDR) {
         mzs.forEach((mz:any, index: any) => {
           if (!addedIndexes.includes(index)) {
@@ -468,6 +514,10 @@ export default defineComponent<DatasetBrowserProps>({
         if (spectrumResult.value) {
           buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
         }
+        state.noData = false
+      } else {
+        state.noData = true
+        state.annotation = undefined
       }
     })
 
@@ -707,6 +757,7 @@ export default defineComponent<DatasetBrowserProps>({
                     )
                   })
                 }
+                <Option label='All databases' value={undefined}/>
               </Select>
             </div>
           </div>
@@ -874,6 +925,7 @@ export default defineComponent<DatasetBrowserProps>({
               }}
               precision={0}
               step={1}
+              min={1}
               size='mini'
               placeholder='2.5'
             />
@@ -938,6 +990,74 @@ export default defineComponent<DatasetBrowserProps>({
       )
     }
 
+    const renderChartOptions = () => {
+      return (
+        <RadioGroup
+          size='small'
+          class='w-full flex ml-4'
+          onInput={(value: any) => {
+            state.currentView = value
+            buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+          }}
+          value={state.currentView}>
+          <RadioButton class='ml-2' label={VIEWS.SPECTRUM}/>
+          <RadioButton label={VIEWS.KENDRICK}/>
+        </RadioGroup>
+      )
+    }
+
+    const renderKmChart = (isEmpty: boolean) => {
+      return (
+        <DatasetBrowserKendrickPlot
+          style={{
+            visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
+            height: state.currentView === VIEWS.KENDRICK ? '' : 0,
+          }}
+          isEmpty={isEmpty}
+          isLoading={state.chartLoading}
+          isDataLoading={annotationsLoading.value}
+          data={state.sampleData}
+          dataRange={state.dataRange}
+          annotatedData={annotatedPeaks.value}
+          peakFilter={state.peakFilter}
+          referenceMz={state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz}
+          onItemSelected={(mz: number) => {
+            state.showFullTIC = false
+            Vue.set(state.normalizationData, 'showFullTIC', false)
+            state.mzmScoreFilter = mz
+            requestIonImage()
+          }}
+          onDownload={handleDownload}
+        />
+      )
+    }
+
+    const renderSpectrum = (isEmpty: boolean) => {
+      return (
+        <DatasetBrowserSpectrumChart
+          style={{
+            visibility: state.currentView === VIEWS.SPECTRUM ? '' : 'hidden',
+            height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
+          }}
+          isEmpty={isEmpty}
+          normalization={state.globalImageSettings.isNormalized ? state.normalization : undefined}
+          isLoading={state.chartLoading}
+          isDataLoading={annotationsLoading.value}
+          data={state.sampleData}
+          annotatedData={annotatedPeaks.value}
+          peakFilter={state.peakFilter}
+          dataRange={state.dataRange}
+          onItemSelected={(mz: number) => {
+            state.showFullTIC = false
+            Vue.set(state.normalizationData, 'showFullTIC', false)
+            state.mzmScoreFilter = mz
+            requestIonImage()
+          }}
+          onDownload={handleDownload}
+        />
+      )
+    }
+
     return () => {
       const isEmpty = state.x === undefined && state.y === undefined
       return (
@@ -948,69 +1068,10 @@ export default defineComponent<DatasetBrowserProps>({
                 Spectrum browser
               </div>
               {renderBrowsingFilters()}
-              <RadioGroup
-                size='small'
-                class='w-full flex ml-4'
-                onInput={(value: any) => {
-                  state.currentView = value
-                  buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
-                }}
-                value={state.currentView}>
-                <RadioButton class='ml-2' label={VIEWS.SPECTRUM}/>
-                <RadioButton label={VIEWS.KENDRICK}/>
-              </RadioGroup>
-              {
-                isEmpty && !state.chartLoading
-                && renderEmptySpectrum()
-              }
-              {
-                state.currentView === VIEWS.KENDRICK
-                && <DatasetBrowserKendrickPlot
-                  style={{
-                    visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
-                    height: state.currentView === VIEWS.KENDRICK ? '' : 0,
-                  }}
-                  isEmpty={isEmpty}
-                  isLoading={state.chartLoading}
-                  isDataLoading={annotationsLoading.value}
-                  data={state.sampleData}
-                  dataRange={state.dataRange}
-                  annotatedData={annotatedPeaks.value}
-                  peakFilter={state.peakFilter}
-                  referenceMz={state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz}
-                  onItemSelected={(mz: number) => {
-                    state.showFullTIC = false
-                    Vue.set(state.normalizationData, 'showFullTIC', false)
-                    state.mzmScoreFilter = mz
-                    requestIonImage()
-                  }}
-                  onDownload={handleDownload}
-                />
-              }
-              {
-                state.currentView === VIEWS.SPECTRUM
-                && <DatasetBrowserSpectrumChart
-                  style={{
-                    visibility: state.currentView === VIEWS.SPECTRUM ? '' : 'hidden',
-                    height: state.currentView === VIEWS.SPECTRUM ? '' : 0,
-                  }}
-                  isEmpty={isEmpty}
-                  normalization={state.globalImageSettings.isNormalized ? state.normalization : undefined}
-                  isLoading={state.chartLoading}
-                  isDataLoading={annotationsLoading.value}
-                  data={state.sampleData}
-                  annotatedData={annotatedPeaks.value}
-                  peakFilter={state.peakFilter}
-                  dataRange={state.dataRange}
-                  onItemSelected={(mz: number) => {
-                    state.showFullTIC = false
-                    Vue.set(state.normalizationData, 'showFullTIC', false)
-                    state.mzmScoreFilter = mz
-                    requestIonImage()
-                  }}
-                  onDownload={handleDownload}
-                />
-              }
+              {!state.noData && renderChartOptions() }
+              {isEmpty && !state.chartLoading && renderEmptySpectrum()}
+              {state.currentView === VIEWS.KENDRICK && !state.noData && renderKmChart(isEmpty)}
+              {state.currentView === VIEWS.SPECTRUM && !state.noData && renderSpectrum(isEmpty)}
             </div>
           </div>
           <div class='dataset-browser-wrapper w-full lg:w-1/2'>

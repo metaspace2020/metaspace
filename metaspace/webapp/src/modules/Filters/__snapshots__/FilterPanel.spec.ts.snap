@@ -5,6 +5,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <mock-el-select placeholder="Add filter" class="filter-select">
     <mock-el-option value="offSample" label="Show/hide off-sample annotations"></mock-el-option>
     <mock-el-option value="molClass" label="Select class"></mock-el-option>
+    <mock-el-option value="opticalImage" label="Show/hide datasets with optical images"></mock-el-option>
   </mock-el-select>
   <div class="tf-outer w-auto el-input el-input-group el-input-group--prepend" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
     <div class="el-input-group__prepend"><i class="el-icon-search -mx-1"></i></div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
@@ -481,6 +482,7 @@ exports[`FilterPanel should match snapshot (database without dataset) 1`] = `
     <mock-el-option value="minMSM" label="Set minimum MSM score"></mock-el-option>
     <mock-el-option value="simpleQuery" label="Search anything"></mock-el-option>
     <mock-el-option value="metadataType" label="Select data type"></mock-el-option>
+    <mock-el-option value="opticalImage" label="Show/hide datasets with optical images"></mock-el-option>
     <mock-el-option value="molClass" label="Select class"></mock-el-option>
   </mock-el-select>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="database" filter-key="database" name="Database" options="">
@@ -547,6 +549,7 @@ exports[`FilterPanel should match snapshot (no filters) 1`] = `
     <mock-el-option value="minMSM" label="Set minimum MSM score"></mock-el-option>
     <mock-el-option value="simpleQuery" label="Search anything"></mock-el-option>
     <mock-el-option value="metadataType" label="Select data type"></mock-el-option>
+    <mock-el-option value="opticalImage" label="Show/hide datasets with optical images"></mock-el-option>
     <mock-el-option value="molClass" label="Select class"></mock-el-option>
   </mock-el-select>
 </div>

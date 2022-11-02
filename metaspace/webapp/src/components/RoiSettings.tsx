@@ -1,24 +1,29 @@
 import VisibleIcon from '../assets/inline/refactoring-ui/icon-view-visible.svg'
 import HiddenIcon from '../assets/inline/refactoring-ui/icon-view-hidden.svg'
 import RoiIcon from '../assets/inline/roi-icon.svg'
+import SaveIcon from '../assets/inline/save-icon.svg'
 import { defineComponent, computed, ref, reactive, onMounted, onUnmounted, watch } from '@vue/composition-api'
 import { Button, Input, Popover, Tooltip } from '../lib/element-ui'
 import Vue from 'vue'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
 import './RoiSettings.scss'
-import { useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable'
 import { annotationListQuery } from '../api/annotation'
 import config from '../lib/config'
 import { loadPngFromUrl, processIonImage } from '../lib/ionImageRendering'
 import isInsidePolygon from '../lib/isInsidePolygon'
 import FileSaver from 'file-saver'
 import StatefulIcon from '../components/StatefulIcon.vue'
+import { addRoiMutation } from '../api/dataset'
+import reportError from '../lib/reportError'
 
 interface RoiSettingsProps {
   annotation: any,
 }
 
 interface RoiSettingsState {
+  updatingPopper: boolean,
+  isUpdatingRoi: boolean,
   isDownloading: boolean,
   offset: number,
   rows: any[],
@@ -46,11 +51,16 @@ export default defineComponent<RoiSettingsProps>({
   },
   setup(props, { root }) {
     const { $store } = root
+    const { mutate } = useMutation(addRoiMutation)
+    const updateRois = mutate as unknown as (variables: any) => void
+
     const popover = ref<any>(null)
     const state = reactive<RoiSettingsState>({
       offset: 0,
       rows: [],
       cols: [],
+      updatingPopper: false,
+      isUpdatingRoi: false,
       isDownloading: false,
     })
 
@@ -115,14 +125,16 @@ export default defineComponent<RoiSettingsProps>({
     })
 
     const resizeHandler = () => {
-      if (popover && popover.value) { // update popper position
+      if (popover && popover.value && !state.updatingPopper) { // update popper position
+        state.updatingPopper = true
         popover.value.updatePopper()
+        setTimeout(() => { state.updatingPopper = false }, 100)
       }
     }
 
     watch(() => $store.getters.filter, () => {
       // hack to update popper position when some filters change reduces table width and misplace its position
-      setTimeout(() => { resizeHandler() }, 100)
+      setTimeout(() => { resizeHandler() }, 0)
     })
 
     const ionImage = (ionImagePng: any, isotopeImage: any,
@@ -235,6 +247,51 @@ export default defineComponent<RoiSettingsProps>({
       })
     }
 
+    const handleSave = () => {
+      if (!props.annotation?.dataset?.canEdit) {
+        return
+      }
+
+      state.isUpdatingRoi = true
+
+      try {
+        Object.keys($store.state.roiInfo).forEach((key: string) => {
+          const roiInfo = $store.state.roiInfo[key]
+          const geoJson : any = {
+            type: 'FeatureCollection',
+            features: [],
+          }
+
+          if (Array.isArray(roiInfo) && key === props.annotation?.dataset?.id) {
+            roiInfo.forEach((roi: any) => {
+              if (roi && !roi.isDrawing) {
+                geoJson.features.push({
+                  type: 'Feature',
+                  properties: {
+                    ...roi,
+                    stroke: roi.rgb,
+                    'stroke-width': 1,
+                    'stroke-opacity': 0,
+                    fill: roi.rgb,
+                    'fill-opacity': 0.4,
+                  },
+                  geometry: {
+                    type: 'Polygon',
+                    coordinates: roi.coordinates.map((coord: any) => [coord.x, coord.y]),
+                  },
+                })
+              }
+            })
+            updateRois({ datasetId: props.annotation?.dataset?.id, geoJson })
+          }
+        })
+      } catch (e) {
+        reportError(new Error(`Error saving ROI: ${JSON.stringify(e)}`), null)
+      } finally {
+        state.isUpdatingRoi = false
+      }
+    }
+
     const triggerDownload = () => {
       queryOptions.enabled = true
       state.isDownloading = true
@@ -290,20 +347,49 @@ export default defineComponent<RoiSettingsProps>({
           trigger="manual"
         >
           <div class='roi-content'>
-            {
-              roiInfo.length > 0
-              && !state.isDownloading
-              && <Button
-                class="button-reset h-5"
-                icon="el-icon-download"
-                onClick={triggerDownload}/>
-            }
-            {
-              state.isDownloading
-              && <div>
-                <i class="el-icon-loading" />
-              </div>
-            }
+            <div class='roi-options'>
+              {
+                roiInfo.length > 0
+                && !state.isDownloading
+                  && <Button
+                    class="button-reset roi-download-icon"
+                    icon="el-icon-download"
+                    onClick={triggerDownload}/>
+              }
+              {
+                roiInfo.length > 0
+                && state.isDownloading
+                  && <div class="button-reset roi-download-icon">
+                    <i class="el-icon-loading" />
+                  </div>
+              }
+              <Tooltip
+                popperClass='roi-save-tooltip'
+                content={'Click to save the ROIs. This requires being the owner or having the '
+                  + 'edit access to this dataset.'}
+                placement="top">
+                {
+                  !state.isUpdatingRoi
+                  && <Button
+                    class={`button-reset roi-save-icon-wrapper ${props.annotation?.dataset?.canEdit
+                      ? '' : 'save-disabled'}`}
+                    onClick={handleSave}
+                  >
+                    <StatefulIcon
+                      class='roi-save-icon-wrapper'
+                      active={props.annotation?.dataset?.canEdit}>
+                      <SaveIcon class='roi-save-icon fill-current'/>
+                    </StatefulIcon>
+                  </Button>
+                }
+                {
+                  state.isUpdatingRoi
+                  && <div class="button-reset roi-download-icon">
+                    <i class="el-icon-loading" />
+                  </div>
+                }
+              </Tooltip>
+            </div>
             {
               roiInfo.map((roi: any, roiIndex: number) => {
                 return (

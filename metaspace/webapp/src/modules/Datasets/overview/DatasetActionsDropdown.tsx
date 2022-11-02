@@ -13,6 +13,7 @@ import { DatasetComparisonDialog } from '../comparison/DatasetComparisonDialog'
 import config from '../../../lib/config'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
 import { useQuery } from '@vue/apollo-composable'
+import './DatasetActionsDropdown.scss'
 import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
 
 interface DatasetActionsDropdownProps {
@@ -88,7 +89,9 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
 
     const {
       result: browserResult,
-    } = useQuery<any>(checkIfHasBrowserFiles, { datasetId: props.dataset?.id })
+      refetch: browserRefetch,
+    } = useQuery<any>(checkIfHasBrowserFiles, { datasetId: props.dataset?.id },
+      { fetchPolicy: 'no-cache' as const })
     const hasBrowserFiles = computed(() => browserResult.value != null
       ? browserResult.value.hasImzmlFiles : null)
 
@@ -208,6 +211,8 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           }
           break
         case 'browser':
+          await browserRefetch()
+          hideFeatureBadge('imzmlBrowser')
           if (hasBrowserFiles.value) {
             $router.push({
               name: 'dataset-browser',
@@ -246,9 +251,11 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       const canReprocess = (role === 'admin')
 
       return (
-        <Dropdown style={{
-          visibility: (!canEdit && !canDelete && !canReprocess && !canDownload) ? 'hidden' : '',
-        }} trigger='click' type="primary" onCommand={handleCommand}>
+        <Dropdown
+          class='dataset-actions-dropdown'
+          style={{
+            visibility: (!canEdit && !canDelete && !canReprocess && !canDownload) ? 'hidden' : '',
+          }} trigger='click' type="primary" onCommand={handleCommand}>
           <NewFeatureBadge featureKey="dataset-overview-actions">
             <Button class="p-1" type="primary" onClick={() => {
               hideFeatureBadge('dataset-overview-actions')
@@ -268,7 +275,11 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
             <DropdownItem command="compare">{compareActionLabel}</DropdownItem>
             {
               config.features.imzml_browser
-              && <DropdownItem command="browser">{browserActionLabel}</DropdownItem>
+              && <DropdownItem command="browser" class='relative'>
+                <NewFeatureBadge featureKey="imzmlBrowser" class='actionBadge'>
+                  {browserActionLabel}
+                </NewFeatureBadge>
+              </DropdownItem>
             }
             {
               config.features.enrichment

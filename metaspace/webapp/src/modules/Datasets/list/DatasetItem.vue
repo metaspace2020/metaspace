@@ -23,6 +23,7 @@
       :dataset="dataset"
       :idx="idx"
       :metadata="metadata"
+      :additional-settings="additionalSettings"
       :current-user="currentUser"
     />
   </div>
@@ -68,6 +69,15 @@ export default {
         Projects: this.dataset.projects,
       }
       return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals)
+    },
+
+    additionalSettings() {
+      try {
+        const configJson = JSON.parse(this.dataset.configJson)
+        return configJson
+      } catch (e) {
+        return {}
+      }
     },
 
     canEditOpticalImage() {

@@ -462,6 +462,24 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return JSON.stringify(resp)
   },
 
+  addRoi: async(source, { datasetId, geoJson }, ctx: Context) => {
+    const typedJson : any = geoJson
+
+    try {
+      await ctx.entityManager.transaction(async txn => {
+        const ds = await getDatasetForEditing(txn, ctx.user, datasetId)
+        const resp = await txn.update(EngineDataset, ds.id, {
+          roi: typedJson,
+        })
+        logger.info(`ROI was added to '${datasetId}' dataset`)
+
+        return JSON.stringify(resp)
+      })
+    } catch (e) {
+      return JSON.stringify(e)
+    }
+  },
+
   deleteOpticalImage: async(source, { datasetId }, ctx: Context) => {
     logger.info(`User '${ctx.getUserIdOrFail()}' deleting optical image from '${datasetId}' dataset...`)
     await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId)

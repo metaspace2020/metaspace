@@ -20,12 +20,6 @@ import { resolveGroupScopeRole } from './util/resolveGroupScopeRole'
 import { urlSlugMatchesClause, validateUrlSlugChange } from '../groupOrProject/urlSlug'
 import { MolecularDbRepository } from '../moldb/MolecularDbRepository'
 
-const assertCanCreateGroup = (user: ContextUser) => {
-  if (!user.id || user.role !== 'admin') {
-    throw new UserError('Only admins can create groups')
-  }
-}
-
 const assertUserAuthenticated = (user: ContextUser) => {
   if (!user.id) {
     throw new UserError('Not authenticated')
@@ -201,13 +195,24 @@ export const Resolvers = {
     },
 
     async allGroups(_: any, { query }: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
-      const scopeRole = await resolveGroupScopeRole(ctx)
-      const groups = await ctx.entityManager.getRepository(GroupModel)
-        .createQueryBuilder('group')
-        .where('group.name ILIKE :query OR group.shortName ILIKE :query', { query: query ? `%${query}%` : '%' })
-        .orderBy('group.name')
-        .getMany()
-      return groups.map(g => ({ ...g, scopeRole }))
+      let userGroups : any = []
+
+      if (ctx.user.id) {
+        let qb = ctx.entityManager.createQueryBuilder(GroupModel,
+          'group')
+          .leftJoinAndSelect('group.members', 'userGroup')
+          .where('(group.name ILIKE :query OR group.shortName ILIKE :query)', { query: query ? `%${query}%` : '%' })
+
+        if (ctx.user.role !== 'admin') {
+          qb = qb.andWhere('userGroup.user = :userId', { userId: ctx.user.id })
+        }
+
+        userGroups = await qb.orderBy('group.name')
+          .distinct(true)
+          .getMany()
+      }
+
+      return userGroups.map((g: any) => ({ ...g, scopeRole: g.role }))
     },
 
     async groupUrlSlugIsValid(source: any, { urlSlug, existingGroupId }: any, ctx: Context): Promise<boolean> {
@@ -221,7 +226,7 @@ export const Resolvers = {
       _: any, { groupDetails }: any, { user, entityManager }: Context
     ): Promise<LooselyCompatible<Group & Scope>> {
       const { groupAdminEmail, ...groupInput } = groupDetails
-      assertCanCreateGroup(user)
+      assertUserAuthenticated(user)
       logger.info(`Creating ${groupInput.name} group by '${user.id}' user...`)
 
       if (groupDetails.urlSlug != null) {

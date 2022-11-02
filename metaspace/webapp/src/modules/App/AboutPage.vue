@@ -122,21 +122,7 @@
             publications from other users<!-- -->
           </router-link>.
         </p>
-        <h3>
-          How should I cite METASPACE?
-        </h3>
-        <p>
-          Please cite our publication (<a
-            href="http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html"
-          >Palmer et al., 2016, Nature Methods</a>)
-          and refer to <a href="https://metaspace2020.eu">https://metaspace2020.eu</a>.
-        </p>
-        <p>
-          If you are preparing a scientific publication based on METASPACE annotations, create a
-          <router-link to="/projects">
-            project<!-- -->
-          </router-link> and follow the &lsquo;Scientific Publishing&rsquo; workflow.
-        </p>
+        <cite-metaspace />
         <h3>
           How to stay in touch?
         </h3>
@@ -206,6 +192,7 @@
 
 <script lang="ts">
 import PrimaryIcon from '../../components/PrimaryIcon.vue'
+import { CiteMetaspace } from './CiteMetaspace'
 
 import Metaspace from '../../assets/inline/METASPACE.svg'
 import MonitorSvg from '../../assets/inline/refactoring-ui/icon-monitor.svg'
@@ -222,6 +209,7 @@ export default {
     BookSvg,
     BoltSvg,
     UnlockSvg,
+    CiteMetaspace,
   },
 }
 </script>

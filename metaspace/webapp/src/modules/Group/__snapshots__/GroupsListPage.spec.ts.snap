@@ -1,0 +1,84 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GroupsListPage should match snapshot logged 1`] = `
+<div class="groups-list-container">
+  <div class="groups-list-wrapper">
+    <div class="groups-list-header">
+      <div class="el-input el-input-group el-input-group--prepend group-name-filter tf-outer w-auto">
+        <div class="el-input-group__prepend"><i class="el-icon-search -mx-1"></i></div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+      </div><button type="button" class="el-button el-button--primary group-list-create-btn">
+        <!---->
+        <!----><span>Create group</span></button>
+    </div>
+    <div class="groups-list-content">
+      <div class="group-item">
+        <div class="group-item-info">
+          <div class="group-item-title-wrapper group-item-info-line"><a href="/group/grp1" class="group-item-title" datatestkey="group-link">group1<span class="group-item-short-name"> (g1)</span></a>
+            <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+              <div slot-key="default">
+                <p class="leading-none m-0">Copy group id to clipboard</p>
+              </div>
+              <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+            </mock-el-popover>
+          </div>
+          <div class="group-item-info-line"><a href="/datasets?grp=group1" class="group-item-title">66 Datasets,</a>2 Members</div>
+        </div>
+        <div class="group-item-actions">
+          <div><i class="el-icon-picture"></i><a href="/datasets?grp=group1" class="ml-1" datatestkey="dataset-link">Browse datasets</a></div>
+          <div><i class="el-icon-edit"></i><a href="/group/grp1?tab=settings" class="ml-1" datatestkey="manage-link">Manage group</a></div>
+        </div>
+      </div>
+      <div class="group-item">
+        <div class="group-item-info">
+          <div class="group-item-title-wrapper group-item-info-line"><a href="/group/grp3" class="group-item-title" datatestkey="group-link">group2<span class="group-item-short-name"> (g2)</span></a>
+            <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+              <div slot-key="default">
+                <p class="leading-none m-0">Copy group id to clipboard</p>
+              </div>
+              <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+            </mock-el-popover>
+          </div>
+          <div class="group-item-info-line"><a href="/datasets?grp=group2" class="group-item-title">66 Datasets,</a>1 Member</div>
+        </div>
+        <div class="group-item-actions">
+          <div><i class="el-icon-picture"></i><a href="/datasets?grp=group2" class="ml-1" datatestkey="dataset-link">Browse datasets</a></div>
+          <div><i class="el-icon-edit"></i><a href="/group/grp3?tab=members" class="ml-1" datatestkey="manage-link">Browse group</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`GroupsListPage should match snapshot no data 1`] = `
+<div class="groups-list-container">
+  <div class="groups-list-wrapper">
+    <div class="groups-list-header">
+      <div class="el-input el-input-group el-input-group--prepend group-name-filter tf-outer w-auto">
+        <div class="el-input-group__prepend"><i class="el-icon-search -mx-1"></i></div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+      </div><button type="button" class="el-button el-button--primary group-list-create-btn">
+        <!---->
+        <!----><span>Create group</span></button>
+    </div>
+    <div class="groups-list-content">
+      <p>Group not found!</p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`GroupsListPage should match snapshot not logged 1`] = `
+<div class="groups-list-container">
+  <div class="groups-list-wrapper">
+    <p class="font-normal text-center">Create an account/login, to create groups and make your work reach more people!</p>
+  </div>
+</div>
+`;

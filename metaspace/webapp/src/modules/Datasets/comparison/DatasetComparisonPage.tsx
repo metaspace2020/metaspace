@@ -1,4 +1,4 @@
-import { Collapse, CollapseItem } from '../../../lib/element-ui'
+import { Button, Collapse, CollapseItem, Popover } from '../../../lib/element-ui'
 import {
   computed,
   defineComponent,
@@ -26,10 +26,15 @@ import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/Cand
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import { DatasetComparisonShareLink } from './DatasetComparisonShareLink'
-import { groupBy, isEqual, uniqBy, uniq } from 'lodash-es'
+import { groupBy, isEqual, uniqBy, uniq, omit } from 'lodash-es'
 import { readNpy } from '../../../lib/npyHandler'
 import { DatasetComparisonModeButton } from './DatasetComparisonModeButton'
 import './DatasetComparisonPage.scss'
+import { getIonImage, loadPngFromUrl } from '../../../lib/ionImageRendering'
+import formatCsvRow, { csvExportIntensityHeader } from '../../../lib/formatCsvRow'
+import FileSaver from 'file-saver'
+import FilterIcon from '../../../assets/inline/filter.svg'
+import { ANNOTATION_SPECIFIC_FILTERS } from '../../Filters/filterSpecs'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -57,9 +62,13 @@ interface DatasetComparisonPageState {
   nCols: number
   nRows: number
   annotationData: any
+  colocDsId: any
   refsLoaded: boolean
   showViewer: boolean
   loadedSnapshot: boolean
+  tableFullScreen: boolean
+  isExporting: boolean
+  exportProgress: number
   isLoading: any
   collapse: string[]
   databaseOptions: any
@@ -68,6 +77,7 @@ interface DatasetComparisonPageState {
   rawAnnotations: any
   processedAnnotations: any
   channelSnapshot: any
+  coloc: boolean
 }
 
 const channels: any = {
@@ -116,7 +126,11 @@ export default defineComponent<DatasetComparisonPageProps>({
       gridState: {},
       channelSnapshot: [],
       loadedSnapshot: false,
+      tableFullScreen: false,
+      isExporting: false,
+      exportProgress: 0,
       databaseOptions: undefined,
+      colocDsId: undefined,
       globalImageSettings: {
         resetViewPort: false,
         isNormalized: false,
@@ -137,6 +151,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       refsLoaded: false,
       showViewer: false,
       isLoading: false,
+      coloc: false,
       normalizationData: {},
       offset: 0,
       rawAnnotations: [],
@@ -157,7 +172,13 @@ export default defineComponent<DatasetComparisonPageProps>({
     const queryVariables = () => {
       const filter = $store.getters.gqlAnnotationFilter
       const dFilter = $store.getters.gqlDatasetFilter
-      const colocalizationCoeffFilter = $store.getters.gqlColocalizationFilter
+      const colocalizationCoeffFilter = state.coloc
+        ? {
+          colocalizedWith: filter.colocalizedWith,
+          colocalizationAlgo: null,
+          databaseId: filter.databaseId,
+          fdrLevel: filter.fdrLevel,
+        } : undefined
       const query = $store.getters.ftsQuery
 
       return {
@@ -170,6 +191,7 @@ export default defineComponent<DatasetComparisonPageProps>({
     }
 
     const annotationQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+    const colocAnnotationQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const dsQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const annotationQueryVars = computed(() => ({
       ...queryVariables(),
@@ -177,12 +199,44 @@ export default defineComponent<DatasetComparisonPageProps>({
       limit: CHUNK_SIZE,
       offset: state.offset,
     }))
+    const colocAnnotationQueryVars = computed(() => ({
+      ...queryVariables(),
+      dFilter: { ...queryVariables().dFilter, ids: state.colocDsId },
+      limit: CHUNK_SIZE,
+      offset: state.offset,
+    }))
 
     const {
-      result: annotationsResult,
       loading: annotationsLoading,
       onResult: onAllAnnotationsResult,
     } = useQuery<any>(annotationListQuery, annotationQueryVars, annotationQueryOptions)
+
+    const aggregateAnnotations = () => {
+      const annotationsByIon = groupBy(state.rawAnnotations, 'ion')
+      const processedAnnotations = Object.keys(annotationsByIon).map((ion: string) => {
+        const annotations = annotationsByIon[ion]
+        const dbId = annotations[0].databaseDetails.id
+        const datasetIds = uniq(annotations.map((annotation: any) => annotation.dataset.id))
+
+        return {
+          ion,
+          dbId,
+          datasetIds,
+          annotations,
+        }
+      })
+
+      state.annotations = processedAnnotations
+      dsQueryOptions.enabled = true
+
+      if (!state.loadedSnapshot) {
+        const auxSettings = safeJsonParse(gridSettings.value.snapshot)
+        if (auxSettings.mode === 'MULTI') {
+          loadSnapshotChannels(auxSettings.channels)
+        }
+        state.loadedSnapshot = true
+      }
+    }
 
     onAllAnnotationsResult(async(result) => {
       let rawAnnotations = state.rawAnnotations
@@ -198,30 +252,34 @@ export default defineComponent<DatasetComparisonPageProps>({
         } else {
           annotationQueryOptions.enabled = false
           state.offset = 0
-          const annotationsByIon = groupBy(state.rawAnnotations, 'ion')
-          const processedAnnotations = Object.keys(annotationsByIon).map((ion: string) => {
-            const annotations = annotationsByIon[ion]
-            const dbId = annotations[0].databaseDetails.id
-            const datasetIds = uniq(annotations.map((annotation: any) => annotation.dataset.id))
+          aggregateAnnotations()
+        }
+      }
+    })
 
-            return {
-              ion,
-              dbId,
-              datasetIds,
-              annotations,
-            }
-          })
+    const {
+      loading: colocAnnotationsLoading,
+      onResult: oncolocAllAnnotationsResult,
+    } = useQuery<any>(annotationListQuery, colocAnnotationQueryVars, colocAnnotationQueryOptions)
 
-          state.annotations = processedAnnotations
-          dsQueryOptions.enabled = true
+    oncolocAllAnnotationsResult(async(result) => {
+      let rawAnnotations = state.rawAnnotations
+      if (result && result.data) {
+        if (state.offset === 0 && datasetIds.value.indexOf(state.colocDsId) === 0) {
+          rawAnnotations = []
+        }
+        rawAnnotations = rawAnnotations.concat(result.data.allAnnotations)
 
-          if (!state.loadedSnapshot) {
-            const auxSettings = safeJsonParse(gridSettings.value.snapshot)
-            if (auxSettings.mode === 'MULTI') {
-              loadSnapshotChannels(auxSettings.channels)
-            }
-            state.loadedSnapshot = true
-          }
+        state.rawAnnotations = rawAnnotations
+        if (state.offset < result.data.countAnnotations) {
+          state.offset += CHUNK_SIZE
+        } else if (datasetIds.value.indexOf(state.colocDsId) !== datasetIds.value.length - 1) {
+          state.colocDsId = datasetIds.value[datasetIds.value.indexOf(state.colocDsId) + 1]
+          state.offset = 0
+        } else {
+          colocAnnotationQueryOptions.enabled = false
+          state.offset = 0
+          aggregateAnnotations()
         }
       }
     })
@@ -292,6 +350,8 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
       return null
     })
+    const datasetIds = computed(() => Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid
+      || {}))
 
     const requestAnnotations = async() => {
       state.isLoading = true
@@ -308,9 +368,26 @@ export default defineComponent<DatasetComparisonPageProps>({
       $store.watch((_, getters) => [getters.gqlAnnotationFilter,
         $store.getters.gqlDatasetFilter, $store.getters.gqlColocalizationFilter, $store.getters.ftsQuery],
       (filter, previousFilter) => {
+        if (filter[0].colocalizedWith) {
+          if (!state.coloc || filter[0].colocalizedWith !== previousFilter[0].colocalizedWith) {
+            colocAnnotationQueryOptions.enabled = true
+            annotationQueryOptions.enabled = false
+          }
+          state.coloc = true
+        } else {
+          state.coloc = false
+        }
+
         if (state.annotations && !isEqual(filter, previousFilter)) {
           state.offset = 0
-          annotationQueryOptions.enabled = true
+          if (state.coloc) {
+            colocAnnotationQueryOptions.enabled = true
+            state.colocDsId = datasetIds.value[0]
+            annotationQueryOptions.enabled = false
+          } else {
+            colocAnnotationQueryOptions.enabled = false
+            annotationQueryOptions.enabled = true
+          }
         }
       })
     })
@@ -416,6 +493,21 @@ export default defineComponent<DatasetComparisonPageProps>({
       $store.commit('setLockTemplate', dsId)
     }
 
+    const filterColocalized = () => {
+      const { annotations, currentAnnotationIdx } = state
+      const selectedAnnotation = annotations && annotations[currentAnnotationIdx]
+      state.coloc = true
+
+      $store.commit('updateFilter', {
+        ...omit($store.getters.filter, ANNOTATION_SPECIFIC_FILTERS),
+        colocalizedWith: selectedAnnotation?.ion,
+      })
+      $store.commit('setSortOrder', {
+        by: 'colocalization',
+        dir: 'descending',
+      })
+    }
+
     const handleIntensitiesChange = (intensities: [number | undefined, number | undefined]) => {
       state.globalImageSettings.globalLockedIntensities = intensities
     }
@@ -428,6 +520,85 @@ export default defineComponent<DatasetComparisonPageProps>({
         setTimeout(() => {
           state.isLoading = false
         }, 500)
+      }
+    }
+
+    const handleScreenChange = (isFullScreen: boolean) => {
+      state.tableFullScreen = isFullScreen
+    }
+
+    const handleAbort = () => {
+      state.isExporting = false
+      state.exportProgress = 0
+    }
+
+    const startIntensitiesExport = async() => {
+      async function formatIntensitiesRow(annotation: any, normalizationData: any) {
+        const { isotopeImages, ionFormula: molFormula, possibleCompounds, adduct, mz, dataset } = annotation
+        const isotopeImage = isotopeImages[0]
+        const ionImagePng = await loadPngFromUrl(isotopeImage.url)
+        const molName = possibleCompounds.map((m: any) => m.name).join(',')
+        const molIds = possibleCompounds.map((m: any) => m.information[0].databaseId).join(',')
+        const finalImage : any = getIonImage(ionImagePng, isotopeImages[0], undefined,
+          undefined, normalizationData)
+        const row = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
+        const { width, height, intensityValues } = finalImage
+        const cols = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
+
+        for (let x = 0; x < width; x++) {
+          for (let y = 0; y < height; y++) {
+            cols.push(`x${x}_y${y}`)
+            const idx = y * width + x
+            row.push(intensityValues[idx])
+          }
+        }
+
+        return { cols, row, dsName: dataset.name }
+      }
+
+      let offset = 0
+      state.isExporting = true
+      const annotations = state.annotations.map((annotation: any) => annotation.annotations).flat()
+      const totalCount = annotations?.length || 1
+      const datasetIds : string[] = Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid || {})
+      const annotationsByDsId : any = groupBy(annotations, 'dataset.id')
+
+      // generate one file per dataset
+      for (let j : number = 0; j < datasetIds?.length; j++) {
+        const datasetId : string = datasetIds[j]
+        const currentAnnotations : any[] = annotationsByDsId[datasetId]
+        let fileName : string = ''
+        let rows = ''
+        let fileCols
+
+        for (let i : number = 0; i < currentAnnotations?.length; i++) {
+          if (!state.isExporting) {
+            state.exportProgress = 0
+            return
+          }
+          const annotation : any = currentAnnotations[i]
+          offset += 1
+          state.exportProgress = offset / totalCount
+          const { cols, row, dsName } = await formatIntensitiesRow(annotation,
+            state.globalImageSettings.isNormalized
+              ? state.normalizationData[annotation.dataset.id] : undefined)
+          if (!fileCols) {
+            fileCols = formatCsvRow(cols)
+            fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${state.globalImageSettings.isNormalized
+              ? '_tic_normalized' : ''}.csv`
+          }
+          rows += formatCsvRow(row)
+        }
+
+        if (state.isExporting) {
+          if (j === datasetIds?.length - 1) {
+            state.isExporting = false
+            state.exportProgress = 0
+          }
+          const csv = csvExportIntensityHeader(state.globalImageSettings.isNormalized) + fileCols + rows
+          const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+          FileSaver.saveAs(blob, fileName)
+        }
       }
     }
 
@@ -547,7 +718,6 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     const renderImageGallery = (nCols: number, nRows: number) => {
       const { annotations, collapse, currentAnnotationIdx, globalImageSettings, normalizationData, isLoading } = state
-
       return (
         <CollapseItem
           id="annot-img-collapse"
@@ -578,10 +748,27 @@ export default defineComponent<DatasetComparisonPageProps>({
             class="absolute top-0 right-0 mt-2 mr-2 dom-to-image-hidden"
             domNode={gridNode.value}
           />
+          <Popover
+            trigger="hover"
+            placement="bottom"
+          >
+            <div slot='reference' class='coloc-filter-wrapper dom-to-image-hidden'>
+              <Button
+                class="w-5 h-5 button-reset av-icon-button"
+                title="Show in list"
+                onClick={filterColocalized}
+              >
+                <FilterIcon class="w-5 h-5 fill-current"/>
+              </Button>
+            </div>
+            <span>
+              Filter by colocalized annotations
+            </span>
+          </Popover>
           <div class='dataset-comparison-grid' ref={gridNode}>
             {
               collapse.includes('images')
-              && !annotationsLoading.value
+              && !(annotationsLoading.value || colocAnnotationsLoading.value)
               && <DatasetComparisonGrid
                 ref={imageGrid}
                 nCols={nCols}
@@ -602,12 +789,12 @@ export default defineComponent<DatasetComparisonPageProps>({
                 normalizationData={normalizationData}
                 datasets={datasets.value || []}
                 selectedAnnotation={currentAnnotationIdx}
-                isLoading={isLoading || annotationsLoading.value}
+                isLoading={isLoading || annotationsLoading.value || colocAnnotationsLoading.value}
               />
             }
             {
               collapse.includes('images')
-              && annotationsLoading.value
+              && (annotationsLoading.value || colocAnnotationsLoading.value)
               && <div class='w-full text-center'>
                 <i
                   class="el-icon-loading"
@@ -654,28 +841,37 @@ export default defineComponent<DatasetComparisonPageProps>({
 
     const renderAnnotationTableWrapper = () => {
       const { annotations } = state
-
       return (
-        <div class='dataset-comparison-wrapper w-full md:w-6/12 relative'>
+        <div class={`dataset-comparison-wrapper w-full ${state.tableFullScreen ? 'w-full' : 'md:w-6/12'} relative`}>
           {
             annotations
             && <DatasetComparisonAnnotationTable
-              isLoading={annotationsLoading.value}
+              isLoading={annotationsLoading.value || colocAnnotationsLoading.value}
               annotations={annotations.map((ion: any) => {
                 return {
                   ...ion.annotations[0],
+                  isomersCount: ion.annotations[0].countPossibleCompounds,
+                  isobarsCount: ion.annotations[0].isobars.length,
+                  maxIntensity: Math.max(...ion.annotations.map((annot: any) => annot.isotopeImages[0].maxIntensity)),
                   msmScore: Math.max(...ion.annotations.map((annot: any) => annot.msmScore)),
+                  colocalization: Math.max(...ion.annotations.map((annot: any) => annot.colocalizationCoeff)),
                   fdrlevel: Math.min(...ion.annotations.map((annot: any) => annot.fdrlevel)),
                   datasetcount: (ion.datasetIds || []).length,
                   rawAnnotations: ion.annotations,
                 }
               })}
+              coloc={state.coloc}
+              exportProgress={state.exportProgress}
+              isExporting={state.isExporting}
               onRowChange={handleRowChange}
+              onScreen={handleScreenChange}
+              onExport={startIntensitiesExport}
+              onAbort={handleAbort}
             />
           }
           {
             !annotations
-            && annotationsLoading.value
+            && (annotationsLoading.value || colocAnnotationsLoading.value)
             && <div class='w-full absolute text-center top-0'>
               <i
                 class="el-icon-loading"
@@ -727,7 +923,7 @@ export default defineComponent<DatasetComparisonPageProps>({
             fixedOptions={state.databaseOptions}
           />
           {renderAnnotationTableWrapper()}
-          {renderAnnotationInfoWrapper()}
+          {!state.tableFullScreen && renderAnnotationInfoWrapper()}
         </div>
       )
     }

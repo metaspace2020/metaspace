@@ -1,6 +1,29 @@
 .dataset-comparison-page{
   overflow: hidden;
 
+  .coloc-filter-wrapper{
+    @apply absolute mt-2 mr-2;
+    left: 176px;
+    top: 6px;
+  }
+
+  .av-icon-button {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .av-icon-button img {
+    max-height: 20px;
+  }
+
+  .av-icon-link {
+    cursor: pointer;
+  }
+
   .dataset-comparison-wrapper{
     min-height: 100px;
   }

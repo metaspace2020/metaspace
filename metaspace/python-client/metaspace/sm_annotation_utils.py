@@ -4,7 +4,6 @@ import os
 import pprint
 import re
 import urllib.parse
-import warnings
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
@@ -13,7 +12,7 @@ from io import BytesIO
 from pathlib import Path
 from shutil import copyfileobj
 from threading import BoundedSemaphore
-from typing import Optional, List, Iterable, Union, Tuple, Any, TYPE_CHECKING
+from typing import Optional, List, Iterable, Union, Tuple, Dict, Any, TYPE_CHECKING
 from urllib.parse import urlparse
 
 import numpy as np
@@ -1100,6 +1099,16 @@ class SMDataset(object):
         """This field is usually only used for attributing the submitter's PI when the submitter
         is not associated with any group"""
         return (self._info['principalInvestigator'] or {}).get('name')
+
+    @property
+    def image_size(self):
+        """Image size in pixels along the X, Y axes if this data exists otherwise an empty dict"""
+        shape = {}
+        if self._info['acquisitionGeometry'] != 'null':
+            acquisition_grid = json.loads(self._info['acquisitionGeometry'])['acquisition_grid']
+            shape['x'] = acquisition_grid['count_x']
+            shape['y'] = acquisition_grid['count_y']
+        return shape
 
     @property
     def _baseurl(self):

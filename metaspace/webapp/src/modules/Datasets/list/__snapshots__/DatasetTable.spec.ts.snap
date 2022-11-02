@@ -83,6 +83,10 @@ exports[`DatasetTable should match snapshot 1`] = `
         label="Select data type"
         value="metadataType"
       />
+      <mock-el-option
+        label="Show/hide datasets with optical images"
+        value="opticalImage"
+      />
     </mock-el-select>
      
   </div>
@@ -378,7 +382,7 @@ exports[`DatasetTable should match snapshot 1`] = `
               slot-key="reference"
             >
               <button
-                class="button-reset flex w-6 h-6"
+                class="button-reset flex  w-6 h-6"
               >
                 <svg
                   class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"
@@ -499,8 +503,8 @@ exports[`DatasetTable should match snapshot 1`] = `
             class="el-row"
           >
             <mock-el-tree
-              data="[object Object],[object Object]"
-              default-expanded-keys="MS analysis,Detector resolving power,Data Management"
+              data="[object Object],[object Object],[object Object]"
+              default-expanded-keys="MS analysis,Detector resolving power,Data Management,Annotation settings"
               id="metadata-tree"
               node-key="id"
             />
@@ -611,7 +615,7 @@ exports[`DatasetTable should match snapshot 1`] = `
               slot-key="reference"
             >
               <button
-                class="button-reset flex w-6 h-6"
+                class="button-reset flex  w-6 h-6"
               >
                 <svg
                   class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"
@@ -732,8 +736,8 @@ exports[`DatasetTable should match snapshot 1`] = `
             class="el-row"
           >
             <mock-el-tree
-              data="[object Object],[object Object]"
-              default-expanded-keys="MS analysis,Detector resolving power,Data Management"
+              data="[object Object],[object Object],[object Object]"
+              default-expanded-keys="MS analysis,Detector resolving power,Data Management,Annotation settings"
               id="metadata-tree"
               node-key="id"
             />
@@ -830,7 +834,7 @@ exports[`DatasetTable should match snapshot 1`] = `
               slot-key="reference"
             >
               <button
-                class="button-reset flex w-6 h-6"
+                class="button-reset flex  w-6 h-6"
               >
                 <svg
                   class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"
@@ -964,8 +968,8 @@ exports[`DatasetTable should match snapshot 1`] = `
             class="el-row"
           >
             <mock-el-tree
-              data="[object Object],[object Object]"
-              default-expanded-keys="MS analysis,Detector resolving power,Data Management"
+              data="[object Object],[object Object],[object Object]"
+              default-expanded-keys="MS analysis,Detector resolving power,Data Management,Annotation settings"
               id="metadata-tree"
               node-key="id"
             />

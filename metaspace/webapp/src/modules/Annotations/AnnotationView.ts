@@ -176,6 +176,7 @@ export default class AnnotationView extends Vue {
        query: {
          ...encodeParams(filter, path, this.$store.state.filterLists),
          ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale', 'norm', 'feat'),
+         cols: this.$route.query.cols,
        },
      }
    }
@@ -236,6 +237,15 @@ export default class AnnotationView extends Vue {
        Projects: this.annotation.dataset.projects,
      }
      return Object.assign(safeJsonParse(this.annotation.dataset.metadataJson), datasetMetadataExternals)
+   }
+
+   get additionalSettings() {
+     try {
+       const configJson = JSON.parse(this.annotation.dataset.configJson)
+       return configJson
+     } catch (e) {
+       return {}
+     }
    }
 
    get pixelSizeX() {

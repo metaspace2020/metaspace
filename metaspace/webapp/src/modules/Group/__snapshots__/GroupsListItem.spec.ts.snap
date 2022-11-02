@@ -1,0 +1,81 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GroupsListItem it should match snapshot with one member and admin role 1`] = `
+<div class="group-item" id="gr1" name="Group 1" shortname="grp1" urlslug="grp1" nummembers="1" currentuserrole="GROUP_ADMIN">
+  <div class="group-item-info">
+    <div class="group-item-title-wrapper group-item-info-line"><a href="/group/grp1" class="group-item-title" datatestkey="group-link">Group 1<span class="group-item-short-name"> (grp1)</span></a>
+      <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+        <div slot-key="default">
+          <p class="leading-none m-0">Copy group id to clipboard</p>
+        </div>
+        <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+      </mock-el-popover>
+    </div>
+    <div class="group-item-info-line"><a href="/datasets?grp=gr1" class="group-item-title">1 Dataset,</a>1 Member</div>
+  </div>
+  <div class="group-item-actions">
+    <div><i class="el-icon-picture"></i><a href="/datasets?grp=gr1" class="ml-1" datatestkey="dataset-link">Browse datasets</a></div>
+    <div><i class="el-icon-edit"></i><a href="/group/grp1?tab=settings" class="ml-1" datatestkey="manage-link">Manage group</a></div>
+  </div>
+</div>
+`;
+
+exports[`GroupsListItem it should match snapshot with two members and admin role 1`] = `
+<div class="group-item" id="gr1" name="Group 1" shortname="grp1" urlslug="grp1" nummembers="2" currentuserrole="GROUP_ADMIN">
+  <div class="group-item-info">
+    <div class="group-item-title-wrapper group-item-info-line"><a href="/group/grp1" class="group-item-title" datatestkey="group-link">Group 1<span class="group-item-short-name"> (grp1)</span></a>
+      <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+        <div slot-key="default">
+          <p class="leading-none m-0">Copy group id to clipboard</p>
+        </div>
+        <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+      </mock-el-popover>
+    </div>
+    <div class="group-item-info-line"><a href="/datasets?grp=gr1" class="group-item-title">1 Dataset,</a>2 Members</div>
+  </div>
+  <div class="group-item-actions">
+    <div><i class="el-icon-picture"></i><a href="/datasets?grp=gr1" class="ml-1" datatestkey="dataset-link">Browse datasets</a></div>
+    <div><i class="el-icon-edit"></i><a href="/group/grp1?tab=settings" class="ml-1" datatestkey="manage-link">Manage group</a></div>
+  </div>
+</div>
+`;
+
+exports[`GroupsListItem it should match snapshot with two members and not admin role 1`] = `
+<div class="group-item" id="gr1" name="Group 1" shortname="grp1" urlslug="grp1" nummembers="1" currentuserrole="MEMBER">
+  <div class="group-item-info">
+    <div class="group-item-title-wrapper group-item-info-line"><a href="/group/grp1" class="group-item-title" datatestkey="group-link">Group 1<span class="group-item-short-name"> (grp1)</span></a>
+      <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+        <div slot-key="default">
+          <p class="leading-none m-0">Copy group id to clipboard</p>
+        </div>
+        <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+      </mock-el-popover>
+    </div>
+    <div class="group-item-info-line"><a href="/datasets?grp=gr1" class="group-item-title">1 Dataset,</a>1 Member</div>
+  </div>
+  <div class="group-item-actions">
+    <div><i class="el-icon-picture"></i><a href="/datasets?grp=gr1" class="ml-1" datatestkey="dataset-link">Browse datasets</a></div>
+    <div><i class="el-icon-edit"></i><a href="/group/grp1?tab=members" class="ml-1" datatestkey="manage-link">Browse group</a></div>
+  </div>
+</div>
+`;
+
+exports[`GroupsListItem it should match snapshot with two members, not admin role and 0 datasets 1`] = `
+<div class="group-item" id="gr1" name="Group 1" shortname="grp1" urlslug="grp1" nummembers="1" currentuserrole="MEMBER">
+  <div class="group-item-info">
+    <div class="group-item-title-wrapper group-item-info-line"><a href="/group/grp1" class="group-item-title" datatestkey="group-link">Group 1<span class="group-item-short-name"> (grp1)</span></a>
+      <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+        <div slot-key="default">
+          <p class="leading-none m-0">Copy group id to clipboard</p>
+        </div>
+        <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+      </mock-el-popover>
+    </div>
+    <div class="group-item-info-line">1 Member</div>
+  </div>
+  <div class="group-item-actions">
+    <div><i class="el-icon-picture"></i><a href="/datasets?grp=gr1" class="ml-1" datatestkey="dataset-link">Browse datasets</a></div>
+    <div><i class="el-icon-edit"></i><a href="/group/grp1?tab=members" class="ml-1" datatestkey="manage-link">Browse group</a></div>
+  </div>
+</div>
+`;
