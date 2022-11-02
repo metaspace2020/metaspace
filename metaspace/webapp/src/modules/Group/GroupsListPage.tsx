@@ -1,11 +1,11 @@
 import { computed, defineComponent, reactive } from '@vue/composition-api'
-import './GroupsListPage.scss'
 import { Button, Input } from '../../lib/element-ui'
-import { calculateMzFromFormula, isFormulaValid } from '../../lib/formulaParser'
 import { useQuery } from '@vue/apollo-composable'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import { getUserGroupsQuery, ViewGroupResult } from '../../api/group'
+import { uniqBy } from 'lodash-es'
 import GroupsListItem from './GroupsListItem'
+import './GroupsListPage.scss'
 
 interface GroupListPageProps {
   className: string
@@ -95,7 +95,7 @@ export default defineComponent<GroupListPageProps>({
               {
                 groups.value?.length > 0
                 && !groupsLoading.value
-                && groups.value?.map((group: any) => {
+                && uniqBy((groups.value || []) as any[], 'id').map((group: any) => {
                   return <GroupsListItem
                     id={group.id}
                     name={group.name}
