@@ -14,6 +14,7 @@ import config from '../../../lib/config'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
 import { useQuery } from '@vue/apollo-composable'
 import './DatasetActionsDropdown.scss'
+import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
 
 interface DatasetActionsDropdownProps {
   actionLabel: string
@@ -23,6 +24,7 @@ interface DatasetActionsDropdownProps {
   downloadActionLabel: string
   compareActionLabel: string
   browserActionLabel: string
+  enrichmentActionLabel: string
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
 }
@@ -31,6 +33,7 @@ interface DatasetActionsDropdownState{
   disabled: boolean
   showMetadataDialog: boolean
   showCompareDialog: boolean
+  showEnrichmentDialog: boolean
   showDownloadDialog: boolean
 }
 
@@ -42,6 +45,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     editActionLabel: { type: String, default: 'Edit metadata' },
     compareActionLabel: { type: String, default: 'Compare with other datasets...' },
     browserActionLabel: { type: String, default: 'Imzml Browser' },
+    enrichmentActionLabel: { type: String, default: 'Lipid enrichment' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
@@ -54,8 +58,34 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       disabled: false,
       showMetadataDialog: false,
       showCompareDialog: false,
+      showEnrichmentDialog: false,
       showDownloadDialog: false,
     })
+
+    const {
+      result: enrichmentResult,
+      refetch: enrichmentRefetch,
+    } = useQuery<any>(checkIfEnrichmentRequested, { id: props.dataset?.id },
+      { fetchPolicy: 'no-cache' })
+    const enrichmentRequested = computed(() => enrichmentResult.value != null
+      ? enrichmentResult.value.enrichmentRequested : null)
+
+    const confirmReprocessEnrichment = async() => {
+      try {
+        await $confirm('The changes to the analysis options require the dataset to be reprocessed. '
+          + 'This dataset will be unavailable until reprocessing has completed. Do you wish to continue?',
+        'Reprocessing required',
+        {
+          type: 'warning',
+          confirmButtonText: 'Continue',
+          cancelButtonText: 'Cancel',
+        })
+        return true
+      } catch (e) {
+        // Ignore - user clicked cancel
+        return false
+      }
+    }
 
     const {
       result: browserResult,
@@ -117,7 +147,13 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       state.showCompareDialog = false
     }
 
-    const handleReprocess = async() => {
+    const handleEnrichmentRequest = async() => {
+      if (await confirmReprocessEnrichment()) {
+        handleReprocess(true)
+      }
+    }
+
+    const handleReprocess = async(performEnrichment = false) => {
       try {
         state.disabled = true
         await $apollo.mutate({
@@ -125,6 +161,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           variables: {
             id: props.dataset?.id,
             useLithops: config.features.lithops,
+            performEnrichment: performEnrichment,
           },
         })
         $notify.success('Dataset sent for reprocessing')
@@ -161,6 +198,18 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
             params: { dataset_id: props.dataset?.id },
           })
           break
+        case 'enrichment':
+          await enrichmentRefetch()
+          if (enrichmentRequested.value) {
+            $router.push({
+              name: 'dataset-enrichment',
+              params: { dataset_id: props.dataset?.id },
+              query: { db_id: props.dataset?.databases[0]?.id?.toString() },
+            })
+          } else {
+            handleEnrichmentRequest()
+          }
+          break
         case 'browser':
           await browserRefetch()
           hideFeatureBadge('imzmlBrowser')
@@ -194,7 +243,8 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     return () => {
       const {
         actionLabel, currentUser, dataset, editActionLabel, deleteActionLabel,
-        downloadActionLabel, reprocessActionLabel, compareActionLabel, browserActionLabel,
+        downloadActionLabel, reprocessActionLabel, compareActionLabel,
+        enrichmentActionLabel, browserActionLabel,
       } = props
       const { role } = currentUser || {}
       const { canEdit, canDelete, canDownload, id, name } = dataset || {}
@@ -230,6 +280,11 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
                   {browserActionLabel}
                 </NewFeatureBadge>
               </DropdownItem>
+            }
+            {
+              config.features.enrichment
+              && (enrichmentRequested.value || canEdit)
+              && <DropdownItem command="enrichment">{enrichmentActionLabel}</DropdownItem>
             }
             {
               canDelete

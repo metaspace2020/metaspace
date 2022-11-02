@@ -29,3 +29,4 @@ s3fs
 lithops==2.7.0
 # numba==0.54.0  # Only used by disabled v2 metrics
 catboost==1.0.3  # Warning - this installs optional dependencies plotly and matplotlib, which are large. Install it without dependencies in Lithops images.
+statsmodels==0.12.2

@@ -220,6 +220,7 @@ type CreateDatasetArgs = {
   force?: boolean, // Only used by reprocess
   delFirst?: boolean, // Only used by reprocess
   skipValidation?: boolean, // Only used by reprocess
+  performEnrichment?: boolean,
 };
 
 const assertUserCanUseMolecularDBs = async(ctx: Context, databaseIds: number[]|undefined) => {
@@ -260,7 +261,7 @@ const assertValidScoringModel = async(ctx: Context, scoringModel?: string | null
 }
 
 const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
-  const { input, priority, force, delFirst, skipValidation, useLithops } = args
+  const { input, priority, force, delFirst, skipValidation, useLithops, performEnrichment } = args
   const datasetId = args.id || newDatasetId()
   const datasetIdWasSpecified = args.id != null
 
@@ -310,6 +311,7 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     doc: { ...input, metadata },
     priority: priority,
     use_lithops: useLithops,
+    perform_enrichment: performEnrichment,
     force: force,
     del_first: delFirst,
     email: ctx.user.email,
@@ -321,7 +323,10 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
-  reprocessDataset: async(source, { id, priority, useLithops }, ctx: Context) => {
+  reprocessDataset: async(source, {
+    id, priority,
+    useLithops, performEnrichment,
+  }, ctx: Context) => {
     const engineDataset = await ctx.entityManager.findOne(EngineDataset, id)
     if (engineDataset === undefined) {
       throw new UserError('Dataset does not exist')
@@ -335,6 +340,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       } as any, // TODO: map this properly
       priority,
       useLithops,
+      performEnrichment,
       force: true,
       skipValidation: true,
       delFirst: true,
@@ -346,7 +352,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   },
 
   updateDataset: async(source, args, ctx: Context) => {
-    const { id: datasetId, input: update, reprocess, skipValidation, delFirst, force, priority, useLithops } = args
+    const {
+      id: datasetId, input: update, reprocess, skipValidation, delFirst, force, priority, useLithops,
+      performEnrichment,
+    } = args
 
     logger.info(`User '${ctx.user.id}' updating '${datasetId}' dataset...`)
     const dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId)
@@ -400,6 +409,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         del_first: procSettingsUpd || delFirst, // delete old results if processing settings changed
         priority: priority,
         use_lithops: useLithops,
+        perform_enrichment: performEnrichment,
         force: force,
         email: ctx.user.email,
       })

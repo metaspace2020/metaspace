@@ -11,6 +11,7 @@ import SimpleFilterBox from './filter-components/SimpleFilterBox.vue'
 import BooleanFilter from './filter-components/BooleanFilter.vue'
 import config from '../../lib/config'
 import AdductFilter from './filter-components/AdductFilter.vue'
+import ClassFilter from './filter-components/ClassFilter.vue'
 import DatabaseFilter from './filter-components/DatabaseFilter.vue'
 import { SingleSelectFilterType } from '../../lib/filterTypes'
 import isSnapshot from '../../lib/isSnapshot'
@@ -19,13 +20,14 @@ function formatFDR(fdr: number) {
   return fdr ? Math.round(fdr * 100) + '%' : ''
 }
 
-export type Level = 'annotation' | 'dataset' | 'upload' | 'projects' | 'dataset-annotation';
+export type Level = 'annotation' | 'dataset' | 'upload' | 'projects' | 'dataset-annotation' | 'enrichment';
 
 export type FilterKey = 'annotationIds' | 'database' | 'datasetIds' | 'minMSM' | 'compoundName'
   | 'chemMod' | 'neutralLoss' | 'adduct' | 'mz' | 'fdrLevel'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
   | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
-  | 'colocalizedWith' | 'colocalizationSamples' | 'offSample' | 'datasetOwner' | 'opticalImage';
+  | 'colocalizedWith' | 'colocalizationSamples' | 'offSample' | 'datasetOwner' | 'molClass' | 'term'
+  | 'opticalImage';
 
 export type MetadataLists = Record<string, any[]>;
 
@@ -103,8 +105,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: DatabaseFilter,
     name: 'Database',
     description: 'Select database',
-    levels: ['annotation', 'dataset-annotation'],
-    defaultInLevels: ['annotation'],
+    levels: ['annotation', 'dataset-annotation', 'enrichment'],
+    defaultInLevels: ['annotation', 'enrichment'],
     initialValue: lists =>
       lists.molecularDatabases?.filter(d => d.default)[0]?.id,
     encoding: 'number',
@@ -178,6 +180,23 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     isMultiFilter: true,
   },
 
+  molClass: {
+    type: ClassFilter,
+    name: 'Class',
+    description: 'Select class',
+    levels: ['annotation'],
+    initialValue: undefined,
+    isMultiFilter: true,
+  },
+
+  term: {
+    type: InputFilter,
+    name: 'Term',
+    levels: ['annotation'],
+    initialValue: undefined,
+    multiFilterParent: 'molClass',
+  },
+
   mz: {
     type: MzFilter,
     name: 'm/z',
@@ -190,8 +209,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SingleSelectFilter,
     name: 'FDR',
     description: 'Select FDR level',
-    levels: ['annotation', 'dataset-annotation'],
-    defaultInLevels: ['annotation', 'dataset-annotation'],
+    levels: ['annotation', 'dataset-annotation', 'enrichment'],
+    defaultInLevels: ['annotation', 'dataset-annotation', 'enrichment'],
     initialValue: 0.1,
 
     options: [0.05, 0.1, 0.2, 0.5],
@@ -377,7 +396,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: '',
     description: 'Show/hide off-sample annotations',
     helpComponent: OffSampleHelp,
-    levels: ['annotation', 'dataset-annotation'],
+    levels: ['annotation', 'dataset-annotation', 'enrichment'],
     defaultInLevels: [],
     initialValue: false,
     options: [true, false],

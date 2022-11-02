@@ -379,7 +379,6 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
 
   if (annotationId) { filters.push({ terms: { _id: annotationId.split('|') } }) }
   if (databaseId) { filters.push({ term: { db_id: databaseId } }) }
-  if (sumFormula) { filters.push({ term: { formula: sumFormula } }) }
   if (chemMod != null) { filters.push({ term: { chem_mod: chemMod } }) }
   if (neutralLoss != null) { filters.push({ term: { neutral_loss: neutralLoss } }) }
   if (adduct != null) { filters.push({ term: { adduct: adduct } }) }
@@ -399,6 +398,11 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
   if (ion != null) {
     filters.push(constructTermOrTermsFilter('ion', ion))
   }
+
+  if (sumFormula != null) {
+    filters.push(constructTermOrTermsFilter('formula', sumFormula))
+  }
+
   if (ionFormula != null) {
     filters.push(constructTermOrTermsFilter('ion_formula', ionFormula))
   }

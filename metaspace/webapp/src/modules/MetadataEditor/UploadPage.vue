@@ -352,7 +352,8 @@ export default {
 
       this.status = 'SUBMITTING'
       const { metadataJson, metaspaceOptions } = formValue
-
+      const performEnrichment = metaspaceOptions.performEnrichment
+      delete metaspaceOptions.performEnrichment
       try {
         await this.$apollo.mutate({
           mutation: createDatasetQuery,
@@ -363,6 +364,7 @@ export default {
               ...metaspaceOptions,
             },
             useLithops: config.features.lithops,
+            performEnrichment,
           },
         })
 

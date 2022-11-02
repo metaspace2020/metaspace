@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional, Dict, Any
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,7 @@ from lithops.storage.utils import CloudObject
 from sm.engine.annotation.diagnostics import FdrDiagnosticBundle
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation_lithops.run_enrichment import run_enrichment
 from sm.engine.annotation_lithops.annotate import process_centr_segments
 from sm.engine.annotation_lithops.build_moldb import InputMolDb, DbFDRData
 from sm.engine.annotation_lithops.cache import PipelineCacher, use_pipeline_cache
@@ -30,6 +31,7 @@ from sm.engine.annotation_lithops.store_images import store_images_to_s3
 from sm.engine.config import SMConfig
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
+
 
 logger = logging.getLogger('annotation-pipeline')
 
@@ -85,10 +87,11 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.use_db_mutex = use_db_mutex
         self.ds_segm_size_mb = 128
 
-    def run_pipeline(
-        self, debug_validate=False, use_cache=True
-    ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]]]:
+        self.enrichment_data = None
 
+    def run_pipeline(
+        self, debug_validate=False, use_cache=True, perform_enrichment=False
+    ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]], Any]:
         # pylint: disable=unexpected-keyword-arg
         self.prepare_moldb(debug_validate=debug_validate)
 
@@ -104,7 +107,10 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.run_fdr(use_cache=use_cache)
         self.prepare_results(use_cache=use_cache)
 
-        return self.results_dfs, self.png_cobjs
+        if perform_enrichment:
+            self.run_enrichment(use_cache=use_cache)
+
+        return self.results_dfs, self.png_cobjs, self.enrichment_data
 
     def prepare_moldb(self, debug_validate=False):
         self.db_data_cobjs, self.peaks_cobjs = get_moldb_centroids(
@@ -191,6 +197,10 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.images_df,
             self.imzml_reader,
         )
+
+    @use_pipeline_cache
+    def run_enrichment(self):
+        self.enrichment_data = run_enrichment(self.results_dfs)
 
     def store_images_to_s3(self, ds_id: str):
         """Stores ion images to S3 ImageStorage. Not part of run_pipeline because this is unwanted

@@ -16,7 +16,7 @@ from sm.engine.annotation.diagnostics import DiagnosticType, load_npy_image, Dia
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob, LocalAnnotationJob
 from sm.engine.dataset import Dataset, DatasetStatus
-from sm.engine.db import DB
+from sm.engine.db import DB, ConnectionPool
 from sm.engine.utils.perf_profile import perf_profile
 from tests.conftest import (
     global_setup,
@@ -238,7 +238,7 @@ def test_local_annotation_job(executor: Executor, sm_config, ds_config):
                     out_dir=out_dir,
                 )
 
-                job.run(debug_validate=True)
+                job.run(debug_validate=True, perform_enrichment=False)
 
                 output_files = list(Path(out_dir).glob('*.png'))
                 assert len(output_files) == len(MOCK_FORMULAS) * 4

@@ -14,6 +14,7 @@ import { Ion } from '../annotation/model'
 import { MolecularDB } from '../moldb/model'
 import { Dataset } from '../dataset/model'
 import { Moment } from 'moment'
+import { EnrichmentBootstrap } from '../enrichmentdb/model'
 
 export type DatasetStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
 
@@ -74,6 +75,9 @@ export class EngineDataset {
 
   @OneToMany(() => DatasetDiagnostic, datasetDiagnostic => datasetDiagnostic.engineDataset)
   datasetDiagnostics: DatasetDiagnostic[];
+
+  @OneToMany(() => EnrichmentBootstrap, enrichmentBootstrap => enrichmentBootstrap.engineDataset)
+  enrichmentBootstrap: EnrichmentBootstrap[];
 }
 
 @Entity({ schema: 'public' })

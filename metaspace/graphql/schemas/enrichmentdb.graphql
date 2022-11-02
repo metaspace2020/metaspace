@@ -1,0 +1,21 @@
+type EnrichmentDb {
+    id: Int!
+    name: String!
+}
+
+type EnrichmentTerm {
+    id: Int!
+    enrichmentId: String!
+    enrichmentName: String!
+    enrichmentDB: EnrichmentDb
+}
+
+
+type Query {
+    allEnrichmentDatabases: [EnrichmentDb]
+    allEnrichmentTerms(databaseId: Int, enrichmentName: String,
+        enrichmentId: String, id: Int, limit: Int = 10) : [EnrichmentTerm]
+    allFormulasByEnrichmentTerm(termId: Int) : [String]
+    enrichmentRequested(datasetId: String) : Boolean
+    allEnrichedMolDatabases(datasetId: String): [MolecularDB]
+}

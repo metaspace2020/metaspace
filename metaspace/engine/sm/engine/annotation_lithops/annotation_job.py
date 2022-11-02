@@ -15,6 +15,7 @@ from sm.engine.annotation.diagnostics import (
     add_diagnostics,
     extract_job_diagnostics,
 )
+from sm.engine.annotation.enrichment import add_enrichment, delete_ds_enrichments
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
@@ -31,6 +32,7 @@ from sm.engine.storage import get_s3_client
 from sm.engine.util import split_s3_path, split_cos_path
 from sm.engine.utils.db_mutex import DBMutex
 from sm.engine.utils.perf_profile import Profiler
+
 
 logger = logging.getLogger('engine')
 
@@ -224,7 +226,8 @@ class LocalAnnotationJob:
         )
 
     def run(self, save=True, **kwargs):
-        results_dfs, png_cobjs = self.pipe.run_pipeline(**kwargs)
+        results_dfs, png_cobjs, _ = self.pipe.run_pipeline(**kwargs)
+
         if save:
             for moldb_id, results_df in results_dfs.items():
                 results_df.to_csv(self.out_dir / f'results_{moldb_id}.csv')
@@ -246,6 +249,7 @@ class LocalAnnotationJob:
                             out_file.open('wb').write(img)
 
 
+# pylint: disable=too-many-instance-attributes
 class ServerAnnotationJob:
     """
     Runs an annotation job for a dataset in the database, saving the results back to the database
@@ -259,6 +263,7 @@ class ServerAnnotationJob:
         perf: Profiler,
         sm_config: Optional[Dict] = None,
         use_cache=False,
+        perform_enrichment=False,
         store_images=True,
     ):
         """
@@ -268,6 +273,9 @@ class ServerAnnotationJob:
         use_cache: For development - cache the results after each pipeline step so that it's easier
                    to quickly re-run specific steps.
         """
+        self.enrichment_data = None
+        logger.info(f'perform_enrichment {perform_enrichment}...')
+        self.perform_enrichment = perform_enrichment
         sm_config = sm_config or SMConfig.get_conf()
         self.sm_storage = sm_config['lithops']['sm_storage']
         self.storage = Storage(sm_config['lithops'])
@@ -314,7 +322,9 @@ class ServerAnnotationJob:
 
         try:
             # Run annotation
-            self.results_dfs, self.png_cobjs = self.pipe.run_pipeline(**kwargs)
+            self.results_dfs, self.png_cobjs, self.enrichment_data = self.pipe.run_pipeline(
+                perform_enrichment=self.perform_enrichment, **kwargs
+            )
 
             # Save images (if enabled)
             if self.store_images:
@@ -331,9 +341,13 @@ class ServerAnnotationJob:
             diagnostics = extract_dataset_diagnostics(self.ds.id, self.pipe.imzml_reader)
             add_diagnostics(diagnostics)
 
+            # delete pre calculated enrichments if already exists
+            delete_ds_enrichments(self.ds.id, self.db)
+
             for moldb_id, job_id in moldb_to_job_map.items():
                 logger.debug(f'Storing results for moldb {moldb_id}')
                 results_df = self.results_dfs[moldb_id]
+
                 formula_image_ids = self.db_formula_image_ids.get(moldb_id, {})
 
                 search_results = SearchResults(
@@ -345,6 +359,17 @@ class ServerAnnotationJob:
                 search_results.store_ion_metrics(results_df, formula_image_ids, self.db)
 
                 add_diagnostics(extract_job_diagnostics(self.ds.id, job_id, fdr_bundles[job_id]))
+
+                if (
+                    self.perform_enrichment
+                    and self.enrichment_data
+                    and moldb_id in self.enrichment_data.keys()
+                    and not self.enrichment_data[moldb_id].empty
+                ):
+                    # get annotations ids to be used later on to speed up enrichment routes
+                    annot_ids = search_results.get_annotations_ids(self.db)
+                    bootstrap_df = self.enrichment_data[moldb_id]
+                    add_enrichment(self.ds.id, moldb_id, bootstrap_df, annot_ids, self.db)
 
                 update_finished_job(job_id, JobStatus.FINISHED)
         except Exception:

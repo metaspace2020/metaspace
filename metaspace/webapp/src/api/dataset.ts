@@ -254,8 +254,8 @@ export const rawOpticalImageQuery =
   }`
 
 export const createDatasetQuery =
-  gql`mutation ($input: DatasetCreateInput!, $useLithops: Boolean) {
-      createDataset(input: $input, priority: 1, useLithops: $useLithops)
+  gql`mutation ($input: DatasetCreateInput!, $useLithops: Boolean, $performEnrichment: Boolean) {
+      createDataset(input: $input, priority: 1, useLithops: $useLithops, performEnrichment: $performEnrichment)
   }`
 
 export const deleteDatasetQuery =
@@ -264,8 +264,8 @@ export const deleteDatasetQuery =
   }`
 
 export const reprocessDatasetQuery =
-  gql`mutation ($id: String!, $useLithops: Boolean) {
-    reprocessDataset(id: $id, useLithops: $useLithops)
+  gql`mutation ($id: String!, $useLithops: Boolean, $performEnrichment: Boolean) {
+    reprocessDataset(id: $id, useLithops: $useLithops, performEnrichment: $performEnrichment)
   }`
 
 export const addOpticalImageQuery =
@@ -416,9 +416,70 @@ export interface GetDatabaseStatusQuery {
     status: GqlJobStatus | null
   }
 }
+
 export const getDatasetStatusQuery =
   gql`query getDatasetStatusQuery($id: String!) {
     dataset(id: $id) { id status }
+  }`
+
+export const getDatasetEnrichmentQuery =
+  gql`query getDatasetEnrichmentQuery($id: String!, $dbId: Int = 3, $fdr: Float = 0.5, $offSample: Boolean) {
+    lipidEnrichment(datasetId: $id, molDbId: $dbId, fdr: $fdr, offSample: $offSample) {
+      id
+      termId
+      name
+      n
+      observed
+      expected
+      median
+      std
+      pValue
+      qValue
+            annotations {
+        id
+        sumFormula
+        adduct
+        ion
+        ionFormula
+        database
+        msmScore
+        rhoSpatial
+        rhoSpectral
+        rhoChaos
+        fdrLevel
+        mz
+        offSample
+        offSampleProb
+        databaseDetails {
+          id
+        }
+        isotopeImages {
+          mz
+          url
+          minIntensity
+          maxIntensity
+          totalIntensity
+        }
+        isomers {
+          ion
+        }
+        isobars {
+          ion
+          ionFormula
+          peakNs
+          shouldWarn
+        }
+        possibleCompounds {
+          name
+          imageURL
+          information {
+            database
+            url
+            databaseId
+          }
+        }
+      }
+    }
   }`
 
 export const checkIfHasBrowserFiles =

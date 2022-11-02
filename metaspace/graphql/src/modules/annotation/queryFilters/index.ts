@@ -1,6 +1,7 @@
 import { Context } from '../../../context'
 import { QueryFilterArgs, QueryFilterResult, PostProcessFunc } from './types'
 import { applyColocalizationSamplesFilter } from './colocalizationSamples'
+import { applyEnrichmentTermFilter } from './enrichment'
 import { applyColocalizedWithFilter } from './colocalizedWith'
 import { applyHasOpticalImageFilter } from './hasOpticalImage'
 import * as _ from 'lodash'
@@ -16,6 +17,7 @@ const queryFilters = [
   applyColocalizedWithFilter,
   applyHasAnnotationMatchingFilter,
   applyHasOpticalImageFilter,
+  applyEnrichmentTermFilter,
 ]
 
 const setDatabaseIdInAnnotationFilter = async(entityManager: EntityManager, filter: AnnotationFilter | undefined) => {

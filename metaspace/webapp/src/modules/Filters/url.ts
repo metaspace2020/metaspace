@@ -44,6 +44,8 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   colocalizedWith: 'colo',
   colocalizationSamples: 'locs',
   offSample: 'offs',
+  molClass: 'mol_class',
+  term: 'term',
   opticalImage: 'opt_img',
 }
 
@@ -51,8 +53,10 @@ const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>
 
 const PATH_TO_LEVEL: [RegExp, Level][] = [
   [/^\/annotations/i, 'annotation'],
+  [/^\/datasets\/\S+\/enrichment/i, 'dataset'],
   [/^\/datasets\/\S+\/comparison/i, 'annotation'],
   [/^\/dataset\/\S+\/annotations/i, 'dataset-annotation'],
+  [/^\/dataset\/\S+\/enrichment/i, 'enrichment'],
   [/^\/datasets/i, 'dataset'],
   [/^\/datasets\/summary/i, 'dataset'],
   [/^\/upload/i, 'upload'],
