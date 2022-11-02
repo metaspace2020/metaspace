@@ -198,9 +198,9 @@ export const Resolvers = {
       let userGroups : any = []
 
       if (ctx.user.id) {
-        let qb = ctx.entityManager.createQueryBuilder(UserGroupModel,
-          'userGroup')
-          .innerJoinAndSelect('userGroup.group', 'group')
+        let qb = ctx.entityManager.createQueryBuilder(GroupModel,
+          'group')
+          .leftJoinAndSelect('group.members', 'userGroup')
           .where('(group.name ILIKE :query OR group.shortName ILIKE :query)', { query: query ? `%${query}%` : '%' })
 
         if (ctx.user.role !== 'admin') {
@@ -208,10 +208,11 @@ export const Resolvers = {
         }
 
         userGroups = await qb.orderBy('group.name')
+          .distinct(true)
           .getMany()
       }
 
-      return userGroups.map((g: any) => ({ ...g.group, scopeRole: g.role }))
+      return userGroups.map((g: any) => ({ ...g, scopeRole: g.role }))
     },
 
     async groupUrlSlugIsValid(source: any, { urlSlug, existingGroupId }: any, ctx: Context): Promise<boolean> {
