@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -15,6 +17,7 @@ from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj
 from sm.engine.config import SMConfig
+from sm.engine.db import DB
 from sm.engine.storage import get_s3_client
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
@@ -136,6 +139,30 @@ def _upload_imzml_browser_files_to_cos(storage, imzml_cobject, imzml_reader, mzs
     return cobjs
 
 
+def _get_hash(
+    storage: Storage, imzml_cobject: CloudObject, ibd_cobject: CloudObject
+) -> Dict[str, str]:
+    """Calculate md5 hash of imzML/ibd files"""
+
+    def calc_hash(file_object, chunk_size=8 * 1024 * 1024):
+        md5_hash = hashlib.md5()
+        chunk = file_object.read(chunk_size)
+        while chunk:
+            md5_hash.update(chunk)
+            chunk = file_object.read(chunk_size)
+
+        return md5_hash.hexdigest()
+
+    start_t = datetime.now().replace(microsecond=0)
+    hash = {
+        'imzml': calc_hash(storage.get_cloudobject(imzml_cobject, stream=True)),
+        'ibd': calc_hash(storage.get_cloudobject(ibd_cobject, stream=True)),
+    }
+    _print_times(start_t, 'calc_hash')
+
+    return hash
+
+
 def _load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
@@ -173,7 +200,18 @@ def _load_ds(
     )
     perf.record_entry('uploaded imzml browser files')
 
-    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, imzml_browser_cobjs
+    logger.info('Calculating md5 hash of imzML/ibd files')
+    md5_hash = _get_hash(storage, imzml_cobject, ibd_cobject)
+    perf.record_entry('calculate hash')
+
+    return (
+        imzml_reader,
+        ds_segments_bounds,
+        ds_segms_cobjs,
+        ds_segm_lens,
+        imzml_browser_cobjs,
+        md5_hash,
+    )
 
 
 def _upload_imzml_browser_files(storage: Storage, imzml_browser_cobjs: List[CObj]):
@@ -199,12 +237,23 @@ def _upload_imzml_browser_files(storage: Storage, imzml_browser_cobjs: List[CObj
             pass
 
 
+def _save_size_hash(imzml_head, ibd_head, md5_hash, ds_id):
+    json_data = {
+        'imzml_hash': md5_hash['imzml'],
+        'ibd_hash': md5_hash['ibd'],
+        'imzml_size': int(imzml_head['content-length']),
+        'ibd_size': int(ibd_head['content-length']),
+    }
+
+    DB().alter('UPDATE dataset SET size_hash = %s WHERE id = %s', (json.dumps(json_data), ds_id))
+
+
 def load_ds(
     executor: Executor,
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
-    storage: Storage,
+    ds_id: str,
 ) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
     try:
         imzml_head = executor.storage.head_object(imzml_cobject.bucket, imzml_cobject.key)
@@ -220,7 +269,7 @@ def load_ds(
     # most memory-intense part (sorting the m/z array). Also for uploading imzml browser files
     # need plus 1x the ibd file size RAM.
     message = f'Found {ibd_size_mb}MB .ibd and {imzml_size_mb}MB .imzML files.'
-    if ibd_size_mb * 3 + 512 < 32 * 1024:
+    if ibd_size_mb * 4 + 512 < 32 * 1024:
         logger.info(f'{message} Trying serverless load_ds')
         runtime_memory = max(2048, int(2 ** np.ceil(np.log2(ibd_size_mb * 3 + 512))))
     else:
@@ -233,6 +282,7 @@ def load_ds(
         ds_segms_cobjs,
         ds_segm_lens,
         imzml_browser_cobjs,
+        md5_hash,
     ) = executor.call(
         _load_ds,
         (imzml_cobject, ibd_cobject, ds_segm_size_mb),
@@ -240,8 +290,10 @@ def load_ds(
     )
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
 
-    _upload_imzml_browser_files(storage, imzml_browser_cobjs)
+    _upload_imzml_browser_files(executor.storage, imzml_browser_cobjs)
     logger.info('Moved imzml browser files to S3')
+
+    _save_size_hash(imzml_head, ibd_head, md5_hash, ds_id)
 
     return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
 

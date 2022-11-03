@@ -58,6 +58,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         ibd_cobject: CloudObject,
         moldbs: List[InputMolDb],
         ds_config: DSConfig,
+        ds_id: int,
         executor: Executor = None,
         lithops_config=None,
         cache_key=None,
@@ -71,6 +72,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.ibd_cobject = ibd_cobject
         self.moldbs = moldbs
         self.ds_config = ds_config
+        self.ds_id = ds_id
         self.isocalc_wrapper = IsocalcWrapper(ds_config)
 
         self.executor = executor or Executor(lithops_config)
@@ -131,7 +133,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segms_cobjs,
             self.ds_segm_lens,
         ) = load_ds(
-            self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, self.storage
+            self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, self.ds_id
         )
 
         self.is_intensive_dataset = len(self.ds_segms_cobjs) * self.ds_segm_size_mb > 5000

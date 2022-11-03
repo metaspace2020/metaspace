@@ -57,6 +57,8 @@ export class EngineDataset {
   ionThumbnail: string | null;
   @Column({ type: 'text', nullable: true })
   ionThumbnailUrl: string | null;
+  @Column({ type: 'json', nullable: true })
+  sizeHash: any;
 
   // sm-engine and sm-graphql create & manage the public.dataset (EngineDataset) and graphql.dataset (Dataset) tables
   // independently, so this relationship doesn't enforce an FK.

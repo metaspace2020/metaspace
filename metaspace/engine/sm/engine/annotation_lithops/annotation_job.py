@@ -218,6 +218,7 @@ class LocalAnnotationJob:
             self.ibd_cobj,
             self.moldb_defs,
             self.ds_config,
+            self.ds.id,
             executor=executor,
             cache_key=cache_key,
             use_db_cache=use_cache,
@@ -302,6 +303,7 @@ class ServerAnnotationJob:
             self.ibd_cobj,
             self.moldb_defs,
             self.ds.config,
+            self.ds.id,
             cache_key=cache_key,
             executor=executor,
         )
