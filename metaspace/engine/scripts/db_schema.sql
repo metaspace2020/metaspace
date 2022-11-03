@@ -223,6 +223,7 @@ CREATE TABLE "public"."dataset" (
   "thumbnail_url" text, 
   "ion_thumbnail" text, 
   "ion_thumbnail_url" text, 
+  "size_hash" json, 
   CONSTRAINT "PK_1368c0f3639e45c45be6288a232" PRIMARY KEY ("id")
 );
 
