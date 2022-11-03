@@ -39,7 +39,6 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       sortedData: undefined,
     })
     const datasetId = computed(() => $route.params.dataset_id)
-    const { db_id: dbId } = $route.query
 
     const {
       result: datasetResult,
@@ -84,9 +83,12 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     }
 
     const handleItemClick = (item: any) => {
+      const dbId = $store.getters.gqlAnnotationFilter.databaseId
+      const fdr = $store.getters.gqlAnnotationFilter.fdrLevel
+
       const routeData = $router.resolve({
         name: 'annotations',
-        query: { term: item?.termId, ds: datasetId.value, db_id: dbId, mol_class: '1' },
+        query: { term: item?.termId, ds: datasetId.value, db_id: dbId, mol_class: '1', fdr },
       })
       window.open(routeData.href, '_blank')
     }
