@@ -418,7 +418,9 @@ def filter_processing(query_filter_src, query_filter_values):
         filter_values = urllib.parse.unquote(query_filter_values).split('|')
         for idx, src in enumerate(filter_src):
             if idx < len(filter_values):
-                filter_hash[src] = filter_values[idx].split('#')
+                filter_hash[src] = map(
+                    lambda x: str.replace(x, "None", ""), filter_values[idx].split('#')
+                )
 
     return filter_src, filter_values, filter_hash
 
@@ -536,8 +538,8 @@ def lambda_handler(event, context):
 #         self.send_header(keyword='Content-type', value='application/json')
 #         self.end_headers()
 #         self.wfile.write(json_to_pass.encode('utf-8'))
-
-
+#
+#
 # if __name__ == "__main__":
 #     # Local server testing
 #     webServer = HTTPServer(('localhost', 8080), MyServer)

@@ -9,6 +9,23 @@ $filter-color: #828282;
   @apply flex flex-wrap m-12 justify-between pb-4;
   margin-top: 0;
 
+  .swap-box{
+    height: 59px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .swap-btn{
+    background: #F1F5F8;
+
+    i{
+      transform: rotate(90deg);
+    }
+  }
+
   .radius-help{
     @apply flex absolute items-center flex-col font-bold;
     bottom: 8px;

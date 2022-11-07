@@ -1,5 +1,5 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
-import { Option, Select, Pagination, InputNumber, RadioGroup, RadioButton, Tooltip } from '../../lib/element-ui'
+import { Option, Select, Pagination, InputNumber, RadioGroup, RadioButton, Tooltip, Button } from '../../lib/element-ui'
 import { cloneDeep, groupBy, keyBy, maxBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
@@ -566,12 +566,13 @@ export default defineComponent({
       try {
         state.loading = true
 
-        const nonEmptyFilters = (state.filter || []).filter((item: any) => Array.isArray(item.value)
-          ? item.value.join('#') : item.value)
+        const nonEmptyFilters = (state.filter || []).filter((item: any) => item.src === 'nL'
+          || (Array.isArray(item.value)
+            ? item.value.join('#') : item.value))
         const filter = nonEmptyFilters.map((item: any) => item.src).join(',')
         // .replace('main_coarse_class', 'coarse_class')
         // .replace('main_coarse_path', 'coarse_path')
-        const filterValues = nonEmptyFilters.map((item: any) => Array.isArray(item.value)
+        const filterValues = nonEmptyFilters.map((item: any) => (item.src === 'nL' || Array.isArray(item.value))
           ? item.value.join('#') : item.value).filter((x:any) => x).join('|')
 
         // load data
@@ -755,22 +756,6 @@ export default defineComponent({
       }
     }
 
-    const handleValueMetricChange = (value: any) => {
-      state.options.valueMetric = value
-      $router.replace({ name: 'spotting', query: { ...getQueryParams(), metric: value } })
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
-        buildValues()
-      }
-    }
-
-    const parseBooleanLabel = (value: string) => {
-      if (parseInt(value, 10) === 0 || parseInt(value, 10) === 1) {
-        return 'False'
-      } else {
-        return 'True'
-      }
-    }
-
     const handleFilterValueChange = async(value: any, idx : any = 0, buildChart: boolean = true) => {
       state.filter[idx].value = value
       const filterValueParams = state.filter.map((item: any) => Array.isArray(item.value)
@@ -790,10 +775,11 @@ export default defineComponent({
       }
     }
 
-    const removeFilterItem = () => {
+    const removeFilterItem = async() => {
       const value = state.filter[state.filter.length - 1].value
       state.filter.pop()
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation && value) {
+        await loadData()
         buildValues()
       }
     }
@@ -914,6 +900,12 @@ export default defineComponent({
       }
     }
 
+    const handleAxisSwap = async() => {
+      const { xAxis, yAxis } = state.options
+      await handleAxisChange(yAxis, true, false)
+      await handleAxisChange(xAxis, false, true)
+    }
+
     const handleAxisChange = async(value: any, isXAxis : boolean = true, buildChart : boolean = true) => {
       const isNew : boolean = (isXAxis && value !== state.options.xAxis)
       || (!isXAxis && value !== state.options.yAxis)
@@ -961,6 +953,9 @@ export default defineComponent({
                 })
               }
             </Select>
+          </div>
+          <div class='filter-box m-2 swap-box'>
+            <Button class='swap-btn' size='mini' icon='el-icon-sort' onClick={handleAxisSwap} disabled={state.loading}/>
           </div>
           <div class='filter-box m-2'>
             <span class='y-axis-label mb-2'>Y axis</span>
@@ -1094,7 +1089,7 @@ export default defineComponent({
                         filter.options.map((option: any) => {
                           return <Option
                             label={!option ? 'None' : option}
-                            value={option}/>
+                            value={!option ? 'None' : option}/>
                         })
                       }
                     </Select>

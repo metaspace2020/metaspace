@@ -343,6 +343,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         && !(props.isLoading || props.isDataLoading)
         && chartOptions.value?.series?.markLine?.data?.length > 0
       ) {
+        handleChartResize()
         const auxOptions : any = chartOptions.value
         if (auxOptions) {
           const markArea : any = { silent: true, data: [] }
@@ -360,6 +361,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           })
           chartRef.chart.setOption({ series: { ...chartOptions.value.series, markArea } }, { replaceMerge: ['series'] })
           state.markArea = markArea
+          setTimeout(() => { handleChartResize() }, 500)
         }
       }
     }
@@ -387,7 +389,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
               on: {
                 'zr:dblclick': handleZoomReset,
                 click: handleItemSelect,
-                finished: handleChartRendered,
+                rendered: handleChartRendered,
               },
             }}
             class='chart'
