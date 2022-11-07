@@ -343,25 +343,26 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         && !(props.isLoading || props.isDataLoading)
         && chartOptions.value?.series?.markLine?.data?.length > 0
       ) {
-        handleChartResize()
         const auxOptions : any = chartOptions.value
         if (auxOptions) {
-          const markArea : any = { silent: true, data: [] }
-          const offset = ((state.size - 110) / (yAxisData.value?.length || 1)) / 2
-          auxOptions.series.data.forEach((item: any, idx: number) => {
-            if (item.value[0] === 0) {
-              const [chartX, chartY] = chartRef.convertToPixel({ seriesIndex: 0 }, [item.value[0], item.value[1]])
-              const re = /(.+)\s-agg-\s(.+)/
-              const label = item.label.key
-              const cat = label.replace(re, '$1')
-              const markLine : any = auxOptions.series.markLine.data.find((markLine: any) => markLine.name === cat)
-              markArea.data.push([{ y: chartY + offset, itemStyle: { color: markLine.color, opacity: 0.1 } },
-                { y: chartY - offset }])
-            }
-          })
-          chartRef.chart.setOption({ series: { ...chartOptions.value.series, markArea } }, { replaceMerge: ['series'] })
-          state.markArea = markArea
-          setTimeout(() => { handleChartResize() }, 500)
+          setTimeout(() => {
+            const markArea : any = { silent: true, data: [] }
+            const offset = ((state.size - 110) / (yAxisData.value?.length || 1)) / 2
+            auxOptions.series.data.forEach((item: any, idx: number) => {
+              if (item.value[0] === 0) {
+                const [chartX, chartY] = chartRef.convertToPixel({ seriesIndex: 0 }, [item.value[0], item.value[1]])
+                const re = /(.+)\s-agg-\s(.+)/
+                const label = item.label.key
+                const cat = label.replace(re, '$1')
+                const markLine : any = auxOptions.series.markLine.data.find((markLine: any) => markLine.name === cat)
+                markArea.data.push([{ y: chartY + offset, itemStyle: { color: markLine.color, opacity: 0.1 } },
+                  { y: chartY - offset }])
+              }
+            })
+            chartRef.chart.setOption({ series: { ...chartOptions.value.series, markArea } },
+              { replaceMerge: ['series'] })
+            state.markArea = markArea
+          }, 2000)
         }
       }
     }
