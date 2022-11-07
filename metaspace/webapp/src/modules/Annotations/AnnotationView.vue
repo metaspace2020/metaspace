@@ -24,7 +24,7 @@
                 </candidate-molecules-popover>
                 <copy-button
                   class="ml-1"
-                  :text="annotation.ion"
+                  :text="getParsedFormula(annotation.ion)"
                 >
                   Copy ion to clipboard
                 </copy-button>

@@ -13,7 +13,7 @@ import safeJsonParse from '../../../lib/safeJsonParse'
 import { DatasetBrowserSpectrumChart } from './DatasetBrowserSpectrumChart'
 import './DatasetBrowserPage.scss'
 import { SimpleIonImageViewer } from '../../../components/SimpleIonImageViewer/SimpleIonImageViewer'
-import { calculateMzFromFormula, isFormulaValid } from '../../../lib/formulaParser'
+import { calculateMzFromFormula, isFormulaValid, parseFormulaAndCharge } from '../../../lib/formulaParser'
 import reportError from '../../../lib/reportError'
 import { readNpy } from '../../../lib/npyHandler'
 import { DatasetBrowserKendrickPlot } from './DatasetBrowserKendrickPlot'
@@ -858,7 +858,7 @@ export default defineComponent<DatasetBrowserProps>({
           <CopyButton
             class="ml-1"
             style={{ display: !annotation?.ion ? 'none' : '' }}
-            text={annotation?.ion || '-'}>
+            text={annotation?.ion ? parseFormulaAndCharge(annotation?.ion) : '-'}>
             Copy ion to clipboard
           </CopyButton>
           <span class="text-2xl flex items-baseline ml-4">
