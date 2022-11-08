@@ -264,7 +264,7 @@ class ServerAnnotationJob:
         sm_config: Optional[Dict] = None,
         use_cache=False,
         store_images=True,
-        perform_enrichment=False,
+        perform_enrichment: bool = False,
     ):
         """
         Args
@@ -280,6 +280,7 @@ class ServerAnnotationJob:
         self.ds = ds
         self.perf = perf
         self.store_images = store_images
+        self.perform_enrichment = perform_enrichment
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = _upload_imzmls_from_prefix_if_needed(
@@ -288,7 +289,6 @@ class ServerAnnotationJob:
         self.moldb_defs = _upload_moldbs_from_db(
             self.ds.config['database_ids'], self.storage, self.sm_storage
         )
-        self.perform_enrichment = perform_enrichment
 
         if use_cache:
             cache_key: Optional[str] = jsonhash({'input_path': ds.input_path, 'ds': ds.config})
@@ -306,6 +306,7 @@ class ServerAnnotationJob:
 
         self.results_dfs = None
         self.png_cobjs = None
+        self.enrichment_data = None
         self.db_formula_image_ids = None
 
     def run(self, **kwargs):
