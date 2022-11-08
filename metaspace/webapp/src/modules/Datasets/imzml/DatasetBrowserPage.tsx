@@ -508,7 +508,17 @@ export default defineComponent<DatasetBrowserProps>({
             ],
           }
         } else {
-          state.annotation = annotations.value[currentAnnotationIdx]
+          state.annotation = {
+            ...annotations.value[currentAnnotationIdx],
+            isotopeImages: [
+              {
+                mz: state.mz,
+                url: state.ionImageUrl,
+                minIntensity: 0,
+                maxIntensity: browserResult?.value?.browserImage?.maxIntensity,
+              },
+            ],
+          }
         }
 
         if (spectrumResult.value) {
