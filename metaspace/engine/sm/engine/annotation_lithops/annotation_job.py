@@ -263,8 +263,8 @@ class ServerAnnotationJob:
         perf: Profiler,
         sm_config: Optional[Dict] = None,
         use_cache=False,
-        perform_enrichment=False,
         store_images=True,
+        perform_enrichment=False,
     ):
         """
         Args
@@ -273,9 +273,6 @@ class ServerAnnotationJob:
         use_cache: For development - cache the results after each pipeline step so that it's easier
                    to quickly re-run specific steps.
         """
-        self.enrichment_data = None
-        logger.info(f'perform_enrichment {perform_enrichment}...')
-        self.perform_enrichment = perform_enrichment
         sm_config = sm_config or SMConfig.get_conf()
         self.sm_storage = sm_config['lithops']['sm_storage']
         self.storage = Storage(sm_config['lithops'])
@@ -291,6 +288,7 @@ class ServerAnnotationJob:
         self.moldb_defs = _upload_moldbs_from_db(
             self.ds.config['database_ids'], self.storage, self.sm_storage
         )
+        self.perform_enrichment = perform_enrichment
 
         if use_cache:
             cache_key: Optional[str] = jsonhash({'input_path': ds.input_path, 'ds': ds.config})

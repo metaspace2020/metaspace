@@ -407,11 +407,11 @@ type Mutation {
   updateDataset(
     id: String!,
     input: DatasetUpdateInput!,
+    priority: Int=0,
     reprocess: Boolean=false,
     delFirst: Boolean=false,
     skipValidation: Boolean=false, # ignored for non-admins
     force: Boolean=false,
-    priority: Int=0,
     useLithops: Boolean=true,
     performEnrichment: Boolean=false
   ): String!

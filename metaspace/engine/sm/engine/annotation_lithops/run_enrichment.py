@@ -75,9 +75,11 @@ def run_enrichment(results_dfs: Dict[int, pd.DataFrame]) -> Dict[int, pd.DataFra
         bootstrap_hash[moldb_id] = pd.DataFrame(bootstrapping_sublist, columns=columns)
 
         logger.info(
-            f'Database ID: {moldb_id}, molecules = {len(molecules)}, \
-        unique molecules = {len(mol_hash)}, metabolites = {len(metabolites)}, \
-        time = {round(time.time() - start_time, 1)} s'
+            (
+                f'Database ID: {moldb_id}, molecules = {len(molecules)}'
+                f'unique molecules = {len(mol_hash)}, metabolites = {len(metabolites)}'
+                f'time = {round(time.time() - start_time, 1)} s'
+            )
         )
 
     return bootstrap_hash
