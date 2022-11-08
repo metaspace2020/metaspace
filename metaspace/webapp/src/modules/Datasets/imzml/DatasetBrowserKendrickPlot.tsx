@@ -152,6 +152,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
             },
             saveAsImage: {
               title: 'Download',
+              name: 'mass_spectrum',
             },
           },
         },
