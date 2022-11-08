@@ -187,6 +187,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation'],
     initialValue: undefined,
     isMultiFilter: true,
+    hidden: () => !config.features.enrichment,
   },
 
   term: {
@@ -409,9 +410,9 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SingleSelectFilter,
     name: '',
     description: 'Show/hide datasets with optical images',
-    levels: ['annotation', 'dataset'],
+    levels: ['dataset'],
     defaultInLevels: [],
-    initialValue: false,
+    initialValue: true,
     options: [true, false],
     encoding: 'bool',
     optionFormatter: option => `${option ? 'With' : 'Without'} optical images only`,
