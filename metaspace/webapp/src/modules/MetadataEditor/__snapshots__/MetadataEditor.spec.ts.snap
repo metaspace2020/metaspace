@@ -49,6 +49,7 @@ Object {
   "isPublic": true,
   "name": "dataset.name",
   "neutralLosses": Array [],
+  "performEnrichment": false,
   "ppm": 3,
   "principalInvestigator": Object {
     "email": "dataset.principalInvestigator.email",

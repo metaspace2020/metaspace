@@ -27,6 +27,7 @@ type Dataset {
   roiJson: String
   metadataJson: String!
   isPublic: Boolean!
+  isEnriched: Boolean
   databases: [MolecularDB!]!
   molDBs: [String!]!  # @deprecated(reason: "Use \"databases\" instead")
   adducts: [String!]!
@@ -258,6 +259,7 @@ input DatasetUpdateInput {
   projectIds: [ID!]
   principalInvestigator: PersonInput
   isPublic: Boolean
+  performEnrichment: Boolean
 }
 
 type DatasetCountPerGroupListElement {

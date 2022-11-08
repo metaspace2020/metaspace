@@ -103,9 +103,12 @@ function validateMetadata(metadata: MetadataNode) {
 }
 
 export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpdateInput & { metadata: MetadataRoot }) {
-  let newDB = false; let procSettingsUpd = false; const metaDiff = null
+  let newDB = false; let procSettingsUpd = false; const metaDiff = null; let enrichmentUpd = false
   if (update.databaseIds) {
     newDB = true
+  }
+  if (update.performEnrichment) {
+    enrichmentUpd = true
   }
 
   if (update.adducts || update.neutralLosses || update.chemMods
@@ -133,7 +136,7 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
     }
   }
 
-  return { newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff }
+  return { newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff, enrichmentUpd }
 }
 
 interface SaveDatasetArgs {
@@ -389,8 +392,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await assertUserCanUseMolecularDBs(ctx, update.databaseIds as number[]|undefined)
 
     const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId)
-    const { newDB, procSettingsUpd } = processingSettingsChanged(engineDataset, { ...update, metadata })
-    const reprocessingNeeded = newDB || procSettingsUpd
+    const { newDB, procSettingsUpd, enrichmentUpd } = processingSettingsChanged(engineDataset, { ...update, metadata })
+    const reprocessingNeeded = newDB || procSettingsUpd || enrichmentUpd
 
     const submitterId = (ctx.isAdmin && update.submitterId) || dataset.userId
     const saveDatasetArgs = {
@@ -428,6 +431,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         }, {
           priority,
           useLithops,
+          performEnrichment,
           force,
         })
       }
