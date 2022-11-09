@@ -10,6 +10,7 @@ import { DatasetEnrichmentTable } from './DatasetEnrichmentTable'
 import './DatasetEnrichmentPage.scss'
 import { getEnrichedMolDatabasesQuery } from '../../../api/enrichmentdb'
 import FilterPanel from '../../Filters/FilterPanel.vue'
+import config from '../../../lib/config'
 
 interface DatasetEnrichmentPageProps {
   className: string
@@ -88,7 +89,14 @@ export default defineComponent<DatasetEnrichmentPageProps>({
 
       const routeData = $router.resolve({
         name: 'annotations',
-        query: { term: item?.termId, ds: datasetId.value, db_id: dbId, mol_class: '1', fdr },
+        query: {
+          term: item?.termId,
+          ds: datasetId.value,
+          db_id: dbId,
+          mol_class: '1',
+          fdr,
+          feat: 'enrichment',
+        },
       })
       window.open(routeData.href, '_blank')
     }
