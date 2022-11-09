@@ -675,7 +675,8 @@ class GraphQLClient(object):
 
     def create_dataset(self, input_params, perform_enrichment=False, ds_id=None):
         query = """
-            mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int, $useLithops: Boolean, $performEnrichment: Boolean) {
+            mutation createDataset($id: String, $input: DatasetCreateInput!,
+                $priority: Int, $useLithops: Boolean, $performEnrichment: Boolean) {
                 createDataset(
                   id: $id,
                   input: $input,
@@ -688,6 +689,7 @@ class GraphQLClient(object):
         variables = {
             'id': ds_id,
             'input': input_params,
+            'priority': 0,
             'useLithops': True,
             'performEnrichment': perform_enrichment,
         }
@@ -708,21 +710,25 @@ class GraphQLClient(object):
     def update_dataset(
         self,
         ds_id,
-        input=None,
+        input={},
         reprocess=False,
         force=False,
+        perform_enrichment=False,
         priority=1,
     ):
         query = """
-            mutation updateMetadataDatabases($id: String!, $reprocess: Boolean,
-                $input: DatasetUpdateInput!, $priority: Int, $force: Boolean) {
-                    updateDataset(
-                      id: $id,
-                      input: $input,
-                      priority: $priority,
-                      reprocess: $reprocess,
-                      force: $force
-                    )
+            mutation updateDataset($id: String!, $input: DatasetUpdateInput!,
+                $priority: Int, $reprocess: Boolean, $force: Boolean,
+                $useLithops: Boolean, $performEnrichment: Boolean) {
+                updateDataset(
+                    id: $id,
+                    input: $input,
+                    priority: $priority,
+                    reprocess: $reprocess,
+                    force: $force,
+                    useLithops: $useLithops,
+                    performEnrichment: $performEnrichment,
+                )
             }
         """
 
@@ -732,6 +738,8 @@ class GraphQLClient(object):
             'priority': priority,
             'reprocess': reprocess,
             'force': force,
+            'useLithops': True,
+            'performEnrichment': perform_enrichment,
         }
 
         self.query(query, variables)
@@ -1859,6 +1867,7 @@ class SMInstance(object):
         analysis_version: Optional[int] = None,
         reprocess: Optional[bool] = None,
         force: bool = False,
+        perform_enrichment: Optional[bool] = False,
     ):
         """Updates a dataset's metadata and/or processing settings. Only specify the fields that
         should change. All arguments should be specified as keyword arguments,
@@ -1894,6 +1903,7 @@ class SMInstance(object):
         :param force:
             True: Allow changes to datasets that are already being processed. This should be used
             with caution, as it can cause errors or inconsistent results.
+        :param perform_enrichment: Optional enable LION for dataset.
         """
 
         input_field = {}
@@ -1925,10 +1935,12 @@ class SMInstance(object):
             input_field['analysisVersion'] = analysis_version
 
         try:
-            self._gqclient.update_dataset(id, input_field, reprocess or False, force)
+            self._gqclient.update_dataset(
+                id, input_field, reprocess or False, force, perform_enrichment
+            )
         except GraphQLException as ex:
             if ex.type == 'reprocessing_needed' and reprocess is None:
-                self._gqclient.update_dataset(id, input_field, True, force)
+                self._gqclient.update_dataset(id, input_field, True, force, perform_enrichment)
             else:
                 raise
 
