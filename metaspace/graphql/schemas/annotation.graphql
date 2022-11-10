@@ -133,6 +133,7 @@ input AnnotationFilter {
   msmScoreFilter: NumericRange
   compoundQuery: String
   fdrLevel: Float
+  pValue: Float
   sumFormula: String
   chemMod: String                 # Empty string for 'no chem mod'
   neutralLoss: String             # Empty string for 'no neutral loss'

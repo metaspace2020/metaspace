@@ -20,6 +20,7 @@ export function hideFeatureBadge(featureKey: string) {
 }
 
 const NewFeatureBadge = defineComponent({
+  name: 'NewFeatureBadge',
   props: {
     featureKey: { type: String, required: true },
     showUntil: Date as any as () => Date,

@@ -42,12 +42,10 @@ export default defineComponent<DatasetEnrichmentPageProps>({
 
     const {
       result: datasetResult,
-      loading: datasetLoading,
     } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId })
     const dataset = computed(() => datasetResult.value != null ? datasetResult.value.dataset : null)
     const {
       result: databasesResult,
-      loading: databasesLoading,
     } = useQuery<any>(getEnrichedMolDatabasesQuery, { id: datasetId })
     const databases = computed(() => databasesResult.value != null
       ? databasesResult.value.allEnrichedMolDatabases : null)
@@ -58,6 +56,9 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       id: datasetId,
       dbId: $store.getters.gqlAnnotationFilter.databaseId,
       fdr: $store.getters.gqlAnnotationFilter.fdrLevel,
+      pValue: ($store.getters.gqlAnnotationFilter.pValue === null
+        || $store.getters.gqlAnnotationFilter.pValue === undefined)
+        ? undefined : $store.getters.gqlAnnotationFilter.pValue,
       offSample: ($store.getters.gqlAnnotationFilter.offSample === null
       || $store.getters.gqlAnnotationFilter.offSample === undefined)
         ? undefined : !!$store.getters.gqlAnnotationFilter.offSample,
@@ -121,7 +122,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
           }
           {
             !enrichmentLoading.value
-            && <div class={'dataset-enrichment-wrapper'}>
+            && <div class={'dataset-enrichment-wrapper md:w-1/2 w-full'}>
               <DatasetEnrichmentTable
                 data={data}
                 filename={`${dataset.value?.name}_${databases.value.find((database:any) => database.id
@@ -134,7 +135,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
           }
           {
             !enrichmentLoading.value
-            && <div class={'dataset-enrichment-wrapper text-center'}>
+            && <div class={'dataset-enrichment-wrapper text-center md:w-1/2 w-full'}>
               {dataset.value?.name} - enrichment
               {
                 !(!data || (data || []).length === 0)

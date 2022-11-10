@@ -980,7 +980,10 @@ export default Vue.extend({
             },
             fetchPolicy: 'cache-first',
           })
-          const roi = safeJsonParse(resp?.data?.dataset?.roiJson)
+          if (!resp?.data?.dataset?.roiJson) {
+            return
+          }
+          const roi = JSON.parse(resp?.data?.dataset?.roiJson)
           if (roi && Array.isArray(roi.features) && !this.$store.state.roiInfo[datasetId]) {
             this.$store.commit('setRoiInfo', {
               key: datasetId,

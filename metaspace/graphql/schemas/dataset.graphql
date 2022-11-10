@@ -377,7 +377,7 @@ type Query {
 
   countDatasetsPerGroup(query: DatasetCountPerGroupInput!): DatasetCountPerGroup!
 
-  lipidEnrichment(datasetId: String!, molDbId: Int, fdr: Float, offSample: Boolean): [Enrichment]
+  lipidEnrichment(datasetId: String!, molDbId: Int, fdr: Float, offSample: Boolean, pValue: Float): [Enrichment]
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
