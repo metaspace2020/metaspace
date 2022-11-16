@@ -1,4 +1,4 @@
-import { decode, Image } from 'upng-js'
+import { decode, Image, toRGBA8 } from 'upng-js'
 import { quantile } from 'simple-statistics'
 import { range } from 'lodash-es'
 import { DEFAULT_SCALE_TYPE } from './constants'
@@ -88,14 +88,17 @@ const getNormalizationIntensityAndMask = (normalizationData: Normalization) => {
 
 const extractIntensityAndMask = (png: Image, min: number, max: number, normalizationData?: Normalization) => {
   const { width, height, depth, ctype } = png
-  const bytesPerComponent = depth <= 8 ? 1 : 2
   const hasAlpha = ctype === 4 || ctype === 6
+  const isRGB = ctype === 6
+  const bytesPerComponent = depth <= 8 ? 1 : 2
   const numPixels = (width * height)
   const numComponents = (ctype & 2 ? 3 : 1) + (hasAlpha ? 1 : 0)
   const rangeVal = Number(max - min) / (bytesPerComponent === 1 ? 255 : 65535)
   const baseVal = Number(min)
-  // NOTE: pngDataBuffer usually has some trailing padding bytes. TypedArrays should have explicit sizes specified to prevent over-reading
-  const pngDataBuffer = (png.data as any as Uint8Array).buffer // The typings are wrong
+  // NOTE: pngDataBuffer usually has some trailing padding bytes. TypedArrays should have explicit sizes specified to
+  // prevent over-reading // if hasAlpha, 16bit and not grayscale uses toRGBA to translate frames
+  const pngDataBuffer = (hasAlpha && bytesPerComponent > 1 && !isRGB) ? toRGBA8(png)[0]
+    : (png.data as any as Uint8Array).buffer // The typings are wrong
   const TIC_MULTIPLIER = 1000000
 
   // NOTE: This function is a bit verbose. It's intentionally structured this way so that the JS engine can
@@ -107,7 +110,6 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
     for (let i = 0; i < numPixels; i++) {
       const byteOffset = i * numComponents * bytesPerComponent
       let intensity = dataView.getUint8(byteOffset) * rangeVal + baseVal
-
       // apply normalization
       if (
         normalizationData && normalizationData.data
@@ -133,6 +135,8 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
     }
   } else {
     for (let i = 0; i < numPixels; i++) {
+      const y = Math.floor(i / width)
+      const x = i % width
       const byteOffset = i * numComponents * bytesPerComponent
       let intensity = dataView.getUint16(byteOffset) * rangeVal + baseVal
 
@@ -150,12 +154,13 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
       }
       intensityValues[i] = intensity
     }
-
     if (hasAlpha) {
       const alphaOffset = (numComponents - 1) * bytesPerComponent
       for (let i = 0; i < numPixels; i++) {
+        const y = Math.floor(i / width)
+        const x = i % width
         const byteOffset = i * numComponents * bytesPerComponent + alphaOffset
-        mask[i] = dataView.getUint16(byteOffset, false) < 32768 ? 0 : 255
+        mask[i] = dataView.getUint16(byteOffset, !isRGB) < 32768 ? 0 : 255
       }
     } else {
       mask.fill(255)
