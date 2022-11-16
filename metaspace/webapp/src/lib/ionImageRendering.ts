@@ -135,8 +135,6 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
     }
   } else {
     for (let i = 0; i < numPixels; i++) {
-      const y = Math.floor(i / width)
-      const x = i % width
       const byteOffset = i * numComponents * bytesPerComponent
       let intensity = dataView.getUint16(byteOffset) * rangeVal + baseVal
 
@@ -157,8 +155,6 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
     if (hasAlpha) {
       const alphaOffset = (numComponents - 1) * bytesPerComponent
       for (let i = 0; i < numPixels; i++) {
-        const y = Math.floor(i / width)
-        const x = i % width
         const byteOffset = i * numComponents * bytesPerComponent + alphaOffset
         mask[i] = dataView.getUint16(byteOffset, !isRGB) < 32768 ? 0 : 255
       }
