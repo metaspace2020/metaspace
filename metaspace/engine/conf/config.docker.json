@@ -81,6 +81,7 @@
       "region": "eu-de",
       "namespace": "",
       "runtime": "",
+      "runtime_timeout": 1800,
       "connection_retries": 10
     },
     "ibm_vpc": {

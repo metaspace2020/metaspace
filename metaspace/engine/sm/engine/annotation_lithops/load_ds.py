@@ -220,7 +220,7 @@ def load_ds(
     # most memory-intense part (sorting the m/z array). Also for uploading imzml browser files
     # need plus 1x the ibd file size RAM.
     message = f'Found {ibd_size_mb}MB .ibd and {imzml_size_mb}MB .imzML files.'
-    if ibd_size_mb * 3 + 512 < 32 * 1024:
+    if ibd_size_mb * 4 + 512 < 32 * 1024:
         logger.info(f'{message} Trying serverless load_ds')
         runtime_memory = max(2048, int(2 ** np.ceil(np.log2(ibd_size_mb * 3 + 512))))
     else:

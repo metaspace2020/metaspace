@@ -82,6 +82,7 @@
       "region": "eu-de",
       "namespace": "{{ sm_lithops_ce_namespace }}",
       "runtime": "",
+      "runtime_timeout": 1800,
       "connection_retries": 10
     },
     "ibm_vpc": {
