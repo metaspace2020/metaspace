@@ -1,4 +1,4 @@
-FROM python:3.8.13-slim-buster
+FROM python:3.8.15-slim-buster
 
 ENV PORT 8080
 ENV CONCURRENCY 4
