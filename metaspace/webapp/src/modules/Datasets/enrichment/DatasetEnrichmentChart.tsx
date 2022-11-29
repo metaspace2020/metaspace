@@ -94,7 +94,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
         toolbox: {
           feature: {
             saveAsImage: {
-              title: 'Download',
+              title: ' ',
             },
           },
         },

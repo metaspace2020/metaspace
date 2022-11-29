@@ -60,6 +60,7 @@ const orderedFilterKeys = [
   'metadataType',
   'molClass',
   'opticalImage',
+  'pValue',
 ]
 
 const dsAnnotationHiddenFilters = [
