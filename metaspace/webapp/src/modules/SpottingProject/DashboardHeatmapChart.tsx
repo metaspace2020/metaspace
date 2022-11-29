@@ -167,13 +167,24 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
           splitArea: {
             show: true,
           },
+          axisTick: {
+            show: false,
+          },
           axisLabel: {
             show: true,
             interval: 0,
             height: 40,
-          },
-          axisTick: {
-            show: false,
+            fontFamily: 'monospace',
+            rich: {
+              b: {
+                fontFamily: 'monospace',
+                fontWeight: 'bold',
+              },
+              h: {
+                fontFamily: 'monospace',
+                color: '#fff',
+              },
+            },
           },
         },
         visualMap: {
@@ -274,8 +285,27 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
         }
       }
 
+      let maxLength = 0
       auxOptions.yAxis.data = yAxisData.value
-        .map((label: string) => label.replace(/.+-agg-\s(.+)/, '$1'))
+        .map((label: string, index: number) => {
+          const re = /(.+)\s-agg-\s(.+)/
+          const cat = label.replace(re, '$1')
+          const value = label.replace(re, '$2')
+
+          maxLength = (value.length + cat.length) > maxLength ? (value.length + cat.length) : maxLength
+
+          return globalCategories[cat] === index ? label : label.replace(/.+-agg-\s(.+)/, '$1')
+        })
+
+      auxOptions.yAxis.axisLabel.formatter = function(label: any) {
+        const re = /(.+)\s-agg-\s(.+)/
+        const found = label.match(re)
+        const cat = label.replace(re, '$1')
+        const value = label.replace(re, '$2')
+        const repeat = maxLength - cat.length - value.length
+        return found ? `{b|${cat}}{h|${' '.repeat(repeat > 0 ? repeat : 0)}}${value}`
+          : value
+      }
 
       // add no Neutral label
       if (props.yOption === 'nL') {
@@ -286,7 +316,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       }
 
       auxOptions.series[0].data = chartData.value
-      auxOptions.series[0].markLine.data = markData
+      // auxOptions.series[0].markLine.data = markData
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }

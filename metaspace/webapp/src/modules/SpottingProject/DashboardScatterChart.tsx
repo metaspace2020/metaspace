@@ -24,6 +24,7 @@ import {
   MarkAreaComponent,
 } from 'echarts/components'
 import './DashboardScatterChart.scss'
+import { truncate } from 'lodash-es'
 
 use([
   CanvasRenderer,
@@ -147,7 +148,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           position: 'top',
           formatter: function(params: any) {
             return 'Fraction detected: ' + (params.value[4] || 0).toFixed(2) + ' '
-              + (params.data?.label?.y || '') + ' in ' + (params.data?.label?.x || '')
+              + (params.data?.label?.y || '').replace(/-agg-/g, ' ') + ' in ' + (params.data?.label?.x || '')
           },
         },
         grid: {
@@ -180,21 +181,33 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           },
           position: 'top',
         },
-        yAxis: {
-          type: 'category',
-          data: [],
-          axisLine: {
-            show: false,
+        yAxis:
+          {
+            type: 'category',
+            data: [],
+            axisLine: {
+              show: false,
+            },
+            axisTick: {
+              show: false,
+            },
+            axisLabel: {
+              show: true,
+              interval: 0,
+              height: 40,
+              fontFamily: 'monospace',
+              rich: {
+                b: {
+                  fontFamily: 'monospace',
+                  fontWeight: 'bold',
+                },
+                h: {
+                  fontFamily: 'monospace',
+                  color: '#fff',
+                },
+              },
+            },
           },
-          axisTick: {
-            show: false,
-          },
-          axisLabel: {
-            show: true,
-            interval: 0,
-            height: 40,
-          },
-        },
         series: {
           type: 'scatter',
           animation: false,
@@ -245,12 +258,6 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         })
       })
 
-      if (props.yOption === 'fine_class' || props.yOption === 'fine_path') {
-        auxOptions.grid.right = 100
-      } else {
-        auxOptions.grid.right = '5%'
-      }
-
       auxOptions.xAxis.data = xAxisData.value
 
       if (auxOptions.xAxis.data.length > 30) {
@@ -273,8 +280,27 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         }
       }
 
+      let maxLength = 0
       auxOptions.yAxis.data = yAxisData.value
-        .map((label: string) => label.replace(/.+-agg-\s(.+)/, '$1'))
+        .map((label: string, index: number) => {
+          const re = /(.+)\s-agg-\s(.+)/
+          const cat = label.replace(re, '$1')
+          const value = label.replace(re, '$2')
+
+          maxLength = (value.length + cat.length) > maxLength ? (value.length + cat.length) : maxLength
+
+          return globalCategories[cat] === index ? label : label.replace(/.+-agg-\s(.+)/, '$1')
+        })
+
+      auxOptions.yAxis.axisLabel.formatter = function(label: any) {
+        const re = /(.+)\s-agg-\s(.+)/
+        const found = label.match(re)
+        const cat = label.replace(re, '$1')
+        const value = label.replace(re, '$2')
+        const repeat = maxLength - cat.length - value.length
+        return found ? `{b|${cat}}{h|${' '.repeat(repeat > 0 ? repeat : 0)}}${value}`
+          : value
+      }
 
       // add no Neutral label
       if (props.yOption === 'nL') {
@@ -285,7 +311,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       }
 
       auxOptions.series.data = chartData.value
-      auxOptions.series.markLine.data = markData
+      // auxOptions.series.markLine.data = markData
       auxOptions.series.markArea = {}
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
@@ -390,7 +416,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
               on: {
                 'zr:dblclick': handleZoomReset,
                 click: handleItemSelect,
-                rendered: handleChartRendered,
+                // rendered: handleChartRendered,
               },
             }}
             class='chart'
