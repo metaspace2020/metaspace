@@ -1,9 +1,6 @@
-# %%
 import json
 import urllib.parse
 
-# from http.server import BaseHTTPRequestHandler, HTTPServer
-# from urllib.parse import urlparse, parse_qsl
 import pandas as pd
 import numpy as np
 from scipy.spatial.distance import pdist
@@ -515,57 +512,3 @@ def lambda_handler(event, context):
             'yAxisSorting': y_axis_sort,
         },
     }
-
-
-# class MyServer(BaseHTTPRequestHandler):
-#     # pylint: disable=invalid-name
-#     def do_GET(self):
-#         print('url')
-#         url = self.path
-#         parsed_url = urlparse(url)
-#         query = parse_qsl(parsed_url.query)
-#         print(query)
-#         print(dict(query))
-#
-#         json_to_pass = json.dumps(
-#             lambda_handler(
-#                 dict(query),
-#                 None,
-#             )
-#         )
-#         self.send_response(code=200, message='here is your token')
-#         self.send_header('Access-Control-Allow-Origin', '*')
-#         self.send_header(keyword='Content-type', value='application/json')
-#         self.end_headers()
-#         self.wfile.write(json_to_pass.encode('utf-8'))
-#
-#
-# if __name__ == "__main__":
-#     # Local server testing
-#     webServer = HTTPServer(('localhost', 8080), MyServer)
-#     print("Yang's local server started at port 8080")
-#     try:
-#         webServer.serve_forever()
-#     except KeyboardInterrupt:
-#         pass
-#
-#     webServer.server_close()
-#     print("Server stopped.")
-
-# script testing
-# payload = lambda_handler(
-#     {
-#         'predType': 'EMBL',
-#         'xAxis': 'a',
-#         'yAxis': 'Participant lab',
-#         'loadPathway': 'false',
-#         'loadClass': 'false',
-#         'queryType': 'data',
-#         'filter': '',
-#         'filterValues': '',
-#     },
-#     None,
-# )
-# print(payload)
-
-# %%
