@@ -31,7 +31,7 @@
             class="pb-2"
             size="default"
             :options="sortingOptions"
-            :on-sort-change="handleSortChange"
+            @sort="handleSortChange"
           />
         </div>
       </div>

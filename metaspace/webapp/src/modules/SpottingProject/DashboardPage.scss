@@ -6,8 +6,62 @@ $filter-color: #828282;
 
 
 .dashboard-container{
-  @apply flex flex-wrap m-12 justify-between pb-1;
+  @apply flex flex-wrap m-12 justify-between pb-4;
   margin-top: 0;
+
+  .swap-box{
+    height: 59px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .swap-btn{
+    background: #F1F5F8;
+
+    i{
+      transform: rotate(90deg);
+    }
+  }
+
+  .radius-help{
+    @apply flex absolute items-center flex-col font-bold;
+    bottom: 8px;
+    right: 8px;
+    font-size: 9px;
+  }
+
+  .dot-legend{
+    @apply w-full flex justify-between;
+    margin-top: -4px;
+  }
+  .dot-container{
+    @apply flex items-center flex-col justify-center relative;
+    height: 42px;
+    min-width: 11px;
+  }
+
+  .dot-text{
+    @apply absolute;
+    bottom: 0;
+  }
+
+  .dot{
+    background-color: black;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .help-container{
+    @apply flex absolute items-center;
+    bottom: 0;
+    left: 0;
+    font-size: 12px;
+    color: rgba(0,0,0,0.6);
+    font-style: italic;
+  }
 
   .el-tag{
     white-space: nowrap;
@@ -16,7 +70,7 @@ $filter-color: #828282;
   }
 
   .icon{
-    @apply flex items-center justify-center cursor-pointer mt-1;
+    @apply flex items-center justify-center cursor-pointer mt-1 ;
   }
 
   .select-box-mini{
@@ -33,8 +87,7 @@ $filter-color: #828282;
   }
 
   .visualization-container{
-    @apply flex flex-wrap overflow-hidden items-end	;
-
+    @apply flex flex-wrap overflow-hidden items-end	justify-end	w-full relative;
   }
 
   .visualization-selector{
@@ -49,7 +102,8 @@ $filter-color: #828282;
     .icon-holder{
       text-align: center;
       height: 20px;
-      width: 40px;
+      width: 25px;
+      @apply cursor-pointer;
     }
 
     .vis-icon{
@@ -58,7 +112,7 @@ $filter-color: #828282;
     }
   }
   .feature-box{
-    @apply flex flex-wrap absolute cursor-pointer items-center justify-center;
+    @apply flex flex-wrap absolute cursor-pointer items-center justify-end w-full;
     top: 6px;
     right: 32px;
     z-index: 2;
@@ -73,6 +127,9 @@ $filter-color: #828282;
     @apply w-full h-full border-2 border-dashed border-gray-300 relative;
     min-height: 500px;
 
+    .el-pagination, button, li{
+      background: #FCFCFC !important;
+    }
   }
 
   .x-axis-label{
