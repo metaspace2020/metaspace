@@ -373,7 +373,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       }
     }
 
-    const startImageSettings = async() => {
+    const startImageSettings = async(forceUpdate = props.forceUpdate) => {
       const { annotations } = props
       const annotation = annotations.filter((item: any) => !item?.isEmpty)[0]
       const ionImagesPng = []
@@ -470,18 +470,14 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       let ionImagePosAux = 0
       for (let index = 0; index < menuItems?.length; index++) {
         const key = ionKeys.value[index]
-
-        if (!props.forceUpdate && hasPreviousSettings && intensitiesSnapshot[key]) {
+        if (!forceUpdate && hasPreviousSettings && intensitiesSnapshot[key]) {
           Vue.set(state.imageSettings.intensities, key, intensitiesSnapshot[key])
         } else {
           const ionImagePos = state.ionImagePosByKey[key] || ionImagePosAux
-
           const intensity = getIntensity(imageSettings.ionImageLayers[ionImagePos]?.ionImage)
           intensity.min.scaled = 0
-
           intensity.max.scaled = globalLockedIntensities.value && globalLockedIntensities.value[1]
             ? globalLockedIntensities.value[1] : (intensity.max.clipped || intensity.max.image)
-
           Vue.set(state.imageSettings.intensities, key, intensity)
         }
 
@@ -710,8 +706,16 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         }
       }
     })
+
+    watch(() => props.isNormalized, async(newValue) => {
+      await startImageSettings(true)
+    })
+
+    watch(() => props.normalizationData, async(newValue) => {
+      await startImageSettings(true)
+    })
+
     // set images and annotation related items when selected annotation changes
-    // // set images and annotation related items when selected annotation changes
     watch(() => props.annotations, async(newValue) => {
       if (props.forceUpdate) {
         await startImageSettings()
@@ -792,6 +796,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
               : undefined}
             scrollBlock
             showPixelIntensity
+            normalizationData={props.normalizationData}
             keepPixelSelected={props.keepPixelSelected}
             {...{
               on: {
@@ -852,6 +857,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
                 onAddLayer={addLayer}
                 onIntensityChange={handleIntensityChange}
                 onIntensityLockChange={handleIntensityLockChangeForAll}
+                isNormalized={props.isNormalized}
               />
             }
           </FadeTransition>
