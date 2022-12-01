@@ -146,7 +146,7 @@ export default class MainImageHeader extends Vue {
     isActive!: boolean
 
     @Prop({ type: Boolean })
-    showNormalizedBadge: boolean = false
+    showNormalizedBadge: boolean | undefined
 
     @Prop({ type: Boolean })
     hideOptions: boolean | undefined
