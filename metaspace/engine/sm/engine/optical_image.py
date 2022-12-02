@@ -49,7 +49,8 @@ class OpticalImageType:
 
 def _annotation_image_shape(db, ds):
     logger.debug(f'Querying annotation image shape for "{ds.id}" dataset')
-    ion_img_id = db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', params=(ds.id,))[0][0][0]
+    ion_img_ids = db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', params=(ds.id,))[0][0]
+    ion_img_id = next((item for item in ion_img_ids if item is not None), None)
     image_bytes = image_storage.get_image(image_storage.ISO, ds.id, ion_img_id)
     image = Image.open(io.BytesIO(image_bytes))
     result = image.size
