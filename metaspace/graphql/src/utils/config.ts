@@ -78,6 +78,9 @@ export interface Config {
     secret: string;
     algorithm: Algorithm;
   };
+  uppy: {
+    secret: string;
+  };
   sentry: {
     dsn: string | null;
     environment?: string;

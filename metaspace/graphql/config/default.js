@@ -80,6 +80,10 @@ module.exports = {
     algorithm: 'HS256',
   },
 
+  uppy: {
+    secret: 'secretUppy',
+  },
+
   sentry: {
     dsn: null,
     environment: 'default',

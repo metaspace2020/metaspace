@@ -24,5 +24,7 @@ export default function getCompanionOptions(path: string, getKey: GetKey) {
     },
     filePath: '/tmp',
     debug: true,
+    logClientVersion: false,
+    secret: config.uppy.secret,
   }
 }

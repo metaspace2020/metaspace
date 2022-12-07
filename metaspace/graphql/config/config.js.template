@@ -49,6 +49,9 @@ config.jwt = {};
 config.jwt.secret = "{{ sm_graphql_jwt_secret }}";
 config.jwt.algorithm = "HS256";
 
+config.uppy = {}
+config.secret = 'secretUppy'
+
 config.sentry = {
   dsn: "{{ sentry_dsn }}",
   environment: "{{ stage | replace('/', '_') }}",

@@ -81,6 +81,9 @@ config.jwt = {}
 config.jwt.secret = 'secret'
 config.jwt.algorithm = 'HS256'
 
+config.uppy = {}
+config.secret = 'secretUppy'
+
 config.sentry = null
 
 config.features = {

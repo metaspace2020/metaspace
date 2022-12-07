@@ -8,6 +8,7 @@ import * as bodyParser from 'body-parser'
 import getCompanionOptions from './getCompanionOptions'
 
 import { getS3Credentials } from '../../utils/awsClient'
+import logger from '../../utils/logger'
 
 function signUuid(uuid: string) {
   const credentials = getS3Credentials()
@@ -34,6 +35,7 @@ export default function(httpServer?: http.Server) {
     '/dataset_upload',
     (req: Request, filename: string) => {
       const uuid = req.header('uuid')
+
       if (uuid === undefined) {
         throw new Error('uuid is not valid')
       }
@@ -42,6 +44,9 @@ export default function(httpServer?: http.Server) {
       if (signedUuid !== uuidSignature) {
         throw new Error('uuid is not valid')
       }
+
+      logger.debug(`File ${filename} uploaded to ${uuid} from user ${req.body?.metadata?.user}`)
+
       return `${uuid}/${filename}`
     }
   )

@@ -47,6 +47,7 @@ interface State {
 
 interface Props {
   disabled: boolean
+  currentUser: any
   options: UppyOptions
   requiredFileTypes: string[]
   s3Options: AwsS3MultipartOptions
@@ -65,6 +66,7 @@ const UppyUploader = defineComponent<Props>({
     options: Object,
     requiredFileTypes: Array,
     s3Options: Object,
+    currentUser: Object,
   },
   setup(props, { emit }) {
     const state = reactive<State>({
@@ -155,6 +157,7 @@ const UppyUploader = defineComponent<Props>({
           uppy.addFile({
             name: file.name,
             type: file.type,
+            meta: { user: props.currentUser?.id },
             data: file,
           })
         }
