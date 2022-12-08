@@ -66,6 +66,9 @@ config.jwt = {}
 config.jwt.secret = ''
 config.jwt.algorithm = 'HS256'
 
+config.uppy = {}
+config.uppy.secret = 'secretUppy'
+
 config.features = {
   graphqlMocks: false,
 }
