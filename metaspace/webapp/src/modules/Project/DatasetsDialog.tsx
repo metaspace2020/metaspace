@@ -68,7 +68,6 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
         submitter: state.datasetOwnerFilter === 'my-datasets' ? props.currentUser.id : undefined,
         project: state.datasetOwnerFilter === 'project-datasets' ? props.project.id : undefined,
         metadataType: 'Imaging MS',
-        status: 'FINISHED',
         name: state.nameFilter,
       },
       limit: state.pageSize,

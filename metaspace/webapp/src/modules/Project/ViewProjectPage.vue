@@ -562,6 +562,8 @@ export default class ViewProjectPage extends Vue {
 
     handleCloseProjectDatasetsDialog() {
       this.showProjectDatasetsDialog = false
+      // TODO: Remove
+      window.location.reload()
     }
 }
 
