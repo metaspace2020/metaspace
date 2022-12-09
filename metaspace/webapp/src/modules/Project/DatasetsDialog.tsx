@@ -15,6 +15,7 @@ interface DatasetsDialogState {
   selectedDatasets: any
   isSubmitting: boolean
   hasChanged: boolean
+  handleSelectionDisabled: boolean
   updateValueDisabled: boolean
   datasetOwnerFilter: string
   nameFilter: string | undefined
@@ -43,18 +44,19 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
   setup(props, ctx) {
     const { emit, root } = ctx
     const { $apollo } = root
-    const pageSizes = [5, 15, 20, 25, 30]
+    const pageSizes = [2, 5, 15, 20, 25, 30]
     const table = ref(null)
 
     const state = reactive<DatasetsDialogState>({
       selectedDatasets: [],
       removedDatasets: [],
       isSubmitting: false,
+      handleSelectionDisabled: true,
       updateValueDisabled: false,
       hasChanged: false,
       datasetOwnerFilter: 'project-datasets',
       nameFilter: undefined,
-      pageSize: 5,
+      pageSize: 5000, // needed to select all datasets before rendering
       offset: 1,
     })
 
@@ -88,13 +90,16 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
     const projectDatasets = computed(() => projectDatasetsResult.value != null
       ? projectDatasetsResult.value.allDatasets : null)
 
-    const setDefaultSelectedDatasets = () => {
+    const setDefaultSelectedDatasets = (defaultPageSize : number = 5) => {
       state.selectedDatasets.forEach((dataset: any) => {
         if (Array.isArray(datasets.value) && datasets.value.find((row: any) => row?.id === dataset?.id)) {
             // @ts-ignore
             table.value!.toggleRowSelection(datasets.value.find((row: any) => row?.id === dataset?.id), true)
         }
       })
+
+      state.handleSelectionDisabled = false
+      state.pageSize = defaultPageSize
     }
 
     onProjectDatasetsResult(async(result) => {
@@ -102,6 +107,7 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
     })
 
     const onDialogOpen = () => {
+      state.handleSelectionDisabled = true
       setDefaultSelectedDatasets()
     }
 
@@ -114,6 +120,7 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
     const {
       result: datasetCountResult,
       loading: datasetCountLoading,
+      refetch: datasetsCountRefetch,
     } = useQuery<{countDatasetsPerGroup: any}>(countDatasetsByStatusQuery, queryVars)
     const datasetCount = computed(() => datasetCountResult.value != null
       ? datasetCountResult.value.countDatasetsPerGroup?.counts[0]?.count : null)
@@ -162,8 +169,16 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
           })
         }
         await props.refreshData()
+
+        // TODO: improve way to solve this workaround
+        // rendering all projects to render all project rows and select it
+        const oldPageSize = state.pageSize
+        state.datasetOwnerFilter = 'project-datasets'
+        state.pageSize = 5000
         await projectDatasetsRefetch()
         await datasetsRefetch()
+        await datasetsCountRefetch()
+        setDefaultSelectedDatasets(oldPageSize)
         emit('update')
       } catch (err) {
         reportError(err)
@@ -189,6 +204,10 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
       const {
         visible, currentUser,
       } = props
+      const selectedDatasetIds = (state.selectedDatasets || []).map((ds: any) => ds.id)
+      const defaultDatasetIds = (projectDatasets.value || []).map((ds: any) => ds.id)
+      const removedDatasetIds = defaultDatasetIds.filter((dsId: string) => !selectedDatasetIds.includes(dsId))
+      const addedDatasetIds = selectedDatasetIds.filter((dsId: string) => !defaultDatasetIds.includes(dsId))
 
       return (
         <Dialog
@@ -237,7 +256,7 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
                 stripe
                 {...{
                   on: {
-                    'selection-change': handleSelectionChange,
+                    'selection-change': state.handleSelectionDisabled ? () => {} : handleSelectionChange,
                   },
                 }}
                 rowKey="id"
@@ -276,18 +295,28 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
               {...{ on: { 'update:pageSize': handlePageSizeChange } }}
               layout={paginationLayout()}
             />
-            <div class="button-bar">
-              <Button onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button
-                class='w-32'
-                loading={state.isSubmitting}
-                disabled={!state.hasChanged}
-                type="primary"
-                onClick={handleUpdate}>
-                Update
-              </Button>
+            <div class="ds-dialog-bt-bar button-bar">
+              <div class='flex-col' style={{ visibility: state.hasChanged ? '' : 'hidden' }}>
+                <div style={{ color: 'green' }}>
+                  {addedDatasetIds.length > 0 ? `${addedDatasetIds.length} dataset to be added` : ''}
+                </div>
+                <div style={{ color: 'red' }}>
+                  {removedDatasetIds.length > 0 ? `${removedDatasetIds.length} dataset to be removed` : ''}
+                </div>
+              </div>
+              <div>
+                <Button onClick={handleClose}>
+                  Cancel
+                </Button>
+                <Button
+                  class='w-32'
+                  loading={state.isSubmitting}
+                  disabled={!state.hasChanged}
+                  type="primary"
+                  onClick={handleUpdate}>
+                  Update
+                </Button>
+              </div>
             </div>
           </div>
         </Dialog>
