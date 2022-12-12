@@ -14,7 +14,7 @@
         :project="project"
         :is-manager="isManager"
         @close="handleCloseProjectDatasetsDialog"
-        @update="handleCloseProjectDatasetsDialog"
+        @update="handleUpdateProjectDatasetsDialog"
       />
       <div class="header-row">
         <div class="header-names">
@@ -562,6 +562,12 @@ export default class ViewProjectPage extends Vue {
 
     handleCloseProjectDatasetsDialog() {
       this.showProjectDatasetsDialog = false
+    }
+
+    handleUpdateProjectDatasetsDialog() {
+      this.showProjectDatasetsDialog = false
+      // TODO: Remove
+      window.location.reload()
     }
 }
 
