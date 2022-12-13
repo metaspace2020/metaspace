@@ -37,8 +37,7 @@ export const getDatasetForEditing = async(
 
   const isSubmitter = user.id === dataset.userId
   const isAdmin = user.role === 'admin'
-  const isInSameGroup = dataset.groupId != null && dataset.groupApproved
-    && (await user.getMemberOfGroupIds()).includes(dataset.groupId)
+  const isInSameGroup = dataset.groupId != null && (await user.getMemberOfGroupIds()).includes(dataset.groupId)
 
   if (requestedAccess.edit) {
     // Only submitters, admins and other group members may directly edit a dataset
@@ -58,7 +57,7 @@ export const getDatasetForEditing = async(
     // Allow group admins but not other group members to delete
     if (!isSubmitter && !isAdmin) {
       const userGroupRoles = await getCurrentUserGroupRolesUncached(entityManager, user)
-      if (dataset.groupId == null || !dataset.groupApproved || userGroupRoles[dataset.groupId] !== UGRO.GROUP_ADMIN) {
+      if (dataset.groupId == null || userGroupRoles[dataset.groupId] !== UGRO.GROUP_ADMIN) {
         throw new UserError('Access denied')
       }
     }

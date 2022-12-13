@@ -1325,7 +1325,7 @@ export default Vue.extend({
           offSample, offSampleProb, colocalizationCoeff,
         } = row
         const cells = [
-          dataset.groupApproved && dataset.group ? dataset.group.name : '',
+          dataset.group ? dataset.group.name : '',
           dataset.name,
           dataset.id,
           sumFormula, 'M' + adduct,
