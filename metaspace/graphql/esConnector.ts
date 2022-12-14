@@ -314,7 +314,7 @@ const constructDatasetAuthFilters = async(user: ContextUser) => {
         bool: {
           filter: [
             { terms: { ds_group_id: groupIds } },
-            { term: { ds_group_approved: true } },
+            // { term: { ds_group_approved: true } },
           ],
         },
       })

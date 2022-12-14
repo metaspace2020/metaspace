@@ -344,14 +344,14 @@ export default Vue.extend({
       function person(p) { return p ? p.name : '' }
 
       function formatRow(row) {
-        const { groupApproved, group, principalInvestigator } = row
+        const { group, principalInvestigator } = row
         return formatCsvRow([
           row.id,
           row.name,
-          groupApproved && group ? group.shortName : '',
+          group ? group.shortName : '',
           person(row.submitter),
           principalInvestigator ? person(principalInvestigator)
-            : groupApproved && group ? (group.adminNames || []).join(', ')
+            : group ? (group.adminNames || []).join(', ')
               : '',
           row.organism,
           row.organismPart,

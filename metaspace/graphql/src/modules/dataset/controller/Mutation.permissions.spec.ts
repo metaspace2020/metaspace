@@ -41,6 +41,8 @@ describe('Dataset mutations: editing permissions', () => {
     sameUser: true,
     admin: true,
     sameGroupMember: true,
+    pendingGroupAdmin: true,
+    invitedGroupAdmin: true,
     sameGroupAdmin: true,
   })
   test.each(canEditMetadataCases)('Can edit dataset metadata: %s -> %s', async(scenario, canEdit) => {
@@ -95,6 +97,8 @@ describe('Dataset mutations: editing permissions', () => {
     sameUser: true,
     admin: true,
     sameGroupAdmin: true,
+    pendingGroupAdmin: true,
+    invitedGroupAdmin: true,
   })
   test.each(canDeleteDatasetCases)('Can delete dataset: %s -> %s', async(scenario, canDelete) => {
     const { context, groupId, projectId } = await getTestUserForScenario(scenario)
