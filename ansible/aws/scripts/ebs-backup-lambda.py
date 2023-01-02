@@ -51,7 +51,7 @@ def backup_region(ec2, region, today):
         if today.day == 1:
             # keep snapshots taken on the first day of month
             retention_days = get_tag_value(instance, 'retention_monthly', default=180)
-        if today.strftime('%A') == 'Sunday':
+        elif today.strftime('%A') == 'Sunday':
             # keep snapshots taken on Sunday for 'retention_weekly' days
             retention_days = get_tag_value(instance, 'retention_weekly', default=7)
         else:
