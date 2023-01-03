@@ -438,6 +438,7 @@ const filterMap : any = {
   pol: 'mode',
   mS: 'matrix',
   t: 'matrix',
+  name: 'mol',
 }
 
 const sortingOptions: any[] = [
@@ -799,8 +800,9 @@ export default defineComponent({
 
     const handleItemClick = (item: any) => { // get info from clicked chart item and open on a metaspace url
       const baseUrl = 'https://metaspace2020.eu/annotations?db_id=304'
+      // const baseUrl = 'http://localhost:8999/annotations?db_id=304'
       let url = baseUrl
-      const formulas : string = item.data.label.formulas.join('|')
+      const formulas : string = item?.data?.label?.formulas?.join('|')
       const yAxisFilter : any = filterMap[state.options.yAxis]
       const xAxisFilter : any = filterMap[state.options.xAxis]
 
@@ -811,14 +813,14 @@ export default defineComponent({
 
       if (yAxisFilter) {
         const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'main_coarse_class'
-          || state.options.yAxis === 'name' || state.options.yAxis === 'main_coarse_path'
+          || state.options.yAxis === 'main_coarse_path'
           || state.options.yAxis === 'fine_path')
           ? formulas : (yAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.y)
         url += `&${yAxisFilter}=${encodeURIComponent(value)}`
       }
       if (xAxisFilter) {
         const value = (state.options.xAxis === 'fine_class' || state.options.xAxis === 'main_coarse_class'
-          || state.options.xAxis === 'name' || state.options.xAxis === 'main_coarse_path'
+          || state.options.xAxis === 'main_coarse_path'
           || state.options.xAxis === 'fine_path')
           ? formulas : (xAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.x)
         url += `&${xAxisFilter}=${encodeURIComponent(value)}`
@@ -1257,6 +1259,7 @@ export default defineComponent({
             size={yAxisValues.length * 40}
             data={chartData}
             visualMap={state.visualMap}
+            onItemSelected={handleItemClick}
           />
           {!state.loading && renderPagination(total)}
         </div>
