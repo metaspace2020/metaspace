@@ -525,16 +525,15 @@ export default defineComponent({
         handleAggregationChange($route.query.agg, false)
       }
 
-      if ($route.query.filter) {
-        const filterSrc : any[] = Array.isArray($route.query.filter)
-          ? $route.query.filter : $route.query.filter.split(',')
-        filterSrc.forEach((item: any, index: number) => {
-          if (index > 0) {
-            addFilterItem()
-          }
-          handleFilterSrcChange(item, index, false)
-        })
-      }
+      const filterSrc : any[] = !$route.query.filter ? ['Polarity', 'nL']
+        : (Array.isArray($route.query.filter) ? $route.query.filter : $route.query.filter.split(','))
+
+      filterSrc.forEach((item: any, index: number) => {
+        if (index > 0) {
+          addFilterItem()
+        }
+        handleFilterSrcChange(item, index, false)
+      })
 
       if ($route.query.filterValue) {
         $route.query.filterValue.split('|').forEach((item: any, index: number) => {
@@ -543,7 +542,11 @@ export default defineComponent({
             handleFilterValueChange(value, index, false)
           }
         })
+      } else if (!$route.query.filter) { // default filters
+        handleFilterValueChange(['positive'], 0, false)
+        handleFilterValueChange(['None'], 1, false)
       }
+
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         await loadData()
         buildValues()
@@ -897,7 +900,7 @@ export default defineComponent({
       const filterSrcParams = state.filter.map((item: any) => item.src).join(',')
       $router.replace({ name: 'spotting', query: { ...getQueryParams(), filter: filterSrcParams } })
       buildFilterOptions(idx)
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && isNew) {
+      if (isNew) {
         handleFilterValueChange(null, idx, buildChart ? shouldLoad : false)
       }
     }
