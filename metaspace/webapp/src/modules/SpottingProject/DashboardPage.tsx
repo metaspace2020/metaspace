@@ -372,12 +372,20 @@ const FILTER_VALUES = [
     src: 'main_coarse_path',
   },
   {
+    label: 'Pathway class',
+    src: 'coarse_path',
+  },
+  {
     label: 'Pathway subclass',
     src: 'fine_path',
   },
   {
     label: 'Class',
     src: 'main_coarse_class',
+  },
+  {
+    label: 'Class',
+    src: 'coarse_class',
   },
   {
     label: 'Subclass',
@@ -896,6 +904,8 @@ export default defineComponent({
     const handleFilterSrcChange = (value: any, idx : any = 0, buildChart: boolean = true) => {
       const isNew = value !== state.filter[idx]?.src
       const shouldLoad = isNew && state.filter[idx]?.value
+
+      // fine_path
       state.filter[idx].src = value
       const filterSrcParams = state.filter.map((item: any) => item.src).join(',')
       $router.replace({ name: 'spotting', query: { ...getQueryParams(), filter: filterSrcParams } })
@@ -921,6 +931,26 @@ export default defineComponent({
         state.options.yAxis = value
         $router.replace({ name: 'spotting', query: { ...getQueryParams(), yAxis: value } })
       }
+
+      // reassign class according to options
+      if (value === 'main_coarse_class'
+        && state.filter.findIndex((filter: any) => filter.src === 'coarse_class') !== -1) {
+        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'coarse_class')
+        state.filter[idx].src = 'main_coarse_class'
+      } else if (value === 'fine_class'
+        && state.filter.findIndex((filter: any) => filter.src === 'main_coarse_class') !== -1) {
+        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'main_coarse_class')
+        state.filter[idx].src = 'coarse_class'
+      } else if (value === 'main_coarse_path'
+        && state.filter.findIndex((filter: any) => filter.src === 'coarse_path') !== -1) {
+        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'coarse_path')
+        state.filter[idx].src = 'main_coarse_path'
+      } else if (value === 'fine_path'
+        && state.filter.findIndex((filter: any) => filter.src === 'main_coarse_path') !== -1) {
+        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'main_coarse_path')
+        state.filter[idx].src = 'coarse_path'
+      }
+
       if (state.options.xAxis && state.options.yAxis && isNew && buildChart) {
         await loadData()
       }
@@ -1064,6 +1094,23 @@ export default defineComponent({
                       size='mini'>
                       {
                         orderBy(FILTER_VALUES, ['label'], ['asc']).map((option: any) => {
+                          if (
+                            (
+                              state.options.yAxis !== 'fine_class' && state.options.xAxis !== 'fine_class'
+                              && option.src === 'coarse_class'
+                            )
+                            || (
+                              state.options.yAxis !== 'fine_path' && state.options.xAxis !== 'fine_path'
+                              && option.src === 'coarse_path'
+                            )
+                            || (FILTER_DISABLED_COMBINATIONS[state.options.yAxis]
+                                && FILTER_DISABLED_COMBINATIONS[state.options.yAxis].includes(option.src))
+                              || (FILTER_DISABLED_COMBINATIONS[state.options.xAxis]
+                                && FILTER_DISABLED_COMBINATIONS[state.options.xAxis].includes(option.src))
+                          ) {
+                            return null
+                          }
+
                           return <Option
                             disabled={state.filter.map((item: any) => item.src).includes(option.src)
                             || (FILTER_DISABLED_COMBINATIONS[state.options.yAxis]
@@ -1228,7 +1275,7 @@ export default defineComponent({
             {...{ on: { 'update:pageSize': onPageSizeChange } }}
             layout='prev,pager,next,sizes'
           />
-          {state.selectedView === VIEW.SCATTER && renderRadiusHelp()}
+          {/* {state.selectedView === VIEW.SCATTER && renderRadiusHelp()} */}
         </div>
       )
     }
