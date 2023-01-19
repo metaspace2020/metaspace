@@ -5,7 +5,7 @@
     :lock-scroll="false"
     @close="onClose"
   >
-    <div class="sign-in">
+    <div class="container">
       <div class="left-side">
         <el-form
           ref="form"
@@ -172,35 +172,64 @@ export default class SignInDialog extends Vue {
 </script>
 
 <style scoped lang="scss">
+  @import "~element-ui/packages/theme-chalk/src/mixins/mixins";
+
   .el-dialog__wrapper /deep/ .el-dialog {
-    width: 570px;
+    width: 400px;
   }
-  .sign-in {
+
+  .container {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: stretch;
   }
+
   .left-side {
-    flex: 0 1 240px;
+    flex: 0 1 auto;
   }
+
   .right-side {
-    flex: 0 1 240px;
+    flex: 0 1 auto;
   }
+
   .mid {
     flex: 0 0 50px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
 
     .divider {
       flex-grow: 1;
-      border-left: 1px solid lightgrey;
+      border-top: 1px solid lightgrey;
     }
     .text {
       flex: none;
-      line-height: 2em;
+      padding: 0.5em;
     }
   }
+
+  @include res('sm') {
+    .el-dialog__wrapper /deep/ .el-dialog {
+      width: 690px;
+    }
+    .container {
+      flex-direction: row;
+    }
+    .left-side {
+      width: 360px;
+    }
+    .right-side {
+      width: 240px;
+    }
+    .mid {
+      flex-direction: column;
+      .divider {
+        border-top: none;
+        border-left: 1px solid lightgrey;
+      }
+    }
+  }
+
   .el-button {
     width: 100%;
   }
