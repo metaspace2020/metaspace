@@ -75,7 +75,7 @@ export default async(ctx: Context, userId: string, projectId: string, newRole: U
   if (datasetsToUpdate.length > 0) {
     const datasetIds = datasetsToUpdate.map(({ id }) => id)
     const approved = newRole == null
-      ? null
+      ? true // keep datasets in project even if user removed
       : [UPRO.MANAGER, UPRO.MEMBER].includes(newRole)
     await updateProjectDatasets(ctx, projectId, datasetIds, [], approved)
   }

@@ -217,7 +217,7 @@ describe('modules/project/controller (membership-related mutations)', () => {
         ]))
     })
 
-    test('Leaving a project should remove imported datasets', async() => {
+    test('Leaving a project should keep imported datasets', async() => {
       const datasets = await Promise.all([1, 2].map(() => createTestDataset()))
       const datasetIds = datasets.map(ds => ds.id)
       await testEntityManager.save(UserProjectModel, { userId, projectId, role: UPRO.MEMBER })
@@ -226,12 +226,13 @@ describe('modules/project/controller (membership-related mutations)', () => {
       }))
 
       await doQuery(leaveProjectQuery, { projectId })
+      const projectDatasets = await testEntityManager.find(DatasetProjectModel, { datasetId: In(datasetIds) })
 
-      expect(await testEntityManager.find(DatasetProjectModel, { datasetId: In(datasetIds) }))
-        .toEqual([])
+      expect(projectDatasets.length)
+        .toEqual(datasetIds.length)
     })
 
-    test('Removing a user from a project should remove imported datasets', async() => {
+    test('Removing a user from a project should keep imported datasets', async() => {
       const datasets = await Promise.all([1, 2].map(() => createTestDataset()))
       const datasetIds = datasets.map(ds => ds.id)
       await testEntityManager.save(UserProjectModel, { userId, projectId, role: UPRO.MEMBER })
@@ -240,9 +241,10 @@ describe('modules/project/controller (membership-related mutations)', () => {
       }))
 
       await doQuery(removeUserFromProjectQuery, { projectId, userId }, { context: managerContext })
+      const projectDatasets = await testEntityManager.find(DatasetProjectModel, { datasetId: In(datasetIds) })
 
-      expect(await testEntityManager.find(DatasetProjectModel, { datasetId: In(datasetIds) }))
-        .toEqual([])
+      expect(projectDatasets.length)
+        .toEqual(datasetIds.length)
     })
   })
 
