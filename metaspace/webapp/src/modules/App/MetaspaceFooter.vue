@@ -1,7 +1,7 @@
 <template>
   <footer class="bg-gray-100">
     <div class="leading-6 max-w-4xl mx-auto px-18 py-16 box-border text-gray-700 text-sm text-center">
-      <p class="flex justify-center m-0 font-medium">
+      <p class="flex justify-center m-0 font-medium flex-wrap">
         <router-link to="/privacy">
           Privacy
         </router-link>
