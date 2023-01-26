@@ -155,5 +155,6 @@ export default {
   .sm-main-content {
     padding-top: 10px;
     padding-bottom: 32px; /* cookies banner height */
+    overflow: auto;
   }
 </style>

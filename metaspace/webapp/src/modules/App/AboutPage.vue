@@ -1,12 +1,12 @@
 <template>
   <div class="text-base leading-6">
     <div class="bg-primary overflow-hidden w-full">
-      <div class="box-border font-display pt-12 pb-24 mx-auto max-w-4xl flex items-center">
+      <div class="box-border font-display pt-12 pb-24 mx-auto md:max-w-4xl max-w-sm flex items-center">
         <img
           src="../../assets/METASPACE_logomark.png"
           class="hidden md:block w-66 h-66 -ml-3 lg:-ml-6 p-3 box-border"
         >
-        <div class="text-white box-border ml-4 h-66">
+        <div class="text-white box-border ml-0 md:ml-4 h-66">
           <h1 class="m-0 md:mt-24 flex flex-col items-start">
             <metaspace class="w-auto md:h-18 box-border py-1" />
           </h1>
@@ -263,6 +263,20 @@ export default {
 
   .sm-about-funding li {
     @apply flex mb-6 h-12;
+  }
+
+  /* md */
+  @media screen and (max-width: 768px) {
+    .sm-about-funding li{
+      @apply h-24;
+    }
+  }
+
+  /* sm */
+  @media screen and (max-width: 640px) {
+    .sm-about-funding li{
+      @apply h-32;
+    }
   }
 
   .sm-about-funding img {
