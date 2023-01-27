@@ -55,6 +55,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       loading: enrichmentLoading,
     } = useQuery<any>(getDatasetEnrichmentQuery, computed(() => ({
       id: datasetId,
+      ontologyId: $store.getters.gqlAnnotationFilter.ontologyId,
       dbId: $store.getters.gqlAnnotationFilter.databaseId,
       fdr: $store.getters.gqlAnnotationFilter.fdrLevel,
       pValue: ($store.getters.gqlAnnotationFilter.pValue === null
@@ -94,7 +95,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
           term: item?.termId,
           ds: datasetId.value,
           db_id: dbId,
-          mol_class: '1',
+          mol_class: $store.getters.gqlAnnotationFilter.ontologyId,
           fdr,
           feat: 'enrichment',
         },

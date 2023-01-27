@@ -35,6 +35,7 @@ import { setLocalStorage } from '../../lib/localStorage'
 import { computed } from '@vue/composition-api'
 
 const orderedFilterKeys = [
+  'ontology',
   'database',
   'fdrLevel',
   'group',
@@ -230,6 +231,7 @@ const FilterPanel = {
               setLocalStorage(filterKey, val)
             }
 
+            console.log('did', filterKey, val)
             this.$store.commit('updateFilter',
               Object.assign(this.filter, { [filterKey]: val, ...extraUpdatesAux }))
           },

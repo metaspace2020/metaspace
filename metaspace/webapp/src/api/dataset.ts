@@ -423,9 +423,10 @@ export const getDatasetStatusQuery =
   }`
 
 export const getDatasetEnrichmentQuery =
-  gql`query getDatasetEnrichmentQuery($id: String!, $dbId: Int = 3, $fdr: Float = 0.5, $offSample: Boolean,
-    $pValue: Float) {
-    lipidEnrichment(datasetId: $id, molDbId: $dbId, fdr: $fdr, offSample: $offSample, pValue: $pValue) {
+  gql`query getDatasetEnrichmentQuery($id: String!, $dbId: Int = 3, $ontologyId: Int, $fdr: Float = 0.5,
+    $offSample: Boolean, $pValue: Float) {
+    lipidEnrichment(datasetId: $id, molDbId: $dbId, ontologyId: $ontologyId, fdr: $fdr,
+      offSample: $offSample, pValue: $pValue) {
       id
       termId
       name

@@ -12,6 +12,7 @@ import BooleanFilter from './filter-components/BooleanFilter.vue'
 import config from '../../lib/config'
 import AdductFilter from './filter-components/AdductFilter.vue'
 import ClassFilter from './filter-components/ClassFilter.vue'
+import OntologyFilter from './filter-components/OntologyFilter.vue'
 import DatabaseFilter from './filter-components/DatabaseFilter.vue'
 import { SingleSelectFilterType } from '../../lib/filterTypes'
 import isSnapshot from '../../lib/isSnapshot'
@@ -31,7 +32,7 @@ export type FilterKey = 'annotationIds' | 'database' | 'datasetIds' | 'minMSM' |
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
   | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
   | 'colocalizedWith' | 'colocalizationSamples' | 'offSample' | 'datasetOwner' | 'molClass' | 'term'
-  | 'opticalImage' | 'pValue';
+  | 'opticalImage' | 'pValue' | 'ontology';
 
 export type MetadataLists = Record<string, any[]>;
 
@@ -86,6 +87,7 @@ export interface FilterSpecification {
   valueGetter?(option: any): any;
   sortOrder?: number;
   isMultiFilter?: boolean;
+  hideChildren?: boolean;
   /** Other filter that should be used for displaying this filter's value */
   multiFilterParent?: FilterKey;
   /** List of other filters whose removal should cause this filter to also be removed */
@@ -182,6 +184,17 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     initialValue: undefined,
     options: lists => lists.adducts.filter(a => config.features.all_adducts || !a.hidden),
     isMultiFilter: true,
+  },
+
+  ontology: {
+    type: OntologyFilter,
+    name: 'Ontology',
+    description: 'Select ontology',
+    levels: ['enrichment'],
+    defaultInLevels: ['enrichment'],
+    hideChildren: true,
+    isMultiFilter: true,
+    initialValue: undefined,
   },
 
   molClass: {
