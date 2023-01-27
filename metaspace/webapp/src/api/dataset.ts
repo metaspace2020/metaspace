@@ -424,9 +424,9 @@ export const getDatasetStatusQuery =
 
 export const getDatasetEnrichmentQuery =
   gql`query getDatasetEnrichmentQuery($id: String!, $dbId: Int = 3, $ontologyId: Int, $fdr: Float = 0.5,
-    $offSample: Boolean, $pValue: Float) {
+    $offSample: Boolean, $colocalizedWith: String, $pValue: Float) {
     lipidEnrichment(datasetId: $id, molDbId: $dbId, ontologyId: $ontologyId, fdr: $fdr,
-      offSample: $offSample, pValue: $pValue) {
+      offSample: $offSample, colocalizedWith: $colocalizedWith, pValue: $pValue) {
       id
       termId
       name

@@ -18,6 +18,7 @@ import { smApiJsonPost, smApiJsonGet } from '../../../utils/smApi/smApiCall'
 import { smApiDatasetRequest } from '../../../utils'
 import { uniq } from 'lodash'
 import { UserError } from 'graphql-errors'
+import { ColocAnnotation, Ion } from '../../annotation/model'
 // import { unpackAnnotation } from '../../annotation/controller/Query'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
@@ -92,17 +93,31 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   async lipidEnrichment(source, {
     datasetId, molDbId, ontologyId, fdr = 0.5,
     offSample = undefined,
+    colocalizedWith = undefined,
     pValue = undefined,
   }, ctx) {
     if (await esDatasetByID(datasetId, ctx.user)) { // check if user has access
       try {
         let idsWithOffSampleFilter : any = []
+        let colocAnnotIds : any = []
 
         // get default ontology
         if (!ontologyId) {
           const enrichmentDb = await ctx.entityManager.createQueryBuilder(EnrichmentDB,
             'enrichmentDb').getOne()
           ontologyId = enrichmentDb?.id
+        }
+
+        if (colocalizedWith !== undefined) {
+          const annotation = await ctx.entityManager.createQueryBuilder(ColocAnnotation, 'colocAnnotation')
+            .innerJoinAndSelect('colocAnnotation.colocJob', 'colocJob')
+            .innerJoin(Ion, 'ion', 'colocAnnotation.ionId = ion.id')
+            .where('colocJob.datasetId = :datasetId', { datasetId })
+            .andWhere('colocJob.fdr = :fdr', { fdr })
+            .andWhere('colocJob.moldbId = :molDbId', { molDbId })
+            .andWhere('ion.ion = :colocalizedWith', { colocalizedWith })
+            .getOne()
+          colocAnnotIds = annotation?.colocIonIds || []
         }
 
         // get molecules by dsId and off sample filter
@@ -125,10 +140,14 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         if (offSample !== undefined) {
           qb = qb.andWhere('bootstrap.annotationId IN (:...idsWithOffSampleFilter)', { idsWithOffSampleFilter })
         }
+
+        if (colocalizedWith !== undefined && colocAnnotIds !== undefined) {
+          qb = qb.andWhere('bootstrap.annotationId IN (:...colocAnnotIds)', { colocAnnotIds })
+        }
+
         qb.andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
         qb.orderBy('bootstrap.scenario', 'ASC')
         const bootstrap = await qb.getMany()
-
         const enrichmentTermsMapping = await ctx.entityManager.createQueryBuilder(EnrichmentDBMoleculeMapping,
           'mapping')
           .leftJoin('mapping.enrichmentTerm', 'terms')

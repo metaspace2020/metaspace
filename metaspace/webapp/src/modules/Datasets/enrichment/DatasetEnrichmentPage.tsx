@@ -10,7 +10,6 @@ import { DatasetEnrichmentTable } from './DatasetEnrichmentTable'
 import './DatasetEnrichmentPage.scss'
 import { getEnrichedMolDatabasesQuery } from '../../../api/enrichmentdb'
 import FilterPanel from '../../Filters/FilterPanel.vue'
-import config from '../../../lib/config'
 
 interface DatasetEnrichmentPageProps {
   className: string
@@ -56,6 +55,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     } = useQuery<any>(getDatasetEnrichmentQuery, computed(() => ({
       id: datasetId,
       ontologyId: $store.getters.gqlAnnotationFilter.ontologyId,
+      colocalizedWith: $store.getters.gqlAnnotationFilter.colocalizedWith,
       dbId: $store.getters.gqlAnnotationFilter.databaseId,
       fdr: $store.getters.gqlAnnotationFilter.fdrLevel,
       pValue: ($store.getters.gqlAnnotationFilter.pValue === null
