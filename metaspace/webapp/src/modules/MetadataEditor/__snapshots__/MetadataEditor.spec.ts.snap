@@ -49,6 +49,7 @@ Object {
   "isPublic": true,
   "name": "dataset.name",
   "neutralLosses": Array [],
+  "ontologyDbIds": Array [],
   "performEnrichment": false,
   "ppm": 3,
   "principalInvestigator": Object {

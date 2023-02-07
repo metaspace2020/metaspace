@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import List
 
 import pandas as pd
 
@@ -24,7 +25,7 @@ DATASET_ENRICHMENT_INS = (
 
 
 def add_enrichment(
-    ds_id: str, moldb_id: int, bootstrap_data: pd.DataFrame, annotations: list, db: DB
+    ds_id: str, moldb_id: int, ontodb_ids: List[int], bootstrap_data: pd.DataFrame, annotations: list, db: DB
 ):
     """Add enrichment bootstrap data"""
     logger.debug(f'Inserting bootstrap for dataset {ds_id} and database {moldb_id}')
@@ -36,22 +37,25 @@ def add_enrichment(
     annotations_hash = {f'{a["formula"]}{a["adduct"]}': a['id'] for a in annotations}
     for _, row in bootstrap_data.iterrows():
         annotation_id = annotations_hash.get(row['formula_adduct'])
-        data.append(
-            (
-                row['scenario'],
-                row['formula_adduct'],
-                row['fdr'],
-                ds_id,
-                annotation_id,
-                row['enrichment_db_molecule_mapping_id'],
+        if annotation_id:
+            data.append(
+                (
+                    row['scenario'],
+                    row['formula_adduct'],
+                    row['fdr'],
+                    ds_id,
+                    annotation_id,
+                    row['enrichment_db_molecule_mapping_id'],
+                )
             )
-        )
 
     db.insert(ENRICHMENT_BOOTSTRAP_INS, rows=data)
     logger.debug('Bootstrap inserted')
 
     logger.debug(f'Inserting enrichment for dataset {ds_id}')
-    db.insert(DATASET_ENRICHMENT_INS, rows=[(ds_id, 1, moldb_id, datetime.now())])
+    for ontodb_id in ontodb_ids:
+        db.insert(DATASET_ENRICHMENT_INS, rows=[(ds_id, ontodb_id, moldb_id, datetime.now())])
+        logger.debug(f'Ontology {ontodb_id} inserted')
     logger.debug('Enrichment inserted')
 
 

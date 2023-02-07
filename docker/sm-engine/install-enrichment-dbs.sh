@@ -11,10 +11,20 @@ curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/core_metabolome.json" -
 curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/lipidmaps.json" -o /tmp/lipidmaps.json
 curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/HMDB.json" -o /tmp/HMDB.json
 curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/swisslipids.json" -o /tmp/swisslipids.json
+curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/metabo_class_HMDB.json" -o /tmp/metabo_class_HMDB.json
+curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/metabo_class_list.csv" -o /tmp/metabo_class_list.csv
+curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/metabo_path_HMDB.json" -o /tmp/metabo_path_HMDB.json
+curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/metabo_path_list.csv" -o /tmp/metabo_path_list.csv
+curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/metabo_tissue_HMDB.json" -o /tmp/metabo_tissue_HMDB.json
+curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/metabo_tissue_list.csv" -o /tmp/metabo_tissue_list.csv
 
 python scripts/import_lion_info.py LION /tmp/LION-LUT.csv CoreMetabolome v3 /tmp/core_metabolome.json /tmp/LION_METASPACE_list.csv
 python scripts/import_lion_info.py LION /tmp/LION-LUT.csv LipidMaps 2017-12-12 /tmp/lipidmaps.json /tmp/LION_METASPACE_list.csv
 python scripts/import_lion_info.py LION /tmp/LION-LUT.csv HMDB v4 /tmp/HMDB.json /tmp/LION_METASPACE_list.csv
 python scripts/import_lion_info.py LION /tmp/LION-LUT.csv SwissLipids 2018-02-02 /tmp/swisslipids.json /tmp/LION_METASPACE_list.csv
+python scripts/import_lion_info.py "Metabolite - Class" /tmp/metabo_class_list.csv HMDB v4 /tmp/metabo_class_HMDB.json /tmp/metabo_class_list.csv
+python scripts/import_lion_info.py "Metabolite - Pathway" /tmp/metabo_path_list.csv HMDB v4 /tmp/metabo_path_HMDB.json /tmp/metabo_path_list.csv
+python scripts/import_lion_info.py "Metabolite - Tissue" /tmp/metabo_tissue_list.csv HMDB v4 /tmp/metabo_tissue_HMDB.json /tmp/metabo_tissue_list.csv
 
 rm /tmp/LION-LUT.csv /tmp/lipidmaps.json /tmp/HMDB.json /tmp/swisslipids.json /tmp/core_metabolome.json /tmp/LION_METASPACE_list.csv
+rm /tmp/metabo_class_HMDB.json /tmp/metabo_class_list.csv /tmp/metabo_path_HMDB.json /tmp/metabo_path_list.csv /tmp/metabo_tissue_HMDB.json /tmp/metabo_tissue_list.csv

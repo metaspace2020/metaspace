@@ -51,6 +51,7 @@ export interface MetaspaceOptions {
   isPublic: boolean;
   performEnrichment: boolean;
   databaseIds: number[];
+  ontologyDbIds: number[];
   adducts: string[];
   neutralLosses: string[];
   chemMods: string[];

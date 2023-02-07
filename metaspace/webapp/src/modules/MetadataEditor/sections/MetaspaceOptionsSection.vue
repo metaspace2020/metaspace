@@ -192,16 +192,17 @@
               <popup-anchor
                 feature-key="v2"
                 placement="top"
-                :show-until="new Date('2022-09-01')"
+                :show-until="new Date('2023-03-01')"
                 class="block"
               >
                 <form-field
-                  type="switch"
-                  name="LION enrichment"
+                  type="selectMulti"
+                  name="Ontology database"
                   :help="EnrichmentHelp"
-                  :value="value.performEnrichment"
-                  :error="error && error.performEnrichment"
-                  @input="val => onInput('performEnrichment', val)"
+                  :value="value.ontologyDbIds"
+                  :error="error && error.ontologyDbIds"
+                  :options="ontologyDbs"
+                  @input="val => onInput('ontologyDbIds', val)"
                 />
               </popup-anchor>
             </el-col>
@@ -232,6 +233,7 @@ import PopupAnchor from '../../../modules/NewFeaturePopup/PopupAnchor.vue'
 import { MolecularDB } from '../../../api/moldb'
 import './FormSection.scss'
 import { normalizeFormulaModifier } from '../../../lib/normalizeFormulaModifier'
+import { EnrichmentDB } from '../../../api/enrichmentdb'
 
 interface Option {
   value: number
@@ -265,6 +267,9 @@ export default class MetaspaceOptionsSection extends Vue {
 
     @Prop({ type: Boolean, required: true })
     isNewDataset!: boolean;
+
+    @Prop({ type: Array })
+    ontologyDbs: EnrichmentDB[] | undefined;
 
     features = config.features;
     dbHelp = DatabaseHelpLink;

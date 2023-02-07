@@ -27,6 +27,7 @@ class DSConfigImageGeneration(TypedDict):
 
 class DSConfig(TypedDict):
     database_ids: List[int]
+    ontology_db_ids: List[int]
     analysis_version: int
     isotope_generation: DSConfigIsotopeGeneration
     fdr: DSConfigFDR

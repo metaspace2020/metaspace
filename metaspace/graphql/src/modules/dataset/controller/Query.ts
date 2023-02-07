@@ -19,6 +19,8 @@ import { smApiDatasetRequest } from '../../../utils'
 import { uniq } from 'lodash'
 import { UserError } from 'graphql-errors'
 import { ColocAnnotation, Ion } from '../../annotation/model'
+import * as _ from 'lodash'
+import { setOrMerge } from '../../../utils/setOrMerge'
 // import { unpackAnnotation } from '../../annotation/controller/Query'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
@@ -99,7 +101,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     if (await esDatasetByID(datasetId, ctx.user)) { // check if user has access
       try {
         let idsWithOffSampleFilter : any = []
-        let colocAnnotIds : any = []
+        let colocIons : any = []
 
         // get default ontology
         if (!ontologyId) {
@@ -113,11 +115,19 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
             .innerJoinAndSelect('colocAnnotation.colocJob', 'colocJob')
             .innerJoin(Ion, 'ion', 'colocAnnotation.ionId = ion.id')
             .where('colocJob.datasetId = :datasetId', { datasetId })
-            .andWhere('colocJob.fdr = :fdr', { fdr })
+            .andWhere('colocJob.fdr <= :fdr', { fdr })
             .andWhere('colocJob.moldbId = :molDbId', { molDbId })
             .andWhere('ion.ion = :colocalizedWith', { colocalizedWith })
             .getOne()
-          colocAnnotIds = annotation?.colocIonIds || []
+          const colocAnnotIds : any = annotation?.colocIonIds || []
+          const ions = await ctx.entityManager.findByIds(Ion, [annotation?.ionId, ...colocAnnotIds])
+          const ionsById = new Map<number, Ion>(ions.map(ion => [ion.id, ion] as [number, Ion]))
+          colocIons = _.uniq([annotation?.ionId, ...colocAnnotIds])
+            .map(ionId => {
+              const ion = ionsById.get(ionId)
+              return ion != null ? (ion.formula + ion.adduct) : null
+            })
+            .filter(ion => ion != null)
         }
 
         // get molecules by dsId and off sample filter
@@ -141,13 +151,14 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           qb = qb.andWhere('bootstrap.annotationId IN (:...idsWithOffSampleFilter)', { idsWithOffSampleFilter })
         }
 
-        if (colocalizedWith !== undefined && colocAnnotIds !== undefined) {
-          qb = qb.andWhere('bootstrap.annotationId IN (:...colocAnnotIds)', { colocAnnotIds })
+        if (colocalizedWith !== undefined && colocIons !== undefined) {
+          qb = qb.andWhere('bootstrap.formulaAdduct IN (:...colocIons)', { colocIons })
         }
 
         qb.andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
         qb.orderBy('bootstrap.scenario', 'ASC')
         const bootstrap = await qb.getMany()
+
         const enrichmentTermsMapping = await ctx.entityManager.createQueryBuilder(EnrichmentDBMoleculeMapping,
           'mapping')
           .leftJoin('mapping.enrichmentTerm', 'terms')

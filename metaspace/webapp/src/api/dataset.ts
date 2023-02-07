@@ -1,6 +1,7 @@
 import gql from 'graphql-tag'
 
 import { MolecularDB } from './moldb'
+import { EnrichmentDB } from './enrichmentdb'
 
 // Prefixing these with `Gql` because differently-cased variants are used elsewhere
 export type GqlPolarity = 'POSITIVE' | 'NEGATIVE';
@@ -56,6 +57,7 @@ export interface DatasetDetailItem {
   isPublic: boolean;
   molDBs: string[];
   databases: MolecularDB[];
+  ontologyDatabases: EnrichmentDB[];
   status: GqlJobStatus | null;
   metadataType: string;
   annotationCounts: DatasetAnnotationCount[];
@@ -101,6 +103,10 @@ export const datasetDetailItemFragment =
     metadataJson
     configJson
     isPublic
+    ontologyDatabases{
+      id
+      name
+    }
     databases {
       id
       name

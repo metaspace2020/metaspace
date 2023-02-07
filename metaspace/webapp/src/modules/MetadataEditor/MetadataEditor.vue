@@ -80,6 +80,7 @@
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :databases-by-group="molDBsByGroup"
+          :ontology-dbs="ontologyDbs"
           :default-db="defaultDb"
           :adduct-options="adductOptions"
           :is-new-dataset="isNew"
@@ -161,6 +162,7 @@ const factories = {
 const defaultMetaspaceOptions = {
   isPublic: true,
   databaseIds: [],
+  ontologyDbIds: [],
   adducts: [],
   name: '',
   submitterId: null,
@@ -191,6 +193,7 @@ export default {
       localErrors: {},
       defaultDb: null,
       molDBsByGroup: [],
+      ontologyDbs: [],
       possibleAdducts: {},
       scoringModels: [],
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
@@ -270,10 +273,11 @@ export default {
       const {
         isPublic, configJson, databases, adducts,
         name, group, projects, submitter, principalInvestigator,
-        description, isEnriched,
+        description, isEnriched, ontologyDatabases,
       } = dataset
 
       const config = safeJsonParse(configJson)
+      console.log('con', config)
       return {
         submitterId: submitter ? submitter.id : null,
         groupId: group ? group.id : null,
@@ -292,6 +296,7 @@ export default {
         ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
         analysisVersion: isNew ? 1 : get(config, 'analysis_version') || 1,
         scoringModel: isNew ? null : get(config, 'fdr.scoring_model') || null,
+        ontologyDbIds: isNew ? null : get(config, 'ontology_db_ids') || null,
         performEnrichment: isEnriched,
       }
     },
@@ -313,6 +318,7 @@ export default {
           },
           submitter: data.currentUser,
           databases: dataset ? dataset.databases : [],
+          ontologyDatabases: (dataset?.ontologyDatabases || []),
         }
       } else {
         const { data } = await this.$apollo.query({
@@ -432,7 +438,7 @@ export default {
       const metadata = this.importMetadata(loadedMetadata, mdType)
 
       // Load options
-      const { adducts, molecularDatabases, scoringModels } = options
+      const { adducts, molecularDatabases, scoringModels, ontologyDbs } = options
       this.possibleAdducts = {
         Positive: adducts.filter(a => a.charge > 0),
         Negative: adducts.filter(a => a.charge < 0),
@@ -440,6 +446,7 @@ export default {
       this.scoringModels = scoringModels
       this.defaultDb = molecularDatabases.find((db) => db.default) || {}
       this.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
+      this.ontologyDbs = ontologyDbs
       this.schema = deriveFullSchema(metadataSchemas[mdType])
 
       // TODO remove the additional information from the schema itself at some point
@@ -449,6 +456,7 @@ export default {
       }
 
       const selectedDbs = dataset.databases || []
+      const selectedOntologyDbs = dataset.ontologyDatabases || []
 
       // enable default db normal edit if dataset already registered and does not have it
       this.defaultDb = !this.isNew && !selectedDbs.map((db) => db.id).includes(this.defaultDb.id) ? {}
@@ -460,8 +468,10 @@ export default {
         // This is because it's expensive to change database later. We want a smart default for new users,
         // but if the user has previously selected a value that is now invalid, they should be made aware so that they
         // can choose an appropriate substitute.
+
         metaspaceOptions.databaseIds = uniq(selectedDbs.map((db) => db.id)
           .concat(molecularDatabases.filter(d => d.default).map(_ => _.id)))
+        metaspaceOptions.ontologyDbIds = uniq(selectedOntologyDbs.map((db) => db.id))
         if (selectedDbs.length > 0) {
           for (const db of selectedDbs) {
             if (molecularDatabases.find(_ => _.id === db.id) === undefined) {

@@ -28,6 +28,7 @@ type Dataset {
   metadataJson: String!
   isPublic: Boolean!
   isEnriched: Boolean
+  ontologyDatabases: [EnrichmentDb]
   databases: [MolecularDB!]!
   molDBs: [String!]!  # @deprecated(reason: "Use \"databases\" instead")
   adducts: [String!]!
@@ -217,6 +218,7 @@ input DatasetCreateInput {
   description: String
   metadataJson: String!
   databaseIds: [Int!]
+  ontologyDbIds: [Int]
   molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
   adducts: [String!]!
   neutralLosses: [String!]
@@ -242,6 +244,7 @@ input DatasetUpdateInput {
   metadataJson: String
   description: String
   databaseIds: [Int!]
+  ontologyDbIds: [Int]
   molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
   adducts: [String!]
   neutralLosses: [String!]

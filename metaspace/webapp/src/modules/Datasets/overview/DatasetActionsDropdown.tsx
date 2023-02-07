@@ -45,7 +45,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     editActionLabel: { type: String, default: 'Edit metadata' },
     compareActionLabel: { type: String, default: 'Compare with other datasets...' },
     browserActionLabel: { type: String, default: 'Imzml Browser' },
-    enrichmentActionLabel: { type: String, default: 'LION enrichment' },
+    enrichmentActionLabel: { type: String, default: 'Ontology enrichment' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
     dataset: { type: Object as () => DatasetDetailItem, required: true },

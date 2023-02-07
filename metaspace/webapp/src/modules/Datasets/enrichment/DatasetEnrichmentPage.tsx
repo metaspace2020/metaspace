@@ -10,6 +10,7 @@ import { DatasetEnrichmentTable } from './DatasetEnrichmentTable'
 import './DatasetEnrichmentPage.scss'
 import { getEnrichedMolDatabasesQuery } from '../../../api/enrichmentdb'
 import FilterPanel from '../../Filters/FilterPanel.vue'
+import { uniq, uniqBy } from 'lodash-es'
 
 interface DatasetEnrichmentPageProps {
   className: string
@@ -109,6 +110,8 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       const data = enrichment.value || []
       const usedData = state.sortedData ? state.sortedData : data
       const pagedData = usedData.slice(dataStart, dataEnd)
+      const databaseOptions : any = databases.value || []
+      const ontologyDatabases : any = dataset.value?.ontologyDatabases || []
 
       return (
         <div class='dataset-enrichment-page'>
@@ -117,7 +120,10 @@ export default defineComponent<DatasetEnrichmentPageProps>({
             && <FilterPanel
               class='w-full'
               level='enrichment'
-              fixedOptions={{ database: (databases.value || []) }}
+              fixedOptions={{
+                database: uniqBy(databaseOptions, 'id'),
+                ontology: uniqBy(ontologyDatabases, 'id'),
+              }}
             />
           }
           {
