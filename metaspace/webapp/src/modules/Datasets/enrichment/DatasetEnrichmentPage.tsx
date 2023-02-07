@@ -172,6 +172,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       const data = enrichment.value || []
       const usedData = state.sortedData ? state.sortedData : data
       const pagedData = usedData.slice(dataStart, dataEnd)
+      const ontologyDatabases : any = dataset.value?.ontologyDatabases || []
       const databaseOptions : any = databases.value || []
       const filename : string = `${dataset.value?.name}_${(databases.value || []).find((database:any) => database.id
         === $store.getters.gqlAnnotationFilter.databaseId)?.name}`.replace(/\./g, '_')

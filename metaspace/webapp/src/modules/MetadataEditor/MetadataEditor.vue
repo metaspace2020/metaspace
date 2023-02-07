@@ -273,10 +273,11 @@ export default {
       const {
         isPublic, configJson, databases, adducts,
         name, group, projects, submitter, principalInvestigator,
-        description, isEnriched,
+        description, isEnriched, ontologyDatabases,
       } = dataset
 
       const config = safeJsonParse(configJson)
+      console.log('con', config)
       return {
         submitterId: submitter ? submitter.id : null,
         groupId: group ? group.id : null,

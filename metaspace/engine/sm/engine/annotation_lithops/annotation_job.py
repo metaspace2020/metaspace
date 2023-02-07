@@ -281,7 +281,7 @@ class ServerAnnotationJob:
         self.perf = perf
         self.store_images = store_images
         self.perform_enrichment = perform_enrichment
-        self.ont_db_ids = self.ds.config['ontology_db_ids'] or []
+        self.ont_db_ids = self.ds.config['ontology_db_ids']
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = _upload_imzmls_from_prefix_if_needed(
@@ -381,9 +381,8 @@ class ServerAnnotationJob:
                     bootstrap_df = self.enrichment_data[moldb_id]
 
                     # add enrichment for each selected ontology
-                    add_enrichment(
-                        self.ds.id, moldb_id, self.ont_db_ids, bootstrap_df, annot_ids, self.db
-                    )
+                    add_enrichment(self.ds.id, moldb_id, self.ont_db_ids,
+                                   bootstrap_df, annot_ids, self.db)
 
                 update_finished_job(job_id, JobStatus.FINISHED)
         except Exception:

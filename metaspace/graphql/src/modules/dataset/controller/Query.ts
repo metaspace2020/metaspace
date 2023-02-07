@@ -100,7 +100,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     if (await esDatasetByID(datasetId, ctx.user)) { // check if user has access
       try {
         let idsWithOffSampleFilter : any = []
-        let colocAnnotIds : any = []
         let colocIons : any = []
 
         // get default ontology
@@ -152,10 +151,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           qb = qb.andWhere('bootstrap.annotationId IN (:...idsWithOffSampleFilter)', { idsWithOffSampleFilter })
         }
 
-        if (colocalizedWith !== undefined && colocAnnotIds !== undefined) {
-          qb = qb.andWhere('bootstrap.annotationId IN (:...colocAnnotIds)', { colocAnnotIds })
-        }
-
 
         if (colocalizedWith !== undefined && colocIons !== undefined) {
           qb = qb.andWhere('bootstrap.formulaAdduct IN (:...colocIons)', { colocIons })
@@ -164,6 +159,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         qb.andWhere('enrichmentDBMoleculeMapping.molecularDbId = :molDbId', { molDbId })
         qb.orderBy('bootstrap.scenario', 'ASC')
         const bootstrap = await qb.getMany()
+
         const enrichmentTermsMapping = await ctx.entityManager.createQueryBuilder(EnrichmentDBMoleculeMapping,
           'mapping')
           .leftJoin('mapping.enrichmentTerm', 'terms')
