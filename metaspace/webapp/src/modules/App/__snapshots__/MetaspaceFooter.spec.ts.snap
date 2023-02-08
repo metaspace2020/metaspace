@@ -11,7 +11,7 @@ exports[`MetaspaceFooter should match snapshot 1`] = `
         Publications
       </a> <a href="https://github.com/metaspace2020/metaspace">GitHub</a> <a href="https://twitter.com/metaspace2020">Twitter</a> <a href="mailto:contact@metaspace2020.eu">Contact</a></p>
     <p class="m-0 mt-8">
-      © 2014–2022 <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov Team</a></p>
+      © 2014–2023 <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov Team</a></p>
   </div>
 </footer>
 `;
