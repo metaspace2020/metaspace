@@ -45,7 +45,10 @@ export default function(httpServer?: http.Server) {
         throw new Error('uuid is not valid')
       }
 
-      logger.debug(`File ${filename} uploaded to ${uuid} from user ${req.body?.metadata?.user}`)
+      const source = req.body?.metadata?.source
+      const user = req.body?.metadata?.user
+
+      logger.debug(`[${source}] File ${filename} uploaded to ${uuid} from user ${user}`)
 
       return `${uuid}/${filename}`
     }

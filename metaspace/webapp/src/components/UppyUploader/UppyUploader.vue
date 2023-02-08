@@ -157,7 +157,7 @@ const UppyUploader = defineComponent<Props>({
           uppy.addFile({
             name: file.name,
             type: file.type,
-            meta: { user: props.currentUser?.id },
+            meta: { user: props.currentUser?.id, source: 'webapp' },
             data: file,
           })
         }
