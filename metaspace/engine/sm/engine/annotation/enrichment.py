@@ -25,7 +25,12 @@ DATASET_ENRICHMENT_INS = (
 
 
 def add_enrichment(
-    ds_id: str, moldb_id: int, ontodb_ids: List[int], bootstrap_data: pd.DataFrame, annotations: list, db: DB
+    ds_id: str,
+    moldb_id: int,
+    ontodb_ids: List[int],
+    bootstrap_data: pd.DataFrame,
+    annotations: list,
+    db: DB,
 ):
     """Add enrichment bootstrap data"""
     logger.debug(f'Inserting bootstrap for dataset {ds_id} and database {moldb_id}')

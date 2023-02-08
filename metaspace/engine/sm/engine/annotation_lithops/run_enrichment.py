@@ -62,7 +62,9 @@ def calc_bootstrapping(
     return bootstrapping_sublist
 
 
-def run_enrichment(results_dfs: Dict[int, pd.DataFrame], ontdb_ids: List[int]) -> Dict[int, pd.DataFrame]:
+def run_enrichment(
+    results_dfs: Dict[int, pd.DataFrame], ontdb_ids: List[int]
+) -> Dict[int, pd.DataFrame]:
     bootstrap_hash = {}
 
     for moldb_id, molecules in results_dfs.items():
