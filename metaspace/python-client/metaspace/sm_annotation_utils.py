@@ -182,7 +182,12 @@ def multipart_upload(local_path, companion_url, file_type, headers={}, current_u
         data = {
             'filename': filename,
             'type': file_type,
-            'metadata': {'name': filename, 'type': file_type, 'source': 'api', 'user': current_user_id},
+            'metadata': {
+                'name': filename,
+                'type': file_type,
+                'source': 'api',
+                'user': current_user_id,
+            },
         }
         resp_data = send_request(url, 'POST', json=data, headers=headers)
         return resp_data['key'], resp_data['uploadId']
@@ -252,8 +257,9 @@ def multipart_upload(local_path, companion_url, file_type, headers={}, current_u
                 yield part, file_data
 
     session = requests.Session()
-    key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers,
-                                           current_user_id=current_user_id)
+    key, upload_id = init_multipart_upload(
+        Path(local_path).name, file_type, headers=headers, current_user_id=current_user_id
+    )
 
     # Python evaluates the input to ThreadPoolExecutor.map eagerly, which would allow iterate_file
     # to read parts and sign uploads even if there was a significant queue to upload_part.
@@ -274,7 +280,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}, current_u
     return bucket, key
 
 
-def _dataset_upload(imzml_fn, ibd_fn, companion_url, current_user_id = None):
+def _dataset_upload(imzml_fn, ibd_fn, companion_url, current_user_id=None):
     assert Path(imzml_fn).exists(), f'Could not find .imzML file: {imzml_fn}'
     assert Path(ibd_fn).exists(), f'Could not find .ibd file: {ibd_fn}'
     # Get UUID for upload
@@ -289,7 +295,7 @@ def _dataset_upload(imzml_fn, ibd_fn, companion_url, current_user_id = None):
             companion_url,
             'application/octet-stream',
             headers=headers,
-            current_user_id=current_user_id
+            current_user_id=current_user_id,
         )
     input_path = f's3a://{bucket}/{key.rsplit("/", 1)[0]}'
     return input_path
@@ -1821,7 +1827,9 @@ class SMInstance(object):
         # Upload the files. Keep this as late as possible to minimize chances of error after upload
         if input_path is None:
             assert imzml_fn and ibd_fn, 'imzml_fn and ibd_fn must be supplied'
-            input_path = _dataset_upload(imzml_fn, ibd_fn, self._config['dataset_upload_url'], current_user_id)
+            input_path = _dataset_upload(
+                imzml_fn, ibd_fn, self._config['dataset_upload_url'], current_user_id
+            )
 
         graphql_response = self._gqclient.create_dataset(
             {
