@@ -200,7 +200,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     @use_pipeline_cache
     def run_enrichment(self):
-        self.enrichment_data = run_enrichment(self.results_dfs, self.ds_config['ontology_db_ids'])
+        self.enrichment_data = run_enrichment(self.results_dfs, self.ds_config['ontology_db_ids'] or [])
 
     def store_images_to_s3(self, ds_id: str):
         """Stores ion images to S3 ImageStorage. Not part of run_pipeline because this is unwanted

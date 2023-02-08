@@ -251,7 +251,7 @@ def generate_ds_config(
 
     return {
         'database_ids': moldb_ids,
-        'ontology_db_ids': ontology_db_ids,
+        'ontology_db_ids': ontology_db_ids or [],
         'analysis_version': analysis_version,
         'isotope_generation': {
             'adducts': adducts or default_adducts,

@@ -36,7 +36,7 @@ TEST_DS_CONFIG = {
     },
     "fdr": {"decoy_sample_size": 20, "scoring_model": None},
     "database_ids": [0],
-    "ontology_db_ids": None,
+    "ontology_db_ids": [],
 }
 
 
