@@ -104,11 +104,7 @@ def import_mappings(df: pd.DataFrame) -> None:
 
 
 def create(
-    enrichment_db_id: int,
-    db_name: str,
-    db_version: str,
-    file_path: str,
-    filter_file_path: str,
+    enrichment_db_id: int, db_name: str, db_version: str, file_path: str, filter_file_path: str,
 ) -> None:
     logger.info(f'Received request: {db_name}')
     matching_enrichment_id_names, filter_terms = read_files(file_path, filter_file_path)
