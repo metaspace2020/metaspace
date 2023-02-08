@@ -20,7 +20,6 @@ import { uniq } from 'lodash'
 import { UserError } from 'graphql-errors'
 import { ColocAnnotation, Ion } from '../../annotation/model'
 import * as _ from 'lodash'
-import { setOrMerge } from '../../../utils/setOrMerge'
 // import { unpackAnnotation } from '../../annotation/controller/Query'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
