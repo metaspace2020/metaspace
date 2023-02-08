@@ -373,8 +373,9 @@ class ServerAnnotationJob:
                     bootstrap_df = self.enrichment_data[moldb_id]
 
                     # add enrichment for each selected ontology
-                    add_enrichment(self.ds.id, moldb_id, self.ont_db_ids,
-                                   bootstrap_df, annot_ids, self.db)
+                    add_enrichment(
+                        self.ds.id, moldb_id, self.ont_db_ids, bootstrap_df, annot_ids, self.db
+                    )
 
                 update_finished_job(job_id, JobStatus.FINISHED)
         except Exception:
