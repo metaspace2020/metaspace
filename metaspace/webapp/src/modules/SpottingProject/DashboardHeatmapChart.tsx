@@ -200,7 +200,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
           feature: {
             saveAsImage: {
               title: ' ',
-              name: 'spotting',
+              name: 'standards',
             },
           },
         },
