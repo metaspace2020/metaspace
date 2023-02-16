@@ -193,7 +193,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['enrichment'],
     defaultInLevels: ['enrichment'],
     hideChildren: true,
-    isMultiFilter: true,
+    isMultiFilter: false,
     initialValue: undefined,
   },
 

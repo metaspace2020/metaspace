@@ -43,7 +43,21 @@ export default defineComponent<DatasetEnrichmentPageProps>({
 
     const {
       result: datasetResult,
+      onResult: handleDatasetLoad,
     } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId })
+
+    handleDatasetLoad(async(result) => {
+      const filter = Object.assign({}, $store.getters.filter)
+
+      if (!filter.ontology) {
+        const ontologyDatabases : any = result?.data?.dataset?.ontologyDatabases || []
+        if (ontologyDatabases.length > 0) {
+          filter.ontology = ontologyDatabases[0].id
+          $store.commit('updateFilter', filter)
+        }
+      }
+    })
+
     const dataset = computed(() => datasetResult.value != null ? datasetResult.value.dataset : null)
     const {
       result: databasesResult,

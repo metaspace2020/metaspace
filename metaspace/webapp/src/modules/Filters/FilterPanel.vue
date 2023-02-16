@@ -231,7 +231,6 @@ const FilterPanel = {
               setLocalStorage(filterKey, val)
             }
 
-            console.log('did', filterKey, val)
             this.$store.commit('updateFilter',
               Object.assign(this.filter, { [filterKey]: val, ...extraUpdatesAux }))
           },

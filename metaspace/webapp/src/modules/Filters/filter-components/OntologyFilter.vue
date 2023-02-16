@@ -6,7 +6,7 @@
   >
     <div slot="edit">
       <el-select
-        :value="filterValues && filterValues.ontology ? parseInt(filterValues.ontology, 10) : undefined"
+        :value="value"
         placeholder="Select ontology"
         filterable
         :clearable="false"
@@ -14,7 +14,7 @@
         @change="val => onChange('ontology', val)"
       >
         <el-option
-          v-for="item in molClasses"
+          v-for="item in (fixedOptions || molClasses)"
           :key="item.id"
           :label="item.name"
           :value="item.id"
@@ -33,7 +33,7 @@
 <script lang="ts">
 import TagFilter from './TagFilter.vue'
 import Vue from 'vue'
-import { Component, Prop } from 'vue-property-decorator'
+import { Component, Prop, Watch } from 'vue-property-decorator'
 import gql from 'graphql-tag'
 import { EnrichmentDB } from '../../../api/enrichmentdb'
 
@@ -54,10 +54,12 @@ import { EnrichmentDB } from '../../../api/enrichmentdb'
     },
   })
 export default class OntologyFilter extends Vue {
-    @Prop(Object)
-    filterValues: any;
+    @Prop()
+    value: any;
 
-    termNameQuery: string = '';
+    @Prop()
+    fixedOptions!: any | undefined;
+
     molClasses!: EnrichmentDB[];
     termOptionsLoading = 0;
 
@@ -68,8 +70,9 @@ export default class OntologyFilter extends Vue {
     }
 
     formatValue() {
-      const { ontology } = (this.filterValues || {})
-      const classItem = (this.molClasses || []).find((item: any) => item.id === parseInt(ontology, 10))
+      const ontology = parseInt(this.value, 10)
+      const molClasses = (this.fixedOptions || this.molClasses || [])
+      const classItem = molClasses.find((item: any) => item.id === ontology)
 
       if (classItem) {
         return classItem.name
