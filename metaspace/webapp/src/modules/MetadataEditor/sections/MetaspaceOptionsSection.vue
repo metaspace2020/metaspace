@@ -197,7 +197,7 @@
               >
                 <form-field
                   type="selectMulti"
-                  name="Ontology database"
+                  name="Enrichment ontology"
                   :help="EnrichmentHelp"
                   :value="value.ontologyDbIds"
                   :error="error && error.ontologyDbIds"

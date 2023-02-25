@@ -1,6 +1,6 @@
 import {
   computed,
-  defineComponent,
+  defineComponent, onMounted,
   reactive,
 } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
@@ -11,6 +11,8 @@ import './DatasetEnrichmentPage.scss'
 import { getEnrichedMolDatabasesQuery } from '../../../api/enrichmentdb'
 import FilterPanel from '../../Filters/FilterPanel.vue'
 import { uniq, uniqBy } from 'lodash-es'
+import gql from 'graphql-tag'
+import safeJsonParse from '../../../lib/safeJsonParse'
 
 interface DatasetEnrichmentPageProps {
   className: string
@@ -39,7 +41,36 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       pageSize: 15,
       sortedData: undefined,
     })
+    const fetchImageViewerSnapshot = gql`query fetchImageViewerSnapshot($id: String!, $datasetId: String!) {
+      imageViewerSnapshot(id: $id, datasetId: $datasetId) {
+        snapshot
+      }
+    }`
+    const snapQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+    const enrichmentQueryOptions = reactive({ enabled: false, fetchPolicy: 'cache-first' as const })
+
     const datasetId = computed(() => $route.params.dataset_id)
+
+    const snapshotId = computed(() => $route.query.viewId)
+    const {
+      result: settingsResult,
+      onResult: handleSettingsLoad,
+    } = useQuery<any>(fetchImageViewerSnapshot, {
+      id: snapshotId,
+      datasetId: datasetId,
+    }, snapQueryOptions)
+
+    handleSettingsLoad(async(result) => {
+      const snapFilter = safeJsonParse(result?.data?.imageViewerSnapshot?.snapshot)
+
+      if (snapFilter) {
+        const filter = Object.assign($store.getters.filter, snapFilter)
+
+        await $store.commit('updateFilter', filter)
+      }
+
+      enrichmentQueryOptions.enabled = true
+    })
 
     const {
       result: datasetResult,
@@ -55,6 +86,12 @@ export default defineComponent<DatasetEnrichmentPageProps>({
           filter.ontology = ontologyDatabases[0].id
           $store.commit('updateFilter', filter)
         }
+      }
+
+      if ($route.query.viewId) {
+        snapQueryOptions.enabled = true
+      } else {
+        enrichmentQueryOptions.enabled = true
       }
     })
 
@@ -79,7 +116,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       offSample: ($store.getters.gqlAnnotationFilter.offSample === null
       || $store.getters.gqlAnnotationFilter.offSample === undefined)
         ? undefined : !!$store.getters.gqlAnnotationFilter.offSample,
-    })), { fetchPolicy: 'no-cache' as const })
+    })), enrichmentQueryOptions)
 
     const enrichment = computed(() => {
       if (enrichmentResult.value) {
@@ -154,7 +191,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
             && <div class={'dataset-enrichment-wrapper md:w-1/2 w-full'}>
               <DatasetEnrichmentTable
                 data={data}
-                filename={`${dataset.value?.name}_${databases.value.find((database:any) => database.id
+                filename={`${dataset.value?.name}_${databases?.value?.find((database:any) => database.id
                   === $store.getters.gqlAnnotationFilter.databaseId)?.name}_enrichment.csv`}
                 onPageChange={handlePageChange}
                 onSizeChange={handleSizeChange}

@@ -92,6 +92,8 @@ import { FilterPanel } from '../Filters/index'
 import config from '../../lib/config'
 import { useRestoredState } from '../ImageViewer'
 import isSnapshot from '../../lib/isSnapshot'
+import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
+import moment from 'moment'
 
 export default {
   name: 'AnnotationsPage',
@@ -135,17 +137,17 @@ export default {
     },
 
     currentLevel() {
-      return this.$route.name === 'dataset-annotations' ? 'dataset-annotation' : 'annotation'
+      return 'annotation'
     },
 
     isFromDatasetOverview() {
-      return this.$route.name === 'dataset-annotations'
+      return this.filter.datasetIds && getLocalStorage('overview')
     },
 
     datasetOverviewLink() {
       return {
         name: 'dataset-overview',
-        params: { dataset_id: this.$route.params.dataset_id },
+        params: { dataset_id: this.$route.query.ds || this.selectedAnnotation?.dataset?.id },
       }
     },
 
@@ -174,6 +176,7 @@ export default {
     }
   },
   destroyed() {
+    setLocalStorage('overview', false)
     this.$store.commit('setAnnotation', undefined)
     this.$store.commit('setSnapshotAnnotationIds', undefined)
   },

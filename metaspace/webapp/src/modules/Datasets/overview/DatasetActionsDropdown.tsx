@@ -72,12 +72,12 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
 
     const confirmReprocessEnrichment = async() => {
       try {
-        await $confirm('The changes to the analysis options require the dataset to be reprocessed. '
-          + 'This dataset will be unavailable until reprocessing has completed. Do you wish to continue?',
-        'Reprocessing required',
+        await $confirm('To perform the ontology enrichment, please select the desired enrichment ontology '
+          + 'on the dataset edition page. ',
+        'Enrichment not found',
         {
           type: 'warning',
-          confirmButtonText: 'Continue',
+          confirmButtonText: 'Edit dataset',
           cancelButtonText: 'Cancel',
         })
         return true
@@ -149,7 +149,11 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
 
     const handleEnrichmentRequest = async() => {
       if (await confirmReprocessEnrichment()) {
-        handleReprocess(true)
+        $router.push({
+          name: 'edit-metadata',
+          params: { dataset_id: props.dataset?.id },
+          query: { feat: 'enrichment' },
+        })
       }
     }
 

@@ -53,36 +53,36 @@ exports[`AnnotationCountTable it should match snapshot 1`] = `
         <tbody>
           <tr class="el-table__row">
             <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx" class="">HMDB-v4</a></div>
+              <div class="cell"><a href="/annotations?db_id=1&amp;ds=xxxx" class="">HMDB-v4</a></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.05" class="">55</a></div>
+              <div class="cell"><a href="/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.05" class="">55</a></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.1" class="">104</a></div>
+              <div class="cell"><a href="/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.1" class="">104</a></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.2" class="">196</a></div>
+              <div class="cell"><a href="/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.2" class="">196</a></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.5" class="">224</a></div>
+              <div class="cell"><a href="/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.5" class="">224</a></div>
             </td>
           </tr>
           <tr class="el-table__row">
             <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx" class="">ChEBI-2018-01</a></div>
+              <div class="cell"><a href="/annotations?db_id=6&amp;ds=xxxx" class="">ChEBI-2018-01</a></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.05" class="">65</a></div>
+              <div class="cell"><a href="/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.05" class="">65</a></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.1" class="">90</a></div>
+              <div class="cell"><a href="/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.1" class="">90</a></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.2" class="">177</a></div>
+              <div class="cell"><a href="/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.2" class="">177</a></div>
             </td>
             <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.5" class="">190</a></div>
+              <div class="cell"><a href="/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.5" class="">190</a></div>
             </td>
           </tr>
           <!---->
@@ -106,16 +106,16 @@ exports[`AnnotationCountTable it should match snapshot 1`] = `
               <div class="cell">Total Annotations</div>
             </td>
             <td colspan="1" rowspan="1" class="el-table_1_column_2 is-leaf">
-              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.05" class="">120</a></div>
+              <div class="cell"><a href="/annotations?ds=xxxx&amp;fdr=0.05" class="">120</a></div>
             </td>
             <td colspan="1" rowspan="1" class="el-table_1_column_3 is-leaf">
-              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.1" class="">194</a></div>
+              <div class="cell"><a href="/annotations?ds=xxxx&amp;fdr=0.1" class="">194</a></div>
             </td>
             <td colspan="1" rowspan="1" class="el-table_1_column_4 is-leaf">
-              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.2" class="">373</a></div>
+              <div class="cell"><a href="/annotations?ds=xxxx&amp;fdr=0.2" class="">373</a></div>
             </td>
             <td colspan="1" rowspan="1" class="el-table_1_column_5 is-leaf">
-              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.5" class="">414</a></div>
+              <div class="cell"><a href="/annotations?ds=xxxx&amp;fdr=0.5" class="">414</a></div>
             </td>
           </tr>
         </tbody>

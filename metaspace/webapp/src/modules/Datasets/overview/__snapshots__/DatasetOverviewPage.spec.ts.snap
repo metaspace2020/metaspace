@@ -115,36 +115,36 @@ exports[`DatasetOverviewPage should match snapshot when dataset exist 1`] = `
               <tbody>
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?db_id=115&amp;ds=dataset1" class="">dataset.annotationCounts.0.dbName-dataset.annotationCounts.0.dbVersion</a></div>
+                    <div class="cell"><a href="/annotations?db_id=115&amp;ds=dataset1" class="">dataset.annotationCounts.0.dbName-dataset.annotationCounts.0.dbVersion</a></div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?db_id=115&amp;ds=dataset1&amp;fdr=0.05" class=""></a></div>
+                    <div class="cell"><a href="/annotations?db_id=115&amp;ds=dataset1&amp;fdr=0.05" class=""></a></div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?db_id=115&amp;ds=dataset1&amp;fdr=0.1" class=""></a></div>
+                    <div class="cell"><a href="/annotations?db_id=115&amp;ds=dataset1&amp;fdr=0.1" class=""></a></div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?db_id=115&amp;ds=dataset1&amp;fdr=0.2" class=""></a></div>
+                    <div class="cell"><a href="/annotations?db_id=115&amp;ds=dataset1&amp;fdr=0.2" class=""></a></div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?db_id=115&amp;ds=dataset1&amp;fdr=0.5" class=""></a></div>
+                    <div class="cell"><a href="/annotations?db_id=115&amp;ds=dataset1&amp;fdr=0.5" class=""></a></div>
                   </td>
                 </tr>
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?db_id=114&amp;ds=dataset1" class="">dataset.annotationCounts.1.dbName-dataset.annotationCounts.1.dbVersion</a></div>
+                    <div class="cell"><a href="/annotations?db_id=114&amp;ds=dataset1" class="">dataset.annotationCounts.1.dbName-dataset.annotationCounts.1.dbVersion</a></div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?db_id=114&amp;ds=dataset1&amp;fdr=0.05" class=""></a></div>
+                    <div class="cell"><a href="/annotations?db_id=114&amp;ds=dataset1&amp;fdr=0.05" class=""></a></div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?db_id=114&amp;ds=dataset1&amp;fdr=0.1" class=""></a></div>
+                    <div class="cell"><a href="/annotations?db_id=114&amp;ds=dataset1&amp;fdr=0.1" class=""></a></div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?db_id=114&amp;ds=dataset1&amp;fdr=0.2" class=""></a></div>
+                    <div class="cell"><a href="/annotations?db_id=114&amp;ds=dataset1&amp;fdr=0.2" class=""></a></div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?db_id=114&amp;ds=dataset1&amp;fdr=0.5" class=""></a></div>
+                    <div class="cell"><a href="/annotations?db_id=114&amp;ds=dataset1&amp;fdr=0.5" class=""></a></div>
                   </td>
                 </tr>
                 <!---->
@@ -168,16 +168,16 @@ exports[`DatasetOverviewPage should match snapshot when dataset exist 1`] = `
                     <div class="cell">Total Annotations</div>
                   </td>
                   <td colspan="1" rowspan="1" class="el-table_1_column_2 is-leaf">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?ds=dataset1&amp;fdr=0.05" class="">NaN</a></div>
+                    <div class="cell"><a href="/annotations?ds=dataset1&amp;fdr=0.05" class="">NaN</a></div>
                   </td>
                   <td colspan="1" rowspan="1" class="el-table_1_column_3 is-leaf">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?ds=dataset1&amp;fdr=0.1" class="">NaN</a></div>
+                    <div class="cell"><a href="/annotations?ds=dataset1&amp;fdr=0.1" class="">NaN</a></div>
                   </td>
                   <td colspan="1" rowspan="1" class="el-table_1_column_4 is-leaf">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?ds=dataset1&amp;fdr=0.2" class="">NaN</a></div>
+                    <div class="cell"><a href="/annotations?ds=dataset1&amp;fdr=0.2" class="">NaN</a></div>
                   </td>
                   <td colspan="1" rowspan="1" class="el-table_1_column_5 is-leaf">
-                    <div class="cell"><a href="/dataset/dataset1/annotations?ds=dataset1&amp;fdr=0.5" class="">NaN</a></div>
+                    <div class="cell"><a href="/annotations?ds=dataset1&amp;fdr=0.5" class="">NaN</a></div>
                   </td>
                 </tr>
               </tbody>

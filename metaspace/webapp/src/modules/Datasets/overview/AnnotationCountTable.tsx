@@ -3,6 +3,7 @@ import Vue from 'vue'
 import { Table, TableColumn, Button } from '../../../lib/element-ui'
 import { DatasetAnnotationCount } from '../../../api/dataset'
 import { encodeParams } from '../../Filters'
+import { setLocalStorage } from '../../../lib/localStorage'
 
 const RouterLink = Vue.component('router-link')
 
@@ -34,6 +35,7 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
   },
   setup(props, ctx) {
     const annotationsLink = (datasetId: string, database?: string, fdrLevel?: number) => {
+      setLocalStorage('overview', true)
       const query = {
         database,
         fdrLevel,
@@ -48,7 +50,7 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
       }
 
       return {
-        name: 'dataset-annotations',
+        name: 'annotations',
         params: { dataset_id: datasetId },
         query: encodeParams(query),
       }

@@ -13,6 +13,13 @@ window.fetch = jest.fn()
 window.scrollTo = jest.fn()
 
 Vue.use(VueRouter)
+// Vue.config.silent = true;
+Vue.config.warnHandler = (msg, instance, trace) =>
+  ![
+    'Invalid component name: "-icon". Component names should conform to valid '
+    + 'custom element name in html5 specification.',
+  ].some((warning) => msg.includes(warning))
+  && console.warn('[Vue warn]: '.concat(msg).concat(trace))
 
 // Mock problematic ElementUI components that are not mocked with Vue.use(ElementUi)
 registerMockComponent('el-collapse', { path: 'element-ui/lib/collapse' })

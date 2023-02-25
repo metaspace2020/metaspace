@@ -158,6 +158,7 @@ describe('AnnotationCountTable', () => {
 
     wrapper.find('button').trigger('click')
     await Vue.nextTick()
-    expect(wrapper.vm.$route.path).toBe(`/dataset/${id}/annotations`)
+    expect(wrapper.vm.$route.path).toBe('/annotations')
+    expect(wrapper.vm.$route.query.ds).toBe('xxxx')
   })
 })

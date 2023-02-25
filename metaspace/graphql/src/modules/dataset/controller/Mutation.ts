@@ -107,7 +107,6 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
   if (update.databaseIds) {
     newDB = true
   }
-  console.log('he', update.ontologyDbIds)
   if (update.performEnrichment || update.ontologyDbIds) {
     enrichmentUpd = true
   }

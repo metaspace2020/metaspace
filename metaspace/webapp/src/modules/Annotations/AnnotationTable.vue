@@ -469,6 +469,25 @@
         </el-popover>
 
         <div
+          v-if="showEnrichment"
+          class="ml-2 mt-1"
+        >
+          <el-tooltip
+            content="Dataset ontology enrichment"
+            placement="top"
+          >
+            <el-button
+              class="full-screen-btn"
+              @click="redirectToEnrichment"
+            >
+              <enrichment
+                class="full-screen-icon"
+              />
+            </el-button>
+          </el-tooltip>
+        </div>
+
+        <div
           v-if="showCustomCols"
           class="ml-2 mt-1"
         >
@@ -515,10 +534,12 @@ import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
 import { getDatasetDiagnosticsQuery, getRoisQuery } from '../../api/dataset'
 import FullScreen from '../../assets/inline/full_screen.svg'
+import Enrichment from '../../assets/inline/enrichment.svg'
 import ExitFullScreen from '../../assets/inline/exit_full_screen.svg'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import { getIonImage, loadPngFromUrl } from '../../lib/ionImageRendering'
+import gql from 'graphql-tag'
 
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
@@ -565,6 +586,7 @@ export default Vue.extend({
     FilterIcon,
     ExitFullScreen,
     FullScreen,
+    Enrichment,
     NewFeatureBadge,
   },
   props: ['hideColumns', 'isFullScreen'],
@@ -729,6 +751,21 @@ export default Vue.extend({
       return isSimple && this.filter.datasetIds && this.filter.datasetIds.length === 1
     },
 
+    showEnrichment() {
+      let isEnriched = false
+      if (Array.isArray(this.annotations) && this.annotations[0] && this.annotations[0].dataset) {
+        try {
+          const dsConfig = JSON.parse(this.annotations[0]?.dataset.configJson)
+          // eslint-disable-next-line camelcase
+          isEnriched = Array.isArray(dsConfig?.ontology_db_ids) && dsConfig?.ontology_db_ids.length > 0
+        } catch (e) {
+          // pass to skip json parse warning
+        }
+      }
+
+      return this.filter.datasetIds && this.filter.datasetIds.length === 1 && isEnriched
+    },
+
     orderBy() {
       return this.$store.getters.settings.table.order.by
     },
@@ -742,7 +779,6 @@ export default Vue.extend({
       const dFilter = this.$store.getters.gqlDatasetFilter
       const colocalizationCoeffFilter = this.$store.getters.gqlColocalizationFilter
       const query = this.$store.getters.ftsQuery
-
       return {
         filter,
         dFilter,
@@ -1193,6 +1229,32 @@ export default Vue.extend({
       if (row.dataset.group != null) {
         this.updateFilter({ group: row.dataset.group.id })
       }
+    },
+
+    async redirectToEnrichment() {
+      const result = await this.$apollo.mutate({
+        mutation: gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
+          saveImageViewerSnapshot(input: $input)
+        }`,
+        variables: {
+          input: {
+            version: 1,
+            ionFormulas: [],
+            dbIds: [],
+            annotationIds: [],
+            snapshot: JSON.stringify(this.filter),
+            datasetId: this.annotations[0].dataset?.id,
+          },
+        },
+      })
+
+      this.$router.push({
+        name: 'dataset-enrichment',
+        params: { dataset_id: this.annotations[0].dataset?.id },
+        query: {
+          viewId: result.data.saveImageViewerSnapshot,
+        },
+      })
     },
 
     filterDataset(row) {
