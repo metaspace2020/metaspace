@@ -1,6 +1,7 @@
 import {
   computed,
-  defineComponent, onMounted,
+  defineComponent,
+  onMounted,
   reactive,
 } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
@@ -10,7 +11,9 @@ import { DatasetEnrichmentTable } from './DatasetEnrichmentTable'
 import './DatasetEnrichmentPage.scss'
 import { getEnrichedMolDatabasesQuery } from '../../../api/enrichmentdb'
 import FilterPanel from '../../Filters/FilterPanel.vue'
-import { uniqBy } from 'lodash-es'
+import { uniq, uniqBy } from 'lodash-es'
+import gql from 'graphql-tag'
+import safeJsonParse from '../../../lib/safeJsonParse'
 
 interface DatasetEnrichmentPageProps {
   className: string
