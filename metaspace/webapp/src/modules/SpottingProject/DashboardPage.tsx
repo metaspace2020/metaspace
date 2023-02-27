@@ -965,6 +965,27 @@ export default defineComponent({
     const renderFilters = (xLabelItem: string, yLabelItem: string) => {
       return (
         <div class='filter-container'>
+
+          <div class='filter-box m-2'>
+            <span class='filter-label mb-3'>
+              Data source
+              <Tooltip content="Select between the labs where the data was gathered from." placement="top">
+                <i class="el-icon-question help-icon text-sm ml-1 cursor-pointer"/>
+              </Tooltip>
+            </span>
+            <RadioGroup
+              disabled={state.loading}
+              value={state.dataSource}
+              size="mini"
+              onInput={async(text:any) => {
+                handleDataSrcChange(text)
+              }}>
+              <RadioButton label='EMBL'/>
+              <RadioButton label='ALL'/>
+              <RadioButton label='INTERLAB'/>
+            </RadioGroup>
+          </div>
+
           <div class='filter-box m-2'>
             <span class='x-axis-label mb-2'>X axis</span>
             <Select
@@ -1057,26 +1078,6 @@ export default defineComponent({
               clearable={false}
               onSort={handleSortChange}
             />
-          </div>
-
-          <div class='filter-box m-2'>
-            <span class='filter-label mb-3'>
-              Data source
-              <Tooltip content="Select between the labs where the data was gathered from." placement="top">
-                <i class="el-icon-question help-icon text-sm ml-1 cursor-pointer"/>
-              </Tooltip>
-            </span>
-            <RadioGroup
-              disabled={state.loading}
-              value={state.dataSource}
-              size="mini"
-              onInput={async(text:any) => {
-                handleDataSrcChange(text)
-              }}>
-              <RadioButton label='EMBL'/>
-              <RadioButton label='ALL'/>
-              <RadioButton label='INTERLAB'/>
-            </RadioGroup>
           </div>
 
           <div class='filter-box m-2'>
