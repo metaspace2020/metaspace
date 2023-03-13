@@ -26,5 +26,6 @@ export default function getCompanionOptions(path: string, getKey: GetKey) {
     debug: true,
     logClientVersion: false,
     secret: config.uppy.secret,
+    uploadUrls: config.uppy.uploadUrls,
   }
 }

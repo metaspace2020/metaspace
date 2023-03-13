@@ -13,6 +13,7 @@ jest.mock('../../utils/config', () => {
       },
       uppy: {
         secret: 'secretUppy',
+        uploadUrls: [/^http(s){0,1}:\/\/(.+\.)*metaspace2020\.eu\/.*/, /.+/],
       },
       log: {
         level: 'error',

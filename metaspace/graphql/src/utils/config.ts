@@ -80,6 +80,7 @@ export interface Config {
   };
   uppy: {
     secret: string;
+    uploadUrls: string[];
   };
   sentry: {
     dsn: string | null;

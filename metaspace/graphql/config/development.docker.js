@@ -83,6 +83,7 @@ config.jwt.algorithm = 'HS256'
 
 config.uppy = {}
 config.uppy.secret = 'secretUppy'
+config.uppy.uploadUrls = [/^http(s){0,1}:\/\/(.+\.)*metaspace2020\.eu\/.*/, /.+/]
 
 config.sentry = null
 
