@@ -41,6 +41,7 @@ interface DatasetBrowserSpectrumChartProps {
   peakFilter: number
   normalization: number | undefined
   dataRange: any
+  annotatedLabel: string
 }
 
 interface DatasetBrowserSpectrumChartState {
@@ -68,6 +69,9 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
     isDataLoading: {
       type: Boolean,
       default: false,
+    },
+    annotatedLabel: {
+      type: String,
     },
     data: {
       type: Array,
@@ -316,6 +320,11 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
 
       return (
         <div class='chart-holder'>
+          {
+            !(isLoading || isDataLoading)
+            && props.annotatedLabel
+            && <div class='annotated-legend'>{props.annotatedLabel}</div>
+          }
           {
             (isLoading || isDataLoading)
             && <div class='loader-holder'>
