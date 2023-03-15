@@ -85,7 +85,7 @@ const DatasetOverviewPage = defineComponent<Props>({
       // eslint-disable-next-line camelcase
       delete metadata?.Submitted_By
       // eslint-disable-next-line camelcase
-      delete metadata.Additional_Information
+      delete metadata?.Additional_Information
 
       const groupLink = $router.resolve({ name: 'group', params: { groupIdOrSlug: group?.id || '' } }).href
       const upDate = moment(moment(dataset?.value?.uploadDT)).isValid()
