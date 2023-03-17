@@ -19,6 +19,8 @@ import { getDatasetForEditing } from '../dataset/operation/getDatasetForEditing'
 import { resolveGroupScopeRole } from './util/resolveGroupScopeRole'
 import { urlSlugMatchesClause, validateUrlSlugChange } from '../groupOrProject/urlSlug'
 import { MolecularDbRepository } from '../moldb/MolecularDbRepository'
+import fetch from 'node-fetch'
+import { URLSearchParams } from 'url'
 
 const assertUserAuthenticated = (user: ContextUser) => {
   if (!user.id) {
@@ -191,6 +193,62 @@ export const Resolvers = {
       } else {
         return null
       }
+    },
+
+    async countPublications(_: any, args: any, ctx: Context): Promise<number|null> {
+      // @ts-ignore
+      const { sessionStore } : any = ctx.req
+      if (sessionStore) {
+        try {
+          const redisClient = sessionStore.client
+          const countKey = 'publications:count'
+          const DAYS = 7
+          const HOURS = 24
+          const SECONDS = 60
+
+          // transform get in async
+          const publicationsCount : string | any = await new Promise((resolve, reject) => {
+            redisClient.get(countKey, (err: any, res: string) => {
+              if (err) {
+                reject(err)
+              }
+              resolve(res)
+            })
+          })
+
+          if (publicationsCount) {
+            console.log('Cache hit for XX', publicationsCount)
+            return parseInt(publicationsCount, 10)
+          } else {
+            console.log('Cache miss for', countKey)
+            const res = await
+            fetch('https://serpapi.com/search?' + new URLSearchParams({
+              engine: 'google_scholar',
+              q: '"metaspace2020.eu"',
+              api_key: config.google.serpapi_key,
+            }).toString(), {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+            })
+            const { data } = await res.json()
+            console.log('data', data)
+            const nOfPublications = data.search_information.total_results
+            redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * SECONDS)
+            return parseInt(nOfPublications, 10)
+          }
+        } catch (e) {
+          console.log(e)
+          return null
+        }
+      } else {
+        return null
+      }
+    },
+
+    async countGroups(_: any, args: any, ctx: Context): Promise<number|null> {
+      return await ctx.entityManager.getRepository(GroupModel)
+        .createQueryBuilder('group')
+        .getCount()
     },
 
     async allGroups(_: any, { query }: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {

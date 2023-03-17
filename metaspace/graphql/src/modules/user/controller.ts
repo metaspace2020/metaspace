@@ -127,6 +127,12 @@ export const Resolvers = {
       return null
     },
 
+    async countUsers(_: any, args: any, ctx: Context): Promise<number|null> {
+      return await ctx.entityManager.getRepository(UserModel)
+        .createQueryBuilder('user')
+        .getCount()
+    },
+
     async allUsers(_: any, { query }: any, ctx: Context): Promise<UserSource[]|null> {
       if (ctx.isAdmin) {
         const users = await ctx.entityManager.getRepository(UserModel)

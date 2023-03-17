@@ -68,6 +68,7 @@ export interface Config {
     client_id: string;
     client_secret: string;
     callback_url: string;
+    serpapi_key: string;
   };
   web_public_url: string;
   slack: {

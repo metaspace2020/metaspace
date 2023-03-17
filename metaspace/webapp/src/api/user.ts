@@ -1,4 +1,4 @@
-import { UserGroupRole } from './group'
+import { countGroupsQuery, UserGroupRole } from './group'
 import gql from 'graphql-tag'
 import { ProjectRole } from './project'
 
@@ -186,3 +186,8 @@ export const currentUserRoleWithGroupQuery =
             }
           }
         }`
+
+export const countUsersQuery =
+gql`query countUsers {
+  countUsers
+}`

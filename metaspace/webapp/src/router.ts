@@ -1,7 +1,7 @@
 /* eslint-disable vue/max-len */
 import Vue, { AsyncComponent } from 'vue'
 import VueRouter, { RawLocation } from 'vue-router'
-import AboutPage from './modules/App/AboutPage.vue'
+import AboutPage from './modules/App/AboutPage'
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
 import { DialogPage, ResetPasswordPage } from './modules/Account'
 import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
