@@ -1,12 +1,14 @@
 import { defineComponent, onMounted, reactive } from '@vue/composition-api'
-import { Option, Select, Pagination, InputNumber, RadioGroup, RadioButton } from '../../lib/element-ui'
+import { Option, Select, Pagination, InputNumber, RadioGroup, RadioButton, Tooltip, Button } from '../../lib/element-ui'
 import { cloneDeep, groupBy, keyBy, maxBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
 import getColorScale from '../../lib/getColorScale'
+import ScatterChart from '../../assets/inline/scatter_chart.svg'
 import './DashboardPage.scss'
+import { SortDropdown } from '../../components/SortDropdown/SortDropdown'
 
 interface Options{
   xAxis: any
@@ -16,6 +18,8 @@ interface Options{
 }
 
 interface DashboardState {
+  orderBy: string,
+  sortingOrder:string,
   colormap: any
   filter: any[]
   xAxisValues: any
@@ -46,6 +50,15 @@ interface DashboardState {
 const VIEW = {
   SCATTER: 1,
   HEATMAP: 2,
+}
+
+const FILTER_DISABLED_COMBINATIONS: any = {
+  main_coarse_class: ['coarse_class', 'fine_class'],
+  coarse_class: ['main_coarse_class'],
+  fine_class: ['main_coarse_class'],
+  main_coarse_path: ['coarse_path', 'fine_path'],
+  coarse_path: ['main_coarse_path'],
+  fine_path: ['main_coarse_path'],
 }
 
 const ALLOWED_COMBINATIONS: any = {
@@ -135,7 +148,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Dataset name',
-      src: 'Dataset name',
+      src: 'Sample name',
     },
     {
       label: 'Matrix',
@@ -350,16 +363,6 @@ const FILTER_VALUES = [
     label: 'Matrix',
     src: 'Matrix short',
   },
-  // {
-  //   label: 'Value Prediction',
-  //   src: 'pV',
-  //   isNumeric: true,
-  // },
-  // {
-  //   label: 'State Prediction',
-  //   src: 'p',
-  //   isBoolean: true,
-  // },
   {
     label: 'Technology',
     src: 'Technology',
@@ -437,6 +440,17 @@ const filterMap : any = {
   t: 'matrix',
 }
 
+const sortingOptions: any[] = [
+  {
+    value: 'ORDER_BY_SERIATE',
+    label: 'Seriate ',
+  },
+  {
+    value: 'ORDER_BY_NAME',
+    label: 'Name',
+  },
+]
+
 export default defineComponent({
   name: 'spotting',
   setup: function(props, ctx) {
@@ -445,13 +459,13 @@ export default defineComponent({
     const filterItem = {
       src: null,
       value: null,
-      isNumeric: false,
-      isBoolean: false,
       options: [],
     }
     const state = reactive<DashboardState>({
       colormap: '-YlGnBu',
       filter: [cloneDeep(filterItem)],
+      orderBy: 'ORDER_BY_SERIATE',
+      sortingOrder: 'DESCENDING',
       hiddenYValues: [],
       hiddenXValues: [],
       xAxisValues: [],
@@ -523,8 +537,7 @@ export default defineComponent({
 
       if ($route.query.filterValue) {
         $route.query.filterValue.split('|').forEach((item: any, index: number) => {
-          const value = ((state.filter[index].isBoolean || state.filter[index].isNumeric)
-            ? item : item.split('#'))
+          const value = item.split('#')
           if (!Array.isArray(value) || (value.length > 0 && value[0])) {
             handleFilterValueChange(value, index, false)
           }
@@ -541,19 +554,6 @@ export default defineComponent({
     })
 
     const buildFilterOptions = async(filterIndex: number) => {
-      // const filterSpec = FILTER_VALUES.find((filterItem: any) => filterItem.src
-      //   === state.filter[filterIndex].src)
-      // if (filterSpec && filterSpec?.isNumeric) {
-      //   state.filter[filterIndex].isNumeric = true
-      //   state.filter[filterIndex].isBoolean = false
-      //   return
-      // } else if (filterSpec && filterSpec?.isBoolean) {
-      //   state.filter[filterIndex].isNumeric = false
-      //   state.filter[filterIndex].isBoolean = true
-      // } else {
-      //   state.filter[filterIndex].isNumeric = false
-      //   state.filter[filterIndex].isBoolean = false
-      // }
       state.filter[filterIndex].loadingFilterOptions = true
 
       const options = await loadFilterValues(state.filter[filterIndex].src)
@@ -565,6 +565,15 @@ export default defineComponent({
     const loadData = async() => {
       try {
         state.loading = true
+
+        const nonEmptyFilters = (state.filter || []).filter((item: any) => item.src === 'nL'
+          || (Array.isArray(item.value)
+            ? item.value.join('#') : item.value))
+        const filter = nonEmptyFilters.map((item: any) => item.src).join(',')
+        // .replace('main_coarse_class', 'coarse_class')
+        // .replace('main_coarse_path', 'coarse_path')
+        const filterValues = nonEmptyFilters.map((item: any) => (item.src === 'nL' || Array.isArray(item.value))
+          ? item.value.join('#') : item.value).filter((x:any) => x).join('|')
 
         // load data
         const params : any = {
@@ -580,16 +589,16 @@ export default defineComponent({
             || (state.filter || [])
               .findIndex((item: any) => Object.keys(CLASSIFICATION_METRICS).includes(item.src)) !== -1,
           queryType: 'data',
-          filter: (state.filter || []).map((item: any) => item.src).join(','),
-          filterValues: (state.filter || []).map((item: any) => Array.isArray(item.value)
-            ? item.value.join('#') : item.value).filter((x:any) => x).join('|'),
+          filter,
+          filterValues,
         }
 
         const query = Object.keys(params)
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
+        const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
+        // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
         // const baseUrl = 'http://localhost:8080' // local
         // const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
         const response = await fetch(baseUrl + '?' + query)
@@ -606,6 +615,9 @@ export default defineComponent({
     const loadFilterValues = async(filter:any) => {
       try {
         // load data
+
+        // filter = filter === 'main_coarse_class' ? 'coarse_class' : filter
+        // filter = filter === 'main_coarse_path' ? 'coarse_path' : filter
         const params : any = {
           predType: state.dataSource.toUpperCase(),
           xAxis: state.options.xAxis,
@@ -626,10 +638,13 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws'
+        const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
+        // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws'
+        // const baseUrl = 'http://localhost:8080' // local
+
         const response = await fetch(baseUrl + '?' + query)
         const filterJson = await response.json()
-        return filterJson.values
+        return filterJson.values // .body.values
       } catch (e) {
         return null
       }
@@ -639,10 +654,23 @@ export default defineComponent({
       try {
         const chartData = state.usedData
         const data = chartData.data
-        const xAxisValues : string[] = chartData.xAxis
-        let yAxisValues : string[] = chartData.yAxis
+        let xAxisValues : string[] = chartData.xAxisSorting ? chartData.xAxisSorting : chartData.xAxis
+        let yAxisValues : string[] = chartData.yAxisSorting ? chartData.yAxisSorting : chartData.yAxis
 
-        yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], ['desc'])
+        if (!chartData.yAxisSorting || state.orderBy === 'ORDER_BY_NAME') {
+          yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
+            ? 'desc' : 'asc'])
+          xAxisValues = orderBy(xAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
+            ? 'desc' : 'asc'])
+        } else if (state.sortingOrder === 'DESCENDING') {
+          yAxisValues = cloneDeep(yAxisValues).reverse()
+          xAxisValues = cloneDeep(xAxisValues).reverse()
+        }
+
+        if (state.options.yAxis === 'fine_class' || state.options.yAxis === 'fine_path') {
+          yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
+            ? 'desc' : 'asc'])
+        }
 
         const auxData : any = groupBy(data, state.options.xAxis)
         Object.keys(auxData).forEach((key: string) => {
@@ -667,7 +695,7 @@ export default defineComponent({
             const value : number = isEmpty ? 0 : item.fraction_detected
             const normalizedValue = isEmpty ? 0 : (yMaxValue === 0 ? 0 : (value / yMaxValue))
             dotValues.push({
-              value: [xIndex, yIndex, normalizedValue * 15, pointAggregation, value],
+              value: [xIndex, yIndex, normalizedValue, pointAggregation, value],
               label: {
                 key: yKey,
                 molecule: item.formulas ? item.formulas.split(',')[0] : undefined,
@@ -690,6 +718,10 @@ export default defineComponent({
           left: 'center',
           inRange: {
             color: getColorScale(state.colormap).range,
+          },
+          handleStyle: {
+            borderColor: '#000',
+            borderWidth: 1,
           },
           orient: 'horizontal',
           min: 0,
@@ -724,22 +756,6 @@ export default defineComponent({
       }
     }
 
-    const handleValueMetricChange = (value: any) => {
-      state.options.valueMetric = value
-      $router.replace({ name: 'spotting', query: { ...getQueryParams(), metric: value } })
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
-        buildValues()
-      }
-    }
-
-    const parseBooleanLabel = (value: string) => {
-      if (parseInt(value, 10) === 0 || parseInt(value, 10) === 1) {
-        return 'False'
-      } else {
-        return 'True'
-      }
-    }
-
     const handleFilterValueChange = async(value: any, idx : any = 0, buildChart: boolean = true) => {
       state.filter[idx].value = value
       const filterValueParams = state.filter.map((item: any) => Array.isArray(item.value)
@@ -759,10 +775,11 @@ export default defineComponent({
       }
     }
 
-    const removeFilterItem = () => {
+    const removeFilterItem = async() => {
       const value = state.filter[state.filter.length - 1].value
       state.filter.pop()
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation && value) {
+        await loadData()
         buildValues()
       }
     }
@@ -774,7 +791,7 @@ export default defineComponent({
     }
 
     const handleColormapChange = (color: any) => {
-      state.colormap = '-' + color.replace('-', '')
+      state.colormap = color
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
       }
@@ -832,6 +849,15 @@ export default defineComponent({
       return queryObj
     }
 
+    const handleSortChange = (value: string, sortingOrder: string) => {
+      state.orderBy = !value ? 'ORDER_BY_SERIATE' : value
+      state.sortingOrder = !sortingOrder ? 'DESCENDING' : sortingOrder
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+        state.loading = true
+        setTimeout(() => { buildValues() }, 1000)
+      }
+    }
+
     const handleDataSrcChange = async(text: any, buildChart: boolean = true) => {
       const changedValue = text !== state.dataSource
       const changedFromEmbl = changedValue && (text.toUpperCase() === 'EMBL' || state.dataSource === 'EMBL')
@@ -857,6 +883,8 @@ export default defineComponent({
         await handleAxisChange(state.options.xAxis, true, false)
         await handleAxisChange(state.options.yAxis, false, false)
         await buildValues()
+      } else if (changedValue) {
+        state.isEmpty = true
       }
     }
 
@@ -870,6 +898,12 @@ export default defineComponent({
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation && isNew) {
         handleFilterValueChange(null, idx, buildChart ? shouldLoad : false)
       }
+    }
+
+    const handleAxisSwap = async() => {
+      const { xAxis, yAxis } = state.options
+      await handleAxisChange(yAxis, true, false)
+      await handleAxisChange(xAxis, false, true)
     }
 
     const handleAxisChange = async(value: any, isXAxis : boolean = true, buildChart : boolean = true) => {
@@ -890,14 +924,7 @@ export default defineComponent({
       }
     }
 
-    const renderFilters = () => {
-      const yLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.yAxis)
-      const xLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.xAxis)
-      const loadPathway: boolean = Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
-      || Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)
-      const loadClass: boolean = Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)
-      || Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)
-
+    const renderFilters = (xLabelItem: string, yLabelItem: string) => {
       return (
         <div class='filter-container'>
           <div class='filter-box m-2'>
@@ -921,11 +948,14 @@ export default defineComponent({
                     label={option.label}
                     value={option.src}
                     disabled={state.options.yAxis && state.dataSource && ALLOWED_COMBINATIONS[state.dataSource]
-                      && yLabelItem && yLabelItem.label
-                      && !ALLOWED_COMBINATIONS[state.dataSource][yLabelItem.label].includes(option.label)}/>
+                      && yLabelItem
+                      && !ALLOWED_COMBINATIONS[state.dataSource][yLabelItem].includes(option.label)}/>
                 })
               }
             </Select>
+          </div>
+          <div class='filter-box m-2 swap-box'>
+            <Button class='swap-btn' size='mini' icon='el-icon-sort' onClick={handleAxisSwap} disabled={state.loading}/>
           </div>
           <div class='filter-box m-2'>
             <span class='y-axis-label mb-2'>Y axis</span>
@@ -948,8 +978,8 @@ export default defineComponent({
                     label={option.label}
                     value={option.src}
                     disabled={state.options.xAxis && state.dataSource && ALLOWED_COMBINATIONS[state.dataSource]
-                      && xLabelItem && xLabelItem.label
-                      && !ALLOWED_COMBINATIONS[state.dataSource][xLabelItem.label].includes(option.label)}/>
+                      && xLabelItem
+                      && !ALLOWED_COMBINATIONS[state.dataSource][xLabelItem].includes(option.label)}/>
                 })
               }
             </Select>
@@ -978,7 +1008,26 @@ export default defineComponent({
           </div>
 
           <div class='filter-box m-2'>
-            <span class='filter-label mb-3'>Data source</span>
+            <span class='filter-label mb-3'>Sorting </span>
+            <SortDropdown
+              class="pb-2"
+              size="mini"
+              tooltipPlacement='top'
+              defaultOption={state.orderBy}
+              defaultSorting={state.sortingOrder}
+              options={sortingOptions}
+              clearable={false}
+              onSort={handleSortChange}
+            />
+          </div>
+
+          <div class='filter-box m-2'>
+            <span class='filter-label mb-3'>
+              Data source
+              <Tooltip content="Select between the labs where the data was gathered from." placement="top">
+                <i class="el-icon-question help-icon text-sm ml-1 cursor-pointer"/>
+              </Tooltip>
+            </span>
             <RadioGroup
               disabled={state.loading}
               value={state.dataSource}
@@ -990,8 +1039,8 @@ export default defineComponent({
               <RadioButton label='ALL'/>
               <RadioButton label='INTERLAB'/>
             </RadioGroup>
-
           </div>
+
           <div class='filter-box m-2'>
             <span class='filter-label mb-2'>Filters</span>
             {
@@ -1011,53 +1060,39 @@ export default defineComponent({
                       {
                         orderBy(FILTER_VALUES, ['label'], ['asc']).map((option: any) => {
                           return <Option
-                            disabled={state.filter.map((item: any) => item.src).includes(option.src)}
+                            disabled={state.filter.map((item: any) => item.src).includes(option.src)
+                            || (FILTER_DISABLED_COMBINATIONS[state.options.yAxis]
+                                && FILTER_DISABLED_COMBINATIONS[state.options.yAxis].includes(option.src))
+                            || (FILTER_DISABLED_COMBINATIONS[state.options.xAxis]
+                                && FILTER_DISABLED_COMBINATIONS[state.options.xAxis].includes(option.src))
+                            }
                             label={option.label}
                             value={option.src}/>
                         })
                       }
                     </Select>
-                    {
-                      !filter.isNumeric
-                      && <Select
-                        class='select-box-mini mr-2'
-                        value={filter.value}
-                        loading={state.filter[filterIdx].loadingFilterOptions}
-                        filterable
-                        clearable
-                        multiple={!filter.isBoolean}
-                        noDataText='No data'
-                        onChange={(value: number) => {
-                          handleFilterValueChange(value, filterIdx)
-                        }}
-                        disabled={state.loading}
-                        placeholder='Select filter value'
-                        size='mini'>
-                        {
-                          (filter.isBoolean ? ['False', 'True'] : filter.options).map((option: any) => {
-                            return <Option
-                              label={!option ? 'None' : option}
-                              value={option}/>
-                          })
-                        }
-                      </Select>
-                    }
-                    {
-                      filter.isNumeric
-                      && !filter.isBoolean
-                      && <InputNumber
-                        class='select-box-mini mr-2'
-                        size="mini"
-                        min={0}
-                        max={1}
-                        step={0.001}
-                        value={parseFloat(state.filter[0].value)}
-                        loading={state.filter[filterIdx].loadingFilterOptions}
-                        disabled={state.loading}
-                        onChange={(value: number) => {
-                          handleFilterValueChange(value, filterIdx)
-                        }}/>
-                    }
+                    <Select
+                      class='select-box-mini mr-2'
+                      value={filter.value}
+                      loading={state.filter[filterIdx].loadingFilterOptions}
+                      filterable
+                      clearable
+                      multiple
+                      noDataText='No data'
+                      onChange={(value: number) => {
+                        handleFilterValueChange(value, filterIdx)
+                      }}
+                      disabled={state.loading}
+                      placeholder='Select filter value'
+                      size='mini'>
+                      {
+                        filter.options.map((option: any) => {
+                          return <Option
+                            label={!option ? 'None' : option}
+                            value={!option ? 'None' : option}/>
+                        })
+                      }
+                    </Select>
                     <div class='flex' style={{ visibility: filterIdx !== 0 ? 'hidden' : '' }}>
                       <div
                         class='icon'
@@ -1081,18 +1116,28 @@ export default defineComponent({
       )
     }
 
-    const renderVisualizations = () => {
+    const renderVisualizations = (xLabelItem: string, yLabelItem: string, showChart: boolean) => {
       return (
-        <div class='visualization-container flex w-full justify-end'>
+        <div class='visualization-container'>
+          {showChart && renderHelp(xLabelItem, yLabelItem)}
           <div class='visualization-selector'>
             <span class='filter-label'>Visualization</span>
-            <div class={`icon-holder ${state.selectedView === VIEW.SCATTER ? 'selected' : ''}`}>
-              <i class="vis-icon el-icon-s-data mr-6 text-4xl" onClick={() => { state.selectedView = VIEW.SCATTER }}/>
+            <div class={`ml-2 icon-holder ${state.selectedView === VIEW.SCATTER ? 'selected' : ''}`}>
+              <ScatterChart class='roi-icon fill-current' onClick={() => { state.selectedView = VIEW.SCATTER }}/>
             </div>
             <div class={`icon-holder ${state.selectedView === VIEW.HEATMAP ? 'selected' : ''}`}>
               <i class="vis-icon el-icon-s-grid mr-6 text-4xl" onClick={() => { state.selectedView = VIEW.HEATMAP }}/>
             </div>
           </div>
+        </div>
+      )
+    }
+
+    const renderHelp = (xLabelItem: string, yLabelItem: string) => {
+      return (
+        <div class='help-container'>
+          <i class="el-icon-question help-icon" />
+          You are looking at Color (average intensity) of ions broken down by X ({xLabelItem}) in Y ({yLabelItem})
         </div>
       )
     }
@@ -1107,6 +1152,7 @@ export default defineComponent({
             <p>2 - Select the y axis metric in the <span class='y-axis-label'>green</span> zone;</p>
             <p>3 - Select the color in the <span class='aggregation-label'>blue</span> zone;</p>
             <p>4 - Apply the filters you desire.</p>
+            <p>5 - Click on the dots to be redirected to the corresponding annotations in METASPACE.</p>
           </div>
         </div>
       )
@@ -1122,6 +1168,42 @@ export default defineComponent({
       $router.replace({ name: 'spotting', query: { ...getQueryParams(), pageSize: newSize.toString() } })
     }
 
+    const renderRadiusHelp = () => {
+      return (
+        <div class='radius-help'>
+          Fraction of compounds detects per class
+          <div class='dot-legend'>
+            <div class='dot-container'>
+              <span class="dot h-0.5 w-0.5"/>
+              <span class='dot-text'>0</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-1 w-1"/>
+              <span class='dot-text'>0.2</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-2 w-2"/>
+              <span class='dot-text'>0.4</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-3 w-3"/>
+              <span class='dot-text'>0.6</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-4 w-4"/>
+              <span class='dot-text'>0.8</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-5 w-5"/>
+              <span class='dot-text'>1.0</span>
+            </div>
+          </div>
+          <div class='flex items-center mt-1'>
+          </div>
+        </div>
+      )
+    }
+
     const renderPagination = (total: number) => {
       return (
         <div class="block">
@@ -1134,6 +1216,7 @@ export default defineComponent({
             {...{ on: { 'update:pageSize': onPageSizeChange } }}
             layout='prev,pager,next,sizes'
           />
+          {state.selectedView === VIEW.SCATTER && renderRadiusHelp()}
         </div>
       )
     }
@@ -1146,7 +1229,7 @@ export default defineComponent({
             yOption={state.options.yAxis}
             xAxis={xAxisValues}
             yAxis={yAxisValues}
-            size={yAxisValues.length * 30}
+            size={yAxisValues.length * 40}
             data={chartData}
             visualMap={state.visualMap}
             onItemSelected={handleItemClick}
@@ -1155,6 +1238,7 @@ export default defineComponent({
         </div>
       )
     }
+
     const renderHeatmapChart = (yAxisValues: any, xAxisValues: any, total: number, chartData : any) => {
       return (
         <div class='chart-container'>
@@ -1163,7 +1247,7 @@ export default defineComponent({
             yOption={state.options.yAxis}
             xAxis={xAxisValues}
             yAxis={yAxisValues}
-            size={yAxisValues.length * 30}
+            size={yAxisValues.length * 40}
             data={chartData}
             visualMap={state.visualMap}
           />
@@ -1177,6 +1261,8 @@ export default defineComponent({
           || (state.options.xAxis && state.options.yAxis && state.options.aggregation))
       const { selectedView } = state
       const isLoading = (state.loading || state.buildingChart)
+      const yLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.yAxis)
+      const xLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.xAxis)
 
       // paginate data on client-side
       const yAxisValues : any[] = state.yAxisValues
@@ -1194,8 +1280,8 @@ export default defineComponent({
 
       return (
         <div class='dashboard-container mb-4'>
-          {renderFilters()}
-          {renderVisualizations()}
+          {renderFilters(xLabelItem?.label, yLabelItem?.label)}
+          {renderVisualizations(xLabelItem?.label, yLabelItem?.label, showChart)}
           <div class='content-container'>
             {
               showChart

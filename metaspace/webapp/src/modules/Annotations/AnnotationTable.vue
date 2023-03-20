@@ -980,7 +980,10 @@ export default Vue.extend({
             },
             fetchPolicy: 'cache-first',
           })
-          const roi = safeJsonParse(resp?.data?.dataset?.roiJson)
+          if (!resp?.data?.dataset?.roiJson) {
+            return
+          }
+          const roi = JSON.parse(resp?.data?.dataset?.roiJson)
           if (roi && Array.isArray(roi.features) && !this.$store.state.roiInfo[datasetId]) {
             this.$store.commit('setRoiInfo', {
               key: datasetId,
@@ -1322,7 +1325,7 @@ export default Vue.extend({
           offSample, offSampleProb, colocalizationCoeff,
         } = row
         const cells = [
-          dataset.groupApproved && dataset.group ? dataset.group.name : '',
+          dataset.group ? dataset.group.name : '',
           dataset.name,
           dataset.id,
           sumFormula, 'M' + adduct,

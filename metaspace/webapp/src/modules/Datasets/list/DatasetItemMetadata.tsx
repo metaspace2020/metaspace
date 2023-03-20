@@ -108,7 +108,7 @@ const DatasetItemMetadata = defineComponent({
             Submitted <ElapsedTime date={dataset.uploadDT} />
             {' by '}
             {filterableItem('submitter', 'submitter', dataset.submitter.name)}
-            {dataset.groupApproved && dataset.group && <span>
+            {dataset.group && <span>
               {', '}
               <el-dropdown
                 show-timeout={50}

@@ -162,7 +162,7 @@ class GroupMatchFilter extends AbstractDatasetFilter {
   esFilter(value) {
     return [
       { term: { [this.esField]: this.preprocess(value) } },
-      { term: { ds_group_approved: true } },
+      // { term: { ds_group_approved: true } },
     ]
   }
 }

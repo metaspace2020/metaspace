@@ -92,6 +92,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   async lipidEnrichment(source, {
     datasetId, molDbId, fdr = 0.5,
     offSample = undefined,
+    pValue = undefined,
   }, ctx) {
     if (await esDatasetByID(datasetId, ctx.user)) { // check if user has access
       try {
@@ -190,6 +191,11 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         }
 
         const data = JSON.parse(content.data)
+
+        // filter by p-value
+        if (pValue) {
+          data.enrichment = data.enrichment.filter((item: any) => item.pValue <= pValue)
+        }
 
         // get annotations associated to enrichment
         for (let i = 0; i < data.enrichment.length; i++) {

@@ -11,7 +11,11 @@ const enum SortingOrder {
 
 interface Props {
   options: Option[]
+  defaultOption: string
+  defaultSorting: string
   size: string
+  clearable: boolean
+  tooltipPlacement: string
   onSortChange(value: any, orderBy: SortingOrder): any
 }
 
@@ -55,12 +59,30 @@ export const SortDropdown = defineComponent<Props>({
       type: String,
       default: 'small',
     },
+    defaultOption: {
+      type: String,
+      default: '',
+    },
+    defaultSorting: {
+      type: String,
+      default: SortingOrder.Unsorted,
+    },
+    tooltipPlacement: {
+      type: String,
+      default: 'right',
+    },
+    clearable: {
+      type: Boolean,
+      default: true,
+    },
   },
   // Last reprocessed date (as currently)/Upload date/Number of annotations for FDR 10%/User name/Dataset name
-  setup(props) {
+  setup(props, ctx) {
+    const { emit } = ctx
+
     const state : UnwrapRef<State> = reactive({
-      orderBy: SortingOrder.Unsorted,
-      value: '',
+      orderBy: props.defaultSorting,
+      value: props.defaultOption,
     })
 
     const handleSort = () => {
@@ -68,19 +90,24 @@ export const SortDropdown = defineComponent<Props>({
 
       state.orderBy = state.orderBy === SortingOrder.Unsorted ? SortingOrder.Desc : (state.orderBy === SortingOrder.Asc
         ? SortingOrder.Desc : SortingOrder.Asc)
-      props.onSortChange(state.value, state.orderBy)
+      emit('sort', state.value, state.orderBy)
     }
 
     const handleSelect = (value: string) => {
       state.value = value
       state.orderBy = !value ? SortingOrder.Unsorted : (state.orderBy === SortingOrder.Unsorted
         ? SortingOrder.Desc : state.orderBy)
-      props.onSortChange(state.value, state.orderBy)
+      emit('sort', state.value, state.orderBy)
     }
 
     return () => (
       <div class="flex flex-row sort-dp-container">
-        <el-select size={props.size} value={state.value} placeholder="Sort by" onChange={handleSelect} clearable>
+        <el-select
+          size={props.size}
+          value={state.value}
+          placeholder="Sort by"
+          onChange={handleSelect}
+          clearable={props.clearable}>
           {
             props.options.map((opt) => {
               return <el-option
@@ -92,7 +119,7 @@ export const SortDropdown = defineComponent<Props>({
         <div class="el-input-group__append sort-dp-btn">
           <el-tooltip
             content="Sorting order"
-            placement="right"
+            placement={props.tooltipPlacement}
           >
             <el-button
               class={`${!state.value ? 'cursor-not-allowed' : ''}`}

@@ -20,6 +20,10 @@ function formatFDR(fdr: number) {
   return fdr ? Math.round(fdr * 100) + '%' : ''
 }
 
+function formatPValue(pValue: number) {
+  return pValue ? (pValue).toFixed(2) : ''
+}
+
 export type Level = 'annotation' | 'dataset' | 'upload' | 'projects' | 'dataset-annotation' | 'enrichment';
 
 export type FilterKey = 'annotationIds' | 'database' | 'datasetIds' | 'minMSM' | 'compoundName'
@@ -27,7 +31,7 @@ export type FilterKey = 'annotationIds' | 'database' | 'datasetIds' | 'minMSM' |
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
   | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
   | 'colocalizedWith' | 'colocalizationSamples' | 'offSample' | 'datasetOwner' | 'molClass' | 'term'
-  | 'opticalImage';
+  | 'opticalImage' | 'pValue';
 
 export type MetadataLists = Record<string, any[]>;
 
@@ -219,6 +223,19 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     encoding: 'number',
     filterable: false,
     removable: false,
+  },
+
+  pValue: {
+    type: SingleSelectFilter,
+    name: 'p-value',
+    description: 'Select p-value',
+    levels: ['enrichment'],
+    initialValue: undefined,
+    options: [0.01, 0.05, 0.1],
+    optionFormatter: formatPValue,
+    encoding: 'number',
+    filterable: false,
+    removable: true,
   },
 
   group: {

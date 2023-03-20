@@ -65,7 +65,7 @@ export default {
       const datasetMetadataExternals = {
         Submitter: this.dataset.submitter,
         PI: this.dataset.principalInvestigator,
-        Group: this.dataset.groupApproved ? this.dataset.group : null,
+        Group: this.dataset.group,
         Projects: this.dataset.projects,
       }
       return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals)

@@ -25,6 +25,7 @@ import { getS3Client } from '../../../utils/awsClient'
 import { In, IsNull } from 'typeorm'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import canDeleteEsDataset from '../operation/canDeleteEsDataset'
+import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/model'
 
 interface DbDataset {
   id: string;
@@ -51,6 +52,15 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
     })
   })
   return await dataloader.load(id)
+}
+
+const getEnrichment = async(ctx: Context, datasetId: string): Promise<any> => {
+  const datasetEnrichment = await ctx.entityManager.createQueryBuilder(DatasetEnrichmentModel,
+    'dsEnrichment')
+    .where('dsEnrichment.datasetId = :datasetId', { datasetId })
+    .getOne()
+
+  return datasetEnrichment
 }
 
 export const thumbnailOpticalImageUrl = async(ctx: Context, datasetId: string) => {
@@ -125,6 +135,11 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   isPublic(ds) {
     return ds._source.ds_is_public
+  },
+
+  async isEnriched(ds, args, ctx) {
+    const result = await getEnrichment(ctx, ds._source.ds_id)
+    return !!result
   },
 
   async databases(ds, _, ctx): Promise<MolecularDB[]> {

@@ -3,7 +3,7 @@ cpyImagingMSpec==0.2.4
 pyMSpec==0.1.2
 cpyMSpec==0.4.2  # Drop all isotopic patterns if updated!
 cpyMSpec_0_3_5==0.3.5
-pyimzML==1.4.1
+pyimzML==1.5.3
 requests==2.26.0
 pytest
 boto3==1.17.13
@@ -13,7 +13,7 @@ pyyaml>=5.1
 elasticsearch-dsl>=5.0.0,<6.0.0
 pika==0.13.1
 bottle
-Pillow==9.0.1
+Pillow==9.3.0
 numpy==1.19.5
 scipy==1.6.0
 pandas==1.2.0

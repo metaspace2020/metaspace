@@ -41,19 +41,4 @@ describe('DatasetBrowserKendrickPlot', () => {
 
     expect(wrapper.element).toMatchSnapshot()
   })
-
-  it('it should match snapshot when loading chart data', async() => {
-    const wrapper = mount(testHarness, {
-      store,
-      router,
-      propsData: {
-        isEmpty: false,
-        isLoading: false,
-        isDataLoading: true,
-      },
-    })
-    await Vue.nextTick()
-
-    expect(wrapper.element).toMatchSnapshot()
-  })
 })

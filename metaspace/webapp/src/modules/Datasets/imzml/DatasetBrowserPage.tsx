@@ -713,8 +713,8 @@ export default defineComponent<DatasetBrowserProps>({
                 if (value === PEAK_FILTER.FDR && !state.fdrFilter) {
                   state.fdrFilter = 0.05
                 } else if (value === PEAK_FILTER.ALL) {
-                  state.fdrFilter = undefined
-                  state.databaseFilter = undefined
+                  // state.fdrFilter = undefined
+                  // state.databaseFilter = undefined
                 }
               }}
               onChange={() => {
@@ -727,7 +727,7 @@ export default defineComponent<DatasetBrowserProps>({
               <Radio class='w-full' label={PEAK_FILTER.ALL}>All Peaks</Radio>
               <Radio class='w-full mt-1 ' label={PEAK_FILTER.OFF}>Unannotated Peaks</Radio>
               <div>
-                <Radio label={PEAK_FILTER.FDR}>Show annotated at FDR</Radio>
+                <Radio class='mr-1' label={PEAK_FILTER.FDR}>Show annotated at FDR:</Radio>
                 <Select
                   class='select-box-mini'
                   value={state.fdrFilter}
@@ -1038,6 +1038,7 @@ export default defineComponent<DatasetBrowserProps>({
             requestIonImage()
           }}
           onDownload={handleDownload}
+          annotatedLabel={`Annotated at FDR ${(state.fdrFilter || 1) * 100}%`}
         />
       )
     }
@@ -1063,6 +1064,7 @@ export default defineComponent<DatasetBrowserProps>({
             state.mzmScoreFilter = mz
             requestIonImage()
           }}
+          annotatedLabel={`Annotated @ FDR ${(state.fdrFilter || 1) * 100}%`}
           onDownload={handleDownload}
         />
       )
