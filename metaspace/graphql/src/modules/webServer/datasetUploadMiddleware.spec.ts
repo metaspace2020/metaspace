@@ -11,6 +11,13 @@ jest.mock('../../utils/config', () => {
       upload: {
         bucket: 's3-upload-bucket',
       },
+      uppy: {
+        secret: 'secretUppy',
+        uploadUrls: [/^http(s){0,1}:\/\/(.+\.)*metaspace2020\.eu\/.*/, /.+/],
+      },
+      log: {
+        level: 'error',
+      },
     },
   }
 })
