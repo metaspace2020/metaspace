@@ -5,7 +5,7 @@ import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Tuple, List
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -253,7 +253,7 @@ def load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
-    ds_id: str,
+    ds_id: Union[str, None],
 ) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
     try:
         imzml_head = executor.storage.head_object(imzml_cobject.bucket, imzml_cobject.key)
