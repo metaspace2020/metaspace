@@ -238,14 +238,17 @@ def _upload_imzml_browser_files(storage: Storage, imzml_browser_cobjs: List[CObj
 
 
 def _save_size_hash(imzml_head, ibd_head, md5_hash, ds_id):
-    json_data = {
-        'imzml_hash': md5_hash['imzml'],
-        'ibd_hash': md5_hash['ibd'],
-        'imzml_size': int(imzml_head['content-length']),
-        'ibd_size': int(ibd_head['content-length']),
-    }
+    """Calculate hash and size only for ServerAnnotationJob (ds_id is not None)"""
+    if ds_id:
+        json_data = {
+            'imzml_hash': md5_hash['imzml'],
+            'ibd_hash': md5_hash['ibd'],
+            'imzml_size': int(imzml_head['content-length']),
+            'ibd_size': int(ibd_head['content-length']),
+        }
 
-    DB().alter('UPDATE dataset SET size_hash = %s WHERE id = %s', (json.dumps(json_data), ds_id))
+        db = DB()
+        db.alter('UPDATE dataset SET size_hash = %s WHERE id = %s', (json.dumps(json_data), ds_id))
 
 
 def load_ds(
