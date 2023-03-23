@@ -264,8 +264,8 @@ class ServerAnnotationJob:
         perf: Profiler,
         sm_config: Optional[Dict] = None,
         use_cache=False,
-        perform_enrichment=False,
         store_images=True,
+        perform_enrichment: bool = False,
     ):
         """
         Args
@@ -274,9 +274,6 @@ class ServerAnnotationJob:
         use_cache: For development - cache the results after each pipeline step so that it's easier
                    to quickly re-run specific steps.
         """
-        self.enrichment_data = None
-        logger.info(f'perform_enrichment {perform_enrichment}...')
-        self.perform_enrichment = perform_enrichment
         sm_config = sm_config or SMConfig.get_conf()
         self.sm_storage = sm_config['lithops']['sm_storage']
         self.storage = Storage(sm_config['lithops'])
@@ -284,6 +281,7 @@ class ServerAnnotationJob:
         self.ds = ds
         self.perf = perf
         self.store_images = store_images
+        self.perform_enrichment = perform_enrichment
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = _upload_imzmls_from_prefix_if_needed(
@@ -310,6 +308,7 @@ class ServerAnnotationJob:
 
         self.results_dfs = None
         self.png_cobjs = None
+        self.enrichment_data = None
         self.db_formula_image_ids = None
 
     def run(self, **kwargs):

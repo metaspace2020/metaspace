@@ -1,10 +1,31 @@
-# %%
 import json
 import urllib.parse
-from http.server import BaseHTTPRequestHandler  # , HTTPServer
-from urllib.parse import urlparse, parse_qsl
+
 import pandas as pd
 import numpy as np
+from scipy.spatial.distance import pdist
+from seriate import seriate
+
+
+def sort_axis(data, x_axis, y_axis):
+    """
+    Transform data dataframe to numpy matrix, then use the
+    seriation algorithm, which is an approach for ordering
+    elements in a set so that the sum of the sequential pairwise
+    distances is minimal.
+    """
+    matrix = np.zeros((len(data[y_axis].unique()), len(data[x_axis].unique())))
+    for row_idx, row in enumerate(data[y_axis].unique()):
+        for col_idx, col in enumerate(data[x_axis].unique()):
+            aux_df = data[(data[y_axis] == row) & (data[x_axis] == col)]['fraction_detected']
+            fraction = aux_df.values[0] if aux_df.size else 1  # df.size return a number
+            matrix[row_idx][col_idx] = fraction
+
+    y_axis_sort = seriate(pdist(matrix))
+    y_axis_sort = list(map(lambda n: data[y_axis].unique()[n], y_axis_sort))
+    x_axis_sort = seriate(pdist(matrix.T))
+    x_axis_sort = list(map(lambda n: data[x_axis].unique()[n], x_axis_sort))
+    return x_axis_sort, y_axis_sort
 
 
 def calculate_detected_intensities(source_df, threshold=0.8):
@@ -33,15 +54,22 @@ def get_class_size(metadata, class_column):
 
 # pylint: disable=too-many-locals, too-many-arguments, too-many-statements, too-many-branches
 def load_data(
-    pred_type='EMBL', load_pathway=False, load_class=False, filters=None, x_axis=None, y_axis=None
+    pred_type='EMBL',
+    load_pathway=False,
+    load_class=False,
+    filters=None,
+    x_axis=None,
+    y_axis=None,
+    load_fine_class=False,
+    load_fine_path=False,
 ):
     """Load spotting related data and apply filters"""
 
     url_prefix = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v2'
     all_pred_file = 'all_predictions_05-07-22.parquet'
-    interlab_pred_file = 'interlab_predictions_05-07-22.parquet'
+    interlab_pred_file = 'interlab_predictions_12-10-22.parquet'
     embl_pred_file = 'embl_predictions_19-07-22.parquet'
-    datasets_file = 'datasets_11-07-22.parquet'
+    datasets_file = 'datasets_25-10-22.parquet'
     pathways_file = 'pathways_05-07-22.parquet'
     chem_class_file = 'custom_classification_05-07-22.parquet'
 
@@ -84,34 +112,52 @@ def load_data(
     # merge with class
     if load_class:
         classes1 = pd.read_parquet(f'{url_prefix}/{chem_class_file}')
+        class_src = ['fine_class', 'main_coarse_class', 'coarse_class']
 
-        if y_axis != 'main_coarse_class' and x_axis != 'main_coarse_class':
-            chem = get_class_size(
-                classes1[['name_short', 'fine_class', 'coarse_class']], 'fine_class'
-            )
-        else:
-            chem = get_class_size(
-                classes1[['name_short', 'main_coarse_class']].drop_duplicates(), 'main_coarse_class'
-            )
+        # calculate class size based on pathway only if axis contains one of the selected sources
+        if (y_axis in class_src) or (x_axis in class_src):
+            if load_fine_class:
+                chem = get_class_size(
+                    classes1[['name_short', 'fine_class', 'coarse_class']], 'fine_class'
+                )
+            else:
+                chem = get_class_size(
+                    classes1[['name_short', 'main_coarse_class']].drop_duplicates(),
+                    'main_coarse_class',
+                )
 
-        spotting_data = spotting_data.merge(
-            chem, left_on='name', right_on='name_short', how='right'
-        )
+            spotting_data = spotting_data.merge(
+                chem, left_on='name', right_on='name_short', how='right'
+            )
+        else:  # merge class if not in axis but in filter
+            spotting_data = spotting_data.merge(
+                classes1, left_on='name', right_on='name_short', how='right'
+            )
 
     # merge with pathway
     if load_pathway:
         classes1 = pd.read_parquet(f'{url_prefix}/{pathways_file}')
+        pathway_src = ['fine_path', 'main_coarse_path', 'coarse_path']
 
-        if y_axis != 'main_coarse_path' and x_axis != 'main_coarse_path':
-            chem = get_class_size(classes1[['name_short', 'fine_path', 'coarse_path']], 'fine_path')
-        else:
-            chem = get_class_size(
-                classes1[['name_short', 'main_coarse_path']].drop_duplicates(), 'main_coarse_path'
+        # calculate pathway size based on pathway only if axis contains one of the selected sources
+        if (y_axis in pathway_src) or (x_axis in pathway_src):
+            if load_fine_path:
+                chem = get_class_size(
+                    classes1[['name_short', 'fine_path', 'coarse_path']], 'fine_path'
+                )
+            else:
+                chem = get_class_size(
+                    classes1[['name_short', 'main_coarse_path']].drop_duplicates(),
+                    'main_coarse_path',
+                )
+
+            spotting_data = spotting_data.merge(
+                chem, left_on='name', right_on='name_short', how='right'
             )
-
-        spotting_data = spotting_data.merge(
-            chem, left_on='name', right_on='name_short', how='right'
-        )
+        else:  # merge pathway if not in axis but in filter
+            spotting_data = spotting_data.merge(
+                classes1, left_on='name', right_on='name_short', how='right'
+            )
 
     # filter types definitions
     numeric_filters = ['pV']
@@ -332,7 +378,7 @@ def parse_event(event):
     load_class = json.loads(parameter['loadClass'].lower())
     pred_type = parameter['predType']
     query_type = parameter['queryType']
-    query_filter_src = parameter['filter']
+    query_filter_src = parameter['filter'] if 'filter' in parameter.keys() else ''
     if parameter.get('filterValues'):
         query_filter_values = parameter['filterValues']
     else:
@@ -369,7 +415,9 @@ def filter_processing(query_filter_src, query_filter_values):
         filter_values = urllib.parse.unquote(query_filter_values).split('|')
         for idx, src in enumerate(filter_src):
             if idx < len(filter_values):
-                filter_hash[src] = filter_values[idx].split('#')
+                filter_hash[src] = map(
+                    lambda x: str.replace(x, "None", ""), filter_values[idx].split('#')
+                )
 
     return filter_src, filter_values, filter_hash
 
@@ -396,7 +444,24 @@ def lambda_handler(event, context):
 
     # load base data
     base_data, n_metabolites = load_data(
-        pred_type, load_pathway, load_class, filter_hash, x_axis, y_axis
+        pred_type,
+        load_pathway,
+        load_class,
+        filter_hash,
+        x_axis,
+        y_axis,
+        (
+            y_axis != 'main_coarse_class'
+            and x_axis != 'main_coarse_class'
+            and 'main_coarse_class' not in filter_src
+        )
+        or (query_type == 'filterValues' and query_filter_src == 'fine_class'),
+        (
+            y_axis != 'main_coarse_path'
+            and x_axis != 'main_coarse_path'
+            and 'main_coarse_path' not in filter_src
+        )
+        or (query_type == 'filterValues' and query_filter_src == 'fine_path'),
     )
 
     # get filter values
@@ -409,6 +474,13 @@ def lambda_handler(event, context):
             },
         }
 
+    # check if should summarize data based on pathway or class size
+    class_src = ['fine_class', 'main_coarse_class', 'coarse_class']
+    pathway_src = ['fine_path', 'main_coarse_path', 'coarse_path']
+    summarize_w_class = (
+        y_axis in class_src or y_axis in pathway_src or x_axis in class_src or x_axis in pathway_src
+    )
+
     # if y_axis is fine_class, compose aggregation to show coarse_class groups on
     # sub axis
     if y_axis == 'fine_class':
@@ -419,10 +491,14 @@ def lambda_handler(event, context):
         y_axis = 'class_full'
 
     # Summarise data per molecule (intensities of its detected ions are summed)
-    if not load_pathway and not load_class:
+
+    if not summarize_w_class:
         data = summarise_data(base_data, n_metabolites, x_axis, y_axis)
     else:
         data = summarise_data_w_class(base_data, x_axis, y_axis)
+
+    # sort matrix axis by using seriate
+    x_axis_sort, y_axis_sort = sort_axis(data, x_axis, y_axis)
 
     return {
         'statusCode': 200,
@@ -432,59 +508,7 @@ def lambda_handler(event, context):
             'yAxis': list(data[y_axis].unique()),
             'filterSrc': list(filter_src),
             'filterValues': list(filter_values),
+            'xAxisSorting': x_axis_sort,
+            'yAxisSorting': y_axis_sort,
         },
     }
-
-
-class MyServer(BaseHTTPRequestHandler):
-    # pylint: disable=invalid-name
-    def do_GET(self):
-        print('url')
-        url = self.path
-        parsed_url = urlparse(url)
-        query = parse_qsl(parsed_url.query)
-        print(query)
-        print(dict(query))
-
-        json_to_pass = json.dumps(
-            lambda_handler(
-                dict(query),
-                None,
-            )
-        )
-        self.send_response(code=200, message='here is your token')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header(keyword='Content-type', value='application/json')
-        self.end_headers()
-        self.wfile.write(json_to_pass.encode('utf-8'))
-
-
-if __name__ == "__main__":
-    # Local server testing
-    # webServer = HTTPServer(('localhost', 8080), MyServer)
-    # print("Yang's local server started at port 8080")
-    # try:
-    #     webServer.serve_forever()
-    # except KeyboardInterrupt:
-    #     pass
-    #
-    # webServer.server_close()
-    # print("Server stopped.")
-
-    # script testing
-    payload = lambda_handler(
-        {
-            'predType': 'EMBL',
-            'xAxis': 'a',
-            'yAxis': 'Participant lab',
-            'loadPathway': 'false',
-            'loadClass': 'false',
-            'queryType': 'data',
-            'filter': '',
-            'filterValues': '',
-        },
-        None,
-    )
-    print(payload)
-
-# %%

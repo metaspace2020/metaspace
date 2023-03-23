@@ -35,6 +35,7 @@ import formatCsvRow, { csvExportIntensityHeader } from '../../../lib/formatCsvRo
 import FileSaver from 'file-saver'
 import FilterIcon from '../../../assets/inline/filter.svg'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../../Filters/filterSpecs'
+import { parseFormulaAndCharge } from '../../../lib/formulaParser'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -679,7 +680,7 @@ export default defineComponent<DatasetComparisonPageProps>({
             selectedAnnotation !== null
             && <CopyButton
               class="ml-1"
-              text={selectedAnnotation?.ion}>
+              text={parseFormulaAndCharge(selectedAnnotation?.ion)}>
                 Copy ion to clipboard
             </CopyButton>
           }

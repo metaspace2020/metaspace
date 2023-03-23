@@ -13,7 +13,7 @@ import safeJsonParse from '../../../lib/safeJsonParse'
 import { DatasetBrowserSpectrumChart } from './DatasetBrowserSpectrumChart'
 import './DatasetBrowserPage.scss'
 import { SimpleIonImageViewer } from '../../../components/SimpleIonImageViewer/SimpleIonImageViewer'
-import { calculateMzFromFormula, isFormulaValid } from '../../../lib/formulaParser'
+import { calculateMzFromFormula, isFormulaValid, parseFormulaAndCharge } from '../../../lib/formulaParser'
 import reportError from '../../../lib/reportError'
 import { readNpy } from '../../../lib/npyHandler'
 import { DatasetBrowserKendrickPlot } from './DatasetBrowserKendrickPlot'
@@ -508,7 +508,17 @@ export default defineComponent<DatasetBrowserProps>({
             ],
           }
         } else {
-          state.annotation = annotations.value[currentAnnotationIdx]
+          state.annotation = {
+            ...annotations.value[currentAnnotationIdx],
+            isotopeImages: [
+              {
+                mz: state.mz,
+                url: state.ionImageUrl,
+                minIntensity: 0,
+                maxIntensity: browserResult?.value?.browserImage?.maxIntensity,
+              },
+            ],
+          }
         }
 
         if (spectrumResult.value) {
@@ -703,8 +713,8 @@ export default defineComponent<DatasetBrowserProps>({
                 if (value === PEAK_FILTER.FDR && !state.fdrFilter) {
                   state.fdrFilter = 0.05
                 } else if (value === PEAK_FILTER.ALL) {
-                  state.fdrFilter = undefined
-                  state.databaseFilter = undefined
+                  // state.fdrFilter = undefined
+                  // state.databaseFilter = undefined
                 }
               }}
               onChange={() => {
@@ -717,7 +727,7 @@ export default defineComponent<DatasetBrowserProps>({
               <Radio class='w-full' label={PEAK_FILTER.ALL}>All Peaks</Radio>
               <Radio class='w-full mt-1 ' label={PEAK_FILTER.OFF}>Unannotated Peaks</Radio>
               <div>
-                <Radio label={PEAK_FILTER.FDR}>Show annotated at FDR</Radio>
+                <Radio class='mr-1' label={PEAK_FILTER.FDR}>Show annotated at FDR:</Radio>
                 <Select
                   class='select-box-mini'
                   value={state.fdrFilter}
@@ -858,7 +868,7 @@ export default defineComponent<DatasetBrowserProps>({
           <CopyButton
             class="ml-1"
             style={{ display: !annotation?.ion ? 'none' : '' }}
-            text={annotation?.ion || '-'}>
+            text={annotation?.ion ? parseFormulaAndCharge(annotation?.ion) : '-'}>
             Copy ion to clipboard
           </CopyButton>
           <span class="text-2xl flex items-baseline ml-4">
@@ -1028,6 +1038,7 @@ export default defineComponent<DatasetBrowserProps>({
             requestIonImage()
           }}
           onDownload={handleDownload}
+          annotatedLabel={`Annotated at FDR ${(state.fdrFilter || 1) * 100}%`}
         />
       )
     }
@@ -1053,6 +1064,7 @@ export default defineComponent<DatasetBrowserProps>({
             state.mzmScoreFilter = mz
             requestIonImage()
           }}
+          annotatedLabel={`Annotated @ FDR ${(state.fdrFilter || 1) * 100}%`}
           onDownload={handleDownload}
         />
       )

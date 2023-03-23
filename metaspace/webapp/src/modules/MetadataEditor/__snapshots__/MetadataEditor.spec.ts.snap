@@ -49,6 +49,7 @@ Object {
   "isPublic": true,
   "name": "dataset.name",
   "neutralLosses": Array [],
+  "performEnrichment": false,
   "ppm": 3,
   "principalInvestigator": Object {
     "email": "dataset.principalInvestigator.email",
@@ -1057,7 +1058,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <!---->
                         <!---->
                         <div class="el-input el-input--medium">
-                          <!----><input type="text" autocomplete="off" max="50" min="1" class="el-input__inner" role="spinbutton" aria-valuemax="50" aria-valuemin="1" aria-valuenow="3" aria-disabled="false">
+                          <!----><input type="text" autocomplete="off" max="50" min="0.1" class="el-input__inner" role="spinbutton" aria-valuemax="50" aria-valuemin="0.1" aria-valuenow="3" aria-disabled="false">
                           <!---->
                           <!---->
                           <!---->

@@ -47,6 +47,7 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   molClass: 'mol_class',
   term: 'term',
   opticalImage: 'opt_img',
+  pValue: 'pval',
 }
 
 const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>

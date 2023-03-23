@@ -157,7 +157,7 @@ def get_config(
     }
 
 
-def multipart_upload(local_path, companion_url, file_type, headers={}):
+def multipart_upload(local_path, companion_url, file_type, headers={}, current_user_id=None):
     def send_request(
         url,
         method='GET',
@@ -177,12 +177,17 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
                     raise
                 print(f'{ex}\nRetrying...')
 
-    def init_multipart_upload(filename, file_type, headers={}):
+    def init_multipart_upload(filename, file_type, headers={}, current_user_id=None):
         url = companion_url + '/s3/multipart'
         data = {
             'filename': filename,
             'type': file_type,
-            'metadata': {'name': filename, 'type': file_type},
+            'metadata': {
+                'name': filename,
+                'type': file_type,
+                'source': 'api',
+                'user': current_user_id,
+            },
         }
         resp_data = send_request(url, 'POST', json=data, headers=headers)
         return resp_data['key'], resp_data['uploadId']
@@ -252,7 +257,9 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
                 yield part, file_data
 
     session = requests.Session()
-    key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers)
+    key, upload_id = init_multipart_upload(
+        Path(local_path).name, file_type, headers=headers, current_user_id=current_user_id
+    )
 
     # Python evaluates the input to ThreadPoolExecutor.map eagerly, which would allow iterate_file
     # to read parts and sign uploads even if there was a significant queue to upload_part.
@@ -273,7 +280,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
     return bucket, key
 
 
-def _dataset_upload(imzml_fn, ibd_fn, companion_url):
+def _dataset_upload(imzml_fn, ibd_fn, companion_url, current_user_id=None):
     assert Path(imzml_fn).exists(), f'Could not find .imzML file: {imzml_fn}'
     assert Path(ibd_fn).exists(), f'Could not find .ibd file: {ibd_fn}'
     # Get UUID for upload
@@ -288,6 +295,7 @@ def _dataset_upload(imzml_fn, ibd_fn, companion_url):
             companion_url,
             'application/octet-stream',
             headers=headers,
+            current_user_id=current_user_id,
         )
     input_path = f's3a://{bucket}/{key.rsplit("/", 1)[0]}'
     return input_path
@@ -675,7 +683,8 @@ class GraphQLClient(object):
 
     def create_dataset(self, input_params, perform_enrichment=False, ds_id=None):
         query = """
-            mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int, $useLithops: Boolean, $performEnrichment: Boolean) {
+            mutation createDataset($id: String, $input: DatasetCreateInput!,
+                $priority: Int, $useLithops: Boolean, $performEnrichment: Boolean) {
                 createDataset(
                   id: $id,
                   input: $input,
@@ -688,6 +697,7 @@ class GraphQLClient(object):
         variables = {
             'id': ds_id,
             'input': input_params,
+            'priority': 0,
             'useLithops': True,
             'performEnrichment': perform_enrichment,
         }
@@ -708,21 +718,25 @@ class GraphQLClient(object):
     def update_dataset(
         self,
         ds_id,
-        input=None,
+        input={},
         reprocess=False,
         force=False,
+        perform_enrichment=False,
         priority=1,
     ):
         query = """
-            mutation updateMetadataDatabases($id: String!, $reprocess: Boolean,
-                $input: DatasetUpdateInput!, $priority: Int, $force: Boolean) {
-                    updateDataset(
-                      id: $id,
-                      input: $input,
-                      priority: $priority,
-                      reprocess: $reprocess,
-                      force: $force
-                    )
+            mutation updateDataset($id: String!, $input: DatasetUpdateInput!,
+                $priority: Int, $reprocess: Boolean, $force: Boolean,
+                $useLithops: Boolean, $performEnrichment: Boolean) {
+                updateDataset(
+                    id: $id,
+                    input: $input,
+                    priority: $priority,
+                    reprocess: $reprocess,
+                    force: $force,
+                    useLithops: $useLithops,
+                    performEnrichment: $performEnrichment,
+                )
             }
         """
 
@@ -732,6 +746,8 @@ class GraphQLClient(object):
             'priority': priority,
             'reprocess': reprocess,
             'force': force,
+            'useLithops': True,
+            'performEnrichment': perform_enrichment,
         }
 
         self.query(query, variables)
@@ -1811,7 +1827,9 @@ class SMInstance(object):
         # Upload the files. Keep this as late as possible to minimize chances of error after upload
         if input_path is None:
             assert imzml_fn and ibd_fn, 'imzml_fn and ibd_fn must be supplied'
-            input_path = _dataset_upload(imzml_fn, ibd_fn, self._config['dataset_upload_url'])
+            input_path = _dataset_upload(
+                imzml_fn, ibd_fn, self._config['dataset_upload_url'], current_user_id
+            )
 
         graphql_response = self._gqclient.create_dataset(
             {
@@ -1859,6 +1877,7 @@ class SMInstance(object):
         analysis_version: Optional[int] = None,
         reprocess: Optional[bool] = None,
         force: bool = False,
+        perform_enrichment: Optional[bool] = False,
     ):
         """Updates a dataset's metadata and/or processing settings. Only specify the fields that
         should change. All arguments should be specified as keyword arguments,
@@ -1894,6 +1913,7 @@ class SMInstance(object):
         :param force:
             True: Allow changes to datasets that are already being processed. This should be used
             with caution, as it can cause errors or inconsistent results.
+        :param perform_enrichment: Optional enable LION for dataset.
         """
 
         input_field = {}
@@ -1925,10 +1945,12 @@ class SMInstance(object):
             input_field['analysisVersion'] = analysis_version
 
         try:
-            self._gqclient.update_dataset(id, input_field, reprocess or False, force)
+            self._gqclient.update_dataset(
+                id, input_field, reprocess or False, force, perform_enrichment
+            )
         except GraphQLException as ex:
             if ex.type == 'reprocessing_needed' and reprocess is None:
-                self._gqclient.update_dataset(id, input_field, True, force)
+                self._gqclient.update_dataset(id, input_field, True, force, perform_enrichment)
             else:
                 raise
 

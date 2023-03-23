@@ -8,6 +8,7 @@ import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../../lib/formatCsvRow'
 import ExternalWindowSvg from '../../../assets/inline/refactoring-ui/icon-external-window.svg'
 import './DatasetEnrichmentTable.scss'
+import moment from 'moment'
 
 interface DatasetEnrichmentTableProps {
   data: any[]
@@ -239,45 +240,6 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       }
     }
 
-    const sortMolecule = (a: any, b: any, order: number) => {
-      const re = /(\D+\d*)/i
-      const reA = /[^a-zA-Z]/g
-      const reN = /[^0-9]/g
-      let aFormula = a.ionFormula
-      let bFormula = b.ionFormula
-      let aMatch = aFormula.match(re)
-      let bMatch = bFormula.match(re)
-      let aMolecule = aMatch[1]
-      let bMolecule = bMatch[1]
-
-      while (aFormula && bFormula && aMolecule === bMolecule) { // if equal evaluate next molecule until not equal
-        aFormula = aFormula.substring(aMatch.length + 1, aFormula.length)
-        bFormula = bFormula.substring(bMatch.length + 1, bFormula.length)
-        aMatch = aFormula.match(re)
-        bMatch = bFormula.match(re)
-
-        if (!bMatch) { // return shortest as first, if different matches are over
-          return -(order)
-        } else if (!aMatch) {
-          return order
-        }
-
-        aMolecule = aMatch[1]
-        bMolecule = bMatch[1]
-      }
-
-      const aA = aMolecule.replace(reA, '')
-      const bA = bMolecule.replace(reA, '')
-
-      if (aA === bA) {
-        const aN = parseInt(aMolecule.replace(reN, ''), 10)
-        const bN = parseInt(bMolecule.replace(reN, ''), 10)
-        return aN === bN ? 0 : aN > bN ? (order) : -(order)
-      } else {
-        return aA > bA ? order : -(order)
-      }
-    }
-
     const handleSortName = (order: string) => {
       state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
         (order === 'ascending' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name))))
@@ -349,31 +311,8 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       handleCurrentRowChange(state.selectedRow)
     }
 
-    const formatPercentage = (value: any) => {
-      return value ? <span>{Math.round(value * 100)}%</span> : <span>&mdash;</span>
-    }
-
     const formatFloat = (value: any) => {
       return value ? <span>{parseFloat(value).toFixed(4)}</span> : <span>&mdash;</span>
-    }
-
-    const getRowClass = (info: any) => {
-      const { row } = info
-      const { qValue: fdrLevel, colocalizationCoeff } = row
-      const fdrClass =
-        fdrLevel == null ? 'fdr-null'
-          : fdrLevel <= 0.051 ? 'fdr-5'
-            : fdrLevel <= 0.101 ? 'fdr-10'
-              : fdrLevel <= 0.201 ? 'fdr-20'
-                : 'fdr-50'
-      const colocClass =
-        colocalizationCoeff == null ? ''
-          : colocalizationCoeff >= 0.949 ? 'coloc-95'
-            : colocalizationCoeff >= 0.899 ? 'coloc-90'
-              : colocalizationCoeff >= 0.799 ? 'coloc-80'
-                : 'coloc-50'
-
-      return `${fdrClass} ${colocClass}`
     }
 
     const paginationLayout = () => {
@@ -387,11 +326,17 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
     }
 
     const startExport = async() => {
-      let csv = csvExportHeader()
+      const dateStr = moment().format('YYYY-MM-DD HH:mm:ss')
+      let csv = `# Generated at ${dateStr}.\n`
+        + `# URL: ${window.location.href}\n`
 
-      const columns = ['id', 'median', 'expected', 'name', 'observed', 'pValue', 'qValue', 'std']
+      const columns = ['ID', 'Name', 'n', 'Observed', 'Expected', 'Median', 'σ', 'p-value', 'q-value']
 
       csv += formatCsvRow(columns)
+
+      function formatNumber(value: any) {
+        return parseFloat(value).toFixed(4)
+      }
 
       function formatRow(row : any) {
         const {
@@ -403,16 +348,18 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
           pValue,
           qValue,
           std,
+          n,
         } = row
         const cells = [
           id,
-          median,
-          expected,
           name,
-          observed,
-          pValue,
-          qValue,
-          std,
+          n,
+          formatNumber(observed),
+          formatNumber(expected),
+          formatNumber(median),
+          formatNumber(std),
+          formatNumber(pValue),
+          formatNumber(qValue),
         ]
 
         return formatCsvRow(cells)
@@ -434,6 +381,22 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
     const abortExport = () => {
       state.isExporting = false
       state.exportProgress = 0
+    }
+
+    const renderExplainedHeader = (column : any, explanation: string) => {
+      return <div class="explained-header">
+        {column.label}
+        <Popover
+          trigger="hover"
+          placement="right"
+        >
+          <i
+            slot="reference"
+            class="el-icon-question help-icon ml-0.5"
+          />
+          {explanation}
+        </Popover>
+      </div>
     }
 
     return () => {
@@ -491,30 +454,36 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
               property="n"
               label="n"
               sortable="custom"
-              minWidth="40"
+              minWidth="60"
+              renderHeader={(h : any, { column } : any) => renderExplainedHeader(column,
+                'Median of number of molecules matched with term.')}
             />
             <TableColumn
               key="observed"
               property="observed"
-              label="observed"
+              label="Observed"
               sortable="custom"
-              minWidth="80"
+              minWidth="110"
+              renderHeader={(h : any, { column } : any) => renderExplainedHeader(column,
+                'Observed ratio over background in term.')}
               formatter={(row: any) => formatFloat(row.observed)}
 
             />
             <TableColumn
               key="expected"
               property="expected"
-              label="expected"
+              label="Expected"
               sortable="custom"
-              minWidth="80"
+              minWidth="110"
+              renderHeader={(h : any, { column } : any) => renderExplainedHeader(column,
+                'Expected ratio over background in term.')}
               formatter={(row: any) => formatFloat(row.expected)}
 
             />
             <TableColumn
               key="median"
               property="median"
-              label="median"
+              label="Median"
               sortable="custom"
               minWidth="80"
               formatter={(row: any) => formatFloat(row.median)}
@@ -523,19 +492,21 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
             <TableColumn
               key="std"
               property="std"
-              label="std"
+              label="σ"
               className="fdr-cell"
               sortable="custom"
               minWidth="80"
+              renderHeader={(h : any, { column } : any) => renderExplainedHeader(column,
+                'Standard deviation.')}
               formatter={(row: any) => formatFloat(row.std)}
             />
             <TableColumn
               key="p-value"
               property="pValue"
-              label="pValue"
+              label="p-value"
               sortable="custom"
               minWidth="80"
-              formatter={(row: any) => formatPercentage(row.pValue)}
+              formatter={(row: any) => formatFloat(row.pValue)}
             />
             <TableColumn
               key="qValue"
@@ -543,7 +514,7 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
               label="q-value"
               sortable="custom"
               minWidth="80"
-              formatter={(row: any) => formatPercentage(row.qValue)}
+              formatter={(row: any) => formatFloat(row.qValue)}
             />
           </Table>
           <div class="flex justify-between items-start mt-2">
@@ -563,10 +534,8 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
                 <b>{ totalCount }</b> matching { totalCount === 1 ? 'record' : 'records' }
               </div>
             </div>
-            <Popover trigger="hover">
-              <div slot="reference">
-                {
-                  state.isExporting
+            {
+              state.isExporting
                 && totalCount > 5000
                 && <ProgressButton
                   class="export-btn"
@@ -577,9 +546,9 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
                 >
                   Cancel
                 </ProgressButton>
-                }
-                {
-                  !(state.isExporting
+            }
+            {
+              !(state.isExporting
                   && totalCount > 5000)
                 && <Button
                   class="export-btn"
@@ -588,18 +557,7 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
                 >
                   Export to CSV
                 </Button>
-                }
-              </div>
-
-              Documentation for the CSV export is available{' '}
-              <a
-                href="https://github.com/metaspace2020/metaspace/wiki/CSV-annotations-export"
-                rel="noopener noreferrer nofollow"
-                target="_blank"
-              >
-                here<ExternalWindowSvg class="inline h-4 w-4 -mb-1 fill-current text-gray-800" />
-              </a>
-            </Popover>
+            }
           </div>
         </div>
       )

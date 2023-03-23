@@ -311,7 +311,7 @@ def process_centr_segments(
         process_centr_segment,
         [(co,) for co in db_segms_cobjs],
         runtime_memory=pw_mem_mb,
-        max_memory=4096,
+        max_memory=8196,
         # debug_run_locally=True,
     )
     formula_metrics_df = pd.concat(formula_metrics_list)

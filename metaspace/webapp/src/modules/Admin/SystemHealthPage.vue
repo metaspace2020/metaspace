@@ -102,7 +102,7 @@ const SystemHealthPage = {
         this.buttonType = 'success'
         this.buttonText = 'Updated'
       } catch (err) {
-        reportError(err)
+        // reportError(err)
         this.buttonType = 'danger'
         this.buttonText = 'Error'
       } finally {

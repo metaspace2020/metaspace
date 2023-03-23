@@ -123,6 +123,7 @@ export default {
         this.isSubmitting = true
 
         const payload = {}
+        const options = {}
         // Only include changed fields in payload
         if (metadataJson !== initialMetadataJson) {
           payload.metadataJson = metadataJson
@@ -139,7 +140,7 @@ export default {
         })
 
         try {
-          const wasSaved = await this.saveDataset(datasetId, payload)
+          const wasSaved = await this.saveDataset(datasetId, payload, options)
 
           if (wasSaved) {
             this.validationErrors = []
@@ -293,6 +294,7 @@ export default {
           id: datasetId,
           input: payload,
           useLithops: config.features.lithops,
+          performEnrichment: payload.performEnrichment,
           ...options,
         },
       })

@@ -731,7 +731,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
           offSample, offSampleProb, colocalization,
         } = row
         const cells = [
-          dataset.groupApproved && dataset.group ? dataset.group.name : '',
+          dataset.group ? dataset.group.name : '',
           dataset.name,
           dataset.id,
           sumFormula, 'M' + adduct,

@@ -8,6 +8,7 @@ export const editDatasetFragment =
     configJson
     description
     isPublic
+    isEnriched
     group {
       id
       name

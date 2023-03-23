@@ -2,7 +2,7 @@
 
 exports[`SignInDialog should match snapshot 1`] = `
 <mock-el-dialog title="Sign in" visible="">
-  <div class="sign-in">
+  <div class="container">
     <div class="left-side">
       <form class="el-form">
         <div class="el-form-item is-required">

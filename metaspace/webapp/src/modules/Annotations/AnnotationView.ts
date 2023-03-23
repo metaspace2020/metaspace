@@ -35,6 +35,7 @@ import FilterIcon from '../../assets/inline/filter.svg'
 
 import { ImageSettings, useIonImageSettings } from '../ImageViewer/ionImageState'
 import viewerState from '../ImageViewer/state'
+import { parseFormulaAndCharge } from '../../lib/formulaParser'
 
 const { settings: ionImageSettings } = useIonImageSettings()
 
@@ -126,6 +127,10 @@ export default class AnnotationView extends Vue {
      const currentMdType: string = this.$store.getters.filter.metadataType
      const componentKey: string = currentMdType in metadataDependentComponents[category] ? currentMdType : 'default'
      return metadataDependentComponents[category][componentKey]
+   }
+
+   getParsedFormula(ion: string) : string {
+     return parseFormulaAndCharge(ion)
    }
 
    get showOpticalImage(): boolean {

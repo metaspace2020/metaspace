@@ -52,7 +52,7 @@ describe('ionImageRendering.ts', () => {
       const bits = is16Bit ? 16 : 8
       const colorType = isRGBA ? 'RGBA' : 'Grayscale'
       test(`processIonImage correctly decodes a ${bits}-bit ${colorType} image`, () => {
-        const png = getGradientPng(is16Bit, isRGBA)
+        const png = getGradientPng(is16Bit, !isRGBA)
 
         const image = processIonImage(png, 0, 1, 'test')
 

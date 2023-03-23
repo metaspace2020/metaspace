@@ -46,6 +46,7 @@ interface DatasetBrowserKendrickPlotProps {
   peakFilter: number
   referenceMz: number
   dataRange: any
+  annotatedLabel: string
 }
 
 interface DatasetBrowserKendrickPlotState {
@@ -73,6 +74,9 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
     isDataLoading: {
       type: Boolean,
       default: false,
+    },
+    annotatedLabel: {
+      type: String,
     },
     data: {
       type: Array,
@@ -152,6 +156,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
             },
             saveAsImage: {
               title: 'Download',
+              name: 'mass_spectrum',
             },
           },
         },
@@ -296,6 +301,11 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
 
       return (
         <div class='chart-holder'>
+          {
+            !(isLoading || isDataLoading)
+            && props.annotatedLabel
+            && <div class='annotated-legend'>{props.annotatedLabel}</div>
+          }
           {
             (isLoading || isDataLoading)
             && <div class='loader-holder'>

@@ -3,7 +3,7 @@
 exports[`MetaspaceFooter should match snapshot 1`] = `
 <footer class="bg-gray-100">
   <div class="leading-6 max-w-4xl mx-auto px-18 py-16 box-border text-gray-700 text-sm text-center">
-    <p class="flex justify-center m-0 font-medium"><a href="/privacy" class="">
+    <p class="flex justify-center m-0 font-medium flex-wrap"><a href="/privacy" class="">
         Privacy
       </a> <a href="/terms" class="">
         Terms
@@ -11,7 +11,7 @@ exports[`MetaspaceFooter should match snapshot 1`] = `
         Publications
       </a> <a href="https://github.com/metaspace2020/metaspace">GitHub</a> <a href="https://twitter.com/metaspace2020">Twitter</a> <a href="mailto:contact@metaspace2020.eu">Contact</a></p>
     <p class="m-0 mt-8">
-      © 2014–2022 <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov Team</a></p>
+      © 2014–2023 <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov Team</a></p>
   </div>
 </footer>
 `;

@@ -93,7 +93,6 @@ export const Resolvers = {
         )
         .where('dataset.userId = :userId', { userId })
         .andWhere('dataset.groupId = :groupId', { groupId })
-        .andWhere('dataset.groupApproved = TRUE')
         .andWhere(canSeePrivateDatasets ? 'TRUE' : 'engine_dataset.is_public')
         .andWhere('engine_dataset.status != \'FAILED\'')
         .getCount()

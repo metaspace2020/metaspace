@@ -88,6 +88,7 @@
                   :required-file-types="['imzML', 'ibd']"
                   :s3-options="s3Options"
                   :options="uppyOptions"
+                  :current-user="currentUser"
                   @file-added="onFileAdded"
                   @file-removed="onFileRemoved"
                   @upload="onUploadStart"

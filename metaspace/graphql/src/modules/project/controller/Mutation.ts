@@ -31,6 +31,7 @@ import { validateUrlSlugChange } from '../../groupOrProject/urlSlug'
 import { validateTiptapJson } from '../../../utils/tiptap'
 import { getDatasetForEditing } from '../../dataset/operation/getDatasetForEditing'
 import { EngineDataset } from '../../engine/model'
+import logger from '../../../utils/logger'
 import moment = require('moment')
 
 const asyncAssertCanEditProject = async(ctx: Context, projectId: string) => {
@@ -242,6 +243,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
           }
         }
       }))
+
+      if (datasetIds && datasetIds.length > 0) {
+        logger.info(`Datasets ${datasetIds} added to ${projectId}`)
+      }
+      if (removedDatasetIds && removedDatasetIds.length > 0) {
+        logger.info(`Datasets ${removedDatasetIds} removed from ${projectId}`)
+      }
 
       const approved = ([UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole) || ctx.isAdmin)
       await updateProjectDatasets(ctx, projectId, (datasetIds || []), (removedDatasetIds || []),

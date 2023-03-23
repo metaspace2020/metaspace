@@ -1,6 +1,14 @@
 .dataset-enrichment-table{
   @apply relative;
 
+  .explained-header{
+    padding: 0;
+
+    .help-icon{
+      font-size: 10px;
+    }
+  }
+
   #annot-table:focus {
     outline: 1px solid theme('colors.primary');
     outline-offset: 1px;
