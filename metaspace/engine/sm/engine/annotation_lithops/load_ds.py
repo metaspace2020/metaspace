@@ -5,7 +5,7 @@ import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -144,7 +144,7 @@ def _get_hash(
 ) -> Dict[str, str]:
     """Calculate md5 hash of imzML/ibd files"""
 
-    def calc_hash(file_object, chunk_size=8 * 1024 * 1024):
+    def calc_hash(file_object: CloudObject, chunk_size: int = 8 * 1024 * 1024) -> str:
         md5_hash = hashlib.md5()
         chunk = file_object.read(chunk_size)
         while chunk:
@@ -154,13 +154,13 @@ def _get_hash(
         return md5_hash.hexdigest()
 
     start_t = datetime.now().replace(microsecond=0)
-    hash = {
+    hash_sum = {
         'imzml': calc_hash(storage.get_cloudobject(imzml_cobject, stream=True)),
         'ibd': calc_hash(storage.get_cloudobject(ibd_cobject, stream=True)),
     }
     _print_times(start_t, 'calc_hash')
 
-    return hash
+    return hash_sum
 
 
 def _load_ds(

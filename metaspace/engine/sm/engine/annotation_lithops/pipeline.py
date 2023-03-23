@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Tuple, Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -52,6 +52,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     results_dfs: Dict[int, pd.DataFrame]
     png_cobjs: List[CObj[List[Tuple[int, bytes]]]]
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         imzml_cobject: CloudObject,
