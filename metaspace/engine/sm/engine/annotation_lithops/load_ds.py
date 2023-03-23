@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -17,7 +16,6 @@ from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj
 from sm.engine.config import SMConfig
-from sm.engine.db import DB
 from sm.engine.storage import get_s3_client
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
@@ -237,18 +235,18 @@ def _upload_imzml_browser_files(storage: Storage, imzml_browser_cobjs: List[CObj
             pass
 
 
-def _save_size_hash(imzml_head, ibd_head, md5_hash, ds_id):
-    """Calculate hash and size only for ServerAnnotationJob (ds_id is not None)"""
+def _get_size_hash(imzml_head, ibd_head, md5_hash, ds_id):
+    """Save hash and size only for ServerAnnotationJob (ds_id is not None)"""
+    size_hash = {}
     if ds_id:
-        json_data = {
+        size_hash = {
             'imzml_hash': md5_hash['imzml'],
             'ibd_hash': md5_hash['ibd'],
             'imzml_size': int(imzml_head['content-length']),
             'ibd_size': int(ibd_head['content-length']),
         }
 
-        db = DB()
-        db.alter('UPDATE dataset SET size_hash = %s WHERE id = %s', (json.dumps(json_data), ds_id))
+    return size_hash
 
 
 def load_ds(
@@ -296,9 +294,9 @@ def load_ds(
     _upload_imzml_browser_files(executor.storage, imzml_browser_cobjs)
     logger.info('Moved imzml browser files to S3')
 
-    _save_size_hash(imzml_head, ibd_head, md5_hash, ds_id)
+    size_hash = _get_size_hash(imzml_head, ibd_head, md5_hash, ds_id)
 
-    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
+    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, size_hash
 
 
 def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens):

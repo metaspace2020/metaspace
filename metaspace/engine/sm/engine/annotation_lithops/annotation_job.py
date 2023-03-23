@@ -307,8 +307,9 @@ class ServerAnnotationJob:
 
         self.results_dfs = None
         self.png_cobjs = None
-        self.enrichment_data = None
         self.db_formula_image_ids = None
+        self.enrichment_data = None
+        self.ds_size_hash = None
 
     def run(self, **kwargs):
         # TODO: Only run missing moldbs
@@ -325,6 +326,9 @@ class ServerAnnotationJob:
             self.results_dfs, self.png_cobjs, self.enrichment_data = self.pipe.run_pipeline(
                 perform_enrichment=self.perform_enrichment, **kwargs
             )
+
+            # Save size and hash of imzML/ibd files
+            self.pipe.store_ds_size_hash()
 
             # Save images (if enabled)
             if self.store_images:

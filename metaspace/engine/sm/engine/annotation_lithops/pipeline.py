@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -91,6 +92,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.ds_segm_size_mb = 128
 
         self.enrichment_data = None
+        self.ds_size_hash = None
 
     def run_pipeline(
         self, debug_validate=False, use_cache=True, perform_enrichment=False
@@ -133,6 +135,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
+            self.ds_size_hash,
         ) = load_ds(
             self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, self.ds_id
         )
@@ -204,6 +207,15 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     @use_pipeline_cache
     def run_enrichment(self):
         self.enrichment_data = run_enrichment(self.results_dfs)
+
+    def store_ds_size_hash(self):
+        """Stores size and md5 hash of imzML/ibd files.
+        Not part of run_pipeline because this is unwanted when running from a LocalAnnotationJob."""
+        db = DB()
+        db.alter(
+            'UPDATE dataset SET size_hash = %s WHERE id = %s',
+            (json.dumps(self.ds_size_hash), self.ds_id),
+        )
 
     def store_images_to_s3(self, ds_id: str):
         """Stores ion images to S3 ImageStorage. Not part of run_pipeline because this is unwanted
