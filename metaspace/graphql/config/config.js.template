@@ -38,6 +38,7 @@ config.google = {};
 config.google.client_id = "{{ sm_graphql_google_client_id }}";
 config.google.client_secret = "{{ sm_graphql_google_client_secret }}";
 config.google.callback_url = "{{ sm_graphql_google_callback_url }}";
+config.google.serpapi_key = "{{ sm_graphql_google_serpapi_key }}";
 
 config.web_public_url = "{{ web_public_url }}";
 
