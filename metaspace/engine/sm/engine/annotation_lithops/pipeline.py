@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import json
 import logging
-from typing import List, Tuple, Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -52,6 +53,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     results_dfs: Dict[int, pd.DataFrame]
     png_cobjs: List[CObj[List[Tuple[int, bytes]]]]
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         imzml_cobject: CloudObject,
@@ -59,6 +61,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         moldbs: List[InputMolDb],
         ds_config: DSConfig,
         executor: Executor = None,
+        ds_id: Union[str, None] = None,
         lithops_config=None,
         cache_key=None,
         use_db_cache=True,
@@ -71,6 +74,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.ibd_cobject = ibd_cobject
         self.moldbs = moldbs
         self.ds_config = ds_config
+        self.ds_id = ds_id
         self.isocalc_wrapper = IsocalcWrapper(ds_config)
 
         self.executor = executor or Executor(lithops_config)
@@ -88,6 +92,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.ds_segm_size_mb = 128
 
         self.enrichment_data = None
+        self.ds_size_hash = None
 
     def run_pipeline(
         self, debug_validate=False, use_cache=True, perform_enrichment=False
@@ -130,8 +135,9 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
+            self.ds_size_hash,
         ) = load_ds(
-            self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, self.storage
+            self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, self.ds_id
         )
 
         self.is_intensive_dataset = len(self.ds_segms_cobjs) * self.ds_segm_size_mb > 5000
@@ -202,6 +208,15 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     def run_enrichment(self):
         self.enrichment_data = run_enrichment(
             self.results_dfs, self.ds_config['ontology_db_ids'] or []
+        )
+
+    def store_ds_size_hash(self):
+        """Stores size and md5 hash of imzML/ibd files.
+        Not part of run_pipeline because this is unwanted when running from a LocalAnnotationJob."""
+        db = DB()
+        db.alter(
+            'UPDATE dataset SET size_hash = %s WHERE id = %s',
+            (json.dumps(self.ds_size_hash), self.ds_id),
         )
 
     def store_images_to_s3(self, ds_id: str):
