@@ -1,7 +1,7 @@
 /* eslint-disable vue/max-len */
 import Vue, { AsyncComponent } from 'vue'
 import VueRouter, { RawLocation } from 'vue-router'
-import AboutPage from './modules/App/AboutPage.vue'
+import AboutPage from './modules/App/AboutPage'
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
 import { DialogPage, ResetPasswordPage } from './modules/Account'
 import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
@@ -32,7 +32,7 @@ const asyncPagesFreelyTyped = {
   GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Group/GroupsListPage'),
   PrivacyPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PrivacyPage.vue'),
   TermsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/TermsPage.vue'),
-  PublicationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PublicationsPage.vue'),
+  PublicationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PublicationsPage'),
 
   // These pages use sanitizeHtml, which is big
   ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/Group/ViewGroupPage.vue'),

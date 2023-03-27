@@ -208,3 +208,18 @@ export const getUserGroupsQuery =
 
 export const countGroupDatasets =
   gql`query ($groupId: ID!) { countDatasets(filter: { group: $groupId }) }`
+
+export const countGroupsQuery =
+gql`query countGroups {
+  countGroups
+}`
+
+export const countPublicationsQuery =
+gql`query countPublications {
+  countPublications
+}`
+
+export const countReviewsQuery =
+gql`query countReviews {
+  countReviews
+}`
