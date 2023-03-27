@@ -276,12 +276,14 @@ const AboutPage = defineComponent<Props>({
                     alt="EU"
                   />
                   <span>
-                    <b>European Union Horizon 2020 Programme</b>
+                    <b>European Union Horizon2020 and Horizon Europe Programs</b>
                     <br/>
                     under grant agreements
                     <a class='mx-1' href="https://cordis.europa.eu/project/id/634402">634402</a>/
                     <a class='mx-1' href="https://cordis.europa.eu/project/id/773089">773089</a>/
-                    <a class='ml-1' href="https://cordis.europa.eu/project/id/825184">825184</a>
+                    <a class='mx-1' href="https://cordis.europa.eu/project/id/773089">825184</a>/
+                    <a class='mx-1' href="https://cordis.europa.eu/project/id/101092644">101092644</a>/
+                    <a class='ml-1' href="https://cordis.europa.eu/project/id/101092646">101092646</a>
                   </span>
                 </li>
                 <li>

@@ -217,7 +217,7 @@ export const Resolvers = {
           })
 
           if (publicationsCount) {
-            console.log('Cache hit for XX', publicationsCount)
+            console.log('Cache hit for', publicationsCount)
             return parseInt(publicationsCount, 10)
           } else {
             console.log('Cache miss for', countKey)
@@ -228,16 +228,20 @@ export const Resolvers = {
               api_key: config.google.serpapi_key,
             }).toString(), {
               method: 'GET',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                mode: 'no-cors',
+              },
             })
-            const { data } = await res.json()
-            console.log('data', data)
-            const nOfPublications = data.search_information.total_results
+            const data : string = await res.text()
+            const dataJson = JSON.parse(data)
+            const nOfPublications = dataJson.search_information.total_results
+
             redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * SECONDS)
             return parseInt(nOfPublications, 10)
           }
         } catch (e) {
-          console.log(e)
+          console.error(e)
           return null
         }
       } else {

@@ -49,7 +49,7 @@
   }
 
   .sm-about-funding li {
-    @apply flex mb-6 h-12;
+    @apply flex mb-6 h-16;
   }
 
   /* md */
@@ -62,7 +62,13 @@
   /* sm */
   @media screen and (max-width: 640px) {
     .sm-about-funding li{
-      @apply h-32;
+      @apply h-64;
+
+      span {
+        max-width: 24rem;
+        flex-wrap: wrap;
+        display: flex;
+      }
     }
   }
 
