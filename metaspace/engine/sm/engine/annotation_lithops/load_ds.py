@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from typing import Tuple, List
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -136,6 +137,30 @@ def _upload_imzml_browser_files_to_cos(storage, imzml_cobject, imzml_reader, mzs
     return cobjs
 
 
+def _get_hash(
+    storage: Storage, imzml_cobject: CloudObject, ibd_cobject: CloudObject
+) -> Dict[str, str]:
+    """Calculate md5 hash of imzML/ibd files"""
+
+    def calc_hash(file_object: CloudObject, chunk_size: int = 8 * 1024 * 1024) -> str:
+        md5_hash = hashlib.md5()
+        chunk = file_object.read(chunk_size)
+        while chunk:
+            md5_hash.update(chunk)
+            chunk = file_object.read(chunk_size)
+
+        return md5_hash.hexdigest()
+
+    start_t = datetime.now().replace(microsecond=0)
+    hash_sum = {
+        'imzml': calc_hash(storage.get_cloudobject(imzml_cobject, stream=True)),
+        'ibd': calc_hash(storage.get_cloudobject(ibd_cobject, stream=True)),
+    }
+    _print_times(start_t, 'calc_hash')
+
+    return hash_sum
+
+
 def _load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
@@ -173,7 +198,18 @@ def _load_ds(
     )
     perf.record_entry('uploaded imzml browser files')
 
-    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, imzml_browser_cobjs
+    logger.info('Calculating md5 hash of imzML/ibd files')
+    md5_hash = _get_hash(storage, imzml_cobject, ibd_cobject)
+    perf.record_entry('calculate hash')
+
+    return (
+        imzml_reader,
+        ds_segments_bounds,
+        ds_segms_cobjs,
+        ds_segm_lens,
+        imzml_browser_cobjs,
+        md5_hash,
+    )
 
 
 def _upload_imzml_browser_files(storage: Storage, imzml_browser_cobjs: List[CObj]):
@@ -199,12 +235,26 @@ def _upload_imzml_browser_files(storage: Storage, imzml_browser_cobjs: List[CObj
             pass
 
 
+def _get_size_hash(imzml_head, ibd_head, md5_hash, ds_id):
+    """Save hash and size only for ServerAnnotationJob (ds_id is not None)"""
+    size_hash = {}
+    if ds_id:
+        size_hash = {
+            'imzml_hash': md5_hash['imzml'],
+            'ibd_hash': md5_hash['ibd'],
+            'imzml_size': int(imzml_head['content-length']),
+            'ibd_size': int(ibd_head['content-length']),
+        }
+
+    return size_hash
+
+
 def load_ds(
     executor: Executor,
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
-    storage: Storage,
+    ds_id: Union[str, None],
 ) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray,]:
     try:
         imzml_head = executor.storage.head_object(imzml_cobject.bucket, imzml_cobject.key)
@@ -233,6 +283,7 @@ def load_ds(
         ds_segms_cobjs,
         ds_segm_lens,
         imzml_browser_cobjs,
+        md5_hash,
     ) = executor.call(
         _load_ds,
         (imzml_cobject, ibd_cobject, ds_segm_size_mb),
@@ -240,10 +291,12 @@ def load_ds(
     )
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
 
-    _upload_imzml_browser_files(storage, imzml_browser_cobjs)
+    _upload_imzml_browser_files(executor.storage, imzml_browser_cobjs)
     logger.info('Moved imzml browser files to S3')
 
-    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
+    size_hash = _get_size_hash(imzml_head, ibd_head, md5_hash, ds_id)
+
+    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, size_hash
 
 
 def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens):
