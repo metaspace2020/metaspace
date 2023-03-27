@@ -319,9 +319,9 @@ const AboutPage = defineComponent<Props>({
               <h3>Other acknowledgements</h3>
               <p>
                 Icons by <a href="http://www.freepik.com/">Freepik</a> from
-                <a href="http://www.flaticon.com">www.flaticon.com</a>,
-                <a href="https://refactoringui.com/book/">Refactoring UI</a> and
-                <a href="https://material.io/icons">Material Icons</a>.
+                <a href="http://www.flaticon.com" class='ml-1'>www.flaticon.com</a>,
+                <a href="https://refactoringui.com/book/" class='ml-1'>Refactoring UI</a> and
+                <a href="https://material.io/icons" class='ml-1'>Material Icons</a>.
               </p>
             </section>
           </div>

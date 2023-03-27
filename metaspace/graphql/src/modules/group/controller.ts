@@ -234,7 +234,13 @@ export const Resolvers = {
               },
             })
             const data : string = await res.text()
+
+            console.log('log data', data)
+
             const dataJson = JSON.parse(data)
+
+            console.log('parsed data', dataJson)
+
             const nOfPublications = dataJson.search_information.total_results
 
             redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * SECONDS)
