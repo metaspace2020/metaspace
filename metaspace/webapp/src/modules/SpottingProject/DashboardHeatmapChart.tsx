@@ -131,8 +131,9 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
-            return 'Fraction detected: ' + params.value[4].toFixed(2) + ' ' + params.data?.label?.y + ' in '
-              + params.data?.label?.x
+            const value = typeof params.value[4] === 'number' ? params.value[4] : params.value[3]
+            return (value || 0).toFixed(2) + ' '
+              + (params.data?.label?.y || '').replace(/-agg-/g, ' ') + ' in ' + (params.data?.label?.x || '')
           },
         },
         grid: {
@@ -173,7 +174,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
           axisLabel: {
             show: true,
             interval: 0,
-            height: 40,
+            verticalAlign: 'middle',
             fontFamily: 'monospace',
             rich: {
               b: {
@@ -199,7 +200,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
           feature: {
             saveAsImage: {
               title: ' ',
-              name: 'spotting',
+              name: 'standards',
             },
           },
         },
@@ -321,6 +322,17 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
         auxOptions.visualMap = visualMap.value
       }
 
+      // reset visualmap range on data update
+      const chartRef : any = spectrumChart.value
+      setTimeout(() => {
+        if (chartRef && chartRef.chart) {
+          chartRef.chart.dispatchAction({
+            type: 'selectDataRange',
+            selected: [0, visualMap.value?.max],
+          })
+        }
+      }, 0)
+
       return state.chartOptions
     })
 
@@ -360,7 +372,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       if (item.targetType === 'axisName') {
         state.scaleIntensity = !state.scaleIntensity
       } else {
-        emit('itemSelected', item.data.mz)
+        emit('itemSelected', item)
       }
     }
 

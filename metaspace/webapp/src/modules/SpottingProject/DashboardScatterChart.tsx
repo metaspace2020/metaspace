@@ -140,14 +140,15 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           feature: {
             saveAsImage: {
               title: ' ',
-              name: 'spotting',
+              name: 'standards',
             },
           },
         },
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
-            return 'Fraction detected: ' + (params.value[4] || 0).toFixed(2) + ' '
+            const value = typeof params.value[4] === 'number' ? params.value[4] : params.value[3]
+            return (value || 0).toFixed(2) + ' '
               + (params.data?.label?.y || '').replace(/-agg-/g, ' ') + ' in ' + (params.data?.label?.x || '')
           },
         },
@@ -192,9 +193,9 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
               show: false,
             },
             axisLabel: {
+              verticalAlign: 'middle',
               show: true,
               interval: 0,
-              height: 40,
               fontFamily: 'monospace',
               rich: {
                 b: {
@@ -258,6 +259,12 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         })
       })
 
+      if (xAxisData.value.length > 3) {
+        auxOptions.grid.right = '5%'
+      } else {
+        auxOptions.grid.right = '40%'
+      }
+
       auxOptions.xAxis.data = xAxisData.value
 
       if (auxOptions.xAxis.data.length > 30) {
@@ -316,6 +323,17 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }
+
+      // reset visualmap range on data update
+      const chartRef : any = spectrumChart.value
+      setTimeout(() => {
+        if (chartRef && chartRef.chart) {
+          chartRef.chart.dispatchAction({
+            type: 'selectDataRange',
+            selected: [0, visualMap.value?.max],
+          })
+        }
+      }, 0)
 
       return auxOptions
     })
@@ -398,7 +416,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
 
       return (
         <div class='chart-holder'
-          style={{ height: `${state.size}px` }}>
+          style={{ height: `${state.size}px`, width: '100%' }}>
           {
             (isLoading || isDataLoading)
             && <div class='loader-holder'>
@@ -420,7 +438,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
               },
             }}
             class='chart'
-            style={{ height: `${state.size}px` }}
+            style={{ height: `${state.size}px`, width: '100%' }}
             options={chartOptions.value}/>
         </div>
       )
@@ -428,7 +446,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
 
     return () => {
       return (
-        <div class={'dataset-browser-spectrum-container'}>
+        <div class={'dataset-browser-scatter-container'}>
           {renderSpectrum()}
         </div>
       )
