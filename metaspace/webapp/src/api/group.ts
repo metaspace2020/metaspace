@@ -218,3 +218,8 @@ export const countPublicationsQuery =
 gql`query countPublications {
   countPublications
 }`
+
+export const countReviewsQuery =
+gql`query countReviews {
+  countReviews
+}`

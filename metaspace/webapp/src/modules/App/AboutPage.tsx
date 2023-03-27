@@ -7,11 +7,11 @@ import MonitorSvg from '../../assets/inline/refactoring-ui/icon-monitor.svg'
 import BookSvg from '../../assets/inline/refactoring-ui/icon-book-open.svg'
 import BoltSvg from '../../assets/inline/refactoring-ui/icon-bolt.svg'
 import UnlockSvg from '../../assets/inline/refactoring-ui/icon-lock-open.svg'
-import './AboutPage.scss'
 import { useQuery } from '@vue/apollo-composable'
 import { countDatasetsQuery } from '../../api/dataset'
 import { countUsersQuery } from '../../api/user'
 import { countGroupsQuery, countPublicationsQuery } from '../../api/group'
+import './AboutPage.scss'
 
 const METALogo = require('../../assets/METASPACE_logomark.png')
 const NIDDKLogo = require('../../assets/NIDDK.svg')
@@ -67,7 +67,7 @@ const AboutPage = defineComponent<Props>({
       return (
         <div class='sm-about-page text-base leading-6'>
           <div class="bg-primary overflow-hidden w-full">
-            <div class="box-border font-display pt-0 pb-12 mx-auto md:max-w-4xl max-w-sm flex items-center">
+            <div class="box-border font-display pt-0 pb-10 mx-auto md:max-w-4xl max-w-sm flex items-center">
               <img
                 alt='METASPACE logo'
                 src={METALogo}
@@ -87,14 +87,14 @@ const AboutPage = defineComponent<Props>({
           </div>
           <div
             id="about"
-            class="sm-about py-12 px-18 mx-auto box-border max-w-4xl"
+            class="sm-about py-6 px-18 mx-auto box-border max-w-4xl"
           >
             <section class="sm-about-features">
               <h2 class="sr-only">
                 Features
               </h2>
               <div>
-                <PrimaryIcon className="mb-2">
+                <PrimaryIcon className="mb-2" small>
                   <MonitorSvg/>
                 </PrimaryIcon>
                 <h3>Metabolite annotation</h3>
@@ -107,7 +107,7 @@ const AboutPage = defineComponent<Props>({
                 </p>
               </div>
               <div>
-                <PrimaryIcon className="mb-2">
+                <PrimaryIcon className="mb-2" small>
                   <BookSvg/>
                 </PrimaryIcon>
                 <h3>Explore the knowledgebase</h3>
@@ -122,7 +122,7 @@ const AboutPage = defineComponent<Props>({
               <div>
                 <PrimaryIcon
                   className="mb-2"
-                  inverse
+                  inverse small
                 >
                   <BoltSvg/>
                 </PrimaryIcon>
@@ -138,7 +138,7 @@ const AboutPage = defineComponent<Props>({
                 </p>
               </div>
               <div>
-                <PrimaryIcon className="mb-2">
+                <PrimaryIcon className="mb-2" small>
                   <UnlockSvg/>
                 </PrimaryIcon>
                 <h3>Open access</h3>
@@ -151,7 +151,7 @@ const AboutPage = defineComponent<Props>({
               </div>
             </section>
           </div>
-          <div class="bg-primary overflow-hidden w-full py-8 px-18 mx-auto box-border flex justify-center">
+          <div class="bg-primary overflow-hidden w-full py-6 px-18 mx-auto box-border flex justify-center">
             <section class="sm-about-stats w-full max-w-3xl">
               <h2 class="sr-only">
                 Stats

@@ -51,6 +51,7 @@ type Query {
   allGroups(query: String, limit: Int = 10): [Group!]!
   countGroups: Int!
   countPublications: Int!
+  countReviews: Int!
 
   groupUrlSlugIsValid(urlSlug: String!, existingGroupId: ID): Boolean! # Throws error if invalid, consistent with updateGroup
 }
