@@ -57,9 +57,9 @@
         <div class="header-items">
           <header-link
             v-if="showSpotting"
-            to="/spotting"
+            to="/standards"
           >
-            Spotting
+            Standards
           </header-link>
           <header-link
             to="/help"
