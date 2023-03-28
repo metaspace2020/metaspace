@@ -110,6 +110,7 @@ describe('Dataset mutations: processingSettingsChanged', () => {
     const update = {
       molDBs: ds.config.databases,
       metadata: _.defaultsDeep({ MS_Analysis: { Detector_Resolving_Power: { mz: 100 } } }, ds.metadata),
+      updateEnrichment: false,
     }
 
     const { procSettingsUpd } = processingSettingsChanged(ds, update)
@@ -124,6 +125,7 @@ describe('Dataset mutations: processingSettingsChanged', () => {
         MS_Analysis: { ionisationSource: 'DESI' },
         Sample_Information: { Organism: 'New organism' },
       }, ds.metadata),
+      updateEnrichment: false,
       name: 'New DS name',
     }
 
