@@ -98,6 +98,7 @@ describe('Dataset mutations: processingSettingsChanged', () => {
     const update = {
       databaseIds: [...ds.config.databases, 1],
       metadata: ds.metadata,
+      updateEnrichment: false,
     }
 
     const { newDB } = processingSettingsChanged(ds, update)
