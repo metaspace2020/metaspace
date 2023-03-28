@@ -10,7 +10,9 @@ import { DatasetEnrichmentTable } from './DatasetEnrichmentTable'
 import './DatasetEnrichmentPage.scss'
 import { getEnrichedMolDatabasesQuery } from '../../../api/enrichmentdb'
 import FilterPanel from '../../Filters/FilterPanel.vue'
-import config from '../../../lib/config'
+import { uniq, uniqBy } from 'lodash-es'
+import gql from 'graphql-tag'
+import safeJsonParse from '../../../lib/safeJsonParse'
 
 interface DatasetEnrichmentPageProps {
   className: string
@@ -44,10 +46,23 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     const {
       result: datasetResult,
     } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId })
+
     const dataset = computed(() => datasetResult.value != null ? datasetResult.value.dataset : null)
     const {
       result: databasesResult,
+      onResult: handleMolDbLoad,
     } = useQuery<any>(getEnrichedMolDatabasesQuery, { id: datasetId })
+
+    handleMolDbLoad(async(result) => {
+      const filter = Object.assign({}, $store.getters.filter)
+
+      // set default db filter if not selected
+      if (!filter.database) {
+        filter.database = result?.data?.allEnrichedMolDatabases[0]?.id
+        $store.commit('updateFilter', filter)
+      }
+    })
+
     const databases = computed(() => databasesResult.value != null
       ? databasesResult.value.allEnrichedMolDatabases : null)
     const {
@@ -108,6 +123,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       const data = enrichment.value || []
       const usedData = state.sortedData ? state.sortedData : data
       const pagedData = usedData.slice(dataStart, dataEnd)
+      const databaseOptions : any = databases.value || []
 
       return (
         <div class='dataset-enrichment-page'>
@@ -116,12 +132,14 @@ export default defineComponent<DatasetEnrichmentPageProps>({
             && <FilterPanel
               class='w-full'
               level='enrichment'
-              fixedOptions={{ database: (databases.value || []) }}
+              fixedOptions={{
+                database: uniqBy(databaseOptions, 'id'),
+              }}
             />
           }
           {
             enrichmentLoading.value
-            && <div class='dataset-enrichment-loading'>
+            && <div class='w-full h-full flex items-center justify-center'>
               <i
                 class="el-icon-loading"
               />
@@ -144,7 +162,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
           {
             !enrichmentLoading.value
             && <div class={'dataset-enrichment-wrapper text-center md:w-1/2 w-full'}>
-              {dataset.value?.name} - enrichment
+              {dataset.value?.name} - <a target='_blank' href='http://www.lipidontology.com/'>LION</a> terms enrichment
               {
                 !(!data || (data || []).length === 0)
                 && <DatasetEnrichmentChart data={pagedData} onItemSelected={handleItemClick}/>

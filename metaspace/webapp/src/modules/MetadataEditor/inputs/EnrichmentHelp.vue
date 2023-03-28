@@ -1,6 +1,10 @@
 <template>
   <div class="analysis-version-help">
-    When performing LION enrichment, a lipid enrichment analysis will be performed based on LION.
+    When performing <a
+      target="_blank"
+      href="http://www.lipidontology.com/"
+    >LION</a> enrichment, a lipid enrichment
+    analysis will be performed based on LION.
     <h5>Available databases:</h5>
     <ul>
       <li>CoreMetabolome - v3.</li>
