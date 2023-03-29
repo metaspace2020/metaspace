@@ -62,7 +62,7 @@ const defaultConfig: ClientConfig = {
   metadataTypes: ['ims'],
   features: {
     coloc: true,
-    enrichment: false,
+    enrichment: true,
     show_dataset_overview: true,
     imzml_browser: true,
     spotting: false,

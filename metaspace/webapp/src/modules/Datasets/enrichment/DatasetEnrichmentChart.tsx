@@ -82,7 +82,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
       chartOptions: {
         grid: { containLabel: false, width: '70%', right: '7%', top: '2%', bottom: '10%' },
         xAxis: {
-          name: 'overrepresentation in dataset vs. database',
+          name: 'Overrepresentation in dataset vs. database',
           bottom: 'center',
           nameLocation: 'middle',
           nameGap: 40,

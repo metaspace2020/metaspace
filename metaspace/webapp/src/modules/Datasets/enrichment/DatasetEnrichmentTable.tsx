@@ -456,7 +456,7 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
               sortable="custom"
               minWidth="60"
               renderHeader={(h : any, { column } : any) => renderExplainedHeader(column,
-                'Median of number of molecules matched with term.')}
+                'Median number of molecules matched with term..')}
             />
             <TableColumn
               key="observed"
