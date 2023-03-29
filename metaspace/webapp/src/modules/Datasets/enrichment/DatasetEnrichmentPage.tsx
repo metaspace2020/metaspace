@@ -77,6 +77,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       onResult: handleDatasetLoad,
     } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId })
 
+
     handleDatasetLoad(async(result) => {
       const filter = Object.assign({}, $store.getters.filter)
 
@@ -98,7 +99,19 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     const dataset = computed(() => datasetResult.value != null ? datasetResult.value.dataset : null)
     const {
       result: databasesResult,
+      onResult: handleMolDbLoad,
     } = useQuery<any>(getEnrichedMolDatabasesQuery, { id: datasetId })
+
+    handleMolDbLoad(async(result) => {
+      const filter = Object.assign({}, $store.getters.filter)
+
+      // set default db filter if not selected
+      if (!filter.database) {
+        filter.database = result?.data?.allEnrichedMolDatabases[0]?.id
+        $store.commit('updateFilter', filter)
+      }
+    })
+
     const databases = computed(() => databasesResult.value != null
       ? databasesResult.value.allEnrichedMolDatabases : null)
     const {
@@ -202,7 +215,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
           {
             !enrichmentLoading.value
             && <div class={'dataset-enrichment-wrapper text-center md:w-1/2 w-full'}>
-              {dataset.value?.name} - enrichment
+              {dataset.value?.name} - <a target='_blank' href='http://www.lipidontology.com/'>LION</a> terms enrichment
               {
                 !(!data || (data || []).length === 0)
                 && <DatasetEnrichmentChart data={pagedData} onItemSelected={handleItemClick}/>

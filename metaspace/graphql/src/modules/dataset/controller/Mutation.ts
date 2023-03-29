@@ -28,6 +28,7 @@ import { assertUserBelongsToGroup } from '../../moldb/util/assertUserBelongsToGr
 import { smApiUpdateDataset } from '../../../utils/smApi/datasets'
 import { validateTiptapJson } from '../../../utils/tiptap'
 import { isMemberOfGroup } from '../operation/isMemberOfGroup'
+import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/model'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -102,12 +103,14 @@ function validateMetadata(metadata: MetadataNode) {
   }
 }
 
-export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpdateInput & { metadata: MetadataRoot }) {
+export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpdateInput & { metadata: MetadataRoot,
+  updateEnrichment: boolean | undefined }) {
   let newDB = false; let procSettingsUpd = false; const metaDiff = null; let enrichmentUpd = false
   if (update.databaseIds) {
     newDB = true
   }
-  if (update.performEnrichment || update.ontologyDbIds) {
+
+  if (update.updateEnrichment || update.ontologyDbIds) {
     enrichmentUpd = true
   }
 
@@ -392,7 +395,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await assertUserCanUseMolecularDBs(ctx, update.databaseIds as number[]|undefined)
 
     const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId)
-    const { newDB, procSettingsUpd, enrichmentUpd } = processingSettingsChanged(engineDataset, { ...update, metadata })
+    let isEnriched : boolean | any = false
+
+    if (performEnrichment) {
+      isEnriched = await ctx.entityManager.createQueryBuilder(DatasetEnrichmentModel,
+        'dsEnrichment')
+        .where('dsEnrichment.datasetId = :datasetId', { datasetId })
+        .getOne()
+    }
+
+    const { newDB, procSettingsUpd, enrichmentUpd } = processingSettingsChanged(engineDataset, {
+      ...update,
+      metadata,
+      updateEnrichment: performEnrichment && !isEnriched,
+    })
     const reprocessingNeeded = newDB || procSettingsUpd || enrichmentUpd
 
     const submitterId = (ctx.isAdmin && update.submitterId) || dataset.userId

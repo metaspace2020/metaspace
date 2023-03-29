@@ -128,6 +128,12 @@ export default {
         if (metadataJson !== initialMetadataJson) {
           payload.metadataJson = metadataJson
         }
+
+        // Include performEnrichment
+        if (metaspaceOptions.performEnrichment) {
+          payload.performEnrichment = metaspaceOptions.performEnrichment
+        }
+
         Object.keys(metaspaceOptions).forEach(key => {
           const oldVal = initialMetaspaceOptions[key]
           const newVal = metaspaceOptions[key]
