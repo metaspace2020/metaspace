@@ -18,7 +18,7 @@
   "scripts": {
     "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=development vue-cli-service serve",
     "test": "yarn run generate-local-graphql-schema && cross-env NODE_ENV=test jest",
-    "test-ci": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=test jest --ci",
+    "test-ci": "cross-env NODE_ENV=test jest --ci",
     "coverage": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=test jest --coverage",
     "deref-schema": "node ./deref_schema.js src/lib/metadataSchemas",
     "generate-local-graphql-schema": "cd ../graphql && yarn run gen-graphql-schema",
