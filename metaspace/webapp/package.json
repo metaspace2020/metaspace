@@ -16,17 +16,17 @@
   ],
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_ENV=development vue-cli-service serve",
+    "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=development vue-cli-service serve",
     "test": "yarn run generate-local-graphql-schema && cross-env NODE_ENV=test jest",
-    "test-ci": "cross-env NODE_ENV=test jest --ci",
-    "coverage": "cross-env NODE_ENV=test jest --coverage",
+    "test-ci": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=test jest --ci",
+    "coverage": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=test jest --coverage",
     "deref-schema": "node ./deref_schema.js src/lib/metadataSchemas",
     "generate-local-graphql-schema": "cd ../graphql && yarn run gen-graphql-schema",
     "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint https://metaspace2020.eu/graphql",
-    "build": "yarn run deref-schema && cross-env NODE_ENV=production vue-cli-service build --modern",
-    "build-ci": "cross-env NODE_ENV=production vue-cli-service build --no-progress --hide-modules",
+    "build": "yarn run deref-schema && cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production vue-cli-service build --modern",
+    "build-ci": "cross-env NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production vue-cli-service build --no-progress --hide-modules",
     "lint": "vue-cli-service lint",
-    "analyze-size": "rm -rf dist ; NODE_ENV=production WEBPACK_STATS=true vue-cli-service build ; npx webpack-bundle-analyzer dist/stats.json dist/ -p 9900 -O"
+    "analyze-size": "rm -rf dist ; NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production WEBPACK_STATS=true vue-cli-service build ; npx webpack-bundle-analyzer dist/stats.json dist/ -p 9900 -O"
   },
   "dependencies": {
     "@fullhuman/postcss-purgecss": "^2.1.0",
