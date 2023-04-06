@@ -204,6 +204,7 @@ export const Resolvers = {
           const countKey = 'publications:count-review'
           const DAYS = 7
           const HOURS = 24
+          const MINUTES = 60
           const SECONDS = 60
 
           // transform get in async
@@ -235,7 +236,7 @@ export const Resolvers = {
             const dataJson = JSON.parse(data)
             const nOfPublications = dataJson.search_information.total_results
 
-            redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * SECONDS)
+            redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * MINUTES * SECONDS)
             return parseInt(nOfPublications, 10)
           }
         } catch (e) {
@@ -256,6 +257,7 @@ export const Resolvers = {
           const countKey = 'publications:count'
           const DAYS = 7
           const HOURS = 24
+          const MINUTES = 60
           const SECONDS = 60
 
           // transform get in async
@@ -287,7 +289,7 @@ export const Resolvers = {
             const dataJson = JSON.parse(data)
             const nOfPublications = dataJson.search_information.total_results
 
-            redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * SECONDS)
+            redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * MINUTES * SECONDS)
             return parseInt(nOfPublications, 10)
           }
         } catch (e) {
