@@ -36,16 +36,17 @@ def add_enrichment(
     annotations_hash = {f'{a["formula"]}{a["adduct"]}': a['id'] for a in annotations}
     for _, row in bootstrap_data.iterrows():
         annotation_id = annotations_hash.get(row['formula_adduct'])
-        data.append(
-            (
-                row['scenario'],
-                row['formula_adduct'],
-                row['fdr'],
-                ds_id,
-                annotation_id,
-                row['enrichment_db_molecule_mapping_id'],
+        if annotation_id:
+            data.append(
+                (
+                    row['scenario'],
+                    row['formula_adduct'],
+                    row['fdr'],
+                    ds_id,
+                    annotation_id,
+                    row['enrichment_db_molecule_mapping_id'],
+                )
             )
-        )
 
     db.insert(ENRICHMENT_BOOTSTRAP_INS, rows=data)
     logger.debug('Bootstrap inserted')
