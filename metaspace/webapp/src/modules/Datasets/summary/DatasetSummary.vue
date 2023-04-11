@@ -23,6 +23,7 @@
       <submitter-summary-plot />
       <mass-spec-setup-plot />
       <organism-summary-plot />
+      <mass-spec-summary-chart />
     </div>
   </div>
 </template>
@@ -30,6 +31,7 @@
 import UploadTimelinePlot from './DatasetUploadTimeline.vue'
 import SubmitterSummaryPlot from './SubmitterSummaryPlot.vue'
 import MassSpecSetupPlot from './MSSetupSummaryPlot.vue'
+import { MassSpecSummaryChart } from './MassSpecSummaryChart'
 import OrganismSummaryPlot from './OrganismSummaryPlot.vue'
 import { FilterPanel } from '../../Filters/index'
 
@@ -40,6 +42,7 @@ export default {
     SubmitterSummaryPlot,
     MassSpecSetupPlot,
     OrganismSummaryPlot,
+    MassSpecSummaryChart,
   },
   methods: {
     onChangeTab(tab) {
