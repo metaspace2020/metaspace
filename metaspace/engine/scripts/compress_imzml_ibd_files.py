@@ -37,7 +37,7 @@ def get_files_list(bucket, prefix):
 
 def calculate_total_size(data):
     total_size = 0
-    for ds_id, info in data.items():
+    for _, info in data.items():
         files = get_files_list(info['bucket'], info['key'])
         for f in files:
             total_size += f['Size']
@@ -69,39 +69,39 @@ def download_files(ds_id, info):
 
 
 def compress_files(info):
-    compression_type = {'imzml': 'bzip2', 'ibd': '7z'}
+    compression_types = {'imzml': 'bzip2', 'ibd': '7z'}
 
     compressions = {}
     for extension, file in info.items():
         path = file['path']
         compressions = info
-        t = compression_type[extension]
-        cmd_str = f'7zzs a -t{t} -mx7 "{path}.{t}" "{path}" > /dev/null'
+        com_alg = compression_types[extension]
+        cmd_str = f'7zzs a -t{com_alg} -mx7 "{path}.{com_alg}" "{path}" > /dev/null'
         start = time.time()
-        subprocess.run(cmd_str, shell=True)
+        subprocess.run(cmd_str, shell=True, check=True)
         end = time.time()
-        compressions[extension]['compression_size'] = os.path.getsize(f'{path}.{t}')
+        compressions[extension]['compression_size'] = os.path.getsize(f'{path}.{com_alg}')
         compressions[extension]['compression_time'] = round(end - start, 1)
 
         cmd_str = f'md5sum "{path}" > "{path}.md5"'
-        subprocess.run(cmd_str, shell=True)
+        subprocess.run(cmd_str, shell=True, check=True)
 
         os.remove(path)
     return compressions
 
 
-def print_compression_stats(info):
+def print_compression_stats(ds_id, info):
     compression_type = {'imzml': 'bzip2', 'ibd': '7z'}
-    size = {'imzml': {'bzip2': []}, 'ibd': {'7z': []}}
-    time_ = {'imzml': {'bzip2': []}, 'ibd': {'7z': []}}
+    sizes = {'imzml': {'bzip2': []}, 'ibd': {'7z': []}}
+    times = {'imzml': {'bzip2': []}, 'ibd': {'7z': []}}
 
     for ext, metadata in info.items():
-        ct = compression_type[ext]
-        s = f'{metadata["compression_size"]/metadata["size"]*100:7.2f}'
-        t = f'{metadata["compression_time"]:8.1f}'
-        size[ext][ct].append(metadata['compression_size'])
-        time_[ext][ct].append(metadata['compression_time'])
-        print(f'{ds_id}\t{ext:>5}\t{s}\t{t}')
+        com_alg = compression_type[ext]
+        size = f'{metadata["compression_size"]/metadata["size"]*100:7.2f}'
+        time_ = f'{metadata["compression_time"]:8.1f}'
+        sizes[ext][com_alg].append(metadata['compression_size'])
+        times[ext][com_alg].append(metadata['compression_time'])
+        print(f'{ds_id}\t{ext:>5}\t{size}\t{time_}')
 
 
 if __name__ == "__main__":
@@ -127,4 +127,4 @@ if __name__ == "__main__":
         for ds_id, info in files.items():
             files_metadata = download_files(ds_id, info)
             compression_metadata = compress_files(files_metadata)
-            print_compression_stats(compression_metadata)
+            print_compression_stats(ds_id, compression_metadata)
