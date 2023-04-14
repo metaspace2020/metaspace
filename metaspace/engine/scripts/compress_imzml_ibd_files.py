@@ -8,13 +8,19 @@ import boto3
 
 
 def get_datasets(path):
-    data = {}
     with open(path) as f:
+        data = {}
+        # return only unique input_path (no duplicates) to avoid downloading files again
         for line in f.readlines():
             ds_id, input_path = line.strip().split('\t')
-            bucket, key = input_path.replace('s3a://', '').split('/')
-            data[ds_id] = {'bucket': bucket, 'key': key}
-    return data
+            data[input_path] = ds_id
+
+    datasets = {}
+    for input_path, ds_id in data.items():
+        bucket, key = input_path.replace('s3a://', '').split('/')
+        datasets[ds_id] = {'bucket': bucket, 'key': key}
+
+    return dict(sorted(datasets.items()))
 
 
 def download_file(bucket, key, filename):
@@ -39,69 +45,63 @@ def calculate_total_size(data):
     print(f'Total size: {total_size/1024**3:6.1f} GB')
 
 
-def download_files(data):
-    for ds_id, info in data.items():
-        files = get_files_list(info['bucket'], info['key'])
-        print(f'Dataset ID: {ds_id}')
-        data[ds_id] = {}
-        for f in files:
-            print(f'{f["Size"]/1024/1024:8.2f} MB\t{f["Key"]}')
-            prefix, filename = f['Key'].split('/')
-            extension = filename.split('.')[-1].lower()
-            path = f'{prefix}/{filename}'
-            data[ds_id][extension] = {
-                'size': f['Size'],
-                'name': filename,
-                'prefix': prefix,
-                'path': path,
-            }
+def download_files(ds_id, info):
+    print(f'Dataset ID: {ds_id}')
+    files = get_files_list(info['bucket'], info['key'])
 
-            Path(f'./{prefix}').mkdir(parents=True, exist_ok=True)
-            download_file(info['bucket'], f['Key'], path)
+    metadata = {}
+    for f in files:
+        print(f'{f["Size"]/1024/1024:8.2f} MB\t{f["Key"]}')
+        prefix, filename = f['Key'].split('/')
+        extension = filename.split('.')[-1].lower()
+        path = f'{prefix}/{filename}'
+        metadata[extension] = {
+            'size': f['Size'],
+            'name': filename,
+            'prefix': prefix,
+            'path': path,
+        }
 
-    return data
+        Path(f'./{prefix}').mkdir(parents=True, exist_ok=True)
+        download_file(info['bucket'], f['Key'], path)
+
+    return metadata
 
 
-def compress_files(data):
-    compressions = {}
+def compress_files(info):
     compression_type = {'imzml': 'bzip2', 'ibd': '7z'}
-    for ds_id, info in data.items():
-        for extension, file in info.items():
-            path = file['path']
-            compressions[ds_id] = info
-            t = compression_type[extension]
-            cmd_str = f'7zzs a -t{t} -mx7 "{path}.{t}" "{path}"'
-            start = time.time()
-            subprocess.run(cmd_str, shell=True)
-            end = time.time()
-            compressions[ds_id][extension]['compression_size'] = os.path.getsize(f'{path}.{t}')
-            compressions[ds_id][extension]['compression_time'] = round(end - start, 1)
 
-            cmd_str = f'md5sum "{path}" > "{path}.md5"'
-            subprocess.run(cmd_str, shell=True)
+    compressions = {}
+    for extension, file in info.items():
+        path = file['path']
+        compressions = info
+        t = compression_type[extension]
+        cmd_str = f'7zzs a -t{t} -mx7 "{path}.{t}" "{path}" > /dev/null'
+        start = time.time()
+        subprocess.run(cmd_str, shell=True)
+        end = time.time()
+        compressions[extension]['compression_size'] = os.path.getsize(f'{path}.{t}')
+        compressions[extension]['compression_time'] = round(end - start, 1)
 
-            print('Remove file')
-            print(path)
-            os.remove(path)
+        cmd_str = f'md5sum "{path}" > "{path}.md5"'
+        subprocess.run(cmd_str, shell=True)
+
+        os.remove(path)
     return compressions
 
 
-def print_compression_stats(compression):
+def print_compression_stats(info):
     compression_type = {'imzml': 'bzip2', 'ibd': '7z'}
     size = {'imzml': {'bzip2': []}, 'ibd': {'7z': []}}
     time_ = {'imzml': {'bzip2': []}, 'ibd': {'7z': []}}
-    for ds_id, info in compression.items():
-        for ext, metadata in info.items():
-            ct = compression_type[ext]
-            s = f'{metadata["compression_size"]/metadata["size"]*100:7.2f}'
-            t = f'{metadata["compression_time"]:8.1f}'
-            size[ext][ct].append(metadata['compression_size'])
-            time_[ext][ct].append(metadata['compression_time'])
-            print(f'{ds_id}\t{ext:>5}\t{s}\t{t}')
 
-    print('')
-    print(f'  ibd\t{sum(size["ibd"]["7z"]):>14}\t{sum(time_["ibd"]["7z"]):8.1f}')
-    print(f'imzml\t{sum(size["imzml"]["bzip2"]):>14}\t{sum(time_["imzml"]["bzip2"]):8.1f}')
+    for ext, metadata in info.items():
+        ct = compression_type[ext]
+        s = f'{metadata["compression_size"]/metadata["size"]*100:7.2f}'
+        t = f'{metadata["compression_time"]:8.1f}'
+        size[ext][ct].append(metadata['compression_size'])
+        time_[ext][ct].append(metadata['compression_time'])
+        print(f'{ds_id}\t{ext:>5}\t{s}\t{t}')
 
 
 if __name__ == "__main__":
@@ -124,6 +124,7 @@ if __name__ == "__main__":
     files = get_datasets(args.datasets)
     calculate_total_size(files)
     if not args.calc_size:
-        data = download_files(files)
-        compression_metadata = compress_files(data)
-        print_compression_stats(compression_metadata)
+        for ds_id, info in files.items():
+            files_metadata = download_files(ds_id, info)
+            compression_metadata = compress_files(files_metadata)
+            print_compression_stats(compression_metadata)
