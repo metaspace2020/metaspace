@@ -252,7 +252,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       } = props
       const { role } = currentUser || {}
       const { canEdit, canDelete, canDownload, id, name } = dataset || {}
-      const canReprocess = (role === 'admin')
+      const canReprocess = (role === 'admin') || (dataset?.status === 'FAILED' && canEdit)
 
       return (
         <Dropdown
