@@ -2,7 +2,7 @@ from os.path import join
 
 import pytest
 
-from sm.engine.annotation.acq_geometry import make_acq_geometry
+from sm.engine.annotation.acq_geometry import make_acq_geometry, make_acq_geometry_lithops
 from sm.engine.config import proj_root
 
 
@@ -40,3 +40,16 @@ def test_lcms_geometry_factory():
     assert not geometry['acquisition_grid']['regular_grid']
     assert len(geometry['acquisition_grid']['coord_list']) == 285
     assert geometry['pixel_size'] == {'regular_size': True, 'size_x': 1, 'size_y': 1}
+
+
+def test_make_acq_geometry_lithops():
+    metadata = {'MS_Analysis': {'Pixel_Size': {'Xaxis': 17, 'Yaxis': 18}}}
+
+    empty_geom = make_acq_geometry_lithops(metadata, (72, 70), 4850)
+
+    assert empty_geom == {
+        'length_unit': 'nm',
+        'pixel_count': 4850,
+        'acquisition_grid': {'regular_grid': True, 'count_x': 72, 'count_y': 70},
+        'pixel_size': {'regular_size': True, 'size_x': 17, 'size_y': 18},
+    }

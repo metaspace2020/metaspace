@@ -1,3 +1,20 @@
+# TODO: remove all make_*_acq_geometry functions except this one
+def make_acq_geometry_lithops(metadata, dims, n_spectra):
+    pixel_size = metadata.get('MS_Analysis', {}).get('Pixel_Size', {})
+    row_n, col_n = dims
+
+    return {
+        'length_unit': 'nm',
+        'pixel_count': n_spectra,
+        'acquisition_grid': {'regular_grid': True, 'count_x': int(col_n), 'count_y': int(row_n)},
+        'pixel_size': {
+            'regular_size': True,
+            'size_x': pixel_size.get('Xaxis'),
+            'size_y': pixel_size.get('Yaxis'),
+        },
+    }
+
+
 def make_ims_acq_geometry(metadata, dims):
     pixel_size = metadata.get('MS_Analysis', {}).get('Pixel_Size', {})
     row_n, col_n = dims
