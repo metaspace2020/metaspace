@@ -50,6 +50,6 @@ def test_make_acq_geometry_lithops():
     assert empty_geom == {
         'length_unit': 'nm',
         'pixel_count': 4850,
-        'acquisition_grid': {'regular_grid': True, 'count_x': 72, 'count_y': 70},
+        'acquisition_grid': {'regular_grid': True, 'count_x': 70, 'count_y': 72},
         'pixel_size': {'regular_size': True, 'size_x': 17, 'size_y': 18},
     }
