@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import sys
 
 import pandas as pd
 
@@ -104,7 +105,7 @@ if __name__ == '__main__':
             datasets = pd.DataFrame(get_datasets(sql_where=args.sql_where))
             if datasets.empty:
                 logger.info('No datasets found')
-                exit(0)
+                sys.exit(0)
 
         sizes = pd.DataFrame(get_all_files(sm_config, bucket='sm-engine-upload'))
 
