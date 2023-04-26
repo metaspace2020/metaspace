@@ -328,6 +328,9 @@ class ServerAnnotationJob:
                 perform_enrichment=len(self.ont_db_ids) > 0, **kwargs
             )
 
+            # Save acq_geometry
+            self.pipe.save_acq_geometry(self.ds)
+
             # Save size and hash of imzML/ibd files
             self.pipe.store_ds_size_hash()
 
