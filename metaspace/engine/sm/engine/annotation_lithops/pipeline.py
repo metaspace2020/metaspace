@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from lithops.storage.utils import CloudObject
 
+from sm.engine.annotation.acq_geometry import make_acq_geometry_lithops
 from sm.engine.annotation.diagnostics import FdrDiagnosticBundle
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
@@ -207,6 +208,13 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     @use_pipeline_cache
     def run_enrichment(self):
         self.enrichment_data = run_enrichment(self.results_dfs)
+
+    def save_acq_geometry(self, ds):
+        """Stores acquisition geometry to DB.
+        Not part of run_pipeline because this is unwanted when running from a LocalAnnotationJob."""
+        dims = (self.imzml_reader.h, self.imzml_reader.w)
+        acq_geometry = make_acq_geometry_lithops(ds.metadata, dims, self.imzml_reader.n_spectra)
+        ds.save_acq_geometry(self._db, acq_geometry)
 
     def store_ds_size_hash(self):
         """Stores size and md5 hash of imzML/ibd files.
