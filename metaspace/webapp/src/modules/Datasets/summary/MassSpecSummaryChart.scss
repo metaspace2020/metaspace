@@ -1,9 +1,33 @@
 .mass-spec-chart{
   width: 100%;
+  border: 1px dashed lightgray;
+  overflow: hidden;
+
+  .chart-header{
+    display: flex;
+    border-bottom: 1px dashed lightgray;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem;
+    margin-bottom: 2rem;
+  }
 
   .echarts {
     width: 100%;
-    height: 800px;
+    height: 500px;
+  }
+
+  .tool-box{
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    align-items: center;
+  }
+
+  .maldi-label{
+    border-bottom: 1px solid black;
+    display: flex;
+    justify-content: center;
   }
 
   .annotated-legend{
@@ -17,7 +41,7 @@
 
   .chart{
     @apply flex flex-row items-center justify-center;
-    height: 800px;
+    height: 500px;
     width: 100%;
   }
 
@@ -29,18 +53,17 @@
   .chart-holder{
     @apply flex flex-col items-center justify-start relative;
     min-height: 500px;
-    width: 100%;
     background: white;
-    height: 100%;
+    margin: 1rem;
   }
 
-  //.loader-holder{
-  //  @apply absolute flex flex-row items-start justify-center;
-  //  height: 100%;
-  //  width: 100%;
-  //  background: rgba(0,0,0,0.02);
-  //  padding-top: 30%;
-  //}
+  .loader-holder{
+    @apply absolute flex flex-row items-start justify-center;
+    height: 100%;
+    width: 100%;
+    background: rgba(0,0,0,0.02);
+    padding-top: 30%;
+  }
 
 }
 

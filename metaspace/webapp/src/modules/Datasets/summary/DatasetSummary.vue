@@ -21,7 +21,6 @@
     <div id="dataset-summary-charts">
       <upload-timeline-plot />
       <submitter-summary-plot />
-      <mass-spec-setup-plot />
       <organism-summary-plot />
       <mass-spec-summary-chart />
     </div>
@@ -40,7 +39,6 @@ export default {
     FilterPanel,
     UploadTimelinePlot,
     SubmitterSummaryPlot,
-    MassSpecSetupPlot,
     OrganismSummaryPlot,
     MassSpecSummaryChart,
   },
