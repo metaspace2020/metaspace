@@ -377,7 +377,7 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
       return (
         <div
           ref={container}
-          class='mass-spec-chart relative'>
+          class='mass-spec-chart relative mt-4'>
           <div class='chart-header dom-to-image-hidden'>
             <div class='text-center font-medium'>Number of datasets per analyzer/ion source/matrix</div>
             <div class='tool-box'>

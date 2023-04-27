@@ -58,11 +58,11 @@
   }
 
   .loader-holder{
-    @apply absolute flex flex-row items-start justify-center;
+    @apply flex flex-row items-center justify-center;
     height: 100%;
     width: 100%;
-    background: rgba(0,0,0,0.02);
-    padding-top: 30%;
+    background: rgba(0, 0, 0, 0.02);
+    flex: 1;
   }
 
 }
