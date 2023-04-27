@@ -1,4 +1,4 @@
-import { computed, defineComponent } from '@vue/composition-api'
+import { computed, defineComponent, onMounted } from '@vue/composition-api'
 import PrimaryIcon from '../../components/PrimaryIcon.vue'
 import { CiteMetaspace } from './CiteMetaspace'
 
@@ -31,7 +31,7 @@ const AboutPage = defineComponent<Props>({
     },
   },
   setup(props, ctx) {
-    const { $router } = ctx.root
+    const { $route, $router } = ctx.root
 
     const queryVars = computed(() => ({
       dFilter: {
@@ -62,6 +62,16 @@ const AboutPage = defineComponent<Props>({
     } = useQuery<{countPublications: any}>(countPublicationsQuery)
     const publicationCount = computed(() => publicationCountResult.value != null
       ? publicationCountResult.value.countPublications : null)
+
+    onMounted(() => {
+      if ($route?.hash?.includes('funding')) {
+        window.scrollTo({
+          top: document?.getElementById('please-appreciate-those-who-funded-it')?.offsetTop,
+          left: 0,
+          behavior: 'smooth',
+        })
+      }
+    })
 
     return () => {
       return (
