@@ -130,17 +130,16 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
           {
             type: 'scatter',
             symbolSize: function(val: any) {
-              return val[3] * 11
+              return val[3] ? val[3] * 11 + 15 : 0
             },
             data: [],
-            animationDelay: function(idx: number) {
-              return idx * 5
-            },
             label: {
               show: true,
+              color: 'black',
               formatter: function(param: any) {
                 return param.data.value[2]
               },
+              fontWeight: '300',
               minMargin: 10,
               verticalAlign: 'middle',
             },
@@ -328,7 +327,7 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
       auxOptions.series.data = chartData?.items
       auxOptions.xAxis.data = chartData?.xAxis
       auxOptions.yAxis.data = chartData?.yAxis
-      auxOptions.color = state.polarity === POSITIVE_MODE ? '#1287EE' : 'red'
+      auxOptions.color = state.polarity === POSITIVE_MODE ? 'rgba(18, 135, 238, 0.5)' : 'rgba(255, 0, 0, 0.5)'
 
       state.size = chartData?.yAxis?.length < 7 ? 800 : chartData?.yAxis?.length * 100
 
