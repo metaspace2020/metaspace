@@ -136,7 +136,7 @@ export default Vue.extend({
   },
   data() {
     return {
-      recordsPerPage: 100,
+      recordsPerPage: 20,
       csvChunkSize: 1000,
       categories: ['ANNOTATING', 'QUEUED', 'FINISHED'],
       isExporting: false,

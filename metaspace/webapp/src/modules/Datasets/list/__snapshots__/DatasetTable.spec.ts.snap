@@ -1064,7 +1064,7 @@ exports[`DatasetTable should match snapshot 1`] = `
       current-page="1"
       hide-on-single-page=""
       layout="prev, pager, next"
-      page-size="100"
+      page-size="20"
       pager-count="11"
       total="23"
     />
