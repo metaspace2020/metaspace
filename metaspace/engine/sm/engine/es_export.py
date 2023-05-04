@@ -94,7 +94,10 @@ LEFT JOIN (
 ) gp ON gp.dataset_id = d.ds_id
 WHERE d.ds_id = %s'''
 
-DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry', 'ds_size_hash',)
+DS_COLUMNS_TO_SKIP_IN_ANN = (
+    'ds_acq_geometry',
+    'ds_size_hash',
+)
 
 
 def init_es_conn(es_config):
