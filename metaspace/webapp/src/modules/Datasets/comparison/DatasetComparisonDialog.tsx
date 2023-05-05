@@ -34,7 +34,7 @@ interface DatasetComparisonDialogState {
   datasetName: string
 }
 
-const MAX_CELLS = 10
+const MAX_CELLS = 12
 
 export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogProps>({
   name: 'DatasetComparisonDialog',
