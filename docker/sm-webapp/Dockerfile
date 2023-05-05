@@ -1,4 +1,4 @@
-FROM node:18.15.0-alpine3.16
+FROM node:16.20.0-alpine3.17
 
 RUN apk add --no-cache --virtual .gyp python3 make g++
 RUN apk add --no-cache git netcat-openbsd
