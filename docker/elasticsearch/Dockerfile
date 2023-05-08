@@ -1,4 +1,4 @@
-FROM elasticsearch:5.5.2
+FROM elasticsearch:8.7.1
 
 
 RUN rm -r /usr/share/elasticsearch/config/elasticsearch.yml && \

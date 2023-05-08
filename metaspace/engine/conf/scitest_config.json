@@ -13,6 +13,8 @@
   },
   "elasticsearch": {
     "index": "sm_test",
+    "dataset_index": "dataset_test",
+    "annotation_index": "annotation_test",
     "host": "localhost",
     "port": "9200",
     "user": "elastic",

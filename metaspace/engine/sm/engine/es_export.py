@@ -8,7 +8,7 @@ import pandas as pd
 from elasticsearch import (
     TransportError,
     Elasticsearch,
-    ElasticsearchException,
+    ApiError,
     NotFoundError,
 )
 from elasticsearch.client import IndicesClient, IngestClient
@@ -97,9 +97,11 @@ DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry',)
 
 
 def init_es_conn(es_config):
-    hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
+    hosts = [{"host": es_config['host'], "port": int(es_config['port']), 'scheme': "http"}]
     http_auth = (es_config['user'], es_config['password']) if 'user' in es_config else None
-    return Elasticsearch(hosts=hosts, http_auth=http_auth)
+    print(f'Connectingx to ElasticSearch at {hosts}')
+    print(f'Using HTTP auth: {http_auth}')
+    return Elasticsearch(hosts=hosts, basic_auth=http_auth)
 
 
 class ESIndexManager:
@@ -130,7 +132,93 @@ class ESIndexManager:
 
         return index
 
-    def create_index(self, index):
+    def create_dataset_index(self, index):
+        dataset_mappings = {
+            "dynamic_templates": [
+                {
+                    "strings": {
+                        "match_mapping_type": "string",
+                        "mapping": {
+                            "type": "keyword",
+                            "normalizer": "default",
+                            "fields": {"raw": {"type": "keyword"}},
+                        },
+                    }
+                }
+            ],
+            "properties": {
+                "ds_id": {"type": "keyword"},
+                "ds_name": {
+                    "type": "keyword",
+                    "fields": {"searchable": {"type": "text", "analyzer": "delimited_ds_names"}},
+                },
+            },
+        }
+        dataset_settings = {
+            "index": {
+                "number_of_shards": 1,
+                "number_of_replicas": 0,
+                "max_result_window": 2147483647,
+                "analysis": {
+                    "normalizer": {
+                        "default": {"type": "custom", "filter": ["lowercase", "asciifolding"]}
+                    },
+                    "analyzer": {
+                        # Support ds names that are delimited with underscores, dashes, etc.
+                        "delimited_ds_names": {
+                            "type": "custom",
+                            "tokenizer": "standard",
+                            "filter": ["lowercase", "asciifolding", "my_word_delimeter"],
+                        }
+                    },
+                    "filter": {
+                        "my_word_delimeter": {
+                            "type": "word_delimiter",
+                            "catenate_all": True,
+                            "preserve_original": True,
+                        }
+                    },
+                },
+            },
+        }
+
+        if not self._ind_client.exists(index=index):
+            out = self._ind_client.create(
+                index=index, settings=dataset_settings, mappings=dataset_mappings
+            )
+            logger.info(f'Dataset index {index} created\n{out}')
+        else:
+            logger.info(f'Dataset index {index} already exists')
+
+    def create_annotation_index(self, index):
+        annotation_settings = {
+            "index": {
+                "number_of_shards": 1,
+                "number_of_replicas": 0,
+                "max_result_window": 2147483647,
+                "analysis": {
+                    "normalizer": {
+                        "default": {"type": "custom", "filter": ["lowercase", "asciifolding"]}
+                    },
+                    "analyzer": {
+                        # Support ds names that are delimited with underscores, dashes, etc.
+                        "delimited_ds_names": {
+                            "type": "custom",
+                            "tokenizer": "standard",
+                            "filter": ["lowercase", "asciifolding", "my_word_delimeter"],
+                        }
+                    },
+                    "filter": {
+                        "my_word_delimeter": {
+                            "type": "word_delimiter",
+                            "catenate_all": True,
+                            "preserve_original": True,
+                        }
+                    },
+                },
+            },
+        }
+
         dynamic_templates = [
             {
                 "strings": {
@@ -150,80 +238,48 @@ class ESIndexManager:
                 "fields": {"searchable": {"type": "text", "analyzer": "delimited_ds_names"}},
             },
         }
-        body = {
-            "settings": {
-                "index": {
-                    "number_of_shards": 1,
-                    "number_of_replicas": 0,
-                    "max_result_window": 2147483647,
-                    "analysis": {
-                        "normalizer": {
-                            "default": {"type": "custom", "filter": ["lowercase", "asciifolding"]}
-                        },
-                        "analyzer": {
-                            # Support ds names that are delimited with underscores, dashes, etc.
-                            "delimited_ds_names": {
-                                "type": "custom",
-                                "tokenizer": "standard",
-                                "filter": ["lowercase", "asciifolding", "my_word_delimeter"],
-                            }
-                        },
-                        "filter": {
-                            "my_word_delimeter": {
-                                "type": "word_delimiter",
-                                "catenate_all": True,
-                                "preserve_original": True,
-                            }
-                        },
-                    },
-                }
-            },
-            "mappings": {
-                "dataset": {
-                    "dynamic_templates": dynamic_templates,
-                    "properties": dataset_properties,
-                },
-                "annotation": {
-                    "dynamic_templates": dynamic_templates,
+
+        annotation_mappings = {
+            "dynamic_templates": dynamic_templates,
+            "properties": {
+                **dataset_properties,
+                "chaos": {"type": "float"},
+                "image_corr": {"type": "float"},
+                "pattern_match": {"type": "float"},
+                "total_iso_ints": {"type": "float"},
+                "min_iso_ints": {"type": "float"},
+                "max_iso_ints": {"type": "float"},
+                "msm": {"type": "float"},
+                "fdr": {"type": "float"},
+                "off_sample_prob": {"type": "float"},
+                "off_sample_label": {"type": "keyword"},
+                "db_version": {
+                    "type": "keyword"
+                },  # Prevent "YYYY-MM"-style DB versions from being parsed as dates
+                "isobars": {
                     "properties": {
-                        **dataset_properties,
-                        "chaos": {"type": "float"},
-                        "image_corr": {"type": "float"},
-                        "pattern_match": {"type": "float"},
-                        "total_iso_ints": {"type": "float"},
-                        "min_iso_ints": {"type": "float"},
-                        "max_iso_ints": {"type": "float"},
-                        "msm": {"type": "float"},
-                        "fdr": {"type": "float"},
-                        "off_sample_prob": {"type": "float"},
-                        "off_sample_label": {"type": "keyword"},
-                        "db_version": {
-                            "type": "keyword"
-                        },  # Prevent "YYYY-MM"-style DB versions from being parsed as dates
-                        "isobars": {
-                            "properties": {
-                                "ion": {"type": "keyword", "include_in_all": False},
-                                "ion_formula": {"type": "keyword", "include_in_all": False},
-                            }
-                        },
-                    },
+                        "ion": {"type": "keyword"},
+                        "ion_formula": {"type": "keyword"},
+                    }
                 },
             },
         }
 
-        if not self._ind_client.exists(index):
-            out = self._ind_client.create(index=index, body=body)
-            logger.info(f'Index {index} created\n{out}')
+        if not self._ind_client.exists(index=index):
+            out = self._ind_client.create(
+                index=index, settings=annotation_settings, mappings=annotation_mappings
+            )
+            logger.info(f'Annotation index {index} created\n{out}')
         else:
-            logger.info(f'Index {index} already exists')
+            logger.info(f'Annotation index {index} already exists')
 
     def delete_index(self, index):
-        if self._ind_client.exists(index):
-            out = self._ind_client.delete(index)
+        if self._ind_client.exists(index=index):
+            out = self._ind_client.delete(index=index)
             logger.info(f'Index {index} deleted: {out}')
 
     def exists_index(self, index):
-        return self._ind_client.exists(index)
+        return self._ind_client.exists(index=index)
 
     @staticmethod
     def another_index_name(index):
@@ -235,19 +291,17 @@ class ESIndexManager:
             return index.replace('yang', 'yin')
 
     def remap_alias(self, new_index, alias='sm'):
-        old_index = self.another_index_name(new_index)
+        old_index = self.another_index_name(index=new_index)
         logger.info(f'Remapping {alias} alias: {old_index} -> {new_index}')
 
-        self._ind_client.update_aliases(
-            {"actions": [{"add": {"index": new_index, "alias": alias}}]}
-        )
-        if self._ind_client.exists_alias(old_index, alias):
+        self._ind_client.update_aliases(actions=[{"add": {"index": new_index, "alias": alias}}])
+        if self._ind_client.exists_alias(index=old_index, name=alias):
             self._ind_client.update_aliases(
-                {"actions": [{"remove": {"index": old_index, "alias": alias}}]}
+                actions=[{"remove": {"index": old_index, "alias": alias}}]
             )
 
     def get_index_stats(self, index):
-        data = self._ind_client.stats(index, metric="docs,store")
+        data = self._ind_client.stats(index=index, metric="docs,store")
         ind_data = data['indices'][index]['total']
         return ind_data['docs']['count'], ind_data['store']['size_in_bytes']
 
@@ -270,15 +324,16 @@ class ESExporter:
         self._ingest: IngestClient = IngestClient(self._es)
         self._db = db
         self._ds_locker = DBMutex(self.sm_config['db'])
-        self.index = self.sm_config['elasticsearch']['index']
+        self.dataset_index = self.sm_config['elasticsearch']['dataset_index']
+        self.annotation_index = self.sm_config['elasticsearch']['annotation_index']
         self._get_mol_by_formula_dict_cache = dict()
 
     def _remove_mol_db_from_dataset(self, ds_id, moldb):
-        ds_doc = self._es.get_source(self.index, id=ds_id, doc_type='dataset')
+        ds_doc = self._es.get_source(index=self.dataset_index, id=ds_id)
         ds_doc['annotation_counts'] = [
             entry for entry in ds_doc.get('annotation_counts', []) if entry['db']['id'] != moldb.id
         ]
-        self._es.update(self.index, id=ds_id, body={'doc': ds_doc}, doc_type='dataset')
+        self._es.update(index=self.dataset_index, id=ds_id, doc=ds_doc)
         return ds_doc
 
     def _select_ds_by_id(self, ds_id):
@@ -289,21 +344,19 @@ class ESExporter:
         """Warning: This will wait till ES index/update is completed"""
         with self._ds_locker.lock(ds_id):
             ds = self._select_ds_by_id(ds_id)
-            if self._es.exists(index=self.index, doc_type='dataset', id=ds_id):
+            if self._es.exists(index=self.dataset_index, id=ds_id):
                 self._es.update(
-                    index=self.index,
+                    index=self.dataset_index,
                     id=ds_id,
-                    doc_type='dataset',
-                    body={'doc': ds},
-                    params={'refresh': 'wait_for'},
+                    doc=ds,
+                    refresh='wait_for',
                 )
             else:
                 self._es.index(
-                    index=self.index,
+                    index=self.dataset_index,
                     id=ds_id,
-                    doc_type='dataset',
-                    body=ds,
-                    params={'refresh': 'wait_for'},
+                    document=ds,
+                    refresh='wait_for',
                 )
 
     def _get_mol_by_formula_dict(self, moldb):
@@ -422,8 +475,7 @@ class ESExporter:
         for doc in annotation_docs:
             to_index.append(
                 {
-                    '_index': self.index,
-                    '_type': 'annotation',
+                    '_index': self.annotation_index,
                     '_id': f"{doc['ds_id']}_{doc['annotation_id']}",
                     '_source': doc,
                 }
@@ -458,7 +510,7 @@ class ESExporter:
                     ],
                 }
             )
-            self._es.index(self.index, doc_type='dataset', body=ds_doc, id=ds_id)
+            self._es.index(index=self.dataset_index, document=ds_doc, id=ds_id)
 
     def reindex_ds(self, ds_id: str):
         """Delete and index dataset documents for all moldbs defined in the dataset config.
@@ -474,13 +526,13 @@ class ESExporter:
         if ds_doc:
             isocalc = IsocalcWrapper(ds_doc['config'])
             for moldb_id in ds_doc['config']['database_ids']:
-                moldb = molecular_db.find_by_id(moldb_id)
                 try:
+                    moldb = molecular_db.find_by_id(moldb_id)
                     self.index_ds(ds_id, moldb=moldb, isocalc=isocalc)
                 except Exception as e:
                     new_msg = (
                         f'Failed to reindex(ds_id={ds_id}, ds_name={ds_doc["name"]}, '
-                        f'moldb: {moldb}): {e}'
+                        f'moldb: {moldb_id}): {e}'
                     )
                     logger.error(new_msg, exc_info=True)
         else:
@@ -525,20 +577,18 @@ class ESExporter:
                         processors.append({'remove': {'field': k}})
                     else:
                         processors.append({'set': {'field': k, 'value': v}})
-                self._ingest.put_pipeline(id=pipeline_id, body={'processors': processors})
+                self._ingest.put_pipeline(id=pipeline_id, processors=processors)
                 try:
                     self._es.update_by_query(
-                        index=self.index,
-                        body={'query': {'term': {'ds_id': ds_id}}},
-                        params={
-                            'pipeline': pipeline_id,
-                            'wait_for_completion': True,
-                            'refresh': 'wait_for',
-                            'request_timeout': 5 * 60,
-                        },
+                        index=self.dataset_index,
+                        query={'term': {'ds_id': ds_id}},
+                        pipeline=pipeline_id,
+                        wait_for_completion=True,
+                        refresh=False,
+                        timeout='5m',
                     )
                 finally:
-                    self._ingest.delete_pipeline(pipeline_id)
+                    self._ingest.delete_pipeline(id=pipeline_id)
 
     @retry_on_exception(TransportError)
     def delete_ds(self, ds_id: str, moldb: MolecularDB = None, delete_dataset: bool = True):
@@ -557,10 +607,10 @@ class ESExporter:
                 if moldb:
                     self._remove_mol_db_from_dataset(ds_id, moldb)
                 elif delete_dataset:
-                    self._es.delete(id=ds_id, index=self.index, doc_type='dataset')
+                    self._es.delete(id=ds_id, index=self.dataset_index)
             except NotFoundError:
                 pass
-            except ElasticsearchException as e:
+            except ApiError as e:
                 logger.warning(f'Dataset deletion failed: {e}')
 
             logger.info(f'Deleting annotation documents from ES: {ds_id}, {moldb}')
@@ -572,10 +622,10 @@ class ESExporter:
             try:
                 body = {'query': {'constant_score': {'filter': {'bool': {'must': must}}}}}
                 resp = self._es.delete_by_query(  # pylint: disable=unexpected-keyword-arg
-                    index=self.index, body=body, doc_type='annotation', conflicts='proceed'
+                    index=self.annotation_index, body=body, conflicts='proceed'
                 )
                 logger.debug(resp)
-            except ElasticsearchException as e:
+            except ApiError as e:
                 logger.warning(f'Annotation deletion failed: {e}')
 
 

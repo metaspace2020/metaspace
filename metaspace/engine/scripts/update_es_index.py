@@ -10,9 +10,19 @@ from sm.engine.util import GlobalInit
 logger = logging.getLogger('engine')
 
 
-def get_inactive_index_es_config(es_config):
+def get_inactive_dataset_index_es_config(es_config):
     es_man = ESIndexManager(es_config)
-    old_index = es_man.internal_index_name(es_config['index'])
+    old_index = es_man.internal_index_name(es_config['dataset_index'])
+    new_index = es_man.another_index_name(old_index)
+    tmp_es_config = deepcopy(es_config)
+    tmp_es_config['index'] = new_index
+
+    return tmp_es_config
+
+
+def get_inactive_annotation_index_es_config(es_config):
+    es_man = ESIndexManager(es_config)
+    old_index = es_man.internal_index_name(es_config['annotation_index'])
     new_index = es_man.another_index_name(old_index)
     tmp_es_config = deepcopy(es_config)
     tmp_es_config['index'] = new_index
@@ -22,25 +32,35 @@ def get_inactive_index_es_config(es_config):
 
 def _reindex_all(sm_config):
     es_config = sm_config['elasticsearch']
-    alias = es_config['index']
     es_man = ESIndexManager(es_config)
-    old_index = es_man.internal_index_name(alias)
-    new_index = es_man.another_index_name(old_index)
-    es_man.create_index(new_index)
+
+    dataset_alias = es_config['dataset_index']
+    old_dataset_index = es_man.internal_index_name(dataset_alias)
+    new_dataset_index = es_man.another_index_name(old_dataset_index)
+    es_man.create_dataset_index(new_dataset_index)
+
+    annotation_alias = es_config['annotation_index']
+    old_annotation_index = es_man.internal_index_name(annotation_alias)
+    new_annotation_index = es_man.another_index_name(old_annotation_index)
+    es_man.create_annotation_index(new_annotation_index)
 
     try:
-        inactive_es_config = get_inactive_index_es_config(es_config)
+        inactive_dataset_es_config = get_inactive_dataset_index_es_config(es_config)
+        inactive_annotation_es_config = get_inactive_annotation_index_es_config(es_config)
         db = DB()
-        es_exp = ESExporter(db, {**sm_config, 'elasticsearch': inactive_es_config})
+        es_exp = ESExporter(db, {**sm_config, 'elasticsearch': inactive_dataset_es_config})
         ds_ids = [r[0] for r in db.select('select id from dataset')]
         _reindex_datasets(ds_ids, es_exp)
 
-        es_man.remap_alias(inactive_es_config['index'], alias=alias)
+        es_man.remap_alias(inactive_dataset_es_config['index'], alias=dataset_alias)
+        es_man.remap_alias(inactive_annotation_es_config['index'], alias=annotation_alias)
     except Exception as e:
-        es_man.delete_index(new_index)
+        es_man.delete_index(new_dataset_index)
+        es_man.delete_index(new_annotation_index)
         raise e
     else:
-        es_man.delete_index(old_index)
+        es_man.delete_index(old_dataset_index)
+        es_man.delete_index(old_annotation_index)
 
 
 def _reindex_datasets(ds_ids, es_exp):
@@ -67,7 +87,7 @@ def reindex_results(sm_config, ds_id, ds_mask, use_inactive_index, offline_reind
     else:
         es_config = sm_config['elasticsearch']
         if use_inactive_index:
-            es_config = get_inactive_index_es_config(es_config)
+            es_config = get_inactive_dataset_index_es_config(es_config)
 
         db = DB()
         es_exp = ESExporter(db, sm_config={**sm_config, 'elasticsearch': es_config})
