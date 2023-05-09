@@ -1,4 +1,4 @@
-FROM node:14.5.0-alpine3.12
+FROM node:16.20.0-alpine3.17
 
 ENV NPM_CONFIG_LOGLEVEL=warn
 RUN npm install -g elasticdump forever

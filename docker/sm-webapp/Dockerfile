@@ -1,5 +1,6 @@
-FROM node:14.5.0-alpine3.12
+FROM node:16.20.0-alpine3.17
 
+RUN apk add --no-cache --virtual .gyp python3 make g++
 RUN apk add --no-cache git netcat-openbsd
 RUN yarn global add nodemon
 
