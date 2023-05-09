@@ -208,7 +208,7 @@ const DatasetItemActions = defineComponent({
             >
               <div class="db-link-list">
               Select a database:
-                {dataset.databases.map(db => (
+                {(dataset.databases || []).map(db => (
                   <div key={db.id}>
                     <FilterLink filter={{ database: db.id, datasetIds: [dataset.id] }}>
                       {formatDatabaseLabel(db)}
