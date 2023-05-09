@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import { UserProjectRoleOptions as UPRO } from './src/modules/project/model'
-import * as elasticsearch from 'elasticsearch'
+import * as elasticsearch from '@elastic/elasticsearch'
 import * as sprintf from 'sprintf-js'
 import config from './src/utils/config'
 import { datasetFilters } from './datasetFilters'
@@ -112,12 +112,12 @@ export interface ESAggAnnotationSource {
 
 const esConfig = () => {
   return {
-    host: [config.elasticsearch],
-    apiVersion: '5.0',
+    node: `${config.elasticsearch.schema}://${config.elasticsearch.host}:${config.elasticsearch.port}`,
   }
 }
 
-const esIndex = config.elasticsearch.index
+const esDatasetIndex = config.elasticsearch.dataset_index
+const esAnnotationIndex = config.elasticsearch.annotation_index
 const es = new elasticsearch.Client(esConfig())
 
 const esFormatMz = (mz: number) => {
@@ -336,17 +336,22 @@ const constructDatabaseAuthFilters = async(user: ContextUser) => {
 }
 
 const constructDatasetFilters = (filter: DatasetFilter) => {
-  const filters = []
+  const filters : any = []
   for (const [key, val] of (Object.entries(filter) as [keyof DatasetFilter, any][])) {
     if (val) {
       const datasetFilter = datasetFilters[key]
       if (datasetFilter != null) {
-        filters.push(datasetFilter.esFilter(val))
+        let esFilter : any = datasetFilter.esFilter(val)
+        if (Array.isArray(esFilter) && esFilter.length === 1) {
+          esFilter = esFilter[0]
+        }
+        filters.push(esFilter)
       } else if (datasetFilter === undefined) {
         console.error(`Missing datasetFilter[${key}]`)
       }
     }
   }
+
   return filters
 }
 
@@ -360,7 +365,7 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
     sumFormula, chemMod, neutralLoss, adduct, ion, ionFormula, offSample, compoundQuery, annotationId,
     isobaricWith, hasNeutralLoss, hasChemMod, hasHiddenAdduct,
   } = filter
-  const filters = []
+  const filters : any = []
 
   if (mzFilter) {
     filters.push(constructRangeFilter('mz', {
@@ -438,14 +443,15 @@ const constructESQuery = async(
 ) => {
   const { orderBy, sortingOrder, filter, datasetFilter, simpleQuery } = args
 
+  const dsFilters = constructDatasetFilters(datasetFilter || {})
+
   return {
     query: {
       bool: {
         filter: [
-          { term: { _type: docType } },
           ...(bypassAuth ? [] : await constructDatasetAuthFilters(user)),
           ...(bypassAuth || docType === 'dataset' ? [] : await constructDatabaseAuthFilters(user)),
-          ...constructDatasetFilters(datasetFilter || {}),
+          ...dsFilters,
           ...constructAnnotationFilters(filter || {}),
           ...(simpleQuery ? [constructSimpleQueryFilter(simpleQuery)] : []),
         ],
@@ -464,7 +470,7 @@ export const esSearchResults = async(args: any, docType: DocType,
   const body = await constructESQuery(args, docType, user, bypassAuth)
   const request = {
     body,
-    index: esIndex,
+    index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex,
     from: args.offset,
     size: args.limit,
   }
@@ -475,8 +481,9 @@ export const esSearchResults = async(args: any, docType: DocType,
 
 export const esCountResults = async(args: any, docType: DocType, user: ContextUser): Promise<number> => {
   const body = await constructESQuery(args, docType, user)
-  const request = { body, index: esIndex }
+  const request = { body, index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex }
   const resp = await es.count(request)
+
   return resp.count
 }
 
@@ -535,7 +542,7 @@ export const esCountGroupedResults = async(args: any, docType: DocType, user: Co
 
   if (args.groupingFields.length === 0) {
     // handle case of no grouping for convenience
-    const request = { body, index: esIndex }
+    const request = { body, index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex }
     const resp = await es.count(request)
     return { counts: [{ fieldValues: [], count: resp.count }] }
   }
@@ -545,7 +552,7 @@ export const esCountGroupedResults = async(args: any, docType: DocType, user: Co
       ...body,
       aggs: constructTermAggregations(args.groupingFields),
     },
-    index: esIndex,
+    index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex,
     size: 0,
   }
   const resp = await es.search(aggRequest)
@@ -589,7 +596,7 @@ export const esRawAggregationResults = async(args: any, docType: DocType,
         },
       },
     },
-    index: esIndex,
+    index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex,
     size: 0,
   }
   const resp = await es.search(aggRequest)
@@ -624,11 +631,11 @@ export const esCountMatchingAnnotationsPerDataset = async(
       ...body,
       aggs: { ds_id: { terms: { field: 'ds_id', size: 1000000 } } },
     },
-    index: esIndex,
+    index: esAnnotationIndex,
     size: 0,
   }
   const resp = await es.search(aggRequest)
-  const counts = resp.aggregations.ds_id.buckets.map(({ key, doc_count }: any) => [key, doc_count])
+  const counts = resp?.aggregations?.ds_id.buckets.map(({ key, doc_count }: any) => [key, doc_count])
   return _.fromPairs(counts)
 }
 
@@ -646,7 +653,6 @@ export const esFilterValueCountResults = async(args: FilterValueCountArgs): Prom
       bool: {
         filter: [
           ...await constructDatasetAuthFilters(user),
-          { term: { _type: docType } },
           ...filters,
         ],
       },
@@ -657,12 +663,13 @@ export const esFilterValueCountResults = async(args: FilterValueCountArgs): Prom
 
   const resp = await es.search({
     body,
-    index: esIndex,
+    index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex,
   })
   const itemCounts: any = {}
-  resp.aggregations.field_counts.buckets.forEach((o: any) => {
+  resp?.aggregations?.field_counts.buckets.forEach((o: any) => {
     itemCounts[o.key] = o.doc_count
   })
+
   return itemCounts
 }
 
