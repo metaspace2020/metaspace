@@ -11,7 +11,6 @@ from elasticsearch import (
     ApiError,
     NotFoundError,
 )
-from elasticsearch.client import IndicesClient, IngestClient
 from elasticsearch.helpers import parallel_bulk
 
 from sm.engine import image_storage
@@ -99,8 +98,6 @@ DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry',)
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port']), 'scheme': "http"}]
     http_auth = (es_config['user'], es_config['password']) if 'user' in es_config else None
-    print(f'Connectingx to ElasticSearch at {hosts}')
-    print(f'Using HTTP auth: {http_auth}')
     return Elasticsearch(hosts=hosts, basic_auth=http_auth)
 
 
@@ -109,7 +106,7 @@ class ESIndexManager:
         if not es_config:
             es_config = SMConfig.get_conf()['elasticsearch']
         self._es = init_es_conn(es_config)
-        self._ind_client = IndicesClient(self._es)
+        self._ind_client = self._es.indices
 
     def internal_index_name(self, alias):
         yin, yang = f'{alias}-yin', f'{alias}-yang'
@@ -321,7 +318,7 @@ class ESExporter:
     def __init__(self, db, sm_config=None):
         self.sm_config = sm_config or SMConfig.get_conf()
         self._es: Elasticsearch = init_es_conn(self.sm_config['elasticsearch'])
-        self._ingest: IngestClient = IngestClient(self._es)
+        self._ingest = self._es.ingest
         self._db = db
         self._ds_locker = DBMutex(self.sm_config['db'])
         self.dataset_index = self.sm_config['elasticsearch']['dataset_index']
@@ -480,8 +477,7 @@ class ESExporter:
                     '_source': doc,
                 }
             )
-
-        for success, info in parallel_bulk(self._es, actions=to_index, timeout='60s'):
+        for success, info in parallel_bulk(client=self._es, actions=to_index, timeout='60s'):
             if not success:
                 logger.error(f'Document failed: {info}')
 
@@ -510,6 +506,7 @@ class ESExporter:
                     ],
                 }
             )
+
             self._es.index(index=self.dataset_index, document=ds_doc, id=ds_id)
 
     def reindex_ds(self, ds_id: str):
@@ -579,8 +576,19 @@ class ESExporter:
                         processors.append({'set': {'field': k, 'value': v}})
                 self._ingest.put_pipeline(id=pipeline_id, processors=processors)
                 try:
+                    # update dataset index
                     self._es.update_by_query(
                         index=self.dataset_index,
+                        query={'term': {'ds_id': ds_id}},
+                        pipeline=pipeline_id,
+                        wait_for_completion=True,
+                        refresh=False,
+                        timeout='5m',
+                    )
+
+                    # update ds fields on annotation index
+                    self._es.update_by_query(
+                        index=self.annotation_index,
                         query={'term': {'ds_id': ds_id}},
                         pipeline=pipeline_id,
                         wait_for_completion=True,
@@ -620,9 +628,9 @@ class ESExporter:
                 must.append({'term': {'db_id': moldb.id}})
 
             try:
-                body = {'query': {'constant_score': {'filter': {'bool': {'must': must}}}}}
+                query = {'constant_score': {'filter': {'bool': {'must': must}}}}
                 resp = self._es.delete_by_query(  # pylint: disable=unexpected-keyword-arg
-                    index=self.annotation_index, body=body, conflicts='proceed'
+                    index=self.annotation_index, query=query, conflicts='proceed'
                 )
                 logger.debug(resp)
             except ApiError as e:
