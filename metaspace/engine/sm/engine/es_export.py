@@ -327,11 +327,12 @@ class ESExporter:
 
     def _remove_mol_db_from_dataset(self, ds_id, moldb):
         ds_doc = self._es.get_source(index=self.dataset_index, id=ds_id)
-        ds_doc['annotation_counts'] = [
+        modified_data = ds_doc if isinstance(ds_doc, dict) else ds_doc.body
+        modified_data['annotation_counts'] = [
             entry for entry in ds_doc.get('annotation_counts', []) if entry['db']['id'] != moldb.id
         ]
-        self._es.update(index=self.dataset_index, id=ds_id, doc=ds_doc)
-        return ds_doc
+        self._es.update(index=self.dataset_index, id=ds_id, doc=modified_data)
+        return modified_data
 
     def _select_ds_by_id(self, ds_id):
         return self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
