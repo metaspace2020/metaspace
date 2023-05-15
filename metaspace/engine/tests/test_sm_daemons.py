@@ -146,6 +146,7 @@ def test_sm_daemons(
     queue_pub,
     local_sm_config,
     sm_config,
+    sm_index,
 ):
     moldb = init_moldb()
     dataset_index = sm_config['elasticsearch']['dataset_index']
@@ -275,6 +276,7 @@ def test_sm_daemons_annot_fails(
     ds_config,
     queue_pub,
     local_sm_config,
+    sm_index,
 ):
     moldb = init_moldb()
 
@@ -319,6 +321,7 @@ def test_sm_daemon_es_export_fails(
     ds_config,
     queue_pub,
     local_sm_config,
+    sm_index,
 ):
     moldb = init_moldb()
 
