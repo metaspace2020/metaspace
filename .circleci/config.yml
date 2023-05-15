@@ -176,6 +176,7 @@ jobs:
       - image: elasticsearch:8.7.1
         environment:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+          xpack.security.enabled: "false"
         command: [elasticsearch, -Etransport.host=127.0.0.1]
 
       - image: redis:3.2-alpine
@@ -268,6 +269,7 @@ jobs:
       - image: elasticsearch:8.7.1
         environment:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+          xpack.security.enabled: "false"
         command: [elasticsearch, -Etransport.host=127.0.0.1]
 
       - image: rabbitmq:3.6-management
@@ -334,6 +336,7 @@ jobs:
       - image: elasticsearch:8.7.1
         environment:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+          xpack.security.enabled: "false"
         command: [elasticsearch, -Etransport.host=127.0.0.1]
 
       - image: rabbitmq:3.6-management

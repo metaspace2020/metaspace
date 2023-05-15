@@ -105,6 +105,7 @@ class ESIndexManager:
     def __init__(self, es_config=None):
         if not es_config:
             es_config = SMConfig.get_conf()['elasticsearch']
+        print(f'es_config: {es_config}')
         self._es = init_es_conn(es_config)
         self._ind_client = self._es.indices
 
