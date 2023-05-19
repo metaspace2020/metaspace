@@ -76,7 +76,8 @@ FROM (
     d.config #> '{isotope_generation,adducts}' AS ds_adducts,
     d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
     d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
-    d.acq_geometry AS ds_acq_geometry
+    d.acq_geometry AS ds_acq_geometry,
+    d.size_hash AS ds_size_hash
   FROM dataset as d
   LEFT JOIN job ON job.ds_id = d.id
   GROUP BY d.id
@@ -93,7 +94,10 @@ LEFT JOIN (
 ) gp ON gp.dataset_id = d.ds_id
 WHERE d.ds_id = %s'''
 
-DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry',)
+DS_COLUMNS_TO_SKIP_IN_ANN = (
+    'ds_acq_geometry',
+    'ds_size_hash',
+)
 
 
 def init_es_conn(es_config):
@@ -289,6 +293,8 @@ class ESExporter:
         """Warning: This will wait till ES index/update is completed"""
         with self._ds_locker.lock(ds_id):
             ds = self._select_ds_by_id(ds_id)
+            print(f'Exporting dataset {ds_id} to ES')
+            print(f'Exporting dataset {ds} to ES')
             if self._es.exists(index=self.index, doc_type='dataset', id=ds_id):
                 self._es.update(
                     index=self.index,
