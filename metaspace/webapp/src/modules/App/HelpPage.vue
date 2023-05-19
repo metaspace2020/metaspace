@@ -49,8 +49,8 @@
     <h2>API documentation</h2>
     <p>
       Check our
-      <a href="https://metaspace2020.readthedocs.io/en/latest/">Python</a>
-      package, which provides programmatic access to the METASPACE platform.
+      <a href="https://metaspace2020.readthedocs.io/en/latest/">Python package</a>, which
+      provides programmatic access to the METASPACE platform.
     </p>
     <h2 id="databases">
       Metabolite Databases
