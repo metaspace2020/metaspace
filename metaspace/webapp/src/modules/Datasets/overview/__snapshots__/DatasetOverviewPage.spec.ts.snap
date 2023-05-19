@@ -4,7 +4,7 @@ exports[`DatasetOverviewPage should match snapshot when dataset does not exist 1
 
 exports[`DatasetOverviewPage should match snapshot when dataset exist 1`] = `
 <div class="dataset-overview-container justify-center">
-  <div class="dataset-overview-wrapper max-w-4xl w-full  ">
+  <div class="dataset-overview-wrapper max-w-4xl w-full">
     <div class="dataset-overview-header">
       <h1 class="text-center truncate">JD_Sampe<span class="text-base align-middle"></span></h1>
       <!--function (el) {

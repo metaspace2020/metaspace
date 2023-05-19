@@ -20,6 +20,7 @@ export interface DatasetAnnotationCount {
 }
 
 export interface DatasetDetailItem {
+  acquisitionGeometry: string | null;
   id: string;
   name: string;
   description: string | null;
@@ -101,6 +102,8 @@ export const datasetDetailItemFragment =
     condition
     growthConditions
     metadataJson
+    acquisitionGeometry
+    sizeHash
     configJson
     isPublic
     ontologyDatabases{

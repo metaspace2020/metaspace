@@ -39,6 +39,7 @@ export interface ESDatasetSource {
   ds_neutral_losses: string[];
   ds_chem_mods: string[];
   ds_acq_geometry: any;
+  ds_size_hash: any;
   ds_submitter_id: string;
   ds_submitter_name: string;
   ds_submitter_email: string;

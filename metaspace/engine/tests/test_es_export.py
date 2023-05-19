@@ -71,8 +71,8 @@ def test_index_ds_works(
     db = DB()
     db.insert(
         "INSERT INTO dataset(id, name, input_path, config, metadata, upload_dt, status, "
-        "status_update_dt, is_public, acq_geometry, ion_thumbnail) "
-        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, true, '{}', %s)",
+        "status_update_dt, is_public, acq_geometry, ion_thumbnail, size_hash) "
+        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, true, '{}', %s, '{}')",
         [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt, upload_dt, 'thumb-id']],
     )
     moldb = create_test_molecular_db()
@@ -170,6 +170,7 @@ def test_index_ds_works(
     assert ds_d == {
         **expected_ds_fields,
         'ds_acq_geometry': {},
+        'ds_size_hash': {},
         'annotation_counts': [
             {
                 'db': {'id': moldb.id, 'name': moldb.name},

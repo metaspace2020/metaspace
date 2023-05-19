@@ -35,6 +35,7 @@ type Dataset {
   neutralLosses: [String!]!
   chemMods: [String!]!
   acquisitionGeometry: String
+  sizeHash: String
   metadataType: String!
 
   status: String
