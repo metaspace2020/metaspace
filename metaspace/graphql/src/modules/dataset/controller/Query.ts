@@ -102,7 +102,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         if (offSample !== undefined) {
           const offSampleIons = await esSearchResults({
             datasetFilter: { ids: datasetId },
-            filter: { databaseId: molDbId, offSample: offSample },
+            filter: { databaseId: molDbId, offSample: offSample, fdrLevel: fdr },
+            limit: 50000,
           }
           , 'annotation', ctx.user)
           idsWithOffSampleFilter = uniq(offSampleIons.map((item: any) => item._source?.annotation_id))
