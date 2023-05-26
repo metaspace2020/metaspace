@@ -49,7 +49,7 @@ def _reindex_all(sm_config):
         inactive_annotation_es_config = get_inactive_annotation_index_es_config(es_config)
         db = DB()
         es_exp = ESExporter(db, {**sm_config, 'elasticsearch': inactive_dataset_es_config})
-        ds_ids = [r[0] for r in db.select('select id from dataset')]
+        ds_ids = [r[0] for r in db.select('SELECT id FROM dataset ORDER BY id')]
         _reindex_datasets(ds_ids, es_exp)
 
         es_man.remap_alias(inactive_dataset_es_config['index'], alias=dataset_alias)
@@ -77,8 +77,10 @@ def _partial_update_datasets(ds_ids, es_exp, fields):
         es_exp.update_ds(ds_id, fields)
 
 
-def reindex_results(sm_config, ds_id, ds_mask, use_inactive_index, offline_reindex, update_fields):
-    assert ds_id or ds_mask or offline_reindex
+def reindex_results(
+    sm_config, ds_id, ds_mask, ds_file, use_inactive_index, offline_reindex, update_fields
+):
+    assert ds_id or ds_mask or ds_file or offline_reindex
 
     IsocalcWrapper.set_centroids_cache_enabled(True)
 
@@ -98,9 +100,12 @@ def reindex_results(sm_config, ds_id, ds_mask, use_inactive_index, offline_reind
             ds_ids = [
                 id
                 for (id,) in db.select(
-                    "select id from dataset where name like '{}%'".format(ds_mask)
+                    "SELECT id FROM dataset WHERE name like '{}%' ORDER BY id".format(ds_mask)
                 )
             ]
+        elif ds_file:
+            with ds_file as file:
+                ds_ids = [line.strip() for line in file.readlines()]
         else:
             ds_ids = []
 
@@ -116,6 +121,7 @@ if __name__ == '__main__':
     parser.add_argument('--inactive', action='store_true', help='Run against the inactive index')
     parser.add_argument('--ds-id', help='DS id (or comma-separated list of ids)')
     parser.add_argument('--ds-name', help='DS name prefix mask')
+    parser.add_argument('--ds-file', type=argparse.FileType('r'), help='DS ids from the file')
     parser.add_argument('--offline-reindex', help='Create and populate inactive index then swap')
     parser.add_argument(
         '--update-fields',
@@ -129,6 +135,7 @@ if __name__ == '__main__':
             sm_config=sm_config,
             ds_id=args.ds_id,
             ds_mask=args.ds_name,
+            ds_file=args.ds_file,
             use_inactive_index=args.inactive,
             offline_reindex=args.offline_reindex,
             update_fields=args.update_fields,
