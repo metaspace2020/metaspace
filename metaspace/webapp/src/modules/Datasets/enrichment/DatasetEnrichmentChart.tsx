@@ -47,6 +47,7 @@ interface DatasetEnrichmentChartProps {
   data: any[]
   annotatedData: any[]
   peakFilter: number
+  filename: string
 }
 
 interface DatasetEnrichmentChartState {
@@ -73,6 +74,10 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
       type: Array,
       default: () => [],
     },
+    filename: {
+      type: String,
+      default: 'Enrichment_LION.png',
+    },
   },
   setup(props, { emit }) {
     const spectrumChart = ref(null)
@@ -80,17 +85,23 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
     const state = reactive<DatasetEnrichmentChartState>({
       size: 600,
       chartOptions: {
-        grid: { containLabel: false, width: '70%', right: '7%', top: '2%', bottom: '10%' },
+        grid: { containLabel: false, width: '70%', right: '7%', top: '2%', bottom: '20%' },
         xAxis: {
-          name: 'Overrepresentation in dataset vs. database',
+          name: '{a|Median}\nOverrepresentation in dataset vs. database',
           bottom: 'center',
           nameLocation: 'middle',
-          nameGap: 40,
+          nameGap: 20,
           splitLine: {
             show: true,
           },
+          nameTextStyle: {
+            rich: {
+              a: {
+                fontWeight: 'bold',
+              },
+            },
+          },
         },
-
         toolbox: {
           feature: {
             saveAsImage: {
@@ -106,9 +117,10 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
             show: true,
           },
           axisLabel: {
-            fontSize: 10,
+            fontSize: 12,
             overflow: 'break',
             width: 140,
+            fontStyle: '400',
           },
         },
         visualMap: {
@@ -143,11 +155,11 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
                 return `n=${params?.data?.label?.n}`
               },
             },
-            markLine: {
-              symbolSize: 0,
-              label: { show: false },
-              data: [{ xAxis: 1, name: 'Avg' }],
-            },
+            // markLine: {
+            //   symbolSize: 0,
+            //   label: { show: false },
+            //   data: [{ xAxis: 1, name: 'Avg' }],
+            // },
             barWidth: 20,
           },
           {
@@ -249,6 +261,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
       chartOptions.series[0].data = barData
       chartOptions.series[1].data = errorData
       chartOptions.visualMap.inRange.color = getColorScale('-Viridis').range
+      chartOptions.toolbox.feature.saveAsImage.name = props.filename
       setTimeout(() => { handleChartResize() }, 100)
 
       return chartOptions
@@ -284,6 +297,8 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
       if (item.targetType === 'axisLabel' && item.componentType === 'yAxis') {
         const itemClicked = chartData.value.find((dataItem: any) => dataItem.name === item.value)
         emit('itemSelected', itemClicked)
+      } else if (item.componentType === 'series' && item.componentSubType === 'bar' && item.data?.label?.termId) {
+        emit('itemSelected', { termId: item.data?.label?.termId })
       }
     }
 

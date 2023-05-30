@@ -240,8 +240,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
 
   pValue: {
     type: SingleSelectFilter,
-    name: 'p-value',
-    description: 'Select p-value',
+    name: 'p-value threshold',
+    description: 'Select p-value threshold',
     levels: ['enrichment'],
     initialValue: undefined,
     options: [0.01, 0.05, 0.1],
