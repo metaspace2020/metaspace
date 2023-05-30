@@ -69,7 +69,7 @@
         <ul>
           <li>owner of their data</li>
           <li>can make their data public</li>
-          <li>can edit metadata</li>
+          <li>can edit dataset</li>
           <li>can delete their data</li>
         </ul>
       </div>

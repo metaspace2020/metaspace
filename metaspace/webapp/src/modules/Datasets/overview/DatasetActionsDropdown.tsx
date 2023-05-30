@@ -42,7 +42,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
   props: {
     actionLabel: { type: String, default: 'Actions' },
     deleteActionLabel: { type: String, default: 'Delete' },
-    editActionLabel: { type: String, default: 'Edit metadata' },
+    editActionLabel: { type: String, default: 'Edit' },
     compareActionLabel: { type: String, default: 'Compare with other datasets...' },
     browserActionLabel: { type: String, default: 'Imzml Browser' },
     enrichmentActionLabel: { type: String, default: 'Ontology enrichment' },
@@ -269,10 +269,6 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           </NewFeatureBadge>
           <DropdownMenu class='dataset-overview-menu p-2'>
             {
-              canEdit
-              && <DropdownItem command="edit">{editActionLabel}</DropdownItem>
-            }
-            {
               canDownload
               && <DropdownItem command="download">{downloadActionLabel}</DropdownItem>
             }
@@ -289,6 +285,10 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
               config.features.enrichment
               && (enrichmentRequested.value || canEdit)
               && <DropdownItem command="enrichment">{enrichmentActionLabel}</DropdownItem>
+            }
+            {
+              canEdit
+              && <DropdownItem command="edit">{editActionLabel}</DropdownItem>
             }
             {
               canDelete
