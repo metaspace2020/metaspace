@@ -245,17 +245,6 @@ const DatasetItemActions = defineComponent({
             >Show full metadata</a>
           </div>
 
-          {dataset.canEdit
-          && <div>
-            <i class="el-icon-edit" />
-            <router-link to={{
-              name: 'edit-metadata',
-              params: { dataset_id: props.dataset.id },
-            }}>
-              Edit metadata
-            </router-link>
-          </div>}
-
           {
             !props.showOverview && dataset.canDownload
           && <div class="ds-download">
@@ -336,6 +325,17 @@ const DatasetItemActions = defineComponent({
               </NewFeatureBadge>
             </div>
           }
+
+          {dataset.canEdit
+            && <div>
+              <i class="el-icon-edit" />
+              <router-link to={{
+                name: 'edit-metadata',
+                params: { dataset_id: props.dataset.id },
+              }}>
+                Edit
+              </router-link>
+            </div>}
         </div>
       )
     }
