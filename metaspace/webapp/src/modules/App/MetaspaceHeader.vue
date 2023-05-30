@@ -220,9 +220,9 @@
           </header-link>
           <header-link
             v-if="showSpotting"
-            to="/spotting"
+            to="/detectability"
           >
-            Spotting
+            Detectability
           </header-link>
           <header-link
             to="/help"
