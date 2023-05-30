@@ -10,9 +10,7 @@ import { DatasetEnrichmentTable } from './DatasetEnrichmentTable'
 import './DatasetEnrichmentPage.scss'
 import { getEnrichedMolDatabasesQuery } from '../../../api/enrichmentdb'
 import FilterPanel from '../../Filters/FilterPanel.vue'
-import { uniq, uniqBy } from 'lodash-es'
-import gql from 'graphql-tag'
-import safeJsonParse from '../../../lib/safeJsonParse'
+import { uniqBy } from 'lodash-es'
 
 interface DatasetEnrichmentPageProps {
   className: string
@@ -78,7 +76,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       offSample: ($store.getters.gqlAnnotationFilter.offSample === null
       || $store.getters.gqlAnnotationFilter.offSample === undefined)
         ? undefined : !!$store.getters.gqlAnnotationFilter.offSample,
-    })), { fetchPolicy: 'no-cache' as const })
+    })), { fetchPolicy: 'cache-first' as const })
 
     const enrichment = computed(() => {
       if (enrichmentResult.value) {
@@ -124,6 +122,8 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       const usedData = state.sortedData ? state.sortedData : data
       const pagedData = usedData.slice(dataStart, dataEnd)
       const databaseOptions : any = databases.value || []
+      const filename : string = `${dataset.value?.name}_${(databases.value || []).find((database:any) => database.id
+        === $store.getters.gqlAnnotationFilter.databaseId)?.name}`.replace(/\./g, '_')
 
       return (
         <div class='dataset-enrichment-page'>
@@ -150,9 +150,9 @@ export default defineComponent<DatasetEnrichmentPageProps>({
             !enrichmentLoading.value
             && <div class={'dataset-enrichment-wrapper md:w-1/2 w-full'}>
               <DatasetEnrichmentTable
+                dsName={dataset.value?.name}
                 data={data}
-                filename={`${dataset.value?.name}_${databases.value.find((database:any) => database.id
-                  === $store.getters.gqlAnnotationFilter.databaseId)?.name}_enrichment.csv`}
+                filename={`${filename}_enrichment.csv`}
                 onPageChange={handlePageChange}
                 onSizeChange={handleSizeChange}
                 onSortChange={handleSortChange}
@@ -165,7 +165,11 @@ export default defineComponent<DatasetEnrichmentPageProps>({
               {dataset.value?.name} - <a target='_blank' href='http://www.lipidontology.com/'>LION</a> terms enrichment
               {
                 !(!data || (data || []).length === 0)
-                && <DatasetEnrichmentChart data={pagedData} onItemSelected={handleItemClick}/>
+                && <DatasetEnrichmentChart
+                  data={pagedData}
+                  onItemSelected={handleItemClick}
+                  filename={`Enrichment_${filename}_LION`}
+                />
               }
             </div>
           }
