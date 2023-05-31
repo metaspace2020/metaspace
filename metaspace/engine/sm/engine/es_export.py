@@ -75,7 +75,8 @@ FROM (
     d.config #> '{isotope_generation,adducts}' AS ds_adducts,
     d.config #> '{isotope_generation,neutral_losses}' AS ds_neutral_losses,
     d.config #> '{isotope_generation,chem_mods}' AS ds_chem_mods,
-    d.acq_geometry AS ds_acq_geometry
+    d.acq_geometry AS ds_acq_geometry,
+    d.size_hash AS ds_size_hash
   FROM dataset as d
   LEFT JOIN job ON job.ds_id = d.id
   GROUP BY d.id
@@ -92,7 +93,10 @@ LEFT JOIN (
 ) gp ON gp.dataset_id = d.ds_id
 WHERE d.ds_id = %s'''
 
-DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry',)
+DS_COLUMNS_TO_SKIP_IN_ANN = (
+    'ds_acq_geometry',
+    'ds_size_hash',
+)
 
 
 def init_es_conn(es_config):

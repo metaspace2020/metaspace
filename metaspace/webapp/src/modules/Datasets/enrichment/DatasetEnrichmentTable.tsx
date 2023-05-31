@@ -485,7 +485,9 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
               property="median"
               label="Median"
               sortable="custom"
-              minWidth="80"
+              minWidth="100"
+              renderHeader={(h : any, { column } : any) => renderExplainedHeader(column,
+                'Fold enrichment median.')}
               formatter={(row: any) => formatFloat(row.median)}
 
             />
