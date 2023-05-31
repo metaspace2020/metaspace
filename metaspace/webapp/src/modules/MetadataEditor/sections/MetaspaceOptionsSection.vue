@@ -105,7 +105,6 @@
               />
             </el-col>
             <el-col
-              v-if="features.advanced_ds_config || features.v2"
               :span="8"
             >
               <popup-anchor
@@ -124,15 +123,6 @@
                   @input="val => onInput('analysisVersion', val)"
                 />
               </popup-anchor>
-              <form-field
-                v-if="features.advanced_ds_config"
-                type="select"
-                name="Scoring model"
-                :value="value.scoringModel || ''"
-                :error="error && error.scoringModel"
-                :options="scoringModelOptions"
-                @input="val => onInput('scoringModel', val ? val : null)"
-              />
             </el-col>
           </el-row>
           <el-row
@@ -286,10 +276,8 @@ export default class MetaspaceOptionsSection extends Vue {
     chemModOptions: string[] = [];
 
     get analysisVersionOptions() {
-      const showV15 = config.features.advanced_ds_config || this.value.analysisVersion === 2
       return [
         { value: 1, label: 'v1 (Original MSM)' },
-        ...(showV15 ? [{ value: 2, label: 'v1.5 (Prototype for higher RPs)' }] : []),
         { value: 3, label: 'v2 (ML-powered MSM)' },
       ]
     }
