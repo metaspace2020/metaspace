@@ -105,7 +105,6 @@
               />
             </el-col>
             <el-col
-              v-if="features.advanced_ds_config || features.v2"
               :span="8"
             >
               <popup-anchor
