@@ -82,7 +82,7 @@ const DiagnosticsMetrics = defineComponent({
         } else {
           metricsFormula = (
             <div class="msm-score-calc">
-              {'METASPACE-ML = '}
+              {'METASPACE-ML score = '}
               <span>{ annotation.msmScore.toFixed(3) }</span>
               {' = ML ('}
               {interleave<any>(
