@@ -9,6 +9,14 @@ $filter-color: #828282;
   @apply flex flex-wrap m-12 justify-between pb-4;
   margin-top: 0;
 
+  .files-link{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: blue;
+    font-size: 12px;
+  }
+
   .swap-box{
     height: 59px;
     display: flex;

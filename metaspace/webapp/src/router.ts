@@ -117,7 +117,7 @@ const router = new VueRouter({
     { path: '/design/components', component: asyncPages.DesignComponents, meta: { footer: true, flex: true } },
     { path: '/design/forms', component: asyncPages.DesignForms, meta: { footer: true, flex: true } },
 
-    { path: '/standards', name: 'standards', component: asyncPages.SpottingProjectPage },
+    { path: '/detectability', name: 'detectability', component: asyncPages.SpottingProjectPage },
 
     { path: '*', component: NotFoundPage, meta: { footer: true, flex: true } },
   ],
