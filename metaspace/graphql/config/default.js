@@ -55,9 +55,11 @@ module.exports = {
   },
 
   elasticsearch: {
+    schema: 'http',
     host: 'localhost',
     port: 9200,
-    index: 'sm',
+    dataset_index: 'dataset',
+    annotation_index: 'annotation',
   },
 
   rabbitmq: {

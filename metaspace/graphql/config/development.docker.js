@@ -50,7 +50,9 @@ config.db.schema = 'sm'
 config.db.password = 'password'
 
 config.elasticsearch = {}
-config.elasticsearch.index = 'sm'
+config.elasticsearch.schema = 'http'
+config.elasticsearch.dataset_index = 'dataset'
+config.elasticsearch.annotation_index = 'annotation'
 config.elasticsearch.host = 'elasticsearch'
 config.elasticsearch.port = 9200
 

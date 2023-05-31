@@ -4,7 +4,7 @@ class MockElasticSearchClient {
   static search = jest.fn()
   search = MockElasticSearchClient.search
 }
-jest.doMock('elasticsearch', () => ({ Client: MockElasticSearchClient }))
+jest.doMock('@elastic/elasticsearch', () => ({ Client: MockElasticSearchClient }))
 
 import {
   createTestDataset, createTestDatasetDiagnostic,
