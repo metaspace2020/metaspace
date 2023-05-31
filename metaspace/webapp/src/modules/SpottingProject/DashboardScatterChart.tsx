@@ -140,7 +140,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           feature: {
             saveAsImage: {
               title: ' ',
-              name: 'standards',
+              name: 'detectability',
             },
           },
         },

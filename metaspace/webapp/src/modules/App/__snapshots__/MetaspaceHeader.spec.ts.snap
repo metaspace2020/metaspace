@@ -45,8 +45,15 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
 ">
           Groups
         </a></div>
-      <div class="header-items">
-        <!----> <a href="/help" class="
+      <div class="header-items"><a href="/detectability" class="
+  mx-1 px-3 py-2 rounded-md no-underline
+  text-sm font-medium text-white lg:tracking-wide
+  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  transition-colors duration-150 ease-in-out
+  border border-solid border-transparent
+">
+          Detectability
+        </a> <a href="/help" class="
   mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
@@ -139,8 +146,15 @@ exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
 ">
           Groups
         </a></div>
-      <div class="header-items">
-        <!----> <a href="/help" class="
+      <div class="header-items"><a href="/detectability" class="
+  mx-1 px-3 py-2 rounded-md no-underline
+  text-sm font-medium text-white lg:tracking-wide
+  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  transition-colors duration-150 ease-in-out
+  border border-solid border-transparent
+">
+          Detectability
+        </a> <a href="/help" class="
   mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700

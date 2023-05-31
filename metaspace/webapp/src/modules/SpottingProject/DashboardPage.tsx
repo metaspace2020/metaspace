@@ -7,11 +7,8 @@ import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
 import getColorScale from '../../lib/getColorScale'
 import ScatterChart from '../../assets/inline/scatter_chart.svg'
-import './DashboardPage.scss'
 import { SortDropdown } from '../../components/SortDropdown/SortDropdown'
-import FolderDownload from '../../assets/inline/refactoring-ui/icon-folder-download.svg'
-import StatefulIcon from '../../components/StatefulIcon.vue'
-import SaveIcon from '../../assets/inline/save-icon.svg'
+import './DashboardPage.scss'
 
 interface Options{
   xAxis: any
@@ -464,7 +461,7 @@ const sortingOptions: any[] = [
 ]
 
 export default defineComponent({
-  name: 'standards',
+  name: 'detectability',
   setup: function(props, ctx) {
     const { $route, $router } = ctx.root
     const pageSizes = [5, 15, 30, 100]
@@ -534,6 +531,9 @@ export default defineComponent({
       }
       if ($route.query.agg) {
         handleAggregationChange($route.query.agg, false)
+      }
+      if ($route.query.vis) {
+        handleVisualizationChange(parseInt($route.query.vis, 10))
       }
 
       const filterSrc : any[] = !$route.query.filter ? ['Polarity', 'nL']
@@ -765,7 +765,7 @@ export default defineComponent({
 
     const handleAggregationChange = (value: any, buildChart: boolean = true) => {
       state.options.aggregation = value
-      $router.replace({ name: 'standards', query: { ...getQueryParams(), agg: value } })
+      $router.replace({ name: 'detectability', query: { ...getQueryParams(), agg: value } })
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart) {
         buildValues()
       }
@@ -777,7 +777,7 @@ export default defineComponent({
         ? item.value.join('#') : item.value).join('|')
 
       $router.replace({
-        name: 'standards',
+        name: 'detectability',
         query: {
           ...getQueryParams(),
           filterValue: filterValueParams,
@@ -842,6 +842,11 @@ export default defineComponent({
       window.open(url, '_blank')
     }
 
+    const handleVisualizationChange = (value: number = VIEW.SCATTER) => {
+      state.selectedView = value
+      $router.replace({ name: 'detectability', query: { ...getQueryParams(), vis: value } })
+    }
+
     const getQueryParams = () => {
       const queryObj : any = {
         filter: state.filter.map((item: any) => item.src).join(','),
@@ -854,6 +859,7 @@ export default defineComponent({
         page: state.pagination.currentPage,
         pageSize: state.pagination.pageSize,
         src: state.dataSource.toUpperCase(),
+        vis: state.selectedView,
       }
 
       Object.keys(queryObj).forEach((key: string) => {
@@ -883,10 +889,10 @@ export default defineComponent({
         state.options.xAxis = undefined
         state.options.yAxis = undefined
         state.options.aggregation = undefined
-        $router.replace({ name: 'standards', query: { src: text } })
+        $router.replace({ name: 'detectability', query: { src: text } })
         state.isEmpty = true
       } else {
-        $router.replace({ name: 'standards', query: { ...getQueryParams(), src: text } })
+        $router.replace({ name: 'detectability', query: { ...getQueryParams(), src: text } })
       }
 
       if (state.options.xAxis && state.options.yAxis && changedValue) {
@@ -911,7 +917,7 @@ export default defineComponent({
       // fine_path
       state.filter[idx].src = value
       const filterSrcParams = state.filter.map((item: any) => item.src).join(',')
-      $router.replace({ name: 'standards', query: { ...getQueryParams(), filter: filterSrcParams } })
+      $router.replace({ name: 'detectability', query: { ...getQueryParams(), filter: filterSrcParams } })
       buildFilterOptions(idx)
       if (isNew) {
         handleFilterValueChange(null, idx, buildChart ? shouldLoad : false)
@@ -929,10 +935,10 @@ export default defineComponent({
       || (!isXAxis && value !== state.options.yAxis)
       if (isXAxis) {
         state.options.xAxis = value
-        $router.replace({ name: 'standards', query: { ...getQueryParams(), xAxis: value } })
+        $router.replace({ name: 'detectability', query: { ...getQueryParams(), xAxis: value } })
       } else {
         state.options.yAxis = value
-        $router.replace({ name: 'standards', query: { ...getQueryParams(), yAxis: value } })
+        $router.replace({ name: 'detectability', query: { ...getQueryParams(), yAxis: value } })
       }
 
       // reassign class according to options
@@ -1176,13 +1182,26 @@ export default defineComponent({
       return (
         <div class='visualization-container'>
           {showChart && renderHelp(xLabelItem, yLabelItem)}
-          <div class='visualization-selector'>
-            <span class='filter-label'>Visualization</span>
-            <div class={`ml-2 icon-holder ${state.selectedView === VIEW.SCATTER ? 'selected' : ''}`}>
-              <ScatterChart class='roi-icon fill-current' onClick={() => { state.selectedView = VIEW.SCATTER }}/>
-            </div>
-            <div class={`icon-holder ${state.selectedView === VIEW.HEATMAP ? 'selected' : ''}`}>
-              <i class="vis-icon el-icon-s-grid mr-6 text-4xl" onClick={() => { state.selectedView = VIEW.HEATMAP }}/>
+
+          <div class='flex flex-col'>
+            <a
+              href='https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v3/detectability_source.zip'
+              class={'files-link mb-1'}
+            >
+              Download results of the study
+            </a>
+            <div class='visualization-selector'>
+              <span class='filter-label'>Visualization</span>
+              <div class={`ml-2 icon-holder ${state.selectedView === VIEW.SCATTER ? 'selected' : ''}`}>
+                <ScatterChart
+                  class='roi-icon fill-current'
+                  onClick={() => { handleVisualizationChange(VIEW.SCATTER) }}/>
+              </div>
+              <div class={`icon-holder ${state.selectedView === VIEW.HEATMAP ? 'selected' : ''}`}>
+                <i
+                  class="vis-icon el-icon-s-grid mr-6 text-4xl"
+                  onClick={() => { handleVisualizationChange(VIEW.HEATMAP) }}/>
+              </div>
             </div>
           </div>
         </div>
@@ -1223,12 +1242,12 @@ export default defineComponent({
 
     const onPageChange = (newPage: number) => {
       state.pagination.currentPage = newPage
-      $router.replace({ name: 'standards', query: { ...getQueryParams(), page: newPage.toString() } })
+      $router.replace({ name: 'detectability', query: { ...getQueryParams(), page: newPage.toString() } })
     }
 
     const onPageSizeChange = (newSize: number) => {
       state.pagination.pageSize = newSize
-      $router.replace({ name: 'standards', query: { ...getQueryParams(), pageSize: newSize.toString() } })
+      $router.replace({ name: 'detectability', query: { ...getQueryParams(), pageSize: newSize.toString() } })
     }
 
     const renderRadiusHelp = () => {
@@ -1350,15 +1369,7 @@ export default defineComponent({
             {
               showChart
               && <div class='feature-box'>
-                <Tooltip content="Download source files." placement="bottom">
-                  <a
-                    href='https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v2/standards_source.zip'
-                    class={'button-reset h-6 w-6 mr-2'}
-                  >
-                    <FolderDownload class='h-6 w-6 pointer-events-none'/>
-                  </a>
-                </Tooltip>
-                <ShareLink name='standards' query={getQueryParams()}/>
+                <ShareLink name='detectability' query={getQueryParams()}/>
                 <ChartSettings onColor={handleColormapChange}/>
               </div>
             }

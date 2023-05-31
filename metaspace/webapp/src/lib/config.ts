@@ -9,7 +9,7 @@ interface Features {
   enrichment: boolean;
   show_dataset_overview: boolean;
   imzml_browser: boolean;
-  spotting: boolean;
+  detectability: boolean;
   roi: boolean;
   tic: boolean;
   custom_cols: boolean;
@@ -65,7 +65,7 @@ const defaultConfig: ClientConfig = {
     enrichment: true,
     show_dataset_overview: true,
     imzml_browser: true,
-    spotting: false,
+    detectability: true,
     roi: true,
     tic: true,
     custom_cols: true,

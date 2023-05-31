@@ -65,38 +65,27 @@ def load_data(
 ):
     """Load spotting related data and apply filters"""
 
-    url_prefix = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v2'
-    all_pred_file = 'all_predictions_05-07-22.parquet'
-    interlab_pred_file = 'interlab_predictions_12-10-22.parquet'
-    embl_pred_file = 'embl_predictions_19-07-22.parquet'
-    datasets_file = 'datasets_25-10-22.parquet'
+    url_prefix = 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v3'
+    all_ds_file = 'all_source_30-05-23.parquet'
+    interlab_ds_file = 'interlab_source_30-05-23.parquet'
+    embl_ds_file = 'embl_source_30-05-23.parquet'
     pathways_file = 'pathways_05-07-22.parquet'
     chem_class_file = 'custom_classification_05-07-22.parquet'
 
     # Load predictions, format neutral loss column
     if pred_type == 'EMBL':
-        predictions = pd.read_parquet(f'{url_prefix}/{embl_pred_file}')
-        print('embl', len(predictions))
+        source_df = pd.read_parquet(f'{url_prefix}/{embl_ds_file}')
     elif pred_type == 'INTERLAB':
         print('interlab')
-        predictions = pd.read_parquet(f'{url_prefix}/{interlab_pred_file}')
+        source_df = pd.read_parquet(f'{url_prefix}/{interlab_ds_file}')
     else:
         print('all')
-        predictions = pd.read_parquet(f'{url_prefix}/{all_pred_file}')
+        source_df = pd.read_parquet(f'{url_prefix}/{all_ds_file}')
 
-    predictions.nL.fillna('', inplace=True)
+    source_df.nL.fillna('', inplace=True)
 
     # Get a subset of most relevant information from Datasets file
-    datasets = pd.read_parquet(f'{url_prefix}/{datasets_file}')
-    datasets.rename(columns={'All': 'ALL', 'Interlab': 'INTERLAB'}, inplace=True)
-    datasets_info = datasets.groupby('Dataset ID').first()
-
-    # Merge with predictions and classification
-    source_df = pd.merge(
-        predictions, datasets_info, left_on='dsId', right_on='Dataset ID', how='left'
-    )
-
-    source_df = source_df[source_df[pred_type]]
+    source_df.rename(columns={'All': 'ALL', 'Interlab': 'INTERLAB'}, inplace=True)
 
     # dsIds, formulas and matrix columns are needed to generate url to metaspace with filter
     # the columns are duplicated and renamed, in case the x_axis or y_axis also having the same name

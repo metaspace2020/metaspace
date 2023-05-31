@@ -57,9 +57,9 @@
         <div class="header-items">
           <header-link
             v-if="showSpotting"
-            to="/standards"
+            to="/detectability"
           >
-            Standards
+            Detectability
           </header-link>
           <header-link
             to="/help"
@@ -220,9 +220,9 @@
           </header-link>
           <header-link
             v-if="showSpotting"
-            to="/spotting"
+            to="/detectability"
           >
-            Spotting
+            Detectability
           </header-link>
           <header-link
             to="/help"
@@ -308,7 +308,7 @@ const MetaspaceHeader = {
 
   computed: {
     showSpotting() {
-      return config.features.spotting
+      return config.features.detectability
     },
 
     uploadHref() {
