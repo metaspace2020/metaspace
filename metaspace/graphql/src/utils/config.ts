@@ -48,7 +48,9 @@ export interface Config {
     password: string;
   };
   elasticsearch: {
-    index: string;
+    dataset_index: string;
+    annotation_index: string;
+    schema: string;
     host: string;
     port: number;
   };

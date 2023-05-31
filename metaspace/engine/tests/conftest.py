@@ -11,7 +11,6 @@ from unittest.mock import patch, DEFAULT
 import numpy as np
 import pytest
 from elasticsearch import Elasticsearch
-from elasticsearch_dsl import Search
 import psycopg2
 from fasteners import InterProcessLock
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -41,7 +40,6 @@ def sm_config():
     # Update the internal cached copy of the config, so independent calls to SMConfig.get_conf()
     # also get the updated config
     SMConfig._config_dict['db']['database'] = test_id
-    SMConfig._config_dict['elasticsearch']['index'] = test_id
     SMConfig._config_dict['rabbitmq']['prefix'] = f'test_{worker_id}__'
 
     for path in SMConfig._config_dict['lithops']['sm_storage'].values():
@@ -194,33 +192,35 @@ def fill_db(test_db, metadata, ds_config):
 
 @pytest.fixture()
 def es(sm_config):
-    return Elasticsearch(
-        hosts=[
-            "{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])
-        ]
+    hosts = [
+        {
+            "host": sm_config['elasticsearch']['host'],
+            "port": int(sm_config['elasticsearch']['port']),
+            'scheme': "http",
+        }
+    ]
+    http_auth = (
+        (sm_config['elasticsearch']['user'], sm_config['elasticsearch']['password'])
+        if 'user' in sm_config['elasticsearch']
+        else None
     )
 
-
-@pytest.fixture()
-def es_dsl_search(sm_config):
-    es = Elasticsearch(
-        hosts=[
-            "{}:{}".format(sm_config['elasticsearch']['host'], sm_config['elasticsearch']['port'])
-        ]
-    )
-    return Search(using=es, index=sm_config['elasticsearch']['index'])
+    return Elasticsearch(hosts=hosts, basic_auth=http_auth)
 
 
 @pytest.fixture()
 def sm_index(sm_config, request):
     es_config = sm_config['elasticsearch']
     es_man = ESIndexManager(es_config)
-    es_man.delete_index(es_config['index'])
-    es_man.create_index(es_config['index'])
+    es_man.delete_index(es_config['dataset_index'])
+    es_man.delete_index(es_config['annotation_index'])
+    es_man.create_dataset_index(es_config['dataset_index'])
+    es_man.create_annotation_index(es_config['annotation_index'])
 
     def fin():
         es_man = ESIndexManager(es_config)
-        es_man.delete_index(sm_config['elasticsearch']['index'])
+        es_man.delete_index(sm_config['elasticsearch']['dataset_index'])
+        es_man.delete_index(sm_config['elasticsearch']['annotation_index'])
 
     request.addfinalizer(fin)
 

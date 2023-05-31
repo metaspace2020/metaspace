@@ -53,22 +53,32 @@ if __name__ == '__main__':
 
     es_config = SMConfig.get_conf()['elasticsearch']
     es_man = ESIndexManager(es_config)
-    alias = es_config['index']
-    active_index = es_man.internal_index_name(alias)
-    inactive_index = es_man.another_index_name(active_index)
-    index = inactive_index if args.inactive else active_index
+    dataset_alias = es_config['dataset_index']
+    annotation_alias = es_config['annotation_index']
+    dataset_active_index = es_man.internal_index_name(dataset_alias)
+    annotation_active_index = es_man.internal_index_name(annotation_alias)
+    dataset_inactive_index = es_man.another_index_name(dataset_active_index)
+    annotation_inactive_index = es_man.another_index_name(annotation_active_index)
+
+    dataset_index = dataset_inactive_index if args.inactive else dataset_active_index
+    annotation_index = annotation_inactive_index if args.inactive else annotation_active_index
 
     if args.action == 'create':
         if args.drop:
-            es_man.delete_index(index)
-        es_man.create_index(index)
+            es_man.delete_index(dataset_index)
+            es_man.delete_index(annotation_index)
+        es_man.create_dataset_index(dataset_index)
+        es_man.create_annotation_index(annotation_index)
         if not args.inactive:
-            es_man.remap_alias(index, alias)
+            es_man.remap_alias(dataset_index, dataset_alias)
+            es_man.remap_alias(annotation_index, annotation_alias)
     elif args.action == 'swap':
-        es_man.remap_alias(inactive_index, alias)
+        es_man.remap_alias(dataset_inactive_index, dataset_alias)
+        es_man.remap_alias(annotation_inactive_index, annotation_alias)
     elif args.action == 'drop':
         assert args.inactive, 'drop must be used with --inactive '
-        es_man.delete_index(index)
+        es_man.delete_index(dataset_index)
+        es_man.delete_index(annotation_index)
     elif args.action == 'status':
         pass
     else:
@@ -76,4 +86,5 @@ if __name__ == '__main__':
 
     # Print status regardless. The specific command just exists as a clean way
     # to indicate to not do anything
-    print_status(es_man, alias)
+    print_status(es_man, dataset_alias)
+    print_status(es_man, annotation_alias)
