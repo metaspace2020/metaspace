@@ -278,7 +278,7 @@ export default class MetaspaceOptionsSection extends Vue {
     get analysisVersionOptions() {
       return [
         { value: 1, label: 'v1 (Original MSM)' },
-        { value: 3, label: 'v2 (ML-powered MSM)' },
+        { value: 3, label: 'v2.20230517 (METASPACE-ML)' },
       ]
     }
 

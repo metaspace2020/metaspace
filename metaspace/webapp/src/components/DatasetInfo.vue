@@ -114,7 +114,7 @@ export default Vue.extend({
     getAnalysisVersion(analysisVersion) {
       switch (analysisVersion) {
         case 3:
-          return 'v2 (ML-powered MSM)'
+          return 'v2.20230517 (METASPACE-ML)'
         case 2:
           return 'v1.5 (Prototype for higher RPs)'
         default:

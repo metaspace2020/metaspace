@@ -3,7 +3,7 @@
     When comparing data between multiple datasets, it is recommended to process all datasets with the same
     analysis version. Otherwise, select the latest version for best results.
     <h4>Changes:</h4>
-    <h5>v2 (ML-powered MSM):</h5>
+    <h5>v2.20230517 (METASPACE-ML):</h5>
     <ul>
       <li>New metrics for evaluating annotations' mass accuracy.</li>
       <li>New ML-powered model for annotation scoring.</li>
