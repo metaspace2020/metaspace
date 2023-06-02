@@ -1011,7 +1011,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                             When comparing data between multiple datasets, it is recommended to process all datasets with the same
                             analysis version. Otherwise, select the latest version for best results.
                             <h4>Changes:</h4>
-                            <h5>v2 (ML-powered MSM):</h5>
+                            <h5>v2.20230517 (METASPACE-ML):</h5>
                             <ul>
                               <li>New metrics for evaluating annotations' mass accuracy.</li>
                               <li>New ML-powered model for annotation scoring.</li>
@@ -1025,7 +1025,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     <div class="el-form-item__content">
                       <mock-el-select>
                         <mock-el-option value="1" label="v1 (Original MSM)"></mock-el-option>
-                        <mock-el-option value="3" label="v2 (ML-powered MSM)"></mock-el-option>
+                        <mock-el-option value="3" label="v2.20230517 (METASPACE-ML)"></mock-el-option>
                       </mock-el-select>
                       <transition-stub name="el-zoom-in-top">
                         <!---->

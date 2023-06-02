@@ -34,7 +34,7 @@
       title="Updated Analysis Engine"
     >
       <p>
-        Select &ldquo;v2 (ML-powered MSM)&rdquo; to use the latest version of the METASPACE analysis engine.
+        Select &ldquo;v2.20230517 (METASPACE-ML)&rdquo; to use the latest version of the METASPACE analysis engine.
       </p>
       <p>
         The new version uses mass accuracy metrics and machine learning to annotate more molecules, with lower False Discovery Rates.
