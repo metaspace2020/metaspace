@@ -225,6 +225,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
             name: 'Unannotated',
             data: [],
             type: 'scatter',
+            sampling: 'none',
             symbolSize: function(val: any) {
               return val[2] * 2 || 20
             },
