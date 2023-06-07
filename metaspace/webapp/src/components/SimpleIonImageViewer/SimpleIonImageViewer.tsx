@@ -754,6 +754,12 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       const nonEmptyAnnotations = annotations.filter((item: any) => !item?.isEmpty)
       const nonEmptyAnnotationIndex = annotations.findIndex((item: any) => !item?.isEmpty)
       const viewerWrapper : any = container.value || {}
+      const imageTitle = nonEmptyAnnotations[0]
+        ? `${nonEmptyAnnotations[0]?.dataset?.name} - ${
+        nonEmptyAnnotations[0]?.dataset.id} - ${nonEmptyAnnotations[0]?.ionFormula}` : props.dataset.id
+      const fileName = nonEmptyAnnotations[0]?.ionFormula
+        ? `${nonEmptyAnnotations[0]?.ionFormula}_${nonEmptyAnnotations[0]?.dataset?.id}`
+          .replace(/\./g, '_') : props.dataset.id
 
       if (!imageSettings || !imageSettings.ionImageLayers
         || !annotations) {
@@ -808,6 +814,8 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           <ImageSaver
             class="absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
             domNode={viewerWrapper.$el}
+            label={imageTitle}
+            fileName={fileName}
           />
           <div class="flex absolute bottom-0 right-0 my-3 ml-3 dom-to-image-hidden">
             <FadeTransition>
