@@ -41,7 +41,6 @@
       <fade-transition v-if="openMenu === 'ION'">
         <ion-image-menu
           v-if="mode === 'MULTI'"
-          id="intensity-controller"
           key="multi"
           :is-normalized="showNormalizedIntensity"
           :menu-items="ionImageMenuItems"
@@ -224,12 +223,12 @@ const ImageViewer = defineComponent<Props>({
     })
 
     const imageFileName = computed(() => {
-      return `${props.annotation?.ionFormula}_${props.annotation?.dataset?.id}`
+      return `${props.annotation?.ion}_${props.annotation?.dataset?.id}`
         .replace(/\./g, '_')
     })
 
     const imageTitle = computed(() => {
-      return `${props.annotation?.dataset?.name} - ${props.annotation?.dataset?.id} - ${props.annotation?.ionFormula}`
+      return `${props.annotation?.dataset?.name} - ${props.annotation?.ion}`
     })
 
     const isIE = computed(() => {

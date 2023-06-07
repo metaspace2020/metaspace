@@ -34,6 +34,7 @@ interface SimpleIonImageViewerProps {
   globalLockedIntensities: [number | undefined, number | undefined]
   channels: any[]
   showChannels: boolean
+  imageTitle: string
 }
 
 interface ImageSettings {
@@ -104,6 +105,9 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     scaleBarColor: {
       type: String,
       default: '#000000',
+    },
+    imageTitle: {
+      type: String,
     },
     forceUpdate: {
       type: Boolean,
@@ -754,11 +758,11 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       const nonEmptyAnnotations = annotations.filter((item: any) => !item?.isEmpty)
       const nonEmptyAnnotationIndex = annotations.findIndex((item: any) => !item?.isEmpty)
       const viewerWrapper : any = container.value || {}
-      const imageTitle = nonEmptyAnnotations[0]
-        ? `${nonEmptyAnnotations[0]?.dataset?.name} - ${
-        nonEmptyAnnotations[0]?.dataset.id} - ${nonEmptyAnnotations[0]?.ionFormula}` : props.dataset.id
-      const fileName = nonEmptyAnnotations[0]?.ionFormula
-        ? `${nonEmptyAnnotations[0]?.ionFormula}_${nonEmptyAnnotations[0]?.dataset?.id}`
+      const imageTitle = props.imageTitle || (nonEmptyAnnotations[0]?.mz
+        ? `${nonEmptyAnnotations[0]?.dataset?.name} - ${nonEmptyAnnotations[0]?.mz.toFixed(4)} m/z`
+        : props.dataset?.name)
+      const fileName = nonEmptyAnnotations[0]
+        ? `${nonEmptyAnnotations[0]?.dataset?.id}_imzml_browser`
           .replace(/\./g, '_') : props.dataset.id
 
       if (!imageSettings || !imageSettings.ionImageLayers

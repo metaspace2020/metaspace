@@ -667,6 +667,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
               >
                 <div
                   class="sm-menu-items flex flex-col justify-center p-2 relative"
+                  id="intensity-controller"
                   style="outline: none; padding-bottom: 2px;"
                 >
                   <div
@@ -1454,6 +1455,7 @@ exports[`DatasetComparisonGrid it should match snapshot 1`] = `
               >
                 <div
                   class="sm-menu-items flex flex-col justify-center p-2 relative"
+                  id="intensity-controller"
                   style="outline: none; padding-bottom: 2px;"
                 >
                   <div
