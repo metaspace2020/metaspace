@@ -661,7 +661,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       // @ts-ignore TS2604
       const candidateMolecules = (annotation: any) => <CandidateMoleculesPopover
         placement="bottom"
-        possibleCompounds={possibleCompounds}
+        possibleCompounds={uniqBy(possibleCompounds, 'name')}
         isomers={isomers}
         isobars={isobars}>
         <MolecularFormula
