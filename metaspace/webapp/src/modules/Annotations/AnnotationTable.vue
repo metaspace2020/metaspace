@@ -1263,15 +1263,19 @@ export default Vue.extend({
           offset += 1
           this.exportProgress = offset / totalCount
           const annotation = resp.data.allAnnotations[i]
-          const { cols, row, dsName } = await formatIntensitiesRow(annotation,
-            this.isNormalized
-              ? this.$store.state.normalization : undefined)
-          if (!fileCols) {
-            fileCols = formatCsvRow(cols)
-            fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${this.isNormalized
-              ? '_tic_normalized' : ''}.csv`
+          try {
+            const { cols, row, dsName } = await formatIntensitiesRow(annotation,
+              this.isNormalized
+                ? this.$store.state.normalization : undefined)
+            if (!fileCols) {
+              fileCols = formatCsvRow(cols)
+              fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${this.isNormalized
+                ? '_tic_normalized' : ''}.csv`
+            }
+            rows += formatCsvRow(row)
+          } catch (e) {
+            // pass when fail to convert png
           }
-          rows += formatCsvRow(row)
         }
       }
 
