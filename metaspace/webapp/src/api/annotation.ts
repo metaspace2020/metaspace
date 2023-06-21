@@ -6,6 +6,7 @@ gql`fragment AnnotationDetailItem on Annotation {
   sumFormula
   adduct
   ion
+  centroidMz
   ionFormula
   database
   msmScore

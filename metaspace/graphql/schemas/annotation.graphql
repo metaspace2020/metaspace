@@ -11,6 +11,7 @@ type Annotation {
   databaseDetails: MolecularDB!
   database: String!  # @deprecated(reason: "This field is deprecated and will be removed. Use databaseDetails instead.")
   mz: Float!
+  centroidMz: Float!
   countPossibleCompounds(includeIsomers: Boolean = False): Int!
   possibleCompounds: [Compound!]!
   fdrLevel: Float

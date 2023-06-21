@@ -8,6 +8,42 @@ import {
 } from '../../../../esConnector'
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Query } from '../../../binding'
+import { generateIonFormula, parseFormula } from '../lib/formulaParser'
+import { periodicTable } from '../lib/periodicTable'
+
+const calculateMzFromFormula = (molecularFormula: string, polarity: string, centroid_mzs : any[]) => {
+  const ionFormula = generateIonFormula(molecularFormula)
+  const ionElements = parseFormula(ionFormula)
+  let mz = 0
+
+  Object.keys(ionElements).forEach((elementKey: string) => {
+    const nOfElements = ionElements[elementKey]
+    if (periodicTable[elementKey]) {
+      const mass = periodicTable[elementKey][2][0]
+      mz += nOfElements * mass
+    }
+  })
+
+  if (polarity && polarity === '+') {
+    mz += periodicTable.Ee[2][0]
+  } else if (polarity && polarity === '-') {
+    mz -= periodicTable.Ee[2][0]
+  }
+
+  centroid_mzs.forEach((theoreticalMz : number) => {
+    const highestMz = 1.000003
+    const lowestMz = 0.999997
+    const precision = 5
+    const ratio = (mz / theoreticalMz)
+    const roundedNumber = Math.round(ratio * Math.pow(10, precision)) / Math.pow(10, precision)
+
+    if (roundedNumber >= lowestMz && roundedNumber <= highestMz) {
+      mz = theoreticalMz
+    }
+  })
+
+  return mz
+}
 
 export const unpackAnnotation = (hit: ESAnnotation | ESAnnotationWithColoc) => {
   const { _id, _source } = hit
@@ -21,8 +57,9 @@ export const unpackAnnotation = (hit: ESAnnotation | ESAnnotationWithColoc) => {
     neutralLoss: _source.neutral_loss || '',
     chemMod: _source.chem_mod || '',
     ion: _source.ion,
+    centroidMz: parseFloat(_source.centroid_mzs[0] as any),
     ionFormula: _source.ion_formula,
-    mz: parseFloat(_source.centroid_mzs[0] as any),
+    mz: calculateMzFromFormula(_source.ion_formula, _source.polarity, _source.centroid_mzs),
     fdrLevel: _source.fdr > 0 ? _source.fdr : null, // Anns in targeted DBs with MSM==0 have FDR=-1
     msmScore: _source.msm,
 
