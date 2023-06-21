@@ -24,6 +24,7 @@ export const parseFormula = (formula: string) => {
     } else {
       throw new Error(`Invalid element ${element}`)
     }
+    return null
   })
 
   return elements
@@ -100,7 +101,7 @@ export const generateIonFormula = (molecularFormula: string) => {
   if (match && match.groups && match.groups.adducts) {
     const regexpAdduct = /([+-]\w+)/ig
     Array.from(match.groups.adducts.matchAll(regexpAdduct),
-      (res, idx) : any => {
+      (res) : any => {
         adducts.push(res[0])
         return null
       })
