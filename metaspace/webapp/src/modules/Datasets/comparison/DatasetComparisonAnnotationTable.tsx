@@ -103,6 +103,12 @@ const COMPARISON_TABLE_COLUMNS = {
       src: 'maxIntensity',
       selected: false,
     },
+  possibleCompounds:
+    {
+      label: 'Molecules',
+      src: 'possibleCompounds',
+      selected: false,
+    },
   fdrlevel:
     {
       label: 'Best FDR',
@@ -632,6 +638,10 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
       return row.msmScore.toFixed(3)
     }
 
+    const formatMolecules = (row: any) => {
+      return row.possibleCompounds?.map((molecule: any) => molecule.name).join(', ')
+    }
+
     const formatMZ = (row: any) => {
       return row.mz.toFixed(4)
     }
@@ -851,6 +861,18 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                 minWidth="120"
                 renderHeader={renderMSMHeader}
                 formatter={(row: any) => formatMSM(row)}
+              />
+            }
+            {
+              isColSelected('possibleCompounds')
+              && <TableColumn
+                key="possibleCompounds"
+                property="possibleCompounds"
+                label={state.columns.possibleCompounds?.label}
+                sortable="false"
+                minWidth="120"
+                showOverflowTooltip
+                formatter={(row: any) => formatMolecules(row)}
               />
             }
             {
