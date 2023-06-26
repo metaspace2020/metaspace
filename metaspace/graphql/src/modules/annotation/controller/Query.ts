@@ -11,7 +11,8 @@ import { Query } from '../../../binding'
 import { generateIonFormula, parseFormula } from '../lib/formulaParser'
 import { periodicTable } from '../lib/periodicTable'
 
-const calculateMzFromFormula = (molecularFormula: string, polarity: string, centroid_mzs : any[]) => {
+const calculateMzFromFormula = (molecularFormula: string, polarity: string, centroid_mzs : any[],
+  ppm = 3) => {
   const ionFormula = generateIonFormula(molecularFormula)
   const ionElements = parseFormula(ionFormula)
   let mz = 0
@@ -31,12 +32,11 @@ const calculateMzFromFormula = (molecularFormula: string, polarity: string, cent
   }
 
   centroid_mzs.forEach((theoreticalMz : number) => {
-    const highestMz = 1.000003
-    const lowestMz = 0.999997
+    const highestMz = 1 + ppm / 1e6
+    const lowestMz = 1 - ppm / 1e6
     const precision = 5
     const ratio = (mz / theoreticalMz)
     const roundedNumber = Math.round(ratio * Math.pow(10, precision)) / Math.pow(10, precision)
-
     if (roundedNumber >= lowestMz && roundedNumber <= highestMz) {
       mz = theoreticalMz
     }
@@ -47,6 +47,7 @@ const calculateMzFromFormula = (molecularFormula: string, polarity: string, cent
 
 export const unpackAnnotation = (hit: ESAnnotation | ESAnnotationWithColoc) => {
   const { _id, _source } = hit
+
   // Extract all directly accessible fields in one place to reduce the overhead of GraphQL having to call lots of
   // per-field resolvers.
   return {
@@ -59,7 +60,8 @@ export const unpackAnnotation = (hit: ESAnnotation | ESAnnotationWithColoc) => {
     ion: _source.ion,
     centroidMz: parseFloat(_source.centroid_mzs[0] as any),
     ionFormula: _source.ion_formula,
-    mz: calculateMzFromFormula(_source.ion_formula, _source.polarity, _source.centroid_mzs),
+    mz: calculateMzFromFormula(_source.ion_formula, _source.polarity, _source.centroid_mzs,
+      _source.ds_config.image_generation.ppm),
     fdrLevel: _source.fdr > 0 ? _source.fdr : null, // Anns in targeted DBs with MSM==0 have FDR=-1
     msmScore: _source.msm,
 
