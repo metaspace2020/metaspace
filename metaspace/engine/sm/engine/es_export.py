@@ -19,7 +19,7 @@ from sm.engine.annotation.fdr import FDR
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.config import SMConfig
 from sm.engine.db import DB
-from sm.engine.formula_parser import format_ion_formula
+from sm.engine.formula_parser import format_ion_formula, calculate_mono_mz
 from sm.engine.molecular_db import MolecularDB
 from sm.engine.utils.db_mutex import DBMutex
 from sm.engine.utils.retry_on_exception import retry_on_exception
@@ -457,13 +457,20 @@ class ESExporter:
             doc['comp_ids'], doc['comp_names'] = mol_by_formula[formula]
             mzs, _ = isocalc.centroids(ion_without_pol)
             doc['centroid_mzs'] = list(mzs) if mzs is not None else []
-            doc['mz'] = mzs[0] if mzs is not None else 0
             doc['iso_image_urls'] = [
                 image_storage.get_image_url(image_storage.ISO, ds_id, image_id)
                 if image_id
                 else None
                 for image_id in doc['iso_image_ids']
             ]
+
+            # calculate mono isotopic mz and check if it matches the one used for annotation
+            centroided_mz = mzs[0] if mzs is not None else 0
+            charge = doc['polarity']
+            doc['mz'] = calculate_mono_mz(doc['ion_formula'], charge)
+            highest_mz = centroided_mz * 1.000003
+            lowest_mz = centroided_mz * 0.999997
+            doc['is_mono'] = lowest_mz <= doc['mz'] <= highest_mz
 
             if moldb.targeted and ds_doc['ds_config'].get('analysis_version', 1) == 1:
                 fdr_level = doc['fdr'] = -1

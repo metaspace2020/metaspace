@@ -106,7 +106,7 @@
       :dom-node="imageArea"
     />
     <el-popover
-      v-if="annotation.mz !== annotation.centroidMz"
+      v-if="annotation.isMono === false"
       trigger="hover"
       class="popover"
       popper-class="w-full max-w-measure-1 text-left text-sm leading-5"

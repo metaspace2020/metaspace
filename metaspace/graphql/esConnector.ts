@@ -81,6 +81,7 @@ export interface ESAnnotationSource extends ESDatasetSource {
   total_iso_ints: number[];
   min_iso_ints: number[];
   max_iso_ints: number[];
+  is_mono: boolean;
 
   chaos: number;
   image_corr: number;

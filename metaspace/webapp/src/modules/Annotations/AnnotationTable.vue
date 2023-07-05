@@ -1200,7 +1200,7 @@ export default Vue.extend({
     },
 
     filterMZ(row) {
-      this.updateFilter({ mz: row.centroidMz.toFixed(4) })
+      this.updateFilter({ mz: row.mz.toFixed(4) })
     },
 
     async startIntensitiesExport() {

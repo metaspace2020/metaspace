@@ -1,6 +1,10 @@
 import re
 from collections import Counter
 
+from pyMSpec.pyisocalc import pyisocalc
+from pyMSpec.pyisocalc.periodic_table import periodic_table
+
+
 from sm.engine.errors import SMError
 
 CLEAN_REGEXP = re.compile(r'[.=]')
@@ -125,3 +129,26 @@ def safe_generate_ion_formula(*parts):
         return generate_ion_formula(*(part for part in parts if part))
     except ParseFormulaError:
         return None
+
+
+def calculate_mono_mz(ion_formula, charge):
+    """Calculates monoisotopic m/z for ion.
+
+    Args:
+        formula (str): ion formula
+        charge (int): ion charge + or -
+
+    Returns:
+        float: Monoisotopic m/z for ion
+        :param ion_formula:
+    """
+    mz = 0
+    for el in pyisocalc.parseSumFormula(ion_formula).get_segments():
+        mz += (periodic_table[str(el.element())][2][0] * el.amount())
+
+    if charge == '+':
+        mz -= periodic_table['Ee'][2][0]
+    elif charge == '-':
+        mz += periodic_table['Ee'][2][0]
+
+    return mz
