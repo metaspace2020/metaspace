@@ -143,8 +143,8 @@ def calculate_mono_mz(ion_formula, charge):
         :param ion_formula:
     """
     mz = 0
-    for el in pyisocalc.parseSumFormula(ion_formula).get_segments():
-        mz += (periodic_table[str(el.element())][2][0] * el.amount())
+    for segment in pyisocalc.parseSumFormula(ion_formula).get_segments():
+        mz += periodic_table[str(segment.element())][2][0] * segment.amount()
 
     if charge == '+':
         mz -= periodic_table['Ee'][2][0]

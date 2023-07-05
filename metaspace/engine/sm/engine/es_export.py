@@ -466,8 +466,7 @@ class ESExporter:
 
             # calculate mono isotopic mz and check if it matches the one used for annotation
             centroided_mz = mzs[0] if mzs is not None else 0
-            charge = doc['polarity']
-            doc['mz'] = calculate_mono_mz(doc['ion_formula'], charge)
+            doc['mz'] = calculate_mono_mz(doc['ion_formula'], doc['polarity'])
             highest_mz = centroided_mz * 1.000003
             lowest_mz = centroided_mz * 0.999997
             doc['is_mono'] = lowest_mz <= doc['mz'] <= highest_mz
