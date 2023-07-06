@@ -219,7 +219,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             name: 'Unannotated',
             type: 'bar',
             symbol: 'diamond',
-            sampling: 'lttb',
+            sampling: 'none',
             data: [],
             label: {
               show: true,
