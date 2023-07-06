@@ -1,6 +1,6 @@
 requests==2.26.0
 numpy==1.19.5
-scipy==1.6.0
+scipy==1.10.0
 pandas==1.2.0
 urllib3
 pyarrow==1.0.1
