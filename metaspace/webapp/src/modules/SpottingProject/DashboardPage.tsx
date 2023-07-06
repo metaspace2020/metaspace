@@ -987,8 +987,6 @@ export default defineComponent({
                 handleDataSrcChange(text)
               }}>
               <RadioButton label='EMBL'/>
-              <RadioButton label='ALL'/>
-              <RadioButton label='INTERLAB'/>
             </RadioGroup>
           </div>
 
