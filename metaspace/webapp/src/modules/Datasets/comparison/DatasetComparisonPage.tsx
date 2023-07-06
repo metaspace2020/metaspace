@@ -580,15 +580,19 @@ export default defineComponent<DatasetComparisonPageProps>({
           const annotation : any = currentAnnotations[i]
           offset += 1
           state.exportProgress = offset / totalCount
-          const { cols, row, dsName } = await formatIntensitiesRow(annotation,
-            state.globalImageSettings.isNormalized
-              ? state.normalizationData[annotation.dataset.id] : undefined)
-          if (!fileCols) {
-            fileCols = formatCsvRow(cols)
-            fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${state.globalImageSettings.isNormalized
-              ? '_tic_normalized' : ''}.csv`
+          try {
+            const { cols, row, dsName } = await formatIntensitiesRow(annotation,
+              state.globalImageSettings.isNormalized
+                ? state.normalizationData[annotation.dataset.id] : undefined)
+            if (!fileCols) {
+              fileCols = formatCsvRow(cols)
+              fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${state.globalImageSettings.isNormalized
+                ? '_tic_normalized' : ''}.csv`
+            }
+            rows += formatCsvRow(row)
+          } catch (e) {
+            // pass when fail to convert png
           }
-          rows += formatCsvRow(row)
         }
 
         if (state.isExporting) {
