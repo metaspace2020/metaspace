@@ -1083,7 +1083,7 @@ export default Vue.extend({
     },
 
     onSortChange(event) {
-      this.clearCurrentRow()
+      // this.clearCurrentRow()
 
       if (!event.order) {
         const { prop, order } = this.tableSort
