@@ -752,6 +752,7 @@ export default defineComponent<DatasetComparisonPageProps>({
           <ImageSaver
             class="absolute top-0 right-0 mt-2 mr-2 dom-to-image-hidden"
             domNode={gridNode.value}
+            fileName={'datasets_comparison'}
           />
           <Popover
             trigger="hover"

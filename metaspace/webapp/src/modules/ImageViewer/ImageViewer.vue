@@ -47,6 +47,7 @@
         />
         <single-ion-image-controls
           v-else-if="!isLoading"
+          id="intensity-controller"
           key="single"
           :is-normalized="showNormalizedIntensity"
           v-bind="singleIonImageControls"
@@ -103,7 +104,9 @@
     </div>
     <image-saver
       class="absolute top-0 left-0 mt-3 ml-3"
+      :file-name="imageFileName"
       :dom-node="imageArea"
+      :label="imageTitle"
     />
   </div>
   <div
@@ -219,6 +222,15 @@ const ImageViewer = defineComponent<Props>({
       })
     })
 
+    const imageFileName = computed(() => {
+      return `${props.annotation?.ion}_${props.annotation?.dataset?.id}`
+        .replace(/\./g, '_')
+    })
+
+    const imageTitle = computed(() => {
+      return `${props.annotation?.dataset?.name} - ${props.annotation?.ion}`
+    })
+
     const isIE = computed(() => {
       // IE 10 and IE 11
       return /Trident\/|MSIE/.test(window.navigator.userAgent)
@@ -226,15 +238,17 @@ const ImageViewer = defineComponent<Props>({
 
     const roiInfo = computed(() => {
       if (
-        props.annotation && props.annotation.dataset?.id && root.$store.state.roiInfo
-        && Object.keys(root.$store.state.roiInfo).includes(props.annotation.dataset.id)) {
-        return root.$store.state.roiInfo[props.annotation.dataset.id] || []
+        props.annotation && props.annotation?.dataset?.id && root.$store.state.roiInfo
+        && Object.keys(root.$store.state.roiInfo).includes(props.annotation?.dataset?.id)) {
+        return root.$store.state.roiInfo[props.annotation?.dataset?.id] || []
       }
       return []
     })
 
     return {
       imageArea,
+      imageFileName,
+      imageTitle,
       dimensions,
       ionImageDimensions,
       imageFit,

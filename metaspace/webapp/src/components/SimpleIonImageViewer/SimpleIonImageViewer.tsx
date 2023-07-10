@@ -34,6 +34,7 @@ interface SimpleIonImageViewerProps {
   globalLockedIntensities: [number | undefined, number | undefined]
   channels: any[]
   showChannels: boolean
+  imageTitle: string
 }
 
 interface ImageSettings {
@@ -104,6 +105,9 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
     scaleBarColor: {
       type: String,
       default: '#000000',
+    },
+    imageTitle: {
+      type: String,
     },
     forceUpdate: {
       type: Boolean,
@@ -754,6 +758,12 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       const nonEmptyAnnotations = annotations.filter((item: any) => !item?.isEmpty)
       const nonEmptyAnnotationIndex = annotations.findIndex((item: any) => !item?.isEmpty)
       const viewerWrapper : any = container.value || {}
+      const imageTitle = props.imageTitle || (nonEmptyAnnotations[0]?.mz
+        ? `${nonEmptyAnnotations[0]?.dataset?.name} - ${nonEmptyAnnotations[0]?.mz.toFixed(4)} m/z`
+        : props.dataset?.name)
+      const fileName = nonEmptyAnnotations[0]
+        ? `${nonEmptyAnnotations[0]?.dataset?.id}_imzml_browser`
+          .replace(/\./g, '_') : props.dataset.id
 
       if (!imageSettings || !imageSettings.ionImageLayers
         || !annotations) {
@@ -808,6 +818,8 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           <ImageSaver
             class="absolute top-0 left-0 mt-3 ml-3 dom-to-image-hidden"
             domNode={viewerWrapper.$el}
+            label={imageTitle}
+            fileName={fileName}
           />
           <div class="flex absolute bottom-0 right-0 my-3 ml-3 dom-to-image-hidden">
             <FadeTransition>

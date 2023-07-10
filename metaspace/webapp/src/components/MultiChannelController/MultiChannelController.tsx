@@ -118,6 +118,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       return (
         <div class="relative">
           <div
+            id="intensity-controller"
             class={'sm-menu-items flex flex-col justify-center p-2 relative'}
             style={{
               border: props.mode === 'MULTI' ? '' : 'none',
