@@ -61,7 +61,7 @@ class PhraseMatchFilter extends SubstringMatchFilter {
   }
 
   esFilter(value) {
-    return { match: { [this.esField]: { query: this.preprocess(value), type: 'phrase' } } }
+    return { match_phrase: { [this.esField]: { query: this.preprocess(value)} } }
   }
 }
 
