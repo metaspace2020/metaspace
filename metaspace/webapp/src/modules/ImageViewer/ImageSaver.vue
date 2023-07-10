@@ -25,12 +25,14 @@ function showBrowserWarning() {
 interface Props {
   domNode: HTMLElement | null,
   fileName: string,
+  label: string,
 }
 
 export default defineComponent<Props>({
   props: {
     domNode: { required: true },
     fileName: String,
+    label: String,
   },
   setup(props) {
     const isSupported = (
@@ -38,15 +40,75 @@ export default defineComponent<Props>({
       || window.navigator.userAgent.includes('Firefox')
     )
 
+    const attachLabelToBlob = (blob: any, intensityBlob: any) => {
+      const image = new Image()
+
+      image.src = URL.createObjectURL(blob)
+
+      image.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = image.width
+        canvas.height = image.height + 80 // Adjust height to accommodate the label
+        const context = canvas.getContext('2d')
+
+        context!.drawImage(image, 0, 65)
+
+        context!.fillStyle = intensityBlob ? 'white' : 'transparent'
+        context!.fillRect(0, 0, image.width, 40)
+
+        const intensityImage = new Image()
+        context!.font = 'bold 14px Roboto'
+        context!.fillStyle = 'black'
+        context!.textAlign = 'center'
+
+        const label = props.label
+        const labelX = context!.measureText(label).width / 2 + 10
+        const labelY = 25
+        context!.fillText(label, labelX, labelY)
+
+        if (intensityBlob) {
+          intensityImage.src = URL.createObjectURL(intensityBlob)
+          intensityImage.onload = () => {
+            context!.drawImage(intensityImage, image.width - 200, 0, 200, 40)
+
+            canvas.toBlob((labeledBlob: any) => {
+              saveAs(labeledBlob, `${props.fileName || 'METASPACE'}.png`)
+            })
+          }
+        } else {
+          canvas.toBlob((labeledBlob: any) => {
+            saveAs(labeledBlob, `${props.fileName || 'METASPACE'}.png`)
+          })
+        }
+      }
+    }
+
     const save = async() => {
       const node = props.domNode
       if (node) {
+        const divElement = document.querySelector('#intensity-controller') as HTMLElement
+        let intensityBlob = null
+        if (divElement) {
+          intensityBlob = await domtoimage.toBlob(divElement, {
+            width: divElement.clientWidth,
+            height: divElement.clientHeight,
+            style: {
+              background: 'white',
+            },
+          })
+        }
+
         const blob = await domtoimage.toBlob(node, {
           width: node.clientWidth,
           height: node.clientHeight,
           filter: el => !el.classList || !el.classList.contains('dom-to-image-hidden'),
         })
-        saveAs(blob, `${props.fileName || 'METASPACE'}.png`)
+
+        if (props.label) {
+          attachLabelToBlob(blob, intensityBlob)
+        } else {
+          saveAs(blob, `${props.fileName || 'METASPACE'}.png`)
+        }
       }
     }
 
