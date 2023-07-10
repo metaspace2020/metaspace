@@ -21,11 +21,6 @@
         </p>
       </div>
       <div v-else-if="isSignedIn || isTourRunning">
-        <!--Uncomment below when LCMS support is needed-->
-        <!--<div id="filter-panel-container">-->
-        <!--<filter-panel level="upload"></filter-panel>-->
-        <!--</div>-->
-
         <div class="metadata-section">
           <div class="el-row">
             <div class="el-col el-col-6">

@@ -292,28 +292,19 @@ const usePanAndZoom = (
   const zoomX = computed(() => props.zoom)
   const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
   const viewBoxStyle = computed(() => {
-    const isLCMS = false
-    if (!isLCMS) {
-      const { width, height } = imageSize.value
-      if (width === undefined || height === undefined) {
-        return null // should always be scaled to size of image
-      }
-      const x = props.width / 2 + (props.xOffset - width / 2) * zoomX.value
-      const y = props.height / 2 + (props.yOffset - height / 2) * zoomY.value
-      return {
-        left: 0,
-        top: 0,
-        width: props.width + 'px',
-        height: props.height + 'px',
-        transformOrigin: '0 0',
-        transform: `translate(${x}px, ${y}px) scale(${zoomX.value}, ${zoomY.value})`,
-      }
-    } else {
-      // LC-MS data (1 x number of time points)
-      return {
-        width: props.width + 'px',
-        height: props.height + 'px',
-      }
+    const { width, height } = imageSize.value
+    if (width === undefined || height === undefined) {
+      return null // should always be scaled to size of image
+    }
+    const x = props.width / 2 + (props.xOffset - width / 2) * zoomX.value
+    const y = props.height / 2 + (props.yOffset - height / 2) * zoomY.value
+    return {
+      left: 0,
+      top: 0,
+      width: props.width + 'px',
+      height: props.height + 'px',
+      transformOrigin: '0 0',
+      transform: `translate(${x}px, ${y}px) scale(${zoomX.value}, ${zoomY.value})`,
     }
   })
 
