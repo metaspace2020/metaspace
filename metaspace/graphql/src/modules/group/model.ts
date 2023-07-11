@@ -38,6 +38,9 @@ export class Group {
   @OneToMany(() => UserGroup, userGroup => userGroup.group)
   members: UserGroup[];
 
+  @OneToMany(() => GroupDetectability, groupDetectability => groupDetectability.group)
+  sources: GroupDetectability[];
+
   @OneToMany(() => MolecularDB, molecularDB => molecularDB.group)
   molecularDBs: MolecularDB[];
 }
@@ -67,8 +70,26 @@ export class UserGroup {
   @Column({ default: true })
   primary: boolean;
 }
+@Entity('group_detectability')
+export class GroupDetectability {
+  @PrimaryColumn({ type: 'uuid' })
+  id: string;
+
+  @PrimaryColumn({ type: 'uuid' })
+  groupId: string;
+
+  @ManyToOne(() => Group)
+  @JoinColumn({ name: 'group_id' })
+  group: Group;
+
+  @Column({ type: 'text', enum: ['EMBL'] })
+  source: 'EMBL' |
+    'ALL' |
+    'INTERLAB';
+}
 
 export const GROUP_ENTITIES = [
   Group,
   UserGroup,
+  GroupDetectability,
 ]

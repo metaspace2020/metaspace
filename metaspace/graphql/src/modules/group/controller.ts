@@ -1,7 +1,7 @@
 import { UserError } from 'graphql-errors'
 import { EntityManager, In } from 'typeorm'
 
-import { Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions } from './model'
+import { Group as GroupModel, GroupDetectability, UserGroup as UserGroupModel, UserGroupRoleOptions } from './model'
 import { User as UserModel } from '../user/model'
 import { Dataset as DatasetModel } from '../dataset/model'
 import { MolecularDB as MolecularDbModel } from '../moldb/model'
@@ -159,6 +159,14 @@ export const Resolvers = {
         ...ug,
         user: { ...ug.user, scopeRole },
       }))
+    },
+
+    async sources(group: GroupModel, _: any, ctx: Context): Promise<any> {
+      const groupSourcesModels = await ctx.entityManager.getRepository(GroupDetectability)
+        .createQueryBuilder('group_detectability')
+        .where({ groupId: group.id })
+        .getMany()
+      return groupSourcesModels
     },
 
     async molecularDatabases(group: GroupModel, args: any, ctx: Context): Promise<MolecularDbModel[]> {
