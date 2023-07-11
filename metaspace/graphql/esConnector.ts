@@ -432,8 +432,8 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
 const constructSimpleQueryFilter = (simpleQuery: string) => {
   return {
     simple_query_string: {
-      query: `${simpleQuery}*`,
-      flags: 'OR|PREFIX',
+      query: simpleQuery,
+      default_operator: 'and',
     },
   }
 }
