@@ -172,7 +172,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
         const enrichedTerms = await ctx.entityManager
           .find(EnrichmentTerm, {
-            where: { enrichmentDbId: ontologyId }, // LION
+            where: { enrichmentDbId: ontologyId },
           })
 
         const bootstrappedSublist : any = []

@@ -1074,19 +1074,24 @@ exports[`MetadataEditor should match snapshot 1`] = `
               </div>
               <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
                 <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
-                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>LION enrichment</span>
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Enrichment ontology</span>
                       <!---->
                       <mock-el-popover trigger="hover" placement="right">
                         <div slot-key="default">
                           <div class="analysis-version-help">
-                            When performing <a target="_blank" href="http://www.lipidontology.com/">LION</a> enrichment, a lipid enrichment
-                            analysis will be performed based on LION.
-                            <h5>Available databases:</h5>
+                            Perform an enrichment according to the selected enrichment ontology.
+                            <h5>Available databases - Lipid classes enrichment:</h5>
                             <ul>
                               <li>CoreMetabolome - v3.</li>
                               <li>HMDB - v4.</li>
                               <li>LipidMaps - 2017-12-12.</li>
                               <li>SwissLipids - 2018-02-02.</li>
+                            </ul>
+                            <h5>Available databases - Metabolite classes enrichment:</h5>
+                            <ul>
+                              <li>Metabolite - class [HMDB - v4].</li>
+                              <li>Metabolite - pathway [HMDB - v4].</li>
+                              <li>Metabolite - tissue [HMDB - v4].</li>
                             </ul>
                           </div>
                         </div>
@@ -1094,10 +1099,10 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       </mock-el-popover>
                       </span></label>
                     <div class="el-form-item__content">
-                      <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input">
-                        <!----><span class="el-switch__core" style="width: 40px;"></span>
-                        <!---->
-                      </div>
+                      <mock-el-select value="" multiple="">
+                        <mock-el-option value="9" label="ontologyDbs.0.label"></mock-el-option>
+                        <mock-el-option value="8" label="ontologyDbs.1.label"></mock-el-option>
+                      </mock-el-select>
                       <transition-stub name="el-zoom-in-top">
                         <!---->
                       </transition-stub>

@@ -8,12 +8,12 @@ import { useQuery } from '@vue/apollo-composable'
 import { getDatasetByIdQuery, GetDatasetByIdQuery, getDatasetEnrichmentQuery } from '../../../api/dataset'
 import { DatasetEnrichmentChart } from './DatasetEnrichmentChart'
 import { DatasetEnrichmentTable } from './DatasetEnrichmentTable'
-import './DatasetEnrichmentPage.scss'
 import { getEnrichedMolDatabasesQuery } from '../../../api/enrichmentdb'
 import FilterPanel from '../../Filters/FilterPanel.vue'
-import { uniq, uniqBy } from 'lodash-es'
+import { uniqBy } from 'lodash-es'
 import gql from 'graphql-tag'
 import safeJsonParse from '../../../lib/safeJsonParse'
+import './DatasetEnrichmentPage.scss'
 
 interface DatasetEnrichmentPageProps {
   className: string

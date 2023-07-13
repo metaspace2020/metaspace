@@ -11,7 +11,7 @@ exports[`DatasetActionsDropdown it should match snapshot 1`] = `
     <eldropdownitem-stub command="browser" class="relative">
       <el-badge-stub value="New" class="sm-feature-badge actionBadge">Imzml Browser</el-badge-stub>
     </eldropdownitem-stub>
-    <eldropdownitem-stub command="enrichment">LION enrichment</eldropdownitem-stub>
+    <eldropdownitem-stub command="enrichment">Ontology enrichment</eldropdownitem-stub>
     <eldropdownitem-stub command="edit">Edit</eldropdownitem-stub>
     <eldropdownitem-stub command="delete" class="text-red-500">Delete</eldropdownitem-stub>
     <eldropdownitem-stub command="reprocess" class="text-red-500">Reprocess data</eldropdownitem-stub>
