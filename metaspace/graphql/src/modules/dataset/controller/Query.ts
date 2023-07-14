@@ -151,7 +151,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           qb = qb.andWhere('bootstrap.annotationId IN (:...idsWithOffSampleFilter)', { idsWithOffSampleFilter })
         }
 
-
         if (colocalizedWith !== undefined && colocIons !== undefined) {
           qb = qb.andWhere('bootstrap.formulaAdduct IN (:...colocIons)', { colocIons })
         }

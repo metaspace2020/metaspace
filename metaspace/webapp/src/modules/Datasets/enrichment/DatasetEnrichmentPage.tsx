@@ -1,7 +1,6 @@
 import {
   computed,
   defineComponent,
-  onMounted,
   reactive,
 } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
@@ -77,7 +76,6 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       result: datasetResult,
       onResult: handleDatasetLoad,
     } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId })
-
 
     handleDatasetLoad(async(result) => {
       const filter = Object.assign({}, $store.getters.filter)
@@ -175,7 +173,6 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       const data = enrichment.value || []
       const usedData = state.sortedData ? state.sortedData : data
       const pagedData = usedData.slice(dataStart, dataEnd)
-      const ontologyDatabases : any = dataset.value?.ontologyDatabases || []
       const databaseOptions : any = databases.value || []
       const filename : string = `${dataset.value?.name}_${(databases.value || []).find((database:any) => database.id
         === $store.getters.gqlAnnotationFilter.databaseId)?.name}`.replace(/\./g, '_')
@@ -196,7 +193,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
           }
           {
             enrichmentLoading.value
-            && <div class='dataset-enrichment-loading'>
+            && <div class='w-full h-full flex items-center justify-center'>
               <i
                 class="el-icon-loading"
               />

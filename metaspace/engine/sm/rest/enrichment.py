@@ -53,12 +53,14 @@ def calculate_enrichment():  # pylint: disable=too-many-locals
                 true_positive = enrichment_analysis_input[key]['sublist'][i]
                 false_positive = enrichment_analysis_input['all']['sublist'][i] - true_positive
                 false_negative = enrichment_analysis_input[key]['background'] - true_positive
-                true_negative = enrichment_analysis_input['all']['background'] - \
-                                (true_positive + false_positive + false_negative)
+                true_negative = enrichment_analysis_input['all']['background'] - (
+                    true_positive + false_positive + false_negative
+                )
 
                 observed = true_positive / (true_positive + false_positive)
-                expected = (true_positive + false_negative) / (true_positive + false_positive +
-                                                                         false_negative + true_negative)
+                expected = (true_positive + false_negative) / (
+                    true_positive + false_positive + false_negative + true_negative
+                )
 
                 fold_enrichment_median = observed / expected  ## median fold enrichment
 
