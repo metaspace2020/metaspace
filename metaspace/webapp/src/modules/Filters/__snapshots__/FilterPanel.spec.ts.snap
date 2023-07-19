@@ -7,7 +7,17 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     <mock-el-option value="molClass" label="Select class"></mock-el-option>
   </mock-el-select>
   <div class="tf-outer w-auto el-input el-input-group el-input-group--prepend" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
-    <div class="el-input-group__prepend"><i class="el-icon-search -mx-1"></i></div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
+    <div class="el-input-group__prepend">
+      <div>
+        <mock-el-tooltip placement="bottom">
+          <div slot-key="content"><span>
+        You can use
+        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" target="_blank">regular expression syntax</a> when searching for the dataset name.
+      </span></div>
+          <div slot-key="default"> <i class="el-icon-search -mx-1"></i></div>
+        </mock-el-tooltip>
+      </div>
+    </div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
     <!---->
     <!---->
     <!---->
