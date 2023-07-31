@@ -104,6 +104,31 @@ export interface ESAnnotationSource extends ESDatasetSource {
   off_sample_label?: 'on' | 'off';
 }
 
+const searchable_txt_annotation_fields = ['db_name',
+  'formula',
+  'adduct',
+  'neutral_loss',
+  'chem_mod',
+  'ion',
+  'ion_formula',
+  'comp_ids',
+  'comp_names',
+  'isomer_ions']
+
+const searchable_txt_dataset_fields = ['ds_id',
+  'ds_status',
+  'ds_adducts',
+  'ds_neutral_losses',
+  'ds_chem_mods',
+  'ds_submitter_id',
+  'ds_submitter_name',
+  'ds_submitter_email',
+  'ds_group_id',
+  'ds_group_name',
+  'ds_group_short_name',
+  'ds_project_id',
+  'ds_ion_thumbnail_url']
+
 export interface ESAggAnnotationSource {
   ion: string
   dbId: number
@@ -429,12 +454,30 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
   return filters
 }
 
-const constructSimpleQueryFilter = (simpleQuery: string) => {
+const constructSimpleQueryFilter = (simpleQuery: string, fields = searchable_txt_dataset_fields) => {
   return {
-    simple_query_string: {
-      query: simpleQuery,
-      default_operator: 'and',
+    bool: {
+      should: [
+        {
+          regexp: {
+            ds_name: {
+              value: `.*${simpleQuery}.*`,
+              flags: 'ALL',
+              case_insensitive: true,
+            },
+          },
+        },
+        {
+          simple_query_string: {
+            query: simpleQuery,
+            fields,
+            default_operator: 'and',
+          },
+        },
+      ],
+
     },
+
   }
 }
 
@@ -453,7 +496,11 @@ const constructESQuery = async(
           ...(bypassAuth || docType === 'dataset' ? [] : await constructDatabaseAuthFilters(user)),
           ...dsFilters,
           ...constructAnnotationFilters(filter || {}),
-          ...(simpleQuery ? [constructSimpleQueryFilter(simpleQuery)] : []),
+          ...(simpleQuery
+            ? [constructSimpleQueryFilter(simpleQuery, docType === 'dataset'
+                ? searchable_txt_dataset_fields
+                : searchable_txt_annotation_fields.concat(searchable_txt_dataset_fields))]
+            : []),
         ],
       },
     },
