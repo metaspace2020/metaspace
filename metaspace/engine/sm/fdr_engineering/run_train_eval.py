@@ -234,7 +234,7 @@ MODEL_NAME = 'v3_default'
 # Remove unwanted fields from metrics_df for saving training data
 train_data = metrics_df[[*features, 'target', 'group_name', 'formula', 'modifier', 'decoy_i']]
 params = upload_catboost_scoring_model(
-    final_model,  # '../fdr-models/model-2022-01-05T13-45-26.947188-416b1311.cbm',
+    final_model,  # '../fdr-models/v2.20230517_(METASPACE-ML).cbm',
     'sm-engine',
     f'scoring_models/{MODEL_NAME}',
     is_public=True,

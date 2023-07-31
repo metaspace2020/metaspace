@@ -329,7 +329,7 @@ def ensure_db_populated(sm_config, analysis_version, database):
             print("Importing v3_default scoring model")
             params = upload_catboost_scoring_model(
                 model=Path(proj_root())
-                / '../scoring-models/v3_default/model-2022-01-05T13-45-26.947188-416b1311.cbm',
+                / '../scoring-models/v3_default/v2.20230517_(METASPACE-ML).cbm',
                 bucket=sm_config['lithops']['lithops']['storage_bucket'],
                 prefix=f'test_scoring_models/v3_default',
                 is_public=False,
