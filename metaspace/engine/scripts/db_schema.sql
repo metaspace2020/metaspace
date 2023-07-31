@@ -73,6 +73,14 @@ CREATE TABLE "graphql"."user_group" (
   "group_id")
 );
 
+CREATE TABLE "graphql"."group_detectability" (
+  "id" uuid NOT NULL, 
+  "group_id" uuid NOT NULL, 
+  "source" text NOT NULL, 
+  CONSTRAINT "PK_8f4a4b179d5827ec371b10cdae2" PRIMARY KEY ("id", 
+  "group_id")
+);
+
 CREATE TABLE "graphql"."project" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
   "name" text NOT NULL, 
@@ -398,6 +406,10 @@ ALTER TABLE "graphql"."user_group" ADD CONSTRAINT "FK_24850e25a096ba62e57cf5caf4
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE "graphql"."user_group" ADD CONSTRAINT "FK_3c213a8a5e3ac56e0882320af43" FOREIGN KEY (
+  "group_id") REFERENCES "graphql"."group"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."group_detectability" ADD CONSTRAINT "FK_e065ed4e907d768e8cfbfd00937" FOREIGN KEY (
   "group_id") REFERENCES "graphql"."group"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 

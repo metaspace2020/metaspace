@@ -1,6 +1,6 @@
-import { defineComponent, onMounted, reactive } from '@vue/composition-api'
+import { computed, defineComponent, onMounted, reactive } from '@vue/composition-api'
 import { Option, Select, Pagination, InputNumber, RadioGroup, RadioButton, Tooltip, Button } from '../../lib/element-ui'
-import { cloneDeep, groupBy, keyBy, maxBy, orderBy, uniq } from 'lodash-es'
+import { cloneDeep, flatten, groupBy, keyBy, maxBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
@@ -9,6 +9,13 @@ import getColorScale from '../../lib/getColorScale'
 import ScatterChart from '../../assets/inline/scatter_chart.svg'
 import { SortDropdown } from '../../components/SortDropdown/SortDropdown'
 import './DashboardPage.scss'
+import { useQuery } from '@vue/apollo-composable'
+import { countReviewsQuery } from '../../api/group'
+import {
+  currentUserRoleQuery,
+  currentUserRoleWithGroupQuery,
+  currentUserWithGroupDetectabilityQuery,
+} from '../../api/user'
 
 interface Options{
   xAxis: any
@@ -509,6 +516,16 @@ export default defineComponent({
       pathways: null,
       wellmap: null,
     })
+    const {
+      result: currentUser,
+    } = useQuery<{currentUser: any}>(currentUserWithGroupDetectabilityQuery)
+    const allowedSources = computed(() => {
+      if (!currentUser.value) return []
+
+      return flatten(
+          currentUser.value?.currentUser?.groups?.map(
+            (group: any) => group.group?.sources?.map((source: any) => source.source)))
+    })
 
     const initializeState = async() => {
       if ($route.query.src) {
@@ -987,6 +1004,8 @@ export default defineComponent({
                 handleDataSrcChange(text)
               }}>
               <RadioButton label='EMBL'/>
+              {allowedSources.value?.includes('ALL') && <RadioButton label='ALL'/>}
+              {allowedSources.value?.includes('INTERLAB') && <RadioButton label='INTERLAB'/>}
             </RadioGroup>
           </div>
 

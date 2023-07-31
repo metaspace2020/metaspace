@@ -187,6 +187,24 @@ export const currentUserRoleWithGroupQuery =
           }
         }`
 
+export const currentUserWithGroupDetectabilityQuery =
+  gql`query MyGroupOptions {
+          currentUser {
+            id,
+            name,
+            groups {
+              group {
+                id
+                value: id
+                label: name
+                sources {
+                  source
+                }
+              }
+            }
+          }
+        }`
+
 export const countUsersQuery =
 gql`query countUsers {
   countUsers
