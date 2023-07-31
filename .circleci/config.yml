@@ -416,7 +416,7 @@ workflows:
               only:
                 - master
                 # Add additional branches to run sci-test against here. Clean up old branches if you notice any.
-                - bug/fix_scientific_test
+                - feat/fix-unfiltered-nan-metrics
 
 
 ## Disabled until we have time to redo these tests
