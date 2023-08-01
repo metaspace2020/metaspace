@@ -108,6 +108,26 @@
       :dom-node="imageArea"
       :label="imageTitle"
     />
+    <el-popover
+      v-if="annotation.isMono === false"
+      trigger="hover"
+      class="popover"
+      popper-class="w-full max-w-measure-1 text-left text-sm leading-5"
+    >
+      <div
+        slot="reference"
+        class="alert-icon-wrapper"
+      >
+        <div
+          class="alert-icon"
+        />
+      </div>
+      The METASPACE annotation engine organizes all the isotopic peaks and selects the top N = 4 among them.
+      From these top 4 peaks, it chooses the one with the lowest m/z value. The displayed image corresponds
+      to a selected m/z value that is not the monoisotopic m/z. <br /> <br />
+      <b>Monoisotopic m/z:</b> {{ annotation.mz.toFixed(6) }} <br />
+      <b>Displayed m/z:</b> {{ annotation.centroidMz.toFixed(6) }} <br />
+    </el-popover>
   </div>
   <div
     v-else
@@ -120,8 +140,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, reactive, ref, toRefs, onMounted, watch } from '@vue/composition-api'
-import { Image } from 'upng-js'
+import { defineComponent, computed, reactive, ref, onMounted } from '@vue/composition-api'
 import resize from 'vue-resize-directive'
 
 import IonImageViewer from '../../components/IonImageViewer'
@@ -324,5 +343,25 @@ export default ImageViewer
   .ion-slider-wrapper{
     min-width: max-content;
   }
+}
+
+.alert-icon-wrapper {
+  width: 30px;
+  height: 30px;
+  position: absolute;
+  top: 0;
+  left: 3rem;
+  background: #F1F5F8;
+  border: 1px solid #F1F5F8;
+  border-radius: 100%;
+  text-align: center;
+  @apply mt-3 ml-1;
+}
+.alert-icon {
+  width: 20px;
+  height: 20px;
+  background-image: url('../../assets/danger.svg');
+  display: inline-block;
+  margin-top: 3px;
 }
 </style>

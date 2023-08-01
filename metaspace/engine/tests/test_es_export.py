@@ -12,6 +12,7 @@ from sm.engine.es_export import (
     ESExporterIsobars,
     ESIndexManager,
 )
+from sm.engine.formula_parser import calculate_mono_mz
 from sm.engine.molecular_db import MolecularDB
 from .utils import create_test_molecular_db
 
@@ -218,7 +219,8 @@ def test_index_ds_works(sm_config, test_db, es, sm_index, ds_config, metadata, a
         'db_id': moldb.id,
         'db_name': moldb.name,
         'db_version': moldb.version,
-        'mz': 100.0,
+        'is_mono': False,
+        'mz': calculate_mono_mz('HO2', '+'),
         'comp_ids': ['mol_id'],
         'annotation_id': 1,
         'off_sample_label': None,
@@ -254,7 +256,8 @@ def test_index_ds_works(sm_config, test_db, es, sm_index, ds_config, metadata, a
         'db_id': moldb.id,
         'db_name': moldb.name,
         'db_version': moldb.version,
-        'mz': 10.0,
+        'is_mono': False,
+        'mz': calculate_mono_mz('HAu', '+'),
         'comp_ids': ['mol_id'],
         'annotation_id': 2,
         'off_sample_label': None,
