@@ -23,31 +23,19 @@ def get_datasets(path):
     return dict(sorted(datasets.items()))
 
 
-def download_file(bucket, key, filename):
-    """Download a file from an S3 bucket"""
-    s3 = boto3.client('s3')
-    s3.download_file(bucket, key, filename)
-
-
-def get_files_list(bucket, prefix):
-    """Get a list of files in an S3 bucket"""
-    s3 = boto3.client('s3')
-    return s3.list_objects_v2(Bucket=bucket, Prefix=prefix)['Contents']
-
-
-def calculate_total_size(data):
+def calculate_total_size(client, data):
     total_size = 0
     for _, info in data.items():
-        files = get_files_list(info['bucket'], info['key'])
+        files = client.list_objects_v2(Bucket=info['bucket'], Prefix=info['key'])['Contents']
         for f in files:
             total_size += f['Size']
 
     print(f'Total size: {total_size/1024**3:6.1f} GB')
 
 
-def download_files(ds_id, info):
+def download_files(client, ds_id, info):
     print(f'Dataset ID: {ds_id}')
-    files = get_files_list(info['bucket'], info['key'])
+    files = client.list_objects_v2(Bucket=info['bucket'], Prefix=info['key'])['Contents']
 
     metadata = {}
     for f in files:
@@ -63,7 +51,7 @@ def download_files(ds_id, info):
         }
 
         Path(f'./{prefix}').mkdir(parents=True, exist_ok=True)
-        download_file(info['bucket'], f['Key'], path)
+        client.download_file(info['bucket'], f['Key'], path)
 
     return metadata
 
@@ -122,9 +110,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     files = get_datasets(args.datasets)
-    calculate_total_size(files)
+    client = boto3.client('s3')
+    calculate_total_size(client, files)
     if not args.calc_size:
         for ds_id, info in files.items():
-            files_metadata = download_files(ds_id, info)
+            files_metadata = download_files(client, ds_id, info)
             compression_metadata = compress_files(files_metadata)
             print_compression_stats(ds_id, compression_metadata)

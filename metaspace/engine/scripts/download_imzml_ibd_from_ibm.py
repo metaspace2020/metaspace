@@ -123,8 +123,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    client = get_cos_client()
     files = get_datasets(args.datasets)
+    client = get_cos_client()
     calculate_total_size(client, files)
     if not args.calc_size:
         for ds_id, info in files.items():
