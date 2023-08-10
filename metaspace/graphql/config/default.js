@@ -40,6 +40,7 @@ module.exports = {
     bucket: '',
     moldb_prefix: 'databases',
     optical_image_prefix: 'optical_images',
+    images_bucket: 'sm-image-storage-dev',
   },
 
   services: {

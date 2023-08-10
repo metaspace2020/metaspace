@@ -242,6 +242,10 @@ import graphqlClient from '../../api/graphqlClient'
 import { readNpy } from '@/lib/npyHandler'
 import safeJsonParse from '@/lib/safeJsonParse'
 import config from '@/lib/config'
+import AwsS3Multipart from '@uppy/aws-s3-multipart'
+import Uppy from '@uppy/core'
+import createStore from '../../components/UppyUploader/store'
+import { currentUserRoleQuery } from '../../api/user'
 
 export default {
   name: 'ImageAlignmentPage',
@@ -263,10 +267,17 @@ export default {
 
   data() {
     return {
+      uppyImageUrl: null,
+      storageKey: {
+        uuid: null,
+        uuidSignature: null,
+      },
       annotImageOpacity: 1,
       annotationIndex: 0,
       file: null,
+      fileId: null,
       opticalImgUrl: null,
+      originUuid: null,
       ticData: null,
       alreadyUploaded: false,
       initialTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
@@ -290,7 +301,8 @@ export default {
       },
       update(data) {
         if (data.rawOpticalImage != null && data.rawOpticalImage.transform != null) {
-          const { url, transform } = data.rawOpticalImage
+          const { url, transform, uuid } = data.rawOpticalImage
+          this.originUuid = uuid
           this.opticalImgUrl = url
           this.initialTransform = transform
           this.angle = 0
@@ -350,9 +362,22 @@ export default {
         this.$store.commit('replaceFilter', { metadataType: data.dataset.metadataType })
       },
     },
+
+    currentUser: {
+      query: currentUserRoleQuery,
+      fetchPolicy: 'cache-first',
+    },
   },
 
   computed: {
+    uuid() {
+      return this.storageKey.uuid
+    },
+
+    uploadEndpoint() {
+      return `${window.location.origin}/dataset_upload`
+    },
+
     datasetId() {
       return this.$store.state.route.params.dataset_id
     },
@@ -397,6 +422,55 @@ export default {
     },
   },
 
+  mounted() {
+    this.fetchStorageKey()
+    const uppy = Uppy({
+      debug: true,
+      autoProceed: true,
+      allowMultipleUploads: false,
+      restrictions: {
+        maxFileSize: this.limitMB * 1024 * 1024,
+        maxNumberOfFiles: 2,
+      },
+      meta: {},
+      store: createStore(),
+    })
+      .on('file-added', (file) => {
+        if (this.fileId) {
+          this.uppy.removeFile(this.fileId)
+        }
+        this.fileId = file.id
+      })
+      .on('file-removed', (file) => {
+        console.log('file-removed', file)
+      })
+      .on('upload', () => {
+        console.log('upload')
+      })
+      .on('upload-error', (...args) => {
+        console.log(args)
+      })
+      .on('upload-success', (file, response) => {
+        this.uppyImageUrl = response.uploadURL
+      })
+      .on('error', (...args) => {
+        console.log(args)
+      })
+      .on('complete', result => {
+        console.log('Upload complete! We’ve uploaded these files:', result.successful)
+      })
+
+    uppy.use(AwsS3Multipart, {
+      limit: 2,
+      companionUrl: `${window.location.origin}/raw_opt_upload`,
+    })
+
+    this.uppy = uppy
+  },
+  beforeDestroy() {
+    this.uppy.close()
+  },
+
   methods: {
     updateAngle(v) {
       if (v < -180) {
@@ -405,6 +479,24 @@ export default {
         v = v - 360
       }
       this.angle = v
+    },
+
+    async fetchStorageKey() {
+      this.status = 'LOADING'
+      try {
+        const response = await fetch(`${this.uploadEndpoint}/s3/uuid`)
+        if (response.status < 200 || response.status >= 300) {
+          const responseBody = await response.text()
+          reportError(new Error(`Unexpected server response getting upload UUID: ${response.status} ${responseBody}`))
+        } else {
+          // uuid and uuidSignature
+          this.storageKey = await response.json()
+        }
+      } catch (e) {
+        reportError(e)
+      } finally {
+        this.status = 'READY'
+      }
     },
 
     renderAnnotation(annotation) {
@@ -417,7 +509,7 @@ export default {
       return annotation.type === 'TIC Image' ? 'TIC Image' : renderMolFormula(ion)
     },
 
-    onFileChange(event) {
+    async onFileChange(event) {
       const file = event.target.files[0]
 
       if (!file) {
@@ -431,6 +523,15 @@ export default {
         })
         return
       }
+
+      await this.uppy.removeFile(this.fileId)
+
+      await this.uppy.addFile({
+        name: file.name,
+        type: file.type,
+        meta: { user: this.currentUser?.id, source: 'webapp', datasetId: this.datasetId, uuid: this.uuid },
+        data: file,
+      })
 
       window.URL.revokeObjectURL(this.opticalImgUrl)
       this.file = file
@@ -488,48 +589,16 @@ export default {
       }
     },
     async submit() {
-      if (this.alreadyUploaded) {
-        try {
-          await this.addOpticalImage(this.opticalImgUrl)
-          this.$message({
-            type: 'success',
-            message: 'The alignment has been updated',
-          })
-          this.$router.go(-1)
-        } catch (e) {
-          reportError(e)
-        }
-        return
+      try {
+        await this.addOpticalImage(!this.fileId ? this.originUuid : this.uuid)
+        this.$message({
+          type: 'success',
+          message: 'The image and alignment were successfully saved',
+        })
+        this.$router.go(-1)
+      } catch (e) {
+        reportError(e)
       }
-
-      const uri = this.rawImageStorageUrl + '/upload/'
-      const xhr = new XMLHttpRequest()
-      const fd = new FormData()
-      xhr.open('POST', uri, true)
-      xhr.responseType = 'json'
-      xhr.onreadystatechange = async() => {
-        if (xhr.readyState === 4 && xhr.status === 201) {
-          const imageId = xhr.response.image_id
-          const imageUrl = this.rawImageStorageUrl + '/' + imageId
-          try {
-            await this.addOpticalImage(imageUrl)
-            this.$message({
-              type: 'success',
-              message: 'The image and alignment were successfully saved',
-            })
-            this.$router.go(-1)
-          } catch (e) {
-            reportError(e)
-          }
-        } else if (xhr.readyState === 4) {
-          this.$message({
-            type: 'error',
-            message: "Couldn't upload the optical image due to server error",
-          })
-        }
-      }
-      fd.append('raw_optical_image', this.file)
-      xhr.send(fd)
     },
 
     async addOpticalImage(imageUrl) {
@@ -555,30 +624,26 @@ export default {
 
     async deleteOpticalImages() {
       try {
-        if (this.alreadyUploaded) {
-          const graphQLResp = await this.$apollo.mutate({
-            mutation: deleteOpticalImageQuery,
-            variables: {
-              id: this.datasetId,
-            },
+        const graphQLResp = await this.$apollo.mutate({
+          mutation: deleteOpticalImageQuery,
+          variables: {
+            id: this.datasetId,
+          },
+        })
+        // Reset the GraphQL cache - see comment in addOpticalImage for rationale
+        await graphqlClient.cache.reset()
+        const resp = JSON.parse(graphQLResp.data.deleteOpticalImage)
+        if (resp.status !== 'success') {
+          this.$message({
+            type: 'error',
+            message: "Couldn't delete optical image due to an error",
           })
-          // Reset the GraphQL cache - see comment in addOpticalImage for rationale
-          await graphqlClient.cache.reset()
-          const resp = JSON.parse(graphQLResp.data.deleteOpticalImage)
-          if (resp.status !== 'success') {
-            this.$message({
-              type: 'error',
-              message: "Couldn't delete optical image due to an error",
-            })
-          } else {
-            this.destroyOptImage()
-            this.$message({
-              type: 'success',
-              message: 'The image and alignment were successfully deleted!',
-            })
-          }
         } else {
           this.destroyOptImage()
+          this.$message({
+            type: 'success',
+            message: 'The image and alignment were successfully deleted!',
+          })
         }
       } catch (e) {
         reportError(e)
@@ -641,7 +706,10 @@ export default {
   }
 
   #alignment-page {
-    margin: 20px;
+    min-height: calc(100vh - 104px);
+    margin: 0;
+    overflow: auto;
+    padding: 20px;
   }
 
   .sliders-box {

@@ -252,6 +252,7 @@ export const rawOpticalImageQuery =
     gql`query Q($ds_id: String!) {
     rawOpticalImage(datasetId: $ds_id) {
       url
+      uuid
       transform
     }
   }`
