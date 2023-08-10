@@ -276,7 +276,8 @@ def configure_bucket(sm_config: Dict):
 
 def init(sm_config: Dict):
     # pylint: disable=global-statement
-    global _instance, get_image, post_image, delete_image, delete_images, delete_raw_opt_images, get_image_url
+    global _instance, get_image, post_image, delete_image, delete_images
+    global delete_raw_opt_images, get_image_url
     global get_ion_images_for_analysis
     _instance = ImageStorage(sm_config)
     get_image = _instance.get_image

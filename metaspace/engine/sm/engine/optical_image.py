@@ -1,12 +1,10 @@
 import io
 import logging
 import numpy as np
-import requests
 from PIL import Image
 
 from sm.engine import image_storage
 from sm.engine.dataset import Dataset
-from sm.engine.storage import get_s3_client
 
 SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
 UPD_DATASET_RAW_OPTICAL_IMAGE = (
