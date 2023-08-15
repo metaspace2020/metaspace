@@ -7,6 +7,7 @@ import logging
 import os
 import sys
 
+import botocore
 import pandas as pd
 from botocore.exceptions import NoCredentialsError
 
@@ -44,10 +45,10 @@ def get_datasets(sql_where):
             ds_id, optical_image = dataset
             data.append({'ds_id': ds_id, 'uuid': optical_image})
 
-        logger.info('Got %d datasets', len(datasets_with_opt_img))
+        logger.info(f'Got {len(datasets_with_opt_img)} datasets')
         return data
 
-    except:
+    except botocore.exceptions.ClientError:
         logger.error("No datasets selected")
         return []
 
@@ -59,7 +60,7 @@ def check_s3_file(config, bucket_name, file_key):
     try:
         get_s3_client(sm_config=config).head_object(Bucket=bucket_name, Key=file_key)
         return True
-    except:
+    except botocore.exceptions.ClientError:
         return False
 
 
@@ -77,11 +78,11 @@ def upload_to_s3(config, local_file, bucket, s3_file):
 
     try:
         get_s3_client(sm_config=config).upload_file(local_file, bucket, s3_file)
-        logger.info('Upload to s3 Successful: %s', s3_file)
+        logger.info(f'Upload to s3 Successful: {s3_file}')
     except NoCredentialsError:
         logger.error("Credentials not available")
-    except:
-        logger.error('Failed to upload to s3: %s', s3_file)
+    except botocore.exceptions.ClientError:
+        logger.error(f'Failed to upload to s3: {s3_file}')
 
 
 def main():
@@ -125,7 +126,7 @@ def main():
                 if has_file_storage:
                     upload_to_s3(sm_config, file_path, bucket, opt_img_s3_path)
                 else:
-                    logger.error('File does not exists on storage: %s', file_path)
+                    logger.error(f'File does not exists on storage: {file_path}')
 
     else:
         parser.print_help()
