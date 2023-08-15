@@ -22,6 +22,7 @@ import { TRANSLATE_ANALYZER, TRANSLATE_MATRIX, TRANSLATE_SOURCE } from '../../..
 import { RadioButton, RadioGroup } from '../../../lib/element-ui'
 import ImageSaver from '../../ImageViewer/ImageSaver.vue'
 import './MassSpecSummaryChart.scss'
+import config from '../../../lib/config'
 
 use([
   SVGRenderer,
@@ -183,13 +184,24 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
       return matrix
     }
 
+    const queryVariables = () => {
+      const filter = Object.assign({ status: 'FINISHED' }, $store.getters.gqlDatasetFilter)
+      const query = $store.getters.ftsQuery
+
+      return {
+        filter,
+        query,
+      }
+    }
+    const queryVars = computed(() => ({
+      ...queryVariables(),
+    }))
+
     const {
       result: receivedDatasetsResult,
       loading: receivedDatasetsResultLoading,
-    } = useQuery<any>(query, {
-      filter: Object.assign({ status: 'FINISHED' }, $store.getters.gqlDatasetFilter),
-      query: $store.getters.ftsQuery,
-    })
+    } = useQuery<any>(query, queryVars)
+
     const dataChart = computed(() => receivedDatasetsResult.value != null
       ? receivedDatasetsResult.value.countDatasetsPerGroup : null)
 
