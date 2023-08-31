@@ -10,6 +10,7 @@ from ibm_boto3.s3.transfer import TransferConfig, MB
 from lithops.storage import Storage
 from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
 
+from sm.engine import molecular_db
 from sm.engine.annotation.diagnostics import (
     extract_dataset_diagnostics,
     add_diagnostics,
@@ -128,6 +129,11 @@ def _upload_moldbs_from_db(moldb_ids, storage, sm_storage):
     bucket, prefix = sm_storage['moldb']
     # Sort the moldbs because the centroids cache key is affected by their order
     for moldb_id in sorted(moldb_ids):
+        try:
+            molecular_db.find_by_id(moldb_id)
+        except Exception:  # db does not exist, continue to next
+            continue
+
         key = f'{prefix}/{moldb_id}'
         try:
             storage.head_object(bucket, key)
@@ -316,7 +322,11 @@ class ServerAnnotationJob:
         del_jobs(self.ds)
         moldb_to_job_map = {}
         for moldb_id in self.ds.config['database_ids']:
-            moldb_to_job_map[moldb_id] = insert_running_job(self.ds.id, moldb_id)
+            try:
+                molecular_db.find_by_id(moldb_id)
+                moldb_to_job_map[moldb_id] = insert_running_job(self.ds.id, moldb_id)
+            except Exception:  # db does not exist, continue to next
+                continue
         self.perf.add_extra_data(moldb_ids=list(moldb_to_job_map.keys()))
 
         n_peaks = self.ds.config['isotope_generation']['n_peaks']
