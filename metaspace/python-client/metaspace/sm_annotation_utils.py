@@ -2032,6 +2032,37 @@ class SMInstance(object):
         )
         return result['addDatasetExternalLink']['externalLinks']
 
+    def copy_optical_image(self, origin_dataset_id: str, destiny_dataset_id: str):
+        """
+        Copies an optical image from a dataset to another
+
+        >>> sm.copy_optical_image(
+        >>>     origin_dataset_id='2018-11-07_14h15m28s',
+        >>>     destiny_dataset_id='2018-11-07_14h15m30s',
+        >>> )
+
+        :param origin_dataset_id: The dataset ID of the origin dataset with the optical image to be copied
+        :param destiny_dataset_id: The dataset ID from the dataset to where the optical image will be copied to
+        :return: The updated list of external links
+        """
+
+        origin_opt_img = self._gqclient.getRawOpticalImage(origin_dataset_id)['rawOpticalImage']
+
+        query = """
+            mutation addOpticalImage($imageUrl: String!,
+                $datasetId: String!, $transform: [[Float]]!) {
+                addOpticalImage(input: {datasetId: $datasetId,
+                                        imageUrl: $imageUrl, transform: $transform})
+              }
+        """
+        variables = {
+            'datasetId': destiny_dataset_id,
+            'imageUrl': origin_opt_img['url'],
+            'transform': origin_opt_img['transform'],
+        }
+
+        return self._gqclient.query(query, variables)['addOpticalImage']
+
     def remove_dataset_external_link(
         self, dataset_id: str, provider: str, link: Optional[str] = None
     ):
