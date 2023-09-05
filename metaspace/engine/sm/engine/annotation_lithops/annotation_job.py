@@ -321,12 +321,22 @@ class ServerAnnotationJob:
         # TODO: Only run missing moldbs
         del_jobs(self.ds)
         moldb_to_job_map = {}
+        moldb_to_be_removed = []
+
         for moldb_id in self.ds.config['database_ids']:
             try:
                 molecular_db.find_by_id(moldb_id)
                 moldb_to_job_map[moldb_id] = insert_running_job(self.ds.id, moldb_id)
             except Exception:  # db does not exist, continue to next
+                moldb_to_be_removed.append(moldb_id)
                 continue
+
+        if len(moldb_to_be_removed) > 0:  # remove non-existing moldbs from ds
+            self.ds.config['database_ids'] = [
+                x for x in self.ds.config['database_ids'] if x not in moldb_to_be_removed
+            ]
+            self.ds.save(self.db)
+
         self.perf.add_extra_data(moldb_ids=list(moldb_to_job_map.keys()))
 
         n_peaks = self.ds.config['isotope_generation']['n_peaks']
