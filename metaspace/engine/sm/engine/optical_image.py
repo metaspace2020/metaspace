@@ -203,7 +203,7 @@ def del_optical_image(db, ds_id):
     logger.info(f'Deleting optical image of "{ds.id}" dataset')
     (raw_img_id,) = db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
     if raw_img_id:
-        image_storage.delete_raw_opt_images(ds_id)
+        image_storage.delete_image(image_storage.RAW, ds_id, raw_img_id)
     for img_id in db.select_onecol(SEL_OPTICAL_IMAGE, params=(ds.id,)):
         image_storage.delete_image(image_storage.OPTICAL, ds_id, img_id)
     (thumbnail_img_id,) = db.select_one(SEL_OPTICAL_IMAGE_THUMBNAIL, params=(ds.id,))

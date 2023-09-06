@@ -94,21 +94,6 @@ class ImageStorage:
             ):
                 pass
 
-    def delete_raw_opt_images(self, ds_id: str):
-        objects_to_delete = self.s3_client.list_objects(
-            Bucket=self.bucket.name, Prefix='/raw_optical/{}'.format(ds_id)
-        )
-
-        # Build a deletion request
-        delete_request = {
-            'Objects': [{'Key': obj['Key']} for obj in objects_to_delete.get('Contents', [])],
-            'Quiet': True,
-        }
-
-        # If there's anything to delete, perform the deletion
-        if delete_request['Objects']:
-            self.s3_client.delete_objects(Bucket=self.bucket.name, Delete=delete_request)
-
     def get_image_url(self, image_type: ImageType, ds_id: str, image_id: str) -> str:
         endpoint = self.s3_client.meta.endpoint_url
         key = self._make_key(image_type, ds_id, image_id)
@@ -231,7 +216,6 @@ RAW = ImageType.RAW
 get_image: Callable[[ImageType, str, str], bytes]
 post_image: Callable[[ImageType, str, Union[bytes, BytesIO]], str]
 delete_image: Callable[[ImageType, str, str], None]
-delete_raw_opt_images: Callable[[str], None]
 delete_images: Callable[[ImageType, str, List[str]], None]
 get_image_url: Callable[[ImageType, str, str], str]
 get_ion_images_for_analysis: _GetIonImagesForAnalysis
@@ -277,13 +261,11 @@ def configure_bucket(sm_config: Dict):
 def init(sm_config: Dict):
     # pylint: disable=global-statement
     global _instance, get_image, post_image, delete_image, delete_images
-    global delete_raw_opt_images, get_image_url
-    global get_ion_images_for_analysis
+    global get_image_url, get_ion_images_for_analysis
     _instance = ImageStorage(sm_config)
     get_image = _instance.get_image
     post_image = _instance.post_image
     delete_image = _instance.delete_image
     delete_images = _instance.delete_images
-    delete_raw_opt_images = _instance.delete_raw_opt_images
     get_image_url = _instance.get_image_url
     get_ion_images_for_analysis = _instance.get_ion_images_for_analysis

@@ -430,7 +430,7 @@ export default {
       allowMultipleUploads: false,
       restrictions: {
         maxFileSize: this.limitMB * 1024 * 1024,
-        maxNumberOfFiles: 2,
+        maxNumberOfFiles: 1,
       },
       meta: {},
       store: createStore(),
