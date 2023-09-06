@@ -329,6 +329,7 @@ class ServerAnnotationJob:
                 moldb_to_job_map[moldb_id] = insert_running_job(self.ds.id, moldb_id)
             except Exception:  # db does not exist, continue to next
                 moldb_to_be_removed.append(moldb_id)
+                logger.warning(f'Removed db {moldb_id} from {self.ds.id}')
                 continue
 
         if len(moldb_to_be_removed) > 0:  # remove non-existing moldbs from ds
