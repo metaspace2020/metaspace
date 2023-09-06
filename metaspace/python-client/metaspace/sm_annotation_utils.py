@@ -2032,6 +2032,37 @@ class SMInstance(object):
         )
         return result['addDatasetExternalLink']['externalLinks']
 
+    def get_optical_image_transform(self, dataset_id: str):
+        """
+        Get optical image transform matrix
+
+        matrix3d(${t[0][0]}, ${t[1][0]}, 0, ${t[2][0]},
+             ${t[0][1]}, ${t[1][1]}, 0, ${t[2][1]},
+                      0,          0, 1,          0,
+             ${t[0][2]}, ${t[1][2]}, 0, ${t[2][2]})
+
+        >>> sm.get_optical_image_transform(
+        >>>     dataset_id='2018-11-07_14h15m28s',
+        >>> )
+
+        :param dataset_id:
+        :return: Returns matrix 3d values
+        """
+        return self._gqclient.getRawOpticalImage(dataset_id)['rawOpticalImage']['transform']
+
+    def get_optical_image_path(self, dataset_id: str):
+        """
+        Get optical image file path
+
+        >>> sm.get_optical_image_path(
+        >>>     dataset_id='2018-11-07_14h15m28s',
+        >>> )
+
+        :param dataset_id:
+        :return: Returns src path
+        """
+        return self._gqclient.getRawOpticalImage(dataset_id)['rawOpticalImage']['url']
+
     def copy_optical_image(self, origin_dataset_id: str, destiny_dataset_id: str):
         """
         Copies an optical image from a dataset to another
@@ -2041,12 +2072,12 @@ class SMInstance(object):
         >>>     destiny_dataset_id='2018-11-07_14h15m30s',
         >>> )
 
-        :param origin_dataset_id: The dataset ID of the origin dataset with the optical image to be copied
-        :param destiny_dataset_id: The dataset ID from the dataset to where the optical image will be copied to
+        :param origin_dataset_id:
+            The dataset ID of the origin dataset with the optical image to be copied
+        :param destiny_dataset_id:
+            The dataset ID from the dataset to where the optical image will be copied to
         :return: The updated list of external links
         """
-
-        origin_opt_img = self._gqclient.getRawOpticalImage(origin_dataset_id)['rawOpticalImage']
 
         query = """
             mutation addOpticalImage($imageUrl: String!,
@@ -2057,8 +2088,8 @@ class SMInstance(object):
         """
         variables = {
             'datasetId': destiny_dataset_id,
-            'imageUrl': origin_opt_img['url'],
-            'transform': origin_opt_img['transform'],
+            'imageUrl': self.get_optical_image_path(origin_dataset_id),
+            'transform': self.get_optical_image_transform(origin_dataset_id),
         }
 
         return self._gqclient.query(query, variables)['addOpticalImage']
