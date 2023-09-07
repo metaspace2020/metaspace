@@ -37,7 +37,6 @@ export interface Config {
     bucket?: string;
     moldb_prefix: string;
     optical_images_prefix: string;
-    images_bucket: string;
   };
   services: {
     sm_engine_api_host: string;

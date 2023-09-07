@@ -15,7 +15,6 @@ config.defaults = {
 
 config.upload = {
   bucket: 'sm-engine-dev',
-  imagesBucket: 'sm-image-storage-dev',
 }
 
 config.s3 = {

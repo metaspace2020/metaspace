@@ -92,7 +92,7 @@ export const rawOpticalImage = async(datasetId: string, ctx: Context) => {
       const s3 = getS3Client()
       const imageUrl = s3.getSignedUrl('getObject',
         {
-          Bucket: `${config.upload.images_bucket}/raw_optical/${datasetId}`,
+          Bucket: `${config.upload.bucket}/raw_optical/${datasetId}`,
           Key: engineDataset.opticalImage,
           Expires: 1800,
         })

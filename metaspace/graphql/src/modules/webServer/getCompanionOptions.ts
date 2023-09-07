@@ -5,12 +5,12 @@ import { getS3Config } from '../../utils/awsClient'
 
 type GetKey = (req: Request, filename: string) => string
 
-export default function getCompanionOptions(path: string, getKey: GetKey, isImageStorage?: boolean) {
+export default function getCompanionOptions(path: string, getKey: GetKey) {
   return {
     providerOptions: {
       s3: {
         getKey,
-        bucket: isImageStorage ? config.upload.images_bucket : config.upload.bucket,
+        bucket: config.upload.bucket,
         awsClientOptions: getS3Config(),
         useAccelerateEndpoint: false,
         expires: 300,

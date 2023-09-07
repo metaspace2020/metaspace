@@ -50,6 +50,7 @@ class ImageStorage:
         self.s3: S3ServiceResource = get_s3_resource(sm_config)
         self.s3_client: S3Client = self.s3.meta.client
         self.bucket = self.s3.Bucket(sm_config['image_storage']['bucket'])
+        self.raw_img_bucket = self.s3.Bucket(sm_config['image_storage']['raw_img_bucket'])
 
     @staticmethod
     def _make_key(image_type, ds_id, img_id):
@@ -57,6 +58,10 @@ class ImageStorage:
 
     def _get_object(self, image_type, ds_id, img_id):
         key = self._make_key(image_type, ds_id, img_id)
+
+        if image_type == self.RAW:
+            return self.raw_img_bucket.Object(key)
+
         return self.bucket.Object(key)
 
     @staticmethod
@@ -97,6 +102,10 @@ class ImageStorage:
     def get_image_url(self, image_type: ImageType, ds_id: str, image_id: str) -> str:
         endpoint = self.s3_client.meta.endpoint_url
         key = self._make_key(image_type, ds_id, image_id)
+
+        if image_type == self.RAW:
+            return f'{endpoint}/{self.raw_img_bucket.name}/{key}'
+
         return f'{endpoint}/{self.bucket.name}/{key}'
 
     def get_ion_images_for_analysis(
