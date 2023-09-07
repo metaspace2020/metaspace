@@ -116,7 +116,7 @@
   },
   "image_storage": {
     "bucket": "sm-image-storage-test",
-    "raw_img_bucket": "sm-engine-dev"
+    "raw_img_bucket": "sm-engine-tests"
   },
   "imzml_browser_storage": {
     "bucket": "sm-imzml-browser-test"

@@ -13,8 +13,7 @@ export default function(httpServer: http.Server) {
       const datasetId = req.body?.metadata?.datasetId
       const file_id = req.body?.metadata?.uuid || uuid.v4()
       return `raw_optical/${datasetId}/${file_id}`
-    },
-    true
+    }
   )
 
   const router = express.Router()
