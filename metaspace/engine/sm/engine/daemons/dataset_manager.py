@@ -1,8 +1,10 @@
 import json
 import logging
 import urllib.parse
+import time
 
 import boto3
+import elasticsearch
 from botocore.exceptions import ClientError
 from requests.api import post
 
@@ -147,7 +149,13 @@ class DatasetManager:
         ds.set_status(self._db, self._es, DatasetStatus.FINISHED)
 
     def update(self, ds, fields):
-        self._es.update_ds(ds.id, fields)
+        try:
+            self._es.update_ds(ds.id, fields)
+        except elasticsearch.exceptions.ConflictError:
+            # tries to write to elasticsearch one more time
+            self.logger.info(f'Problem updating ES for: {ds.id}, trying again...')
+            time.sleep(5)
+            self._es.update_ds(ds.id, fields)
 
     def delete(self, ds):
         """Delete all dataset related data."""
