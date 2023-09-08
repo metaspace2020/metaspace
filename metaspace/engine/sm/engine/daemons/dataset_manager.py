@@ -1,6 +1,7 @@
 import json
 import logging
 import urllib.parse
+import time
 
 import boto3
 import elasticsearch
@@ -150,8 +151,10 @@ class DatasetManager:
     def update(self, ds, fields):
         try:
             self._es.update_ds(ds.id, fields)
-        except elasticsearch.ConflictError:  # tries to write to elasticsearch one more time
+        except elasticsearch.exceptions.ConflictError:
+            # tries to write to elasticsearch one more time
             self.logger.info(f'Problem updating ES for: {ds.id}, trying again...')
+            time.sleep(5)
             self._es.update_ds(ds.id, fields)
 
     def delete(self, ds):
