@@ -85,7 +85,7 @@ server {
         set $graphql_storage graphql:4201;
         proxy_pass http://$graphql_storage$request_uri;
         # include proxy-params.conf;
-        client_max_body_size 5M;
+        client_max_body_size 50M;
     }
     location /graphql {
         set $graphql graphql:3010;

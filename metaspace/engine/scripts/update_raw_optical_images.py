@@ -106,30 +106,26 @@ def main():
 
     sm_config = SMConfig.get_conf()
 
-    if args.sql_where:
-        with GlobalInit(args.config_path):
-            datasets = pd.DataFrame(get_datasets(sql_where=args.sql_where))
-            if datasets.empty:
-                logger.info('No datasets found')
-                sys.exit(0)
+    with GlobalInit(args.config_path):
+        datasets = pd.DataFrame(get_datasets(sql_where=args.sql_where))
+        if datasets.empty:
+            logger.info('No datasets found')
+            sys.exit(0)
 
-        for _, row in datasets.iterrows():
-            bucket = sm_config['image_storage']['bucket']
-            opt_img_s3_path = 'raw_optical/{}/{}'.format(row['ds_id'], row['uuid'])
-            has_file_s3 = check_s3_file(sm_config, bucket, opt_img_s3_path)
-            if not has_file_s3:
-                file_path = '/opt/data/metaspace/public/raw_optical_images/{}/{}'.format(
-                    row['uuid'][0:3], row['uuid'][3:]
-                )
-                has_file_storage = check_storage_file(file_path)
+    for _, row in datasets.iterrows():
+        bucket = sm_config['image_storage']['raw_img_bucket']
+        opt_img_s3_path = 'raw_optical/{}/{}'.format(row['ds_id'], row['uuid'])
+        has_file_s3 = check_s3_file(sm_config, bucket, opt_img_s3_path)
+        if not has_file_s3:
+            file_path = '/opt/data/metaspace/public/raw_optical_images/{}/{}'.format(
+                row['uuid'][0:3], row['uuid'][3:]
+            )
+            has_file_storage = check_storage_file(file_path)
 
-                if has_file_storage:
-                    upload_to_s3(sm_config, file_path, bucket, opt_img_s3_path)
-                else:
-                    logger.error(f'File does not exists on storage: {file_path}')
-
-    else:
-        parser.print_help()
+            if has_file_storage:
+                upload_to_s3(sm_config, file_path, bucket, opt_img_s3_path)
+            else:
+                logger.error(f'File does not exists on storage: {file_path}')
 
 
 if __name__ == '__main__':
