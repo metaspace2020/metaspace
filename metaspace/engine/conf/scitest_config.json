@@ -137,7 +137,8 @@
     "secret_access_key": "minioadmin"
   },
   "image_storage": {
-    "bucket": "sm-image-storage-sci-test"
+    "bucket": "sm-image-storage-sci-test",
+    "raw_img_bucket": "sm-engine-dev"
   },
   "imzml_browser_storage": {
     "bucket": "sm-imzml-browser-sci-test"

@@ -1,5 +1,4 @@
 import * as jsondiffpatch from 'jsondiffpatch'
-import config from '../../../utils/config'
 import logger from '../../../utils/logger'
 import * as Ajv from 'ajv'
 import { UserError } from 'graphql-errors'
@@ -472,10 +471,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     logger.info(`User '${ctx.getUserIdOrFail()}' adding optical image to '${datasetId}' dataset...`)
     await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId)
-    // TODO support image storage running on a separate host
-    const url = `http://${config.img_storage_host}:${config.img_storage_port}${imageUrl}`
     const resp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/add-optical-image`, {
-      url, transform,
+      url: imageUrl, transform,
     })
 
     logger.info(`Optical image was added to '${datasetId}' dataset`)

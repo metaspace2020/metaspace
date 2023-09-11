@@ -289,6 +289,7 @@ type OpticalImage {
 
 type RawOpticalImage {
     url: String
+    uuid: String
     transform: [[Float]]
 }
 

@@ -89,8 +89,17 @@ export const rawOpticalImage = async(datasetId: string, ctx: Context) => {
   if (ds) {
     const engineDataset = await ctx.entityManager.getRepository(EngineDataset).findOne(datasetId)
     if (engineDataset && engineDataset.opticalImage) {
+      const s3 = getS3Client()
+      const imageUrl = s3.getSignedUrl('getObject',
+        {
+          Bucket: `${config.upload.bucket}/raw_optical/${datasetId}`,
+          Key: engineDataset.opticalImage,
+          Expires: 1800,
+        })
+
       return {
-        url: `/fs/raw_optical_images/${engineDataset.opticalImage}`,
+        url: imageUrl,
+        uuid: engineDataset.opticalImage,
         transform: engineDataset.transform,
       }
     }
