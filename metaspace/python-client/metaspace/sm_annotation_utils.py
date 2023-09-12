@@ -2079,6 +2079,20 @@ class SMInstance(object):
         :return: The updated list of external links
         """
 
+        copy_file_query = """
+            mutation copyRawOpticalImage($originDatasetId: String!,
+                $destinyDatasetId: String!) {
+                copyRawOpticalImage(originDatasetId: $originDatasetId, 
+                    destinyDatasetId: $destinyDatasetId)
+              }
+        """
+        copy_variables = {
+            'originDatasetId': origin_dataset_id,
+            'destinyDatasetId': destiny_dataset_id,
+        }
+
+        copied_file = self._gqclient.query(copy_file_query, copy_variables)['copyRawOpticalImage']
+
         query = """
             mutation addOpticalImage($imageUrl: String!,
                 $datasetId: String!, $transform: [[Float]]!) {
@@ -2086,9 +2100,10 @@ class SMInstance(object):
                                         imageUrl: $imageUrl, transform: $transform})
               }
         """
+
         variables = {
             'datasetId': destiny_dataset_id,
-            'imageUrl': self.get_optical_image_path(origin_dataset_id),
+            'imageUrl': copied_file,
             'transform': self.get_optical_image_transform(origin_dataset_id),
         }
 

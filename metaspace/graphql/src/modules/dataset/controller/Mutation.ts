@@ -28,6 +28,8 @@ import { smApiUpdateDataset } from '../../../utils/smApi/datasets'
 import { validateTiptapJson } from '../../../utils/tiptap'
 import { isMemberOfGroup } from '../operation/isMemberOfGroup'
 import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/model'
+import { getS3Client } from '../../../utils/awsClient'
+import config from '../../../utils/config'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -477,6 +479,24 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     logger.info(`Optical image was added to '${datasetId}' dataset`)
     return JSON.stringify(resp)
+  },
+
+  copyRawOpticalImage: async(source, { originDatasetId, destinyDatasetId }, ctx: Context) => {
+    await esDatasetByID(originDatasetId, ctx.user) // check if user has access to origin dataset
+    await esDatasetByID(destinyDatasetId, ctx.user) // check if user has access to destiny dataset
+
+    const engineDataset = await ctx.entityManager.getRepository(EngineDataset).findOne(originDatasetId)
+
+    if (engineDataset && engineDataset.opticalImage) {
+      const s3 = getS3Client()
+      await s3.copyObject({
+        Bucket: `${config.upload.bucket}/raw_optical/${destinyDatasetId}`,
+        CopySource: `${config.upload.bucket}/raw_optical/${originDatasetId}/${engineDataset.opticalImage}`,
+        Key: engineDataset.opticalImage,
+      }).promise()
+
+      return engineDataset.opticalImage
+    }
   },
 
   addRoi: async(source, { datasetId, geoJson }, ctx: Context) => {
