@@ -434,6 +434,8 @@ type Mutation {
 
   addOpticalImage(input: AddOpticalImageInput!): String!
 
+  copyRawOpticalImage(originDatasetId: String!, destinyDatasetId: String!): String!
+
   addRoi(datasetId: String!, geoJson: GeoJson!): String
 
   deleteOpticalImage(datasetId: String!): String!

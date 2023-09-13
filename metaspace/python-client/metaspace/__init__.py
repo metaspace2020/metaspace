@@ -1,4 +1,4 @@
-__version__ = '2.0.4'
+__version__ = '2.0.5'
 
 from metaspace.sm_annotation_utils import (
     SMInstance,
