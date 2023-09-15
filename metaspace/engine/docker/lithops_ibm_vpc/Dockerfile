@@ -1,4 +1,4 @@
-FROM python:3.8.13-slim-buster
+FROM python:3.8.18-slim
 
 ENV FLASK_PROXY_PORT 8080
 
@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
         pika==1.2.0 \
         ps-mem==3.12 \
         redis==3.5.3 \
-        requests==2.26.0 \
+        requests==2.29.0 \
         tblib==1.7.0
 
 COPY requirements.txt /tmp/requirements.txt
