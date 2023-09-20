@@ -158,8 +158,15 @@ def get_config(
     }
 
 
-def multipart_upload(local_path, companion_url, file_type, headers={}, current_user_id=None,
-                     dataset_id=None, uuid=None):
+def multipart_upload(
+    local_path,
+    companion_url,
+    file_type,
+    headers={},
+    current_user_id=None,
+    dataset_id=None,
+    uuid=None,
+):
     def send_request(
         url,
         method='GET',
@@ -179,8 +186,9 @@ def multipart_upload(local_path, companion_url, file_type, headers={}, current_u
                     raise
                 print(f'{ex}\nRetrying...')
 
-    def init_multipart_upload(filename, file_type, headers={}, current_user_id=None,
-                              dataset_id=None, uuid=None):
+    def init_multipart_upload(
+        filename, file_type, headers={}, current_user_id=None, dataset_id=None, uuid=None
+    ):
         url = companion_url + '/s3/multipart'
         data = {
             'filename': filename,
@@ -191,7 +199,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}, current_u
                 'source': 'api',
                 'user': current_user_id if current_user_id else 'not-provided',
                 'datasetId': dataset_id if dataset_id else 'not-provided',
-                'uuid': uuid if uuid else 'not-provided'
+                'uuid': uuid if uuid else 'not-provided',
             },
         }
         resp_data = send_request(url, 'POST', json=data, headers=headers)
@@ -263,8 +271,12 @@ def multipart_upload(local_path, companion_url, file_type, headers={}, current_u
 
     session = requests.Session()
     key, upload_id = init_multipart_upload(
-        Path(local_path).name, file_type, headers=headers, current_user_id=current_user_id,
-        dataset_id=dataset_id, uuid=uuid
+        Path(local_path).name,
+        file_type,
+        headers=headers,
+        current_user_id=current_user_id,
+        dataset_id=dataset_id,
+        uuid=uuid,
     )
 
     # Python evaluates the input to ThreadPoolExecutor.map eagerly, which would allow iterate_file
@@ -765,8 +777,12 @@ class GraphQLClient(object):
         result = self.query("""query { currentUser { id } }""")
         current_user_id = result['currentUser'] and result['currentUser']['id']
 
-        bucket, key = multipart_upload(local_path, self._config['database_upload_url'], 'text/csv',
-                                       current_user_id=current_user_id)
+        bucket, key = multipart_upload(
+            local_path,
+            self._config['database_upload_url'],
+            'text/csv',
+            current_user_id=current_user_id,
+        )
         s3_path = f's3://{bucket}/{key}'
 
         query = f"""
@@ -2042,9 +2058,7 @@ class SMInstance(object):
         )
         return result['addDatasetExternalLink']['externalLinks']
 
-    def upload_raw_opt_image_to_s3(
-        self, local_path: Union[str, Path], dataset_id: str
-    ) -> str:
+    def upload_raw_opt_image_to_s3(self, local_path: Union[str, Path], dataset_id: str) -> str:
         """
         Upload optical raw image local file to s3 bucket
 
@@ -2064,14 +2078,27 @@ class SMInstance(object):
         url = f'{self._config["dataset_upload_url"]}/s3/uuid'
         resp = requests.get(url)
         uuid = resp.json()['uuid']
-        multipart_upload(local_path, self._config['raw_opt_upload_url'],
-                                       file_type='image/png', current_user_id=current_user_id,
-                                       dataset_id=dataset_id, uuid=uuid)
+        multipart_upload(
+            local_path,
+            self._config['raw_opt_upload_url'],
+            file_type='image/png',
+            current_user_id=current_user_id,
+            dataset_id=dataset_id,
+            uuid=uuid,
+        )
         return uuid
 
     def upload_optical_image(
-        self, local_path: Union[str, Path], dataset_id: str,
-            transformation_matrix: np.ndarray = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], ])
+        self,
+        local_path: Union[str, Path],
+        dataset_id: str,
+        transformation_matrix: np.ndarray = np.array(
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            ]
+        ),
     ) -> str:
         """
         Upload optical image from local file
@@ -2104,6 +2131,7 @@ class SMInstance(object):
         }
 
         return self._gqclient.query(query, variables)['addOpticalImage']
+
     def get_optical_image_transform(self, dataset_id: str):
         """
         Get optical image transform matrix
