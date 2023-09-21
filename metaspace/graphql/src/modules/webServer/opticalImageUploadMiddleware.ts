@@ -11,7 +11,7 @@ export default function(httpServer: http.Server) {
     '/raw_opt_upload',
     (req: express.Request) => {
       const datasetId = req.body?.metadata?.datasetId
-      const file_id = req.body?.metadata?.uuid || uuid.v4()
+      const file_id = req.header('uuid') || req.body?.metadata?.uuid || uuid.v4()
       return `raw_optical/${datasetId}/${file_id}`
     }
   )
