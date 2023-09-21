@@ -1248,7 +1248,7 @@ export default Vue.extend({
       let totalCount = 1
       let fileCols
       let fileName
-      let rows = ''
+      const rows = []
 
       while (this.isExporting && offset < totalCount) {
         const resp = await this.$apollo.query({
@@ -1272,7 +1272,7 @@ export default Vue.extend({
               fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${this.isNormalized
                 ? '_tic_normalized' : ''}.csv`
             }
-            rows += formatCsvRow(row)
+            rows.push(formatCsvRow(row).replace(/\n/g, ''))
           } catch (e) {
             // pass when fail to convert png
           }
@@ -1282,7 +1282,7 @@ export default Vue.extend({
       if (this.isExporting) {
         this.isExporting = false
         this.exportProgress = 0
-        const csv = csvExportIntensityHeader(this.isNormalized) + fileCols + rows
+        const csv = csvExportIntensityHeader(this.isNormalized) + fileCols + rows.join('\n')
         const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
         FileSaver.saveAs(blob, fileName)
       }
