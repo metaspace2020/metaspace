@@ -1282,7 +1282,7 @@ export default Vue.extend({
       if (this.isExporting) {
         this.isExporting = false
         this.exportProgress = 0
-        const csv = csvExportIntensityHeader(this.isNormalized) + fileCols + rows.join('\n')
+        const csv = csvExportIntensityHeader(this.isNormalized) + fileCols // + rows.join('\n')
         const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
         FileSaver.saveAs(blob, fileName)
       }
