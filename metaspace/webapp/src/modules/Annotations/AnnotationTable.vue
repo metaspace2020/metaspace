@@ -1220,7 +1220,9 @@ export default Vue.extend({
         const molIds = possibleCompounds.map((m) => m.information[0].databaseId).join(',')
         const finalImage = getIonImage(ionImagePng, isotopeImages[0], undefined,
           undefined, normalizationData)
-        const row = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
+        const truncatedMolName = (molName.length > 200) ? molName.slice(0, 197) + '...' : molName
+        const truncatedMolIds = (molIds.length > 200) ? molIds.slice(0, 197) + '...' : molIds
+        const row = [molFormula, adduct, mz.toFixed(4), `"${truncatedMolName}"`, `"${truncatedMolIds}"`]
         const { width, height, intensityValues } = finalImage
         const cols = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
 
@@ -1228,7 +1230,7 @@ export default Vue.extend({
           for (let y = 0; y < height; y++) {
             cols.push(`x${x}_y${y}`)
             const idx = y * width + x
-            row.push(intensityValues[idx])
+            row.push(parseFloat(intensityValues[idx]).toFixed(4))
           }
         }
 
@@ -1282,7 +1284,7 @@ export default Vue.extend({
       if (this.isExporting) {
         this.isExporting = false
         this.exportProgress = 0
-        const csv = csvExportIntensityHeader(this.isNormalized) + fileCols // + rows.join('\n')
+        const csv = csvExportIntensityHeader(this.isNormalized) + fileCols + rows.join('\n')
         const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
         FileSaver.saveAs(blob, fileName)
       }
