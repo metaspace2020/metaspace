@@ -198,7 +198,7 @@ def multipart_upload(
                 'source': 'api',
                 'user': current_user_id if current_user_id else 'not-provided',
                 'datasetId': dataset_id if dataset_id else 'not-provided',
-                'uuid': headers['uuid'] if headers and headers['uuid'] else 'not-provided',
+                'uuid': headers['uuid'] if headers.get('uuid') else 'not-provided',
             },
         }
         resp_data = send_request(url, 'POST', json=data, headers=headers)
@@ -2114,7 +2114,7 @@ class SMInstance(object):
         :return: Returns file s3 key
         """
 
-        image_url = self.upload_raw_opt_image_to_s3(local_path=local_path, dataset_id=dataset_id)
+        image_uuid = self.upload_raw_opt_image_to_s3(local_path=local_path, dataset_id=dataset_id)
         query = """
             mutation addOpticalImage($imageUrl: String!,
                 $datasetId: String!, $transform: [[Float]]!) {
@@ -2125,7 +2125,7 @@ class SMInstance(object):
 
         variables = {
             'datasetId': dataset_id,
-            'imageUrl': image_url,
+            'imageUrl': image_uuid,
             'transform': transformation_matrix.tolist(),
         }
 
