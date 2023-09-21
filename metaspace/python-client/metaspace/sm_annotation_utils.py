@@ -165,7 +165,6 @@ def multipart_upload(
     headers={},
     current_user_id=None,
     dataset_id=None,
-    uuid=None,
 ):
     def send_request(
         url,
@@ -187,7 +186,7 @@ def multipart_upload(
                 print(f'{ex}\nRetrying...')
 
     def init_multipart_upload(
-        filename, file_type, headers={}, current_user_id=None, dataset_id=None, uuid=None
+        filename, file_type, headers={}, current_user_id=None, dataset_id=None
     ):
         url = companion_url + '/s3/multipart'
         data = {
@@ -199,7 +198,7 @@ def multipart_upload(
                 'source': 'api',
                 'user': current_user_id if current_user_id else 'not-provided',
                 'datasetId': dataset_id if dataset_id else 'not-provided',
-                'uuid': uuid if uuid else 'not-provided',
+                'uuid': headers['uuid'] if headers and headers['uuid'] else 'not-provided',
             },
         }
         resp_data = send_request(url, 'POST', json=data, headers=headers)
@@ -276,7 +275,6 @@ def multipart_upload(
         headers=headers,
         current_user_id=current_user_id,
         dataset_id=dataset_id,
-        uuid=uuid,
     )
 
     # Python evaluates the input to ThreadPoolExecutor.map eagerly, which would allow iterate_file
@@ -2077,16 +2075,17 @@ class SMInstance(object):
 
         url = f'{self._config["dataset_upload_url"]}/s3/uuid'
         resp = requests.get(url)
-        uuid = resp.json()['uuid']
+        resp.raise_for_status()
+        headers = resp.json()
         multipart_upload(
             local_path,
             self._config['raw_opt_upload_url'],
             file_type='image/png',
+            headers=headers,
             current_user_id=current_user_id,
             dataset_id=dataset_id,
-            uuid=uuid,
         )
-        return uuid
+        return headers['uuid']
 
     def upload_optical_image(
         self,
