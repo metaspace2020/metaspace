@@ -15,7 +15,7 @@ RUN apt-get update \
 RUN pip install --upgrade pip setuptools wheel \
     && pip install --no-cache-dir \
         cloudpickle==1.6.0 \
-        flask==2.0.1 \
+        flask==2.3.3 \
         gunicorn==20.1.0 \
         ibm-code-engine-sdk==3.1.0 \
         ibm-cos-sdk==2.10.0 \

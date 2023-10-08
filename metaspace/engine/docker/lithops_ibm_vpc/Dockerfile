@@ -5,7 +5,7 @@ ENV FLASK_PROXY_PORT 8080
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir \
         cloudpickle==1.6.0 \
-        flask==2.0.1 \
+        flask==2.3.3 \
         gevent==21.8.0 \
         ibm-cloud-sdk-core==3.16.6 \
         ibm-cos-sdk==2.10.0 \
