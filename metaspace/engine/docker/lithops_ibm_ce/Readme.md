@@ -8,7 +8,7 @@
    ```
 2. Login and activate CE project:
    ```
-   $ ibmcloud login -u e-mail@embl.de
+   $ ibmcloud login --sso
    $ ibmcloud target -g metaspace-env-prod && ibmcloud ce project select --name metaspace-prod-ce --kubecfg
    ```
 3. Build and deploy image:
