@@ -1,4 +1,4 @@
-FROM python:3.8.13-slim-buster
+FROM python:3.8.18-slim
 
 ENV FLASK_PROXY_PORT 8080
 
@@ -7,11 +7,12 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
         cloudpickle==1.6.0 \
         flask==2.0.1 \
         gevent==21.8.0 \
+        ibm-cloud-sdk-core==3.16.6 \
         ibm-cos-sdk==2.10.0 \
         pika==1.2.0 \
         ps-mem==3.12 \
         redis==3.5.3 \
-        requests==2.26.0 \
+        requests==2.29.0 \
         tblib==1.7.0
 
 COPY requirements.txt /tmp/requirements.txt
