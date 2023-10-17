@@ -90,7 +90,7 @@
     "ibm_vpc": {
       "endpoint": "https://eu-de.iaas.cloud.ibm.com",
       "instance_id": "{{ sm_lithops_vpc_instance_id }}",
-      "ip_address": "{{ sm_lithops_vpc_instance_ip }}",
+      "floating_ip": "{{ sm_lithops_vpc_instance_ip }}",
       "ssh_key_filename": "/home/ubuntu/.ssh/ibm_cloud_vpc"
     },
     "ibm_cos": {

@@ -1,4 +1,4 @@
-FROM python:3.8.13-slim-buster
+FROM python:3.8.18-slim
 
 ENV PORT 8080
 ENV CONCURRENCY 4
@@ -15,13 +15,14 @@ RUN apt-get update \
 RUN pip install --upgrade pip setuptools wheel \
     && pip install --no-cache-dir \
         cloudpickle==1.6.0 \
-        flask==2.0.1 \
+        flask==2.3.3 \
         gunicorn==20.1.0 \
+        ibm-code-engine-sdk==3.1.0 \
         ibm-cos-sdk==2.10.0 \
         pika==1.2.0 \
         ps-mem==3.12 \
         redis==3.5.3 \
-        requests==2.26.0 \
+        requests==2.29.0 \
         tblib==1.7.0
 
 # Copy Lithops proxy and lib to the container image.
