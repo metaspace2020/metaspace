@@ -4,7 +4,7 @@ pyMSpec==0.1.2
 cpyMSpec==0.4.2  # Drop all isotopic patterns if updated!
 cpyMSpec_0_3_5==0.3.5
 pyimzML==1.5.3
-requests==2.26.0
+requests==2.29.0
 pytest
 boto3==1.17.13
 fabric3
@@ -26,7 +26,7 @@ pyspark[sql]==3.0.1
 pyarrow==1.0.1
 pysparkling==0.6.0
 s3fs
-lithops==2.7.0
+lithops==3.0.1
 # numba==0.54.0  # Only used by disabled v2 metrics
 catboost==1.0.3  # Warning - this installs optional dependencies plotly and matplotlib, which are large. Install it without dependencies in Lithops images.
 statsmodels==0.12.2

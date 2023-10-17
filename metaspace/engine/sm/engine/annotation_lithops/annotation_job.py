@@ -118,8 +118,10 @@ def _upload_imzmls_from_prefix_if_needed(src_path, storage, sm_storage, s3_clien
     ibd_keys = [key for key in keys if key.lower().endswith('.ibd')]
     assert len(imzml_keys) == 1, imzml_keys
     assert len(ibd_keys) == 1, ibd_keys
-    imzml_cobj = _upload_if_needed(imzml_keys[0], storage, sm_storage, 'imzml', s3_client)
-    ibd_cobj = _upload_if_needed(ibd_keys[0], storage, sm_storage, 'imzml', s3_client)
+    # imzml_cobj = _upload_if_needed(imzml_keys[0], storage, sm_storage, 'imzml', s3_client)
+    # ibd_cobj = _upload_if_needed(ibd_keys[0], storage, sm_storage, 'imzml', s3_client)
+    imzml_cobj = CloudObject(storage.backend, bucket, '/'.join(imzml_keys[0].split('/')[-2:]))
+    ibd_cobj = CloudObject(storage.backend, bucket, '/'.join(ibd_keys[0].split('/')[-2:]))
 
     return imzml_cobj, ibd_cobj
 

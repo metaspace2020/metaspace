@@ -174,15 +174,20 @@ class Executor:
         else:
             self.is_hybrid = True
             self.executors = {
-                'code_engine': lithops.ServerlessExecutor(
+                'aws_lambda': lithops.ServerlessExecutor(
                     config=lithops_config,
-                    runtime=RUNTIME_CE,
-                    backend='code_engine',
+                    backend='aws_lambda',
+                    **{'runtime': 'metaspace-aws-lambda:3.0.1.a'},
                 ),
-                'ibm_vpc': lithops.StandaloneExecutor(
-                    config=lithops_config,
-                    runtime=RUNTIME_VPC,
-                ),
+                # 'code_engine': lithops.ServerlessExecutor(
+                #     config=lithops_config,
+                #     runtime=RUNTIME_CE,
+                #     backend='code_engine',
+                # ),
+                # 'ibm_vpc': lithops.StandaloneExecutor(
+                #     config=lithops_config,
+                #     runtime=RUNTIME_VPC,
+                # ),
             }
 
         self.storage = Storage(lithops_config)
