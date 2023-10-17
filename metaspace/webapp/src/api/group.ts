@@ -200,8 +200,8 @@ export const getGroupDatabasesQuery =
   }`
 
 export const getUserGroupsQuery =
-  gql`query GetUserGroupsQuery($query: String!) {
-    allGroups(query: $query, limit: 1000) {
+  gql`query GetUserGroupsQuery($query: String!, $useRole: Boolean) {
+    allGroups(query: $query, limit: 1000, useRole: $useRole) {
       ...ViewGroupFragment
     }
   }${ViewGroupFragment}`

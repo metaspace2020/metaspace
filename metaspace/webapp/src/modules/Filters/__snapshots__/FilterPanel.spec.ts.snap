@@ -111,8 +111,8 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       <div slot-key="default">
         <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="true" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="0123">
           <mock-el-option value="0123" label="group.label"></mock-el-option>
-          <mock-el-option label="currentUser.groups.0.group.label" value="currentUser.groups.0.group.value"></mock-el-option>
-          <mock-el-option label="currentUser.groups.1.group.label" value="currentUser.groups.1.group.value"></mock-el-option>
+          <mock-el-option label="options.0.label" value="options.0.value"></mock-el-option>
+          <mock-el-option label="options.1.label" value="options.1.value"></mock-el-option>
         </mock-el-select>
       </div>
       <div slot-key="reference">
