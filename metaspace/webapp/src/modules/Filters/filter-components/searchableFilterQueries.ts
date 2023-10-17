@@ -103,40 +103,18 @@ const annotationQueries: FilterQueries = {
 
 const groupQueries: FilterQueries = {
   async search($apollo, $store, query) {
-    if (query) {
-      const { data } = await $apollo.query({
-        query: gql`query GroupOptions($query: String!) {
+    const { data } = await $apollo.query({
+      query: gql`query GroupOptions($query: String!) {
         options: allGroups(query: $query, limit: 20) {
-         id
-         value: id
-         label: name
+          id
+          value: id
+          label: name
         }
       }`,
-        fetchPolicy: 'cache-first',
-        variables: { query },
-      })
-      return data.options as Option[]
-    } else {
-      const { data: { currentUser } } = await $apollo.query({
-        query: gql`query MyGroupOptions {
-          currentUser {
-            id
-            groups {
-              group {
-                id
-                value: id
-                label: name
-              }
-            }
-          }
-        }`,
-        fetchPolicy: 'cache-first',
-      })
-      return (currentUser
-        && currentUser.groups
-        && currentUser.groups.map((userGroup: any) => userGroup.group))
-        || [] as Option[]
-    }
+      fetchPolicy: 'cache-first',
+      variables: { query },
+    })
+    return data.options as Option[]
   },
   async getById($apollo, ids) {
     const promises = ids.map(groupId => $apollo.query({

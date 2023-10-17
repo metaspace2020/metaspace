@@ -713,7 +713,7 @@ export const esFilterValueCountResults = async(args: FilterValueCountArgs): Prom
     body,
     index: docType === 'dataset' ? esDatasetIndex : esAnnotationIndex,
   })
-  const itemCounts: any = {}
+  const itemCounts: { [key: string]: number } = {}
   resp?.aggregations?.field_counts.buckets.forEach((o: any) => {
     itemCounts[o.key] = o.doc_count
   })

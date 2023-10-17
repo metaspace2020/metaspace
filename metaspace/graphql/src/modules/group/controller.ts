@@ -315,23 +315,24 @@ export const Resolvers = {
         .getCount()
     },
 
-    async allGroups(_: any, { query }: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
+    async allGroups(_: any, { query, useRole }: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
       let userGroups : any = []
 
-      if (ctx.user.id) {
-        let qb = ctx.entityManager.createQueryBuilder(GroupModel,
-          'group')
-          .leftJoinAndSelect('group.members', 'userGroup')
-          .where('(group.name ILIKE :query OR group.shortName ILIKE :query)', { query: query ? `%${query}%` : '%' })
+      let qb = ctx.entityManager.createQueryBuilder(GroupModel,
+        'group')
+        .leftJoinAndSelect('group.members', 'userGroup')
 
-        if (ctx.user.role !== 'admin') {
-          qb = qb.andWhere('userGroup.user = :userId', { userId: ctx.user.id })
-        }
-
-        userGroups = await qb.orderBy('group.name')
-          .distinct(true)
-          .getMany()
+      if (query) {
+        qb = qb.where('(group.name ILIKE :query OR group.shortName ILIKE :query)', { query: `%${query}%` })
       }
+
+      if (useRole && ctx.user.role !== 'admin') {
+        qb = qb.andWhere('userGroup.user = :userId', { userId: ctx.user.id })
+      }
+
+      userGroups = await qb.orderBy('group.name')
+        .distinct(true)
+        .getMany()
 
       return userGroups.map((g: any) => ({ ...g, scopeRole: g.role }))
     },
