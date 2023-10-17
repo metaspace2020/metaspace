@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from itertools import repeat
 from typing import List, Tuple, TypedDict, Optional, cast
 
@@ -72,7 +72,7 @@ def get_formulas_df(
     ion_formula = set()
     target_ion_formulas = set()
     targeted_ion_formulas = set()
-    with ProcessPoolExecutor() as executor:
+    with ThreadPoolExecutor() as executor:
         for moldb, (fdr, formula_map_df) in zip(
             moldbs, executor.map(_get_db_fdr_and_formulas, repeat(ds_config), dbs_iter)
         ):
