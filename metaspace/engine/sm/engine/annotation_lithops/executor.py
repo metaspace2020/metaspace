@@ -24,8 +24,8 @@ TRet = TypeVar('TRet')
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_VPC = 'metaspace2020/metaspace-lithops:2.7.0'
-RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:2.7.0.3'
+RUNTIME_VPC = 'metaspace2020/metaspace-lithops:3.0.1'
+RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:3.0.1'
 MEM_LIMITS = {
     'localhost': 32 * 1024,
     'code_engine': 32 * 1024,
@@ -168,7 +168,7 @@ class Executor:
                 'localhost': lithops.LocalhostExecutor(
                     config=lithops_config,
                     storage='localhost',
-                    runtime='python',  # Change to RUNTIME_VPC to run in a Docker container
+                    # runtime='python',  # Change to RUNTIME_VPC to run in a Docker container
                 )
             }
         else:
@@ -179,15 +179,6 @@ class Executor:
                     backend='aws_lambda',
                     **{'runtime': 'metaspace-aws-lambda:3.0.1.a'},
                 ),
-                # 'code_engine': lithops.ServerlessExecutor(
-                #     config=lithops_config,
-                #     runtime=RUNTIME_CE,
-                #     backend='code_engine',
-                # ),
-                # 'ibm_vpc': lithops.StandaloneExecutor(
-                #     config=lithops_config,
-                #     runtime=RUNTIME_VPC,
-                # ),
             }
 
         self.storage = Storage(lithops_config)

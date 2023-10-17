@@ -37,6 +37,7 @@ export default defineComponent<GroupListPageProps>({
 
     const queryVars = computed(() => ({
       query: state.groupNameFilter,
+      useRole: true,
     }))
     const {
       result: groupsResult,
