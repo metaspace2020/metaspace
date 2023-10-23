@@ -30,6 +30,8 @@ MEM_LIMITS = {
     'localhost': 32 * 1024,
     'code_engine': 32 * 1024,
     'ibm_vpc': 128 * 1024,
+    'aws_lambda': 10 * 1024,
+    'aws_ec2': 128 * 1024,
 }
 
 
@@ -178,6 +180,10 @@ class Executor:
                     config=lithops_config,
                     backend='aws_lambda',
                     **{'runtime': 'metaspace-aws-lambda:3.0.1.a'},
+                ),
+                'aws_ec2': lithops.StandaloneExecutor(
+                    config=lithops_config,
+                    backend='aws_ec2',
                 ),
             }
 
