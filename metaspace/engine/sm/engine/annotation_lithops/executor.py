@@ -184,6 +184,7 @@ class Executor:
                 'aws_ec2': lithops.StandaloneExecutor(
                     config=lithops_config,
                     backend='aws_ec2',
+                    **{'runtime': 'metaspace-aws-ec2:3.0.1.b'},
                 ),
             }
 
