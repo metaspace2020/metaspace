@@ -93,8 +93,8 @@ const defaultConfig: ClientConfig = {
     multiple_ion_images: true,
     lock_intensity: false,
     lithops: false,
-    raw_fdr: false
-  }
+    raw_fdr: false,
+  },
 }
 
 const FEATURE_STORAGE_KEY = 'featureFlags'
@@ -144,9 +144,9 @@ interface Limits {
 }
 
 export const limits : Limits = {
-  get maxMolDBs () {
+  get maxMolDBs() {
     return config.features.moldb_limit_ext ? MAX_MOL_DBS_EXT : MAX_MOL_DBS
-  }
+  },
 }
 
 export default config

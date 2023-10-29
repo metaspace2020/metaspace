@@ -1,15 +1,25 @@
 <template>
   <div class="about">
-    <h1 @click="throwError">This is an about page</h1>
+    <h1 @click="throwError">This ids an about page</h1>
   </div>
 </template>
 
 <script>
+
 export default {
   methods: {
-    throwError () {
-      throw new Error('Sentry Error')
-    }
-  }
+    throwError() {
+      console.log('oi')
+      this.$alert('This is a message', 'Title', {
+        confirmButtonText: 'OK',
+        callback: (action) => {
+          this.$message({
+            type: 'info',
+            message: `action: ${action}`,
+          })
+        },
+      })
+    },
+  },
 }
 </script>

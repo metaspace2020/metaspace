@@ -1,12 +1,18 @@
 import 'focus-visible'
 
-import { createApp } from 'vue'
-import config from './lib/config'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { createApp, provide, h } from 'vue'
 
+import config from './lib/config'
 import * as Sentry from '@sentry/vue'
 
-import ElementPlus from 'element-plus'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
+import { createApolloProvider } from '@vue/apollo-option'
+
+import ElementPlus, { ElMessageBox } from 'element-plus'
 // @ts-ignore
 import en from 'element-plus/dist/locale/en.mjs'
 import 'element-plus/dist/index.css'
@@ -24,7 +30,14 @@ import VueGtag from 'vue-gtag'
 
 sync(store, router)
 const isProd = process.env.NODE_ENV === 'production'
-const app = createApp(App)
+
+const app = createApp({
+  setup() {
+    provide(DefaultApolloClient, apolloClient)
+  },
+
+  render: () => h(App),
+})
 
 if (config.sentry != null && config.sentry.dsn !== '') {
   Sentry.init({
@@ -32,9 +45,9 @@ if (config.sentry != null && config.sentry.dsn !== '') {
     ...config.sentry,
     integrations: [
       new Sentry.BrowserTracing({
-        routingInstrumentation: Sentry.vueRouterInstrumentation(router)
+        routingInstrumentation: Sentry.vueRouterInstrumentation(router),
       }),
-      new Sentry.Replay()
+      new Sentry.Replay(),
     ],
 
     // Set tracesSampleRate to 1.0 to capture 100%
@@ -54,23 +67,26 @@ if (config.sentry != null && config.sentry.dsn !== '') {
     // Ignore ResizeObserver errors - this seems to be a benign issue, but there's not enough detail to track down
     // the root cause, and the error reports are so spammy they can easily blow our monthly quota.
       'ResizeObserver loop completed with undelivered notifications.',
-      'ResizeObserver loop limit exceeded'
-    ]
+      'ResizeObserver loop limit exceeded',
+    ],
   })
 }
 
 app.use(VueGtag, {
   config: { id: 'UA-73509518-1' },
-  enabled: isProd // disabled in dev because it impairs "break on uncaught exception"
+  enabled: isProd, // disabled in dev because it impairs "break on uncaught exception"
 }, router)
 
 app.use(store)
 app.use(router)
 app.use(ElementPlus, {
-  locale: en
+  locale: en,
 })
 
 // app.config.devtools = process.env.NODE_ENV === 'development'
 app.config.performance = process.env.NODE_ENV === 'development'
+app.config.globalProperties.$alert = ElMessageBox.alert
 
 app.mount('#app')
+
+setMaintenanceMessageHandler(app.config.globalProperties.$alert)

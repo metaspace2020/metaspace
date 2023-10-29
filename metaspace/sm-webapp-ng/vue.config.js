@@ -9,8 +9,8 @@ module.exports = defineConfig({
     allowedHosts: 'all', // For running behind nginx
     port: 8082,
     client: {
-      webSocketURL: 'ws://0.0.0.0:8888'
-    }
-  }
+      webSocketURL: 'ws://0.0.0.0:8999',
+    },
+  },
 
 })

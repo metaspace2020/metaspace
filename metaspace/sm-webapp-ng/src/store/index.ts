@@ -10,7 +10,7 @@ const store = createStore({
   actions: {
   },
   modules: {
-  }
+  },
 })
 
 export default store

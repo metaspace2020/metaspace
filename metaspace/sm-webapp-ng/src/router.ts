@@ -1,23 +1,17 @@
+/* eslint-disable vue/max-len */
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from './views/HomeView.vue'
-import AboutView from './views/AboutView.vue'
-import store from './store'
-// ... other imports ...
+import { defineAsyncComponent } from 'vue'
 
-const routes = [
-  {
-    path: '/',
-    component: HomeView
-  },
-  {
-    path: '/user/:id',
-    component: AboutView
-  }
-]
+const asyncPagesFreelyTyped = {
+  ViewPage: () => import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ './views/View'),
+}
+const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, any>
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes: [
+    { path: '/', component: asyncPages.ViewPage, meta: { footer: true, headerClass: 'bg-primary' } },
+  ],
 })
 
 router.afterEach((to) => {
