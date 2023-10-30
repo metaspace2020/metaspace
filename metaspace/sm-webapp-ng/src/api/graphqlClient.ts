@@ -2,10 +2,11 @@ import { onError } from '@apollo/client/link/error'
 import { setContext } from '@apollo/client/link/context'
 import { get } from 'lodash-es'
 import config from '../lib/config'
+import { makeApolloCache } from '../lib/apolloCache'
 import tokenAutorefresh from './tokenAutorefresh'
 import reportError from '../lib/reportError'
 
-import { ApolloClient, InMemoryCache } from '@apollo/client/core'
+import { ApolloClient } from '@apollo/client/core'
 // import { GraphQLWsLink } from '@apollo/client/link/subscriptions'
 import { WebSocketLink } from '@apollo/client/link/ws' // TODO: Update once the graphql is updated
 import { BatchHttpLink } from '@apollo/client/link/batch-http'
@@ -54,9 +55,7 @@ const authLink = setContext(async() => {
       },
     }
   } catch (err) {
-    if (err instanceof Error) {
-      reportError(err)
-    }
+    reportError(err)
     throw err
   }
 }) // Adjust this if needed
@@ -105,9 +104,8 @@ wsClient.use([{
     try {
       operationOptions.jwt = await tokenAutorefresh.getJwt()
     } catch (err) {
-      if (err instanceof Error) {
-        reportError(err)
-      } next(err)
+      reportError(err)
+      next(err)
     } finally {
       next()
     }
@@ -131,7 +129,7 @@ const link = errorLink.concat(authLink).concat(split(
 
 const apolloClient = new ApolloClient({
   link,
-  cache: new InMemoryCache(),
+  cache: makeApolloCache(),
   defaultOptions: {
     query: {
       fetchPolicy: 'network-only',

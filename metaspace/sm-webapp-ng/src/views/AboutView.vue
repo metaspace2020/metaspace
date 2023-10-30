@@ -10,15 +10,20 @@ export default {
   methods: {
     throwError() {
       console.log('oi')
-      this.$alert('This is a message', 'Title', {
-        confirmButtonText: 'OK',
-        callback: (action) => {
-          this.$message({
-            type: 'info',
-            message: `action: ${action}`,
-          })
-        },
+      this.$notify({
+        title: 'Error',
+        message: 'This is a error message',
+        type: 'error',
       })
+      // this.$alert('This is a message', 'Title', {
+      //   confirmButtonText: 'OK',
+      //   callback: (action) => {
+      //     this.$message({
+      //       type: 'info',
+      //       message: `action: ${action}`,
+      //     })
+      //   },
+      // })
     },
   },
 }

@@ -4,10 +4,10 @@ import delay from '../lib/delay'
 const REFRESH_INTERVAL_MS = 30000
 
 class TokenAutorefresh {
-  jwt?: string;
-  jwtPromise?: Promise<string>;
-  jwtCanExpire = true;
-  refreshLoopRunning = false;
+  jwt?: string
+  jwtPromise?: Promise<string>
+  jwtCanExpire = true
+  refreshLoopRunning = false
 
   constructor() {
     // noinspection JSIgnoredPromiseFromCall

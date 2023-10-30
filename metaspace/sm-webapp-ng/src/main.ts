@@ -4,15 +4,14 @@ import 'focus-visible'
 // @ts-ignore
 import { createApp, provide, h } from 'vue'
 
-import config from './lib/config'
+import config, { updateConfigFromQueryString } from './lib/config'
 import * as Sentry from '@sentry/vue'
 
 // @ts-ignore
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
-import { createApolloProvider } from '@vue/apollo-option'
 
-import ElementPlus, { ElMessageBox } from 'element-plus'
+import ElementPlus, { ElMessageBox, ElNotification } from 'element-plus'
 // @ts-ignore
 import en from 'element-plus/dist/locale/en.mjs'
 import 'element-plus/dist/index.css'
@@ -21,14 +20,14 @@ import './main.css'
 
 import store from './store'
 import router from './router'
+import { sync } from 'vuex-router-sync'
 
 import App from './App.vue'
 
-import { sync } from 'vuex-router-sync'
-
 import VueGtag from 'vue-gtag'
+import { setErrorNotifier } from './lib/reportError'
+import { migrateLocalStorage } from './lib/localStorage'
 
-sync(store, router)
 const isProd = process.env.NODE_ENV === 'production'
 
 const app = createApp({
@@ -72,6 +71,8 @@ if (config.sentry != null && config.sentry.dsn !== '') {
   })
 }
 
+migrateLocalStorage()
+
 app.use(VueGtag, {
   config: { id: 'UA-73509518-1' },
   enabled: isProd, // disabled in dev because it impairs "break on uncaught exception"
@@ -82,11 +83,15 @@ app.use(router)
 app.use(ElementPlus, {
   locale: en,
 })
+sync(store, router)
 
 // app.config.devtools = process.env.NODE_ENV === 'development'
 app.config.performance = process.env.NODE_ENV === 'development'
 app.config.globalProperties.$alert = ElMessageBox.alert
+app.config.globalProperties.$notification = ElNotification
 
 app.mount('#app')
 
 setMaintenanceMessageHandler(app.config.globalProperties.$alert)
+setErrorNotifier(app.config.globalProperties.$notification)
+updateConfigFromQueryString()

@@ -1,11 +1,15 @@
-import { computed, defineComponent } from 'vue'
+import { defineComponent } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 
-export default defineComponent<any>({
+interface Props {
+  name: string
+}
+
+export default defineComponent<Props>({
   name: 'GroupsListItem',
-  setup: function(props: any) {
-    const { result, loading, error } = useQuery(
+  setup: function() {
+    const { result, loading } = useQuery(
       gql`
         query GetPosts {
           colocalizationAlgos {id, name}

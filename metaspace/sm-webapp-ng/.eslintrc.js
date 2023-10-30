@@ -23,6 +23,8 @@ module.exports = {
     'vue/html-self-closing': ['off'], // Unnecessarily forces template style to differ from TSX
     'vue/no-v-html': ['off'],
     'no-mixed-operators': ['off'],
+    '@typescript-eslint/no-explicit-any': ['off'],
+    '@typescript-eslint/no-var-requires': ['off'], // Many JS files need to interop with non-ESM code
 
     'no-unused-vars': ['off'], // Does not work well with TypeScript
     'import/no-duplicates': ['off'], // This keeps breaking stuff: https://github.com/benmosher/eslint-plugin-import/issues/1504

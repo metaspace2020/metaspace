@@ -95,6 +95,7 @@ export interface WheelEventCompat extends WheelEvent { wheelDelta?: number }
 export function scrollDistance(event: WheelEventCompat) {
   let sY = 0
   if ('detail' in event) { sY = event.detail * 2 }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   if ('wheelDelta' in event) { sY = -event.wheelDelta! / 120 }
   if (('deltaY' in event) && !sY) { sY = (event.deltaY < 1) ? -1 : 1 }
   return sY

@@ -1,10 +1,10 @@
 /* eslint-disable camelcase */
-import { defaultsDeep } from 'lodash-es'
+// import { defaultsDeep } from 'lodash-es'
 // import { getLocalStorage, removeLocalStorage, setLocalStorage } from './localStorage'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { MAX_MOL_DBS_EXT, MAX_MOL_DBS } from './constants'
-import router from '@/router'
+// import router from '@/router'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 // const fileConfig = require('../clientConfig.json')
 
@@ -97,7 +97,7 @@ const defaultConfig: ClientConfig = {
   },
 }
 
-const FEATURE_STORAGE_KEY = 'featureFlags'
+// const FEATURE_STORAGE_KEY = 'featureFlags'
 
 const config = {} as ClientConfig // defaultsDeep({}, fileConfig, defaultConfig) as ClientConfig
 
