@@ -49,6 +49,7 @@ class TokenAutorefresh {
       return
     }
     this.refreshLoopRunning = true
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
         if (!this.jwt || this.jwtCanExpire) {

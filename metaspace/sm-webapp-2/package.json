@@ -32,13 +32,14 @@
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
     "lodash-es": "^4.17.21",
-    "pinia": "^2.1.7",
     "subscriptions-transport-ws": "^0.11.0",
     "vite-svg-loader": "^4.0.0",
     "vue": "^3.3.4",
     "vue-gtag": "^2.0.1",
     "vue-router": "^4.2.5",
-    "vue3-cookies": "^1.0.6"
+    "vue3-cookies": "^1.0.6",
+    "vuex": "^4.0.2",
+    "vuex-router-sync": "6.0.0-rc.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.23.2",

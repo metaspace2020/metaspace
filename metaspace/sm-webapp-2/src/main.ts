@@ -1,16 +1,17 @@
 import 'focus-visible'
 
 
-import { createApp, provide, h, markRaw } from 'vue'
+import { createApp, provide, h } from 'vue'
 
 import config, { updateConfigFromQueryString } from './lib/config'
 import * as Sentry from '@sentry/vue'
 
 
-import { createPinia } from 'pinia'
 
-import App from './modules/App.vue'
+import App from './modules/App/App.vue'
+import store from './store'
 import router from './router'
+import { sync } from 'vuex-router-sync'
 
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
@@ -25,9 +26,9 @@ import 'element-plus/dist/index.css'
 // import './assets/main.css'
 import './modules/App/tailwind.scss'
 import {ElMessageBox, ElNotification} from "element-plus";
+import {Route} from "@sentry/vue/types/router";
 // import './modules/App/tailwind.scss'
 
-import { useRouteStore } from './stores/routeStore';
 
 const isProd = process.env.NODE_ENV === 'production'
 
@@ -74,16 +75,14 @@ if (config.sentry != null && config.sentry.dsn !== '') {
 
 migrateLocalStorage()
 
-const pinia = createPinia();
-
-router.beforeEach((to, from, next) => {
-  const routeStore = useRouteStore();
-  routeStore.updateRoute(to);
-  next();
-});
 
 app.use(router)
-app.use(pinia)
+app.use(store)
+sync(store, router)
+
+router.afterEach((to: Route) => {
+  store.commit('updateFilterOnNavigate', to)
+})
 
 // @ts-ignore
 app.use(VueGtag, {

@@ -6,7 +6,6 @@ import { ElNotification } from 'element-plus/lib/components/notification'
 let $notify: typeof ElNotification
 
 export function setErrorNotifier(_$notify: typeof ElNotification) {
-  console.log('dude', _$notify)
   $notify = _$notify
 }
 
@@ -26,7 +25,6 @@ export default function reportError(
   extraData?: Record<string, Primitive>,
 ) {
   try {
-    console.log(err, message, extraData)
     if (!isHandled(err)) {
       Sentry.captureException(err, { contexts: { 'Extra Data': extraData } })
       console.error(err, extraData)

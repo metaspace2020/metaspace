@@ -8,12 +8,21 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
-const isCypressRun = process.env.CYPRESS_RUN === 'true';
+// const isCypressRun = process.env.CYPRESS_RUN === 'true';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   build: {
     sourcemap: true,
+    assetsInlineLimit: 0,
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        entryFileNames: `assets/[name].js`,
+        chunkFileNames: `assets/[name].js`,
+        assetFileNames: `assets/[name].[ext]`
+      }
+    }
   },
   server: {
     host: true,   // Equivalent to disableHostCheck: true in Webpack
@@ -36,7 +45,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
   },
 })

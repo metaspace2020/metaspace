@@ -63,7 +63,6 @@ const authLink = setContext(async() => {
 let $alert: ((message: string, title: string, options?: any) => Promise<any>) | null = null
 
 export function setMaintenanceMessageHandler(_$alert: (message: string, title: string, options?: any) => Promise<any>) {
-  console.log('$alert', $alert)
   $alert = _$alert
 }
 
@@ -77,7 +76,6 @@ const httpLink = new BatchHttpLink({
 const wsClient = new SubscriptionClient(wsGraphqlUrl, {
   reconnect: true,
   async connectionParams() {
-    console.log('wsClient', wsClient)
     // WORKAROUND: This is not the right place for this, but it's the only callback that gets called after a reconnect
     // and can run an async operation before any messages are sent.
     // All subscription operations need to have their JWTs updated before they are reconnected, so do that before
@@ -116,7 +114,6 @@ const wsLink = new WebSocketLink(wsClient)
 
 const link = errorLink.concat(authLink).concat(split(
   ({ query }) => {
-    console.log('man', query)
     const def = getMainDefinition(query)
     return (
       def.kind === 'OperationDefinition'

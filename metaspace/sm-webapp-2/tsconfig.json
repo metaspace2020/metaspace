@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
+    "noImplicitAny": false,
     "strict": true,
     "jsx": "preserve",
     "moduleResolution": "node",
@@ -15,7 +16,8 @@
     "types": [
       "webpack-env",
       "jest",
-      "element-plus/global"
+      "element-plus/global",
+      "@vue/apollo-composable",
     ],
     "paths": {
       "@/*": [

@@ -3,6 +3,8 @@ const tailwindcss = require('tailwindcss')
 const postcssPurgecss = require('@fullhuman/postcss-purgecss')
 const postcss = require('postcss')
 
+
+
 const purgecss = postcssPurgecss({
   content: [
     './public/**/*.html',
@@ -21,9 +23,13 @@ const purgecss = postcssPurgecss({
 // https://github.com/FullHuman/purgecss/issues/300 It's heinously slow because it re-reads all input content files
 //
 const purgecssTailwindOnly = postcss.plugin('postcss-plugin-purgecss-tailwind', () => {
-  return async (root, result) => {
+  return (root) => {
     if (root && root.source && root.source.input && /tailwind/i.test(root.source.input.file)) {
-      await purgecss(root, result)
+      const purgeProcessor = postcss([purgecss]);
+      purgeProcessor.process(root, { from: undefined }).then(purgedResult => {
+        root.removeAll();
+        root.append(purgedResult.css);
+      });
     }
   }
 })
