@@ -41,9 +41,15 @@
     .header-items {
       width: 100%;
 
-      a{
+      .header-link{
+        background-color: theme('colors.primary');
         width: 100%;
         text-align: center;
+        border-radius: 0;
+
+        &:hover{
+          @apply bg-blue-700;
+        }
       }
     }
   }
