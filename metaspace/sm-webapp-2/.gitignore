@@ -1,28 +1,22 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+clientConfig.json
+db.sqlite
+coverage*
 
-node_modules
-.DS_Store
-dist
-dist-ssr
-coverage
-*.local
+# Dereferenced metadata files
+/src/lib/metadataSchemas
 
-/cypress/videos/
-/cypress/screenshots/
+# Copy of graphql schema for tests
+/tests/utils/graphql-schema.json
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Compiled output
+stats.json
+
+# Passwords and other sensitive data
+conf.js
+src/clientConfig.json
+
+# Screenshots taken by testcafe
+tests/e2e/screenshots
+
+# Build output
+/dist

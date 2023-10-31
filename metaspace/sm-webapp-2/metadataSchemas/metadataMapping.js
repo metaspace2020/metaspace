@@ -1,0 +1,1 @@
+export default {"Imaging MS":"ims.json","LC-MS":"lcms.json"};
