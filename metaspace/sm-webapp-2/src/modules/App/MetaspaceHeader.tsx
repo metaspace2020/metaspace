@@ -7,7 +7,7 @@ import {useStore} from "vuex";
 import NotificationIcon from "@/components/NotificationIcon.vue";
 import { HeaderLink, HeaderButton } from './HeaderLink'
 
-import { UserGroupRoleOptions as UGRO } from '@/api/group'
+import { UserGroupRoleOptions as UGRO } from '../../api/group'
 import { ProjectRoleOptions as UPRO } from '@/api/project'
 import {userProfileQuery} from "@/api/user";
 import {signOut} from "@/api/auth";
@@ -172,28 +172,33 @@ export default defineComponent({
     });
 
     const renderLeftTabs = () => {
-      return [
-        <HeaderLink id="upload-link" class='header-link' to={uploadHref()}>Upload</HeaderLink>,
-        <HeaderLink id="annotations-link" class='header-link' to={annotationsHref()}>Annotations</HeaderLink>,
-        <HeaderLink id="datasets-link" class='header-link' to={datasetsHref()}>Datasets</HeaderLink>,
-        <HeaderLink class='header-link' to="/projects">Projects</HeaderLink>,
-        <HeaderLink class='header-link' to="/groups">Groups</HeaderLink>
-      ];
+      return (
+        <>
+          <HeaderLink id="upload-link" class='header-link' to={uploadHref()}>Upload</HeaderLink>,
+          <HeaderLink id="annotations-link" class='header-link' to={annotationsHref()}>Annotations</HeaderLink>,
+          <HeaderLink id="datasets-link" class='header-link' to={datasetsHref()}>Datasets</HeaderLink>,
+          <HeaderLink class='header-link' to="/projects">Projects</HeaderLink>,
+          <HeaderLink class='header-link' to="/groups">Groups</HeaderLink>
+        </>)
     }
 
     const renderRightTabs = () => {
-      return [
-        <HeaderLink class='header-link' to='/detectability'>Detectability</HeaderLink>,
-        <HeaderLink class='header-link' to='/help'>Help</HeaderLink>
-      ]
+      return (
+        <>
+          <HeaderLink class='header-link' to='/detectability'>Detectability</HeaderLink>,
+          <HeaderLink class='header-link' to='/help'>Help</HeaderLink>
+        </>
+        )
     }
 
     const renderNotLoggedIn = (show: boolean = true) => {
       if(!show) return null
-      return [
-        <HeaderButton class='header-link' onClick={showCreateAccount}>Create account</HeaderButton>,
-        <HeaderButton class='header-link' onClick={showSignIn}>Sign in</HeaderButton>
-      ]
+      return (
+        <>
+          <HeaderButton class='header-link' onClick={showCreateAccount}>Create account</HeaderButton>,
+          <HeaderButton class='header-link' onClick={showSignIn}>Sign in</HeaderButton>
+        </>
+        )
     }
 
     return () => {
@@ -210,24 +215,24 @@ export default defineComponent({
               <div class="header-items">
                 <RouterLink
                   to="/"
-                  className="flex pl-3 pr-4">
+                  class="flex pl-3 pr-4">
                   <img
                     src={MetaspaceLogo}
                     alt="Metaspace"
                     title="Metaspace"
                   />
                 </RouterLink>
-                { ...renderLeftTabs() }
+                { renderLeftTabs() }
               </div>
 
               <div class="header-items">
-                {...renderRightTabs()}
+                {renderRightTabs()}
                 {
                   !loadingUser.value
                   && !currentUser.value
                   &&
                   <div class="header-items mr-1 lg:mr-2">
-                    {...renderNotLoggedIn()}
+                    {renderNotLoggedIn()}
                   </div>
                 }
                 {
@@ -244,7 +249,7 @@ export default defineComponent({
                         id="user-menu"
                         to="/user/me"
                         isActive={isMenuOpen}>
-                        {currentUser.value?.name} Doe
+                        {currentUser.value?.name}
                         {
                           pendingRequestMessage.value
                           &&
@@ -268,8 +273,8 @@ export default defineComponent({
                             <div
                               class="py-1 rounded-md bg-white shadow-xs text-sm"
                               role="menu"
-                              ariaOrientation="vertical"
-                              ariaLabelledby="user-menu">
+                              aria-orientation="vertical"
+                              aria-labelledby="user-menu">
                               <RouterLink
                                 to="/user/me"
                                 class="no-underline block px-4 py-2 text-gray-700 hover:bg-gray-100 font-medium">
@@ -297,7 +302,7 @@ export default defineComponent({
                 style="height: 64px">
                 <RouterLink
                   to="/"
-                  className="flex pl-3 pr-4">
+                  class="flex pl-3 pr-4">
                   <img
                     src={MetaspaceLogo}
                     alt="Metaspace"
@@ -305,7 +310,6 @@ export default defineComponent({
                     onClick={() => {showResponsiveMenu(false)}}/>
                 </RouterLink>
                 <button
-                  slot="reference"
                   class=" button-reset flex h-12 w-12 mr-3"
                   onClick={() => {showResponsiveMenu(!state.responsiveMenuOpen)}}>
                   {
@@ -327,14 +331,14 @@ export default defineComponent({
                 <div
                   class="header-items flex-col z-50"
                   onClick={() => {showResponsiveMenu(false)}}>
-                  {...renderLeftTabs() }
-                  {...renderRightTabs()}
-                  {...renderNotLoggedIn(!loadingUser.value && !currentUser.value)}
+                  {renderLeftTabs() }
+                  {renderRightTabs()}
+                  {renderNotLoggedIn(!loadingUser.value && !currentUser.value)}
                   {
                     currentUser.value &&
                     <HeaderLink
                       to="/user/me"
-                      className="w-full text-center header-link"
+                      class="w-full text-center header-link"
                     >
                       My account
                     </HeaderLink>
@@ -342,9 +346,9 @@ export default defineComponent({
                   {
                     currentUser.value &&
                     <HeaderButton
-                      className="w-full text-center header-link"
+                      class="w-full text-center header-link"
                       onClick={() => {logout()}}>
-                      My account
+                      Sign out
                     </HeaderButton>
                   }
                 </div>

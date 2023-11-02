@@ -11,6 +11,7 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 // const isCypressRun = process.env.CYPRESS_RUN === 'true';
 
 // https://vitejs.dev/config/
+// @ts-ignore
 export default defineConfig({
   build: {
     sourcemap: true,
@@ -44,7 +45,7 @@ export default defineConfig({
     })
   ],
   resolve: {
-    alias: {
+    alias: { // @ts-ignore
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
