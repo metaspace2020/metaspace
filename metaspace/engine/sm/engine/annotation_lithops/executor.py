@@ -20,16 +20,14 @@ from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
 logger = logging.getLogger('engine.lithops-wrapper')
 TRet = TypeVar('TRet')
-#: RUNTIME_DOCKER_IMAGE is defined in code instead of config so that devs don't have to coordinate
+#: RUNTIME_***_IMAGE is defined in code instead of config so that devs don't have to coordinate
 #: manually updating their config files every time it changes. The image must be public on
-#: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
+#: Docker Hub, and can be rebuilt using the Dockerfile in `engine/docker/lithops_aws_***`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_VPC = 'metaspace2020/metaspace-lithops:3.0.1'
-RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:3.0.1'
+RUNTIME_EC2_IMAGE = 'metaspace2020/metaspace-aws-ec2:3.0.1.b'
+RUNTIME_LAMBDA_IMAGE = 'metaspace-aws-lambda:3.0.1.a'
 MEM_LIMITS = {
     'localhost': 32 * 1024,
-    'code_engine': 32 * 1024,
-    'ibm_vpc': 128 * 1024,
     'aws_lambda': 10 * 1024,
     'aws_ec2': 128 * 1024,
 }
@@ -145,7 +143,7 @@ class Executor:
     If a feature is successful, it should be upstreamed to Lithops as an RFC or PR.
 
     Current features:
-      * Switch to the Standalone executor if >32GB of memory is required
+      * Switch to the Standalone executor if >10GB of memory is required
       * Retry with 2x more memory if an execution fails due to an OOM
       * Collect & record per-invocation performance statistics & custom data
         * A named kwarg `perf` of type `SubtaskPerf` will be injected if in the parameter list,
@@ -170,7 +168,9 @@ class Executor:
                 'localhost': lithops.LocalhostExecutor(
                     config=lithops_config,
                     storage='localhost',
-                    # runtime='python',  # Change to RUNTIME_VPC to run in a Docker container
+                    **{
+                        'runtime': 'python'
+                    },  # Change to RUNTIME_EC2_IMAGE to run in a Docker container
                 )
             }
         else:
@@ -179,12 +179,12 @@ class Executor:
                 'aws_lambda': lithops.ServerlessExecutor(
                     config=lithops_config,
                     backend='aws_lambda',
-                    **{'runtime': 'metaspace-aws-lambda:3.0.1.a'},
+                    **{'runtime': RUNTIME_LAMBDA_IMAGE},
                 ),
                 'aws_ec2': lithops.StandaloneExecutor(
                     config=lithops_config,
                     backend='aws_ec2',
-                    **{'runtime': 'metaspace-aws-ec2:3.0.1.b'},
+                    **{'runtime': RUNTIME_EC2_IMAGE},
                 ),
             }
 
@@ -268,15 +268,15 @@ class Executor:
 
             if (
                 isinstance(exc, (MemoryError, TimeoutError, OSError))
-                and runtime_memory <= 32 * 1024
+                and runtime_memory <= MEM_LIMITS['aws_lambda']
                 and (max_memory is None or runtime_memory < max_memory)
             ):
                 attempt += 1
                 old_memory = runtime_memory
-                if old_memory < 32 * 1024:
+                if old_memory < MEM_LIMITS['aws_lambda']:
                     runtime_memory *= 2
                 else:
-                    runtime_memory = 128 * 1024  # switch to VPC
+                    runtime_memory = 128 * 1024  # switch to EC2
 
                 logger.warning(
                     f'{func_name} raised {type(exc)} with {old_memory}MB, retrying with '
@@ -364,16 +364,6 @@ class Executor:
             executor.config['lithops']['worker_processes'] = min(
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
-        if executor.config['lithops']['mode'] == 'serverless':
-            # Selected `CPU-intensive` combination between CPU & RAM if amount of RAM <= 16 GB.
-            # In case of 32 GB, switch on `Balanced`
-            # https://cloud.ibm.com/docs/codeengine?topic=codeengine-mem-cpu-combo
-            if runtime_memory <= 16 * 1024:
-                runtime_cpu = runtime_memory / 1024 / 2.0
-            else:
-                runtime_cpu = runtime_memory / 1024 / 4.0
-            executor.config['code_engine']['runtime_cpu'] = runtime_cpu
-            logger.info(f'Setup {runtime_cpu} CPUs and {runtime_memory} MB RAM')
 
         return executor
 
