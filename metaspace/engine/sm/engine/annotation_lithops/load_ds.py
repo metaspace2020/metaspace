@@ -9,7 +9,6 @@ from typing import Dict, List, Tuple, Union
 import numpy as np
 import pandas as pd
 
-# from ibm_boto3.s3.transfer import TransferConfig, MB
 from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 
@@ -115,27 +114,41 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs)
     return ds_segms_cobjs, ds_segments_bounds, ds_segm_lens
 
 
-def _upload_imzml_browser_files_to_cos(storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs):
-    """Save imzml browser files on COS"""
+def _prepare_storage_imzml_browser_files(
+    imzml_cobject: CloudObject, conf: Dict[str, Any]
+) -> Tuple[Storage, str]:
+    """Storage initialization for imzml browser files"""
+    browser_storage = Storage(backend=conf['lithops']['lithops']['storage'])
+    bucket_storage = conf['imzml_browser_storage']['bucket']
+    uuid = imzml_cobject.key.split('/')[0]
+    return browser_storage, uuid
 
-    def upload_file(data, key):
-        return storage.put_cloudobject(data.astype('f').tobytes(), key=key)
 
-    prefix = f'imzml_browser/{imzml_cobject.key.split("/")[1]}'
-    keys = [f'{prefix}/{var}.npy' for var in ['mzs', 'ints', 'sp_idxs']]
+def _upload_imzml_browser_files(
+    mzs: np.array,
+    ints: np.array,
+    sp_idxs: np.array,
+    imzml_reader: LithopsImzMLReader,
+    browser_storage: Storage,
+    uuid: str,
+) -> None:
+    """Save imzml browser files on the object storage"""
+
+    def upload_file(data: np.array, key: str):
+        save_cobj(browser_storage, data, key=key)
+
+    keys = [f'{uuid}/{k}' for k in ['mzs.npy', 'ints.npy', 'sp_idxs.npy']]
     start_t = datetime.now().replace(microsecond=0)
     with ThreadPoolExecutor(3) as executor:
         cobjs = list(executor.map(upload_file, [mzs, ints, sp_idxs], keys))
     _print_times(start_t, 'upload_imzml_files')
 
     chunk_records_number = 1024
-    data = mzs[::chunk_records_number].astype('f')
-    cobjs.append(storage.put_cloudobject(data.tobytes(), key=f'{prefix}/mz_index.npy'))
+    mz_index = mzs[::chunk_records_number].astype('f')
+    cobjs.append(save_cobj(browser_storage, mz_index, key=f'{uuid}/mz_index.npy'))
 
-    data = imzml_reader.imzml_reader
-    cobjs.append(save_cobj(storage, data, key=f'{prefix}/portable_spectrum_reader.pickle'))
-
-    return cobjs
+    key = f'{uuid}/portable_spectrum_reader.pickle'
+    cobjs.append(save_cobj(browser_storage, imzml_reader.imzml_reader, key=key))
 
 
 def _get_hash(
@@ -166,6 +179,7 @@ def _load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
+    conf: SMConfig,
     *,
     storage: Storage,
     perf: SubtaskProfiler,
@@ -193,11 +207,12 @@ def _load_ds(
     )
     perf.record_entry('uploaded segments', n_segms=len(ds_segms_cobjs))
 
-    # logger.info('Uploading related to imzml browser files')
-    # imzml_browser_cobjs = _upload_imzml_browser_files_to_cos(
-    #     storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs
-    # )
-    # perf.record_entry('uploaded imzml browser files')
+    logger.info('Uploading imzml browser files')
+    browser_storage, uuid = _prepare_storage_imzml_browser_files(imzml_cobject, conf)
+    imzml_browser_cobjs = _upload_imzml_browser_files(
+        mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid
+    )
+    perf.record_entry('uploaded imzml browser files')
 
     logger.info('Calculating md5 hash of imzML/ibd files')
     md5_hash = _get_hash(storage, imzml_cobject, ibd_cobject)
@@ -208,32 +223,8 @@ def _load_ds(
         ds_segments_bounds,
         ds_segms_cobjs,
         ds_segm_lens,
-        False,  # imzml_browser_cobjs,
         md5_hash,
     )
-
-
-def _upload_imzml_browser_files(storage: Storage, imzml_browser_cobjs: List[CObj]):
-    """Move files from COS to S3"""
-    conf = SMConfig.get_conf()
-    s3_client = get_s3_client(sm_config=conf)
-    transfer_config = TransferConfig(
-        multipart_chunksize=20 * MB, max_concurrency=10, io_chunksize=1 * MB
-    )
-
-    def upload_file(cobj):
-        logger.info(f'Uploading {cobj.key}')
-        file_object = storage.get_cloudobject(cobj, stream=True)
-        s3_client.upload_fileobj(
-            Bucket=conf['imzml_browser_storage']['bucket'],
-            Key=cobj.key.split('/', 1)[-1],
-            Fileobj=file_object,
-            Config=transfer_config,
-        )
-
-    with ThreadPoolExecutor(3) as executor:
-        for _ in executor.map(upload_file, imzml_browser_cobjs):
-            pass
 
 
 def _get_size_hash(imzml_head, ibd_head, md5_hash, ds_id):
@@ -278,22 +269,14 @@ def load_ds(
         logger.info(f'{message} Using VM-based load_ds')
         runtime_memory = 128 * 1024
 
-    (
-        imzml_reader,
-        ds_segments_bounds,
-        ds_segms_cobjs,
-        ds_segm_lens,
-        imzml_browser_cobjs,
-        md5_hash,
-    ) = executor.call(
+    conf = SMConfig.get_conf()
+
+    (imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, md5_hash,) = executor.call(
         _load_ds,
-        (imzml_cobject, ibd_cobject, ds_segm_size_mb),
+        (imzml_cobject, ibd_cobject, ds_segm_size_mb, conf),
         runtime_memory=runtime_memory,
     )
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
-
-    # _upload_imzml_browser_files(executor.storage, imzml_browser_cobjs)
-    # logger.info('Moved imzml browser files to S3')
 
     size_hash = _get_size_hash(imzml_head, ibd_head, md5_hash, ds_id)
 
