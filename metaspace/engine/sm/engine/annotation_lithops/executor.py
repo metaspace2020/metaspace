@@ -25,7 +25,7 @@ TRet = TypeVar('TRet')
 #: Docker Hub, and can be rebuilt using the Dockerfile in `engine/docker/lithops_aws_***`.
 #: Note: sci-test changes this constant to force local execution without docker
 RUNTIME_EC2_IMAGE = 'metaspace2020/metaspace-aws-ec2:3.0.1.b'
-RUNTIME_LAMBDA_IMAGE = 'metaspace-aws-lambda:3.0.1.a'
+RUNTIME_LAMBDA_IMAGE = 'metaspace-aws-lambda:3.0.1.c'
 MEM_LIMITS = {
     'localhost': 32 * 1024,
     'aws_lambda': 10 * 1024,

@@ -3,9 +3,6 @@ FROM python:3.8.18-slim
 RUN apt-get update \
     # Install aws-lambda-cpp build dependencies
     && apt-get install -y \
-      g++ \
-      make \
-      cmake \
       unzip \
     # cleanup package lists, they are not used anymore in this image
     && rm -rf /var/lib/apt/lists/* \

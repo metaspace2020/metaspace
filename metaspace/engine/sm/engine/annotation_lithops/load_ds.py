@@ -13,7 +13,7 @@ from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
-from sm.engine.annotation_lithops.executor import Executor
+from sm.engine.annotation_lithops.executor import Executor, MEM_LIMITS
 from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj
 from sm.engine.config import SMConfig
 from sm.engine.storage import get_s3_client
@@ -119,7 +119,7 @@ def _prepare_storage_imzml_browser_files(
 ) -> Tuple[Storage, str]:
     """Storage initialization for imzml browser files"""
     browser_storage = Storage(backend=conf['lithops']['lithops']['storage'])
-    bucket_storage = conf['imzml_browser_storage']['bucket']
+    browser_storage.bucket = conf['imzml_browser_storage']['bucket']
     uuid = imzml_cobject.key.split('/')[0]
     return browser_storage, uuid
 
@@ -262,7 +262,7 @@ def load_ds(
     # most memory-intense part (sorting the m/z array). Also for uploading imzml browser files
     # need plus 1x the ibd file size RAM.
     message = f'Found {ibd_size_mb}MB .ibd and {imzml_size_mb}MB .imzML files.'
-    if ibd_size_mb * 4 + 512 < 32 * 1024:
+    if ibd_size_mb * 4 + 512 < MEM_LIMITS['aws_lambda']:
         logger.info(f'{message} Trying serverless load_ds')
         runtime_memory = max(2048, int(2 ** np.ceil(np.log2(ibd_size_mb * 3 + 512))))
     else:
