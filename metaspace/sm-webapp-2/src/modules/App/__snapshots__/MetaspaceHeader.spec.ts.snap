@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`MyComponent > renders with first user data 1`] = `
+exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
 "<div class=\\"sm-header h-16\\">
   <div class=\\"fixed top-0 left-0 right-0\\">
     <div class=\\"
@@ -64,7 +64,7 @@ exports[`MyComponent > renders with first user data 1`] = `
 </div>"
 `;
 
-exports[`MyComponent > renders with second user data 1`] = `
+exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
 "<div class=\\"sm-header h-16\\">
   <div class=\\"fixed top-0 left-0 right-0\\">
     <div class=\\"

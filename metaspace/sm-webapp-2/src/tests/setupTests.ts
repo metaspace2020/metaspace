@@ -1,10 +1,11 @@
 // src/setupTests.ts
-import { afterAll, beforeAll, vi } from 'vitest';
+import { afterAll, beforeAll, vi, afterEach } from 'vitest';
 import fetch from 'node-fetch';
 import svgMock from './mockSvg';
 
 import { config } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
+
 
 // Assuming you're using `setupGlobalPlugins` as a custom setup function
 export function setupGlobalPlugins() {
@@ -16,6 +17,7 @@ if (!global.fetch) {
   // @ts-ignore
   global.fetch = fetch;
 }
+
 
 vi.mock('vue', async () => {
   const actualVue = await vi.importActual('vue');
@@ -45,6 +47,11 @@ afterAll(() => {
   if (unhandledRejections.size > 0) {
     throw new Error(`Unhandled promise rejections: ${Array.from(unhandledRejections.values()).join(', ')}`);
   }
+});
+
+
+afterEach(() => {
+  vi.clearAllMocks();
 });
 
 

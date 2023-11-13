@@ -1,9 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
 import router from "@/router";
 import store from "@/store";
 import { nextTick, ref } from 'vue';
-import {flushPromises, mount} from '@vue/test-utils';
-import MyComponent from './MetaspaceHeader';
+import { mount} from '@vue/test-utils';
+import MetaspaceHeader from './MetaspaceHeader';
 
 const currentUserMockResponses = [
   {
@@ -45,9 +44,7 @@ vi.mock('@vue/apollo-composable', () => ({
     loading: ref(false),
     error: ref(null),
     subscribeToMore: vi.fn(),
-    // Implement any other methods that your component expects
   })),
-  // ...mock other composable if needed
 }));
 
 
@@ -55,39 +52,29 @@ vi.mock('@vue/apollo-composable', () => ({
 router.push = vi.fn();
 
 
-describe('MyComponent', () => {
-  it('renders with first user data', async () => {
+describe('MetaspaceHeader', () => {
+  it('should match snapshot (logged in)', async ({expect}) => {
     mockIndex = 0;
-    // Mount the component using Vue Test Utils
-    const wrapper = mount(MyComponent, {
+    const wrapper = mount(MetaspaceHeader, {
       global: {
-        plugins: [router, store], // Use the mock router as a plugin
+        plugins: [router, store],
       },
     });
 
-    await nextTick(); // Wait for the next "tick" after mounting
-
+    await nextTick();
     expect(wrapper.html()).toMatchSnapshot();
   });
 
-  it('renders with second user data', async () => {
+  it('should match snapshot (logged out)', async ({expect}) => {
     mockIndex = 1;
-    // Mount the component using Vue Test Utils
-    const wrapper = mount(MyComponent, {
+    const wrapper = mount(MetaspaceHeader, {
       global: {
-        plugins: [router, store], // Use the mock router as a plugin
+        plugins: [router, store],
       },
     });
 
-    await nextTick(); // Wait for the next "tick" after mounting
-
+    await nextTick();
     expect(wrapper.html()).toMatchSnapshot();
   });
 
-
-  afterEach(() => {
-    // Reset the mockIndex or any other state between tests
-    mockIndex = 0;
-    vi.clearAllMocks();
-  });
 });
