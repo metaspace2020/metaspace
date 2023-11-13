@@ -5,11 +5,19 @@
   >
     <metaspace-header :class="$route.meta.headerClass" />
 
+    <!--
+      :key="$route.path" is used to force the content to be remounted if a non-querystring param in the URL changes.
+      This ensures that a loading screen is displayed and no unnecessary state is retained when e.g. switching
+      between group profile pages or datasets
+    -->
     <router-view
       :key="$route.path"
       class="sm-main-content"
       :class="{ 'flex-grow w-full': $route.meta.flex }"
     />
+
+    <metaspace-footer v-if="$route.meta.footer" />
+
   </div>
 </template>
 
@@ -19,6 +27,7 @@ import config from '../../lib/config'
 import safeJsonParse from '../../lib/safeJsonParse'
 
 import MetaspaceHeader from './MetaspaceHeader'
+import MetaspaceFooter from './MetaspaceFooter.vue'
 
 
 /** @type {ComponentOptions<Vue> & Vue} */
@@ -26,6 +35,7 @@ export default {
   name: 'App',
   components: {
     MetaspaceHeader,
+    MetaspaceFooter,
   },
   data() {
     return {
@@ -129,5 +139,6 @@ input, button {
   padding-top: 10px;
   padding-bottom: 32px; /* cookies banner height */
   overflow: auto;
+  min-height: calc(100vh - 316px);
 }
 </style>

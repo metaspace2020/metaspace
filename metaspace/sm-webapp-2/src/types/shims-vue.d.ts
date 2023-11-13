@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { App } from 'vue'
-import { ElMessageBox } from 'element-plus'
+import {ComponentInternalInstance, DefineComponent} from '@vue/runtime-core';
 
-declare module '*.vue' {
-  import type { DefineComponent } from 'vue'
-  const component: DefineComponent<{}, {}, any>
-  export default component
+// This helps TypeScript understand what a .vue file is
+declare module "*.vue" {
+  const component: DefineComponent<{}, {}, any>;
+  export default component;
 }
+

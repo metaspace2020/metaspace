@@ -1,6 +1,6 @@
+import { nextTick, ref } from 'vue';
 import router from "@/router";
 import store from "@/store";
-import { nextTick, ref } from 'vue';
 import { mount} from '@vue/test-utils';
 import MetaspaceHeader from './MetaspaceHeader';
 
