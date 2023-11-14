@@ -38,6 +38,7 @@
     "vue-gtag": "^2.0.1",
     "vue-router": "^4.2.5",
     "vue3-cookies": "^1.0.6",
+    "vue3-slide-up-down": "^2.0.1",
     "vuex": "^4.0.2",
     "vuex-router-sync": "6.0.0-rc.1"
   },

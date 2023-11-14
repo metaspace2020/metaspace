@@ -1,10 +1,13 @@
 // src/setupTests.ts
-import { afterAll, beforeAll, vi, afterEach } from 'vitest';
+import { afterAll, beforeAll, vi, afterEach, expect } from 'vitest';
 import fetch from 'node-fetch';
 import svgMock from './mockSvg';
-
+import { customSerializer } from './customSerializer';
 import { config } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
+
+
+expect.addSnapshotSerializer(customSerializer);
 
 
 // Assuming you're using `setupGlobalPlugins` as a custom setup function
@@ -12,11 +15,20 @@ export function setupGlobalPlugins() {
   config.global.plugins.push([ElementPlus])
 }
 
+
 // Polyfill fetch if it's not already available in the global environment
 if (!global.fetch) {
   // @ts-ignore
   global.fetch = fetch;
 }
+
+vi.mock('element-plus', async() => {
+  const originalModule = await vi.importActual('element-plus');
+  return {
+    ...originalModule,
+    generateId: () => 'fixed-id',
+  };
+});
 
 
 vi.mock('vue', async () => {

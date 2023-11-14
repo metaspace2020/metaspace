@@ -22,7 +22,8 @@ export const setLocalStorage = (key: string, value: any, cookieFallback = false)
 
 export const getLocalStorage = <T>(key: string): (T | undefined) => {
   try {
-    const json = localStorage.getItem(key) || memoryStorage[key] || cookies.get('storage_' + key)
+    const json = localStorage.getItem(key) || memoryStorage[key]
+      || JSON.stringify(cookies.get('storage_' + key))
     return json && safeJsonParse(json)
   } catch (err) {
     console.error(err)
@@ -49,14 +50,14 @@ export const migrateLocalStorage = () => {
 
     // Convert storage cookies to localStorage
     try {
-      const hideReleaseNotes = safeJsonParse(cookies.get('hideReleaseNotes'))
+      const hideReleaseNotes = cookies.get('hideReleaseNotes')
       if (hideReleaseNotes != null) {
         setLocalStorage('hideReleaseNotes', hideReleaseNotes, true)
         cookies.remove('hideReleaseNotes')
       }
     } catch (err) { console.error(err) }
     try {
-      const showDescrHint = safeJsonParse(cookies.get('show_descr_hint')) as any
+      const showDescrHint = cookies.get('show_descr_hint') as any
       if (showDescrHint != null) {
         setLocalStorage('hideMarkdownHint', showDescrHint === 0, true)
         cookies.remove('show_descr_hint')

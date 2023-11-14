@@ -18,6 +18,8 @@
 
     <metaspace-footer v-if="$route.meta.footer" />
 
+    <dialog-controller />
+
   </div>
 </template>
 
@@ -28,6 +30,7 @@ import safeJsonParse from '../../lib/safeJsonParse'
 
 import MetaspaceHeader from './MetaspaceHeader'
 import MetaspaceFooter from './MetaspaceFooter.vue'
+import { DialogController } from '../Account'
 
 
 /** @type {ComponentOptions<Vue> & Vue} */
@@ -36,6 +39,7 @@ export default {
   components: {
     MetaspaceHeader,
     MetaspaceFooter,
+    DialogController
   },
   data() {
     return {
@@ -44,7 +48,7 @@ export default {
   },
   async created() {
     const { cookies } = useCookies()
-    const flashMessage = safeJsonParse(cookies.get('flashMessage'))
+    const flashMessage = cookies.get('flashMessage')
     if (flashMessage) {
       try {
         if (flashMessage.type === 'verify_email_success') {

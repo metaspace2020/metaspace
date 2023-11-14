@@ -39636,18 +39636,62 @@ VueWrapper {
               "_makeLocalGettersCache": {},
               "_modules": ModuleCollection {
                 "root": Module {
-                  "_children": {},
+                  "_children": {
+                    "account": Module {
+                      "_children": {},
+                      "_rawModule": {
+                        "mutations": {
+                          "hideDialog": [Function],
+                          "showDialog": [Function],
+                        },
+                        "namespaced": true,
+                        "state": {
+                          "dialog": null,
+                          "dialogCloseRedirect": null,
+                          "loginSuccessRedirect": null,
+                        },
+                      },
+                      "context": {
+                        "commit": [Function],
+                        "dispatch": [Function],
+                      },
+                      "runtime": false,
+                      "state": {
+                        "dialog": null,
+                        "dialogCloseRedirect": null,
+                        "loginSuccessRedirect": null,
+                      },
+                    },
+                  },
                   "_rawModule": {
                     "getters": {
                       "currentUser": [Function],
                       "filter": [Function],
                     },
-                    "modules": {},
+                    "modules": {
+                      "account": {
+                        "mutations": {
+                          "hideDialog": [Function],
+                          "showDialog": [Function],
+                        },
+                        "namespaced": true,
+                        "state": {
+                          "dialog": null,
+                          "dialogCloseRedirect": null,
+                          "loginSuccessRedirect": null,
+                        },
+                      },
+                    },
                     "mutations": {
                       "updateCurrentUser": [Function],
                       "updateFilterOnNavigate": [Function],
                     },
                     "state": {
+                      "account": {
+                        "dialog": null,
+                        "dialogCloseRedirect": null,
+                        "loginSuccessRedirect": null,
+                      },
                       "annotation": undefined,
                       "channels": [],
                       "currentTour": null,
@@ -39670,6 +39714,11 @@ VueWrapper {
                   },
                   "runtime": false,
                   "state": {
+                    "account": {
+                      "dialog": null,
+                      "dialogCloseRedirect": null,
+                      "loginSuccessRedirect": null,
+                    },
                     "annotation": undefined,
                     "channels": [],
                     "currentTour": null,
@@ -39687,8 +39736,40 @@ VueWrapper {
                   },
                 },
               },
-              "_modulesNamespaceMap": {},
+              "_modulesNamespaceMap": {
+                "account/": Module {
+                  "_children": {},
+                  "_rawModule": {
+                    "mutations": {
+                      "hideDialog": [Function],
+                      "showDialog": [Function],
+                    },
+                    "namespaced": true,
+                    "state": {
+                      "dialog": null,
+                      "dialogCloseRedirect": null,
+                      "loginSuccessRedirect": null,
+                    },
+                  },
+                  "context": {
+                    "commit": [Function],
+                    "dispatch": [Function],
+                  },
+                  "runtime": false,
+                  "state": {
+                    "dialog": null,
+                    "dialogCloseRedirect": null,
+                    "loginSuccessRedirect": null,
+                  },
+                },
+              },
               "_mutations": {
+                "account/hideDialog": [
+                  [Function],
+                ],
+                "account/showDialog": [
+                  [Function],
+                ],
                 "updateCurrentUser": [
                   [Function],
                 ],
@@ -39698,6 +39779,11 @@ VueWrapper {
               },
               "_state": {
                 "data": {
+                  "account": {
+                    "dialog": null,
+                    "dialogCloseRedirect": null,
+                    "loginSuccessRedirect": null,
+                  },
                   "annotation": undefined,
                   "channels": [],
                   "currentTour": null,
@@ -39921,18 +40007,62 @@ VueWrapper {
             "_makeLocalGettersCache": {},
             "_modules": ModuleCollection {
               "root": Module {
-                "_children": {},
+                "_children": {
+                  "account": Module {
+                    "_children": {},
+                    "_rawModule": {
+                      "mutations": {
+                        "hideDialog": [Function],
+                        "showDialog": [Function],
+                      },
+                      "namespaced": true,
+                      "state": {
+                        "dialog": null,
+                        "dialogCloseRedirect": null,
+                        "loginSuccessRedirect": null,
+                      },
+                    },
+                    "context": {
+                      "commit": [Function],
+                      "dispatch": [Function],
+                    },
+                    "runtime": false,
+                    "state": {
+                      "dialog": null,
+                      "dialogCloseRedirect": null,
+                      "loginSuccessRedirect": null,
+                    },
+                  },
+                },
                 "_rawModule": {
                   "getters": {
                     "currentUser": [Function],
                     "filter": [Function],
                   },
-                  "modules": {},
+                  "modules": {
+                    "account": {
+                      "mutations": {
+                        "hideDialog": [Function],
+                        "showDialog": [Function],
+                      },
+                      "namespaced": true,
+                      "state": {
+                        "dialog": null,
+                        "dialogCloseRedirect": null,
+                        "loginSuccessRedirect": null,
+                      },
+                    },
+                  },
                   "mutations": {
                     "updateCurrentUser": [Function],
                     "updateFilterOnNavigate": [Function],
                   },
                   "state": {
+                    "account": {
+                      "dialog": null,
+                      "dialogCloseRedirect": null,
+                      "loginSuccessRedirect": null,
+                    },
                     "annotation": undefined,
                     "channels": [],
                     "currentTour": null,
@@ -39955,6 +40085,11 @@ VueWrapper {
                 },
                 "runtime": false,
                 "state": {
+                  "account": {
+                    "dialog": null,
+                    "dialogCloseRedirect": null,
+                    "loginSuccessRedirect": null,
+                  },
                   "annotation": undefined,
                   "channels": [],
                   "currentTour": null,
@@ -39972,8 +40107,40 @@ VueWrapper {
                 },
               },
             },
-            "_modulesNamespaceMap": {},
+            "_modulesNamespaceMap": {
+              "account/": Module {
+                "_children": {},
+                "_rawModule": {
+                  "mutations": {
+                    "hideDialog": [Function],
+                    "showDialog": [Function],
+                  },
+                  "namespaced": true,
+                  "state": {
+                    "dialog": null,
+                    "dialogCloseRedirect": null,
+                    "loginSuccessRedirect": null,
+                  },
+                },
+                "context": {
+                  "commit": [Function],
+                  "dispatch": [Function],
+                },
+                "runtime": false,
+                "state": {
+                  "dialog": null,
+                  "dialogCloseRedirect": null,
+                  "loginSuccessRedirect": null,
+                },
+              },
+            },
             "_mutations": {
+              "account/hideDialog": [
+                [Function],
+              ],
+              "account/showDialog": [
+                [Function],
+              ],
               "updateCurrentUser": [
                 [Function],
               ],
@@ -39983,6 +40150,11 @@ VueWrapper {
             },
             "_state": {
               "data": {
+                "account": {
+                  "dialog": null,
+                  "dialogCloseRedirect": null,
+                  "loginSuccessRedirect": null,
+                },
                 "annotation": undefined,
                 "channels": [],
                 "currentTour": null,

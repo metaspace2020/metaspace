@@ -2,6 +2,9 @@ import { createStore } from 'vuex'
 import mutations from './mutations';
 import getters from './getters';
 
+import {accountModule} from '../modules/Account';
+
+
 
 const store = createStore({
   state: {
@@ -38,7 +41,7 @@ const store = createStore({
   mutations,
   // actions,
   modules: {
-    // account: accountModule
+    account: accountModule
   }
 })
 

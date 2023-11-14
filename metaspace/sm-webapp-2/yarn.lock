@@ -6147,6 +6147,11 @@ vue3-cookies@^1.0.6:
   dependencies:
     vue "^3.0.0"
 
+vue3-slide-up-down@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/vue3-slide-up-down/-/vue3-slide-up-down-2.0.1.tgz#280494cc56b2af3dd7096a5377b780a141d2c279"
+  integrity sha512-lOuQC7Obpr4Mzg1afJYsHjPFHmVXp7WO7ilAry22HADQC4KYF7CnFHuwduFBJYjiQuaOjMyMCZAjkPoLqhg+lA==
+
 vue@^3.0.0, vue@^3.3.4:
   version "3.3.7"
   resolved "https://registry.yarnpkg.com/vue/-/vue-3.3.7.tgz#972a218682443a3819d121261b2bff914417f4f0"
