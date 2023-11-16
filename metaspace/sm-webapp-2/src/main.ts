@@ -1,12 +1,11 @@
 import 'focus-visible'
 
 
+// @ts-ignore
 import { createApp, provide, h } from 'vue'
 
 import config, { updateConfigFromQueryString } from './lib/config'
 import * as Sentry from '@sentry/vue'
-
-
 
 import App from './modules/App/App.vue'
 import store from './store'
@@ -30,6 +29,11 @@ import {Route} from "@sentry/vue/types/router";
 // import './modules/App/tailwind.scss'
 
 
+// if you're using CDN, please remove this line.
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+
+
+
 const isProd = process.env.NODE_ENV === 'production'
 
 const app = createApp({
@@ -39,6 +43,10 @@ const app = createApp({
 
   render: () => h(App),
 })
+
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
 
 if (config.sentry != null && config.sentry.dsn !== '') {
   Sentry.init({

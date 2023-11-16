@@ -1,6 +1,7 @@
 import { createStore } from 'vuex'
 import mutations from './mutations';
 import getters from './getters';
+import actions from './actions.js';
 
 import {accountModule} from '../modules/Account';
 
@@ -10,6 +11,8 @@ const store = createStore({
   state: {
     // names of currently shown filters
     orderedActiveFilters: [],
+
+    reportError: false,
 
     filterLists: null,
     filterListsLoading: false,
@@ -39,7 +42,7 @@ const store = createStore({
 
   getters,
   mutations,
-  // actions,
+  actions,
   modules: {
     account: accountModule
   }

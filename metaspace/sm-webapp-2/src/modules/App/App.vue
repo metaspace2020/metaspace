@@ -26,7 +26,6 @@
 <script>
 import { useCookies } from 'vue3-cookies'
 import config from '../../lib/config'
-import safeJsonParse from '../../lib/safeJsonParse'
 
 import MetaspaceHeader from './MetaspaceHeader'
 import MetaspaceFooter from './MetaspaceFooter.vue'

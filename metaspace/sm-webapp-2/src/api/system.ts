@@ -26,3 +26,16 @@ export const getSystemHealthSubscribeToMore = {
 export const updateSystemHealthMutation = gql`mutation UpdateSystemHealth ($health: UpdateSystemHealthInput!) {
   updateSystemHealth(health: $health)
 }`
+
+export const getDatabaseOptionsQuery = gql`query DatabaseOptions {
+  allMolecularDBs {
+    id
+    name
+    version
+    archived
+    group {
+      id
+      shortName
+    }
+  }
+}`

@@ -102,7 +102,7 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-import {ElForm, FormInstance} from 'element-plus';
+import { FormInstance} from 'element-plus';
 import GoogleButton from './GoogleButton.vue';
 import InterDialogLink from './InterDialogLink';
 import { createAccountByEmail } from '../../../api/auth';

@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/browser'
 import { every } from 'lodash-es'
 import { Primitive } from 'ts-essentials'
 import { ElNotification } from 'element-plus/lib/components/notification'
+import {getLocalStorage, setLocalStorage} from "@/lib/localStorage";
 
 let $notify: typeof ElNotification
 
@@ -28,7 +29,14 @@ export default function reportError(
     if (!isHandled(err)) {
       Sentry.captureException(err, { contexts: { 'Extra Data': extraData } })
       console.error(err, extraData)
-      if ($notify != null && message) {
+      const isReportingError = getLocalStorage('reportError')
+
+      setTimeout(() => {
+        setLocalStorage('reportError', false)
+      }, 500)
+
+      if ($notify != null && message && !isReportingError) {
+        setLocalStorage('reportError', true)
         $notify.error(message)
       }
     }

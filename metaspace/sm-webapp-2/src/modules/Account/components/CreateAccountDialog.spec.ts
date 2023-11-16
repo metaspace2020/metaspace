@@ -5,7 +5,7 @@ import { beforeEach, afterEach, vi } from 'vitest';
 import ElementPlus from 'element-plus';
 import CreateAccountDialog from './CreateAccountDialog.vue';
 import account from '../store/account';
-import { nextTick, ref } from 'vue';
+import { nextTick } from 'vue';
 import * as authApi from '../../../api/auth';
 
 vi.mock('../../../api/auth');

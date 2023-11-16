@@ -17,7 +17,7 @@
       "webpack-env",
       "element-plus/global",
       "@vue/apollo-composable",
-      "@vue/runtime-core",
+      "@vue/runtime-core"
     ],
     "paths": {
       "@/*": [
@@ -31,7 +31,7 @@
       "scripthost"
     ],
     "allowJs": true,
-    "noEmit": true,
+    "noEmit": true
   },
   "include": [
     "src/types/*.d.ts",

@@ -84,3 +84,17 @@ export const deleteDatabaseMutation =
 export interface DeleteDatabaseMutation {
   id: number,
 }
+
+
+export const getDatabaseOptionsQuery = gql`query DatabaseOptions {
+  allMolecularDBs {
+    id
+    name
+    version
+    archived
+    group {
+      id
+      shortName
+    }
+  }
+}`

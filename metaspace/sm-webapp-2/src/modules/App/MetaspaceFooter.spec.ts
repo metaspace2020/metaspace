@@ -10,6 +10,6 @@ describe('MetaspaceFooter', () => {
     const wrapper = mount(MetaspaceFooter, { store, router })
     await nextTick()
 
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.html()).toMatchSnapshot()
   })
 })

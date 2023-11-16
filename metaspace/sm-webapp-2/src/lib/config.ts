@@ -2,6 +2,7 @@
 import { defaultsDeep } from 'lodash-es'
 import { getLocalStorage, removeLocalStorage, setLocalStorage } from './localStorage'
 import { MAX_MOL_DBS_EXT, MAX_MOL_DBS } from './constants'
+// @ts-ignore
 import fileConfig from '../clientConfig.json'
 
 interface Features {
@@ -135,7 +136,6 @@ export const replaceConfigWithDefaultForTests = () => {
   Object.assign(config, defaultConfig)
 }
 
-export default config
 
 interface Limits {
   maxMolDBs: number
@@ -146,3 +146,6 @@ export const limits : Limits = {
     return config.features.moldb_limit_ext ? MAX_MOL_DBS_EXT : MAX_MOL_DBS
   },
 }
+
+
+export default config
