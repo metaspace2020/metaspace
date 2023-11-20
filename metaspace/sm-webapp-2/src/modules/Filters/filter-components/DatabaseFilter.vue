@@ -136,7 +136,6 @@ export default defineComponent({
     let datasetDBsByGroup = ref();
 
     watch(hasDatasetFilter, async(newVal) => {
-      console.log('hasDatasetFilter', newVal)
       if (!newVal) {
         const { data } = await apolloClient.query({
           query:  DATABASE_OPTIONS_QUERY,
@@ -172,7 +171,6 @@ export default defineComponent({
     });
 
     const valueIfKnown = computed(() => {
-      console.log('props', props.value)
       return props.value && options.value[props.value] ? props.value : undefined;
     });
 

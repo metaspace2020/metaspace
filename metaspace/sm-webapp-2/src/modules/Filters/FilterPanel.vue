@@ -219,7 +219,6 @@ export default defineComponent({
     }
 
     function addFilter(key) {
-      console.log('here', key)
       if (key) {
         selectedFilterToAdd.value = null
         store.commit('addFilter', key)

@@ -19,10 +19,8 @@ export default {
         fetchPolicy: 'cache-first',
       });
     } catch (err) {
-      console.log('err', err)
       reportError(err);
     }
-    console.log('response', response)
 
     // set annotationIds default according to values passed from snapshot to the store state
     context.commit('setFilterLists', {...response.data,

@@ -23,7 +23,6 @@ export default defineComponent({
     const dialog = this.accountState.dialog;
 
     const DialogComponent = dialog == null ? null : dialogComponents[dialog];
-    console.log('', this.accountState.dialog)
 
     return DialogComponent == null ? null : h(DialogComponent);
   },

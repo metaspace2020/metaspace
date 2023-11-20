@@ -87,7 +87,6 @@ export default {
   },
 
   addFilter(state, name) {
-    console.log('addFilter', name)
     const oldFilter = decodeParams(state.route, state.filterLists);
     const filtersToAdd = [name];
     const filtersToRemove = [];
@@ -111,7 +110,6 @@ export default {
     filtersToRemove.forEach(key => {
       newFilter[key] = undefined;
     });
-    console.log('newFilter', newFilter)
     const newActive = without([...state.orderedActiveFilters, ...filtersToAdd], ...filtersToRemove);
     sortFilterKeys(newActive);
 
