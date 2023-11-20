@@ -23,7 +23,7 @@
 
     <template v-slot:show>
       <span class="tf-value-span">
-        <span v-if="value != null">{{ formatValue(value) }}</span>
+        <span v-if="value != null && value !== ''">{{ formatValue(value) }}</span>
         <span v-else>(any)</span>
       </span>
     </template>
@@ -41,7 +41,7 @@ export default defineComponent({
   },
   props: {
     value: {
-      type: [String, Number, Object],
+      type: [String, Number, Object, Boolean],
       default: undefined,
     },
     name: {
@@ -49,11 +49,11 @@ export default defineComponent({
       required: true,
     },
     helpComponent: {
-      type: String,
+      type: [String, Object],
       default: null,
     },
     options: {
-      type: Array as PropType<any[]>,
+      type: Array,
       required: true,
     },
     optionFormatter: Function,

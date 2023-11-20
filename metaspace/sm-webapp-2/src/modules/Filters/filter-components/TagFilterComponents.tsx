@@ -1,5 +1,5 @@
 import { defineComponent } from 'vue'
-import {Clock, InfoFilled} from "@element-plus/icons-vue";
+import {Clock, Close, InfoFilled} from "@element-plus/icons-vue";
 import {ElIcon} from "element-plus";
 
 export const TagFilterOuter = defineComponent({
@@ -27,9 +27,13 @@ export const TagFilterRemove = defineComponent({
     return () => (
       <button
         title="Remove filter"
-        class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"
+        class="tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base"
         onClick={() => emit('click')}
-      />
+      >
+        <ElIcon>
+          <Close />
+        </ElIcon>
+      </button>
     )
   },
 })

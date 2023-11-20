@@ -122,7 +122,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: 'Dataset',
     description: 'Select dataset',
     levels: ['annotation', 'dataset', 'dataset-annotation'],
-    initialValue: [],
+    initialValue: undefined,
     multiple: true,
     encoding: 'list',
   },
@@ -154,7 +154,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: 'Molecule',
     description: 'Search molecule',
     levels: ['dataset', 'annotation', 'dataset-annotation'],
-    initialValue: '',
+    initialValue: undefined,
     debounce: true,
   },
 

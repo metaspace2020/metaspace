@@ -1,5 +1,5 @@
 <template>
-  <el-popover trigger="hover">
+  <el-popover trigger="hover" width="450">
     <template #default>
       <div class="off-sample-help-content">
         <p>

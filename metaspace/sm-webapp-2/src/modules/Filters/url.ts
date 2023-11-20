@@ -97,17 +97,18 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
       continue
     }
 
-    if (key in filter && (defaultFilter == null || filter[key] !== defaultFilter[key])) {
+
+    if (key in filter && (defaultFilter == null || (filter[key] === undefined ? !Object.keys(defaultFilter).includes(key) : filter[key] !== defaultFilter[key]))) {
       if (encoding === 'json') {
         q[FILTER_TO_URL[key]] = JSON.stringify(filter[key])
       } else if (encoding === 'list') {
-        q[FILTER_TO_URL[key]] = filter[key] ? filter[key].join(',') : undefined
+        q[FILTER_TO_URL[key]] = filter[key] ? filter[key].join(',') : ''
       } else if (encoding === 'bool') {
         q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0'
       } else if (encoding === 'number') {
         q[FILTER_TO_URL[key]] = String(filter[key] ?? '')
       } else {
-        q[FILTER_TO_URL[key]] = filter[key]
+        q[FILTER_TO_URL[key]] = filter[key] || ''
       }
     }
   }

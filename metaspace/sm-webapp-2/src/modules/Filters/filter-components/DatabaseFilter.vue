@@ -16,7 +16,7 @@
         no-data-text="No matches"
         no-match-text="No matches"
         reserve-keyword
-        :value="valueIfKnown"
+        v-model="valueIfKnown"
         @change="onInput"
         @visible-change="filterOptions('')"
       >
@@ -59,7 +59,7 @@
       <span v-if="initialized" class="tf-value-span">
         {{ label }}
       </span>
-      <el-icon v-else><Loading/></el-icon>
+      <el-icon v-else class="is-loading"><Loading/></el-icon>
     </template>
   </tag-filter>
 </template>
@@ -172,6 +172,7 @@ export default defineComponent({
     });
 
     const valueIfKnown = computed(() => {
+      console.log('props', props.value)
       return props.value && options.value[props.value] ? props.value : undefined;
     });
 
