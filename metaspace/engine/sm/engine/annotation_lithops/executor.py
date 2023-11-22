@@ -24,8 +24,8 @@ TRet = TypeVar('TRet')
 #: manually updating their config files every time it changes. The image must be public on
 #: Docker Hub, and can be rebuilt using the Dockerfile in `engine/docker/lithops_aws_***`.
 #: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_EC2_IMAGE = 'metaspace2020/metaspace-aws-ec2:3.0.1.b'
-RUNTIME_LAMBDA_IMAGE = 'metaspace-aws-lambda:3.0.1.c'
+RUNTIME_EC2_IMAGE = 'metaspace2020/metaspace-aws-ec2:3.0.2.a'
+RUNTIME_LAMBDA_IMAGE = 'metaspace-aws-lambda:3.0.2.b'
 MEM_LIMITS = {
     'localhost': 32 * 1024,
     'aws_lambda': 10 * 1024,
@@ -42,21 +42,12 @@ def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
         def finalize_perf():
             if len(subtask_perf.entries) > 0 and 'finished' not in subtask_perf.entries:
                 subtask_perf.record_entry('finished')
-            subtask_perf.add_extra_data(
-                **{
-                    'inner time': (datetime.now() - start_time).total_seconds(),
-                    'mem before': mem_before,
-                    'mem after': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
-                }
-            )
             return subtask_perf
 
-        start_time = datetime.now()
         subtask_perf = SubtaskProfiler()
         if has_perf_arg:
             kwargs['perf'] = subtask_perf
 
-        mem_before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         try:
             result = func(*args, **kwargs)
             return result, finalize_perf()
@@ -87,32 +78,30 @@ def _save_subtask_perf(
     cost_factors_plain = cost_factors.to_dict('list') if cost_factors is not None else None
     if futures:
         exec_times = [f.stats.get('worker_func_exec_time', -1) for f in futures]
+        mem_usages = [int(f.stats.get('worker_peak_memory_end', -1) / 1024 ** 2) for f in futures]
+        request_ids = [f.activation_id for f in futures]
     else:
         # debug_run_locally=True doesn't make futures
         exec_times = [sum(perf.entries.values()) for perf in subtask_perfs]
-    inner_times = subtask_data.pop('inner time', [-1])
-    mem_befores = subtask_data.pop('mem before', [-1])
-    mem_afters = subtask_data.pop('mem after', [-1])
     perf_data = {
         'num_actions': len(exec_times),
         'attempt': attempt,
         'runtime_memory': runtime_memory,
-        'max_memory': np.max(mem_afters).item(),
+        'max_memory': np.max(mem_usages).item(),
         'max_time': np.max(exec_times).item(),
-        'overhead_memory': np.max(mem_befores).item(),
-        'overhead_time': (np.mean(exec_times) - np.mean(inner_times)).item(),
         'cost_factors': cost_factors_plain,
         'exec_times': exec_times,
-        'mem_usages': mem_afters,
+        'mem_usages': mem_usages,
         'subtask_timings': subtask_timings,
         'subtask_data': subtask_data,
+        'request_ids': request_ids,
     }
     perf.record_entry(func_name, start_time, datetime.now(), **perf_data)
 
     # Print a summary
     if any(subtask_timings) or any(subtask_data):
         subtask_df = pd.concat([pd.DataFrame(subtask_timings), pd.DataFrame(subtask_data)], axis=1)
-        subtask_df['perf.mem_usage'] = mem_afters
+        subtask_df['perf.mem_usage'] = mem_usages
         subtask_df['perf.exec_time'] = exec_times
         if futures and len(futures) > 1:
             subtask_summary = subtask_df.describe().transpose().to_string()
@@ -276,7 +265,7 @@ class Executor:
                 if old_memory < MEM_LIMITS['aws_lambda']:
                     runtime_memory *= 2
                 else:
-                    runtime_memory = 128 * 1024  # switch to EC2
+                    runtime_memory = MEM_LIMITS['aws_ec2']  # switch to EC2
 
                 logger.warning(
                     f'{func_name} raised {type(exc)} with {old_memory}MB, retrying with '

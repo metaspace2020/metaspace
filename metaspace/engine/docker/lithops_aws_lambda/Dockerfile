@@ -13,14 +13,14 @@ RUN pip install --upgrade --ignore-installed pip wheel six setuptools \
     && pip install --upgrade --no-cache-dir --ignore-installed \
         awslambdaric \
         boto3 \
-        redis \
+        cloudpickle==1.6.0 \
         httplib2 \
-        requests \
-        pika \
         kafka-python \
-        cloudpickle \
-        ps-mem \
-        tblib
+        pika==1.2.0 \
+        ps-mem==3.12 \
+        redis==3.5.3 \
+        requests==2.29.0 \
+        tblib==1.7.0
 
 ARG FUNCTION_DIR="/function"
 
