@@ -148,7 +148,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           position: 'top',
           formatter: function(params: any) {
             const value = typeof params.value[4] === 'number' ? params.value[4] : params.value[3]
-            return (value || 0).toFixed(2) + ' '
+            return (value === 'number' ? (value || 0).toFixed(2) : value) + ' '
               + (params.data?.label?.y || '').replace(/-agg-/g, ' ') + ' in ' + (params.data?.label?.x || '')
           },
         },
