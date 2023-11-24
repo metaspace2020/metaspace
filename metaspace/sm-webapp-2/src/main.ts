@@ -10,7 +10,7 @@ import * as Sentry from '@sentry/vue'
 import App from './modules/App/App.vue'
 import store from './store'
 import router from './router'
-import { sync } from 'vuex-router-sync'
+// import { sync } from 'vuex-router-sync'
 
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
@@ -86,7 +86,7 @@ migrateLocalStorage()
 
 app.use(router)
 app.use(store)
-sync(store, router)
+// sync(store, router)
 
 router.afterEach((to: Route) => {
   store.commit('updateFilterOnNavigate', to)

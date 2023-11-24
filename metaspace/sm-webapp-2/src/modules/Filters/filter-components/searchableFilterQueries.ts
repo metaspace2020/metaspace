@@ -77,8 +77,8 @@ const annotationQueries: FilterQueries = {
         dFilter,
         query: $store.getters.ftsQuery,
         colocalizationCoeffFilter,
-        orderBy: $store.getters.settings.table.order.by,
-        sortingOrder: $store.getters.settings.table.order.dir,
+        orderBy: $store.getters.settings?.table?.order?.by,
+        sortingOrder: $store.getters.settings?.table?.order?.dir,
         countIsomerCompounds: config.features.isomers,
       },
     })
@@ -116,7 +116,7 @@ const groupQueries: FilterQueries = {
     return data.options as Option[]
   },
   async getById($apollo, ids) {
-    const promises = ids.map(groupId => $apollo.query({
+    const promises = (ids || []).map(groupId => $apollo.query({
       query: gql`query GroupOptionById ($groupId: ID!) {
         group(groupId: $groupId) {
          id

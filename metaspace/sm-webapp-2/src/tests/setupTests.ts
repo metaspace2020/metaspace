@@ -22,6 +22,13 @@ if (!global.fetch) {
   global.fetch = fetch;
 }
 
+// mock new jwt token
+global.fetch = vi.fn(() =>
+  Promise.resolve({
+    json: () => Promise.resolve({ token: 'mock-token' }),
+  })
+);
+
 vi.mock('element-plus', async() => {
   const originalModule = await vi.importActual('element-plus');
   return {

@@ -11,7 +11,7 @@
       between group profile pages or datasets
     -->
     <router-view
-      :key="$route.path"
+      :key="route.path"
       class="sm-main-content"
       :class="{ 'flex-grow w-full': $route.meta.flex }"
     />
@@ -26,6 +26,10 @@
 <script>
 import { useCookies } from 'vue3-cookies'
 import config from '../../lib/config'
+import { useStore } from 'vuex';
+import { useRoute } from 'vue-router';
+import { watch } from 'vue';
+
 
 import MetaspaceHeader from './MetaspaceHeader'
 import MetaspaceFooter from './MetaspaceFooter.vue'
@@ -67,6 +71,23 @@ export default {
       } finally {
         cookies.remove('flashMessage')
       }
+    }
+  },
+  setup() {
+    const store = useStore();
+    const route = useRoute();
+
+    watch(route, (newRoute) => {
+      store.commit('updateRoute', {
+        path: newRoute.path,
+        params: newRoute.params,
+        query: newRoute.query,
+      });
+    }, { immediate: true });
+
+    return {
+      store,
+      route,
     }
   },
 }

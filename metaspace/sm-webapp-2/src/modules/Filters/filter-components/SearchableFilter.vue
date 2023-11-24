@@ -128,11 +128,12 @@ export default defineComponent({
       cachedOptions.value = foundOptions;
 
       if (missingValues.length > 0) {
-        const options = await searchableFilterQueries[props.filterKey].getById(/* Apollo Client and other params */);
+        const options = await searchableFilterQueries[props.filterKey].getById(apolloClient, valueAsArray.value);
         cachedOptions.value.push(...options);
       }
 
       if (valueAsArray.value.length === 1) {
+        // data.options.length may be 0 if an invalid ID is passed due to URL truncation or a dataset becoming hidden
         currentLabel.value = foundOptions.length > 0 ? foundOptions[0].label : valueAsArray.value[0];
       }
 

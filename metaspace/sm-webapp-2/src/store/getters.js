@@ -32,7 +32,7 @@ export default {
 
   gqlAnnotationFilter(state, getters) {
     const filter = getters.filter;
-    const colocalizationAlgo = getters.settings.annotationView.colocalizationAlgo;
+    const colocalizationAlgo = getters?.settings?.annotationView?.colocalizationAlgo;
 
     const f = {
       compoundQuery: filter.compoundName,
@@ -113,7 +113,7 @@ export default {
 
   gqlColocalizationFilter(state, getters) {
     const { datasetIds, colocalizedWith, database, fdrLevel } = getters.filter;
-    const colocalizationAlgo = getters.settings.annotationView.colocalizationAlgo;
+    const colocalizationAlgo = getters?.settings?.annotationView?.colocalizationAlgo;
     if (datasetIds && !datasetIds.includes('|') && colocalizedWith != null && database != null && fdrLevel != null) {
       return { colocalizedWith, colocalizationAlgo, databaseId: database, fdrLevel };
     } else {

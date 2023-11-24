@@ -37,7 +37,12 @@ const store = createStore({
 
     // ion image global viewer settings
     channels: [],
-    mode: 'SINGLE'
+    mode: 'SINGLE',
+    route: {
+      path: '',
+      params: {},
+      query: {},
+    },
   },
 
   getters,

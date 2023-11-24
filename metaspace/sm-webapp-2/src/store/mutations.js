@@ -68,6 +68,12 @@ function updateFilter(state, filter, routerAction = null) {
 }
 
 export default {
+  updateRoute(state, route) {
+    state.route.path = route.path;
+    state.route.params = route.params;
+    state.route.query = route.query;
+  },
+
   updateFilter(state, filter) {
     // TODO: Stop using updateFilter for adding/removing filters, as it makes reacting to added/removed filters
     // much more difficult
