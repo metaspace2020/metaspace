@@ -13,7 +13,11 @@
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue';
+import {ElTooltip} from "element-plus";
 export default defineComponent({
+  components: {
+    ElTooltip
+  },
   props: {
     tooltip: String,
     tooltipPlacement: String,

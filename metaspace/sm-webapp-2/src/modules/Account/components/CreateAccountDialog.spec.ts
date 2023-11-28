@@ -1,5 +1,4 @@
 import {flushPromises, mount} from '@vue/test-utils';
-import { createRouter, createWebHistory } from 'vue-router';
 import { createStore } from 'vuex';
 import { beforeEach, afterEach, vi } from 'vitest';
 import ElementPlus from 'element-plus';
@@ -7,14 +6,9 @@ import CreateAccountDialog from './CreateAccountDialog.vue';
 import account from '../store/account';
 import { nextTick } from 'vue';
 import * as authApi from '../../../api/auth';
+import router from "@/router";
 
 vi.mock('../../../api/auth');
-
-// Create a router instance
-const localRouter = createRouter({
-  history: createWebHistory(),
-  routes: [], // Define your routes here
-});
 
 const setFormField = (wrapper, fieldName, value) => {
   const formItem = wrapper.findAllComponents({ name: 'ElFormItem' }).find(w => w.props().prop === fieldName);
@@ -41,7 +35,7 @@ describe('CreateAccountDialog', () => {
   it('should match snapshot', async ({expect}) => {
     const wrapper = mount(CreateAccountDialog, {
       global: {
-        plugins: [store, localRouter, ElementPlus],
+        plugins: [store, router, ElementPlus],
       },
     });
     await nextTick();
@@ -58,7 +52,7 @@ describe('CreateAccountDialog', () => {
     const password = 'abcd1234';
     const wrapper = mount(CreateAccountDialog, {
       global: {
-        plugins: [store, localRouter, ElementPlus],
+        plugins: [store, router, ElementPlus],
       },
     });
     await nextTick();
@@ -84,7 +78,7 @@ describe('CreateAccountDialog', () => {
     // Arrange
     const wrapper = mount(CreateAccountDialog, {
       global: {
-        plugins: [store, localRouter, ElementPlus],
+        plugins: [store, router, ElementPlus],
       },
     });
     await nextTick();

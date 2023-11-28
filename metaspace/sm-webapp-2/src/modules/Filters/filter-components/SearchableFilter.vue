@@ -53,7 +53,12 @@ import { useStore } from 'vuex';
 import { ElSelect } from 'element-plus';
 import TagFilter from './TagFilter.vue';
 import searchableFilterQueries, { Option } from './searchableFilterQueries';
-import apolloClient from "@/api/graphqlClient";
+
+
+// import apolloClient from "@/api/graphqlClient";
+import { inject, InjectionKey } from 'vue';
+import { DefaultApolloClient } from '@vue/apollo-composable';
+import { ApolloClient } from '@apollo/client/core';
 
 export default defineComponent({
   name: 'SearchableFilter',
@@ -71,6 +76,8 @@ export default defineComponent({
   },
   emits: ['input', 'change', 'destroy'],
   setup(props, { emit }) {
+    const apolloClientKey: InjectionKey<ApolloClient<any>> = DefaultApolloClient as InjectionKey<ApolloClient<any>>;
+    const apolloClient = inject(apolloClientKey);
     const store = useStore();
     const loading = ref(false);
     const options = ref<Option[]>([]);
@@ -100,7 +107,7 @@ export default defineComponent({
       const optionsAux = values.map(value => ({ value, label: valueToLabel[value] }))
 
       // add currently selected values to the list
-      for (let i = 0; i < options.value.length; i++) {
+      for (let i = 0; i < options.value?.length; i++) {
         const item = options.value[i]
         if (values.indexOf(item.value) === -1) {
           values.push(item.value)

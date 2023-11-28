@@ -74,7 +74,13 @@ import TagFilter from './TagFilter.vue';
 import { FilterHelpText } from './TagFilterComponents'
 import { MolecularDB } from '../../../api/moldb';
 import { formatDatabaseLabel, getDatabasesByGroup } from '../../MolecularDatabases/formatting';
-import apolloClient from "@/api/graphqlClient";
+
+import { inject, InjectionKey } from 'vue';
+import { DefaultApolloClient } from '@vue/apollo-composable';
+import { ApolloClient } from '@apollo/client/core';
+import {Loading} from "@element-plus/icons-vue";
+
+// import apolloClient from "@/api/graphqlClient";
 
 interface Option {
   value: string;
@@ -92,12 +98,16 @@ export default defineComponent({
   components: {
     TagFilter,
     FilterHelpText,
+    Loading
   },
   props: {
     value: String,
     fixedOptions: Array,
   },
   setup(props, { emit }) {
+    const apolloClientKey: InjectionKey<ApolloClient<any>> = DefaultApolloClient as InjectionKey<ApolloClient<any>>;
+    const apolloClient = inject(apolloClientKey);
+
     const groups = ref<GroupOption[]>([]);
     const options = ref<Record<string, Option>>({});
     const previousQuery = ref<string | null>(null);
@@ -136,6 +146,9 @@ export default defineComponent({
     let datasetDBsByGroup = ref();
 
     watch(hasDatasetFilter, async(newVal) => {
+      if(!apolloClient){
+        return
+      }
       if (!newVal) {
         const { data } = await apolloClient.query({
           query:  DATABASE_OPTIONS_QUERY,
@@ -143,6 +156,7 @@ export default defineComponent({
 
         })
         const moldbs = data.allMolecularDBs || []
+
         allDBsByGroup.value = getDatabasesByGroup(moldbs);
       } else {
         const { data } = await apolloClient.query({

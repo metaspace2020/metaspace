@@ -6,13 +6,54 @@ import { customSerializer } from './customSerializer';
 import { config } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
 
-
 expect.addSnapshotSerializer(customSerializer);
-
 
 // Assuming you're using `setupGlobalPlugins` as a custom setup function
 export function setupGlobalPlugins() {
   config.global.plugins.push([ElementPlus])
+
+}
+export function setupGlobalStubs() {
+  const ElOptionMock = {
+    name: 'ElOptionMock',
+    template: '<div class="el-option-mock"><slot></slot></div>',
+    props: ['groupQueryChange'], // Add props used by the original component
+    // inject: ['ElSelect'], // Mock the injection used by the real component
+  };
+
+  const ElSelectMock = {
+    name: 'ElSelectMock',
+    template: '<div class="el-select-mock"><slot></slot></div>',
+  };
+
+  const ElOptionGroupMock = {
+    name: 'ElOptionGroupMock',
+    template: '<div class="el-option-group-mock"><slot></slot></div>',
+  };
+
+  const ElIconMock = {
+    name: 'ElIconMock',
+    template: '<div class="el-icon-mock"><slot></slot></div>',
+  };
+
+  const ElPopoverMock = {
+    name: 'ElPopoverMock',
+    template: '<div class="el-popover-mock"><slot></slot></div>',
+  };
+
+  const RouterLinkMock = {
+    template: '<div><slot></slot></div>',
+    props: ['to'],
+  };
+
+  config.global.stubs = {
+    'el-option': ElOptionMock,
+    'el-select': ElSelectMock,
+    'el-option-group': ElOptionGroupMock,
+    'el-icon': ElIconMock,
+    'el-popover': ElPopoverMock,
+    RouterLink: RouterLinkMock,
+  };
 }
 
 
@@ -57,8 +98,21 @@ vi.mock('vue', async () => {
 // Set up any global hooks or utilities for Apollo or Vue Testing
 beforeAll(() => {
   // Setup before all tests run, e.g., initializing Apollo Client
-  setupGlobalPlugins()
+  // setupGlobalPlugins()
+  setupGlobalStubs()
 });
+
+
+// Track unhandled rejections
+const unhandledRejections = new Map();
+process.on('unhandledRejection', (reason, promise) => {
+  // console.error('Unhandled rejection', promise, 'reason:', reason);
+  unhandledRejections.set(promise, reason);
+});
+process.on('rejectionHandled', (promise) => {
+  unhandledRejections.delete(promise);
+});
+
 
 afterAll(() => {
   // Cleanup after all tests have run
@@ -71,14 +125,4 @@ afterAll(() => {
 
 afterEach(() => {
   vi.clearAllMocks();
-});
-
-
-// Track unhandled rejections
-const unhandledRejections = new Map();
-process.on('unhandledRejection', (reason, promise) => {
-  unhandledRejections.set(promise, reason);
-});
-process.on('rejectionHandled', (promise) => {
-  unhandledRejections.delete(promise);
 });

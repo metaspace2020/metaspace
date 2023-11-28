@@ -12,8 +12,10 @@ import { ProjectRoleOptions as UPRO } from '@/api/project'
 import {userProfileQuery} from "@/api/user";
 import {signOut} from "@/api/auth";
 import {refreshLoginStatus} from "@/api/graphqlClient";
+import { Transition } from 'vue';
 
 import {ElRow, ElAlert} from "element-plus";
+
 
 import './MetaspaceHeader.scss'
 
@@ -39,7 +41,7 @@ interface MetaspaceHeaderState {
 
 export default defineComponent({
   name: 'metaspace-header',
-  components: { MenuOpen, MenuClose, HeaderLink, HeaderButton },
+  components: { MenuOpen, MenuClose, HeaderLink, HeaderButton, Transition },
   setup: function() {
     const state = reactive<MetaspaceHeaderState>({
       loginEmail: '',

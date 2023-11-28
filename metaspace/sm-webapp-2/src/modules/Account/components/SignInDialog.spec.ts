@@ -1,6 +1,5 @@
 import {flushPromises, mount} from '@vue/test-utils';
 import { createStore } from 'vuex';
-import { createRouter, createWebHistory } from 'vue-router';
 import { beforeEach, afterEach, vi } from 'vitest';
 import ElementPlus from 'element-plus';
 import SignInDialog from './SignInDialog.vue';
@@ -8,6 +7,7 @@ import account from '../store/account';
 import {nextTick} from "vue";
 import * as authApi from '../../../api/auth';
 import { refreshLoginStatus } from '../../../api/graphqlClient';
+import router from "@/router";
 
 vi.mock('../../../api/auth', () => ({
   signInByEmail: vi.fn(),
@@ -24,10 +24,10 @@ const store = createStore({
   },
 });
 
-const router = createRouter({
-  history: createWebHistory(),
-  routes: [], // Define your routes here
-});
+// const router = createRouter({
+//   history: createWebHistory(),
+//   routes: [], // Define your routes here
+// });
 
 const setFormField = (wrapper, fieldName, value) => {
   const formItem = wrapper.findAllComponents({ name: 'ElFormItem' }).find(w => w.props().prop === fieldName);
