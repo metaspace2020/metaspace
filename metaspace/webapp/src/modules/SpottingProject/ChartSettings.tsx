@@ -1,4 +1,4 @@
-import { defineComponent, reactive } from '@vue/composition-api'
+import { defineComponent, reactive, watch } from '@vue/composition-api'
 import { Option, Popover, Select, Button } from '../../lib/element-ui'
 import FadeTransition from '../../components/FadeTransition'
 // @ts-ignore
@@ -31,6 +31,10 @@ export const ChartSettings = defineComponent({
       state.colormap = value
       emit('color', value)
     }
+
+    watch(() => props.defaultColormap, (value) => {
+      handleColormapChange(value)
+    })
 
     return () => {
       return (
