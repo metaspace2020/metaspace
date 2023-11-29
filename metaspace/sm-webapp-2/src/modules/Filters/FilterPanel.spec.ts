@@ -59,7 +59,7 @@ describe('FilterPanel', () => {
       }),
     })
     store.commit('setFilterLists', null)
-    await store.dispatch('initFilterLists')
+    await store.dispatch('initFilterLists', graphqlMockClient)
   })
 
   const updateFilter = async(newFilter: any) => {
@@ -108,24 +108,24 @@ describe('FilterPanel', () => {
     expect(wrapper.html()).toMatchSnapshot();
   });
 
-  // it('should match snapshot (all annotation filters)', async() => {
-  //   await updateFilter(allFilters)
-  //   const propsData = { level: 'annotation' }
-  //   const wrapper = mount(FilterPanel, {
-  //     global: {
-  //       plugins: [store, router],
-  //       provide: {
-  //         [DefaultApolloClient]: graphqlMockClient
-  //       }
-  //     },
-  //     props: propsData
-  //   });
-  //
-  //   await flushPromises();
-  //   await nextTick();
-  //
-  //   expect(wrapper.html()).toMatchSnapshot();
-  // });
+  it('should match snapshot (all annotation filters)', async() => {
+    await updateFilter(allFilters)
+    const propsData = { level: 'annotation' }
+    const wrapper = mount(FilterPanel, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient
+        }
+      },
+      props: propsData
+    });
+
+    await flushPromises();
+    await nextTick();
+
+    expect(wrapper.html()).toMatchSnapshot();
+  });
 
 
 });

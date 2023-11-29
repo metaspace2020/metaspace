@@ -21,7 +21,7 @@
       <el-input-number
         v-else
         ref="inputRef"
-        v-model="localValue"
+        :value="localValue"
         :step="step"
         :max="max"
         :min="min"
@@ -45,12 +45,15 @@
 import { defineComponent, ref, watch, nextTick } from 'vue'
 import TagFilter from './TagFilter.vue'
 import {FilterHelpText} from './TagFilterComponents'
+import { ElInputNumber, ElInput } from 'element-plus'
 
 export default defineComponent({
   name: 'NumberFilter',
   components: {
     TagFilter,
     FilterHelpText,
+    ElInputNumber,
+    ElInput
   },
   props: {
     name: String,

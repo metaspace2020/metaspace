@@ -53,7 +53,7 @@ export default defineComponent({
       default: null,
     },
     options: {
-      type: Array,
+      type: [Array],
       required: true,
     },
     optionFormatter: Function,

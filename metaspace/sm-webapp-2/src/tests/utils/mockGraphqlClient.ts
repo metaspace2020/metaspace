@@ -20,9 +20,9 @@ const getID = (info: any) => {
   const path = getPath(info)
   if (!/[0-9]/.test(path)) {
     // If there's no ID in the path, it's probably a get-by-id query so look through the query variables to find the id
-    const IDs = Object.keys(info.variableValues)
-      .filter(key => /^id$|Id$/.test(key) && typeof info.variableValues[key] === 'string')
-      .map(key => info.variableValues[key])
+    const IDs = Object.keys(info?.variableValues || {})
+      .filter(key => /^id$|Id$/.test(key) && typeof info?.variableValues[key] === 'string')
+      .map(key => info?.variableValues[key])
     if (IDs.length > 0) {
       return IDs.join(',')
     }

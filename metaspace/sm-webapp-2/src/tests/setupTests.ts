@@ -40,6 +40,10 @@ export function setupGlobalStubs() {
     name: 'ElPopoverMock',
     template: '<div class="el-popover-mock"><slot></slot></div>',
   };
+  const ElTooltipMock = {
+    name: 'ElTooltipMock',
+    template: '<div class="el-tooltip-mock"><slot></slot></div>',
+  };
 
   const RouterLinkMock = {
     template: '<div><slot></slot></div>',
@@ -52,6 +56,7 @@ export function setupGlobalStubs() {
     'el-option-group': ElOptionGroupMock,
     'el-icon': ElIconMock,
     'el-popover': ElPopoverMock,
+    'el-tooltip': ElTooltipMock,
     RouterLink: RouterLinkMock,
   };
 }

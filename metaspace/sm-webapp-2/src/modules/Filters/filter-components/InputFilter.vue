@@ -26,11 +26,13 @@
 import { defineComponent, ref, watch } from 'vue';
 import { debounce } from 'lodash-es';
 import TagFilter from './TagFilter.vue';
+import { ElInput } from 'element-plus';
 
 export default defineComponent({
   name: 'InputFilter',
   components: {
     TagFilter,
+    ElInput
   },
   props: {
     name: String,

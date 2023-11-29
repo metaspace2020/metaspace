@@ -16,7 +16,7 @@
         no-data-text="No matches"
         no-match-text="No matches"
         reserve-keyword
-        v-model="valueIfKnown"
+        :value="valueIfKnown"
         @change="onInput"
         @visible-change="filterOptions('')"
       >

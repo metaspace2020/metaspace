@@ -2,7 +2,7 @@
   <div class="filter-panel">
     <el-select
       v-if="anyOptionalFilterPresent"
-      v-model="selectedFilterToAdd"
+      :value="selectedFilterToAdd"
       class="filter-select"
       placeholder="Add filter"
       @change="addFilter"
@@ -36,6 +36,10 @@ import { FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS } from './filterSpecs'
 import { isFunction, pick, get, uniq } from 'lodash-es'
 import { setLocalStorage } from '../../lib/localStorage'
 
+
+import { inject } from 'vue';
+import { DefaultApolloClient } from '@vue/apollo-composable';
+
 const orderedFilterKeys = [
   'database', 'fdrLevel', 'group', 'project', 'submitter', 'datasetIds', 'compoundName', 'mz', 'offSample', 'polarity',
   'adduct', 'organism', 'organismPart', 'condition', 'growthConditions', 'analyzerType', 'ionisationSource', 'maldiMatrix',
@@ -64,11 +68,12 @@ export default defineComponent({
   components: filterComponents,
   props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters', 'fixedOptions'],
   setup(props) {
+    const apolloClient = inject(DefaultApolloClient);
     const store = useStore()
     const selectedFilterToAdd = ref(null)
 
     onMounted(() => {
-      store.dispatch('initFilterLists')
+      store.dispatch('initFilterLists', apolloClient)
     })
 
     const storeFilter = computed(() => store.getters.filter)
@@ -234,7 +239,6 @@ export default defineComponent({
 
     function getFilterOptions(filter, filterKey) {
       const { filterLists } = store.state
-
       // dynamically generated options are supported:
       // either specify a function of optionLists or one of its field names
       if (filterKey === 'simpleFilter') {
