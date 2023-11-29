@@ -309,6 +309,12 @@ export const Resolvers = {
       }
     },
 
+    async allSources(_: any, args: any, ctx: Context): Promise<GroupDetectability[]|null> {
+      return await ctx.entityManager.getRepository(GroupDetectability)
+        .createQueryBuilder('group_detectability')
+        .getMany()
+    },
+
     async countGroups(_: any, args: any, ctx: Context): Promise<number|null> {
       return await ctx.entityManager.getRepository(GroupModel)
         .createQueryBuilder('group')

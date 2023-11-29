@@ -10,10 +10,8 @@ import ScatterChart from '../../assets/inline/scatter_chart.svg'
 import { SortDropdown } from '../../components/SortDropdown/SortDropdown'
 import './DashboardPage.scss'
 import { useQuery } from '@vue/apollo-composable'
-import { countReviewsQuery } from '../../api/group'
+import { getDetectabilitySourcesQuery } from '../../api/group'
 import {
-  currentUserRoleQuery,
-  currentUserRoleWithGroupQuery,
   currentUserWithGroupDetectabilityQuery,
 } from '../../api/user'
 
@@ -576,6 +574,10 @@ export default defineComponent({
       wellmap: null,
     })
     const {
+      result: sourcesResult,
+    } = useQuery<{allSources: any}>(getDetectabilitySourcesQuery)
+    const allSources = computed(() => sourcesResult.value?.allSources.map((source: any) => source.source))
+    const {
       result: currentUser,
     } = useQuery<{currentUser: any}>(currentUserWithGroupDetectabilityQuery)
     const allowedSources = computed(() => {
@@ -1075,10 +1077,10 @@ export default defineComponent({
                   handleDataSrcChange(text)
                 }}>
                 <RadioButton label='EMBL'/>
-                <RadioButton label='ALL'/>
-                <RadioButton label='INTERLAB'/>
-                {allowedSources.value?.includes('ALL') && <RadioButton label='ALL'/>}
-                {allowedSources.value?.includes('INTERLAB') && <RadioButton label='INTERLAB'/>}
+                {(allowedSources.value?.includes('ALL')
+                  || allSources.value?.includes('ALLEMBL')) && <RadioButton label='ALL'/>}
+                {(allowedSources.value?.includes('INTERLAB')
+                  || allSources.value?.includes('ALLINTERLAB')) && <RadioButton label='INTERLAB'/>}
               </RadioGroup>
             </div>
             <div class='filter-box m-2'>
