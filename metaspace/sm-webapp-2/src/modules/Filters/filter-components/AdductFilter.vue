@@ -79,11 +79,14 @@ import {
   neutralLossSuggestionQuery
 } from "@/api/metadata";
 import config from '../../../lib/config'
+import {ElSelect, ElOption} from "element-plus";
 
 export default defineComponent({
   name: 'AdductFilter',
   components: {
-    TagFilter
+    TagFilter,
+    ElSelect,
+    ElOption
   },
   props: {
     filterValues: Object,

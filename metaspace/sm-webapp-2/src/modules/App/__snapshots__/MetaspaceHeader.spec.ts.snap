@@ -49,7 +49,7 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent\\" activeclass=\\"bg-blue-700\\" id=\\"user-menu\\">Test UserX<div data-v-6bf8fbbe=\\"\\" class=\\"el-tooltip-mock\\" content=\\"undefined has a pending membership request.\\" placement=\\"bottom\\"><span data-v-6bf8fbbe=\\"\\" class=\\"notification\\"></span></div>
+  border border-solid border-transparent\\" activeclass=\\"bg-blue-700\\" id=\\"user-menu\\">Test UserX<div data-v-6bf8fbbe=\\"\\" class=\\"mock-el-tooltip\\" content=\\"undefined has a pending membership request.\\" placement=\\"bottom\\"><span data-v-6bf8fbbe=\\"\\" class=\\"notification\\"></span></div>
             </div>
             <!---->
           </div>

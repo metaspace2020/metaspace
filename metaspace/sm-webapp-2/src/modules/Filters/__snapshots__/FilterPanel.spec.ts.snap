@@ -2,16 +2,16 @@
 
 exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
 "<div class=\\"filter-panel\\">
-  <div class=\\"el-select-mock filter-select\\" placeholder=\\"Add filter\\" size=\\"large\\">
-    <div class=\\"el-option-mock\\" label=\\"Show/hide off-sample annotations\\" value=\\"offSample\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select class\\" value=\\"molClass\\"></div>
+  <div class=\\"mock-el-select filter-select\\" placeholder=\\"Add filter\\" size=\\"large\\">
+    <div class=\\"mock-el-option\\" label=\\"Show/hide off-sample annotations\\" value=\\"offSample\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select class\\" value=\\"molClass\\"></div>
   </div>
   <div class=\\"el-input el-input-group el-input-group--prepend tf-outer w-auto\\">
     <!-- input -->
     <!-- prepend slot -->
     <div class=\\"el-input-group__prepend\\">
-      <div class=\\"el-tooltip-mock\\" placement=\\"bottom\\">
-        <div class=\\"el-icon-mock -mx-1\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-tooltip\\" placement=\\"bottom\\">
+        <div class=\\"mock-el-icon -mx-1\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
             <path fill=\\"currentColor\\" d=\\"m795.904 750.72 124.992 124.928a32 32 0 0 1-45.248 45.248L750.656 795.904a416 416 0 1 1 45.248-45.248zM480 832a352 352 0 1 0 0-704 352 352 0 0 0 0 704z\\"></path>
           </svg></div>
       </div>
@@ -28,8 +28,8 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Database
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock w-full\\" placeholder=\\"Start typing name\\" clearable=\\"false\\" filterable=\\"\\" filter-method=\\"function filterOptions(query) {
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select w-full\\" placeholder=\\"Start typing name\\" clearable=\\"false\\" filterable=\\"\\" filter-method=\\"function filterOptions(query) {
       if (query === previousQuery.value || dbsByGroup.value === null) {
         return;
       }
@@ -68,19 +68,19 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
         throw err;
       }
     }\\" no-data-text=\\"No matches\\" no-match-text=\\"No matches\\" reserve-keyword=\\"\\">
-        <div class=\\"el-option-group-mock\\" label=\\"METASPACE\\">
-          <div class=\\"el-option-mock flex\\" label=\\"foo - v1\\" value=\\"1\\"><span class=\\"truncate\\" title=\\"foo - v1\\">foo - v1</span>
+        <div class=\\"mock-el-option-group\\" label=\\"METASPACE\\">
+          <div class=\\"mock-el-option flex\\" label=\\"foo - v1\\" value=\\"1\\"><span class=\\"truncate\\" title=\\"foo - v1\\">foo - v1</span>
             <!--v-if-->
           </div>
         </div>
-        <div class=\\"el-option-group-mock\\" label=\\"test\\">
-          <div class=\\"el-option-mock flex\\" label=\\"bar - v1\\" value=\\"2\\"><span class=\\"truncate\\" title=\\"bar - v1\\">bar - v1</span>
+        <div class=\\"mock-el-option-group\\" label=\\"test\\">
+          <div class=\\"mock-el-option flex\\" label=\\"bar - v1\\" value=\\"2\\"><span class=\\"truncate\\" title=\\"bar - v1\\">bar - v1</span>
             <!--v-if-->
           </div>
         </div>
       </div>
       <p class=\\"leading-5 text-sm m-0 mt-3 text-gray-700\\">
-      <div class=\\"el-icon-mock text-gray-600 mr-1\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon text-gray-600 mr-1\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M512 64a448 448 0 1 1 0 896.064A448 448 0 0 1 512 64zm67.2 275.072c33.28 0 60.288-23.104 60.288-57.344s-27.072-57.344-60.288-57.344c-33.28 0-60.16 23.104-60.16 57.344s26.88 57.344 60.16 57.344zM590.912 699.2c0-6.848 2.368-24.64 1.024-34.752l-52.608 60.544c-10.88 11.456-24.512 19.392-30.912 17.28a12.992 12.992 0 0 1-8.256-14.72l87.68-276.992c7.168-35.136-12.544-67.2-54.336-71.296-44.096 0-108.992 44.736-148.48 101.504 0 6.784-1.28 23.68.064 33.792l52.544-60.608c10.88-11.328 23.552-19.328 29.952-17.152a12.8 12.8 0 0 1 7.808 16.128L388.48 728.576c-10.048 32.256 8.96 63.872 55.04 71.04 67.84 0 107.904-43.648 147.456-100.416z\\"></path>
         </svg>
         <!---->
@@ -93,8 +93,8 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Group
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" placeholder=\\"Start typing name\\" remote=\\"\\" filterable=\\"\\" clearable=\\"true\\" remote-method=\\"async (query) => {
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" placeholder=\\"Start typing name\\" remote=\\"\\" filterable=\\"\\" clearable=\\"true\\" remote-method=\\"async (query) => {
       loading.value = true;
       try {
         options.value = await __vite_ssr_import_4__.default[props.filterKey].search(apolloClient, store, query);
@@ -105,10 +105,10 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
         loading.value = false;
       }
     }\\" loading=\\"false\\" loading-text=\\"Loading matching entries...\\" no-match-text=\\"No matches\\" multiple=\\"false\\" multiple-limit=\\"10\\" teleported=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -118,8 +118,8 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Project
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" placeholder=\\"Start typing name\\" remote=\\"\\" filterable=\\"\\" clearable=\\"true\\" remote-method=\\"async (query) => {
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" placeholder=\\"Start typing name\\" remote=\\"\\" filterable=\\"\\" clearable=\\"true\\" remote-method=\\"async (query) => {
       loading.value = true;
       try {
         options.value = await __vite_ssr_import_4__.default[props.filterKey].search(apolloClient, store, query);
@@ -130,10 +130,10 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
         loading.value = false;
       }
     }\\" loading=\\"false\\" loading-text=\\"Loading matching entries...\\" no-match-text=\\"No matches\\" multiple=\\"false\\" multiple-limit=\\"10\\" teleported=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -143,8 +143,8 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Submitter
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" placeholder=\\"Start typing name\\" remote=\\"\\" filterable=\\"\\" clearable=\\"true\\" remote-method=\\"async (query) => {
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" placeholder=\\"Start typing name\\" remote=\\"\\" filterable=\\"\\" clearable=\\"true\\" remote-method=\\"async (query) => {
       loading.value = true;
       try {
         options.value = await __vite_ssr_import_4__.default[props.filterKey].search(apolloClient, store, query);
@@ -155,10 +155,10 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
         loading.value = false;
       }
     }\\" loading=\\"false\\" loading-text=\\"Loading matching entries...\\" no-match-text=\\"No matches\\" multiple=\\"false\\" multiple-limit=\\"10\\" teleported=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -168,8 +168,8 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Dataset
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"900\\">
-      <div class=\\"el-select-mock\\" placeholder=\\"Start typing name\\" remote=\\"\\" filterable=\\"\\" clearable=\\"true\\" remote-method=\\"async (query) => {
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"900\\">
+      <div class=\\"mock-el-select\\" placeholder=\\"Start typing name\\" remote=\\"\\" filterable=\\"\\" clearable=\\"true\\" remote-method=\\"async (query) => {
       loading.value = true;
       try {
         options.value = await __vite_ssr_import_4__.default[props.filterKey].search(apolloClient, store, query);
@@ -180,10 +180,10 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
         loading.value = false;
       }
     }\\" loading=\\"false\\" loading-text=\\"Loading matching entries...\\" no-match-text=\\"No matches\\" multiple=\\"true\\" multiple-limit=\\"10\\" model-value=\\"\\" teleported=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"CDEF\\" value=\\"CDEF\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"CDEF\\" value=\\"CDEF\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -193,8 +193,8 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Min. MSM
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"256\\">
-      <div class=\\"el-input-number is-controls-right w-full\\" value=\\"0\\"><span role=\\"button\\" aria-label=\\"decrease number\\" class=\\"el-input-number__decrease\\"><div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\"><path fill=\\"currentColor\\" d=\\"M831.872 340.864 512 652.672 192.128 340.864a30.592 30.592 0 0 0-42.752 0 29.12 29.12 0 0 0 0 41.6L489.664 714.24a32 32 0 0 0 44.672 0l340.288-331.712a29.12 29.12 0 0 0 0-41.728 30.592 30.592 0 0 0-42.752 0z\\"></path></svg></div></span><span role=\\"button\\" aria-label=\\"increase number\\" class=\\"el-input-number__increase\\"><div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\"><path fill=\\"currentColor\\" d=\\"m488.832 344.32-339.84 356.672a32 32 0 0 0 0 44.16l.384.384a29.44 29.44 0 0 0 42.688 0l320-335.872 319.872 335.872a29.44 29.44 0 0 0 42.688 0l.384-.384a32 32 0 0 0 0-44.16L535.168 344.32a32 32 0 0 0-46.336 0z\\"></path></svg></div></span>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"256\\">
+      <div class=\\"el-input-number is-controls-right w-full\\" value=\\"0\\"><span role=\\"button\\" aria-label=\\"decrease number\\" class=\\"el-input-number__decrease\\"><div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\"><path fill=\\"currentColor\\" d=\\"M831.872 340.864 512 652.672 192.128 340.864a30.592 30.592 0 0 0-42.752 0 29.12 29.12 0 0 0 0 41.6L489.664 714.24a32 32 0 0 0 44.672 0l340.288-331.712a29.12 29.12 0 0 0 0-41.728 30.592 30.592 0 0 0-42.752 0z\\"></path></svg></div></span><span role=\\"button\\" aria-label=\\"increase number\\" class=\\"el-input-number__increase\\"><div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\"><path fill=\\"currentColor\\" d=\\"m488.832 344.32-339.84 356.672a32 32 0 0 0 0 44.16l.384.384a29.44 29.44 0 0 0 42.688 0l320-335.872 319.872 335.872a29.44 29.44 0 0 0 42.688 0l.384-.384a32 32 0 0 0 0-44.16L535.168 344.32a32 32 0 0 0-46.336 0z\\"></path></svg></div></span>
         <div class=\\"el-input\\">
           <!-- input -->
           <!-- prepend slot -->
@@ -208,13 +208,13 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
         </div>
       </div>
       <p class=\\"leading-5 text-sm m-0 mt-3 text-gray-700\\">
-      <div class=\\"el-icon-mock text-gray-600 mr-1\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon text-gray-600 mr-1\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M512 64a448 448 0 1 1 0 896.064A448 448 0 0 1 512 64zm67.2 275.072c33.28 0 60.288-23.104 60.288-57.344s-27.072-57.344-60.288-57.344c-33.28 0-60.16 23.104-60.16 57.344s26.88 57.344 60.16 57.344zM590.912 699.2c0-6.848 2.368-24.64 1.024-34.752l-52.608 60.544c-10.88 11.456-24.512 19.392-30.912 17.28a12.992 12.992 0 0 1-8.256-14.72l87.68-276.992c7.168-35.136-12.544-67.2-54.336-71.296-44.096 0-108.992 44.736-148.48 101.504 0 6.784-1.28 23.68.064 33.792l52.544-60.608c10.88-11.328 23.552-19.328 29.952-17.152a12.8 12.8 0 0 1 7.808 16.128L388.48 728.576c-10.048 32.256 8.96 63.872 55.04 71.04 67.84 0 107.904-43.648 147.456-100.416z\\"></path>
         </svg>
         <!---->
       </div> Press <span class=\\"font-medium\\">Enter</span> to confirm manual input </p>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -224,7 +224,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Molecule
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
       <div class=\\"el-input\\">
         <!-- input -->
         <!-- prepend slot -->
@@ -237,7 +237,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
         <!--v-if-->
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -247,24 +247,24 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Adduct
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div data-v-4ce4a68f=\\"\\" class=\\"el-select-mock\\" placeholder=\\"Select ionising adduct\\" filterable=\\"\\" clearable=\\"\\" remote=\\"\\"></div>
-      <div data-v-4ce4a68f=\\"\\" class=\\"el-select-mock\\" remote-method=\\"(query) => {
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-select\\" placeholder=\\"Select ionising adduct\\" filterable=\\"\\" clearable=\\"\\" remote=\\"\\"></div>
+      <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-select\\" remote-method=\\"(query) => {
       chemModQuery.value = query;
     }\\" loading=\\"true\\" placeholder=\\"Select chemical modification\\" filterable=\\"\\" clearable=\\"\\" remote=\\"\\">
-        <div data-v-4ce4a68f=\\"\\" class=\\"el-option-mock\\" label=\\"No chemical modification\\" value=\\"none\\"></div>
-        <div data-v-4ce4a68f=\\"\\" class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
-        <div data-v-4ce4a68f=\\"\\" class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"No chemical modification\\" value=\\"none\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
-      <div data-v-4ce4a68f=\\"\\" class=\\"el-select-mock\\" remote-method=\\"(query) => {
+      <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-select\\" remote-method=\\"(query) => {
       neutralLossQuery.value = query;
     }\\" loading=\\"true\\" placeholder=\\"Select neutral loss\\" filterable=\\"\\" clearable=\\"\\" remote=\\"\\">
-        <div data-v-4ce4a68f=\\"\\" class=\\"el-option-mock\\" label=\\"No neutral loss\\" value=\\"none\\"></div>
-        <div data-v-4ce4a68f=\\"\\" class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
-        <div data-v-4ce4a68f=\\"\\" class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"No neutral loss\\" value=\\"none\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -274,7 +274,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> m/z
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"256\\">
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"256\\">
       <div class=\\"el-input w-full\\">
         <!-- input -->
         <!-- prepend slot -->
@@ -287,13 +287,13 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
         <!--v-if-->
       </div>
       <p class=\\"leading-5 text-sm m-0 mt-3 text-gray-700\\">
-      <div class=\\"el-icon-mock text-gray-600 mr-1\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon text-gray-600 mr-1\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M512 64a448 448 0 1 1 0 896.064A448 448 0 0 1 512 64zm67.2 275.072c33.28 0 60.288-23.104 60.288-57.344s-27.072-57.344-60.288-57.344c-33.28 0-60.16 23.104-60.16 57.344s26.88 57.344 60.16 57.344zM590.912 699.2c0-6.848 2.368-24.64 1.024-34.752l-52.608 60.544c-10.88 11.456-24.512 19.392-30.912 17.28a12.992 12.992 0 0 1-8.256-14.72l87.68-276.992c7.168-35.136-12.544-67.2-54.336-71.296-44.096 0-108.992 44.736-148.48 101.504 0 6.784-1.28 23.68.064 33.792l52.544-60.608c10.88-11.328 23.552-19.328 29.952-17.152a12.8 12.8 0 0 1 7.808 16.128L388.48 728.576c-10.048 32.256 8.96 63.872 55.04 71.04 67.84 0 107.904-43.648 147.456-100.416z\\"></path>
         </svg>
         <!---->
       </div> Press <span class=\\"font-medium\\">Enter</span> to confirm manual input </p>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -303,12 +303,12 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> FDR
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" filterable=\\"false\\" clearable=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"5%\\" value=\\"0.05\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"10%\\" value=\\"0.1\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"20%\\" value=\\"0.2\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"50%\\" value=\\"0.5\\"></div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"false\\" clearable=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"5%\\" value=\\"0.05\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"10%\\" value=\\"0.1\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"20%\\" value=\\"0.2\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"50%\\" value=\\"0.5\\"></div>
       </div>
     </div>
     <!--v-if-->
@@ -318,13 +318,13 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Polarity
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" filterable=\\"false\\" clearable=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"Positive\\" value=\\"Positive\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"Negative\\" value=\\"Negative\\"></div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"false\\" clearable=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"Positive\\" value=\\"Positive\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"Negative\\" value=\\"Negative\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -334,13 +334,13 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Organism
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" filterable=\\"true\\" clearable=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -350,13 +350,13 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Organism part
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" filterable=\\"true\\" clearable=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -366,13 +366,13 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Organism condition
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" filterable=\\"true\\" clearable=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -382,13 +382,13 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Sample growth conditions
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" filterable=\\"true\\" clearable=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -398,13 +398,13 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Source
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" filterable=\\"true\\" clearable=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -414,13 +414,13 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Matrix
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" filterable=\\"true\\" clearable=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -430,13 +430,13 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Analyzer type
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" filterable=\\"true\\" clearable=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"\\" value=\\"\\"></div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
     </div><button title=\\"Remove filter\\" class=\\"tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base\\">
-      <div class=\\"el-icon-mock\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z\\"></path>
         </svg></div>
     </button>
@@ -446,10 +446,10 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!-- If you want to provide a default content for the \\"name\\" slot --> Data type
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock\\" filterable=\\"true\\" clearable=\\"false\\">
-        <div class=\\"el-option-mock\\" label=\\"Imaging MS\\" value=\\"Imaging MS\\"></div>
-        <div class=\\"el-option-mock\\" label=\\"LC-MS\\" value=\\"LC-MS\\"></div>
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+        <div class=\\"mock-el-option\\" label=\\"Imaging MS\\" value=\\"Imaging MS\\"></div>
+        <div class=\\"mock-el-option\\" label=\\"LC-MS\\" value=\\"LC-MS\\"></div>
       </div>
     </div>
     <!--v-if-->
@@ -459,36 +459,36 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
 
 exports[`FilterPanel > should match snapshot (database without dataset) 1`] = `
 "<div class=\\"filter-panel\\">
-  <div class=\\"el-select-mock filter-select\\" placeholder=\\"Add filter\\" size=\\"large\\">
-    <div class=\\"el-option-mock\\" label=\\"Select FDR level\\" value=\\"fdrLevel\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select group\\" value=\\"group\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select project\\" value=\\"project\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select submitter\\" value=\\"submitter\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select dataset\\" value=\\"datasetIds\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Search molecule\\" value=\\"compoundName\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Search by m/z\\" value=\\"mz\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Show/hide off-sample annotations\\" value=\\"offSample\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select polarity\\" value=\\"polarity\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select adduct\\" value=\\"adduct\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select organism\\" value=\\"organism\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select organism part\\" value=\\"organismPart\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select organism condition\\" value=\\"condition\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select sample growth conditions\\" value=\\"growthConditions\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select analyzer\\" value=\\"analyzerType\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select ionisation source\\" value=\\"ionisationSource\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select MALDI matrix\\" value=\\"maldiMatrix\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Set minimum MSM score\\" value=\\"minMSM\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Search anything\\" value=\\"simpleQuery\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select data type\\" value=\\"metadataType\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select class\\" value=\\"molClass\\"></div>
+  <div class=\\"mock-el-select filter-select\\" placeholder=\\"Add filter\\" size=\\"large\\">
+    <div class=\\"mock-el-option\\" label=\\"Select FDR level\\" value=\\"fdrLevel\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select group\\" value=\\"group\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select project\\" value=\\"project\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select submitter\\" value=\\"submitter\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select dataset\\" value=\\"datasetIds\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Search molecule\\" value=\\"compoundName\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Search by m/z\\" value=\\"mz\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Show/hide off-sample annotations\\" value=\\"offSample\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select polarity\\" value=\\"polarity\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select adduct\\" value=\\"adduct\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select organism\\" value=\\"organism\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select organism part\\" value=\\"organismPart\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select organism condition\\" value=\\"condition\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select sample growth conditions\\" value=\\"growthConditions\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select analyzer\\" value=\\"analyzerType\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select ionisation source\\" value=\\"ionisationSource\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select MALDI matrix\\" value=\\"maldiMatrix\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Set minimum MSM score\\" value=\\"minMSM\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Search anything\\" value=\\"simpleQuery\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select data type\\" value=\\"metadataType\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select class\\" value=\\"molClass\\"></div>
   </div>
   <div class=\\"tf-outer border-gray-300 border border-solid text-sm pr-3\\" data-test-key=\\"database\\" filter-key=\\"database\\" options=\\"\\">
     <div class=\\"tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300\\">
       <!-- If you want to provide a default content for the \\"name\\" slot --> Database
       <!--v-if-->
     </div>
-    <div class=\\"el-popover-mock tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"el-select-mock w-full\\" placeholder=\\"Start typing name\\" clearable=\\"false\\" filterable=\\"\\" filter-method=\\"function filterOptions(query) {
+    <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
+      <div class=\\"mock-el-select w-full\\" placeholder=\\"Start typing name\\" clearable=\\"false\\" filterable=\\"\\" filter-method=\\"function filterOptions(query) {
       if (query === previousQuery.value || dbsByGroup.value === null) {
         return;
       }
@@ -527,19 +527,19 @@ exports[`FilterPanel > should match snapshot (database without dataset) 1`] = `
         throw err;
       }
     }\\" no-data-text=\\"No matches\\" no-match-text=\\"No matches\\" reserve-keyword=\\"\\">
-        <div class=\\"el-option-group-mock\\" label=\\"METASPACE\\">
-          <div class=\\"el-option-mock flex\\" label=\\"foo - v1\\" value=\\"1\\"><span class=\\"truncate\\" title=\\"foo - v1\\">foo - v1</span>
+        <div class=\\"mock-el-option-group\\" label=\\"METASPACE\\">
+          <div class=\\"mock-el-option flex\\" label=\\"foo - v1\\" value=\\"1\\"><span class=\\"truncate\\" title=\\"foo - v1\\">foo - v1</span>
             <!--v-if-->
           </div>
         </div>
-        <div class=\\"el-option-group-mock\\" label=\\"test\\">
-          <div class=\\"el-option-mock flex\\" label=\\"bar - v1\\" value=\\"2\\"><span class=\\"truncate\\" title=\\"bar - v1\\">bar - v1</span>
+        <div class=\\"mock-el-option-group\\" label=\\"test\\">
+          <div class=\\"mock-el-option flex\\" label=\\"bar - v1\\" value=\\"2\\"><span class=\\"truncate\\" title=\\"bar - v1\\">bar - v1</span>
             <!--v-if-->
           </div>
         </div>
       </div>
       <p class=\\"leading-5 text-sm m-0 mt-3 text-gray-700\\">
-      <div class=\\"el-icon-mock text-gray-600 mr-1\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+      <div class=\\"mock-el-icon text-gray-600 mr-1\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
           <path fill=\\"currentColor\\" d=\\"M512 64a448 448 0 1 1 0 896.064A448 448 0 0 1 512 64zm67.2 275.072c33.28 0 60.288-23.104 60.288-57.344s-27.072-57.344-60.288-57.344c-33.28 0-60.16 23.104-60.16 57.344s26.88 57.344 60.16 57.344zM590.912 699.2c0-6.848 2.368-24.64 1.024-34.752l-52.608 60.544c-10.88 11.456-24.512 19.392-30.912 17.28a12.992 12.992 0 0 1-8.256-14.72l87.68-276.992c7.168-35.136-12.544-67.2-54.336-71.296-44.096 0-108.992 44.736-148.48 101.504 0 6.784-1.28 23.68.064 33.792l52.544-60.608c10.88-11.328 23.552-19.328 29.952-17.152a12.8 12.8 0 0 1 7.808 16.128L388.48 728.576c-10.048 32.256 8.96 63.872 55.04 71.04 67.84 0 107.904-43.648 147.456-100.416z\\"></path>
         </svg>
         <!---->
@@ -552,29 +552,29 @@ exports[`FilterPanel > should match snapshot (database without dataset) 1`] = `
 
 exports[`FilterPanel > should match snapshot (no filters) 1`] = `
 "<div class=\\"filter-panel\\">
-  <div class=\\"el-select-mock filter-select\\" placeholder=\\"Add filter\\" size=\\"large\\">
-    <div class=\\"el-option-mock\\" label=\\"Select database\\" value=\\"database\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select FDR level\\" value=\\"fdrLevel\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select group\\" value=\\"group\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select project\\" value=\\"project\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select submitter\\" value=\\"submitter\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select dataset\\" value=\\"datasetIds\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Search molecule\\" value=\\"compoundName\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Search by m/z\\" value=\\"mz\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Show/hide off-sample annotations\\" value=\\"offSample\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select polarity\\" value=\\"polarity\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select adduct\\" value=\\"adduct\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select organism\\" value=\\"organism\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select organism part\\" value=\\"organismPart\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select organism condition\\" value=\\"condition\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select sample growth conditions\\" value=\\"growthConditions\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select analyzer\\" value=\\"analyzerType\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select ionisation source\\" value=\\"ionisationSource\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select MALDI matrix\\" value=\\"maldiMatrix\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Set minimum MSM score\\" value=\\"minMSM\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Search anything\\" value=\\"simpleQuery\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select data type\\" value=\\"metadataType\\"></div>
-    <div class=\\"el-option-mock\\" label=\\"Select class\\" value=\\"molClass\\"></div>
+  <div class=\\"mock-el-select filter-select\\" placeholder=\\"Add filter\\" size=\\"large\\">
+    <div class=\\"mock-el-option\\" label=\\"Select database\\" value=\\"database\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select FDR level\\" value=\\"fdrLevel\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select group\\" value=\\"group\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select project\\" value=\\"project\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select submitter\\" value=\\"submitter\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select dataset\\" value=\\"datasetIds\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Search molecule\\" value=\\"compoundName\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Search by m/z\\" value=\\"mz\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Show/hide off-sample annotations\\" value=\\"offSample\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select polarity\\" value=\\"polarity\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select adduct\\" value=\\"adduct\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select organism\\" value=\\"organism\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select organism part\\" value=\\"organismPart\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select organism condition\\" value=\\"condition\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select sample growth conditions\\" value=\\"growthConditions\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select analyzer\\" value=\\"analyzerType\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select ionisation source\\" value=\\"ionisationSource\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select MALDI matrix\\" value=\\"maldiMatrix\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Set minimum MSM score\\" value=\\"minMSM\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Search anything\\" value=\\"simpleQuery\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select data type\\" value=\\"metadataType\\"></div>
+    <div class=\\"mock-el-option\\" label=\\"Select class\\" value=\\"molClass\\"></div>
   </div>
 </div>"
 `;

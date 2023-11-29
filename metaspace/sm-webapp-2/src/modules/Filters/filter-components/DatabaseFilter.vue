@@ -79,6 +79,7 @@ import { inject, InjectionKey } from 'vue';
 import { DefaultApolloClient } from '@vue/apollo-composable';
 import { ApolloClient } from '@apollo/client/core';
 import {Loading} from "@element-plus/icons-vue";
+import {ElSelect, ElOption, ElOptionGroup} from "element-plus";
 
 // import apolloClient from "@/api/graphqlClient";
 
@@ -98,7 +99,10 @@ export default defineComponent({
   components: {
     TagFilter,
     FilterHelpText,
-    Loading
+    Loading,
+    ElOption,
+    ElOptionGroup,
+    ElSelect
   },
   props: {
     value: String,
@@ -108,6 +112,7 @@ export default defineComponent({
     const apolloClientKey: InjectionKey<ApolloClient<any>> = DefaultApolloClient as InjectionKey<ApolloClient<any>>;
     const apolloClient = inject(apolloClientKey);
 
+    const selectRef = ref(null);
     const groups = ref<GroupOption[]>([]);
     const options = ref<Record<string, Option>>({});
     const previousQuery = ref<string | null>(null);
@@ -282,7 +287,8 @@ export default defineComponent({
       filterOptions,
       onInput,
       destroy,
-      groups
+      groups,
+      selectRef
     };
   }
 });

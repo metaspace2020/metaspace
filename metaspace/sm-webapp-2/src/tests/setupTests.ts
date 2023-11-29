@@ -16,33 +16,33 @@ export function setupGlobalPlugins() {
 export function setupGlobalStubs() {
   const ElOptionMock = {
     name: 'ElOptionMock',
-    template: '<div class="el-option-mock"><slot></slot></div>',
+    template: '<div class="mock-el-option"><slot></slot></div>',
     props: ['groupQueryChange'], // Add props used by the original component
     // inject: ['ElSelect'], // Mock the injection used by the real component
   };
 
   const ElSelectMock = {
     name: 'ElSelectMock',
-    template: '<div class="el-select-mock"><slot></slot></div>',
+    template: '<div class="mock-el-select"><slot></slot></div>',
   };
 
   const ElOptionGroupMock = {
     name: 'ElOptionGroupMock',
-    template: '<div class="el-option-group-mock"><slot></slot></div>',
+    template: '<div class="mock-el-option-group"><slot></slot></div>',
   };
 
   const ElIconMock = {
     name: 'ElIconMock',
-    template: '<div class="el-icon-mock"><slot></slot></div>',
+    template: '<div class="mock-el-icon"><slot></slot></div>',
   };
 
   const ElPopoverMock = {
     name: 'ElPopoverMock',
-    template: '<div class="el-popover-mock"><slot></slot></div>',
+    template: '<div class="mock-el-popover"><slot></slot></div>',
   };
   const ElTooltipMock = {
     name: 'ElTooltipMock',
-    template: '<div class="el-tooltip-mock"><slot></slot></div>',
+    template: '<div class="mock-el-tooltip"><slot></slot></div>',
   };
 
   const RouterLinkMock = {

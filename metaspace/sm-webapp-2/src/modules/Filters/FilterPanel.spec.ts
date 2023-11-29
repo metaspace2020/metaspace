@@ -12,6 +12,7 @@ import  {initMockGraphqlClient} from "@/tests/utils/mockGraphqlClient";
 import { DefaultApolloClient } from '@vue/apollo-composable';
 import {vi} from "vitest";
 import router from "@/router";
+import {encodeParams} from "@/modules/Filters/url";
 
 
 vi.mock('../../lib/util', () => ({
@@ -65,12 +66,12 @@ describe('FilterPanel', () => {
   const updateFilter = async(newFilter: any) => {
     await router.replace({ path: '/annotations' })
     await nextTick()
-    store.commit('updateFilter', newFilter)
+    await store.commit('updateFilter', newFilter)
     await nextTick() // Must wait after every change for vue-router to update the store
   }
 
 
-  it('should match snapshot (no filters)', async () => {
+  it('should match snapshot (no filters)', async ({expect}) => {
     await updateFilter({})
     const propsData = { level: 'annotation' }
     const wrapper = mount(FilterPanel, {
@@ -89,7 +90,7 @@ describe('FilterPanel', () => {
     expect(wrapper.html()).toMatchSnapshot();
   });
 
-  it('should match snapshot (database without dataset)', async () => {
+  it('should match snapshot (database without dataset)', async ({expect}) => {
     await updateFilter({ database: allFilters.database })
     const propsData = { level: 'annotation' }
     const wrapper = mount(FilterPanel, {
@@ -108,7 +109,7 @@ describe('FilterPanel', () => {
     expect(wrapper.html()).toMatchSnapshot();
   });
 
-  it('should match snapshot (all annotation filters)', async() => {
+  it('should match snapshot (all annotation filters)', async({expect}) => {
     await updateFilter(allFilters)
     const propsData = { level: 'annotation' }
     const wrapper = mount(FilterPanel, {
@@ -125,6 +126,55 @@ describe('FilterPanel', () => {
     await nextTick();
 
     expect(wrapper.html()).toMatchSnapshot();
+  });
+
+
+  it('should update the route when filters change', async({expect}) => {
+    await updateFilter(allFilters)
+    const propsData = { level: 'annotation' }
+    const wrapper = mount(FilterPanel, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient
+        }
+      },
+      props: propsData
+    });
+    const newFilters = {
+      simpleQuery: 'lorem ipsum',
+      // database: 2,
+      // project: 'abc',
+      // datasetIds: ['aaa', 'bbb'],
+      // compoundName: 'C10H15N3O5',
+      // mz: '296.1',
+    }
+
+    // await flushPromises();
+    // await nextTick();
+
+    // simpleQuery - SearchBox
+    await wrapper.find('[data-test-key="simpleQuery"]').setValue(newFilters.simpleQuery);
+    // database - SingleSelectFilter
+    // await wrapper.find('[data-test-key="database"]').trigger('change', newFilters.database);
+    // project - SearchableFilter [multiple=false]
+    // wrapper.find('[data-test-key="project"]').trigger('change', newFilters.project);
+    // datasetIds - SearchableFilter [multiple=true]
+    // wrapper.find('[data-test-key="datasetIds"]').trigger('change', newFilters.datasetIds);
+    // compoundName - InputFilter [commented out as does not work with debounce]
+    // wrapper.find('[data-test-key="compoundName"] .tf-value-span').trigger('click')
+    // await Vue.nextTick()
+    // wrapper.find('[data-test-key="compoundName"] input').setValue(newFilters.compoundName)
+    // await Vue.nextTick()
+    // mz - NumberFilter
+
+    // wrapper.find('[data-test-key="mz"]').trigger('click');
+    // wrapper.find('[data-test-key="mz"] input').setValue(newFilters.mz);
+    // wrapper.find('[data-test-key="mz"] input').trigger('change');
+    await nextTick();
+    await flushPromises();
+
+    expect(router.currentRoute.value.query).toEqual(expect.objectContaining(encodeParams(newFilters)));
   });
 
 

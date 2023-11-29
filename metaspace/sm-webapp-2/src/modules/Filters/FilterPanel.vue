@@ -35,7 +35,7 @@ import { useStore } from 'vuex'
 import { FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS } from './filterSpecs'
 import { isFunction, pick, get, uniq } from 'lodash-es'
 import { setLocalStorage } from '../../lib/localStorage'
-
+import {ElSelect, ElOption} from "element-plus";
 
 import { inject } from 'vue';
 import { DefaultApolloClient } from '@vue/apollo-composable';
@@ -65,7 +65,11 @@ Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
 
 export default defineComponent({
   name: 'filter-panel',
-  components: filterComponents,
+  components: {
+    ...filterComponents,
+    ElSelect,
+    ElOption,
+  },
   props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters', 'fixedOptions'],
   setup(props) {
     const apolloClient = inject(DefaultApolloClient);
