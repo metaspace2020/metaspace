@@ -76,8 +76,8 @@ export default defineComponent({
     const store = useStore()
     const selectedFilterToAdd = ref(null)
 
-    onMounted(() => {
-      store.dispatch('initFilterLists', apolloClient)
+    onMounted(async() => {
+      await store.dispatch('initFilterLists', apolloClient)
     })
 
     const storeFilter = computed(() => store.getters.filter)

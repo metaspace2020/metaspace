@@ -3,6 +3,45 @@
     <filter-panel
       :level="currentLevel"
     />
+    <div class="my-2 w-full">
+      <router-link
+        v-if="isFromDatasetOverview"
+        :to="datasetOverviewLink"
+      >
+        <span><i class="el-icon-arrow-left"></i>Dataset Overview</span>
+      </router-link>
+    </div>
+    <el-row>
+      <el-col
+        id="annot-table-container"
+        :xs="24"
+        :sm="24"
+        :md="24"
+        :lg="hideImageViewer ? 24 : tableWidth"
+      >
+        <annotation-table
+          :hide-columns="hiddenColumns"
+          :is-full-screen="!hideImageViewer"
+          @screen="toggleHideImageViewer"
+        />
+      </el-col>
+
+      <el-col
+        v-if="!hideImageViewer"
+        id="annot-view-container"
+        :xs="24"
+        :sm="24"
+        :md="24"
+        :lg="24 - tableWidth"
+      >
+
+        <el-col
+          class="av-centered no-selection"
+        >
+
+        </el-col>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -10,7 +49,7 @@
 import {defineComponent, ref, computed, onMounted, onUnmounted} from 'vue';
 import { useStore } from 'vuex';
 import { useRoute } from 'vue-router';
-// import AnnotationTable from './AnnotationTable.vue';
+import AnnotationTable from './AnnotationTable.vue';
 // import AnnotationView from './AnnotationView.vue';
 import { FilterPanel } from '../Filters/index';
 import config from '../../lib/config';
@@ -20,7 +59,7 @@ import config from '../../lib/config';
 export default defineComponent({
   name: 'AnnotationsPage',
   components: {
-    // AnnotationTable,
+    AnnotationTable,
     // AnnotationView,
     FilterPanel,
   },
