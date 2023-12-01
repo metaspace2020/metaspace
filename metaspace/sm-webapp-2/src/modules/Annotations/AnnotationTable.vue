@@ -355,7 +355,7 @@
       </el-table-column>
     </el-table>
 
-    <div class="flex justify-between items-start mt-2">
+    <div class="flex justify-between items-start mt-2 w-full">
       <div class="mt-1">
         <el-pagination
           v-if="!state.initialLoading"
@@ -369,8 +369,100 @@
           @size-change="onPageSizeChange"
           @click="onPaginationClick"
         />
+
+        <div
+          id="annot-count"
+          class="mt-2"
+        >
+          <b>{{ state.totalCount }}</b> matching {{ state.totalCount == 1 ? 'record': 'records' }}
+        </div>
+
+        <div class="mt-2">
+          <div class="fdr-legend-header">
+            FDR levels:
+          </div>
+          <div class="fdr-legend fdr-5">
+            5%
+          </div>
+          <div class="fdr-legend fdr-10">
+            10%
+          </div>
+          <div class="fdr-legend fdr-20">
+            20%
+          </div>
+          <div class="fdr-legend fdr-50">
+            50%
+          </div>
+        </div>
       </div>
 
+
+      <div class="flex w-full items-center justify-end flex-wrap">
+        <el-popover v-if="showCustomCols" class="mt-1" width="200"
+                    trigger="click">
+          <template #reference>
+            <el-button class="select-btn-wrapper relative" @click="handleColSelectorClick">
+              <new-feature-badge feature-key="custom-cols" custom-class="new-custom-badge">
+                Columns
+              </new-feature-badge>
+              <i class="el-icon-arrow-down select-btn-icon" />
+            </el-button>
+          </template>
+          <div>
+            <div
+              v-for="(column, i) in state.columns"
+              :key="column.label"
+              class="cursor-pointer select-none"
+              @click="handleColumnClick(i)"
+            >
+              <template v-if="!column.hide">
+                <el-icon v-if="column.selected" class="el-icon-check"><check /></el-icon>
+                <el-icon v-else class="el-icon-check invisible"><check /></el-icon>
+                <span v-if="column.src.includes('rho')"> &rho;<sub>{{ column.label }}</sub> </span>
+                <span v-else>{{ column.label }}</span>
+              </template>
+            </div>
+          </div>
+        </el-popover>
+
+        <div v-if="state.isExporting" class="select-btn-wrapper ml-2 mt-1">
+          <progress-button
+            class="export-btn"
+            :width="146"
+            :height="42"
+            :percentage="state.exportProgress * 100"
+            @click="state.abortExport"
+          >
+            Cancel
+          </progress-button>
+        </div>
+
+        <el-popover v-else ref="exportPop" class="select-btn-wrapper ml-2 mt-1" popper-class="export-pop"
+                    trigger="click">
+          <template #reference>
+            <el-button class="select-btn-wrapper relative" :width="146" :height="42">
+              Export to CSV
+              <i class="el-icon-arrow-down select-btn-icon" />
+            </el-button>
+          </template>
+
+          <p class="export-option" @click="state.startExport">
+            Annotations table
+          </p>
+          <p class="export-option" @click="state.startIntensitiesExport">
+            Pixel intensities
+          </p>
+        </el-popover>
+
+        <div v-if="showCustomCols" class="ml-2 mt-1">
+          <el-button v-if="isFullScreen" class="full-screen-btn" @click="$emit('screen')">
+            <full-screen class="full-screen-icon" />
+          </el-button>
+          <el-button v-else class="full-screen-btn" @click="$emit('screen')">
+            <exit-full-screen class="full-screen-icon" />
+          </el-button>
+        </div>
+      </div>
     </div>
 
 
@@ -387,12 +479,24 @@ import config from '../../lib/config'
 import {useQuery} from "@vue/apollo-composable";
 import {getSystemHealthQuery} from "../../api/system";
 import {annotationListQuery} from "../../api/annotation";
-import {useRoute} from "vue-router";
-
+import {useRoute, useRouter} from "vue-router";
+import {setLocalStorage} from "../../lib/localStorage";
+import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
+import ProgressButton from './ProgressButton.vue'
+import {Check} from "@element-plus/icons-vue";
 
 const FilterIcon = defineAsyncComponent(() =>
   import('../../assets/inline/filter.svg')
 );
+
+const FullScreen = defineAsyncComponent(() =>
+  import('../../assets/inline/full_screen.svg')
+);
+
+const ExitFullScreen = defineAsyncComponent(() =>
+  import('../../assets/inline/exit_full_screen.svg')
+);
+
 // 38 = up, 40 = down, 74 = j, 75 = k
 const KEY_TO_ACTION = {
   ArrowUp: 'up',
@@ -438,12 +542,20 @@ export default defineComponent({
     ElTable,
     ElTableColumn,
     FilterIcon,
-    ElPagination
+    ElPagination,
+    NewFeatureBadge,
+    ProgressButton,
+    FullScreen,
+    Check,
+    ElIcon,
+    ExitFullScreen
   },
   props: ['hideColumns', 'isFullScreen'],
   setup(props) {
     const store = useStore();
     const table = ref(null);
+    const showCustomCols = computed(() => config.features.custom_cols);
+    const datasetIds = computed(() => store.getters.filter.datasetIds);
 
     const state = reactive({
       annotations: [],
@@ -458,7 +570,6 @@ export default defineComponent({
       csvChunkSize: 1000,
       nextCurrentRowIndex: null,
       loadedSnapshotAnnotations: false,
-      showCustomCols: config.features.custom_cols,
       columns: [
         {
           id: 1,
@@ -577,8 +688,8 @@ export default defineComponent({
         },
       ],
     })
-    const route = useRoute();
-
+    const route = useRoute()
+    const router = useRouter()
 
 
     const formatMSM = (row, col) => row.msmScore.toFixed(3)
@@ -688,9 +799,37 @@ export default defineComponent({
       enabled: queryOptions.enabled,
     });
 
-    watch(loading, (isLoading) => {
-      store.commit('updateAnnotationTableStatus', isLoading)
-    });
+    const updateColocSort = () => {
+      // sort table to update selected sort ui when coloc filter applied from annotation view
+      if (orderBy.value === 'ORDER_BY_COLOCALIZATION' && table.value && typeof table.value.sort === 'function') {
+        setTimeout(() => {
+          table.value.sort(SORT_ORDER_TO_COLUMN[orderBy.value], sortingOrder.value.toLowerCase());
+        }, 0);
+      }
+    }
+
+    const updateDatasetColumns = () => {
+      // hide dataset related filters if dataset filter added
+      if (Array.isArray(datasetIds.value) && datasetIds.value.length === 1 && showCustomCols.value) {
+        hideDatasetRelatedColumns();
+      } else if (showCustomCols.value) {
+        // show dataset related filters if dataset filter removed
+        showDatasetRelatedColumns();
+      }
+    }
+
+    const updateColumns = () => {
+      if (route.query.cols) {
+        const columns = state.columns
+        const persistedCols = route.query.cols.split(',')
+        columns.forEach((column, colIdx) => {
+          if (persistedCols.includes(column.id.toString())) {
+            columns[colIdx].selected = true
+          }
+        })
+        state.columns = columns
+      }
+    }
 
     onMounted(() => {
       const nCells = (window.innerHeight - 150) / 43
@@ -698,6 +837,9 @@ export default defineComponent({
       if (state.pageSizes.length > 0) {
         state.recordsPerPage = pageSizes[0]
       }
+      updateColumns()
+      updateDatasetColumns()
+      updateColocSort()
     })
 
     onAnnotationsResult(async(result) => {
@@ -731,7 +873,7 @@ export default defineComponent({
     })
 
     const hidden = (columnLabel) => {
-      return (state.columns.findIndex((col) => col.src === columnLabel) === -1 || !state.showCustomCols)
+      return (state.columns.findIndex((col) => col.src === columnLabel) === -1 || !showCustomCols.value)
         ? (props.hideColumns.indexOf(columnLabel) >= 0 || !state.columns.find((col) => col.src === columnLabel)?.selected)
         : !state.columns.find((col) => col.src === columnLabel)?.selected
     };
@@ -917,10 +1059,61 @@ export default defineComponent({
       await store.commit('setCurrentPage', page)
     }
 
+    const handleColSelectorClick = (e) => {
+      e.stopPropagation()
+      hideFeatureBadge('custom-cols')
+    }
+
+
+    const handleColumnClick = (index) => {
+      state.columns[index].selected = !state.columns[index].selected
+      const defaultCols = state.columns.filter((column) => column.default).map((column) => column.id)
+      const selectedCols = state.columns.filter((column) => column.selected).map((column) => column.id)
+      if (!isEqual(defaultCols, selectedCols)) {
+        router.push({ path: route.fullPath, query: { cols: selectedCols.join(',') } })
+      } else {
+        router.push({ path: route.fullPath, query: { cols: undefined } })
+      }
+
+      setLocalStorage('annotationTableCols', state.columns)
+    }
+
+
+    const hideDatasetRelatedColumns = () => {
+      if (Array.isArray(filter.value?.datasetIds) && filter.value?.datasetIds.length > 0) {
+        state.columns.find((col) => col.src === 'Group').selected = false
+        state.columns.find((col) => col.src === 'Dataset').selected = false
+      }
+    }
+
+
+    const showDatasetRelatedColumns = () => {
+      state.columns.find((col) => col.src === 'Group').selected = true
+      state.columns.find((col) => col.src === 'Dataset').selected = true
+    }
+
+    watch(loading, (isLoading) => {
+      store.commit('updateAnnotationTableStatus', isLoading)
+    });
+
+    watch(() => route.query, () => {
+     updateColocSort()
+    }, { deep: true });
+
+    watch(datasetIds, () => {
+      updateDatasetColumns()
+    });
+
+    watch(() => route.query, () => {
+     updateColumns()
+    });
+
+
     // Return the reactive properties and methods
     return {
       state,
       isLoading,
+      showCustomCols,
       formatMSM,
       tableSort,
       getRowClass,
@@ -933,6 +1126,7 @@ export default defineComponent({
       noColocJobError,
       singleDatasetSelected,
       filter,
+      handleColumnClick,
       hidden,
       filterGroup,
       formatDatasetName,
@@ -945,6 +1139,7 @@ export default defineComponent({
       onPageSizeChange,
       onPaginationClick,
       currentPage,
+      handleColSelectorClick
     };
   },
 });
@@ -1110,7 +1305,8 @@ export default defineComponent({
 }
 
 .export-pop{
-  @apply p-0;
+  padding: 0 !important;
+  min-width: 200px;
 }
 .export-option{
   @apply cursor-pointer p-4 m-0 select-none;

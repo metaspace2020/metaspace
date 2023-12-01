@@ -21,16 +21,18 @@ import { setErrorNotifier } from './lib/reportError'
 import { migrateLocalStorage } from './lib/localStorage'
 
 
-import 'element-plus/dist/index.css'
+// import 'element-plus/dist/index.css'
 // import './assets/main.css'
 import './modules/App/tailwind.scss'
-import {ElMessageBox, ElNotification} from "element-plus";
-import {Route} from "@sentry/vue/types/router";
 // import './modules/App/tailwind.scss'
-
-
 // if you're using CDN, please remove this line.
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import './modules/App/element-overrides.css'
+
+
+import {ElMessageBox, ElNotification} from "element-plus";
+import {Route} from "@sentry/vue/types/router";
+
 
 
 

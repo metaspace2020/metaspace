@@ -23,6 +23,7 @@ declare module 'vue' {
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
+    ElTableV2: typeof import('element-plus/es')['ElTableV2']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     NotificationIcon: typeof import('./src/components/NotificationIcon.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
