@@ -682,7 +682,7 @@ export default defineComponent({
 
     const queryOptions = reactive({ enabled: !store.state.filterListsLoading })
 
-    const { result: annotationsResult, onResult: onAnnotationsResult, loading } = useQuery(annotationListQuery, queryVariables, {
+    const { onResult: onAnnotationsResult, loading } = useQuery(annotationListQuery, queryVariables, {
       fetchPolicy: 'cache-first',
       throttle: 200,
       enabled: queryOptions.enabled,
@@ -692,11 +692,41 @@ export default defineComponent({
       store.commit('updateAnnotationTableStatus', isLoading)
     });
 
+    onMounted(() => {
+      const nCells = (window.innerHeight - 150) / 43
+      const pageSizes = state.pageSizes.filter(n => nCells >= n).slice(-1)
+      if (state.pageSizes.length > 0) {
+        state.recordsPerPage = pageSizes[0]
+      }
+    })
+
     onAnnotationsResult(async(result) => {
       const {data} = result
-      await nextTick()
+      if(!data){
+        return
+      }
+
       state.annotations = data?.allAnnotations || []
       state.totalCount = data?.countAnnotations || 0
+
+      await nextTick()
+
+      if (state.nextCurrentRowIndex !== null && state.nextCurrentRowIndex !== -1) {
+        setCurrentRow(state.nextCurrentRowIndex)
+        state.nextCurrentRowIndex = null
+      } else if (state.nextCurrentRowIndex !== -1) {
+        const curRow = getCurrentRow()
+        if (!curRow.value) {
+          setCurrentRow(currentRowIndex.value)
+        }
+      }
+
+      // Move focus to the table so that keyboard navigation works, except when focus is on an input element
+      const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
+      if (table.value && shouldMoveFocus) {
+        table.value?.$el.focus()
+      }
+
       state.initialLoading = false
     })
 
@@ -736,6 +766,14 @@ export default defineComponent({
       return `${fdrClass} ${colocClass}`
     }
 
+    const getCurrentRow = () => {
+      if (table.value) {
+        const tblStore = table.value.store
+        return tblStore.states.currentRow
+      }
+      return null
+    }
+
     const onKeyDown = (event) => {
       const action = KEY_TO_ACTION[event.key]
       if (action) {
@@ -745,19 +783,90 @@ export default defineComponent({
       return true
     }
 
+    const setCurrentRow = (rowIndex, rows = state.annotations) => {
+      if (table.value && rows && rows.length) {
+        table.value?.setCurrentRow(null)
+        const nextIndex = rowIndex < 0 ? 0 : Math.min(rowIndex, rows.length - 1)
+        table.value?.setCurrentRow(rows[nextIndex])
+      }
+    }
+
     const onKeyUp = (event) => {
       const action = KEY_TO_ACTION[event.key]
       if (!action) {
         return
       }
 
+      // WARNING the code below relies on internals of el-table:
+      // store.{states.currentRow, mutations.{setData, setCurrentRow}}
+      const curRow = getCurrentRow()
+      const curIdx = state.annotations.indexOf(curRow.value)
+
+      if (action === 'up' && curIdx === 0) {
+        if (currentPage.value === 1) {
+          return
+        }
+        state.nextCurrentRowIndex = state.recordsPerPage - 1
+        setCurrentPage(currentPage.value - 1)
+        return
+      }
+
+
+      if (action === 'down' && curIdx === state.annotations.length - 1) {
+        if (currentPage.value === numberOfPages.value) {
+          return
+        }
+
+        state.nextCurrentRowIndex = 0
+        setCurrentPage(currentPage.value + 1)
+        return
+      }
+
+      if (action === 'left') {
+        state.nextCurrentRowIndex = curIdx
+        setCurrentPage(Math.max(1, currentPage.value - 1))
+        return
+      }
+
+      if (action === 'right') {
+        state.nextCurrentRowIndex = curIdx
+        setCurrentPage(Math.min(numberOfPages.value, currentPage.value + 1))
+        return
+      }
+
+      const delta = action === 'up' ? -1 : +1
+      setCurrentRow(curIdx + delta)
     }
 
     const onSortChange = (event) => {
+      if (!event.order) {
+        const { prop, order } = tableSort.value
+        // Skip the "unsorted" state by just inverting the last seen sort order
+        table.value?.sort(prop, order === 'ascending' ? 'descending' : 'ascending')
+        return
+      }
 
+      store.commit('setSortOrder', {
+        by: COLUMN_TO_SORT_ORDER[event.prop] || orderBy.value,
+        dir: event.order.toUpperCase(),
+      })
+    }
+
+    const setCurrentRowIndex = (index) => {
+      store.commit('setRow', index + 1)
     }
 
     const onCurrentRowChange = (row) => {
+      // do not set initial row if loading from a snapshot (permalink)
+      if (isSnapshot() && !state.loadedSnapshotAnnotations) {
+        return null
+      }
+
+     store.commit('setAnnotation', row)
+
+      if (row !== null) {
+        setCurrentRowIndex(state.annotations.indexOf(row))
+      }
 
     }
 
@@ -796,6 +905,12 @@ export default defineComponent({
       if (page === currentPage.value || state.initialLoading) {
         return
       }
+
+      setCurrentPage(page)
+
+    }
+
+    const setCurrentPage = async(page) => {
       if (state.nextCurrentRowIndex === null) {
         state.nextCurrentRowIndex = 0
       }
