@@ -57,12 +57,15 @@ enum UserGroupSource {
   EMBL
   ALL
   INTERLAB
+  ALLINTERLAB
+  ALLEMBL
 }
 
 type Query {
   group(groupId: ID!): Group
   groupByUrlSlug(urlSlug: String!): Group
   allGroups(query: String, limit: Int = 10, useRole: Boolean = False): [Group!]!
+  allSources: [GroupDetectability!]
   countGroups: Int!
   countPublications: Int!
   countReviews: Int!

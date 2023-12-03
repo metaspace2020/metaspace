@@ -9,6 +9,7 @@ $filter-color: #828282;
   @apply flex flex-wrap m-12 justify-between pb-4;
   margin-top: 0;
 
+
   .files-link{
     display: none;
     justify-content: center;
@@ -87,7 +88,12 @@ $filter-color: #828282;
   }
 
   .filter-container{
-    @apply flex font-bold flex-wrap;
+    @apply flex font-bold flex-wrap relative w-full;
+
+
+    .gen-btn {
+      margin-top: -2px;
+    }
 
     .filter-box{
       @apply flex flex-col;
