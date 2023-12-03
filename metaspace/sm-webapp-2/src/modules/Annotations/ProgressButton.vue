@@ -1,5 +1,5 @@
 <template>
-  <div class="el-button" :style="buttonStyle" @click="$emit('click')">
+  <div class="el-button flex justify-start" :style="buttonStyle" @click="$emit('click')">
     <div :style="progressStyle" />
     <div :style="textStyle">
       <slot />

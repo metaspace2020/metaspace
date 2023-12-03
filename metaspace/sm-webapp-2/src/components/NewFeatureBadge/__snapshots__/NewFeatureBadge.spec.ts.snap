@@ -1,0 +1,14 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`NewFeatureBadge > should hide the badge 1`] = `[]`;
+
+exports[`NewFeatureBadge > should not render the badge if already hidden 1`] = `[]`;
+
+exports[`NewFeatureBadge > should not render the badge if stale 1`] = `[]`;
+
+exports[`NewFeatureBadge > should render a badge 1`] = `
+[
+  "el-badge",
+  "sm-feature-badge",
+]
+`;

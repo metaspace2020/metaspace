@@ -43,6 +43,7 @@ export default defineComponent({
       return (
         <ElBadge
           value="New"
+          isDot
           class={['sm-feature-badge', { 'sm-feature-badge--hidden': store[props.featureKey] }, props.customClass]}
         >
           {slots.default ? slots.default() : null}

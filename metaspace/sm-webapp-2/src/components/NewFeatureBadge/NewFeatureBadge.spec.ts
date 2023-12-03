@@ -1,39 +1,60 @@
-import { mount } from '@vue/test-utils'
-import Vue from 'vue'
+import { defineComponent, nextTick, h } from 'vue'
 import NewFeatureBadge, { hideFeatureBadge } from './NewFeatureBadge'
+import {flushPromises, mount} from '@vue/test-utils';
+import router from "@/router";
+import store from "../../store";
 
-const TestNewFeatureBadge = Vue.component('test', {
-  functional: true,
-  render: (h, { props }) => h(NewFeatureBadge, { props }, [h('span', {}, 'Badge Content')]),
-})
+const TestNewFeatureBadge = defineComponent({
+  setup(props, { slots }) {
+    return () => h(NewFeatureBadge, { ...props }, slots.default ? () => slots.default() : undefined);
+  },
+});
 
-const featureKey = 'test'
+const featureKey = 'test';
 
 describe('NewFeatureBadge', () => {
   it('should render a badge', () => {
-    const wrapper = mount(TestNewFeatureBadge, { propsData: { featureKey } })
-    expect(wrapper.classes()).toMatchSnapshot()
-  })
+    const wrapper = mount(TestNewFeatureBadge, {
+      props: { featureKey },
+      global: {
+        plugins: [store],
+      },
+    });
+    expect(wrapper.classes()).toMatchSnapshot();
+  });
 
-  it('should hide the badge', async() => {
-    const wrapper = mount(TestNewFeatureBadge, { propsData: { featureKey } })
-    hideFeatureBadge(featureKey)
-    await Vue.nextTick()
-    expect(wrapper.classes()).toMatchSnapshot()
-  })
+  it('should hide the badge', async () => {
+    const wrapper = mount(TestNewFeatureBadge, {
+      props: { featureKey },
+      global: {
+        plugins: [store],
+      },
+    });
+    hideFeatureBadge(featureKey);
+    await nextTick();
+    expect(wrapper.classes()).toMatchSnapshot();
+  });
 
   it('should not render the badge if already hidden', () => {
-    hideFeatureBadge(featureKey)
-    const wrapper = mount(TestNewFeatureBadge, { propsData: { featureKey } })
-    expect(wrapper.classes()).toMatchSnapshot()
-  })
+    hideFeatureBadge(featureKey);
+    const wrapper = mount(TestNewFeatureBadge, {
+      props: { featureKey },
+      global: {
+        plugins: [store],
+      },
+    });
+    expect(wrapper.classes()).toMatchSnapshot();
+  });
 
   it('should not render the badge if stale', () => {
-    const spy = jest.spyOn(global.Date, 'now').mockImplementation(() => new Date('2020-01-02T00:00:00.000').valueOf())
+    const spy = vi.spyOn(global.Date, 'now').mockReturnValue(new Date('2020-01-02T00:00:00.000').valueOf());
     const wrapper = mount(TestNewFeatureBadge, {
-      propsData: { featureKey, showUntil: new Date('2020-01-01T00:00:00.000') },
-    })
-    expect(wrapper.classes()).toMatchSnapshot()
-    spy.mockRestore()
-  })
-})
+      props: { featureKey, showUntil: new Date('2020-01-01T00:00:00.000') },
+      global: {
+        plugins: [store],
+      },
+    });
+    expect(wrapper.classes()).toMatchSnapshot();
+    spy.mockRestore();
+  });
+});

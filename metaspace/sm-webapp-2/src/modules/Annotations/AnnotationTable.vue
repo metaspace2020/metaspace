@@ -405,7 +405,7 @@
               <new-feature-badge feature-key="custom-cols" custom-class="new-custom-badge">
                 Columns
               </new-feature-badge>
-              <i class="el-icon-arrow-down select-btn-icon" />
+              <el-icon class="el-icon-arrow-down select-btn-icon"><ArrowDown /></el-icon>
             </el-button>
           </template>
           <div>
@@ -431,7 +431,7 @@
             :width="146"
             :height="42"
             :percentage="state.exportProgress * 100"
-            @click="state.abortExport"
+            @click="abortExport"
           >
             Cancel
           </progress-button>
@@ -442,14 +442,14 @@
           <template #reference>
             <el-button class="select-btn-wrapper relative" :width="146" :height="42">
               Export to CSV
-              <i class="el-icon-arrow-down select-btn-icon" />
+              <el-icon class="el-icon-arrow-down select-btn-icon"><ArrowDown /></el-icon>
             </el-button>
           </template>
 
-          <p class="export-option" @click="state.startExport">
+          <p class="export-option" @click="startExport">
             Annotations table
           </p>
-          <p class="export-option" @click="state.startIntensitiesExport">
+          <p class="export-option" @click="startIntensitiesExport">
             Pixel intensities
           </p>
         </el-popover>
@@ -470,20 +470,23 @@
 </template>
 
 <script>
-import {defineComponent, ref, reactive, computed, onMounted, watch, defineAsyncComponent, nextTick} from 'vue';
+import {defineComponent, ref, reactive, computed, onMounted, watch, defineAsyncComponent, nextTick, inject} from 'vue';
 import { useStore } from 'vuex';
-import { ElRow, ElTable, ElTableColumn, ElPagination, ElPopover, ElButton } from 'element-plus';
+import { ElRow, ElTable, ElTableColumn, ElPagination } from 'element-plus';
 import isSnapshot from "../../lib/isSnapshot";
-import { invert, uniqBy, isEqual, throttle } from 'lodash-es'
+import { invert, isEqual } from 'lodash-es'
 import config from '../../lib/config'
-import {useQuery} from "@vue/apollo-composable";
-import {getSystemHealthQuery} from "../../api/system";
-import {annotationListQuery} from "../../api/annotation";
+import {DefaultApolloClient, useQuery} from "@vue/apollo-composable";
+import {annotationListQuery, tableExportQuery} from "../../api/annotation";
 import {useRoute, useRouter} from "vue-router";
 import {setLocalStorage} from "../../lib/localStorage";
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import ProgressButton from './ProgressButton.vue'
-import {Check} from "@element-plus/icons-vue";
+import {Check, ArrowDown} from "@element-plus/icons-vue";
+import formatCsvRow, { csvExportHeader, formatCsvTextArray, csvExportIntensityHeader } from '../../lib/formatCsvRow'
+import FileSaver from 'file-saver'
+import { getIonImage, loadPngFromUrl } from '../../lib/ionImageRendering'
+
 
 const FilterIcon = defineAsyncComponent(() =>
   import('../../assets/inline/filter.svg')
@@ -548,12 +551,15 @@ export default defineComponent({
     FullScreen,
     Check,
     ElIcon,
+    ArrowDown,
     ExitFullScreen
   },
   props: ['hideColumns', 'isFullScreen'],
   setup(props) {
+    const apolloClient = inject(DefaultApolloClient);
     const store = useStore();
     const table = ref(null);
+    const exportPop = ref(null);
     const showCustomCols = computed(() => config.features.custom_cols);
     const datasetIds = computed(() => store.getters.filter.datasetIds);
 
@@ -692,7 +698,7 @@ export default defineComponent({
     const router = useRouter()
 
 
-    const formatMSM = (row, col) => row.msmScore.toFixed(3)
+    const formatMSM = (row) => row.msmScore.toFixed(3)
 
     const formatFDR = ({ fdrLevel }) => {
       if (fdrLevel == null) {
@@ -1012,8 +1018,8 @@ export default defineComponent({
 
     }
 
-    const formatDatasetName = (row, col) => row.dataset.name
-    const formatMZ = (row, col) => row.mz.toFixed(4)
+    const formatDatasetName = (row) => row.dataset.name
+    const formatMZ = (row) => row.mz.toFixed(4)
 
 
 
@@ -1050,6 +1056,191 @@ export default defineComponent({
 
       setCurrentPage(page)
 
+    }
+
+    const startIntensitiesExport = async() => {
+      if (exportPop.value && typeof exportPop.value.doClose === 'function') {
+        exportPop.value?.doClose()
+      }
+
+      if (!store.state.annotation?.dataset?.id) { // no annotation selected
+        return
+      }
+
+      async function formatIntensitiesRow(annotation, normalizationData) {
+        const { isotopeImages, ionFormula: molFormula, possibleCompounds, adduct, mz, dataset } = annotation
+        const isotopeImage = isotopeImages[0]
+        const ionImagePng = await loadPngFromUrl(isotopeImage.url)
+        const molName = possibleCompounds.map((m) => m.name).join(',')
+        const molIds = possibleCompounds.map((m) => m.information[0].databaseId).join(',')
+        const finalImage = getIonImage(ionImagePng, isotopeImages[0], undefined,
+          undefined, normalizationData)
+        const row = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
+        const { width, height, intensityValues } = finalImage
+        const cols = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
+
+        for (let x = 0; x < width; x++) {
+          for (let y = 0; y < height; y++) {
+            cols.push(`x${x}_y${y}`)
+            const idx = y * width + x
+            row.push(intensityValues[idx])
+          }
+        }
+
+        return { cols, row, dsName: dataset.name }
+      }
+
+      const queryVariablesAux = {
+        ...queryVariables.value,
+        dFilter: {
+          ...queryVariables.value.dFilter,
+          ids: store.state.annotation?.dataset?.id,
+        },
+      }
+      const chunkSize = state.csvChunkSize
+      let offset = 0
+      state.isExporting = true
+      let totalCount = 1
+      let fileCols
+      let fileName
+      let rows = ''
+
+
+      while (state.isExporting && offset < totalCount) {
+        const resp = await apolloClient.query({
+          query: annotationListQuery,
+          variables: { ...queryVariablesAux, limit: chunkSize, offset },
+        })
+        totalCount = resp.data.countAnnotations
+        for (let i = 0; i < resp.data.allAnnotations.length; i++) {
+          if (!state.isExporting) {
+            return
+          }
+          offset += 1
+          state.exportProgress = offset / totalCount
+          const annotation = resp.data.allAnnotations[i]
+          try {
+            const { cols, row, dsName } = await formatIntensitiesRow(annotation,
+              isNormalized.value
+                ? store.state.normalization : undefined)
+            if (!fileCols) {
+              fileCols = formatCsvRow(cols)
+              fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${isNormalized.value
+                ? '_tic_normalized' : ''}.csv`
+            }
+            rows += formatCsvRow(row)
+          } catch (e) {
+            // pass when fail to convert png
+          }
+        }
+      }
+
+      if (state.isExporting) {
+        state.isExporting = false
+        state.exportProgress = 0
+        const csv = csvExportIntensityHeader(isNormalized.value) + fileCols + rows
+        const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+        FileSaver.saveAs(blob, fileName)
+      }
+
+    }
+
+    const abortExport = () => {
+      state.isExporting = false
+      state.exportProgress = 0
+    }
+
+    const startExport = async() => {
+      if (exportPop.value && typeof exportPop.value.doClose === 'function') {
+        exportPop.value?.doClose()
+      }
+
+      const chunkSize = state.csvChunkSize
+      const includeColoc = !hidden('colocalizationCoeff')
+      const includeOffSample = config.features.off_sample
+      const includeIsobars = config.features.isobars
+      const includeNeutralLosses = config.features.neutral_losses
+      const includeChemMods = config.features.chem_mods
+      const colocalizedWith = filter.value.colocalizedWith
+      let csv = csvExportHeader()
+      const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct',
+        ...(includeChemMods ? ['chemMod'] : []),
+        ...(includeNeutralLosses ? ['neutralLoss'] : []),
+        'ion', 'mz', 'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
+        'moleculeNames', 'moleculeIds', 'minIntensity', 'maxIntensity', 'totalIntensity', 'isomers', 'isobars']
+      if (includeColoc) {
+        columns.push('colocalizationCoeff')
+      }
+      if (includeOffSample) {
+        columns.push('offSample', 'rawOffSampleProb')
+      }
+      if (includeIsobars) {
+        columns.push('isobarIons')
+      }
+      csv += formatCsvRow(columns)
+
+      function databaseId(compound) {
+        return compound.information[0].databaseId
+      }
+
+      function formatRow(row) {
+        const {
+          dataset, sumFormula, adduct, chemMod, neutralLoss, ion, mz,
+          msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
+          isotopeImages, isobars,
+          offSample, offSampleProb, colocalizationCoeff,
+        } = row
+        const cells = [
+          dataset.group ? dataset.group.name : '',
+          dataset.name,
+          dataset.id,
+          sumFormula, 'M' + adduct,
+          ...(includeChemMods ? [chemMod] : []),
+          ...(includeNeutralLosses ? [neutralLoss] : []),
+          ion, mz,
+          msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
+          formatCsvTextArray(possibleCompounds.map(m => m.name)),
+          formatCsvTextArray(possibleCompounds.map(databaseId)),
+          isotopeImages[0] && isotopeImages[0].minIntensity,
+          isotopeImages[0] && isotopeImages[0].maxIntensity,
+          isotopeImages[0] && isotopeImages[0].totalIntensity,
+          possibleCompounds.length,
+          isobars.length,
+        ]
+        if (includeColoc) {
+          cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff)
+        }
+        if (includeOffSample) {
+          cells.push(offSample, offSampleProb)
+        }
+        if (includeIsobars) {
+          cells.push(formatCsvTextArray(isobars.map(isobar => isobar.ion)))
+        }
+
+        return formatCsvRow(cells)
+      }
+
+      const queryVariablesAux = { ...queryVariables.value }
+      let offset = 0
+      state.isExporting = true
+
+      while (state.isExporting && offset < state.totalCount) {
+        const resp = await apolloClient.query({
+          query: tableExportQuery,
+          variables: { ...queryVariablesAux, limit: chunkSize, offset },
+        })
+        state.exportProgress = offset / state.totalCount
+        offset += chunkSize
+        csv += resp.data.annotations.map(formatRow).join('')
+      }
+
+      if (state.isExporting) {
+        state.isExporting = false
+        state.exportProgress = 0
+
+        const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+        FileSaver.saveAs(blob, 'metaspace_annotations.csv')
+      }
     }
 
     const setCurrentPage = async(page) => {
@@ -1139,7 +1330,11 @@ export default defineComponent({
       onPageSizeChange,
       onPaginationClick,
       currentPage,
-      handleColSelectorClick
+      handleColSelectorClick,
+      exportPop,
+      startExport,
+      startIntensitiesExport,
+      abortExport
     };
   },
 });
@@ -1295,11 +1490,12 @@ export default defineComponent({
 }
 .new-custom-badge{
   .el-badge__content{
-    right: 10px !important;
-    top: -10px !important;
+    right: -39px !important;
+    top: -13px !important;
   }
 }
 .select-btn-wrapper{
+  @apply mt-1;
   width: 146px;
   height: 42px;
 }
