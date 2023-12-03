@@ -22,11 +22,6 @@ from sm.engine.utils.perf_profile import SubtaskProfiler
 logger = logging.getLogger('annotation-pipeline')
 
 
-def _print_times(start, name):
-    end = datetime.now().replace(microsecond=0)
-    print(f'{end.isoformat(" ")} - {name} - {(end - start).total_seconds()} sec')
-
-
 def _load_spectra(storage, imzml_reader):
     # Pre-allocate lists of mz & int arrays
     mz_arrays = [np.array([], dtype=imzml_reader.mz_precision)] * imzml_reader.n_spectra
@@ -45,12 +40,10 @@ def _load_spectra(storage, imzml_reader):
     chunk_bounds = np.linspace(0, imzml_reader.n_spectra, n_chunks + 1, dtype=np.int64)
     spectrum_chunks = zip(chunk_bounds, chunk_bounds[1:])
 
-    start = datetime.now().replace(microsecond=0)
     with ThreadPoolExecutor(4) as executor:
         for _ in executor.map(read_spectrum_chunk, spectrum_chunks):
             pass
 
-    _print_times(start, '_load_spectra')
     return np.concatenate(mz_arrays), np.concatenate(int_arrays), sp_lens
 
 
@@ -60,30 +53,26 @@ def _sort_spectra(imzml_reader, mzs, ints, sp_lens):
     #   and the underlying "Timsort" implementation is optimized for partially-sorted data.
     # * It's a "stable sort", meaning it will preserve the ordering by spectrum index if mz values
     #   are equal. The order of pixels affects some metrics, so this stability is important.
-    start_t = datetime.now().replace(microsecond=0)
     by_mz = np.argsort(mzs, kind='mergesort')
-    _print_times(start_t, 'by_mz')
+    perf.record_entry('by_mz')
 
     # The existing `mzs` and `ints` arrays can't be garbage-collected because the calling function
     # holds references to them. Overwrite the original arrays with the temp sorted arrays so that
     # the temp arrays can be freed instead.
-    start_t = datetime.now().replace(microsecond=0)
     mzs[:] = mzs[by_mz]
-    _print_times(start_t, 'sort mzs')
+    perf.record_entry('sort_mzs')
 
-    start_t = datetime.now().replace(microsecond=0)
     ints[:] = ints[by_mz]
-    _print_times(start_t, 'sort ints')
+    perf.record_entry('sort_ints')
 
     # Build sp_idxs after sorting mzs. Sorting mzs uses the most memory, so it's best to keep
     # sp_idxs in a compacted form with sp_lens until the last minute.
-    start_t = datetime.now().replace(microsecond=0)
     sp_idxs = np.empty(len(ints), np.uint32)
     sp_lens = np.insert(np.cumsum(sp_lens), 0, 0)
     for sp_idx, start, end in zip(imzml_reader.pixel_indexes, sp_lens[:-1], sp_lens[1:]):
         sp_idxs[start:end] = sp_idx
     sp_idxs = sp_idxs[by_mz]
-    _print_times(start_t, 'sort sp_idxs')
+    perf.record_entry('sort_idxs')
 
     return mzs, ints, sp_idxs
 
@@ -165,12 +154,10 @@ def _get_hash(
 
         return md5_hash.hexdigest()
 
-    start_t = datetime.now().replace(microsecond=0)
     hash_sum = {
         'imzml': calc_hash(storage.get_cloudobject(imzml_cobject, stream=True)),
         'ibd': calc_hash(storage.get_cloudobject(ibd_cobject, stream=True)),
     }
-    _print_times(start_t, 'calc_hash')
 
     return hash_sum
 
@@ -199,7 +186,6 @@ def _load_ds(
 
     logger.info('Sorting spectra')
     mzs, ints, sp_idxs = _sort_spectra(imzml_reader, mzs, ints, sp_lens)
-    perf.record_entry('sorted spectra')
 
     logger.info('Uploading segments')
     ds_segms_cobjs, ds_segments_bounds, ds_segm_lens = _upload_segments(
