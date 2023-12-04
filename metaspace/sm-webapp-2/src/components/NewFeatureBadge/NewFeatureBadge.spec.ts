@@ -1,7 +1,6 @@
 import { defineComponent, nextTick, h } from 'vue'
 import NewFeatureBadge, { hideFeatureBadge } from './NewFeatureBadge'
-import {flushPromises, mount} from '@vue/test-utils';
-import router from "@/router";
+import { mount} from '@vue/test-utils';
 import store from "../../store";
 
 const TestNewFeatureBadge = defineComponent({

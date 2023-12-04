@@ -17,7 +17,8 @@
       @keyup="onKeyUp"
       @keydown="onKeyDown"
       @current-change="onCurrentRowChange"
-      @sort-change="onSortChange">
+      @sort-change="onSortChange"
+    >
       <template v-slot:empty>
         <p v-if="multipleDatasetsColocError">
           Colocalization filters cannot be used with multiple datasets selected.
@@ -113,6 +114,9 @@
           :min-width="120"
         >
 
+          <template v-slot="{ row }">
+            <annotation-table-mol-name :annotation="row" />
+          </template>
         </el-table-column>
 
       <el-table-column
@@ -472,20 +476,24 @@
 <script>
 import {defineComponent, ref, reactive, computed, onMounted, watch, defineAsyncComponent, nextTick, inject} from 'vue';
 import { useStore } from 'vuex';
-import { ElRow, ElTable, ElTableColumn, ElPagination } from 'element-plus';
+import { ElIcon, ElRow, ElTable, ElTableColumn, ElPagination } from 'element-plus';
 import isSnapshot from "../../lib/isSnapshot";
-import { invert, isEqual } from 'lodash-es'
+import { readNpy } from '../../lib/npyHandler'
+import safeJsonParse from '../../lib/safeJsonParse'
+import { invert, isEqual, uniqBy } from 'lodash-es'
 import config from '../../lib/config'
 import {DefaultApolloClient, useQuery} from "@vue/apollo-composable";
 import {annotationListQuery, tableExportQuery} from "../../api/annotation";
 import {useRoute, useRouter} from "vue-router";
-import {setLocalStorage} from "../../lib/localStorage";
+import {getLocalStorage, setLocalStorage} from "../../lib/localStorage";
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import ProgressButton from './ProgressButton.vue'
+import AnnotationTableMolName from './AnnotationTableMolName.vue'
 import {Check, ArrowDown} from "@element-plus/icons-vue";
 import formatCsvRow, { csvExportHeader, formatCsvTextArray, csvExportIntensityHeader } from '../../lib/formatCsvRow'
 import FileSaver from 'file-saver'
 import { getIonImage, loadPngFromUrl } from '../../lib/ionImageRendering'
+import { getDatasetDiagnosticsQuery, getRoisQuery } from '../../api/dataset'
 
 
 const FilterIcon = defineAsyncComponent(() =>
@@ -552,7 +560,8 @@ export default defineComponent({
     Check,
     ElIcon,
     ArrowDown,
-    ExitFullScreen
+    ExitFullScreen,
+    AnnotationTableMolName
   },
   props: ['hideColumns', 'isFullScreen'],
   setup(props) {
@@ -777,7 +786,6 @@ export default defineComponent({
     })
     const showColocCol = computed(() => route.query.colo !== undefined)
 
-
     const queryVariables = computed(() => {
       const filter = store.getters.gqlAnnotationFilter
       const dFilter = store.getters.gqlDatasetFilter
@@ -825,16 +833,32 @@ export default defineComponent({
     }
 
     const updateColumns = () => {
-      if (route.query.cols) {
-        const columns = state.columns
+      if (!showCustomCols.value) { // do not apply custom column settings
+        return
+      }
+
+      const columns = state.columns
+
+      if (route.query.cols && Array.isArray(route.query.cols.split(','))) { // load cols from url
         const persistedCols = route.query.cols.split(',')
         columns.forEach((column, colIdx) => {
           if (persistedCols.includes(column.id.toString())) {
             columns[colIdx].selected = true
           }
         })
-        state.columns = columns
+      } else { // load cols from local storage - legacy
+        const localColSettings = getLocalStorage('annotationTableCols')
+        if (Array.isArray(localColSettings)) {
+          localColSettings.forEach((colSetting) => {
+            const colIdx = columns.findIndex(col => col.src === colSetting.src)
+            if (colIdx !== -1) {
+              columns[colIdx].selected = colSetting.selected
+            }
+          })
+        }
       }
+
+      state.columns = columns
     }
 
     onMounted(() => {
@@ -859,6 +883,20 @@ export default defineComponent({
 
       await nextTick()
 
+      if (isSnapshot() && !state.loadedSnapshotAnnotations) {
+        state.nextCurrentRowIndex = -1
+        if (Array.isArray(store.state.snapshotAnnotationIds)) {
+          if (store.state.snapshotAnnotationIds.length > 1) { // adds annotationFilter if multi mol
+            updateFilter({ annotationIds: store.state.snapshotAnnotationIds })
+          } else { // dont display filter if less than one annotation
+            setTimeout(() => store.commit('removeFilter', 'annotationIds'), 500)
+          }
+          state.nextCurrentRowIndex = state.annotations?.findIndex((annotation) =>
+            store.state.snapshotAnnotationIds.includes(annotation.id))
+          state.loadedSnapshotAnnotations = true
+        }
+      }
+
       if (state.nextCurrentRowIndex !== null && state.nextCurrentRowIndex !== -1) {
         setCurrentRow(state.nextCurrentRowIndex)
         state.nextCurrentRowIndex = null
@@ -868,12 +906,14 @@ export default defineComponent({
           setCurrentRow(currentRowIndex.value)
         }
       }
-
       // Move focus to the table so that keyboard navigation works, except when focus is on an input element
       const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
       if (table.value && shouldMoveFocus) {
         table.value?.$el.focus()
       }
+
+      // load ROIs from db
+      loadRois(uniqBy(data.allAnnotations, 'dataset.id').map((annotation) => annotation?.dataset.id))
 
       state.initialLoading = false
     })
@@ -884,10 +924,81 @@ export default defineComponent({
         : !state.columns.find((col) => col.src === columnLabel)?.selected
     };
 
+    const loadRois = (datasetIdsRoi) => {
+      datasetIdsRoi.map(async(datasetId) => {
+        try {
+          const resp = await apolloClient.query({
+            query: getRoisQuery,
+            variables: {
+              datasetId,
+            },
+            fetchPolicy: 'cache-first',
+          })
+          if (!resp?.data?.dataset?.roiJson) {
+            return
+          }
+          const roi = JSON.parse(resp?.data?.dataset?.roiJson)
+          if (roi && Array.isArray(roi.features) && store.state.roiInfo[datasetId]) {
+            store.commit('setRoiInfo', {
+              key: datasetId,
+              roi: roi.features.map((feature) => {
+                return feature?.properties
+                  ? { ...feature?.properties, allVisible: store.state.roiInfo?.visible } : {}
+              }),
+            })
+          }
+        } catch (e) {
+          // pass
+        }
+      })
+    }
 
     const updateFilter = (delta) => {
       const newFilter = Object.assign({}, filter.value, delta)
       store.commit('updateFilter', newFilter)
+    }
+
+    const setNormalizationData = async(currentAnnotation) => {
+      if (!currentAnnotation) {
+        return null
+      }
+
+      try {
+        const resp = await apolloClient.query({
+          query: getDatasetDiagnosticsQuery,
+          variables: {
+            id: currentAnnotation.dataset.id,
+          },
+          fetchPolicy: 'cache-first',
+        })
+        const dataset = resp.data.dataset
+        const tics = dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
+        const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
+        const { data, shape } = await readNpy(tic[0].url)
+        const metadata = safeJsonParse(tics[0].data)
+        metadata.maxTic = metadata.max_tic
+        metadata.minTic = metadata.min_tic
+        delete metadata.max_tic
+        delete metadata.min_tic
+
+        store.commit('setNormalizationMatrix', {
+          data,
+          shape,
+          metadata: metadata,
+          type: 'TIC',
+          showFullTIC: false,
+          error: false,
+        })
+      } catch (e) {
+        store.commit('setNormalizationMatrix', {
+          data: null,
+          shape: null,
+          metadata: null,
+          showFullTIC: null,
+          type: 'TIC',
+          error: true,
+        })
+      }
     }
 
     const filterGroup = (row) => {
@@ -1016,6 +1127,7 @@ export default defineComponent({
         setCurrentRowIndex(state.annotations.indexOf(row))
       }
 
+      setNormalizationData(row)
     }
 
     const formatDatasetName = (row) => row.dataset.name
