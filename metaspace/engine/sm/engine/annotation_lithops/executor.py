@@ -42,6 +42,11 @@ def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
         def finalize_perf():
             if len(subtask_perf.entries) > 0 and 'finished' not in subtask_perf.entries:
                 subtask_perf.record_entry('finished')
+            subtask_perf.add_extra_data(
+                **{
+                    'mem after': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+                }
+            )
             return subtask_perf
 
         subtask_perf = SubtaskProfiler()
@@ -83,6 +88,8 @@ def _save_subtask_perf(
     else:
         # debug_run_locally=True doesn't make futures
         exec_times = [sum(perf.entries.values()) for perf in subtask_perfs]
+        mem_usages = [perf.extra_data['mem after'] for perf in subtask_perfs]
+        request_ids = []
     perf_data = {
         'num_actions': len(exec_times),
         'attempt': attempt,
