@@ -95,10 +95,8 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs)
         )
         return save_cobj(storage, df)
 
-    start_t = datetime.now().replace(microsecond=0)
     with ThreadPoolExecutor(4) as executor:
         ds_segms_cobjs = list(executor.map(upload_segm, segm_ranges))
-    _print_times(start_t, 'upload_segm')
 
     return ds_segms_cobjs, ds_segments_bounds, ds_segm_lens
 
@@ -127,10 +125,8 @@ def _upload_imzml_browser_files(
         save_cobj(browser_storage, data, key=key)
 
     keys = [f'{uuid}/{k}' for k in ['mzs.npy', 'ints.npy', 'sp_idxs.npy']]
-    start_t = datetime.now().replace(microsecond=0)
     with ThreadPoolExecutor(3) as executor:
         cobjs = list(executor.map(upload_file, [mzs, ints, sp_idxs], keys))
-    _print_times(start_t, 'upload_imzml_files')
 
     chunk_records_number = 1024
     mz_index = mzs[::chunk_records_number].astype('f')
