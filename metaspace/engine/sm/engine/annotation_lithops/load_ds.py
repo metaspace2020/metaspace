@@ -47,7 +47,7 @@ def _load_spectra(storage, imzml_reader):
     return np.concatenate(mz_arrays), np.concatenate(int_arrays), sp_lens
 
 
-def _sort_spectra(imzml_reader, mzs, ints, sp_lens):
+def _sort_spectra(imzml_reader, perf, mzs, ints, sp_lens):
     # Mergesort is used for 2 reasons:
     # * It's much faster than the default quicksort, because m/z data is already partially sorted
     #   and the underlying "Timsort" implementation is optimized for partially-sorted data.
@@ -181,7 +181,7 @@ def _load_ds(
     perf.record_entry('read spectra', n_peaks=len(mzs))
 
     logger.info('Sorting spectra')
-    mzs, ints, sp_idxs = _sort_spectra(imzml_reader, mzs, ints, sp_lens)
+    mzs, ints, sp_idxs = _sort_spectra(imzml_reader, perf, mzs, ints, sp_lens)
 
     logger.info('Uploading segments')
     ds_segms_cobjs, ds_segments_bounds, ds_segm_lens = _upload_segments(
