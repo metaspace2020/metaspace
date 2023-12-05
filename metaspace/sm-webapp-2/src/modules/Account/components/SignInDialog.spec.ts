@@ -49,7 +49,7 @@ describe('SignInDialog', () => {
     // Clean up or restore any global changes here
   });
 
-  it('should match snapshot', async ({expect}) => {
+  it('should match snapshot', async () => {
     const wrapper = mount(SignInDialog, {
       global: {
         plugins: [store, router, ElementPlus],
@@ -60,7 +60,7 @@ describe('SignInDialog', () => {
     expect(wrapper.html()).toMatchSnapshot();
   });
 
-  it('should be able to sign in', async ({expect}) => {
+  it('should be able to sign in', async () => {
     // Arrange
     const email = 'test@example.com';
     const password = 'baz';

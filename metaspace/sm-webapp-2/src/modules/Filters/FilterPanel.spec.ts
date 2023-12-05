@@ -71,7 +71,7 @@ describe('FilterPanel', () => {
   }
 
 
-  it('should match snapshot (no filters)', async ({expect}) => {
+  it('should match snapshot (no filters)', async () => {
     await updateFilter({})
     const propsData = { level: 'annotation' }
     const wrapper = mount(FilterPanel, {
@@ -90,7 +90,7 @@ describe('FilterPanel', () => {
     expect(wrapper.html()).toMatchSnapshot();
   });
 
-  it('should match snapshot (database without dataset)', async ({expect}) => {
+  it('should match snapshot (database without dataset)', async () => {
     await updateFilter({ database: allFilters.database })
     const propsData = { level: 'annotation' }
     const wrapper = mount(FilterPanel, {
@@ -109,7 +109,7 @@ describe('FilterPanel', () => {
     expect(wrapper.html()).toMatchSnapshot();
   });
 
-  it('should match snapshot (all annotation filters)', async({expect}) => {
+  it('should match snapshot (all annotation filters)', async() => {
     await updateFilter(allFilters)
     const propsData = { level: 'annotation' }
     const wrapper = mount(FilterPanel, {
@@ -129,7 +129,7 @@ describe('FilterPanel', () => {
   });
 
 
-  it('should update the route when filters change', async({expect}) => {
+  it('should update the route when filters change', async() => {
     await updateFilter(allFilters)
     const propsData = { level: 'annotation' }
     const wrapper = mount(FilterPanel, {

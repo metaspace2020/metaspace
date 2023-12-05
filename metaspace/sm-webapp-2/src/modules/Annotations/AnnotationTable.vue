@@ -4,7 +4,7 @@
       id="annot-table"
       ref="table"
       v-loading="isLoading"
-      :data="state.annotations"
+      :data="state?.annotations"
       size="small"
       border
       element-loading-text="Loading results …"
@@ -362,12 +362,12 @@
     <div class="flex justify-between items-start mt-2 w-full">
       <div class="mt-1">
         <el-pagination
-          v-if="!state.initialLoading"
+          v-if="!state?.initialLoading"
           :small="false"
-          :total="state.totalCount"
+          :total="state?.totalCount"
           :current-page="currentPage"
-          :page-size="state.recordsPerPage"
-          :page-sizes="state.pageSizes"
+          :page-size="state?.recordsPerPage"
+          :page-sizes="state?.pageSizes"
           :layout="paginationLayout"
           @current-change="() => {}"
           @size-change="onPageSizeChange"
@@ -378,7 +378,7 @@
           id="annot-count"
           class="mt-2"
         >
-          <b>{{ state.totalCount }}</b> matching {{ state.totalCount == 1 ? 'record': 'records' }}
+          <b>{{ state?.totalCount }}</b> matching {{ state?.totalCount == 1 ? 'record': 'records' }}
         </div>
 
         <div class="mt-2">
@@ -429,12 +429,12 @@
           </div>
         </el-popover>
 
-        <div v-if="state.isExporting" class="select-btn-wrapper ml-2 mt-1">
+        <div v-if="state?.isExporting" class="select-btn-wrapper ml-2 mt-1">
           <progress-button
             class="export-btn"
             :width="146"
             :height="42"
-            :percentage="state.exportProgress * 100"
+            :percentage="state?.exportProgress * 100"
             @click="abortExport"
           >
             Cancel
@@ -476,7 +476,7 @@
 <script>
 import {defineComponent, ref, reactive, computed, onMounted, watch, defineAsyncComponent, nextTick, inject} from 'vue';
 import { useStore } from 'vuex';
-import { ElIcon, ElRow, ElTable, ElTableColumn, ElPagination } from 'element-plus';
+import { ElIcon, ElRow, ElTable, ElTableColumn, ElPagination, ElButton } from 'element-plus';
 import isSnapshot from "../../lib/isSnapshot";
 import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
@@ -491,7 +491,7 @@ import ProgressButton from './ProgressButton.vue'
 import AnnotationTableMolName from './AnnotationTableMolName.vue'
 import {Check, ArrowDown} from "@element-plus/icons-vue";
 import formatCsvRow, { csvExportHeader, formatCsvTextArray, csvExportIntensityHeader } from '../../lib/formatCsvRow'
-import FileSaver from 'file-saver'
+import * as FileSaver from 'file-saver'
 import { getIonImage, loadPngFromUrl } from '../../lib/ionImageRendering'
 import { getDatasetDiagnosticsQuery, getRoisQuery } from '../../api/dataset'
 
@@ -561,7 +561,8 @@ export default defineComponent({
     ElIcon,
     ArrowDown,
     ExitFullScreen,
-    AnnotationTableMolName
+    AnnotationTableMolName,
+    ElButton
   },
   props: ['hideColumns', 'isFullScreen'],
   setup(props) {
@@ -574,6 +575,7 @@ export default defineComponent({
 
     const state = reactive({
       annotations: [],
+      loading: false,
       currentPage: 1,
       recordsPerPage: 15,
       greenCount: 0,
@@ -730,6 +732,7 @@ export default defineComponent({
       }
     }
 
+    const tableLoading = computed(() => state.loading);
     const isLoading = computed(() => store.state.tableIsLoading);
     const isNormalized = computed(() => store.getters.settings?.annotationView?.normalization);
     const filter = computed(() => store.getters.filter)
@@ -737,11 +740,11 @@ export default defineComponent({
 
     const currentPage = computed(() => {
 
-      if(store.getters.settings.table.currentPage > numberOfPages.value && numberOfPages.value !== 0){
+      if(store.getters.settings?.table?.currentPage > numberOfPages.value && numberOfPages.value !== 0){
         store.commit('setCurrentPage', numberOfPages.value)
       }
 
-      return store.getters.settings.table.currentPage
+      return store.getters.settings?.table?.currentPage
     })
     const singleDatasetSelected = computed(() => {
       let isSimple = true
@@ -756,15 +759,15 @@ export default defineComponent({
       }
       return isSimple && filter.value.datasetIds && filter.value.datasetIds.length === 1
     })
-    const orderBy = computed(() => store.getters.settings.table.order.by)
-    const sortingOrder = computed(() => store.getters.settings.table.order.dir)
+    const orderBy = computed(() => store.getters.settings?.table?.order?.by)
+    const sortingOrder = computed(() => store.getters.settings?.table?.order?.dir)
     const tableSort = computed(() => {
       return {
         prop: SORT_ORDER_TO_COLUMN[orderBy.value] || 'msmScore',
         order: sortingOrder.value?.toLowerCase(),
       }
     })
-    const currentRowIndex = computed(() => store.getters.settings.table.row - 1)
+    const currentRowIndex = computed(() => store.getters.settings?.table?.row - 1)
     const paginationLayout = computed(() => {
       const { datasetIds } = filter.value
       const limitedSpace = datasetIds && datasetIds.length === 1
@@ -791,7 +794,6 @@ export default defineComponent({
       const dFilter = store.getters.gqlDatasetFilter
       const colocalizationCoeffFilter = store.getters.gqlColocalizationFilter
       const query = store.getters.ftsQuery
-
       return {
         filter,
         dFilter,
@@ -799,7 +801,7 @@ export default defineComponent({
         colocalizationCoeffFilter,
         orderBy: orderBy.value,
         sortingOrder: sortingOrder.value,
-        offset: Math.max(0, (currentPage.value - 1) * state.recordsPerPage),
+        offset: Math.max(0, (currentPage.value - 1) * state.recordsPerPage) || 0,
         limit: state.recordsPerPage,
         countIsomerCompounds: config.features.isomers,
       }
@@ -807,11 +809,11 @@ export default defineComponent({
 
     const queryOptions = reactive({ enabled: !store.state.filterListsLoading })
 
-    const { onResult: onAnnotationsResult, loading } = useQuery(annotationListQuery, queryVariables, {
-      fetchPolicy: 'cache-first',
-      throttle: 200,
-      enabled: queryOptions.enabled,
-    });
+    // const { onResult: onAnnotationsResult, loading } = useQuery(annotationListQuery, queryVariables, {
+    //   fetchPolicy: 'cache-first',
+    //   throttle: 200,
+    //   enabled: queryOptions.enabled,
+    // });
 
     const updateColocSort = () => {
       // sort table to update selected sort ui when coloc filter applied from annotation view
@@ -820,6 +822,11 @@ export default defineComponent({
           table.value.sort(SORT_ORDER_TO_COLUMN[orderBy.value], sortingOrder.value.toLowerCase());
         }, 0);
       }
+    }
+
+    const showDatasetRelatedColumns = () => {
+      state.columns.find((col) => col.src === 'Group').selected = true
+      state.columns.find((col) => col.src === 'Dataset').selected = true
     }
 
     const updateDatasetColumns = () => {
@@ -872,51 +879,64 @@ export default defineComponent({
       updateColocSort()
     })
 
-    onAnnotationsResult(async(result) => {
-      const {data} = result
-      if(!data){
-        return
-      }
+    const executeQuery = async () => {
+      state.loading = true
+      try {
+        const result = await apolloClient.query({
+          query: annotationListQuery,
+          variables: queryVariables.value,
+          fetchPolicy: 'cache-first',
+          throttle: 200,
+        })
+        const {data} = result
+        if(!data){
+          return
+        }
+        state.annotations = data?.allAnnotations || []
+        state.totalCount = data?.countAnnotations || 0
 
-      state.annotations = data?.allAnnotations || []
-      state.totalCount = data?.countAnnotations || 0
+        await nextTick()
 
-      await nextTick()
-
-      if (isSnapshot() && !state.loadedSnapshotAnnotations) {
-        state.nextCurrentRowIndex = -1
-        if (Array.isArray(store.state.snapshotAnnotationIds)) {
-          if (store.state.snapshotAnnotationIds.length > 1) { // adds annotationFilter if multi mol
-            updateFilter({ annotationIds: store.state.snapshotAnnotationIds })
-          } else { // dont display filter if less than one annotation
-            setTimeout(() => store.commit('removeFilter', 'annotationIds'), 500)
+        if (isSnapshot() && !state.loadedSnapshotAnnotations) {
+          state.nextCurrentRowIndex = -1
+          if (Array.isArray(store.state.snapshotAnnotationIds)) {
+            if (store.state.snapshotAnnotationIds.length > 1) { // adds annotationFilter if multi mol
+              updateFilter({ annotationIds: store.state.snapshotAnnotationIds })
+            } else { // dont display filter if less than one annotation
+              setTimeout(() => store.commit('removeFilter', 'annotationIds'), 500)
+            }
+            state.nextCurrentRowIndex = state.annotations?.findIndex((annotation) =>
+              store.state.snapshotAnnotationIds.includes(annotation.id))
+            state.loadedSnapshotAnnotations = true
           }
-          state.nextCurrentRowIndex = state.annotations?.findIndex((annotation) =>
-            store.state.snapshotAnnotationIds.includes(annotation.id))
-          state.loadedSnapshotAnnotations = true
         }
-      }
 
-      if (state.nextCurrentRowIndex !== null && state.nextCurrentRowIndex !== -1) {
-        setCurrentRow(state.nextCurrentRowIndex)
-        state.nextCurrentRowIndex = null
-      } else if (state.nextCurrentRowIndex !== -1) {
-        const curRow = getCurrentRow()
-        if (!curRow.value) {
-          setCurrentRow(currentRowIndex.value)
+        if (state.nextCurrentRowIndex !== null && state.nextCurrentRowIndex !== -1) {
+          setCurrentRow(state.nextCurrentRowIndex)
+          state.nextCurrentRowIndex = null
+        } else if (state.nextCurrentRowIndex !== -1) {
+          const curRow = getCurrentRow()
+          if (!curRow.value) {
+            setCurrentRow(currentRowIndex.value)
+          }
         }
-      }
-      // Move focus to the table so that keyboard navigation works, except when focus is on an input element
-      const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
-      if (table.value && shouldMoveFocus) {
-        table.value?.$el.focus()
-      }
+        // Move focus to the table so that keyboard navigation works, except when focus is on an input element
+        const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
+        if (table.value && shouldMoveFocus) {
+          table.value?.$el.focus()
+        }
 
-      // load ROIs from db
-      loadRois(uniqBy(data.allAnnotations, 'dataset.id').map((annotation) => annotation?.dataset.id))
+        // load ROIs from db
+        loadRois(uniqBy(data.allAnnotations, 'dataset.id').map((annotation) => annotation?.dataset.id))
 
-      state.initialLoading = false
-    })
+        state.initialLoading = false
+      } catch (e) {
+        console.error(e)
+      } finally {
+        state.loading = false
+      }
+    }
+
 
     const hidden = (columnLabel) => {
       return (state.columns.findIndex((col) => col.src === columnLabel) === -1 || !showCustomCols.value)
@@ -1217,7 +1237,6 @@ export default defineComponent({
       let fileName
       let rows = ''
 
-
       while (state.isExporting && offset < totalCount) {
         const resp = await apolloClient.query({
           query: annotationListQuery,
@@ -1390,14 +1409,12 @@ export default defineComponent({
     }
 
 
-    const showDatasetRelatedColumns = () => {
-      state.columns.find((col) => col.src === 'Group').selected = true
-      state.columns.find((col) => col.src === 'Dataset').selected = true
-    }
-
-    watch(loading, (isLoading) => {
+    watch(tableLoading, (isLoading) => {
       store.commit('updateAnnotationTableStatus', isLoading)
     });
+
+    // Watch for changes in query variables or options and re-execute query
+    watch([queryVariables, () => queryOptions.enabled], executeQuery)
 
     watch(() => route.query, () => {
      updateColocSort()
