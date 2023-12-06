@@ -34,11 +34,22 @@
         :md="24"
         :lg="24 - tableWidth"
       >
+        <annotation-view
+          v-if="selectedAnnotation && selectedAnnotation.status !== 'reprocessed_snapshot'"
+          :annotation="selectedAnnotation"
+          :normalization="selectedNormalizationMatrix"
+        />
 
         <el-col
           class="av-centered no-selection"
         >
-
+          <div style="align-self: center;">
+            <el-icon
+              v-if="store.state.tableIsLoading"
+              class="is-loading el-icon-loading">
+              <Loading/>
+            </el-icon>
+          </div>
         </el-col>
       </el-col>
     </el-row>
@@ -50,18 +61,22 @@ import {defineComponent, ref, computed, onMounted, onUnmounted} from 'vue';
 import { useStore } from 'vuex';
 import { useRoute } from 'vue-router';
 import AnnotationTable from './AnnotationTable.vue';
-// import AnnotationView from './AnnotationView.vue';
+import AnnotationView from './AnnotationView.vue';
 import { FilterPanel } from '../Filters/index';
 import config from '../../lib/config';
 // import { useRestoredState } from '../ImageViewer';
 // import isSnapshot from '../../lib/isSnapshot';
+import {ElIcon} from "element-plus";
+import {Loading} from "@element-plus/icons-vue";
 
 export default defineComponent({
   name: 'AnnotationsPage',
   components: {
     AnnotationTable,
-    // AnnotationView,
+    AnnotationView,
     FilterPanel,
+    Loading,
+    ElIcon
   },
   setup() {
     const store = useStore();
@@ -145,6 +160,7 @@ export default defineComponent({
     });
 
     return {
+      store,
       hideImageViewer,
       hiddenColumns,
       tableWidth,

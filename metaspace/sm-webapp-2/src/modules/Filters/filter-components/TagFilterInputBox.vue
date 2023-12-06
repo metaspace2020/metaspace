@@ -38,12 +38,12 @@
 </template>
 
 <script>
-import { mixin as clickaway } from 'vue-clickaway'
+// import { mixin as clickaway } from 'vue-clickaway'
 import Vue from 'vue'
 
 export default {
   name: 'TfInputBox',
-  mixins: [clickaway],
+  // mixins: [clickaway],
   props: {
     value: [String, Number],
     mode: String,

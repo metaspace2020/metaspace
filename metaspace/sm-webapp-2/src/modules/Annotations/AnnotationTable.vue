@@ -809,12 +809,6 @@ export default defineComponent({
 
     const queryOptions = reactive({ enabled: !store.state.filterListsLoading })
 
-    // const { onResult: onAnnotationsResult, loading } = useQuery(annotationListQuery, queryVariables, {
-    //   fetchPolicy: 'cache-first',
-    //   throttle: 200,
-    //   enabled: queryOptions.enabled,
-    // });
-
     const updateColocSort = () => {
       // sort table to update selected sort ui when coloc filter applied from annotation view
       if (orderBy.value === 'ORDER_BY_COLOCALIZATION' && table.value && typeof table.value.sort === 'function') {

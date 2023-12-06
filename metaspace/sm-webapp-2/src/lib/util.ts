@@ -117,7 +117,7 @@ export function getOS() {
   const macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K']
   const windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE']
   const iosPlatforms = ['iPhone', 'iPad', 'iPod']
-  let os = null
+  let os : any = null
 
   if (macosPlatforms.indexOf(platform) !== -1) {
     os = 'Mac OS'

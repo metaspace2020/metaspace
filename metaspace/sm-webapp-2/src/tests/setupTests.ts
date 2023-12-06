@@ -69,6 +69,7 @@ if (!global.fetch) {
 }
 
 // mock new jwt token
+// @ts-ignore
 global.fetch = vi.fn(() =>
   Promise.resolve({
     json: () => Promise.resolve({ token: 'mock-token' }),
@@ -76,7 +77,7 @@ global.fetch = vi.fn(() =>
 );
 
 vi.mock('element-plus', async() => {
-  const originalModule = await vi.importActual('element-plus');
+  const originalModule : any = await vi.importActual('element-plus');
   return {
     ...originalModule,
     generateId: () => 'fixed-id',
@@ -85,7 +86,7 @@ vi.mock('element-plus', async() => {
 
 
 vi.mock('vue', async () => {
-  const actualVue = await vi.importActual('vue');
+  const actualVue : any = await vi.importActual('vue');
 
   return {
     ...actualVue,

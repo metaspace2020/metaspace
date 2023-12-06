@@ -32,7 +32,7 @@ describe('CreateAccountDialog', () => {
     // For example, if you had mocked global functions or properties
   });
 
-  it('should match snapshot', async ({expect}) => {
+  it('should match snapshot', async () => {
     const wrapper = mount(CreateAccountDialog, {
       global: {
         plugins: [store, router, ElementPlus],
@@ -42,7 +42,7 @@ describe('CreateAccountDialog', () => {
     expect(wrapper.html()).toMatchSnapshot();
   });
 
-  it('should be able to submit a valid form', async ({expect}) => {
+  it('should be able to submit a valid form', async () => {
     // Import the mocked module
 
     // Arrange
@@ -74,7 +74,7 @@ describe('CreateAccountDialog', () => {
     expect(paragraph.text()).toContain('Please click the link');
   });
 
-  it('should not submit an invalid form', async ({expect}) => {
+  it('should not submit an invalid form', async () => {
     // Arrange
     const wrapper = mount(CreateAccountDialog, {
       global: {
