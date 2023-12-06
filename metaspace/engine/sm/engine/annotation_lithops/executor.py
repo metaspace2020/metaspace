@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import inspect
 import logging
 import resource
@@ -20,16 +21,14 @@ from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
 logger = logging.getLogger('engine.lithops-wrapper')
 TRet = TypeVar('TRet')
-#: RUNTIME_***_IMAGE is defined in code instead of config so that devs don't have to coordinate
-#: manually updating their config files every time it changes. The image must be public on
-#: Docker Hub, and can be rebuilt using the Dockerfile in `engine/docker/lithops_aws_***`.
-#: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_EC2_IMAGE = 'metaspace2020/metaspace-aws-ec2:3.1.0.a'
-RUNTIME_LAMBDA_IMAGE = 'metaspace-aws-lambda:3.1.0.a'
+
 MEM_LIMITS = {
     'localhost': 32 * 1024,
-    'aws_lambda': 10 * 1024,
-    'aws_ec2': 128 * 1024,
+    'aws_lambda': 8 * 1024,
+    'aws_ec2_32': 32 * 1024,
+    'aws_ec2_64': 64 * 1024,
+    'aws_ec2_128': 128 * 1024,
+    'aws_ec2_256': 256 * 1024,
 }
 
 
@@ -44,7 +43,7 @@ def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
                 subtask_perf.record_entry('finished')
             subtask_perf.add_extra_data(
                 **{
-                    'mem after': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+                    'mem after': int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0),
                 }
             )
             return subtask_perf
@@ -132,6 +131,22 @@ def exception_to_json_obj(exc):
     return obj
 
 
+def generate_aws_executors(lithops_config):
+    executors = {
+        'aws_lambda': lithops.ServerlessExecutor(
+            config=lithops_config, **{'runtime': lithops_config['aws_lambda']['runtime']}
+        )
+    }
+    # create a lithops executor for an EC2 instance with a different amount of RAM
+    for ec2_instance_name, ec2_instance_id in lithops_config['aws_ec2']['ec2_instances'].items():
+        config = copy.deepcopy(lithops_config)
+        config['aws_ec2']['instance_id'] = ec2_instance_id
+        executors[ec2_instance_name] = lithops.StandaloneExecutor(
+            config=config, **{'runtime': lithops_config['aws_ec2']['runtime']}
+        )
+    return executors
+
+
 class Executor:
     """
     This class wraps Lithops' FunctionExecutor to provide a platform where we can experiment with
@@ -171,18 +186,7 @@ class Executor:
             }
         else:
             self.is_hybrid = True
-            self.executors = {
-                'aws_lambda': lithops.ServerlessExecutor(
-                    config=lithops_config,
-                    backend='aws_lambda',
-                    **{'runtime': RUNTIME_LAMBDA_IMAGE},
-                ),
-                'aws_ec2': lithops.StandaloneExecutor(
-                    config=lithops_config,
-                    backend='aws_ec2',
-                    **{'runtime': RUNTIME_EC2_IMAGE},
-                ),
-            }
+            self.executors = generate_aws_executors(lithops_config)
 
         self.storage = Storage(lithops_config)
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
@@ -264,15 +268,12 @@ class Executor:
 
             if (
                 isinstance(exc, (MemoryError, TimeoutError, OSError))
-                and runtime_memory <= MEM_LIMITS['aws_lambda']
+                and runtime_memory <= max(MEM_LIMITS.values())
                 and (max_memory is None or runtime_memory < max_memory)
             ):
                 attempt += 1
                 old_memory = runtime_memory
-                if old_memory < MEM_LIMITS['aws_lambda']:
-                    runtime_memory *= 2
-                else:
-                    runtime_memory = MEM_LIMITS['aws_ec2']  # switch to EC2
+                runtime_memory *= 2
 
                 logger.warning(
                     f'{func_name} raised {type(exc)} with {old_memory}MB, retrying with '
