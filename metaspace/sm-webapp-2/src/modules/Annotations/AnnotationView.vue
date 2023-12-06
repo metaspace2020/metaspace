@@ -109,7 +109,18 @@
         name="images"
         class="el-collapse-item--no-padding"
       >
-        Viewer
+        <template v-slot:title>
+          <component
+            :is="metadataDependentComponent('main-image-header')"
+            :annotation="annotation"
+            :has-optical-image="bestOpticalImage != null"
+            :show-optical-image="showOpticalImage"
+            :reset-viewport="resetViewport"
+            :toggle-optical-image="toggleOpticalImage"
+            :is-active="activeSections.includes('images')"
+            @scaleBarColorChange="setScaleBarColor"
+          />
+        </template>
       </el-collapse-item>
 
     </el-collapse>
