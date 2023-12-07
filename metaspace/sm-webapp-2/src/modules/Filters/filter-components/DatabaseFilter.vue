@@ -81,8 +81,6 @@ import { ApolloClient } from '@apollo/client/core';
 import {Loading} from "@element-plus/icons-vue";
 import {ElSelect, ElOption, ElOptionGroup} from "element-plus";
 
-// import apolloClient from "@/api/graphqlClient";
-
 interface Option {
   value: string;
   label: string;

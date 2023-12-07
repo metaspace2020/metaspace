@@ -7,7 +7,7 @@ import account from '../store/account';
 import {nextTick} from "vue";
 import * as authApi from '../../../api/auth';
 import { refreshLoginStatus } from '../../../api/graphqlClient';
-import router from "@/router";
+import router from "../../../router";
 
 vi.mock('../../../api/auth', () => ({
   signInByEmail: vi.fn(),

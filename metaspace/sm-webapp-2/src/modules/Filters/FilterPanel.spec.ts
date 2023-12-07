@@ -7,12 +7,12 @@ import {
   mockMolecularDatabases,
   mockAdductSuggestions,
   mockDatasetDatabases,
-} from "@/tests/utils/mockGraphqlData";
-import  {initMockGraphqlClient} from "@/tests/utils/mockGraphqlClient";
+} from "../../tests/utils/mockGraphqlData";
+import  {initMockGraphqlClient} from "../../tests/utils/mockGraphqlClient";
 import { DefaultApolloClient } from '@vue/apollo-composable';
 import {vi} from "vitest";
-import router from "@/router";
-import {encodeParams} from "@/modules/Filters/url";
+import router from "../../router";
+import {encodeParams} from "../../modules/Filters/url";
 
 
 vi.mock('../../lib/util', () => ({

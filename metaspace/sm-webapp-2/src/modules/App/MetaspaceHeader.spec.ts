@@ -1,8 +1,9 @@
 import { nextTick, ref } from 'vue';
-import router from "@/router";
-import store from "@/store";
+import router from "../../router";
+import store from "../../store";
 import { mount} from '@vue/test-utils';
 import MetaspaceHeader from './MetaspaceHeader';
+import {expect} from "vitest";
 
 const currentUserMockResponses = [
   {
@@ -53,7 +54,7 @@ router.push = vi.fn();
 
 
 describe('MetaspaceHeader', () => {
-  it('should match snapshot (logged in)', async ({expect}) => {
+  it('should match snapshot (logged in)', async () => {
     mockIndex = 0;
     const wrapper = mount(MetaspaceHeader, {
       global: {
@@ -65,7 +66,7 @@ describe('MetaspaceHeader', () => {
     expect(wrapper.html()).toMatchSnapshot();
   });
 
-  it('should match snapshot (logged out)', async ({expect}) => {
+  it('should match snapshot (logged out)', async () => {
     mockIndex = 1;
     const wrapper = mount(MetaspaceHeader, {
       global: {

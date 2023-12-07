@@ -1,6 +1,16 @@
 {
   "name": "sm-webapp-2",
   "version": "0.0.0",
+  "contributors": [
+    "Andrew Palmer <andrew.palmer@embl.de>",
+    "Artem Tarasov <artem.tarasov@embl.de>",
+    "Ivan Protsyuk <ivan.protsyuk@embl.de>",
+    "Lachlan Stuart <lachlan.stuart@embl.de>",
+    "Lucas Maciel <lucas.maciel@embl.de>",
+    "Renat Nigmetzianov <renat.nigmetzianov@embl.de>",
+    "Theodore Alexandrov <theodore.alexandrov@embl.de>",
+    "Vitaly Kovalev <vitaly.kovalev@embl.de>"
+  ],
   "private": true,
   "scripts": {
     "test:e2e": "start-server-and-test preview http://localhost:8082 'cypress run --e2e'",

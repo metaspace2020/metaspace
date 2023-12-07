@@ -77,7 +77,7 @@ import {
   AdductSuggestion,
   chemModSuggestionQuery,
   neutralLossSuggestionQuery
-} from "@/api/metadata";
+} from "../../../api/metadata";
 import config from '../../../lib/config'
 import {ElSelect, ElOption} from "element-plus";
 

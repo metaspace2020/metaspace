@@ -1,14 +1,11 @@
-import { computed, defineComponent, onMounted, onUpdated, reactive, ref, inject, watch, nextTick } from 'vue'
-import { Ref, SetupContext } from 'vue'
-
+import { computed, defineComponent, onMounted, onUpdated, reactive, ref, watch, nextTick } from 'vue'
+import { Ref } from 'vue'
 import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
 import config from '../lib/config'
 import { renderIonImages, IonImageLayer } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
 import { debounce, throttle } from 'lodash-es'
 import { ReferenceObject } from 'popper.js'
-import { templateRef } from '../lib/templateRef'
-import {useStore} from "vuex";
 import {ElLoading, ElTooltip} from "element-plus";
 
 const formatMatrix3d = (t: readonly number[][]) =>
@@ -127,7 +124,7 @@ const usePixelIntensityDisplay = (
   emit: (event: string, ...args: any[]) => void,
 ) => {
   // const pixelIntensityTooltipRef = templateRef<any>('pixelIntensityTooltip')
-  const pixelIntensityTooltipRef = ref(null)
+  const pixelIntensityTooltipRef = ref<any>(null)
   const cursorPixelPos = ref<[number, number] | null>(null)
   const zoomX = computed(() => props.zoom)
   const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
@@ -177,7 +174,7 @@ const usePixelIntensityDisplay = (
   const updatePixelIntensity = throttle(() => {
     // WORKAROUND: el-tooltip and el-popover don't correctly open if they're mounted in an already-visible state
     // Calling updatePopper causes it to refresh its visibility
-    if (pixelIntensityTooltipRef.value != null && typeof pixelIntensityTooltipRef.value?.updatePopper === 'function') {
+    if (pixelIntensityTooltipRef.value != null && typeof pixelIntensityTooltipRef.value!.updatePopper === 'function') {
       (pixelIntensityTooltipRef.value as any).updatePopper()
     }
   }, 10)
@@ -386,9 +383,9 @@ const useBufferedOpticalImage = (props: Props | any) => {
     <div>
       {opticalImageUrl.value
       && <img
-        key={state.loadedOpticalImageUrl}
+        key={state.loadedOpticalImageUrl as string} // @ts-ignore
         crossOrigin="anonymous"
-        src={state.loadedOpticalImageUrl}
+        src={state.loadedOpticalImageUrl as string}
         class="absolute top-0 left-0 -z-10 origin-top-left"
         style={{
           ...state.loadedOpticalImageStyle,
@@ -400,7 +397,7 @@ const useBufferedOpticalImage = (props: Props | any) => {
       {opticalImageUrl.value
       && state.loadedOpticalImageUrl !== opticalImageUrl.value
       && <img
-        key={opticalImageUrl.value}
+        key={opticalImageUrl.value} // @ts-ignore
         crossOrigin="anonymous"
         src={opticalImageUrl.value}
         class="absolute top-0 left-0 -z-20 origin-top-left opacity-1"
@@ -465,9 +462,9 @@ const useIonImageView = (props: Props | any, imageSize: Ref<{ width: number, hei
         ref={canvasRef}
         width={width}
         height={height}
-        onmousemove={roiEnabled ? debounce((e) => { handleMouseDown(e, false) }, 100,
+        onMousemove={ roiEnabled ? debounce((e) => { handleMouseDown(e, false) }, 100,
           { leading: true }) : () => {}}
-        onmousedown={roiEnabled ? debounce(handleMouseDown, 100, { leading: true }) : () => {}}
+        onMousedown={roiEnabled ? debounce(handleMouseDown, 100, { leading: true }) : () => {}}
         class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
         style={{
           cursor: props.roiInfo && props.roiInfo.length > 0 && props.roiInfo[props.roiInfo.length - 1].isDrawing
@@ -543,7 +540,7 @@ export default defineComponent({
   directives: {
     'loading': ElLoading.directive,
   },
-  setup(props: Props, { emit }) {
+  setup(props: Props, { emit }:any) {
     // const imageLoaderRef = templateRef<ReferenceObject>('imageLoader')
     const imageLoaderRef = ref(null)
     const { showScrollBlock, renderScrollBlock } = useScrollBlock()
@@ -574,16 +571,16 @@ export default defineComponent({
         v-loading={props.isLoading}
         class="relative overflow-hidden"
         style={{ width: props.width + 'px', height: props.height + 'px' }}
-        onwheel={onWheel}
-        onmousedown={handlePanStart}
+        onMousedown = {handlePanStart}
+        onWheel={onWheel}
+        onMousemove={({ clientX, clientY }: MouseEvent) => {
+          if (!props.keepPixelSelected) {
+            movePixelIntensity(clientX, clientY)
+          }
+        }}
         onClick={({ clientX, clientY }: MouseEvent) => {
           if (props.keepPixelSelected) {
             movePixelIntensity(clientX, clientY, true)
-          }
-        }}
-        onmousemove={({ clientX, clientY }: MouseEvent) => {
-          if (!props.keepPixelSelected) {
-            movePixelIntensity(clientX, clientY)
           }
         }}
       >

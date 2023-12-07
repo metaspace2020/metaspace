@@ -1,11 +1,11 @@
 import {flushPromises, mount} from '@vue/test-utils';
 import AnnotationTable from './AnnotationTable.vue';
-import {nextTick, ref} from "vue";
+import {nextTick} from "vue";
 import store from "../../store";
-import  {initMockGraphqlClient} from "@/tests/utils/mockGraphqlClient";
-import { DefaultApolloClient, useQuery } from '@vue/apollo-composable';
-import {vi} from "vitest";
-import router from "@/router";
+import  {initMockGraphqlClient} from "../../tests/utils/mockGraphqlClient";
+import { DefaultApolloClient } from '@vue/apollo-composable';
+import {vi, expect} from "vitest";
+import router from "../../router";
 import * as FileSaver from 'file-saver'
 import ElementPlus from "element-plus";
 import { merge } from 'lodash-es'
@@ -149,7 +149,7 @@ describe('AnnotationTable', () => {
 
     await (wrapper.vm as any).startExport()
     expect(FileSaver.saveAs).toBeCalled()
-    const blob: Blob = FileSaver.saveAs.mock.calls[0][0]
+    const blob: Blob = (FileSaver.saveAs as any).mock.calls[0][0]
     const csv = await blobToText(blob)
     const csvWithoutDateHeader = csv.replace(/# Generated at .*\n/, '')
 

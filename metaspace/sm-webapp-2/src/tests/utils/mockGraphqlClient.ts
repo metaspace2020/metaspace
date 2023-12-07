@@ -2,7 +2,7 @@ import { ApolloClient, InMemoryCache, NormalizedCacheObject } from '@apollo/clie
 import { SchemaLink } from '@apollo/client/link/schema';
 import {  makeExecutableSchema } from '@graphql-tools/schema'; // Updated imports
 import { IMocks, addMocksToSchema } from '@graphql-tools/mock'; // Updated import for IMocks
-import buildClientSchema from "@/tests/utils/buildClientSchema";
+import buildClientSchema from "../../tests/utils/buildClientSchema";
 
 const lazyHash = (str: string) => Array.from(str).reduce((hash, char) => hash ^ char.charCodeAt(0), 0)
 

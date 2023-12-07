@@ -55,7 +55,6 @@ import TagFilter from './TagFilter.vue';
 import searchableFilterQueries, { Option } from './searchableFilterQueries';
 
 
-// import apolloClient from "@/api/graphqlClient";
 import { inject, InjectionKey } from 'vue';
 import { DefaultApolloClient } from '@vue/apollo-composable';
 import { ApolloClient } from '@apollo/client/core';

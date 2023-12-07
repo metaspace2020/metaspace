@@ -1,6 +1,4 @@
 import {defineComponent, ref, computed, nextTick} from 'vue';
-// @ts-ignore
-import {inject} from 'vue';
 import { useStore } from 'vuex';
 import {RouteLocationRaw, useRoute, useRouter} from 'vue-router';
 import {ElRow, ElCollapse, ElCollapseItem} from "element-plus";
@@ -20,15 +18,15 @@ import {
   opticalImagesQuery,
 } from '../../api/dataset'
 import {reactive, defineAsyncComponent} from "vue";
-import {currentUserRoleQuery} from "@/api/user";
-import config from "@/lib/config";
-import {ANNOTATION_SPECIFIC_FILTERS} from "@/modules/Filters/filterSpecs";
+import {currentUserRoleQuery} from "../../api/user";
+import config from "../../lib/config";
+import {ANNOTATION_SPECIFIC_FILTERS} from "../../modules/Filters/filterSpecs";
 import ModeButton from '../ImageViewer/ModeButton.vue'
 import annotationWidgets from './annotation-widgets/index'
 import viewerState from '../ImageViewer/state'
 import { ImageSettings, useIonImageSettings } from '../ImageViewer/ionImageState'
 import { OpacityMode } from '../../lib/createColormap'
-import safeJsonParse from "@/lib/safeJsonParse";
+import safeJsonParse from "../../lib/safeJsonParse";
 
 const LockSvg = defineAsyncComponent(() =>
   import('../../assets/inline/refactoring-ui/icon-lock.svg')
@@ -74,13 +72,17 @@ export default defineComponent({
 
 
     const queryOptions = reactive({ enabled: false })
-    const { result: datasetVisibilityResult } = useQuery(datasetVisibilityQuery, { id: props.annotation.dataset.id }, () => {
+    const { result: datasetVisibilityResult } = useQuery(datasetVisibilityQuery,
+      { id: props.annotation.dataset.id },
+      () => {
       return {
         enabled: queryOptions.enabled,
         fetchPolicy: 'cache-first',
       }
     });
-    const { result: currentUserResult } = useQuery(currentUserRoleQuery, { id: props.annotation.dataset.id }, {
+    const { result: currentUserResult } = useQuery(currentUserRoleQuery,
+      { id: props.annotation.dataset.id },
+      {
       fetchPolicy: 'cache-first',
     });
     const { result: opticalImagesResult } = useQuery(opticalImagesQuery, {

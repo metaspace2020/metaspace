@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/browser'
 import { every } from 'lodash-es'
 import { Primitive } from 'ts-essentials'
 import { ElNotification } from 'element-plus/lib/components/notification'
-import {getLocalStorage, setLocalStorage} from "@/lib/localStorage";
+import {getLocalStorage, setLocalStorage} from "../lib/localStorage";
 
 let $notify: typeof ElNotification
 

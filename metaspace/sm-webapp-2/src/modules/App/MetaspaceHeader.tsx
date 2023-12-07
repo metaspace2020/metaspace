@@ -4,14 +4,14 @@ import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/
 import {RouterLink} from "vue-router";
 import {useStore} from "vuex";
 
-import NotificationIcon from "@/components/NotificationIcon.vue";
+import NotificationIcon from "../../components/NotificationIcon.vue";
 import { HeaderLink, HeaderButton } from './HeaderLink'
 
 import { UserGroupRoleOptions as UGRO } from '../../api/group'
-import { ProjectRoleOptions as UPRO } from '@/api/project'
-import {userProfileQuery} from "@/api/user";
-import {signOut} from "@/api/auth";
-import {refreshLoginStatus} from "@/api/graphqlClient";
+import { ProjectRoleOptions as UPRO } from '../../api/project'
+import {userProfileQuery} from "../../api/user";
+import {signOut} from "../../api/auth";
+import {refreshLoginStatus} from "../../api/graphqlClient";
 import { Transition } from 'vue';
 
 import {ElRow, ElAlert} from "element-plus";

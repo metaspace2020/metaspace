@@ -1,4 +1,4 @@
-import store from "@/store"; // Ensure correct path
+import store from "../../../store"; // Ensure correct path
 import searchableFilterQueries, { SearchableFilterKey } from './searchableFilterQueries'
 import {ApolloClient, InMemoryCache, ApolloLink, Observable} from "@apollo/client/core";
 

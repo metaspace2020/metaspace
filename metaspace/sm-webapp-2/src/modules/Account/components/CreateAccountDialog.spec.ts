@@ -6,7 +6,7 @@ import CreateAccountDialog from './CreateAccountDialog.vue';
 import account from '../store/account';
 import { nextTick } from 'vue';
 import * as authApi from '../../../api/auth';
-import router from "@/router";
+import router from "../../../router";
 
 vi.mock('../../../api/auth');
 
