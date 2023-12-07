@@ -2,6 +2,9 @@
 require('@rushstack/eslint-patch/modern-module-resolution')
 
 module.exports = {
+  rules: {
+    'vue/multi-word-component-names': 'off',
+  },
   env: {
     browser: true,
     es2021: true,

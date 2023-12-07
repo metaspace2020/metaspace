@@ -30,7 +30,7 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import './modules/App/element-overrides.css'
 
 
-import {ElMessageBox, ElNotification} from "element-plus";
+import ElementPlus, {ElMessageBox, ElNotification} from "element-plus";
 import {Route} from "@sentry/vue/types/router";
 
 
@@ -89,6 +89,7 @@ migrateLocalStorage()
 app.use(router)
 app.use(store)
 // sync(store, router)
+// app.use(ElementPlus);
 
 router.afterEach((to: Route) => {
   store.commit('updateFilterOnNavigate', to)

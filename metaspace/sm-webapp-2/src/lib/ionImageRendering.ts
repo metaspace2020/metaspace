@@ -278,7 +278,7 @@ export const loadPngFromUrl = async(url: string): Promise<UPNG.Image> => {
 }
 
 export const processIonImage = (
-  png: UPNG.Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
+  png: UPNG.Image | any, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
   userScaling: readonly [number, number] = [0, 1],
   userIntensities: readonly [number?, number?] = [],
   normalizationData?: Normalization): IonImage => {
@@ -476,7 +476,7 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
   }
 }
 
-export const renderScaleBar = (ionImage: IonImage, cmap: ColorMap, horizontal: boolean) => {
+export const renderScaleBar = (ionImage: IonImage | any, cmap: ColorMap, horizontal: boolean) => {
   const outputBytes = new Uint8ClampedArray(256 * 4)
   for (let i = 0; i < ionImage.scaleBarValues.length; i++) {
     const val = ionImage.scaleBarValues[i]

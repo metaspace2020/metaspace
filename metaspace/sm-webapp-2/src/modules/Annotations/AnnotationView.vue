@@ -3,7 +3,7 @@
     <el-collapse
       id="annot-content"
       class="border-0"
-      :value="activeSections"
+      :model-value="activeSections"
       @change="onSectionsChange"
     >
       <div class="el-collapse-item">
@@ -121,6 +121,25 @@
             @scaleBarColorChange="setScaleBarColor"
           />
         </template>
+        <component
+          :is="metadataDependentComponent('main-image')"
+          :annotation="annotation"
+          :colormap="colormap"
+          :opacity="opacity"
+          :optical-opacity="opticalOpacity"
+          :image-position="imagePosition"
+          :image-loader-settings="imageLoaderSettings"
+          :apply-image-move="onImageMove"
+          :acquisition-geometry="msAcqGeometry"
+          :pixel-size-x="pixelSizeX"
+          :pixel-size-y="pixelSizeY"
+          :scale-bar-color="scaleBarColor"
+          :scale-type="scaleType"
+          :tic-data="ticData ? normalization : null"
+          @opacity="handleOpacityChange"
+          @roi-coordinate="addRoiCoordinate"
+          @opticalOpacity="handleOpticalOpacityChange"
+        />
       </el-collapse-item>
 
     </el-collapse>

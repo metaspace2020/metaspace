@@ -26,6 +26,9 @@ import {ANNOTATION_SPECIFIC_FILTERS} from "@/modules/Filters/filterSpecs";
 import ModeButton from '../ImageViewer/ModeButton.vue'
 import annotationWidgets from './annotation-widgets/index'
 import viewerState from '../ImageViewer/state'
+import { ImageSettings, useIonImageSettings } from '../ImageViewer/ionImageState'
+import { OpacityMode } from '../../lib/createColormap'
+import safeJsonParse from "@/lib/safeJsonParse";
 
 const LockSvg = defineAsyncComponent(() =>
   import('../../assets/inline/refactoring-ui/icon-lock.svg')
@@ -34,6 +37,8 @@ const LockSvg = defineAsyncComponent(() =>
 const LocationPinSvg = defineAsyncComponent(() =>
   import('../../assets/inline/refactoring-ui/icon-location-pin.svg')
 );
+
+const { settings: ionImageSettings } = useIonImageSettings()
 
 const metadataDependentComponents: any = {}
 const componentsToRegister: any = {
@@ -60,9 +65,8 @@ for (const category of Object.keys(annotationWidgets)) {
 export default defineComponent({
   name: 'AnnotationView',
   components: componentsToRegister,
-  props: ['annotation'],
+  props: ['annotation', 'normalization'],
   setup(props) {
-    const apolloClient = inject(DefaultApolloClient);
     const store = useStore();
     const route = useRoute();
     const router = useRouter();
@@ -85,9 +89,15 @@ export default defineComponent({
     }, {
       fetchPolicy: 'cache-first',
     });
+    const { result: msAcqGeometryResult } = useQuery(msAcqGeometryQuery, {
+      datasetId: props.annotation.dataset.id,
+    }, {
+      fetchPolicy: 'cache-first',
+    });
     const datasetVisibility = computed(() => datasetVisibilityResult.value?.datasetVisibility)
     const currentUser = computed(() => currentUserResult.value?.currentUser)
     const opticalImages = computed(() => opticalImagesResult.value?.dataset?.opticalImages || [])
+    const msAcqGeometry = computed(() =>  safeJsonParse(msAcqGeometryResult.value?.dataset.acquisitionGeometry))
 
     const activeSections = computed(() : string[] =>  {
       return store.getters.settings.annotationView.activeSections
@@ -130,7 +140,6 @@ export default defineComponent({
     }
 
     const visibilityText = computed(() => {
-      console.log('datasetVisibility.value', datasetVisibility.value)
       if (datasetVisibility.value != null && datasetVisibility.value?.id === props.annotation.dataset.id) {
         const { submitter, group, projects } = datasetVisibility.value
         const submitterName = currentUser.value && submitter.id === currentUser.value.id ? 'you' : submitter.name
@@ -193,9 +202,7 @@ export default defineComponent({
       return !route.query.hideopt
     })
 
-    const imagePosition = computed(() => {
-      return viewerState.imagePosition.value
-    })
+    const imagePosition = computed(() => viewerState.imagePosition.value)
 
     const resetViewport = (event: any): void => {
       event.stopPropagation()
@@ -225,6 +232,124 @@ export default defineComponent({
       scaleBarColor.value = color
     }
 
+    const colormap = computed(() => store.getters.settings.annotationView.colormap)
+    const opacity = computed(() => ionImageSettings.opacity)
+    const opticalOpacity = computed(() => ionImageSettings.opticalOpacity)
+    const imageOpacityMode = computed((): OpacityMode => {
+      return (showOpticalImage.value && bestOpticalImage.value != null) ? 'linear' : 'constant'
+    })
+
+    const metadata = computed(() => {
+      const datasetMetadataExternals = {
+        Submitter: props.annotation.dataset.submitter,
+        PI: props.annotation.dataset.principalInvestigator,
+        Group: props.annotation.dataset.group,
+        Projects: props.annotation.dataset.projects,
+      }
+      return Object.assign(safeJsonParse(props.annotation.dataset.metadataJson), datasetMetadataExternals)
+    })
+
+    const pixelSizeX = computed(() => {
+      if (metadata.value.MS_Analysis != null
+        && metadata.value.MS_Analysis.Pixel_Size != null) {
+        return metadata.value.MS_Analysis.Pixel_Size.Xaxis
+      }
+      return 0
+    })
+
+    const pixelSizeY = computed(() => {
+      if (metadata.value.MS_Analysis != null
+        && metadata.value.MS_Analysis.Pixel_Size != null) {
+        return metadata.value.MS_Analysis.Pixel_Size.Yaxis
+      }
+      return 0
+    })
+
+    const onImageMove = (event: any): void =>{
+      imagePosition.value.zoom = event.zoom
+      imagePosition.value.xOffset = event.xOffset
+      imagePosition.value.yOffset = event.yOffset
+    }
+
+    const imageLoaderSettings = computed((): ImageSettings => {
+      const optImg = bestOpticalImage.value
+      const hasOpticalImages = showOpticalImage.value && optImg != null
+
+      return {
+        annotImageOpacity: (showOpticalImage.value && hasOpticalImages) ? opacity.value : 1.0,
+        opticalOpacity: showOpticalImage.value ? opticalOpacity.value : 1.0,
+        opacityMode: imageOpacityMode.value,
+        imagePosition: imagePosition.value,
+        opticalSrc: showOpticalImage.value && optImg && optImg.url || null,
+        opticalTransform: optImg && optImg.transform,
+        pixelAspectRatio: config.features.ignore_pixel_aspect_ratio ? 1
+          : pixelSizeX.value && pixelSizeY.value && pixelSizeX.value / pixelSizeY.value || 1,
+      }
+    })
+
+    const scaleType = computed((): string => store.getters.settings.annotationView.scaleType)
+    const ticData = computed((): string => store.getters.settings.annotationView.normalization)
+
+    const handleOpacityChange = (value: number) =>{
+      ionImageSettings.opacity = value
+    }
+
+    const handleOpticalOpacityChange = (value: number) =>{
+      ionImageSettings.opticalOpacity = value
+    }
+
+    const roiInfo = computed((): any => {
+      if (
+        props.annotation && props.annotation.dataset?.id && store.state.roiInfo
+        && Object.keys(store.state.roiInfo).includes(props.annotation.dataset.id)) {
+        return store.state.roiInfo[props.annotation.dataset.id] || []
+      }
+      return []
+    })
+
+    const addRoiCoordinate = (roiPoint: any) => {
+      const RADIUS = 2;
+      const isInsideCircle = (x: number, y: number, centerX: number, centerY: number, radius: number) => {
+        return (x - centerX) ** 2 + (y - centerY) ** 2 < radius ** 2;
+      };
+
+      const roi = roiInfo.value || [];
+      const roiIndex = roi.length - 1;
+      const coordinates: any[] = roi[roiIndex].coordinates;
+      let isRepeatedPoint: boolean = false;
+
+      if (roiPoint.isFixed) {
+        if (coordinates.length === 0) {
+          coordinates.push(roiPoint);
+        } else {
+          if (roiPoint.x === coordinates[coordinates.length - 1].x
+            && roiPoint.y === coordinates[coordinates.length - 1].y && coordinates[coordinates.length - 1].isFixed) {
+            isRepeatedPoint = true;
+          }
+          coordinates[coordinates.length - 1] = roiPoint;
+        }
+        roi[roiIndex] = { ...roi[roiIndex], coordinates };
+
+        coordinates.forEach((coordinate: any, index: number) => {
+          if (
+            (index !== coordinates.length - 1 || isRepeatedPoint)
+            && isInsideCircle(roiPoint.x, roiPoint.y, coordinate.x, coordinate.y, RADIUS)) {
+            coordinates[coordinates.length - 1].isEndPoint = true;
+            roi[roiIndex] = { ...roi[roiIndex], isDrawing: false };
+          }
+        });
+      } else if (coordinates.length > 0) {
+        if (coordinates[coordinates.length - 1].isFixed) {
+          coordinates.push(roiPoint);
+        } else {
+          coordinates[coordinates.length - 1] = roiPoint;
+        }
+        roi[roiIndex] = { ...roi[roiIndex], coordinates };
+      }
+
+      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi });
+    };
+
     return {
       activeSections,
       onSectionsChange,
@@ -241,7 +366,22 @@ export default defineComponent({
       showOpticalImage,
       resetViewport,
       toggleOpticalImage,
-      setScaleBarColor
+      setScaleBarColor,
+      colormap,
+      opacity,
+      opticalOpacity,
+      imagePosition,
+      imageLoaderSettings,
+      onImageMove,
+      msAcqGeometry,
+      pixelSizeX,
+      pixelSizeY,
+      scaleBarColor,
+      scaleType,
+      ticData,
+      handleOpacityChange,
+      handleOpticalOpacityChange,
+      addRoiCoordinate
     };
   },
 });
