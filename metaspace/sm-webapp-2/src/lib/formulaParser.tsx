@@ -1,5 +1,5 @@
 import { periodicTable } from './periodicTable'
-import { reorderAdducts, superscript } from './util'
+import { reorderAdducts } from './util'
 
 export const parseFormula = (formula: string) => {
   const regexp = /(?<element>[A-Z][a-z]{0,2})(?<n>[0-9]*)/g
@@ -84,7 +84,7 @@ export const generateIonFormula = (molecularFormula: string) => {
   if (match && match.groups && match.groups.adducts) {
     const regexpAdduct = /([+-]\w+)/ig
     Array.from(match.groups.adducts.matchAll(regexpAdduct),
-      (res, idx) => {
+      (res) => {
         adducts.push(res[0])
       })
   }

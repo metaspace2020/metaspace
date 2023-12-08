@@ -47,13 +47,18 @@
   </form>
 </template>
 <script lang="ts">
-import { defineComponent, ref, onMounted, onBeforeUnmount } from 'vue'
+import { defineComponent, ref, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 
 import FadeTransition from '../../components/FadeTransition'
-import ArrowIcon from '../../assets/inline/refactoring-ui/icon-arrow-thin-right-circle.svg'
-import CloseIcon from '../../assets/inline/refactoring-ui/icon-close.svg'
-
 import useOutClick from '../../lib/useOutClick'
+
+const ArrowIcon = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-arrow-thin-right-circle.svg')
+);
+
+const CloseIcon = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-close.svg')
+);
 
 export default defineComponent({
   components: {
@@ -114,12 +119,17 @@ input::placeholder {
 }
 
 button {
-  margin: 2px;
+  padding: 0;
+  border: 0;
+  height: 20px;
+  width: 20px;
+  background: none;
 }
 
 button:hover,
 button:focus {
-  @apply bg-blue-300;
+  /*@apply bg-blue-300;*/
+  @apply cursor-pointer;
 }
 
 button:hover > svg,
@@ -129,8 +139,8 @@ button:focus > svg {
 
 button > svg {
   @apply w-6 h-6 absolute fill-current text-gray-600;
-  top: -2px;
-  left: -2px;
+  top: 0;
+  left: -4px;
 }
 button > svg .secondary {
   display: none;

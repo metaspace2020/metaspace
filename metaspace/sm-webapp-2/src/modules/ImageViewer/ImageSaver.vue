@@ -39,7 +39,7 @@ export default defineComponent({
     Download,
     ElIcon,
   },
-  setup(props) {
+  setup(props: Props) {
     const isSupported = (
       window.navigator.userAgent.includes('Chrome')
       || window.navigator.userAgent.includes('Firefox')

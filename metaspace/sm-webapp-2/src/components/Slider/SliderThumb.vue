@@ -11,8 +11,6 @@
 import { defineComponent, reactive, ref, computed, onMounted } from 'vue'
 import { throttle } from 'lodash-es'
 
-import { THUMB_WIDTH } from './constants'
-
 interface State {
   startX: number
 }
@@ -22,12 +20,12 @@ interface Props {
   x: number
 }
 
-export default defineComponent>({
+export default defineComponent({
   props: {
     disabled: { type: Boolean, default: false },
     x: Number,
   },
-  setup(props, { emit }) {
+  setup(props: Props, { emit }) {
     const thumb = ref<HTMLElement|any>(null)
     const state = reactive<State|any>({
       startX: props.x,

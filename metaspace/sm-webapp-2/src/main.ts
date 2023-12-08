@@ -30,7 +30,7 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import './modules/App/element-overrides.css'
 
 
-import ElementPlus, {ElMessageBox, ElNotification} from "element-plus";
+import {ElMessageBox, ElNotification} from "element-plus";
 import {Route} from "@sentry/vue/types/router";
 
 

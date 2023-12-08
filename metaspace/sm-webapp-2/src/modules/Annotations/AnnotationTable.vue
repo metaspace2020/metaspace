@@ -482,7 +482,7 @@ import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
 import { invert, isEqual, uniqBy } from 'lodash-es'
 import config from '../../lib/config'
-import {DefaultApolloClient, useQuery} from "@vue/apollo-composable";
+import {DefaultApolloClient} from "@vue/apollo-composable";
 import {annotationListQuery, tableExportQuery} from "../../api/annotation";
 import {useRoute, useRouter} from "vue-router";
 import {getLocalStorage, setLocalStorage} from "../../lib/localStorage";

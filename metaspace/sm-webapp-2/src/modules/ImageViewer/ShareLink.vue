@@ -63,12 +63,11 @@
 </template>
 <script lang="ts">
 
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref, computed, defineAsyncComponent } from 'vue';
 import { useStore } from 'vuex';
 import gql from 'graphql-tag';
 import FadeTransition from '../../components/FadeTransition';
 import StatefulIcon from '../../components/StatefulIcon.vue';
-import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg';
 import { exportIonImageState } from './ionImageState';
 import { exportImageViewerState } from './state';
 import reportError from '../../lib/reportError';
@@ -76,6 +75,11 @@ import config from '../../lib/config';
 import useOutClick from '../../lib/useOutClick';
 import {inject} from "vue";
 import {DefaultApolloClient} from "@vue/apollo-composable";
+
+const ExternalWindowSvg = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-external-window.svg')
+);
+
 interface Route {
   query: Record<string, string>
   path: string
@@ -98,7 +102,7 @@ export default defineComponent<Props>({
     annotation: Object,
     route: Object,
   },
-  setup(props, { root }) {
+  setup(props) {
     const store = useStore();
     const apolloClient = inject(DefaultApolloClient);
     const viewId = ref<string>()

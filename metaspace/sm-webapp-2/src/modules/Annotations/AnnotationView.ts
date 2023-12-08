@@ -2,17 +2,16 @@ import {defineComponent, ref, computed, nextTick} from 'vue';
 import { useStore } from 'vuex';
 import {RouteLocationRaw, useRoute, useRouter} from 'vue-router';
 import {ElRow, ElCollapse, ElCollapseItem} from "element-plus";
-import {DefaultApolloClient, useQuery} from "@vue/apollo-composable";
+import {useQuery} from "@vue/apollo-composable";
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../components/MolecularFormula'
 import CopyButton from '../../components/CopyButton.vue'
 import { parseFormulaAndCharge } from '../../lib/formulaParser'
 import { encodeParams } from '../Filters'
-import { cloneDeep, omit, pick, sortBy, throttle } from 'lodash-es'
+import { omit, pick, sortBy } from 'lodash-es'
 import ShareLink from '../ImageViewer/ShareLink.vue'
 import {
   datasetVisibilityQuery,
-  DatasetVisibilityResult,
   msAcqGeometryQuery,
   OpticalImage,
   opticalImagesQuery,
@@ -27,6 +26,7 @@ import viewerState from '../ImageViewer/state'
 import { ImageSettings, useIonImageSettings } from '../ImageViewer/ionImageState'
 import { OpacityMode } from '../../lib/createColormap'
 import safeJsonParse from "../../lib/safeJsonParse";
+import OpacitySettings from "../ImageViewer/OpacitySettings.vue";
 
 const LockSvg = defineAsyncComponent(() =>
   import('../../assets/inline/refactoring-ui/icon-lock.svg')
@@ -50,6 +50,7 @@ const componentsToRegister: any = {
   LocationPinSvg,
   ModeButton,
   ElCollapseItem,
+  OpacitySettings
 }
 for (const category of Object.keys(annotationWidgets)) {
   metadataDependentComponents[category] = {}

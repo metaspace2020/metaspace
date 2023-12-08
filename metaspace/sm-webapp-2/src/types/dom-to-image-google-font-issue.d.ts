@@ -1,3 +1,4 @@
+/* eslint-disable */
 // declare module 'dom-to-image-google-font-issue' {
 //   interface DTIOptions {
 //     filter?(node: HTMLElement): boolean

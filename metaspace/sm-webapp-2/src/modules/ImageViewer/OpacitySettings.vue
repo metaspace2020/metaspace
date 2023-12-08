@@ -10,18 +10,26 @@
         {{ percentage }}%
       </span>
     </p>
+    <slider
+      class="opacity-gradient"
+      :value="percentage"
+      :min="0"
+      :max="100"
+      :step="1"
+      @input="emitOpacity"
+    />
   </overlay>
 </template>
 <script lang="ts">
-import { defineComponent, computed, ref } from 'vue'
+import { defineComponent, computed } from 'vue'
 
 import Overlay from './Overlay.vue'
-// import { Slider } from '../../components/Slider'
+import { Slider } from '../../components/Slider'
 
 export default defineComponent({
   components: {
     Overlay,
-    // Slider,
+    Slider,
   },
   props: {
     opacity: { type: Number, required: true },

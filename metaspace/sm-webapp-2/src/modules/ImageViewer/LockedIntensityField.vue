@@ -38,11 +38,18 @@
   </form>
 </template>
 <script lang="ts">
-import { defineComponent, ref, watch } from 'vue'
+import { defineComponent, ref, watch, defineAsyncComponent } from 'vue'
 
 import FadeTransition from '../../components/FadeTransition'
-import ArrowIcon from '../../assets/inline/refactoring-ui/icon-arrow-thin-right-circle.svg'
-import CloseIcon from '../../assets/inline/refactoring-ui/icon-close.svg'
+
+const ArrowIcon = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-arrow-thin-right-circle.svg')
+);
+
+const CloseIcon = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-close.svg')
+);
+
 
 export default defineComponent({
   components: {

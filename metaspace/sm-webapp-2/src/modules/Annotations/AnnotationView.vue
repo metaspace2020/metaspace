@@ -122,6 +122,7 @@
           />
         </template>
         <component
+          :is-hidden="!activeSections.includes('images')"
           :is="metadataDependentComponent('main-image')"
           :annotation="annotation"
           :colormap="colormap"

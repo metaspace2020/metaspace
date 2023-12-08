@@ -1,3 +1,4 @@
+/* eslint-disable */
 // @ts-ignore
 declare const describe: (name: string, fn: () => void) => void;
 // @ts-ignore

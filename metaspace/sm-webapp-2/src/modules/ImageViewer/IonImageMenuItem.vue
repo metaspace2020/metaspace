@@ -78,7 +78,7 @@
   </el-popover>
 </template>
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, defineAsyncComponent } from 'vue'
 
 import MenuItem from './MenuItem.vue'
 import IonIntensitySlider from './IonIntensitySlider.vue'
@@ -86,11 +86,17 @@ import MolecularFormula from '../../components/MolecularFormula'
 import ChannelSelector from './ChannelSelector.vue'
 import CandidateMoleculesPopover from '../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import ClippingNotice from './ClippingNotice.vue'
-
-import VisibleIcon from '../../assets/inline/refactoring-ui/icon-view-visible.svg'
-import HiddenIcon from '../../assets/inline/refactoring-ui/icon-view-hidden.svg'
-
 import useClippingNotice from './useClippingNotice'
+
+const VisibleIcon = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-view-visible.svg')
+);
+
+const HiddenIcon = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-view-hidden.svg')
+);
+
+
 
 interface Props {
   item: {
@@ -119,7 +125,7 @@ export default defineComponent({
     isNormalized: Boolean,
     popupsDisabled: Boolean,
   },
-  setup(props, { emit }) {
+  setup(props: Props, { emit }) {
     const usedSlider = ref(false); // to prevent active state changing when using the slider
     const { clippingNotice, toggleClippingNotice } = useClippingNotice();
 

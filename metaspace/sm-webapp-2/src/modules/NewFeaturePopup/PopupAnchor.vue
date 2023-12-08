@@ -43,7 +43,7 @@ export default defineComponent<Props>({
       return {}
     }
 
-    const { isFullyInView, intersectionRatio } = useIntersectionObserver(reference, { threshold: [0, 1] })
+    const { isFullyInView } = useIntersectionObserver(reference, { threshold: [0, 1] })
 
     watch(isFullyInView, value => {
       if (value) {

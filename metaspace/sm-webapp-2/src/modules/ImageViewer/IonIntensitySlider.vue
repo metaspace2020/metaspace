@@ -1,44 +1,56 @@
 <template>
   <div
     v-if="intensity"
+    :key="componentKey"
     ref="container"
     class="relative"
   >
-
+    <range-slider
+      :value="scaleRange"
+      :style="style"
+      :class="{ 'cursor-pointer': canFocus }"
+      :tabindex="canFocus && !isDisabled ? 0 : null"
+      :min="0"
+      :max="1"
+      :step="0.01"
+      :disabled="isDisabled"
+      @input="setScaleRange"
+      @thumb-start="disableTooltips = true; $emit('thumb-start')"
+      @thumb-stop="disableTooltips = false; $emit('thumb-stop')"
+    />
     <div class="flex justify-between items-start h-6 leading-6 tracking-wide relative z-10">
-<!--      <ion-intensity-->
-<!--        :value="model.minIntensity"-->
-<!--        :intensities="intensity.min"-->
-<!--        :tooltip-disabled="disableTooltips"-->
-<!--        label="Minimum intensity"-->
-<!--        placeholder="min."-->
-<!--        @input="value => { model.minIntensity = value; setScaleRange([0, scaleRange[1]]) }"-->
-<!--        @lock="lockMin"-->
-<!--        @show-popover="$emit('popover', 'outlier-min')"-->
-<!--        @hide-popover="$emit('popover', null)"-->
-<!--      />-->
-<!--      <ion-intensity-->
-<!--        :value="model.maxIntensity"-->
-<!--        :intensities="intensity.max"-->
-<!--        :tooltip-disabled="disableTooltips"-->
-<!--        label="Maximum intensity"-->
-<!--        placeholder="max."-->
-<!--        @input="value => { model.maxIntensity = value; setScaleRange([scaleRange[0], 1]) }"-->
-<!--        @lock="lockMax"-->
-<!--        @show-popover="$emit('popover', intensity.min.status === 'CLIPPED' ? 'outlier-max' : 'hotspot-removal')"-->
-<!--        @hide-popover="$emit('popover', null)"-->
-<!--      />-->
+      <ion-intensity
+        :value="model.minIntensity"
+        :intensities="intensity.min"
+        :tooltip-disabled="disableTooltips"
+        label="Minimum intensity"
+        placeholder="min."
+        @input="updateMinIntensity"
+        @lock="lockMin"
+        @show-popover="$emit('popover', 'outlier-min')"
+        @hide-popover="$emit('popover', null)"
+      />
+      <ion-intensity
+        :reverse="true"
+        :value="model.maxIntensity"
+        :intensities="intensity.max"
+        :tooltip-disabled="disableTooltips"
+        label="Maximum intensity"
+        placeholder="max."
+        @input="updateMaxIntensity"
+        @lock="lockMax"
+        @show-popover="$emit('popover', intensity.min.status === 'CLIPPED' ? 'outlier-max' : 'hotspot-removal')"
+        @hide-popover="$emit('popover', null)"
+      />
     </div>
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, ref } from 'vue'
+import {defineComponent, computed, ref} from 'vue'
 
 import IonIntensity from './IonIntensity.vue'
 
-// import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
-import { THUMB_WIDTH } from '../../components/Slider'
-import FadeTransition from '../../components/FadeTransition'
+import { RangeSlider, THUMB_WIDTH } from '../../components/Slider'
 
 import { useIonImageSettings } from './ionImageState'
 import { IonImageState, IonImageIntensity, ColorBar } from './ionImageState'
@@ -65,13 +77,15 @@ export default defineComponent({
     scaleRange: Array,
   },
   components: {
-    // RangeSlider,
+    RangeSlider,
     IonIntensity,
   },
-  setup(props: any, { emit }) {
+  setup(props: Props, { emit }) {
     const { settings } = useIonImageSettings()
     const container = ref<HTMLElement | null>(null);
     const disableTooltips = ref(false);
+    const componentKey = ref(0);
+
 
     const computedStyle = computed(() => {
       if (container.value) {
@@ -130,6 +144,23 @@ export default defineComponent({
       emit('thumb-stop');
     };
 
+    const updateMinIntensity = (value) => {
+      if(typeof value !== 'number') {
+        return
+      }
+      const model: any = props.model
+      model.minIntensity = value
+      setScaleRange([0, props.scaleRange[1]]);
+    };
+    const updateMaxIntensity = (value) => {
+      if(typeof value !== 'number') {
+        return
+      }
+      const model: any = props.model
+      model.maxIntensity = value
+      setScaleRange([props.scaleRange[0], 1])
+    };
+
     return {
       container,
       setScaleRange,
@@ -139,6 +170,9 @@ export default defineComponent({
       style: computedStyle,
       handleThumbStart,
       handleThumbStop,
+      updateMinIntensity,
+      updateMaxIntensity,
+      componentKey
     }
   },
 })

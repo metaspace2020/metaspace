@@ -63,7 +63,7 @@ export default defineComponent<RoiSettingsProps>({
   props: {
     annotation: { type: Object, default: () => {} },
   },
-  setup(props, { root }) {
+  setup(props) {
     const store = useStore();
     const { mutate } = useMutation(addRoiMutation)
     const updateRois = mutate as unknown as (variables: any) => void

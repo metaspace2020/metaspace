@@ -55,7 +55,7 @@ export default defineComponent({
     Overlay,
     FadeTransition,
   },
-  setup(props, { emit }) {
+  setup() {
     const { activeLayer, removeLayer, setActiveLayer } = useIonImageMenu()
 
     const popupsDisabled = ref(false)

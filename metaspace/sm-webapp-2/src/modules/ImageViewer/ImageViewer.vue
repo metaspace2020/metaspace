@@ -38,23 +38,23 @@
     <div
       class="absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-between items-end w-0 v-rhythm-3 sm-side-bar"
     >
-      <fade-transition v-if="openMenu === 'ION'">
+      <fade-transition v-if="openMenu === 'ION' && !isHidden">
         <ion-image-menu
           v-if="mode === 'MULTI'"
           key="multi"
           :is-normalized="showNormalizedIntensity"
           :menu-items="ionImageMenuItems"
         />
-<!--        <single-ion-image-controls-->
-<!--          v-else-if="!isLoading"-->
-<!--          id="intensity-controller"-->
-<!--          key="single"-->
-<!--          :is-normalized="showNormalizedIntensity"-->
-<!--          v-bind="singleIonImageControls"-->
-<!--        />-->
+        <single-ion-image-controls
+          v-else-if="!isLoading"
+          id="intensity-controller"
+          key="single"
+          :is-normalized="showNormalizedIntensity"
+          v-bind="singleIonImageControls"
+        />
       </fade-transition>
       <div
-        v-if="openMenu === 'ION'"
+        v-if="openMenu === 'ION' && !isHidden"
         class="ion-slider-wrapper"
       >
         <div
@@ -141,7 +141,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, reactive, ref, onMounted, watch } from 'vue';
+import { defineComponent, computed, reactive, ref, onMounted } from 'vue';
 // @ts-ignore
 import resize from 'vue3-resize-directive'
 
@@ -149,7 +149,7 @@ import IonImageViewer from '../../components/IonImageViewer'
 import FadeTransition from '../../components/FadeTransition'
 import ImageSaver from './ImageSaver.vue'
 import IonImageMenu from './IonImageMenu.vue'
-// import SingleIonImageControls from './SingleIonImageControls.vue'
+import SingleIonImageControls from './SingleIonImageControls.vue'
 import IntensitySettings from './IntensitySettings.vue'
 import OpacitySettings from './OpacitySettings.vue'
 
@@ -181,7 +181,7 @@ export default defineComponent({
     ImageSaver,
     IonImageMenu,
     IonImageViewer,
-    // SingleIonImageControls,
+    SingleIonImageControls,
     IntensitySettings,
     OpacitySettings,
   },
@@ -200,9 +200,10 @@ export default defineComponent({
     scaleBarColor: { type: String },
     scaleType: { type: String },
     keepPixelSelected: { type: Boolean },
+    isHidden: { type: Boolean, default: false },
     ticData: { type: Object },
   },
-  setup(props, { emit }) {
+  setup(props: Props, { emit }) {
     const store = useStore();
     const {
       ionImageLayers,

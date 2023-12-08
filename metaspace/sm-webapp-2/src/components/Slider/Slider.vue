@@ -2,12 +2,10 @@
   <slider-track
     ref="track"
     class="cursor-pointer"
-    :disabled="disabled"
     @click="onTrackClick"
   >
     <slider-thumb
       class="bg-gray-100"
-      :disabled="disabled"
       :x="thumbX"
       :bounds="thumbBounds"
       @change="onThumbChange"
@@ -17,7 +15,6 @@
   </slider-track>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import { defineComponent, ref, computed } from 'vue'
 
 import SliderTrack from './SliderTrack.vue'
@@ -46,8 +43,8 @@ const Slider = defineComponent({
     step: { type: Number, default: 1 },
     disabled: Boolean,
   },
-  setup(props, { emit }) {
-    const track = ref<Vue|any>(null)
+  setup(props: Props, { emit }) {
+    const track = ref<any>(null)
 
     const width = computed(() => {
       return track.value?.$el.clientWidth || 0
@@ -66,6 +63,9 @@ const Slider = defineComponent({
     }
 
     function onTrackClick(x: number) {
+      if (typeof x !== 'number') {
+        return
+      }
       onThumbChange(x - THUMB_WIDTH / 2)
     }
 

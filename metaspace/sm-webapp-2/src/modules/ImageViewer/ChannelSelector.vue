@@ -41,13 +41,16 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, ref, watch, onBeforeUnmount } from 'vue'
+import { defineComponent, ref, watch, onBeforeUnmount, defineAsyncComponent } from 'vue'
 
 import FadeTransition from '../../components/FadeTransition'
-import DotsIcon from '../../assets/inline/refactoring-ui/icon-dots-horizontal.svg'
 
 import { channels } from '../../lib/getColorScale'
 import useOutClick from '../../lib/useOutClick'
+
+const DotsIcon = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-dots-horizontal.svg')
+);
 
 export default defineComponent({
   components: {
@@ -57,7 +60,7 @@ export default defineComponent({
   props: {
     value: String,
   },
-  setup(_, { emit }) {
+  setup() {
     const clickContainer = ref<HTMLElement>()
     const isOpen = ref(false)
 

@@ -5,7 +5,6 @@ import { range } from 'lodash-es'
 import IonImageViewer from './IonImageViewer'
 import * as _ionImageRendering from '../lib/ionImageRendering'
 import createColormap from '../lib/createColormap'
-import safeJsonParse from '../lib/safeJsonParse'
 
 jest.mock('../lib/ionImageRendering')
 const mockIonImageRendering = _ionImageRendering as jest.Mocked<typeof _ionImageRendering>

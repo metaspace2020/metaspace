@@ -1,13 +1,11 @@
 <template>
   <slider-track
     ref="track"
-    :disabled="disabled"
     @click="onTrackClick"
     @mousedown="lockTrackClick = false"
   >
     <slider-thumb
       :style="minStyle"
-      :disabled="disabled"
       :x="minThumb.x.value"
       @change="onMinChange"
       @increment="onMinIncrement"
@@ -17,7 +15,6 @@
     />
     <slider-thumb
       :style="maxStyle"
-      :disabled="disabled"
       :x="maxThumb.x.value"
       @change="onMaxChange"
       @increment="onMaxIncrement"
@@ -28,7 +25,6 @@
   </slider-track>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import { defineComponent, ref, computed } from 'vue'
 
 import SliderTrack from './SliderTrack.vue'
@@ -46,7 +42,7 @@ interface Props {
   maxColor: string
 }
 
-const Slider = defineComponent>({
+const Slider = defineComponent({
   components: {
     SliderThumb,
     SliderTrack,
@@ -61,7 +57,7 @@ const Slider = defineComponent>({
     maxColor: String,
   },
   setup(props: Props, { emit }) {
-    const track = ref<Vue | any>(null)
+    const track = ref<any>(null)
 
     // hides aliasing around thumbs
     const padding = 1
@@ -129,7 +125,7 @@ const Slider = defineComponent>({
         emit('thumb-stop')
       },
       onTrackClick(x: number) {
-        if (lockTrackClick.value) {
+        if (lockTrackClick.value || typeof x !== 'number') {
           return
         }
         const diffMin = Math.abs(x - minThumb.x.value)

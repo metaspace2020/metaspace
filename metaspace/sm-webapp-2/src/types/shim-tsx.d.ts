@@ -1,3 +1,4 @@
+/* eslint-disable */
 // import { VNode } from 'vue';
 //
 // declare global {

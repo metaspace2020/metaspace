@@ -13,6 +13,9 @@
     <div
       v-else
       class="h-5 flex items-center sm-flex-direction"
+      :class="{
+          'flex-row-reverse': reverse ,
+        }"
     >
       <button
         title="Click to edit"
@@ -37,23 +40,27 @@
       >
         <lock-icon class="fill-current text-gray-600" />
       </button>
-      <check-icon
+      <el-icon
         v-if="status === 'LOCKED'"
         class="h-6 w-6 -mx-2 sm-fill-secondary text-blue-500 relative -z-10"
-      />
+      ><Check />
+      </el-icon>
     </div>
   </fade-transition>
 </template>
 <script lang="ts">
-import { defineComponent, computed, ref, watch } from 'vue'
+import { defineComponent, computed, ref, defineAsyncComponent } from 'vue'
 
 import EditIntensity from './EditIntensity.vue'
 import FadeTransition from '../../components/FadeTransition'
-
-import LockIcon from '../../assets/inline/refactoring-ui/icon-lock.svg'
-import CheckIcon from '../../assets/inline/refactoring-ui/icon-check.svg'
+import {ElIcon} from "element-plus";
+import {Check} from "@element-plus/icons-vue";
 
 import { IonImageIntensity } from './ionImageState'
+
+const LockIcon = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-lock.svg')
+);
 
 interface Props {
   clippingType: string
@@ -71,19 +78,20 @@ export default defineComponent({
     label: String,
     placeholder: String,
     tooltipDisabled: Boolean,
+    reverse: Boolean,
     value: Number,
   },
   components: {
     FadeTransition,
     EditIntensity,
     LockIcon,
-    CheckIcon,
+    ElIcon,
+    Check,
   },
-  setup(props, { emit }) {
+  setup(props: Props, { emit }) {
     const editing = ref(false)
-
-    const status = computed(() => (props.intensities as IonImageIntensity).status)
-    const intensity = computed(() => (props.intensities as IonImageIntensity).scaled.toExponential(1))
+    const status = computed(() => props.intensities.status)
+    const intensity = computed(() => props.intensities.scaled.toExponential(1))
 
     return {
       editing,
@@ -125,9 +133,9 @@ export default defineComponent({
     height: 14px;
     width: 14px;
   }
-  .sm-flex-direction:last-child {
-    flex-direction: row-reverse;
-  }
+  /*.sm-flex-direction:last-child {*/
+  /*  flex-direction: row-reverse;*/
+  /*}*/
 
   .sm-fill-secondary {
     fill: none;
