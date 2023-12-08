@@ -13,6 +13,7 @@ type MolecularDB {
   # True if database is deprecated/superseded and would not be useful for most users
   hidden: Boolean! @deprecated(reason: "Use archived field instead")
   isPublic: Boolean!
+  isVisible: Boolean!
   archived: Boolean!  # Cannot be used for dataset processing
   targeted: Boolean!  # If true keep all annotations regardless of their FDR
   fullName: String
@@ -29,6 +30,7 @@ input CreateMolecularDBInput {
   version: String!
   filePath: String!  # s3://[BUCKET]/path/to-file.tsv
   isPublic: Boolean = False
+  isVisible: Boolean = False
   groupId: ID!
   userId: ID
   fullName: String
@@ -40,6 +42,7 @@ input CreateMolecularDBInput {
 input UpdateMolecularDBInput {
   archived: Boolean
   isPublic: Boolean
+  isVisible: Boolean
   fullName: String
   description: String # JSON-based rich text, in a format defined by tiptap (https://tiptap.scrumpy.io/)
   link: String

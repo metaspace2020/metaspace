@@ -192,6 +192,7 @@ export const getGroupDatabasesQuery =
         createdDT
         id
         isPublic
+        isVisible
         name
         version
         user { id name email}

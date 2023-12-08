@@ -5,6 +5,7 @@ export interface MolecularDB {
   name: string
   version: string
   isPublic: boolean
+  isVisible: boolean
   downloadLink?: string
   fullName?: string
   description?: string
@@ -42,6 +43,7 @@ export const databaseDetailsQuery =
       link
       name
       isPublic
+      isVisible
       version
       group {
         id
@@ -65,6 +67,7 @@ export const updateDatabaseDetailsMutation =
 
 export interface MolecularDBDetails {
   isPublic: boolean
+  isVisible: boolean
   fullName?: string
   description?: string
   link?: string

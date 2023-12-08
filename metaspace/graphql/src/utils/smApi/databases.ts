@@ -34,6 +34,7 @@ interface CreateDatabaseArgs {
     name: string;
     version: string;
     isPublic?: boolean;
+    isVisible?: boolean;
     groupId: string;
     userId: string;
     filePath: string;
@@ -50,6 +51,7 @@ export const smApiCreateDatabase = async(args: CreateDatabaseArgs) => {
 interface UpdateDatabaseArgs {
     archived?: boolean;
     isPublic?: boolean;
+    isVisible?: boolean;
     fullName?: string;
     description?: string;
     link?: string;

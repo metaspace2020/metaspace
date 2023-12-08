@@ -238,8 +238,7 @@ const assertUserCanUseMolecularDBs = async(ctx: Context, databaseIds: number[]|u
   for (const databaseId of databaseIds) {
     const database = await ctx.entityManager.getCustomRepository(MolecularDbRepository)
       .findDatabaseById(ctx, databaseId)
-
-    if (database.groupId != null) {
+    if (database.groupId != null && !database.isVisible) {
       await assertUserBelongsToGroup(ctx, database.groupId)
     }
   }
