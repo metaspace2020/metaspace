@@ -65,6 +65,7 @@
             :value="item.settings.channel"
             class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end z-10"
             @remove="removeLayer"
+            @input="setChannel"
           />
         </div>
       </menu-item>
@@ -141,12 +142,18 @@ export default defineComponent({
       emit('remove', item.id);
     };
 
+    const setChannel = (newChannel) => {
+      const item: any = props.item;
+      item.settings.channel = newChannel;
+    };
+
     return {
       usedSlider,
       clippingNotice,
       toggleClippingNotice,
       setActiveLayer,
       removeLayer,
+      setChannel,
     };
   },
 });

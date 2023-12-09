@@ -1,9 +1,14 @@
 <template>
+  <div class="flex" ref="buttonRef">
+    <slot></slot>
+  </div>
   <el-popover
-    ref="popover"
+    ref="popoverRef"
     :hide-after="0"
     :show-after="0"
     trigger="hover"
+    :virtual-ref="buttonRef"
+    virtual-triggering
     v-bind="$attrs"
   >
       <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
@@ -41,9 +46,6 @@
           </p>
         </div>
       </div>
-    <template #reference>
-      <slot></slot>
-    </template>
   </el-popover>
 </template>
 
@@ -60,7 +62,8 @@ export default defineComponent({
     isobars: Array,
   },
   setup(props) {
-    const popover = ref(null)
+    const popoverRef = ref(null)
+    const buttonRef = ref(null)
 
     const filteredCompounds = computed(() => {
       return props.limit != null
@@ -81,11 +84,12 @@ export default defineComponent({
     })
 
     return {
-      popover,
+      popoverRef,
       filteredCompounds,
       moreCount,
       showIsomers,
       showIsobars,
+      buttonRef,
     }
   },
 })

@@ -540,7 +540,7 @@ export default defineComponent({
   directives: {
     'loading': ElLoading.directive,
   },
-  setup(props: Props, { emit }:any) {
+  setup(props: Props | any, { emit }:any) {
     // const imageLoaderRef = templateRef<ReferenceObject>('imageLoader')
     const imageLoaderRef = ref(null)
     const { showScrollBlock, renderScrollBlock } = useScrollBlock()
