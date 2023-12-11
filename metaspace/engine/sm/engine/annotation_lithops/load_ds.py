@@ -136,28 +136,6 @@ def _upload_imzml_browser_files(
     cobjs.append(save_cobj(browser_storage, imzml_reader.imzml_reader, key=key))
 
 
-def _get_hash(
-    storage: Storage, imzml_cobject: CloudObject, ibd_cobject: CloudObject
-) -> Dict[str, str]:
-    """Calculate md5 hash of imzML/ibd files"""
-
-    def calc_hash(file_object: CloudObject, chunk_size: int = 8 * 1024 * 1024) -> str:
-        md5_hash = hashlib.md5()
-        chunk = file_object.read(chunk_size)
-        while chunk:
-            md5_hash.update(chunk)
-            chunk = file_object.read(chunk_size)
-
-        return md5_hash.hexdigest()
-
-    hash_sum = {
-        'imzml': calc_hash(storage.get_cloudobject(imzml_cobject, stream=True)),
-        'ibd': calc_hash(storage.get_cloudobject(ibd_cobject, stream=True)),
-    }
-
-    return hash_sum
-
-
 def _load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
@@ -196,31 +174,12 @@ def _load_ds(
     )
     perf.record_entry('uploaded imzml browser files')
 
-    logger.info('Calculating md5 hash of imzML/ibd files')
-    md5_hash = _get_hash(storage, imzml_cobject, ibd_cobject)
-    perf.record_entry('calculate hash')
-
     return (
         imzml_reader,
         ds_segments_bounds,
         ds_segms_cobjs,
         ds_segm_lens,
-        md5_hash,
     )
-
-
-def _get_size_hash(imzml_head, ibd_head, md5_hash, ds_id):
-    """Save hash and size only for ServerAnnotationJob (ds_id is not None)"""
-    size_hash = {}
-    if ds_id:
-        size_hash = {
-            'imzml_hash': md5_hash['imzml'],
-            'ibd_hash': md5_hash['ibd'],
-            'imzml_size': int(imzml_head['content-length']),
-            'ibd_size': int(ibd_head['content-length']),
-        }
-
-    return size_hash
 
 
 def load_ds(
@@ -254,16 +213,14 @@ def load_ds(
 
     conf = SMConfig.get_conf()
 
-    (imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, md5_hash,) = executor.call(
+    (imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens,) = executor.call(
         _load_ds,
         (imzml_cobject, ibd_cobject, ds_segm_size_mb, conf),
         runtime_memory=runtime_memory,
     )
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
 
-    size_hash = _get_size_hash(imzml_head, ibd_head, md5_hash, ds_id)
-
-    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, size_hash
+    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
 
 
 def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens):
