@@ -351,9 +351,6 @@ class ServerAnnotationJob:
             # Save acq_geometry
             self.pipe.save_acq_geometry(self.ds)
 
-            # Save size and hash of imzML/ibd files
-            self.pipe.store_ds_size_hash()
-
             # Save images (if enabled)
             if self.store_images:
                 self.db_formula_image_ids = self.pipe.store_images_to_s3(self.ds.id)
@@ -400,6 +397,10 @@ class ServerAnnotationJob:
                     add_enrichment(self.ds.id, moldb_id, bootstrap_df, annot_ids, self.db)
 
                 update_finished_job(job_id, JobStatus.FINISHED)
+
+            # Cals and save size and hash of imzML/ibd files
+            self.pipe.calc_save_ds_size_hash()
+
         except Exception:
             for moldb_id, job_id in moldb_to_job_map.items():
                 update_finished_job(job_id, JobStatus.FAILED)

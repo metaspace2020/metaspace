@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -93,7 +94,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.ds_segm_size_mb = 128
 
         self.enrichment_data = None
-        self.ds_size_hash = None
 
     def run_pipeline(
         self, debug_validate=False, use_cache=True, perform_enrichment=False
@@ -136,7 +136,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
-            self.ds_size_hash,
         ) = load_ds(
             self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, self.ds_id
         )
@@ -216,13 +215,39 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         acq_geometry = make_acq_geometry_lithops(ds.metadata, dims, self.imzml_reader.n_spectra)
         ds.save_acq_geometry(self._db, acq_geometry)
 
-    def store_ds_size_hash(self):
-        """Stores size and md5 hash of imzML/ibd files.
+    def calc_save_ds_size_hash(self):
+        """Calculate md5 hash of imzML/ibd files and store this with file size.
         Not part of run_pipeline because this is unwanted when running from a LocalAnnotationJob."""
+
+        def calc_hash(file_object: CloudObject, chunk_size: int = 8 * 1024 ** 2) -> str:
+            md5_hash = hashlib.md5()
+            chunk = file_object.read(chunk_size)
+            while chunk:
+                md5_hash.update(chunk)
+                chunk = file_object.read(chunk_size)
+
+            return md5_hash.hexdigest()
+
+        imzml_head = self.storage.head_object(self.imzml_cobject.bucket, self.imzml_cobject.key)
+        ibd_head = self.storage.head_object(self.ibd_cobject.bucket, self.ibd_cobject.key)
+
+        import time
+
+        start = time.time()
+        ds_size_hash = {
+            'imzml_hash': calc_hash(self.storage.get_cloudobject(self.imzml_cobject, stream=True)),
+            'ibd_hash': calc_hash(self.storage.get_cloudobject(self.ibd_cobject, stream=True)),
+            'imzml_size': int(imzml_head['content-length']),
+            'ibd_size': int(ibd_head['content-length']),
+        }
+        logger.info(
+            f'MD5 hash calculation for imzML/ibd files: round({time.time() - start}, 1) sec'
+        )
+
         db = DB()
         db.alter(
             'UPDATE dataset SET size_hash = %s WHERE id = %s',
-            (json.dumps(self.ds_size_hash), self.ds_id),
+            (json.dumps(ds_size_hash), self.ds_id),
         )
 
     def store_images_to_s3(self, ds_id: str):
