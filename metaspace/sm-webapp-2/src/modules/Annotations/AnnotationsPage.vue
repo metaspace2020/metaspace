@@ -57,17 +57,18 @@
 </template>
 
 <script>
-import {defineComponent, ref, computed, onMounted, onUnmounted} from 'vue';
+import {defineComponent, ref, computed, onMounted, onUnmounted, inject} from 'vue';
 import { useStore } from 'vuex';
-import { useRoute } from 'vue-router';
+import {useRoute, useRouter} from 'vue-router';
 import AnnotationTable from './AnnotationTable.vue';
 import AnnotationView from './AnnotationView.vue';
 import { FilterPanel } from '../Filters/index';
 import config from '../../lib/config';
-// import { useRestoredState } from '../ImageViewer';
-// import isSnapshot from '../../lib/isSnapshot';
+import { useRestoredState } from '../ImageViewer';
+import isSnapshot from '../../lib/isSnapshot';
 import {ElIcon} from "element-plus";
 import {Loading} from "@element-plus/icons-vue";
+import {DefaultApolloClient} from "@vue/apollo-composable";
 
 export default defineComponent({
   name: 'AnnotationsPage',
@@ -79,8 +80,10 @@ export default defineComponent({
     ElIcon
   },
   setup() {
+    const apolloClient = inject(DefaultApolloClient);
     const store = useStore();
     const route = useRoute();
+    const router = useRouter();
     const hideImageViewer = ref(false);
 
     const filter = computed(() => store.getters.filter);
@@ -145,12 +148,12 @@ export default defineComponent({
       delete filterValue.annotationIds;
       store.commit('updateFilter', filterValue);
       store.commit('resetRoiInfo');
-      //
-      // if (isSnapshot()) {
-      //   const { viewId } = route.query;
-      //   const { datasetIds } = filter.value;
-      //   useRestoredState(store.$apollo, viewId, datasetIds[0]);
-      // }
+
+      if (isSnapshot()) {
+        const { viewId } = route.query;
+        const { datasetIds } = filter.value;
+        useRestoredState(apolloClient, viewId, datasetIds[0], router);
+      }
     });
 
     onUnmounted(() => {

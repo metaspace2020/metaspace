@@ -121,19 +121,14 @@ export default defineComponent({
     const permalinkHref = computed((): RouteLocationRaw => {
       const path = '/annotations'
       const filter: any = {
+        ...store.getters.filter,
         datasetIds: [props.annotation.dataset.id],
-        compoundName: props.annotation.sumFormula,
-        adduct: props.annotation.adduct,
-        fdrLevel: props.annotation.fdrLevel,
-        database: store.getters.filter.database,
-        simpleQuery: '',
       }
       return {
         path,
         query: {
           ...encodeParams(filter, path, store.state.filterLists),
-          ...pick(route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale', 'norm', 'feat'),
-          cols: route.query.cols,
+          ...pick(route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale', 'norm', 'feat', 'cols'),
         },
       }
     })

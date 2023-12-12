@@ -92,7 +92,7 @@ interface Props {
   route: Route
 }
 
-export default defineComponent<Props>({
+export default defineComponent({
   components: {
     FadeTransition,
     StatefulIcon,
@@ -102,7 +102,7 @@ export default defineComponent<Props>({
     annotation: Object,
     route: Object,
   },
-  setup(props) {
+  setup(props: Props | any) {
     const store = useStore();
     const apolloClient = inject(DefaultApolloClient);
     const viewId = ref<string>()

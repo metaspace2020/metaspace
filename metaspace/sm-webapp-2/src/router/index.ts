@@ -10,6 +10,7 @@ const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreely
 
 
 const router = createRouter({
+  // @ts-ignore
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', component: asyncPages.HomePage, meta: { footer: true, headerClass: 'bg-primary' } },

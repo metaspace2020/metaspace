@@ -5,7 +5,7 @@ export default () => {
   try {
     if (config.features.multiple_ion_images) {
       // @ts-ignore
-      const { viewId, ds } = router.history.current.query
+      const { viewId, ds } = router.currentRoute.value.query
       if (viewId && ds) {
         return true
       }

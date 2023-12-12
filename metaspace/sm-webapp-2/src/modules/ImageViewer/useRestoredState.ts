@@ -6,9 +6,8 @@ import { restoreImageViewerState } from './state'
 import { restoreIonImageState } from './ionImageState'
 import store from '../../store'
 import { annotationDetailItemFragment } from '../../api/annotation'
-import router from '../../router'
 
-export default async($apollo: any, id: string, datasetId: string) => {
+export default async($apollo: any, id: string, datasetId: string, router: any) => {
   try {
     const result: any = await $apollo.query({
       query: gql`query fetchImageViewerSnapshot(
@@ -37,16 +36,6 @@ export default async($apollo: any, id: string, datasetId: string) => {
     const parsed = JSON.parse(snapshot)
     let filter = store.getters.filter
 
-    if (parsed.query.cols) {
-      router.replace({
-        query: {
-          // @ts-ignore
-          ...router.history.current.query,
-          cols: parsed.query.cols,
-        },
-      })
-    }
-
     store.commit('setSnapshotAnnotationIds', annotations.map((annotation: any) => annotation.id))
 
     // set snapshot filters
@@ -65,21 +54,9 @@ export default async($apollo: any, id: string, datasetId: string) => {
     if (parsed.query?.scale) {
       store.commit('setScaleType', parsed.query.scale)
     }
-    const searchParams = new URLSearchParams(window.location.search)
 
     if (parsed.query?.norm) {
       store.commit('setNormalization', parsed.query.norm)
-    }
-
-    if ((parsed.query?.feat || parsed.query?.norm) && !searchParams.get('feat')) {
-      router.replace({
-        query: {
-          // @ts-ignore
-          ...router.history.current.query,
-          feat: !parsed.query.feat ? 'tic' : parsed.query?.feat,
-        },
-      })
-      window.location.reload()
     }
 
     if (annotations.length > 0) {
@@ -90,6 +67,17 @@ export default async($apollo: any, id: string, datasetId: string) => {
         annotationIons: parsed.annotationIons,
       })
     }
+
+    // restore query param saved
+    store.commit('updateRoute', {
+      path: router.currentRoute.value.path,
+      params: router.currentRoute.value.params,
+      query: {
+        ...router.currentRoute.value.query,
+        ...parsed.query
+      },
+    });
+
 
     restoreImageViewerState({
       version,

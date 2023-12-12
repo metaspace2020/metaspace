@@ -214,7 +214,6 @@ export default defineComponent({
     } = useIonImages(props)
     // don't think this is the best way to do it
      store.watch((_, getters) => getters.filter.datasetIds, (datasetIds = [], previous) => {
-       console.log("datasetIds", datasetIds)
       if (datasetIds.length !== 1 || (previous && previous[0] !== datasetIds[0])) {
         resetIonImageState()
         resetImageViewerState()

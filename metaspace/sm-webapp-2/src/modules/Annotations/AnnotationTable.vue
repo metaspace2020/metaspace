@@ -1386,9 +1386,15 @@ export default defineComponent({
       const defaultCols = state.columns.filter((column) => column.default).map((column) => column.id)
       const selectedCols = state.columns.filter((column) => column.selected).map((column) => column.id)
       if (!isEqual(defaultCols, selectedCols)) {
-        router.push({ path: route.fullPath, query: { cols: selectedCols.join(',') } })
+        router.replace({ path: route.fullPath, query: {
+            ...router.currentRoute.value.query,
+            cols: selectedCols.join(',')
+        } })
       } else {
-        router.push({ path: route.fullPath, query: { cols: undefined } })
+        router.replace({ path: route.fullPath, query: {
+            ...router.currentRoute.value.query,
+            cols: undefined
+        } })
       }
 
       setLocalStorage('annotationTableCols', state.columns)

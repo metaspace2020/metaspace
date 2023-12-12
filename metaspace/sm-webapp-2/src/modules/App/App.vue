@@ -27,7 +27,7 @@
 import { useCookies } from 'vue3-cookies'
 import config from '../../lib/config'
 import { useStore } from 'vuex';
-import { useRoute } from 'vue-router';
+import {useRoute} from 'vue-router';
 import { watch } from 'vue';
 
 
@@ -84,6 +84,7 @@ export default {
         query: newRoute.query,
       });
     }, { immediate: true });
+
 
     return {
       store,
