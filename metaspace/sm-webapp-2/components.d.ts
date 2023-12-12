@@ -7,6 +7,7 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    ContentPage: typeof import('./src/components/ContentPage.vue')['default']
     CopyButton: typeof import('./src/components/CopyButton.vue')['default']
     ElAutoResizer: typeof import('element-plus/es')['ElAutoResizer']
     ElButton: typeof import('element-plus/es')['ElButton']
@@ -15,6 +16,7 @@ declare module 'vue' {
     ElCollapse: typeof import('element-plus/es')['ElCollapse']
     ElCollapseItem: typeof import('element-plus/es')['ElCollapseItem']
     ElDialog: typeof import('element-plus/es')['ElDialog']
+    ElDivider: typeof import('element-plus/es')['ElDivider']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
     ElIcon: typeof import('element-plus/es')['ElIcon']
@@ -33,6 +35,7 @@ declare module 'vue' {
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     MiniSwitch: typeof import('./src/components/MiniSwitch.vue')['default']
     NotificationIcon: typeof import('./src/components/NotificationIcon.vue')['default']
+    PrimaryIcon: typeof import('./src/components/PrimaryIcon.vue')['default']
     RangeSlider: typeof import('./src/components/Slider/RangeSlider.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

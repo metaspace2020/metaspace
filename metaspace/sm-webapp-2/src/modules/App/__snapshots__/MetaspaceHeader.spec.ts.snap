@@ -10,19 +10,19 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
               bg-primary\\">
       <div class=\\"header-items\\">
         <div class=\\"flex pl-3 pr-4\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\"></div>
-        <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+        <div id=\\"upload-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\" id=\\"upload-link\\">Upload</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Upload</div>,<div id=\\"annotations-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\" id=\\"annotations-link\\">Annotations</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Annotations</div>,<div id=\\"datasets-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\" id=\\"datasets-link\\">Datasets</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Datasets</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
@@ -45,11 +45,11 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
         <!---->
         <div class=\\"header-items mr-1 lg:mr-2\\">
           <div class=\\"relative flex py-2\\">
-            <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+            <div id=\\"user-menu\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent\\" activeclass=\\"bg-blue-700\\" id=\\"user-menu\\">Test UserX<div data-v-6bf8fbbe=\\"\\" class=\\"mock-el-tooltip\\" content=\\"undefined has a pending membership request.\\" placement=\\"bottom\\"><span data-v-6bf8fbbe=\\"\\" class=\\"notification\\"></span></div>
+  border border-solid border-transparent\\" activeclass=\\"bg-blue-700\\">Test UserX<div data-v-6bf8fbbe=\\"\\" class=\\"mock-el-tooltip\\" content=\\"undefined has a pending membership request.\\" placement=\\"bottom\\"><span data-v-6bf8fbbe=\\"\\" class=\\"notification\\"></span></div>
             </div>
             <!---->
           </div>
@@ -79,19 +79,19 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
               bg-primary\\">
       <div class=\\"header-items\\">
         <div class=\\"flex pl-3 pr-4\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\"></div>
-        <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+        <div id=\\"upload-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\" id=\\"upload-link\\">Upload</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Upload</div>,<div id=\\"annotations-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\" id=\\"annotations-link\\">Annotations</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Annotations</div>,<div id=\\"datasets-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\" id=\\"datasets-link\\">Datasets</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Datasets</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out

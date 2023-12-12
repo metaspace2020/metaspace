@@ -147,7 +147,7 @@ export function decodeParams(location: RouteLocation, filterLists: any): Object 
     // If necessary, unwrap array parameters and take their first element. Array-valued parameters can happen
     // if someone changes the URL and adds a second copy of an existing parameter.
     // @ts-ignore
-    const value = isArray(query[key]) ? query[key][0] : query[key]
+    const value: string = isArray(query[key]) ? query[key][0] : query[key]
 
     if (levels.indexOf(level) === -1) {
       continue

@@ -1,9 +1,12 @@
 import {defineComponent, ref, computed, nextTick} from 'vue';
 import { useStore } from 'vuex';
 import {RouteLocationRaw, useRoute, useRouter} from 'vue-router';
+// @ts-ignore
 import {ElRow, ElCollapse, ElCollapseItem} from "element-plus";
 import {useQuery} from "@vue/apollo-composable";
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
+import AmbiguityAlert from './annotation-widgets/AmbiguityAlert.vue'
+import RelatedMolecules from './annotation-widgets/RelatedMolecules.vue'
 import MolecularFormula from '../../components/MolecularFormula'
 import CopyButton from '../../components/CopyButton.vue'
 import { parseFormulaAndCharge } from '../../lib/formulaParser'
@@ -50,7 +53,9 @@ const componentsToRegister: any = {
   LocationPinSvg,
   ModeButton,
   ElCollapseItem,
-  OpacitySettings
+  OpacitySettings,
+  AmbiguityAlert,
+  RelatedMolecules,
 }
 for (const category of Object.keys(annotationWidgets)) {
   metadataDependentComponents[category] = {}
@@ -379,7 +384,8 @@ export default defineComponent({
       ticData,
       handleOpacityChange,
       handleOpticalOpacityChange,
-      addRoiCoordinate
+      addRoiCoordinate,
+      store,
     };
   },
 });

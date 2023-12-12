@@ -868,6 +868,7 @@ export default defineComponent({
       if (state.pageSizes.length > 0) {
         state.recordsPerPage = pageSizes[0]
       }
+      executeQuery()
       updateColumns()
       updateDatasetColumns()
       updateColocSort()

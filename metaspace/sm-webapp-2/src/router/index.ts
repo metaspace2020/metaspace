@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { Component } from 'vue'
-import NotFound from '../views/NotFoundPage.vue'
+import NotFound from '../modules/App/NotFoundPage.vue'
 
 const asyncPagesFreelyTyped = {
   HomePage: () => import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../views/View'),

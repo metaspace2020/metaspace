@@ -143,6 +143,28 @@
         />
       </el-collapse-item>
 
+      <el-collapse-item name="compounds">
+        <template v-slot:title>
+          <div
+            class="w-full"
+            style="display: flex; align-items: center"
+          >
+            <div class="mr-2">Molecules ({{ annotation.countPossibleCompounds }})</div>
+            <ambiguity-alert
+              :isomers="annotation.isomers"
+              :isobars="annotation.isobars"
+            />
+          </div>
+        </template>
+        <related-molecules
+          v-if="annotation && activeSections.indexOf('compounds') !== -1"
+          query="isomers"
+          :annotation="annotation"
+          :database-id="this.$store.getters.filter.database"
+        />
+      </el-collapse-item>
+
+
     </el-collapse>
   </el-row>
 </template>
