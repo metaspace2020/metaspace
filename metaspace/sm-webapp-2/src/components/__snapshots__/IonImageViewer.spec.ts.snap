@@ -1,0 +1,86 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`IonImageViewer > should match snapshot (with channels tooltip) 1`] = `
+<div
+  class="relative overflow-hidden"
+  style="width: 200px; height: 300px;"
+>
+  <div
+    data-test-key="ion-image-panel"
+    style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
+  >
+    <canvas
+      class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
+      data-images="http://placebacon.com/200/300, http://placekitten.com/200/300"
+      height="300"
+      width="200"
+    />
+    <div>
+      <!---->
+      <!---->
+    </div>
+  </div>
+  <div>
+    <div
+      class="mock-el-tooltip"
+      manual="true"
+      placement="top"
+      popper-class="pointer-events-none"
+      visible="true"
+    >
+      
+      <div
+        class="absolute block border-solid z-30 pointer-events-none box-border"
+        style="left: 47.5px; top: 47.5px; width: 0.5px; height: 0.5px;"
+      />
+      
+    </div>
+  </div>
+  <!---->
+  <!---->
+</div>
+`;
+
+exports[`IonImageViewer > should match snapshot (with normalization) 1`] = `
+"<div class=\\"relative overflow-hidden\\" style=\\"width: 200px; height: 300px;\\">
+  <div data-test-key=\\"ion-image-panel\\" style=\\"left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);\\"><canvas width=\\"200\\" height=\\"300\\" class=\\"absolute top-0 left-0 z-10 origin-top-left select-none pixelated\\" data-images=\\"http://placebacon.com/200/300, http://placekitten.com/200/300\\"></canvas>
+    <div>
+      <!---->
+      <!---->
+    </div>
+  </div>
+  <div>
+    <div class=\\"mock-el-tooltip\\" manual=\\"true\\" visible=\\"true\\" popper-class=\\"pointer-events-none\\" placement=\\"top\\">
+      <div style=\\"left: 47.5px; top: 47.5px; width: 0.5px; height: 0.5px;\\" class=\\"absolute block border-solid z-30 pointer-events-none box-border\\"></div>
+    </div>
+  </div>
+  <!---->
+  <!---->
+</div>"
+`;
+
+exports[`IonImageViewer > should match snapshot 1`] = `
+<div
+  class="relative overflow-hidden"
+  style="width: 200px; height: 300px;"
+>
+  <div
+    data-test-key="ion-image-panel"
+    style="left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);"
+  >
+    <canvas
+      class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
+      data-images="http://placebacon.com/200/300, http://placekitten.com/200/300"
+      height="300"
+      width="200"
+    />
+    <div>
+      <!---->
+      <!---->
+    </div>
+  </div>
+  <!---->
+  <!---->
+  <!---->
+</div>
+`;

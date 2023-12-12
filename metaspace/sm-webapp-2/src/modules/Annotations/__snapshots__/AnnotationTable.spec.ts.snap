@@ -112,7 +112,11 @@ exports[`AnnotationTable > should match snapshot 1`] = `
                       <div class=\\"cell\\">
                         <!---->
                         <div class=\\"cell-wrapper\\">
-                          <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover cell-span\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" placement=\\"right\\">
+                          <div data-v-dd35c778=\\"\\" class=\\"flex\\"><span>[C<sub class=\\"leading-none\\">19</sub>H<sub class=\\"leading-none\\">18</sub>N<sub class=\\"leading-none\\">2</sub>O<sub class=\\"leading-none\\">7</sub>S<sub class=\\"leading-none\\">2</sub> - H]⁺</span>
+                            <!--v-if-->
+                            <!--v-if-->
+                          </div>
+                          <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover cell-span\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" virtual-triggering=\\"\\" placement=\\"right\\" virtual-ref=\\"[object HTMLDivElement]\\">
                             <div data-v-dd35c778=\\"\\" class=\\"leading-5 py-2 px-3 font-normal content text-sm text-left\\">
                               <!--v-if-->
                               <p data-v-dd35c778=\\"\\" class=\\"title\\"> Candidate molecule </p>
@@ -408,7 +412,11 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
                       <div class=\\"cell\\">
                         <!---->
                         <div class=\\"cell-wrapper\\">
-                          <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover cell-span\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" placement=\\"right\\">
+                          <div data-v-dd35c778=\\"\\" class=\\"flex\\"><span>[C<sub class=\\"leading-none\\">19</sub>H<sub class=\\"leading-none\\">18</sub>N<sub class=\\"leading-none\\">2</sub>O<sub class=\\"leading-none\\">7</sub>S<sub class=\\"leading-none\\">2</sub> - H]⁺</span>
+                            <!--v-if-->
+                            <!--v-if-->
+                          </div>
+                          <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover cell-span\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" virtual-triggering=\\"\\" placement=\\"right\\" virtual-ref=\\"[object HTMLDivElement]\\">
                             <div data-v-dd35c778=\\"\\" class=\\"leading-5 py-2 px-3 font-normal content text-sm text-left\\">
                               <!--v-if-->
                               <p data-v-dd35c778=\\"\\" class=\\"title\\"> Candidate molecule </p>

@@ -11,9 +11,15 @@ import ElementPlus from "element-plus";
 import { merge } from 'lodash-es'
 
 
-vi.mock('../../lib/util', () => ({
-  getJWT: vi.fn().mockResolvedValue({text: vi.fn()}), // Mock getJWT to return a resolved promise with a string
-}));
+vi.mock('../../lib/util', async () => {
+  const actual : any = await vi.importActual("../../lib/util")
+  return {
+    ...actual,
+    getJWT: vi.fn().mockResolvedValue({text: vi.fn()}), // Mock getJWT to return a resolved p
+  }
+})
+
+
 
 vi.mock('file-saver', () => ({
   saveAs: vi.fn()

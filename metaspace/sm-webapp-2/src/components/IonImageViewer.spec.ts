@@ -1,25 +1,31 @@
-import { mount } from '@vue/test-utils'
-import Vue from 'vue'
+import { defineComponent, h, nextTick } from 'vue';
+import { mount } from '@vue/test-utils';
+import { vi } from 'vitest';
+import IonImageViewer from './IonImageViewer';
+import * as _ionImageRendering from '../lib/ionImageRendering';
 import { range } from 'lodash-es'
-
-import IonImageViewer from './IonImageViewer'
-import * as _ionImageRendering from '../lib/ionImageRendering'
 import createColormap from '../lib/createColormap'
+import store from "../store";
+import router from "../router";
+import ElementPlus from "element-plus";
 
-jest.mock('../lib/ionImageRendering')
-const mockIonImageRendering = _ionImageRendering as jest.Mocked<typeof _ionImageRendering>
+vi.mock('../lib/ionImageRendering');
+// @ts-ignore
+const mockIonImageRendering = _ionImageRendering as vi.Mocked<typeof _ionImageRendering>;
 
-const W = 200
-const H = 300
+const W = 200;
+const H = 300;
 
-const testHarness = Vue.extend({
+// Create a test harness component
+const TestHarness = defineComponent({
   components: {
     IonImageViewer,
   },
-  render(h) {
-    return h(IonImageViewer, { props: this.$attrs })
+  props: ['ionImageLayers', 'width', 'height', 'zoom', 'xOffset', 'yOffset', 'showPixelIntensity', 'showNormalizedIntensity', 'normalizationData'],
+  setup(props) {
+    return () => h(IonImageViewer, { ...props });
   },
-})
+});
 
 describe('IonImageViewer', () => {
   const ionImageData = {
@@ -62,36 +68,36 @@ describe('IonImageViewer', () => {
 
   beforeEach(() => {
     // Set HTMLElements to have non-zero dimensions
-    // @ts-ignore
-    jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() =>
-      ({ left: 200, right: 200 + W, top: 100, bottom: 100 + H, width: W, height: H }))
-    jest.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => W)
-    jest.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => H)
-  })
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => // @ts-ignore
+      ({ left: 200, right: 200 + W, top: 100, bottom: 100 + H, width: W, height: H }));
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => W);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => H);
+  });
 
-  it('should match snapshot', async() => {
-    const wrapper = mount(testHarness, { propsData })
-    await Vue.nextTick()
-
-    expect(wrapper.element).toMatchSnapshot()
-  })
+  it('should match snapshot', async () => {
+    const wrapper = mount(TestHarness, { props: propsData });
+    await nextTick();
+    expect(wrapper.element).toMatchSnapshot();
+  });
 
   it('should match snapshot (with channels tooltip)', async() => {
-    const wrapper = mount(testHarness, { propsData })
-    await Vue.nextTick()
+    const wrapper = mount(TestHarness, { propsData })
+    await nextTick()
 
     // Trigger mouseover to show the intensity popup.
     wrapper.find('div>div').trigger('mousemove', {
       clientX: 250,
       clientY: 150,
     })
-    await Vue.nextTick()
+    await nextTick()
 
     expect(wrapper.element).toMatchSnapshot()
   })
 
+
   it('should match snapshot (with normalization)', async() => {
-    const wrapper = mount(testHarness, {
+    const wrapper = mount(TestHarness, {
+      plugins: [store, router, ElementPlus],
       propsData: {
         ...propsData,
         showNormalizedIntensity: true,
@@ -104,15 +110,16 @@ describe('IonImageViewer', () => {
         },
       },
     })
-    await Vue.nextTick()
+    await nextTick()
 
     // Trigger mouseover to show the intensity popup.
     wrapper.find('[data-test-key="ion-image-panel"] div').trigger('mousemove', {
       clientX: 250,
       clientY: 150,
     })
-    await Vue.nextTick()
+    await nextTick()
 
-    expect(wrapper.element).toMatchSnapshot()
+    expect(wrapper.html()).toMatchSnapshot()
   })
-})
+
+});

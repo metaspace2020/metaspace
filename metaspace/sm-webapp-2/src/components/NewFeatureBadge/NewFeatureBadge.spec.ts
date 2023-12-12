@@ -8,7 +8,7 @@ const TestNewFeatureBadge = defineComponent({
   props: {
     featureKey: String,
   },
-  setup(props, { slots }) {
+  setup(props) {
     return () =>
       h(NewFeatureBadge, { ...props }, {
         default: () => h('span', {}, 'Badge Content'),

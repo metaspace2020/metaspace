@@ -8,24 +8,24 @@
       v-resize="onResize"
     >
       <ion-image-viewer
-        :height="dimensions.height"
-        :image-height="ionImageDimensions.height"
-        :image-width="ionImageDimensions.width"
+        :height="dimensions?.height"
+        :image-height="ionImageDimensions?.height"
+        :image-width="ionImageDimensions?.width"
         :ion-image-layers="ionImageLayers"
         :is-loading="isLoading"
-        :max-zoom="imageFit.imageZoom * 20"
-        :min-zoom="imageFit.imageZoom / 4"
+        :max-zoom="imageFit?.imageZoom * 20"
+        :min-zoom="imageFit?.imageZoom / 4"
         :pixel-size-x="pixelSizeX"
         :pixel-size-y="pixelSizeY"
         :scale-bar-color="scaleBarColor"
         :scale-type="scaleType"
-        :width="dimensions.width"
+        :width="dimensions?.width"
         :show-normalized-intensity="showNormalizedIntensity"
         :normalization-data="normalizationData"
         :roi-info="roiInfo"
-        :x-offset="imageLoaderSettings.imagePosition.xOffset"
-        :y-offset="imageLoaderSettings.imagePosition.yOffset"
-        :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
+        :x-offset="imageLoaderSettings?.imagePosition?.xOffset"
+        :y-offset="imageLoaderSettings?.imagePosition?.yOffset"
+        :zoom="imageLoaderSettings?.imagePosition?.zoom * imageFit?.imageZoom"
         scroll-block
         show-pixel-intensity
         v-bind="imageLoaderSettings"
@@ -203,7 +203,7 @@ export default defineComponent({
     isHidden: { type: Boolean, default: false },
     ticData: { type: Object },
   },
-  setup(props: Props, { emit }) {
+  setup(props: Props | any, { emit }) {
     const store = useStore();
     const {
       ionImageLayers,
@@ -214,6 +214,7 @@ export default defineComponent({
     } = useIonImages(props)
     // don't think this is the best way to do it
      store.watch((_, getters) => getters.filter.datasetIds, (datasetIds = [], previous) => {
+       console.log("datasetIds", datasetIds)
       if (datasetIds.length !== 1 || (previous && previous[0] !== datasetIds[0])) {
         resetIonImageState()
         resetImageViewerState()
@@ -304,9 +305,9 @@ export default defineComponent({
         emit('opticalOpacity', value)
       },
       hasNormalizationError: computed(() =>
-        store.getters.settings.annotationView.normalization && store.state.normalization
+        store.getters?.settings?.annotationView?.normalization && store.state?.normalization
       && store.state.normalization.error),
-      showNormalizedIntensity: computed(() => store.getters.settings.annotationView.normalization),
+      showNormalizedIntensity: computed(() => store.getters?.settings?.annotationView?.normalization),
       roiInfo,
       normalizationData: computed(() => store.state.normalization),
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),

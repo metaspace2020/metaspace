@@ -153,7 +153,7 @@ const usePixelIntensityDisplay = (
   })
   const pixelIntensityStyle = computed(() => {
     if (props.showPixelIntensity
-      && props.ionImageLayers.length
+      && props.ionImageLayers?.length
       && cursorPixelPos.value != null
       && cursorOverLayers.value.length) {
       const { width, height } = props.ionImageLayers[0].ionImage
