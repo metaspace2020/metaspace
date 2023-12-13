@@ -28,7 +28,6 @@
           <span v-else>Reference annotation<sub><!-- Subscript to make height consistent with formulas --></sub></span>
         </candidate-molecules-popover>
 
-        <br>
         {{ other.mz.toFixed(4) }} <br>
         <image-loader
           :src="other.isotopeImages[0].url"
@@ -46,7 +45,7 @@
           :open-delay="100"
         >
           <template #reference>
-            <div>
+            <div class="text-sm">
               <span>{{ other.msmScore.toFixed(3) }},</span>
               <span v-if="other.fdrLevel !== null">{{ other.fdrLevel * 100 }}%,</span>
               <span>{{ other.isotopeImages[0].maxIntensity.toExponential(2) }}</span>
@@ -227,6 +226,7 @@ export default defineComponent({
   }
 
   .ion-link, a.ion-link:link {
+    @apply flex flex-col items-center justify-center;
     color: inherit;
     text-decoration: none;
   }

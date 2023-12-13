@@ -20,7 +20,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-i >>> svg {
+i ::v-deep(svg) {
   width: 100%;
 }
 
