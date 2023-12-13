@@ -30,6 +30,9 @@ import { ImageSettings, useIonImageSettings } from '../ImageViewer/ionImageState
 import { OpacityMode } from '../../lib/createColormap'
 import safeJsonParse from "../../lib/safeJsonParse";
 import OpacitySettings from "../ImageViewer/OpacitySettings.vue";
+import {ElIcon} from "element-plus";
+import {Setting} from "@element-plus/icons-vue";
+import ColocalizationSettings from './annotation-widgets/ColocalizationSettings.vue'
 
 const LockSvg = defineAsyncComponent(() =>
   import('../../assets/inline/refactoring-ui/icon-lock.svg')
@@ -39,12 +42,17 @@ const LocationPinSvg = defineAsyncComponent(() =>
   import('../../assets/inline/refactoring-ui/icon-location-pin.svg')
 );
 
+const FilterIcon = defineAsyncComponent(() =>
+  import('../../assets/inline/filter.svg')
+);
+
 const { settings: ionImageSettings } = useIonImageSettings()
 
 const metadataDependentComponents: any = {}
 const componentsToRegister: any = {
   ElRow,
   ElCollapse,
+  ColocalizationSettings,
   CandidateMoleculesPopover,
   MolecularFormula,
   CopyButton,
@@ -56,6 +64,9 @@ const componentsToRegister: any = {
   OpacitySettings,
   AmbiguityAlert,
   RelatedMolecules,
+  ElIcon,
+  Setting,
+  FilterIcon,
 }
 for (const category of Object.keys(annotationWidgets)) {
   metadataDependentComponents[category] = {}
@@ -174,6 +185,18 @@ export default defineComponent({
       store.commit('updateFilter', {
         ...omit(store.getters.filter, ANNOTATION_SPECIFIC_FILTERS),
         datasetIds: [props.annotation.dataset.id],
+      })
+    }
+
+    const filterColocalized = () => {
+      store.commit('updateFilter', {
+        ...omit(store.getters.filter, ANNOTATION_SPECIFIC_FILTERS),
+        datasetIds: [props.annotation.dataset.id],
+        colocalizedWith: props.annotation.ion,
+      })
+      store.commit('setSortOrder', {
+        by: 'colocalization',
+        dir: 'descending',
       })
     }
 
@@ -386,6 +409,7 @@ export default defineComponent({
       handleOpticalOpacityChange,
       addRoiCoordinate,
       store,
+      filterColocalized,
     };
   },
 });

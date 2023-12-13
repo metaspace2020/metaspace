@@ -1,4 +1,4 @@
-// import RelatedAnnotations from './default/RelatedAnnotations.vue'
+import RelatedAnnotations from './default/RelatedAnnotations.vue'
 // import MainImage from './default/MainImage.vue'
 import MainImageHeader from './default/MainImageHeader.vue'
 // import Diagnostics from './default/Diagnostics.vue'
@@ -16,7 +16,7 @@ export default {
   // diagnostics: {
   //   default: Diagnostics,
   // },
-  // 'related-annotations': {
-  //   default: RelatedAnnotations,
-  // },
+  'related-annotations': {
+    default: RelatedAnnotations,
+  },
 } as any

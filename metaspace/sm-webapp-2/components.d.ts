@@ -9,7 +9,6 @@ declare module 'vue' {
   export interface GlobalComponents {
     ContentPage: typeof import('./src/components/ContentPage.vue')['default']
     CopyButton: typeof import('./src/components/CopyButton.vue')['default']
-    ElAutoResizer: typeof import('element-plus/es')['ElAutoResizer']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
     ElCol: typeof import('element-plus/es')['ElCol']
@@ -31,8 +30,8 @@ declare module 'vue' {
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
-    ElTableV2: typeof import('element-plus/es')['ElTableV2']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
+    ImageLoader: typeof import('./src/components/ImageLoader.vue')['default']
     MiniSwitch: typeof import('./src/components/MiniSwitch.vue')['default']
     NotificationIcon: typeof import('./src/components/NotificationIcon.vue')['default']
     PrimaryIcon: typeof import('./src/components/PrimaryIcon.vue')['default']

@@ -1,9 +1,9 @@
 <template>
   <div
     class="min-h-full m-0 relative"
-    :class="{ 'flex flex-col': $route.meta.flex }"
+    :class="{ 'flex flex-col': route.meta.flex }"
   >
-    <metaspace-header :class="$route.meta.headerClass" />
+    <metaspace-header :class="route.meta.headerClass" />
 
     <!--
       :key="$route.path" is used to force the content to be remounted if a non-querystring param in the URL changes.
@@ -13,10 +13,10 @@
     <router-view
       :key="route.path"
       class="sm-main-content"
-      :class="{ 'flex-grow w-full': $route.meta.flex }"
+      :class="{ 'flex-grow w-full': route.meta.flex }"
     />
 
-    <metaspace-footer v-if="$route.meta.footer" />
+    <metaspace-footer v-if="route.meta.footer" />
 
     <dialog-controller />
 

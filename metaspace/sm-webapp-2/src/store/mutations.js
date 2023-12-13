@@ -13,6 +13,7 @@ import {
 import { DEFAULT_ANNOTATION_VIEW_SECTIONS, DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER } from '../modules/Filters/url';
 import { DEFAULT_SCALE_TYPE } from '../lib/constants';
 
+
 function updatedLocation(state, filter) {
   let query = encodeParams(filter, state.route.path, state.filterLists);
 
@@ -27,12 +28,28 @@ function updatedLocation(state, filter) {
   };
 }
 
+function routerReplace(state, params) {
+  router.replace(params);
+  state.route.path = params.path || state.route.path;
+  state.route.params = params.params || state.route.params;
+  state.route.query = params.query || state.route.query;
+}
+
+function routerPush(state, params) {
+  router.push(params);
+  state.route.path = params.path || state.route.path;
+  state.route.params = params.params || state.route.params;
+  state.route.query = params.query || state.route.query;
+}
+
+
 function replaceURL(state, filter) {
-  router.replace(updatedLocation(state, filter));
+  routerReplace(state, updatedLocation(state, filter));
+
 }
 
 function pushURL(state, filter) {
-  router.push(updatedLocation(state, filter));
+  routerPush(state, updatedLocation(state, filter));
 }
 
 function sortFilterKeys(keys) {
@@ -228,7 +245,7 @@ export default {
   updateAnnotationViewSections(state, activeSections) {
     const sections = encodeSections(activeSections);
     const defaultSections = encodeSections(DEFAULT_ANNOTATION_VIEW_SECTIONS);
-    router.replace({
+    routerReplace(state, {
       query: sections !== defaultSections
         ? { ...state.route.query, sections }
         : omit(state.route.query, 'sections'),
@@ -236,7 +253,7 @@ export default {
   },
 
   setColormap(state, cmap) {
-    router.replace({
+    routerReplace(state, {
       query: cmap !== DEFAULT_COLORMAP
         ? { ...state.route.query, cmap }
         : omit(state.route.query, 'cmap'),
@@ -244,7 +261,7 @@ export default {
   },
 
   setScaleType(state, scaleType) {
-    router.replace({
+    routerReplace(state, {
       query: scaleType !== DEFAULT_SCALE_TYPE
         ? { ...state.route.query, scale: scaleType }
         : omit(state.route.query, 'scale'),
@@ -252,7 +269,7 @@ export default {
   },
 
   setLockTemplate(state, lockTemplate) {
-    router.replace({
+    routerReplace(state, {
       query: lockTemplate
         ? { ...state.route.query, lock: lockTemplate }
         : omit(state.route.query, 'lock'),
@@ -260,14 +277,14 @@ export default {
   },
 
   setNormalization(state, normalization) {
-    router.replace({
+    routerReplace(state, {
       query: !normalization ? omit(state.route.query, 'norm')
         : {...state.route.query, norm: normalization }
     });
   },
 
   setCurrentPage(state, page) {
-    router.replace({
+    routerReplace(state, {
       query: page !== 1
         ? { ...state.route.query, page: String(page) }
         : omit(state.route.query, 'page'),
@@ -275,7 +292,7 @@ export default {
   },
 
   setRow(state, row) {
-    router.replace({
+    routerReplace(state, {
       query: row !== 1
         ? { ...state.route.query, row: String(row) }
         : omit(state.route.query, 'row'),
@@ -285,7 +302,7 @@ export default {
   setSortOrder(state, sortOrder) {
     const sort = encodeSortOrder(sortOrder);
     const defaultSort = encodeSortOrder(DEFAULT_TABLE_ORDER);
-    router.replace({
+    routerReplace(state, {
       query: sort !== defaultSort
         ? { ...state.route.query, sort }
         : omit(state.route.query, 'sort'),
@@ -293,7 +310,7 @@ export default {
   },
 
   setColocalizationAlgo(state, colocalizationAlgo) {
-    router.replace({
+    routerReplace(state, {
       query: colocalizationAlgo != null
         ? { ...state.route.query, alg: colocalizationAlgo }
         : omit(state.route.query, 'alg'),
@@ -305,7 +322,7 @@ export default {
       'list': '/datasets',
       'summary': '/datasets/summary'
     }[tab.toLowerCase()];
-    router.replace({
+    routerReplace(state, {
       path,
       query: state.route.query,
     });

@@ -160,7 +160,64 @@
           v-if="annotation && activeSections.indexOf('compounds') !== -1"
           query="isomers"
           :annotation="annotation"
-          :database-id="this.$store.getters.filter.database"
+          :database-id="store.getters.filter.database"
+        />
+      </el-collapse-item>
+
+
+
+      <el-collapse-item
+        v-if="showColoc"
+        name="colocalized"
+      >
+        <template v-slot:title>
+          <div
+            class="w-full"
+            style="display: flex; align-items: center; padding-right: 10px"
+          >
+            <span>
+              Colocalized annotations
+            </span>
+
+            <el-popover
+              placement="bottom"
+              trigger="click"
+            >
+              <colocalization-settings />
+              <template #reference>
+                <button
+                  class="button-reset av-icon-button"
+                  @click.stop=""
+                >
+                  <el-icon
+                    id="colocalization-settings-icon"
+                    class="el-icon-setting"
+                    style="font-size: 20px; vertical-align: middle;"
+                  >
+                    <Setting />
+                  </el-icon>
+                </button>
+              </template>
+            </el-popover>
+            <button
+              class="button-reset av-icon-button"
+              title="Show in list"
+              @click.stop="filterColocalized"
+            >
+              <filter-icon class="w-5 h-5 fill-current" />
+            </button>
+          </div>
+        </template>
+
+        <component
+          :is="metadataDependentComponent('related-annotations')"
+          v-if="activeSections.indexOf('colocalized') !== -1"
+          query="colocalized"
+          :annotation="annotation"
+          :database-id="store.getters.filter.database"
+          :acquisition-geometry="msAcqGeometry"
+          :image-loader-settings="imageLoaderSettings"
+          :scale-type="scaleType"
         />
       </el-collapse-item>
 
