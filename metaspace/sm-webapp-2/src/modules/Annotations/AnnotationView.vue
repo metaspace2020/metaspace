@@ -244,6 +244,24 @@
         />
       </el-collapse-item>
 
+      <el-collapse-item
+        name="metadata"
+      >
+        <template v-slot:title>
+          <div
+            class="w-full"
+            style="display: flex; align-items: center"
+          >
+            <div class="mr-2">Metadata</div>
+          </div>
+        </template>
+        <dataset-info
+          v-if="activeSections.includes('metadata')"
+          :metadata="metadata"
+          :additional-settings="additionalSettings"
+          :current-user="currentUser"
+        />
+      </el-collapse-item>
     </el-collapse>
   </el-row>
 </template>
@@ -279,6 +297,7 @@
 
 #annot-content {
   width: 100%;
+  border: 0;
 }
 
 #annot-content ::v-deep(.el-collapse-item__header) {

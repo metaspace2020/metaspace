@@ -33,6 +33,7 @@ import OpacitySettings from "../ImageViewer/OpacitySettings.vue";
 import {ElIcon} from "element-plus";
 import {Setting} from "@element-plus/icons-vue";
 import ColocalizationSettings from './annotation-widgets/ColocalizationSettings.vue'
+import DatasetInfo from '../../components/DatasetInfo.vue'
 
 const LockSvg = defineAsyncComponent(() =>
   import('../../assets/inline/refactoring-ui/icon-lock.svg')
@@ -67,6 +68,7 @@ const componentsToRegister: any = {
   ElIcon,
   Setting,
   FilterIcon,
+  DatasetInfo,
 }
 for (const category of Object.keys(annotationWidgets)) {
   metadataDependentComponents[category] = {}
@@ -275,6 +277,15 @@ export default defineComponent({
       return Object.assign(safeJsonParse(props.annotation.dataset.metadataJson), datasetMetadataExternals)
     })
 
+    const additionalSettings = computed(() => {
+      try {
+        const configJson = JSON.parse(props.annotation.dataset.configJson)
+        return configJson
+      } catch (e) {
+        return {}
+      }
+    })
+
     const pixelSizeX = computed(() => {
       if (metadata.value.MS_Analysis != null
         && metadata.value.MS_Analysis.Pixel_Size != null) {
@@ -410,6 +421,9 @@ export default defineComponent({
       addRoiCoordinate,
       store,
       filterColocalized,
+      metadata,
+      additionalSettings,
+      currentUser,
     };
   },
 });
