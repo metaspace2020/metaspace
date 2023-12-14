@@ -221,6 +221,28 @@
         />
       </el-collapse-item>
 
+      <el-collapse-item
+        name="scores"
+        class="tour-diagnostic-tab"
+      >
+        <template v-slot:title>
+          <div
+            class="w-full"
+            style="display: flex; align-items: center"
+          >
+            <div class="mr-2">Diagnostics</div>
+          </div>
+        </template>
+        <component
+          :is="metadataDependentComponent('diagnostics')"
+          v-if="activeSections.indexOf('scores') !== -1"
+          :annotation="annotation"
+          :colormap="colormap"
+          :image-loader-settings="imageLoaderSettings"
+          :scale-type="scaleType"
+          :acquisition-geometry="msAcqGeometry"
+        />
+      </el-collapse-item>
 
     </el-collapse>
   </el-row>

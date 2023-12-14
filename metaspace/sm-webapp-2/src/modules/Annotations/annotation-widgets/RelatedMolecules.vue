@@ -149,7 +149,7 @@ export default defineComponent({
         orderBy: 'ORDER_BY_FDR_MSM',
         sortingOrder: 'ASCENDING',
       }),
-      { skip: !config.features.isomers }
+      { enabled: config.features.isomers }
     );
     const isomerAnnotations = computed(() => !config.features.isomers ? [] : isomerAnnotationsResult.value?.allAnnotations)
     const { result: isobarAnnotationsResult, loading: isobarLoading } = useQuery(
@@ -160,7 +160,7 @@ export default defineComponent({
         orderBy: 'ORDER_BY_FDR_MSM',
         sortingOrder: 'ASCENDING',
       }),
-      { skip: !config.features.isobars }
+      { enabled: config.features.isobars }
     );
     const isobarAnnotations = computed(() => !config.features.isobars ? [] : isobarAnnotationsResult.value?.allAnnotations)
 

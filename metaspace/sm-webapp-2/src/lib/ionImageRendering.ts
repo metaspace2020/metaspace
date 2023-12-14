@@ -1,4 +1,4 @@
-import UPNG from 'upng-js'
+import * as UPNG from 'upng-js'
 import { quantile } from 'simple-statistics'
 import { range } from 'lodash-es'
 import { DEFAULT_SCALE_TYPE } from './constants'

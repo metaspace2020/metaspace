@@ -1,0 +1,209 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Diagnostics > should match snapshot (no isobars) 1`] = `
+"<div data-v-fc5f4157=\\"\\">
+  <!--v-if-->
+  <!--v-if-->
+  <!-- Reference annotation metrics -->
+  <!--v-if-->
+  <div data-v-fc5f4157=\\"\\" class=\\"\\">
+    <div data-v-68800b4c=\\"\\" data-v-fc5f4157=\\"\\" class=\\"el-row\\" id=\\"scores-table\\">
+      <div data-v-68800b4c=\\"\\"></div>
+      <!---->
+    </div>
+    <div data-v-688b3dc9=\\"\\" data-v-fc5f4157=\\"\\" class=\\"el-row isotope-images-container tour-isotope-images\\">
+      <div data-v-688b3dc9=\\"\\" class=\\"el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6\\">
+        <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">100.0000
+          <!--v-if--><br data-v-688b3dc9=\\"\\">
+          <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
+            <div class=\\"relative overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+              <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-leave-from el-loading-fade-leave-active\\" style=\\"\\">
+                <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
+                    <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
+                  </svg>
+                  <!---->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-v-688b3dc9=\\"\\" class=\\"el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6\\">
+        <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">101.0000
+          <!--v-if--><br data-v-688b3dc9=\\"\\">
+          <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
+            <div class=\\"relative overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+              <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-leave-from el-loading-fade-leave-active\\" style=\\"\\">
+                <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
+                    <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
+                  </svg>
+                  <!---->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- Comparison annotation metrics -->
+  <!--v-if-->
+  <!--v-if-->
+  <div data-v-69b5bd51=\\"\\" data-v-fc5f4157=\\"\\" class=\\"relative\\">
+    <div data-v-69b5bd51=\\"\\" class=\\"el-row relative w-full\\" id=\\"isotope-plot-container\\">
+      <div data-v-3f954605=\\"\\" data-v-69b5bd51=\\"\\" class=\\"peak-chart w-full\\">
+        <div data-v-3f954605=\\"\\" style=\\"height: 300px;\\"></div>
+        <div data-v-3f954605=\\"\\" class=\\"plot-legend\\"></div>
+      </div>
+    </div>
+  </div>
+</div>"
+`;
+
+exports[`Diagnostics > should match snapshot (with isobar) 1`] = `
+"<div data-v-fc5f4157=\\"\\">
+  <div data-v-fc5f4157=\\"\\" class=\\"el-alert el-alert--warning is-light isobar-alert\\" role=\\"alert\\">
+    <div class=\\"mock-el-icon el-alert__icon is-big\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+        <path fill=\\"currentColor\\" d=\\"M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896zm0 192a58.432 58.432 0 0 0-58.24 63.744l23.36 256.384a35.072 35.072 0 0 0 69.76 0l23.296-256.384A58.432 58.432 0 0 0 512 256zm0 512a51.2 51.2 0 1 0 0-102.4 51.2 51.2 0 0 0 0 102.4z\\"></path>
+      </svg></div>
+    <div class=\\"el-alert__content\\">
+      <!--v-if-->
+      <p class=\\"el-alert__description\\">Another ion was annotated that is isobaric to the selected annotation.
+        <!--v-if--> Select an isobaric annotation below to compare against.
+      </p>
+      <!--v-if-->
+    </div>
+  </div>
+  <div data-v-fc5f4157=\\"\\" class=\\"compare-container\\"> Compare selected annotation to: <div data-v-fc5f4157=\\"\\" class=\\"mock-el-select compare-select\\" placeholder=\\"None\\" clearable=\\"\\" modelvalue=\\"C8H9S2\\">
+      <div data-v-fc5f4157=\\"\\" class=\\"mock-el-option\\" label=\\"[M+0.0000]: [C8H10S2 - H]⁻\\" value=\\"C8H9S2\\">[M+0.0000]: [C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</div>
+    </div>
+  </div><!-- Reference annotation metrics -->
+  <div data-v-fc5f4157=\\"\\" class=\\"ref-annotation-header\\">
+    <div data-v-dd35c778=\\"\\" class=\\"flex\\"><span data-v-fc5f4157=\\"\\" class=\\"annotation-ion\\">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> - H]⁺</span></div>
+    <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" virtual-triggering=\\"\\" placement=\\"top\\" open-delay=\\"100\\" virtual-ref=\\"[object HTMLDivElement]\\">
+      <div data-v-dd35c778=\\"\\" class=\\"leading-5 py-2 px-3 font-normal content text-sm text-left\\">
+        <!--v-if-->
+        <p data-v-dd35c778=\\"\\" class=\\"title\\"> Candidate molecule </p>
+        <ul data-v-dd35c778=\\"\\" class=\\"p-0 list-none leading-7\\">
+          <li data-v-dd35c778=\\"\\">C.I. Food Red 6</li>
+          <!--v-if-->
+        </ul>
+        <!--v-if-->
+        <!--v-if-->
+      </div>
+    </div><span data-v-fc5f4157=\\"\\" style=\\"padding-left: 5px;\\">(Selected annotation)</span>
+  </div>
+  <div data-v-fc5f4157=\\"\\" class=\\"ref-annotation-container\\">
+    <div data-v-68800b4c=\\"\\" data-v-fc5f4157=\\"\\" class=\\"el-row\\" id=\\"scores-table\\">
+      <div data-v-68800b4c=\\"\\"></div>
+      <!---->
+    </div>
+    <div data-v-688b3dc9=\\"\\" data-v-fc5f4157=\\"\\" class=\\"el-row isotope-images-container tour-isotope-images\\">
+      <div data-v-688b3dc9=\\"\\" class=\\"el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6\\">
+        <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">100.0000 <div data-v-688b3dc9=\\"\\" class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\">This peak's detection window overlaps with the other annotation's 1st peak. </div><br data-v-688b3dc9=\\"\\">
+          <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
+            <div class=\\"relative overflow-hidden\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-v-688b3dc9=\\"\\" class=\\"el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6\\">
+        <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">101.0000
+          <!--v-if--><br data-v-688b3dc9=\\"\\">
+          <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
+            <div class=\\"relative overflow-hidden\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\">
+              <!---->
+              <!---->
+              <!---->
+              <!---->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- Comparison annotation metrics -->
+  <div data-v-fc5f4157=\\"\\" class=\\"comp-annotation-header\\">
+    <!--v-if--><span data-v-fc5f4157=\\"\\"><div data-v-dd35c778=\\"\\" class=\\"flex\\"><span data-v-fc5f4157=\\"\\" class=\\"annotation-ion\\">[C<sub>8</sub>H<sub>10</sub>S<sub>2</sub> - H]⁻</span>
+  </div>
+  <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" virtual-triggering=\\"\\" placement=\\"top\\" open-delay=\\"100\\" virtual-ref=\\"[object HTMLDivElement]\\">
+    <div data-v-dd35c778=\\"\\" class=\\"leading-5 py-2 px-3 font-normal content text-sm text-left\\">
+      <!--v-if-->
+      <p data-v-dd35c778=\\"\\" class=\\"title\\"> Candidate molecule </p>
+      <ul data-v-dd35c778=\\"\\" class=\\"p-0 list-none leading-7\\">
+        <li data-v-dd35c778=\\"\\">C.I. Food Red 6</li>
+        <!--v-if-->
+      </ul>
+      <!--v-if-->
+      <!--v-if-->
+    </div>
+  </div>
+  <!--v-if--></span>
+</div>
+<div data-v-fc5f4157=\\"\\" class=\\"comp-annotation-container\\">
+  <div data-v-68800b4c=\\"\\" data-v-fc5f4157=\\"\\" class=\\"el-row\\" id=\\"scores-table\\">
+    <div data-v-68800b4c=\\"\\"></div>
+    <!---->
+  </div>
+  <div data-v-688b3dc9=\\"\\" data-v-fc5f4157=\\"\\" class=\\"el-row isotope-images-container tour-isotope-images\\">
+    <div data-v-688b3dc9=\\"\\" class=\\"el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6\\">
+      <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">100.0000 <div data-v-688b3dc9=\\"\\" class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\">This peak's detection window overlaps with the other annotation's 1st peak. </div><br data-v-688b3dc9=\\"\\">
+        <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
+          <div class=\\"relative overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
+            <!---->
+            <!---->
+            <!---->
+            <!---->
+            <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-leave-from el-loading-fade-leave-active\\" style=\\"\\">
+              <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
+                  <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
+                </svg>
+                <!---->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div data-v-688b3dc9=\\"\\" class=\\"el-col el-col-24 el-col-xs-24 el-col-sm-12 el-col-md-12 el-col-lg-6\\">
+      <div data-v-688b3dc9=\\"\\" class=\\"small-peak-image\\">101.0000
+        <!--v-if--><br data-v-688b3dc9=\\"\\">
+        <div data-v-688b3dc9=\\"\\" image-fit-params=\\"[object Object]\\" style=\\"overflow: hidden;\\" show-pixel-intensity=\\"\\">
+          <div class=\\"relative overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; overflow: hidden;\\" image-fit-params=\\"[object Object]\\" loading-number=\\"1\\">
+            <!---->
+            <!---->
+            <!---->
+            <!---->
+            <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-leave-from el-loading-fade-leave-active\\" style=\\"\\">
+              <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
+                  <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
+                </svg>
+                <!---->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div data-v-69b5bd51=\\"\\" data-v-fc5f4157=\\"\\" class=\\"relative\\">
+  <div data-v-69b5bd51=\\"\\" class=\\"el-row relative w-full\\" id=\\"isotope-plot-container\\">
+    <div data-v-3f954605=\\"\\" data-v-69b5bd51=\\"\\" class=\\"peak-chart w-full\\">
+      <div data-v-3f954605=\\"\\" style=\\"height: 300px;\\"></div>
+      <div data-v-3f954605=\\"\\" class=\\"plot-legend\\"></div>
+    </div>
+  </div>
+</div>
+</div>"
+`;

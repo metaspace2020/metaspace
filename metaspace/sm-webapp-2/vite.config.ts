@@ -42,8 +42,13 @@ export default defineConfig({
     }),
     Components({
       resolvers: [ElementPlusResolver()],
-    })
+    }),
   ],
+  css: {
+    preprocessorOptions: {
+      scss: { additionalData: `@import '@/modules/App/element-plus.scss';` },
+    }
+  },
   resolve: {
     alias: { // @ts-ignore
       '@': fileURLToPath(new URL('./src', import.meta.url)),

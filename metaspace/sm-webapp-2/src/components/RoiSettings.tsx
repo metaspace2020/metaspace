@@ -58,12 +58,12 @@ const channels: any = {
 
 const CHUNK_SIZE = 1000
 
-export default defineComponent<RoiSettingsProps>({
+export default defineComponent({
   name: 'RoiSettings',
   props: {
     annotation: { type: Object, default: () => {} },
   },
-  setup(props) {
+  setup(props: RoiSettingsProps | any) {
     const store = useStore();
     const { mutate } = useMutation(addRoiMutation)
     const updateRois = mutate as unknown as (variables: any) => void
@@ -383,7 +383,6 @@ export default defineComponent<RoiSettingsProps>({
           <ElPopover
             trigger="hover"
             placement="bottom"
-            slot="reference"
             disabled={isVisible}
             v-slots={{
               reference: renderRoiIcon,
@@ -457,7 +456,7 @@ export default defineComponent<RoiSettingsProps>({
                       && <ElInput
                         class='roi-label'
                         size='small'
-                        value={roi.name}
+                        modelValue={roi.name}
                         onChange={() => toggleEdit(roiIndex)}
                         onInput={(value: any) => { handleNameEdit(value, roiIndex) }}/>
                     }
@@ -481,7 +480,7 @@ export default defineComponent<RoiSettingsProps>({
                   <div class='roi-channels'>
                     <ChannelSelector
                       class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
-                      value={roi.channel}
+                      value={roi.channel} // @ts-ignore
                       onRemove={() => removeRoi(roiIndex)}
                       onInput={(value: any) => changeRoi(value, roiIndex)}
                     />
