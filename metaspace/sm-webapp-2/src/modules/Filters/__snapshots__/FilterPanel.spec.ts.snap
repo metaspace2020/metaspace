@@ -248,17 +248,25 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-select\\" placeholder=\\"Select ionising adduct\\" filterable=\\"\\" clearable=\\"\\" remote=\\"\\"></div>
+      <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-select\\" teleported=\\"false\\" placeholder=\\"Select ionising adduct\\" filterable=\\"\\" clearable=\\"\\" remote=\\"\\">
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"[M + H]⁺\\" value=\\"+H\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"[M + Na]⁺\\" value=\\"+Na\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"[M + K]⁺\\" value=\\"+K\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"[M]⁺\\" value=\\"[M]+\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"[M - H]⁻\\" value=\\"-H\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"[M + Cl]⁻\\" value=\\"+Cl\\"></div>
+        <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"[M]⁻\\" value=\\"[M]-\\"></div>
+      </div>
       <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-select\\" remote-method=\\"(query) => {
       chemModQuery.value = query;
-    }\\" loading=\\"true\\" placeholder=\\"Select chemical modification\\" filterable=\\"\\" clearable=\\"\\" remote=\\"\\">
+    }\\" loading=\\"false\\" placeholder=\\"Select chemical modification\\" filterable=\\"\\" clearable=\\"\\" remote=\\"\\">
         <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"No chemical modification\\" value=\\"none\\"></div>
         <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
         <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
       <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-select\\" remote-method=\\"(query) => {
       neutralLossQuery.value = query;
-    }\\" loading=\\"true\\" placeholder=\\"Select neutral loss\\" filterable=\\"\\" clearable=\\"\\" remote=\\"\\">
+    }\\" loading=\\"false\\" placeholder=\\"Select neutral loss\\" filterable=\\"\\" clearable=\\"\\" remote=\\"\\">
         <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"No neutral loss\\" value=\\"none\\"></div>
         <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
         <div data-v-4ce4a68f=\\"\\" class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>

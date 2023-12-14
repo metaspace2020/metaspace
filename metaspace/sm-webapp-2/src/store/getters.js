@@ -39,7 +39,7 @@ export default {
       termId: filter.term ? parseInt(filter.term, 10) : undefined,
       chemMod: noneToEmptyString(filter.chemMod),
       neutralLoss: noneToEmptyString(filter.neutralLoss),
-      adduct: filter.adduct,
+      adduct: filter.adduct === '' ? undefined : filter.adduct,
       annotationId: filter.annotationIds ? filter.annotationIds.join('|') : undefined,
       fdrLevel: filter.fdrLevel,
       pValue: filter.pValue,

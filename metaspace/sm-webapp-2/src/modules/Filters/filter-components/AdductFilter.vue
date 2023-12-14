@@ -6,7 +6,8 @@
   >
     <template v-slot:edit>
       <el-select
-        :value="filterValues.adduct"
+        :teleported="false"
+        :model-value="filterValues.adduct"
         placeholder="Select ionising adduct"
         filterable
         clearable
@@ -22,9 +23,9 @@
       </el-select>
       <el-select
         v-if="showChemMods"
-        :value="filterValues.chemMod"
+        :model-value="filterValues.chemMod"
         :remote-method="updateChemModQuery"
-        :loading="chemModOptionsLoading !== 0"
+        :loading="chemModOptionsLoading"
         placeholder="Select chemical modification"
         filterable
         clearable
@@ -41,9 +42,9 @@
       </el-select>
       <el-select
         v-if="showNeutralLosses"
-        :value="filterValues.neutralLoss"
+        :model-value="filterValues.neutralLoss"
         :remote-method="updateNeutralLossQuery"
-        :loading="neutralLossOptionsLoading !== 0"
+        :loading="neutralLossOptionsLoading"
         placeholder="Select neutral loss"
         filterable
         clearable
@@ -170,18 +171,18 @@ export default defineComponent({
     };
 
     // Method to update the neutralLoss query
-    const showChemMods = () => {
+    const showChemMods = computed(() => {
       return config.features.chem_mods || props.filterValues?.chemMod != null
-    };
+    })
 
-    const showNeutralLosses = () => {
+    const showNeutralLosses = computed(() => {
       return config.features.neutral_losses || props.filterValues?.neutralLoss != null
-    }
+    })
 
-    const adductOptions = () =>  {
-      return this.filterLists.adducts
+    const adductOptions = computed(() =>  {
+      return filterLists.value.adducts
         .filter((a: AdductSuggestion) => config.features.all_adducts || !a.hidden)
-    }
+    })
 
 
     // Method to handle changes in filter options

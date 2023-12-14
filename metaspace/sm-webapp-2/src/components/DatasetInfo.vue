@@ -59,7 +59,6 @@ export default defineComponent({
     }
 
     const objToTreeNode = (label, obj, schema) => {
-      console.log('schema',schema)
       const children = []
       let isLeaf = true
       for (const key in schema.properties) {
@@ -107,8 +106,6 @@ export default defineComponent({
         || store.getters.filter.metadataType
         || defaultMetadataType;
 
-      console.log('metadataType', metadataType)
-      console.log('metadataSchemas', metadataSchemas)
       return metadataSchemas[metadataType];
     });
 
@@ -118,8 +115,6 @@ export default defineComponent({
         image_generation: imageGeneration,
       } = (props.additionalSettings || {})
 
-      console.log('meta', metadata)
-      console.log(' schema.value',  schema.value)
       delete metadata.Additional_Information
       const schemaBasedVals = objToTreeNode(null, metadata, schema.value)
       // The current user may be allowed by the API to see the submitter & PI's email address due to being members
