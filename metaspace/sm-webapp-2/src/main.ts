@@ -21,7 +21,8 @@ import { setErrorNotifier } from './lib/reportError'
 import { migrateLocalStorage } from './lib/localStorage'
 
 
-// import 'element-plus/dist/index.css'
+import 'element-plus/dist/index.css'
+// import 'element-plus/es/components/notification/style/css';
 // import './assets/main.css'
 import './modules/App/tailwind.scss'
 // import './modules/App/tailwind.scss'

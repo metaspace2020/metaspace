@@ -1,8 +1,10 @@
 import { defineComponent, computed } from 'vue';
-import {ElLoading, ElPopover, ElRow} from 'element-plus';
+import { ElPopover, ElRow} from 'element-plus';
 import { sortBy } from 'lodash-es';
 import safeJsonParse from '../../../../lib/safeJsonParse';
 import config from '../../../../lib/config';
+import {ElIcon} from "element-plus";
+import {Loading} from "@element-plus/icons-vue";
 
 const interleave = <T extends any>(arr: T[], separator: T): T[] =>
   arr.flatMap(item => [separator, item]).slice(1)
@@ -19,11 +21,8 @@ const formatOffSampleProb = (offSampleProb: number) => {
 
 export default defineComponent({
   name: 'DiagnosticsMetrics',
-  components: { ElLoading, ElPopover, ElRow },
+  components: { ElPopover, ElRow },
   props: ['loading', 'annotation'],
-  directives: {
-    'loading': ElLoading.directive,
-  },
   setup(props) {
     const metrics = computed(() => {
       const order = ['spatial', 'spectral', 'chaos', 'mz_err_abs', 'mz_err_rel'];
@@ -54,14 +53,18 @@ export default defineComponent({
 
     return () => {
       const {loading, annotation} = props
-
       let metricsFormula
       if (loading) {
-        metricsFormula = <div v-loading="1" class="msm-score-calc h-4" />
-      }else if (metrics.value != null) {
+        metricsFormula = (<div class="msm-score-calc h-4">
+                          <ElIcon
+                            class="is-loading el-icon-loading">
+                            <Loading/>
+                          </ElIcon>
+                          </div>)
+      } else if (metrics.value != null) {
         const isV1 = scoringModel.value == null
         const metricItems = [
-          { name: ['ρ', <sub>spatial</sub>], formattedVal: metrics.value.spatial.toFixed(3) },
+          {name: ['ρ', <sub>spatial</sub>], formattedVal: metrics.value.spatial.toFixed(3) },
           { name: ['ρ', <sub>spectral</sub>], formattedVal: metrics.value.spectral.toFixed(3) },
           { name: ['ρ', <sub>chaos</sub>], formattedVal: metrics.value.chaos.toFixed(3) },
         ]

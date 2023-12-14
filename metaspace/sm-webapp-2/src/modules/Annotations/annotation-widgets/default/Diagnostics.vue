@@ -159,25 +159,25 @@ export default defineComponent({
     const comparisonLoading = ref(0);
     const comparisonIonFormula = ref(null);
     const isobarAnnotationsIonFormula = ref(null);
-
+    const currentAnnotation = computed(() => props.annotation)
     const peakChartData = computed(() => {
       return diagnosticsData.value != null ? safeJsonParse(diagnosticsData.value.peakChartData) : null
     })
 
 
     const hasIsobars = computed(() => {
-      return config.features.isobars && props.annotation.isobars.length !== 0
+      return config.features.isobars && currentAnnotation.value.isobars.length !== 0
     })
 
 
     const { result: isobarAnnotationsResult } =
       useQuery(isobarsQuery, () => {
-        isobarAnnotationsIonFormula.value = props.annotation.ionFormula
+        isobarAnnotationsIonFormula.value = currentAnnotation.value.ionFormula
         return {
-          datasetId: props.annotation.dataset.id,
+          datasetId: currentAnnotation.value.dataset.id,
           filter: {
-            isobaricWith: props.annotation.ionFormula,
-            databaseId: props.annotation.databaseDetails.id,
+            isobaricWith: currentAnnotation.value.ionFormula,
+            databaseId: currentAnnotation.value.databaseDetails.id,
           },
         }
       }, {
@@ -187,23 +187,23 @@ export default defineComponent({
     const isobarAnnotations = computed(() => isobarAnnotationsResult.value?.allAnnotations)
 
     const annotationGroups = computed(() : AnnotationGroup[]  => {
-      const allAnnotations = [props.annotation, ...(loading.value ? [] : (isobarAnnotations.value || []))]
-      const isobarsByIonFormula = groupBy(props.annotation.isobars, 'ionFormula')
-      const isobarsKeys = [props.annotation.ionFormula, ...Object.keys(isobarsByIonFormula)]
+      const allAnnotations = [currentAnnotation.value, ...(loading.value ? [] : (isobarAnnotations.value || []))]
+      const isobarsByIonFormula = groupBy(currentAnnotation.value.isobars, 'ionFormula')
+      const isobarsKeys = [currentAnnotation.value.ionFormula, ...Object.keys(isobarsByIonFormula)]
       const annotationsByIonFormula = groupBy(allAnnotations, 'ionFormula')
       const annotationsKeys = Object.keys(annotationsByIonFormula)
       // isobarsByIonFormula and annotationsByIonFormula should line up, but do an inner join just to be safe
       const ionFormulas = intersection(isobarsKeys, annotationsKeys)
       const missingIonFormulas = xor(isobarsKeys, annotationsKeys)
       if (!loading.value
-        && isobarAnnotationsIonFormula.value === props.annotation.ionFormula
+        && isobarAnnotationsIonFormula.value === currentAnnotation.value.ionFormula
         && missingIonFormulas.length > 0) {
         reportError(
           new Error('Inconsistent annotations between Annotation.isobars and isobaricWith query results.'),
           null,
           {
-            annotationId: props.annotation.id,
-            ion: props.annotation.ion,
+            annotationId: currentAnnotation.value.id,
+            ion: currentAnnotation.value.ion,
             isobarsFromPropsAnnotation: isobarsKeys.join(','),
             isobarsFromQuery: annotationsKeys.join(','),
           })
@@ -211,10 +211,10 @@ export default defineComponent({
 
 
       const groups = ionFormulas.map(ionFormula => {
-        const isReference = ionFormula === props.annotation.ionFormula
+        const isReference = ionFormula === currentAnnotation.value.ionFormula
         const isobars = isobarsByIonFormula[ionFormula]
         const annotations = annotationsByIonFormula[ionFormula]
-        const massShiftText = isReference ? '' : renderMassShift(props.annotation.mz, annotations[0].mz) + ': '
+        const massShiftText = isReference ? '' : renderMassShift(currentAnnotation.value.mz, annotations[0].mz) + ': '
         const isomersText = annotations.length < 2 ? '' : ' (isomers)'
         return {
           ionFormula,
@@ -242,10 +242,10 @@ export default defineComponent({
     })
 
     const { result: diagnosticsDataResult, loading } = useQuery(diagnosticsDataQuery,
-      () => ({ id: props.annotation.id }),
+      () => ({ id: currentAnnotation.value.id }),
       {
         fetchPolicy: 'cache-first',
-        enabled: props.annotation?.id !== undefined
+        enabled: currentAnnotation.value?.id !== undefined
       })
     const diagnosticsData = computed(() => diagnosticsDataResult.value?.annotation)
     const { result: comparisonDiagnosticsDataResult } =
@@ -265,7 +265,7 @@ export default defineComponent({
     })
 
     const hasWarnIsobar = computed(() => {
-      return props.annotation.isobars.some((isobar: any) => isobar.shouldWarn)
+      return currentAnnotation.value.isobars.some((isobar: any) => isobar.shouldWarn)
     })
 
 
@@ -293,7 +293,7 @@ export default defineComponent({
       diagnosticsData,
       comparisonDiagnosticsData,
       isobarAnnotations,
-      loading: loading.value,
+      loading,
       comparisonLoading,
       isobarAnnotationsIonFormula,
       hasIsobars,
