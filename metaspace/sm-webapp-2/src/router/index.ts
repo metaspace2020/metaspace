@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { Component } from 'vue'
 import NotFound from '../modules/App/NotFoundPage.vue'
+import AboutPage from '../modules/App/AboutPage'
 
 const asyncPagesFreelyTyped = {
   HomePage: () => import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../views/View'),
@@ -13,7 +14,8 @@ const router = createRouter({
   // @ts-ignore
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', component: asyncPages.HomePage, meta: { footer: true, headerClass: 'bg-primary' } },
+    { path: '/', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
+    { path: '/about', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
     {
       path: '/:pathMatch(.*)*',
       component: NotFound,
