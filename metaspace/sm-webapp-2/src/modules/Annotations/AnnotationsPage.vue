@@ -39,6 +39,35 @@
           :annotation="selectedAnnotation"
           :normalization="selectedNormalizationMatrix"
         />
+        <div
+          v-if="selectedAnnotation && selectedAnnotation.status === 'reprocessed_snapshot'"
+        >
+          <el-alert
+            title="This share link is no longer valid as the dataset has been reprocessed since
+            the link was created."
+            type="warning"
+            effect="dark"
+            :closable="false"
+            :show-icon="true"
+          >
+            <ul
+              v-if="selectedAnnotation && selectedAnnotation.annotationIons"
+              id="ions"
+              class="mt-0 ml-0 pl-2"
+            >
+              <p class="mb-1 font-bold text-xs">
+                This link was supposed to show the following annotation(s):
+              </p>
+              <li
+                v-for="item in selectedAnnotation.annotationIons"
+                :key="item.ion"
+                class="ml-4"
+              >
+                {{ item.ion }} - {{ item.database }}
+              </li>
+            </ul>
+          </el-alert>
+        </div>
 
         <el-col
           class="av-centered no-selection"
@@ -66,7 +95,7 @@ import { FilterPanel } from '../Filters/index';
 import config from '../../lib/config';
 import { useRestoredState } from '../ImageViewer';
 import isSnapshot from '../../lib/isSnapshot';
-import {ElIcon} from "element-plus";
+import {ElIcon, ElAlert} from "element-plus";
 import {Loading} from "@element-plus/icons-vue";
 import {DefaultApolloClient} from "@vue/apollo-composable";
 
@@ -77,7 +106,8 @@ export default defineComponent({
     AnnotationView,
     FilterPanel,
     Loading,
-    ElIcon
+    ElIcon,
+    ElAlert,
   },
   setup() {
     const apolloClient = inject(DefaultApolloClient);
