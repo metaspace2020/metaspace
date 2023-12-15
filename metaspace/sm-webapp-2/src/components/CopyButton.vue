@@ -37,6 +37,7 @@
 <script lang="ts">
 import {defineAsyncComponent, defineComponent, ref} from 'vue';
 import copyToClipboard from '../lib/copyToClipboard';
+import {ElIcon} from "element-plus";
 import {CopyDocument} from "@element-plus/icons-vue";
 
 const CopyIdIcon = defineAsyncComponent(() =>
@@ -47,7 +48,8 @@ const CopyIdIcon = defineAsyncComponent(() =>
 export default defineComponent({
   components: {
     CopyIdIcon,
-    CopyDocument
+    CopyDocument,
+    ElIcon,
   },
   props: {
     text: { type: String, required: true },

@@ -1,0 +1,7 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`NewFeaturePopup > should match snapshot (in view) 1`] = `
+"<div><span><span>Test anchor</span></span>
+  <!--v-if-->
+</div>"
+`;

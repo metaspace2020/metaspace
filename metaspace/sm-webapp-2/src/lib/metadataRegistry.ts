@@ -16,7 +16,8 @@ async function loadMetadataSchemas() {
       }
       metadataSchemas[mdType] = await response.json();
     } catch (error) {
-      console.error(`Error loading metadata schema for ${mdType}:`, error);
+      // pass
+      // console.error(`Error loading metadata schema for ${mdType}:`, error);
     }
   }
 }

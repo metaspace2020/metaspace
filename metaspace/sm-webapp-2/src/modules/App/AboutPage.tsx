@@ -85,7 +85,7 @@ const AboutPage = defineComponent({
 
     return () => {
       return (
-        <div class='sm-about-page text-base leading-6'>
+        <div class='sm-about-page text-base leading-6 pt-0'>
           <div class="bg-primary overflow-hidden w-full">
             <div class="box-border font-display pt-0 pb-10 mx-auto md:max-w-4xl max-w-sm flex items-center">
               <img

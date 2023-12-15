@@ -8,6 +8,7 @@
     "Lachlan Stuart <lachlan.stuart@embl.de>",
     "Lucas Maciel <lucas.maciel@embl.de>",
     "Renat Nigmetzianov <renat.nigmetzianov@embl.de>",
+    "Sergii Mamedov <sergii.mamedov@embl.de>",
     "Theodore Alexandrov <theodore.alexandrov@embl.de>",
     "Vitaly Kovalev <vitaly.kovalev@embl.de>"
   ],
@@ -50,6 +51,7 @@
     "focus-visible": "^5.2.0",
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
+    "js-cookie": "^3.0.5",
     "lodash-es": "^4.17.21",
     "moment": "^2.29.4",
     "numpy-parser": "^1.2.3",

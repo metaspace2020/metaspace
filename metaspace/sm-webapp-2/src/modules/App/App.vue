@@ -19,7 +19,12 @@
     <metaspace-footer v-if="route.meta.footer" />
 
     <dialog-controller />
+    <!--<release-notes-dialog />-->
 
+    <new-feature-popups />
+
+
+    <cookie-banner />
   </div>
 </template>
 
@@ -29,6 +34,8 @@ import config from '../../lib/config'
 import { useStore } from 'vuex';
 import {useRoute} from 'vue-router';
 import { watch } from 'vue';
+import CookieBanner from './CookieBanner'
+import NewFeaturePopups from './NewFeaturePopups.vue'
 
 
 import MetaspaceHeader from './MetaspaceHeader'
@@ -42,7 +49,9 @@ export default {
   components: {
     MetaspaceHeader,
     MetaspaceFooter,
-    DialogController
+    DialogController,
+    CookieBanner,
+    NewFeaturePopups,
   },
   data() {
     return {
