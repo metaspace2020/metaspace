@@ -8,6 +8,7 @@ const asyncPagesFreelyTyped = {
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   HelpPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/HelpPage.vue'),
+  PrivacyPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/PrivacyPage.vue'),
 
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, Component>
@@ -21,11 +22,22 @@ const router = createRouter({
     { path: '/about', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
     { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
     { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
+
+    { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
+
+
     {
       path: '/:pathMatch(.*)*',
       component: NotFound,
     },
   ],
+  scrollBehavior(to, from, savedPosition) {
+    // return desired position
+    if (savedPosition) {
+      return savedPosition;
+    }
+    return { top: 0 };
+  },
 })
 
 export default router
