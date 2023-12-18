@@ -35,7 +35,6 @@ export function setupGlobalStubs() {
     name: 'ElIconMock',
     template: '<div class="mock-el-icon"><slot></slot></div>',
   };
-
   const ElPopoverMock = {
     name: 'ElPopoverMock',
     template: '<div class="mock-el-popover"><slot></slot></div>',
@@ -43,6 +42,10 @@ export function setupGlobalStubs() {
   const ElTooltipMock = {
     name: 'ElTooltipMock',
     template: '<div class="mock-el-tooltip"><slot></slot></div>',
+  };
+  const ElDropdownMock = {
+    name: 'ElDropdownMock',
+    template: '<div class="mock-el-dropdown"><slot></slot></div>',
   };
 
   const RouterLinkMock = {
@@ -52,6 +55,7 @@ export function setupGlobalStubs() {
 
   config.global.stubs = {
     'el-option': ElOptionMock,
+    'el-dropdown': ElDropdownMock,
     'el-select': ElSelectMock,
     'el-option-group': ElOptionGroupMock,
     'el-icon': ElIconMock,
@@ -106,6 +110,8 @@ beforeAll(() => {
   // Setup before all tests run, e.g., initializing Apollo Client
   // setupGlobalPlugins()
   setupGlobalStubs()
+  // @ts-ignore
+  global.window.scrollTo = vi.fn();
 });
 
 

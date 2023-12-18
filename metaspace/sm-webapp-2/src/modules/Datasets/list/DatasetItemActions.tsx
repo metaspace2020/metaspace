@@ -187,7 +187,7 @@ export default defineComponent({
             class='dataset-item-dialog'
             title="Provided metadata"
             lock-scroll={false}
-            visible={state.showMetadataDialog}
+            v-model={state.showMetadataDialog}
             onClose={closeMetadataDialog}
           >
             <DatasetInfo
@@ -208,11 +208,13 @@ export default defineComponent({
           </el-dialog>
 
           {state.showDownloadDialog
-            && <DownloadDialog
+            &&
+            <DownloadDialog
               datasetId={dataset.id}
               datasetName={dataset.name}
               onClose={closeDownloadDialog}
-            />}
+            />
+          }
 
           {dataset.status === 'FINISHED'
             && <div class='flex items-center'>
@@ -263,24 +265,28 @@ export default defineComponent({
 
           {
             !props.showOverview && dataset.canDownload
-            && <div class="ds-download items-center">
+            &&
+            <div class="ds-download items-center">
               <el-icon><Download/></el-icon>
               <a
                 href="#"
                 onClick={openDownloadDialog}
               >Download</a>
-            </div>}
+            </div>
+          }
 
           {
             !props.showOverview && dataset.canDelete
-            && <div class="ds-delete items-center">
+            &&
+            <div class="ds-delete items-center">
               <el-icon><Delete/></el-icon>
               <a
                 href="#"
                 class="text-danger"
                 onClick={openDeleteDialog}
               >Delete dataset</a>
-            </div>}
+            </div>
+          }
 
           {
             !props.showOverview

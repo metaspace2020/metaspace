@@ -49,7 +49,6 @@ export default defineComponent({
   props: ['dataset', 'currentUser', 'idx', 'hideGroupMenu'],
   setup(props) {
     const deferRender = ref(props.idx >= 20);
-
     const isOpticalImageSupported = computed(() => {
       return mdTypeSupportsOpticalImages(get(props.metadata, 'Data_Type') || defaultMetadataType);
     });

@@ -9,7 +9,7 @@ import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 import CopyButton from '../../../components/CopyButton.vue'
 import {useStore} from "vuex";
 import {useRouter} from "vue-router";
-import { ElDropdown, ElDropdownMenu} from "element-plus";
+import { ElDropdown, ElDropdownMenu, ElDropdownItem} from "element-plus";
 
 
 type FilterField = keyof DatasetDetailItem | 'analyzerType';
@@ -19,6 +19,7 @@ const DatasetItemMetadata = defineComponent({
   components: {
     ElDropdown,
     ElDropdownMenu,
+    ElDropdownItem,
   },
   props: {
     dataset: { type: Object as () => DatasetDetailItem, required: true },
@@ -79,6 +80,7 @@ const DatasetItemMetadata = defineComponent({
         </span>
       )
 
+
       return (
         <div class="ds-info">
           <div class="ds-item-line flex">
@@ -119,28 +121,32 @@ const DatasetItemMetadata = defineComponent({
             {filterableItem('submitter', 'submitter', dataset.submitter?.name)}
             {dataset.group && <span>
               {', '}
-              <el-dropdown
-                show-timeout={50}
+              <ElDropdown
+                showTimeout={50}
                 placement="bottom"
-                trigger={hideGroupMenu ? 'never' : 'hover'}
+                disabled={hideGroupMenu}
+                trigger={'hover'}
                 onCommand={handleDropdownCommand}
-              >
-                <span
-                  class="text-base text-primary cursor-pointer"
-                  onClick={() => addFilter('group')}
-                >
-                  {dataset.group.shortName}
-                </span>
-                <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="filter_group">Filter by this group</el-dropdown-item>
-                  <el-dropdown-item command="view_group">View group</el-dropdown-item>
-                </el-dropdown-menu>
-              </el-dropdown>
+                v-slots={{
+                  dropdown: () => (
+                    <ElDropdownMenu>
+                      <ElDropdownItem command="filter_group">Filter by this group</ElDropdownItem>
+                      <ElDropdownItem command="view_group">View group</ElDropdownItem>
+                    </ElDropdownMenu>),
+                  default: () => (
+                    <span
+                      class="text-base text-primary cursor-pointer"
+                      onClick={() => addFilter('group')}
+                    >
+                  {dataset.group?.shortName}
+                </span>)
+                }}
+              />
             </span>}
           </div>
           {dataset.status === 'FINISHED' && dataset.fdrCounts && <div class="ds-item-line">
             <span>
-              <FilterLink filter={{ database: dataset.fdrCounts.databaseId, datasetIds: [dataset.id] }}>
+              <FilterLink filter={{database: dataset.fdrCounts.databaseId, datasetIds: [dataset.id]}}>
                 {plural(dataset.fdrCounts.counts.join(', '), 'annotation', 'annotations')}
               </FilterLink>
               {' @ FDR '}

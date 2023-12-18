@@ -22,8 +22,10 @@ import { migrateLocalStorage } from './lib/localStorage'
 
 
 // import 'element-plus/dist/index.css'
+import 'element-plus/es/components/dropdown/style/css';
 import 'element-plus/es/components/notification/style/css';
 import 'element-plus/es/components/message-box/style/css';
+import 'element-plus/es/components/dialog/style/css';
 // import './assets/main.css'
 import './modules/App/tailwind.scss'
 // import './modules/App/tailwind.scss'
@@ -47,6 +49,7 @@ const app = createApp({
 
   render: () => h(App),
 })
+app.provide(DefaultApolloClient, apolloClient);
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)

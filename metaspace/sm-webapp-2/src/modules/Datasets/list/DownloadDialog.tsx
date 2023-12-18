@@ -153,9 +153,7 @@ export default defineComponent({
           model-value={true}
           lockScroll={false}
           onClose={() => emit('close')}
-          title={`Download ${props.datasetName}`}
-          customClass="el-dialog-lean max-w-xl"
-        >
+          title={`Download ${props.datasetName}`}>
           {content.children}
         </ElDialog>
       )

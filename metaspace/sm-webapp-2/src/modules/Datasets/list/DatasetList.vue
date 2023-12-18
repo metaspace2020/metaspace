@@ -41,7 +41,10 @@ export default defineComponent({
   setup(props) {
     const { result: currentUser } = useQuery(currentUserRoleQuery, null, { fetchPolicy: 'cache-first' });
 
-    const isDoubleColumn = ref(props.allowDoubleColumn && matchMedia('(min-width: 1650px)').matches);
+    // window.matchMedia is present on all our supported browsers, but not available in jsdom for tests
+    const widthQuery = window.matchMedia ? window.matchMedia('(min-width: 1650px)') : null
+
+    const isDoubleColumn = ref(props.allowDoubleColumn && widthQuery != null && widthQuery.matches);
 
     const computeDoubleColumn = () => {
       isDoubleColumn.value = props.allowDoubleColumn && matchMedia('(min-width: 1650px)').matches;
@@ -50,11 +53,15 @@ export default defineComponent({
     watch(() => props.allowDoubleColumn, computeDoubleColumn);
 
     onMounted(() => {
-      window.addEventListener('resize', computeDoubleColumn);
+      if(widthQuery != null) {
+        widthQuery.addListener(computeDoubleColumn);
+      }
     });
 
     onBeforeUnmount(() => {
-      window.removeEventListener('resize', computeDoubleColumn);
+      if(widthQuery != null) {
+        widthQuery.removeListener(computeDoubleColumn);
+      }
     });
 
     return { currentUser, isDoubleColumn };
