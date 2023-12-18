@@ -2,7 +2,7 @@ import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch
 import { useStore } from 'vuex';
 import { useMutation, useQuery } from '@vue/apollo-composable';
 import {ElButton, ElInput, ElPopover, ElTooltip} from "element-plus";
-import FileSaver from 'file-saver';
+import * as FileSaver from 'file-saver'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue';
 import './RoiSettings.scss';
 import { annotationListQuery } from '../api/annotation'

@@ -1,0 +1,9 @@
+.sort-dp-container{
+    min-width: 200px;
+
+    .btn-internal{
+        border: 1px solid #BCCCDB !important;
+        background: #F4F7FA !important;
+        border-left: 0 !important;
+    }
+}

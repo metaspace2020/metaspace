@@ -6,6 +6,6 @@ export interface SingleSelectFilterType {
 }
 
 export const datasetOwnerOptions : SingleSelectFilterType[] = [
-  { value: null, label: 'All datasets' },
+  { value: "", label: 'All datasets' },
   { value: 'my-datasets', label: 'My datasets' },
 ]

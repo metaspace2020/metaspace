@@ -1,0 +1,20 @@
+.featured-action{
+  .el-badge__content.is-fixed{
+    top: 7px;
+    right: 8px;
+  }
+}
+
+.custom-text{
+  @apply p-0 m-0;
+
+    .ProseMirror{
+      padding: 0 !important;
+    }
+}
+
+.dataset-item-dialog{
+  .el-tree-node__content{
+    @apply h-full;
+  }
+}

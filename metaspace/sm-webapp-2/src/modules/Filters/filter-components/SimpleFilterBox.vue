@@ -1,6 +1,7 @@
 <template>
   <el-select
     class="filter-select"
+    size="large"
     :model-value="value"
     @change="onChange"
   >
