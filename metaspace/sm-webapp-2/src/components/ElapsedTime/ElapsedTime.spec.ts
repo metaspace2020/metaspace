@@ -21,7 +21,7 @@ describe('ElapsedTime', () => {
     const wrapper = mount(TestElapsedTime, { props: { date: '2020-01-02T00:00:00.000Z' } });
     await nextTick()
     expect(wrapper.text()).toEqual('1 day ago');
-    expect(wrapper.attributes().title).toEqual('1/2/2020, 24:00');
+    expect(wrapper.attributes().title).toEqual('1/2/2020, 01:00');
 
     spy.mockRestore();
   });
