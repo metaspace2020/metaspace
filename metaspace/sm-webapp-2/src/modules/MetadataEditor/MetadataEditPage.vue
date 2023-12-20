@@ -87,7 +87,7 @@ export default defineComponent({
     const { result: currentUserResult } = useQuery(currentUserRoleQuery, null,{
       fetchPolicy: 'cache-first'
     })
-    const currentUser = computed(() => currentUserResult.value.currentUser)
+    const currentUser = computed(() => currentUserResult.value?.currentUser)
 
     const { result: datasetStatusResult } = useQuery(getDatasetStatusQuery, () => ({ id: datasetId.value }),{
       fetchPolicy: 'cache-first'

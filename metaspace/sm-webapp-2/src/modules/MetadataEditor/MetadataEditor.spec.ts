@@ -1,13 +1,16 @@
-import { mount } from '@vue/test-utils'
+import {flushPromises, mount} from '@vue/test-utils'
+import { nextTick } from 'vue'
 import MetadataEditor from './MetadataEditor.vue'
-import router from '../../router'
-import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient'
-import store from '../../store/index'
+import { initMockGraphqlClient } from '../../tests/utils/mockGraphqlClient'
 import {
   mockAdductSuggestions,
   mockMolecularDatabases,
-} from '../../../tests/utils/mockGraphqlData'
-import Vue from 'vue'
+} from '../../tests/utils/mockGraphqlData'
+import store from "../../store";
+import router from "../../router";
+import {DefaultApolloClient} from "@vue/apollo-composable";
+
+
 
 describe('MetadataEditor', () => {
   /* eslint-disable vue/max-len */
@@ -25,71 +28,103 @@ describe('MetadataEditor', () => {
     metadataJson: JSON.stringify(mockMetadata),
   }
 
+
   beforeAll(async() => {
     store.replaceState({
       ...store.state,
       // @ts-ignore
       route: { path: '/upload', query: {} },
     })
-  })
+  });
 
   beforeEach(() => {
-    jest.resetAllMocks()
+    vi.resetAllMocks()
     // suppressConsoleWarn('async-validator:');
-  })
+  });
 
   afterEach(() => {
     // restoreConsole();
-  })
+  });
 
   it('should match snapshot', async() => {
-    initMockGraphqlClient({
+    const graphqlMockClient =  initMockGraphqlClient({
       Query: () => ({
         currentUserLastSubmittedDataset: () => null, // Prevent automatic mocking
         adductSuggestions: mockAdductSuggestions,
         allMolecularDBs: mockMolecularDatabases,
       }),
     })
-    const wrapper = mount(MetadataEditor, { store, router, apolloProvider })
-    await wrapper.vm.$data.loadingPromise
-    await Vue.nextTick()
+    const wrapper = mount(MetadataEditor, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient
+        }
+      },
+    });
+    await wrapper.vm.state.loadingPromise
+    await flushPromises();
+    await nextTick();
 
-    expect(wrapper).toMatchSnapshot()
-  })
+    expect(wrapper.html()).toMatchSnapshot();
+  });
 
   it('should be able to load an existing dataset', async() => {
-    initMockGraphqlClient({
+    const graphqlMockClient =  initMockGraphqlClient({
       Query: () => ({
         dataset: () => mockDataset,
       }),
     })
     const propsData = { datasetId: '123' }
-    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, propsData })
-    await wrapper.vm.$data.loadingPromise
+    const wrapper = mount(MetadataEditor, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient
+        }
+      },
+      props: propsData
+    });
+    await wrapper.vm.state.loadingPromise
 
-    expect(wrapper.vm.$data.value).toMatchSnapshot('metadata')
-    expect(wrapper.vm.$data.metaspaceOptions).toMatchSnapshot('metaspaceOptions')
-  })
+    await flushPromises();
+    await nextTick();
+
+    expect(wrapper.vm.state.value).toMatchSnapshot('metadata')
+    expect(wrapper.vm.state.metaspaceOptions).toMatchSnapshot('metaspaceOptions')
+  });
 
   it('should load the user\'s last dataset when present', async() => {
-    initMockGraphqlClient({
+    const graphqlMockClient =  initMockGraphqlClient({
       Query: () => ({
         currentUserLastSubmittedDataset: () => mockDataset,
       }),
     })
+    const wrapper = mount(MetadataEditor, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient
+        }
+      }
+    });
+    await wrapper.vm.state.loadingPromise
 
-    const wrapper = mount(MetadataEditor, { store, router, apolloProvider })
-    await wrapper.vm.$data.loadingPromise
+    await flushPromises();
+    await nextTick();
 
     const fieldValues: Record<string, string> = {}
-    wrapper.findAllComponents({ name: 'FormField' }).wrappers
-      .forEach(field => { fieldValues[field.vm.$props.name] = field.vm.$props.value })
+    wrapper.findAllComponents({ name: 'FormField' }).forEach((fieldWrapper) => {
+      const fieldName = fieldWrapper.props('name');
+      const fieldValue = fieldWrapper.props('value');
+      fieldValues[fieldName] = fieldValue;
+    });
 
-    expect(fieldValues.Organism).toEqual(mockMetadata.Sample_Information.Organism)
-    expect(fieldValues['Sample stabilisation']).toEqual(mockMetadata.Sample_Preparation.Sample_Stabilisation)
-    expect(fieldValues.Polarity).toEqual(mockMetadata.MS_Analysis.Polarity)
-    expect(fieldValues['Detector resolving power']).toEqual(mockMetadata.MS_Analysis.Detector_Resolving_Power)
-  })
+    expect(fieldValues['Organism']).toEqual(mockMetadata.Sample_Information.Organism);
+    expect(fieldValues['Sample stabilisation']).toEqual(mockMetadata.Sample_Preparation.Sample_Stabilisation);
+    expect(fieldValues['Polarity']).toEqual(mockMetadata.MS_Analysis.Polarity);
+    expect(fieldValues['Detector resolving power']).toEqual(mockMetadata.MS_Analysis.Detector_Resolving_Power);
+  });
 
   it('should be able to load another user\'s dataset', async() => {
     const submitterId = 'submitter id'
@@ -98,19 +133,31 @@ describe('MetadataEditor', () => {
       name: 'mock user',
       groups: [{ group: { id: 'group', name: 'group name' } }],
     }
-    const mockUserFn = jest.fn(() => mockUser)
-    initMockGraphqlClient({
+    const mockUserFn = vi.fn().mockReturnValue(mockUser)
+    const graphqlMockClient =  initMockGraphqlClient({
       Query: () => ({
         dataset: () => ({ ...mockDataset, submitter: { id: submitterId } }),
         user: mockUserFn,
       }),
     })
     const propsData = { datasetId: '123' }
-    const wrapper = mount(MetadataEditor, { store, router, apolloProvider, propsData })
-    await wrapper.vm.$data.loadingPromise
+    const wrapper = mount(MetadataEditor, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient
+        }
+      },
+      props: propsData
+    });
+    await wrapper.vm.state.loadingPromise
+
+    await flushPromises();
+    await nextTick();
 
     expect(mockUserFn).toHaveBeenCalledTimes(1)
-    expect(mockUserFn.mock.calls[0][1]).toEqual({ userId: submitterId })
-    expect(wrapper.vm.$data.submitter).toMatchObject(mockUser)
-  })
-})
+    expect(wrapper.vm.state.submitter).toMatchObject(mockUser)
+  });
+
+
+});

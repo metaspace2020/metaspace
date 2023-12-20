@@ -11,6 +11,8 @@
 
 <script lang="ts">
 import { defineComponent, toRefs, computed, watch } from 'vue';
+import {ElInputNumber} from "element-plus";
+
 /**
  * Wrapper for el-input-number to make it slightly friendlier in forms:
  * - uses null instead of undefined for blank values
@@ -21,6 +23,9 @@ import { defineComponent, toRefs, computed, watch } from 'vue';
 export default defineComponent({
   name: 'CustomNumberInput',
   inheritAttrs: false,
+  components: {
+    ElInputNumber
+  },
   props: {
     value: {
       type: Number,

@@ -122,9 +122,9 @@
     On submit button click, the form is checked for validity; if valid,
     a submit event is emitted with dataset ID and stringified form value.
   */
-import {defineComponent, reactive, computed, watch, inject, onMounted} from 'vue'
+import {defineComponent, reactive, computed, watch, inject, onBeforeMount} from 'vue'
 import { useStore } from 'vuex'
-import { ElPopover, ElButton, ElSelect, ElOption, ElMessage } from 'element-plus'
+import {ElPopover, ElButton, ElSelect, ElOption, ElMessage, ElLoading} from 'element-plus'
 import RichText from '../../components/RichText/RichText'
 import FormSection from './sections/FormSection.vue'
 import MetaspaceOptionsSection from './sections/MetaspaceOptionsSection.vue'
@@ -178,6 +178,9 @@ export default defineComponent({
     ElPopover, ElButton, ElSelect, ElOption,
     RichText, FormSection, MetaspaceOptionsSection,
     VisibilityOptionSection, DataManagementSection,
+  },
+  directives: {
+    loading: ElLoading.directive,
   },
   props: {
     datasetId: String,
@@ -283,7 +286,6 @@ export default defineComponent({
     const loadForm = async (dataset, options, mdType) => {
       const loadedMetadata = dataset.metadata
       const metaspaceOptions = defaults({}, omitBy(dataset.metaspaceOptions, isNil), defaultMetaspaceOptions)
-
       // in case user just opened a link to metadata editing page w/o navigation in web-app,
       // filters are not set up
       store.commit('updateFilter', { metadataType: mdType })
@@ -298,8 +300,7 @@ export default defineComponent({
       state.scoringModels = scoringModels
       state.defaultDb = molecularDatabases.find((db) => db.default) || {}
       state.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
-      state.schema = metadataSchemas && metadataSchemas[mdType]
-      ? deriveFullSchema(metadataSchemas[mdType]) : {}
+      state.schema = deriveFullSchema(metadataSchemas[mdType])
 
       // TODO remove the additional information from the schema itself at some point
       // hide additional info from dataset upload, without changing schema for compatibility reasons
@@ -412,11 +413,11 @@ export default defineComponent({
       }).then(resp => callback(resp.data.metadataSuggestions.map(val => ({ value: val }))))
     }
 
-      const sectionBinds = (sectionKey) => {
+    const sectionBinds = (sectionKey) => {
       return {
         sectionKey,
-        section: state.schema.properties[sectionKey],
-        value: state.value[sectionKey],
+        section: state.schema.properties[sectionKey] || {},
+        value: state.value[sectionKey] || {},
         error: errors.value[sectionKey],
         getSuggestionsForField,
       }
@@ -654,7 +655,7 @@ export default defineComponent({
     });
 
 
-    onMounted(() => {
+    onBeforeMount(() => {
       state.loadingPromise = initializeForm()
     })
 

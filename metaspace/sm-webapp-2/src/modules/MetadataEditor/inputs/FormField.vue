@@ -194,7 +194,8 @@ import PixelSizeInput from './PixelSizeInput.vue';
 import CustomNumberInput from './CustomNumberInput.vue';
 import {  uniq } from 'lodash-es';
 import {QuestionFilled} from "@element-plus/icons-vue";
-import {ElIcon} from "element-plus";
+import {ElIcon, ElAutocomplete, ElPopover,
+  ElSelect, ElFormItem, ElInput, ElOption, ElSwitch} from "element-plus";
 
 export default defineComponent({
   name: 'FormField',
@@ -206,6 +207,9 @@ export default defineComponent({
     CustomNumberInput,
     QuestionFilled,
     ElIcon,
+    ElAutocomplete,
+    ElPopover, ElSwitch,
+    ElSelect, ElFormItem, ElInput, ElOption
   },
   props: {
     type: { type: String as PropType<string>, required: true },

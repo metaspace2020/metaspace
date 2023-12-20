@@ -72,10 +72,13 @@ import {
   allGroupsQuery,
   requestAccessToGroupMutation,
 } from '../../../api/dataManagement'
-import {ElMessage} from "element-plus";
+import {ElMessage, ElRow, ElDialog, ElForm, ElFormItem, ElSelect, ElButton} from 'element-plus'
 
 export default defineComponent({
   name: 'FindGroupDialog',
+  components: {
+    ElRow, ElDialog, ElForm, ElFormItem, ElSelect, ElButton
+  },
   props: {
     visible: { type: Boolean, default: false },
   },

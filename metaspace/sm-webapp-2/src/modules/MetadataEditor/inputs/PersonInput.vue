@@ -76,9 +76,12 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { Person } from '../formStructure';
-
+import {ElCol, ElRow, ElFormItem, ElInput} from "element-plus";
 export default defineComponent({
   name: 'PersonInput',
+  components: {
+    ElCol, ElRow, ElFormItem, ElInput
+  },
   props: {
     value: {
       type: Object as any,

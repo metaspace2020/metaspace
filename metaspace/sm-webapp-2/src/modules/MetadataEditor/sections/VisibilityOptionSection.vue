@@ -51,10 +51,14 @@
 
 <script lang="ts">
 import { defineComponent, PropType, watch, ref } from 'vue';
+import {ElSwitch, ElRow, ElCol, ElPopover} from "element-plus";
 import './FormSection.scss';
 
 export default defineComponent({
   name: 'VisibilityOptionSection',
+  components: {
+    ElSwitch, ElRow, ElCol, ElPopover
+  },
   props: {
     isPublic: {
       type: Boolean as PropType<boolean>,

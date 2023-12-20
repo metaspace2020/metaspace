@@ -7,13 +7,13 @@
     >
       <el-col :span="6">
         <div class="metadata-section__title">
-          {{ section.title }}
+          {{ section?.title }}
           <el-popover
-            v-if="section.help"
+            v-if="section?.help"
             trigger="hover"
             placement="top"
           >
-            <p>{{ section.help }}</p>
+            <p>{{ section?.help }}</p>
             <template #reference>
               <i
                 class="el-icon-question metadata-help-icon"
@@ -25,7 +25,7 @@
       <el-col :span="18">
         <el-row :gutter="8">
           <el-col
-            v-for="(field, fieldKey) in section.properties"
+            v-for="(field, fieldKey) in section?.properties"
             :key="fieldKey"
             :span="field.smEditorColWidth"
           >
@@ -37,7 +37,7 @@
               :error="error && error[fieldKey]"
               :fields="field.items && field.items.properties"
               :options="field.enum || (field.items && field.items.enum)"
-              :required="section.required && section.required.includes(fieldKey)"
+              :required="section?.required && section?.required.includes(fieldKey)"
               :placeholder="field.description"
               :fetch-suggestions="fetchSuggestionsFunc(fieldKey)"
               @input="val => onInput([sectionKey, fieldKey], val)"
@@ -54,12 +54,17 @@ import { defineComponent, PropType } from 'vue';
 import { memoize } from 'lodash-es';
 import FormField from '../inputs/FormField.vue';
 import { FormSectionProperty } from '../formStructure';
-import './FormSection.scss';
+import {ElCol, ElForm, ElPopover, ElRow} from "element-plus";
+import './Formsection.scss';
 
 export default defineComponent({
   name: 'FormSection',
   components: {
     FormField,
+    ElCol,
+    ElForm,
+    ElPopover,
+    ElRow,
   },
   props: {
     sectionKey: {
@@ -104,5 +109,5 @@ export default defineComponent({
 
 
 <style lang="scss">
-  //@import './FormSection.scss'; // Imported in JS so that Webpack de-duplicates redundant copies
+  //@import './Formsection?.scss'; // Imported in JS so that Webpack de-duplicates redundant copies
 </style>

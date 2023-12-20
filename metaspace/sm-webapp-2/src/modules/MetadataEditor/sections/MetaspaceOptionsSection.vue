@@ -212,7 +212,7 @@ import { normalizeFormulaModifier } from '../../../lib/normalizeFormulaModifier'
 import { MolecularDB } from '../../../api/moldb'
 import { formatDatabaseLabel, MolDBsByGroup } from '../../MolecularDatabases/formatting'
 import { sortBy } from 'lodash-es'
-import {ElMessage} from "element-plus";
+import {ElMessage, ElRow, ElCol, ElForm} from "element-plus";
 import DatabaseHelpLink from '../inputs/DatabaseHelpLink.vue'
 import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
 import EnrichmentHelp from '../inputs/EnrichmentHelp.vue'
@@ -230,6 +230,7 @@ export default defineComponent({
   components: {
     FormField,
     PopupAnchor,
+    ElRow, ElCol, ElForm
   },
   props: {
     value: { type: Object as PropType<MetaspaceOptions>, required: true },

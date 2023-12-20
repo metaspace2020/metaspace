@@ -47,6 +47,22 @@ export function setupGlobalStubs() {
     name: 'ElDropdownMock',
     template: '<div class="mock-el-dropdown"><slot></slot></div>',
   };
+  const ElDialogMock = {
+    name: 'ElDialogMock',
+    template: '<div class="mock-el-dialog"><slot></slot></div>',
+  };
+  // const ElFormMock = {
+  //   name: 'ElFormMock',
+  //   template: '<div class="mock-el-form"><slot></slot></div>',
+  // };
+  // const ElFormItemMock = {
+  //   name: 'ElFormItemMock',
+  //   template: '<div class="mock-el-form-item"><slot></slot></div>',
+  // };
+  const ElAutocompleteMock = {
+    name: 'ElAutocompleteMock',
+    template: '<div class="mock-el-autocomplete"><slot></slot></div>',
+  };
 
   const RouterLinkMock = {
     template: '<div><slot></slot></div>',
@@ -54,8 +70,12 @@ export function setupGlobalStubs() {
   };
 
   config.global.stubs = {
+    // 'el-form': ElFormMock,
+    'el-autocomplete': ElAutocompleteMock,
+    // 'el-form-item': ElFormItemMock,
     'el-option': ElOptionMock,
     'el-dropdown': ElDropdownMock,
+    'el-dialog': ElDialogMock,
     'el-select': ElSelectMock,
     'el-option-group': ElOptionGroupMock,
     'el-icon': ElIconMock,
@@ -105,13 +125,41 @@ vi.mock('vue', async () => {
   };
 });
 
+export function setupGlobalVariables() {
+  // @ts-ignore
+  global.window.scrollTo = vi.fn();
+  global.DragEvent = class extends MouseEvent {
+    dataTransfer: DataTransfer;
+    constructor(type: string, init?: DragEventInit) {
+      super(type, init);
+      this.dataTransfer = init?.dataTransfer;
+    }
+  };
+  global.ClipboardEvent = class extends Event {
+    clipboardData: DataTransfer;
+    constructor(type: string, eventInitDict?: ClipboardEventInit) {
+      super(type, eventInitDict);
+      this.clipboardData = eventInitDict?.clipboardData
+    }
+  };
+  // @ts-ignore
+  global.IntersectionObserver = class {
+    constructor(private callback: IntersectionObserverCallback) {
+    }
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+
+}
+
 // Set up any global hooks or utilities for Apollo or Vue Testing
 beforeAll(() => {
   // Setup before all tests run, e.g., initializing Apollo Client
   // setupGlobalPlugins()
+  setupGlobalVariables()
   setupGlobalStubs()
-  // @ts-ignore
-  global.window.scrollTo = vi.fn();
+  setupGlobalVariables()
 });
 
 
