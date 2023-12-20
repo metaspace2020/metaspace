@@ -89,7 +89,7 @@ const defaultConfig: ClientConfig = {
     moldb_limit_ext: false,
     multiple_ion_images: true,
     lock_intensity: false,
-    lithops: false,
+    lithops: true,
     raw_fdr: false,
   },
 }

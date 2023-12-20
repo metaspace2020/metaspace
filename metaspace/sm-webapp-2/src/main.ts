@@ -25,6 +25,7 @@ import { migrateLocalStorage } from './lib/localStorage'
 import 'element-plus/es/components/dropdown/style/css';
 import 'element-plus/es/components/notification/style/css';
 import 'element-plus/es/components/message-box/style/css';
+import 'element-plus/es/components/message/style/css';
 import 'element-plus/es/components/dialog/style/css';
 // import './assets/main.css'
 import './modules/App/tailwind.scss'

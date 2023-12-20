@@ -10,7 +10,9 @@ declare module 'vue' {
     ContentPage: typeof import('./src/components/ContentPage.vue')['default']
     CopyButton: typeof import('./src/components/CopyButton.vue')['default']
     DatasetInfo: typeof import('./src/components/DatasetInfo.vue')['default']
+    Dropzone: typeof import('./src/components/UppyUploader/Dropzone.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
+    ElAutocomplete: typeof import('element-plus/es')['ElAutocomplete']
     ElBadge: typeof import('element-plus/es')['ElBadge']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
@@ -18,6 +20,7 @@ declare module 'vue' {
     ElCol: typeof import('element-plus/es')['ElCol']
     ElCollapse: typeof import('element-plus/es')['ElCollapse']
     ElCollapseItem: typeof import('element-plus/es')['ElCollapseItem']
+    ElCollapseTransition: typeof import('element-plus/es')['ElCollapseTransition']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElDivider: typeof import('element-plus/es')['ElDivider']
     ElForm: typeof import('element-plus/es')['ElForm']
@@ -39,6 +42,7 @@ declare module 'vue' {
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ElTree: typeof import('element-plus/es')['ElTree']
+    FileStatus: typeof import('./src/components/UppyUploader/FileStatus.vue')['default']
     ImageLoader: typeof import('./src/components/ImageLoader.vue')['default']
     MiniSwitch: typeof import('./src/components/MiniSwitch.vue')['default']
     NotificationIcon: typeof import('./src/components/NotificationIcon.vue')['default']
@@ -51,6 +55,7 @@ declare module 'vue' {
     SliderThumb: typeof import('./src/components/Slider/SliderThumb.vue')['default']
     SliderTrack: typeof import('./src/components/Slider/SliderTrack.vue')['default']
     StatefulIcon: typeof import('./src/components/StatefulIcon.vue')['default']
+    UppyUploader: typeof import('./src/components/UppyUploader/UppyUploader.vue')['default']
   }
   export interface ComponentCustomProperties {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

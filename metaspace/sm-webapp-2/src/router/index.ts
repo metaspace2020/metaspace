@@ -6,6 +6,8 @@ import DatasetsPage from '../modules/Datasets/DatasetsPage.vue'
 
 const asyncPagesFreelyTyped = {
   AnnotationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "AnnotationsPage" */ '../modules/Annotations/AnnotationsPage.vue'),
+  UploadPage: () => import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ '../modules/MetadataEditor/UploadPage.vue'),
+  MetadataEditPage: () => import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ '../modules/MetadataEditor/MetadataEditPage.vue'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Datasets/list/DatasetTable.vue'),
@@ -36,12 +38,13 @@ const router = createRouter({
       name: 'datasets-comparison',
       component: asyncPages.DatasetTable,
     },
-    { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.DatasetTable },
+    { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
     { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.DatasetTable },
     { path: '/dataset/:dataset_id', name: 'dataset-overview', component: asyncPages.DatasetTable },
     { path: '/dataset/:dataset_id/annotations', name: 'dataset-annotations', component: asyncPages.AnnotationsPage },
     { path: '/dataset/:dataset_id/browser', name: 'dataset-browser', component: asyncPages.DatasetTable },
     { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetTable },
+    { path: '/upload', component: asyncPages.UploadPage },
 
     { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
     { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },

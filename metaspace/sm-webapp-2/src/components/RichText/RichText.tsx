@@ -1,11 +1,16 @@
 import { defineComponent, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { EditorContent } from '@tiptap/vue-3';
 import { useEditor } from '@tiptap/vue-3';
-// @ts-ignore
-import { Placeholder } from '@tiptap/extension-placeholder';
+import Placeholder from '@tiptap/extension-placeholder';
 import { OnEscape } from './tiptap';
-
+import StarterKit from '@tiptap/starter-kit';
+import TextStyle from '@tiptap/extension-text-style';
+import Subscript from '@tiptap/extension-subscript';
+import Superscript from '@tiptap/extension-superscript';
 import FadeTransition from '../../components/FadeTransition';
+import MenuItems from './MenuItems'
+import './RichText.css';
+import safeJsonParse from "../../lib/safeJsonParse";
 
 interface Props {
   content: string
@@ -35,6 +40,32 @@ const getSaveState = (saveState: string) => {
   }
 }
 
+const Underline = TextStyle.extend({
+  name: 'underline',
+  parseHTML() {
+    return [
+      { tag: 'u' },
+      { style: 'text-decoration', getAttrs: value => value === 'underline' && null },
+    ];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['u', HTMLAttributes, 0];
+  }, // @ts-ignore
+  addCommands() {
+    return {
+      setUnderline: () => ({ commands }) => {
+        return commands.setMark('underline');
+      },
+      toggleUnderline: () => ({ commands }) => {
+        return commands.toggleMark('underline');
+      },
+      unsetUnderline: () => ({ commands }) => {
+        return commands.unsetMark('underline');
+      },
+    };
+  },
+});
+
 const RichText = defineComponent({
   props: {
     content: String,
@@ -52,20 +83,26 @@ const RichText = defineComponent({
     const state = reactive<any>({
       editor: useEditor({
         extensions: [
+          StarterKit,
+          Underline,
+          Subscript,
+          Superscript,
           new OnEscape(() => {
             state.editing = false
-            state.editor.blur()
+            state.editor.commands.blur()
           }),
-        ].concat(
-          props.placeholder ? new Placeholder({
-            emptyNodeText: props.placeholder,
+          Placeholder.configure({
+            placeholder: props.placeholder,
             emptyNodeClass: 'sm-RichText-placeholder',
             showOnlyWhenEditable: false,
-          }) : [],
-        ),
+          }),
+        ],
         editable: !props.readonly,
-        content: props.content,
-        onUpdate: async(content: string) => {
+        content: safeJsonParse(props.content),
+        onUpdate: async({ editor }) => {
+          const content = JSON.stringify(editor.getJSON())
+          // const content = editor.getText()
+
           state.saveState = saveStates.SAVING
           try {
             // wait a minimum of 500ms for the transition
@@ -84,10 +121,8 @@ const RichText = defineComponent({
       saveState: saveStates.UNSAVED,
     })
 
-    const { editor } : any = state
-
     if (!props.readonly) {
-      editor.on('focus', () => { state.editing = true })
+      state.editor?.on('focus', () => { state.editing = true })
 
       const onOutclick = () => {
         state.editing = false
@@ -108,7 +143,8 @@ const RichText = defineComponent({
     const handleEditorClick = (e: Event) => {
       e.stopPropagation()
       if (!props.readonly && !state.editing) {
-        editor.focus()
+        state.editor.commands.focus()
+        state.editing = true
       }
     }
 
@@ -117,9 +153,9 @@ const RichText = defineComponent({
         {!props.readonly && (
           <header class="flex items-end h-8 mb-1">
             <FadeTransition>
-              {state.editing
+              {state.editing && state.editor
                 ? <div onClick={stopPropagation}>
-                  <div>stop</div>
+                    <MenuItems editor={state.editor} />
                 </div>
                 : <button
                   onClick={handleEditorClick}
@@ -134,7 +170,7 @@ const RichText = defineComponent({
                 {state.editing && <p class="m-0 ml-auto text-sm leading-6 text-gray-700" onClick={stopPropagation}>
                   <FadeTransition>
                     {state.saveState === saveStates.FAILED
-                      ? <button class="el-button el-button--mini" onClick={() => editor.emitUpdate()}>
+                      ? <button class="el-button el-button--mini" onClick={() => state.editor.emitUpdate()}>
                         Retry
                       </button>
                       : <span key={state.saveState}>
@@ -154,7 +190,7 @@ const RichText = defineComponent({
               { 'bg-transparent': !state.editing },
               { 'bg-gray-100': state.editing },
             ]}
-            editor={editor}
+            editor={state.editor}
           />
         </div>
       </section>

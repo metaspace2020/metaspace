@@ -1,0 +1,1114 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MetadataEditor should be able to load an existing dataset: metadata 1`] = `
+Object {
+  "Additional_Information": Object {
+    "Supplementary": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+  },
+  "Data_Type": "Imaging MS",
+  "MS_Analysis": Object {
+    "Analyzer": "none",
+    "Detector_Resolving_Power": Object {
+      "Resolving_Power": 123456,
+      "mz": 123,
+    },
+    "Ionisation_Source": "none",
+    "Pixel_Size": Object {
+      "Xaxis": 0,
+      "Yaxis": 0,
+    },
+    "Polarity": "Positive",
+  },
+  "Sample_Information": Object {
+    "Condition": "Live",
+    "Organism": "Human",
+    "Organism_Part": "Liver",
+    "Sample_Growth_Conditions": "N/A",
+  },
+  "Sample_Preparation": Object {
+    "MALDI_Matrix": "baz",
+    "MALDI_Matrix_Application": "qux",
+    "Sample_Stabilisation": "foo",
+    "Solvent": "quux",
+    "Tissue_Modification": "bar",
+  },
+}
+`;
+
+exports[`MetadataEditor should be able to load an existing dataset: metaspaceOptions 1`] = `
+Object {
+  "adducts": Array [
+    "adducts.0.adduct",
+  ],
+  "analysisVersion": 1,
+  "chemMods": Array [],
+  "databaseIds": Array [
+    1,
+  ],
+  "groupId": "123",
+  "isPublic": true,
+  "name": "dataset.name",
+  "neutralLosses": Array [],
+  "performEnrichment": false,
+  "ppm": 3,
+  "principalInvestigator": Object {
+    "email": "dataset.principalInvestigator.email",
+    "name": "dataset.principalInvestigator.name",
+  },
+  "projectIds": Array [
+    "dataset.projects.0.id",
+    "dataset.projects.1.id",
+  ],
+  "submitterId": "123",
+}
+`;
+
+exports[`MetadataEditor should match snapshot 1`] = `
+<div id="md-editor-container">
+  <div mock-v-loading="true" style="position: relative;">
+    <div id="md-section-list">
+      <div class="flex flex-row w-full flex-wrap mt-6 justify-end">
+        <mock-el-popover trigger="click" placement="left">
+          <div slot-key="default">
+            <div class="max-w-sm">
+              <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches">
+                <mock-el-option value="allDatasets.0.id" label="allDatasets.0.name"></mock-el-option>
+                <mock-el-option value="allDatasets.1.id" label="allDatasets.1.name"></mock-el-option>
+              </mock-el-select>
+            </div>
+          </div>
+          <div slot-key="reference"><button type="button" class="el-button mr-1 el-button--primary">
+              <!---->
+              <!----><span>
+            Copy metadata from another dataset...<i class="el-icon-document-copy ml-1"></i></span></button></div>
+        </mock-el-popover>
+      </div>
+      <div class="flex flex-row w-full flex-wrap mt-6">
+        <div class="metadata-section__title w-3/12">
+          Dataset description
+        </div>
+        <section class="sm-RichText" id="description-container">
+          <header class="flex items-end h-8 mb-1">
+            <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+              <div><span class="flex items-start justify-center"><button title="Bold (Ctrl+B)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H8c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h5.78c2.07 0 3.96-1.69 3.97-3.77.01-1.53-.85-2.84-2.15-3.44zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"></path></svg></button><button title="Italic (Ctrl+I)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M10 5.5c0 .83.67 1.5 1.5 1.5h.71l-3.42 8H7.5c-.83 0-1.5.67-1.5 1.5S6.67 18 7.5 18h5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-.71l3.42-8h1.29c.83 0 1.5-.67 1.5-1.5S17.33 4 16.5 4h-5c-.83 0-1.5.67-1.5 1.5z"></path></svg></button><button title="Underline (Ctrl+U)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M12.79 16.95c3.03-.39 5.21-3.11 5.21-6.16V4.25C18 3.56 17.44 3 16.75 3s-1.25.56-1.25 1.25v6.65c0 1.67-1.13 3.19-2.77 3.52-2.25.47-4.23-1.25-4.23-3.42V4.25C8.5 3.56 7.94 3 7.25 3S6 3.56 6 4.25V11c0 3.57 3.13 6.42 6.79 5.95zM5 20c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1z"></path></svg></button><button title="Title" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M5 5.5C5 6.33 5.67 7 6.5 7h4v10.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V7h4c.83 0 1.5-.67 1.5-1.5S18.33 4 17.5 4h-11C5.67 4 5 4.67 5 5.5z"></path></svg></button><button title="Bullet list" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM8 19h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zm0-6h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zM7 6c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1z"></path></svg></button><button title="Subscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold tracking-wider">H<sub class="text-xs leading-none">2</sub></span></button><button title="Superscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold">x<sup class="text-xs leading-none">2</sup></span></button></span></div>
+            </transition-stub>
+          </header>
+          <div>
+            <div autofocus="true" class="customEditor transition-colors ease-in-out duration-300 rounded bg-gray-100">
+              <div contenteditable="true" tabindex="0" class="ProseMirror">
+                <p><br></p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="metadata-section">
+        <form class="el-form el-form--label-top">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">
+              Sample information
+              <!---->
+            </div>
+          </div>
+          <div class="el-col el-col-18">
+            <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Organism</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Species" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Organism part</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Organ or organism part" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Condition</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. wildtype, diseased" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Sample growth conditions</span>
+                    <!---->
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" placeholder="E.g. intervention, treatment" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="metadata-section">
+        <form class="el-form el-form--label-top">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">
+              Sample preparation
+              <!---->
+            </div>
+          </div>
+          <div class="el-col el-col-18">
+            <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Sample stabilisation</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Preservation method" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Tissue modification</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. chemical modification" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>MALDI matrix</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="none" required="true" placeholder="MALDI matrix, if used" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>MALDI matrix application</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="none" required="true" placeholder="Method of application, if used" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Solvent</span>
+                    <!---->
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="none" placeholder="Solvent used e.g. for DESI or MALDI matrix" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="metadata-section">
+        <form class="el-form el-form--label-top">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">
+              MS analysis
+              <mock-el-popover trigger="hover" placement="top">
+                <div slot-key="default">
+                  <p>METASPACE is optimized for data from high-resolving power MS like FTICR or Orbitrap</p>
+                </div>
+                <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+              </mock-el-popover>
+            </div>
+          </div>
+          <div class="el-col el-col-18">
+            <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+              <div class="el-col el-col-4" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Polarity</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-select value="" required="true">
+                      <mock-el-option value="Positive" label="Positive"></mock-el-option>
+                      <mock-el-option value="Negative" label="Negative"></mock-el-option>
+                    </mock-el-select>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Ionisation source</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. MALDI, DESI" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Analyzer</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. FTICR, Orbitrap" trigger-on-focus="true" fetch-suggestions="function debounced() {
+        var time = now(),
+            isInvoking = shouldInvoke(time);
+
+        lastArgs = arguments;
+        lastThis = this;
+        lastCallTime = time;
+
+        if (isInvoking) {
+          if (timerId === undefined) {
+            return leadingEdge(lastCallTime);
+          }
+          if (maxing) {
+            // Handle invocations in a tight loop.
+            clearTimeout(timerId);
+            timerId = setTimeout(timerExpired, wait);
+            return invokeFunc(lastCallTime);
+          }
+        }
+        if (timerId === undefined) {
+          timerId = setTimeout(timerExpired, wait);
+        }
+        return result;
+      }" class="md-ac"></mock-el-autocomplete>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-17" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Detector resolving power</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <div class="el-row">
+                      <div class="subfield el-col el-col-12">
+                        <div class="el-form-item is-required el-form-item--medium">
+                          <!---->
+                          <div class="el-form-item__content">
+                            <div class="el-input-number-overrides el-input-number el-input-number--medium is-without-controls">
+                              <!---->
+                              <!---->
+                              <div class="el-input el-input--medium">
+                                <!----><input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="200" aria-disabled="false">
+                                <!---->
+                                <!---->
+                                <!---->
+                                <!---->
+                              </div>
+                            </div>
+                            <div class="subfield-label">
+                              m/z
+                            </div>
+                            <!---->
+                            <transition-stub name="el-zoom-in-top">
+                              <!---->
+                            </transition-stub>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="subfield el-col el-col-12">
+                        <div class="el-form-item is-required el-form-item--medium">
+                          <!---->
+                          <div class="el-form-item__content">
+                            <div class="el-input-number-overrides el-input-number el-input-number--medium is-without-controls">
+                              <!---->
+                              <!---->
+                              <div class="el-input el-input--medium">
+                                <!----><input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="140000" aria-disabled="false">
+                                <!---->
+                                <!---->
+                                <!---->
+                                <!---->
+                              </div>
+                            </div>
+                            <div class="subfield-label">
+                              resolving power
+                            </div>
+                            <!---->
+                            <transition-stub name="el-zoom-in-top">
+                              <!---->
+                            </transition-stub>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-17" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Pixel size in μm</span><span style="color: red;">*</span>
+                    <!----></span></label>
+                  <div class="el-form-item__content">
+                    <div class="el-row">
+                      <div class="subfield el-col el-col-12">
+                        <div class="el-form-item is-required el-form-item--medium">
+                          <!---->
+                          <div class="el-form-item__content">
+                            <div class="el-input-number-overrides el-input-number el-input-number--medium is-without-controls">
+                              <!---->
+                              <!---->
+                              <div class="el-input el-input--medium">
+                                <!----><input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="0" aria-disabled="false">
+                                <!---->
+                                <!---->
+                                <!---->
+                                <!---->
+                              </div>
+                            </div>
+                            <div class="subfield-label">
+                              horizontal
+                            </div>
+                            <!---->
+                            <transition-stub name="el-zoom-in-top">
+                              <!---->
+                            </transition-stub>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="subfield el-col el-col-12">
+                        <div class="el-form-item is-required el-form-item--medium">
+                          <!---->
+                          <div class="el-form-item__content">
+                            <div class="el-input-number-overrides el-input-number el-input-number--medium is-without-controls" required="required">
+                              <!---->
+                              <!---->
+                              <div class="el-input el-input--medium">
+                                <!----><input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="0" aria-disabled="false">
+                                <!---->
+                                <!---->
+                                <!---->
+                                <!---->
+                              </div>
+                            </div>
+                            <div class="subfield-label">
+                              vertical
+                            </div>
+                            <!---->
+                            <transition-stub name="el-zoom-in-top">
+                              <!---->
+                            </transition-stub>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <transition-stub name="el-zoom-in-top">
+                      <!---->
+                    </transition-stub>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="metadata-section">
+        <mock-el-dialog custom-class="find-group-dialog">
+          <h2>Find a group</h2>
+          <p>
+            If you are not member of a group, you can request access here and your dataset will be
+            automatically added to the group once your access has been approved.
+          </p>
+          <form class="el-form">
+            <div class="el-form-item"><label class="el-form-item__label">Your group:</label>
+              <div class="el-form-item__content">
+                <div class="el-row">
+                  <mock-el-select filterable="" remote="" remote-method="function () { [native code] }" placeholder="Enter group name"></mock-el-select>
+                </div>
+                <transition-stub name="el-zoom-in-top">
+                  <!---->
+                </transition-stub>
+              </div>
+            </div>
+          </form>
+          <div class="el-row" style="margin: 15px 0px;"><button type="button" class="el-button el-button--default">
+              <!---->
+              <!----><span>
+      Cancel
+    </span></button> <button disabled="disabled" type="button" class="el-button el-button--primary is-disabled">
+              <!---->
+              <!----><span>
+      Request access
+    </span></button></div>
+          <div class="el-row">
+            <p><b>Can't find your group?</b> <a href="mailto:contact@metaspace2020.eu">Contact us</a> to get your team started,
+              or <a href="#" style="cursor: pointer;">fill in your Principal Investigator</a> instead.
+            </p>
+          </div>
+        </mock-el-dialog>
+        <mock-el-dialog append-to-body="" title="Create project" class="dialog">
+          <div mock-v-loading="0">
+            <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
+              <div><label><span class="text-base font-medium">Title</span>
+                  <div class="el-form-item is-required">
+                    <!---->
+                    <div class="el-form-item__content">
+                      <div class="py-1 el-input">
+                        <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <!---->
+                        <!---->
+                      </div>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div></label>
+                <div class="hidden el-input">
+                  <!----><input type="text" autocomplete="off" class="el-input__inner">
+                  <!---->
+                  <!---->
+                  <!---->
+                  <!---->
+                </div>
+              </div>
+              <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+                <div class="h-10 flex items-center">
+                  <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
+                </div>
+                <!---->
+              </div>
+            </form>
+            <div class="mt-6">
+              <h4 class="m-0">
+                Would you like to include previously submitted datasets?
+              </h4>
+              <div>
+                <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
+                <div class="dataset-checkbox-list leading-6">
+                  <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
+          allDatasets.0.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
+                      <!----></span></label></div>
+                  <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
+          allDatasets.1.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
+                      <!----></span></label></div>
+                </div>
+              </div>
+            </div>
+            <div class="button-bar"><button type="button" class="el-button el-button--default">
+                <!---->
+                <!----><span>
+        Cancel
+      </span></button> <button autofocus="autofocus" type="button" class="el-button el-button--primary">
+                <!---->
+                <!----><span>
+        Create project
+      </span></button></div>
+          </div>
+        </mock-el-dialog>
+        <div class="el-row">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">
+              Data management
+            </div>
+          </div>
+          <div class="el-col el-col-18">
+            <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+              <form class="el-form el-form--label-top">
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Submitter name</span><span style="color: red;">*</span>
+                      <!----></span></label>
+                    <div class="el-form-item__content">
+                      <div class="el-input el-input--medium is-disabled">
+                        <!----><input type="text" disabled="disabled" autocomplete="off" required="required" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <!---->
+                        <!---->
+                      </div>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Group</span><span style="color: red;">*</span>
+                      <!----></span></label>
+                    <div class="el-form-item__content">
+                      <mock-el-select value="currentUser.primaryGroup.group.id" required="true">
+                        <mock-el-option value="currentUser.groups.0.group.id" label="currentUser.groups.0.group.name"></mock-el-option>
+                        <mock-el-option value="currentUser.groups.1.group.id" label="currentUser.groups.1.group.name"></mock-el-option>
+                        <mock-el-option value="currentUser.primaryGroup.group.id" label="group.name"></mock-el-option>
+                        <mock-el-option value="FIND_GROUP" label="Find my group..."></mock-el-option>
+                        <mock-el-option value="NO_GROUP" label="No group (Enter PI instead)"></mock-el-option>
+                      </mock-el-select>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Projects</span>
+                      <!---->
+                      <!----></span></label>
+                    <div class="el-form-item__content">
+                      <mock-el-select value="" multiple="">
+                        <mock-el-option value="currentUser.projects.0.project.id" label="currentUser.projects.0.project.name"></mock-el-option>
+                        <mock-el-option value="currentUser.projects.1.project.id" label="currentUser.projects.1.project.name"></mock-el-option>
+                        <mock-el-option value="CREATE_PROJECT" label="Create a new project..."></mock-el-option>
+                      </mock-el-select>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <transition-stub>
+          <!---->
+        </transition-stub>
+      </div>
+      <div class="metadata-section">
+        <div class="el-row">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">
+              Visibility
+              <mock-el-popover trigger="hover" placement="top">
+                <div slot-key="default">
+                  <div class="max-w-sm">
+                    <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base,
+                      sharable and searchable by the community. The imzML files will be made available to download under the
+                      <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener noreferrer nofollow" target="_blank">Creative Commons Attribution 4.0 License</a>.
+                    </p>
+                    <p><b>Private:</b> The dataset and its annotation results will only be visible to you,
+                      logged-in members of the selected group and projects, and METASPACE administrators.
+                      These people will also be able to download the imzML files, but no automatic license for usage will be granted.
+                    </p>
+                  </div>
+                </div>
+                <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+              </mock-el-popover>
+            </div>
+          </div>
+          <div class="el-col el-col-18" style="padding: 0px 5px;">
+            <div role="switch" aria-checked="true" class="el-switch is-checked"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left"><!----><span aria-hidden="true">Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right is-active"><!----><span>Public</span></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="metadata-section">
+        <form class="el-form el-form--label-top">
+          <div class="el-row">
+            <div class="el-col el-col-6">
+              <div class="metadata-section__title">
+                Annotation settings
+              </div>
+            </div>
+            <div class="el-col el-col-18">
+              <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Metabolite database</span><span style="color: red;">*</span>
+                      <mock-el-popover trigger="hover" placement="right">
+                        <div slot-key="default"><a href="/help#databases" target="_blank" rel="noopener" class="flex items-start">
+                            See the Help page for details
+                            <i class="flex w-4 h-4 ml-1 active"><svg data-icon="icon-external-window"></svg></i></a> </div>
+                        <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+                      </mock-el-popover>
+                      </span></label>
+                    <div class="el-form-item__content">
+                      <mock-el-select value="1" required="true" multiple="" multiple-limit="4">
+                        <ul class="el-select-group__wrap">
+                          <li class="el-select-group__title">METASPACE</li>
+                          <li>
+                            <ul class="el-select-group">
+                              <mock-el-option value="1" label="foo - v1"></mock-el-option>
+                            </ul>
+                          </li>
+                        </ul>
+                        <ul class="el-select-group__wrap">
+                          <li class="el-select-group__title">test</li>
+                          <li>
+                            <ul class="el-select-group">
+                              <mock-el-option value="2" label="bar - v1"></mock-el-option>
+                            </ul>
+                          </li>
+                        </ul>
+                      </mock-el-select>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Adducts</span><span style="color: red;">*</span>
+                      <mock-el-popover trigger="hover" placement="right">
+                        <div slot-key="default">
+                          <div class="adducts-help">
+                            <p>
+                              Each selected adduct is applied to every molecule in the selected database.
+                              Only adducts that commonly form with the chosen ionization source or MALDI matrix should be selected,
+                              as searching for improbable adducts is likely to generate spurious annotations.
+                            </p>
+                            <p>
+                              We recommend selecting <span class="example-input">[M+H]⁺</span>, <span class="example-input">[M+Na]⁺</span>,
+                              <span class="example-input">[M+K]⁺</span> in positive mode,
+                              and <span class="example-input">[M-H]⁻</span>,&nbsp;<span class="example-input">[M+Cl]⁻</span> in negative mode.
+                            </p>
+                            <p>
+                              For ESI-based sources <span class="example-input">[M+NH₄]⁺</span> should also be selected in positive mode.
+                            </p>
+                            <p><span class="example-input">[M]⁺</span> and <span class="example-input">[M]⁻</span> should generally only be
+                              selected when annotating custom databases that have had adducts merged into their molecular formulas, or
+                              in cases when a derivatization agent causes molecules to become permanently charged.
+                            </p>
+                          </div>
+                        </div>
+                        <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+                      </mock-el-popover>
+                      </span></label>
+                    <div class="el-form-item__content">
+                      <mock-el-select value="+H,+Na,+K" required="true" multiple="">
+                        <mock-el-option value="+H" label="[M + H]⁺"></mock-el-option>
+                        <mock-el-option value="+Na" label="[M + Na]⁺"></mock-el-option>
+                        <mock-el-option value="+K" label="[M + K]⁺"></mock-el-option>
+                      </mock-el-select>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Dataset name</span><span style="color: red;">*</span>
+                      <!----></span></label>
+                    <div class="el-form-item__content">
+                      <div class="el-input el-input--medium">
+                        <!----><input type="text" autocomplete="off" required="required" placeholder="Dataset name" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <!---->
+                        <!---->
+                      </div>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+                <!---->
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Chemical modifications</span>
+                      <!---->
+                      <mock-el-popover trigger="hover" placement="right">
+                        <div slot-key="default">
+                          <div style="max-width: 500px;">
+                            <p>
+                              This setting is intended for use in samples that have been treated with a derivatization agent.
+                              Chemical modifications add and remove elements from every formula in the selected database.
+                              Unmodified formulas will also be annotated, and each modification will have an independent FDR ranking.
+                            </p>
+                            <p>
+                              Extra scrutiny must be given to the results annotated with chemical modifications,
+                              as modified formulas are often isomeric to other unmodified molecules in the database.
+                            </p>
+                            <p>
+                              Modifications should be entered as a series of formulas being removed
+                              with <span class="example-input">-</span> and added with <span class="example-input">+</span>.
+                              For example, derivatization with Girard's Reagent T would be
+                              entered as <span class="example-input">-O+C5H12N3O</span>.
+                            </p>
+                            <p>
+                              In cases where a derivatization agent adds a permanent charge, such as with the
+                              quaternary ammonium moiety in the above example, additional steps are needed to ensure that
+                              METASPACE searches for the correct mass. Either
+                              the <span class="example-input">[M]⁺</span> or <span class="example-input">[M]⁻</span> adduct
+                              should be selected, or the number of hydrogens in the chemical modification formula should be adjusted
+                              so that the correct mass is calculated after
+                              the <span class="example-input">[M+H]⁺</span> or <span class="example-input">[M-H]⁻</span> adduct is applied.
+                            </p>
+                          </div>
+                        </div>
+                        <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+                      </mock-el-popover>
+                      </span></label>
+                    <div class="el-form-item__content">
+                      <mock-el-select popper-class="el-select-popper__with-create" no-data-text="Invalid value" multiple="" filterable="" default-first-option="" remote="" remote-method="function () { [native code] }" multiple-limit="3"></mock-el-select>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>Analysis version</span>
+                      <!---->
+                      <mock-el-popover trigger="hover" placement="right">
+                        <div slot-key="default">
+                          <div class="analysis-version-help">
+                            When comparing data between multiple datasets, it is recommended to process all datasets with the same
+                            analysis version. Otherwise, select the latest version for best results.
+                            <h4>Changes:</h4>
+                            <h5>v2.20230517 (METASPACE-ML):</h5>
+                            <ul>
+                              <li>New metrics for evaluating annotations' mass accuracy.</li>
+                              <li>New ML-powered model for annotation scoring.</li>
+                              <li>Fine-grained reporting of FDR values.</li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+                      </mock-el-popover>
+                      </span></label>
+                    <div class="el-form-item__content">
+                      <mock-el-select>
+                        <mock-el-option value="1" label="v1 (Original MSM)"></mock-el-option>
+                        <mock-el-option value="3" label="v2.20230517 (METASPACE-ML)"></mock-el-option>
+                      </mock-el-select>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>m/z tolerance (ppm)</span><span style="color: red;">*</span>
+                      <mock-el-popover trigger="hover" placement="right">
+                        <div slot-key="default">
+                          <div style="max-width: 500px;">
+                            <p>
+                              For mass resolving power below 70K, we recommend using higher m/z tolerance of 5-10 ppm. Please keep in mind that
+                              increasing tolerance leads to increased ambiguity, often lower numbers of annotations at fixed FDR, and increased
+                              numbers of isobaric annotations.
+                            </p>
+                          </div>
+                        </div>
+                        <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+                      </mock-el-popover>
+                      </span></label>
+                    <div class="el-form-item__content">
+                      <div class="el-input-number-overrides el-input-number el-input-number--medium is-without-controls" required="required">
+                        <!---->
+                        <!---->
+                        <div class="el-input el-input--medium">
+                          <!----><input type="text" autocomplete="off" max="50" min="0.1" class="el-input__inner" role="spinbutton" aria-valuemax="50" aria-valuemin="0.1" aria-valuenow="3" aria-disabled="false">
+                          <!---->
+                          <!---->
+                          <!---->
+                          <!---->
+                        </div>
+                      </div>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+                <!---->
+                <!---->
+              </div>
+              <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>LION enrichment</span>
+                      <!---->
+                      <mock-el-popover trigger="hover" placement="right">
+                        <div slot-key="default">
+                          <div class="analysis-version-help">
+                            When performing <a target="_blank" href="http://www.lipidontology.com/">LION</a> enrichment, a lipid enrichment
+                            analysis will be performed based on LION.
+                            <h5>Available databases:</h5>
+                            <ul>
+                              <li>CoreMetabolome - v3.</li>
+                              <li>HMDB - v4.</li>
+                              <li>LipidMaps - 2017-12-12.</li>
+                              <li>SwissLipids - 2018-02-02.</li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+                      </mock-el-popover>
+                      </span></label>
+                    <div class="el-form-item__content">
+                      <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input">
+                        <!----><span class="el-switch__core" style="width: 40px;"></span>
+                        <!---->
+                      </div>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+`;

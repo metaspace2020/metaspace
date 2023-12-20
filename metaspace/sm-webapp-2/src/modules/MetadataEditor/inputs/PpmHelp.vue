@@ -1,0 +1,16 @@
+<template>
+  <div style="max-width: 500px;">
+    <p>
+      For mass resolving power below 70K, we recommend using higher m/z tolerance of 5-10 ppm. Please keep in mind that
+      increasing tolerance leads to increased ambiguity, often lower numbers of annotations at fixed FDR, and increased
+      numbers of isobaric annotations.
+    </p>
+  </div>
+</template>
+
+<script>
+
+export default {
+  name: 'PpmHelp',
+}
+</script>

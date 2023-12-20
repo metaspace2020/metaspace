@@ -271,7 +271,7 @@ export default defineComponent({
                       >
                         {
                           isMenuOpen &&
-                          <div class="origin-top-right absolute right-0 top-1/2 mt-6 w-40 rounded-md shadow-lg z-10">
+                          <div class="bg-white origin-top-right absolute right-0 top-1/2 mt-6 w-40 rounded-md shadow-lg z-10">
                             <div
                               class="py-1 rounded-md bg-white shadow-xs text-sm"
                               role="menu"
