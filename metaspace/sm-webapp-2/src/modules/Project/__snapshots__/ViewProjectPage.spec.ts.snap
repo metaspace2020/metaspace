@@ -1,0 +1,1196 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <transition-stub name="dialog-fade">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons"><button type="button" class="el-button el-button--primary">
+          <!---->
+          <!----><span>
+          Request access
+        </span></button>
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
+          Members (2)
+          <!----></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <div role="tabpanel" id="pane-datasets" aria-labelledby="tab-datasets" class="el-tab-pane">
+          <div class="dataset-list">
+            <datasetitem-stub dataset="[object Object]" current-user="[object Object]" idx="0"></datasetitem-stub>
+            <datasetitem-stub dataset="[object Object]" current-user="[object Object]" idx="1"></datasetitem-stub>
+            <datasetitem-stub dataset="[object Object]" current-user="[object Object]" idx="2"></datasetitem-stub>
+            <!---->
+          </div>
+          <div class="dataset-list-footer"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444" class="">
+              See all datasets
+            </a></div>
+        </div>
+        <!---->
+        <!---->
+        <!---->
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;
+
+exports[`ViewProjectPage members tab should match snapshot (invited) 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <transition-stub name="dialog-fade">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons">
+        <!---->
+        <!---->
+        <!---->
+      </div>
+      <transition-stub name="el-alert-fade">
+        <div role="alert" class="el-alert el-alert--info is-light"><i class="el-alert__icon el-icon-info is-big"></i>
+          <div class="el-alert__content">
+            <!---->
+            <p class="el-alert__description">
+              <div style="padding: 0px 0px 20px 20px;">
+                <p>
+                  You have been invited to join project name.
+                </p>
+                <div><button type="button" class="el-button el-button--danger">
+                    <!---->
+                    <!----><span>
+              Decline invitation
+            </span></button> <button type="button" class="el-button el-button--primary">
+                    <!---->
+                    <!----><span>
+              Join project
+            </span></button></div>
+              </div>
+            </p>
+            <!----><i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
+          </div>
+        </div>
+      </transition-stub>
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
+          Members (2)
+          <!----></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <!---->
+        <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
+          <div style="max-width: 950px;">
+            <projectmemberslist-stub currentuser="[object Object]" project="[object Object]" members="[object Object]" refreshdata="function () { [native code] }"></projectmemberslist-stub>
+            <p class="hidden-members-text">
+              + 1 hidden member.
+            </p>
+          </div>
+        </div>
+        <!---->
+        <!---->
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;
+
+exports[`ViewProjectPage members tab should match snapshot (manager, including table) 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <transition-stub name="dialog-fade">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons">
+        <!---->
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-about" aria-controls="pane-about" role="tab" tabindex="-1" class="el-tabs__item is-top">About</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
+          Members (2)
+          <span class="notification"></span></span></div>
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
+            Publishing
+          <transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div></span></div>
+              <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <!---->
+        <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
+          <div style="max-width: 950px;">
+            <div>
+              <!---->
+              <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" element-loading-text="Loading results from the server..." mock-v-loading="false">
+                <div class="hidden-columns">
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                </div>
+                <div class="el-table__header-wrapper">
+                  <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 850px;">
+                    <colgroup>
+                      <col name="el-table_1_column_1" width="200">
+                      <col name="el-table_1_column_2" width="200">
+                      <col name="el-table_1_column_3" width="160">
+                      <col name="el-table_1_column_4" width="90">
+                      <col name="el-table_1_column_5" width="200">
+                    </colgroup>
+                    <thead class="">
+                      <tr class="">
+                        <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf">
+                          <div class="cell">Name</div>
+                        </th>
+                        <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf">
+                          <div class="cell">Email</div>
+                        </th>
+                        <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf">
+                          <div class="cell">Role</div>
+                        </th>
+                        <th colspan="1" rowspan="1" class="el-table_1_column_4  is-center   is-leaf">
+                          <div class="cell">Datasets</div>
+                        </th>
+                        <th colspan="1" rowspan="1" class="el-table_1_column_5     is-leaf">
+                          <div class="cell"></div>
+                        </th>
+                      </tr>
+                    </thead>
+                  </table>
+                </div>
+                <div class="el-table__body-wrapper is-scrolling-left">
+                  <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 850px;">
+                    <colgroup>
+                      <col name="el-table_1_column_1" width="200">
+                      <col name="el-table_1_column_2" width="200">
+                      <col name="el-table_1_column_3" width="160">
+                      <col name="el-table_1_column_4" width="90">
+                      <col name="el-table_1_column_5" width="200">
+                    </colgroup>
+                    <tbody>
+                      <tr class="el-table__row">
+                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                          <div class="cell">
+                            me
+                          </div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                          <div class="cell">
+                            my-email@example.com
+                          </div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                          <div class="cell"><a href="#" title="Change role">
+                              Project manager
+                            </a></div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">
+                              123
+                            </a></div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                          <div class="cell">
+                            <!---->
+                            <!---->
+                            <!---->
+                            <!---->
+                          </div>
+                        </td>
+                      </tr>
+                      <tr class="el-table__row">
+                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                          <div class="cell">
+                            Project member
+                          </div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                          <div class="cell">
+                            person@embl.de
+                          </div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                          <div class="cell"><a href="#" title="Change role">
+                              Member
+                            </a></div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">
+                              1
+                            </a></div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                          <div class="cell"><button type="button" class="el-button grid-button el-button--default el-button--mini">
+                              <!---->
+                              <!----><span>
+          Remove
+        </span></button>
+                            <!---->
+                            <!---->
+                            <!---->
+                          </div>
+                        </td>
+                      </tr>
+                      <tr class="el-table__row">
+                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                          <div class="cell">
+                            Person who asked to join
+                          </div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                          <div class="cell">
+                            access@requestor.com
+                          </div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                          <div class="cell"><span>
+          Requesting access
+        </span></div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">
+                              0
+                            </a></div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                          <div class="cell">
+                            <!---->
+                            <!----> <button type="button" class="el-button grid-button el-button--success el-button--mini">
+                              <!---->
+                              <!----><span>
+          Accept
+        </span></button> <button type="button" class="el-button grid-button el-button--default el-button--mini">
+                              <!---->
+                              <!----><span>
+          Decline
+        </span></button></div>
+                        </td>
+                      </tr>
+                      <tr class="el-table__row">
+                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                          <div class="cell">
+                            Invitee
+                          </div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                          <div class="cell">
+                            awaiting@response.com
+                          </div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                          <div class="cell"><span>
+          Invited
+        </span></div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                          <div class="cell"><a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">
+                              0
+                            </a></div>
+                        </td>
+                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                          <div class="cell">
+                            <!----> <button type="button" class="el-button grid-button el-button--default el-button--mini">
+                              <!---->
+                              <!----><span>
+          Cancel
+        </span></button>
+                            <!---->
+                            <!---->
+                          </div>
+                        </td>
+                      </tr>
+                      <!---->
+                    </tbody>
+                  </table>
+                  <!---->
+                  <!---->
+                </div>
+                <!---->
+                <!---->
+                <!---->
+                <!---->
+                <div class="el-table__column-resize-proxy" style="display: none;"></div>
+              </div>
+              <div class="pagination-row">
+                <!---->
+                <div class="flex-spacer"></div> <button type="button" class="el-button el-button--default">
+                  <!---->
+                  <!----><span>
+      Add member
+    </span></button>
+              </div>
+            </div>
+            <!---->
+          </div>
+        </div>
+        <!---->
+        <!---->
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;
+
+exports[`ViewProjectPage members tab should match snapshot (member) 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <transition-stub name="dialog-fade">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons">
+        <!---->
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
+          Members (2)
+          <span class="notification"></span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <!---->
+        <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
+          <div style="max-width: 950px;">
+            <projectmemberslist-stub currentuser="[object Object]" project="[object Object]" members="[object Object],[object Object],[object Object],[object Object]" refreshdata="function () { [native code] }"></projectmemberslist-stub>
+            <!---->
+          </div>
+        </div>
+        <!---->
+        <!---->
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;
+
+exports[`ViewProjectPage members tab should match snapshot (non-member) 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <transition-stub name="dialog-fade">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons"><button type="button" class="el-button el-button--primary">
+          <!---->
+          <!----><span>
+          Request access
+        </span></button>
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
+          Members (2)
+          <!----></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <!---->
+        <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
+          <div style="max-width: 950px;">
+            <projectmemberslist-stub currentuser="[object Object]" project="[object Object]" members="[object Object]" refreshdata="function () { [native code] }"></projectmemberslist-stub>
+            <p class="hidden-members-text">
+              + 1 hidden member.
+            </p>
+          </div>
+        </div>
+        <!---->
+        <!---->
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;
+
+exports[`ViewProjectPage publishing tab should match snapshot (published) 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <transition-stub name="dialog-fade">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons">
+        <!---->
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-about" aria-controls="pane-about" role="tab" tabindex="-1" class="el-tabs__item is-top">About</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
+          Members (2)
+          <!----></span></div>
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
+            Publishing
+          </span></div>
+              <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <!---->
+        <!---->
+        <div role="tabpanel" id="pane-publishing" aria-labelledby="tab-publishing" class="el-tab-pane tab-with-badge sm-publishing-tab">
+          <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+            <div class="leading-6 text-center mt-12"><i class="flex rounded-full p-2 bg-blue-100 w-8 h-8 mx-auto"><svg data-icon="icon-globe"></svg></i>
+              <h2 class="leading-12 m-0">Project is published</h2>
+              <p class="m-0">The project and its datasets are now public.<br>Thank you for your contribution.</p>
+            </div>
+          </transition-stub>
+        </div>
+        <!---->
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;
+
+exports[`ViewProjectPage publishing tab should match snapshot (under review) 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <transition-stub name="dialog-fade">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons">
+        <!---->
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-about" aria-controls="pane-about" role="tab" tabindex="-1" class="el-tabs__item is-top">About</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
+          Members (2)
+          <!----></span></div>
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
+            Publishing
+          </span></div>
+              <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <!---->
+        <!---->
+        <div role="tabpanel" id="pane-publishing" aria-labelledby="tab-publishing" class="el-tab-pane tab-with-badge sm-publishing-tab">
+          <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+            <ol class="sm-workflow leading-6 m-0 p-0 sm-scientific-publishing">
+              <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 done border-blue-200">
+                <h2 class="sm-workflow-header">Update project details</h2>
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+                  <form action="#"><label><span class="font-medium text-primary">Reference the project in the manuscript using this link:</span>
+                      <div class="el-input el-input-group el-input-group--append py-1">
+                        <!----><input type="text" readonly="readonly" autocomplete="off" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <div class="el-input-group__append">
+                          <mock-el-tooltip manual="true" content="Copied!" placement="right"><button type="button" class="el-button el-button--default" title="Copy to clipboard">
+                              <!----><i class="el-icon-document-copy"></i>
+                              <!----></button></mock-el-tooltip>
+                        </div>
+                        <!---->
+                      </div></label><button type="button" class="el-button el-button--default">
+                      <!---->
+                      <!----><span>Edit details</span></button></form>
+                </transition-stub>
+              </li>
+              <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 done border-blue-200">
+                <h2 class="sm-workflow-header">Create link for reviewers</h2>
+                <form>
+                  <p class="pb-3"><em>Review links are temporary and will not work after the project is published.</em></p><label><span class="font-medium text-primary">Reviewers can access the project using this link:</span>
+                    <div class="el-input el-input-group el-input-group--append py-1">
+                      <!----><input type="text" readonly="readonly" autocomplete="off" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <div class="el-input-group__append">
+                        <mock-el-tooltip manual="true" content="Copied!" placement="right"><button type="button" class="el-button el-button--default" title="Copy to clipboard">
+                            <!----><i class="el-icon-document-copy"></i>
+                            <!----></button></mock-el-tooltip>
+                      </div>
+                      <!---->
+                    </div></label><button type="button" class="el-button el-button--default">
+                    <!---->
+                    <!----><span>Remove link</span></button>
+                </form>
+              </li>
+              <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 active">
+                <h2 class="sm-workflow-header">Publish the data</h2>
+                <form action="#">
+                  <p class="italic">Complete this step after the DOI for your paper has been issued.<br>You will receive a reminder by email.</p>
+                  <div><label for="scientific-publishing-doi"><span class="text-base font-medium">Publication DOI</span><span class="block text-sm text-gray-800">Should link to the published paper</span></label>
+                    <div class="el-input el-input-group el-input-group--append el-input-group--prepend">
+                      <div class="el-input-group__prepend"><span>https://doi.org/</span></div><input type="text" autocomplete="off" id="scientific-publishing-doi" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <div class="el-input-group__append"><span><a target="_blank" rel="noopener" class="text-inherit">Test link</a></span></div>
+                      <!---->
+                    </div>
+                  </div><button type="button" class="el-button el-button--primary">
+                    <!---->
+                    <!----><span>Publish project</span></button>
+                </form>
+              </li>
+            </ol>
+          </transition-stub>
+        </div>
+        <!---->
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;
+
+exports[`ViewProjectPage publishing tab should match snapshot (unpublished) 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <transition-stub name="dialog-fade">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons">
+        <!---->
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-about" aria-controls="pane-about" role="tab" tabindex="-1" class="el-tabs__item is-top">About</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
+          Members (2)
+          <!----></span></div>
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
+            Publishing
+          </span></div>
+              <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <!---->
+        <!---->
+        <div role="tabpanel" id="pane-publishing" aria-labelledby="tab-publishing" class="el-tab-pane tab-with-badge sm-publishing-tab">
+          <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+            <ol class="sm-workflow leading-6 m-0 p-0 sm-scientific-publishing">
+              <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 active">
+                <h2 class="sm-workflow-header">Update project details</h2>
+                <transition-stub mode="out-in" enterclass="opacity-0" leavetoclass="opacity-0" enteractiveclass="duration-150 transition-opacity ease-in-out" leaveactiveclass="duration-150 transition-opacity ease-in-out">
+                  <form action="#">
+                    <p>Create a short project link to use in the manuscript. We also suggest updating the project title and adding an abstract to the project description.</p>
+                    <div><label for="publishing-project-link"><span class="text-base font-medium">Link to be used in the manuscript</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
+                      <div class="el-input el-input-group el-input-group--prepend">
+                        <div class="el-input-group__prepend"><span>http://localhost/project/</span></div><input type="text" autocomplete="off" id="publishing-project-link" maxlength="50" minlength="4" pattern="[a-zA-Z0-9_-]+" title="min. 4 characters, a–z, 0–9, hyphen or underscore" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <!---->
+                        <!---->
+                      </div>
+                    </div>
+                    <div><label for="project-review-title"><span class="text-base font-medium">Project title</span><span class="block text-sm text-gray-800">Suggested format: Author et al. (year) title</span></label>
+                      <div class="el-input">
+                        <!----><input type="text" autocomplete="off" id="project-review-title" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <!---->
+                        <!---->
+                      </div>
+                    </div>
+                    <div class="sm-RichText sm-RichTextArea relative"><label><span class="text-base font-medium">Abstract</span><span class="block text-sm text-gray-800">Copy and paste here, will be displayed in the About section</span></label>
+                      <div class="h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary mt-1">
+                        <div contenteditable="true" tabindex="0" class="ProseMirror">
+                          <p><br></p>
+                        </div>
+                      </div>
+                      <div class="absolute bg-white rounded p-1 border border-solid border-gray-100 shadow mb-2 transform -translate-x-1/2 transition-fade ease-in-out duration-150 invisible opacity-0" style="left: 0px; bottom: 0px;"><span class="flex items-start justify-center"><button title="Bold (Ctrl+B)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H8c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h5.78c2.07 0 3.96-1.69 3.97-3.77.01-1.53-.85-2.84-2.15-3.44zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"></path></svg></button><button title="Italic (Ctrl+I)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M10 5.5c0 .83.67 1.5 1.5 1.5h.71l-3.42 8H7.5c-.83 0-1.5.67-1.5 1.5S6.67 18 7.5 18h5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-.71l3.42-8h1.29c.83 0 1.5-.67 1.5-1.5S17.33 4 16.5 4h-5c-.83 0-1.5.67-1.5 1.5z"></path></svg></button><button title="Underline (Ctrl+U)" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M12.79 16.95c3.03-.39 5.21-3.11 5.21-6.16V4.25C18 3.56 17.44 3 16.75 3s-1.25.56-1.25 1.25v6.65c0 1.67-1.13 3.19-2.77 3.52-2.25.47-4.23-1.25-4.23-3.42V4.25C8.5 3.56 7.94 3 7.25 3S6 3.56 6 4.25V11c0 3.57 3.13 6.42 6.79 5.95zM5 20c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1z"></path></svg></button><button title="Title" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M5 5.5C5 6.33 5.67 7 6.5 7h4v10.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V7h4c.83 0 1.5-.67 1.5-1.5S18.33 4 17.5 4h-11C5.67 4 5 4.67 5 5.5z"></path></svg></button><button title="Bullet list" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" class="fill-current"><path d="M0 0h24v24H0V0z" fill="none"></path><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM8 19h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zm0-6h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1s.45 1 1 1zM7 6c0 .55.45 1 1 1h12c.55 0 1-.45 1-1s-.45-1-1-1H8c-.55 0-1 .45-1 1z"></path></svg></button><button title="Subscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold tracking-wider">H<sub class="text-xs leading-none">2</sub></span></button><button title="Superscript" class="button-reset mr-1 last:mr-0 h-8 w-8 inline-flex items-center justify-center rounded-sm text-gray-600 hover:bg-gray-100 focus:bg-gray-100"><span class="text-lg font-bold">x<sup class="text-xs leading-none">2</sup></span></button></span></div>
+                      <p title="Highlight a word or phrase for formatting options" class="sm-RichTextArea-description cursor-help">Rich Text</p>
+                    </div><button class="el-button el-button--primary"><span>Update</span></button>
+                  </form>
+                </transition-stub>
+              </li>
+              <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300">
+                <h2 class="sm-workflow-header">Create link for reviewers</h2>
+                <p>A review link allows reviewers to access this project and its datasets without making the project available to everyone.</p>
+              </li>
+              <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300">
+                <h2 class="sm-workflow-header">Publish the data</h2>
+                <p>This project and its datasets will be made public.</p>
+              </li>
+            </ol>
+          </transition-stub>
+        </div>
+        <!---->
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;
+
+exports[`ViewProjectPage settings tab should disable actions when published 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <transition-stub name="dialog-fade">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons">
+        <!---->
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-about" aria-controls="pane-about" role="tab" tabindex="-1" class="el-tabs__item is-top">About</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
+          Members (2)
+          <!----></span></div>
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
+            Publishing
+          <transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div></span></div>
+              <div id="tab-settings" aria-controls="pane-settings" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+        <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
+          <div class="project-settings max-w-measure-3 mx-auto leading-6">
+            <div class="mt-6 mb-12">
+              <form action="#">
+                <h2>Project Details</h2>
+                <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
+                  <div><label><span class="text-base font-medium">Title</span>
+                      <div class="el-form-item is-required">
+                        <!---->
+                        <div class="el-form-item__content">
+                          <div class="py-1 el-input">
+                            <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
+                            <!---->
+                            <!---->
+                            <!---->
+                            <!---->
+                          </div>
+                          <transition-stub name="el-zoom-in-top">
+                            <!---->
+                          </transition-stub>
+                        </div>
+                      </div></label>
+                    <div class="hidden el-input">
+                      <!----><input type="text" autocomplete="off" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                  </div>
+                  <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+                    <div class="h-10 flex items-center">
+                      <div role="switch" aria-disabled="true" class="el-switch is-disabled"><input type="checkbox" name="" true-value="true" disabled="disabled" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
+                    </div>
+                    <p class="m-0 italic text-sm text-gray-700">
+                      published projects are always visible
+                    </p>
+                  </div>
+                </form>
+                <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
+                  <div class="el-input is-disabled el-input-group el-input-group--prepend">
+                    <div class="el-input-group__prepend"><span>http://localhost/project/</span></div><input type="text" disabled="disabled" autocomplete="off" id="project-settings-short-link" maxlength="50" minlength="4" pattern="[a-zA-Z0-9_-]+" title="min. 4 characters, a–z, 0–9, hyphen or underscore" class="el-input__inner">
+                    <!---->
+                    <!---->
+                    <!---->
+                    <!---->
+                  </div>
+                </div>
+                <div class="mt-6"><label for="project-settings-doi"><span class="text-base font-medium">Publication DOI</span><span class="block text-sm text-gray-800">Should link to the published paper</span></label>
+                  <div class="el-input el-input-group el-input-group--append el-input-group--prepend">
+                    <div class="el-input-group__prepend"><span>https://doi.org/</span></div><input type="text" autocomplete="off" id="project-settings-doi" class="el-input__inner">
+                    <!---->
+                    <!---->
+                    <div class="el-input-group__append"><span><a target="_blank" rel="noopener" class="text-inherit">Test link</a></span></div>
+                    <!---->
+                  </div>
+                </div> <button class="el-button el-button--primary mt-5">
+                  <!----> <span>
+          Update details
+        </span></button>
+              </form>
+              <div class="mt-12">
+                <h2>Delete project</h2>
+                <p><em>Published projects cannot be deleted.</em></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;
+
+exports[`ViewProjectPage settings tab should disable actions when under review 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <transition-stub name="dialog-fade">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons">
+        <!---->
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-about" aria-controls="pane-about" role="tab" tabindex="-1" class="el-tabs__item is-top">About</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
+          Members (2)
+          <!----></span></div>
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
+            Publishing
+          <transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div></span></div>
+              <div id="tab-settings" aria-controls="pane-settings" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+        <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
+          <div class="project-settings max-w-measure-3 mx-auto leading-6">
+            <div class="mt-6 mb-12">
+              <form action="#">
+                <h2>Project Details</h2>
+                <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
+                  <div><label><span class="text-base font-medium">Title</span>
+                      <div class="el-form-item is-required">
+                        <!---->
+                        <div class="el-form-item__content">
+                          <div class="py-1 el-input">
+                            <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
+                            <!---->
+                            <!---->
+                            <!---->
+                            <!---->
+                          </div>
+                          <transition-stub name="el-zoom-in-top">
+                            <!---->
+                          </transition-stub>
+                        </div>
+                      </div></label>
+                    <div class="hidden el-input">
+                      <!----><input type="text" autocomplete="off" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                  </div>
+                  <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+                    <div class="h-10 flex items-center">
+                      <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
+                    </div>
+                    <!---->
+                  </div>
+                </form>
+                <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
+                  <div class="el-input el-input-group el-input-group--prepend">
+                    <div class="el-input-group__prepend"><span>http://localhost/project/</span></div><input type="text" autocomplete="off" id="project-settings-short-link" maxlength="50" minlength="4" pattern="[a-zA-Z0-9_-]+" title="min. 4 characters, a–z, 0–9, hyphen or underscore" class="el-input__inner">
+                    <!---->
+                    <!---->
+                    <!---->
+                    <!---->
+                  </div>
+                </div>
+                <!----> <button class="el-button el-button--primary mt-5">
+                  <!----> <span>
+          Update details
+        </span></button>
+              </form>
+              <div class="mt-12">
+                <h2>Delete project</h2>
+                <p><em>This project is under review.</em> <br>
+                  To delete the project, remove the review link on the <a href="/project/00000000-1111-2222-3333-444444444444?tab=publishing" class="router-link-active">
+                    Publishing tab</a>.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;
+
+exports[`ViewProjectPage settings tab should match snapshot 1`] = `
+<div class="page" mock-v-loading="false">
+  <div class="page-content">
+    <transition-stub name="dialog-fade">
+      <div class="el-dialog__wrapper" style="display: none;">
+        <div role="dialog" aria-modal="true" aria-label="Add or remove datasets in this project" class="el-dialog project-datasets-dialog" style="margin-top: 15vh;">
+          <div class="el-dialog__header"><span class="el-dialog__title">Add or remove datasets in this project</span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
+          <!---->
+          <!---->
+        </div>
+      </div>
+    </transition-stub>
+    <div class="header-row">
+      <div class="header-names">
+        <h1 class="py-1 leading-tight">
+          project name
+        </h1>
+        <!---->
+      </div>
+      <div class="header-buttons">
+        <!---->
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+    <div class="with-badges el-tabs el-tabs--top">
+      <div class="el-tabs__header is-top">
+        <div class="el-tabs__nav-wrap is-top">
+          <div class="el-tabs__nav-scroll">
+            <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
+              <div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(NaNpx); webkit-transform: translateX(NaNpx);"></div>
+              <div id="tab-about" aria-controls="pane-about" role="tab" tabindex="-1" class="el-tabs__item is-top">About</div>
+              <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
+              <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
+          Members (2)
+          <!----></span></div>
+              <div id="tab-publishing" aria-controls="pane-publishing" role="tab" tabindex="-1" class="el-tabs__item is-top"><span><div class="el-badge sm-feature-badge">
+            Publishing
+          <transition-stub name="el-zoom-in-center"><sup class="el-badge__content el-badge__content--undefined is-fixed">New</sup></transition-stub></div></span></div>
+              <div id="tab-settings" aria-controls="pane-settings" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Settings</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="el-tabs__content">
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+        <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
+          <div class="project-settings max-w-measure-3 mx-auto leading-6">
+            <div class="mt-6 mb-12">
+              <form action="#">
+                <h2>Project Details</h2>
+                <form class="el-form leading-6 mt-3 mb-6 v-rhythm-6 el-form--label-top">
+                  <div><label><span class="text-base font-medium">Title</span>
+                      <div class="el-form-item is-required">
+                        <!---->
+                        <div class="el-form-item__content">
+                          <div class="py-1 el-input">
+                            <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
+                            <!---->
+                            <!---->
+                            <!---->
+                            <!---->
+                          </div>
+                          <transition-stub name="el-zoom-in-top">
+                            <!---->
+                          </transition-stub>
+                        </div>
+                      </div></label>
+                    <div class="hidden el-input">
+                      <!----><input type="text" autocomplete="off" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                  </div>
+                  <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+                    <div class="h-10 flex items-center">
+                      <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
+                    </div>
+                    <!---->
+                  </div>
+                </form>
+                <div><label for="project-settings-short-link"><span class="text-base font-medium">Short link</span><span class="block text-sm text-gray-800">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span></label>
+                  <div class="el-input el-input-group el-input-group--prepend">
+                    <div class="el-input-group__prepend"><span>http://localhost/project/</span></div><input type="text" autocomplete="off" id="project-settings-short-link" maxlength="50" minlength="4" pattern="[a-zA-Z0-9_-]+" title="min. 4 characters, a–z, 0–9, hyphen or underscore" class="el-input__inner">
+                    <!---->
+                    <!---->
+                    <!---->
+                    <!---->
+                  </div>
+                </div>
+                <!----> <button class="el-button el-button--primary mt-5">
+                  <!----> <span>
+          Update details
+        </span></button>
+              </form>
+              <div class="mt-12">
+                <h2>Delete project</h2>
+                <div>
+                  <p>
+                    Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
+                  </p> <button type="button" class="el-button mt-5 el-button--danger">
+                    <!---->
+                    <!----><span>
+          Delete project
+        </span></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!---->
+</div>
+`;

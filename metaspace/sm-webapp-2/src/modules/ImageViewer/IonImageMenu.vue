@@ -70,17 +70,17 @@ export default defineComponent({
 })
 </script>
 <style scoped>
-.sm-menu-items :deep(> *) {
+.sm-menu-items > :deep(*) {
   @apply box-border border-0 border-t border-solid border-gray-200;
 }
-.sm-menu-items :deep(> *:last-child) {
+.sm-menu-items > :deep(*:last-child) {
   @apply border-b;
 }
-.sm-menu-items :deep(> .focus-visible) {
+.sm-menu-items > :deep(.focus-visible) {
   outline: 2px solid theme('colors.primary');
   outline-offset: -2px;
 }
-.sm-menu-items :deep(> *:hover) {
+.sm-menu-items > :deep(*:hover) {
   outline: 1px solid theme('colors.primary');
   outline-offset: -1px;
 }

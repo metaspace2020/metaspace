@@ -1,0 +1,620 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ProjectsListPage should change actions for projects under review 1`] = `
+<div class="page">
+  <mock-el-dialog append-to-body="" title="Create project" class="dialog">
+    <div mock-v-loading="0">
+      <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
+        <div><label><span class="text-base font-medium">Title</span>
+            <div class="el-form-item is-required">
+              <!---->
+              <div class="el-form-item__content">
+                <div class="py-1 el-input">
+                  <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
+                  <!---->
+                  <!---->
+                  <!---->
+                  <!---->
+                </div>
+                <transition-stub name="el-zoom-in-top">
+                  <!---->
+                </transition-stub>
+              </div>
+            </div></label>
+          <div class="hidden el-input">
+            <!----><input type="text" autocomplete="off" class="el-input__inner">
+            <!---->
+            <!---->
+            <!---->
+            <!---->
+          </div>
+        </div>
+        <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+          <div class="h-10 flex items-center">
+            <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
+          </div>
+          <!---->
+        </div>
+      </form>
+      <div class="mt-6">
+        <h4 class="m-0">
+          Would you like to include previously submitted datasets?
+        </h4>
+        <div>
+          <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
+          <div class="dataset-checkbox-list leading-6">
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
+          allDatasets.0.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
+                <!----></span></label></div>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
+          allDatasets.1.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
+                <!----></span></label></div>
+          </div>
+        </div>
+      </div>
+      <div class="button-bar"><button type="button" class="el-button el-button--default">
+          <!---->
+          <!----><span>
+        Cancel
+      </span></button> <button autofocus="autofocus" type="button" class="el-button el-button--primary">
+          <!---->
+          <!----><span>
+        Create project
+      </span></button></div>
+    </div>
+  </mock-el-dialog>
+  <div class="page-content">
+    <div class="flex flex-row items-center justify-end flex-1 w-full py-4"><button type="button" class="el-button el-button--primary el-button--small">
+        <!---->
+        <!----><span>
+        Create project
+      </span></button></div>
+    <div class="header-row">
+      <div class="filter-panel">
+        <!---->
+        <mock-el-select class="filter-select" data-test-key="simpleFilter" filter-key="simpleFilter">
+          <mock-el-option label="All projects"></mock-el-option>
+          <mock-el-option value="my-projects" label="My projects"></mock-el-option>
+        </mock-el-select>
+        <div class="tf-outer w-auto el-input el-input-group el-input-group--prepend" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
+          <div class="el-input-group__prepend">
+            <div>
+              <mock-el-tooltip placement="bottom">
+                <div slot-key="content"><span>
+        You can use
+        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" target="_blank">regular expression syntax</a> when searching for the dataset name.
+      </span></div>
+                <div slot-key="default"> <i class="el-icon-search -mx-1"></i></div>
+              </mock-el-tooltip>
+            </div>
+          </div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
+          <!---->
+          <!---->
+          <!---->
+          <!---->
+        </div>
+      </div>
+      <div class="flex flex-row items-center justify-end flex-1">
+        <div class="pb-2 flex flex-row sort-dp-container">
+          <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
+            <mock-el-option label="Project size" value="ORDER_BY_POPULARITY"></mock-el-option>
+            <mock-el-option label="Creation date" value="ORDER_BY_DATE"></mock-el-option>
+            <mock-el-option label="Publication date" value="ORDER_BY_UP_DATE"></mock-el-option>
+            <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
+            <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
+            <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
+            <mock-el-option label="Number of members" value="ORDER_BY_MEMBERS_COUNT"></mock-el-option>
+          </mock-el-select>
+          <div class="el-input-group__append sort-dp-btn">
+            <mock-el-tooltip content="Sorting order" placement="right"><button type="button" class="el-button el-button--default cursor-not-allowed">
+                <!----><i class="el-icon-sort"></i>
+                <!----></button></mock-el-tooltip>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="" mock-v-loading="true" class="clearfix"></div>
+    <div style="min-height: 100px;" mock-v-loading="false">
+      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
+        <div class="item-body">
+          <div class="info">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+                project one
+              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i>
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
+            </div>
+            <div>
+              <div class="info-line">
+                <!---->
+                1 member
+              </div>
+              <div class="info-line">
+                Managed by
+                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.0.members.0.user.primaryGroup.group.id" class="">
+                  allProjects.0.members.0.user.primaryGroup.group.shortName</a>
+                <!----></span></div>
+              <div class="info-line"><span>
+            Under review
+          </span></div>
+              <!---->
+            </div>
+          </div>
+          <div class="actions">
+            <!---->
+            <div><i class="el-icon-edit"></i> <a href="/project/proj-one?tab=settings" class="">
+                Manage project
+              </a></div>
+            <!---->
+          </div>
+        </div>
+      </div>
+      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
+        <div class="item-body">
+          <div class="info">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+                project two
+              </a>
+              <!---->
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
+            </div>
+            <div>
+              <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 datasets</span></a>,
+                </span>
+                20 members
+              </div>
+              <div class="info-line">
+                Managed by
+                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.1.members.0.user.primaryGroup.group.id" class="">
+                  allProjects.1.members.0.user.primaryGroup.group.shortName</a>
+                <!----></span></div>
+              <div class="info-line"><span>
+            Last submission <mock-elapsed-time date="2018-08-01T09:00:00.000"></mock-elapsed-time></span></div>
+              <!---->
+            </div>
+          </div>
+          <div class="actions">
+            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
+                Browse annotations
+              </a></div>
+            <!---->
+            <!---->
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align: center;">
+      <mock-el-pagination total="69" page-size="10" current-page="1" layout="prev,pager,next"></mock-el-pagination>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ProjectsListPage should change actions for published projects 1`] = `
+<div class="page">
+  <mock-el-dialog append-to-body="" title="Create project" class="dialog">
+    <div mock-v-loading="0">
+      <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
+        <div><label><span class="text-base font-medium">Title</span>
+            <div class="el-form-item is-required">
+              <!---->
+              <div class="el-form-item__content">
+                <div class="py-1 el-input">
+                  <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
+                  <!---->
+                  <!---->
+                  <!---->
+                  <!---->
+                </div>
+                <transition-stub name="el-zoom-in-top">
+                  <!---->
+                </transition-stub>
+              </div>
+            </div></label>
+          <div class="hidden el-input">
+            <!----><input type="text" autocomplete="off" class="el-input__inner">
+            <!---->
+            <!---->
+            <!---->
+            <!---->
+          </div>
+        </div>
+        <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+          <div class="h-10 flex items-center">
+            <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
+          </div>
+          <!---->
+        </div>
+      </form>
+      <div class="mt-6">
+        <h4 class="m-0">
+          Would you like to include previously submitted datasets?
+        </h4>
+        <div>
+          <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
+          <div class="dataset-checkbox-list leading-6">
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
+          allDatasets.0.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
+                <!----></span></label></div>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
+          allDatasets.1.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
+                <!----></span></label></div>
+          </div>
+        </div>
+      </div>
+      <div class="button-bar"><button type="button" class="el-button el-button--default">
+          <!---->
+          <!----><span>
+        Cancel
+      </span></button> <button autofocus="autofocus" type="button" class="el-button el-button--primary">
+          <!---->
+          <!----><span>
+        Create project
+      </span></button></div>
+    </div>
+  </mock-el-dialog>
+  <div class="page-content">
+    <div class="flex flex-row items-center justify-end flex-1 w-full py-4"><button type="button" class="el-button el-button--primary el-button--small">
+        <!---->
+        <!----><span>
+        Create project
+      </span></button></div>
+    <div class="header-row">
+      <div class="filter-panel">
+        <!---->
+        <mock-el-select class="filter-select" data-test-key="simpleFilter" filter-key="simpleFilter">
+          <mock-el-option label="All projects"></mock-el-option>
+          <mock-el-option value="my-projects" label="My projects"></mock-el-option>
+        </mock-el-select>
+        <div class="tf-outer w-auto el-input el-input-group el-input-group--prepend" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
+          <div class="el-input-group__prepend">
+            <div>
+              <mock-el-tooltip placement="bottom">
+                <div slot-key="content"><span>
+        You can use
+        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" target="_blank">regular expression syntax</a> when searching for the dataset name.
+      </span></div>
+                <div slot-key="default"> <i class="el-icon-search -mx-1"></i></div>
+              </mock-el-tooltip>
+            </div>
+          </div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
+          <!---->
+          <!---->
+          <!---->
+          <!---->
+        </div>
+      </div>
+      <div class="flex flex-row items-center justify-end flex-1">
+        <div class="pb-2 flex flex-row sort-dp-container">
+          <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
+            <mock-el-option label="Project size" value="ORDER_BY_POPULARITY"></mock-el-option>
+            <mock-el-option label="Creation date" value="ORDER_BY_DATE"></mock-el-option>
+            <mock-el-option label="Publication date" value="ORDER_BY_UP_DATE"></mock-el-option>
+            <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
+            <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
+            <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
+            <mock-el-option label="Number of members" value="ORDER_BY_MEMBERS_COUNT"></mock-el-option>
+          </mock-el-select>
+          <div class="el-input-group__append sort-dp-btn">
+            <mock-el-tooltip content="Sorting order" placement="right"><button type="button" class="el-button el-button--default cursor-not-allowed">
+                <!----><i class="el-icon-sort"></i>
+                <!----></button></mock-el-tooltip>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="" mock-v-loading="true" class="clearfix"></div>
+    <div style="min-height: 100px;" mock-v-loading="false">
+      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
+        <div class="item-body">
+          <div class="info">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+                project one
+              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i>
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
+            </div>
+            <div>
+              <div class="info-line">
+                <!---->
+                1 member
+              </div>
+              <div class="info-line">
+                Managed by
+                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.0.members.0.user.primaryGroup.group.id" class="">
+                  allProjects.0.members.0.user.primaryGroup.group.shortName</a>
+                <!----></span></div>
+              <div class="info-line"><span>
+            Published <mock-elapsed-time></mock-elapsed-time></span></div>
+              <!---->
+            </div>
+          </div>
+          <div class="actions">
+            <!---->
+            <div><i class="el-icon-edit"></i> <a href="/project/proj-one?tab=settings" class="">
+                Manage project
+              </a></div>
+            <!---->
+          </div>
+        </div>
+      </div>
+      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
+        <div class="item-body">
+          <div class="info">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+                project two
+              </a>
+              <!---->
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
+            </div>
+            <div>
+              <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 datasets</span></a>,
+                </span>
+                20 members
+              </div>
+              <div class="info-line">
+                Managed by
+                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.1.members.0.user.primaryGroup.group.id" class="">
+                  allProjects.1.members.0.user.primaryGroup.group.shortName</a>
+                <!----></span></div>
+              <div class="info-line"><span>
+            Published <mock-elapsed-time></mock-elapsed-time></span></div>
+              <!---->
+            </div>
+          </div>
+          <div class="actions">
+            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
+                Browse annotations
+              </a></div>
+            <!---->
+            <!---->
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align: center;">
+      <mock-el-pagination total="69" page-size="10" current-page="1" layout="prev,pager,next"></mock-el-pagination>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ProjectsListPage should match snapshot 1`] = `
+<div class="page">
+  <mock-el-dialog append-to-body="" title="Create project" class="dialog">
+    <div mock-v-loading="0">
+      <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
+        <div><label><span class="text-base font-medium">Title</span>
+            <div class="el-form-item is-required">
+              <!---->
+              <div class="el-form-item__content">
+                <div class="py-1 el-input">
+                  <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
+                  <!---->
+                  <!---->
+                  <!---->
+                  <!---->
+                </div>
+                <transition-stub name="el-zoom-in-top">
+                  <!---->
+                </transition-stub>
+              </div>
+            </div></label>
+          <div class="hidden el-input">
+            <!----><input type="text" autocomplete="off" class="el-input__inner">
+            <!---->
+            <!---->
+            <!---->
+            <!---->
+          </div>
+        </div>
+        <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
+        Visibility of the project only, does not apply to included datasets
+      </span></label>
+          <div class="h-10 flex items-center">
+            <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
+          </div>
+          <!---->
+        </div>
+      </form>
+      <div class="mt-6">
+        <h4 class="m-0">
+          Would you like to include previously submitted datasets?
+        </h4>
+        <div>
+          <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
+          <div class="dataset-checkbox-list leading-6">
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
+          allDatasets.0.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
+                <!----></span></label></div>
+            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
+          allDatasets.1.name
+        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
+                <!----></span></label></div>
+          </div>
+        </div>
+      </div>
+      <div class="button-bar"><button type="button" class="el-button el-button--default">
+          <!---->
+          <!----><span>
+        Cancel
+      </span></button> <button autofocus="autofocus" type="button" class="el-button el-button--primary">
+          <!---->
+          <!----><span>
+        Create project
+      </span></button></div>
+    </div>
+  </mock-el-dialog>
+  <div class="page-content">
+    <div class="flex flex-row items-center justify-end flex-1 w-full py-4"><button type="button" class="el-button el-button--primary el-button--small">
+        <!---->
+        <!----><span>
+        Create project
+      </span></button></div>
+    <div class="header-row">
+      <div class="filter-panel">
+        <!---->
+        <mock-el-select class="filter-select" data-test-key="simpleFilter" filter-key="simpleFilter">
+          <mock-el-option label="All projects"></mock-el-option>
+          <mock-el-option value="my-projects" label="My projects"></mock-el-option>
+        </mock-el-select>
+        <div class="tf-outer w-auto el-input el-input-group el-input-group--prepend" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
+          <div class="el-input-group__prepend">
+            <div>
+              <mock-el-tooltip placement="bottom">
+                <div slot-key="content"><span>
+        You can use
+        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" target="_blank">regular expression syntax</a> when searching for the dataset name.
+      </span></div>
+                <div slot-key="default"> <i class="el-icon-search -mx-1"></i></div>
+              </mock-el-tooltip>
+            </div>
+          </div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
+          <!---->
+          <!---->
+          <!---->
+          <!---->
+        </div>
+      </div>
+      <div class="flex flex-row items-center justify-end flex-1">
+        <div class="pb-2 flex flex-row sort-dp-container">
+          <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
+            <mock-el-option label="Project size" value="ORDER_BY_POPULARITY"></mock-el-option>
+            <mock-el-option label="Creation date" value="ORDER_BY_DATE"></mock-el-option>
+            <mock-el-option label="Publication date" value="ORDER_BY_UP_DATE"></mock-el-option>
+            <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
+            <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
+            <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
+            <mock-el-option label="Number of members" value="ORDER_BY_MEMBERS_COUNT"></mock-el-option>
+          </mock-el-select>
+          <div class="el-input-group__append sort-dp-btn">
+            <mock-el-tooltip content="Sorting order" placement="right"><button type="button" class="el-button el-button--default cursor-not-allowed">
+                <!----><i class="el-icon-sort"></i>
+                <!----></button></mock-el-tooltip>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="" mock-v-loading="true" class="clearfix"></div>
+    <div style="min-height: 100px;" mock-v-loading="false">
+      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
+        <div class="item-body">
+          <div class="info">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+                project one
+              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i>
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
+            </div>
+            <div>
+              <div class="info-line">
+                <!---->
+                1 member
+              </div>
+              <div class="info-line">
+                Managed by
+                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.0.members.0.user.primaryGroup.group.id" class="">
+                  allProjects.0.members.0.user.primaryGroup.group.shortName</a>
+                <!----></span></div>
+              <div class="info-line"><span>
+            Created <mock-elapsed-time date="2018-08-29T05:00:00.000"></mock-elapsed-time></span></div>
+              <!---->
+            </div>
+          </div>
+          <div class="actions">
+            <!---->
+            <div><i class="el-icon-edit"></i> <a href="/project/proj-one?tab=settings" class="">
+                Manage project
+              </a></div>
+            <div><i class="el-icon-delete"></i> <a href="#" class="text-danger">Delete project</a></div>
+          </div>
+        </div>
+      </div>
+      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
+        <div class="item-body">
+          <div class="info">
+            <div class="info-line project-name pr-5 flex items-start"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
+                project two
+              </a>
+              <!---->
+              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
+                <div slot-key="default">
+                  <p class="leading-none m-0">
+                    Copy project id to clipboard
+                  </p>
+                </div>
+                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
+              </mock-el-popover>
+            </div>
+            <div>
+              <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 datasets</span></a>,
+                </span>
+                20 members
+              </div>
+              <div class="info-line">
+                Managed by
+                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.1.members.0.user.primaryGroup.group.id" class="">
+                  allProjects.1.members.0.user.primaryGroup.group.shortName</a>
+                <!----></span></div>
+              <div class="info-line"><span>
+            Last submission <mock-elapsed-time date="2018-08-01T09:00:00.000"></mock-elapsed-time></span></div>
+              <!---->
+            </div>
+          </div>
+          <div class="actions">
+            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
+                Browse annotations
+              </a></div>
+            <!---->
+            <!---->
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align: center;">
+      <mock-el-pagination total="69" page-size="10" current-page="1" layout="prev,pager,next"></mock-el-pagination>
+    </div>
+  </div>
+</div>
+`;

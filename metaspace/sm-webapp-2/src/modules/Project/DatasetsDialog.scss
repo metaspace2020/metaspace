@@ -1,0 +1,16 @@
+.project-datasets-dialog{
+  .filter-box{
+    @apply flex justify-between items-center;
+    .query-filter{
+      max-width: 200px;
+    }
+  }
+  .el-checkbox__inner {
+    &:after {
+    }
+  }
+}
+
+.ds-dialog-bt-bar{
+  justify-content: space-between !important;
+}

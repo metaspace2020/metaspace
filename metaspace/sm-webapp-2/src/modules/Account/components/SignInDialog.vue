@@ -107,6 +107,7 @@ import { refreshLoginStatus } from '../../../api/graphqlClient';
 import reportError from '../../../lib/reportError';
 import { setSignInReturnUrl } from '../signInReturnUrl';
 import {useStore} from "vuex";
+import {useRoute} from "vue-router";
 
 export default defineComponent({
   components: {
@@ -116,6 +117,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore()
+    const route = useRoute()
     const isSubmitting = ref(false);
     const isInvalid = ref(false);
     const showPreMigrationUserInfo = ref(false);
@@ -165,7 +167,7 @@ export default defineComponent({
     };
 
     const setReturnUrl = () => {
-      setSignInReturnUrl(this.$route)
+      setSignInReturnUrl(route)
     };
 
     const onClose = () => {

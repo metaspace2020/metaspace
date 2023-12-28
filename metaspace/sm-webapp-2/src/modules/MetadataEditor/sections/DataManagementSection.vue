@@ -5,12 +5,12 @@
       @close="hideFindGroupDialog"
       @selectGroup="handleSelectGroup"
     />
-<!--    <create-project-dialog-->
-<!--      :visible="showCreateProjectDialog && currentUser != null"-->
-<!--      :current-user-id="currentUser && currentUser.id"-->
-<!--      @close="hideCreateProjectDialog"-->
-<!--      @create="handleSelectProject"-->
-<!--    />-->
+    <create-project-dialog
+      :visible="showCreateProjectDialog && currentUser != null"
+      :current-user-id="currentUser && currentUser.id"
+      @close="hideCreateProjectDialog"
+      @create="handleSelectProject"
+    />
     <el-row>
       <el-col :span="6">
         <div class="metadata-section__title">
@@ -124,7 +124,7 @@ import {defineComponent, onMounted, ref, watch, computed, inject} from 'vue';
 import {useQuery, DefaultApolloClient} from '@vue/apollo-composable';
 import FormField from '../inputs/FormField.vue';
 import FindGroupDialog from './FindGroupDialog.vue';
-// import CreateProjectDialog from '../../Project/CreateProjectDialog.vue';
+import CreateProjectDialog from '../../Project/CreateProjectDialog.vue';
 import { currentUserRoleQuery, DatasetSubmitterFragment } from '../../../api/user'
 import { GroupListItem, oneGroupQuery, oneProjectQuery } from '../../../api/dataManagement'
 import './FormSection.scss';
@@ -147,7 +147,7 @@ export default defineComponent({
     FormField,
     FindGroupDialog,
     ElRow, ElCol, ElForm, ElCollapseTransition,
-    // CreateProjectDialog,
+    CreateProjectDialog,
   },
   props: {
     value: { type: Object as () => MetaspaceOptions, required: true },

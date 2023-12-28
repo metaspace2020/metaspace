@@ -12,7 +12,11 @@ const asyncPagesFreelyTyped = {
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Datasets/list/DatasetTable.vue'),
   HelpPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/HelpPage.vue'),
+  ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Project/ProjectsListPage.vue'),
   PrivacyPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/PrivacyPage.vue'),
+
+  // These pages use sanitizeHtml, which is big
+  ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ '../modules/Project/ViewProjectPage.vue'),
 
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, Component>
@@ -45,8 +49,18 @@ const router = createRouter({
     { path: '/dataset/:dataset_id/browser', name: 'dataset-browser', component: asyncPages.DatasetTable },
     { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetTable },
     { path: '/upload', component: asyncPages.UploadPage },
-
     { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
+
+
+    { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
+    { // Legacy URL sent in "request access" emails up until Feb 2019
+      path: '/project/:projectIdOrSlug/manage',
+      redirect: { path: '/project/:projectIdOrSlug', query: { tab: 'members' } },
+    },
+    { path: '/projects', component: asyncPages.ProjectsListPage },
+
+
+
     { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
 
 
@@ -63,5 +77,9 @@ const router = createRouter({
     return { top: 0 };
   },
 })
+
+
+const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined)
+export const PROJECT_URL_PREFIX = location.origin + href.replace('REMOVE', '')
 
 export default router

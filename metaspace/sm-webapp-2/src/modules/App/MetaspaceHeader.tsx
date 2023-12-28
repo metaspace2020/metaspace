@@ -176,10 +176,10 @@ export default defineComponent({
     const renderLeftTabs = () => {
       return (
         <>
-          <HeaderLink id="upload-link" class='header-link' to={uploadHref()}>Upload</HeaderLink>,
-          <HeaderLink id="annotations-link" class='header-link' to={annotationsHref()}>Annotations</HeaderLink>,
-          <HeaderLink id="datasets-link" class='header-link' to={datasetsHref()}>Datasets</HeaderLink>,
-          <HeaderLink class='header-link' to="/projects">Projects</HeaderLink>,
+          <HeaderLink id="upload-link" class='header-link' to={uploadHref()}>Upload</HeaderLink>
+          <HeaderLink id="annotations-link" class='header-link' to={annotationsHref()}>Annotations</HeaderLink>
+          <HeaderLink id="datasets-link" class='header-link' to={datasetsHref()}>Datasets</HeaderLink>
+          <HeaderLink class='header-link' to="/projects">Projects</HeaderLink>
           <HeaderLink class='header-link' to="/groups">Groups</HeaderLink>
         </>)
     }
@@ -187,7 +187,7 @@ export default defineComponent({
     const renderRightTabs = () => {
       return (
         <>
-          <HeaderLink class='header-link' to='/detectability'>Detectability</HeaderLink>,
+          <HeaderLink class='header-link' to='/detectability'>Detectability</HeaderLink>
           <HeaderLink class='header-link' to='/help'>Help</HeaderLink>
         </>
         )

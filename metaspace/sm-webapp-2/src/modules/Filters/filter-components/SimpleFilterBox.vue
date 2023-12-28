@@ -29,14 +29,14 @@
 <script lang="ts">
 import { defineComponent, computed } from 'vue';
 import { groupBy } from 'lodash-es';
-// import { FilterKey } from '../filterSpecs'
+import { FilterKey } from '../filterSpecs'
 
-// interface SimpleFilterOption {
-//   value: string;
-//   label: string;
-//   group?: string;
-//   filter?: Partial<Record<FilterKey, any>>; // Ensure FilterKey is imported or defined
-// }
+interface SimpleFilterOption {
+  value: string;
+  label: string;
+  group?: string;
+  filter?: Partial<Record<FilterKey, any>>; // Ensure FilterKey is imported or defined
+}
 
 // interface SimpleFilterGroup {
 //   label: string;
@@ -51,14 +51,14 @@ export default defineComponent({
     name: String,
     value: String,
     options: {
-      type: Array,
+      type: Array as () => SimpleFilterOption[],
       default: () => [] // Providing a default empty array
     }
   },
   setup(props, { emit }) {
-    const ungroupedOptions = computed(() =>
-      props.options!.filter(opt => opt.group == null)
-    );
+    const ungroupedOptions = computed(() => {
+      return props.options.filter(opt => opt.group == null)
+    });
 
     const groupedOptions = computed(() => {
       const optionsWithGroup = props.options!.filter(opt => opt.group != null);
