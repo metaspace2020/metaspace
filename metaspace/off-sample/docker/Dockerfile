@@ -40,7 +40,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         libsm6 libxrender1 libxext6 \
         && \
     wget -O ~/get-pip.py \
-        https://bootstrap.pypa.io/get-pip.py && \
+        https://bootstrap.pypa.io/pip/3.6/get-pip.py && \
     python3.6 ~/get-pip.py && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python && \
@@ -65,13 +65,11 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         enum34 \
         pyyaml \
         typing \
-        scikit-learn \
+        scikit-learn==0.20.3 \
         && \
     $PIP_INSTALL \
-#        torch_nightly -f \
-#        https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html \
         https://download.pytorch.org/whl/cpu/torch-1.0.0-cp36-cp36m-linux_x86_64.whl \
-        torchvision \
+        torchvision==0.2.2 \
         fastai==1.0.48 \
         fastprogress==0.1.20 \
         && \
@@ -90,6 +88,8 @@ RUN apt-get -y update && apt-get install -y locales && locale-gen en_US.UTF-8 &&
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
+
+RUN pip install psutil
 
 WORKDIR /app
 COPY models ./models

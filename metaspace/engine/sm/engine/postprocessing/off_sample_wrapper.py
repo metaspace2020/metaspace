@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from uuid import uuid4
 
 from PIL import Image
 from requests import post, get
@@ -55,19 +56,23 @@ def numpy_to_pil(a):
 
 
 @retry_on_exception(SMError, num_retries=6, retry_wait_params=(10, 10, 5))
-def call_api(url='', doc=None):
+def call_api(url='', batch_id=None, doc=None):
     if doc:
-        resp = post(url=url, json=doc, timeout=120)
+        resp = post(url=url, json=doc, timeout=(120, 120))
     else:
         resp = get(url=url)
     if resp.status_code == 200:
         return resp.json()
+    logger.info(f'call_api exception, batch_id: {batch_id}')
     raise SMError(resp.content or resp)
 
 
 def make_classify_images(api_endpoint, ds_id):
     def classify(chunk):
-        logger.debug(f'Classifying chunk of {len(chunk)} images')
+        batch_id = str(uuid4())
+        logger.info(
+            f'Classifying chunk of {len(chunk)} images. ds_id is {ds_id}, batch_id is {batch_id}'
+        )
 
         base64_images = []
         for img_id in chunk:
@@ -76,7 +81,10 @@ def make_classify_images(api_endpoint, ds_id):
             base64_images.append(img_base64)
 
         images_doc = base64_images_to_doc(base64_images)
-        pred_doc = call_api(api_endpoint + '/predict', doc=images_doc)
+        images_doc['ds_id'] = ds_id
+        images_doc['batch_id'] = batch_id
+        pred_doc = call_api(api_endpoint + '/predict', batch_id=batch_id, doc=images_doc)
+        logger.info(f'Off-sample classification was finish. batch_id is {batch_id}')
         return pred_doc['predictions']
 
     def classify_items(items):
