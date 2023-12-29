@@ -33,6 +33,8 @@ declare module 'vue' {
   export const onMounted: any;
   export const onUpdated: any;
   export const inject: any;
+
+  export type PropType<T> = any;
   export const onBeforeUnmount: any;
   export const onUnmounted: any;
 }

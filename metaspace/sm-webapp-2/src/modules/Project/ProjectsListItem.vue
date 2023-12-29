@@ -13,11 +13,12 @@
           >
             {{ project.name }}
           </router-link>
-          <i
+          <el-icon
             v-if="!project.isPublic"
-            class="el-icon-lock ml-2 text-xl"
-            title="This project is only visible to its members and METASPACE administrators"
-          />
+            class="ml-2 text-xl"
+            title="This project is only visible to its members and METASPACE administrators">
+            <Lock />
+          </el-icon>
           <copy-button
             class="ml-1"
             is-id
@@ -77,20 +78,20 @@
         </div>
       </div>
       <div class="actions">
-        <div v-if="project.numDatasets > 0">
-          <i class="el-icon-picture" />
+        <div v-if="project.numDatasets > 0" class="flex items-center">
+          <el-icon><PictureFilled /></el-icon>
           <router-link :to="annotationsLink">
             Browse annotations
           </router-link>
         </div>
-        <div v-if="canManage">
-          <i class="el-icon-edit" />
+        <div v-if="canManage" class="flex items-center">
+          <el-icon><EditPen /></el-icon>
           <router-link :to="manageLink">
             Manage project
           </router-link>
         </div>
-        <div v-if="canDelete">
-          <i class="el-icon-delete" />
+        <div v-if="canDelete" class="flex items-center">
+          <el-icon><Delete /></el-icon>
           <a
             href="#"
             class="text-danger"
@@ -103,15 +104,15 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, computed, toRefs, PropType, inject} from 'vue'
-import { useStore } from 'vuex'
-import { useRoute, useRouter } from 'vue-router'
+import {defineComponent, computed, toRefs, PropType, inject} from 'vue'
 import ElapsedTime from '../../components/ElapsedTime'
 import CopyButton from '../../components/CopyButton.vue'
 import { ProjectRoleOptions as UPRO } from '../../api/project'
 import { useConfirmAsync } from '../../components/ConfirmAsync'
 import { deleteProjectMutation, ProjectsListProject } from '../../api/project'
 import { ElMessage } from 'element-plus'
+import {ElIcon} from "element-plus";
+import {Delete, Lock, PictureFilled, EditPen} from "@element-plus/icons-vue";
 import {plural} from "../../lib/vueFilters";
 import {CurrentUserRoleResult} from "../../api/user";
 import {DefaultApolloClient} from "@vue/apollo-composable";
@@ -133,6 +134,11 @@ export default defineComponent({
   components: {
     ElapsedTime,
     CopyButton,
+    ElIcon,
+    Delete,
+    Lock,
+    PictureFilled,
+    EditPen,
   },
   props: {
     currentUser: Object as PropType<CurrentUserRoleResult | null>,

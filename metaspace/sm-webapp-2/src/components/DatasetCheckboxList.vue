@@ -8,8 +8,9 @@
     <div class="dataset-checkbox-list leading-6">
       <div v-for="dataset in datasets" :key="dataset.id">
         <el-checkbox
-          v-model="selectedDatasets[dataset.id]"
+          :model-value="selectedDatasets[dataset.id]"
           class="flex h-6 items-center"
+          @change="(value) => handleChange(dataset.id, value)"
         >
           <span class="truncate" :title="dataset.name">
             {{ dataset.name }}
@@ -45,7 +46,6 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ['update:selectedDatasets'],
   setup(props, { emit }) {
     const selectedDatasets = ref({});
 
@@ -63,18 +63,27 @@ export default defineComponent({
 
     watch(() => props.datasets, populateSelectedDatasetIds, { immediate: true });
 
+    const handleChange = (datasetId: string, value: boolean) => {
+       selectedDatasets.value[datasetId] = value
+       emit('update:modelValue', selectedDatasets.value);
+    }
+
+
     const handleSelectNone = () => {
       Object.keys(selectedDatasets.value).forEach(key => { selectedDatasets.value[key] = false });
+      emit('update:modelValue', selectedDatasets.value);
     };
 
     const handleSelectAll = () => {
       Object.keys(selectedDatasets.value).forEach(key => { selectedDatasets.value[key] = true });
+      emit('update:modelValue', selectedDatasets.value);
     };
 
     return {
       selectedDatasets,
       handleSelectNone,
       handleSelectAll,
+      handleChange,
     };
   },
 });

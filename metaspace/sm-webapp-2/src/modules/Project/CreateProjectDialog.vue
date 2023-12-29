@@ -9,18 +9,20 @@
   >
     <div v-loading="loading">
       <edit-project-form
-        ref="form"
-        :value="project"
+        ref="projectForm"
+        :model-value="project"
         size="small"
         class="v-rhythm-3"
+        @update:modelValue="handleUpdate"
       />
       <div v-if="allDatasets.length > 0" class="mt-6">
         <h4 class="m-0">
           Would you like to include previously submitted datasets?
         </h4>
         <dataset-checkbox-list
-          v-model="selectedDatasets"
+          :model-value="selectedDatasets"
           :datasets="allDatasets"
+          @update:modelValue="handleUpdateSelection"
         />
       </div>
       <div class="button-bar">
@@ -41,7 +43,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch } from 'vue';
+import { defineComponent, ref, computed, watch, reactive } from 'vue';
 import { useQuery, useMutation } from '@vue/apollo-composable';
 import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset'
 import { createProjectMutation, importDatasetsIntoProjectMutation } from '../../api/project'
@@ -67,19 +69,19 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
-    const form = ref(null);
-    const project = ref({
+    const projectForm = ref(null);
+    const project = reactive({
       name: '',
       isPublic: false,
       urlSlug: '',
     });
-    const selectedDatasets = ref({});
+    const selectedDatasets = reactive({});
     const isSubmitting = ref(false);
 
     const { result, loading } = useQuery(datasetListItemsQuery, () => ({ dFilter: { submitter: props.currentUserId } }));
     const allDatasets = computed(() => result.value?.allDatasets || []);
 
-    const numSelected = computed(() => Object.values(selectedDatasets.value).filter(selected => selected).length);
+    const numSelected = computed(() => Object.values(selectedDatasets).filter(selected => selected).length);
     const acceptText = computed(() => {
       const action = 'Create project';
       return numSelected.value === 0
@@ -97,17 +99,13 @@ export default defineComponent({
     };
 
     const handleCreate = async () => {
-      try {
-        await form.value.validate();
-      } catch (err) {
-        return;
-      }
+      await projectForm.value.validate()
 
       isSubmitting.value = true;
 
       try {
-        const selectedDatasetIds = Object.keys(selectedDatasets.value).filter(key => selectedDatasets.value[key]);
-        const { name, isPublic, urlSlug } = project.value;
+        const selectedDatasetIds = Object.keys(selectedDatasets).filter(key => selectedDatasets[key]);
+        const { name, isPublic, urlSlug } = project;
 
         const { data } = await createProject.mutate({
           projectDetails: {
@@ -133,8 +131,15 @@ export default defineComponent({
       }
     };
 
+    const handleUpdate = (newModel) => {
+      Object.assign(project, newModel);
+    };
+    const handleUpdateSelection = (newModel) => {
+      Object.assign(selectedDatasets, newModel);
+    };
+
     return {
-      form,
+      projectForm,
       project,
       selectedDatasets,
       isSubmitting,
@@ -144,6 +149,8 @@ export default defineComponent({
       acceptText,
       handleClose,
       handleCreate,
+      handleUpdate,
+      handleUpdateSelection,
     };
   },
 });

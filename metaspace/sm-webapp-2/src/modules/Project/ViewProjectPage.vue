@@ -1,6 +1,6 @@
 <template>
   <div
-    v-loading="!loaded"
+    v-loading="!isLoaded"
     class="page"
   >
     <div
@@ -187,8 +187,11 @@
         </el-tab-pane>
       </el-tabs>
     </div>
-    <div v-if="projectLoaded && project == null">
+    <div v-if="isLoaded && project == null">
       This project does not exist, or you do not have access to it.
+    </div>
+    <div v-else-if="!isLoaded && project == null">
+      <el-icon class="is-loading"><Loading/></el-icon>
     </div>
   </div>
 </template>
@@ -207,15 +210,13 @@ import {
 import {
   acceptProjectInvitationMutation,
   leaveProjectMutation,
-  ProjectRole,
-  ProjectRoleOptions, removeUserFromProjectMutation,
-  requestAccessToProjectMutation, updateProjectMutation, UpdateProjectMutation,
+  ProjectRoleOptions,
+  requestAccessToProjectMutation,
+  updateProjectMutation,
   ViewProjectFragment,
   ViewProjectResult,
 } from '../../api/project'
 import {
-  currentUserRoleQuery,
-  CurrentUserRoleResult,
   currentUserRoleWithGroupQuery,
   CurrentUserRoleWithGroupResult
 } from '../../api/user'
@@ -235,7 +236,8 @@ import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBa
 import { ProjectDatasetsDialog } from '../Project/ProjectDatasetsDialog'
 import DatasetsDialog from './DatasetsDialog'
 import {DefaultApolloClient, useQuery, useSubscription} from "@vue/apollo-composable";
-
+import {ElIcon} from "element-plus";
+import {Loading} from "@element-plus/icons-vue";
 interface ViewProjectPageData {
   allDatasets: DatasetDetailItem[];
   countDatasets: number;
@@ -255,6 +257,8 @@ export default defineComponent({
     RichText,
     Publishing,
     NewFeatureBadge,
+    ElIcon,
+    Loading
   },
   setup() {
     const router = useRouter();
@@ -262,6 +266,7 @@ export default defineComponent({
     const store = useStore();
     const confirmAsync = useConfirmAsync();
     const apolloClient = inject(DefaultApolloClient);
+    const tab = ref(null as string | null)
 
     const projectLoaded = ref(false);
     const loaded = ref(false);
@@ -293,7 +298,9 @@ export default defineComponent({
       fetchPolicy: 'cache-first'
     });
     onProjectResult(() => {
-      projectLoaded.value = true;
+      setTimeout(() => {
+        projectLoaded.value = true;
+      }, 300)
     });
     const project = computed(() => projectResult.value?.project as ViewProjectResult | null);
 
@@ -325,7 +332,9 @@ export default defineComponent({
       enabled: computed(() => projectId.value != null),
     });
     onDataResult(() => {
-      loaded.value = true;
+      setTimeout(() => {
+        loaded.value = true;
+      }, 300)
     });
     const data = computed(() => dataResult.value as ViewProjectPageData | null);
 
@@ -372,26 +381,28 @@ export default defineComponent({
       }
       return ['datasets', 'members']
     });
-    const setTab = (tab: string | null) => {
-      if (tab !== null && visibleTabs.value.includes(tab)) {
-        router.replace({ query: { tab } })
+    const setTab = (newTab: string | null) => {
+      if (newTab !== null && visibleTabs.value.includes(newTab)) {
+        router.replace({ query: { tab: newTab } })
+        tab.value = newTab
       }
     }
-    const tab = computed(() : string | null  => {
+    const initializeTab = () : string | null  => {
       const tabs = visibleTabs.value
       if (tabs.length === 0) {
-        return null
+        setTab(null)
       }
       const selectedTab = route.query.tab as string
+
       if (tabs.includes(selectedTab)) {
-        return selectedTab
+        setTab(selectedTab)
       }
-      if (selectedTab !== undefined) {
+      if (selectedTab === undefined) {
         setTab(tabs[0])
       }
       return tabs[0]
-    });
-
+    }
+    const isLoaded = computed(() => projectLoaded.value && loaded.value)
     const checkFeatureBadges = () => {
       if (tab.value === 'publishing') {
         hideFeatureBadge('scientific_publishing')
@@ -454,7 +465,7 @@ export default defineComponent({
 
 
     onMounted(() => {
-      // ... logic from created() hook ...
+      initializeTab()
     });
 
     const refetch = async() => {
@@ -558,6 +569,11 @@ export default defineComponent({
     });
 
 
+    watch(visibleTabs, () => {
+      initializeTab()
+    });
+
+
     return {
       projectLoading,
       projectLoaded,
@@ -600,6 +616,7 @@ export default defineComponent({
       handleUpdateProjectDatasetsDialog,
       optionalSuffixInParens,
       descriptionPlaceholder,
+      isLoaded,
     };
   },
 });

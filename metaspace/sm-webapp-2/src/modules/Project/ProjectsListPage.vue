@@ -14,7 +14,7 @@
       >
         <el-button
           type="primary"
-          size="small"
+          size="default"
           @click="handleOpenCreateProject"
         >
           Create project
@@ -30,7 +30,7 @@
         >
           <sort-dropdown
             class="pb-2"
-            size="default"
+            size="large"
             :options="sortingOptions"
             @sort="handleSortChange"
           />
@@ -39,7 +39,7 @@
 
       <div class="clearfix" />
       <div
-        v-loading="loading !== 0"
+        v-loading="loading"
         style="min-height: 100px;"
       >
         <projects-list-item
@@ -68,7 +68,7 @@
 <script lang="ts">
 import { defineComponent, ref, watch, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
-import { useRouter } from 'vue-router';
+import {onBeforeRouteUpdate, useRouter} from 'vue-router';
 import { FilterPanel } from '../Filters'
 import QuickFilterBox from '../Filters/filter-components/SimpleFilterBox.vue';
 import ProjectsListItem from './ProjectsListItem.vue';
@@ -204,7 +204,6 @@ export default defineComponent({
     })
 
 
-
     watch([query, filter], () => {
       page.value = 1;
     });
@@ -246,7 +245,8 @@ export default defineComponent({
       sortingOrder.value = order || 'DESCENDING';
     };
 
-    const handleProjectCreated = ({ id }: { id: string }) => {
+    const handleProjectCreated = async ({ id }: { id: string }) => {
+      handleRefreshData();
       router.push({ name: 'project', params: { projectIdOrSlug: id } });
     };
 

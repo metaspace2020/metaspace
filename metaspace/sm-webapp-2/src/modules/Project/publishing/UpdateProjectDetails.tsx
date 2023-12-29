@@ -1,5 +1,5 @@
 import { defineComponent, reactive } from 'vue'
-import {ElButton, ElIcon, ElInput} from 'element-plus'
+import {ElButton, ElInput} from 'element-plus'
 
 import { WorkflowStep } from '../../../components/Workflow'
 import { RichTextArea } from '../../../components/RichText'
@@ -11,7 +11,6 @@ import { ViewProjectResult } from '../../../api/project'
 import { parseValidationErrors } from '../../../api/validation'
 
 import { PROJECT_URL_PREFIX } from '../../../router'
-import {Lock} from "@element-plus/icons-vue";
 
 function getInitialModel(project: ViewProjectResult, currentUserName = '') {
   const year = new Date().getFullYear()
