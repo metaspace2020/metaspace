@@ -24,12 +24,12 @@ export default defineComponent({
 </script>
 
 <style scoped>
-form ::v-deep .el-input {
+form ::v-deep(.el-input) {
   @apply py-1;
 }
 
-form ::v-deep .sm-form-error .el-input__inner,
-form ::v-deep input:invalid {
+form ::v-deep(.sm-form-error .el-input__inner),
+form ::v-deep(input:invalid) {
   @apply border-danger;
 }
 </style>

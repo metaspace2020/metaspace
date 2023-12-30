@@ -74,7 +74,7 @@
 <script lang="ts">
 import {defineComponent, ref, reactive, watch, computed, inject} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
-import {useQuery, useMutation, DefaultApolloClient} from '@vue/apollo-composable';
+import {useQuery, DefaultApolloClient} from '@vue/apollo-composable';
 import EditProjectForm from './EditProjectForm.vue';
 import DoiField from './DoiField'
 import ShortLinkField from './ShortLinkField'
@@ -82,11 +82,9 @@ import { SmForm } from '../../components/Form'
 import {
   deleteProjectMutation,
   editProjectQuery,
-  EditProjectQuery,
-  UpdateProjectMutation,
   updateProjectMutation,
   updateProjectDOIMutation,
-  removeProjectDOIMutation, ViewProjectMember, acceptRequestToJoinProjectMutation,
+  removeProjectDOIMutation,
 } from '../../api/project'
 import reportError from '../../lib/reportError';
 import { parseValidationErrors } from '../../api/validation';
@@ -121,11 +119,12 @@ export default defineComponent({
     const isSaving = ref(false);
     const confirmAsync = useConfirmAsync();
 
-    const { result: currentUserResult, loading: currentUserLoading } = useQuery(currentUserRoleQuery);
+    const { result: currentUserResult } = useQuery(currentUserRoleQuery, null,
+      {fetchPolicy: 'cache-first'});
     const currentUser = computed(() => currentUserResult.value?.currentUser);
 
-    const { result: projectResult, loading: projectLoading } = useQuery(editProjectQuery,
-      () => ({ projectId: props.projectId }));
+    const { result: projectResult } = useQuery(editProjectQuery,
+      { projectId: props.projectId }, {fetchPolicy: 'network-only'});
     const project = computed(() => projectResult.value?.project);
 
     const projectName = computed(() => project.value?.name || '');

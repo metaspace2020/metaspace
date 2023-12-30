@@ -13,15 +13,15 @@ export default defineComponent({
 </script>
 
 <style scoped>
-i ::v-deep svg {
+i ::v-deep(svg) {
   width: 100%;
 }
 
-i ::v-deep .primary {
+i ::v-deep(.primary) {
   @apply fill-current  text-blue-100;
 }
 
-i ::v-deep .secondary {
+i ::v-deep(.secondary) {
   @apply fill-current text-blue-800;
 }
 </style>

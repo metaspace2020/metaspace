@@ -68,7 +68,7 @@
 <script lang="ts">
 import { defineComponent, ref, watch, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
-import {onBeforeRouteUpdate, useRouter} from 'vue-router';
+import {useRouter} from 'vue-router';
 import { FilterPanel } from '../Filters'
 import QuickFilterBox from '../Filters/filter-components/SimpleFilterBox.vue';
 import ProjectsListItem from './ProjectsListItem.vue';
@@ -76,7 +76,6 @@ import CreateProjectDialog from './CreateProjectDialog.vue';
 import { getLocalStorage } from '../../lib/localStorage';
 import SortDropdown from '../../components/SortDropdown/SortDropdown'
 import {
-  MyProjectsListQuery,
   myProjectsListQuery,
   projectsCountQuery,
   ProjectsListProject,

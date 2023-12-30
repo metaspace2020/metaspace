@@ -123,7 +123,7 @@ describe('ProjectDatasetsDialog', () => {
     selectNone.trigger('click')
     await Vue.nextTick()
 
-    wrapper.findAll('.el-checkbox').wrappers.forEach((checkBox, index) => {
+    wrapper.findAll('.el-checkbox').wrappers.forEach((checkBox) => {
       expect(checkBox.classes('is-checked')).toBe(false)
     })
 

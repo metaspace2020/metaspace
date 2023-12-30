@@ -98,7 +98,7 @@ export default defineComponent({
   .select-buttons {
     margin: 12px 0;
   }
-  ::v-deep .el-checkbox__label {
+  ::v-deep(.el-checkbox__label) {
     @apply inline-flex flex-grow justify-between items-baseline overflow-hidden;
   }
 </style>

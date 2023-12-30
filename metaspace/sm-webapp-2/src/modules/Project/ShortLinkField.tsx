@@ -1,4 +1,4 @@
-import {defineComponent, toRefs, watch} from 'vue'
+import {defineComponent} from 'vue'
 import { ElInput } from 'element-plus'
 
 import * as Form from '../../components/Form'
@@ -13,11 +13,12 @@ const ShortLinkField = defineComponent({
     id: String,
     disabled: Boolean,
   },
-  setup(props , { attrs, emit }) {
+  setup(props , { emit }) {
     const onInput = (value: string) => {
       emit('update:modelValue', value);
     };
 
+    // @ts-ignore
     return () => (
       <div>
         <label for={props.id}>
@@ -35,9 +36,10 @@ const ShortLinkField = defineComponent({
         <ElInput
           class={{ 'sm-form-error': props.error }}
           disabled={props.disabled}
-          id={props.id} // @ts-ignore
+          id={props.id}
           maxlength="50"
           minlength="4"
+          // @ts-ignore
           onUpdate:modelValue={onInput}
           pattern="[a-zA-Z0-9_-]+"
           title="min. 4 characters, a–z, 0–9, hyphen or underscore"

@@ -21,6 +21,14 @@ module.exports = {
   ],
   overrides: [
     {
+      files: ['*.vue', '*.tsx'],
+      rules: {
+        // Disable the rule that conflicts with your `onUpdate:modelValue` syntax
+        '@typescript-eslint/ban-ts-comment': 'off',
+        'vue/valid-v-model': 'off', // If you get errors about v-model on components
+      },
+    },
+    {
       files: [
         '**/__tests__/*.{cy,spec}.{js,ts,jsx,tsx}',
         'cypress/e2e/**/*.{cy,spec}.{js,ts,jsx,tsx}'

@@ -1,4 +1,4 @@
-import { mount, Wrapper } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import Vue from 'vue'
 import ProjectsListPage from './ProjectsListPage.vue'
 import router from '../../router'

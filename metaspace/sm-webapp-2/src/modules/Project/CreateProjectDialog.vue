@@ -43,9 +43,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, reactive } from 'vue';
+import { defineComponent, ref, computed, reactive } from 'vue';
 import { useQuery, useMutation } from '@vue/apollo-composable';
-import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset'
+import { datasetListItemsQuery } from '../../api/dataset'
 import { createProjectMutation, importDatasetsIntoProjectMutation } from '../../api/project'
 import EditProjectForm from './EditProjectForm.vue';
 import DatasetCheckboxList from '../../components/DatasetCheckboxList.vue';

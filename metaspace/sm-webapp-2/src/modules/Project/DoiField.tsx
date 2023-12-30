@@ -24,7 +24,7 @@ export default defineComponent({
       default: false,
     },
   },
-  setup(props: Props | any, { emit, attrs }) {
+  setup(props: Props | any, { emit }) {
     const inputValue = ref(props.modelValue.replace(DOI_ORG_DOMAIN, ''));
 
     watch(() => props.modelValue, (newValue) => {

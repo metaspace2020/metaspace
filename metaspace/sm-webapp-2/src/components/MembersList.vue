@@ -1,13 +1,12 @@
 <template>
   <div>
     <el-dialog
-      v-if="editingRoleOfMember"
-      visible
+      :model-value="editingRoleOfMember != null"
       :title="`Change ${type} member role`"
       @close="handleCloseEditRole"
     >
       <p>
-        Change {{ editingRoleOfMember.user.name }}'s role to:
+        Change {{ editingRoleOfMember?.user?.name }}'s role to:
         <el-select v-model="newRole">
           <el-option
             v-for="role in allowedRoles"
@@ -16,7 +15,7 @@
             :label="getRoleName(role as any)"
           />
           <el-option
-            :value="null"
+            :value="''"
             :label="`None (remove from ${type})`"
           />
         </el-select>
@@ -24,7 +23,7 @@
       <p>
         Changing a member's role this way does not cause any notification emails to be sent.
       </p>
-      <el-row align="right">
+      <el-row align="middle">
         <el-button @click="handleCloseEditRole">
           Close
         </el-button>
@@ -156,7 +155,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, onBeforeUnmount } from 'vue';
+import { defineComponent, ref, computed } from 'vue';
 import { UserGroupRole, UserGroupRoleOptions, getRoleName as getGroupRoleName } from '../api/group';
 import { ProjectRole, ProjectRoleOptions, getRoleName as getProjectRoleName } from '../api/project';
 import { encodeParams } from '../modules/Filters';

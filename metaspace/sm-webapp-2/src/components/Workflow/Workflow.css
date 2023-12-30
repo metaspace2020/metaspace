@@ -62,6 +62,5 @@
 }
 
 .sm-workflow-step.done:before {
-  content: '\e6da';
-  font-family: element-icons !important;
+  content: '✓';
 }

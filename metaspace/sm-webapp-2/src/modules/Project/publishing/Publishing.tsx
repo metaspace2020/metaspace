@@ -1,4 +1,4 @@
-import {defineComponent, computed, inject} from 'vue'
+import {defineComponent, computed, inject, defineAsyncComponent} from 'vue'
 
 import { Workflow } from '../../../components/Workflow'
 import UpdateProjectDetails from './UpdateProjectDetails'
@@ -7,7 +7,9 @@ import PublishData from './PublishData'
 import FadeTransition from '../../../components/FadeTransition'
 import PrimaryIcon from '../../../components/PrimaryIcon.vue'
 
-import GlobeSvg from '../../../assets/inline/refactoring-ui/icon-globe.svg'
+const GlobeSvg = defineAsyncComponent(() =>
+  import('../../../assets/inline/refactoring-ui/icon-globe.svg')
+);
 
 import {
   updateProjectMutation,

@@ -7,7 +7,6 @@ import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset'
 import {DefaultApolloClient, useQuery} from '@vue/apollo-composable'
 import ElapsedTime from '../../components/ElapsedTime'
 import reportError from '../../lib/reportError'
-import Vue from 'vue'
 
 interface CheckOptions {
   [key: string]: boolean
@@ -71,14 +70,12 @@ export const ProjectDatasetsDialog = defineComponent({
 
     const {
       result: datasetsResult,
-      loading,
     } = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery,
       () => ({ dFilter: { submitter: props.currentUserId } }))
     const datasets = computed(() => datasetsResult.value != null
       ? datasetsResult.value.allDatasets as DatasetListItem[] : null)
     const {
       result: projectDatasetsResult,
-      loading: loadingProjectDatasets,
       refetch: projectDatasetsRefetch,
     } = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery,
       () => ({ dFilter: { project: props.project?.id } }))

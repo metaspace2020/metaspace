@@ -1,4 +1,4 @@
-import {defineComponent, computed, reactive, ref, toRefs, onMounted, watch, inject} from 'vue';
+import {defineComponent, computed, reactive, ref, inject} from 'vue';
 import { ElDialog, ElButton, ElSelect, ElOption, ElInput, ElTable, ElTableColumn, ElPagination } from 'element-plus';
 import {DefaultApolloClient, useQuery} from '@vue/apollo-composable';
 import { isEqual } from 'lodash-es';
@@ -96,7 +96,7 @@ export default defineComponent({
       state.pageSize = defaultPageSize
     }
 
-    onProjectDatasetsResult(async(result) => {
+    onProjectDatasetsResult(async() => {
       state.selectedDatasets = projectDatasets.value
     })
 
@@ -113,7 +113,6 @@ export default defineComponent({
 
     const {
       result: datasetCountResult,
-      loading: datasetCountLoading,
       refetch: datasetsCountRefetch,
     } = useQuery<{countDatasetsPerGroup: any}>(countDatasetsByStatusQuery, queryVars)
     const datasetCount = computed(() => datasetCountResult.value != null
@@ -189,7 +188,7 @@ export default defineComponent({
       return 'prev,pager,next,sizes'
     }
 
-    const dateFormatter = (row: any, column: any, cellValue: any, index: number) => {
+    const dateFormatter = (row: any, column: any, cellValue: any) => {
       return moment(cellValue).format('D MMMM, YYYY')
     }
 

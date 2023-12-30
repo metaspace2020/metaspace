@@ -1,6 +1,7 @@
 import { defineComponent, reactive, ref } from 'vue';
 import { ElInput, ElTooltip, ElButton } from 'element-plus';
 import copyToClipboard from '../../lib/copyToClipboard';
+import {DocumentCopy} from "@element-plus/icons-vue";
 
 interface Props {
   value: string;
@@ -55,7 +56,7 @@ export default defineComponent({
               placement="right"
             >
               <ElButton
-                icon="el-icon-document-copy"
+                icon={DocumentCopy}
                 onClick={handleCopy}
                 onMouseleave={() => { state.copied = false; }}
                 {...{

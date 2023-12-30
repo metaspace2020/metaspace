@@ -127,7 +127,7 @@ export default defineComponent({
       });
     }
 
-    const handleAddMember = async (email: string) => {
+    const handleAddMember = async () => {
       const confirmOptions = {
         title: 'Add member',
         message: 'An email will be sent inviting them to join the project. If they accept the invitation, '
@@ -140,7 +140,8 @@ export default defineComponent({
         confirmButtonLoadingText: 'Sending invitation...',
       };
 
-      await confirmAsync(confirmOptions, async () => {
+      await confirmAsync(confirmOptions, async (params) => {
+        const email : string = params.value;
         await apolloClient.mutate({
           mutation: inviteUserToProjectMutation,
           variables: { projectId: projectId.value, email },
@@ -149,7 +150,7 @@ export default defineComponent({
       });
     }
 
-    const handleUpdateRole = async(member: ViewProjectMember, role: ProjectRole | null) => {
+    const handleUpdateRole = async(member: ViewProjectMember, role: ProjectRole | null | string) => {
       try {
         state.loadingInternal = true
         await apolloClient.mutate({
@@ -157,7 +158,7 @@ export default defineComponent({
           variables: {
             projectId: projectId.value,
             userId: member.user.id,
-            update: { role },
+            update: { role: role === '' ? null : role }
           },
         })
         await props.refreshData()

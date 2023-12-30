@@ -59,27 +59,6 @@ describe('DatasetsDialog', () => {
       }),
     })
   }
-  const graphqlWithExtraUserData = () => {
-    initMockGraphqlClient({
-      Query: () => ({
-        allDatasets: (src: any, { filter: { project } } : any) => {
-          if (project) {
-            return []
-          }
-
-          return [{
-            id: '2021-03-31_11h02m28s',
-            name: 'New 3 (1)',
-            uploadDT: '2021-03-31T14:02:28.722Z',
-          }, {
-            id: '2021-03-30_18h25m18s',
-            name: 'Untreated_3_434_super_lite_19_31 (1)',
-            uploadDT: '2021-03-30T21:25:18.473Z',
-          }]
-        },
-      }),
-    })
-  }
 
   const graphqlWithNoData = () => {
     initMockGraphqlClient({

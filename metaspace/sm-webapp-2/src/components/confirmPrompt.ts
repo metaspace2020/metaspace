@@ -6,7 +6,6 @@ interface ExtraOptions {
   confirmButtonLoadingText?: string;
   style?: 'warning' | 'danger';
 }
-type ValueOrCallback<T> = T | ((...args: any[]) => T);
 
 const createCustomClass = (options: ExtraOptions) => {
   let customClass = 'confirm-async-message-box'

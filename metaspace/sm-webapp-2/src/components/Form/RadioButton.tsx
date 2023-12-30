@@ -1,8 +1,10 @@
-import { defineComponent } from 'vue'
+import {defineAsyncComponent, defineComponent} from 'vue'
 import FadeTransition from '../FadeTransition'
 
 import SecondaryIcon from '../SecondaryIcon.vue'
-import CheckSvg from '../../assets/inline/refactoring-ui/icon-check.svg'
+const CheckSvg = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-check.svg')
+);
 
 const RadioButton = defineComponent({
   name: 'RadioButton',

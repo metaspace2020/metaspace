@@ -96,8 +96,9 @@
         </el-alert>
       </div>
       <el-tabs
-        v-model="tab"
+        :model-value="tab"
         class="with-badges"
+        @update:model-value="setTab"
       >
         <el-tab-pane
           v-if="visibleTabs.includes('about')"
@@ -233,7 +234,6 @@ import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import RichText from '../../components/RichText'
 import Publishing from './publishing'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
-import { ProjectDatasetsDialog } from '../Project/ProjectDatasetsDialog'
 import DatasetsDialog from './DatasetsDialog'
 import {DefaultApolloClient, useQuery, useSubscription} from "@vue/apollo-composable";
 import {ElIcon} from "element-plus";
@@ -303,7 +303,6 @@ export default defineComponent({
       }, 300)
     });
     const project = computed(() => projectResult.value?.project as ViewProjectResult | null);
-
     const projectId = computed((): string | null => {
       if (isUuid(route.params.projectIdOrSlug as string)) {
         return route.params.projectIdOrSlug as string // If it's possible to get the ID from the route, use that because it's faster than projectById/projectBySlug.
@@ -617,6 +616,7 @@ export default defineComponent({
       optionalSuffixInParens,
       descriptionPlaceholder,
       isLoaded,
+      setTab,
     };
   },
 });

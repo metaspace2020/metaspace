@@ -78,6 +78,20 @@ const router = createRouter({
   },
 })
 
+const pageLoadedAt = Date.now()
+router.beforeEach((to, from, next) => {
+  // If user has had the window open for a long time, it's likely they're using old code. This can cause issues
+  // such as incorrect API usage, or causing error reports for bugs that have already been fixed.
+  // Force the browser to reload the page, preferring to do so during page transitions to minimize impact.
+  const daysSincePageLoad = (Date.now() - pageLoadedAt) / 1000 / 60 / 60 / 24
+  if (to.path !== from.path && daysSincePageLoad > 1.75 || daysSincePageLoad > 7) {
+    window.location.assign(to.fullPath)
+    next(false)
+  } else {
+    next()
+  }
+})
+
 
 const { href } = router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined)
 export const PROJECT_URL_PREFIX = location.origin + href.replace('REMOVE', '')

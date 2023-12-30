@@ -43,7 +43,7 @@ interface ConfirmAsyncOptions {
 
 export function useConfirmAsync() {
   const confirmAsync = async (options: ConfirmAsyncOptions, action: (...args: any[]) => Promise<any>) => {
-    const { confirmButtonLoadingText, ...baseOptions } = options;
+    const { ...baseOptions } = options;
 
     try {
       const result = await ElMessageBox.confirm(

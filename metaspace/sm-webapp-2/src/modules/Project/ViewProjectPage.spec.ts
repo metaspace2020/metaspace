@@ -42,7 +42,7 @@ describe('ViewProjectPage', () => {
     projectDescription: null,
     publicationStatus: 'UNPUBLISHED',
   }
-  const mockProjectFn = jest.fn((src: any, args: any, ctx: any, info: any): any => mockProject)
+  const mockProjectFn = jest.fn((): any => mockProject)
   const graphqlMocks = {
     Query: () => ({
       currentUser: () => ({ id: 'userid' }),
@@ -178,7 +178,6 @@ describe('ViewProjectPage', () => {
     mockProjectFn.mockImplementation(() => ({ ...mockProject, urlSlug }))
     initMockGraphqlClient(graphqlMocks)
 
-    const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
     await Vue.nextTick()
 
     expect(router.currentRoute.params.projectIdOrSlug).toEqual(urlSlug)
