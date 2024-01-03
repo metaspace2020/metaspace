@@ -16,7 +16,7 @@ export default function useEditor({ content, extensions = [], onUpdate, ...optio
     extensions: [
       StarterKit,
       new Sub(),
-      new Sup(),
+      new Sup(), // @ts-ignore
       ...extensions
     ],
     ...options,

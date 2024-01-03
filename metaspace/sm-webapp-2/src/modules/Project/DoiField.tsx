@@ -54,7 +54,7 @@ export default defineComponent({
         <ElInput
           id={props.id}
           modelValue={inputValue.value}
-          onUpdate:modelValue={onInput} // @ts-ignore
+          {...{'onUpdate:modelValue': onInput}}
           v-slots={{
             prepend: () => <span>{DOI_ORG_DOMAIN}</span>,
             append: appendContent }}

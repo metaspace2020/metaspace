@@ -1,6 +1,7 @@
 import {flushPromises, mount} from '@vue/test-utils'
 import {defineComponent, nextTick, ref, h} from 'vue'
 import DownloadDialog from './DownloadDialog'
+import {vi} from "vitest";
 
 
 const TestDownloadDialog = defineComponent({
@@ -15,7 +16,7 @@ const TestDownloadDialog = defineComponent({
 });
 
 describe('Datasets/DownloadDialog', () => {
-  test('should match snapshot', async () => {
+  it('should match snapshot', async () => {
     vi.mock('@vue/apollo-composable', () => ({
       useQuery: vi.fn(() => ({
         result: ref({dataset:

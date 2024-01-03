@@ -39,8 +39,7 @@ const ShortLinkField = defineComponent({
           id={props.id}
           maxlength="50"
           minlength="4"
-          // @ts-ignore
-          onUpdate:modelValue={onInput}
+          {...{'onUpdate:modelValue': onInput}}
           pattern="[a-zA-Z0-9_-]+"
           title="min. 4 characters, a–z, 0–9, hyphen or underscore"
           modelValue={props.modelValue}

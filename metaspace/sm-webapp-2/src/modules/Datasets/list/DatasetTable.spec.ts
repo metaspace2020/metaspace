@@ -1,5 +1,5 @@
 import {nextTick} from 'vue';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, expect, vi } from 'vitest';
 import DatasetTable from './DatasetTable.vue';
 import * as FileSaver from 'file-saver';
 import { merge } from 'lodash-es';

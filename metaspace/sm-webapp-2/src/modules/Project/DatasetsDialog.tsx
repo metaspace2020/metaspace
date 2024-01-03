@@ -201,6 +201,8 @@ export default defineComponent({
       const removedDatasetIds = defaultDatasetIds.filter((dsId: string) => !selectedDatasetIds.includes(dsId))
       const addedDatasetIds = selectedDatasetIds.filter((dsId: string) => !defaultDatasetIds.includes(dsId))
 
+      // @ts-ignore
+      // @ts-ignore
       return (
         <ElDialog
           class='project-datasets-dialog'
@@ -279,11 +281,12 @@ export default defineComponent({
                 class='mt-2'
                 total={datasetCount.value}
                 pageSizes={pageSizes}
-                pageSize={state.pageSize} // @ts-ignore
-                onUpdate:pageSize={handlePageSizeChange}
-                currentPage={state.offset} // @ts-ignore
-                onUpdate:currentPage={handlePageChange}
-                layout={paginationLayout()} />
+                pageSize={state.pageSize}
+                onSizeChange={handlePageSizeChange}
+                currentPage={state.offset}
+                onCurrentChange={handlePageChange}
+                layout={paginationLayout()}
+              />
             }
             <div class="ds-dialog-bt-bar button-bar">
               <div class='flex-col' style={{visibility: state.hasChanged ? 'visible' : 'hidden'}}>
