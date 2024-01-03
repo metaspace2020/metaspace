@@ -123,6 +123,8 @@ export const ProjectDatasetsDialog = defineComponent({
       }
     }
 
+
+
     const handleProjectDatasetsUpdate = async() => {
       const previousDatasets = getProjectDatasets(projectDatasets?.value)
       const removedDatasetIds: string[] = []

@@ -63,7 +63,10 @@ export function setupGlobalStubs() {
     name: 'ElAutocompleteMock',
     template: '<div class="mock-el-autocomplete"><slot></slot></div>',
   };
-
+  // const ElTableColumn = {
+  //   name: 'ElTableColumn',
+  //   template: '<div class="mock-el-table-column"><slot :row="{ user: { name: \'Test User\' } }"></slot></div>',
+  // };
   const RouterLinkMock = {
     template: '<div><slot></slot></div>',
     props: ['to'],
@@ -72,6 +75,7 @@ export function setupGlobalStubs() {
   config.global.stubs = {
     // 'el-form': ElFormMock,
     'el-autocomplete': ElAutocompleteMock,
+    // 'el-table-column': ElTableColumn,
     // 'el-form-item': ElFormItemMock,
     'el-option': ElOptionMock,
     'el-dropdown': ElDropdownMock,

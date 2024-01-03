@@ -13,9 +13,7 @@ const formatOptions: Intl.DateTimeFormatOptions = {
 
 export default defineComponent({
   name: 'ElapsedTime',
-  props: {
-    date: { type: String, required: true },
-  },
+  props: ['date'],
   setup(props) {
     const parsedDate = computed(() => parseISO(props.date));
     const valid = computed(() => isValid(parsedDate.value));

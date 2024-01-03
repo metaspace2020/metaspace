@@ -47,7 +47,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, reactive, watch } from 'vue';
-import { ElForm, ElInput, ElSwitch } from 'element-plus';
+import { ElForm, ElInput, ElSwitch, ElFormItem } from 'element-plus';
 
 import { PrimaryLabelText, SecondaryLabelText } from '../../components/Form'
 
@@ -64,6 +64,7 @@ export default defineComponent({
     ElForm,
     ElInput,
     ElSwitch,
+    ElFormItem,
   },
   props: {
     modelValue: {

@@ -6,8 +6,9 @@
       @selectGroup="handleSelectGroup"
     />
     <create-project-dialog
-      :visible="showCreateProjectDialog && currentUser != null"
-      :current-user-id="currentUser && currentUser.id"
+      v-if="currentUser != null"
+      :visible="showCreateProjectDialog"
+      :current-user-id="currentUser.id"
       @close="hideCreateProjectDialog"
       @create="handleSelectProject"
     />
@@ -70,7 +71,7 @@
                 :options="projectOptions"
                 type="selectMulti"
                 name="Projects"
-                @input="val => onInput('projectIds', val)"
+                @input="val => setProjectIds(val)"
               />
             </el-col>
           </el-form>
@@ -400,6 +401,7 @@ export default defineComponent({
       handleInputPI,
       onInput,
       setGroupId,
+      setProjectIds,
     };
   },
 });

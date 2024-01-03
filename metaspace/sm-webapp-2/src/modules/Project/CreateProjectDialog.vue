@@ -15,7 +15,7 @@
         class="v-rhythm-3"
         @update:modelValue="handleUpdate"
       />
-      <div v-if="allDatasets.length > 0" class="mt-6">
+      <div v-if="allDatasets?.length > 0" class="mt-6">
         <h4 class="m-0">
           Would you like to include previously submitted datasets?
         </h4>
@@ -50,13 +50,16 @@ import { createProjectMutation, importDatasetsIntoProjectMutation } from '../../
 import EditProjectForm from './EditProjectForm.vue';
 import DatasetCheckboxList from '../../components/DatasetCheckboxList.vue';
 import reportError from '../../lib/reportError';
-import {ElDialog, ElButton} from "element-plus";
+import {ElDialog, ElButton, ElLoading} from "element-plus";
 
 export default defineComponent({
   components: {
     EditProjectForm,
     DatasetCheckboxList,
     ElDialog, ElButton,
+  },
+  directives: {
+    'loading': ElLoading.directive,
   },
   props: {
     currentUserId: {
@@ -80,7 +83,6 @@ export default defineComponent({
 
     const { result, loading } = useQuery(datasetListItemsQuery, () => ({ dFilter: { submitter: props.currentUserId } }));
     const allDatasets = computed(() => result.value?.allDatasets || []);
-
     const numSelected = computed(() => Object.values(selectedDatasets).filter(selected => selected).length);
     const acceptText = computed(() => {
       const action = 'Create project';

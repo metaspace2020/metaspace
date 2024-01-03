@@ -83,6 +83,7 @@ import {
 } from '../../api/project'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import { useQuery } from '@vue/apollo-composable';
+import {ElButton, ElLoading, ElPagination} from "element-plus";
 
 export default defineComponent({
   components: {
@@ -92,6 +93,11 @@ export default defineComponent({
     // eslint-disable-next-line vue/no-unused-components
     QuickFilterBox,
     SortDropdown,
+    ElButton,
+    ElPagination,
+  },
+  directives: {
+    loading: ElLoading.directive,
   },
   setup() {
     const store = useStore();
@@ -133,6 +139,8 @@ export default defineComponent({
       },
     ])
 
+    const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, { fetchPolicy: 'cache-first' });
+    const currentUser = computed(() => currentUserResult.value?.currentUser as CurrentUserRoleResult | null);
 
     const filter = computed(() => {
       const simpleFilter = store.getters.filter.simpleFilter;
@@ -140,9 +148,7 @@ export default defineComponent({
     });
     const query = computed(() => store.getters.filter.simpleQuery || '');
 
-    const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, { fetchPolicy: 'cache-first' });
-    const currentUser = computed(() => currentUserResult.value?.currentUser as CurrentUserRoleResult | null);
-    const { result: allProjectsResult, refetch: refetchAllProjects } = useQuery(projectsListQuery, () => ({
+  const { result: allProjectsResult, refetch: refetchAllProjects } = useQuery(projectsListQuery, () => ({
       query: query.value,
       offset: (page.value - 1) * pageSize.value,
       limit: pageSize.value,
@@ -151,11 +157,9 @@ export default defineComponent({
     }), { fetchPolicy: 'cache-first' });
 
     const allProjects = computed(() => allProjectsResult.value?.allProjects as ProjectsListProject[] | null);
-
     const { result: allProjectsCountResult, refetch: refetchAllProjectsCount } = useQuery(projectsCountQuery, () => ({
       query: query.value,
     }), { fetchPolicy: 'cache-first' });
-
     const allProjectsCount = computed(() => allProjectsCountResult.value?.projectsCount || 0);
 
     const { result: myProjectsResult, refetch: refetchMyProjects } = useQuery(myProjectsListQuery,
@@ -164,7 +168,6 @@ export default defineComponent({
     const myProjects = computed(() => myProjectsResult.value?.myProjects?.projects
       ? myProjectsResult.value?.myProjects?.projects.map(userProject => userProject.project)
       : []);
-
 
 
     const filteredMyProjects = computed(()  => {

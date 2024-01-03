@@ -1,9 +1,20 @@
-import { mount, Stubs } from '@vue/test-utils'
-import Vue from 'vue'
-import ViewProjectPage from './ViewProjectPage.vue'
-import router from '../../router'
-import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient'
-import { mockGenerateId, resetGenerateId } from '../../../tests/utils/mockGenerateId'
+import { nextTick, ref } from 'vue';
+import { mount, flushPromises } from '@vue/test-utils';
+import ViewProjectPage from './ViewProjectPage.vue';
+import {initMockGraphqlClient} from "../../tests/utils/mockGraphqlClient";
+import { vi } from 'vitest';
+import { DefaultApolloClient, useQuery } from "@vue/apollo-composable";
+import router from "../../router";
+import store from "../../store";
+
+vi.mock('@vue/apollo-composable', () => ({
+  useQuery: vi.fn(),
+  useSubscription: vi.fn(() => ({ onResult: vi.fn() })),
+  DefaultApolloClient: vi.fn(),
+}));
+
+let graphqlMocks: any;
+
 
 describe('ViewProjectPage', () => {
   const mockMembersForManagers = [
@@ -42,189 +53,416 @@ describe('ViewProjectPage', () => {
     projectDescription: null,
     publicationStatus: 'UNPUBLISHED',
   }
-  const mockProjectFn = jest.fn((): any => mockProject)
-  const graphqlMocks = {
-    Query: () => ({
-      currentUser: () => ({ id: 'userid' }),
-      project: mockProjectFn,
-      projectByUrlSlug: mockProjectFn,
-      allDatasets: () => ([
-        { id: 'datasetId1', name: 'dataset name 1', status: 'FINISHED' },
-        { id: 'datasetId2', name: 'dataset name 2', status: 'QUEUED' },
-        { id: 'datasetId3', name: 'dataset name 3', status: 'ANNOTATING' },
-        { id: 'datasetId4', name: 'dataset name 4', status: 'FINISHED' },
-      ]),
-      countDatasets: () => 4,
-    }),
-  }
+  const mockProjectFn = vi.fn((): any => mockProject)
 
-  const stubs: Stubs = {
-    DatasetItem: true,
+  const stubs = {
+    DatasetItem: {
+      template: '<div class="mock-ds-item"><slot></slot></div>',
+      props: ['dataset']
+    },
+    ElTable: {
+      template: '<div class="mock-el-table"><slot></slot></div>',
+      props: ['data', 'columns', 'tableId'], // include other props as necessary
+    },
+    ElTableColumn: {
+      template: '<div class="mock-el-table-column"><slot></slot></div>',
+      props: ['data', 'columns', 'tableId'], // include other props as necessary
+    },
   }
-  const stubsWithMembersList: Stubs = {
+  const stubsWithMembersList = {
     ...stubs,
-    ProjectMembersList: true,
+    ProjectMembersList: {
+      template: '<div class="mock-prj-members-item"><slot></slot></div>',
+    }
   }
 
-  beforeEach(() => {
-    jest.clearAllMocks()
-    router.replace({ name: 'project', params: { projectIdOrSlug: mockProject.id } })
+  const defaultParams = {
+    currentUser: () => ({ id: 'userid' }),
+    project: mockProjectFn,
+    projectByUrlSlug: mockProjectFn,
+    allDatasets: () => ([
+      { id: 'datasetId1', name: 'dataset name 1', status: 'FINISHED' },
+      { id: 'datasetId2', name: 'dataset name 2', status: 'QUEUED' },
+      { id: 'datasetId3', name: 'dataset name 3', status: 'ANNOTATING' },
+      { id: 'datasetId4', name: 'dataset name 4', status: 'FINISHED' },
+    ]),
+    countDatasets: () => 4,
+  }
+  const mockGraphql = async (params) => {
+    graphqlMocks = await initMockGraphqlClient({
+      Query: () => (params),
+    });
+
+    (useQuery as any).mockReturnValue({
+      result: ref(Object.keys(params).reduce((acc, key) => ({ ...acc, [key]: params[key]() }), {})),
+      loading: ref(false),
+      onResult: vi.fn(),
+    });
+  };
+
+  beforeAll(async () => {
+    await mockGraphql(defaultParams);
   })
+
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    await router.replace({ name: 'project', params: { projectIdOrSlug: mockProject.id } });
+  });
 
   describe('datasets tab', () => {
-    beforeEach(() => {
-      router.replace({ query: { tab: 'datasets' } })
+    beforeEach(async () => {
+      await router.replace({ query: { tab: 'datasets' } })
     })
 
     it('should match snapshot (non-member)', async() => {
-      initMockGraphqlClient(graphqlMocks)
-      const maxVisibleDatasets = 3
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
-      wrapper.setData({ maxVisibleDatasets }) // Also test that the datasets list is correctly clipped
-      await Vue.nextTick()
+      const maxVisibleDatasets = ref(3); // Create a ref for the reactive property
 
-      expect(wrapper).toMatchSnapshot()
+      const wrapper = mount(ViewProjectPage, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks
+          },
+          stubs,
+        },
+      });
+      wrapper.vm.maxVisibleDatasets = maxVisibleDatasets
 
-      expect(wrapper.findAll('button').wrappers.map(w => w.text()))
-        .toEqual(expect.arrayContaining(['Request access']))
-      expect(wrapper.findAll('[role="tab"]').wrappers.map(w => w.text()))
-        .toEqual(['Datasets (4)', 'Members (2)'])
-      expect(wrapper.findAll('.dataset-list > *')).toHaveLength(maxVisibleDatasets)
-    })
-  })
+      await flushPromises();
+      await nextTick();
+
+      expect(wrapper.html()).toMatchSnapshot();
+
+      expect(wrapper.findAll('button').map(w => w.text()))
+        .toEqual(expect.arrayContaining(['Request access']));
+      expect(wrapper.findAll('[role="tab"]').map(w => w.text()))
+        .toEqual(['Datasets (4)', 'Members (2)']);
+      expect(wrapper.findAll('.dataset-list > *')).toHaveLength(maxVisibleDatasets.value);
+
+    });
+  });
 
   describe('members tab', () => {
-    beforeEach(() => {
-      router.replace({ query: { tab: 'members' } })
+    beforeEach(async () => {
+      await router.replace({ query: { tab: 'members' } })
     })
 
     it('should match snapshot (non-member)', async() => {
-      initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, apolloProvider })
-      await Vue.nextTick()
+      const wrapper = mount(ViewProjectPage, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks
+          },
+          stubs: stubsWithMembersList,
+        },
+      });
 
-      expect(wrapper).toMatchSnapshot()
-    })
+      await flushPromises();
+      await nextTick();
+
+      expect(wrapper.html()).toMatchSnapshot();
+    });
 
     it('should match snapshot (invited)', async() => {
-      mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'INVITED' }))
-      initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, apolloProvider })
-      await Vue.nextTick()
+      const customValue = { ...mockProject, currentUserRole: 'INVITED' }
+      const customParams = {
+        project: () => (customValue),
+        projectByUrlSlug: () => (customValue),
+      }
+      await mockGraphql({
+        ...defaultParams,
+        ...customParams,
+      });
 
-      expect(wrapper).toMatchSnapshot()
-    })
+      const wrapper = mount(ViewProjectPage, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks
+          },
+          stubs: stubsWithMembersList,
+        },
+      });
+
+      await flushPromises();
+      await nextTick();
+
+      expect(wrapper.html()).toMatchSnapshot();
+    });
 
     it('should match snapshot (member)', async() => {
-      mockProjectFn.mockImplementation(() =>
-        ({ ...mockProject, currentUserRole: 'MEMBER', members: mockMembersForMembers }))
-      initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, apolloProvider })
-      await Vue.nextTick()
+      const customValue = { ...mockProject, currentUserRole: 'MEMBER', members: mockMembersForMembers }
+      const customParams = {
+        project: () => (customValue),
+        projectByUrlSlug: () => (customValue),
+      }
+      await mockGraphql({
+        ...defaultParams,
+        ...customParams,
+      });
 
-      expect(wrapper).toMatchSnapshot()
-    })
+      const wrapper = mount(ViewProjectPage, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks
+          },
+          stubs: stubsWithMembersList,
+        },
+      });
+
+      await flushPromises();
+      await nextTick();
+
+      expect(wrapper.html()).toMatchSnapshot();
+    });
 
     it('should match snapshot (manager, including table)', async() => {
-      mockProjectFn.mockImplementation(() =>
-        ({ ...mockProject, currentUserRole: 'MANAGER', members: mockMembersForManagers }))
-      initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
-      await Vue.nextTick()
+      const customValue = { ...mockProject, currentUserRole: 'MANAGER', members: mockMembersForManagers }
+      const customParams = {
+        project: () => (customValue),
+        projectByUrlSlug: () => (customValue),
+      }
+      await mockGraphql({
+        ...defaultParams,
+        ...customParams,
+      });
 
-      expect(wrapper).toMatchSnapshot()
-    })
-  })
+      const wrapper = mount(ViewProjectPage, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks
+          },
+          stubs,
+        },
+      });
+
+      await flushPromises();
+      await nextTick();
+
+      expect(wrapper.html()).toMatchSnapshot();
+    });
+
+
+  });
 
   describe('settings tab', () => {
-    beforeEach(() => {
-      router.replace({ query: { tab: 'settings' } })
+    beforeEach(async () => {
+      await router.replace({ query: { tab: 'settings' } })
     })
 
     it('should match snapshot', async() => {
-      mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MANAGER' }))
-      initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
-      await Vue.nextTick()
+      const customValue = { ...mockProject, currentUserRole: 'MANAGER' }
+      const customParams = {
+        project: () => (customValue),
+        projectByUrlSlug: () => (customValue),
+      }
+      await mockGraphql({
+        ...defaultParams,
+        ...customParams,
+      });
 
-      expect(wrapper).toMatchSnapshot()
-    })
+      const wrapper = mount(ViewProjectPage, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks
+          },
+          stubs,
+        },
+      });
+
+      await flushPromises();
+      await nextTick();
+
+      expect(wrapper.html()).toMatchSnapshot();
+    });
 
     it('should disable actions when under review', async() => {
-      mockProjectFn.mockImplementation(() => ({
-        ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'UNDER_REVIEW',
-      }))
-      initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
-      await Vue.nextTick()
+      const customValue = { ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'UNDER_REVIEW' }
+      const customParams = {
+        project: () => (customValue),
+        projectByUrlSlug: () => (customValue),
+      }
+      await mockGraphql({
+        ...defaultParams,
+        ...customParams,
+      });
 
-      expect(wrapper).toMatchSnapshot()
-    })
+      const wrapper = mount(ViewProjectPage, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks
+          },
+          stubs,
+        },
+      });
 
-    it('should disable actions when published', async() => {
-      mockProjectFn.mockImplementation(() => ({
-        ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED',
-      }))
-      initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
-      await Vue.nextTick()
+      await flushPromises();
+      await nextTick();
 
-      expect(wrapper).toMatchSnapshot()
-    })
-  })
+      expect(wrapper.html()).toMatchSnapshot();
+    });
+
+    it('should disable actions when under published', async() => {
+      const customValue = { ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED' }
+      const customParams = {
+        project: () => (customValue),
+        projectByUrlSlug: () => (customValue),
+      }
+      await mockGraphql({
+        ...defaultParams,
+        ...customParams,
+      });
+
+      const wrapper = mount(ViewProjectPage, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks
+          },
+          stubs,
+        },
+      });
+
+      await flushPromises();
+      await nextTick();
+
+      expect(wrapper.html()).toMatchSnapshot();
+    });
+
+
+  });
 
   it('should correctly fetch data and update the route if the project has a urlSlug but is accessed by ID', async() => {
     const urlSlug = 'project-url-slug'
-    mockProjectFn.mockImplementation(() => ({ ...mockProject, urlSlug }))
-    initMockGraphqlClient(graphqlMocks)
+    const mockProjectFn: any = vi.fn(() => ({ ...mockProject, urlSlug }));
+    await router.replace({ name: 'project', params: { projectIdOrSlug: urlSlug } });
 
-    await Vue.nextTick()
+    const customParams = {
+      project: mockProjectFn,
+      projectByUrlSlug: mockProjectFn,
+    }
+    await mockGraphql({
+      ...defaultParams,
+      ...customParams,
+    });
 
-    expect(router.currentRoute.params.projectIdOrSlug).toEqual(urlSlug)
+    const wrapper = mount(ViewProjectPage, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlMocks
+        },
+        stubs,
+      },
+    });
+
+    await flushPromises();
+    await nextTick();
+
+
+    expect(router.currentRoute.value.params.projectIdOrSlug).toEqual(urlSlug)
     // Assert that the correct graphql calls were made. See the GraphQLFieldResolver type for details on the args here
     expect(mockProjectFn).toHaveBeenCalledTimes(2)
-    expect(mockProjectFn.mock.calls[0][1].projectId).toEqual(mockProject.id)
-    expect(mockProjectFn.mock.calls[0][3].fieldName).toEqual('project')
-    expect(mockProjectFn.mock.calls[1][1].urlSlug).toEqual(urlSlug)
-    expect(mockProjectFn.mock.calls[1][3].fieldName).toEqual('projectByUrlSlug')
-  })
+    expect(wrapper.vm.projectId).toEqual(mockProject.id);
+    expect(wrapper.vm.projectIdOrSlug).toEqual(urlSlug);
+  });
 
   describe('publishing tab', () => {
-    beforeEach(() => {
-      router.replace({ query: { tab: 'publishing' } })
-      resetGenerateId()
+    beforeEach(async () => {
+      await router.replace({ query: { tab: 'publishing' } })
     })
 
     it('should match snapshot (unpublished)', async() => {
-      mockGenerateId(123)
-      mockProjectFn.mockImplementation(() => ({ ...mockProject, currentUserRole: 'MANAGER' }))
-      initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
-      await Vue.nextTick()
+      const customValue = { ...mockProject, currentUserRole: 'MANAGER' }
+      const customParams = {
+        project: () => (customValue),
+        projectByUrlSlug: () => (customValue),
+      }
+      await mockGraphql({
+        ...defaultParams,
+        ...customParams,
+      });
 
-      expect(wrapper).toMatchSnapshot()
-    })
+      const wrapper = mount(ViewProjectPage, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks
+          },
+          stubs,
+        },
+      });
+
+      await flushPromises();
+      await nextTick();
+
+      expect(wrapper.html()).toMatchSnapshot();
+    });
 
     it('should match snapshot (under review)', async() => {
-      mockProjectFn.mockImplementation(() => ({
-        ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'UNDER_REVIEW',
-      }))
-      initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
-      await Vue.nextTick()
+      const customValue = { ...mockProject, currentUserRole: 'MANAGER',
+        publicationStatus: 'UNDER_REVIEW' }
+      const customParams = {
+        project: () => (customValue),
+        projectByUrlSlug: () => (customValue),
+      }
+      await mockGraphql({
+        ...defaultParams,
+        ...customParams,
+      });
 
-      expect(wrapper).toMatchSnapshot()
-    })
+      const wrapper = mount(ViewProjectPage, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks
+          },
+          stubs,
+        },
+      });
+
+      await flushPromises();
+      await nextTick();
+
+      expect(wrapper.html()).toMatchSnapshot();
+    });
 
     it('should match snapshot (published)', async() => {
-      mockProjectFn.mockImplementation(() => ({
-        ...mockProject, currentUserRole: 'MANAGER', publicationStatus: 'PUBLISHED',
-      }))
-      initMockGraphqlClient(graphqlMocks)
-      const wrapper = mount(ViewProjectPage, { router, stubs, apolloProvider })
-      await Vue.nextTick()
+      const customValue = { ...mockProject, currentUserRole: 'MANAGER',
+        publicationStatus: 'PUBLISHED' }
+      const customParams = {
+        project: () => (customValue),
+        projectByUrlSlug: () => (customValue),
+      }
+      await mockGraphql({
+        ...defaultParams,
+        ...customParams,
+      });
 
-      expect(wrapper).toMatchSnapshot()
-    })
-  })
-})
+      const wrapper = mount(ViewProjectPage, {
+        global: {
+          plugins: [store, router],
+          provide: {
+            [DefaultApolloClient]: graphqlMocks
+          },
+          stubs,
+        },
+      });
+
+      await flushPromises();
+      await nextTick();
+
+      expect(wrapper.html()).toMatchSnapshot();
+    });
+
+
+
+  });
+
+
+});

@@ -38,7 +38,7 @@
     <el-table
       v-loading="loading"
       :data="currentPageData"
-      :row-key="row => row.user.id"
+      :row-key="row => row?.user.id"
       element-loading-text="Loading results from the server..."
     >
       <template v-slot:empty>
@@ -52,7 +52,7 @@
         min-width="200"
       >
         <template v-slot="{ row }">
-          {{ row.user.name }}
+          {{ row?.user?.name }}
         </template>
       </el-table-column>
 
@@ -62,7 +62,7 @@
         min-width="200"
       >
         <template v-slot="{ row }">
-          {{ row.user.email }}
+          {{ row?.user?.email }}
         </template>
       </el-table-column>
 
@@ -77,10 +77,10 @@
             title="Change role"
             @click.prevent="() => handleEditRole(row)"
           >
-            {{ getRoleName(row.role) }}
+            {{ getRoleName(row?.role) }}
           </a>
           <span v-else>
-            {{ getRoleName(row.role) }}
+            {{ getRoleName(row?.role) }}
           </span>
         </template>
       </el-table-column>
@@ -91,8 +91,8 @@
         align="center"
       >
         <template v-slot="{ row }">
-          <router-link :to="datasetsListLink(row.user)">
-            {{ row.numDatasets }}
+          <router-link :to="datasetsListLink(row?.user)">
+            {{ row?.numDatasets }}
           </router-link>
         </template>
       </el-table-column>
@@ -100,7 +100,7 @@
       <el-table-column width="200">
         <template v-slot="{ row }">
           <el-button
-            v-if="canEdit && row.role === 'MEMBER'"
+            v-if="canEdit && row?.role === 'MEMBER'"
             size="small"
             class="grid-button"
             @click="() => handleRemoveUser(row)"
@@ -108,7 +108,7 @@
             Remove
           </el-button>
           <el-button
-            v-if="canEdit && row.role === 'INVITED'"
+            v-if="canEdit && row?.role === 'INVITED'"
             size="small"
             class="grid-button"
             @click="() => handleCancelInvite(row)"
@@ -116,7 +116,7 @@
             Cancel
           </el-button>
           <el-button
-            v-if="canEdit && row.role === 'PENDING'"
+            v-if="canEdit && row?.role === 'PENDING'"
             size="small"
             type="success"
             class="grid-button"
@@ -125,7 +125,7 @@
             Accept
           </el-button>
           <el-button
-            v-if="canEdit && row.role === 'PENDING'"
+            v-if="canEdit && row?.role === 'PENDING'"
             size="small"
             class="grid-button"
             @click="() => handleRejectUser(row)"
@@ -160,6 +160,10 @@ import { UserGroupRole, UserGroupRoleOptions, getRoleName as getGroupRoleName } 
 import { ProjectRole, ProjectRoleOptions, getRoleName as getProjectRoleName } from '../api/project';
 import { encodeParams } from '../modules/Filters';
 import { CurrentUserRoleResult } from '../api/user';
+import {
+  ElDialog, ElButton, ElSelect, ElOption,
+  ElRow, ElTableColumn, ElPagination, ElTable, ElLoading
+} from "element-plus";
 
 export interface Member {
   role: UserGroupRole | ProjectRole,
@@ -173,6 +177,19 @@ export interface Member {
 
 export default defineComponent({
   name: 'MembersList',
+  components: {
+    ElDialog,
+    ElButton,
+    ElSelect,
+    ElOption,
+    ElRow,
+    ElTableColumn,
+    ElPagination,
+    ElTable
+  },
+  directives: {
+    loading: ElLoading.directive,
+  },
   props: {
     loading: {
       type: Boolean,
@@ -227,7 +244,7 @@ export default defineComponent({
     const canEditRoleFor = (user: Member) => {
       return props.canEdit
         && props.currentUser
-        && (props.currentUser.role === 'admin' || (props.currentUser.id !== user.user.id && allowedRoles.value.includes(user.role as any)));
+        && (props.currentUser.role === 'admin' || (props.currentUser.id !== user?.user?.id && allowedRoles.value.includes(user?.role as any)));
     };
 
     const datasetsListLink = (user: Member['user']) => {
@@ -235,7 +252,7 @@ export default defineComponent({
         path: '/datasets',
         query: encodeParams({
           ...props.filter,
-          submitter: user.id,
+          submitter: user?.id,
         }),
       };
     };
@@ -248,7 +265,7 @@ export default defineComponent({
     const handleAddMember = () => emit('addMember');
     const handleEditRole = (user: Member) => {
       editingRoleOfMember.value = user;
-      newRole.value = user.role;
+      newRole.value = user?.role;
     };
     const handleCloseEditRole = () => {
       editingRoleOfMember.value = null;

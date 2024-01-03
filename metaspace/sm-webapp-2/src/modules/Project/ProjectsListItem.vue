@@ -131,6 +131,7 @@ interface ManagerGroupName {
 }
 
 export default defineComponent({
+  name: 'ProjectsListItem',
   components: {
     ElapsedTime,
     CopyButton,

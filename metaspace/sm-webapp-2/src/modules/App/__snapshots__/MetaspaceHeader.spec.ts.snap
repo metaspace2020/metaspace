@@ -14,19 +14,23 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Upload</div>,<div id=\\"annotations-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Upload</div>
+        <div id=\\"annotations-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Annotations</div>,<div id=\\"datasets-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Annotations</div>
+        <div id=\\"datasets-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Datasets</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Datasets</div>
+        <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Projects</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Projects</div>
+        <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
@@ -37,7 +41,8 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Detectability</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Detectability</div>
+        <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
@@ -83,19 +88,23 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Upload</div>,<div id=\\"annotations-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Upload</div>
+        <div id=\\"annotations-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Annotations</div>,<div id=\\"datasets-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Annotations</div>
+        <div id=\\"datasets-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Datasets</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Datasets</div>
+        <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Projects</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Projects</div>
+        <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
@@ -106,7 +115,8 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Detectability</div>,<div class=\\"mx-1 px-3 py-2 rounded-md no-underline
+  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Detectability</div>
+        <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out

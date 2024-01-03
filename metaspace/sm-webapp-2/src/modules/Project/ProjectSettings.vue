@@ -90,14 +90,15 @@ import reportError from '../../lib/reportError';
 import { parseValidationErrors } from '../../api/validation';
 import { useConfirmAsync } from '../../components/ConfirmAsync'
 import {currentUserRoleQuery} from "../../api/user";
-import {ElMessage} from "element-plus";
+import {ElMessage, ElButton} from "element-plus";
 
 export default defineComponent({
   components: {
     EditProjectForm,
     DoiField,
     ShortLinkField,
-    SmForm
+    SmForm,
+    ElButton,
   },
   props: {
     projectId: String

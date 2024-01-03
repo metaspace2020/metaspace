@@ -201,7 +201,7 @@
 import {defineComponent, ref, watch, onMounted, computed, inject} from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
-import { ElButton, ElAlert, ElTabs, ElTabPane } from 'element-plus';
+import {ElButton, ElAlert, ElTabs, ElTabPane, ElLoading} from 'element-plus';
 import DatasetList from '../Datasets/list/DatasetList.vue';
 import {
   datasetDeletedQuery,
@@ -259,6 +259,9 @@ export default defineComponent({
     NewFeatureBadge,
     ElIcon,
     Loading
+  },
+  directives: {
+    'loading': ElLoading.directive,
   },
   setup() {
     const router = useRouter();
@@ -424,7 +427,7 @@ export default defineComponent({
       }
     })
     const projectDOI = computed(() => {
-      if (project.value !== null) {
+      if (project.value !== null && Array.isArray(project.value.externalLinks)) {
         // eslint-disable-next-line no-unsafe-optional-chaining
         for (const item of project.value?.externalLinks) {
           if (item.provider === 'DOI') {
@@ -585,6 +588,7 @@ export default defineComponent({
       plural,
       project,
       projectId,
+      projectIdOrSlug,
       showProjectDatasetsDialog,
       maxVisibleDatasets,
       currentUser,

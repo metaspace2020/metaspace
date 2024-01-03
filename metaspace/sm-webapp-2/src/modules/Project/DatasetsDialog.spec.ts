@@ -1,14 +1,33 @@
-import { mount } from '@vue/test-utils'
-import router from '../../router'
-import store from '../../store/index'
-import Vue from 'vue'
-import Vuex from 'vuex'
-import { sync } from 'vuex-router-sync'
-import { DatasetsDialog } from './DatasetsDialog'
-import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient'
+import {defineComponent, nextTick, h, ref} from 'vue'
+import {flushPromises, mount} from '@vue/test-utils'
+import DatasetsDialog from './DatasetsDialog'
+import {initMockGraphqlClient} from "../../tests/utils/mockGraphqlClient";
+import store from "../../store";
+import router from "../../router";
+import {vi} from "vitest";
+import { DefaultApolloClient, useQuery } from "@vue/apollo-composable";
 
-Vue.use(Vuex)
-sync(store, router)
+vi.mock('@vue/apollo-composable', () => ({
+  useQuery: vi.fn(),
+  DefaultApolloClient: vi.fn(),
+}));
+
+const graphqlWithNoData = {
+  allDatasets: [],
+}
+const graphqlWithData = {
+  allDatasets: [{
+    id: '2021-03-31_11h02m28s',
+    name: 'New 3 (1)',
+    uploadDT: '2021-03-31T14:02:28.722Z',
+  }, {
+    id: '2021-03-30_18h25m18s',
+    name: 'Untreated_3_434_super_lite_19_31 (1)',
+    uploadDT: '2021-03-30T21:25:18.473Z',
+  }],
+}
+let graphqlWithNoDataClient: any
+let graphqlWithDataClient: any
 
 describe('DatasetsDialog', () => {
   const propsData = {
@@ -33,72 +52,68 @@ describe('DatasetsDialog', () => {
     refreshData: () => {},
   }
 
-  const testHarness = Vue.extend({
+
+  const testHarness = defineComponent({
     components: {
       DatasetsDialog,
     },
-    render(h) {
-      return h(DatasetsDialog, { props: this.$attrs })
+    setup() {
+      return () => h(DatasetsDialog, { props: propsData })
     },
   })
 
-  const graphqlWithData = () => {
-    initMockGraphqlClient({
-      Query: () => ({
-        allDatasets: () => {
-          return [{
-            id: '2021-03-31_11h02m28s',
-            name: 'New 3 (1)',
-            uploadDT: '2021-03-31T14:02:28.722Z',
-          }, {
-            id: '2021-03-30_18h25m18s',
-            name: 'Untreated_3_434_super_lite_19_31 (1)',
-            uploadDT: '2021-03-30T21:25:18.473Z',
-          }]
-        },
-      }),
-    })
-  }
-
-  const graphqlWithNoData = () => {
-    initMockGraphqlClient({
-      Query: () => ({
-        allDatasets: () => {
-          return []
-        },
-      }),
-    })
-  }
-
-  // it('it should match snapshot', async() => {
-  //   graphqlWithData()
-  //   const wrapper = mount(testHarness, { store, router, apolloProvider, propsData })
-  //   await Vue.nextTick()
-  //
-  //   expect(wrapper).toMatchSnapshot()
-  // })
-  //
-  // it('it should match no dataset snapshot', async() => {
-  //   graphqlWithNoData()
-  //   const wrapper = mount(testHarness, { store, router, apolloProvider, propsData })
-  //   await Vue.nextTick()
-  //
-  //   expect(wrapper).toMatchSnapshot()
-  // })
+  beforeAll(async () => {
+    graphqlWithNoDataClient =  await initMockGraphqlClient({
+      Query: () => (graphqlWithNoData),
+     })
+    graphqlWithDataClient =  await initMockGraphqlClient({
+      Query: () => (graphqlWithData),
+     })
+  })
 
   it('it should have disabled update button when no data available', async() => {
-    graphqlWithNoData()
-    const wrapper = mount(testHarness, { store, router, apolloProvider, propsData })
-    await Vue.nextTick()
+    (useQuery as any).mockReturnValue({
+      result: ref(graphqlWithNoData),
+      loading: ref(false),
+      onResult: vi.fn(),
+    });
 
-    expect(wrapper.find('.el-button--primary').props('disabled')).toBe(true)
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlWithNoDataClient
+        }
+      },
+      props: propsData
+    });
+    await flushPromises()
+    await nextTick()
+
+    expect((wrapper.find('.el-button--primary') as any).isDisabled()).toBe(true)
   })
+
 
   it('it should have disabled update button when no dataset selection has changed', async() => {
-    graphqlWithData()
-    const wrapper = mount(testHarness, { store, router, apolloProvider, propsData })
-    await Vue.nextTick()
+    (useQuery as any).mockReturnValue({
+      result: ref(graphqlWithData),
+      loading: ref(false),
+      onResult: vi.fn(),
+    });
 
-    expect(wrapper.find('.el-button--primary').props('disabled')).toBe(true)
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlWithDataClient
+        }
+      },
+      props: propsData
+    });
+    await flushPromises()
+    await nextTick()
+
+    expect((wrapper.find('.el-button--primary') as any).isDisabled()).toBe(true)
   })
+
 })
