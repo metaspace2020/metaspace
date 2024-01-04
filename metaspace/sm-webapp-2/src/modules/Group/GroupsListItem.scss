@@ -11,6 +11,10 @@
       box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   }
 
+  .link{
+    @apply text-blue-600 hover:text-blue-700 underline cursor-pointer
+  }
+
   .group-item-info {
     overflow: hidden;
     flex: auto;

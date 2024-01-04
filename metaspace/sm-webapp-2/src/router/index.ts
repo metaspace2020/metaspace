@@ -24,60 +24,61 @@ const asyncPagesFreelyTyped = {
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, Component>
 
+export const routes : any =[
+  { path: '/', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
+  { path: '/about', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
+  { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
+  {
+    path: '/datasets',
+    component: DatasetsPage,
+    children: [
+      { path: '', component: asyncPages.DatasetTable },
+      { path: 'summary', component: asyncPages.DatasetTable },
+    ],
+  },
+  {
+    path: '/datasets/:dataset_id/comparison',
+    name: 'datasets-comparison',
+    component: asyncPages.DatasetTable,
+  },
+  { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
+  { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.DatasetTable },
+  { path: '/dataset/:dataset_id', name: 'dataset-overview', component: asyncPages.DatasetTable },
+  { path: '/dataset/:dataset_id/annotations', name: 'dataset-annotations', component: asyncPages.AnnotationsPage },
+  { path: '/dataset/:dataset_id/browser', name: 'dataset-browser', component: asyncPages.DatasetTable },
+  { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetTable },
+  { path: '/upload', component: asyncPages.UploadPage },
+  { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
+
+
+
+  { path: '/groups', component: asyncPages.GroupsListPage },
+  { path: '/group/create', component: asyncPages.CreateGroupPage },
+  { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
+
+
+  { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
+  { // Legacy URL sent in "request access" emails up until Feb 2019
+    path: '/project/:projectIdOrSlug/manage',
+    redirect: { path: '/project/:projectIdOrSlug', query: { tab: 'members' } },
+  },
+  { path: '/projects', component: asyncPages.ProjectsListPage },
+
+
+
+  { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
+
+
+  {
+    path: '/:pathMatch(.*)*',
+    component: NotFound,
+  },
+]
 
 const router = createRouter({
   // @ts-ignore
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    { path: '/', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
-    { path: '/about', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
-    { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
-    {
-      path: '/datasets',
-      component: DatasetsPage,
-      children: [
-        { path: '', component: asyncPages.DatasetTable },
-        { path: 'summary', component: asyncPages.DatasetTable },
-      ],
-    },
-    {
-      path: '/datasets/:dataset_id/comparison',
-      name: 'datasets-comparison',
-      component: asyncPages.DatasetTable,
-    },
-    { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
-    { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.DatasetTable },
-    { path: '/dataset/:dataset_id', name: 'dataset-overview', component: asyncPages.DatasetTable },
-    { path: '/dataset/:dataset_id/annotations', name: 'dataset-annotations', component: asyncPages.AnnotationsPage },
-    { path: '/dataset/:dataset_id/browser', name: 'dataset-browser', component: asyncPages.DatasetTable },
-    { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetTable },
-    { path: '/upload', component: asyncPages.UploadPage },
-    { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
-
-
-
-    { path: '/groups', component: asyncPages.GroupsListPage },
-    { path: '/group/create', component: asyncPages.CreateGroupPage },
-    { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
-
-
-    { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
-    { // Legacy URL sent in "request access" emails up until Feb 2019
-      path: '/project/:projectIdOrSlug/manage',
-      redirect: { path: '/project/:projectIdOrSlug', query: { tab: 'members' } },
-    },
-    { path: '/projects', component: asyncPages.ProjectsListPage },
-
-
-
-    { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
-
-
-    {
-      path: '/:pathMatch(.*)*',
-      component: NotFound,
-    },
-  ],
+  routes,
   scrollBehavior(to, from, savedPosition) {
     // return desired position
     if (savedPosition) {

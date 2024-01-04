@@ -48,8 +48,8 @@ export default defineComponent<GroupListPageProps>({
     const groups = computed(() => groupsResult.value != null ? groupsResult.value.allGroups
       : null)
 
-    const handleCreateGroup = () => {
-      router.push('/group/create')
+    const handleCreateGroup = async () => {
+      await router.push('/group/create')
     }
 
     return () => {

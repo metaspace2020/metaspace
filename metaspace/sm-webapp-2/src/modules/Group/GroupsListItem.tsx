@@ -2,7 +2,7 @@ import { defineComponent, computed } from 'vue';
 import { useQuery } from '@vue/apollo-composable';
 import { countGroupDatasets, UserGroupRoleOptions } from '../../api/group';
 import { plural } from '../../lib/vueFilters';
-import {  RouterLink } from 'vue-router';
+import { useRouter} from 'vue-router';
 import { encodeParams } from '../Filters';
 import CopyButton from '../../components/CopyButton.vue';
 import {ElIcon} from "element-plus";
@@ -29,6 +29,7 @@ export default defineComponent<GroupListItemProps>({
     numMembers: Number,
   },
   setup(props) {
+    const router = useRouter()
     const queryVars = computed(() => ({
       groupId: props.id,
     }));
@@ -51,6 +52,10 @@ export default defineComponent<GroupListItemProps>({
       query: { tab: props.currentUserRole === UserGroupRoleOptions.GROUP_ADMIN ? 'settings' : 'members' },
     }));
 
+    const handleNavigation = async (params: any) => {
+      await router.push(params)
+    }
+
     return () => {
       const { id, name, shortName, numMembers, currentUserRole } = props
       const nOfDatasets : number = (datasetCount.value || 0) as unknown as number
@@ -59,12 +64,12 @@ export default defineComponent<GroupListItemProps>({
         <div class='group-item'>
           <div class="group-item-info">
             <div class="group-item-title-wrapper group-item-info-line">
-              <RouterLink
+              <div
                 data-test-key="group-link"
-                to={groupLink.value}
+                onClick={() => handleNavigation(groupLink.value)}
                 class='group-item-title'>
                 {name}{shortName ? <span class='group-item-short-name'> ({shortName})</span> : ''}
-              </RouterLink>
+              </div>
               <CopyButton
                 class="ml-1"
                 isId
@@ -75,9 +80,9 @@ export default defineComponent<GroupListItemProps>({
             <div class="group-item-info-line">
               {
                 nOfDatasets > 0
-                && <RouterLink to={datasetsLink.value} class='group-item-title'>
+                && <div onClick={() => handleNavigation(datasetsLink.value)} class='group-item-title'>
                   {plural(nOfDatasets, 'Dataset', 'Datasets')},
-                </RouterLink>
+                </div>
               }{' '}
               {plural(numMembers, 'Member', 'Members') }
             </div>
@@ -85,19 +90,21 @@ export default defineComponent<GroupListItemProps>({
           <div class="group-item-actions">
             <div class="flex items-center">
               <ElIcon><PictureFilled /></ElIcon>
-              <RouterLink
+              <div
+                class='link ml-1'
                 data-test-key="dataset-link"
-                to={datasetsLink.value} class='ml-1'>
+                onClick={() => handleNavigation(datasetsLink.value)}>
                 Browse datasets
-              </RouterLink>
+              </div>
             </div>
             <div class="flex items-center">
               <ElIcon><EditPen /></ElIcon>
-              <RouterLink
+              <div
+                class='link ml-1'
                 data-test-key="manage-link"
-                to={managementLink.value} class='ml-1'>
+                onClick={() => handleNavigation(managementLink.value)}>
                 {currentUserRole === UserGroupRoleOptions.GROUP_ADMIN ? 'Manage' : 'Browse'} group
-              </RouterLink>
+              </div>
             </div>
           </div>
         </div>
