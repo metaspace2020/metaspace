@@ -50,7 +50,7 @@ const RichTextArea = defineComponent({
 
     return () => (
       <div class="sm-RichText sm-RichTextArea relative">
-        {slots.label && <label onClick={() => { editor.focus() }}>{slots.label()}</label>}
+        {slots.label && <label onClick={() => { editor.chain().focus() }}>{slots.label()}</label>}
         <EditorContent
           class={[
             'h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm',
@@ -68,7 +68,7 @@ const RichTextArea = defineComponent({
         <p
           class="sm-RichTextArea-description cursor-help"
           title="Highlight a word or phrase for formatting options"
-          onClick={() => { editor.focus() }}
+          onClick={() => { editor.chain().focus() }}
         >
           Rich Text
         </p>

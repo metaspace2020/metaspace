@@ -296,9 +296,11 @@ export default defineComponent({
     });
     const currentUser = computed(() => currentUserResult.value?.currentUser as CurrentUserRoleWithGroupResult | null);
 
-    const { result: projectResult, onResult: onProjectResult, refetch: refetchProject } = useQuery(projectQuery.value,
+    const { result: projectResult, onResult: onProjectResult, refetch: refetchProject, loading: projectLoading } = useQuery(projectQuery.value,
       { projectIdOrSlug: route.params.projectIdOrSlug }, {
-      fetchPolicy: 'cache-first'
+        // Can't be 'no-cache' because `refetchProject` is used for updating the cache, which in turn updates
+        // MetaspaceHeader's project.hasPendingRequest notification
+      fetchPolicy: 'network-only'
     });
     onProjectResult(() => {
       setTimeout(() => {
@@ -314,7 +316,7 @@ export default defineComponent({
       }
     })
 
-    const { result: dataResult, loading: projectLoading, onResult: onDataResult, refetch: refetchData } = useQuery(gql`query ProjectProfileDatasets(
+    const { result: dataResult, onResult: onDataResult, refetch: refetchData } = useQuery(gql`query ProjectProfileDatasets(
           $projectId: ID!,
           $maxVisibleDatasets: Int!,
           $inpFdrLvls: [Int!] = [10],
@@ -330,7 +332,6 @@ export default defineComponent({
       maxVisibleDatasets: maxVisibleDatasets.value,
       projectId: projectId.value,
     }, {
-      fetchPolicy: 'cache-first',
       enabled: computed(() => projectId.value != null),
     });
     onDataResult(() => {

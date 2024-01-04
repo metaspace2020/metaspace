@@ -1,0 +1,42 @@
+.group-item{
+  @apply  border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200 my-1;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  > * {
+    z-index: 1;
+  }
+
+  &:hover{
+      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  .group-item-info {
+    overflow: hidden;
+    flex: auto;
+
+    .group-item-title-wrapper {
+      @apply pr-5 flex items-start;
+
+      .group-item-title{
+        @apply text-2xl tracking-snug font-medium no-underline truncate leading-none pb-2 text-black;
+      }
+      .group-item-short-name{
+        @apply text-xl tracking-snug font-medium no-underline truncate leading-none pb-2 text-gray-500 italic;
+      }
+    }
+
+    .group-item-info-line {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .group-item-actions {
+    flex: 0 0 1;
+  }
+
+
+
+}
