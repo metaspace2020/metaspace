@@ -182,7 +182,7 @@ export default defineComponent({
       const description = getDescriptionAsTree()
 
       return (
-        <div class="ds-actions">
+        <div class="ds-actions relative">
           <el-dialog
             class='dataset-item-dialog'
             title="Provided metadata"

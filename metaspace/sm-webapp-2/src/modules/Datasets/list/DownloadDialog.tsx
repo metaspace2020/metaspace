@@ -2,7 +2,7 @@ import { computed, defineComponent, toRefs } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { DownloadLinkJson, GetDatasetDownloadLink, getDatasetDownloadLink } from '../../../api/dataset'
 import safeJsonParse from '../../../lib/safeJsonParse'
-import { ElDialog } from 'element-plus'
+import {ElDialog, ElLoading} from 'element-plus'
 
 const getFilenameAndExt = (filename: string) => {
   const lastDot = filename.lastIndexOf('.')
@@ -87,6 +87,9 @@ export default defineComponent({
     datasetId: { type: String, required: true },
     onClose: { type: Function },
   },
+  directives: {
+    loading: ElLoading.directive,
+  },
   setup(props, { emit }) {
     const { datasetId } = toRefs(props)
     const {
@@ -152,6 +155,7 @@ export default defineComponent({
         <ElDialog
           model-value={true}
           lockScroll={false}
+          onClick={(e) => e.stopPropagation()}
           onClose={() => emit('close')}
           title={`Download ${props.datasetName}`}>
           {content.children}

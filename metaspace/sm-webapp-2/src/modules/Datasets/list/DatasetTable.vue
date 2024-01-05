@@ -20,7 +20,8 @@
         </el-radio-group>
 
         <el-checkbox-group
-          v-model="state.categories"
+          :model-value="state.categories"
+          @change="(value) => state.categories = value"
           v-loading="state.countLoading"
           :min="1"
           class="p-2 dataset-status-checkboxes"
@@ -366,7 +367,11 @@ export default defineComponent({
       }
     });
 
-    watch(queryVariables, async () => {
+    const categories = computed(() => {
+      return state.categories
+    })
+
+    watch([queryVariables, categories], async () => {
       await getDatasets()
       await countDatasets()
     })
