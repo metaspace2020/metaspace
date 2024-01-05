@@ -167,9 +167,39 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
       }
     }
 
-    return () => {
-      const datasets : any[] = uniqBy(((options.value || []) as any[]).concat((dataset.value || []) as any[])
-        , 'id')
+    return {
+      options,
+      state,
+      emit,
+      handleScroll,
+      fetchDatasets,
+      handleDatasetSelection,
+      handleSelection,
+      annotationsLink,
+      datasetLoading,
+      receivedDatasets,
+      receivedDatasetsResultLoading,
+      dataset,
+      router,
+    };
+
+  },
+  render() {
+    const {
+      options,
+      state,
+      emit,
+      handleScroll,
+      fetchDatasets,
+      handleDatasetSelection,
+      handleSelection,
+      annotationsLink,
+      datasetLoading,
+      dataset,
+      router,
+    } = this
+    const datasets : any[] = uniqBy(((options || []) as any[]).concat((dataset || []) as any[])
+      , 'id')
 
       return (
         <ElDialog
@@ -205,7 +235,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                     filterable
                     remote
                     remoteMethod={fetchDatasets}
-                    loading={datasetLoading.value}
+                    loading={datasetLoading}
                     placeholder="Start typing name"
                     loadingText="Loading matching entries..."
                     noMatchText="No matches"
@@ -252,61 +282,61 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
               </p>
               {
                 state.workflowStep === 2
-                  && <form>
-                    <div class='w-full flex flex-row items-center justify-center'>
-                      <div class='m-2'>
-                        <p>Number of rows</p>
-                        <ElInputNumber
-                          size="small"
-                          min={1}
-                          max={state.nCols * state.nRows >= 15 ? state.nRows : undefined}
-                          modelValue={state.nRows}
-                          onChange={(value: number) => { state.nRows = value }}/>
-                      </div>
-                      <div class='m-2'>
-                        <p>Number of columns</p>
-                        <ElInputNumber
-                          size="small"
-                          min={1}
-                          max={state.nCols * state.nRows >= 15 ? state.nCols : undefined}
-                          modelValue={state.nCols}
-                          onChange={(value: number) => { state.nCols = value }}/>
-                      </div>
+                && <form>
+                  <div class='w-full flex flex-row items-center justify-center'>
+                    <div class='m-2'>
+                      <p>Number of rows</p>
+                      <ElInputNumber
+                        size="small"
+                        min={1}
+                        max={state.nCols * state.nRows >= 15 ? state.nRows : undefined}
+                        modelValue={state.nRows}
+                        onChange={(value: number) => { state.nRows = value }}/>
                     </div>
-                    <div class='dataset-comparison-dialog-grid'>
-                      {Array.from(Array(state.nRows).keys()).map((row) => {
-                        return (
-                          <div key={row} class='dataset-comparison-dialog-row'>
-                            {Array.from(Array(state.nCols).keys()).map((col) => {
-                              return (
-                                <div key={col} class='dataset-comparison-dialog-col'>
-                                  {(col + 1) + (row * state.nCols)}
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )
-                      })}
+                    <div class='m-2'>
+                      <p>Number of columns</p>
+                      <ElInputNumber
+                        size="small"
+                        min={1}
+                        max={state.nCols * state.nRows >= 15 ? state.nCols : undefined}
+                        modelValue={state.nCols}
+                        onChange={(value: number) => { state.nCols = value }}/>
                     </div>
-                    <ErrorLabelText class='mt-0' style={{ visibility: state.secondStepError ? '' : 'hidden' }}>
-                      The grid must have enough cells to all datasets!
-                    </ErrorLabelText>
-                    <ElButton onClick={() => { state.workflowStep = 1 }}>
-                      Prev
-                    </ElButton>
-                    <ElButton onClick={() => {
-                      // the grid needs to have cells to all datasets
-                      if ((state.nCols * state.nRows) < state.selectedDatasetIds.length) {
-                        state.secondStepError = true
-                      } else {
-                        state.secondStepError = false
-                        state.maxCellError = false
-                        state.workflowStep = 3
-                      }
-                    }} type="primary">
-                      Next
-                    </ElButton>
-                  </form>
+                  </div>
+                  <div class='dataset-comparison-dialog-grid'>
+                    {Array.from(Array(state.nRows).keys()).map((row) => {
+                      return (
+                        <div key={row} class='dataset-comparison-dialog-row'>
+                          {Array.from(Array(state.nCols).keys()).map((col) => {
+                            return (
+                              <div key={col} class='dataset-comparison-dialog-col'>
+                                {(col + 1) + (row * state.nCols)}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <ErrorLabelText class='mt-0' style={{ visibility: state.secondStepError ? '' : 'hidden' }}>
+                    The grid must have enough cells to all datasets!
+                  </ErrorLabelText>
+                  <ElButton onClick={() => { state.workflowStep = 1 }}>
+                    Prev
+                  </ElButton>
+                  <ElButton onClick={() => {
+                    // the grid needs to have cells to all datasets
+                    if ((state.nCols * state.nRows) < state.selectedDatasetIds.length) {
+                      state.secondStepError = true
+                    } else {
+                      state.secondStepError = false
+                      state.maxCellError = false
+                      state.workflowStep = 3
+                    }
+                  }} type="primary">
+                    Next
+                  </ElButton>
+                </form>
               }
             </WorkflowStep>
 
@@ -321,11 +351,11 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                 state.workflowStep === 3
                 && <form>
                   <div class='dataset-comparison-dialog-grid'
-                    {...{
-                      on: {
-                        scroll: handleScroll,
-                      },
-                    }}>
+                       {...{
+                         on: {
+                           scroll: handleScroll,
+                         },
+                       }}>
                     {Array.from(Array(state.nRows).keys()).map((row) => {
                       return (
                         <div key={row} class='dataset-comparison-dialog-row'>
@@ -387,6 +417,5 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
           </Workflow>
         </ElDialog>
       )
-    }
-  },
+  }
 })

@@ -35,7 +35,7 @@ exports[`DatasetItem > should match snapshot 1`] = `
     </div>
     <div class=\\"ds-item-line\\"><span><div>20 annotations</div> @ FDR 10% (HMDB-v2.5)</span></div>
   </div>
-  <div class=\\"ds-actions\\">
+  <div class=\\"ds-actions relative\\">
     <div class=\\"mock-el-dialog dataset-item-dialog\\" title=\\"Provided metadata\\" lock-scroll=\\"false\\" modelvalue=\\"false\\">
       <div data-v-7194f2e5=\\"\\" class=\\"el-row w-full\\">
         <div data-v-7194f2e5=\\"\\" class=\\"el-tree w-full\\" role=\\"tree\\" id=\\"metadata-tree\\">
