@@ -116,7 +116,6 @@ export default defineComponent({
     });
     const allDatasets = computed(() => allDatasetsResult.value?.allDatasets as DatasetListItem[] || []);
     const loading = computed(() => currenUserLoading.value || datasetsLoading.value);
-
     const dialogTitle = computed(() => allDatasets.value.length > 0 ? 'Transfer datasets' : 'Join group');
     const acceptText = computed(() => {
       const action = props.isInvited ? 'Join group' : 'Request access';

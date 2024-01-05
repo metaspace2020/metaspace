@@ -1,5 +1,4 @@
 import { defineComponent } from 'vue'
-import('../../assets/inline/refactoring-ui/icon-check.svg')
 
 /* prevents ts errors for attributes */
 interface Props {

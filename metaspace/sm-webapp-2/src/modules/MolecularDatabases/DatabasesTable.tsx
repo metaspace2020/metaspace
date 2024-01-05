@@ -1,4 +1,4 @@
-import { defineComponent, reactive, onBeforeMount } from 'vue'
+import {defineComponent, reactive, onBeforeMount, defineAsyncComponent} from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 
 import UploadDialog from './UploadDialog'
@@ -6,8 +6,13 @@ import ElapsedTime from '../../components/ElapsedTime'
 import PrimaryIcon from '../../components/PrimaryIcon.vue'
 import SecondaryIcon from '../../components/SecondaryIcon.vue'
 
-import CheckSvg from '../../assets/inline/refactoring-ui/icon-check.svg'
-import GroupSvg from '../../assets/inline/refactoring-ui/icon-user-group.svg'
+
+const CheckSvg = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-check.svg')
+);
+const GroupSvg = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-user-group.svg')
+);
 
 import {ElButton, ElLoading, ElTable, ElTableColumn} from "element-plus";
 

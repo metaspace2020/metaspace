@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive } from 'vue'
+import {computed, defineAsyncComponent, defineComponent, reactive} from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import FadeTransition from '../../components/FadeTransition'
 import DetailsForm from './DatabaseDetailsForm'
@@ -6,7 +6,6 @@ import ArchiveForm from './ArchiveDatabaseForm'
 import DeleteForm from './DeleteDatabaseForm'
 import UploadDialog from './UploadDialog'
 import SecondaryIcon from '../../components/SecondaryIcon.vue'
-import ArrowSvg from '../../assets/inline/refactoring-ui/icon-arrow-thin-left-circle.svg'
 import {
   databaseDetailsQuery,
   DatabaseDetailsQuery,
@@ -20,6 +19,10 @@ import safeJsonParse from '../../lib/safeJsonParse'
 import './DatabaseDetails.scss'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import {ElLoading, ElButton} from "element-plus";
+
+const ArrowSvg = defineAsyncComponent(() =>
+  import('../../assets/inline/refactoring-ui/icon-arrow-thin-left-circle.svg')
+)
 
 interface DownloadJson{
   filename: string,
@@ -42,7 +45,7 @@ const Details = defineComponent<Props>({
   directives: {
     'loading': ElLoading.directive,
   },
-  setup(props, { root }) {
+  setup(props) {
     const { result, refetch, onResult } = useQuery<DatabaseDetailsQuery>(
       databaseDetailsQuery,
       { id: props.id },
@@ -50,7 +53,6 @@ const Details = defineComponent<Props>({
     )
     const {
       result: currentUserResult,
-      loading: userLoading,
     } = useQuery<CurrentUserRoleResult|any>(currentUserRoleQuery)
     const currentUser = computed(() => currentUserResult.value != null ? currentUserResult.value.currentUser : null)
 

@@ -1,6 +1,4 @@
 import {defineComponent, watch, reactive, computed, onMounted} from 'vue'
-
-import router from '../../router'
 import FadeTransition from '../../components/FadeTransition'
 
 import Table from './DatabasesTable'
@@ -40,13 +38,12 @@ export default defineComponent({
     })
 
 
-
     const selectDatabase = (row: any) => {
       router.push({ query: { ...router.currentRoute.value.query, db: row.id } })
     }
 
     const removeSelected = () => {
-      const { db, ...query } = router.currentRoute.value.query
+      const { ...query } = router.currentRoute.value.query
       router.push({ query })
     }
 

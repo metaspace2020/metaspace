@@ -193,7 +193,7 @@ import { encodeParams } from '../Filters'
 import { useConfirmAsync } from '../../components/ConfirmAsync'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import reportError from '../../lib/reportError'
-import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
+import { currentUserRoleQuery } from '../../api/user'
 import isUuid from '../../lib/isUuid'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
@@ -202,7 +202,7 @@ import MolecularDatabases from '../MolecularDatabases'
 import config from '../../lib/config'
 import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
 import { RequestedAccessDialog } from './RequestedAccessDialog'
-import {ElTabs} from "element-plus";
+import {ElTabs, ElButton, ElTabPane, ElLoading, ElAlert} from "element-plus";
 import {useStore} from "vuex";
 
 interface ViewGroupProfileData {
@@ -223,6 +223,12 @@ export default defineComponent({
     PopupAnchor,
     RequestedAccessDialog,
     ElTabs,
+    ElButton,
+    ElAlert,
+    ElTabPane,
+  },
+  directives: {
+    'loading': ElLoading.directive,
   },
   setup() {
     const store = useStore();
@@ -359,7 +365,6 @@ export default defineComponent({
     }
 
     const groupSlug = computed(() => route.params?.groupIdOrSlug || group.value?.urlSlug)
-
     watch(() => groupSlug, () => {
       canonicalizeUrl()
     });
@@ -488,6 +493,7 @@ export default defineComponent({
       countDatabases,
       isGroupMember,
       groupId,
+      groupSlug,
       tab,
       setTab,
       isInvited,

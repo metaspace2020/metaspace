@@ -10,7 +10,7 @@
         <el-checkbox
           :model-value="selectedDatasets[dataset.id]"
           class="flex h-6 items-center"
-          @change="(value) => handleChange(dataset.id, value)"
+          @click="() => handleChange(dataset.id)"
         >
           <span class="truncate" :title="dataset.name">
             {{ dataset.name }}
@@ -63,8 +63,9 @@ export default defineComponent({
 
     watch(() => props.datasets, populateSelectedDatasetIds, { immediate: true });
 
-    const handleChange = (datasetId: string, value: boolean) => {
-       selectedDatasets.value[datasetId] = value
+    const handleChange = (datasetId: string) => {
+      const newValue = !selectedDatasets.value[datasetId]
+       selectedDatasets.value[datasetId] = newValue
        emit('update:modelValue', selectedDatasets.value);
     }
 

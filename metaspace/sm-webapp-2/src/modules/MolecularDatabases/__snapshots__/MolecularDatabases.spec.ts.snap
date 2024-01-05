@@ -1,0 +1,457 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MolecularDatabases > details view > should match snapshot (archived) 1`] = `
+"<transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+  <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+    <div class=\\"relative leading-6 h2-leading-12 database-details-container\\">
+      <div class=\\"absolute top-0 left-0 h-12 flex items-center\\"><a class=\\"font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6\\" href=\\"#\\"><span class=\\"flex items-center\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6 mr-1\\"><svg></svg></i><span class=\\"leading-none mt-1\\">All databases</span></span></a></div>
+      <div class=\\"max-w-measure-3 mx-auto mt-6 mb-18\\">
+        <div class=\\"flex justify-between items-center\\">
+          <h2 title=\\"undefined - undefined\\" class=\\"truncate\\">
+            <!----> <small class=\\"text-gray-700 font-normal\\">
+              <!---->
+            </small>
+          </h2><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button ml-3\\">
+            <!--v-if--><span class=\\"\\">Upload new version</span>
+          </button>
+        </div>
+        <form data-v-6c5bb112=\\"\\" class=\\"v-rhythm-6 mt-3\\" action=\\"#\\">
+          <div><label for=\\"database-full-name\\"><span class=\\"text-base font-medium\\">Full name</span></label>
+            <div class=\\"el-input\\">
+              <!-- input -->
+              <!-- prepend slot -->
+              <!--v-if-->
+              <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
+                <!-- prefix slot -->
+                <!--v-if--><input class=\\"el-input__inner\\" type=\\"text\\" autocomplete=\\"off\\" tabindex=\\"0\\" id=\\"database-full-name\\"><!-- suffix slot -->
+                <!--v-if-->
+              </div><!-- append slot -->
+              <!--v-if-->
+            </div>
+          </div>
+          <div class=\\"sm-RichText sm-RichTextArea relative\\">
+            <!---->
+            <div class=\\"h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary\\">
+              <div contenteditable=\\"true\\" translate=\\"no\\" class=\\"tiptap ProseMirror\\" tabindex=\\"0\\">
+                <p><br class=\\"ProseMirror-trailingBreak\\"></p>
+              </div>
+            </div>
+            <div>
+              <div></div>
+            </div>
+            <p class=\\"sm-RichTextArea-description cursor-help\\" title=\\"Highlight a word or phrase for formatting options\\">Rich Text</p>
+          </div>
+          <div>
+            <p class=\\"m-0 mb-3\\"><span class=\\"text-base font-medium\\">Annotation access</span></p>
+            <div class=\\"flex -ml-12\\">
+              <div class=\\"w-9 flex items-center\\">
+                <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6\\"><svg></svg></i></transition>
+              </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-annotations-private\\" name=\\"isPublic\\"><span class=\\"text-base font-medium\\">Annotations are private</span><span class=\\"block text-sm text-gray-800\\">Results will be visible to group members only</span></label>
+            </div>
+            <div class=\\"flex -ml-12\\">
+              <div class=\\"w-9 flex items-center\\">
+                <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+                  <!---->
+                </transition>
+              </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-annotations-public\\" name=\\"isPublic\\"><span class=\\"text-base font-medium\\">Annotations are public</span><span class=\\"block text-sm text-gray-800\\">Results will be visible to everyone</span></label>
+            </div>
+          </div>
+          <div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
+            <div class=\\"el-input\\">
+              <!-- input -->
+              <!-- prepend slot -->
+              <!--v-if-->
+              <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
+                <!-- prefix slot -->
+                <!--v-if--><input class=\\"el-input__inner\\" type=\\"text\\" autocomplete=\\"off\\" tabindex=\\"0\\" id=\\"database-link\\"><!-- suffix slot -->
+                <!--v-if-->
+              </div><!-- append slot -->
+              <!--v-if-->
+            </div>
+          </div>
+          <div class=\\"sm-RichText sm-RichTextArea relative\\">
+            <!---->
+            <div class=\\"h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary\\">
+              <div contenteditable=\\"true\\" translate=\\"no\\" class=\\"tiptap ProseMirror\\" tabindex=\\"0\\">
+                <p><br class=\\"ProseMirror-trailingBreak\\"></p>
+              </div>
+            </div>
+            <div>
+              <div></div>
+            </div>
+            <p class=\\"sm-RichTextArea-description cursor-help\\" title=\\"Highlight a word or phrase for formatting options\\">Rich Text</p>
+          </div><button class=\\"el-button el-button--primary\\">Update details</button>
+        </form>
+        <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\" class=\\"mt-12\\">
+          <form class=\\"margin-reset mt-12\\">
+            <h2>Archive database</h2>
+            <p>Database will not be available for dataset processing.</p><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button mt-5\\">
+              <!--v-if--><span class=\\"\\">Archive database</span>
+            </button>
+          </form>
+        </transition>
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+  </transition>
+</transition>"
+`;
+
+exports[`MolecularDatabases > details view > should match snapshot (manager) 1`] = `
+"<transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+  <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+    <div class=\\"relative leading-6 h2-leading-12 database-details-container\\">
+      <div class=\\"absolute top-0 left-0 h-12 flex items-center\\"><a class=\\"font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6\\" href=\\"#\\"><span class=\\"flex items-center\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6 mr-1\\"><svg></svg></i><span class=\\"leading-none mt-1\\">All databases</span></span></a></div>
+      <div class=\\"max-w-measure-3 mx-auto mt-6 mb-18\\">
+        <div class=\\"flex justify-between items-center\\">
+          <h2 title=\\"undefined - undefined\\" class=\\"truncate\\">
+            <!----> <small class=\\"text-gray-700 font-normal\\">
+              <!---->
+            </small>
+          </h2><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button ml-3\\">
+            <!--v-if--><span class=\\"\\">Upload new version</span>
+          </button>
+        </div>
+        <form data-v-6c5bb112=\\"\\" class=\\"v-rhythm-6 mt-3\\" action=\\"#\\">
+          <div><label for=\\"database-full-name\\"><span class=\\"text-base font-medium\\">Full name</span></label>
+            <div class=\\"el-input\\">
+              <!-- input -->
+              <!-- prepend slot -->
+              <!--v-if-->
+              <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
+                <!-- prefix slot -->
+                <!--v-if--><input class=\\"el-input__inner\\" type=\\"text\\" autocomplete=\\"off\\" tabindex=\\"0\\" id=\\"database-full-name\\"><!-- suffix slot -->
+                <!--v-if-->
+              </div><!-- append slot -->
+              <!--v-if-->
+            </div>
+          </div>
+          <div class=\\"sm-RichText sm-RichTextArea relative\\">
+            <!---->
+            <div class=\\"h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary\\">
+              <div contenteditable=\\"true\\" translate=\\"no\\" class=\\"tiptap ProseMirror\\" tabindex=\\"0\\">
+                <p><br class=\\"ProseMirror-trailingBreak\\"></p>
+              </div>
+            </div>
+            <div>
+              <div></div>
+            </div>
+            <p class=\\"sm-RichTextArea-description cursor-help\\" title=\\"Highlight a word or phrase for formatting options\\">Rich Text</p>
+          </div>
+          <div>
+            <p class=\\"m-0 mb-3\\"><span class=\\"text-base font-medium\\">Annotation access</span></p>
+            <div class=\\"flex -ml-12\\">
+              <div class=\\"w-9 flex items-center\\">
+                <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6\\"><svg></svg></i></transition>
+              </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-annotations-private\\" name=\\"isPublic\\"><span class=\\"text-base font-medium\\">Annotations are private</span><span class=\\"block text-sm text-gray-800\\">Results will be visible to group members only</span></label>
+            </div>
+            <div class=\\"flex -ml-12\\">
+              <div class=\\"w-9 flex items-center\\">
+                <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+                  <!---->
+                </transition>
+              </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-annotations-public\\" name=\\"isPublic\\"><span class=\\"text-base font-medium\\">Annotations are public</span><span class=\\"block text-sm text-gray-800\\">Results will be visible to everyone</span></label>
+            </div>
+          </div>
+          <div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
+            <div class=\\"el-input\\">
+              <!-- input -->
+              <!-- prepend slot -->
+              <!--v-if-->
+              <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
+                <!-- prefix slot -->
+                <!--v-if--><input class=\\"el-input__inner\\" type=\\"text\\" autocomplete=\\"off\\" tabindex=\\"0\\" id=\\"database-link\\"><!-- suffix slot -->
+                <!--v-if-->
+              </div><!-- append slot -->
+              <!--v-if-->
+            </div>
+          </div>
+          <div class=\\"sm-RichText sm-RichTextArea relative\\">
+            <!---->
+            <div class=\\"h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary\\">
+              <div contenteditable=\\"true\\" translate=\\"no\\" class=\\"tiptap ProseMirror\\" tabindex=\\"0\\">
+                <p><br class=\\"ProseMirror-trailingBreak\\"></p>
+              </div>
+            </div>
+            <div>
+              <div></div>
+            </div>
+            <p class=\\"sm-RichTextArea-description cursor-help\\" title=\\"Highlight a word or phrase for formatting options\\">Rich Text</p>
+          </div><button class=\\"el-button el-button--primary\\">Update details</button>
+        </form>
+        <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\" class=\\"mt-12\\">
+          <form class=\\"margin-reset mt-12\\">
+            <h2>Archive database</h2>
+            <p>Database will not be available for dataset processing.</p><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button mt-5\\">
+              <!--v-if--><span class=\\"\\">Archive database</span>
+            </button>
+          </form>
+        </transition>
+        <!---->
+        <form class=\\"margin-reset mt-12\\">
+          <h2>Delete database</h2>
+          <p>Unprocessed dataset jobs using this database will also be removed.</p><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--danger mt-5\\">
+            <!--v-if--><span class=\\"\\">Delete database</span>
+          </button>
+        </form>
+      </div>
+      <!---->
+    </div>
+  </transition>
+</transition>"
+`;
+
+exports[`MolecularDatabases > details view > should match snapshot 1`] = `
+"<transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+  <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+    <div class=\\"relative leading-6 h2-leading-12 database-details-container\\">
+      <div class=\\"absolute top-0 left-0 h-12 flex items-center\\"><a class=\\"font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6\\" href=\\"#\\"><span class=\\"flex items-center\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6 mr-1\\"><svg></svg></i><span class=\\"leading-none mt-1\\">All databases</span></span></a></div>
+      <div class=\\"max-w-measure-3 mx-auto mt-6 mb-18\\">
+        <div class=\\"flex justify-between items-center\\">
+          <h2 title=\\"undefined - undefined\\" class=\\"truncate\\">
+            <!----> <small class=\\"text-gray-700 font-normal\\">
+              <!---->
+            </small>
+          </h2><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button ml-3\\">
+            <!--v-if--><span class=\\"\\">Upload new version</span>
+          </button>
+        </div>
+        <form data-v-6c5bb112=\\"\\" class=\\"v-rhythm-6 mt-3\\" action=\\"#\\">
+          <div><label for=\\"database-full-name\\"><span class=\\"text-base font-medium\\">Full name</span></label>
+            <div class=\\"el-input\\">
+              <!-- input -->
+              <!-- prepend slot -->
+              <!--v-if-->
+              <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
+                <!-- prefix slot -->
+                <!--v-if--><input class=\\"el-input__inner\\" type=\\"text\\" autocomplete=\\"off\\" tabindex=\\"0\\" id=\\"database-full-name\\"><!-- suffix slot -->
+                <!--v-if-->
+              </div><!-- append slot -->
+              <!--v-if-->
+            </div>
+          </div>
+          <div class=\\"sm-RichText sm-RichTextArea relative\\">
+            <!---->
+            <div class=\\"h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary\\">
+              <div contenteditable=\\"true\\" translate=\\"no\\" class=\\"tiptap ProseMirror\\" tabindex=\\"0\\">
+                <p><br class=\\"ProseMirror-trailingBreak\\"></p>
+              </div>
+            </div>
+            <div>
+              <div></div>
+            </div>
+            <p class=\\"sm-RichTextArea-description cursor-help\\" title=\\"Highlight a word or phrase for formatting options\\">Rich Text</p>
+          </div>
+          <div>
+            <p class=\\"m-0 mb-3\\"><span class=\\"text-base font-medium\\">Annotation access</span></p>
+            <div class=\\"flex -ml-12\\">
+              <div class=\\"w-9 flex items-center\\">
+                <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6\\"><svg></svg></i></transition>
+              </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-annotations-private\\" name=\\"isPublic\\"><span class=\\"text-base font-medium\\">Annotations are private</span><span class=\\"block text-sm text-gray-800\\">Results will be visible to group members only</span></label>
+            </div>
+            <div class=\\"flex -ml-12\\">
+              <div class=\\"w-9 flex items-center\\">
+                <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+                  <!---->
+                </transition>
+              </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-annotations-public\\" name=\\"isPublic\\"><span class=\\"text-base font-medium\\">Annotations are public</span><span class=\\"block text-sm text-gray-800\\">Results will be visible to everyone</span></label>
+            </div>
+          </div>
+          <div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
+            <div class=\\"el-input\\">
+              <!-- input -->
+              <!-- prepend slot -->
+              <!--v-if-->
+              <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
+                <!-- prefix slot -->
+                <!--v-if--><input class=\\"el-input__inner\\" type=\\"text\\" autocomplete=\\"off\\" tabindex=\\"0\\" id=\\"database-link\\"><!-- suffix slot -->
+                <!--v-if-->
+              </div><!-- append slot -->
+              <!--v-if-->
+            </div>
+          </div>
+          <div class=\\"sm-RichText sm-RichTextArea relative\\">
+            <!---->
+            <div class=\\"h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm rounded border border-solid transition-colors ease-in-out duration-200 border-gray-300 hover:border-gray-500 focus-within:border-primary\\">
+              <div contenteditable=\\"true\\" translate=\\"no\\" class=\\"tiptap ProseMirror\\" tabindex=\\"0\\">
+                <p><br class=\\"ProseMirror-trailingBreak\\"></p>
+              </div>
+            </div>
+            <div>
+              <div></div>
+            </div>
+            <p class=\\"sm-RichTextArea-description cursor-help\\" title=\\"Highlight a word or phrase for formatting options\\">Rich Text</p>
+          </div><button class=\\"el-button el-button--primary\\">Update details</button>
+        </form>
+        <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\" class=\\"mt-12\\">
+          <form class=\\"margin-reset mt-12\\">
+            <h2>Archive database</h2>
+            <p>Database will not be available for dataset processing.</p><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button mt-5\\">
+              <!--v-if--><span class=\\"\\">Archive database</span>
+            </button>
+          </form>
+        </transition>
+        <!---->
+        <!---->
+      </div>
+      <!---->
+    </div>
+  </transition>
+</transition>"
+`;
+
+exports[`MolecularDatabases > should match snapshot 1`] = `
+"<transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+  <div>
+    <header class=\\"flex justify-between items-center py-3\\">
+      <div class=\\"flex items-center\\"><i data-v-b0972120=\\"\\" class=\\"flex rounded-full p-2 bg-blue-100 w-6 h-6 mx-3\\"><svg></svg></i>
+        <p class=\\"m-0 ml-1 text-sm leading-5 text-gray-700\\">Databases are only available to members of this group.<br>You can choose to make derived annotations visible to others.</p>
+      </div><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
+        <!--v-if--><span class=\\"\\">Upload Database</span>
+      </button>
+    </header>
+    <div class=\\"el-table--fit el-table--enable-row-hover el-table--enable-row-transition el-table el-table--layout-fixed cursor-pointer\\" style=\\"width: 100%;\\" data-prefix=\\"el\\">
+      <div class=\\"el-table__inner-wrapper\\">
+        <div class=\\"hidden-columns\\">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+        <div class=\\"el-table__header-wrapper\\">
+          <table class=\\"el-table__header\\" border=\\"0\\" cellpadding=\\"0\\" cellspacing=\\"0\\">
+            <colgroup>
+              <col name=\\"el-table_1_column_1\\" width=\\"144\\">
+              <col name=\\"el-table_1_column_2\\" width=\\"144\\">
+              <col name=\\"el-table_1_column_3\\" width=\\"144\\">
+              <col name=\\"el-table_1_column_4\\" width=\\"144\\">
+              <col name=\\"el-table_1_column_5\\" width=\\"144\\">
+            </colgroup>
+            <thead class=\\"\\">
+              <tr class=\\"\\">
+                <th class=\\"el-table_1_column_1 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                  <div class=\\"cell\\">Name<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                    <!---->
+                  </div>
+                </th>
+                <th class=\\"el-table_1_column_2 descending is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                  <div class=\\"cell\\">Uploaded<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                    <!---->
+                  </div>
+                </th>
+                <th class=\\"el-table_1_column_3 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                  <div class=\\"cell\\">Uploaded by<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                    <!---->
+                  </div>
+                </th>
+                <th class=\\"el-table_1_column_4 is-center is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                  <div class=\\"cell\\">Public annotations
+                    <!---->
+                    <!---->
+                  </div>
+                </th>
+                <th class=\\"el-table_1_column_5 is-center is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                  <div class=\\"cell\\">Archived
+                    <!---->
+                    <!---->
+                  </div>
+                </th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+        <div class=\\"el-table__body-wrapper\\">
+          <div class=\\"el-scrollbar\\">
+            <div class=\\"el-scrollbar__wrap el-scrollbar__wrap--hidden-default\\">
+              <div class=\\"el-scrollbar__view\\" style=\\"display: inline-block; vertical-align: middle;\\">
+                <table class=\\"el-table__body\\" cellspacing=\\"0\\" cellpadding=\\"0\\" border=\\"0\\" style=\\"table-layout: fixed;\\">
+                  <colgroup>
+                    <col name=\\"el-table_1_column_1\\" width=\\"144\\">
+                    <col name=\\"el-table_1_column_2\\" width=\\"144\\">
+                    <col name=\\"el-table_1_column_3\\" width=\\"144\\">
+                    <col name=\\"el-table_1_column_4\\" width=\\"144\\">
+                    <col name=\\"el-table_1_column_5\\" width=\\"144\\">
+                  </colgroup>
+                  <!--v-if-->
+                  <tbody tabindex=\\"-1\\">
+                    <tr class=\\"el-table__row\\">
+                      <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!----><span><span class=\\"text-body font-medium\\">bar</span> <span class=\\"text-gray-700\\">v1</span></span>
+                        </div>
+                      </td>
+                      <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!----><span class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span>
+                        </div>
+                      </td>
+                      <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!---->
+                        </div>
+                      </td>
+                      <td class=\\"el-table_1_column_4 is-center el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!----><span class=\\"flex justify-center items-center h-5\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6\\"><svg></svg></i></span>
+                        </div>
+                      </td>
+                      <td class=\\"el-table_1_column_5 is-center el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!----><span class=\\"flex justify-center items-center h-5\\"><!----></span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr class=\\"el-table__row\\">
+                      <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!----><span><span class=\\"text-body font-medium\\">foo</span> <span class=\\"text-gray-700\\">v1</span></span>
+                        </div>
+                      </td>
+                      <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!----><span class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span>
+                        </div>
+                      </td>
+                      <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!---->
+                        </div>
+                      </td>
+                      <td class=\\"el-table_1_column_4 is-center el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!----><span class=\\"flex justify-center items-center h-5\\"><!----></span>
+                        </div>
+                      </td>
+                      <td class=\\"el-table_1_column_5 is-center el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!----><span class=\\"flex justify-center items-center h-5\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6\\"><svg></svg></i></span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <!--v-if-->
+                </table>
+                <!--v-if-->
+                <!--v-if-->
+              </div>
+            </div>
+            <div class=\\"el-scrollbar__bar is-horizontal\\" style=\\"display: none;\\">
+              <div class=\\"el-scrollbar__thumb\\" style=\\"transform: translateX(0%);\\"></div>
+            </div>
+            <div class=\\"el-scrollbar__bar is-vertical\\" style=\\"display: none;\\">
+              <div class=\\"el-scrollbar__thumb\\" style=\\"transform: translateY(0%);\\"></div>
+            </div>
+          </div>
+        </div>
+        <!--v-if-->
+        <!--v-if-->
+      </div>
+      <div class=\\"el-table__column-resize-proxy\\" style=\\"display: none;\\"></div>
+    </div>
+    <!---->
+  </div>
+</transition>"
+`;

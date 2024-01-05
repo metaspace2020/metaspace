@@ -83,7 +83,7 @@ const UploadDialog = defineComponent<Props>({
     details: Object,
     groupId: String,
   },
-  setup(props, { emit, root }) {
+  setup(props, { emit }) {
     const apolloClient = inject(DefaultApolloClient);
     const state = reactive<State>({
       model: {

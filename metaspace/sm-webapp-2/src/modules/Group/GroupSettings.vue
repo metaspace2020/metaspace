@@ -65,14 +65,12 @@
   </div>
 </template>
 <script lang="ts">
-import {defineComponent, ref, watch, onMounted, computed, inject, reactive} from 'vue';
+import {defineComponent, ref, watch, computed, inject, reactive} from 'vue';
 import EditGroupForm from './EditGroupForm.vue';
-import {useQuery, useMutation, DefaultApolloClient} from '@vue/apollo-composable';
+import {useQuery, DefaultApolloClient} from '@vue/apollo-composable';
 import {
   deleteGroupMutation,
   editGroupQuery,
-  EditGroupQuery,
-  UpdateGroupMutation,
   updateGroupMutation,
 } from '../../api/group'
 import {useRoute, useRouter} from 'vue-router';
@@ -81,11 +79,9 @@ import reportError from '../../lib/reportError';
 import { currentUserRoleQuery } from '../../api/user'
 import {ElMessage} from "element-plus";
 import { parseValidationErrors } from '../../api/validation';
-import EditProjectForm from "@/modules/Project/EditProjectForm.vue";
 
 export default defineComponent({
   components: {
-    EditProjectForm,
     EditGroupForm,
   },
   props: {

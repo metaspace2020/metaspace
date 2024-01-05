@@ -20,7 +20,7 @@ const Delete = defineComponent<Props>({
   props: {
     db: { type: Object, required: true },
   },
-  setup(props, { root, emit }) {
+  setup(props, { emit }) {
     const { mutate } = useMutation(deleteDatabaseMutation)
     const deleteDatabase = mutate as unknown as (variables: DeleteDatabaseMutation) => void
 

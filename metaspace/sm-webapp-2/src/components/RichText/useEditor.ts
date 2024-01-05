@@ -3,7 +3,6 @@ import { Editor } from '@tiptap/vue-3';
 // @ts-ignore
 import StarterKit from '@tiptap/starter-kit';
 import { debounce } from 'lodash-es';
-import { Sub, Sup } from './tiptap';  // Assuming these are TiPTaP v2 compatible extensions
 
 interface Options {
   content?: string;
@@ -14,9 +13,7 @@ interface Options {
 export default function useEditor({ content, extensions = [], onUpdate, ...options }: Options) {
   const editor = ref<any>(new Editor({
     extensions: [
-      StarterKit,
-      new Sub(),
-      new Sup(), // @ts-ignore
+      StarterKit, // @ts-ignore
       ...extensions
     ],
     ...options,

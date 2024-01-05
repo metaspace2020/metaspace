@@ -23,7 +23,7 @@ const Details = defineComponent<Props>({
     db: { type: Object, required: true },
     submit: { type: Function, required: true },
   },
-  setup(props, { root }) {
+  setup(props) {
     const state = reactive<State>({
       model: getDatabaseDetails(props.db),
       loading: false,
