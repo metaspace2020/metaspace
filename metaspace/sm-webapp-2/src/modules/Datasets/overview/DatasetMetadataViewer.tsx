@@ -42,7 +42,7 @@ const cleanSectionContent = (content: any, schema: any): string | [string, strin
       return entries
         .map(([key, val]) =>
           [cleanString(key), key in customRenderers ? customRenderers[key](val) : val] as const)
-        .filter(([key, val]) => val)
+        .filter(([, val]) => val)
         .map(([key, val]) => [key, String(val)])
     }
   } else {

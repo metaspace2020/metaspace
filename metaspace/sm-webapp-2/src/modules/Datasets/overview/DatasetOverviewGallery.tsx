@@ -1,10 +1,9 @@
-import { computed, defineComponent, reactive, ref } from 'vue'
+import { computed, defineComponent, reactive } from 'vue'
 import { ElSelect, ElOptionGroup, ElOption, ElCarousel, ElCarouselItem } from 'element-plus'
-import { intersection, keyBy } from 'lodash'
+import { keyBy } from 'lodash'
 import ImageLoader from '../../../components/ImageLoader.vue'
 import './DatasetOverviewGallery.scss'
 import safeJsonParse from '../../../lib/safeJsonParse'
-import { templateRef } from '../../../lib/templateRef'
 
   enum ITEM_TYPES {
     IMAGE = 'image',
@@ -78,8 +77,6 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
     },
   },
   setup(props) {
-    const carousel = templateRef<any>('carousel')
-
     const diagnosticDataLookup = computed(() => {
       const parsed = props.data?.map(({ data, ...rest }) => ({ ...rest, data: JSON.parse(data) }))
       return keyBy(parsed, 'id')
@@ -109,7 +106,7 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
       state.selectedValue = setSelectedValue(option)
     }
 
-    const handleCarouselChange = (index: number) => {
+    const handleCarouselChange = () => {
       // quick fix to imageloader redraw
       state.showCarouselItem = false
       setTimeout(() => {
@@ -153,7 +150,7 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
                 indicatorPosition={`${Array.isArray(mockImg) && mockImg.length > 1 ? 'outside' : 'none'}`}
                 autoplay={false}>
                 {
-                  Array.isArray(selectedValue) && selectedValue.map((image, imageIndex) => {
+                  Array.isArray(selectedValue) && selectedValue.map((image, ) => {
                     return (
                       <ElCarouselItem>
                         {

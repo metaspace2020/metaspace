@@ -1,20 +1,26 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`DatasetActionsDropdown it should match snapshot 1`] = `
-<eldropdown-stub trigger="click" type="primary" size="" hideonclick="true" placement="bottom-end" visiblearrow="true" showtimeout="250" hidetimeout="150" tabindex="0" class="dataset-actions-dropdown" dataset="[object Object]" currentuser="[object Object]">
-  <el-badge-stub value="New" class="sm-feature-badge">
-    <elbutton-stub type="primary" icon="" nativetype="button" class="p-1"><span class="ml-2">Actions</span><i class="el-icon-arrow-down el-icon--right"></i></elbutton-stub>
-  </el-badge-stub>
-  <eldropdownmenu-stub transformorigin="true" placement="bottom" boundariespadding="5" offset="0" visiblearrow="true" arrowoffset="0" appendtobody="true" popperoptions="[object Object]" class="dataset-overview-menu p-2">
-    <eldropdownitem-stub command="download">Download</eldropdownitem-stub>
-    <eldropdownitem-stub command="compare">Compare with other datasets...</eldropdownitem-stub>
-    <eldropdownitem-stub command="browser" class="relative">
-      <el-badge-stub value="New" class="sm-feature-badge actionBadge">Imzml Browser</el-badge-stub>
-    </eldropdownitem-stub>
-    <eldropdownitem-stub command="enrichment">LION enrichment</eldropdownitem-stub>
-    <eldropdownitem-stub command="edit">Edit</eldropdownitem-stub>
-    <eldropdownitem-stub command="delete" class="text-red-500">Delete</eldropdownitem-stub>
-    <eldropdownitem-stub command="reprocess" class="text-red-500">Reprocess data</eldropdownitem-stub>
-  </eldropdownmenu-stub>
-</eldropdown-stub>
+exports[`DatasetActionsDropdown > it should match snapshot 1`] = `
+"<div class=\\"mock-el-dropdown dataset-actions-dropdown\\" trigger=\\"click\\" type=\\"primary\\">
+  <div class=\\"ml-2\\">
+    <div class=\\"el-badge sm-feature-badge\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary p-1\\">
+        <!--v-if--><span class=\\"\\"><span class=\\"ml-2\\">Actions</span><i class=\\"el-icon-arrow-down el-icon--right\\"></i></span>
+      </button><sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup></div>
+    <!---->
+    <!---->
+  </div>
+  <div class=\\"mock-el-dropdown-menu dataset-overview-menu p-2\\">
+    <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Download</div>
+    <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Compare with other datasets...</div>
+    <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">
+      <div class=\\"relative actionBadge\\">
+        <div class=\\"el-badge sm-feature-badge\\">Imzml Browser<sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup></div>
+      </div>
+    </div>
+    <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">LION enrichment</div>
+    <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Edit</div>
+    <div class=\\"mock-el-dropdown-item text-red-500\\" attrs=\\"[object Object]\\">Delete</div>
+    <div class=\\"mock-el-dropdown-item text-red-500\\" attrs=\\"[object Object]\\">Reprocess data</div>
+  </div>
+</div>"
 `;

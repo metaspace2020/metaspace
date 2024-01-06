@@ -1,4 +1,4 @@
-import { computed, defineComponent, onMounted, reactive, ref, watchEffect } from 'vue'
+import { computed, defineComponent, reactive, watchEffect } from 'vue'
 import { Workflow, WorkflowStep } from '../../../components/Workflow'
 import { ElSelect, ElOption, ElInputNumber, ElButton, ElDialog } from 'element-plus'
 import { ErrorLabelText } from '../../../components/Form'
@@ -46,7 +46,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
     },
   },
   // @ts-ignore
-  setup(props, { refs, emit, root }) {
+  setup(props, { refs, emit }) {
     const router = useRouter()
     const state = reactive<DatasetComparisonDialogState>({
       selectedDatasetIds: props.selectedDatasetIds,

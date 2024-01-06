@@ -16,7 +16,6 @@ import {DefaultApolloClient, useQuery} from '@vue/apollo-composable'
 import './DatasetActionsDropdown.scss'
 import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
 import {useRouter} from "vue-router";
-import {DOI_ORG_DOMAIN} from "../../Project/DoiField";
 
 interface DatasetActionsDropdownProps {
   actionLabel: string

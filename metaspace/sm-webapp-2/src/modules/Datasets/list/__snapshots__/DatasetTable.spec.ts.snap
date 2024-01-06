@@ -94,7 +94,12 @@ exports[`DatasetTable > should match snapshot 1`] = `
         </div>
         <div class=\\"ds-item-line text-gray-700\\"><span class=\\"ds-add-filter\\" title=\\"Filter by species\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by organism part\\"></span> <span class=\\"ds-add-filter\\" title=\\"Filter by condition\\">()</span></div>
         <div class=\\"ds-item-line\\"><span class=\\"ds-add-filter\\" title=\\"Filter by ionisation source\\"></span> + <span class=\\"ds-add-filter\\" title=\\"Filter by analyzer type\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by polarity\\">positive mode</span>, RP 123k @ 1234</div>
-        <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"></span><span>, <div class=\\"mock-el-dropdown\\" showtimeout=\\"50\\" placement=\\"bottom\\" disabled=\\"false\\" trigger=\\"hover\\"><span class=\\"text-base text-primary cursor-pointer\\"></span></div></span>
+        <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"></span><span>, <div class=\\"mock-el-dropdown\\" showtimeout=\\"50\\" placement=\\"bottom\\" disabled=\\"false\\" trigger=\\"hover\\"><span class=\\"text-base text-primary cursor-pointer\\"></span>
+          <div class=\\"mock-el-dropdown-menu\\">
+            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Filter by this group</div>
+            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">View group</div>
+          </div>
+        </div></span>
       </div>
       <!---->
     </div>
@@ -274,7 +279,12 @@ exports[`DatasetTable > should match snapshot 1`] = `
       </div>
       <div class=\\"ds-item-line text-gray-700\\"><span class=\\"ds-add-filter\\" title=\\"Filter by species\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by organism part\\"></span> <span class=\\"ds-add-filter\\" title=\\"Filter by condition\\">()</span></div>
       <div class=\\"ds-item-line\\"><span class=\\"ds-add-filter\\" title=\\"Filter by ionisation source\\"></span> + <span class=\\"ds-add-filter\\" title=\\"Filter by analyzer type\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by polarity\\">positive mode</span>, RP 123k @ 1234</div>
-      <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"></span><span>, <div class=\\"mock-el-dropdown\\" showtimeout=\\"50\\" placement=\\"bottom\\" disabled=\\"false\\" trigger=\\"hover\\"><span class=\\"text-base text-primary cursor-pointer\\"></span></div></span>
+      <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"></span><span>, <div class=\\"mock-el-dropdown\\" showtimeout=\\"50\\" placement=\\"bottom\\" disabled=\\"false\\" trigger=\\"hover\\"><span class=\\"text-base text-primary cursor-pointer\\"></span>
+        <div class=\\"mock-el-dropdown-menu\\">
+          <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Filter by this group</div>
+          <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">View group</div>
+        </div>
+      </div></span>
     </div>
     <!---->
   </div>
@@ -452,7 +462,12 @@ exports[`DatasetTable > should match snapshot 1`] = `
     </div>
     <div class=\\"ds-item-line text-gray-700\\"><span class=\\"ds-add-filter\\" title=\\"Filter by species\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by organism part\\"></span> <span class=\\"ds-add-filter\\" title=\\"Filter by condition\\">()</span></div>
     <div class=\\"ds-item-line\\"><span class=\\"ds-add-filter\\" title=\\"Filter by ionisation source\\"></span> + <span class=\\"ds-add-filter\\" title=\\"Filter by analyzer type\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by polarity\\">positive mode</span>, RP 123k @ 1234</div>
-    <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"></span><span>, <div class=\\"mock-el-dropdown\\" showtimeout=\\"50\\" placement=\\"bottom\\" disabled=\\"false\\" trigger=\\"hover\\"><span class=\\"text-base text-primary cursor-pointer\\"></span></div></span>
+    <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"></span><span>, <div class=\\"mock-el-dropdown\\" showtimeout=\\"50\\" placement=\\"bottom\\" disabled=\\"false\\" trigger=\\"hover\\"><span class=\\"text-base text-primary cursor-pointer\\"></span>
+      <div class=\\"mock-el-dropdown-menu\\">
+        <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Filter by this group</div>
+        <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">View group</div>
+      </div>
+    </div></span>
   </div>
   <div class=\\"ds-item-line\\"><span><div>0, 0 annotations</div> @ FDR 0, 0% ()</span></div>
 </div>

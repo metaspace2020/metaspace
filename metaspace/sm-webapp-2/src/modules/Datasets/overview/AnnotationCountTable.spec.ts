@@ -1,14 +1,26 @@
-import { mount } from '@vue/test-utils'
-import router from '../../../router'
-import store from '../../../store/index'
-import Vue from 'vue'
-import Vuex from 'vuex'
-import { sync } from 'vuex-router-sync'
+import { nextTick, h, defineComponent } from 'vue';
+import { mount, flushPromises } from '@vue/test-utils';
+import router from "../../../router";
+import store from "../../../store";
 import { AnnotationCountTable } from './AnnotationCountTable'
 import { DatasetAnnotationCount } from '../../../api/dataset'
+import ElementPlus from "element-plus";
 
-Vue.use(Vuex)
-sync(store, router)
+let mockRoutePush
+
+
+const stubs = {
+  RouterLink: {
+    template: '<div class="mock-router-link" :to="stringifyTo(to)"><slot /></div>',
+    props: ['to'],
+    methods: {
+      stringifyTo(toProp) {
+        // Fall back to just returning the 'to' prop if it's not an object
+        return JSON.stringify(toProp);
+      }
+    }
+  }
+}
 
 describe('AnnotationCountTable', () => {
   const mockAnnotationCounts = [
@@ -64,70 +76,111 @@ describe('AnnotationCountTable', () => {
   const propsData = { data: mockAnnotationCounts, id: id, header: mockFdrLevels }
   const propsEmptyData = { data: [], id: id, header: mockFdrLevels }
 
-  const testHarness = Vue.extend({
+
+  const testHarness = defineComponent({
     components: {
       AnnotationCountTable,
     },
-    render(h) {
-      return h(AnnotationCountTable, { props: this.$attrs })
+    props: ['id', 'title', 'sumRowLabel', 'btnLabel', 'data', 'header', 'headerTitleSuffix'],
+    setup(props) {
+      return () => h(AnnotationCountTable, { ...props });
     },
   })
 
   it('it should match snapshot', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router, ElementPlus],
+        stubs,
+      },
+      props: propsData
+    });
+    await flushPromises();
+    await nextTick();
 
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.html()).toMatchSnapshot();
   })
 
   it('it should render the correct number of columns', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router, ElementPlus],
+        stubs,
+      },
+      props: propsData
+    });
+    await flushPromises();
+    await nextTick();
+
     expect(wrapper.findAll('th').length).toBe(mockFdrLevels.length + 1)
   })
 
   it('it should render the correct links to navigate to annotation', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router, ElementPlus],
+        stubs,
+      },
+      props: propsData
+    });
+    await flushPromises();
+    await nextTick();
 
     // check if each link cell has the correct parameters for fdr and db filters
-    wrapper.find('tbody').findAll('tr').wrappers.forEach((row, rowIndex) => {
-      row.findAll('a').wrappers.forEach((col, colIndex) => {
+    wrapper.find('tbody').findAll('tr').forEach((row, rowIndex) => {
+      row.findAll('.mock-router-link').forEach((col, colIndex) => {
+        const toAttr = col.attributes('to');
+        const toProp = JSON.parse(toAttr);
         if (colIndex !== 0) { // db name links do not filter by fdr
-          expect(col.props('to').query.fdr)
-            .toBe((mockFdrLevels[colIndex - 1] / 100).toString())
+          expect(toProp.query.fdr).toBe((mockFdrLevels[colIndex - 1] / 100).toString());
         }
-        expect(col.props('to').params.dataset_id).toBe('xxxx')
-        expect(col.props('to').query.db_id).toBe(mockAnnotationCounts[rowIndex].databaseId.toString())
+        expect(toProp.params.dataset_id).toBe('xxxx');
+        expect(toProp.query.db_id).toBe(mockAnnotationCounts[rowIndex].databaseId.toString());
       })
     })
 
     // check if each link cell has the correct parameters for the summaryRow
-    wrapper.findAll('tbody').at(1)
-      .findAll('a').wrappers.forEach((col, colIndex) => {
-        expect(col.props('to').query.fdr)
+    wrapper.findAll('tfoot').at(0)
+      .findAll('.mock-router-link').forEach((col, colIndex) => {
+      const toAttr = col.attributes('to');
+      const toProp = JSON.parse(toAttr);
+        expect(toProp.query.fdr)
           .toBe((mockFdrLevels[colIndex] / 100).toString())
-        expect(col.props('to').params.dataset_id).toBe('xxxx')
+        expect(toProp.params.dataset_id).toBe('xxxx')
       })
 
     expect(wrapper.findAll('th').length).toBe(mockFdrLevels.length + 1)
-    expect(wrapper.findAll('a').at(1).props('to').params.dataset_id)
+    expect(JSON.parse(wrapper.findAll('.mock-router-link').at(1).attributes('to')).params.dataset_id)
       .toBe('xxxx')
   })
 
   it('it should render with no data warning when props empty', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData: propsEmptyData })
-    await Vue.nextTick()
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router, ElementPlus],
+        stubs,
+      },
+      props: propsEmptyData
+    });
+    await flushPromises();
+    await nextTick();
 
     expect(wrapper.find('.el-table__empty-text').exists()).toBeTruthy()
   })
 
   it('it should render the annotation count sum correctly', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router, ElementPlus],
+        stubs,
+      },
+      props: propsData
+    });
+    await flushPromises();
+    await nextTick();
 
     // check if each link cell has the correct parameters
-    wrapper.find('.el-table__footer-wrapper').findAll('td').wrappers.slice(1)
+    wrapper.find('.el-table__footer-wrapper').findAll('td').slice(1)
       .forEach((footerItem, index) => {
         const reducer = (accumulator: number, currentValue: DatasetAnnotationCount) => {
           return accumulator + currentValue.counts[index].n
@@ -138,11 +191,18 @@ describe('AnnotationCountTable', () => {
   })
 
   it('it should render the correct databases name', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router, ElementPlus],
+        stubs,
+      },
+      props: propsData
+    });
+    await flushPromises();
+    await nextTick();
 
     // check if each link cell has the correct parameters
-    wrapper.find('.el-table__footer-wrapper').findAll('td').wrappers.slice(1)
+    wrapper.find('.el-table__footer-wrapper').findAll('td').slice(1)
       .forEach((footerItem, index) => {
         const reducer = (accumulator: number, currentValue: DatasetAnnotationCount) => {
           return accumulator + currentValue.counts[index].n
@@ -153,11 +213,35 @@ describe('AnnotationCountTable', () => {
   })
 
   it('it should navigate to dataset annotation page on browse annotation button click', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
+    mockRoutePush = vi.fn()
+    vi.mock('vue-router', async () => {
+      const actual: any = await vi.importActual("vue-router")
+      return {
+        ...actual,
+        useRouter: () => {
+          return {
+            push: mockRoutePush
+          }
+        }
+      }
+    })
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router, ElementPlus],
+        stubs,
+      },
+      props: propsData
+    });
+    await flushPromises();
+    await nextTick();
 
     wrapper.find('button').trigger('click')
-    await Vue.nextTick()
-    expect(wrapper.vm.$route.path).toBe(`/dataset/${id}/annotations`)
+    await nextTick()
+
+    expect(mockRoutePush).toHaveBeenCalledWith({
+      name: 'dataset-annotations',
+      params: { dataset_id: id },
+      query: {ds: id},
+    })
   })
 })

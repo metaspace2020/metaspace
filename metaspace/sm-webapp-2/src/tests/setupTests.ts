@@ -5,6 +5,7 @@ import svgMock from './mockSvg';
 import { customSerializer } from './customSerializer';
 import { config } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
+import { h  } from 'vue';
 
 expect.addSnapshotSerializer(customSerializer);
 
@@ -43,10 +44,33 @@ export function setupGlobalStubs() {
     name: 'ElTooltipMock',
     template: '<div class="mock-el-tooltip"><slot></slot></div>',
   };
+
   const ElDropdownMock = {
-    name: 'ElDropdownMock',
-    template: '<div class="mock-el-dropdown"><slot></slot></div>',
-  };
+    name: 'ElDropdown',
+      render: function (this: { $slots: { [key: string]: any } }) {
+      return h('div', { class: 'mock-el-dropdown' }, [
+        this.$slots.default ? this.$slots.default() : '',
+        this.$slots.dropdown ? this.$slots.dropdown() : '',
+      ]);
+    },
+  }
+  const ElDropdownMenuMock = {
+    name: 'ElDropdownMenu',
+      render: function (this: { $slots: { [key: string]: any } }) {
+      return h('div', { class: 'mock-el-dropdown-menu' }, [
+        this.$slots.default ? this.$slots.default() : '',
+      ]);
+    },
+  }
+  const ElDropdownItemMock = {
+    name: 'ElDropdownItem',
+      props: ['command'],
+      render: function (this: { $slots: { [key: string]: any }; command: string }) {
+      return h('div', { class: 'mock-el-dropdown-item', attrs: { command: this.command } }, [
+        this.$slots.default ? this.$slots.default() : '',
+      ]);
+    },
+  }
   const ElDialogMock = {
     name: 'ElDialogMock',
     template: '<div class="mock-el-dialog"><slot></slot></div>',
@@ -79,6 +103,8 @@ export function setupGlobalStubs() {
     // 'el-form-item': ElFormItemMock,
     'el-option': ElOptionMock,
     'el-dropdown': ElDropdownMock,
+    'el-dropdown-menu': ElDropdownMenuMock,
+    'el-dropdown-item': ElDropdownItemMock,
     'el-dialog': ElDialogMock,
     'el-select': ElSelectMock,
     'el-option-group': ElOptionGroupMock,
