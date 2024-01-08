@@ -1,0 +1,155 @@
+.dataset-enrichment-table{
+  @apply relative;
+
+  .explained-header{
+    padding: 0;
+
+    .help-icon{
+      font-size: 10px;
+    }
+  }
+
+  #annot-table:focus {
+    outline: 1px solid theme('colors.primary');
+    outline-offset: 1px;
+  }
+  .el-table--border{
+    border: 1px solid #DAE4EC;
+    border-bottom: 0;
+  }
+  .msm-header{
+    min-width: 80px;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* fix cell height and align text in the center */
+  #annot-table .cell {
+    height: 24px;
+    display: flex;
+    align-items: center;
+    padding: 0 0 0 10px;
+  }
+
+  #annot-table th > .cell{
+    height: 30px;
+    font-size: 14px;
+  }
+
+  /* don't show long group/dataset names */
+  #annot-table .cell {
+    white-space: nowrap;
+  }
+
+  #annot-table::after {
+    background-color: transparent;
+  }
+
+  .el-table__body tr.fdr-null > td.fdr-cell, .fdr-legend.fdr-null {
+    @apply bg-blue-100;
+  }
+
+  .el-table__body tr.fdr-5 > td.fdr-cell, .fdr-legend.fdr-5, .el-table__body tr.coloc-95 > td.coloc-cell {
+    background-color: #c8ffc8;
+  }
+
+  .el-table__body tr.fdr-10 > td.fdr-cell, .fdr-legend.fdr-10, .el-table__body tr.coloc-90 > td.coloc-cell {
+    background-color: #e0ffe0;
+  }
+
+  .el-table__body tr.fdr-20 > td.fdr-cell, .fdr-legend.fdr-20, .el-table__body tr.coloc-80 > td.coloc-cell {
+    background-color: #ffe;
+  }
+
+  .el-table__body tr.fdr-50 > td.fdr-cell, .fdr-legend.fdr-50, .el-table__body tr.coloc-50 > td.coloc-cell {
+    background-color: #fff5e0;
+  }
+
+  .el-table__body tr.fdr-null.current-row > td {
+    background-color: theme('backgroundColor.blue.200') !important;
+  }
+
+  .el-table__body tr.fdr-5.current-row > td {
+    background-color: #8f8 !important;
+  }
+
+  .el-table__body tr.fdr-10.current-row > td {
+    background-color: #bfb !important;
+  }
+
+  .el-table__body tr.fdr-20.current-row > td {
+    background-color: #ffa !important;
+  }
+
+  .el-table__body tr.fdr-50.current-row > td {
+    background-color: #ffe5a0 !important;
+  }
+
+  .cell-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .cell-span {
+    @apply tracking-wide flex;
+  }
+
+  .cell-wrapper .cell-filter-button {
+    @apply absolute right-0 self-center fill-current text-blue-500 opacity-0 cursor-pointer;
+    width: 16px;
+    height: 16px;
+    padding: 2px 4px;
+  }
+
+  .cell-wrapper:hover .cell-filter-button {
+    @apply opacity-100;
+  }
+
+  .fdr-legend, .fdr-legend-header {
+    padding: 5px;
+    margin: 0px 0px 10px 0px;
+    display: inline-block;
+    float: left;
+    text-align: center;
+  }
+
+  .fdr-legend.fdr-5 {
+    border-radius: 5px 0px 0px 5px;
+  }
+
+  .fdr-legend.fdr-50 {
+    border-radius: 0px 5px 5px 0px;
+  }
+
+  #annot-table th.fdr-cell > .cell {
+    padding: 0;
+  }
+
+  .fdr-cell > .cell, .coloc-cell > .cell {
+    justify-content: center;
+    padding: 0 10px !important;
+  }
+
+  #annot-table .el-table__empty-block {
+    min-height: 300px;
+  }
+  #annot-table .el-table__empty-text {
+    line-height: normal;
+  }
+
+  #annot-table > .el-loading-mask {
+    background-color: white;
+  }
+
+  #annot-count {
+    padding-left: 5px;
+  }
+}
+
+.ds-comparison-annotation-table-loading-wrapper{
+  @apply flex items-center justify-center;
+  height: 200px;
+  width: 100%;
+}
+

@@ -1,0 +1,19 @@
+.dataset-enrichment-page{
+  @apply flex flex-wrap flex-row relative p-4 justify-between;
+
+  .dataset-enrichment-wrapper{
+    width: calc(100% - 1rem);
+
+    @media (min-width: 1024px){
+      width: calc(50% - 0.5rem);
+    }
+
+  }
+
+
+}
+
+.dataset-enrichment-loading{
+  @apply w-full absolute text-center top-0 flex items-center justify-center flex-col;
+  height: calc(100vh - 300px);
+}

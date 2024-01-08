@@ -9,8 +9,9 @@ const asyncPagesFreelyTyped = {
   MetadataEditPage: () => import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ '../modules/MetadataEditor/MetadataEditPage.vue'),
   UploadPage: () => import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ '../modules/MetadataEditor/UploadPage.vue'),
   DatasetOverviewPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ '../modules/Datasets/overview/DatasetOverviewPage'),
-  DatasetComparisonPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ '../modules/Datasets/comparison/DatasetComparisonPage'),
-  DatasetBrowserPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ '../modules/Datasets/imzml/DatasetBrowserPage'),
+  DatasetComparisonPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetComparisonPage" */ '../modules/Datasets/comparison/DatasetComparisonPage'),
+  DatasetBrowserPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetBrowserPage" */ '../modules/Datasets/imzml/DatasetBrowserPage'),
+  DatasetEnrichmentPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetEnrichmentPage" */ '../modules/Datasets/enrichment/DatasetEnrichmentPage'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Datasets/list/DatasetTable.vue'),
@@ -49,7 +50,7 @@ export const routes : any =[
   { path: '/dataset/:dataset_id', name: 'dataset-overview', component: asyncPages.DatasetOverviewPage },
   { path: '/dataset/:dataset_id/annotations', name: 'dataset-annotations', component: asyncPages.AnnotationsPage },
   { path: '/dataset/:dataset_id/browser', name: 'dataset-browser', component: asyncPages.DatasetBrowserPage },
-  { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetTable },
+  { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetEnrichmentPage },
   { path: '/upload', component: asyncPages.UploadPage },
   { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
 
