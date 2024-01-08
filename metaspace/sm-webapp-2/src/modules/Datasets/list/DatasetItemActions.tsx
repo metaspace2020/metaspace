@@ -311,7 +311,7 @@ export default defineComponent({
             && <div class='items-center'>
               <el-icon><DataAnalysis/></el-icon>
               <router-link
-                className='mr-2'
+                class='mr-2'
                 to={{
                   name: 'dataset-overview',
                   params: {dataset_id: props.dataset?.id},

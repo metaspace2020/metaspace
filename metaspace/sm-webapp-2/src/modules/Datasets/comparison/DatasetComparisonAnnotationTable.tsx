@@ -942,7 +942,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                 key="maxIntensity"
                 property="maxIntensity"
                 label={state.columns.maxIntensity?.label}
-                className="fdr-cell"
+                class="fdr-cell"
                 sortable="custom"
                 minWidth="200"
                 v-slots={{
@@ -972,7 +972,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                 key="fdrLevel"
                 property="fdrlevel"
                 label={state.columns.fdrlevel?.label}
-                className="fdr-cell"
+                class="fdr-cell"
                 sortable="custom"
                 minWidth="120"
                 v-slots={{
@@ -1028,7 +1028,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                       class="select-btn-wrapper relative"
                     >
                       Columns
-                      <ElIcon className="el-icon-arrow-down select-btn-icon"><ArrowDown/></ElIcon>
+                      <ElIcon class="el-icon-arrow-down select-btn-icon"><ArrowDown/></ElIcon>
                     </ElButton>
                   ),
                   default: () => (
@@ -1089,7 +1089,7 @@ export const DatasetComparisonAnnotationTable = defineComponent<DatasetCompariso
                           width={146}
                           height={42}>
                           Export to CSV
-                          <ElIcon className="select-btn-icon"><ArrowDown/></ElIcon>
+                          <ElIcon class="select-btn-icon"><ArrowDown/></ElIcon>
                         </ElButton>
                       </div>
                     ),

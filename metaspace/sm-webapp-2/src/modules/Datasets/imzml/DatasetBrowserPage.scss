@@ -1,0 +1,192 @@
+$className: 'dataset-overview';
+$header-height: 64px;
+
+.dataset-browser-container{
+  @apply flex flex-row flex-wrap p-0;
+  min-height: calc(100vh - #{$header-height});
+
+
+  .ds-intensities-wrapper{
+    @apply flex justify-between items-start h-6 leading-6 tracking-wide relative z-10;
+
+  }
+  .ds-wrapper{
+    @apply flex justify-center items-center;
+    width: 100%;
+    height: 310px;
+  }
+  .ds-viewer-controls-wrapper{
+    @apply absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-between items-end w-0;
+  }
+
+
+  .viewer-item-header{
+    @apply flex flex-row;
+    background: #F1F5F8;
+    padding: 4px 8px;
+    width: calc(100% - 16px);
+    border-top: 1px dashed lightgray;
+    align-items: baseline;
+    height: 22px;
+
+    span{
+      @apply mr-1;
+    }
+
+    .av-icon-button {
+      @apply self-center mb-2 mr-1 h-6;
+
+      svg {
+        display: block;
+      }
+    }
+
+    .setting-icon{
+      height: 20px;
+      width: 20px;
+      color: black;
+    }
+  }
+
+  .info{
+    @apply flex justify-center p-2 w-full flex-wrap;
+    min-height: 52px;
+  }
+
+  .mass-ref-label{
+    width: 130px;
+  }
+
+  .dataset-browser-empty-spectrum{
+    @apply border-2 border-dashed border-gray-200 relative rounded m-6 p-2 flex flex-row items-center justify-center;
+    background: rgba(224,224,224,0.2);
+  }
+
+  .label{
+    width: 70px;
+  }
+
+  .error-message{
+    @apply text-xs;
+    color: red;
+  }
+
+  .formula-input-wrapper{
+    @apply flex flex-col;
+    width: calc(100% - 70px);
+  }
+
+  .ion-image-holder{
+    @apply flex flex-col items-center justify-start relative;
+    min-height: 500px;
+    width: 100%;
+    background: rgba(0,0,0,0.01);
+    height: 100%;
+
+    .av-icon-button {
+      @apply self-center mb-2 mr-1 h-6;
+
+      svg {
+        display: block;
+      }
+    }
+
+    .setting-icon{
+      height: 20px;
+      width: 20px;
+      color: black;
+    }
+  }
+
+  .ion-image{
+    width: calc(100% - 24px);
+    height: 400px;
+    object-fit: contain;
+  }
+
+  .info-icon{
+    font-size: 30px;
+    color: gray;
+  }
+
+  .loader-holder{
+    @apply absolute flex flex-row items-start justify-center;
+    height: 500px;
+    //width: 100%;
+    //background: white;//rgba(0,0,0,0.02);
+    //padding-top: 30%;
+
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    width: 100%;
+    display: flex;
+    /* justify-content: center; */
+    align-items: center;
+    color: white;
+    font-size: 50px;
+    text-align: center;
+  }
+
+  .formula-input{
+    max-width: 22.05rem;
+  }
+  .max-formula-input{
+    //max-width: 24.2rem;
+  }
+
+  .formula-input-error{
+    input{
+      border-color: red;
+    }
+  }
+
+  .reference-box{
+    max-width: 8rem;
+  }
+
+  .select-box{
+    max-width: 7rem;
+  }
+
+  .select-box-mini{
+    max-width: 5rem;
+  }
+
+  p {
+    @apply my-0 max-w-measure-4;
+  }
+
+  h1 {
+    @apply text-4xl leading-12 font-display;
+  }
+
+  .dataset-browser-wrapper{
+    @apply p-4 max-w-4xl box-border mx-auto leading-6 text-base;
+  }
+
+  .dataset-browser-holder{
+    @apply w-full h-full border-2 border-dashed border-gray-300 relative;
+    overflow: hidden;
+  }
+
+  .dataset-browser-holder-header{
+    @apply p-2 max-w-4xl box-border mx-auto leading-6 text-base text-center font-bold;
+    background: #F1F5F8;
+  }
+
+  .dataset-browser-holder-filter-box{
+    @apply p-2 max-w-4xl box-border leading-6 text-base;
+    //min-height: 168px;
+
+    p{
+      @apply mb-2;
+    }
+
+    .filter-holder{
+      @apply flex flex-row w-full items-end;
+      min-height: 30px;
+    }
+  }
+}
+
+

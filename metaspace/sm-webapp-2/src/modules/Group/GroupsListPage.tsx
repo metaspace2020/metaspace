@@ -113,7 +113,7 @@ export default defineComponent<GroupListPageProps>({
               {
                 groupsLoading.value
                 && <p>
-                  <ElIcon className="is-loading"><Loading/></ElIcon>
+                  <ElIcon class="is-loading"><Loading/></ElIcon>
                 </p>
               }
             </div>

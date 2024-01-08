@@ -467,7 +467,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
                       to={annotationsLink(annData?.dataset?.id?.toString(),
                         annData?.databaseDetails?.id?.toString(),
                         annData?.databaseDetails?.fdrLevel)}>
-                      <StatefulIcon className="h-6 w-6 pointer-events-none">
+                      <StatefulIcon class="h-6 w-6 pointer-events-none">
                         <ExternalWindowSvg/>
                       </StatefulIcon>
                     </RouterLink>
