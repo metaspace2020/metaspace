@@ -351,11 +351,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
                 state.workflowStep === 3
                 && <form>
                   <div class='dataset-comparison-dialog-grid'
-                       {...{
-                         on: {
-                           scroll: handleScroll,
-                         },
-                       }}>
+                       onScroll={handleScroll}>
                     {Array.from(Array(state.nRows).keys()).map((row) => {
                       return (
                         <div key={row} class='dataset-comparison-dialog-row'>

@@ -3,27 +3,7 @@ import { ElTable, ElTableColumn, ElButton } from 'element-plus'
 import { DatasetAnnotationCount } from '../../../api/dataset'
 import { encodeParams } from '../../Filters'
 import {useRouter} from "vue-router";
-
-const RouterLink = defineComponent({
-  name: 'RouterLink',
-  props: ['to', 'class', 'id'],
-  setup(props, {slots}) {
-    const router = useRouter()
-    const handleNavigation = async (params: any) => {
-      await router.push(params)
-    }
-
-    return () => (
-      <div
-        class={['text-blue-600 hover:text-blue-700 underline cursor-pointer', props.class]}
-        data-test-key={props.id}
-        onClick={() => handleNavigation(props.to)}
-      >
-        {slots.default ? slots.default() : ''}
-      </div>
-    );
-  },
-});
+import RouterLink from "../../../components/RouterLink";
 
 interface AnnotationCountTableData{
   name: string

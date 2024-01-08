@@ -110,6 +110,7 @@ import reportError from '../../../lib/reportError';
 import emailRegex from '../../../lib/emailRegex';
 import { setSignInReturnUrl } from '../signInReturnUrl';
 import {useStore} from "vuex";
+import {useRoute} from "vue-router";
 
 export default defineComponent({
   components: {
@@ -118,6 +119,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore()
+    const route = useRoute()
     const isSubmitting = ref(false);
     const hasSucceeded = ref(false);
     const model = ref({
@@ -162,7 +164,7 @@ export default defineComponent({
     };
 
     const setReturnUrl = () => {
-      setSignInReturnUrl(this.$route);
+      setSignInReturnUrl(route);
     };
 
     const onClose = () => {

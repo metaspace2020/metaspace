@@ -88,7 +88,14 @@ export default defineComponent({
       }
     }
 
-    const save = async() => {
+    const save = async(e) => {
+      try{
+        e.stopPropagation()
+      }catch (e) {
+        console.log(e)
+      }
+
+
       const node = props.domNode
       if (node) {
         const divElement = document.querySelector('#intensity-controller') as HTMLElement
@@ -112,7 +119,7 @@ export default defineComponent({
         if (props.label) {
           attachLabelToBlob(blob, intensityBlob)
         } else {
-          saveAs(blob, `${props.fileName || 'METASPACE'}.png`)
+          FileSaver.saveAs(blob, `${props.fileName || 'METASPACE'}.png`)
         }
       }
     }

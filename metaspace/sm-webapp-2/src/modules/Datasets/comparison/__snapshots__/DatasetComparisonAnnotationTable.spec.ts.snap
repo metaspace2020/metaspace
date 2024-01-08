@@ -1,0 +1,294 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DatasetComparisonAnnotationTable > it should match snapshot 1`] = `
+"<div class=\\"dataset-comparison-annotation-table relative\\">
+  <div class=\\"el-table--fit el-table--striped el-table--border el-table--enable-row-hover el-table--enable-row-transition el-table--small el-table el-table--layout-fixed\\" data-prefix=\\"el\\" id=\\"annot-table\\" elementloadingtext=\\"Loading results …\\" tabindex=\\"1\\">
+    <div class=\\"el-table__inner-wrapper\\">
+      <div class=\\"hidden-columns\\">
+        <div></div>
+        <!---->
+        <div></div>
+        <!---->
+        <div></div>
+        <div></div>
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+        <div></div>
+      </div>
+      <div class=\\"el-table__header-wrapper\\">
+        <table class=\\"el-table__header\\" border=\\"0\\" cellpadding=\\"0\\" cellspacing=\\"0\\">
+          <colgroup>
+            <col name=\\"el-table_1_column_1\\" width=\\"120\\">
+            <col name=\\"el-table_1_column_2\\" width=\\"120\\">
+            <col name=\\"el-table_1_column_3\\" width=\\"60\\">
+            <col name=\\"el-table_1_column_4\\" width=\\"100\\">
+            <col name=\\"el-table_1_column_5\\" width=\\"120\\">
+          </colgroup>
+          <thead class=\\"\\">
+            <tr class=\\"\\">
+              <th class=\\"el-table_1_column_1 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">Annotation<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_1_column_2 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">
+                  <div class=\\"msm-header\\">Best MSM<div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\"><span>Highest MSM among the datasets.</span></div>
+                  </div><span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_1_column_3 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">m/z<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_1_column_4 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">Datasets #<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_1_column_5 ascending fdr-cell is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">
+                  <div class=\\"msm-header\\">Best FDR<div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\"><span>Lowest FDR among the datasets.</span></div>
+                  </div><span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div class=\\"el-table__body-wrapper\\">
+        <div class=\\"el-scrollbar\\">
+          <div class=\\"el-scrollbar__wrap el-scrollbar__wrap--hidden-default\\">
+            <div class=\\"el-scrollbar__view\\" style=\\"display: inline-block; vertical-align: middle;\\">
+              <table class=\\"el-table__body\\" cellspacing=\\"0\\" cellpadding=\\"0\\" border=\\"0\\" style=\\"table-layout: fixed;\\">
+                <colgroup>
+                  <col name=\\"el-table_1_column_1\\" width=\\"120\\">
+                  <col name=\\"el-table_1_column_2\\" width=\\"120\\">
+                  <col name=\\"el-table_1_column_3\\" width=\\"60\\">
+                  <col name=\\"el-table_1_column_4\\" width=\\"100\\">
+                  <col name=\\"el-table_1_column_5\\" width=\\"120\\">
+                </colgroup>
+                <!--v-if-->
+                <tbody tabindex=\\"-1\\">
+                  <tr class=\\"el-table__row fdr-5 coloc-50\\">
+                    <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"cell-wrapper\\">
+                          <div data-v-dd35c778=\\"\\" class=\\"flex\\"><span>[C<sub class=\\"leading-none\\">10</sub>H<sub class=\\"leading-none\\">11</sub>NO + Na]⁺</span>
+                            <!--v-if-->
+                            <!--v-if-->
+                          </div>
+                          <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover cell-span\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" virtual-triggering=\\"\\" placement=\\"right\\" virtual-ref=\\"[object HTMLDivElement]\\">
+                            <div data-v-dd35c778=\\"\\" class=\\"leading-5 py-2 px-3 font-normal content text-sm text-left\\">
+                              <!--v-if-->
+                              <!--v-if-->
+                              <ul data-v-dd35c778=\\"\\" class=\\"p-0 list-none leading-7\\">
+                                <!--v-if-->
+                              </ul>
+                              <!--v-if-->
+                              <!--v-if-->
+                            </div>
+                          </div><svg class=\\"cell-filter-button\\"></svg>
+                        </div>
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->0.736
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->184.0732
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_4 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_5 fdr-cell el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!----><span>5%</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class=\\"el-table__row el-table__row--striped fdr-5 coloc-50\\">
+                    <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"cell-wrapper\\">
+                          <div data-v-dd35c778=\\"\\" class=\\"flex\\"><span>[C<sub class=\\"leading-none\\">23</sub>H<sub class=\\"leading-none\\">45</sub>NO<sub class=\\"leading-none\\">4</sub> + H]⁺</span>
+                            <!--v-if-->
+                            <!--v-if-->
+                          </div>
+                          <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover cell-span\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" virtual-triggering=\\"\\" placement=\\"right\\" virtual-ref=\\"[object HTMLDivElement]\\">
+                            <div data-v-dd35c778=\\"\\" class=\\"leading-5 py-2 px-3 font-normal content text-sm text-left\\">
+                              <!--v-if-->
+                              <!--v-if-->
+                              <ul data-v-dd35c778=\\"\\" class=\\"p-0 list-none leading-7\\">
+                                <!--v-if-->
+                              </ul>
+                              <!--v-if-->
+                              <!--v-if-->
+                            </div>
+                          </div><svg class=\\"cell-filter-button\\"></svg>
+                        </div>
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->0.510
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->400.3421
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_4 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_5 fdr-cell el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!----><span>5%</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+                <!--v-if-->
+              </table>
+              <!--v-if-->
+              <!--v-if-->
+            </div>
+          </div>
+          <div class=\\"el-scrollbar__bar is-horizontal\\" style=\\"display: none;\\">
+            <div class=\\"el-scrollbar__thumb\\" style=\\"transform: translateX(0%);\\"></div>
+          </div>
+          <div class=\\"el-scrollbar__bar is-vertical\\" style=\\"display: none;\\">
+            <div class=\\"el-scrollbar__thumb\\" style=\\"transform: translateY(0%);\\"></div>
+          </div>
+        </div>
+      </div>
+      <!--v-if-->
+      <div class=\\"el-table__border-left-patch\\"></div>
+    </div>
+    <div class=\\"el-table__column-resize-proxy\\" style=\\"display: none;\\"></div>
+  </div>
+  <div class=\\"flex justify-between items-start mt-2\\">
+    <div>
+      <div class=\\"el-pagination mt-1\\"><button type=\\"button\\" class=\\"btn-prev is-first\\" disabled=\\"\\" aria-label=\\"Go to previous page\\" aria-disabled=\\"true\\">
+          <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+              <path fill=\\"currentColor\\" d=\\"M609.408 149.376 277.76 489.6a32 32 0 0 0 0 44.672l331.648 340.352a29.12 29.12 0 0 0 41.728 0 30.592 30.592 0 0 0 0-42.752L339.264 511.936l311.872-319.872a30.592 30.592 0 0 0 0-42.688 29.12 29.12 0 0 0-41.728 0z\\"></path>
+            </svg></div>
+        </button>
+        <ul class=\\"el-pager\\">
+          <li class=\\"is-active number\\" aria-current=\\"true\\" aria-label=\\"page 1\\" tabindex=\\"0\\"> 1 </li>
+          <!--v-if-->
+          <!--v-if-->
+          <!--v-if-->
+        </ul><button type=\\"button\\" class=\\"btn-next\\" aria-label=\\"Go to next page\\" aria-disabled=\\"true\\" disabled=\\"\\">
+          <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+              <path fill=\\"currentColor\\" d=\\"M340.864 149.312a30.592 30.592 0 0 0 0 42.752L652.736 512 340.864 831.872a30.592 30.592 0 0 0 0 42.752 29.12 29.12 0 0 0 41.728 0L714.24 534.336a32 32 0 0 0 0-44.672L382.592 149.376a29.12 29.12 0 0 0-41.728 0z\\"></path>
+            </svg></div>
+        </button><span class=\\"el-pagination__sizes is-last\\"><div class=\\"mock-el-select\\" model-value=\\"15\\" disabled=\\"false\\" popper-class=\\"\\" size=\\"default\\" teleported=\\"true\\" validate-event=\\"false\\"><div class=\\"mock-el-option\\" label=\\"15/page\\" value=\\"15\\"></div><div class=\\"mock-el-option\\" label=\\"20/page\\" value=\\"20\\"></div><div class=\\"mock-el-option\\" label=\\"25/page\\" value=\\"25\\"></div><div class=\\"mock-el-option\\" label=\\"30/page\\" value=\\"30\\"></div></div></span>
+      </div>
+      <div id=\\"annot-count\\" class=\\"mt-2\\"><b>2</b> matching records</div>
+      <div class=\\"mt-2\\">
+        <div class=\\"fdr-legend-header\\">FDR levels:</div>
+        <div class=\\"fdr-legend fdr-5\\">5%</div>
+        <div class=\\"fdr-legend fdr-10\\">10%</div>
+        <div class=\\"fdr-legend fdr-20\\">20%</div>
+        <div class=\\"fdr-legend fdr-50\\">50%</div>
+      </div>
+    </div>
+    <div class=\\"flex w-full items-center justify-end flex-wrap\\">
+      <div class=\\"mock-el-popover mt-1\\" width=\\"200\\">
+        <div>
+          <div class=\\"cursor-pointer select-none\\">
+            <div>
+              <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+                </svg></div>
+              <!----><span>Annotation</span>
+            </div>
+            <div>
+              <!---->
+              <div class=\\"mock-el-icon invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+                </svg></div><span>Adduct</span>
+            </div>
+            <div>
+              <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+                </svg></div>
+              <!----><span>Best MSM</span>
+            </div>
+            <div>
+              <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+                </svg></div>
+              <!----><span>m/z</span>
+            </div>
+            <div>
+              <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+                </svg></div>
+              <!----><span>Datasets #</span>
+            </div>
+            <div>
+              <!---->
+              <div class=\\"mock-el-icon invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+                </svg></div><span>Isomers</span>
+            </div>
+            <div>
+              <!---->
+              <div class=\\"mock-el-icon invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+                </svg></div><span>Isobars</span>
+            </div>
+            <div>
+              <!---->
+              <div class=\\"mock-el-icon invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+                </svg></div><span>Max Intensity</span>
+            </div>
+            <div>
+              <!---->
+              <div class=\\"mock-el-icon invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+                </svg></div><span>Molecules</span>
+            </div>
+            <div>
+              <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+                </svg></div>
+              <!----><span>Best FDR</span>
+            </div>
+            <!---->
+          </div>
+        </div>
+      </div>
+      <!---->
+      <div class=\\"mock-el-popover select-btn-wrapper ml-2 mt-1\\" popper-class=\\"export-pop\\">
+        <p class=\\"export-option\\">Annotations table</p>
+        <p class=\\"export-option\\">Pixel intensities</p>
+      </div>
+      <div class=\\"ml-2 mt-1\\">
+        <!----><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button full-screen-btn\\">
+          <!--v-if--><span class=\\"\\"><svg class=\\"full-screen-icon\\"></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>"
+`;
