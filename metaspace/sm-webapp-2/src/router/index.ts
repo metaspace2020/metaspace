@@ -6,6 +6,7 @@ import DatasetsPage from '../modules/Datasets/DatasetsPage.vue'
 
 const asyncPagesFreelyTyped = {
   AnnotationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "AnnotationsPage" */ '../modules/Annotations/AnnotationsPage.vue'),
+  DatasetSummary: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetSummary" */ '../modules/Datasets/summary/DatasetSummary.vue'),
   MetadataEditPage: () => import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ '../modules/MetadataEditor/MetadataEditPage.vue'),
   UploadPage: () => import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ '../modules/MetadataEditor/UploadPage.vue'),
   DatasetOverviewPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ '../modules/Datasets/overview/DatasetOverviewPage'),
@@ -37,7 +38,7 @@ export const routes : any =[
     component: DatasetsPage,
     children: [
       { path: '', component: asyncPages.DatasetTable },
-      { path: 'summary', component: asyncPages.DatasetTable },
+      { path: 'summary', component: asyncPages.DatasetSummary },
     ],
   },
   {
