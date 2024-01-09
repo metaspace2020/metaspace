@@ -2,7 +2,7 @@
 
 exports[`ImageLoader > should match snapshot (minimal) 1`] = `
 "<div imagefitparams=\\"[object Object]\\" showpixelintensity=\\"true\\">
-  <div class=\\"relative overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; transform: scaleX(1.23);\\" imagefitparams=\\"[object Object]\\" loading-number=\\"1\\">
+  <div class=\\"overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; transform: scaleX(1.23);\\" imagefitparams=\\"[object Object]\\" loading-number=\\"1\\">
     <!---->
     <!---->
     <!---->
@@ -20,7 +20,7 @@ exports[`ImageLoader > should match snapshot (minimal) 1`] = `
 
 exports[`ImageLoader > should match snapshot (with everything turned on) 1`] = `
 "<div imagefitparams=\\"[object Object]\\" showpixelintensity=\\"true\\" opticalsrc=\\"http://placekitten.com/200/300\\" opticaltransform=\\"1,2,3,4,5,6,7,8,9\\" scrollblock=\\"true\\">
-  <div class=\\"relative overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; transform: scaleX(1.23);\\" imagefitparams=\\"[object Object]\\" loading-number=\\"1\\">
+  <div class=\\"overflow-hidden el-loading-parent--relative\\" style=\\"width: 200px; height: 300px; transform: scaleX(1.23);\\" imagefitparams=\\"[object Object]\\" loading-number=\\"1\\">
     <div data-test-key=\\"ion-image-panel\\" style=\\"left: 0px; top: 0px; width: 200px; height: 300px; transform-origin: 0 0; transform: translate(0px, 0px) scale(1, 1);\\"><canvas width=\\"200\\" height=\\"300\\" class=\\"absolute top-0 left-0 z-10 origin-top-left select-none pixelated\\" data-images=\\"http://placebacon.com/200/300\\"></canvas>
       <div><img crossorigin=\\"anonymous\\" src=\\"http://placekitten.com/200/300\\" class=\\"absolute top-0 left-0 -z-10 origin-top-left\\" style=\\"transform: matrix3d(1, 4, 0, 7,
              2, 5, 0, 8,

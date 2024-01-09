@@ -569,7 +569,7 @@ export default defineComponent({
       <div
         ref={imageLoaderRef}
         v-loading={props.isLoading}
-        class="relative overflow-hidden"
+        class="overflow-hidden"
         style={{ width: props.width + 'px', height: props.height + 'px' }}
         onMousedown = {handlePanStart}
         onWheel={onWheel}

@@ -44,7 +44,7 @@ export default defineComponent({
     imageStyle: Object,
     minIntensity: Number,
     maxIntensity: Number,
-    pixelAspectRatio: { type: Number, default: 1 },
+    pixelAspectRatio: { type: Number},
     scaleType: Object,
     colormap: { type: String, default: 'Viridis' },
     opacityMode: String,

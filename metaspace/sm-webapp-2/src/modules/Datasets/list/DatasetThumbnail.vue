@@ -30,10 +30,12 @@
         src="../../../assets/no_opt_image.png"
         alt="Add optical image"
       >
-      <div
-        class="thumb--overlay el-icon-edit"
-        :class="hasOpticalImage ? 'el-icon-edit' : 'el-icon-plus'"
-      />
+      <div v-if="hasOpticalImage" class="thumb--overlay">
+        <el-icon><EditPen /></el-icon>
+      </div>
+      <div v-else class="thumb--overlay">
+        <el-icon><Plus /></el-icon>
+      </div>
     </div>
   </router-link>
   <div
@@ -68,8 +70,15 @@
 
 <script>
 import config from '../../../lib/config'
+import {ElIcon} from 'element-plus'
+import {EditPen, Plus}  from "@element-plus/icons-vue"
 export default {
   props: ['dataset', 'editable'],
+  components: {
+    ElIcon,
+    EditPen,
+    Plus
+  },
   data() {
     return {
       ionLoadError: false,

@@ -14,6 +14,9 @@ export function setupGlobalPlugins() {
   config.global.plugins.push([ElementPlus])
 
 }
+
+
+
 export function setupGlobalStubs() {
   const ElOptionMock = {
     name: 'ElOptionMock',
@@ -75,6 +78,10 @@ export function setupGlobalStubs() {
     name: 'ElDialogMock',
     template: '<div class="mock-el-dialog"><slot></slot></div>',
   };
+  const ElLoadingMock = {
+    name: 'ElLoadingMock',
+    template: '<div class="mock-el-loading"><slot></slot></div>',
+  };
   // const ElFormMock = {
   //   name: 'ElFormMock',
   //   template: '<div class="mock-el-form"><slot></slot></div>',
@@ -101,6 +108,9 @@ export function setupGlobalStubs() {
     'el-autocomplete': ElAutocompleteMock,
     // 'el-table-column': ElTableColumn,
     // 'el-form-item': ElFormItemMock,
+    'el-loading': ElLoadingMock,
+    'el-loading-mask': ElLoadingMock,
+    'loading': ElLoadingMock,
     'el-option': ElOptionMock,
     'el-dropdown': ElDropdownMock,
     'el-dropdown-menu': ElDropdownMenuMock,
@@ -179,6 +189,14 @@ export function setupGlobalVariables() {
     observe() {}
     unobserve() {}
     disconnect() {}
+  };
+
+  global.requestAnimationFrame = callback => {
+    return setTimeout(callback, 0);
+  };
+
+  global.cancelAnimationFrame = id => {
+    clearTimeout(id);
   };
 
 }

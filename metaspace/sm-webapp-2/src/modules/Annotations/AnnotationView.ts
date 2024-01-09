@@ -125,11 +125,31 @@ export default defineComponent({
     })
 
     const onSectionsChange = async (activeSections: string[]): Promise<void> => {
+      // Capture the current scroll position
+      const originalScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const originalOverflow = document.body.style.overflow;
+
+      // Lock the scroll
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${originalScrollTop}px`;
+
       // FIXME: this is a hack to make isotope images redraw
       // so that they pick up the changes in parent div widths
       await nextTick()
       window.dispatchEvent(new Event('resize'))
-      store.commit('updateAnnotationViewSections', activeSections)
+       store.commit('updateAnnotationViewSections', activeSections)
+
+      // Restore the scroll position
+      setTimeout(() => {
+        // Unlock the scroll
+        document.body.style.overflow = originalOverflow;
+        document.body.style.position = '';
+        document.body.style.top = '';
+
+        // Restore the original scroll position
+        window.scrollTo(0, originalScrollTop);
+      }, 0);
     }
 
     const getParsedFormula = (ion: string) : string  => {
