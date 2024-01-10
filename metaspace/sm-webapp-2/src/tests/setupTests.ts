@@ -191,13 +191,13 @@ export function setupGlobalVariables() {
     disconnect() {}
   };
 
-  global.requestAnimationFrame = callback => {
-    return setTimeout(callback, 0);
-  };
-
-  global.cancelAnimationFrame = id => {
-    clearTimeout(id);
-  };
+  // global.requestAnimationFrame = callback => {
+  //   return setTimeout(callback, 0);
+  // };
+  //
+  // global.cancelAnimationFrame = id => {
+  //   clearTimeout(id);
+  // };
 
 }
 

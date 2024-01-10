@@ -570,7 +570,7 @@ exports[`ViewProjectPage > members tab > should match snapshot (non-member) 1`] 
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask\\" style=\\"\\">
+  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
     <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
         <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
       </svg>
