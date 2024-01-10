@@ -1,8 +1,10 @@
+/* eslint-disable vue/max-len */
 import { createRouter, createWebHistory } from 'vue-router'
 import { Component } from 'vue'
 import NotFound from '../modules/App/NotFoundPage.vue'
 import AboutPage from '../modules/App/AboutPage'
 import DatasetsPage from '../modules/Datasets/DatasetsPage.vue'
+import {updateDBParam} from "../modules/Filters/url";
 
 const asyncPagesFreelyTyped = {
   AnnotationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "AnnotationsPage" */ '../modules/Annotations/AnnotationsPage.vue'),
@@ -14,6 +16,7 @@ const asyncPagesFreelyTyped = {
   DatasetComparisonPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetComparisonPage" */ '../modules/Datasets/comparison/DatasetComparisonPage'),
   DatasetBrowserPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetBrowserPage" */ '../modules/Datasets/imzml/DatasetBrowserPage'),
   DatasetEnrichmentPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetEnrichmentPage" */ '../modules/Datasets/enrichment/DatasetEnrichmentPage'),
+  SpottingProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/SpottingProject/DashboardPage'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Datasets/list/DatasetTable.vue'),
@@ -29,6 +32,20 @@ const asyncPagesFreelyTyped = {
 
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, Component>
+
+const convertLegacyUrls = () => {
+  const { pathname, hash, search } = window.location
+  if (pathname === '/' && hash && hash.startsWith('#/')) {
+    history.replaceState(undefined, undefined as any, hash.slice(1))
+  }
+  if (pathname === '/annotations') {
+    const updatedQueryString = updateDBParam(search.slice(1))
+    if (updatedQueryString !== null) {
+      history.replaceState(undefined, undefined as any, `${pathname}?${updatedQueryString}`)
+    }
+  }
+}
+convertLegacyUrls()
 
 export const routes : any =[
   { path: '/', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
@@ -56,12 +73,9 @@ export const routes : any =[
   { path: '/upload', component: asyncPages.UploadPage },
   { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
 
-
-
   { path: '/groups', component: asyncPages.GroupsListPage },
   { path: '/group/create', component: asyncPages.CreateGroupPage },
   { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
-
 
   { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
   { // Legacy URL sent in "request access" emails up until Feb 2019
@@ -70,15 +84,11 @@ export const routes : any =[
   },
   { path: '/projects', component: asyncPages.ProjectsListPage },
 
-
-
   { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
 
+  { path: '/detectability', name: 'detectability', component: asyncPages.SpottingProjectPage },
 
-  {
-    path: '/:pathMatch(.*)*',
-    component: NotFound,
-  },
+  { path: '/:pathMatch(.*)*', component: NotFound, meta: { footer: true, flex: true } },
 ]
 
 const router = createRouter({
