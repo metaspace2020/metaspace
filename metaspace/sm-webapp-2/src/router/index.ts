@@ -36,6 +36,13 @@ const asyncPagesFreelyTyped = {
   ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ '../modules/Group/ViewGroupPage.vue'),
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ '../modules/Project/ViewProjectPage.vue'),
 
+  // Separate bundle for design docs
+  DesignTOC: () => import(/* webpackChunkName: "DesignBundle" */ '../design/TOCPage.vue'),
+  DesignStyleGuide: () => import(/* webpackChunkName: "DesignBundle" */ '../design/StyleGuidePage.vue'),
+  DesignIcons: () => import(/* webpackChunkName: "DesignBundle" */ '../design/IconsPage.vue'),
+  DesignComponents: () => import(/* webpackChunkName: "DesignBundle" */ '../design/ComponentsPage.vue'),
+  DesignForms: () => import(/* webpackChunkName: "DesignBundle" */ '../design/FormsPage.vue'),
+
 }
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, Component>
 
@@ -99,10 +106,15 @@ export const routes : any =[
   },
   { path: '/projects', component: asyncPages.ProjectsListPage },
 
-
   { path: '/terms', component: asyncPages.TermsPage, meta: { footer: true } },
   { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
   { path: '/publications', component: asyncPages.PublicationsPage, meta: { footer: true } },
+
+  { path: '/design', component: asyncPages.DesignTOC, meta: { footer: true, flex: true } },
+  { path: '/design/styleguide', component: asyncPages.DesignStyleGuide, meta: { footer: true, flex: true } },
+  { path: '/design/icons', component: asyncPages.DesignIcons, meta: { footer: true, flex: true } },
+  { path: '/design/components', component: asyncPages.DesignComponents, meta: { footer: true, flex: true } },
+  { path: '/design/forms', component: asyncPages.DesignForms, meta: { footer: true, flex: true } },
 
   { path: '/detectability', name: 'detectability', component: asyncPages.SpottingProjectPage },
 

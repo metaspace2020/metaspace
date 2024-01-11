@@ -1,25 +1,12 @@
 import 'focus-visible'
 
-
-// @ts-ignore
 import { createApp, provide, h } from 'vue'
 
 import config, { updateConfigFromQueryString } from './lib/config'
 import * as Sentry from '@sentry/vue'
 
-import App from './modules/App/App.vue'
-import store from './store'
-import router from './router'
-// import { sync } from 'vuex-router-sync'
-
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
-
-
-import VueGtag from 'vue-gtag'
-import { setErrorNotifier } from './lib/reportError'
-import { migrateLocalStorage } from './lib/localStorage'
-
 
 import 'element-plus/es/components/dropdown/style/css';
 import 'element-plus/es/components/notification/style/css';
@@ -27,21 +14,22 @@ import 'element-plus/es/components/message-box/style/css';
 import 'element-plus/es/components/message/style/css';
 import 'element-plus/es/components/dialog/style/css';
 import 'element-plus/es/components/table/style/css';
-import 'element-plus/dist/index.css'
-
-// import './assets/main.css'
+import 'element-plus/es/components/alert/style/css';
 import './modules/App/tailwind.scss'
-// import './modules/App/tailwind.scss'
-// if you're using CDN, please remove this line.
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import './modules/App/element-overrides.css'
+// import 'element-plus/dist/index.css'
 
+import App from './modules/App/App.vue'
+import store from './store'
+import router from './router'
+
+import VueGtag from 'vue-gtag'
+import { setErrorNotifier } from './lib/reportError'
+import { migrateLocalStorage } from './lib/localStorage'
 
 import {ElMessageBox, ElNotification} from "element-plus";
 import {Route} from "@sentry/vue/types/router";
-
-
-
 
 const isProd = process.env.NODE_ENV === 'production'
 
@@ -93,29 +81,22 @@ if (config.sentry != null && config.sentry.dsn !== '') {
 
 migrateLocalStorage()
 
-
 app.use(router)
 app.use(store)
-// sync(store, router)
-// app.use(ElementPlus);
 
 router.afterEach((to: Route) => {
   store.commit('updateFilterOnNavigate', to)
 })
 
-// @ts-ignore
 app.use(VueGtag, {
   config: { id: 'UA-73509518-1' },
   enabled: isProd, // disabled in dev because it impairs "break on uncaught exception"
 }, router)
 
-
-
 // app.config.devtools = process.env.NODE_ENV === 'development'
 app.config.performance = process.env.NODE_ENV === 'development'
 app.config.globalProperties.$alert = ElMessageBox.alert
 app.config.globalProperties.$notification = ElNotification
-
 
 app.mount('#app')
 
