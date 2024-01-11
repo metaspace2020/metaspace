@@ -24,6 +24,7 @@ const asyncPagesFreelyTyped = {
   EditUserPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/UserProfile/EditUserPage.vue'),
   CreateGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Group/CreateGroupPage.vue'),
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Project/ProjectsListPage.vue'),
+  SystemHealthPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Admin/SystemHealthPage.vue'),
   GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Group/GroupsListPage'),
   PrivacyPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/PrivacyPage.vue'),
 
@@ -74,6 +75,8 @@ export const routes : any =[
   { path: '/upload', component: asyncPages.UploadPage },
   { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
   { path: '/user/me', component: asyncPages.EditUserPage },
+
+  { path: '/admin/health', component: asyncPages.SystemHealthPage },
 
   { path: '/groups', component: asyncPages.GroupsListPage },
   { path: '/group/create', component: asyncPages.CreateGroupPage },

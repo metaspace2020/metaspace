@@ -1,4 +1,4 @@
-import {defineComponent, nextTick, h, ref} from 'vue';
+import { nextTick, ref} from 'vue';
 import {flushPromises, mount} from '@vue/test-utils';
 import EditUserPage from './EditUserPage.vue'
 import {initMockGraphqlClient} from "../../tests/utils/mockGraphqlClient";
@@ -7,7 +7,6 @@ import {DefaultApolloClient, useMutation, useQuery} from "@vue/apollo-composable
 import store from "../../store";
 import router from "../../router";
 import { ElMessageBox } from 'element-plus';
-
 
 vi.mock('element-plus', async () => {
   const actual : any = await vi.importActual("element-plus")
@@ -26,10 +25,7 @@ vi.mock('@vue/apollo-composable', () => ({
   DefaultApolloClient: vi.fn(),
 }));
 
-let mockRoutePush
-
 let graphqlMocks: any;
-
 describe('EditUserPage', () => {
   const mockCurrentUser = {
     id: '22333',
@@ -50,9 +46,7 @@ describe('EditUserPage', () => {
       { role: 'MANAGER', numDatasets: 20, project: { id: 'DD', name: 'Project D', urlSlug: null } },
     ],
   }
-
   const mockUpdateUserMutation = vi.fn(() => ({}))
-
   const graphqlMock = async() => {
     const queryParams = {
       currentUser: () => mockCurrentUser,
@@ -77,12 +71,10 @@ describe('EditUserPage', () => {
     });
   };
 
-
   beforeEach(async() => {
     vi.clearAllMocks()
     await graphqlMock();
   })
-
 
   it('should match snapshot', async() => {
     const wrapper = mount(EditUserPage, {
@@ -95,10 +87,8 @@ describe('EditUserPage', () => {
     });
     await flushPromises();
     await nextTick();
-
     expect(wrapper.html()).toMatchSnapshot();
   });
-
 
   it('should be able to submit changes to the user', async() => {
     const wrapper = mount(EditUserPage, {
@@ -115,7 +105,6 @@ describe('EditUserPage', () => {
     const saveButton = wrapper.find('.saveButton')
     const name = 'foo bar'
     const email = 'changed@bar.baz'
-
 
     wrapper.vm.model.name = name
     wrapper.vm.model.email = email
@@ -136,8 +125,6 @@ describe('EditUserPage', () => {
     expect(mockUpdateUserMutation).toHaveBeenCalledTimes(1)
   });
 
-
-
   it('should not include unchanged fields in the update payload', async() => {
     const wrapper = mount(EditUserPage, {
       global: {
@@ -152,7 +139,6 @@ describe('EditUserPage', () => {
 
     const saveButton = wrapper.find('.saveButton')
     const name = 'foo bar'
-
 
     wrapper.vm.model.name = name
     saveButton.trigger('click')
@@ -171,7 +157,4 @@ describe('EditUserPage', () => {
 
     expect(mockUpdateUserMutation).toHaveBeenCalledTimes(1)
   });
-
-
-
 });
