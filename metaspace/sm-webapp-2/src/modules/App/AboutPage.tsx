@@ -71,7 +71,7 @@ const AboutPage = defineComponent({
       result: publicationCountResult,
     } = useQuery<{countPublications: any}>(countPublicationsQuery)
     const publicationCount = computed(() => publicationCountResult.value != null
-      ? publicationCountResult.value.countPublications : null)
+      ? publicationCountResult.value?.countPublications : null)
 
     onMounted(() => {
       if (route?.hash?.includes('funding')) {

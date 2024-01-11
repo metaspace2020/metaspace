@@ -1,10 +1,12 @@
 /* eslint-disable vue/max-len */
 import { createRouter, createWebHistory } from 'vue-router'
 import { Component } from 'vue'
-import NotFound from '../modules/App/NotFoundPage.vue'
 import AboutPage from '../modules/App/AboutPage'
 import DatasetsPage from '../modules/Datasets/DatasetsPage.vue'
+import { DialogPage, ResetPasswordPage } from '../modules/Account'
+import { redirectAfterSignIn } from '../modules/Account/signInReturnUrl'
 import {updateDBParam} from "../modules/Filters/url";
+import NotFound from '../modules/App/NotFoundPage.vue'
 
 const asyncPagesFreelyTyped = {
   AnnotationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "AnnotationsPage" */ '../modules/Annotations/AnnotationsPage.vue'),
@@ -27,6 +29,8 @@ const asyncPagesFreelyTyped = {
   SystemHealthPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Admin/SystemHealthPage.vue'),
   GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Group/GroupsListPage'),
   PrivacyPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/PrivacyPage.vue'),
+  TermsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/TermsPage.vue'),
+  PublicationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/PublicationsPage'),
 
   // These pages use sanitizeHtml, which is big
   ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ '../modules/Group/ViewGroupPage.vue'),
@@ -78,6 +82,12 @@ export const routes : any =[
 
   { path: '/admin/health', component: asyncPages.SystemHealthPage },
 
+  { path: '/account/sign-in', component: DialogPage, props: { dialog: 'signIn' } },
+  { path: '/account/sign-in-success', redirect: redirectAfterSignIn },
+  { path: '/account/create-account', component: DialogPage, props: { dialog: 'createAccount' } },
+  { path: '/account/forgot-password', component: DialogPage, props: { dialog: 'forgotPassword' } },
+  { path: '/account/reset-password', component: ResetPasswordPage },
+
   { path: '/groups', component: asyncPages.GroupsListPage },
   { path: '/group/create', component: asyncPages.CreateGroupPage },
   { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
@@ -89,7 +99,10 @@ export const routes : any =[
   },
   { path: '/projects', component: asyncPages.ProjectsListPage },
 
+
+  { path: '/terms', component: asyncPages.TermsPage, meta: { footer: true } },
   { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
+  { path: '/publications', component: asyncPages.PublicationsPage, meta: { footer: true } },
 
   { path: '/detectability', name: 'detectability', component: asyncPages.SpottingProjectPage },
 
