@@ -21,6 +21,7 @@ const asyncPagesFreelyTyped = {
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Datasets/list/DatasetTable.vue'),
   HelpPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/App/HelpPage.vue'),
+  EditUserPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/UserProfile/EditUserPage.vue'),
   CreateGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Group/CreateGroupPage.vue'),
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Project/ProjectsListPage.vue'),
   GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ '../modules/Group/GroupsListPage'),
@@ -72,6 +73,7 @@ export const routes : any =[
   { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetEnrichmentPage },
   { path: '/upload', component: asyncPages.UploadPage },
   { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
+  { path: '/user/me', component: asyncPages.EditUserPage },
 
   { path: '/groups', component: asyncPages.GroupsListPage },
   { path: '/group/create', component: asyncPages.CreateGroupPage },
