@@ -103,6 +103,7 @@
       </el-form-item>
       <el-form-item label="Colormap">
         <el-select
+          popper-class="export-pop"
           :model-value="colormap"
           style="width: 150px;"
           :teleported="false"
@@ -112,12 +113,12 @@
             <el-option
               v-for="scale in availableScales"
               :key="scale"
-              class="flex items-center pr-5 py-2"
+              class="flex items-center pr-5 py-2 "
               :value="scale"
               :label="scale"
             >
               <color-bar
-                class="h-full w-full"
+                class="h-5 w-full"
                 :map="scale"
                 horizontal
               />
@@ -132,7 +133,7 @@
               :label="scale"
             >
               <color-bar
-                class="h-full w-full"
+                class="h-5 w-full"
                 :map="'-' + scale"
                 horizontal
               />

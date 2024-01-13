@@ -172,7 +172,7 @@
       <mini-switch
         :value="miniSwitch.mini"
         active-text="mini size"
-        @change="miniSwitch.mini = !miniSwitch.mini"
+        @click="miniSwitch.mini = !miniSwitch.mini"
       />
     </component-example>
     <h2 id="molecular-formula">
@@ -253,7 +253,7 @@
           class="text-primary bg-gray-100 rounded-full"
           :radius="20"
           :stroke="4"
-          :progress="progress"
+          :progress="parseInt(progress as string, 10)"
         />
         <el-input
           v-model="progress"
@@ -349,8 +349,9 @@
     <component-example>
       <form class="flex items-center">
         <slider
-          v-model="sliderValue"
           class="w-1/3"
+          :value="sliderValue"
+          @input="(value) => {sliderValue = value}"
         />
         <p class="text-sm ml-3">
           value: {{ sliderValue }}
@@ -390,7 +391,7 @@
     </props-table>
     <component-example>
       <form class="w-1/3">
-        <range-slider v-model="rangeSliderValue" />
+        <range-slider :value="rangeSliderValue" @input="(nextRange) => {rangeSliderValue = nextRange}"/>
         <p class="text-sm flex items-start justify-between">
           <span>{{ rangeSliderValue[0] }}</span>
           <span>{{ rangeSliderValue[1] }}</span>

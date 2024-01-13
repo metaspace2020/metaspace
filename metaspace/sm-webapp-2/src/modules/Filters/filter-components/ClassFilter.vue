@@ -6,10 +6,11 @@
   >
     <template v-slot:edit>
       <el-select
-        :value="filterValues.molClass ? parseInt(filterValues.molClass, 10) : undefined"
+        :model-value="filterValues.molClass ? parseInt(filterValues.molClass, 10) : undefined"
         placeholder="Select molecular ontology"
         filterable
         clearable
+        :teleported="false"
         remote
         @change="val => onChange('molClass', val)"
       >
@@ -21,14 +22,14 @@
         />
       </el-select>
       <el-select
-        :value="filterValues.term ? parseInt(filterValues.term, 10) : undefined"
+        :model-value="filterValues.term ? parseInt(filterValues.term, 10) : undefined"
         :remote-method="updateTermQuery"
-        :loading="termOptionsLoading !== 0"
+        :loading="termOptionsLoading"
         placeholder="Select term"
         filterable
         clearable
         remote
-        @focus="() => updateTermQuery('')"
+        @focus="() => {updateTermQuery('')}"
         @change="val => onChange('term', val)"
       >
         <el-option
@@ -61,7 +62,7 @@ export default defineComponent({
     TagFilter,
   },
   props: {
-    filterValues: Object,
+    filterValues: Object as any,
   },
   setup(props, { emit }) {
     const filterValues = ref(props.filterValues);

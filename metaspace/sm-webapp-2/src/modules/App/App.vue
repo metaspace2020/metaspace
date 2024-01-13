@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-full m-0 relative"
+    class="min-h-screen m-0 relative"
     :class="{ 'flex flex-col': route.meta.flex }"
   >
     <metaspace-header :class="route.meta.headerClass" />

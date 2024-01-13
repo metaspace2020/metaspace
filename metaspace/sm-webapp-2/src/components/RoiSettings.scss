@@ -29,7 +29,7 @@ $bgColor: hsl(208, 36%, 96%);
   }
 
   .roi-label{
-    @apply font-bold;
+    @apply font-bold overflow-hidden truncate;
   }
 
   .roi-item{

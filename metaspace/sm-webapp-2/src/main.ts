@@ -8,6 +8,9 @@ import * as Sentry from '@sentry/vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
 
+
+// import 'element-plus/dist/index.css'
+import 'element-plus/es/components/radio-button/style/css';
 import 'element-plus/es/components/dropdown/style/css';
 import 'element-plus/es/components/notification/style/css';
 import 'element-plus/es/components/message-box/style/css';
@@ -18,7 +21,6 @@ import 'element-plus/es/components/alert/style/css';
 import './modules/App/tailwind.scss'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import './modules/App/element-overrides.css'
-// import 'element-plus/dist/index.css'
 
 import App from './modules/App/App.vue'
 import store from './store'

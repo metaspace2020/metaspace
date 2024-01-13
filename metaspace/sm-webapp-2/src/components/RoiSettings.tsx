@@ -1,7 +1,7 @@
 import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useMutation, useQuery } from '@vue/apollo-composable';
-import {ElButton, ElInput, ElPopover, ElTooltip} from "element-plus";
+import {ElButton, ElIcon, ElInput, ElNotification, ElPopover, ElTooltip} from "element-plus";
 import * as FileSaver from 'file-saver'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue';
 import './RoiSettings.scss';
@@ -13,6 +13,7 @@ import isInsidePolygon from '../lib/isInsidePolygon';
 import StatefulIcon from '../components/StatefulIcon.vue';
 import reportError from '../lib/reportError';
 import {defineAsyncComponent} from "vue";
+import {Loading} from "@element-plus/icons-vue";
 
 const VisibleIcon = defineAsyncComponent(() =>
   import('../assets/inline/refactoring-ui/icon-view-visible.svg')
@@ -300,9 +301,12 @@ export default defineComponent({
           }
         })
       } catch (e) {
+        ElNotification.error(`There was a problem saving the ROI settings.`)
         reportError(new Error(`Error saving ROI: ${JSON.stringify(e)}`), null)
       } finally {
-        state.isUpdatingRoi = false
+        setTimeout(() => {
+          state.isUpdatingRoi = false
+        }, 1000)
       }
     }
 
@@ -403,14 +407,14 @@ export default defineComponent({
               && !state.isDownloading
               && <ElButton
                 class="button-reset roi-download-icon"
-                icon="el-icon-download"
+                icon="Download"
                 onClick={triggerDownload}/>
             }
             {
               roiInfo.length > 0
               && state.isDownloading
               && <div class="button-reset roi-download-icon">
-                <i class="el-icon-loading" />
+                <ElIcon class="is-loading"><Loading/></ElIcon>
               </div>
             }
             <ElTooltip
@@ -435,7 +439,7 @@ export default defineComponent({
               {
                 state.isUpdatingRoi
                 && <div class="button-reset roi-download-icon">
-                  <i class="el-icon-loading" />
+                  <ElIcon class="is-loading"><Loading/></ElIcon>
                 </div>
               }
             </ElTooltip>
@@ -444,7 +448,7 @@ export default defineComponent({
             roiInfo.map((roi: any, roiIndex: number) => {
               return (
                 <div class='roi-item relative'>
-                  <div class='flex w-full justify-between items-center'>
+                  <div class='flex w-full justify-between items-center w-28'>
                     {
                       !roi.edit
                       && <span class='roi-label' style={ { color: roi.channel } }>
@@ -463,7 +467,7 @@ export default defineComponent({
                     <div class='flex justify-center items-center'>
                       <ElButton
                         class="button-reset h-5"
-                        icon="el-icon-edit-outline"
+                        icon="Edit"
                         onClick={() => toggleEdit(roiIndex)}/>
                       <ElButton class="button-reset h-5" onClick={() => toggleHidden(roiIndex)}>
                         {

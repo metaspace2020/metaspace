@@ -144,7 +144,7 @@ export default Slider
     @apply absolute p-1 mb-1 text-xs tracking-wide shadow-sm rounded-sm leading-none bg-white;
     @apply transition-opacity duration-300 ease-in-out pointer-events-none;
     bottom: 100%;
-    visiblity: hidden;
+    visibility: hidden;
     opacity: 0;
   }
   div:hover + span,

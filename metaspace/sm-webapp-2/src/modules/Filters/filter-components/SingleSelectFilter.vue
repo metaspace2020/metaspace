@@ -10,6 +10,7 @@
         :filterable="filterable"
         :clearable="clearable"
         :model-value="value"
+        :teleported="false"
         @change="onChange"
       >
         <el-option

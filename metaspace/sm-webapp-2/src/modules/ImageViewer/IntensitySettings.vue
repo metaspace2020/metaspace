@@ -9,7 +9,7 @@
         class="relative z-10"
         :disabled="isSwitchDisabled"
         :value="settings.isLockActive && !isSwitchDisabled"
-        @change="settings.isLockActive = !settings.isLockActive"
+        @click="settings.isLockActive = !settings.isLockActive"
       />
     </p>
     <div class="flex justify-between">
@@ -43,6 +43,7 @@ export default defineComponent({
   },
   props: {
     hasOpticalImage: Boolean,
+    isSwitchDisabled: Boolean,
     opacity: { type: Number, required: true },
   },
   setup() {

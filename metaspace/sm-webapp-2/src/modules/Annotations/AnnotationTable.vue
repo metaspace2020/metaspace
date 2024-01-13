@@ -949,11 +949,13 @@ export default defineComponent({
             },
             fetchPolicy: 'cache-first',
           })
+
           if (!resp?.data?.dataset?.roiJson) {
             return
           }
+
           const roi = JSON.parse(resp?.data?.dataset?.roiJson)
-          if (roi && Array.isArray(roi.features) && store.state.roiInfo[datasetId]) {
+          if (roi && Array.isArray(roi.features) && !store.state.roiInfo[datasetId]) {
             store.commit('setRoiInfo', {
               key: datasetId,
               roi: roi.features.map((feature) => {

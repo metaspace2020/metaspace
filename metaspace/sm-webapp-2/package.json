@@ -1,6 +1,6 @@
 {
-  "name": "sm-webapp-2",
-  "version": "0.0.0",
+  "name": "sm-webapp-ng",
+  "version": "2.0.0",
   "contributors": [
     "Andrew Palmer <andrew.palmer@embl.de>",
     "Artem Tarasov <artem.tarasov@embl.de>",
@@ -10,7 +10,8 @@
     "Renat Nigmetzianov <renat.nigmetzianov@embl.de>",
     "Sergii Mamedov <sergii.mamedov@embl.de>",
     "Theodore Alexandrov <theodore.alexandrov@embl.de>",
-    "Vitaly Kovalev <vitaly.kovalev@embl.de>"
+    "Vitaly Kovalev <vitaly.kovalev@embl.de>",
+    "Richard Goater <richard.goater@embl.de>"
   ],
   "private": true,
   "scripts": {
