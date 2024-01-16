@@ -55,7 +55,7 @@ import { memoize } from 'lodash-es';
 import FormField from '../inputs/FormField.vue';
 import { FormSectionProperty } from '../formStructure';
 import {ElCol, ElForm, ElPopover, ElRow} from "element-plus";
-import './Formsection.scss';
+import './FormSection.scss';
 
 export default defineComponent({
   name: 'FormSection',
