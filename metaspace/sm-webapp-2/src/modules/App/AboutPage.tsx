@@ -9,23 +9,11 @@ import './AboutPage.scss'
 import {defineAsyncComponent} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import METALogo from '../../assets/METASPACE_logomark.png'
-
-const Metaspace = defineAsyncComponent(() =>
-  import('../../assets/inline/METASPACE.svg')
-);
-const MonitorSvg = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-monitor.svg')
-);
-const BookSvg = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-book-open.svg')
-);
-const BoltSvg = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-bolt.svg')
-);
-const UnlockSvg = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-lock-open.svg')
-);
-
+import Metaspace from '../../assets/inline/METASPACE.svg'
+import MonitorSvg from '../../assets/inline/refactoring-ui/icon-monitor.svg'
+import BookSvg from '../../assets/inline/refactoring-ui/icon-book-open.svg'
+import BoltSvg from '../../assets/inline/refactoring-ui/icon-bolt.svg'
+import UnlockSvg from '../../assets/inline/refactoring-ui/icon-lock-open.svg'
 
 const NIDDKLogo = defineAsyncComponent(() =>
   import('../../assets/NIDDK.svg')
