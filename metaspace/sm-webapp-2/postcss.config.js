@@ -25,7 +25,7 @@ const purgecss = postcssPurgecss({
 const purgecssTailwindOnly = () => {
   return {
     postcssPlugin: 'postcss-plugin-purgecss-tailwind',
-    Once(root, { result }) {
+    Once(root) {
       if (root.source?.input?.file?.match(/tailwind/i)) {
         const purgeProcessor = postcss([purgecss]);
         purgeProcessor.process(root, { from: undefined }).then(purgedResult => {

@@ -170,7 +170,7 @@
   </div>
 </template>
 <script lang="ts">
-import {defineComponent, ref, watch, computed, inject} from 'vue';
+import {defineComponent, ref, watch, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {DefaultApolloClient, useQuery, useSubscription} from '@vue/apollo-composable';
 import { datasetDeletedQuery, DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset'
@@ -246,9 +246,10 @@ export default defineComponent({
     });
     const currentUser : any = computed(() => currentUserResult.value != null ? currentUserResult.value.currentUser
       : null)
+    const groupIdOrSlug = computed(() => route.params?.groupIdOrSlug as string | null)
 
     const groupQuery = computed(() => {
-      if (isUuid(route.params.groupIdOrSlug as string)) {
+      if (isUuid(groupIdOrSlug.value as string)) {
         return gql`query GroupProfileById($groupIdOrSlug: ID!) {
               group(groupId: $groupIdOrSlug) { ...ViewGroupFragment hasPendingRequest }
             }
@@ -261,21 +262,23 @@ export default defineComponent({
       }
     })
 
-    const { result: groupResult, refetch: refetchGroup, loading: groupLoading } = useQuery(groupQuery.value,
-      { groupIdOrSlug: route.params.groupIdOrSlug }, {
+
+    const { result: groupResult, refetch: refetchGroup, loading: groupLoading } =
+      useQuery(groupQuery.value,
+        () => ({ groupIdOrSlug: groupIdOrSlug.value }), {
         // Can't be 'no-cache' because `refetchGroup` is used for updating the cache, which in turn updates
         // MetaspaceHeader's primaryGroup & the group.hasPendingRequest notification
         fetchPolicy: 'network-only'
       });
     const group = computed(() => groupResult.value?.group as ViewGroupResult | null);
+
     const groupId = computed((): string | null => {
-      if (isUuid(route.params.groupIdOrSlug as string)) {
-        return route.params.groupIdOrSlug as string // If it's possible to get the ID from the route, use that because it's faster than groupById/groupBySlug.
+      if (isUuid(groupIdOrSlug.value as string)) {
+        return groupIdOrSlug.value as string // If it's possible to get the ID from the route, use that because it's faster than groupById/groupBySlug.
       } else {
         return group.value?.id
       }
     })
-
 
     const { result: dataResult, onResult: onDataResult, refetch: refetchData } = useQuery(gql`query GroupProfileDatasets(
           $groupId: ID!,
@@ -289,11 +292,15 @@ export default defineComponent({
           countDatasets(filter: { group: $groupId })
         }
 
-        ${datasetDetailItemFragment}`, {
-      maxVisibleDatasets: maxVisibleDatasets.value,
-      groupId: groupId.value,
-    }, {
-      enabled: computed(() => groupId.value != null),
+        ${datasetDetailItemFragment}`, () => (
+      {
+        maxVisibleDatasets: maxVisibleDatasets.value,
+        groupId: groupId.value,
+      }
+    ), () => {
+      return {
+        enabled: groupId.value != null
+      }
     });
     onDataResult(() => {
       // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
@@ -355,7 +362,7 @@ export default defineComponent({
       if (
         group.value !== null
         && group.value?.urlSlug !== null
-        && route.params.groupIdOrSlug !== group.value?.urlSlug
+        && groupIdOrSlug.value !== group.value?.urlSlug
       ) {
         router.replace({
           params: { groupIdOrSlug: group.value?.urlSlug},

@@ -1,4 +1,5 @@
 import 'focus-visible'
+import './modules/App/tailwind.scss'
 
 import { createApp, provide, h } from 'vue'
 
@@ -10,15 +11,14 @@ import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
 
 
 import 'element-plus/dist/index.css'
-import 'element-plus/es/components/radio-button/style/css';
-import 'element-plus/es/components/dropdown/style/css';
-import 'element-plus/es/components/notification/style/css';
-import 'element-plus/es/components/message-box/style/css';
-import 'element-plus/es/components/message/style/css';
-import 'element-plus/es/components/dialog/style/css';
-import 'element-plus/es/components/table/style/css';
-import 'element-plus/es/components/alert/style/css';
-import './modules/App/tailwind.scss'
+// import 'element-plus/es/components/radio-button/style/css';
+// import 'element-plus/es/components/dropdown/style/css';
+// import 'element-plus/es/components/notification/style/css';
+// import 'element-plus/es/components/message-box/style/css';
+// import 'element-plus/es/components/message/style/css';
+// import 'element-plus/es/components/dialog/style/css';
+// import 'element-plus/es/components/table/style/css';
+// import 'element-plus/es/components/alert/style/css';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import './modules/App/element-overrides.css'
 
