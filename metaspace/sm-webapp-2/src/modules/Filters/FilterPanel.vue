@@ -285,6 +285,7 @@ export default defineComponent({
 
 <style>
 .filter-panel {
+  @apply w-full;
   display: inline-flex;
   align-items: flex-start;
   flex-wrap: wrap;
