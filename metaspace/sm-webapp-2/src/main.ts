@@ -9,7 +9,7 @@ import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
 
 
-// import 'element-plus/dist/index.css'
+import 'element-plus/dist/index.css'
 import 'element-plus/es/components/radio-button/style/css';
 import 'element-plus/es/components/dropdown/style/css';
 import 'element-plus/es/components/notification/style/css';
