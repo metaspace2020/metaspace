@@ -117,7 +117,7 @@
     "json-schema-deref-sync": "^0.14.0",
     "node-fetch": "^3.3.2",
     "npm-run-all2": "^6.1.1",
-    "postcss": "^8.4.31",
+    "postcss": "^8.4.33",
     "prettier": "^3.0.3",
     "sass": "^1.69.5",
     "start-server-and-test": "^2.0.1",
@@ -130,5 +130,8 @@
     "vite-plugin-virtual": "^0.2.0",
     "vitest": "^0.34.6",
     "vue-tsc": "^1.8.19"
+  },
+  "peerDependencies": {
+    "postcss": "^8.4.33"
   }
 }

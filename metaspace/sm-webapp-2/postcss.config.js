@@ -22,17 +22,22 @@ const purgecss = postcssPurgecss({
 //
 // https://github.com/FullHuman/purgecss/issues/300 It's heinously slow because it re-reads all input content files
 //
-const purgecssTailwindOnly = postcss.plugin('postcss-plugin-purgecss-tailwind', () => {
-  return (root) => {
-    if (root && root.source && root.source.input && /tailwind/i.test(root.source.input.file)) {
-      const purgeProcessor = postcss([purgecss]);
-      purgeProcessor.process(root, { from: undefined }).then(purgedResult => {
-        root.removeAll();
-        root.append(purgedResult.css);
-      });
+const purgecssTailwindOnly = () => {
+  return {
+    postcssPlugin: 'postcss-plugin-purgecss-tailwind',
+    Once(root, { result }) {
+      if (root.source?.input?.file?.match(/tailwind/i)) {
+        const purgeProcessor = postcss([purgecss]);
+        purgeProcessor.process(root, { from: undefined }).then(purgedResult => {
+          root.removeAll();
+          root.append(purgedResult.css);
+        });
+      }
     }
   }
-})
+};
+
+purgecssTailwindOnly.postcss = true;
 
 module.exports = {
   plugins: [

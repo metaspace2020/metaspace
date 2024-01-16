@@ -106,8 +106,3 @@ export default defineComponent({
   }
 });
 </script>
-
-
-<style lang="scss">
-  //@import './Formsection?.scss'; // Imported in JS so that Webpack de-duplicates redundant copies
-</style>

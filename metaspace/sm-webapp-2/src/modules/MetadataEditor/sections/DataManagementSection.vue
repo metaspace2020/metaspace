@@ -406,7 +406,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style lang="scss">
-  //@import './FormSection.scss';
-</style>
