@@ -110,7 +110,7 @@ The Prefix is necessary and should not have a leading or trailing slash
 #}
       "imzml": ["{{ sm_lithops_s3_bucket_imzml }}", "imzml"],
       "moldb": ["{{ sm_lithops_s3_bucket_centroids }}", "moldb"],
-      "centroids": ["{{ ssm_lithops_s3_bucket_centroids }}", "centroids"],
+      "centroids": ["{{ sm_lithops_s3_bucket_centroids }}", "centroids"],
       "pipeline_cache": ["{{ sm_lithops_s3_bucket_temp }}", "pipeline_cache"]
     }
   },
