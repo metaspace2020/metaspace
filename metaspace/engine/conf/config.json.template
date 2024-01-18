@@ -115,7 +115,7 @@ The Prefix is necessary and should not have a leading or trailing slash
     }
   },
   "aws": {
-    "aws_default_region": "{{ aws_region }}"
+    "aws_default_region": "{{ aws_region }}",
     "aws_access_key_id": "{{ aws_access_key_id }}",
     "aws_secret_access_key": "{{ aws_secret_access_key }}",
   },
