@@ -82,7 +82,7 @@
     "aws_lambda": {
       "namespace": "{{ sm_lithops_aws_lambda_namespace }}",
       "runtime_timeout": 900,
-      "runtime": "{{ sm_lithops_aws_lambda_runtime_name }}"
+      "runtime": "{{ sm_lithops_aws_lambda_runtime_name }}",
       "execution_role": "{{ sm_lithops_aws_lambda_execution_role }}"
     },
     "aws_ec2": {
