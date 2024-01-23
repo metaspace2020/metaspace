@@ -13,7 +13,7 @@ pyyaml>=5.1
 elasticsearch==8.7.0
 pika==0.13.1
 bottle
-Pillow==9.3.0
+Pillow==10.2.0
 numpy==1.19.5
 scipy==1.6.0
 pandas==1.2.0
