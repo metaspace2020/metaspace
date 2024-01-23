@@ -8,6 +8,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import CompressionPlugin from 'vite-plugin-compression'
+import Markdown from 'unplugin-vue-markdown/vite'
 
 // const isCypressRun = process.env.CYPRESS_RUN === 'true';
 
@@ -35,7 +36,9 @@ export default defineConfig({
     },
   },
   plugins: [
-    vue(),
+    vue({
+      include: ['**/*.vue', '**/*.md'],
+    }),
     vueJsx(),
     svgLoader(),
     AutoImport({
@@ -48,6 +51,14 @@ export default defineConfig({
       algorithm: 'brotliCompress',
       ext: '.br',
     }),
+    Markdown({
+      headEnabled: true,
+      markdownItOptions: {
+        html: true,
+        linkify: true,
+        typographer: true,
+      },
+    })
   ],
   css: {
     preprocessorOptions: {

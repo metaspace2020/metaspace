@@ -312,7 +312,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"mock-el-select\\" filterable=\\"false\\" clearable=\\"false\\">
+      <div class=\\"mock-el-select\\" filterable=\\"false\\" clearable=\\"false\\" teleported=\\"false\\">
         <div class=\\"mock-el-option\\" label=\\"5%\\" value=\\"0.05\\"></div>
         <div class=\\"mock-el-option\\" label=\\"10%\\" value=\\"0.1\\"></div>
         <div class=\\"mock-el-option\\" label=\\"20%\\" value=\\"0.2\\"></div>
@@ -327,7 +327,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"mock-el-select\\" filterable=\\"false\\" clearable=\\"false\\">
+      <div class=\\"mock-el-select\\" filterable=\\"false\\" clearable=\\"false\\" teleported=\\"false\\">
         <div class=\\"mock-el-option\\" label=\\"Positive\\" value=\\"Positive\\"></div>
         <div class=\\"mock-el-option\\" label=\\"Negative\\" value=\\"Negative\\"></div>
       </div>
@@ -343,7 +343,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\" teleported=\\"false\\">
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
@@ -359,7 +359,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\" teleported=\\"false\\">
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
@@ -375,7 +375,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\" teleported=\\"false\\">
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
@@ -391,7 +391,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\" teleported=\\"false\\">
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
@@ -407,7 +407,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\" teleported=\\"false\\">
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
@@ -423,7 +423,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\" teleported=\\"false\\">
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
@@ -439,7 +439,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\" teleported=\\"false\\">
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
         <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
       </div>
@@ -455,7 +455,7 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"mock-el-popover tf-value-container pl-3\\" trigger=\\"click\\" placement=\\"bottom\\" width=\\"300\\">
-      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\">
+      <div class=\\"mock-el-select\\" filterable=\\"true\\" clearable=\\"false\\" teleported=\\"false\\">
         <div class=\\"mock-el-option\\" label=\\"Imaging MS\\" value=\\"Imaging MS\\"></div>
         <div class=\\"mock-el-option\\" label=\\"LC-MS\\" value=\\"LC-MS\\"></div>
       </div>

@@ -444,7 +444,7 @@
         <el-popover v-else ref="exportPop" class="select-btn-wrapper ml-2 mt-1" popper-class="export-pop"
                     trigger="click">
           <template #reference>
-            <el-button class="select-btn-wrapper relative" :width="146" :height="42">
+            <el-button class="select-btn-wrapper relative export-btn" :width="146" :height="42">
               Export to CSV
               <el-icon class="el-icon-arrow-down select-btn-icon"><ArrowDown /></el-icon>
             </el-button>

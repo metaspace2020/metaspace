@@ -23,6 +23,10 @@
 
     <new-feature-popups />
 
+    <tour-step
+      ref="tour"
+      :tour="store.state.currentTour"
+    />
 
     <cookie-banner />
   </div>
@@ -37,7 +41,7 @@ import { watch } from 'vue';
 import CookieBanner from './CookieBanner'
 import NewFeaturePopups from './NewFeaturePopups.vue'
 
-
+import TourStep from './TourStep.vue'
 import MetaspaceHeader from './MetaspaceHeader'
 import MetaspaceFooter from './MetaspaceFooter.vue'
 import { DialogController } from '../Account'
@@ -51,6 +55,7 @@ export default {
     MetaspaceFooter,
     DialogController,
     CookieBanner,
+    TourStep,
     NewFeaturePopups,
   },
   data() {

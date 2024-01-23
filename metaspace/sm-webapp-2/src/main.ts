@@ -1,6 +1,7 @@
 import 'focus-visible'
 
 import { createApp, provide, h } from 'vue'
+import { createHead } from '@unhead/vue'
 
 import config, { updateConfigFromQueryString } from './lib/config'
 import * as Sentry from '@sentry/vue'
@@ -9,7 +10,7 @@ import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
 
 
-import 'element-plus/dist/index.css'
+// import 'element-plus/dist/index.css'
 import 'element-plus/es/components/radio-button/style/css';
 import 'element-plus/es/components/dropdown/style/css';
 import 'element-plus/es/components/notification/style/css';
@@ -94,6 +95,9 @@ app.use(VueGtag, {
   config: { id: 'UA-73509518-1' },
   enabled: isProd, // disabled in dev because it impairs "break on uncaught exception"
 }, router)
+
+const head = createHead()
+app.use(head)
 
 // app.config.devtools = process.env.NODE_ENV === 'development'
 app.config.performance = process.env.NODE_ENV === 'development'

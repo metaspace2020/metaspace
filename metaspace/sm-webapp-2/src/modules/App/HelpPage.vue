@@ -130,17 +130,17 @@
   </content-page>
 </template>
 <script>
-import {defineAsyncComponent, defineComponent} from 'vue'
+import {defineAsyncComponent, defineComponent, onMounted} from 'vue'
 
 import TourButton from './TourButton.vue'
 import PrimaryIcon from '../../components/PrimaryIcon.vue'
 import ContentPage from '../../components/ContentPage.vue'
-// import introTour from '../../tours/intro.ts'
-// import filteringTour from '../../tours/filtering.ts'
-// import diagnosticsTour from '../../tours/diagnostics.ts'
+import introTour from '../../tours/intro.ts'
+import filteringTour from '../../tours/filtering.ts'
+import diagnosticsTour from '../../tours/diagnostics.ts'
 import DatabaseHelp from './DatabaseHelp.vue'
 import useAnchorLinkHack from '../../lib/useAnchorLinkHack'
-// import { useStore } from 'vuex';
+import {useStore} from "vuex";
 
 
 const UserSvg = defineAsyncComponent(() =>
@@ -165,17 +165,22 @@ export default defineComponent({
     DatabaseHelp,
   },
   setup() {
-    // const store = useStore()
+    const store = useStore()
     useAnchorLinkHack()
+
+    onMounted(() => {
+      store.commit('startTour', undefined)
+    })
+
     return {
       intro() {
-        // store.commit('startTour', introTour)
+        store.commit('startTour', introTour)
       },
       filtering() {
-        // store.commit('startTour', filteringTour)
+        store.commit('startTour', filteringTour)
       },
       diagnostics() {
-        // store.commit('startTour', diagnosticsTour)
+        store.commit('startTour', diagnosticsTour)
       },
     }
   },

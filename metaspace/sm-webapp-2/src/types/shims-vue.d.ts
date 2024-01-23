@@ -9,6 +9,12 @@ declare module "*.vue" {
   export default component;
 }
 
+
+declare module '*.md' {
+  const component: DefineComponent<{}, {}, any>;
+  export default component;
+}
+
 import { Store } from 'vuex';
 // @ts-ignore
 import { ComponentCustomProperties } from 'vue';
