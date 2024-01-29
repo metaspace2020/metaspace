@@ -116,13 +116,21 @@ export default defineComponent({
       await nextTick();
       const meta = mdRef.value?.frontmatter;
       if(!meta) return
-      if(meta.route !== router.currentRoute.value.path){
-        await router.push(meta.route)
+      if(meta.route && meta.route !== router.currentRoute?.value?.path){
+        await router.push({
+          path: meta.route,
+          query: meta.query,
+        })
       }
+
+      await nextTick();
+      await new Promise(resolve => setTimeout(resolve, 500));
       await nextTick();
 
       const targetElement = document.querySelector(meta.target);
       const arrow = document.querySelector('#arrow');
+
+      console.log('targetElement', meta.target, targetElement)
 
       if (targetElement && container.value) {
         popperInstance.value = createPopper(targetElement, container.value, {

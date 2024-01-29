@@ -230,7 +230,7 @@
             class="w-full"
             style="display: flex; align-items: center"
           >
-            <div class="mr-2">Diagnostics</div>
+            <div class="mr-2 tour-diagnostic-title">Diagnostics</div>
           </div>
         </template>
         <component
