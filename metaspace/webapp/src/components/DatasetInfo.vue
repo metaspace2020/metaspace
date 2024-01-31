@@ -55,7 +55,10 @@ export default Vue.extend({
       const metadata = this.metadata
       const {
         image_generation: imageGeneration,
+        fdr: fdrSettings,
       } = (this.additionalSettings || {})
+      // eslint-disable-next-line camelcase
+      const scoringModel = fdrSettings?.scoring_model ? 'METASPACE-ML' : 'Original MSM'
 
       delete metadata.Additional_Information
       const schemaBasedVals = this.objToTreeNode(null, metadata, this.schema)
@@ -71,6 +74,7 @@ export default Vue.extend({
       ]
       const annotationSettingsChildren = [
         { id: 'PPM', label: `m/z tolerance (ppm): ${imageGeneration?.ppm}` },
+        { id: 'engineV', label: `Analysis version: ${scoringModel}` },
       ]
 
       if (this.dsPI != null) {
@@ -114,7 +118,7 @@ export default Vue.extend({
     getAnalysisVersion(analysisVersion) {
       switch (analysisVersion) {
         case 3:
-          return 'v2 (ML-powered MSM)'
+          return 'v2.20230517 (METASPACE-ML)'
         case 2:
           return 'v1.5 (Prototype for higher RPs)'
         default:

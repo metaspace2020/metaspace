@@ -1,4 +1,5 @@
 import { periodicTable } from './periodicTable'
+import { reorderAdducts, superscript } from './util'
 
 export const parseFormula = (formula: string) => {
   const regexp = /(?<element>[A-Z][a-z]{0,2})(?<n>[0-9]*)/g
@@ -108,4 +109,14 @@ export const generateIonFormula = (molecularFormula: string) => {
   })
 
   return formatFormula(ionElements)
+}
+
+export const parseFormulaAndCharge = (ion: string) => {
+  const match = /^(.*?)([+-]\d*)?$/.exec(ion)
+  const formula = match && match[1] || ion
+  const charge = match && match[2] || undefined
+  const fmtCharge = charge !== undefined ? charge : ''
+  const fmtFormula = reorderAdducts(formula).replace(/([+-])/g, '$1')
+  const parts = fmtFormula.split(/(\d+)/g)
+  return `[${parts.join('')}]${fmtCharge}`
 }

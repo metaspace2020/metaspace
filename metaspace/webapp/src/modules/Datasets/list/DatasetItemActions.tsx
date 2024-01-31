@@ -208,7 +208,7 @@ const DatasetItemActions = defineComponent({
             >
               <div class="db-link-list">
               Select a database:
-                {dataset.databases.map(db => (
+                {(dataset.databases || []).map(db => (
                   <div key={db.id}>
                     <FilterLink filter={{ database: db.id, datasetIds: [dataset.id] }}>
                       {formatDatabaseLabel(db)}
@@ -244,17 +244,6 @@ const DatasetItemActions = defineComponent({
               onClick={openMetadataDialog}
             >Show full metadata</a>
           </div>
-
-          {dataset.canEdit
-          && <div>
-            <i class="el-icon-edit" />
-            <router-link to={{
-              name: 'edit-metadata',
-              params: { dataset_id: props.dataset.id },
-            }}>
-              Edit metadata
-            </router-link>
-          </div>}
 
           {
             !props.showOverview && dataset.canDownload
@@ -336,6 +325,17 @@ const DatasetItemActions = defineComponent({
               </NewFeatureBadge>
             </div>
           }
+
+          {dataset.canEdit
+            && <div>
+              <i class="el-icon-edit" />
+              <router-link to={{
+                name: 'edit-metadata',
+                params: { dataset_id: props.dataset.id },
+              }}>
+                Edit
+              </router-link>
+            </div>}
         </div>
       )
     }

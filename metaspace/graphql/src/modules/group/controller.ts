@@ -1,7 +1,7 @@
 import { UserError } from 'graphql-errors'
 import { EntityManager, In } from 'typeorm'
 
-import { Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions } from './model'
+import { Group as GroupModel, GroupDetectability, UserGroup as UserGroupModel, UserGroupRoleOptions } from './model'
 import { User as UserModel } from '../user/model'
 import { Dataset as DatasetModel } from '../dataset/model'
 import { MolecularDB as MolecularDbModel } from '../moldb/model'
@@ -19,12 +19,8 @@ import { getDatasetForEditing } from '../dataset/operation/getDatasetForEditing'
 import { resolveGroupScopeRole } from './util/resolveGroupScopeRole'
 import { urlSlugMatchesClause, validateUrlSlugChange } from '../groupOrProject/urlSlug'
 import { MolecularDbRepository } from '../moldb/MolecularDbRepository'
-
-const assertCanCreateGroup = (user: ContextUser) => {
-  if (!user.id || user.role !== 'admin') {
-    throw new UserError('Only admins can create groups')
-  }
-}
+import fetch from 'node-fetch'
+import { URLSearchParams } from 'url'
 
 const assertUserAuthenticated = (user: ContextUser) => {
   if (!user.id) {
@@ -99,7 +95,6 @@ export const Resolvers = {
         )
         .where('dataset.userId = :userId', { userId })
         .andWhere('dataset.groupId = :groupId', { groupId })
-        .andWhere('dataset.groupApproved = TRUE')
         .andWhere(canSeePrivateDatasets ? 'TRUE' : 'engine_dataset.is_public')
         .andWhere('engine_dataset.status != \'FAILED\'')
         .getCount()
@@ -166,6 +161,14 @@ export const Resolvers = {
       }))
     },
 
+    async sources(group: GroupModel, _: any, ctx: Context): Promise<any> {
+      const groupSourcesModels = await ctx.entityManager.getRepository(GroupDetectability)
+        .createQueryBuilder('group_detectability')
+        .where({ groupId: group.id })
+        .getMany()
+      return groupSourcesModels
+    },
+
     async molecularDatabases(group: GroupModel, args: any, ctx: Context): Promise<MolecularDbModel[]> {
       return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
         .findDatabases(ctx.user, undefined, group.id)
@@ -200,14 +203,144 @@ export const Resolvers = {
       }
     },
 
-    async allGroups(_: any, { query }: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
-      const scopeRole = await resolveGroupScopeRole(ctx)
-      const groups = await ctx.entityManager.getRepository(GroupModel)
-        .createQueryBuilder('group')
-        .where('group.name ILIKE :query OR group.shortName ILIKE :query', { query: query ? `%${query}%` : '%' })
-        .orderBy('group.name')
+    async countReviews(_: any, args: any, ctx: Context): Promise<number|null> {
+      // @ts-ignore
+      const { sessionStore } : any = ctx.req
+      if (sessionStore) {
+        try {
+          const redisClient = sessionStore.client
+          const countKey = 'publications:count-review'
+          const DAYS = 7
+          const HOURS = 24
+          const MINUTES = 60
+          const SECONDS = 60
+
+          // transform get in async
+          const publicationsCount : string | any = await new Promise((resolve, reject) => {
+            redisClient.get(countKey, (err: any, res: string) => {
+              if (err) {
+                reject(err)
+              }
+              resolve(res)
+            })
+          })
+
+          if (publicationsCount) {
+            return parseInt(publicationsCount, 10)
+          } else {
+            const res = await
+            fetch('https://serpapi.com/search?' + new URLSearchParams({
+              engine: 'google_scholar',
+              q: '"METASPACE" AND ("imaging mass spectrometry" OR "mass spectrometry imaging") AND "Review article"',
+              api_key: config.google.serpapi_key,
+            }).toString(), {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                mode: 'no-cors',
+              },
+            })
+            const data : string = await res.text()
+            const dataJson = JSON.parse(data)
+            const nOfPublications = dataJson.search_information.total_results
+
+            redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * MINUTES * SECONDS)
+            return parseInt(nOfPublications, 10)
+          }
+        } catch (e) {
+          console.error(e)
+          return null
+        }
+      } else {
+        return null
+      }
+    },
+
+    async countPublications(_: any, args: any, ctx: Context): Promise<number|null> {
+      // @ts-ignore
+      const { sessionStore } : any = ctx.req
+      if (sessionStore) {
+        try {
+          const redisClient = sessionStore.client
+          const countKey = 'publications:count'
+          const DAYS = 7
+          const HOURS = 24
+          const MINUTES = 60
+          const SECONDS = 60
+
+          // transform get in async
+          const publicationsCount : string | any = await new Promise((resolve, reject) => {
+            redisClient.get(countKey, (err: any, res: string) => {
+              if (err) {
+                reject(err)
+              }
+              resolve(res)
+            })
+          })
+
+          if (publicationsCount) {
+            return parseInt(publicationsCount, 10)
+          } else {
+            const res = await
+            fetch('https://serpapi.com/search?' + new URLSearchParams({
+              engine: 'google_scholar',
+              q: '"METASPACE" AND ("imaging mass spectrometry" OR "mass spectrometry imaging")',
+              api_key: config.google.serpapi_key,
+            }).toString(), {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                mode: 'no-cors',
+              },
+            })
+            const data : string = await res.text()
+            const dataJson = JSON.parse(data)
+            const nOfPublications = dataJson.search_information.total_results
+
+            redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * MINUTES * SECONDS)
+            return parseInt(nOfPublications, 10)
+          }
+        } catch (e) {
+          console.error(e)
+          return null
+        }
+      } else {
+        return null
+      }
+    },
+
+    async allSources(_: any, args: any, ctx: Context): Promise<GroupDetectability[]|null> {
+      return await ctx.entityManager.getRepository(GroupDetectability)
+        .createQueryBuilder('group_detectability')
         .getMany()
-      return groups.map(g => ({ ...g, scopeRole }))
+    },
+
+    async countGroups(_: any, args: any, ctx: Context): Promise<number|null> {
+      return await ctx.entityManager.getRepository(GroupModel)
+        .createQueryBuilder('group')
+        .getCount()
+    },
+
+    async allGroups(_: any, { query, useRole }: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
+      let userGroups : any = []
+
+      let qb = ctx.entityManager.createQueryBuilder(GroupModel,
+        'group')
+        .leftJoinAndSelect('group.members', 'userGroup')
+
+      if (query) {
+        qb = qb.where('(group.name ILIKE :query OR group.shortName ILIKE :query)', { query: `%${query}%` })
+      }
+
+      if (useRole && ctx.user.role !== 'admin') {
+        qb = qb.andWhere('userGroup.user = :userId', { userId: ctx.user.id })
+      }
+
+      userGroups = await qb.orderBy('group.name')
+        .distinct(true)
+        .getMany()
+
+      return userGroups.map((g: any) => ({ ...g, scopeRole: g.role }))
     },
 
     async groupUrlSlugIsValid(source: any, { urlSlug, existingGroupId }: any, ctx: Context): Promise<boolean> {
@@ -221,7 +354,7 @@ export const Resolvers = {
       _: any, { groupDetails }: any, { user, entityManager }: Context
     ): Promise<LooselyCompatible<Group & Scope>> {
       const { groupAdminEmail, ...groupInput } = groupDetails
-      assertCanCreateGroup(user)
+      assertUserAuthenticated(user)
       logger.info(`Creating ${groupInput.name} group by '${user.id}' user...`)
 
       if (groupDetails.urlSlug != null) {

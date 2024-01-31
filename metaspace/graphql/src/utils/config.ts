@@ -48,7 +48,9 @@ export interface Config {
     password: string;
   };
   elasticsearch: {
-    index: string;
+    dataset_index: string;
+    annotation_index: string;
+    schema: string;
     host: string;
     port: number;
   };
@@ -68,6 +70,7 @@ export interface Config {
     client_id: string;
     client_secret: string;
     callback_url: string;
+    serpapi_key: string;
   };
   web_public_url: string;
   slack: {
@@ -77,6 +80,10 @@ export interface Config {
   jwt: {
     secret: string;
     algorithm: Algorithm;
+  };
+  uppy: {
+    secret: string;
+    uploadUrls: string[];
   };
   sentry: {
     dsn: string | null;

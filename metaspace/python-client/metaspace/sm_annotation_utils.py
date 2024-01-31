@@ -4,7 +4,6 @@ import os
 import pprint
 import re
 import urllib.parse
-import warnings
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
@@ -13,7 +12,7 @@ from io import BytesIO
 from pathlib import Path
 from shutil import copyfileobj
 from threading import BoundedSemaphore
-from typing import Optional, List, Iterable, Union, Tuple, Any, TYPE_CHECKING
+from typing import Optional, List, Iterable, Union, Tuple, Dict, Any, TYPE_CHECKING
 from urllib.parse import urlparse
 
 import numpy as np
@@ -149,6 +148,7 @@ def get_config(
         'moldb_url': '{}/mol_db/v1'.format(host),
         'signin_url': '{}/api_auth/signin'.format(host),
         'gettoken_url': '{}/api_auth/gettoken'.format(host),
+        'raw_opt_upload_url': f'{host}/raw_opt_upload',
         'database_upload_url': f'{host}/database_upload',
         'dataset_upload_url': f'{host}/dataset_upload',
         'usr_email': email,
@@ -158,7 +158,14 @@ def get_config(
     }
 
 
-def multipart_upload(local_path, companion_url, file_type, headers={}):
+def multipart_upload(
+    local_path,
+    companion_url,
+    file_type,
+    headers={},
+    current_user_id=None,
+    dataset_id=None,
+):
     def send_request(
         url,
         method='GET',
@@ -178,12 +185,21 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
                     raise
                 print(f'{ex}\nRetrying...')
 
-    def init_multipart_upload(filename, file_type, headers={}):
+    def init_multipart_upload(
+        filename, file_type, headers={}, current_user_id=None, dataset_id=None
+    ):
         url = companion_url + '/s3/multipart'
         data = {
             'filename': filename,
             'type': file_type,
-            'metadata': {'name': filename, 'type': file_type},
+            'metadata': {
+                'name': filename,
+                'type': file_type,
+                'source': 'api',
+                'user': current_user_id if current_user_id else 'not-provided',
+                'datasetId': dataset_id if dataset_id else 'not-provided',
+                'uuid': headers['uuid'] if headers.get('uuid') else 'not-provided',
+            },
         }
         resp_data = send_request(url, 'POST', json=data, headers=headers)
         return resp_data['key'], resp_data['uploadId']
@@ -253,7 +269,13 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
                 yield part, file_data
 
     session = requests.Session()
-    key, upload_id = init_multipart_upload(Path(local_path).name, file_type, headers=headers)
+    key, upload_id = init_multipart_upload(
+        Path(local_path).name,
+        file_type,
+        headers=headers,
+        current_user_id=current_user_id,
+        dataset_id=dataset_id,
+    )
 
     # Python evaluates the input to ThreadPoolExecutor.map eagerly, which would allow iterate_file
     # to read parts and sign uploads even if there was a significant queue to upload_part.
@@ -274,7 +296,7 @@ def multipart_upload(local_path, companion_url, file_type, headers={}):
     return bucket, key
 
 
-def _dataset_upload(imzml_fn, ibd_fn, companion_url):
+def _dataset_upload(imzml_fn, ibd_fn, companion_url, current_user_id=None):
     assert Path(imzml_fn).exists(), f'Could not find .imzML file: {imzml_fn}'
     assert Path(ibd_fn).exists(), f'Could not find .ibd file: {ibd_fn}'
     # Get UUID for upload
@@ -289,6 +311,7 @@ def _dataset_upload(imzml_fn, ibd_fn, companion_url):
             companion_url,
             'application/octet-stream',
             headers=headers,
+            current_user_id=current_user_id,
         )
     input_path = f's3a://{bucket}/{key.rsplit("/", 1)[0]}'
     return input_path
@@ -674,21 +697,25 @@ class GraphQLClient(object):
         resp.raise_for_status()
         return resp.json()
 
-    def create_dataset(self, input_params, ds_id=None):
+    def create_dataset(self, input_params, perform_enrichment=False, ds_id=None):
         query = """
-            mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int, $useLithops: Boolean) {
+            mutation createDataset($id: String, $input: DatasetCreateInput!,
+                $priority: Int, $useLithops: Boolean, $performEnrichment: Boolean) {
                 createDataset(
                   id: $id,
                   input: $input,
                   priority: $priority,
                   useLithops: $useLithops,
+                  performEnrichment: $performEnrichment,
                 )
             }
         """
         variables = {
             'id': ds_id,
             'input': input_params,
+            'priority': 0,
             'useLithops': True,
+            'performEnrichment': perform_enrichment,
         }
         return self.query(query, variables)['createDataset']
 
@@ -707,21 +734,25 @@ class GraphQLClient(object):
     def update_dataset(
         self,
         ds_id,
-        input=None,
+        input={},
         reprocess=False,
         force=False,
+        perform_enrichment=False,
         priority=1,
     ):
         query = """
-            mutation updateMetadataDatabases($id: String!, $reprocess: Boolean,
-                $input: DatasetUpdateInput!, $priority: Int, $force: Boolean) {
-                    updateDataset(
-                      id: $id,
-                      input: $input,
-                      priority: $priority,
-                      reprocess: $reprocess,
-                      force: $force
-                    )
+            mutation updateDataset($id: String!, $input: DatasetUpdateInput!,
+                $priority: Int, $reprocess: Boolean, $force: Boolean,
+                $useLithops: Boolean, $performEnrichment: Boolean) {
+                updateDataset(
+                    id: $id,
+                    input: $input,
+                    priority: $priority,
+                    reprocess: $reprocess,
+                    force: $force,
+                    useLithops: $useLithops,
+                    performEnrichment: $performEnrichment,
+                )
             }
         """
 
@@ -731,6 +762,8 @@ class GraphQLClient(object):
             'priority': priority,
             'reprocess': reprocess,
             'force': force,
+            'useLithops': True,
+            'performEnrichment': perform_enrichment,
         }
 
         self.query(query, variables)
@@ -739,7 +772,15 @@ class GraphQLClient(object):
         self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
     ) -> dict:
         # TODO: s3 -> s3a in GraphQL
-        bucket, key = multipart_upload(local_path, self._config['database_upload_url'], 'text/csv')
+        result = self.query("""query { currentUser { id } }""")
+        current_user_id = result['currentUser'] and result['currentUser']['id']
+
+        bucket, key = multipart_upload(
+            local_path,
+            self._config['database_upload_url'],
+            'text/csv',
+            current_user_id=current_user_id,
+        )
         s3_path = f's3://{bucket}/{key}'
 
         query = f"""
@@ -1100,6 +1141,16 @@ class SMDataset(object):
         """This field is usually only used for attributing the submitter's PI when the submitter
         is not associated with any group"""
         return (self._info['principalInvestigator'] or {}).get('name')
+
+    @property
+    def image_size(self):
+        """Image size in pixels along the X, Y axes if this data exists otherwise an empty dict"""
+        shape = {}
+        if self._info['acquisitionGeometry'] != 'null':
+            acquisition_grid = json.loads(self._info['acquisitionGeometry'])['acquisition_grid']
+            shape['x'] = acquisition_grid['count_x']
+            shape['y'] = acquisition_grid['count_y']
+        return shape
 
     @property
     def _baseurl(self):
@@ -1735,6 +1786,7 @@ class SMInstance(object):
         analysis_version: Optional[int] = None,
         input_path: Optional[str] = None,
         description: Optional[str] = None,
+        perform_enrichment: Optional[bool] = False,
     ) -> str:
         """Submit a dataset for processing in METASPACE.
 
@@ -1762,8 +1814,9 @@ class SMInstance(object):
         :param analysis_version:
         :param input_path: To clone an existing dataset, specify input_path using the value of the
             existing dataset's "s3dir".
-            When input_path is suppled, imzml_fn and ibd_fn can be set to none None.
+            When input_path is suppled, imzml_fn and ibd_fn can be set to None.
         :param description: Optional text to describe the dataset
+        :param perform_enrichment: Optional enable LION for dataset.
 
         :return: The newly created dataset ID
 
@@ -1800,7 +1853,9 @@ class SMInstance(object):
         # Upload the files. Keep this as late as possible to minimize chances of error after upload
         if input_path is None:
             assert imzml_fn and ibd_fn, 'imzml_fn and ibd_fn must be supplied'
-            input_path = _dataset_upload(imzml_fn, ibd_fn, self._config['dataset_upload_url'])
+            input_path = _dataset_upload(
+                imzml_fn, ibd_fn, self._config['dataset_upload_url'], current_user_id
+            )
 
         graphql_response = self._gqclient.create_dataset(
             {
@@ -1820,7 +1875,8 @@ class SMInstance(object):
                 'groupId': primary_group_id,
                 'projectIds': project_ids,
                 'isPublic': is_public,
-            }
+            },
+            perform_enrichment=perform_enrichment,
         )
         return json.loads(graphql_response)['datasetId']
 
@@ -1847,6 +1903,7 @@ class SMInstance(object):
         analysis_version: Optional[int] = None,
         reprocess: Optional[bool] = None,
         force: bool = False,
+        perform_enrichment: Optional[bool] = False,
     ):
         """Updates a dataset's metadata and/or processing settings. Only specify the fields that
         should change. All arguments should be specified as keyword arguments,
@@ -1882,6 +1939,7 @@ class SMInstance(object):
         :param force:
             True: Allow changes to datasets that are already being processed. This should be used
             with caution, as it can cause errors or inconsistent results.
+        :param perform_enrichment: Optional enable LION for dataset.
         """
 
         input_field = {}
@@ -1913,10 +1971,12 @@ class SMInstance(object):
             input_field['analysisVersion'] = analysis_version
 
         try:
-            self._gqclient.update_dataset(id, input_field, reprocess or False, force)
+            self._gqclient.update_dataset(
+                id, input_field, reprocess or False, force, perform_enrichment
+            )
         except GraphQLException as ex:
             if ex.type == 'reprocessing_needed' and reprocess is None:
-                self._gqclient.update_dataset(id, input_field, True, force)
+                self._gqclient.update_dataset(id, input_field, True, force, perform_enrichment)
             else:
                 raise
 
@@ -1997,6 +2057,158 @@ class SMInstance(object):
             },
         )
         return result['addDatasetExternalLink']['externalLinks']
+
+    def upload_raw_opt_image_to_s3(self, local_path: Union[str, Path], dataset_id: str) -> str:
+        """
+        Upload optical raw image local file to s3 bucket
+
+        >>> sm.upload_opt_file_to_s3(
+        >>>     local_path='/tmp/image.png',
+        >>>     dataset_id='2018-11-07_14h15m28s',
+        >>> )
+
+        :param local_path:
+        :param dataset_id:
+        :return: Returns file s3 key
+        """
+
+        current_user_id = self.current_user_id()
+        assert current_user_id, 'You must be logged in to submit a dataset'
+
+        url = f'{self._config["dataset_upload_url"]}/s3/uuid'
+        resp = requests.get(url)
+        resp.raise_for_status()
+        headers = resp.json()
+        multipart_upload(
+            local_path,
+            self._config['raw_opt_upload_url'],
+            file_type='image/png',
+            headers=headers,
+            current_user_id=current_user_id,
+            dataset_id=dataset_id,
+        )
+        return headers['uuid']
+
+    def upload_optical_image(
+        self,
+        local_path: Union[str, Path],
+        dataset_id: str,
+        transformation_matrix: np.ndarray = np.array(
+            [
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            ]
+        ),
+    ) -> str:
+        """
+        Upload optical image from local file
+
+        >>> sm.upload_optical_image(
+        >>>     local_path='/tmp/image.png',
+        >>>     dataset_id='2018-11-07_14h15m28s',
+        >>>     transformation_matrix=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], ]),
+        >>> )
+
+        :param local_path:
+        :param dataset_id:
+        :param transformation_matrix:
+        :return: Returns file s3 key
+        """
+
+        image_uuid = self.upload_raw_opt_image_to_s3(local_path=local_path, dataset_id=dataset_id)
+        query = """
+            mutation addOpticalImage($imageUrl: String!,
+                $datasetId: String!, $transform: [[Float]]!) {
+                addOpticalImage(input: {datasetId: $datasetId,
+                                        imageUrl: $imageUrl, transform: $transform})
+              }
+        """
+
+        variables = {
+            'datasetId': dataset_id,
+            'imageUrl': image_uuid,
+            'transform': transformation_matrix.tolist(),
+        }
+
+        return self._gqclient.query(query, variables)['addOpticalImage']
+
+    def get_optical_image_transform(self, dataset_id: str):
+        """
+        Get optical image transform matrix
+
+        matrix3d(${t[0][0]}, ${t[1][0]}, 0, ${t[2][0]},
+             ${t[0][1]}, ${t[1][1]}, 0, ${t[2][1]},
+                      0,          0, 1,          0,
+             ${t[0][2]}, ${t[1][2]}, 0, ${t[2][2]})
+
+        >>> sm.get_optical_image_transform(
+        >>>     dataset_id='2018-11-07_14h15m28s',
+        >>> )
+
+        :param dataset_id:
+        :return: Returns matrix 3d values
+        """
+        return self._gqclient.getRawOpticalImage(dataset_id)['rawOpticalImage']['transform']
+
+    def get_optical_image_path(self, dataset_id: str):
+        """
+        Get optical image file path
+
+        >>> sm.get_optical_image_path(
+        >>>     dataset_id='2018-11-07_14h15m28s',
+        >>> )
+
+        :param dataset_id:
+        :return: Returns src path
+        """
+        return self._gqclient.getRawOpticalImage(dataset_id)['rawOpticalImage']['url']
+
+    def copy_optical_image(self, origin_dataset_id: str, destiny_dataset_id: str):
+        """
+        Copies an optical image from a dataset to another
+
+        >>> sm.copy_optical_image(
+        >>>     origin_dataset_id='2018-11-07_14h15m28s',
+        >>>     destiny_dataset_id='2018-11-07_14h15m30s',
+        >>> )
+
+        :param origin_dataset_id:
+            The dataset ID of the origin dataset with the optical image to be copied
+        :param destiny_dataset_id:
+            The dataset ID from the dataset to where the optical image will be copied to
+        :return: The updated list of external links
+        """
+
+        copy_file_query = """
+            mutation copyRawOpticalImage($originDatasetId: String!,
+                $destinyDatasetId: String!) {
+                copyRawOpticalImage(originDatasetId: $originDatasetId, 
+                    destinyDatasetId: $destinyDatasetId)
+              }
+        """
+        copy_variables = {
+            'originDatasetId': origin_dataset_id,
+            'destinyDatasetId': destiny_dataset_id,
+        }
+
+        copied_file = self._gqclient.query(copy_file_query, copy_variables)['copyRawOpticalImage']
+
+        query = """
+            mutation addOpticalImage($imageUrl: String!,
+                $datasetId: String!, $transform: [[Float]]!) {
+                addOpticalImage(input: {datasetId: $datasetId,
+                                        imageUrl: $imageUrl, transform: $transform})
+              }
+        """
+
+        variables = {
+            'datasetId': destiny_dataset_id,
+            'imageUrl': copied_file,
+            'transform': self.get_optical_image_transform(origin_dataset_id),
+        }
+
+        return self._gqclient.query(query, variables)['addOpticalImage']
 
     def remove_dataset_external_link(
         self, dataset_id: str, provider: str, link: Optional[str] = None

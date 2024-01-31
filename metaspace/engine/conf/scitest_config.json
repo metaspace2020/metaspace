@@ -13,6 +13,8 @@
   },
   "elasticsearch": {
     "index": "sm_test",
+    "dataset_index": "dataset_test",
+    "annotation_index": "annotation_test",
     "host": "localhost",
     "port": "9200",
     "user": "elastic",
@@ -135,7 +137,8 @@
     "secret_access_key": "minioadmin"
   },
   "image_storage": {
-    "bucket": "sm-image-storage-sci-test"
+    "bucket": "sm-image-storage-sci-test",
+    "raw_img_bucket": "sm-engine-dev"
   },
   "imzml_browser_storage": {
     "bucket": "sm-imzml-browser-sci-test"

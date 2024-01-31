@@ -1,5 +1,6 @@
 /* eslint-disable */ // Old file, needs a big refactor
 import { capitalize } from 'lodash'
+import {OpticalImage} from "./src/modules/engine/model";
 
 function getPgField(schemaPath) {
   const pathElements = schemaPath.replace(/\./g, ',')
@@ -60,7 +61,7 @@ class PhraseMatchFilter extends SubstringMatchFilter {
   }
 
   esFilter(value) {
-    return { match: { [this.esField]: { query: this.preprocess(value), type: 'phrase' } } }
+    return { match_phrase: { [this.esField]: { query: this.preprocess(value)} } }
   }
 }
 
@@ -107,6 +108,26 @@ class DatasetStatusFilter extends AbstractDatasetFilter {
   }
 }
 
+class OpticalImageFilter extends AbstractDatasetFilter {
+  constructor() {
+    super('', {})
+  }
+
+  esFilter() {
+      return {}
+  }
+
+  pgFilter(q, status) {
+    if (status === true) {
+      return q.whereNotNull('optical_image')
+    } else if (status === false) {
+      return q.whereNull('optical_image')
+    } else {
+      return q
+    }
+  }
+}
+
 class NotNullFilter extends AbstractDatasetFilter {
   constructor(schemaPath, options = {}) {
     super(schemaPath, options)
@@ -141,7 +162,7 @@ class GroupMatchFilter extends AbstractDatasetFilter {
   esFilter(value) {
     return [
       { term: { [this.esField]: this.preprocess(value) } },
-      { term: { ds_group_approved: true } },
+      // { term: { ds_group_approved: true } },
     ]
   }
 }
@@ -164,6 +185,7 @@ export const datasetFilters = {
   project: new ExactMatchFilter('', { esField: 'ds_project_ids' }),
   metadataType: new ExactMatchFilter('Data_Type', {}),
   hasAnnotationMatching: null,
+  opticalImage: new OpticalImageFilter(),
 }
 
 export function dsField(hit, alias) {

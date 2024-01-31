@@ -35,6 +35,7 @@ import formatCsvRow, { csvExportIntensityHeader } from '../../../lib/formatCsvRo
 import FileSaver from 'file-saver'
 import FilterIcon from '../../../assets/inline/filter.svg'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../../Filters/filterSpecs'
+import { parseFormulaAndCharge } from '../../../lib/formulaParser'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -579,15 +580,19 @@ export default defineComponent<DatasetComparisonPageProps>({
           const annotation : any = currentAnnotations[i]
           offset += 1
           state.exportProgress = offset / totalCount
-          const { cols, row, dsName } = await formatIntensitiesRow(annotation,
-            state.globalImageSettings.isNormalized
-              ? state.normalizationData[annotation.dataset.id] : undefined)
-          if (!fileCols) {
-            fileCols = formatCsvRow(cols)
-            fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${state.globalImageSettings.isNormalized
-              ? '_tic_normalized' : ''}.csv`
+          try {
+            const { cols, row, dsName } = await formatIntensitiesRow(annotation,
+              state.globalImageSettings.isNormalized
+                ? state.normalizationData[annotation.dataset.id] : undefined)
+            if (!fileCols) {
+              fileCols = formatCsvRow(cols)
+              fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${state.globalImageSettings.isNormalized
+                ? '_tic_normalized' : ''}.csv`
+            }
+            rows += formatCsvRow(row)
+          } catch (e) {
+            // pass when fail to convert png
           }
-          rows += formatCsvRow(row)
         }
 
         if (state.isExporting) {
@@ -660,7 +665,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       // @ts-ignore TS2604
       const candidateMolecules = (annotation: any) => <CandidateMoleculesPopover
         placement="bottom"
-        possibleCompounds={possibleCompounds}
+        possibleCompounds={uniqBy(possibleCompounds, 'name')}
         isomers={isomers}
         isobars={isobars}>
         <MolecularFormula
@@ -679,7 +684,7 @@ export default defineComponent<DatasetComparisonPageProps>({
             selectedAnnotation !== null
             && <CopyButton
               class="ml-1"
-              text={selectedAnnotation?.ion}>
+              text={parseFormulaAndCharge(selectedAnnotation?.ion)}>
                 Copy ion to clipboard
             </CopyButton>
           }
@@ -747,6 +752,7 @@ export default defineComponent<DatasetComparisonPageProps>({
           <ImageSaver
             class="absolute top-0 right-0 mt-2 mr-2 dom-to-image-hidden"
             domNode={gridNode.value}
+            fileName={'datasets_comparison'}
           />
           <Popover
             trigger="hover"

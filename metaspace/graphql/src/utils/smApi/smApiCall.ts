@@ -37,7 +37,7 @@ export const smApiJsonGet = async(path: string) => {
   return smApiSemaphore.use(async() => {
     const response = await fetch(`http://${config.services.sm_engine_api_host}${path}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
     })
 
     let content

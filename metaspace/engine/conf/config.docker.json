@@ -14,6 +14,8 @@
   },
   "elasticsearch": {
     "index": "sm",
+    "dataset_index": "dataset",
+    "annotation_index": "annotation",
     "host": "elasticsearch",
     "port": "9200",
     "user": "elastic",
@@ -59,16 +61,14 @@
       "storage_bucket": "TEMP_BUCKET",
       "storage": "localhost",
       "mode": "localhost",
-      "include_modules": [
-        "engine/sm"
-      ],
+      "include_modules": ["engine/sm"],
       "data_cleaner": true,
       "data_limit": false,
       "workers": 4,
       "execution_timeout": 2400
     },
     "serverless": {
-      "backend": "ibm_cf",
+      "backend": "code_engine",
       "runtime_timeout": 1200,
       "runtime_memory": 2048
     },
@@ -79,10 +79,12 @@
     "ibm": {
       "iam_api_key": ""
     },
-    "ibm_cf": {
-      "endpoint": "https://eu-de.functions.cloud.ibm.com",
+    "code_engine": {
+      "region": "eu-de",
       "namespace": "",
-      "namespace_id": ""
+      "runtime": "",
+      "runtime_timeout": 1800,
+      "connection_retries": 10
     },
     "ibm_vpc": {
       "endpoint": "https://eu-de.iaas.cloud.ibm.com",
@@ -181,7 +183,8 @@
     "secret_access_key": "minioadmin"
   },
   "image_storage": {
-    "bucket": "sm-image-storage-dev"
+    "bucket": "sm-image-storage-dev",
+    "raw_img_bucket": "sm-engine-dev"
   },
   "imzml_browser_storage": {
     "bucket": "sm-imzml-browser-dev"

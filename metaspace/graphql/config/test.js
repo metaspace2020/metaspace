@@ -49,7 +49,9 @@ config.db.user = 'sm'
 config.db.password = 'password'
 
 config.elasticsearch = {}
-config.elasticsearch.index = 'sm'
+config.elasticsearch.schema = 'http'
+config.elasticsearch.dataset_index = 'dataset'
+config.elasticsearch.annotation_index = 'annotation'
 config.elasticsearch.host = 'localhost'
 config.elasticsearch.port = 9200
 
@@ -65,6 +67,10 @@ config.slack.channel = ''
 config.jwt = {}
 config.jwt.secret = ''
 config.jwt.algorithm = 'HS256'
+
+config.uppy = {}
+config.uppy.secret = 'secretUppy'
+config.uppy.uploadUrls = [/^http(s){0,1}:\/\/(.+\.)*metaspace2020\.eu\/.*/, /.+/]
 
 config.features = {
   graphqlMocks: false,

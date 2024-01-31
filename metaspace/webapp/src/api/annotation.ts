@@ -6,6 +6,8 @@ gql`fragment AnnotationDetailItem on Annotation {
   sumFormula
   adduct
   ion
+  centroidMz
+  isMono
   ionFormula
   database
   msmScore
@@ -29,6 +31,7 @@ gql`fragment AnnotationDetailItem on Annotation {
     metadataJson
     configJson
     isPublic
+    canEdit
     opticalImages(type: $type) {
       id
       url

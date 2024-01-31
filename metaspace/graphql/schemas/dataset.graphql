@@ -24,14 +24,17 @@ type Dataset {
   scoringModel: ScoringModel
   # full metadata JSON conforming to schema published at
   # https://github.com/metaspace2020/metaspace/tree/master/metaspace/metadata
+  roiJson: String
   metadataJson: String!
   isPublic: Boolean!
+  isEnriched: Boolean
   databases: [MolecularDB!]!
   molDBs: [String!]!  # @deprecated(reason: "Use \"databases\" instead")
   adducts: [String!]!
   neutralLosses: [String!]!
   chemMods: [String!]!
   acquisitionGeometry: String
+  sizeHash: String
   metadataType: String!
 
   status: String
@@ -194,6 +197,7 @@ input DatasetFilter {
   metadataType: String
   status: String # list of JobStatus separated by '|'
   hasAnnotationMatching: AnnotationFilter # Does not support some advanced filters e.g. the colocalization filters
+  opticalImage: Boolean
 }
 
 input DatasetCountPerGroupInput {
@@ -256,6 +260,7 @@ input DatasetUpdateInput {
   projectIds: [ID!]
   principalInvestigator: PersonInput
   isPublic: Boolean
+  performEnrichment: Boolean
 }
 
 type DatasetCountPerGroupListElement {
@@ -284,6 +289,7 @@ type OpticalImage {
 
 type RawOpticalImage {
     url: String
+    uuid: String
     transform: [[Float]]
 }
 
@@ -303,11 +309,34 @@ input AddOpticalImageInput {
   transform: [[Float]]!
 }
 
+scalar GeoJsonFeature
+
+input GeoJson {
+  type: String!
+  features: [GeoJsonFeature]
+}
+
 type DatasetRelationship {
   type: String!
   id: String!
   name: String!
 }
+
+
+type Enrichment {
+  name: String
+  id: String
+  termId: Int
+  n: Float
+  observed: Float
+  expected: Float
+  median: Float
+  std: Float
+  pValue: Float
+  qValue: Float
+  annotations: [Annotation]
+}
+
 enum DatasetAction {
   ANNOTATE
   UPDATE
@@ -350,6 +379,8 @@ type Query {
 
   countDatasetsPerGroup(query: DatasetCountPerGroupInput!): DatasetCountPerGroup!
 
+  lipidEnrichment(datasetId: String!, molDbId: Int, fdr: Float, offSample: Boolean, pValue: Float): [Enrichment]
+
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
   rawOpticalImage(datasetId: String!): RawOpticalImage  # @deprecated(reason: "Use Dataset.opticalImages instead")
@@ -372,19 +403,21 @@ type Mutation {
     id: String,
     input: DatasetCreateInput!,
     priority: Int=0,
-    useLithops: Boolean=true
+    useLithops: Boolean=true,
+    performEnrichment: Boolean=false
   ): String!
 
   # Throws errors of types: "under_review_or_published", "reprocessing_needed", "failed_validation", "dataset_busy"
   updateDataset(
     id: String!,
     input: DatasetUpdateInput!,
+    priority: Int=0,
     reprocess: Boolean=false,
     delFirst: Boolean=false,
     skipValidation: Boolean=false, # ignored for non-admins
     force: Boolean=false,
-    priority: Int=0,
-    useLithops: Boolean=true
+    useLithops: Boolean=true,
+    performEnrichment: Boolean=false
   ): String!
 
   # Throws errors of types: "under_review_or_published"
@@ -395,10 +428,15 @@ type Mutation {
     id: String,
     priority: Int=0,
     delFirst: Boolean=false,
-    useLithops: Boolean=true
+    useLithops: Boolean=true,
+    performEnrichment: Boolean=false
   ): String!
 
   addOpticalImage(input: AddOpticalImageInput!): String!
+
+  copyRawOpticalImage(originDatasetId: String!, destinyDatasetId: String!): String!
+
+  addRoi(datasetId: String!, geoJson: GeoJson!): String
 
   deleteOpticalImage(datasetId: String!): String!
 

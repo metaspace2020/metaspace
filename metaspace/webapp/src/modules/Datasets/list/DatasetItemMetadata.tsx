@@ -95,9 +95,9 @@ const DatasetItemMetadata = defineComponent({
           <div class="ds-item-line">
             {filterableItem('ionisationSource', 'ionisation source', dataset.ionisationSource)}
             {' + '}
-            {filterableItem('analyzerType', 'analyzer type', dataset.analyzer.type)}
+            {filterableItem('analyzerType', 'analyzer type', dataset.analyzer?.type)}
             {', '}
-            {filterableItem('polarity', 'polarity', `${dataset.polarity.toLowerCase()} mode`)}
+            {filterableItem('polarity', 'polarity', `${dataset.polarity?.toLowerCase()} mode`)}
             {', RP '}
             {(rp / 1000).toFixed(0)}
             {'k @ '}
@@ -107,8 +107,8 @@ const DatasetItemMetadata = defineComponent({
           <div class="ds-item-line">
             Submitted <ElapsedTime date={dataset.uploadDT} />
             {' by '}
-            {filterableItem('submitter', 'submitter', dataset.submitter.name)}
-            {dataset.groupApproved && dataset.group && <span>
+            {filterableItem('submitter', 'submitter', dataset.submitter?.name)}
+            {dataset.group && <span>
               {', '}
               <el-dropdown
                 show-timeout={50}

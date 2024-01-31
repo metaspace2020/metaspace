@@ -4,6 +4,15 @@
     height: 500px;
   }
 
+  .annotated-legend{
+    position: absolute;
+    z-index: 1000;
+    background: white;
+    font-size: 12px;
+    margin-left: 181px;
+    color: rgba(0,0,0,0.7);
+  }
+
   .chart{
     @apply flex flex-row items-center justify-center;
     height: 500px;

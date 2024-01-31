@@ -1,7 +1,7 @@
 /* eslint-disable vue/max-len */
 import Vue, { AsyncComponent } from 'vue'
 import VueRouter, { RawLocation } from 'vue-router'
-import AboutPage from './modules/App/AboutPage.vue'
+import AboutPage from './modules/App/AboutPage'
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue'
 import { DialogPage, ResetPasswordPage } from './modules/Account'
 import { redirectAfterSignIn } from './modules/Account/signInReturnUrl'
@@ -19,22 +19,23 @@ const asyncPagesFreelyTyped = {
   DatasetOverviewPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ './modules/Datasets/overview/DatasetOverviewPage'),
   DatasetComparisonPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ './modules/Datasets/comparison/DatasetComparisonPage'),
   DatasetBrowserPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ './modules/Datasets/imzml/DatasetBrowserPage'),
+  DatasetEnrichmentPage: () => import(/* webpackPrefetch: true, webpackChunkName: "DatasetOverviewPage" */ './modules/Datasets/enrichment/DatasetEnrichmentPage'),
   SpottingProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ './modules/SpottingProject/DashboardPage'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Datasets/list/DatasetTable.vue'),
   HelpPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/HelpPage.vue'),
   EditUserPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/UserProfile/EditUserPage.vue'),
-  CreateGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/GroupProfile/CreateGroupPage.vue'),
+  CreateGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Group/CreateGroupPage.vue'),
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ProjectsListPage.vue'),
   SystemHealthPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/SystemHealthPage.vue'),
-  GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Admin/GroupsListPage.vue'),
+  GroupsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Group/GroupsListPage'),
   PrivacyPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PrivacyPage.vue'),
   TermsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/TermsPage.vue'),
-  PublicationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PublicationsPage.vue'),
+  PublicationsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/PublicationsPage'),
 
   // These pages use sanitizeHtml, which is big
-  ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/GroupProfile/ViewGroupPage.vue'),
+  ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/Group/ViewGroupPage.vue'),
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle2" */ './modules/Project/ViewProjectPage.vue'),
 
   // Separate bundle for design docs
@@ -83,12 +84,12 @@ const router = new VueRouter({
     { path: '/dataset/:dataset_id', name: 'dataset-overview', component: asyncPages.DatasetOverviewPage },
     { path: '/dataset/:dataset_id/annotations', name: 'dataset-annotations', component: asyncPages.AnnotationsPage },
     { path: '/dataset/:dataset_id/browser', name: 'dataset-browser', component: asyncPages.DatasetBrowserPage },
+    { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetEnrichmentPage },
     { path: '/upload', component: asyncPages.UploadPage },
     { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
     { path: '/user/me', component: asyncPages.EditUserPage },
 
     { path: '/admin/health', component: asyncPages.SystemHealthPage },
-    { path: '/admin/groups', component: asyncPages.GroupsListPage },
 
     { path: '/account/sign-in', component: DialogPage, props: { dialog: 'signIn' } },
     { path: '/account/sign-in-success', redirect: redirectAfterSignIn },
@@ -96,6 +97,7 @@ const router = new VueRouter({
     { path: '/account/forgot-password', component: DialogPage, props: { dialog: 'forgotPassword' } },
     { path: '/account/reset-password', component: ResetPasswordPage },
 
+    { path: '/groups', component: asyncPages.GroupsListPage },
     { path: '/group/create', component: asyncPages.CreateGroupPage },
     { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
 
@@ -116,7 +118,7 @@ const router = new VueRouter({
     { path: '/design/components', component: asyncPages.DesignComponents, meta: { footer: true, flex: true } },
     { path: '/design/forms', component: asyncPages.DesignForms, meta: { footer: true, flex: true } },
 
-    { path: '/spotting', name: 'spotting', component: asyncPages.SpottingProjectPage },
+    { path: '/detectability', name: 'detectability', component: asyncPages.SpottingProjectPage },
 
     { path: '*', component: NotFoundPage, meta: { footer: true, flex: true } },
   ],

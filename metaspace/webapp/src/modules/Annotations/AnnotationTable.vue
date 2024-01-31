@@ -508,12 +508,12 @@ import {
 import Vue from 'vue'
 import FileSaver from 'file-saver'
 import formatCsvRow, { csvExportHeader, formatCsvTextArray, csvExportIntensityHeader } from '../../lib/formatCsvRow'
-import { invert, isEqual } from 'lodash-es'
+import { invert, uniqBy, isEqual } from 'lodash-es'
 import config from '../../lib/config'
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
-import { getDatasetDiagnosticsQuery } from '../../api/dataset'
+import { getDatasetDiagnosticsQuery, getRoisQuery } from '../../api/dataset'
 import FullScreen from '../../assets/inline/full_screen.svg'
 import ExitFullScreen from '../../assets/inline/exit_full_screen.svg'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
@@ -829,7 +829,9 @@ export default Vue.extend({
     },
     '$store.getters.filter.datasetIds'() {
       // hide dataset related filters if dataset filter added
-      if (this.$store.getters.filter.datasetIds && this.showCustomCols) {
+      if (Array.isArray(this.$store.getters.filter.datasetIds)
+        && this.$store.getters.filter.datasetIds.length === 1
+        && this.showCustomCols) {
         this.hideDatasetRelatedColumns()
       } else if (this.showCustomCols) { // show dataset related filters if dataset filter added
         this.showDatasetRelatedColumns()
@@ -896,6 +898,9 @@ export default Vue.extend({
             this.$refs.table.$el.focus()
           }
         })
+
+        // load ROIs from db
+        this.loadRois(uniqBy(data.allAnnotations, 'dataset.id').map((annotation) => annotation?.dataset.id))
 
         this.totalCount = data.countAnnotations
         this.initialLoading = false
@@ -965,6 +970,35 @@ export default Vue.extend({
       }
     },
 
+    loadRois(datasetIds) {
+      datasetIds.map(async(datasetId) => {
+        try {
+          const resp = await this.$apollo.query({
+            query: getRoisQuery,
+            variables: {
+              datasetId,
+            },
+            fetchPolicy: 'cache-first',
+          })
+          if (!resp?.data?.dataset?.roiJson) {
+            return
+          }
+          const roi = JSON.parse(resp?.data?.dataset?.roiJson)
+          if (roi && Array.isArray(roi.features) && !this.$store.state.roiInfo[datasetId]) {
+            this.$store.commit('setRoiInfo', {
+              key: datasetId,
+              roi: roi.features.map((feature) => {
+                return feature?.properties
+                  ? { ...feature?.properties, allVisible: this.$store.state.roiInfo?.visible } : {}
+              }),
+            })
+          }
+        } catch (e) {
+          // pass
+        }
+      })
+    },
+
     hidden(columnLabel) {
       return (this.columns.findIndex((col) => col.src === columnLabel) === -1 || !this.showCustomCols)
         ? (this.hideColumns.indexOf(columnLabel) >= 0 || !this.columns.find((col) => col.src === columnLabel)?.selected)
@@ -1013,7 +1047,7 @@ export default Vue.extend({
     },
 
     onSortChange(event) {
-      this.clearCurrentRow()
+      // this.clearCurrentRow()
 
       if (!event.order) {
         const { prop, order } = this.tableSort
@@ -1229,15 +1263,19 @@ export default Vue.extend({
           offset += 1
           this.exportProgress = offset / totalCount
           const annotation = resp.data.allAnnotations[i]
-          const { cols, row, dsName } = await formatIntensitiesRow(annotation,
-            this.isNormalized
-              ? this.$store.state.normalization : undefined)
-          if (!fileCols) {
-            fileCols = formatCsvRow(cols)
-            fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${this.isNormalized
-              ? '_tic_normalized' : ''}.csv`
+          try {
+            const { cols, row, dsName } = await formatIntensitiesRow(annotation,
+              this.isNormalized
+                ? this.$store.state.normalization : undefined)
+            if (!fileCols) {
+              fileCols = formatCsvRow(cols)
+              fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${this.isNormalized
+                ? '_tic_normalized' : ''}.csv`
+            }
+            rows += formatCsvRow(row)
+          } catch (e) {
+            // pass when fail to convert png
           }
-          rows += formatCsvRow(row)
         }
       }
 
@@ -1291,7 +1329,7 @@ export default Vue.extend({
           offSample, offSampleProb, colocalizationCoeff,
         } = row
         const cells = [
-          dataset.groupApproved && dataset.group ? dataset.group.name : '',
+          dataset.group ? dataset.group.name : '',
           dataset.name,
           dataset.id,
           sumFormula, 'M' + adduct,

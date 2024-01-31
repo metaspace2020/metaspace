@@ -46,7 +46,7 @@ exports[`DatasetComparisonDialog it should match snapshot 1`] = `
                     <!---->
                   </div>
                 </transition-stub>
-              </div><span class="block text-sm font-medium text-danger mt-0" style="visibility: hidden;">Only up to 10 datasets can be selected!</span><button type="button" class="el-button el-button--primary">
+              </div><span class="block text-sm font-medium text-danger mt-0" style="visibility: hidden;">Only up to 12 datasets can be selected!</span><button type="button" class="el-button el-button--primary">
                 <!---->
                 <!----><span>Next</span></button>
             </form>

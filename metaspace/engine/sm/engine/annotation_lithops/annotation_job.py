@@ -10,11 +10,13 @@ from ibm_boto3.s3.transfer import TransferConfig, MB
 from lithops.storage import Storage
 from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
 
+from sm.engine import molecular_db
 from sm.engine.annotation.diagnostics import (
     extract_dataset_diagnostics,
     add_diagnostics,
     extract_job_diagnostics,
 )
+from sm.engine.annotation.enrichment import add_enrichment, delete_ds_enrichments
 from sm.engine.annotation.job import del_jobs, insert_running_job, update_finished_job, JobStatus
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import save_cobj, iter_cobjs_with_prefetch
@@ -31,6 +33,7 @@ from sm.engine.storage import get_s3_client
 from sm.engine.util import split_s3_path, split_cos_path
 from sm.engine.utils.db_mutex import DBMutex
 from sm.engine.utils.perf_profile import Profiler
+
 
 logger = logging.getLogger('engine')
 
@@ -126,6 +129,11 @@ def _upload_moldbs_from_db(moldb_ids, storage, sm_storage):
     bucket, prefix = sm_storage['moldb']
     # Sort the moldbs because the centroids cache key is affected by their order
     for moldb_id in sorted(moldb_ids):
+        try:
+            molecular_db.find_by_id(moldb_id)
+        except Exception:  # db does not exist, continue to next
+            continue
+
         key = f'{prefix}/{moldb_id}'
         try:
             storage.head_object(bucket, key)
@@ -224,7 +232,8 @@ class LocalAnnotationJob:
         )
 
     def run(self, save=True, **kwargs):
-        results_dfs, png_cobjs = self.pipe.run_pipeline(**kwargs)
+        results_dfs, png_cobjs, _ = self.pipe.run_pipeline(**kwargs)
+
         if save:
             for moldb_id, results_df in results_dfs.items():
                 results_df.to_csv(self.out_dir / f'results_{moldb_id}.csv')
@@ -246,6 +255,7 @@ class LocalAnnotationJob:
                             out_file.open('wb').write(img)
 
 
+# pylint: disable=too-many-instance-attributes
 class ServerAnnotationJob:
     """
     Runs an annotation job for a dataset in the database, saving the results back to the database
@@ -260,6 +270,7 @@ class ServerAnnotationJob:
         sm_config: Optional[Dict] = None,
         use_cache=False,
         store_images=True,
+        perform_enrichment: bool = False,
     ):
         """
         Args
@@ -275,6 +286,7 @@ class ServerAnnotationJob:
         self.ds = ds
         self.perf = perf
         self.store_images = store_images
+        self.perform_enrichment = perform_enrichment
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = _upload_imzmls_from_prefix_if_needed(
@@ -296,25 +308,51 @@ class ServerAnnotationJob:
             self.ds.config,
             cache_key=cache_key,
             executor=executor,
+            ds_id=self.ds.id,
         )
 
         self.results_dfs = None
         self.png_cobjs = None
         self.db_formula_image_ids = None
+        self.enrichment_data = None
+        self.ds_size_hash = None
 
     def run(self, **kwargs):
         # TODO: Only run missing moldbs
         del_jobs(self.ds)
         moldb_to_job_map = {}
+        moldb_to_be_removed = []
+
         for moldb_id in self.ds.config['database_ids']:
-            moldb_to_job_map[moldb_id] = insert_running_job(self.ds.id, moldb_id)
+            try:
+                molecular_db.find_by_id(moldb_id)
+                moldb_to_job_map[moldb_id] = insert_running_job(self.ds.id, moldb_id)
+            except Exception:  # db does not exist, continue to next
+                moldb_to_be_removed.append(moldb_id)
+                logger.warning(f'Removed db {moldb_id} from {self.ds.id}')
+                continue
+
+        if len(moldb_to_be_removed) > 0:  # remove non-existing moldbs from ds
+            self.ds.config['database_ids'] = [
+                x for x in self.ds.config['database_ids'] if x not in moldb_to_be_removed
+            ]
+            self.ds.save(self.db)
+
         self.perf.add_extra_data(moldb_ids=list(moldb_to_job_map.keys()))
 
         n_peaks = self.ds.config['isotope_generation']['n_peaks']
 
         try:
             # Run annotation
-            self.results_dfs, self.png_cobjs = self.pipe.run_pipeline(**kwargs)
+            self.results_dfs, self.png_cobjs, self.enrichment_data = self.pipe.run_pipeline(
+                perform_enrichment=self.perform_enrichment, **kwargs
+            )
+
+            # Save acq_geometry
+            self.pipe.save_acq_geometry(self.ds)
+
+            # Save size and hash of imzML/ibd files
+            self.pipe.store_ds_size_hash()
 
             # Save images (if enabled)
             if self.store_images:
@@ -331,9 +369,13 @@ class ServerAnnotationJob:
             diagnostics = extract_dataset_diagnostics(self.ds.id, self.pipe.imzml_reader)
             add_diagnostics(diagnostics)
 
+            # delete pre calculated enrichments if already exists
+            delete_ds_enrichments(self.ds.id, self.db)
+
             for moldb_id, job_id in moldb_to_job_map.items():
                 logger.debug(f'Storing results for moldb {moldb_id}')
                 results_df = self.results_dfs[moldb_id]
+
                 formula_image_ids = self.db_formula_image_ids.get(moldb_id, {})
 
                 search_results = SearchResults(
@@ -345,6 +387,17 @@ class ServerAnnotationJob:
                 search_results.store_ion_metrics(results_df, formula_image_ids, self.db)
 
                 add_diagnostics(extract_job_diagnostics(self.ds.id, job_id, fdr_bundles[job_id]))
+
+                if (
+                    self.perform_enrichment
+                    and self.enrichment_data
+                    and moldb_id in self.enrichment_data.keys()
+                    and not self.enrichment_data[moldb_id].empty
+                ):
+                    # get annotations ids to be used later on to speed up enrichment routes
+                    annot_ids = search_results.get_annotations_ids(self.db)
+                    bootstrap_df = self.enrichment_data[moldb_id]
+                    add_enrichment(self.ds.id, moldb_id, bootstrap_df, annot_ids, self.db)
 
                 update_finished_job(job_id, JobStatus.FINISHED)
         except Exception:

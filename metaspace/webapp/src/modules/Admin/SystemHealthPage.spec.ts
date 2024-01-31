@@ -24,7 +24,7 @@ describe('SystemHealthPage', () => {
         currentUser: () => ({ id: 'userid', role: 'admin' }),
       }),
       Mutation: () => ({
-        updateSystemHealth: () => new Error('dude'),
+        updateSystemHealth: () => new Error('internal error'),
       }),
     })
   }

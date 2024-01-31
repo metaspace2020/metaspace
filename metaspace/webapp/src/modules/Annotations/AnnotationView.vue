@@ -24,7 +24,7 @@
                 </candidate-molecules-popover>
                 <copy-button
                   class="ml-1"
-                  :text="annotation.ion"
+                  :text="getParsedFormula(annotation.ion)"
                 >
                   Copy ion to clipboard
                 </copy-button>
@@ -92,6 +92,14 @@
                 > -->
                 <div>Show representative spatial patterns for dataset</div>
               </el-popover>
+
+              <copy-button
+                is-id
+                :text="annotation.dataset.id"
+                custom-class="dataset-id-copy"
+              >
+                Copy dataset id to clipboard
+              </copy-button>
             </div>
             <mode-button
               v-if="multiImagesEnabled"
@@ -325,5 +333,9 @@
 
   .av-icon-link {
     cursor: pointer;
+  }
+
+  .dataset-id-copy{
+    padding-top: 4px;
   }
 </style>

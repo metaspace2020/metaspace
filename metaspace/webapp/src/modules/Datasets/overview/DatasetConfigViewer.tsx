@@ -1,42 +1,43 @@
 import { defineComponent } from '@vue/composition-api'
 import analysisVersionHelp from '../../MetadataEditor/inputs/AnalysisVersionHelp.vue'
+import { formatBytes } from '../../../lib/formatBytes'
 
 interface DatasetConfigViewerProps {
   data: any
+  acqGeo: any
+  fileSize: any
 }
 
 export const DatasetConfigViewer = defineComponent<DatasetConfigViewerProps>({
   name: 'DatasetConfigViewer',
   props: {
     data: { type: Object, default: {} },
+    acqGeo: { type: Object, default: {} },
+    fileSize: { type: Object, default: {} },
   },
   setup(props: DatasetConfigViewerProps) {
-    const getAnalysisVersion = (analysisVersion: number) => {
-      switch (analysisVersion) {
-        case 3:
-          return 'v2 (ML-powered MSM)'
-        case 2:
-          return 'v1.5 (Prototype for higher RPs)'
-        default:
-          return 'v1 (Original MSM)'
-      }
-    }
-
     return () => {
-      const {
-        image_generation: imageGeneration, isotope_generation: isotopeGeneration,
-        analysis_version: analysisVersion,
-      } = (props.data || {})
-      const { chem_mods: chemMods, adducts, neutral_losses: neutralLosses } = (isotopeGeneration || {})
+      const { image_generation: imageGeneration, fdr: fdrSettings } = (props.data || {})
+      const { pixel_count: pixelCount } = (props.acqGeo || {})
+      const { ibd_size: ibdSize, imzml_size: imzmlSize } = (props.fileSize || {})
+      // eslint-disable-next-line camelcase
+      const scoringModel = fdrSettings?.scoring_model ? 'METASPACE-ML' : 'Original MSM'
 
       return (
         <div class="flex flex-wrap relative -m-3">
-          <div class="flex-grow box-border min-w-64 p-3 break-words">
-            <h3 class='m-0 my-2'>Annotation settings</h3>
-            <ul class="list-none p-0 m-0 max-h-40 overflow-y-auto">
-              <li ><b>m/z tolerance (ppm):</b> {imageGeneration?.ppm}</li>
-            </ul>
-          </div>
+          {
+            imageGeneration?.ppm
+            && <div class="flex-grow box-border min-w-64 p-3 break-words">
+              <h3 class='m-0 my-2'>Annotation settings</h3>
+              <ul class="list-none p-0 m-0 max-h-40 overflow-y-auto">
+                <li><b>m/z tolerance (ppm):</b> {imageGeneration?.ppm}</li>
+                <li><b>Analysis version:</b> {scoringModel}</li>
+                { pixelCount && <li><b>Pixel count:</b> {pixelCount}</li>}
+                { imzmlSize && <li><b>Imzml file size:</b> {formatBytes(imzmlSize, 2)}</li>}
+                { ibdSize && <li><b>Ibd file size:</b> {formatBytes(ibdSize, 2)}</li>}
+              </ul>
+            </div>
+          }
         </div>
       )
     }

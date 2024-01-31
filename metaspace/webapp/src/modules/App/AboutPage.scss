@@ -1,0 +1,89 @@
+.sm-about-page.sm-main-content {
+  @apply pt-0;
+
+  .sm-about h3 {
+    @apply font-display font-medium leading-6 text-2xl tracking-snug py-2 m-0;
+  }
+
+  .about-link {
+    @apply cursor-pointer underline;
+    color: #0877d9;
+  }
+
+  .sm-about p {
+    @apply m-0 mb-6;
+  }
+
+  .sm-about ul {
+    margin: 0;
+    padding: 0;
+  }
+
+  .sm-about strong {
+    @apply font-medium;
+  }
+
+  @screen md {
+    .sm-about-features {
+      @apply -mx-6 -my-6 flex flex-wrap;
+    }
+    .sm-about-features > div {
+      @apply mx-6 my-6;
+      width: calc(50% - theme('spacing.12'))
+    }
+    .sm-about-features p {
+      @apply mb-0;
+    }
+  }
+
+  .sm-about-details h3:not(:first-of-type) {
+    @apply mt-12;
+  }
+
+  .sm-about-details ul {
+    @apply mb-6;
+  }
+
+  .sm-about-funding {
+    list-style: none;
+  }
+
+  .sm-about-funding li {
+    @apply flex mb-6 h-16;
+  }
+
+  /* md */
+  @media screen and (max-width: 768px) {
+    .sm-about-funding li{
+      @apply h-24;
+    }
+  }
+
+  /* sm */
+  @media screen and (max-width: 640px) {
+    .sm-about-funding li{
+      @apply h-64;
+
+      span {
+        max-width: 24rem;
+        flex-wrap: wrap;
+        display: flex;
+      }
+    }
+  }
+
+  .sm-about-funding img {
+    @apply w-18 h-12 object-contain object-left mr-6;
+  }
+
+  .sm-about-funding b {
+    @apply font-medium text-lg;
+  }
+
+  .sm-about-funding abbr[title] {
+    text-decoration: none;
+    cursor: help;
+    border-bottom: 1px dashed currentColor;
+  }
+}
+

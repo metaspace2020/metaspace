@@ -471,6 +471,7 @@ export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>
               && <SimpleIonImageViewer
                 annotations={annotations.length > 0 && $store.state.mode === 'MULTI' ? annotations : [annData]}
                 channels={channels}
+                imageTitle={dataset.name}
                 showChannels={gridCell?.isActive}
                 isActive={$store.state.mode === 'MULTI'}
                 dataset={dataset}

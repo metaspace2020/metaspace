@@ -1,12 +1,19 @@
-import { defineComponent, onMounted, reactive } from '@vue/composition-api'
-import { Option, Select, Pagination, InputNumber, RadioGroup, RadioButton } from '../../lib/element-ui'
-import { cloneDeep, groupBy, keyBy, maxBy, orderBy, uniq } from 'lodash-es'
+import { computed, defineComponent, onMounted, reactive } from '@vue/composition-api'
+import { Option, Select, Pagination, InputNumber, RadioGroup, RadioButton, Tooltip, Button } from '../../lib/element-ui'
+import { cloneDeep, flatten, groupBy, keyBy, maxBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'
 import { ShareLink } from './ShareLink'
 import { ChartSettings } from './ChartSettings'
 import getColorScale from '../../lib/getColorScale'
+import ScatterChart from '../../assets/inline/scatter_chart.svg'
+import { SortDropdown } from '../../components/SortDropdown/SortDropdown'
 import './DashboardPage.scss'
+import { useQuery } from '@vue/apollo-composable'
+import { getDetectabilitySourcesQuery } from '../../api/group'
+import {
+  currentUserWithGroupDetectabilityQuery,
+} from '../../api/user'
 
 interface Options{
   xAxis: any
@@ -16,6 +23,9 @@ interface Options{
 }
 
 interface DashboardState {
+  orderBy: string,
+  firstGenerated: boolean,
+  sortingOrder:string,
   colormap: any
   filter: any[]
   xAxisValues: any
@@ -48,73 +58,119 @@ const VIEW = {
   HEATMAP: 2,
 }
 
+const FILTER_DISABLED_COMBINATIONS: any = {
+  main_coarse_class: ['coarse_class', 'fine_class'],
+  coarse_class: ['main_coarse_class'],
+  fine_class: ['main_coarse_class'],
+  main_coarse_path: ['coarse_path', 'fine_path'],
+  coarse_path: ['main_coarse_path'],
+  fine_path: ['main_coarse_path'],
+}
+
 const ALLOWED_COMBINATIONS: any = {
   EMBL: {
-    Adducts: ['Class', 'Dataset id', 'Dataset name', 'Matrix', 'Molecule', 'Neutral losses', 'Pathway',
-      'Pathway subclass', 'Polarity', 'Subclass'],
-    Class: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
-    'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway',
-      'Pathway subclass', 'Subclass'],
-    'Dataset name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway',
-      'Pathway subclass', 'Subclass'],
-    Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Molecule: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Dataset name', 'Matrix', 'Molecule',
-      'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Pathway: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
-    'Pathway subclass': ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses',
+    Adducts: ['Chemical class', 'Dataset id', 'Sample name',
+      'MALDI matrix', 'Molecule', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Polarity', 'Chemical subclass'],
+    'Chemical class': ['Adducts', 'Dataset id', 'Sample name', 'MALDI matrix', 'Neutral losses', 'Polarity'],
+    'Dataset id': ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'Sample name': ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'MALDI matrix': ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses',
+      'Metabolic pathway group', 'Metabolic pathway', 'Polarity', 'Chemical subclass'],
+    Molecule: ['Adducts', 'Dataset id', 'Sample name', 'MALDI matrix', 'Neutral losses', 'Polarity'],
+    'Neutral losses': ['Adducts', 'Chemical class', 'Dataset id', 'Sample name', 'MALDI matrix', 'Molecule',
+      'Metabolic pathway group', 'Metabolic pathway', 'Polarity', 'Chemical subclass'],
+    'Metabolic pathway group': ['Adducts', 'Dataset id', 'Sample name', 'MALDI matrix', 'Neutral losses', 'Polarity'],
+    'Metabolic pathway': ['Adducts', 'Dataset id', 'Sample name', 'MALDI matrix', 'Neutral losses',
       'Polarity'],
-    Polarity: ['Adducts', 'Class', 'Matrix', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass'],
-    Subclass: ['Adducts', 'Dataset id', 'Dataset name', 'Matrix', 'Neutral losses', 'Polarity'],
+    Polarity: ['Adducts', 'Chemical class', 'MALDI matrix', 'Molecule', 'Neutral losses',
+      'Metabolic pathway group', 'Metabolic pathway'],
+    'Chemical subclass': ['Adducts', 'Dataset id', 'Sample name', 'MALDI matrix', 'Neutral losses', 'Polarity'],
+    'Ionisation source': ['Adducts', 'Chemical class', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    Lab: ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'Mass analyser': ['Adducts', 'Chemical class', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'Source Pressure': ['Adducts', 'Neutral losses'],
+    Technology: ['Adducts', 'Chemical class', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
   },
   ALL: {
-    Adducts: ['Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
-      'Matrix', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass',
-      'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Class: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
-      'Matrix', 'Neutral losses', 'Polarity', 'Technology'],
-    'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    'Dataset name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    'Ionisation source': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Lab: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    'Mass analyser': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Molecule: ['Adducts', 'Dataset id', 'Dataset name', 'Lab', 'Matrix', 'Neutral losses'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab',
-      'Mass analyser', 'Matrix', 'Molecule', 'Pathway', 'Pathway subclass', 'Polarity',
-      'Subclass', 'Technology', 'Source Pressure'],
-    Pathway: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Adducts: ['Chemical class', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser',
+      'MALDI matrix', 'Molecule', 'Neutral losses', 'Metabolic pathway group', 'Metabolic pathway',
+      'Polarity', 'Chemical subclass', 'Technology', 'Source Pressure'],
+    'Chemical class': ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser',
+      'MALDI matrix', 'Neutral losses', 'Polarity', 'Technology'],
+    'Dataset id': ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'Sample name': ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'Ionisation source': ['Adducts', 'Chemical class', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    Lab: ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'Mass analyser': ['Adducts', 'Chemical class', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'MALDI matrix': ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses',
+      'Metabolic pathway group', 'Metabolic pathway', 'Polarity', 'Chemical subclass'],
+    Molecule: ['Adducts', 'Dataset id', 'Sample name', 'Lab', 'MALDI matrix', 'Neutral losses'],
+    'Neutral losses': ['Adducts', 'Chemical class', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab',
+      'Mass analyser', 'MALDI matrix', 'Molecule', 'Metabolic pathway group', 'Metabolic pathway', 'Polarity',
+      'Chemical subclass', 'Technology', 'Source Pressure'],
+    'Metabolic pathway group': ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source',
+      'Lab', 'Mass analyser', 'MALDI matrix',
       'Neutral losses', 'Polarity', 'Technology'],
-    'Pathway subclass': ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
-      'Matrix', 'Neutral losses', 'Polarity', 'Technology'],
-    Polarity: ['Adducts', 'Class', 'Matrix', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Subclass: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    'Metabolic pathway': ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser',
+      'MALDI matrix', 'Neutral losses', 'Polarity', 'Technology'],
+    Polarity: ['Adducts', 'Chemical class', 'MALDI matrix', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'Chemical subclass': ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source',
+      'Lab', 'Mass analyser', 'MALDI matrix',
       'Neutral losses', 'Polarity', 'Technology'],
-    Technology: ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
+    Technology: ['Adducts', 'Chemical class', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
     'Source Pressure': ['Adducts', 'Neutral losses'],
   },
   INTERLAB: {
-    Adducts: ['Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix', 'Molecule',
-      'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Class: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Adducts: ['Chemical class', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab',
+      'Mass analyser', 'MALDI matrix', 'Molecule',
+      'Neutral losses', 'Metabolic pathway group', 'Metabolic pathway', 'Polarity',
+      'Chemical subclass', 'Technology', 'Source Pressure'],
+    'Chemical class': ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source',
+      'Lab', 'Mass analyser', 'MALDI matrix', 'Neutral losses', 'Polarity', 'Technology'],
+    'Dataset id': ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'Sample name': ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'Ionisation source': ['Adducts', 'Chemical class', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    Lab: ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'Mass analyser': ['Adducts', 'Chemical class', 'Neutral losses', 'Metabolic pathway group',
+      'Metabolic pathway', 'Chemical subclass'],
+    'MALDI matrix': ['Adducts', 'Chemical class', 'Molecule', 'Neutral losses',
+      'Metabolic pathway group', 'Metabolic pathway', 'Polarity', 'Chemical subclass'],
+    Molecule: ['Adducts', 'Dataset id', 'Sample name', 'Lab', 'MALDI matrix', 'Neutral losses'],
+    'Neutral losses': ['Adducts', 'Chemical class', 'Dataset id', 'Sample name',
+      'Ionisation source', 'Lab', 'Mass analyser',
+      'MALDI matrix', 'Molecule', 'Metabolic pathway group', 'Metabolic pathway',
+      'Polarity', 'Chemical subclass', 'Technology', 'Source Pressure'],
+    'Metabolic pathway group': ['Adducts', 'Dataset id', 'Sample name',
+      'Ionisation source', 'Lab', 'Mass analyser', 'MALDI matrix',
       'Neutral losses', 'Polarity', 'Technology'],
-    'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    'Dataset name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    'Ionisation source': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Lab: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    'Mass analyser': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
-    Molecule: ['Adducts', 'Dataset id', 'Dataset name', 'Lab', 'Matrix', 'Neutral losses'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser',
-      'Matrix', 'Molecule', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Pathway: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    'Metabolic pathway': ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source',
+      'Lab', 'Mass analyser', 'MALDI matrix',
       'Neutral losses', 'Polarity', 'Technology'],
-    'Pathway subclass': ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
+    Polarity: ['Adducts', 'Chemical class', 'MALDI matrix', 'Neutral losses',
+      'Metabolic pathway group', 'Metabolic pathway', 'Chemical subclass'],
+    'Chemical subclass': ['Adducts', 'Dataset id', 'Sample name',
+      'Ionisation source', 'Lab', 'Mass analyser', 'MALDI matrix',
       'Neutral losses', 'Polarity', 'Technology'],
-    Polarity: ['Adducts', 'Class', 'Matrix', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Subclass: ['Adducts', 'Dataset id', 'Dataset name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
-      'Neutral losses', 'Polarity', 'Technology'],
-    Technology: ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
+    Technology: ['Adducts', 'Chemical class', 'Neutral losses',
+      'Metabolic pathway group', 'Metabolic pathway', 'Chemical subclass'],
     'Source Pressure': ['Adducts', 'Neutral losses'],
   },
 }
@@ -126,7 +182,7 @@ const AXIS_VALUES : any = {
       src: 'a',
     },
     {
-      label: 'Class',
+      label: 'Chemical class',
       src: 'main_coarse_class',
     },
     {
@@ -134,11 +190,11 @@ const AXIS_VALUES : any = {
       src: 'dsId',
     },
     {
-      label: 'Dataset name',
-      src: 'Dataset name',
+      label: 'Sample name',
+      src: 'Sample name',
     },
     {
-      label: 'Matrix',
+      label: 'MALDI matrix',
       src: 'Matrix short',
     },
     {
@@ -150,11 +206,11 @@ const AXIS_VALUES : any = {
       src: 'nL',
     },
     {
-      label: 'Pathway',
+      label: 'Metabolic pathway group',
       src: 'main_coarse_path',
     },
     {
-      label: 'Pathway subclass',
+      label: 'Metabolic pathway',
       src: 'fine_path',
     },
     {
@@ -162,8 +218,28 @@ const AXIS_VALUES : any = {
       src: 'Polarity',
     },
     {
-      label: 'Subclass',
+      label: 'Chemical subclass',
       src: 'fine_class',
+    },
+    {
+      label: 'Lab',
+      src: 'Participant lab',
+    },
+    {
+      label: 'Ionisation source',
+      src: 'Ionisation source',
+    },
+    {
+      label: 'Mass analyser',
+      src: 'Mass analyser',
+    },
+    {
+      label: 'Source Pressure',
+      src: 'Source pressure',
+    },
+    {
+      label: 'Technology',
+      src: 'Technology',
     },
   ],
   ALL: [
@@ -180,7 +256,7 @@ const AXIS_VALUES : any = {
       src: 'nL',
     },
     {
-      label: 'Matrix',
+      label: 'MALDI matrix',
       src: 'Matrix short',
     },
     {
@@ -192,19 +268,19 @@ const AXIS_VALUES : any = {
       src: 'Technology',
     },
     {
-      label: 'Pathway',
+      label: 'Metabolic pathway group',
       src: 'main_coarse_path',
     },
     {
-      label: 'Pathway subclass',
+      label: 'Metabolic pathway',
       src: 'fine_path',
     },
     {
-      label: 'Class',
+      label: 'Chemical class',
       src: 'main_coarse_class',
     },
     {
-      label: 'Subclass',
+      label: 'Chemical subclass',
       src: 'fine_class',
     },
     {
@@ -212,8 +288,8 @@ const AXIS_VALUES : any = {
       src: 'dsId',
     },
     {
-      label: 'Dataset name',
-      src: 'Dataset name',
+      label: 'Sample name',
+      src: 'Sample name',
     },
     {
       label: 'Lab',
@@ -229,7 +305,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Source Pressure',
-      src: 'Source Pressure',
+      src: 'Source pressure',
     },
   ],
   INTERLAB: [
@@ -246,7 +322,7 @@ const AXIS_VALUES : any = {
       src: 'nL',
     },
     {
-      label: 'Matrix',
+      label: 'MALDI matrix',
       src: 'Matrix short',
     },
     {
@@ -258,19 +334,19 @@ const AXIS_VALUES : any = {
       src: 'Technology',
     },
     {
-      label: 'Pathway',
+      label: 'Metabolic pathway group',
       src: 'main_coarse_path',
     },
     {
-      label: 'Pathway subclass',
+      label: 'Metabolic pathway',
       src: 'fine_path',
     },
     {
-      label: 'Class',
+      label: 'Chemical class',
       src: 'main_coarse_class',
     },
     {
-      label: 'Subclass',
+      label: 'Chemical subclass',
       src: 'fine_class',
     },
     {
@@ -278,8 +354,8 @@ const AXIS_VALUES : any = {
       src: 'dsId',
     },
     {
-      label: 'Dataset name',
-      src: 'Dataset name',
+      label: 'Sample name',
+      src: 'Sample name',
     },
     {
       label: 'Lab',
@@ -295,7 +371,7 @@ const AXIS_VALUES : any = {
     },
     {
       label: 'Source Pressure',
-      src: 'Source Pressure',
+      src: 'Source pressure',
     },
   ],
 }
@@ -347,37 +423,35 @@ const FILTER_VALUES = [
     src: 'nL',
   },
   {
-    label: 'Matrix',
+    label: 'MALDI matrix',
     src: 'Matrix short',
   },
-  // {
-  //   label: 'Value Prediction',
-  //   src: 'pV',
-  //   isNumeric: true,
-  // },
-  // {
-  //   label: 'State Prediction',
-  //   src: 'p',
-  //   isBoolean: true,
-  // },
   {
     label: 'Technology',
     src: 'Technology',
   },
   {
-    label: 'Pathway class',
+    label: 'Metabolic pathway group',
     src: 'main_coarse_path',
   },
   {
-    label: 'Pathway subclass',
+    label: 'Metabolic pathway group',
+    src: 'coarse_path',
+  },
+  {
+    label: 'Metabolic pathway',
     src: 'fine_path',
   },
   {
-    label: 'Class',
+    label: 'Chemical class',
     src: 'main_coarse_class',
   },
   {
-    label: 'Subclass',
+    label: 'Chemical class',
+    src: 'coarse_class',
+  },
+  {
+    label: 'Chemical subclass',
     src: 'fine_class',
   },
   {
@@ -385,8 +459,8 @@ const FILTER_VALUES = [
     src: 'dsId',
   },
   {
-    label: 'Dataset name',
-    src: 'Dataset name',
+    label: 'Sample name',
+    src: 'Sample name',
   },
   {
     label: 'Lab',
@@ -433,25 +507,37 @@ const filterMap : any = {
   d: 'ds',
   nL: 'nl',
   pol: 'mode',
-  mS: 'matrix',
-  t: 'matrix',
+  mS: 'MALDI matrix',
+  t: 'MALDI matrix',
+  name: 'mol',
 }
 
+const sortingOptions: any[] = [
+  {
+    value: 'ORDER_BY_SERIATE',
+    label: 'Seriate ',
+  },
+  {
+    value: 'ORDER_BY_NAME',
+    label: 'Name',
+  },
+]
+
 export default defineComponent({
-  name: 'spotting',
+  name: 'detectability',
   setup: function(props, ctx) {
     const { $route, $router } = ctx.root
     const pageSizes = [5, 15, 30, 100]
     const filterItem = {
       src: null,
       value: null,
-      isNumeric: false,
-      isBoolean: false,
       options: [],
     }
     const state = reactive<DashboardState>({
       colormap: '-YlGnBu',
       filter: [cloneDeep(filterItem)],
+      orderBy: 'ORDER_BY_SERIATE',
+      sortingOrder: 'DESCENDING',
       hiddenYValues: [],
       hiddenXValues: [],
       xAxisValues: [],
@@ -462,6 +548,7 @@ export default defineComponent({
       rawDataInter: undefined,
       usedData: undefined,
       isEmpty: false,
+      firstGenerated: false,
       baseData: undefined,
       visualMap: {},
       options: {
@@ -472,7 +559,7 @@ export default defineComponent({
       },
       pagination: {
         nOfPages: 1,
-        pageSize: 5,
+        pageSize: 15,
         currentPage: 1,
         total: 1,
       },
@@ -486,16 +573,30 @@ export default defineComponent({
       pathways: null,
       wellmap: null,
     })
+    const {
+      result: sourcesResult,
+    } = useQuery<{allSources: any}>(getDetectabilitySourcesQuery)
+    const allSources = computed(() => sourcesResult.value?.allSources.map((source: any) => source.source))
+    const {
+      result: currentUser,
+    } = useQuery<{currentUser: any}>(currentUserWithGroupDetectabilityQuery)
+    const allowedSources = computed(() => {
+      if (!currentUser.value) return []
+
+      return flatten(
+          currentUser.value?.currentUser?.groups?.map(
+            (group: any) => group.group?.sources?.map((source: any) => source.source)))
+    })
 
     const initializeState = async() => {
+      if ($route.query.src) {
+        await handleDataSrcChange($route.query.src, false)
+      }
       if ($route.query.page) {
         state.pagination.currentPage = parseInt($route.query.page, 10)
       }
       if ($route.query.pageSize) {
         state.pagination.pageSize = parseInt($route.query.pageSize, 10)
-      }
-      if ($route.query.metric) {
-        state.options.valueMetric = parseInt($route.query.metric, 10)
       }
       if ($route.query.xAxis) {
         await handleAxisChange($route.query.xAxis, true, false)
@@ -506,33 +607,40 @@ export default defineComponent({
       if ($route.query.agg) {
         handleAggregationChange($route.query.agg, false)
       }
-      if ($route.query.src) {
-        handleDataSrcChange($route.query.src, false)
+      if ($route.query.vis) {
+        handleVisualizationChange(parseInt($route.query.vis, 10))
       }
 
-      if ($route.query.filter) {
-        const filterSrc : any[] = Array.isArray($route.query.filter)
-          ? $route.query.filter : $route.query.filter.split(',')
-        filterSrc.forEach((item: any, index: number) => {
-          if (index > 0) {
-            addFilterItem()
-          }
-          handleFilterSrcChange(item, index, false)
-        })
-      }
+      const filterSrc : any[] = !$route.query.filter ? ['Polarity', 'nL']
+        : (Array.isArray($route.query.filter) ? $route.query.filter : $route.query.filter.split(','))
+
+      filterSrc.forEach((item: any, index: number) => {
+        if (index > 0) {
+          addFilterItem()
+        }
+        handleFilterSrcChange(item, index, false)
+      })
 
       if ($route.query.filterValue) {
         $route.query.filterValue.split('|').forEach((item: any, index: number) => {
-          const value = ((state.filter[index].isBoolean || state.filter[index].isNumeric)
-            ? item : item.split('#'))
+          const value = item.split('#')
           if (!Array.isArray(value) || (value.length > 0 && value[0])) {
             handleFilterValueChange(value, index, false)
           }
         })
+      } else if (!$route.query.filter) { // default filters
+        handleFilterValueChange(['positive'], 0, false)
+        handleFilterValueChange(['None'], 1, false)
       }
+
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+        state.firstGenerated = true
         await loadData()
         buildValues()
+      }
+
+      if ($route.query.cmap) {
+        handleColormapChange($route.query.cmap)
       }
     }
 
@@ -541,19 +649,6 @@ export default defineComponent({
     })
 
     const buildFilterOptions = async(filterIndex: number) => {
-      // const filterSpec = FILTER_VALUES.find((filterItem: any) => filterItem.src
-      //   === state.filter[filterIndex].src)
-      // if (filterSpec && filterSpec?.isNumeric) {
-      //   state.filter[filterIndex].isNumeric = true
-      //   state.filter[filterIndex].isBoolean = false
-      //   return
-      // } else if (filterSpec && filterSpec?.isBoolean) {
-      //   state.filter[filterIndex].isNumeric = false
-      //   state.filter[filterIndex].isBoolean = true
-      // } else {
-      //   state.filter[filterIndex].isNumeric = false
-      //   state.filter[filterIndex].isBoolean = false
-      // }
       state.filter[filterIndex].loadingFilterOptions = true
 
       const options = await loadFilterValues(state.filter[filterIndex].src)
@@ -565,6 +660,15 @@ export default defineComponent({
     const loadData = async() => {
       try {
         state.loading = true
+
+        const nonEmptyFilters = (state.filter || []).filter((item: any) => item.src === 'nL'
+          || (Array.isArray(item.value)
+            ? item.value.join('#') : item.value))
+        const filter = nonEmptyFilters.map((item: any) => item.src).join(',')
+        // .replace('main_coarse_class', 'coarse_class')
+        // .replace('main_coarse_path', 'coarse_path')
+        const filterValues = nonEmptyFilters.map((item: any) => (item.src === 'nL' || Array.isArray(item.value))
+          ? item.value.join('#') : item.value).filter((x:any) => x).join('|')
 
         // load data
         const params : any = {
@@ -580,16 +684,16 @@ export default defineComponent({
             || (state.filter || [])
               .findIndex((item: any) => Object.keys(CLASSIFICATION_METRICS).includes(item.src)) !== -1,
           queryType: 'data',
-          filter: (state.filter || []).map((item: any) => item.src).join(','),
-          filterValues: (state.filter || []).map((item: any) => Array.isArray(item.value)
-            ? item.value.join('#') : item.value).filter((x:any) => x).join('|'),
+          filter,
+          filterValues,
         }
 
         const query = Object.keys(params)
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
+        const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
+        // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws' // prod
         // const baseUrl = 'http://localhost:8080' // local
         // const baseUrl = 'https://tif7fmvuyc7wk6etuql2zpjcwq0ixxmn.lambda-url.eu-west-1.on.aws' // test
         const response = await fetch(baseUrl + '?' + query)
@@ -606,6 +710,9 @@ export default defineComponent({
     const loadFilterValues = async(filter:any) => {
       try {
         // load data
+
+        // filter = filter === 'main_coarse_class' ? 'coarse_class' : filter
+        // filter = filter === 'main_coarse_path' ? 'coarse_path' : filter
         const params : any = {
           predType: state.dataSource.toUpperCase(),
           xAxis: state.options.xAxis,
@@ -626,10 +733,13 @@ export default defineComponent({
           .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
-        const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws'
+        const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
+        // const baseUrl = 'https://sotnykje7gwzumke4nums4horm0gujac.lambda-url.eu-west-1.on.aws'
+        // const baseUrl = 'http://localhost:8080' // local
+
         const response = await fetch(baseUrl + '?' + query)
         const filterJson = await response.json()
-        return filterJson.values
+        return filterJson.values // .body.values
       } catch (e) {
         return null
       }
@@ -637,12 +747,27 @@ export default defineComponent({
 
     const buildValues = async() => {
       try {
+        state.buildingChart = true
         const chartData = state.usedData
-        const data = chartData.data
-        const xAxisValues : string[] = chartData.xAxis
-        let yAxisValues : string[] = chartData.yAxis
+        if (!chartData) return
+        const data = chartData?.data
+        let xAxisValues : string[] = chartData.xAxisSorting ? chartData.xAxisSorting : chartData.xAxis
+        let yAxisValues : string[] = chartData.yAxisSorting ? chartData.yAxisSorting : chartData.yAxis
 
-        yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], ['desc'])
+        if (!chartData.yAxisSorting || state.orderBy === 'ORDER_BY_NAME') {
+          yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
+            ? 'desc' : 'asc'])
+          xAxisValues = orderBy(xAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
+            ? 'desc' : 'asc'])
+        } else if (state.sortingOrder === 'DESCENDING') {
+          yAxisValues = cloneDeep(yAxisValues).reverse()
+          xAxisValues = cloneDeep(xAxisValues).reverse()
+        }
+
+        if (state.options.yAxis === 'fine_class' || state.options.yAxis === 'fine_path') {
+          yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
+            ? 'desc' : 'asc'])
+        }
 
         const auxData : any = groupBy(data, state.options.xAxis)
         Object.keys(auxData).forEach((key: string) => {
@@ -667,7 +792,7 @@ export default defineComponent({
             const value : number = isEmpty ? 0 : item.fraction_detected
             const normalizedValue = isEmpty ? 0 : (yMaxValue === 0 ? 0 : (value / yMaxValue))
             dotValues.push({
-              value: [xIndex, yIndex, normalizedValue * 15, pointAggregation, value],
+              value: [xIndex, yIndex, normalizedValue, pointAggregation, value],
               label: {
                 key: yKey,
                 molecule: item.formulas ? item.formulas.split(',')[0] : undefined,
@@ -691,11 +816,15 @@ export default defineComponent({
           inRange: {
             color: getColorScale(state.colormap).range,
           },
+          handleStyle: {
+            borderColor: '#000',
+            borderWidth: 1,
+          },
           orient: 'horizontal',
           min: 0,
           max: maxColor,
           formatter: function(value: any) {
-            return value.toFixed(2)
+            return typeof value === 'number' ? value?.toFixed(2) : value
           },
         }
 
@@ -707,37 +836,19 @@ export default defineComponent({
         state.pagination.total = xAxisValues.length
         state.xAxisValues = xAxisValues
         state.yAxisValues = yAxisValues
-
-        state.buildingChart = false
       } catch (e) {
         console.error(e)
       } finally {
-        state.loading = false
+        state.buildingChart = false
       }
     }
 
     const handleAggregationChange = (value: any, buildChart: boolean = true) => {
       state.options.aggregation = value
-      $router.replace({ name: 'spotting', query: { ...getQueryParams(), agg: value } })
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart) {
-        buildValues()
-      }
-    }
-
-    const handleValueMetricChange = (value: any) => {
-      state.options.valueMetric = value
-      $router.replace({ name: 'spotting', query: { ...getQueryParams(), metric: value } })
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
-        buildValues()
-      }
-    }
-
-    const parseBooleanLabel = (value: string) => {
-      if (parseInt(value, 10) === 0 || parseInt(value, 10) === 1) {
-        return 'False'
-      } else {
-        return 'True'
-      }
+      $router.replace({ name: 'detectability', query: { ...getQueryParams(), agg: value } })
+      // if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart) {
+      //   buildValues()
+      // }
     }
 
     const handleFilterValueChange = async(value: any, idx : any = 0, buildChart: boolean = true) => {
@@ -746,23 +857,24 @@ export default defineComponent({
         ? item.value.join('#') : item.value).join('|')
 
       $router.replace({
-        name: 'spotting',
+        name: 'detectability',
         query: {
           ...getQueryParams(),
           filterValue: filterValueParams,
         },
       })
 
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart) {
-        await loadData()
-        buildValues()
-      }
+      // if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart) {
+      //   await loadData()
+      //   buildValues()
+      // }
     }
 
-    const removeFilterItem = () => {
+    const removeFilterItem = async() => {
       const value = state.filter[state.filter.length - 1].value
       state.filter.pop()
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation && value) {
+        await loadData()
         buildValues()
       }
     }
@@ -774,7 +886,9 @@ export default defineComponent({
     }
 
     const handleColormapChange = (color: any) => {
-      state.colormap = '-' + color.replace('-', '')
+      state.colormap = color
+      $router.replace({ name: 'detectability', query: { ...getQueryParams(), cmap: color } })
+
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         buildValues()
       }
@@ -782,8 +896,9 @@ export default defineComponent({
 
     const handleItemClick = (item: any) => { // get info from clicked chart item and open on a metaspace url
       const baseUrl = 'https://metaspace2020.eu/annotations?db_id=304'
+      // const baseUrl = 'http://localhost:8999/annotations?db_id=304'
       let url = baseUrl
-      const formulas : string = item.data.label.formulas.join('|')
+      const formulas : string = item?.data?.label?.formulas?.join('|')
       const yAxisFilter : any = filterMap[state.options.yAxis]
       const xAxisFilter : any = filterMap[state.options.xAxis]
 
@@ -794,19 +909,25 @@ export default defineComponent({
 
       if (yAxisFilter) {
         const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'main_coarse_class'
-          || state.options.yAxis === 'name' || state.options.yAxis === 'main_coarse_path'
-          || state.options.yAxis === 'fine_path')
-          ? formulas : (yAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.y)
+          || state.options.yAxis === 'main_coarse_path'
+          || state.options.yAxis === 'fine_path' || state.options.yAxis === 'name')
+          ? formulas : (yAxisFilter.includes('MALDI matrix') ? item.data.label.matrix.join('|') : item.data.label.y)
         url += `&${yAxisFilter}=${encodeURIComponent(value)}`
       }
+
       if (xAxisFilter) {
         const value = (state.options.xAxis === 'fine_class' || state.options.xAxis === 'main_coarse_class'
-          || state.options.xAxis === 'name' || state.options.xAxis === 'main_coarse_path'
-          || state.options.xAxis === 'fine_path')
-          ? formulas : (xAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.x)
+          || state.options.xAxis === 'main_coarse_path'
+          || state.options.xAxis === 'fine_path' || state.options.xAxis === 'name')
+          ? formulas : (xAxisFilter.includes('MALDI matrix') ? item.data.label.matrix.join('|') : item.data.label.x)
         url += `&${xAxisFilter}=${encodeURIComponent(value)}`
       }
       window.open(url, '_blank')
+    }
+
+    const handleVisualizationChange = (value: number = VIEW.SCATTER) => {
+      state.selectedView = value
+      $router.replace({ name: 'detectability', query: { ...getQueryParams(), vis: value } })
     }
 
     const getQueryParams = () => {
@@ -817,10 +938,11 @@ export default defineComponent({
         xAxis: state.options.xAxis,
         yAxis: state.options.yAxis,
         agg: state.options.aggregation,
-        metric: state.options.valueMetric,
         page: state.pagination.currentPage,
         pageSize: state.pagination.pageSize,
         src: state.dataSource.toUpperCase(),
+        vis: state.selectedView,
+        cmap: state.colormap,
       }
 
       Object.keys(queryObj).forEach((key: string) => {
@@ -832,6 +954,15 @@ export default defineComponent({
       return queryObj
     }
 
+    const handleSortChange = (value: string, sortingOrder: string) => {
+      state.orderBy = !value ? 'ORDER_BY_SERIATE' : value
+      state.sortingOrder = !sortingOrder ? 'DESCENDING' : sortingOrder
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
+        state.loading = true
+        setTimeout(() => { buildValues() }, 1000)
+      }
+    }
+
     const handleDataSrcChange = async(text: any, buildChart: boolean = true) => {
       const changedValue = text !== state.dataSource
       const changedFromEmbl = changedValue && (text.toUpperCase() === 'EMBL' || state.dataSource === 'EMBL')
@@ -841,10 +972,11 @@ export default defineComponent({
         state.options.xAxis = undefined
         state.options.yAxis = undefined
         state.options.aggregation = undefined
-        $router.replace({ name: 'spotting', query: { src: text } })
+        $router.replace({ name: 'detectability', query: { src: text } })
         state.isEmpty = true
+        state.firstGenerated = false
       } else {
-        $router.replace({ name: 'spotting', query: { ...getQueryParams(), src: text } })
+        $router.replace({ name: 'detectability', query: { ...getQueryParams(), src: text } })
       }
 
       if (state.options.xAxis && state.options.yAxis && changedValue) {
@@ -857,19 +989,35 @@ export default defineComponent({
         await handleAxisChange(state.options.xAxis, true, false)
         await handleAxisChange(state.options.yAxis, false, false)
         await buildValues()
+      } else if (changedValue) {
+        state.isEmpty = true
       }
     }
 
     const handleFilterSrcChange = (value: any, idx : any = 0, buildChart: boolean = true) => {
       const isNew = value !== state.filter[idx]?.src
       const shouldLoad = isNew && state.filter[idx]?.value
+
+      // fine_path
       state.filter[idx].src = value
       const filterSrcParams = state.filter.map((item: any) => item.src).join(',')
-      $router.replace({ name: 'spotting', query: { ...getQueryParams(), filter: filterSrcParams } })
+      $router.replace({ name: 'detectability', query: { ...getQueryParams(), filter: filterSrcParams } })
       buildFilterOptions(idx)
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && isNew) {
+      if (isNew) {
         handleFilterValueChange(null, idx, buildChart ? shouldLoad : false)
       }
+    }
+
+    const handleAxisSwap = async() => {
+      const { xAxis, yAxis } = state.options
+      await handleAxisChange(yAxis, true, false)
+      await handleAxisChange(xAxis, false, true)
+    }
+
+    const handleGenerateChart = async() => {
+      state.firstGenerated = true
+      await loadData()
+      await buildValues()
     }
 
     const handleAxisChange = async(value: any, isXAxis : boolean = true, buildChart : boolean = true) => {
@@ -877,155 +1025,223 @@ export default defineComponent({
       || (!isXAxis && value !== state.options.yAxis)
       if (isXAxis) {
         state.options.xAxis = value
-        $router.replace({ name: 'spotting', query: { ...getQueryParams(), xAxis: value } })
+        $router.replace({ name: 'detectability', query: { ...getQueryParams(), xAxis: value } })
       } else {
         state.options.yAxis = value
-        $router.replace({ name: 'spotting', query: { ...getQueryParams(), yAxis: value } })
+        $router.replace({ name: 'detectability', query: { ...getQueryParams(), yAxis: value } })
       }
-      if (state.options.xAxis && state.options.yAxis && isNew && buildChart) {
-        await loadData()
+
+      // reassign class according to options
+      if (value === 'main_coarse_class'
+        && state.filter.findIndex((filter: any) => filter.src === 'coarse_class') !== -1) {
+        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'coarse_class')
+        state.filter[idx].src = 'main_coarse_class'
+      } else if (value === 'fine_class'
+        && state.filter.findIndex((filter: any) => filter.src === 'main_coarse_class') !== -1) {
+        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'main_coarse_class')
+        state.filter[idx].src = 'coarse_class'
+      } else if (value === 'main_coarse_path'
+        && state.filter.findIndex((filter: any) => filter.src === 'coarse_path') !== -1) {
+        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'coarse_path')
+        state.filter[idx].src = 'main_coarse_path'
+      } else if (value === 'fine_path'
+        && state.filter.findIndex((filter: any) => filter.src === 'main_coarse_path') !== -1) {
+        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'main_coarse_path')
+        state.filter[idx].src = 'coarse_path'
       }
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart && isNew) {
-        buildValues()
-      }
+
+      // if (state.options.xAxis && state.options.yAxis && isNew && buildChart) {
+      //   await loadData()
+      // }
+      // if (state.options.xAxis && state.options.yAxis && state.options.aggregation && buildChart && isNew) {
+      //   buildValues()
+      // }
     }
 
-    const renderFilters = () => {
-      const yLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.yAxis)
-      const xLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.xAxis)
-      const loadPathway: boolean = Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
-      || Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)
-      const loadClass: boolean = Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)
-      || Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)
-
+    const renderFilters = (xLabelItem: string, yLabelItem: string) => {
       return (
-        <div class='filter-container'>
-          <div class='filter-box m-2'>
-            <span class='x-axis-label mb-2'>X axis</span>
-            <Select
-              class='select-box-mini'
-              clearable
-              value={state.options.xAxis}
-              onClear={() => {
-                state.options.xAxis = null
-              }}
-              onChange={(value: number) => {
-                handleAxisChange(value)
-              }}
-              placeholder='Select axis'
-              disabled={state.loading}
-              size='mini'>
-              {
-                orderBy(AXIS_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
-                  return <Option
-                    label={option.label}
-                    value={option.src}
-                    disabled={state.options.yAxis && state.dataSource && ALLOWED_COMBINATIONS[state.dataSource]
-                      && yLabelItem && yLabelItem.label
-                      && !ALLOWED_COMBINATIONS[state.dataSource][yLabelItem.label].includes(option.label)}/>
-                })
-              }
-            </Select>
+        <div class='filter-container justify-between'>
+          <div class='flex flex-wrap'>
+            <div class='filter-box m-2'>
+              <span class='filter-label mb-3'>
+              Data source
+                <Tooltip content="Select between the labs where the data was gathered from." placement="top">
+                  <i class="el-icon-question help-icon text-sm ml-1 cursor-pointer"/>
+                </Tooltip>
+              </span>
+              <RadioGroup
+                disabled={state.loading}
+                value={state.dataSource}
+                size="mini"
+                onInput={async(text:any) => {
+                  handleDataSrcChange(text)
+                }}>
+                <RadioButton label='EMBL'/>
+                {(allowedSources.value?.includes('ALL')
+                  || allSources.value?.includes('ALLEMBL')) && <RadioButton label='ALL'/>}
+                {(allowedSources.value?.includes('INTERLAB')
+                  || allSources.value?.includes('ALLINTERLAB')) && <RadioButton label='INTERLAB'/>}
+              </RadioGroup>
+            </div>
+            <div class='filter-box m-2'>
+              <span class='x-axis-label mb-2'>X axis</span>
+              <Select
+                class='select-box-mini'
+                clearable
+                value={state.options.xAxis}
+                onClear={() => {
+                  state.options.xAxis = null
+                }}
+                onChange={(value: number) => {
+                  handleAxisChange(value)
+                }}
+                placeholder='Select axis'
+                disabled={state.loading}
+                size='mini'>
+                {
+                  orderBy(AXIS_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
+                    return <Option
+                      label={option.label}
+                      value={option.src}
+                      disabled={state.options.yAxis && state.dataSource && ALLOWED_COMBINATIONS[state.dataSource]
+                        && yLabelItem
+                        && !ALLOWED_COMBINATIONS[state.dataSource][yLabelItem].includes(option.label)}/>
+                  })
+                }
+              </Select>
+            </div>
+            <div class='filter-box m-2 swap-box'>
+              <Button class='swap-btn' size='mini' icon='el-icon-sort'
+                onClick={handleAxisSwap} disabled={state.loading}/>
+            </div>
+            <div class='filter-box m-2'>
+              <span class='y-axis-label mb-2'>Y axis</span>
+              <Select
+                clearable
+                class='select-box-mini'
+                value={state.options.yAxis}
+                onClear={() => {
+                  state.options.yAxis = null
+                }}
+                onChange={(value: number) => {
+                  handleAxisChange(value, false)
+                }}
+                disabled={state.loading}
+                placeholder='Select axis'
+                size='mini'>
+                {
+                  orderBy(AXIS_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
+                    return <Option
+                      label={option.label}
+                      value={option.src}
+                      disabled={state.options.xAxis && state.dataSource && ALLOWED_COMBINATIONS[state.dataSource]
+                        && xLabelItem
+                        && !ALLOWED_COMBINATIONS[state.dataSource][xLabelItem].includes(option.label)}/>
+                  })
+                }
+              </Select>
+            </div>
+            <div class='filter-box m-2'>
+              <span class='aggregation-label mb-2'>Color</span>
+              <Select
+                clearable
+                class='select-box-mini'
+                value={state.options.aggregation}
+                onClear={() => {
+                  state.options.aggregation = null
+                }}
+                onChange={(value: number) => {
+                  handleAggregationChange(value)
+                }}
+                disabled={state.loading}
+                placeholder='Select color metric'
+                size='mini'>
+                {
+                  orderBy(AGGREGATED_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
+                    return <Option label={option.label} value={option.src}/>
+                  })
+                }
+              </Select>
+            </div>
+            <div class='filter-box m-2'>
+              <span class='filter-label mb-3'>Sorting </span>
+              <SortDropdown
+                class="pb-2"
+                size="mini"
+                tooltipPlacement='top'
+                defaultOption={state.orderBy}
+                defaultSorting={state.sortingOrder}
+                options={sortingOptions}
+                clearable={false}
+                onSort={handleSortChange}
+              />
+            </div>
+            <div class='filter-box m-2'>
+              <span class='filter-label mb-3 invisible'>Generate</span>
+              <Button
+                type="primary"
+                size="small"
+                class='gen-btn'
+                loading={state.loading}
+                disabled={!(state.options.xAxis && state.options.yAxis && state.options.aggregation)}
+                onClick={handleGenerateChart}>Generate chart</Button>
+            </div>
           </div>
-          <div class='filter-box m-2'>
-            <span class='y-axis-label mb-2'>Y axis</span>
-            <Select
-              clearable
-              class='select-box-mini'
-              value={state.options.yAxis}
-              onClear={() => {
-                state.options.yAxis = null
-              }}
-              onChange={(value: number) => {
-                handleAxisChange(value, false)
-              }}
-              disabled={state.loading}
-              placeholder='Select axis'
-              size='mini'>
+          <div>
+            <div class='filter-box m-2'>
+              <span class='filter-label mb-2'>Filters</span>
               {
-                orderBy(AXIS_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
-                  return <Option
-                    label={option.label}
-                    value={option.src}
-                    disabled={state.options.xAxis && state.dataSource && ALLOWED_COMBINATIONS[state.dataSource]
-                      && xLabelItem && xLabelItem.label
-                      && !ALLOWED_COMBINATIONS[state.dataSource][xLabelItem.label].includes(option.label)}/>
-                })
-              }
-            </Select>
-          </div>
-          <div class='filter-box m-2'>
-            <span class='aggregation-label mb-2'>Color</span>
-            <Select
-              clearable
-              class='select-box-mini'
-              value={state.options.aggregation}
-              onClear={() => {
-                state.options.aggregation = null
-              }}
-              onChange={(value: number) => {
-                handleAggregationChange(value)
-              }}
-              disabled={state.loading}
-              placeholder='Select color metric'
-              size='mini'>
-              {
-                orderBy(AGGREGATED_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
-                  return <Option label={option.label} value={option.src}/>
-                })
-              }
-            </Select>
-          </div>
+                state.filter.map((filter: any, filterIdx: number) => {
+                  return (
+                    <div class='flex flex-wrap justify-center'>
+                      <Select
+                        clearable
+                        class='select-box-mini mr-2'
+                        value={filter.src}
+                        onChange={(value: number) => {
+                          handleFilterSrcChange(value, filterIdx)
+                        }}
+                        disabled={state.loading}
+                        placeholder='Select filter metric'
+                        size='mini'>
+                        {
+                          orderBy(FILTER_VALUES, ['label'], ['asc']).map((option: any) => {
+                            if (
+                              (
+                                state.options.yAxis !== 'fine_class' && state.options.xAxis !== 'fine_class'
+                                && option.src === 'coarse_class'
+                              )
+                              || (
+                                state.options.yAxis !== 'fine_path' && state.options.xAxis !== 'fine_path'
+                                && option.src === 'coarse_path'
+                              )
+                              || (FILTER_DISABLED_COMBINATIONS[state.options.yAxis]
+                                && FILTER_DISABLED_COMBINATIONS[state.options.yAxis].includes(option.src))
+                              || (FILTER_DISABLED_COMBINATIONS[state.options.xAxis]
+                                && FILTER_DISABLED_COMBINATIONS[state.options.xAxis].includes(option.src))
+                            ) {
+                              return null
+                            }
 
-          <div class='filter-box m-2'>
-            <span class='filter-label mb-3'>Data source</span>
-            <RadioGroup
-              disabled={state.loading}
-              value={state.dataSource}
-              size="mini"
-              onInput={async(text:any) => {
-                handleDataSrcChange(text)
-              }}>
-              <RadioButton label='EMBL'/>
-              <RadioButton label='ALL'/>
-              <RadioButton label='INTERLAB'/>
-            </RadioGroup>
-
-          </div>
-          <div class='filter-box m-2'>
-            <span class='filter-label mb-2'>Filters</span>
-            {
-              state.filter.map((filter: any, filterIdx: number) => {
-                return (
-                  <div class='flex flex-wrap justify-center'>
-                    <Select
-                      clearable
-                      class='select-box-mini mr-2'
-                      value={filter.src}
-                      onChange={(value: number) => {
-                        handleFilterSrcChange(value, filterIdx)
-                      }}
-                      disabled={state.loading || state.usedData === undefined}
-                      placeholder='Select filter metric'
-                      size='mini'>
-                      {
-                        orderBy(FILTER_VALUES, ['label'], ['asc']).map((option: any) => {
-                          return <Option
-                            disabled={state.filter.map((item: any) => item.src).includes(option.src)}
-                            label={option.label}
-                            value={option.src}/>
-                        })
-                      }
-                    </Select>
-                    {
-                      !filter.isNumeric
-                      && <Select
+                            return <Option
+                              disabled={state.filter.map((item: any) => item.src).includes(option.src)
+                                || (FILTER_DISABLED_COMBINATIONS[state.options.yAxis]
+                                  && FILTER_DISABLED_COMBINATIONS[state.options.yAxis].includes(option.src))
+                                || (FILTER_DISABLED_COMBINATIONS[state.options.xAxis]
+                                  && FILTER_DISABLED_COMBINATIONS[state.options.xAxis].includes(option.src))
+                              }
+                              label={option.label}
+                              value={option.src}/>
+                          })
+                        }
+                      </Select>
+                      <Select
                         class='select-box-mini mr-2'
                         value={filter.value}
                         loading={state.filter[filterIdx].loadingFilterOptions}
                         filterable
                         clearable
-                        multiple={!filter.isBoolean}
+                        multiple
                         noDataText='No data'
                         onChange={(value: number) => {
                           handleFilterValueChange(value, filterIdx)
@@ -1034,65 +1250,79 @@ export default defineComponent({
                         placeholder='Select filter value'
                         size='mini'>
                         {
-                          (filter.isBoolean ? ['False', 'True'] : filter.options).map((option: any) => {
+                          filter.options.map((option: any) => {
                             return <Option
                               label={!option ? 'None' : option}
-                              value={option}/>
+                              value={!option ? 'None' : option}/>
                           })
                         }
                       </Select>
-                    }
-                    {
-                      filter.isNumeric
-                      && !filter.isBoolean
-                      && <InputNumber
-                        class='select-box-mini mr-2'
-                        size="mini"
-                        min={0}
-                        max={1}
-                        step={0.001}
-                        value={parseFloat(state.filter[0].value)}
-                        loading={state.filter[filterIdx].loadingFilterOptions}
-                        disabled={state.loading}
-                        onChange={(value: number) => {
-                          handleFilterValueChange(value, filterIdx)
-                        }}/>
-                    }
-                    <div class='flex' style={{ visibility: filterIdx !== 0 ? 'hidden' : '' }}>
-                      <div
-                        class='icon'
-                        onClick={removeFilterItem}
-                        style={{ visibility: state.filter.length < 2 ? 'hidden' : '' }}>
-                        <i class="el-icon-remove"/>
-                      </div>
-                      <div
-                        class='icon'
-                        onClick={addFilterItem}
-                        style={{ visibility: state.filter.length >= FILTER_VALUES.length ? 'hidden' : '' }}>
-                        <i class="el-icon-circle-plus"/>
+                      <div class='flex' style={{ visibility: filterIdx !== 0 ? 'hidden' : '' }}>
+                        <div
+                          class='icon'
+                          onClick={removeFilterItem}
+                          style={{ visibility: state.filter.length < 2 ? 'hidden' : '' }}>
+                          <i class="el-icon-remove"/>
+                        </div>
+                        <div
+                          class='icon'
+                          onClick={addFilterItem}
+                          style={{ visibility: state.filter.length >= FILTER_VALUES.length ? 'hidden' : '' }}>
+                          <i class="el-icon-circle-plus"/>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })
-            }
+                  )
+                })
+              }
+            </div>
           </div>
         </div>
       )
     }
 
-    const renderVisualizations = () => {
+    const renderVisualizations = (xLabelItem: string, yLabelItem: string, showChart: boolean) => {
       return (
-        <div class='visualization-container flex w-full justify-end'>
-          <div class='visualization-selector'>
-            <span class='filter-label'>Visualization</span>
-            <div class={`icon-holder ${state.selectedView === VIEW.SCATTER ? 'selected' : ''}`}>
-              <i class="vis-icon el-icon-s-data mr-6 text-4xl" onClick={() => { state.selectedView = VIEW.SCATTER }}/>
-            </div>
-            <div class={`icon-holder ${state.selectedView === VIEW.HEATMAP ? 'selected' : ''}`}>
-              <i class="vis-icon el-icon-s-grid mr-6 text-4xl" onClick={() => { state.selectedView = VIEW.HEATMAP }}/>
+        <div class='visualization-container'>
+          {showChart && renderHelp(xLabelItem, yLabelItem)}
+
+          <div class='flex flex-col'>
+            <a
+              href='https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v3/detectability_source.zip'
+              class={'files-link mb-1'}
+            >
+              Download results of the study
+            </a>
+            <div class='visualization-selector'>
+              <span class='filter-label'>Visualization</span>
+              <div class={`ml-2 icon-holder ${state.selectedView === VIEW.SCATTER ? 'selected' : ''}`}>
+                <ScatterChart
+                  class='roi-icon fill-current'
+                  onClick={() => { handleVisualizationChange(VIEW.SCATTER) }}/>
+              </div>
+              <div class={`icon-holder ${state.selectedView === VIEW.HEATMAP ? 'selected' : ''}`}>
+                <i
+                  class="vis-icon el-icon-s-grid mr-6 text-4xl"
+                  onClick={() => { handleVisualizationChange(VIEW.HEATMAP) }}/>
+              </div>
             </div>
           </div>
+        </div>
+      )
+    }
+
+    const renderHelp = (xLabelItem: string, yLabelItem: string) => {
+      const colorLabelItem : any = AGGREGATED_VALUES[state.dataSource]
+        .find((item: any) => item.src === state.options.aggregation)
+
+      if (!xLabelItem && !yLabelItem && !colorLabelItem?.label) {
+        return null
+      }
+
+      return (
+        <div class='help-container'>
+          <i class="el-icon-question help-icon" />
+          You are looking at Color ({colorLabelItem?.label}) of ions broken down by X ({xLabelItem}) in Y ({yLabelItem})
         </div>
       )
     }
@@ -1107,6 +1337,8 @@ export default defineComponent({
             <p>2 - Select the y axis metric in the <span class='y-axis-label'>green</span> zone;</p>
             <p>3 - Select the color in the <span class='aggregation-label'>blue</span> zone;</p>
             <p>4 - Apply the filters you desire.</p>
+            <p>5 - Click on the button <b>Generate chart</b> to apply the changes and generate the chart.</p>
+            <p>6 - Click on the dots to be redirected to the corresponding annotations in METASPACE.</p>
           </div>
         </div>
       )
@@ -1114,12 +1346,48 @@ export default defineComponent({
 
     const onPageChange = (newPage: number) => {
       state.pagination.currentPage = newPage
-      $router.replace({ name: 'spotting', query: { ...getQueryParams(), page: newPage.toString() } })
+      $router.replace({ name: 'detectability', query: { ...getQueryParams(), page: newPage.toString() } })
     }
 
     const onPageSizeChange = (newSize: number) => {
       state.pagination.pageSize = newSize
-      $router.replace({ name: 'spotting', query: { ...getQueryParams(), pageSize: newSize.toString() } })
+      $router.replace({ name: 'detectability', query: { ...getQueryParams(), pageSize: newSize.toString() } })
+    }
+
+    const renderRadiusHelp = () => {
+      return (
+        <div class='radius-help'>
+          Fraction of compounds detects per class
+          <div class='dot-legend'>
+            <div class='dot-container'>
+              <span class="dot h-0.5 w-0.5"/>
+              <span class='dot-text'>0</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-1 w-1"/>
+              <span class='dot-text'>0.2</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-2 w-2"/>
+              <span class='dot-text'>0.4</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-3 w-3"/>
+              <span class='dot-text'>0.6</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-4 w-4"/>
+              <span class='dot-text'>0.8</span>
+            </div>
+            <div class='dot-container'>
+              <span class="dot h-5 w-5"/>
+              <span class='dot-text'>1.0</span>
+            </div>
+          </div>
+          <div class='flex items-center mt-1'>
+          </div>
+        </div>
+      )
     }
 
     const renderPagination = (total: number) => {
@@ -1134,6 +1402,7 @@ export default defineComponent({
             {...{ on: { 'update:pageSize': onPageSizeChange } }}
             layout='prev,pager,next,sizes'
           />
+          {/* {state.selectedView === VIEW.SCATTER && renderRadiusHelp()} */}
         </div>
       )
     }
@@ -1146,7 +1415,7 @@ export default defineComponent({
             yOption={state.options.yAxis}
             xAxis={xAxisValues}
             yAxis={yAxisValues}
-            size={yAxisValues.length * 30}
+            size={yAxisValues.length * 40}
             data={chartData}
             visualMap={state.visualMap}
             onItemSelected={handleItemClick}
@@ -1155,6 +1424,7 @@ export default defineComponent({
         </div>
       )
     }
+
     const renderHeatmapChart = (yAxisValues: any, xAxisValues: any, total: number, chartData : any) => {
       return (
         <div class='chart-container'>
@@ -1163,9 +1433,10 @@ export default defineComponent({
             yOption={state.options.yAxis}
             xAxis={xAxisValues}
             yAxis={yAxisValues}
-            size={yAxisValues.length * 30}
+            size={yAxisValues.length * 40}
             data={chartData}
             visualMap={state.visualMap}
+            onItemSelected={handleItemClick}
           />
           {!state.loading && renderPagination(total)}
         </div>
@@ -1173,10 +1444,12 @@ export default defineComponent({
     }
 
     return () => {
-      const showChart = (($route.query.xAxis && $route.query.yAxis && $route.query.agg)
-          || (state.options.xAxis && state.options.yAxis && state.options.aggregation))
+      const showChart = state.firstGenerated && ((($route.query.xAxis && $route.query.yAxis && $route.query.agg)
+          || (state.options.xAxis && state.options.yAxis && state.options.aggregation)))
       const { selectedView } = state
       const isLoading = (state.loading || state.buildingChart)
+      const yLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.yAxis)
+      const xLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.xAxis)
 
       // paginate data on client-side
       const yAxisValues : any[] = state.yAxisValues
@@ -1194,14 +1467,14 @@ export default defineComponent({
 
       return (
         <div class='dashboard-container mb-4'>
-          {renderFilters()}
-          {renderVisualizations()}
+          {renderFilters(xLabelItem?.label, yLabelItem?.label)}
+          {renderVisualizations(xLabelItem?.label, yLabelItem?.label, showChart)}
           <div class='content-container'>
             {
               showChart
               && <div class='feature-box'>
-                <ShareLink name='spotting' query={getQueryParams()}/>
-                <ChartSettings onColor={handleColormapChange}/>
+                <ShareLink name='detectability' query={getQueryParams()}/>
+                <ChartSettings defaultColormap={state.colormap} onColor={handleColormapChange}/>
               </div>
             }
             {!showChart && renderDashboardInstructions()}

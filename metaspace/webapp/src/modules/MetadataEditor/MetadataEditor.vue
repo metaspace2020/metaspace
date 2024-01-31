@@ -270,8 +270,9 @@ export default {
       const {
         isPublic, configJson, databases, adducts,
         name, group, projects, submitter, principalInvestigator,
-        description,
+        description, isEnriched,
       } = dataset
+
       const config = safeJsonParse(configJson)
       return {
         submitterId: submitter ? submitter.id : null,
@@ -291,6 +292,7 @@ export default {
         ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
         analysisVersion: isNew ? 1 : get(config, 'analysis_version') || 1,
         scoringModel: isNew ? null : get(config, 'fdr.scoring_model') || null,
+        performEnrichment: isEnriched,
       }
     },
 

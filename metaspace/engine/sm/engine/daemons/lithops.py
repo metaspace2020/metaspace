@@ -48,14 +48,11 @@ class LithopsDaemon:
 
         # Stop processing in case of problem with imzML file
         if isinstance(e, ImzMLError):
-            self._manager.post_to_slack(
-                'bomb',
-                f" [x] Annotation failed, ImzMLError: {json.dumps(msg)}\n```{e.traceback}```",
-            )
             if 'email' in msg:
                 self._manager.send_failed_email(msg, e.traceback)
 
             os.kill(os.getpid(), signal.SIGINT)
+            self._manager.ds_failure_handler(msg, e)
             return
 
         exc = format_exc(limit=10)
@@ -91,7 +88,11 @@ class LithopsDaemon:
             self._manager.set_ds_status(ds, DatasetStatus.ANNOTATING)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.STARTED)
 
-            self._manager.annotate_lithops(ds=ds, del_first=msg.get('del_first', False))
+            self._manager.annotate_lithops(
+                ds=ds,
+                del_first=msg.get('del_first', False),
+                perform_enrichment=msg.get('perform_enrichment', False),
+            )
 
             update_msg = {
                 'ds_id': msg['ds_id'],

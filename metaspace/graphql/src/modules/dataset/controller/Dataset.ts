@@ -25,9 +25,11 @@ import { getS3Client } from '../../../utils/awsClient'
 import { In, IsNull } from 'typeorm'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import canDeleteEsDataset from '../operation/canDeleteEsDataset'
+import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/model'
 
 interface DbDataset {
   id: string;
+  roi: any | null;
   thumbnail: string | null;
   thumbnail_url: string | null;
   ion_thumbnail: string | null;
@@ -40,7 +42,7 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
     return new DataLoader(async(datasetIds: string[]): Promise<any[]> => {
       const results = await ctx.entityManager.query(`
       SELECT ds.id, ds.thumbnail_url, ds.ion_thumbnail_url, 
-             ds.transform, gds.external_links
+             ds.transform, ds.roi, gds.external_links
       FROM public.dataset ds
       JOIN graphql.dataset gds on ds.id = gds.id
       WHERE ds.id = ANY($1)`,
@@ -50,6 +52,15 @@ const getDbDatasetById = async(ctx: Context, id: string): Promise<DbDataset | nu
     })
   })
   return await dataloader.load(id)
+}
+
+const getEnrichment = async(ctx: Context, datasetId: string): Promise<any> => {
+  const datasetEnrichment = await ctx.entityManager.createQueryBuilder(DatasetEnrichmentModel,
+    'dsEnrichment')
+    .where('dsEnrichment.datasetId = :datasetId', { datasetId })
+    .getOne()
+
+  return datasetEnrichment
 }
 
 export const thumbnailOpticalImageUrl = async(ctx: Context, datasetId: string) => {
@@ -78,8 +89,17 @@ export const rawOpticalImage = async(datasetId: string, ctx: Context) => {
   if (ds) {
     const engineDataset = await ctx.entityManager.getRepository(EngineDataset).findOne(datasetId)
     if (engineDataset && engineDataset.opticalImage) {
+      const s3 = getS3Client()
+      const imageUrl = s3.getSignedUrl('getObject',
+        {
+          Bucket: `${config.upload.bucket}/raw_optical/${datasetId}`,
+          Key: engineDataset.opticalImage,
+          Expires: 1800,
+        })
+
       return {
-        url: `/fs/raw_optical_images/${engineDataset.opticalImage}`,
+        url: imageUrl,
+        uuid: engineDataset.opticalImage,
         transform: engineDataset.transform,
       }
     }
@@ -117,8 +137,18 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return JSON.stringify(ds._source.ds_meta)
   },
 
+  async roiJson(ds, args, ctx) {
+    const result = await getDbDatasetById(ctx, ds._source.ds_id)
+    return result?.roi ? JSON.stringify(result?.roi) : null
+  },
+
   isPublic(ds) {
     return ds._source.ds_is_public
+  },
+
+  async isEnriched(ds, args, ctx) {
+    const result = await getEnrichment(ctx, ds._source.ds_id)
+    return !!result
   },
 
   async databases(ds, _, ctx): Promise<MolecularDB[]> {
@@ -151,6 +181,10 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   acquisitionGeometry(ds) {
     return JSON.stringify(ds._source.ds_acq_geometry)
+  },
+
+  sizeHash(ds) {
+    return JSON.stringify(ds._source.ds_size_hash)
   },
 
   organism(ds) { return dsField(ds, 'organism') },

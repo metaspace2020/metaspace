@@ -18,7 +18,9 @@ config.db.user = "sm";
 config.db.password = "{{ sm_graphql_database_password }}";
 
 config.elasticsearch = {};
-config.elasticsearch.index = "sm";
+config.elasticsearch.schema = "http";
+config.elasticsearch.dataset_index = "dataset";
+config.elasticsearch.annotation_index = "annotation";
 config.elasticsearch.host = "localhost";
 config.elasticsearch.port = 9200;
 
@@ -38,6 +40,7 @@ config.google = {};
 config.google.client_id = "{{ sm_graphql_google_client_id }}";
 config.google.client_secret = "{{ sm_graphql_google_client_secret }}";
 config.google.callback_url = "{{ sm_graphql_google_callback_url }}";
+config.google.serpapi_key = "{{ sm_graphql_google_serpapi_key }}";
 
 config.web_public_url = "{{ web_public_url }}";
 
@@ -48,6 +51,9 @@ config.slack.channel = "{{ sm_graphql_slack_channel }}";
 config.jwt = {};
 config.jwt.secret = "{{ sm_graphql_jwt_secret }}";
 config.jwt.algorithm = "HS256";
+
+config.uppy = {}
+config.uppy.secret = 'secretUppy'
 
 config.sentry = {
   dsn: "{{ sentry_dsn }}",

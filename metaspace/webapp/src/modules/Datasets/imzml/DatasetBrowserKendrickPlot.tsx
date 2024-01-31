@@ -46,6 +46,7 @@ interface DatasetBrowserKendrickPlotProps {
   peakFilter: number
   referenceMz: number
   dataRange: any
+  annotatedLabel: string
 }
 
 interface DatasetBrowserKendrickPlotState {
@@ -73,6 +74,9 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
     isDataLoading: {
       type: Boolean,
       default: false,
+    },
+    annotatedLabel: {
+      type: String,
     },
     data: {
       type: Array,
@@ -114,6 +118,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
           },
         },
         toolbox: {
+          right: 20,
           feature: {
             myTool1: {
               show: true,
@@ -133,6 +138,13 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
                 handleZoomReset()
               },
             },
+            dataZoom: {
+              title: {
+                zoom: 'Zoom',
+                back: 'Zoom reset',
+              },
+              filterMode: 'none',
+            },
             myTool2: {
               show: true,
               title: 'Download data',
@@ -142,15 +154,9 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
                 emit('download')
               },
             },
-            dataZoom: {
-              title: {
-                zoom: 'Zoom',
-                back: 'Zoom reset',
-              },
-              filterMode: 'none',
-            },
             saveAsImage: {
               title: 'Download',
+              name: 'mass_spectrum',
             },
           },
         },
@@ -219,6 +225,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
             name: 'Unannotated',
             data: [],
             type: 'scatter',
+            sampling: 'none',
             symbolSize: function(val: any) {
               return val[2] * 2 || 20
             },
@@ -231,7 +238,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
               hideOverlap: true,
             },
             itemStyle: {
-              color: 'red',
+              color: '#DC3220',
             },
           },
           {
@@ -239,7 +246,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
             type: 'scatter',
             data: [],
             itemStyle: {
-              color: 'blue',
+              color: '#005AB5',
             },
           },
         ],
@@ -295,6 +302,11 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
 
       return (
         <div class='chart-holder'>
+          {
+            !(isLoading || isDataLoading)
+            && props.annotatedLabel
+            && <div class='annotated-legend'>{props.annotatedLabel}</div>
+          }
           {
             (isLoading || isDataLoading)
             && <div class='loader-holder'>

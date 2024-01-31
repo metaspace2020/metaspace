@@ -1,8 +1,10 @@
 import json
 import logging
 import urllib.parse
+import time
 
 import boto3
+import elasticsearch
 from botocore.exceptions import ClientError
 from requests.api import post
 
@@ -103,7 +105,7 @@ class DatasetManager:
                 generate_ion_thumbnail(db=self._db, ds=ds, only_if_needed=not del_first)
                 perf.record_entry('generated ion thumbnail')
 
-    def annotate_lithops(self, ds: Dataset, del_first=False):
+    def annotate_lithops(self, ds: Dataset, del_first=False, perform_enrichment=False):
         if del_first:
             self.logger.warning(f'Deleting all results for dataset: {ds.id}')
             del_jobs(ds)
@@ -111,7 +113,7 @@ class DatasetManager:
         with perf_profile(self._db, 'annotate_lithops', ds.id) as perf:
             executor = Executor(self._sm_config['lithops'], perf=perf)
 
-            ServerAnnotationJob(executor, ds, perf).run()
+            ServerAnnotationJob(executor, ds, perf, perform_enrichment=perform_enrichment).run()
 
             if self._sm_config['services'].get('colocalization', True):
                 Colocalization(self._db).run_coloc_job_lithops(executor, ds, reprocess=del_first)
@@ -147,7 +149,13 @@ class DatasetManager:
         ds.set_status(self._db, self._es, DatasetStatus.FINISHED)
 
     def update(self, ds, fields):
-        self._es.update_ds(ds.id, fields)
+        try:
+            self._es.update_ds(ds.id, fields)
+        except elasticsearch.exceptions.ConflictError:
+            # tries to write to elasticsearch one more time
+            self.logger.info(f'Problem updating ES for: {ds.id}, trying again...')
+            time.sleep(5)
+            self._es.update_ds(ds.id, fields)
 
     def delete(self, ds):
         """Delete all dataset related data."""

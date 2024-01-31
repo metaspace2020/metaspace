@@ -55,9 +55,11 @@ module.exports = {
   },
 
   elasticsearch: {
+    schema: 'http',
     host: 'localhost',
     port: 9200,
-    index: 'sm',
+    dataset_index: 'dataset',
+    annotation_index: 'annotation',
   },
 
   rabbitmq: {
@@ -78,6 +80,11 @@ module.exports = {
   jwt: {
     secret: 'secret',
     algorithm: 'HS256',
+  },
+
+  uppy: {
+    secret: 'secretUppy',
+    uploadUrls: [/^http(s){0,1}:\/\/(.+\.)*metaspace2020\.eu\/.*/],
   },
 
   sentry: {

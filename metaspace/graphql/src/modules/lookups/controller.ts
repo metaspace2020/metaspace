@@ -25,7 +25,11 @@ const getTopFieldValues = async(docType: 'dataset' | 'annotation',
     docType,
     user,
   })
-  return Object.keys(itemCounts).filter(key => key !== '')
+
+  return Object.entries(itemCounts as { [key: string]: number })
+    .filter(([key]) => key !== '')
+    .sort(([, a], [, b]) => b - a)
+    .map(([key]) => key)
 }
 
 const padPlusMinus = (s: string) => s.replace(/([+-])/g, ' $1 ')
@@ -66,7 +70,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
             lang: 'painless',
           },
           size: 1000,
-          order: { _term: 'asc' },
+          order: { _key: 'asc' },
         },
       },
       filters: [{ wildcard: { ds_submitter_name: `*${query}*` } }],

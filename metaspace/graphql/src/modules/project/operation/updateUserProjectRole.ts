@@ -6,6 +6,7 @@ import { UserError } from 'graphql-errors'
 import { DatasetProject as DatasetProjectModel } from '../../dataset/model'
 import updateProjectDatasets from './updateProjectDatasets'
 import { ProjectSourceRepository } from '../ProjectSourceRepository'
+import logger from '../../../utils/logger'
 
 export default async(ctx: Context, userId: string, projectId: string, newRole: UserProjectRole | null) => {
   const currentUserId = ctx.getUserIdOrFail()
@@ -57,6 +58,7 @@ export default async(ctx: Context, userId: string, projectId: string, newRole: U
   if (existingUserProject == null) {
     await userProjectRepository.insert({ userId, projectId, role: newRole! })
   } else if (newRole == null) {
+    logger.info(`User ${userId} removed from project ${projectId}.`)
     await userProjectRepository.delete({ userId, projectId })
   } else {
     await userProjectRepository.update({ userId, projectId }, { role: newRole })
@@ -73,7 +75,7 @@ export default async(ctx: Context, userId: string, projectId: string, newRole: U
   if (datasetsToUpdate.length > 0) {
     const datasetIds = datasetsToUpdate.map(({ id }) => id)
     const approved = newRole == null
-      ? null
+      ? true // keep datasets in project even if user removed
       : [UPRO.MANAGER, UPRO.MEMBER].includes(newRole)
     await updateProjectDatasets(ctx, projectId, datasetIds, [], approved)
   }

@@ -1,6 +1,6 @@
 import { computed, defineComponent, reactive } from '@vue/composition-api'
 import { useQuery } from '@vue/apollo-composable'
-import { GetDatasetByIdQuery, getDatasetByIdQuery } from '../../../api/dataset'
+import { GetDatasetByIdQuery, getDatasetByIdQuery, msAcqGeometryQuery } from '../../../api/dataset'
 import { AnnotationCountTable } from './AnnotationCountTable'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { DatasetMetadataViewer } from './DatasetMetadataViewer'
@@ -13,6 +13,7 @@ import { currentUserRoleQuery, CurrentUserRoleResult } from '../../../api/user'
 import { DatasetOverviewGallery } from './DatasetOverviewGallery'
 import RichText from '../../../components/RichText'
 import isValidTiptapJson from '../../../lib/isValidTiptapJson'
+import NewFeatureBadge from '../../../components/NewFeatureBadge'
 import './DatasetOverviewPage.scss'
 
 interface Props {
@@ -73,15 +74,20 @@ const DatasetOverviewPage = defineComponent<Props>({
     return () => {
       const {
         name, submitter, group, projects, annotationCounts, metadataJson, id,
-        isPublic, description, canEdit, configJson,
+        isPublic, description, canEdit, configJson, acquisitionGeometry, sizeHash,
       } = dataset?.value || {} as any
       const { annotationLabel, detailLabel, projectLabel, inpFdrLvls } = props
-      const showImageViewer = false
       const metadata = safeJsonParse(metadataJson) || {}
       const config = safeJsonParse(configJson) || {}
+      const acqGeo = safeJsonParse(acquisitionGeometry) || {}
+      const fileSize = safeJsonParse(sizeHash) || {}
 
+      // hide deprecated fields
       // eslint-disable-next-line camelcase
       delete metadata?.Submitted_By
+      // eslint-disable-next-line camelcase
+      delete metadata?.Additional_Information
+
       const groupLink = $router.resolve({ name: 'group', params: { groupIdOrSlug: group?.id || '' } }).href
       const upDate = moment(moment(dataset?.value?.uploadDT)).isValid()
         ? moment(dataset?.value?.uploadDT).format('D MMMM, YYYY') : ''
@@ -100,30 +106,16 @@ const DatasetOverviewPage = defineComponent<Props>({
         ? safeJsonParse(description) : null
       const canViewPublicationStatus = (dataset.value?.status === 'FINISHED' && canEdit
         && publicationStatus?.value != null)
-      const diagnosticData = reactive([
-        {
-          id: 'ionPreview',
-          data: JSON.stringify({ minIntensity: [0, 0, 1], maxIntensity: [3, 4, 5] }),
-          imageIds: ['/fs/iso_images/29a6706fd8625de08d8a4e76a42aab1b',
-            '/fs/raw_optical_images/a81173dfa8dba91e3c922b2e19f97e37'],
-          metadata: '{"@timestamp":"2021-03-11 17:54:07.548","thread":"CP Server Thread-8"}',
-        },
-        {
-          id: 'long',
-          data: JSON.stringify({ minIntensity: [0, 0, 1], maxIntensity: [3, 4, 5] }),
-          imageIds: ['/fs/iso_images/29a6706fd8625de08d8a4e76a42aab1b'],
-        },
-      ])
 
-      if (datasetLoading.value && dataset.value == null || userLoading.value && userLoading.value == null) {
+      if ((datasetLoading.value && dataset.value === null) || userLoading.value) {
         return <div class="text-center">Loading...</div>
-      } else if (dataset.value == null) {
+      } else if (dataset.value === null) {
         return <div class="text-center">This dataset doesn't exist, or you do not have access to it.</div>
       }
 
       return (
-        <div class={`dataset-overview-container ${!showImageViewer ? 'justify-center' : ''}`}>
-          <div class={`dataset-overview-wrapper max-w-4xl w-full  ${showImageViewer ? 'lg:w-1/2' : ''}`}>
+        <div class={'dataset-overview-container justify-center'}>
+          <div class={'dataset-overview-wrapper max-w-4xl w-full'}>
             <div class='dataset-overview-header'>
               <h1 class='text-center truncate'>
                 {name}
@@ -134,7 +126,11 @@ const DatasetOverviewPage = defineComponent<Props>({
                   }
                 </span>
               </h1>
-              <DatasetActionsDropdown dataset={dataset?.value} currentUser={currentUser?.value}/>
+              <NewFeatureBadge
+                featureKey="imzmlBrowser"
+              >
+                <DatasetActionsDropdown dataset={dataset?.value} currentUser={currentUser?.value}/>
+              </NewFeatureBadge>
             </div>
             <div class='dataset-overview-holder'>
               <p class='truncate'>{submitter?.name}
@@ -163,9 +159,9 @@ const DatasetOverviewPage = defineComponent<Props>({
               </div>
             }
             {
-              !isEmpty(configJson)
+              (!isEmpty(config) || !isEmpty(acqGeo))
               && <div class='dataset-overview-holder'>
-                <DatasetConfigViewer data={config}/>
+                <DatasetConfigViewer data={config} acqGeo={acqGeo} fileSize={fileSize}/>
               </div>
             }
             {
@@ -198,12 +194,6 @@ const DatasetOverviewPage = defineComponent<Props>({
               </div>
             }
           </div>
-          {
-            showImageViewer
-            && <div class='dataset-overview-wrapper dataset-overview-img-wrapper w-full lg:w-1/2'>
-              <DatasetOverviewGallery data={diagnosticData}/>
-            </div>
-          }
         </div>
       )
     }

@@ -1,5 +1,4 @@
 import * as jsondiffpatch from 'jsondiffpatch'
-import config from '../../../utils/config'
 import logger from '../../../utils/logger'
 import * as Ajv from 'ajv'
 import { UserError } from 'graphql-errors'
@@ -28,6 +27,9 @@ import { assertUserBelongsToGroup } from '../../moldb/util/assertUserBelongsToGr
 import { smApiUpdateDataset } from '../../../utils/smApi/datasets'
 import { validateTiptapJson } from '../../../utils/tiptap'
 import { isMemberOfGroup } from '../operation/isMemberOfGroup'
+import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/model'
+import { getS3Client } from '../../../utils/awsClient'
+import config from '../../../utils/config'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -102,10 +104,15 @@ function validateMetadata(metadata: MetadataNode) {
   }
 }
 
-export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpdateInput & { metadata: MetadataRoot }) {
-  let newDB = false; let procSettingsUpd = false; const metaDiff = null
+export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpdateInput & { metadata: MetadataRoot,
+  updateEnrichment: boolean | undefined }) {
+  let newDB = false; let procSettingsUpd = false; const metaDiff = null; let enrichmentUpd = false
   if (update.databaseIds) {
     newDB = true
+  }
+
+  if (update.updateEnrichment) {
+    enrichmentUpd = true
   }
 
   if (update.adducts || update.neutralLosses || update.chemMods
@@ -133,7 +140,7 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
     }
   }
 
-  return { newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff }
+  return { newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff, enrichmentUpd }
 }
 
 interface SaveDatasetArgs {
@@ -220,6 +227,7 @@ type CreateDatasetArgs = {
   force?: boolean, // Only used by reprocess
   delFirst?: boolean, // Only used by reprocess
   skipValidation?: boolean, // Only used by reprocess
+  performEnrichment?: boolean,
 };
 
 const assertUserCanUseMolecularDBs = async(ctx: Context, databaseIds: number[]|undefined) => {
@@ -260,7 +268,7 @@ const assertValidScoringModel = async(ctx: Context, scoringModel?: string | null
 }
 
 const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
-  const { input, priority, force, delFirst, skipValidation, useLithops } = args
+  const { input, priority, force, delFirst, skipValidation, useLithops, performEnrichment } = args
   const datasetId = args.id || newDatasetId()
   const datasetIdWasSpecified = args.id != null
 
@@ -310,6 +318,7 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     doc: { ...input, metadata },
     priority: priority,
     use_lithops: useLithops,
+    perform_enrichment: performEnrichment,
     force: force,
     del_first: delFirst,
     email: ctx.user.email,
@@ -321,7 +330,10 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
-  reprocessDataset: async(source, { id, priority, useLithops }, ctx: Context) => {
+  reprocessDataset: async(source, {
+    id, priority,
+    useLithops, performEnrichment,
+  }, ctx: Context) => {
     const engineDataset = await ctx.entityManager.findOne(EngineDataset, id)
     if (engineDataset === undefined) {
       throw new UserError('Dataset does not exist')
@@ -335,6 +347,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       } as any, // TODO: map this properly
       priority,
       useLithops,
+      performEnrichment,
       force: true,
       skipValidation: true,
       delFirst: true,
@@ -346,7 +359,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   },
 
   updateDataset: async(source, args, ctx: Context) => {
-    const { id: datasetId, input: update, reprocess, skipValidation, delFirst, force, priority, useLithops } = args
+    const {
+      id: datasetId, input: update, reprocess, skipValidation, delFirst, force, priority, useLithops,
+      performEnrichment,
+    } = args
 
     logger.info(`User '${ctx.user.id}' updating '${datasetId}' dataset...`)
     const dataset = await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId)
@@ -380,8 +396,21 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await assertUserCanUseMolecularDBs(ctx, update.databaseIds as number[]|undefined)
 
     const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId)
-    const { newDB, procSettingsUpd } = processingSettingsChanged(engineDataset, { ...update, metadata })
-    const reprocessingNeeded = newDB || procSettingsUpd
+    let isEnriched : boolean | any = false
+
+    if (performEnrichment) {
+      isEnriched = await ctx.entityManager.createQueryBuilder(DatasetEnrichmentModel,
+        'dsEnrichment')
+        .where('dsEnrichment.datasetId = :datasetId', { datasetId })
+        .getOne()
+    }
+
+    const { newDB, procSettingsUpd, enrichmentUpd } = processingSettingsChanged(engineDataset, {
+      ...update,
+      metadata,
+      updateEnrichment: performEnrichment && !isEnriched,
+    })
+    const reprocessingNeeded = newDB || procSettingsUpd || enrichmentUpd
 
     const submitterId = (ctx.isAdmin && update.submitterId) || dataset.userId
     const saveDatasetArgs = {
@@ -400,6 +429,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         del_first: procSettingsUpd || delFirst, // delete old results if processing settings changed
         priority: priority,
         use_lithops: useLithops,
+        perform_enrichment: performEnrichment,
         force: force,
         email: ctx.user.email,
       })
@@ -418,6 +448,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         }, {
           priority,
           useLithops,
+          performEnrichment,
           force,
         })
       }
@@ -442,14 +473,48 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     logger.info(`User '${ctx.getUserIdOrFail()}' adding optical image to '${datasetId}' dataset...`)
     await getDatasetForEditing(ctx.entityManager, ctx.user, datasetId)
-    // TODO support image storage running on a separate host
-    const url = `http://${config.img_storage_host}:${config.img_storage_port}${imageUrl}`
     const resp = await smApiDatasetRequest(`/v1/datasets/${datasetId}/add-optical-image`, {
-      url, transform,
+      url: imageUrl, transform,
     })
 
     logger.info(`Optical image was added to '${datasetId}' dataset`)
     return JSON.stringify(resp)
+  },
+
+  copyRawOpticalImage: async(source, { originDatasetId, destinyDatasetId }, ctx: Context) => {
+    await esDatasetByID(originDatasetId, ctx.user) // check if user has access to origin dataset
+    await esDatasetByID(destinyDatasetId, ctx.user) // check if user has access to destiny dataset
+
+    const engineDataset = await ctx.entityManager.getRepository(EngineDataset).findOne(originDatasetId)
+
+    if (engineDataset && engineDataset.opticalImage) {
+      const s3 = getS3Client()
+      await s3.copyObject({
+        Bucket: `${config.upload.bucket}/raw_optical/${destinyDatasetId}`,
+        CopySource: `${config.upload.bucket}/raw_optical/${originDatasetId}/${engineDataset.opticalImage}`,
+        Key: engineDataset.opticalImage,
+      }).promise()
+
+      return engineDataset.opticalImage
+    }
+  },
+
+  addRoi: async(source, { datasetId, geoJson }, ctx: Context) => {
+    const typedJson : any = geoJson
+
+    try {
+      await ctx.entityManager.transaction(async txn => {
+        const ds = await getDatasetForEditing(txn, ctx.user, datasetId)
+        const resp = await txn.update(EngineDataset, ds.id, {
+          roi: typedJson,
+        })
+        logger.info(`ROI was added to '${datasetId}' dataset`)
+
+        return JSON.stringify(resp)
+      })
+    } catch (e) {
+      return JSON.stringify(e)
+    }
   },
 
   deleteOpticalImage: async(source, { datasetId }, ctx: Context) => {

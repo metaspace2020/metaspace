@@ -32,11 +32,13 @@ export default {
 
     const f = {
       compoundQuery: filter.compoundName,
+      termId: filter.term ? parseInt(filter.term, 10) : undefined,
       chemMod: noneToEmptyString(filter.chemMod),
       neutralLoss: noneToEmptyString(filter.neutralLoss),
       adduct: filter.adduct,
       annotationId: filter.annotationIds ? filter.annotationIds.join('|') : undefined,
       fdrLevel: filter.fdrLevel,
+      pValue: filter.pValue,
       colocalizedWith: filter.colocalizedWith,
       // Only include colocalizationAlgo if there is another filter that uses it. Otherwise the annotations list
       // refreshes unnecessarily when changing algorithm.
@@ -79,7 +81,7 @@ export default {
     const { group, project, submitter, datasetIds, polarity,
       organism, organismPart, condition, growthConditions,
       ionisationSource, analyzerType, maldiMatrix, metadataType,
-      compoundName, datasetOwner } = filter;
+      compoundName, datasetOwner, opticalImage } = filter;
     const level = getters.filterLevel;
     const isLogged = state.currentUser && state.currentUser.id
     const hasAnnotationMatching = level === 'dataset' && compoundName ? { compoundQuery: compoundName } : undefined;
@@ -92,6 +94,7 @@ export default {
       ids: datasetIds ? datasetIds.join("|") : null,
 
       organism,
+      opticalImage,
       organismPart,
       condition,
       growthConditions,

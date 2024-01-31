@@ -41,6 +41,7 @@ interface DatasetBrowserSpectrumChartProps {
   peakFilter: number
   normalization: number | undefined
   dataRange: any
+  annotatedLabel: string
 }
 
 interface DatasetBrowserSpectrumChartState {
@@ -68,6 +69,9 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
     isDataLoading: {
       type: Boolean,
       default: false,
+    },
+    annotatedLabel: {
+      type: String,
     },
     data: {
       type: Array,
@@ -108,6 +112,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
           },
         },
         toolbox: {
+          right: 20,
           feature: {
             myTool1: {
               show: true,
@@ -127,6 +132,13 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
                 handleZoomReset()
               },
             },
+            dataZoom: {
+              title: {
+                zoom: 'Zoom',
+                back: 'Zoom reset',
+              },
+              filterMode: 'none',
+            },
             myTool2: {
               show: true,
               title: 'Download data',
@@ -136,15 +148,9 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
                 emit('download')
               },
             },
-            dataZoom: {
-              title: {
-                zoom: 'Zoom',
-                back: 'Zoom reset',
-              },
-              filterMode: 'none',
-            },
             saveAsImage: {
               title: 'Download',
+              name: 'mass_spectrum',
             },
           },
         },
@@ -213,7 +219,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             name: 'Unannotated',
             type: 'bar',
             symbol: 'diamond',
-            sampling: 'lttb',
+            sampling: 'none',
             data: [],
             label: {
               show: true,
@@ -225,7 +231,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             },
             barWidth: 2,
             itemStyle: {
-              color: 'red',
+              color: '#DC3220',
             },
             markPoint: {
               symbol: 'circle',
@@ -241,7 +247,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
             type: 'bar',
             data: [],
             itemStyle: {
-              color: 'blue',
+              color: '#005AB5',
             },
           },
         ],
@@ -314,6 +320,11 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
 
       return (
         <div class='chart-holder'>
+          {
+            !(isLoading || isDataLoading)
+            && props.annotatedLabel
+            && <div class='annotated-legend'>{props.annotatedLabel}</div>
+          }
           {
             (isLoading || isDataLoading)
             && <div class='loader-holder'>

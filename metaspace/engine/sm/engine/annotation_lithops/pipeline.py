@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import json
 import logging
-from typing import List, Tuple, Optional, Dict
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from lithops.storage.utils import CloudObject
 
+from sm.engine.annotation.acq_geometry import make_acq_geometry_lithops
 from sm.engine.annotation.diagnostics import FdrDiagnosticBundle
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
+from sm.engine.annotation_lithops.run_enrichment import run_enrichment
 from sm.engine.annotation_lithops.annotate import process_centr_segments
 from sm.engine.annotation_lithops.build_moldb import InputMolDb, DbFDRData
 from sm.engine.annotation_lithops.cache import PipelineCacher, use_pipeline_cache
@@ -31,6 +34,7 @@ from sm.engine.config import SMConfig
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
 
+
 logger = logging.getLogger('annotation-pipeline')
 
 
@@ -50,6 +54,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
     results_dfs: Dict[int, pd.DataFrame]
     png_cobjs: List[CObj[List[Tuple[int, bytes]]]]
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         imzml_cobject: CloudObject,
@@ -57,6 +62,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         moldbs: List[InputMolDb],
         ds_config: DSConfig,
         executor: Executor = None,
+        ds_id: Union[str, None] = None,
         lithops_config=None,
         cache_key=None,
         use_db_cache=True,
@@ -69,6 +75,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.ibd_cobject = ibd_cobject
         self.moldbs = moldbs
         self.ds_config = ds_config
+        self.ds_id = ds_id
         self.isocalc_wrapper = IsocalcWrapper(ds_config)
 
         self.executor = executor or Executor(lithops_config)
@@ -85,10 +92,12 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.use_db_mutex = use_db_mutex
         self.ds_segm_size_mb = 128
 
-    def run_pipeline(
-        self, debug_validate=False, use_cache=True
-    ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]]]:
+        self.enrichment_data = None
+        self.ds_size_hash = None
 
+    def run_pipeline(
+        self, debug_validate=False, use_cache=True, perform_enrichment=False
+    ) -> Tuple[Dict[int, pd.DataFrame], List[CObj[List[Tuple[int, bytes]]]], Any]:
         # pylint: disable=unexpected-keyword-arg
         self.prepare_moldb(debug_validate=debug_validate)
 
@@ -104,7 +113,10 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.run_fdr(use_cache=use_cache)
         self.prepare_results(use_cache=use_cache)
 
-        return self.results_dfs, self.png_cobjs
+        if perform_enrichment:
+            self.run_enrichment(use_cache=use_cache)
+
+        return self.results_dfs, self.png_cobjs, self.enrichment_data
 
     def prepare_moldb(self, debug_validate=False):
         self.db_data_cobjs, self.peaks_cobjs = get_moldb_centroids(
@@ -124,8 +136,9 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
+            self.ds_size_hash,
         ) = load_ds(
-            self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, self.storage
+            self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, self.ds_id
         )
 
         self.is_intensive_dataset = len(self.ds_segms_cobjs) * self.ds_segm_size_mb > 5000
@@ -190,6 +203,26 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.fdrs,
             self.images_df,
             self.imzml_reader,
+        )
+
+    @use_pipeline_cache
+    def run_enrichment(self):
+        self.enrichment_data = run_enrichment(self.results_dfs)
+
+    def save_acq_geometry(self, ds):
+        """Stores acquisition geometry to DB.
+        Not part of run_pipeline because this is unwanted when running from a LocalAnnotationJob."""
+        dims = (self.imzml_reader.h, self.imzml_reader.w)
+        acq_geometry = make_acq_geometry_lithops(ds.metadata, dims, self.imzml_reader.n_spectra)
+        ds.save_acq_geometry(self._db, acq_geometry)
+
+    def store_ds_size_hash(self):
+        """Stores size and md5 hash of imzML/ibd files.
+        Not part of run_pipeline because this is unwanted when running from a LocalAnnotationJob."""
+        db = DB()
+        db.alter(
+            'UPDATE dataset SET size_hash = %s WHERE id = %s',
+            (json.dumps(self.ds_size_hash), self.ds_id),
         )
 
     def store_images_to_s3(self, ds_id: str):

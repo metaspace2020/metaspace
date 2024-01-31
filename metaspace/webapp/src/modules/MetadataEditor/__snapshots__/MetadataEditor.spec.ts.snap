@@ -49,6 +49,7 @@ Object {
   "isPublic": true,
   "name": "dataset.name",
   "neutralLosses": Array [],
+  "performEnrichment": false,
   "ppm": 3,
   "principalInvestigator": Object {
     "email": "dataset.principalInvestigator.email",
@@ -1010,9 +1011,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                             When comparing data between multiple datasets, it is recommended to process all datasets with the same
                             analysis version. Otherwise, select the latest version for best results.
                             <h4>Changes:</h4>
-                            <!---->
-                            <!---->
-                            <h5>v2 (ML-powered MSM):</h5>
+                            <h5>v2.20230517 (METASPACE-ML):</h5>
                             <ul>
                               <li>New metrics for evaluating annotations' mass accuracy.</li>
                               <li>New ML-powered model for annotation scoring.</li>
@@ -1026,14 +1025,13 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     <div class="el-form-item__content">
                       <mock-el-select>
                         <mock-el-option value="1" label="v1 (Original MSM)"></mock-el-option>
-                        <mock-el-option value="3" label="v2 (ML-powered MSM)"></mock-el-option>
+                        <mock-el-option value="3" label="v2.20230517 (METASPACE-ML)"></mock-el-option>
                       </mock-el-select>
                       <transition-stub name="el-zoom-in-top">
                         <!---->
                       </transition-stub>
                     </div>
                   </div>
-                  <!---->
                 </div>
               </div>
               <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
@@ -1057,7 +1055,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <!---->
                         <!---->
                         <div class="el-input el-input--medium">
-                          <!----><input type="text" autocomplete="off" max="50" min="1" class="el-input__inner" role="spinbutton" aria-valuemax="50" aria-valuemin="1" aria-valuenow="3" aria-disabled="false">
+                          <!----><input type="text" autocomplete="off" max="50" min="0.1" class="el-input__inner" role="spinbutton" aria-valuemax="50" aria-valuemin="0.1" aria-valuenow="3" aria-disabled="false">
                           <!---->
                           <!---->
                           <!---->
@@ -1072,6 +1070,39 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 </div>
                 <!---->
                 <!---->
+              </div>
+              <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium"><label class="el-form-item__label"><span class="field-label"><span>LION enrichment</span>
+                      <!---->
+                      <mock-el-popover trigger="hover" placement="right">
+                        <div slot-key="default">
+                          <div class="analysis-version-help">
+                            When performing <a target="_blank" href="http://www.lipidontology.com/">LION</a> enrichment, a lipid enrichment
+                            analysis will be performed based on LION.
+                            <h5>Available databases:</h5>
+                            <ul>
+                              <li>CoreMetabolome - v3.</li>
+                              <li>HMDB - v4.</li>
+                              <li>LipidMaps - 2017-12-12.</li>
+                              <li>SwissLipids - 2018-02-02.</li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div>
+                      </mock-el-popover>
+                      </span></label>
+                    <div class="el-form-item__content">
+                      <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input">
+                        <!----><span class="el-switch__core" style="width: 40px;"></span>
+                        <!---->
+                      </div>
+                      <transition-stub name="el-zoom-in-top">
+                        <!---->
+                      </transition-stub>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

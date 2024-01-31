@@ -1,12 +1,10 @@
 import io
 import logging
 import numpy as np
-import requests
 from PIL import Image
 
 from sm.engine import image_storage
 from sm.engine.dataset import Dataset
-
 
 SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
 UPD_DATASET_RAW_OPTICAL_IMAGE = (
@@ -49,7 +47,8 @@ class OpticalImageType:
 
 def _annotation_image_shape(db, ds):
     logger.debug(f'Querying annotation image shape for "{ds.id}" dataset')
-    ion_img_id = db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', params=(ds.id,))[0][0][0]
+    ion_img_ids = db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', params=(ds.id,))[0][0]
+    ion_img_id = next((item for item in ion_img_ids if item is not None), None)
     image_bytes = image_storage.get_image(image_storage.ISO, ds.id, ion_img_id)
     image = Image.open(io.BytesIO(image_bytes))
     result = image.size
@@ -179,19 +178,19 @@ def _add_thumbnail_optical_image(db, ds, dims, optical_img, transform):
     db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(img_thumb_id, img_thumb_url, ds.id))
 
 
-def add_optical_image(db, ds_id, url, transform, zoom_levels=(1, 2, 4, 8)):
+def add_optical_image(db, ds_id, raw_optical_img_id, transform, zoom_levels=(1, 2, 4, 8)):
     """Add optical image to dataset.
 
     Generates scaled and transformed versions of the provided optical image + creates the thumbnail
     """
+
     ds = Dataset.load(db, ds_id)
-    logger.info(f'Adding optical image {url} to "{ds.id}" dataset')
+    logger.info(f'Adding optical image {raw_optical_img_id} to "{ds.id}" dataset')
 
     dims = _annotation_image_shape(db, ds)
-    resp = requests.get(url)
-    optical_img = Image.open(io.BytesIO(resp.content))
+    image_bytes = image_storage.get_image(image_storage.RAW, ds_id, raw_optical_img_id)
+    optical_img = Image.open(io.BytesIO(image_bytes))
 
-    raw_optical_img_id = url.split('/')[-1]
     _add_raw_optical_image(db, ds, raw_optical_img_id, transform)
     _add_zoom_optical_images(db, ds, dims, optical_img, transform, zoom_levels)
     _add_thumbnail_optical_image(db, ds, dims, optical_img, transform)
@@ -204,7 +203,7 @@ def del_optical_image(db, ds_id):
     logger.info(f'Deleting optical image of "{ds.id}" dataset')
     (raw_img_id,) = db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
     if raw_img_id:
-        image_storage.delete_image(image_storage.OPTICAL, ds_id, raw_img_id)
+        image_storage.delete_image(image_storage.RAW, ds_id, raw_img_id)
     for img_id in db.select_onecol(SEL_OPTICAL_IMAGE, params=(ds.id,)):
         image_storage.delete_image(image_storage.OPTICAL, ds_id, img_id)
     (thumbnail_img_id,) = db.select_one(SEL_OPTICAL_IMAGE_THUMBNAIL, params=(ds.id,))

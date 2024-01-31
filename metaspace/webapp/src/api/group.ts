@@ -198,3 +198,35 @@ export const getGroupDatabasesQuery =
       }
     }
   }`
+
+export const getUserGroupsQuery =
+  gql`query GetUserGroupsQuery($query: String!, $useRole: Boolean) {
+    allGroups(query: $query, limit: 1000, useRole: $useRole) {
+      ...ViewGroupFragment
+    }
+  }${ViewGroupFragment}`
+
+export const getDetectabilitySourcesQuery =
+  gql`query GetDetectabilitySourcesQuery {
+    allSources {
+      source
+    }
+  }`
+
+export const countGroupDatasets =
+  gql`query ($groupId: ID!) { countDatasets(filter: { group: $groupId }) }`
+
+export const countGroupsQuery =
+gql`query countGroups {
+  countGroups
+}`
+
+export const countPublicationsQuery =
+gql`query countPublications {
+  countPublications
+}`
+
+export const countReviewsQuery =
+gql`query countReviews {
+  countReviews
+}`

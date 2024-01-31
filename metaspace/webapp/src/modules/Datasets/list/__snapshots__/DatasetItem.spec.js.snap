@@ -81,7 +81,7 @@ exports[`DatasetItem should match snapshot 1`] = `
           slot-key="reference"
         >
           <button
-            class="button-reset flex w-6 h-6"
+            class="button-reset flex  w-6 h-6"
           >
             <svg
               class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"
@@ -247,17 +247,6 @@ exports[`DatasetItem should match snapshot 1`] = `
     </div>
     <div>
       <i
-        class="el-icon-edit"
-      />
-      <a
-        class=""
-        href="/datasets/edit/mockdataset"
-      >
-        Edit metadata
-      </a>
-    </div>
-    <div>
-      <i
         class="el-icon-data-analysis"
       />
       <a
@@ -268,6 +257,17 @@ exports[`DatasetItem should match snapshot 1`] = `
         <span>
           Dataset overview
         </span>
+      </a>
+    </div>
+    <div>
+      <i
+        class="el-icon-edit"
+      />
+      <a
+        class=""
+        href="/datasets/edit/mockdataset"
+      >
+        Edit
       </a>
     </div>
   </div>

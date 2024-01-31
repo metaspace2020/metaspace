@@ -357,6 +357,10 @@ nginx_servers:
         params:
           - proxy_pass http://isotope_image_server/database_upload;
           - client_max_body_size 5M;
+      - path: /raw_opt_upload
+        params:
+          - proxy_pass http://isotope_image_server/raw_opt_upload;
+          - client_max_body_size 50M;
       - path: /graphql
         params:
           - proxy_pass http://graphql_server/graphql;

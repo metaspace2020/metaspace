@@ -7,6 +7,7 @@ type Group {
   hasPendingRequest: Boolean  # null if current user is not allowed to see
   numMembers: Int!
   members: [UserGroup!]    # null if current user is not allowed to see
+  sources: [GroupDetectability!]
   groupDescriptionAsHtml: String
   molecularDatabases: [MolecularDB!]
   numDatabases: Int!
@@ -38,6 +39,7 @@ type UserGroup {
   numDatasets: Int!
 }
 
+
 enum UserGroupRole {
   INVITED    # User was invited into the group but hasn't confirmed it yet
   PENDING    # User requested to join the group but the PI hasn't confirmed it yet
@@ -45,10 +47,28 @@ enum UserGroupRole {
   GROUP_ADMIN    # Group administrator
 }
 
+# Many-to-many relationship between Group and Detectability sources
+type GroupDetectability {
+  group: Group!
+  source: UserGroupSource!
+}
+
+enum UserGroupSource {
+  EMBL
+  ALL
+  INTERLAB
+  ALLINTERLAB
+  ALLEMBL
+}
+
 type Query {
   group(groupId: ID!): Group
   groupByUrlSlug(urlSlug: String!): Group
-  allGroups(query: String, limit: Int = 10): [Group!]!
+  allGroups(query: String, limit: Int = 10, useRole: Boolean = False): [Group!]!
+  allSources: [GroupDetectability!]
+  countGroups: Int!
+  countPublications: Int!
+  countReviews: Int!
 
   groupUrlSlugIsValid(urlSlug: String!, existingGroupId: ID): Boolean! # Throws error if invalid, consistent with updateGroup
 }

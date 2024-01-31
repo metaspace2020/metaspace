@@ -6,10 +6,20 @@
     placeholder="Enter keywords"
     @input="onChange"
   >
-    <i
-      slot="prepend"
-      class="el-icon-search -mx-1"
-    />
+    <div slot="prepend">
+      <el-tooltip placement="bottom">
+        <span slot="content">
+          You can use
+          <a
+            href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet"
+            target="_blank"
+          >regular expression syntax</a> when searching for the dataset name.
+        </span>
+        <i
+          class="el-icon-search -mx-1"
+        />
+      </el-tooltip>
+    </div>
   </el-input>
 </template>
 

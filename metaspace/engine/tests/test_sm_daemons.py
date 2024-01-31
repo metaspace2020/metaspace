@@ -139,15 +139,18 @@ def test_sm_daemons(
     get_ion_images_for_analysis_mock,
     # fixtures
     test_db,
-    es_dsl_search,
     clean_isotope_storage,
     reset_queues,
     metadata,
     ds_config,
     queue_pub,
     local_sm_config,
+    sm_config,
+    sm_index,
 ):
     moldb = init_moldb()
+    dataset_index = sm_config['elasticsearch']['dataset_index']
+    annotation_index = sm_config['elasticsearch']['annotation_index']
 
     formula_metrics_df = pd.DataFrame(
         {
@@ -253,9 +256,9 @@ def test_sm_daemons(
 
     time.sleep(1)  # Waiting for ES
     # ES asserts
-    ds_docs = es_dsl_search.query('term', _type='dataset').execute().to_dict()['hits']['hits']
+    ds_docs = es._es.search(index=dataset_index)['hits']['hits']
     assert 1 == len(ds_docs)
-    ann_docs = es_dsl_search.query('term', _type='annotation').execute().to_dict()['hits']['hits']
+    ann_docs = es._es.search(index=annotation_index)['hits']['hits']
     assert len(ann_docs) == len(rows)
     for doc in ann_docs:
         assert doc['_id'].startswith(ds_id)
@@ -267,13 +270,13 @@ def test_sm_daemons_annot_fails(
     MSMSearchMock,
     post_images_to_image_store_mock,
     test_db,
-    es_dsl_search,
     clean_isotope_storage,
     reset_queues,
     metadata,
     ds_config,
     queue_pub,
     local_sm_config,
+    sm_index,
 ):
     moldb = init_moldb()
 
@@ -312,13 +315,13 @@ def test_sm_daemon_es_export_fails(
     MSMSearchMock,
     post_images_to_image_store_mock,
     test_db,
-    es_dsl_search,
     clean_isotope_storage,
     reset_queues,
     metadata,
     ds_config,
     queue_pub,
     local_sm_config,
+    sm_index,
 ):
     moldb = init_moldb()
 

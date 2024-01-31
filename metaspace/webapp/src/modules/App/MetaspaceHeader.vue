@@ -5,7 +5,7 @@
   >
     <div class="fixed top-0 left-0 right-0">
       <div
-        class="transition-colors duration-300 ease-in-out h-16 flex items-center justify-between"
+        class="non-responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-center justify-between"
         :class="{ 'bg-primary': scrolled === false, 'bg-primary-alpha': scrolled === true }"
       >
         <div class="header-items">
@@ -48,21 +48,18 @@
           </header-link>
 
           <header-link
-            v-if="currentUser && currentUser.primaryGroup"
-            :to="primaryGroupHref"
+            to="/groups"
           >
-            <div class="limit-width">
-              {{ currentUser.primaryGroup.group.shortName }}
-            </div>
+            Groups
           </header-link>
         </div>
 
         <div class="header-items">
           <header-link
             v-if="showSpotting"
-            to="/spotting"
+            to="/detectability"
           >
-            Spotting
+            Detectability
           </header-link>
           <header-link
             to="/help"
@@ -148,6 +145,122 @@
           </div>
         </div>
       </div>
+
+      <div
+        class="responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-start justify-center
+        bg-primary flex-wrap h-full"
+      >
+        <div
+          class="header-items flex-row w-full justify-between"
+          style="height: 64px"
+        >
+          <router-link
+            to="/"
+            class="flex pl-3 pr-4"
+          >
+            <img
+              src="../../assets/logo.png"
+              alt="Metaspace"
+              title="Metaspace"
+              @click="showResponsiveMenu(false)"
+            >
+          </router-link>
+          <button
+            slot="reference"
+            class=" button-reset flex h-12 w-12 mr-3"
+            @click="showResponsiveMenu(!responsiveMenuOpen)"
+          >
+            <menu-open
+              v-if="!responsiveMenuOpen"
+              class="h-full w-full sm-menu-icon"
+            />
+            <menu-close
+              v-else
+              class="h-full w-full sm-menu-icon"
+            />
+          </button>
+        </div>
+
+        <div
+          v-if="responsiveMenuOpen"
+          class="header-items flex-col"
+          @click="showResponsiveMenu(false)"
+        >
+          <header-link
+            id="upload-link"
+            :to="uploadHref"
+          >
+            Upload
+          </header-link>
+
+          <header-link
+            id="annotations-link"
+            :to="annotationsHref"
+          >
+            Annotations
+          </header-link>
+
+          <header-link
+            id="datasets-link"
+            :to="datasetsHref"
+          >
+            Datasets
+          </header-link>
+
+          <header-link
+            to="/projects"
+          >
+            Projects
+          </header-link>
+
+          <header-link
+            to="/groups"
+          >
+            Groups
+          </header-link>
+          <header-link
+            v-if="showSpotting"
+            to="/detectability"
+          >
+            Detectability
+          </header-link>
+          <header-link
+            to="/help"
+          >
+            Help
+          </header-link>
+          <header-button
+            v-if="loadingUser === 0 && currentUser == null"
+            class="w-full text-center"
+            @click="showCreateAccount"
+          >
+            Create account
+          </header-button>
+
+          <header-button
+            v-if="loadingUser === 0 && currentUser == null"
+            class="w-full text-center"
+            @click="showSignIn"
+          >
+            Sign in
+          </header-button>
+          <header-link
+            v-if="currentUser != null"
+            to="/user/me"
+            class="w-full text-center"
+          >
+            My account
+          </header-link>
+          <header-button
+            v-if="currentUser != null"
+            class="w-full text-center"
+            @click="logout"
+          >
+            Sign out
+          </header-button>
+        </div>
+      </div>
+
       <el-row
         v-if="healthMessage"
         class="transition-colors duration-300 ease-in-out text-white"
@@ -166,6 +279,9 @@
 </template>
 
 <script>
+import MenuOpen from '../../assets/inline/refactoring-ui/icon-menu.svg'
+import MenuClose from '../../assets/inline/refactoring-ui/icon-close.svg'
+
 import gql from 'graphql-tag'
 import { signOut } from '../../api/auth'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
@@ -186,11 +302,13 @@ const MetaspaceHeader = {
     NotificationIcon,
     HeaderLink,
     HeaderButton,
+    MenuOpen,
+    MenuClose,
   },
 
   computed: {
     showSpotting() {
-      return config.features.spotting
+      return config.features.detectability
     },
 
     uploadHref() {
@@ -273,6 +391,7 @@ const MetaspaceHeader = {
       systemHealth: null,
       openSubmenu: null,
       scrolled: false,
+      responsiveMenuOpen: false,
     }
   },
 
@@ -402,6 +521,10 @@ const MetaspaceHeader = {
       this.$store.commit('account/showDialog', 'createAccount')
     },
 
+    showResponsiveMenu(value = false) {
+      this.responsiveMenuOpen = value
+    },
+
     showSignIn() {
       this.$store.commit('account/showDialog', 'signIn')
     },
@@ -463,6 +586,38 @@ export default MetaspaceHeader
     .el-alert.is-light {
       color: inherit;
       background: inherit;
+    }
+
+    .sm-menu-icon .primary,
+    .sm-menu-icon .secondary {
+      stroke-width: 1px;
+      fill: #fff;
+    }
+
+    .responsive-menu{
+      display: none;
+
+      .header-items {
+        width: 100%;
+
+        a{
+          width: 100%;
+          text-align: center;
+        }
+      }
+    }
+
+    .non-responsive-menu {
+      display: flex;
+    }
+
+    @media screen and (max-width: 768px) { // md
+      .responsive-menu{
+        display: flex;
+      }
+      .non-responsive-menu{
+        display: none;
+      }
     }
   }
 </style>

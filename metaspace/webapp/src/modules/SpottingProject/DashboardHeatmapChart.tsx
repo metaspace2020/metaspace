@@ -131,8 +131,9 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
-            return 'Fraction detected: ' + params.value[4].toFixed(2) + ' ' + params.data?.label?.y + ' in '
-              + params.data?.label?.x
+            const value = typeof params.value[4] === 'number' ? params.value[4] : params.value[3]
+            return (value === 'number' ? (value || 0).toFixed(2) : value) + ' '
+              + (params.data?.label?.y || '').replace(/-agg-/g, ' ') + ' in ' + (params.data?.label?.x || '')
           },
         },
         grid: {
@@ -152,6 +153,12 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
             show: true,
             interval: 0,
             rotate: 30,
+            formatter: function(value :string) {
+              return value?.length > 25 ? value.substring(0, 25) + '...' : value
+            },
+          },
+          axisTick: {
+            show: false,
           },
           position: 'top',
         },
@@ -161,10 +168,24 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
           splitArea: {
             show: true,
           },
+          axisTick: {
+            show: false,
+          },
           axisLabel: {
             show: true,
             interval: 0,
-            height: 30,
+            verticalAlign: 'middle',
+            fontFamily: 'monospace',
+            rich: {
+              b: {
+                fontFamily: 'monospace',
+                fontWeight: 'bold',
+              },
+              h: {
+                fontFamily: 'monospace',
+                color: '#fff',
+              },
+            },
           },
         },
         visualMap: {
@@ -179,6 +200,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
           feature: {
             saveAsImage: {
               title: ' ',
+              name: 'detectability',
             },
           },
         },
@@ -189,9 +211,10 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
           data: [],
           label: {
             normal: {
+              fontSize: 8,
               show: true,
               formatter: (param: any) => {
-                return param.data?.label?.molecule ? '' : 'Not detected'
+                return param.data?.label?.molecule ? '' : 'N/A'
               },
             },
           },
@@ -246,13 +269,69 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       }
 
       auxOptions.xAxis.data = xAxisData.value
+
+      if (auxOptions.xAxis.data.length > 30) {
+        auxOptions.xAxis.axisLabel.rotate = 90
+        auxOptions.series[0].label.normal.fontSize = 6
+      } else {
+        auxOptions.xAxis.axisLabel.rotate = 30
+        auxOptions.series[0].label.normal.fontSize = 10
+      }
+
+      // add no Neutral label
+      if (props.xOption === 'nL') {
+        const nullIdx = auxOptions.xAxis.data.findIndex((label: string) => label === '')
+        if (nullIdx !== -1) {
+          auxOptions.xAxis.data[nullIdx] = 'no neutral loss'
+        }
+      }
+
+      let maxLength = 0
       auxOptions.yAxis.data = yAxisData.value
-        .map((label: string) => label.replace(/.+-agg-\s(.+)/, '$1'))
+        .map((label: string, index: number) => {
+          const re = /(.+)\s-agg-\s(.+)/
+          const cat = label.replace(re, '$1')
+          const value = label.replace(re, '$2')
+
+          maxLength = (value.length + cat.length) > maxLength ? (value.length + cat.length) : maxLength
+
+          return globalCategories[cat] === index ? label : label.replace(/.+-agg-\s(.+)/, '$1')
+        })
+
+      auxOptions.yAxis.axisLabel.formatter = function(label: any) {
+        const re = /(.+)\s-agg-\s(.+)/
+        const found = label.match(re)
+        const cat = label.replace(re, '$1')
+        const value = label.replace(re, '$2')
+        const repeat = maxLength - cat.length - value.length
+        return found ? `{b|${cat}}{h|${' '.repeat(repeat > 0 ? repeat : 0)}}${value}`
+          : value
+      }
+
+      // add no Neutral label
+      if (props.yOption === 'nL') {
+        const nullIdx = auxOptions.yAxis.data.findIndex((label: string) => label === '')
+        if (nullIdx !== -1) {
+          auxOptions.yAxis.data[nullIdx] = 'no neutral loss'
+        }
+      }
+
       auxOptions.series[0].data = chartData.value
-      auxOptions.series[0].markLine.data = markData
+      // auxOptions.series[0].markLine.data = markData
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }
+
+      // reset visualmap range on data update
+      const chartRef : any = spectrumChart.value
+      setTimeout(() => {
+        if (chartRef && chartRef.chart) {
+          chartRef.chart.dispatchAction({
+            type: 'selectDataRange',
+            selected: [0, visualMap.value?.max],
+          })
+        }
+      }, 0)
 
       return state.chartOptions
     })
@@ -293,7 +372,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       if (item.targetType === 'axisName') {
         state.scaleIntensity = !state.scaleIntensity
       } else {
-        emit('itemSelected', item.data.mz)
+        emit('itemSelected', item)
       }
     }
 

@@ -47,6 +47,7 @@
         />
         <single-ion-image-controls
           v-else-if="!isLoading"
+          id="intensity-controller"
           key="single"
           :is-normalized="showNormalizedIntensity"
           v-bind="singleIonImageControls"
@@ -103,8 +104,30 @@
     </div>
     <image-saver
       class="absolute top-0 left-0 mt-3 ml-3"
+      :file-name="imageFileName"
       :dom-node="imageArea"
+      :label="imageTitle"
     />
+    <el-popover
+      v-if="annotation.isMono === false"
+      trigger="hover"
+      class="popover"
+      popper-class="w-full max-w-measure-1 text-left text-sm leading-5"
+    >
+      <div
+        slot="reference"
+        class="alert-icon-wrapper"
+      >
+        <div
+          class="alert-icon"
+        />
+      </div>
+      The METASPACE annotation engine organizes all the isotopic peaks and selects the top N = 4 among them.
+      From these top 4 peaks, it chooses the one with the lowest m/z value. The displayed image corresponds
+      to a selected m/z value that is not the monoisotopic m/z. <br /> <br />
+      <b>Monoisotopic m/z:</b> {{ annotation.mz.toFixed(6) }} <br />
+      <b>Displayed m/z:</b> {{ annotation.centroidMz.toFixed(6) }} <br />
+    </el-popover>
   </div>
   <div
     v-else
@@ -117,8 +140,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, reactive, ref, toRefs, onMounted, watch } from '@vue/composition-api'
-import { Image } from 'upng-js'
+import { defineComponent, computed, reactive, ref, onMounted } from '@vue/composition-api'
 import resize from 'vue-resize-directive'
 
 import IonImageViewer from '../../components/IonImageViewer'
@@ -219,6 +241,15 @@ const ImageViewer = defineComponent<Props>({
       })
     })
 
+    const imageFileName = computed(() => {
+      return `${props.annotation?.ion}_${props.annotation?.dataset?.id}`
+        .replace(/\./g, '_')
+    })
+
+    const imageTitle = computed(() => {
+      return `${props.annotation?.dataset?.name} - ${props.annotation?.ion}`
+    })
+
     const isIE = computed(() => {
       // IE 10 and IE 11
       return /Trident\/|MSIE/.test(window.navigator.userAgent)
@@ -226,15 +257,17 @@ const ImageViewer = defineComponent<Props>({
 
     const roiInfo = computed(() => {
       if (
-        props.annotation && props.annotation.dataset?.id && root.$store.state.roiInfo
-        && Object.keys(root.$store.state.roiInfo).includes(props.annotation.dataset.id)) {
-        return root.$store.state.roiInfo[props.annotation.dataset.id] || []
+        props.annotation && props.annotation?.dataset?.id && root.$store.state.roiInfo
+        && Object.keys(root.$store.state.roiInfo).includes(props.annotation?.dataset?.id)) {
+        return root.$store.state.roiInfo[props.annotation?.dataset?.id] || []
       }
       return []
     })
 
     return {
       imageArea,
+      imageFileName,
+      imageTitle,
       dimensions,
       ionImageDimensions,
       imageFit,
@@ -310,5 +343,25 @@ export default ImageViewer
   .ion-slider-wrapper{
     min-width: max-content;
   }
+}
+
+.alert-icon-wrapper {
+  width: 30px;
+  height: 30px;
+  position: absolute;
+  top: 0;
+  left: 3rem;
+  background: #F1F5F8;
+  border: 1px solid #F1F5F8;
+  border-radius: 100%;
+  text-align: center;
+  @apply mt-3 ml-1;
+}
+.alert-icon {
+  width: 20px;
+  height: 20px;
+  background-image: url('../../assets/danger.svg');
+  display: inline-block;
+  margin-top: 3px;
 }
 </style>

@@ -14,6 +14,7 @@ import { Ion } from '../annotation/model'
 import { MolecularDB } from '../moldb/model'
 import { Dataset } from '../dataset/model'
 import { Moment } from 'moment'
+import { EnrichmentBootstrap } from '../enrichmentdb/model'
 
 export type DatasetStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
 
@@ -28,6 +29,8 @@ export class EngineDataset {
   inputPath: string | null;
   @Column({ type: 'json', nullable: true })
   metadata: any;
+  @Column({ type: 'json', nullable: true })
+  roi: any;
   @Column({ type: 'json', nullable: true })
   config: any;
   @Column({ type: 'timestamp without time zone', nullable: true, transformer: new MomentValueTransformer() })
@@ -54,6 +57,8 @@ export class EngineDataset {
   ionThumbnail: string | null;
   @Column({ type: 'text', nullable: true })
   ionThumbnailUrl: string | null;
+  @Column({ type: 'json', nullable: true })
+  sizeHash: any;
 
   // sm-engine and sm-graphql create & manage the public.dataset (EngineDataset) and graphql.dataset (Dataset) tables
   // independently, so this relationship doesn't enforce an FK.
@@ -72,6 +77,9 @@ export class EngineDataset {
 
   @OneToMany(() => DatasetDiagnostic, datasetDiagnostic => datasetDiagnostic.engineDataset)
   datasetDiagnostics: DatasetDiagnostic[];
+
+  @OneToMany(() => EnrichmentBootstrap, enrichmentBootstrap => enrichmentBootstrap.engineDataset)
+  enrichmentBootstrap: EnrichmentBootstrap[];
 }
 
 @Entity({ schema: 'public' })

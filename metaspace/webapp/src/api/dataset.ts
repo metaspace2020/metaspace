@@ -19,6 +19,7 @@ export interface DatasetAnnotationCount {
 }
 
 export interface DatasetDetailItem {
+  acquisitionGeometry: string | null;
   id: string;
   name: string;
   description: string | null;
@@ -99,6 +100,8 @@ export const datasetDetailItemFragment =
     condition
     growthConditions
     metadataJson
+    acquisitionGeometry
+    sizeHash
     configJson
     isPublic
     databases {
@@ -184,6 +187,14 @@ export const datasetListItemsQuery =
     }
   }`
 
+export const getRoisQuery =
+gql`query ($datasetId: String!) {
+  dataset(id: $datasetId) {
+    id
+    roiJson
+  }
+}`
+
 export const datasetListItemsWithDiagnosticsQuery =
   gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $limit: Int = 10000) {
     allDatasets(offset: 0, limit: $limit, filter: $dFilter, simpleQuery: $query) {
@@ -241,13 +252,14 @@ export const rawOpticalImageQuery =
     gql`query Q($ds_id: String!) {
     rawOpticalImage(datasetId: $ds_id) {
       url
+      uuid
       transform
     }
   }`
 
 export const createDatasetQuery =
-  gql`mutation ($input: DatasetCreateInput!, $useLithops: Boolean) {
-      createDataset(input: $input, priority: 1, useLithops: $useLithops)
+  gql`mutation ($input: DatasetCreateInput!, $useLithops: Boolean, $performEnrichment: Boolean) {
+      createDataset(input: $input, priority: 1, useLithops: $useLithops, performEnrichment: $performEnrichment)
   }`
 
 export const deleteDatasetQuery =
@@ -256,8 +268,8 @@ export const deleteDatasetQuery =
   }`
 
 export const reprocessDatasetQuery =
-  gql`mutation ($id: String!, $useLithops: Boolean) {
-    reprocessDataset(id: $id, useLithops: $useLithops)
+  gql`mutation ($id: String!, $useLithops: Boolean, $performEnrichment: Boolean) {
+    reprocessDataset(id: $id, useLithops: $useLithops, performEnrichment: $performEnrichment)
   }`
 
 export const addOpticalImageQuery =
@@ -265,6 +277,11 @@ export const addOpticalImageQuery =
                 $datasetId: String!, $transform: [[Float]]!) {
     addOpticalImage(input: {datasetId: $datasetId,
                             imageUrl: $imageUrl, transform: $transform})
+  }`
+
+export const addRoiMutation =
+  gql`mutation ($datasetId: String!, $geoJson: GeoJson!) {
+    addRoi(datasetId: $datasetId, geoJson: $geoJson)
   }`
 
 export const deleteOpticalImageQuery =
@@ -403,9 +420,71 @@ export interface GetDatabaseStatusQuery {
     status: GqlJobStatus | null
   }
 }
+
 export const getDatasetStatusQuery =
   gql`query getDatasetStatusQuery($id: String!) {
     dataset(id: $id) { id status }
+  }`
+
+export const getDatasetEnrichmentQuery =
+  gql`query getDatasetEnrichmentQuery($id: String!, $dbId: Int = 3, $fdr: Float = 0.5, $offSample: Boolean,
+    $pValue: Float) {
+    lipidEnrichment(datasetId: $id, molDbId: $dbId, fdr: $fdr, offSample: $offSample, pValue: $pValue) {
+      id
+      termId
+      name
+      n
+      observed
+      expected
+      median
+      std
+      pValue
+      qValue
+            annotations {
+        id
+        sumFormula
+        adduct
+        ion
+        ionFormula
+        database
+        msmScore
+        rhoSpatial
+        rhoSpectral
+        rhoChaos
+        fdrLevel
+        mz
+        offSample
+        offSampleProb
+        databaseDetails {
+          id
+        }
+        isotopeImages {
+          mz
+          url
+          minIntensity
+          maxIntensity
+          totalIntensity
+        }
+        isomers {
+          ion
+        }
+        isobars {
+          ion
+          ionFormula
+          peakNs
+          shouldWarn
+        }
+        possibleCompounds {
+          name
+          imageURL
+          information {
+            database
+            url
+            databaseId
+          }
+        }
+      }
+    }
   }`
 
 export const checkIfHasBrowserFiles =

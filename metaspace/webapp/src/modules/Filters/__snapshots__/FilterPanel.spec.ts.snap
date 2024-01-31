@@ -4,9 +4,20 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
 <div class="filter-panel">
   <mock-el-select placeholder="Add filter" class="filter-select">
     <mock-el-option value="offSample" label="Show/hide off-sample annotations"></mock-el-option>
+    <mock-el-option value="molClass" label="Select class"></mock-el-option>
   </mock-el-select>
   <div class="tf-outer w-auto el-input el-input-group el-input-group--prepend" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
-    <div class="el-input-group__prepend"><i class="el-icon-search -mx-1"></i></div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
+    <div class="el-input-group__prepend">
+      <div>
+        <mock-el-tooltip placement="bottom">
+          <div slot-key="content"><span>
+        You can use
+        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" target="_blank">regular expression syntax</a> when searching for the dataset name.
+      </span></div>
+          <div slot-key="default"> <i class="el-icon-search -mx-1"></i></div>
+        </mock-el-tooltip>
+      </div>
+    </div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
     <!---->
     <!---->
     <!---->
@@ -100,8 +111,8 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       <div slot-key="default">
         <mock-el-select placeholder="Start typing name" remote="" filterable="" clearable="true" remote-method="function () { [native code] }" loading-text="Loading matching entries..." no-match-text="No matches" multiple-limit="10" value="0123">
           <mock-el-option value="0123" label="group.label"></mock-el-option>
-          <mock-el-option label="currentUser.groups.0.group.label" value="currentUser.groups.0.group.value"></mock-el-option>
-          <mock-el-option label="currentUser.groups.1.group.label" value="currentUser.groups.1.group.value"></mock-el-option>
+          <mock-el-option label="options.0.label" value="options.0.value"></mock-el-option>
+          <mock-el-option label="options.1.label" value="options.1.value"></mock-el-option>
         </mock-el-select>
       </div>
       <div slot-key="reference">
@@ -480,6 +491,7 @@ exports[`FilterPanel should match snapshot (database without dataset) 1`] = `
     <mock-el-option value="minMSM" label="Set minimum MSM score"></mock-el-option>
     <mock-el-option value="simpleQuery" label="Search anything"></mock-el-option>
     <mock-el-option value="metadataType" label="Select data type"></mock-el-option>
+    <mock-el-option value="molClass" label="Select class"></mock-el-option>
   </mock-el-select>
   <div class="tf-outer border-gray-300 border border-solid text-sm pr-3" data-test-key="database" filter-key="database" name="Database" options="">
     <div class="tf-name bg-gray-100 text-gray-700 tracking-tight px-3 border-0 border-r border-solid border-gray-300">
@@ -545,6 +557,7 @@ exports[`FilterPanel should match snapshot (no filters) 1`] = `
     <mock-el-option value="minMSM" label="Set minimum MSM score"></mock-el-option>
     <mock-el-option value="simpleQuery" label="Search anything"></mock-el-option>
     <mock-el-option value="metadataType" label="Select data type"></mock-el-option>
+    <mock-el-option value="molClass" label="Select class"></mock-el-option>
   </mock-el-select>
 </div>
 `;

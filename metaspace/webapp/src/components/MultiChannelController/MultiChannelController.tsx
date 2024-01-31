@@ -17,6 +17,7 @@ interface MultiChannelControllerProps {
   menuItems: any[],
   activeLayer: boolean,
   showClippingNotice: boolean,
+  isNormalized: boolean,
   mode: string
 }
 
@@ -29,6 +30,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
   props: {
     menuItems: { type: Array, default: () => [] },
     activeLayer: { type: Boolean, default: false },
+    isNormalized: { type: Boolean, default: false },
     showClippingNotice: { type: Boolean, default: false },
     mode: { type: String, default: 'MULTI' },
   },
@@ -116,6 +118,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       return (
         <div class="relative">
           <div
+            id="intensity-controller"
             class={'sm-menu-items flex flex-col justify-center p-2 relative'}
             style={{
               border: props.mode === 'MULTI' ? '' : 'none',
@@ -209,6 +212,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                     />
                     <ClippingNotice
                       type="hotspot-removal"
+                      isNormalized={props.isNormalized}
                       intensity={item.intensity.value}
                     />
                   </Popover>

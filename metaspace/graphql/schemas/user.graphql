@@ -20,6 +20,8 @@ type Query {
   currentUser: User
   user(userId: ID!): User
   allUsers(query: String=""): [User!]  # For admins
+  countUsers: Int!
+
 }
 
 type Mutation {

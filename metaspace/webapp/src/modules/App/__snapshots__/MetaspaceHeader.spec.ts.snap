@@ -3,7 +3,7 @@
 exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
 <div class="sm-header h-24">
   <div class="fixed top-0 left-0 right-0">
-    <div class="transition-colors duration-300 ease-in-out h-16 flex items-center justify-between bg-primary">
+    <div class="non-responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-center justify-between bg-primary">
       <div class="header-items"><a href="/" class="flex pl-3 pr-4 router-link-exact-active router-link-active"><img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"></a> <a href="/upload" class="
   mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
@@ -36,19 +36,24 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
   border border-solid border-transparent
 ">
           Projects
-        </a> <a href="/group/456" class="
+        </a> <a href="/groups" class="
   mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
   border border-solid border-transparent
 ">
-          <div class="limit-width">
-            currentUser.primaryGroup.group.shortName
-          </div>
+          Groups
         </a></div>
-      <div class="header-items">
-        <!----> <a href="/help" class="
+      <div class="header-items"><a href="/detectability" class="
+  mx-1 px-3 py-2 rounded-md no-underline
+  text-sm font-medium text-white lg:tracking-wide
+  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  transition-colors duration-150 ease-in-out
+  border border-solid border-transparent
+">
+          Detectability
+        </a> <a href="/help" class="
   mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
@@ -78,6 +83,11 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
         </div>
       </div>
     </div>
+    <div class="responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-start justify-center
+      bg-primary flex-wrap h-full">
+      <div class="header-items flex-row w-full justify-between" style="height: 64px;"><a href="/" class="flex pl-3 pr-4 router-link-exact-active router-link-active"><img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"></a> <button slot="reference" class=" button-reset flex h-12 w-12 mr-3"><svg data-icon="icon-menu" class="h-full w-full sm-menu-icon"></svg></button></div>
+      <!---->
+    </div>
     <div class="transition-colors duration-300 ease-in-out text-white el-row bg-blue-700">
       <transition-stub name="el-alert-fade" class="h-8 rounded-none justify-center z-0">
         <div role="alert" class="el-alert el-alert--info is-light"><i class="el-alert__icon el-icon-info"></i>
@@ -94,7 +104,7 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
 exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
 <div class="sm-header h-24">
   <div class="fixed top-0 left-0 right-0">
-    <div class="transition-colors duration-300 ease-in-out h-16 flex items-center justify-between bg-primary">
+    <div class="non-responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-center justify-between bg-primary">
       <div class="header-items"><a href="/" class="flex pl-3 pr-4 router-link-exact-active router-link-active"><img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"></a> <a href="/upload" class="
   mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
@@ -127,11 +137,24 @@ exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
   border border-solid border-transparent
 ">
           Projects
-        </a>
-        <!---->
-      </div>
-      <div class="header-items">
-        <!----> <a href="/help" class="
+        </a> <a href="/groups" class="
+  mx-1 px-3 py-2 rounded-md no-underline
+  text-sm font-medium text-white lg:tracking-wide
+  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  transition-colors duration-150 ease-in-out
+  border border-solid border-transparent
+">
+          Groups
+        </a></div>
+      <div class="header-items"><a href="/detectability" class="
+  mx-1 px-3 py-2 rounded-md no-underline
+  text-sm font-medium text-white lg:tracking-wide
+  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  transition-colors duration-150 ease-in-out
+  border border-solid border-transparent
+">
+          Detectability
+        </a> <a href="/help" class="
   mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
@@ -159,6 +182,11 @@ exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
           </button></div>
         <!---->
       </div>
+    </div>
+    <div class="responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-start justify-center
+      bg-primary flex-wrap h-full">
+      <div class="header-items flex-row w-full justify-between" style="height: 64px;"><a href="/" class="flex pl-3 pr-4 router-link-exact-active router-link-active"><img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"></a> <button slot="reference" class=" button-reset flex h-12 w-12 mr-3"><svg data-icon="icon-menu" class="h-full w-full sm-menu-icon"></svg></button></div>
+      <!---->
     </div>
     <div class="transition-colors duration-300 ease-in-out text-white el-row bg-blue-700">
       <transition-stub name="el-alert-fade" class="h-8 rounded-none justify-center z-0">

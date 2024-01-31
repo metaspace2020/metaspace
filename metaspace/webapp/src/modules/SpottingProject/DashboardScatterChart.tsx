@@ -21,8 +21,10 @@ import {
   VisualMapPiecewiseComponent,
   VisualMapContinuousComponent,
   MarkLineComponent,
+  MarkAreaComponent,
 } from 'echarts/components'
 import './DashboardScatterChart.scss'
+import { truncate } from 'lodash-es'
 
 use([
   CanvasRenderer,
@@ -39,6 +41,7 @@ use([
   VisualMapPiecewiseComponent,
   MarkLineComponent,
   VisualMapContinuousComponent,
+  MarkAreaComponent,
 ])
 
 interface DashboardScatterChartProps {
@@ -58,6 +61,7 @@ interface DashboardScatterChartProps {
 
 interface DashboardScatterChartState {
   scaleIntensity: boolean
+  markArea: any
   chartOptions: any
   size: number
 }
@@ -66,6 +70,8 @@ const PEAK_FILTER = {
   ALL: 1,
   FDR: 2,
 }
+
+const markAreaPalette = ['#9b5fe0', '#16a4d8', '#60dbe8', '#8bd346', '#efdf48', '#f9a52c', '#d64e12']
 
 export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>({
   name: 'DashboardScatterChart',
@@ -125,6 +131,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
     const state = reactive<DashboardScatterChartState>({
       scaleIntensity: false,
       size: 600,
+      markArea: undefined,
       chartOptions: {
         title: {
           text: '',
@@ -133,14 +140,16 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           feature: {
             saveAsImage: {
               title: ' ',
+              name: 'detectability',
             },
           },
         },
         tooltip: {
           position: 'top',
           formatter: function(params: any) {
-            return 'Fraction detected: ' + (params.value[4] || 0).toFixed(2) + ' '
-              + params.data?.label?.y + ' in ' + params.data?.label?.x
+            const value = typeof params.value[4] === 'number' ? params.value[4] : params.value[3]
+            return (value === 'number' ? (value || 0).toFixed(2) : value) + ' '
+              + (params.data?.label?.y || '').replace(/-agg-/g, ' ') + ' in ' + (params.data?.label?.x || '')
           },
         },
         grid: {
@@ -160,36 +169,58 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           axisLine: {
             show: false,
           },
-          axisLabel: {
-            show: true,
-            interval: 0,
-            rotate: 30,
-          },
-          position: 'top',
-        },
-        yAxis: {
-          type: 'category',
-          data: [],
-          axisLine: {
+          axisTick: {
             show: false,
           },
           axisLabel: {
             show: true,
             interval: 0,
-            height: 30,
+            rotate: 30,
+            formatter: function(value :string) {
+              return value?.length > 25 ? value.substring(0, 25) + '...' : value
+            },
           },
+          position: 'top',
         },
-        series: [{
+        yAxis:
+          {
+            type: 'category',
+            data: [],
+            axisLine: {
+              show: false,
+            },
+            axisTick: {
+              show: false,
+            },
+            axisLabel: {
+              verticalAlign: 'middle',
+              show: true,
+              interval: 0,
+              fontFamily: 'monospace',
+              rich: {
+                b: {
+                  fontFamily: 'monospace',
+                  fontWeight: 'bold',
+                },
+                h: {
+                  fontFamily: 'monospace',
+                  color: '#fff',
+                },
+              },
+            },
+          },
+        series: {
           type: 'scatter',
+          animation: false,
           markLine: {},
           symbolSize: function(val: any) {
-            return val[2] * 2
+            return val[2] * 30
           },
           itemStyle: {
             borderColor: 'black',
           },
           data: [],
-        }],
+        },
       },
     })
 
@@ -211,10 +242,11 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           globalCategories[cat] = idx
         }
       })
-      Object.keys(globalCategories).map((key: string) => {
+      Object.keys(globalCategories).map((key: string, idx: number) => {
         markData.push({
           name: key,
           yAxis: globalCategories[key],
+          color: markAreaPalette[idx % markAreaPalette.length],
           label: {
             formatter: key,
             position: 'end',
@@ -227,20 +259,82 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         })
       })
 
-      if (props.yOption === 'fine_class' || props.yOption === 'fine_path') {
-        auxOptions.grid.right = 100
-      } else {
+      if (xAxisData.value.length > 3) {
         auxOptions.grid.right = '5%'
+      } else {
+        auxOptions.grid.right = '40%'
       }
 
       auxOptions.xAxis.data = xAxisData.value
+
+      if (auxOptions.xAxis.data.length > 30) {
+        auxOptions.xAxis.axisLabel.rotate = 90
+        auxOptions.series.symbolSize = function(val: any) {
+          return val[2] * 10
+        }
+      } else {
+        auxOptions.xAxis.axisLabel.rotate = 30
+        auxOptions.series.symbolSize = function(val: any) {
+          return val[2] * 30
+        }
+      }
+
+      // add no Neutral label
+      if (props.xOption === 'nL') {
+        const nullIdx = auxOptions.xAxis.data.findIndex((label: string) => label === '')
+        if (nullIdx !== -1) {
+          auxOptions.xAxis.data[nullIdx] = 'no neutral loss'
+        }
+      }
+
+      let maxLength = 0
       auxOptions.yAxis.data = yAxisData.value
-        .map((label: string) => label.replace(/.+-agg-\s(.+)/, '$1'))
-      auxOptions.series[0].data = chartData.value
-      auxOptions.series[0].markLine.data = markData
+        .map((label: string, index: number) => {
+          const re = /(.+)\s-agg-\s(.+)/
+          const cat = label.replace(re, '$1')
+          const value = label.replace(re, '$2')
+
+          maxLength = (value.length + cat.length) > maxLength ? (value.length + cat.length) : maxLength
+
+          return globalCategories[cat] === index ? label : label.replace(/.+-agg-\s(.+)/, '$1')
+        })
+
+      auxOptions.yAxis.axisLabel.formatter = function(label: any) {
+        const re = /(.+)\s-agg-\s(.+)/
+        const found = label.match(re)
+        const cat = label.replace(re, '$1')
+        const value = label.replace(re, '$2')
+        const repeat = maxLength - cat.length - value.length
+        return found ? `{b|${cat}}{h|${' '.repeat(repeat > 0 ? repeat : 0)}}${value}`
+          : value
+      }
+
+      // add no Neutral label
+      if (props.yOption === 'nL') {
+        const nullIdx = auxOptions.yAxis.data.findIndex((label: string) => label === '')
+        if (nullIdx !== -1) {
+          auxOptions.yAxis.data[nullIdx] = 'no neutral loss'
+        }
+      }
+
+      auxOptions.series.data = chartData.value
+      // auxOptions.series.markLine.data = markData
+      auxOptions.series.markArea = {}
       if (visualMap.value && visualMap.value.type) {
         auxOptions.visualMap = visualMap.value
       }
+
+      // reset visualmap range on data update
+      const chartRef : any = spectrumChart.value
+      setTimeout(() => {
+        if (chartRef && chartRef.chart) {
+          chartRef.chart.dispatchAction({
+            type: 'selectDataRange',
+            selected: [0, visualMap.value?.max],
+          })
+        }
+      }, 0)
+
       return auxOptions
     })
 
@@ -284,12 +378,45 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       }
     }
 
+    const handleChartRendered = () => {
+      const chartRef : any = spectrumChart.value
+      if (
+        chartRef
+        && chartRef.chart
+        && !state.markArea
+        && !(props.isLoading || props.isDataLoading)
+        && chartOptions.value?.series?.markLine?.data?.length > 0
+      ) {
+        const auxOptions : any = chartOptions.value
+        if (auxOptions) {
+          setTimeout(() => {
+            const markArea : any = { silent: true, data: [] }
+            const offset = ((state.size - 110) / (yAxisData.value?.length || 1)) / 2
+            auxOptions.series.data.forEach((item: any, idx: number) => {
+              if (item.value[0] === 0) {
+                const [chartX, chartY] = chartRef.convertToPixel({ seriesIndex: 0 }, [item.value[0], item.value[1]])
+                const re = /(.+)\s-agg-\s(.+)/
+                const label = item.label.key
+                const cat = label.replace(re, '$1')
+                const markLine : any = auxOptions.series.markLine.data.find((markLine: any) => markLine.name === cat)
+                markArea.data.push([{ y: chartY + offset, itemStyle: { color: markLine.color, opacity: 0.1 } },
+                  { y: chartY - offset }])
+              }
+            })
+            chartRef.chart.setOption({ series: { ...chartOptions.value.series, markArea } },
+              { replaceMerge: ['series'] })
+            state.markArea = markArea
+          }, 2000)
+        }
+      }
+    }
+
     const renderSpectrum = () => {
       const { isLoading, isDataLoading } = props
 
       return (
         <div class='chart-holder'
-          style={{ height: `${state.size}px` }}>
+          style={{ height: `${state.size}px`, width: '100%' }}>
           {
             (isLoading || isDataLoading)
             && <div class='loader-holder'>
@@ -307,10 +434,11 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
               on: {
                 'zr:dblclick': handleZoomReset,
                 click: handleItemSelect,
+                // rendered: handleChartRendered,
               },
             }}
             class='chart'
-            style={{ height: `${state.size}px` }}
+            style={{ height: `${state.size}px`, width: '100%' }}
             options={chartOptions.value}/>
         </div>
       )
@@ -318,7 +446,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
 
     return () => {
       return (
-        <div class={'dataset-browser-spectrum-container'}>
+        <div class={'dataset-browser-scatter-container'}>
           {renderSpectrum()}
         </div>
       )

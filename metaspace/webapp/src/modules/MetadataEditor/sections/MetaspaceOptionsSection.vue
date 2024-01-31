@@ -105,7 +105,6 @@
               />
             </el-col>
             <el-col
-              v-if="features.advanced_ds_config || features.v2"
               :span="8"
             >
               <popup-anchor
@@ -124,15 +123,6 @@
                   @input="val => onInput('analysisVersion', val)"
                 />
               </popup-anchor>
-              <form-field
-                v-if="features.advanced_ds_config"
-                type="select"
-                name="Scoring model"
-                :value="value.scoringModel || ''"
-                :error="error && error.scoringModel"
-                :options="scoringModelOptions"
-                @input="val => onInput('scoringModel', val ? val : null)"
-              />
             </el-col>
           </el-row>
           <el-row
@@ -146,9 +136,8 @@
                 :value="value.ppm"
                 :error="error && error.ppm"
                 :help="PpmHelp"
-                :min="1"
+                :min="0.1"
                 :step="1"
-                :step-strictly="true"
                 :max="50"
                 @input="val => onInput('ppm', val)"
               />
@@ -184,6 +173,28 @@
               />
             </el-col>
           </el-row>
+          <el-row
+            v-if="features.enrichment"
+            :gutter="8"
+          >
+            <el-col :span="8">
+              <popup-anchor
+                feature-key="v2"
+                placement="top"
+                :show-until="new Date('2022-09-01')"
+                class="block"
+              >
+                <form-field
+                  type="switch"
+                  name="LION enrichment"
+                  :help="EnrichmentHelp"
+                  :value="value.performEnrichment"
+                  :error="error && error.performEnrichment"
+                  @input="val => onInput('performEnrichment', val)"
+                />
+              </popup-anchor>
+            </el-col>
+          </el-row>
         </el-col>
       </el-row>
     </el-form>
@@ -196,6 +207,7 @@ import { Component, Prop } from 'vue-property-decorator'
 import FormField from '../inputs/FormField.vue'
 import DatabaseHelpLink from '../inputs/DatabaseHelpLink.vue'
 import AnalysisVersionHelp from '../inputs/AnalysisVersionHelp.vue'
+import EnrichmentHelp from '../inputs/EnrichmentHelp.vue'
 import AdductsHelp from '../inputs/AdductsHelp.vue'
 import NeutralLossesHelp from '../inputs/NeutralLossesHelp.vue'
 import PpmHelp from '../inputs/PpmHelp.vue'
@@ -246,6 +258,7 @@ export default class MetaspaceOptionsSection extends Vue {
     features = config.features;
     dbHelp = DatabaseHelpLink;
     AnalysisVersionHelp = AnalysisVersionHelp;
+    EnrichmentHelp = EnrichmentHelp;
     NeutralLossesHelp = NeutralLossesHelp;
     PpmHelp = PpmHelp;
     ChemModsHelp = ChemModsHelp;
@@ -258,11 +271,9 @@ export default class MetaspaceOptionsSection extends Vue {
     chemModOptions: string[] = [];
 
     get analysisVersionOptions() {
-      const showV15 = config.features.advanced_ds_config || this.value.analysisVersion === 2
       return [
         { value: 1, label: 'v1 (Original MSM)' },
-        ...(showV15 ? [{ value: 2, label: 'v1.5 (Prototype for higher RPs)' }] : []),
-        { value: 3, label: 'v2 (ML-powered MSM)' },
+        { value: 3, label: 'v2.20230517 (METASPACE-ML)' },
       ]
     }
 

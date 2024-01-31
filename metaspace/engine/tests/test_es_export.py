@@ -12,6 +12,7 @@ from sm.engine.es_export import (
     ESExporterIsobars,
     ESIndexManager,
 )
+from sm.engine.formula_parser import calculate_mono_mz
 from sm.engine.molecular_db import MolecularDB
 from .utils import create_test_molecular_db
 
@@ -30,7 +31,7 @@ V1_STATS = {
     'mz_err_abs': -0.0001,
     'mz_err_rel': 0.0002,
     'theo_mz': [12.0, 13.1],
-    'theo_ints': [100, 50.0],
+    'theo_ints': [100.0, 50.0],
     'mz_mean': [11.9999, 13.1001],
     'mz_stddev': [0.00001, 0.000002],
 }
@@ -59,20 +60,20 @@ def wait_for_es(es, index):
 
 
 @pytest.mark.parametrize('annotation_stats', [OLD_STATS, V1_STATS, V3_STATS])
-def test_index_ds_works(
-    sm_config, test_db, es, es_dsl_search, sm_index, ds_config, metadata, annotation_stats
-):
+def test_index_ds_works(sm_config, test_db, es, sm_index, ds_config, metadata, annotation_stats):
     ds_id = '2000-01-01_00h00m'
     upload_dt = datetime.now().isoformat()
     last_finished = '2017-01-01 00:00:00'
     iso_image_ids = ['iso_img_id_1', 'iso_img_id_2']
     stats = json.dumps(annotation_stats)
+    dataset_index = sm_config['elasticsearch']['dataset_index']
+    annotation_index = sm_config['elasticsearch']['annotation_index']
 
     db = DB()
     db.insert(
         "INSERT INTO dataset(id, name, input_path, config, metadata, upload_dt, status, "
-        "status_update_dt, is_public, acq_geometry, ion_thumbnail) "
-        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, true, '{}', %s)",
+        "status_update_dt, is_public, acq_geometry, ion_thumbnail, size_hash) "
+        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, true, '{}', %s, '{}')",
         [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt, upload_dt, 'thumb-id']],
     )
     moldb = create_test_molecular_db()
@@ -135,13 +136,10 @@ def test_index_ds_works(
             isocalc=isocalc_mock,
         )
 
-    wait_for_es(es, sm_config['elasticsearch']['index'])
+    wait_for_es(es, sm_config['elasticsearch']['dataset_index'])
+    wait_for_es(es, sm_config['elasticsearch']['annotation_index'])
 
-    ds_d = (
-        es_dsl_search.filter('term', _type='dataset')
-        .execute()
-        .to_dict()['hits']['hits'][0]['_source']
-    )
+    ds_d = es.search(index=dataset_index)['hits']['hits'][0]['_source']
     expected_ds_fields = {
         'ds_last_finished': last_finished,
         'ds_config': ds_config,
@@ -170,6 +168,7 @@ def test_index_ds_works(
     assert ds_d == {
         **expected_ds_fields,
         'ds_acq_geometry': {},
+        'ds_size_hash': {},
         'annotation_counts': [
             {
                 'db': {'id': moldb.id, 'name': moldb.name},
@@ -182,11 +181,9 @@ def test_index_ds_works(
             }
         ],
     }
-    ann_1_d = (
-        es_dsl_search.filter('term', formula='H2O')
-        .execute()
-        .to_dict()['hits']['hits'][0]['_source']
-    )
+
+    query = {'term': {'formula': {'value': 'H2O'}}}
+    ann_1_d = es.search(index=annotation_index, query=query)['hits']['hits'][0]['_source']
     top_level_stats = {
         'pattern_match': annotation_stats['spectral'],
         'image_corr': annotation_stats['spatial'],
@@ -206,8 +203,8 @@ def test_index_ds_works(
         'centroid_mzs': [100.0, 200.0, 300.0],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
         'iso_image_urls': [
-            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_1',
-            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_2',
+            f'{sm_config["storage"]["endpoint_url"]}/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_1',
+            f'{sm_config["storage"]["endpoint_url"]}/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_2',
         ],
         'isobars': [],
         'isomer_ions': [],
@@ -222,15 +219,15 @@ def test_index_ds_works(
         'db_id': moldb.id,
         'db_name': moldb.name,
         'db_version': moldb.version,
-        'mz': 100.0,
+        'is_mono': False,
+        'mz': calculate_mono_mz('HO2', '+'),
         'comp_ids': ['mol_id'],
         'annotation_id': 1,
         'off_sample_label': None,
         'off_sample_prob': None,
     }
-    ann_2_d = (
-        es_dsl_search.filter('term', formula='Au').execute().to_dict()['hits']['hits'][0]['_source']
-    )
+    query = {'term': {'formula': {'value': 'Au'}}}
+    ann_2_d = es.search(index=annotation_index, query=query)['hits']['hits'][0]['_source']
     assert ann_2_d == {
         **expected_ds_fields,
         **top_level_stats,
@@ -243,8 +240,8 @@ def test_index_ds_works(
         'centroid_mzs': [10.0, 20.0],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
         'iso_image_urls': [
-            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_1',
-            f'http://localhost:9000/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_2',
+            f'{sm_config["storage"]["endpoint_url"]}/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_1',
+            f'{sm_config["storage"]["endpoint_url"]}/{sm_config["image_storage"]["bucket"]}/iso/{ds_id}/iso_img_id_2',
         ],
         'isobars': [],
         'isomer_ions': [],
@@ -259,7 +256,8 @@ def test_index_ds_works(
         'db_id': moldb.id,
         'db_name': moldb.name,
         'db_version': moldb.version,
-        'mz': 10.0,
+        'is_mono': False,
+        'mz': calculate_mono_mz('HAu', '+'),
         'comp_ids': ['mol_id'],
         'annotation_id': 2,
         'off_sample_label': None,
@@ -344,12 +342,12 @@ def test_delete_ds__one_db_ann_only(sm_config, test_db, es, sm_index):
     moldb = MolecularDB(0, 'HMDB', '2016')
     moldb2 = MolecularDB(1, 'ChEBI', '2016')
 
-    index = sm_config['elasticsearch']['index']
+    dataset_index = sm_config['elasticsearch']['dataset_index']
+    annotation_index = sm_config['elasticsearch']['annotation_index']
     es.create(
-        index=index,
-        doc_type='annotation',
+        index=annotation_index,
         id='id1',
-        body={
+        document={
             'ds_id': 'dataset1',
             'db_id': moldb.id,
             'db_name': moldb.name,
@@ -357,10 +355,9 @@ def test_delete_ds__one_db_ann_only(sm_config, test_db, es, sm_index):
         },
     )
     es.create(
-        index=index,
-        doc_type='annotation',
+        index=annotation_index,
         id='id2',
-        body={
+        document={
             'ds_id': 'dataset1',
             'db_id': moldb2.id,
             'db_name': moldb2.name,
@@ -368,10 +365,9 @@ def test_delete_ds__one_db_ann_only(sm_config, test_db, es, sm_index):
         },
     )
     es.create(
-        index=index,
-        doc_type='annotation',
+        index=annotation_index,
         id='id3',
-        body={
+        document={
             'ds_id': 'dataset2',
             'db_id': moldb.id,
             'db_name': moldb.name,
@@ -379,10 +375,9 @@ def test_delete_ds__one_db_ann_only(sm_config, test_db, es, sm_index):
         },
     )
     es.create(
-        index=index,
-        doc_type='dataset',
+        index=dataset_index,
         id='id4',
-        body={
+        document={
             'ds_id': 'dataset1',
             'db_id': moldb.id,
             'db_name': moldb.name,
@@ -390,47 +385,48 @@ def test_delete_ds__one_db_ann_only(sm_config, test_db, es, sm_index):
         },
     )
 
-    wait_for_es(es, index)
+    wait_for_es(es, dataset_index)
+    wait_for_es(es, annotation_index)
 
     db_mock = MagicMock(spec=DB)
     es_exporter = ESExporter(db_mock, sm_config)
     es_exporter.delete_ds(ds_id='dataset1', moldb=moldb)
 
-    wait_for_es(es, index)
+    wait_for_es(es, annotation_index)
+    wait_for_es(es, dataset_index)
 
-    body = {'query': {'bool': {'filter': []}}}
-    body['query']['bool']['filter'] = [
+    query = {'bool': {'filter': []}}
+    query['bool']['filter'] = [
         {'term': {'ds_id': 'dataset1'}},
         {'term': {'db_id': moldb.id}},
     ]
-    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
-    body['query']['bool']['filter'] = [
+    assert es.count(index=annotation_index, query=query)['count'] == 0
+    query['bool']['filter'] = [
         {'term': {'ds_id': 'dataset1'}},
         {'term': {'db_id': moldb2.id}},
     ]
-    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
-    body['query']['bool']['filter'] = [
+    assert es.count(index=annotation_index, query=query)['count'] == 1
+    query['bool']['filter'] = [
         {'term': {'ds_id': 'dataset2'}},
         {'term': {'db_id': moldb.id}},
     ]
-    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
-    body['query']['bool']['filter'] = [
+    assert es.count(index=annotation_index, query=query)['count'] == 1
+    query['bool']['filter'] = [
         {'term': {'ds_id': 'dataset1'}},
-        {'term': {'_type': 'dataset'}},
     ]
-    assert es.count(index=index, doc_type='dataset', body=body)['count'] == 1
+    assert es.count(index=dataset_index, query=query)['count'] == 1
 
 
 def test_delete_ds__completely(sm_config, test_db, es, sm_index):
     moldb = MolecularDB(0, 'HMDB', '2016')
     moldb2 = MolecularDB(1, 'ChEBI', '2016')
 
-    index = sm_config['elasticsearch']['index']
+    dataset_index = sm_config['elasticsearch']['dataset_index']
+    annotation_index = sm_config['elasticsearch']['annotation_index']
     es.create(
-        index=index,
-        doc_type='annotation',
+        index=annotation_index,
         id='id1',
-        body={
+        document={
             'ds_id': 'dataset1',
             'db_id': moldb.id,
             'db_name': moldb.name,
@@ -438,10 +434,9 @@ def test_delete_ds__completely(sm_config, test_db, es, sm_index):
         },
     )
     es.create(
-        index=index,
-        doc_type='annotation',
+        index=annotation_index,
         id='id2',
-        body={
+        document={
             'ds_id': 'dataset1',
             'db_id': moldb2.id,
             'db_name': moldb2.name,
@@ -449,10 +444,9 @@ def test_delete_ds__completely(sm_config, test_db, es, sm_index):
         },
     )
     es.create(
-        index=index,
-        doc_type='annotation',
+        index=annotation_index,
         id='id3',
-        body={
+        document={
             'ds_id': 'dataset2',
             'db_id': moldb.id,
             'db_name': moldb.name,
@@ -460,10 +454,9 @@ def test_delete_ds__completely(sm_config, test_db, es, sm_index):
         },
     )
     es.create(
-        index=index,
-        doc_type='dataset',
+        index=dataset_index,
         id='dataset1',
-        body={
+        document={
             'ds_id': 'dataset1',
             'db_id': moldb.id,
             'db_name': moldb.name,
@@ -471,39 +464,40 @@ def test_delete_ds__completely(sm_config, test_db, es, sm_index):
         },
     )
 
-    wait_for_es(es, index)
+    wait_for_es(es, dataset_index)
+    wait_for_es(es, annotation_index)
 
     db_mock = MagicMock(spec=DB)
 
     es_exporter = ESExporter(db_mock, sm_config)
     es_exporter.delete_ds(ds_id='dataset1')
 
-    wait_for_es(es, index)
+    wait_for_es(es, dataset_index)
+    wait_for_es(es, annotation_index)
 
-    body = {'query': {'bool': {'filter': []}}}
-    body['query']['bool']['filter'] = [
+    query = {'bool': {'filter': []}}
+    query['bool']['filter'] = [
         {'term': {'ds_id': 'dataset1'}},
         {'term': {'db_id': moldb.id}},
     ]
-    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
-    body['query']['bool']['filter'] = [
+    assert es.count(index=annotation_index, query=query)['count'] == 0
+    query['bool']['filter'] = [
         {'term': {'ds_id': 'dataset1'}},
         {'term': {'db_id': moldb2.id}},
     ]
-    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
-    body['query']['bool']['filter'] = [
+    assert es.count(index=annotation_index, query=query)['count'] == 0
+    query['bool']['filter'] = [
         {'term': {'ds_id': 'dataset2'}},
         {'term': {'db_id': moldb.id}},
     ]
-    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
-    body['query']['bool']['filter'] = [
+    assert es.count(index=annotation_index, query=query)['count'] == 1
+    query['bool']['filter'] = [
         {'term': {'ds_id': 'dataset1'}},
-        {'term': {'_type': 'dataset'}},
     ]
-    assert es.count(index=index, doc_type='dataset', body=body)['count'] == 0
+    assert es.count(index=dataset_index, query=query)['count'] == 0
 
 
-def test_update_ds_works_for_all_fields(sm_config, test_db, es, sm_index, es_dsl_search):
+def test_update_ds_works_for_all_fields(sm_config, test_db, es, sm_index):
     update = {
         'name': 'new_ds_name',
         'submitter_id': 'new_ds_submitter_id',
@@ -512,12 +506,12 @@ def test_update_ds_works_for_all_fields(sm_config, test_db, es, sm_index, es_dsl
         'is_public': True,
     }
 
-    index = sm_config['elasticsearch']['index']
+    dataset_index = sm_config['elasticsearch']['dataset_index']
+    annotation_index = sm_config['elasticsearch']['annotation_index']
     es.create(
-        index=index,
-        doc_type='annotation',
+        index=annotation_index,
         id='id1',
-        body={
+        document={
             'ds_id': 'dataset1',
             'ds_name': 'ds_name',
             'ds_submitter_id': 'ds_submitter',
@@ -527,10 +521,9 @@ def test_update_ds_works_for_all_fields(sm_config, test_db, es, sm_index, es_dsl
         },
     )
     es.create(
-        index=index,
-        doc_type='dataset',
+        index=dataset_index,
         id='dataset1',
-        body={
+        document={
             'ds_id': 'dataset1',
             'ds_name': 'ds_name',
             'ds_submitter_id': 'ds_submitter_id',
@@ -539,7 +532,8 @@ def test_update_ds_works_for_all_fields(sm_config, test_db, es, sm_index, es_dsl
             'ds_is_public': False,
         },
     )
-    wait_for_es(es, index)
+    wait_for_es(es, dataset_index)
+    wait_for_es(es, annotation_index)
 
     db_mock = MagicMock(spec=DB)
     db_mock.select_with_fields.return_value = [
@@ -559,59 +553,77 @@ def test_update_ds_works_for_all_fields(sm_config, test_db, es, sm_index, es_dsl
 
     es_exporter = ESExporter(db_mock, sm_config)
     es_exporter.update_ds('dataset1', fields=list(update.keys()))
-    wait_for_es(es, index)
+    wait_for_es(es, dataset_index)
+    wait_for_es(es, annotation_index)
 
-    ds_doc = (
-        es_dsl_search.filter('term', _type='dataset')
-        .execute()
-        .to_dict()['hits']['hits'][0]['_source']
-    )
+    ds_doc = es.search(index=dataset_index)['hits']['hits'][0]['_source']
     for k, v in update.items():
         assert v == ds_doc[f'ds_{k}']
 
-    ann_doc = (
-        es_dsl_search.filter('term', _type='annotation')
-        .execute()
-        .to_dict()['hits']['hits'][0]['_source']
-    )
+    ann_doc = es.search(index=annotation_index)['hits']['hits'][0]['_source']
     for k, v in update.items():
         assert v == ann_doc[f'ds_{k}']
 
 
 def test_rename_index_works(sm_config, test_db):
     es_config = sm_config['elasticsearch']
-    alias = es_config['index']
-    yin_index = f'{alias}-yin'
-    yang_index = f'{alias}-yang'
+    dataset_alias = es_config['dataset_index']
+    annotation_alias = es_config['annotation_index']
+    yin_dataset_index = f'{dataset_alias}-yin'
+    yin_annotation_index = f'{annotation_alias}-yin'
+    yang_dataset_index = f'{dataset_alias}-yang'
+    yang_annotation_index = f'{annotation_alias}-yang'
     es_man = ESIndexManager(es_config)
     # Clean up previous test runs if needed
-    es_man.delete_index(alias)
-    es_man.delete_index(yin_index)
-    es_man.delete_index(yang_index)
+    es_man.delete_index(dataset_alias)
+    es_man.delete_index(annotation_alias)
+    es_man.delete_index(yin_dataset_index)
+    es_man.delete_index(yin_annotation_index)
+    es_man.delete_index(yang_dataset_index)
+    es_man.delete_index(yang_annotation_index)
 
     try:
-        es_man.create_index(yin_index)
-        es_man.remap_alias(yin_index, alias=alias)
+        es_man.create_dataset_index(yin_dataset_index)
+        es_man.remap_alias(yin_dataset_index, alias=dataset_alias)
+        es_man.create_annotation_index(yin_annotation_index)
+        es_man.remap_alias(yin_annotation_index, alias=annotation_alias)
 
-        assert es_man.exists_index(alias)
-        assert es_man.exists_index(yin_index)
-        assert not es_man.exists_index(yang_index)
+        assert es_man.exists_index(dataset_alias)
+        assert es_man.exists_index(annotation_alias)
+        assert es_man.exists_index(yin_dataset_index)
+        assert es_man.exists_index(yin_annotation_index)
+        assert not es_man.exists_index(yang_dataset_index)
+        assert not es_man.exists_index(yang_annotation_index)
 
-        es_man.create_index(yang_index)
-        es_man.remap_alias(yang_index, alias=alias)
+        es_man.create_dataset_index(yang_dataset_index)
+        es_man.create_annotation_index(yang_annotation_index)
+        es_man.remap_alias(yang_dataset_index, alias=dataset_alias)
+        es_man.remap_alias(yang_annotation_index, alias=annotation_alias)
 
-        assert es_man.exists_index(alias)
-        assert es_man.exists_index(yang_index)
-        assert es_man.exists_index(yin_index)
+        assert es_man.exists_index(dataset_alias)
+        assert es_man.exists_index(annotation_alias)
+        assert es_man.exists_index(yang_dataset_index)
+        assert es_man.exists_index(yang_annotation_index)
+        assert es_man.exists_index(yin_dataset_index)
+        assert es_man.exists_index(yin_annotation_index)
     finally:
-        es_man.delete_index(alias)
-        es_man.delete_index(yin_index)
-        es_man.delete_index(yang_index)
+        es_man.delete_index(yin_dataset_index)
+        es_man.delete_index(yin_annotation_index)
+        es_man.delete_index(yang_dataset_index)
+        es_man.delete_index(yang_annotation_index)
 
 
 def test_internal_index_name_return_valid_values(sm_config):
     es_config = sm_config['elasticsearch']
-    alias = es_config['index']
+    dataset_alias = es_config['dataset_index']
+    annotation_alias = es_config['annotation_index']
     es_man = ESIndexManager(es_config)
 
-    assert es_man.internal_index_name(alias) in ['{}-yin'.format(alias), '{}-yang'.format(alias)]
+    assert es_man.internal_index_name(dataset_alias) in [
+        '{}-yin'.format(dataset_alias),
+        '{}-yang'.format(dataset_alias),
+    ]
+    assert es_man.internal_index_name(annotation_alias) in [
+        '{}-yin'.format(annotation_alias),
+        '{}-yang'.format(annotation_alias),
+    ]

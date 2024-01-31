@@ -21,11 +21,6 @@
         </p>
       </div>
       <div v-else-if="isSignedIn || isTourRunning">
-        <!--Uncomment below when LCMS support is needed-->
-        <!--<div id="filter-panel-container">-->
-        <!--<filter-panel level="upload"></filter-panel>-->
-        <!--</div>-->
-
         <div class="metadata-section">
           <div class="el-row">
             <div class="el-col el-col-6">
@@ -88,6 +83,7 @@
                   :required-file-types="['imzML', 'ibd']"
                   :s3-options="s3Options"
                   :options="uppyOptions"
+                  :current-user="currentUser"
                   @file-added="onFileAdded"
                   @file-removed="onFileRemoved"
                   @upload="onUploadStart"
@@ -124,7 +120,7 @@ import { parseS3Url } from '../../lib/util'
 import config from '../../lib/config'
 import gql from 'graphql-tag'
 import { ViewGroupFragment } from '@/api/group'
-import { RequestedAccessDialog } from '../../modules/GroupProfile/RequestedAccessDialog'
+import { RequestedAccessDialog } from '../Group/RequestedAccessDialog'
 
 const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
@@ -352,7 +348,8 @@ export default {
 
       this.status = 'SUBMITTING'
       const { metadataJson, metaspaceOptions } = formValue
-
+      const performEnrichment = metaspaceOptions.performEnrichment
+      delete metaspaceOptions.performEnrichment
       try {
         await this.$apollo.mutate({
           mutation: createDatasetQuery,
@@ -363,6 +360,7 @@ export default {
               ...metaspaceOptions,
             },
             useLithops: config.features.lithops,
+            performEnrichment,
           },
         })
 

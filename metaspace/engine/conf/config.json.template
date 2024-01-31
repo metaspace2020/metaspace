@@ -14,6 +14,8 @@
   },
   "elasticsearch": {
     "index": "sm",
+    "dataset_index": "dataset",
+    "annotation_index": "annotation",
     "host": "{{ sm_es_host }}",
     "port": "{{ sm_es_port }}",
     "user": "{{ sm_es_user }}",
@@ -62,7 +64,7 @@
       "data_cleaner": true,
       "data_limit": false,
       "workers": 1000,
-      "execution_timeout": 3600
+      "execution_timeout": 7200
     },
     "serverless": {
       "backend": "code_engine",
@@ -71,27 +73,24 @@
     },
     "standalone": {
       "backend": "ibm_vpc",
-      "soft_dismantle_timeout": 30
+      "soft_dismantle_timeout": 30,
+      "hard_dismantle_timeout": 7200
     },
-    "localhost": {
-    },
+    "localhost": {},
     "ibm": {
       "iam_api_key": "{{ sm_lithops_iam_api_key }}"
-    },
-    "ibm_cf": {
-      "endpoint": "https://eu-de.functions.cloud.ibm.com",
-      "namespace": "{{ sm_lithops_cf_ns_name }}",
-      "namespace_id": "{{ sm_lithops_cf_ns_id }}"
     },
     "code_engine": {
       "region": "eu-de",
       "namespace": "{{ sm_lithops_ce_namespace }}",
-      "runtime": ""
+      "runtime": "",
+      "runtime_timeout": 1800,
+      "connection_retries": 10
     },
     "ibm_vpc": {
       "endpoint": "https://eu-de.iaas.cloud.ibm.com",
       "instance_id": "{{ sm_lithops_vpc_instance_id }}",
-      "ip_address": "{{ sm_lithops_vpc_instance_ip }}",
+      "floating_ip": "{{ sm_lithops_vpc_instance_ip }}",
       "ssh_key_filename": "/home/ubuntu/.ssh/ibm_cloud_vpc"
     },
     "ibm_cos": {
@@ -192,7 +191,8 @@ The Prefix is necessary and should not have a leading or trailing slash
     "adducts": {{ sm_default_adducts | to_json }}
   },
   "image_storage": {
-    "bucket": "{{ sm_image_storage_bucket }}"
+    "bucket": "{{ sm_image_storage_bucket }}",
+    "raw_img_bucket": "{{ sm_graphql_s3_upload_bucket }}"
   },
   "imzml_browser_storage": {
     "bucket": "{{ sm_imzml_browser_bucket }}"

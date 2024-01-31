@@ -11,6 +11,8 @@ type Annotation {
   databaseDetails: MolecularDB!
   database: String!  # @deprecated(reason: "This field is deprecated and will be removed. Use databaseDetails instead.")
   mz: Float!
+  centroidMz: Float!
+  isMono: Boolean
   countPossibleCompounds(includeIsomers: Boolean = False): Int!
   possibleCompounds: [Compound!]!
   fdrLevel: Float
@@ -129,9 +131,11 @@ input AnnotationFilter {
   database: String  # @deprecated(reason: "This field will be removed. Use \"databaseId\" instead.")
   datasetName: String
   mzFilter: NumericRange
+  termId: Int
   msmScoreFilter: NumericRange
   compoundQuery: String
   fdrLevel: Float
+  pValue: Float
   sumFormula: String
   chemMod: String                 # Empty string for 'no chem mod'
   neutralLoss: String             # Empty string for 'no neutral loss'
