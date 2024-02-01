@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 import hashlib
 import json
 import logging
@@ -231,8 +232,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         imzml_head = self.storage.head_object(self.imzml_cobject.bucket, self.imzml_cobject.key)
         ibd_head = self.storage.head_object(self.ibd_cobject.bucket, self.ibd_cobject.key)
 
-        import time
-
+        logger.info('MD5 hash calculating ...')
         start = time.time()
         ds_size_hash = {
             'imzml_hash': calc_hash(self.storage.get_cloudobject(self.imzml_cobject, stream=True)),
