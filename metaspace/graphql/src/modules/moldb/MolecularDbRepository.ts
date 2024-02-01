@@ -46,8 +46,9 @@ export class MolecularDbRepository {
     if (usable === true) {
       const usableGroupIds = await user.getMemberOfGroupIds()
       const groupIdClause = new Brackets(
-        qb => !qb.where('moldb.group_id is NULL').orWhere('moldb.group_id = ANY(:usableGroupIds)',
-          { usableGroupIds })
+        qb => !qb.where('moldb.group_id is NULL')
+          .orWhere('moldb.group_id = ANY(:usableGroupIds)', { usableGroupIds })
+          .orWhere('moldb.is_visible = true')
       )
       const usableClause = new Brackets(qb => qb.where('moldb.archived = false').andWhere(groupIdClause))
       andWhereClauses.push(usableClause)

@@ -61,15 +61,19 @@ const Details = defineComponent<Props>({
         >
           <PrimaryLabelText slot="label">Description</PrimaryLabelText>
         </RichTextArea>
-        <div>
+        <div class='radio-wrapper'>
           <p class="m-0 mb-3">
             <PrimaryLabelText>Annotation access</PrimaryLabelText>
           </p>
           <RadioButton
             id="database-annotations-private"
             name="isPublic"
+            disabled={state.model.isVisible}
             checked={!state.model.isPublic}
-            onChange={() => { state.model.isPublic = false }}
+            onChange={() => {
+              state.model.isPublic = false
+              state.model.isVisible = false
+            }}
           >
             <PrimaryLabelText>Annotations are private</PrimaryLabelText>
             <SecondaryLabelText>Results will be visible to group members only</SecondaryLabelText>
@@ -82,6 +86,32 @@ const Details = defineComponent<Props>({
           >
             <PrimaryLabelText>Annotations are public</PrimaryLabelText>
             <SecondaryLabelText>Results will be visible to everyone</SecondaryLabelText>
+          </RadioButton>
+        </div>
+        <div class='radio-wrapper'>
+          <p class="m-0 mb-3">
+            <PrimaryLabelText>Custom database access</PrimaryLabelText>
+          </p>
+          <RadioButton
+            id="database-private"
+            name="isVisible"
+            checked={!state.model.isVisible}
+            onChange={() => { state.model.isVisible = false }}
+          >
+            <PrimaryLabelText>Custom database is private</PrimaryLabelText>
+            <SecondaryLabelText>Custom database will be available for group members only</SecondaryLabelText>
+          </RadioButton>
+          <RadioButton
+            id="database-public"
+            name="isVisible"
+            checked={state.model.isVisible}
+            onChange={() => {
+              state.model.isVisible = true
+              state.model.isPublic = true
+            }}
+          >
+            <PrimaryLabelText>Custom database is public</PrimaryLabelText>
+            <SecondaryLabelText>Custom database will be available as annotation option to everyone</SecondaryLabelText>
           </RadioButton>
         </div>
         <div>

@@ -20,6 +20,7 @@ export function getDatabaseDetails(database: MolecularDB) : MolecularDBDetails {
     description,
     fullName,
     isPublic,
+    isVisible,
     link,
   } = database
 
@@ -28,6 +29,7 @@ export function getDatabaseDetails(database: MolecularDB) : MolecularDBDetails {
     description,
     fullName,
     isPublic,
+    isVisible,
     link,
   }
 }
