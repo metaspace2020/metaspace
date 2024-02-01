@@ -240,9 +240,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             'imzml_size': int(imzml_head['content-length']),
             'ibd_size': int(ibd_head['content-length']),
         }
-        logger.info(
-            f'MD5 hash calculation for imzML/ibd files: round({time.time() - start}, 1) sec'
-        )
+        logger.info(f'MD5 hash calculation for imzML/ibd files: {round(time.time() - start, 1)} sec')
 
         db = DB()
         db.alter(
