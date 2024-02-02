@@ -10,7 +10,7 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import CompressionPlugin from 'vite-plugin-compression'
 import Markdown from 'unplugin-vue-markdown/vite'
 
-// const isCypressRun = process.env.CYPRESS_RUN === 'true';
+const isCypressRun = process.env.CYPRESS_RUN === 'true';
 
 // https://vitejs.dev/config/
 // @ts-ignore
