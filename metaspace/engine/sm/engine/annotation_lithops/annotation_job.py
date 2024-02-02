@@ -398,9 +398,6 @@ class ServerAnnotationJob:
 
                 update_finished_job(job_id, JobStatus.FINISHED)
 
-            # Cals and save size and hash of imzML/ibd files
-            self.pipe.calc_save_ds_size_hash()
-
         except Exception:
             for moldb_id, job_id in moldb_to_job_map.items():
                 update_finished_job(job_id, JobStatus.FAILED)
