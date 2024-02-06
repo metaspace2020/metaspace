@@ -7,6 +7,8 @@ import { restoreIonImageState } from './ionImageState'
 import store from '../../store'
 import { annotationDetailItemFragment } from '../../api/annotation'
 import router from '../../router'
+import { isEqual } from 'lodash-es'
+import Vue from 'vue'
 
 export default async($apollo: any, id: string, datasetId: string) => {
   try {
@@ -47,7 +49,8 @@ export default async($apollo: any, id: string, datasetId: string) => {
       })
     }
 
-    store.commit('setSnapshotAnnotationIds', annotations.map((annotation: any) => annotation.id))
+    const annotationIds = annotations.map((annotation: any) => annotation.id).sort()
+    store.commit('setSnapshotAnnotationIds', annotationIds)
 
     // set snapshot filters
     if (parsed.filter) {
@@ -82,13 +85,24 @@ export default async($apollo: any, id: string, datasetId: string) => {
       window.location.reload()
     }
 
-    if (annotations.length > 0) {
-      store.commit('setAnnotation', annotations[0])
-    } else {
-      store.commit('setAnnotation', {
-        status: 'reprocessed_snapshot',
-        annotationIons: parsed.annotationIons,
+    const restoreState = isEqual(annotationIds,
+      (parsed.ionImage?.layers || []).map((layer: any) => layer.id).sort())
+
+    // multiple annotations reprocessed, so saved layers based on id do not match
+    if (!restoreState || annotations.length === 0) {
+      Vue.nextTick(async() => { // wait for rendering and time before update viewer
+        const MILISECONDS = 1000
+        await new Promise(resolve => setTimeout(resolve, MILISECONDS))
+        store.commit('setAnnotation', {
+          status: 'reprocessed_snapshot',
+          annotationIons: parsed.annotationIons,
+        })
       })
+      return
+    }
+
+    if (Array.isArray(annotations)) {
+      store.commit('setAnnotation', annotations[0])
     }
 
     restoreImageViewerState({
