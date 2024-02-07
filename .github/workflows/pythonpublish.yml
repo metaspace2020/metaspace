@@ -7,10 +7,6 @@ jobs:
     name: Create and publish package to PyPI
     runs-on: ubuntu-latest
 
-    environment:
-      name: pypi
-      url: https://pypi.org/p/metaspace
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -33,8 +29,3 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine upload dist/*
-
-#    - name: Publish package on PyPI
-#      uses: pypa/gh-action-pypi-publish@v1.8.10
-#      with:
-#        password: ${{ secrets.PYTHON_CLIENT_PYPI_API_TOKEN }}
