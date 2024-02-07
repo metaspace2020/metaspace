@@ -219,6 +219,16 @@ exports[`DatasetTable > should match snapshot 1`] = `
                   </div>
                   <!---->
                 </div>
+                <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"engineV\\">
+                  <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                    <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                        <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                      </svg></div>
+                    <!--v-if-->
+                    <!--v-if--><span class=\\"el-tree-node__label\\">Analysis version: Original MSM</span>
+                  </div>
+                  <!---->
+                </div>
               </div>
             </div>
             <!--v-if-->
@@ -404,6 +414,16 @@ exports[`DatasetTable > should match snapshot 1`] = `
                 </div>
                 <!---->
               </div>
+              <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"engineV\\">
+                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                  <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                    </svg></div>
+                  <!--v-if-->
+                  <!--v-if--><span class=\\"el-tree-node__label\\">Analysis version: Original MSM</span>
+                </div>
+                <!---->
+              </div>
             </div>
           </div>
           <!--v-if-->
@@ -584,6 +604,16 @@ exports[`DatasetTable > should match snapshot 1`] = `
                   </svg></div>
                 <!--v-if-->
                 <!--v-if--><span class=\\"el-tree-node__label\\">m/z tolerance (ppm): undefined</span>
+              </div>
+              <!---->
+            </div>
+            <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"engineV\\">
+              <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                    <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                  </svg></div>
+                <!--v-if-->
+                <!--v-if--><span class=\\"el-tree-node__label\\">Analysis version: Original MSM</span>
               </div>
               <!---->
             </div>

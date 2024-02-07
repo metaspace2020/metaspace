@@ -24,7 +24,7 @@
     "type-check": "vue-tsc --noEmit -p tsconfig.cypress-ct.json --composite false",
     "format": "prettier --write src/",
     "dev": "cross-env NODE_ENV=development vite",
-    "test": "yarn run generate-local-graphql-schema && cross-env NODE_ENV=test vitest --run",
+    "test": "yarn run generate-local-graphql-schema && yarn install && cross-env NODE_ENV=test vitest --run",
     "test-ci": "cross-env NODE_ENV=test vitest --run --ci",
     "coverage": "cross-env NODE_ENV=test vitest --run --coverage",
     "deref-schema": "node ./deref_schema.js src/lib/metadataSchemas",

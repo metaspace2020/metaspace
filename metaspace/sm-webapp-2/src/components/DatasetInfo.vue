@@ -113,7 +113,10 @@ export default defineComponent({
       const metadata = props.metadata
       const {
         image_generation: imageGeneration,
+        fdr: fdrSettings,
       } = (props.additionalSettings || {})
+      // eslint-disable-next-line camelcase
+      const scoringModel = fdrSettings?.scoring_model ? 'METASPACE-ML' : 'Original MSM'
 
       delete metadata.Additional_Information
       const schemaBasedVals = objToTreeNode(null, metadata, schema.value)
@@ -129,6 +132,7 @@ export default defineComponent({
       ]
       const annotationSettingsChildren = [
         { id: 'PPM', label: `m/z tolerance (ppm): ${imageGeneration?.ppm}` },
+        { id: 'engineV', label: `Analysis version: ${scoringModel}` },
       ]
 
       if (dsPI.value != null) {
