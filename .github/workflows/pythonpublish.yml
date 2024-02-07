@@ -32,7 +32,7 @@ jobs:
         twine upload dist/*
 
     - name: Publish package on PyPI
-      user: pypa/gh-action-pypi-publish@v1.8.11
+      uses: pypa/gh-action-pypi-publish@v1.8.11
       with:
         user: __token__
         password: ${{ secrets.PYTHON_CLIENT_PYPI_API_TOKEN }}
