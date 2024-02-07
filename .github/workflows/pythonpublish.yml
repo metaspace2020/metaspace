@@ -1,7 +1,6 @@
 name: Publish python-client
 
-on:
-  workflow_dispatch:  # Manual trigger
+on: workflow_dispatch  # Manual trigger
 
 jobs:
   build_and_deploy:
