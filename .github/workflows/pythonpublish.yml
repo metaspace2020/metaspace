@@ -27,10 +27,14 @@ jobs:
 
     - name: Build and publish
       working-directory: ./metaspace/python-client
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYTHON_CLIENT_PYPI_API_TOKEN }}
       run: |
         python setup.py sdist bdist_wheel
+        twine upload dist/*
 
-    - name: Publish package on PyPI
-      uses: pypa/gh-action-pypi-publish@v1.8.10
-      with:
-        password: ${{ secrets.PYTHON_CLIENT_PYPI_API_TOKEN }}
+#    - name: Publish package on PyPI
+#      uses: pypa/gh-action-pypi-publish@v1.8.10
+#      with:
+#        password: ${{ secrets.PYTHON_CLIENT_PYPI_API_TOKEN }}
