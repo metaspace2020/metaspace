@@ -4,8 +4,14 @@ on:
   workflow_dispatch:  # Manual trigger
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  build_and_deploy:
+    - name: Create and publish package to PyPI
+      runs-on: ubuntu-latest
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/metaspace
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
