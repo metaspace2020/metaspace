@@ -48,8 +48,8 @@ def store_images_to_s3(
             .set_index('formula_i')
             .join(formula_i_to_db_id, how='inner')
         )
-        # Limit parallelism to 4 to avoid accidentally hitting S3's upload limit (3500 PUTs/s)
-        with ThreadPoolExecutor(4) as executor:
+        # Limit parallelism to 1 to avoid accidentally hitting S3's upload limit (3500 PUTs/s)
+        with ThreadPoolExecutor(1) as executor:
             db_formula_image_ids: DbFormulaImagesDict = defaultdict(dict)
 
             for db_id, formula_id, image_ids in zip(

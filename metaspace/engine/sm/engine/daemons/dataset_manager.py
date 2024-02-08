@@ -26,6 +26,7 @@ from sm.engine.postprocessing.ion_thumbnail import (
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
+from sm.engine.postprocessing.ds_size_hash import save_size_hash
 from sm.engine.optical_image import del_optical_image
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import perf_profile
@@ -113,7 +114,8 @@ class DatasetManager:
         with perf_profile(self._db, 'annotate_lithops', ds.id) as perf:
             executor = Executor(self._sm_config['lithops'], perf=perf)
 
-            ServerAnnotationJob(executor, ds, perf, perform_enrichment=perform_enrichment).run()
+            job = ServerAnnotationJob(executor, ds, perf, perform_enrichment=perform_enrichment)
+            job.run()
 
             if self._sm_config['services'].get('colocalization', True):
                 Colocalization(self._db).run_coloc_job_lithops(executor, ds, reprocess=del_first)
@@ -125,6 +127,8 @@ class DatasetManager:
                     ds=ds,
                     only_if_needed=not del_first,
                 )
+
+            save_size_hash(executor=executor, ds=ds, db=self._db, imzml_cobj=job.imzml_cobj, ibd_cobj=job.ibd_cobj)
 
     def index(self, ds: Dataset):
         """Re-index all search results for the dataset.

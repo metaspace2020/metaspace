@@ -57,70 +57,67 @@
   },
   "lithops": {
     "lithops": {
-      "storage_bucket": "{{ sm_lithops_cos_bucket_temp }}",
-      "storage": "ibm_cos",
       "mode": "serverless",
-      "include_modules": ["engine/sm"],
+      "storage": "aws_s3",
+      "include_modules": ["sm"],
       "data_cleaner": true,
       "data_limit": false,
       "workers": 1000,
-      "execution_timeout": 7200
+      "execution_timeout": 7200,
+      "log_level": "INFO"
     },
     "serverless": {
-      "backend": "code_engine",
-      "runtime_timeout": 1200,
-      "runtime_memory": 2048
+      "backend": "aws_lambda"
     },
     "standalone": {
-      "backend": "ibm_vpc",
-      "soft_dismantle_timeout": 30,
-      "hard_dismantle_timeout": 7200
+      "backend": "aws_ec2"
     },
-    "localhost": {},
-    "ibm": {
-      "iam_api_key": "{{ sm_lithops_iam_api_key }}"
-    },
-    "code_engine": {
-      "region": "eu-de",
-      "namespace": "{{ sm_lithops_ce_namespace }}",
-      "runtime": "",
-      "runtime_timeout": 1800,
-      "connection_retries": 10
-    },
-    "ibm_vpc": {
-      "endpoint": "https://eu-de.iaas.cloud.ibm.com",
-      "instance_id": "{{ sm_lithops_vpc_instance_id }}",
-      "floating_ip": "{{ sm_lithops_vpc_instance_ip }}",
-      "ssh_key_filename": "/home/ubuntu/.ssh/ibm_cloud_vpc"
-    },
-    "ibm_cos": {
-      "region": "eu-de",
-      "access_key": "{{ sm_lithops_cos_access_key }}",
-      "secret_key": "{{ sm_lithops_cos_secret_key }}"
+    "localhost": {
     },
     "aws": {
+      "region": "{{ aws_region }}",
       "access_key_id": "{{ aws_access_key_id }}",
       "secret_access_key": "{{ aws_secret_access_key }}"
     },
+    "aws_lambda": {
+      "namespace": "{{ sm_lithops_aws_lambda_namespace }}",
+      "runtime_timeout": 900,
+      "runtime": "{{ sm_lithops_aws_lambda_runtime_name }}",
+      "execution_role": "{{ sm_lithops_aws_lambda_execution_role }}"
+    },
+    "aws_ec2": {
+      "exec_mode": "consume",
+      "soft_dismantle_timeout": 30,
+      "hard_dismantle_timeout": 7200,
+      "runtime": "{{ sm_lithops_aws_ec2_runtime_name }}",
+      "ssh_key_filename": "{{ sm_lithops_aws_ec2_ssh_key_filename }}",
+      "instance_id": "{{ sm_lithops_aws_ec2_instance_id_32_gb }}",
+      "ec2_instances": {
+        "aws_ec2_32": "{{ sm_lithops_aws_ec2_instance_id_32_gb }}",
+        "aws_ec2_64": "{{ sm_lithops_aws_ec2_instance_id_64_gb }}",
+        "aws_ec2_128": "{{ sm_lithops_aws_ec2_instance_id_128_gb }}",
+        "aws_ec2_256": "{{ sm_lithops_aws_ec2_instance_id_256_gb }}"
+      }
+    },
     "aws_s3": {
-      "endpoint": "https://s3.{{ aws_region }}.amazonaws.com"
+      "storage_bucket": "{{ sm_lithops_s3_bucket_temp }}"
     },
     "sm_storage": {
 {#
 Each entry in this block is an array of [Bucket name, Prefix]
-e.g. "imzml": ["my-bucket","files/go/here"] means ImzML files will be stored under cos://my-bucket/files/go/here/
+e.g. "imzml": ["my-bucket","files/go/here"] means ImzML files will be stored under s3://my-bucket/files/go/here/
 The Prefix is necessary and should not have a leading or trailing slash
 #}
-      "imzml": ["{{ sm_lithops_cos_bucket_imzml }}", "imzml"],
-      "moldb": ["{{ sm_lithops_cos_bucket_data }}", "moldb"],
-      "centroids": ["{{ sm_lithops_cos_bucket_data }}", "centroids"],
-      "pipeline_cache": ["{{ sm_lithops_cos_bucket_temp }}", "pipeline_cache"]
+      "imzml": ["{{ sm_lithops_s3_bucket_imzml }}", "imzml"],
+      "moldb": ["{{ sm_lithops_s3_bucket_centroids }}", "moldb"],
+      "centroids": ["{{ sm_lithops_s3_bucket_centroids }}", "centroids"],
+      "pipeline_cache": ["{{ sm_lithops_s3_bucket_temp }}", "pipeline_cache"]
     }
   },
   "aws": {
+    "aws_default_region": "{{ aws_region }}",
     "aws_access_key_id": "{{ aws_access_key_id }}",
-    "aws_secret_access_key": "{{ aws_secret_access_key }}",
-    "aws_default_region": "{{ aws_region }}"
+    "aws_secret_access_key": "{{ aws_secret_access_key }}"
   },
   "slack": {
     "channel": "{{ slack_channel }}",

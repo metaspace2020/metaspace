@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import inspect
 import logging
 import resource
@@ -20,16 +21,14 @@ from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
 logger = logging.getLogger('engine.lithops-wrapper')
 TRet = TypeVar('TRet')
-#: RUNTIME_DOCKER_IMAGE is defined in code instead of config so that devs don't have to coordinate
-#: manually updating their config files every time it changes. The image must be public on
-#: Docker Hub, and can be rebuilt using the scripts/Dockerfile in `engine/docker/lithops_ibm_cf`.
-#: Note: sci-test changes this constant to force local execution without docker
-RUNTIME_VPC = 'metaspace2020/metaspace-lithops:3.0.1'
-RUNTIME_CE = 'metaspace2020/metaspace-lithops-ce:3.0.1'
+
 MEM_LIMITS = {
     'localhost': 32 * 1024,
-    'code_engine': 32 * 1024,
-    'ibm_vpc': 128 * 1024,
+    'aws_lambda': 8 * 1024,
+    'aws_ec2_32': 32 * 1024,
+    'aws_ec2_64': 64 * 1024,
+    'aws_ec2_128': 128 * 1024,
+    'aws_ec2_256': 256 * 1024,
 }
 
 
@@ -44,19 +43,15 @@ def _build_wrapper_func(func: Callable[..., TRet]) -> Callable[..., TRet]:
                 subtask_perf.record_entry('finished')
             subtask_perf.add_extra_data(
                 **{
-                    'inner time': (datetime.now() - start_time).total_seconds(),
-                    'mem before': mem_before,
-                    'mem after': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+                    'mem after': int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0),
                 }
             )
             return subtask_perf
 
-        start_time = datetime.now()
         subtask_perf = SubtaskProfiler()
         if has_perf_arg:
             kwargs['perf'] = subtask_perf
 
-        mem_before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         try:
             result = func(*args, **kwargs)
             return result, finalize_perf()
@@ -87,32 +82,32 @@ def _save_subtask_perf(
     cost_factors_plain = cost_factors.to_dict('list') if cost_factors is not None else None
     if futures:
         exec_times = [f.stats.get('worker_func_exec_time', -1) for f in futures]
+        mem_usages = [int(f.stats.get('worker_peak_memory_end', -1) / 1024 ** 2) for f in futures]
+        request_ids = [f.activation_id for f in futures]
     else:
         # debug_run_locally=True doesn't make futures
         exec_times = [sum(perf.entries.values()) for perf in subtask_perfs]
-    inner_times = subtask_data.pop('inner time', [-1])
-    mem_befores = subtask_data.pop('mem before', [-1])
-    mem_afters = subtask_data.pop('mem after', [-1])
+        mem_usages = [perf.extra_data['mem after'] for perf in subtask_perfs]
+        request_ids = []
     perf_data = {
         'num_actions': len(exec_times),
         'attempt': attempt,
         'runtime_memory': runtime_memory,
-        'max_memory': np.max(mem_afters).item(),
+        'max_memory': np.max(mem_usages).item(),
         'max_time': np.max(exec_times).item(),
-        'overhead_memory': np.max(mem_befores).item(),
-        'overhead_time': (np.mean(exec_times) - np.mean(inner_times)).item(),
         'cost_factors': cost_factors_plain,
         'exec_times': exec_times,
-        'mem_usages': mem_afters,
+        'mem_usages': mem_usages,
         'subtask_timings': subtask_timings,
         'subtask_data': subtask_data,
+        'request_ids': request_ids,
     }
     perf.record_entry(func_name, start_time, datetime.now(), **perf_data)
 
     # Print a summary
     if any(subtask_timings) or any(subtask_data):
         subtask_df = pd.concat([pd.DataFrame(subtask_timings), pd.DataFrame(subtask_data)], axis=1)
-        subtask_df['perf.mem_usage'] = mem_afters
+        subtask_df['perf.mem_usage'] = mem_usages
         subtask_df['perf.exec_time'] = exec_times
         if futures and len(futures) > 1:
             subtask_summary = subtask_df.describe().transpose().to_string()
@@ -136,6 +131,22 @@ def exception_to_json_obj(exc):
     return obj
 
 
+def generate_aws_executors(lithops_config):
+    executors = {
+        'aws_lambda': lithops.ServerlessExecutor(
+            config=lithops_config, **{'runtime': lithops_config['aws_lambda']['runtime']}
+        )
+    }
+    # create a lithops executor for an EC2 instance with a different amount of RAM
+    for ec2_instance_name, ec2_instance_id in lithops_config['aws_ec2']['ec2_instances'].items():
+        config = copy.deepcopy(lithops_config)
+        config['aws_ec2']['instance_id'] = ec2_instance_id
+        executors[ec2_instance_name] = lithops.StandaloneExecutor(
+            config=config, **{'runtime': lithops_config['aws_ec2']['runtime']}
+        )
+    return executors
+
+
 class Executor:
     """
     This class wraps Lithops' FunctionExecutor to provide a platform where we can experiment with
@@ -143,7 +154,7 @@ class Executor:
     If a feature is successful, it should be upstreamed to Lithops as an RFC or PR.
 
     Current features:
-      * Switch to the Standalone executor if >32GB of memory is required
+      * Switch to the Standalone executor if >10GB of memory is required
       * Retry with 2x more memory if an execution fails due to an OOM
       * Collect & record per-invocation performance statistics & custom data
         * A named kwarg `perf` of type `SubtaskPerf` will be injected if in the parameter list,
@@ -168,22 +179,14 @@ class Executor:
                 'localhost': lithops.LocalhostExecutor(
                     config=lithops_config,
                     storage='localhost',
-                    # runtime='python',  # Change to RUNTIME_VPC to run in a Docker container
+                    **{
+                        'runtime': 'python'
+                    },  # Change to RUNTIME_EC2_IMAGE to run in a Docker container
                 )
             }
         else:
             self.is_hybrid = True
-            self.executors = {
-                'code_engine': lithops.ServerlessExecutor(
-                    config=lithops_config,
-                    backend='code_engine',
-                    **{'runtime': RUNTIME_CE},
-                ),
-                'ibm_vpc': lithops.StandaloneExecutor(
-                    config=lithops_config,
-                    **{'runtime': RUNTIME_VPC},
-                ),
-            }
+            self.executors = generate_aws_executors(lithops_config)
 
         self.storage = Storage(lithops_config)
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
@@ -265,15 +268,12 @@ class Executor:
 
             if (
                 isinstance(exc, (MemoryError, TimeoutError, OSError))
-                and runtime_memory <= 32 * 1024
+                and runtime_memory <= max(MEM_LIMITS.values())
                 and (max_memory is None or runtime_memory < max_memory)
             ):
                 attempt += 1
                 old_memory = runtime_memory
-                if old_memory < 32 * 1024:
-                    runtime_memory *= 2
-                else:
-                    runtime_memory = 128 * 1024  # switch to VPC
+                runtime_memory *= 2
 
                 logger.warning(
                     f'{func_name} raised {type(exc)} with {old_memory}MB, retrying with '
@@ -361,16 +361,6 @@ class Executor:
             executor.config['lithops']['worker_processes'] = min(
                 20, MEM_LIMITS.get(executor_type) // runtime_memory
             )
-        if executor.config['lithops']['mode'] == 'serverless':
-            # Selected `CPU-intensive` combination between CPU & RAM if amount of RAM <= 16 GB.
-            # In case of 32 GB, switch on `Balanced`
-            # https://cloud.ibm.com/docs/codeengine?topic=codeengine-mem-cpu-combo
-            if runtime_memory <= 16 * 1024:
-                runtime_cpu = runtime_memory / 1024 / 2.0
-            else:
-                runtime_cpu = runtime_memory / 1024 / 4.0
-            executor.config['code_engine']['runtime_cpu'] = runtime_cpu
-            logger.info(f'Setup {runtime_cpu} CPUs and {runtime_memory} MB RAM')
 
         return executor
 

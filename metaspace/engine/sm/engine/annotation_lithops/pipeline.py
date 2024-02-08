@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+import hashlib
 import json
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -93,7 +95,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.ds_segm_size_mb = 128
 
         self.enrichment_data = None
-        self.ds_size_hash = None
 
     def run_pipeline(
         self, debug_validate=False, use_cache=True, perform_enrichment=False
@@ -136,7 +137,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.ds_segments_bounds,
             self.ds_segms_cobjs,
             self.ds_segm_lens,
-            self.ds_size_hash,
         ) = load_ds(
             self.executor, self.imzml_cobject, self.ibd_cobject, self.ds_segm_size_mb, self.ds_id
         )
@@ -215,15 +215,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         dims = (self.imzml_reader.h, self.imzml_reader.w)
         acq_geometry = make_acq_geometry_lithops(ds.metadata, dims, self.imzml_reader.n_spectra)
         ds.save_acq_geometry(self._db, acq_geometry)
-
-    def store_ds_size_hash(self):
-        """Stores size and md5 hash of imzML/ibd files.
-        Not part of run_pipeline because this is unwanted when running from a LocalAnnotationJob."""
-        db = DB()
-        db.alter(
-            'UPDATE dataset SET size_hash = %s WHERE id = %s',
-            (json.dumps(self.ds_size_hash), self.ds_id),
-        )
 
     def store_images_to_s3(self, ds_id: str):
         """Stores ion images to S3 ImageStorage. Not part of run_pipeline because this is unwanted
