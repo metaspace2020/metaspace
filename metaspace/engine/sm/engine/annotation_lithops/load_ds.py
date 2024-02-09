@@ -105,7 +105,7 @@ def _prepare_storage_imzml_browser_files(
     imzml_cobject: CloudObject, conf: Dict[str, Any]
 ) -> Tuple[Storage, str]:
     """Storage initialization for imzml browser files"""
-    browser_storage = Storage(backend=conf['lithops']['lithops']['storage'])
+    browser_storage = Storage(conf['lithops'], backend=conf['lithops']['lithops']['storage'])
     browser_storage.bucket = conf['imzml_browser_storage']['bucket']
     uuid = imzml_cobject.key.split('/')[0]
     return browser_storage, uuid

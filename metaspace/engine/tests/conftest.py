@@ -43,6 +43,8 @@ def sm_config():
     SMConfig._config_dict['rabbitmq']['prefix'] = f'test_{worker_id}__'
 
     for path in SMConfig._config_dict['lithops']['sm_storage'].values():
+        if not isinstance(path, list):
+            continue
         # prefix keys with test ID so they can be cleaned up later
         path[1] = f'{test_id}/{path[1]}'
 
@@ -234,7 +236,10 @@ def executor(sm_config):
     yield executor
 
     executor.clean()
-    for bucket, prefix in sm_config['lithops']['sm_storage'].values():
+    for key, value in sm_config['lithops']['sm_storage'].items():
+        if key == 'storage':
+            continue
+        bucket, prefix = value[0], value[1]
         keys = executor.storage.list_keys(bucket, prefix)
         if keys:
             executor.storage.delete_objects(bucket, keys)
