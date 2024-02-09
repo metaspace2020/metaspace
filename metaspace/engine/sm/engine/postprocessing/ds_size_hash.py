@@ -14,11 +14,7 @@ logger = logging.getLogger('engine')
 
 
 def save_size_hash(
-        executor: Executor,
-        ds: Dataset,
-        db: DB,
-        imzml_cobj: CloudObject,
-        ibd_cobj: CloudObject
+    executor: Executor, ds: Dataset, db: DB, imzml_cobj: CloudObject, ibd_cobj: CloudObject
 ) -> None:
     """Calculate md5 hash of imzML/ibd files and store this with file size."""
 

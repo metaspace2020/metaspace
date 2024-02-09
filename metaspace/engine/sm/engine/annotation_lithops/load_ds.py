@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import hashlib
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -16,7 +14,6 @@ from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.executor import Executor, MEM_LIMITS
 from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj
 from sm.engine.config import SMConfig
-from sm.engine.storage import get_s3_client
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
 logger = logging.getLogger('annotation-pipeline')
@@ -131,7 +128,7 @@ def _upload_imzml_browser_files(
     if ints.itemsize > 4:
         ints = ints.astype('f')
 
-    if any([o.nbytes >= 5 * 1024 ** 3 for o in (mzs, ints, sp_idxs)]):
+    if any(o.nbytes >= 5 * 1024 ** 3 for o in (mzs, ints, sp_idxs)):
         print('At least one object has a size of more than 5 GB')
         return
 
@@ -180,9 +177,7 @@ def _load_ds(
 
     logger.info('Uploading imzml browser files')
     browser_storage, uuid = _prepare_storage_imzml_browser_files(imzml_cobject, conf)
-    imzml_browser_cobjs = _upload_imzml_browser_files(
-        mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid
-    )
+    _upload_imzml_browser_files(mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid)
     perf.record_entry('uploaded imzml browser files')
 
     return (
@@ -213,7 +208,7 @@ def load_ds(
     # separate m/z arrays per spectrum) approximately 3x the ibd file size is used during the
     # most memory-intense part (sorting the m/z array). Also for uploading imzml browser files
     # need plus 1x the ibd file size RAM.
-    message = f'Found {ibd_size_mb} MB .ibd and {imzml_size_mb} MB .imzML files.'
+    message = f'Found {ibd_size_mb} MB .ibd and {imzml_size_mb} MB .imzML files id {ds_id}.'
     runtime_memory = ibd_size_mb * 4 + 512
     if runtime_memory < MEM_LIMITS['aws_lambda']:
         logger.info(f'{message} Trying serverless load_ds')
