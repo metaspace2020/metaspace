@@ -232,12 +232,13 @@ def executor(sm_config):
     from sm.engine.annotation_lithops.executor import Executor
 
     executor = Executor(sm_config['lithops'], debug_run_locally=True)
-
+    # for some reason lithops constructor do not load temp bucket passed as config, so it is needed to manually add it
+    executor.storage.bucket = sm_config['lithops']['lithops']['storage_bucket']
     yield executor
 
     executor.clean()
     for key, value in sm_config['lithops']['sm_storage'].items():
-        if key == 'storage':
+        if not isinstance(value, list):
             continue
         bucket, prefix = value[0], value[1]
         keys = executor.storage.list_keys(bucket, prefix)
