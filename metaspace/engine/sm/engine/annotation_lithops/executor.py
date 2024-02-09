@@ -178,7 +178,7 @@ class Executor:
             self.executors = {
                 'localhost': lithops.LocalhostExecutor(
                     config=lithops_config,
-                    storage='localhost',
+                    storage=lithops_config['lithops']['storage'],
                     **{
                         'runtime': 'python'
                     },  # Change to RUNTIME_EC2_IMAGE to run in a Docker container
@@ -188,7 +188,7 @@ class Executor:
             self.is_hybrid = True
             self.executors = generate_aws_executors(lithops_config)
 
-        self.storage = Storage(lithops_config)
+        self.storage = Storage(lithops_config, backend=lithops_config['lithops']['storage'])
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
         self._execution_timeout = lithops_config['lithops'].get('execution_timeout', 7200) + 60
         self._perf = perf or NullProfiler()

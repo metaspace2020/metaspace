@@ -58,58 +58,40 @@
   },
   "lithops": {
     "lithops": {
-      "storage_bucket": "TEMP_BUCKET",
-      "storage": "localhost",
+      "storage_bucket": "lithops-dev",
+      "storage": "minio",
       "mode": "localhost",
-      "include_modules": ["engine/sm"],
+      "include_modules": ["sm"],
       "data_cleaner": true,
       "data_limit": false,
       "workers": 4,
       "execution_timeout": 2400
     },
+    "minio": {
+      "endpoint": "http://storage:9000",
+      "access_key_id": "minioadmin",
+      "secret_access_key": "minioadmin"
+    },
     "serverless": {
-      "backend": "code_engine",
-      "runtime_timeout": 1200,
-      "runtime_memory": 2048
+      "backend": "aws_lambda"
     },
     "standalone": {
-      "backend": "ibm_vpc"
+      "backend": "aws_ec2"
     },
     "localhost": {},
-    "ibm": {
-      "iam_api_key": ""
-    },
-    "code_engine": {
-      "region": "eu-de",
-      "namespace": "",
-      "runtime": "",
-      "runtime_timeout": 1800,
-      "connection_retries": 10
-    },
-    "ibm_vpc": {
-      "endpoint": "https://eu-de.iaas.cloud.ibm.com",
-      "instance_id": "",
-      "ip_address": "",
-      "ssh_key_filename": "/home/ubuntu/.ssh/ibm_cloud_vpc"
-    },
-    "ibm_cos": {
-      "region": "eu-de",
-      "access_key": "",
-      "secret_key": ""
-    },
     "aws": {
       "access_key_id": "minioadmin",
       "secret_access_key": "minioadmin"
     },
     "aws_s3": {
-      "__comment__": "Lithops overrides this to be HTTPS (https://github.com/lithops-cloud/lithops/issues/708). A workaround is needed to access MinIO through Lithops Storage - see update_diagnostics.py for an example",
-      "endpoint": "http://storage:9000"
+      "storage_bucket": "lithops-dev"
     },
     "sm_storage": {
-      "imzml": ["DATA_BUCKET", "imzml"],
-      "moldb": ["DATA_BUCKET", "moldb"],
-      "centroids": ["DATA_BUCKET", "centroids"],
-      "pipeline_cache": ["TEMP_BUCKET", "pipeline_cache"]
+      "storage": "minio",
+      "imzml": ["lithops-dev", "imzml"],
+      "moldb": ["lithops-dev", "moldb"],
+      "centroids": ["lithops-dev", "centroids"],
+      "pipeline_cache": ["lithops-dev", "pipeline_cache"]
     }
   },
   "slack": {

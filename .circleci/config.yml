@@ -279,7 +279,7 @@ jobs:
 
       - image: minio/minio:RELEASE.2021-01-16T02-19-44Z
         entrypoint: sh
-        command: -c 'mkdir -p /data/sm-engine-upload && mkdir -p /data/sm-imzml-browser-test && /usr/bin/minio server /data'
+        command: -c 'mkdir -p /data/sm-engine-upload && mkdir -p /data/sm-imzml-browser-test && mkdir -p /data/lithops-test && /usr/bin/minio server /data'
 
     working_directory: ~/metaspace/metaspace/engine
     steps:
