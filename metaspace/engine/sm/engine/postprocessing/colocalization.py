@@ -440,7 +440,7 @@ class Colocalization:
         tasks = list(self._iter_pending_coloc_tasks(ds.id, reprocess))
         cost_factors = pd.DataFrame({'n_images': [len(task[1]) for task in tasks]})
         job_cobjs = fexec.map_concat(
-            run_coloc_job, tasks, cost_factors=cost_factors, runtime_memory=4096 * 2  # 2x temporary
+            run_coloc_job, tasks, cost_factors=cost_factors, runtime_memory=4096
         )
 
         for job in iter_cobjs_with_prefetch(fexec.storage, job_cobjs):
