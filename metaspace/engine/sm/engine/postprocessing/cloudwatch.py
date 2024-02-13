@@ -1,0 +1,163 @@
+import re
+import json
+import time
+import logging
+from typing import Any, Dict, List, Tuple, Union
+from datetime import datetime, timedelta
+
+import boto3
+import numpy as np
+
+from sm.engine.db import DB
+
+EC2_PRICE = {
+    32768: 0.2538,
+    65536: 0.5076,
+    131072: 1.0152,
+    262144: 2.0304,
+}
+
+
+logger = logging.getLogger('engine')
+
+
+def get_perf_profile_start_finish_datetime(db: DB, profile_id: int) -> Tuple[datetime, datetime]:
+    resp = db.select_with_fields(
+        'SELECT start, finish FROM perf_profile WHERE id = %s', params=(profile_id,)
+    )
+    if resp and isinstance(resp[0].get('finish'), datetime):
+        return resp[0]['start'], resp[0]['finish']
+
+
+def get_perf_profile_data(db: DB, profile_id: int) -> List[Dict[str, Any]]:
+    resp = db.select_with_fields(
+        'SELECT id, start, finish, extra_data FROM perf_profile_entry WHERE profile_id = %s ORDER BY id',
+        params=(profile_id,)
+    )
+    if resp:
+        return resp
+
+
+def get_cloudwatch_logs(
+        cw_client: boto3.client, log_groups: list, start_dt: datetime, finish_dt: datetime
+) -> List[List[Dict[str, str]]]:
+    """Receive Cloudwatch Logs during job execution"""
+    query = 'fields @timestamp, @message | filter @message like /REPORT RequestId/ | sort @timestamp desc | limit 10000'
+
+    # extend the time range by delta seconds in both directions
+    delta = 5
+    start_query_response = cw_client.start_query(
+        logGroupNames=log_groups,
+        startTime=int((start_dt - timedelta(seconds=delta)).timestamp()),
+        endTime=int((finish_dt + timedelta(seconds=delta)).timestamp()),
+        queryString=query,
+    )
+
+    query_id = start_query_response['queryId']
+    response = None
+
+    while response == None or response['status'] == 'Running':
+        time.sleep(1)
+        response = cw_client.get_query_results(queryId=query_id)
+
+    if int(response['statistics']['recordsMatched']) >= 10_000:
+        logger.warning('Found more 10_000 matched records in Cloudwatch logs')
+
+    return response
+
+
+def extract_value(message: str) -> Dict[str, Union[float, int]]:
+    """Extract info about duration time in seconds and usage memory in MB"""
+
+    if re.match('^Billed Duration', message):
+        return {'duration_billed': round(float(message.split(' ')[2]) / 1000.0, 3)}
+    elif re.match('^Init Duration', message):
+        return {'duration_init': round(float(message.split(' ')[2]) / 1000.0, 3)}
+    elif re.match('^Duration', message):
+        return {'duration_exec': round(float(message.split(' ')[1]) / 1000.0, 3)}
+
+    if re.match('^Max Memory Used', message):
+        return {'memory_used': int(message.split(' ')[3])}
+
+
+def extract_data_from_cloudwatch_logs(records: List[List[Dict[str, str]]]) -> Dict[str, Dict[str, Union[float, int]]]:
+    """For each record in CW logs, extract info about Duration and Memory"""
+    data = {}
+    for record in records:
+        messages = record[1]['value'].split('\t')
+        request_id = messages[0].split(' ')[2]
+
+        item = {}
+        # iterate over report values: Duration, Memory, ...
+        for m in messages:
+            values = extract_value(m)
+            if values:
+                item.update(extract_value(m))
+
+        data[request_id] = item
+
+    return data
+
+
+def calc_lambda_cost(gb_secs, actions) -> float:
+    cost = 16.67 * 10 ** (-6) * gb_secs
+    cost += 0.20 * 10 ** (-6) * actions
+    return round(cost, 8)
+
+
+def calc_ec2_cost(runtime_memory, total_time) -> float:
+    # when runtime_memory equal 16 or 32 GB we use a VM with 32 GB RAM
+    memory = runtime_memory if runtime_memory >= 32768 else 32768
+
+    price_per_hour = EC2_PRICE[memory]
+    total_cost = price_per_hour * total_time / 3600.0
+    return round(total_cost, 8)
+
+
+def calc_costs(perf_profile_entries, request_ids_stat) -> Dict[int, float]:
+    """Calculate costs for each step of the pipeline (perf_profile_entry)"""
+    costs = {}
+    for entry in perf_profile_entries:
+        extra_data = entry['extra_data']
+        runtime_memory = extra_data['runtime_memory']
+
+        # error
+        if extra_data.get('error'):
+            logger.warning(f'{entry["id"]}: extra_data["error"]["type"]')
+
+        # successful
+        if runtime_memory > 10 * 1024:
+            total_time = (entry['finish'] - entry['start']).total_seconds()
+            total_cost = calc_ec2_cost(runtime_memory, total_time)
+        else:
+            time_total_aws = [request_ids_stat[r_id].get('duration_billed', 0.0) for r_id in extra_data['request_ids']]
+            total_gb_sec = np.sum(np.array(time_total_aws) * runtime_memory / 1024)
+            total_cost = calc_lambda_cost(total_gb_sec, extra_data.get('num_actions', len(extra_data['request_ids'])))
+
+        costs[entry['id']] = total_cost
+
+    return costs
+
+
+def get_costs(cloudwatch_client: boto3.client, db: DB, log_groups: List[str], profile_id: int) -> Dict[int, float]:
+    """Main function to calculate the cost per step for a given profile_id"""
+
+    start_dt, finish_dt = get_perf_profile_start_finish_datetime(db, profile_id)
+    cloudwatch_logs = get_cloudwatch_logs(cloudwatch_client, log_groups, start_dt, finish_dt)
+    request_ids_stat = extract_data_from_cloudwatch_logs(cloudwatch_logs)
+    perf_profile_entries = get_perf_profile_data(db, profile_id)
+    costs = calc_costs(perf_profile_entries, request_ids_stat)
+
+    return costs
+
+
+def add_cost_to_perf_profile_entries(db: DB, cost_data: Dict[int, float]) -> None:
+    for perf_profile_entry_id, cost in cost_data.items():
+        (old_extra_data,) = db.select_one(
+            'SELECT extra_data FROM perf_profile_entry WHERE id = %s', (perf_profile_entry_id,)
+        )
+        extra_data_json = json.dumps({**(old_extra_data or {}), **{'cost': cost}})
+        db.alter(
+            'UPDATE perf_profile_entry SET extra_data = %s WHERE id = %s',
+            (extra_data_json, perf_profile_entry_id),
+        )
