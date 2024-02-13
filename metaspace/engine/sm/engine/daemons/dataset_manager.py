@@ -14,6 +14,7 @@ from sm.engine.annotation.job import del_jobs
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
+from sm.engine.postprocessing.cloudwatch import get_costs, add_cost_to_perf_profile_entries
 from sm.engine.postprocessing.colocalization import Colocalization
 from sm.engine.daemons.actions import DaemonActionStage
 from sm.engine.dataset import Dataset, DatasetStatus
@@ -47,6 +48,13 @@ class DatasetManager:
                 'eu-west-1',
                 aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
                 aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
+            )
+
+            self.cloudwatch = boto3.client(
+                'logs',
+                'eu-west-1',
+                aws_access_key_id = self._sm_config['aws']['aws_access_key_id'],
+                aws_secret_access_key = self._sm_config['aws']['aws_secret_access_key'],
             )
 
     def post_to_slack(self, emoji, msg):
@@ -128,7 +136,16 @@ class DatasetManager:
                     only_if_needed=not del_first,
                 )
 
-            save_size_hash(executor=executor, ds=ds, db=self._db, imzml_cobj=job.imzml_cobj, ibd_cobj=job.ibd_cobj)
+            profile_id = perf._profile_id
+
+        save_size_hash(executor=executor, ds=ds, db=self._db, imzml_cobj=job.imzml_cobj, ibd_cobj=job.ibd_cobj)
+
+        # costs from Cloudwatch Logs
+        log_groups = self._sm_config['lithops']['aws_lambda'].get('cloudwatch_log_groups')
+        if log_groups:
+            costs_by_step = get_costs(self.cloudwatch, self._db, log_groups, profile_id)
+            # add_cost_to_perf_profile_entries(self._db, costs_by_step)
+            self.cost = round(sum(costs_by_step.values()), 4)
 
     def index(self, ds: Dataset):
         """Re-index all search results for the dataset.
