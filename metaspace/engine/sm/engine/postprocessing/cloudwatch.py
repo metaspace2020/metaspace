@@ -63,7 +63,6 @@ def get_raw_cloudwatch_logs(
     )
 
     query_id = start_query_response['queryId']
-    logger.info(f'{query_id=}')
     response = None
 
     while response is None or response['status'] == 'Running':
@@ -79,14 +78,12 @@ def get_cloudwatch_logs(
     """Return back Cloudwatch Logs during job execution"""
 
     logger.info(f'Number of runs: {runs}')
-
     response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
     while int(response['statistics']['recordsMatched']) < runs:
-        logger.info(f'Inner: {int(response["statistics"]["recordsMatched"])}')
-        response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
+        logger.info(f'CloudWatch records: {int(response["statistics"]["recordsMatched"])}')
         time.sleep(20)
+        response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
 
-    logger.info('Finished')
     logger.info(response['statistics'])
     if int(response['statistics']['recordsMatched']) >= 10_000:
         logger.warning('Found more 10_000 matched records in Cloudwatch logs')
@@ -161,7 +158,7 @@ def calc_costs(perf_profile_entries, request_ids_stat) -> Dict[int, float]:
             total_cost = _calc_lambda_cost(total_gb_sec, extra_data.get('num_actions', len(extra_data['request_ids'])))
 
         costs[entry['id']] = total_cost
-        logger.info(f'{entry["id"]: {100*total_cost:3.2f}}¢ {entry["name"]}')
+        logger.info(f'{entry["id"]}: {100*total_cost:5.3f}¢ {entry["name"]}')
 
     return costs
 
@@ -175,7 +172,6 @@ def get_costs(cloudwatch_client: boto3.client, db: DB, log_groups: List[str], pr
     cloudwatch_logs = get_cloudwatch_logs(cloudwatch_client, log_groups, start_dt, finish_dt, aws_lambda_runs)
     request_ids_stat = extract_data_from_cloudwatch_logs(cloudwatch_logs)
     costs = calc_costs(perf_profile_entries, request_ids_stat)
-    logger.info(costs)
 
     return costs
 
