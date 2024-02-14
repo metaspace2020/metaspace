@@ -31,7 +31,7 @@ def get_perf_profile_start_finish_datetime(db: DB, profile_id: int) -> Tuple[dat
 
 def get_perf_profile_data(db: DB, profile_id: int) -> List[Dict[str, Any]]:
     resp = db.select_with_fields(
-        'SELECT id, start, finish, extra_data FROM perf_profile_entry WHERE profile_id = %s ORDER BY id',
+        'SELECT id, name, start, finish, extra_data FROM perf_profile_entry WHERE profile_id = %s ORDER BY id',
         params=(profile_id,),
     )
     if resp:
@@ -69,8 +69,6 @@ def get_raw_cloudwatch_logs(
     while response is None or response['status'] == 'Running':
         time.sleep(5.0)
         response = cw_client.get_query_results(queryId=query_id)
-        logger.info(response['status'])
-        logger.info(response['statistics'])
 
     return response
 
@@ -129,13 +127,13 @@ def extract_data_from_cloudwatch_logs(records: List[List[Dict[str, str]]]) -> Di
     return data
 
 
-def calc_lambda_cost(gb_secs, actions) -> float:
+def _calc_lambda_cost(gb_secs, actions) -> float:
     cost = 16.67 * 10 ** (-6) * gb_secs
     cost += 0.20 * 10 ** (-6) * actions
     return round(cost, 8)
 
 
-def calc_ec2_cost(runtime_memory, total_time) -> float:
+def _calc_ec2_cost(runtime_memory, total_time) -> float:
     # when runtime_memory equal 16 or 32 GB we use a VM with 32 GB RAM
     memory = runtime_memory if runtime_memory >= 32768 else 32768
 
@@ -151,25 +149,19 @@ def calc_costs(perf_profile_entries, request_ids_stat) -> Dict[int, float]:
         extra_data = entry['extra_data']
         runtime_memory = extra_data['runtime_memory']
 
-        # error
-        if extra_data.get('error'):
-            logger.warning(f'{entry["id"]}: extra_data["error"]["type"]')
-
-        # successful
-        if runtime_memory > 10 * 1024:
+        if runtime_memory > 10 * 1024:  # EC2 instance
             total_time = (entry['finish'] - entry['start']).total_seconds()
-            total_cost = calc_ec2_cost(runtime_memory, total_time)
+            total_cost = _calc_ec2_cost(runtime_memory, total_time)
         else:
             time_total_aws = [
                 request_ids_stat[r_id].get('duration_billed', 0.0)
                 for r_id in extra_data['request_ids']
             ]
             total_gb_sec = np.sum(np.array(time_total_aws) * runtime_memory / 1024)
-            total_cost = calc_lambda_cost(
-                total_gb_sec, extra_data.get('num_actions', len(extra_data['request_ids']))
-            )
+            total_cost = _calc_lambda_cost(total_gb_sec, extra_data.get('num_actions', len(extra_data['request_ids'])))
 
         costs[entry['id']] = total_cost
+        logger.info(f'{entry["id"]: {100*total_cost:3.2f}}¢ {entry["name"]}')
 
     return costs
 
@@ -189,6 +181,7 @@ def get_costs(cloudwatch_client: boto3.client, db: DB, log_groups: List[str], pr
 
 
 def add_cost_to_perf_profile_entries(db: DB, cost_data: Dict[int, float]) -> None:
+    """Add info about costs to perf_profile_entries table"""
     for perf_profile_entry_id, cost in cost_data.items():
         (old_extra_data,) = db.select_one(
             'SELECT extra_data FROM perf_profile_entry WHERE id = %s', (perf_profile_entry_id,)
