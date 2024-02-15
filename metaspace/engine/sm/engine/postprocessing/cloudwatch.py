@@ -2,7 +2,7 @@ import re
 import json
 import time
 import logging
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Set, Tuple, Union
 from datetime import datetime, timedelta
 
 import boto3
@@ -38,13 +38,13 @@ def get_perf_profile_data(db: DB, profile_id: int) -> List[Dict[str, Any]]:
         return resp
 
 
-def calc_number_aws_lambda_runs(perf_profile_entries: List[Dict[str, Any]]) -> float:
-    """Calculate the number of lithops runs on AWS Lambda"""
-    runs = []
+def get_aws_lambda_request_ids(perf_profile_entries: List[Dict[str, Any]]) -> Set[str]:
+    """Return back AWS Lambda request ID for all runs"""
+    request_ids = []
     for entry in perf_profile_entries:
         if entry['extra_data']['runtime_memory'] <= 10 * 1024:
-            runs.append(len(entry['extra_data']['request_ids']))
-    return sum(runs)
+            request_ids.extend(entry['extra_data']['request_ids'])
+    return set(request_ids)
 
 
 def get_raw_cloudwatch_logs(
@@ -73,20 +73,21 @@ def get_raw_cloudwatch_logs(
 
 
 def get_cloudwatch_logs(
-    cw_client: boto3.client, log_groups: list, start_dt: datetime, finish_dt: datetime, runs: float
+    cw_client: boto3.client, log_groups: list, start_dt: datetime, finish_dt: datetime, aws_lambda_request_ids: Set[str]
 ) -> List[List[Dict[str, str]]]:
     """Return back Cloudwatch Logs during job execution"""
 
-    logger.info(f'Number of runs: {runs}')
+    logger.info(f'Number of runs: {len(aws_lambda_request_ids)}')
     response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
-    # AWS Lambda logs are typically available in Cloudwatch Logs with a delay of several minutes because of this,
-    # we are forced to compare the number of available log entries with the total number of lambda invokes (runs)
-    while int(response['statistics']['recordsMatched']) < runs:
-        logger.info(f'CloudWatch records: {int(response["statistics"]["recordsMatched"])}')
-        time.sleep(20)
+    cloudwatch_request_ids = set(extract_data_from_cloudwatch_logs(response['results']).keys())
+    #
+    #
+    while len(aws_lambda_request_ids - cloudwatch_request_ids) > 0:
+        logger.info(f'Waiting {len(aws_lambda_request_ids - cloudwatch_request_ids):>3} CloudWatch records')
+        time.sleep(25)
         response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
+        cloudwatch_request_ids = set(extract_data_from_cloudwatch_logs(response['results']).keys())
 
-    logger.info(response['statistics'])
     if int(response['statistics']['recordsMatched']) >= 10_000:
         logger.warning('Found more 10_000 matched records in Cloudwatch logs')
 
@@ -170,8 +171,8 @@ def get_costs(cloudwatch_client: boto3.client, db: DB, log_groups: List[str], pr
 
     start_dt, finish_dt = get_perf_profile_start_finish_datetime(db, profile_id)
     perf_profile_entries = get_perf_profile_data(db, profile_id)
-    aws_lambda_runs = calc_number_aws_lambda_runs(perf_profile_entries)
-    cloudwatch_logs = get_cloudwatch_logs(cloudwatch_client, log_groups, start_dt, finish_dt, aws_lambda_runs)
+    aws_lambda_request_ids = get_aws_lambda_request_ids(perf_profile_entries)
+    cloudwatch_logs = get_cloudwatch_logs(cloudwatch_client, log_groups, start_dt, finish_dt, aws_lambda_request_ids)
     request_ids_stat = extract_data_from_cloudwatch_logs(cloudwatch_logs)
     costs = calc_costs(perf_profile_entries, request_ids_stat)
 
