@@ -146,6 +146,7 @@ class DatasetManager:
             costs_by_step = get_costs(self.cloudwatch, self._db, log_groups, profile_id)
             add_cost_to_perf_profile_entries(self._db, costs_by_step)
             self.cost = round(sum(costs_by_step.values()), 4)
+            self.logger.info(f'Total costs: ${self.cost}')
 
     def index(self, ds: Dataset):
         """Re-index all search results for the dataset.

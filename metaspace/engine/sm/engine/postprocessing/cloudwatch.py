@@ -79,6 +79,8 @@ def get_cloudwatch_logs(
 
     logger.info(f'Number of runs: {runs}')
     response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
+    # AWS Lambda logs are typically available in Cloudwatch Logs with a delay of several minutes because of this,
+    # we are forced to compare the number of available log entries with the total number of lambda invokes (runs)
     while int(response['statistics']['recordsMatched']) < runs:
         logger.info(f'CloudWatch records: {int(response["statistics"]["recordsMatched"])}')
         time.sleep(20)
