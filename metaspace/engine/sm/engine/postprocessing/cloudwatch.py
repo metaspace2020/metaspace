@@ -83,7 +83,10 @@ def get_cloudwatch_logs(
     #
     #
     while len(aws_lambda_request_ids - cloudwatch_request_ids) > 0:
-        logger.info(f'Waiting {len(aws_lambda_request_ids - cloudwatch_request_ids):>3} CloudWatch records')
+        waiting_request_ids = aws_lambda_request_ids - cloudwatch_request_ids
+        logger.info(f'Waiting {len(waiting_request_ids):>3} CloudWatch records')
+        if len(waiting_request_ids) == 1:
+            logger.info(waiting_request_ids)
         time.sleep(25)
         response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
         cloudwatch_request_ids = set(extract_data_from_cloudwatch_logs(response['results']).keys())
