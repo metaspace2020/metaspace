@@ -295,7 +295,7 @@ export const Resolvers = {
             })
             const data : string = await res.text()
             const dataJson = JSON.parse(data)
-            const nOfPublications = dataJson.search_information.total_results
+            const nOfPublications = dataJson.search_information?.total_results
 
             redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * MINUTES * SECONDS)
             return parseInt(nOfPublications, 10)
