@@ -85,7 +85,8 @@ def upload_test_imzml(storage: Storage, sm_config, ds_config):
         imzml_content = open(imzml_path, 'rb').read()
         ibd_content = open(ibd_path, 'rb').read()
 
-    bucket, prefix = sm_config['lithops']['minio']['storage_bucket']
+    bucket = sm_config['lithops']['minio']['storage_bucket']
+    prefix = 'imzml'
     storage.put_cloudobject(imzml_content, bucket, f'{prefix}/test_ds/test.imzML')
     storage.put_cloudobject(ibd_content, bucket, f'{prefix}/test_ds/test.ibd')
     return f's3a://{bucket}/{prefix}/test_ds'
