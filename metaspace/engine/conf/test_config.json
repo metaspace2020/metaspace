@@ -56,7 +56,6 @@
       "secret_access_key": "minioadmin"
     },
     "sm_storage": {
-      "imzml": ["sm-lithops-test", "imzml"],
       "moldb": ["sm-lithops-test", "moldb"],
       "centroids": ["sm-lithops-test", "centroids"],
       "pipeline_cache": ["sm-lithops-test", "pipeline_cache"]
