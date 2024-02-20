@@ -119,7 +119,7 @@ def _upload_imzml_browser_files(
     """Save imzML browser files on the object storage"""
 
     def upload_file(data: np.array, key: str):
-        save_cobj(browser_storage, data, key=key)
+        return browser_storage.put_cloudobject(data.astype('f').tobytes(), key=key)
 
     # TODO: need reimplement save_cobj for file > 5 GB
     # https://github.com/metaspace2020/metaspace/issues/1469
@@ -138,7 +138,7 @@ def _upload_imzml_browser_files(
 
     chunk_records_number = 1024
     mz_index = mzs[::chunk_records_number]
-    cobjs.append(save_cobj(browser_storage, mz_index, key=f'{uuid}/mz_index.npy'))
+    cobjs.append(browser_storage.put_cloudobject(mz_index.tobytes(), key=f'{uuid}/mz_index.npy'))
 
     key = f'{uuid}/portable_spectrum_reader.pickle'
     cobjs.append(save_cobj(browser_storage, imzml_reader.imzml_reader, key=key))
