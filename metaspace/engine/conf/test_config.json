@@ -38,9 +38,8 @@
   },
   "lithops": {
     "lithops": {
-      "storage_bucket": "lithops-test",
-      "storage": "minio",
       "mode": "localhost",
+      "storage": "minio",
       "include_modules": ["sm"],
       "data_cleaner": true,
       "data_limit": false,
@@ -49,28 +48,18 @@
     "minio": {
       "endpoint": "http://localhost:9000",
       "access_key_id": "minioadmin",
-      "secret_access_key": "minioadmin"
+      "secret_access_key": "minioadmin",
+      "storage_bucket": "sm-lithops-test"
     },
-    "serverless": {
-      "backend": "aws_lambda"
-    },
-    "standalone": {
-      "backend": "aws_ec2"
-    },
-    "localhost": {},
     "aws": {
       "access_key_id": "minioadmin",
       "secret_access_key": "minioadmin"
     },
-    "aws_s3": {
-      "storage_bucket": "lithops-test"
-    },
     "sm_storage": {
-      "storage": "minio",
-      "imzml": ["lithops-test", "imzml"],
-      "moldb": ["lithops-test", "moldb"],
-      "centroids": ["lithops-test", "centroids"],
-      "pipeline_cache": ["lithops-test", "pipeline_cache"]
+      "imzml": ["sm-lithops-test", "imzml"],
+      "moldb": ["sm-lithops-test", "moldb"],
+      "centroids": ["sm-lithops-test", "centroids"],
+      "pipeline_cache": ["sm-lithops-test", "pipeline_cache"]
     }
   },
   "slack": {},
