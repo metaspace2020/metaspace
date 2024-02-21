@@ -74,11 +74,9 @@ def get_raw_cloudwatch_logs(
     )
 
     query_id = start_query_response['queryId']
-    response = None
+    response = {}
 
-    while (
-        response is None or response['status'] == 'Running'
-    ):  # pylint: disable=unsubscriptable-object
+    while response == {} or response['status'] == 'Running':
         time.sleep(5.0)
         response = cw_client.get_query_results(queryId=query_id)
 
