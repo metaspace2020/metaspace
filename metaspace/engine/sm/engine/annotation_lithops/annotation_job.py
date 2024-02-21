@@ -281,9 +281,7 @@ class ServerAnnotationJob:
         """
         sm_config = sm_config or SMConfig.get_conf()
         self.sm_storage = sm_config['lithops']['sm_storage']
-        self.storage = Storage(
-            sm_config['lithops'], backend=sm_config['lithops']['lithops']['storage']
-        )
+        self.storage = Storage(sm_config['lithops'])
         self.s3_client = get_s3_client()
         self.ds = ds
         self.perf = perf

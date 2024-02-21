@@ -232,8 +232,6 @@ def executor(sm_config):
     from sm.engine.annotation_lithops.executor import Executor
 
     executor = Executor(sm_config['lithops'], debug_run_locally=True)
-    # for some reason lithops constructor do not load temp bucket passed as config, so it is needed to manually add it
-    executor.storage.bucket = sm_config['lithops']['lithops']['storage_bucket']
     yield executor
 
     executor.clean()

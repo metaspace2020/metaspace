@@ -102,7 +102,7 @@ def _prepare_storage_imzml_browser_files(
     imzml_cobject: CloudObject, conf: Dict[str, Any]
 ) -> Tuple[Storage, str]:
     """Storage initialization for imzml browser files"""
-    browser_storage = Storage(conf['lithops'], backend=conf['lithops']['lithops']['storage'])
+    browser_storage = Storage(conf['lithops'])
     browser_storage.bucket = conf['imzml_browser_storage']['bucket']
     uuid = imzml_cobject.key.split('/')[0]
     return browser_storage, uuid
@@ -118,7 +118,7 @@ def _upload_imzml_browser_files(
 ) -> None:
     """Save imzML browser files on the object storage"""
 
-    def upload_file(data: np.array, key: str):
+    def upload_file(data: np.array, key: str) -> CloudObject:
         return browser_storage.put_cloudobject(data.astype('f').tobytes(), key=key)
 
     # TODO: need reimplement save_cobj for file > 5 GB
@@ -132,6 +132,8 @@ def _upload_imzml_browser_files(
         print('At least one object has a size of more than 5 GB')
         return
 
+    # there was no point in saving `sp_idxs` like float, it was a mistake
+    # due to the thousands of files stored on S3, we cannot now store this array as np.int32 now
     keys = [f'{uuid}/{k}' for k in ['mzs.npy', 'ints.npy', 'sp_idxs.npy']]
     with ThreadPoolExecutor(3) as executor:
         cobjs = list(executor.map(upload_file, [mzs, ints, sp_idxs], keys))
@@ -148,11 +150,11 @@ def _load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
-    conf: SMConfig,
+    conf: Dict[str, Any],
     *,
     storage: Storage,
     perf: SubtaskProfiler,
-) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray, List[CObj]]:
+) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray]:
     logger.info('Loading .imzML file...')
     imzml_reader = LithopsImzMLReader(storage, imzml_cobject, ibd_cobject)
     perf.record_entry(
