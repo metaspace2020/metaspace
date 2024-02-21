@@ -284,22 +284,27 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
   },
   async currentUserLastSubmittedDataset(source, args, ctx): Promise<DatasetSource | null> {
-    if (ctx.user.id) {
-      const results = await esSearchResults({
-        orderBy: 'ORDER_BY_DATE',
-        sortingOrder: 'DESCENDING',
-        datasetFilter: {
-          submitter: ctx.user.id,
-        },
-        limit: 1,
-      }, 'dataset', ctx.user)
-      if (results.length > 0) {
-        return {
-          ...results[0],
-          scopeRole: await resolveDatasetScopeRole(ctx, results[0]._source.ds_id),
+    try {
+      if (ctx.user.id) {
+        const results = await esSearchResults({
+          orderBy: 'ORDER_BY_DATE',
+          sortingOrder: 'DESCENDING',
+          datasetFilter: {
+            submitter: ctx.user.id,
+          },
+          limit: 1,
+        }, 'dataset', ctx.user)
+        if (results.length > 0) {
+          return {
+            ...results[0],
+            scopeRole: await resolveDatasetScopeRole(ctx, results[0]._source.ds_id),
+          }
         }
       }
+    } catch (e) {
+      return null
     }
+
     return null
   },
 

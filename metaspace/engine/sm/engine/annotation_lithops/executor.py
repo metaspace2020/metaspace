@@ -178,7 +178,7 @@ class Executor:
             self.executors = {
                 'localhost': lithops.LocalhostExecutor(
                     config=lithops_config,
-                    storage='localhost',
+                    storage=lithops_config['lithops']['storage'],
                     **{
                         'runtime': 'python'
                     },  # Change to RUNTIME_EC2_IMAGE to run in a Docker container

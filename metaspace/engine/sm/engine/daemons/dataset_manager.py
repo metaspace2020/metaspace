@@ -128,7 +128,13 @@ class DatasetManager:
                     only_if_needed=not del_first,
                 )
 
-            save_size_hash(executor=executor, ds=ds, db=self._db, imzml_cobj=job.imzml_cobj, ibd_cobj=job.ibd_cobj)
+            save_size_hash(
+                executor=executor,
+                ds=ds,
+                db=self._db,
+                imzml_cobj=job.imzml_cobj,
+                ibd_cobj=job.ibd_cobj,
+            )
 
     def index(self, ds: Dataset):
         """Re-index all search results for the dataset.

@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import hashlib
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -16,7 +14,6 @@ from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.executor import Executor, MEM_LIMITS
 from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj
 from sm.engine.config import SMConfig
-from sm.engine.storage import get_s3_client
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
 logger = logging.getLogger('annotation-pipeline')
@@ -105,7 +102,7 @@ def _prepare_storage_imzml_browser_files(
     imzml_cobject: CloudObject, conf: Dict[str, Any]
 ) -> Tuple[Storage, str]:
     """Storage initialization for imzml browser files"""
-    browser_storage = Storage(backend=conf['lithops']['lithops']['storage'])
+    browser_storage = Storage(conf['lithops'])
     browser_storage.bucket = conf['imzml_browser_storage']['bucket']
     uuid = imzml_cobject.key.split('/')[0]
     return browser_storage, uuid
@@ -121,8 +118,8 @@ def _upload_imzml_browser_files(
 ) -> None:
     """Save imzML browser files on the object storage"""
 
-    def upload_file(data: np.array, key: str):
-        save_cobj(browser_storage, data, key=key)
+    def upload_file(data: np.array, key: str) -> CloudObject:
+        return browser_storage.put_cloudobject(data.astype('f').tobytes(), key=key)
 
     # TODO: need reimplement save_cobj for file > 5 GB
     # https://github.com/metaspace2020/metaspace/issues/1469
@@ -131,17 +128,19 @@ def _upload_imzml_browser_files(
     if ints.itemsize > 4:
         ints = ints.astype('f')
 
-    if any([o.nbytes >= 5 * 1024 ** 3 for o in (mzs, ints, sp_idxs)]):
+    if any(o.nbytes >= 5 * 1024 ** 3 for o in (mzs, ints, sp_idxs)):
         print('At least one object has a size of more than 5 GB')
         return
 
+    # there was no point in saving `sp_idxs` like float, it was a mistake
+    # due to the thousands of files stored on S3, we cannot now store this array as np.int32 now
     keys = [f'{uuid}/{k}' for k in ['mzs.npy', 'ints.npy', 'sp_idxs.npy']]
     with ThreadPoolExecutor(3) as executor:
         cobjs = list(executor.map(upload_file, [mzs, ints, sp_idxs], keys))
 
     chunk_records_number = 1024
     mz_index = mzs[::chunk_records_number]
-    cobjs.append(save_cobj(browser_storage, mz_index, key=f'{uuid}/mz_index.npy'))
+    cobjs.append(browser_storage.put_cloudobject(mz_index.tobytes(), key=f'{uuid}/mz_index.npy'))
 
     key = f'{uuid}/portable_spectrum_reader.pickle'
     cobjs.append(save_cobj(browser_storage, imzml_reader.imzml_reader, key=key))
@@ -151,11 +150,11 @@ def _load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
-    conf: SMConfig,
+    conf: Dict[str, Any],
     *,
     storage: Storage,
     perf: SubtaskProfiler,
-) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray, List[CObj]]:
+) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray]:
     logger.info('Loading .imzML file...')
     imzml_reader = LithopsImzMLReader(storage, imzml_cobject, ibd_cobject)
     perf.record_entry(
@@ -180,9 +179,7 @@ def _load_ds(
 
     logger.info('Uploading imzml browser files')
     browser_storage, uuid = _prepare_storage_imzml_browser_files(imzml_cobject, conf)
-    imzml_browser_cobjs = _upload_imzml_browser_files(
-        mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid
-    )
+    _upload_imzml_browser_files(mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid)
     perf.record_entry('uploaded imzml browser files')
 
     return (
@@ -213,7 +210,7 @@ def load_ds(
     # separate m/z arrays per spectrum) approximately 3x the ibd file size is used during the
     # most memory-intense part (sorting the m/z array). Also for uploading imzml browser files
     # need plus 1x the ibd file size RAM.
-    message = f'Found {ibd_size_mb} MB .ibd and {imzml_size_mb} MB .imzML files.'
+    message = f'Found {ibd_size_mb} MB .ibd and {imzml_size_mb} MB .imzML files id {ds_id}.'
     runtime_memory = ibd_size_mb * 4 + 512
     if runtime_memory < MEM_LIMITS['aws_lambda']:
         logger.info(f'{message} Trying serverless load_ds')

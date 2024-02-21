@@ -202,7 +202,7 @@ services:
   storage:
     image: minio/minio:RELEASE.2021-01-16T02-19-44Z
     entrypoint: sh
-    command: -c 'mkdir -p /data/sm-engine-dev && mkdir -p /data/sm-imzml-browser-dev && /usr/bin/minio server /data'
+    command: -c 'mkdir -p /data/sm-centroids-dev && mkdir -p /data/sm-engine-dev && mkdir -p /data/sm-image-storage-dev && mkdir -p /data/sm-imzml-browser-dev && mkdir -p /data/sm-lithops-temp-dev && /usr/bin/minio server /data'
     volumes:
       - "${DATA_ROOT}/s3:/data"
     ports:

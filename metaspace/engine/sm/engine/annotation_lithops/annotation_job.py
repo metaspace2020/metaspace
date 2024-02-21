@@ -100,7 +100,7 @@ def _upload_if_needed(
             return cobject
 
 
-def _return_imzml_ibd_cobj(src_path, storage, sm_storage, s3_client=None):
+def _return_imzml_ibd_cobj(src_path, storage, s3_client=None):
     """
     Return CloudObject for imzML/ibd files.
     Check that there is only one imzML/ibd file in the directory in the AWS S3.
@@ -290,7 +290,7 @@ class ServerAnnotationJob:
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = _return_imzml_ibd_cobj(
-            self.ds.input_path, self.storage, self.sm_storage, self.s3_client
+            self.ds.input_path, self.storage, self.s3_client
         )
         self.moldb_defs = _upload_moldbs_from_db(
             self.ds.config['database_ids'], self.storage, self.sm_storage
