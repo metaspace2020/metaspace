@@ -133,7 +133,7 @@ def _upload_imzml_browser_files(
         return
 
     # there was no point in saving `sp_idxs` like float, it was a mistake
-    # due to the thousands of files stored on S3, we cannot now painlessly store this array as np.int32
+    # due to the thousands of files stored on S3, we cannot now store this array as np.int32 now
     keys = [f'{uuid}/{k}' for k in ['mzs.npy', 'ints.npy', 'sp_idxs.npy']]
     with ThreadPoolExecutor(3) as executor:
         cobjs = list(executor.map(upload_file, [mzs, ints, sp_idxs], keys))
