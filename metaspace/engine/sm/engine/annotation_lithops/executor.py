@@ -188,7 +188,7 @@ class Executor:
             self.is_hybrid = True
             self.executors = generate_aws_executors(lithops_config)
 
-        self.storage = Storage(lithops_config, backend=lithops_config['lithops']['storage'])
+        self.storage = Storage(lithops_config)
         self._include_modules = lithops_config['lithops'].get('include_modules', [])
         self._execution_timeout = lithops_config['lithops'].get('execution_timeout', 7200) + 60
         self._perf = perf or NullProfiler()
