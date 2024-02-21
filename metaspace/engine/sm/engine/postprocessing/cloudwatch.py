@@ -22,8 +22,8 @@ PERF_PROFILE = 'SELECT start, finish FROM perf_profile WHERE id = %s'
 
 PERF_PROFILE_ENTRY = (
     'SELECT id, name, start, finish, extra_data '
-    'FROM perf_profile_entry'
-    'WHERE profile_id = %s'
+    'FROM perf_profile_entry '
+    'WHERE profile_id = %s '
     'ORDER BY id'
 )
 
