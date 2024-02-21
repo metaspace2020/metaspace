@@ -55,8 +55,8 @@ class DatasetManager:
             self.cloudwatch = boto3.client(
                 'logs',
                 'eu-west-1',
-                aws_access_key_id = self._sm_config['aws']['aws_access_key_id'],
-                aws_secret_access_key = self._sm_config['aws']['aws_secret_access_key'],
+                aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+                aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
             )
 
     def post_to_slack(self, emoji, msg):

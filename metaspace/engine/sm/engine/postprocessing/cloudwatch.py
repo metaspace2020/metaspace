@@ -31,7 +31,7 @@ logger = logging.getLogger('engine')
 
 
 def get_perf_profile_start_finish_datetime(
-        db: DB, profile_id: int
+    db: DB, profile_id: int
 ) -> Optional[Tuple[datetime, datetime]]:
     resp = db.select_with_fields(PERF_PROFILE, params=(profile_id,))
     if resp and isinstance(resp[0].get('finish'), datetime):
@@ -40,7 +40,7 @@ def get_perf_profile_start_finish_datetime(
 
 
 def get_perf_profile_data(db: DB, profile_id: int) -> Optional[List[Dict[str, Any]]]:
-    resp = db.select_with_fields(PERF_PROFILE_ENTRY,params=(profile_id,))
+    resp = db.select_with_fields(PERF_PROFILE_ENTRY, params=(profile_id,))
     if resp:
         return resp
     return None
@@ -56,12 +56,14 @@ def get_aws_lambda_request_ids(perf_profile_entries: List[Dict[str, Any]]) -> Se
 
 
 def get_raw_cloudwatch_logs(
-        cw_client: boto3.client, log_groups: List[str], start_dt: datetime, finish_dt: datetime
+    cw_client: boto3.client, log_groups: List[str], start_dt: datetime, finish_dt: datetime
 ) -> Dict[str, Any]:
     """Return back response from Cloudwatch client"""
 
-    query = ('fields @timestamp, @message | filter @message like /REPORT RequestId/ | '
-             'sort @timestamp desc | limit 10000')
+    query = (
+        'fields @timestamp, @message | filter @message like /REPORT RequestId/ | '
+        'sort @timestamp desc | limit 10000'
+    )
     delta = 15  # extend the endTime 15 minutes to cover stuck lambda function
 
     start_query_response = cw_client.start_query(
@@ -74,7 +76,9 @@ def get_raw_cloudwatch_logs(
     query_id = start_query_response['queryId']
     response = None
 
-    while response is None or response['status'] == 'Running':  # pylint: disable=unsubscriptable-object
+    while (
+        response is None or response['status'] == 'Running'
+    ):  # pylint: disable=unsubscriptable-object
         time.sleep(5.0)
         response = cw_client.get_query_results(queryId=query_id)
 
@@ -82,11 +86,11 @@ def get_raw_cloudwatch_logs(
 
 
 def get_cloudwatch_logs(
-        cw_client: boto3.client,
-        log_groups: list,
-        start_dt: datetime,
-        finish_dt: datetime,
-        aws_lambda_request_ids: Set[str]
+    cw_client: boto3.client,
+    log_groups: list,
+    start_dt: datetime,
+    finish_dt: datetime,
+    aws_lambda_request_ids: Set[str],
 ) -> List[List[Dict[str, str]]]:
     """Return back Cloudwatch Logs during job execution"""
 
@@ -128,7 +132,7 @@ def extract_value(message: str) -> Dict[str, Union[float, int]]:
 
 
 def extract_data_from_cloudwatch_logs(
-        records: List[List[Dict[str, str]]]
+    records: List[List[Dict[str, str]]]
 ) -> Dict[str, Dict[str, Union[float, int]]]:
     """For each record in CW logs, extract info about Duration and Memory"""
     data = {}
@@ -190,7 +194,7 @@ def calc_costs(perf_profile_entries, request_ids_stat) -> Dict[int, float]:
 
 
 def get_costs(
-        cloudwatch_client: boto3.client, db: DB, log_groups: List[str], profile_id: int
+    cloudwatch_client: boto3.client, db: DB, log_groups: List[str], profile_id: int
 ) -> Dict[int, float]:
     """Main function to calculate the cost per step for a given profile_id"""
 
