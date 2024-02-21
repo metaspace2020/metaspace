@@ -265,7 +265,7 @@ class Executor:
                 attempt=attempt,
                 runtime_memory=runtime_memory,
                 failed_activation_ids=failed_activation_ids,
-                request_ids=[f.activation_id for f in futures],
+                request_ids=[f.activation_id for f in futures],  # pylint: disable=not-an-iterable
             )
 
             if (

@@ -43,6 +43,8 @@ class DatasetManager:
         self.logger = logger or logging.getLogger()
 
         if 'aws' in self._sm_config:
+            self.cost = None
+
             self.ses = boto3.client(
                 'ses',
                 'eu-west-1',
@@ -136,9 +138,11 @@ class DatasetManager:
                     only_if_needed=not del_first,
                 )
 
-            profile_id = perf._profile_id
+            profile_id = perf._profile_id  # pylint: disable=protected-access
 
-        save_size_hash(executor=executor, ds=ds, db=self._db, imzml_cobj=job.imzml_cobj, ibd_cobj=job.ibd_cobj)
+        save_size_hash(
+            executor=executor, ds=ds, db=self._db, imzml_cobj=job.imzml_cobj, ibd_cobj=job.ibd_cobj
+        )
 
         # costs from Cloudwatch Logs
         log_groups = self._sm_config['lithops']['aws_lambda'].get('cloudwatch_log_groups')
