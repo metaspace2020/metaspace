@@ -83,7 +83,8 @@
       "namespace": "{{ sm_lithops_aws_lambda_namespace }}",
       "runtime_timeout": 900,
       "runtime": "{{ sm_lithops_aws_lambda_runtime_name }}",
-      "execution_role": "{{ sm_lithops_aws_lambda_execution_role }}"
+      "execution_role": "{{ sm_lithops_aws_lambda_execution_role }}",
+      "cloudwatch_log_groups": {{ sm_lithops_aws_lambda_cloudwatch_log_groups | to_json }}
     },
     "aws_ec2": {
       "exec_mode": "consume",

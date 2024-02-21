@@ -252,6 +252,7 @@ class Executor:
 
                 return [result for result, subtask_perf in return_vals]
 
+            # failed futures
             failed_idxs = [i for i, f in enumerate(futures or []) if f.error]
             # pylint: disable=unsubscriptable-object # (because futures is Optional)
             failed_activation_ids = [futures[i].activation_id for i in failed_idxs]
@@ -264,6 +265,7 @@ class Executor:
                 attempt=attempt,
                 runtime_memory=runtime_memory,
                 failed_activation_ids=failed_activation_ids,
+                request_ids=[f.activation_id for f in futures],  # pylint: disable=not-an-iterable
             )
 
             if (
