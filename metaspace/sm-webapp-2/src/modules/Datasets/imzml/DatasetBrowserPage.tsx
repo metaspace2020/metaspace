@@ -27,7 +27,7 @@ import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import * as FileSaver from 'file-saver'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
-import { uniq } from 'lodash-es'
+import { get, uniq } from 'lodash-es'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { InfoFilled, Loading } from '@element-plus/icons-vue'
@@ -625,9 +625,10 @@ export default defineComponent({
     onAnnotationsResult(async (result) => {
       if (dataset.value && result) {
         const mz = result.data.allAnnotations[0].mz
+        const config = safeJsonParse(dataset.value?.configJson)
+        const ppm = get(config, 'image_generation.ppm') || 3
 
         if (!state.mzmScoreFilter) {
-          const ppm = 3
           state.mzmScoreFilter = mz
           state.mzmShiftFilter = ppm
           state.mzmScaleFilter = 'ppm'
