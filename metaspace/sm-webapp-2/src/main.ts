@@ -9,15 +9,7 @@ import * as Sentry from '@sentry/vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
 
-// import 'element-plus/dist/index.css'
-import 'element-plus/es/components/radio-button/style/css'
-import 'element-plus/es/components/dropdown/style/css'
-import 'element-plus/es/components/notification/style/css'
-import 'element-plus/es/components/message-box/style/css'
-import 'element-plus/es/components/message/style/css'
-import 'element-plus/es/components/dialog/style/css'
-import 'element-plus/es/components/table/style/css'
-import 'element-plus/es/components/alert/style/css'
+import ElementPlusCustom from './lib/element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import './modules/App/element-overrides.css'
 import './modules/App/tailwind.scss'
@@ -30,7 +22,6 @@ import VueGtag from 'vue-gtag'
 import { setErrorNotifier } from './lib/reportError'
 import { migrateLocalStorage } from './lib/localStorage'
 
-import { ElMessageBox, ElNotification } from 'element-plus'
 import { Route } from '@sentry/vue/types/router'
 
 const isProd = process.env.NODE_ENV === 'production'
@@ -85,6 +76,7 @@ migrateLocalStorage()
 
 app.use(router)
 app.use(store)
+app.use(ElementPlusCustom)
 
 router.afterEach((to: Route) => {
   store.commit('updateFilterOnNavigate', to)
@@ -104,8 +96,6 @@ app.use(head)
 
 // app.config.devtools = process.env.NODE_ENV === 'development'
 app.config.performance = process.env.NODE_ENV === 'development'
-app.config.globalProperties.$alert = ElMessageBox.alert
-app.config.globalProperties.$notification = ElNotification
 
 app.mount('#app')
 

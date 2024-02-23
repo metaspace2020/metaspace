@@ -4,9 +4,6 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import svgLoader from 'vite-svg-loader'
-import AutoImport from 'unplugin-auto-import/vite'
-import Components from 'unplugin-vue-components/vite'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import CompressionPlugin from 'vite-plugin-compression'
 import Markdown from 'unplugin-vue-markdown/vite'
 
@@ -41,12 +38,6 @@ export default defineConfig({
     }),
     vueJsx(),
     svgLoader(),
-    AutoImport({
-      resolvers: [ElementPlusResolver()],
-    }),
-    Components({
-      resolvers: [ElementPlusResolver()],
-    }),
     CompressionPlugin({
       algorithm: 'brotliCompress',
       ext: '.br',

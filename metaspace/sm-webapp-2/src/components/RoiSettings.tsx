@@ -53,7 +53,7 @@ const CHUNK_SIZE = 1000
 export default defineComponent({
   name: 'RoiSettings',
   props: {
-    annotation: { type: Object, default: () => {} },
+    annotation: { type: Object as any, default: () => {} },
   },
   setup(props: RoiSettingsProps | any) {
     const store = useStore()

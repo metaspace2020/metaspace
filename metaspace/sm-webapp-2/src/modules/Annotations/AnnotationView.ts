@@ -29,6 +29,7 @@ import { ElIcon } from 'element-plus'
 import { Setting } from '@element-plus/icons-vue'
 import ColocalizationSettings from './annotation-widgets/ColocalizationSettings.vue'
 import DatasetInfo from '../../components/DatasetInfo.vue'
+import StatefulIcon from '../../components/StatefulIcon.vue'
 
 const LockSvg = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-lock.svg'))
 
@@ -58,6 +59,7 @@ const componentsToRegister: any = {
   Setting,
   FilterIcon,
   DatasetInfo,
+  StatefulIcon,
 }
 for (const category of Object.keys(annotationWidgets)) {
   metadataDependentComponents[category] = {}
