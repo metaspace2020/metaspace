@@ -236,6 +236,14 @@ export const getUserGroupsQuery = gql`
   ${ViewGroupFragment}
 `
 
+export const getDetectabilitySourcesQuery = gql`
+  query GetDetectabilitySourcesQuery {
+    allSources {
+      source
+    }
+  }
+`
+
 export const countGroupDatasets = gql`
   query ($groupId: ID!) {
     countDatasets(filter: { group: $groupId })

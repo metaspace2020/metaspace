@@ -1,4 +1,4 @@
-import { defineComponent, reactive } from 'vue'
+import { defineComponent, reactive, watch, computed } from 'vue'
 import { ElOption, ElPopover, ElSelect, ElButton, ElIcon } from '../../lib/element-plus'
 import FadeTransition from '../../components/FadeTransition'
 import { Setting } from '@element-plus/icons-vue'
@@ -34,11 +34,16 @@ export const ChartSettings = defineComponent({
       colormap: props.defaultColormap,
       status: 'CLOSED',
     })
+    const defaultColormap = computed(() => props.defaultColormap)
 
     const handleColormapChange = (value: string) => {
       state.colormap = value
       emit('color', value)
     }
+
+    watch(defaultColormap, (value) => {
+      handleColormapChange(value)
+    })
 
     return () => {
       return (

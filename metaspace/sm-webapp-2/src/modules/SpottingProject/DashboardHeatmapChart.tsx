@@ -61,7 +61,7 @@ const PEAK_FILTER = {
 
 // const items = ['not detected', 'M+H', 'M+Na', 'M+']
 
-export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>({
+export const DashboardHeatmapChart = defineComponent({
   name: 'DashboardHeatmapChart',
   props: {
     isEmpty: {
@@ -111,7 +111,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       type: String,
     },
   },
-  setup(props, { emit }) {
+  setup(props: DashboardHeatmapChartProps, { emit }) {
     const spectrumChart = ref(null)
     const xAxisData = computed(() => props.xAxis)
     const yAxisData = computed(() => props.yAxis)
@@ -125,7 +125,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
           formatter: function (params: any) {
             const value = typeof params.value[4] === 'number' ? params.value[4] : params.value[3]
             return (
-              (value || 0).toFixed(2) +
+              (value === 'number' ? (value || 0).toFixed(2) : value) +
               ' ' +
               (params.data?.label?.y || '').replace(/-agg-/g, ' ') +
               ' in ' +

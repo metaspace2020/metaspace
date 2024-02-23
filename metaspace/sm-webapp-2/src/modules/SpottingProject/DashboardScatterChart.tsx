@@ -67,7 +67,7 @@ const PEAK_FILTER = {
 
 const markAreaPalette = ['#9b5fe0', '#16a4d8', '#60dbe8', '#8bd346', '#efdf48', '#f9a52c', '#d64e12']
 
-export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>({
+export const DashboardScatterChart = defineComponent({
   name: 'DashboardScatterChart',
   props: {
     isEmpty: {
@@ -117,7 +117,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       type: String,
     },
   },
-  setup(props, { emit }) {
+  setup(props: DashboardScatterChartProps, { emit }) {
     const spectrumChart = ref(null)
     const xAxisData = computed(() => props.xAxis)
     const yAxisData = computed(() => props.yAxis)
@@ -143,7 +143,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
           formatter: function (params: any) {
             const value = typeof params.value[4] === 'number' ? params.value[4] : params.value[3]
             return (
-              (value || 0).toFixed(2) +
+              (value === 'number' ? (value || 0).toFixed(2) : value) +
               ' ' +
               (params.data?.label?.y || '').replace(/-agg-/g, ' ') +
               ' in ' +
