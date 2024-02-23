@@ -86,7 +86,7 @@
 
 <script lang="ts">
 import { defineComponent, onMounted, ref, watch, computed } from 'vue'
-import { ElMessageBox, ElSlider, ElTooltip } from 'element-plus'
+import { ElMessageBox, ElSlider, ElTooltip } from '../../../../lib/element-plus'
 import IonImageViewer from '../../../../components/IonImageViewer'
 import Colorbar from './Colorbar.vue'
 import domtoimage from 'dom-to-image-google-font-issue'

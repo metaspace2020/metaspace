@@ -15,7 +15,7 @@
 <script>
 import { defineComponent, ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
-import { ElTree, ElRow } from 'element-plus'
+import { ElTree, ElRow } from '../lib/element-plus'
 import { defaultMetadataType, metadataSchemas } from '../lib/metadataRegistry'
 import { get, flatMap } from 'lodash-es'
 import { optionalSuffixInParens } from '../lib/vueFilters'

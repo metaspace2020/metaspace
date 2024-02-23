@@ -17,7 +17,7 @@ declare module '*.md' {
 import { Store } from 'vuex'
 // @ts-ignore
 import { ComponentCustomProperties } from 'vue'
-import { ElMessageBox, ElNotification } from 'element-plus'
+import { ElMessageBox, ElNotification } from '../lib/element-plus'
 
 // Replace 'YourStoreStateType' with the actual type of your Vuex store state
 declare module '@vue/runtime-core' {

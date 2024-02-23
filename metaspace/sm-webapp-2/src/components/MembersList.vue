@@ -127,7 +127,7 @@ import {
   ElPagination,
   ElTable,
   ElLoading,
-} from 'element-plus'
+} from '../lib/element-plus'
 
 export interface Member {
   role: UserGroupRole | ProjectRole

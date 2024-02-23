@@ -65,7 +65,7 @@ import { inject, InjectionKey } from 'vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import { ApolloClient } from '@apollo/client/core'
 import { Loading } from '@element-plus/icons-vue'
-import { ElSelect, ElOption, ElOptionGroup } from 'element-plus'
+import { ElSelect, ElOption, ElOptionGroup } from '../../../lib/element-plus'
 
 interface Option {
   value: string
@@ -99,7 +99,7 @@ export default defineComponent({
     const selectRef = ref(null)
     const groups = ref<GroupOption[]>([])
     const options = ref<Record<string, Option>>({})
-    const previousQuery = ref<string | null>(null)
+    const previousQuery = ref(null)
     const store = useStore()
     const datasetFilter = ref(store.getters.filter.datasetIds)
     const hasDatasetFilter = computed(() => datasetFilter.value?.length > 0)

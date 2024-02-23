@@ -1,6 +1,6 @@
 import { computed, defineComponent, reactive, watchEffect } from 'vue'
 import { Workflow, WorkflowStep } from '../../../components/Workflow'
-import { ElSelect, ElOption, ElInputNumber, ElButton, ElDialog } from 'element-plus'
+import { ElSelect, ElOption, ElInputNumber, ElButton, ElDialog } from '../../../lib/element-plus'
 import { ErrorLabelText } from '../../../components/Form'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import { DatasetDetailItem, datasetListItemsQuery } from '../../../api/dataset'
@@ -36,7 +36,7 @@ interface DatasetComparisonDialogState {
 
 const MAX_CELLS = 12
 
-export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogProps>({
+export const DatasetComparisonDialog = defineComponent({
   name: 'DatasetComparisonDialog',
   props: {
     selectedDatasetIds: {
@@ -45,7 +45,7 @@ export const DatasetComparisonDialog = defineComponent<DatasetComparisonDialogPr
     },
   },
   // @ts-ignore
-  setup(props, { refs, emit }) {
+  setup(props: DatasetComparisonDialogProps, { refs, emit }) {
     const router = useRouter()
     const state = reactive<DatasetComparisonDialogState>({
       selectedDatasetIds: props.selectedDatasetIds,

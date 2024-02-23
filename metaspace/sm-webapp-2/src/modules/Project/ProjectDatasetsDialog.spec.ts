@@ -6,7 +6,7 @@ import router from '../../router'
 import { vi } from 'vitest'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { ProjectDatasetsDialog } from './ProjectDatasetsDialog'
-import { ElCheckbox } from 'element-plus'
+import { ElCheckbox } from '../../lib/element-plus'
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),

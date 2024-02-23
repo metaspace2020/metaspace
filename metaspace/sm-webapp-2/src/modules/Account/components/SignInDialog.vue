@@ -51,7 +51,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, watch } from 'vue'
-import { ElForm } from 'element-plus'
+import { ElForm } from '../../../lib/element-plus'
 import { Vue3SlideUpDown } from 'vue3-slide-up-down'
 import GoogleButton from './GoogleButton.vue'
 import InterDialogLink from './InterDialogLink'

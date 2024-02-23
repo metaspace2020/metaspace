@@ -32,7 +32,7 @@ import { defineComponent, PropType, computed } from 'vue'
 import ImageLoader from '../../../../components/ImageLoader.vue'
 import { sortBy } from 'lodash-es'
 import { formatHumanReadableList, formatNth } from '../../../../lib/util'
-import { ElIcon, ElCol, ElRow, ElPopover } from 'element-plus'
+import { ElIcon, ElCol, ElRow, ElPopover } from '../../../../lib/element-plus'
 import { Warning } from '@element-plus/icons-vue'
 export default defineComponent({
   components: {

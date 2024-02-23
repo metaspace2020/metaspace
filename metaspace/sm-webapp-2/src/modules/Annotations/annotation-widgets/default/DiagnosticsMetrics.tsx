@@ -1,9 +1,9 @@
 import { defineComponent, computed } from 'vue'
-import { ElPopover, ElRow } from 'element-plus'
+import { ElPopover, ElRow } from '../../../../lib/element-plus'
 import { sortBy } from 'lodash-es'
 import safeJsonParse from '../../../../lib/safeJsonParse'
 import config from '../../../../lib/config'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
 
 const interleave = <T extends any>(arr: T[], separator: T): T[] => arr.flatMap((item) => [separator, item]).slice(1)

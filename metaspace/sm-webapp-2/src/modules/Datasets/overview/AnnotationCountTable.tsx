@@ -1,5 +1,5 @@
 import { defineComponent } from 'vue'
-import { ElTable, ElTableColumn, ElButton } from 'element-plus'
+import { ElTable, ElTableColumn, ElButton } from '../../../lib/element-plus'
 import { DatasetAnnotationCount } from '../../../api/dataset'
 import { encodeParams } from '../../Filters'
 import { useRouter } from 'vue-router'
@@ -20,7 +20,7 @@ interface AnnotationCountTableProps {
   headerTitleSuffix: string
 }
 
-export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
+export const AnnotationCountTable = defineComponent({
   name: 'AnnotationCountTable',
   props: {
     id: { type: String, default: '' },
@@ -31,7 +31,7 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
     header: { type: Array, default: () => [5, 10, 20, 50] },
     headerTitleSuffix: { type: String, default: '%' },
   },
-  setup(props) {
+  setup(props: AnnotationCountTableProps) {
     const router = useRouter()
     const annotationsLink = (datasetId: string, database?: string, fdrLevel?: number) => {
       const query = {
@@ -65,7 +65,7 @@ export const AnnotationCountTable = defineComponent<AnnotationCountTableProps>({
         obj.name = `${item?.dbName}${item?.dbVersion ? `-${item?.dbVersion}` : ''}`
         header.forEach((headerEl: string) => {
           obj[headerEl] = Array.isArray(item?.counts)
-            ? (item.counts.find((count: any) => count.level === headerEl) || {}).n
+            ? ((item.counts.find((count: any) => count.level === headerEl) || {}) as any).n
             : '-'
         })
         return obj

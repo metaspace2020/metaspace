@@ -1,5 +1,5 @@
 import { defineComponent, reactive, ref } from 'vue'
-import { ElInput, ElTooltip, ElButton } from 'element-plus'
+import { ElInput, ElTooltip, ElButton } from '../../lib/element-plus'
 import copyToClipboard from '../../lib/copyToClipboard'
 import { DocumentCopy } from '@element-plus/icons-vue'
 

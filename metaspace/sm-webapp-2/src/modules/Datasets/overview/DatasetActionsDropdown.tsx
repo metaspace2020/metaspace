@@ -6,7 +6,14 @@ import {
   reprocessDatasetQuery,
 } from '../../../api/dataset'
 import { CurrentUserRoleResult } from '../../../api/user'
-import { ElDropdown, ElDropdownItem, ElDropdownMenu, ElButton, ElNotification, ElMessageBox } from 'element-plus'
+import {
+  ElDropdown,
+  ElDropdownItem,
+  ElDropdownMenu,
+  ElButton,
+  ElNotification,
+  ElMessageBox,
+} from '../../../lib/element-plus'
 import reportError from '../../../lib/reportError'
 import DownloadDialog from '../list/DownloadDialog'
 import { DatasetComparisonDialog } from '../comparison/DatasetComparisonDialog'
@@ -38,7 +45,7 @@ interface DatasetActionsDropdownState {
   showDownloadDialog: boolean
 }
 
-export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProps>({
+export const DatasetActionsDropdown = defineComponent({
   name: 'DatasetActionsDropdown',
   props: {
     actionLabel: { type: String, default: 'Actions' },
@@ -52,7 +59,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     currentUser: { type: Object as () => CurrentUserRoleResult },
   },
-  setup(props, ctx) {
+  setup(props: DatasetActionsDropdownProps, ctx) {
     const { emit } = ctx
     const router = useRouter()
     const apolloClient = inject(DefaultApolloClient)

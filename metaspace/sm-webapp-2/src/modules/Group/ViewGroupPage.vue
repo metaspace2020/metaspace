@@ -131,7 +131,7 @@ import MolecularDatabases from '../MolecularDatabases'
 import config from '../../lib/config'
 import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
 import { RequestedAccessDialog } from './RequestedAccessDialog'
-import { ElTabs, ElButton, ElTabPane, ElLoading, ElAlert } from 'element-plus'
+import { ElTabs, ElButton, ElTabPane, ElLoading, ElAlert } from '../../lib/element-plus'
 import { useStore } from 'vuex'
 
 interface ViewGroupProfileData {

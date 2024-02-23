@@ -34,7 +34,7 @@
 <script lang="ts">
 import { defineComponent, ref, reactive, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElForm } from 'element-plus'
+import { ElForm } from '../../../lib/element-plus'
 import { validatePasswordResetToken, resetPassword } from '../../../api/auth'
 import reportError from '../../../lib/reportError'
 import { refreshLoginStatus } from '../../../api/graphqlClient'

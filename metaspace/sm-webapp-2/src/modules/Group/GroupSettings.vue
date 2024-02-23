@@ -55,7 +55,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useConfirmAsync } from '../../components/ConfirmAsync'
 import reportError from '../../lib/reportError'
 import { currentUserRoleQuery } from '../../api/user'
-import { ElMessage, ElButton } from 'element-plus'
+import { ElMessage, ElButton } from '../../lib/element-plus'
 import { parseValidationErrors } from '../../api/validation'
 
 export default defineComponent({

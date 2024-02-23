@@ -91,7 +91,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { omit, sortBy, uniqBy } from 'lodash-es'
 import { encodeParams, stripFilteringParams } from '../../../modules/Filters'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../../../modules/Filters/filterSpecs'
-import { ElDivider, ElLoading } from 'element-plus'
+import { ElDivider, ElLoading } from '../../../lib/element-plus'
 
 export default defineComponent({
   components: {

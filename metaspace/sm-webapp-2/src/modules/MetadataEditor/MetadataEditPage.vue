@@ -46,7 +46,7 @@ import { currentUserRoleQuery } from '../../api/user'
 import { updateDatasetQuery } from '../../api/metadata'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import { getDatasetStatusQuery } from '../../api/dataset'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from '../../lib/element-plus'
 import { isArray, isEqual, get } from 'lodash-es'
 import config from '../../lib/config'
 

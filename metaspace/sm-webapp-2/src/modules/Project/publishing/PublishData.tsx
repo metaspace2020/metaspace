@@ -1,5 +1,5 @@
 import { defineComponent, reactive } from 'vue'
-import { ElButton } from 'element-plus'
+import { ElButton } from '../../../lib/element-plus'
 
 import { WorkflowStep } from '../../../components/Workflow'
 import { SmForm } from '../../../components/Form'

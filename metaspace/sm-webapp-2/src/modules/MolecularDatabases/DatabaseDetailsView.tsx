@@ -18,7 +18,7 @@ import reportError from '../../lib/reportError'
 import safeJsonParse from '../../lib/safeJsonParse'
 import './DatabaseDetails.scss'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
-import { ElLoading, ElButton } from 'element-plus'
+import { ElLoading, ElButton } from '../../lib/element-plus'
 
 const ArrowSvg = defineAsyncComponent(
   () => import('../../assets/inline/refactoring-ui/icon-arrow-thin-left-circle.svg')
@@ -35,7 +35,7 @@ interface Props {
   close: () => void
 }
 
-const Details = defineComponent<Props>({
+const Details = defineComponent({
   name: 'DatabaseDetailsView',
   props: {
     id: { type: Number, required: true },
@@ -45,7 +45,7 @@ const Details = defineComponent<Props>({
   directives: {
     loading: ElLoading.directive,
   },
-  setup(props) {
+  setup(props: Props) {
     const { result, refetch, onResult } = useQuery<DatabaseDetailsQuery>(
       databaseDetailsQuery,
       { id: props.id },
@@ -172,7 +172,7 @@ const Details = defineComponent<Props>({
               <UploadDialog
                 name={database.name}
                 details={getDatabaseDetails(database)}
-                groupId={database.group.id}
+                groupId={database.group.id as string}
                 onClose={handleNewVersionClose}
                 onDone={handleNewVersionDone}
               />

@@ -10,7 +10,7 @@
 import { defineComponent, computed } from 'vue'
 import IsotopePatternPlot from './IsotopePatternPlot.vue'
 import { renderMolFormulaHtml } from '../../../lib/util'
-import { ElRow } from 'element-plus'
+import { ElRow } from '../../../lib/element-plus'
 
 export default defineComponent({
   name: 'DiagnosticsPlot',

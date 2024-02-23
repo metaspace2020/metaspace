@@ -16,7 +16,7 @@ import {
 } from 'echarts/components'
 import './DatasetEnrichmentChart.scss'
 import getColorScale from '../../../lib/getColorScale'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../../lib/element-plus'
 import { InfoFilled, Loading } from '@element-plus/icons-vue'
 
 use([
@@ -49,7 +49,7 @@ interface DatasetEnrichmentChartState {
   size: number
 }
 
-export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProps>({
+export const DatasetEnrichmentChart = defineComponent({
   name: 'DatasetEnrichmentChart',
   props: {
     isEmpty: {
@@ -73,7 +73,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
       default: 'Enrichment_LION.png',
     },
   },
-  setup(props, { emit }) {
+  setup(props: DatasetEnrichmentChartProps, { emit }) {
     const spectrumChart = ref(null)
 
     const state = reactive<DatasetEnrichmentChartState>({

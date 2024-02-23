@@ -9,7 +9,7 @@
 
 <script>
 import { defineComponent, getCurrentInstance } from 'vue'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../lib/element-plus'
 import { CaretRight } from '@element-plus/icons-vue'
 export default defineComponent({
   name: 'TourButton',

@@ -1,5 +1,5 @@
 import { defineComponent, reactive } from 'vue'
-import { ElButton, ElInput } from 'element-plus'
+import { ElButton, ElInput } from '../../../lib/element-plus'
 
 import { WorkflowStep } from '../../../components/Workflow'
 import { RichTextArea } from '../../../components/RichText'

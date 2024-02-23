@@ -199,7 +199,7 @@ import {
   ElInput,
   ElFormItem,
   ElLoading,
-} from 'element-plus'
+} from '../../lib/element-plus'
 import { updateUserMutation, deleteUserMutation, userProfileQuery, resetUserApiKeyMutation } from '../../api/user'
 import reportError from '../../lib/reportError'
 import { refreshLoginStatus } from '../../api/graphqlClient'

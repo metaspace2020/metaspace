@@ -37,7 +37,7 @@
 import { defineComponent, ref, watch, nextTick } from 'vue'
 import TagFilter from './TagFilter.vue'
 import { FilterHelpText } from './TagFilterComponents'
-import { ElInputNumber, ElInput } from 'element-plus'
+import { ElInputNumber, ElInput } from '../../../lib/element-plus'
 
 export default defineComponent({
   name: 'NumberFilter',

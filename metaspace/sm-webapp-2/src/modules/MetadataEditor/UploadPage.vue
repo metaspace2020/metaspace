@@ -78,7 +78,7 @@ import { defineComponent, ref, reactive, computed, watch, nextTick, inject, onMo
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from '../../lib/element-plus'
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 import MetadataEditor from './MetadataEditor.vue'

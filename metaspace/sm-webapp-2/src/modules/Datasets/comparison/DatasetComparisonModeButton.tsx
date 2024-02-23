@@ -1,6 +1,6 @@
 import { defineComponent, reactive } from 'vue'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
-import { ElButton } from 'element-plus'
+import { ElButton } from '../../../lib/element-plus'
 import { defineAsyncComponent } from 'vue'
 import PopupAnchor from '../../NewFeaturePopup/PopupAnchor.vue'
 

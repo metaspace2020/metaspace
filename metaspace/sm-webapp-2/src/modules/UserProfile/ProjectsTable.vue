@@ -74,10 +74,9 @@ import { useConfirmAsync } from '../../components/ConfirmAsync'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { encodeParams } from '../Filters'
 import { CreateProjectDialog } from '../Project'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElButton, ElRow } from '../../lib/element-plus'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import { useRouter } from 'vue-router'
-import { ElButton, ElRow } from 'element-plus'
 
 interface ProjectRow {
   id: string

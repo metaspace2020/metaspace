@@ -1,5 +1,5 @@
 import { defineComponent, ref, watch } from 'vue'
-import { ElInput } from 'element-plus'
+import { ElInput } from '../../lib/element-plus'
 import * as Form from '../../components/Form'
 
 export const DOI_ORG_DOMAIN = 'https://doi.org/'

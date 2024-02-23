@@ -6,7 +6,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { ElTooltip } from 'element-plus'
+import { ElTooltip } from '../lib/element-plus'
 export default defineComponent({
   components: {
     ElTooltip,

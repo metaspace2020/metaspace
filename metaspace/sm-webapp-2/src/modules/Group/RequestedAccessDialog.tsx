@@ -1,5 +1,5 @@
 import { defineComponent } from 'vue'
-import { ElDialog } from 'element-plus'
+import { ElDialog } from '../../lib/element-plus'
 import './RequestedAccessDialog.scss'
 
 interface RequestedAccessDialogProps {

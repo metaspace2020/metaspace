@@ -16,7 +16,7 @@
 import { defineComponent, ref, watch } from 'vue'
 import { debounce } from 'lodash-es'
 import TagFilter from './TagFilter.vue'
-import { ElInput } from 'element-plus'
+import { ElInput } from '../../../lib/element-plus'
 
 export default defineComponent({
   name: 'InputFilter',

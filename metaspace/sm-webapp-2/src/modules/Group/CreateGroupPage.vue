@@ -28,7 +28,7 @@ import EditGroupForm from './EditGroupForm.vue'
 import { createGroupMutation, UserGroupRole } from '../../api/group'
 import { currentUserRoleQuery, UserRole } from '../../api/user'
 import reportError from '../../lib/reportError'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from '../../lib/element-plus'
 
 interface CurrentUserQuery {
   id: string

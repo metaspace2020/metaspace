@@ -7,7 +7,7 @@ import { DefaultApolloClient } from '@vue/apollo-composable'
 import { vi, expect } from 'vitest'
 import router from '../../router'
 import * as FileSaver from 'file-saver'
-import ElementPlus from 'element-plus'
+import ElementPlus from '../../lib/element-plus'
 import { merge } from 'lodash-es'
 
 vi.mock('../../lib/util', async () => {

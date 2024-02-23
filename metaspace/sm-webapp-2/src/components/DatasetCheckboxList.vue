@@ -27,7 +27,7 @@
 <script lang="ts">
 import { defineComponent, ref, watch } from 'vue'
 import ElapsedTime from '../components/ElapsedTime'
-import { ElCheckbox } from 'element-plus'
+import { ElCheckbox } from '../lib/element-plus'
 import { DatasetListItem } from '../api/dataset'
 
 export default defineComponent({

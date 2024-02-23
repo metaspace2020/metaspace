@@ -1,5 +1,5 @@
 import { computed, defineComponent, reactive } from 'vue'
-import { ElSelect, ElOptionGroup, ElOption, ElCarousel, ElCarouselItem } from 'element-plus'
+import { ElSelect, ElOptionGroup, ElOption, ElCarousel, ElCarouselItem } from '../../../lib/element-plus'
 import { keyBy } from 'lodash'
 import ImageLoader from '../../../components/ImageLoader.vue'
 import './DatasetOverviewGallery.scss'

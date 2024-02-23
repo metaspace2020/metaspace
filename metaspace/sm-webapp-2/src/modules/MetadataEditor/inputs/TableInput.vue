@@ -37,7 +37,7 @@
 <script lang="ts">
 import { defineComponent, PropType, ref } from 'vue'
 import { mapValues } from 'lodash-es'
-import { ElTable, ElButton, ElTableColumn } from 'element-plus'
+import { ElTable, ElButton, ElTableColumn } from '../../../lib/element-plus'
 
 export default defineComponent({
   name: 'TableInput',

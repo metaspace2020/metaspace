@@ -12,7 +12,7 @@
 import { defineComponent } from 'vue'
 import domtoimage from 'dom-to-image-google-font-issue'
 import * as FileSaver from 'file-saver'
-import { ElMessageBox, ElIcon } from 'element-plus'
+import { ElMessageBox, ElIcon } from '../../lib/element-plus'
 import { Download } from '@element-plus/icons-vue'
 
 function showBrowserWarning() {

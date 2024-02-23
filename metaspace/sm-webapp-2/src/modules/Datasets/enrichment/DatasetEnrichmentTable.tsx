@@ -1,5 +1,5 @@
 import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
-import { ElTable, ElTableColumn, ElPagination, ElButton, ElPopover, ElIcon } from 'element-plus'
+import { ElTable, ElTableColumn, ElPagination, ElButton, ElPopover, ElIcon } from '../../../lib/element-plus'
 import ProgressButton from '../../Annotations/ProgressButton.vue'
 import { findIndex } from 'lodash-es'
 import * as FileSaver from 'file-saver'
@@ -40,7 +40,7 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_NAME: 'name',
 }
 
-export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProps>({
+export const DatasetEnrichmentTable = defineComponent({
   name: 'DatasetEnrichmentTable',
   props: {
     data: {
@@ -55,7 +55,7 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       default: 'enrichment.csv',
     },
   },
-  setup: function (props, { emit }) {
+  setup: function (props: DatasetEnrichmentTableProps, { emit }) {
     const route = useRoute()
     const store = useStore()
     const table = ref(null)

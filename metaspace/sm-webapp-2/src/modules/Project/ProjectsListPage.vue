@@ -48,7 +48,7 @@ import SortDropdown from '../../components/SortDropdown/SortDropdown'
 import { myProjectsListQuery, projectsCountQuery, ProjectsListProject, projectsListQuery } from '../../api/project'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import { useQuery } from '@vue/apollo-composable'
-import { ElButton, ElLoading, ElPagination } from 'element-plus'
+import { ElButton, ElLoading, ElPagination } from '../../lib/element-plus'
 
 export default defineComponent({
   components: {

@@ -37,7 +37,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, reactive, PropType, watch } from 'vue'
-import { ElForm, ElFormItem, ElInput, ElPopover, ElIcon } from 'element-plus'
+import { ElForm, ElFormItem, ElInput, ElPopover, ElIcon } from '../../lib/element-plus'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import emailRegex from '../../lib/emailRegex'
 

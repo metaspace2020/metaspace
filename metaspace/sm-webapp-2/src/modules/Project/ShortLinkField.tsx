@@ -1,5 +1,5 @@
 import { defineComponent } from 'vue'
-import { ElInput } from 'element-plus'
+import { ElInput } from '../../lib/element-plus'
 
 import * as Form from '../../components/Form'
 import { PROJECT_URL_PREFIX } from '../../router'

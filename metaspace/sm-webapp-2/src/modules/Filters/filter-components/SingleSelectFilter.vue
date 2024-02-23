@@ -29,7 +29,7 @@
 <script lang="ts">
 import { defineComponent, ref, watch } from 'vue'
 import TagFilter from './TagFilter.vue'
-import { ElSelect, ElOption } from 'element-plus'
+import { ElSelect, ElOption } from '../../../lib/element-plus'
 export default defineComponent({
   name: 'SingleSelectFilter',
   components: {

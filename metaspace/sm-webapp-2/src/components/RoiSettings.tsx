@@ -1,7 +1,7 @@
 import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useStore } from 'vuex'
 import { useMutation, useQuery } from '@vue/apollo-composable'
-import { ElButton, ElIcon, ElInput, ElNotification, ElPopover, ElTooltip } from 'element-plus'
+import { ElButton, ElIcon, ElInput, ElNotification, ElPopover, ElTooltip } from '../lib/element-plus'
 import * as FileSaver from 'file-saver'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
 import './RoiSettings.scss'

@@ -6,7 +6,7 @@ import { vi } from 'vitest'
 import { DefaultApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
 import store from '../../store'
 import router from '../../router'
-import { ElMessageBox } from 'element-plus'
+import { ElMessageBox } from '../../lib/element-plus'
 
 vi.mock('element-plus', async () => {
   const actual: any = await vi.importActual('element-plus')

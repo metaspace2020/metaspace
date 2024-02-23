@@ -51,7 +51,7 @@ import { defineComponent, computed, ref, defineAsyncComponent } from 'vue'
 
 import EditIntensity from './EditIntensity.vue'
 import FadeTransition from '../../components/FadeTransition'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../lib/element-plus'
 import { Check } from '@element-plus/icons-vue'
 
 const LockIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-lock.svg'))

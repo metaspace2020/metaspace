@@ -1,8 +1,7 @@
 import { computed, defineComponent, reactive } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { datasetVisibilityQuery, DatasetVisibilityQuery } from '../../../api/dataset'
-import { ElLoading, ElPopover } from 'element-plus'
-import { ElIcon } from 'element-plus'
+import { ElLoading, ElPopover, ElIcon } from '../../../lib/element-plus'
 import { Lock } from '@element-plus/icons-vue'
 
 export default defineComponent({

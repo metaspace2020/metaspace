@@ -26,7 +26,7 @@
 import { defineComponent, PropType } from 'vue'
 import { DetectorResolvingPower } from '../formStructure'
 import CustomNumberInput from './CustomNumberInput.vue'
-import { ElCol, ElRow, ElFormItem } from 'element-plus'
+import { ElCol, ElRow, ElFormItem } from '../../../lib/element-plus'
 
 export default defineComponent({
   name: 'DetectorResolvingPowerInput',

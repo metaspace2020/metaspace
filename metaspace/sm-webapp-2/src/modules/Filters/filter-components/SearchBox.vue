@@ -27,7 +27,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { Search } from '@element-plus/icons-vue'
-import { ElInput } from 'element-plus'
+import { ElInput } from '../../../lib/element-plus'
 
 export default defineComponent({
   components: {

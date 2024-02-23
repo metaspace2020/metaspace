@@ -17,7 +17,7 @@ import {
   MarkAreaComponent,
 } from 'echarts/components'
 import './DashboardScatterChart.scss'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
 
 use([

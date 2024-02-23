@@ -40,7 +40,7 @@ import { defineComponent, PropType } from 'vue'
 import { memoize } from 'lodash-es'
 import FormField from '../inputs/FormField.vue'
 import { FormSectionProperty } from '../formStructure'
-import { ElCol, ElForm, ElPopover, ElRow } from 'element-plus'
+import { ElCol, ElForm, ElPopover, ElRow } from '../../../lib/element-plus'
 import './FormSection.scss'
 
 export default defineComponent({

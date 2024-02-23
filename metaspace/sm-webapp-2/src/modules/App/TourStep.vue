@@ -28,7 +28,7 @@
 import { defineComponent, ref, watch, onMounted, nextTick, defineAsyncComponent, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { ElProgress, ElButton } from 'element-plus'
+import { ElProgress, ElButton } from '../../lib/element-plus'
 import { createPopper } from '@popperjs/core'
 import Upload from '../../tours/intro/steps/00-upload.md'
 

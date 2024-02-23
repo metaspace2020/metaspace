@@ -44,6 +44,8 @@ import {
   ElNotification,
   ElLoading,
   ElOptionGroup,
+  ElBadge,
+  ElCollapseTransition,
 } from 'element-plus'
 
 // Importing Element Plus styles
@@ -93,6 +95,8 @@ const components = {
   ElNotification,
   ElLoading,
   ElOptionGroup,
+  ElBadge,
+  ElCollapseTransition,
   // Additional components as needed
 }
 
@@ -137,9 +141,12 @@ export {
   ElCollapseItem,
   ElDivider,
   ElMessage,
+  ElMessageBox,
   ElNotification,
   ElLoading,
   ElOptionGroup,
+  ElBadge,
+  ElCollapseTransition,
   // Additional components as needed
 }
 

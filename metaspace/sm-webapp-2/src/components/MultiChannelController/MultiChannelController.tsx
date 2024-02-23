@@ -1,6 +1,6 @@
 import { defineComponent, onMounted, reactive, ref } from 'vue'
 import FadeTransition from '../FadeTransition'
-import { ElButton, ElPopover } from 'element-plus'
+import { ElButton, ElPopover } from '../../lib/element-plus'
 import CandidateMoleculesPopover from '../../modules/Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../MolecularFormula'
 import VisibleIcon from '../../assets/inline/refactoring-ui/icon-view-visible.svg'

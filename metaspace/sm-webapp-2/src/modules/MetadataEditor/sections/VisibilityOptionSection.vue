@@ -43,7 +43,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType, watch, ref } from 'vue'
-import { ElSwitch, ElRow, ElCol, ElPopover } from 'element-plus'
+import { ElSwitch, ElRow, ElCol, ElPopover } from '../../../lib/element-plus'
 import './FormSection.scss'
 
 export default defineComponent({

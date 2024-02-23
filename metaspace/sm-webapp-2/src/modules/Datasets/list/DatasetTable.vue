@@ -81,7 +81,7 @@ import {
   ElCheckbox,
   ElButton,
   ElPagination,
-} from 'element-plus'
+} from '../../../lib/element-plus'
 
 export default defineComponent({
   name: 'DatasetTable',

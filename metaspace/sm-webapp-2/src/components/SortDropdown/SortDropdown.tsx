@@ -1,5 +1,5 @@
 import { defineComponent, reactive } from 'vue'
-import { ElSelect, ElOption, ElButton, ElTooltip } from 'element-plus'
+import { ElSelect, ElOption, ElButton, ElTooltip } from '../../lib/element-plus'
 import './SortDropdown.css'
 import { Sort, SortUp, SortDown } from '@element-plus/icons-vue'
 

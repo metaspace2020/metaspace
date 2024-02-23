@@ -411,7 +411,7 @@
 <script>
 import { defineComponent, ref, reactive, computed, onMounted, watch, defineAsyncComponent, nextTick, inject } from 'vue'
 import { useStore } from 'vuex'
-import { ElIcon, ElRow, ElTable, ElTableColumn, ElPagination, ElButton } from 'element-plus'
+import { ElIcon, ElRow, ElTable, ElTableColumn, ElPagination, ElButton } from '../../lib/element-plus'
 import isSnapshot from '../../lib/isSnapshot'
 import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'

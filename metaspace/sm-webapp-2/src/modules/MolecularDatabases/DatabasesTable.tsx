@@ -9,7 +9,7 @@ import SecondaryIcon from '../../components/SecondaryIcon.vue'
 const CheckSvg = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-check.svg'))
 const GroupSvg = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-user-group.svg'))
 
-import { ElButton, ElLoading, ElTable, ElTableColumn } from 'element-plus'
+import { ElButton, ElLoading, ElTable, ElTableColumn } from '../../lib/element-plus'
 
 import { getGroupDatabasesQuery } from '../../api/group'
 
@@ -47,7 +47,7 @@ interface Props {
   groupId: string
 }
 
-const DatabasesTable = defineComponent<Props>({
+const DatabasesTable = defineComponent({
   name: 'DatabasesTable',
   props: {
     handleRowClick: { type: Function, required: true },
@@ -56,7 +56,7 @@ const DatabasesTable = defineComponent<Props>({
   directives: {
     loading: ElLoading.directive,
   },
-  setup(props) {
+  setup(props: Props) {
     const state = reactive({
       showUploadDialog: false,
     })

@@ -1,20 +1,20 @@
 import { defineComponent, reactive } from 'vue'
 
 import FadeTransition from '../../components/FadeTransition'
-import { ElButton } from 'element-plus'
+import { ElButton } from '../../lib/element-plus'
 
 interface Props {
   archived: boolean
   submit: (update: { archived: boolean }) => void
 }
 
-const Archive = defineComponent<Props>({
+const Archive = defineComponent({
   name: 'ArchiveDatabaseForm',
   props: {
     archived: { type: Boolean, required: true },
     submit: { type: Function, required: true },
   },
-  setup(props) {
+  setup(props: Props) {
     const state = reactive({
       loading: false,
     })

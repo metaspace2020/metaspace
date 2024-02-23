@@ -22,7 +22,7 @@
 <script lang="ts">
 import { defineAsyncComponent, defineComponent, ref } from 'vue'
 import copyToClipboard from '../lib/copyToClipboard'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../lib/element-plus'
 import { CopyDocument } from '@element-plus/icons-vue'
 
 const CopyIdIcon = defineAsyncComponent(() => import('../assets/inline/copy-id.svg'))

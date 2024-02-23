@@ -9,7 +9,7 @@ import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 import CopyButton from '../../../components/CopyButton.vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import { ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
+import { ElDropdown, ElDropdownMenu, ElDropdownItem } from '../../../lib/element-plus'
 
 type FilterField = keyof DatasetDetailItem | 'analyzerType'
 

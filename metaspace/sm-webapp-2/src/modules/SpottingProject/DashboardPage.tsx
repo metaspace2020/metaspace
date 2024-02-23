@@ -8,7 +8,7 @@ import {
   ElTooltip,
   ElButton,
   ElIcon,
-} from 'element-plus'
+} from '../../lib/element-plus'
 import { cloneDeep, flatten, groupBy, keyBy, maxBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
 import { DashboardHeatmapChart } from './DashboardHeatmapChart'

@@ -3,7 +3,7 @@ import MainImageHeader from '../../Annotations/annotation-widgets/default/MainIm
 import { nextTick } from 'vue'
 import { encodeParams } from '../../Filters'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
-import { ElButton, ElIcon, ElPopover } from 'element-plus'
+import { ElButton, ElIcon, ElPopover } from '../../../lib/element-plus'
 import { range } from 'lodash-es'
 import { SimpleIonImageViewer } from '../../../components/SimpleIonImageViewer/SimpleIonImageViewer'
 import RouterLink from '../../../components/RouterLink'

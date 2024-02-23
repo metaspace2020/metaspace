@@ -7,7 +7,7 @@ import { SmForm, PrimaryLabelText } from '../../components/Form'
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 
-import { ElDialog, ElInput, ElButton } from 'element-plus'
+import { ElDialog, ElInput, ElButton } from '../../lib/element-plus'
 
 import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
 import safeJsonParse from '../../lib/safeJsonParse'
@@ -77,14 +77,14 @@ interface State {
   error: ErrorMessage | null
 }
 
-const UploadDialog = defineComponent<Props>({
+const UploadDialog = defineComponent({
   name: 'UploadDialog',
   props: {
     name: String,
     details: Object,
     groupId: String,
   },
-  setup(props, { emit }) {
+  setup(props: Props | any, { emit }) {
     const apolloClient = inject(DefaultApolloClient)
     const state = reactive<State>({
       model: {
@@ -143,8 +143,8 @@ const UploadDialog = defineComponent<Props>({
       }
     }
 
-    const nameInput = ref<HTMLInputElement | null>(null)
-    const versionInput = ref<HTMLInputElement | null>(null)
+    const nameInput = ref(null)
+    const versionInput = ref(null)
     const focusHandler = () => {
       const inputRef = isNewVersion ? versionInput : nameInput
       if (inputRef.value !== null) {

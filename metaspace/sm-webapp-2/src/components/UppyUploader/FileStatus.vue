@@ -67,7 +67,7 @@
 import { defineComponent, computed, defineAsyncComponent } from 'vue'
 import FadeTransition from '../../components/FadeTransition'
 import ProgressRing from '../../components/ProgressRing'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../lib/element-plus'
 import { RefreshLeft, Remove } from '@element-plus/icons-vue'
 const FileIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-document.svg'))
 const CheckIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-check.svg'))

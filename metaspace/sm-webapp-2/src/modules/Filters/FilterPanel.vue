@@ -30,7 +30,7 @@ import { useStore } from 'vuex'
 import { FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS } from './filterSpecs'
 import { isFunction, pick, get, uniq } from 'lodash-es'
 import { setLocalStorage } from '../../lib/localStorage'
-import { ElSelect, ElOption } from 'element-plus'
+import { ElSelect, ElOption } from '../../lib/element-plus'
 
 import { inject } from 'vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'

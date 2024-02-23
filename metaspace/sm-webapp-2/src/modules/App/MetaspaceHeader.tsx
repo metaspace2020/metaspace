@@ -14,7 +14,7 @@ import { signOut } from '../../api/auth'
 import { refreshLoginStatus } from '../../api/graphqlClient'
 import { Transition } from 'vue'
 
-import { ElRow, ElAlert } from 'element-plus'
+import { ElRow, ElAlert } from '../../lib/element-plus'
 
 import './MetaspaceHeader.scss'
 

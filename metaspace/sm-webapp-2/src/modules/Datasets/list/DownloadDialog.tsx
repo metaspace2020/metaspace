@@ -2,7 +2,7 @@ import { computed, defineComponent, toRefs } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { DownloadLinkJson, GetDatasetDownloadLink, getDatasetDownloadLink } from '../../../api/dataset'
 import safeJsonParse from '../../../lib/safeJsonParse'
-import { ElDialog, ElLoading } from 'element-plus'
+import { ElDialog, ElLoading } from '../../../lib/element-plus'
 
 const getFilenameAndExt = (filename: string) => {
   const lastDot = filename.lastIndexOf('.')

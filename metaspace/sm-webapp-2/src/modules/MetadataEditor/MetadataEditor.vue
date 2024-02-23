@@ -97,7 +97,7 @@
   */
 import { defineComponent, reactive, computed, watch, inject, onBeforeMount } from 'vue'
 import { useStore } from 'vuex'
-import { ElPopover, ElButton, ElSelect, ElOption, ElMessage, ElLoading } from 'element-plus'
+import { ElPopover, ElButton, ElSelect, ElOption, ElMessage, ElLoading } from '../../lib/element-plus'
 import RichText from '../../components/RichText/RichText'
 import FormSection from './sections/FormSection.vue'
 import MetaspaceOptionsSection from './sections/MetaspaceOptionsSection.vue'

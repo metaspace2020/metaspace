@@ -62,7 +62,7 @@ import TagFilter from './TagFilter.vue'
 import { useStore } from 'vuex'
 import { AdductSuggestion, chemModSuggestionQuery, neutralLossSuggestionQuery } from '../../../api/metadata'
 import config from '../../../lib/config'
-import { ElSelect, ElOption } from 'element-plus'
+import { ElSelect, ElOption } from '../../../lib/element-plus'
 
 export default defineComponent({
   name: 'AdductFilter',

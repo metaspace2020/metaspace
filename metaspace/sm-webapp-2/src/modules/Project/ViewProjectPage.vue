@@ -112,7 +112,7 @@
 import { defineComponent, ref, watch, onMounted, computed, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { ElButton, ElAlert, ElTabs, ElTabPane, ElLoading } from 'element-plus'
+import { ElButton, ElAlert, ElTabs, ElTabPane, ElLoading } from '../../lib/element-plus'
 import DatasetList from '../Datasets/list/DatasetList.vue'
 import { datasetDeletedQuery, DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset'
 import {
@@ -140,7 +140,7 @@ import Publishing from './publishing'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
 import DatasetsDialog from './DatasetsDialog'
 import { DefaultApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
 interface ViewProjectPageData {
   allDatasets: DatasetDetailItem[]

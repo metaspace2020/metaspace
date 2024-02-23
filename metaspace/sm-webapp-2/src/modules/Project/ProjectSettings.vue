@@ -76,7 +76,7 @@ import reportError from '../../lib/reportError'
 import { parseValidationErrors } from '../../api/validation'
 import { useConfirmAsync } from '../../components/ConfirmAsync'
 import { currentUserRoleQuery } from '../../api/user'
-import { ElMessage, ElButton } from 'element-plus'
+import { ElMessage, ElButton } from '../../lib/element-plus'
 
 export default defineComponent({
   components: {

@@ -1,5 +1,5 @@
 import { computed, defineComponent, reactive } from 'vue'
-import { ElButton, ElInput, ElIcon } from 'element-plus'
+import { ElButton, ElInput, ElIcon } from '../../lib/element-plus'
 import { useQuery } from '@vue/apollo-composable'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 import { getUserGroupsQuery, ViewGroupResult } from '../../api/group'

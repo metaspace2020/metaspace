@@ -5,18 +5,18 @@ import confirmPrompt from '../../components/confirmPrompt'
 
 import { deleteDatabaseMutation, DeleteDatabaseMutation, MolecularDB } from '../../api/moldb'
 import { formatDatabaseLabel } from './formatting'
-import { ElButton, ElMessage } from 'element-plus'
+import { ElButton, ElMessage } from '../../lib/element-plus'
 
 interface Props {
   db: MolecularDB
 }
 
-const Delete = defineComponent<Props>({
+const Delete = defineComponent({
   name: 'DeleteDatabaseForm',
   props: {
-    db: { type: Object, required: true },
+    db: { type: Object as any, required: true },
   },
-  setup(props, { emit }) {
+  setup(props: Props, { emit }) {
     const { mutate } = useMutation(deleteDatabaseMutation)
     const deleteDatabase = mutate as unknown as (variables: DeleteDatabaseMutation) => void
 

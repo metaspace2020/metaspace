@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { createStore } from 'vuex'
 import { beforeEach, afterEach, vi } from 'vitest'
-import ElementPlus from 'element-plus'
+import ElementPlus from '../../../lib/element-plus'
 import SignInDialog from './SignInDialog.vue'
 import account from '../store/account'
 import { nextTick } from 'vue'

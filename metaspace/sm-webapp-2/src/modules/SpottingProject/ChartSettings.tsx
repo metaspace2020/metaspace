@@ -1,5 +1,5 @@
 import { defineComponent, reactive } from 'vue'
-import { ElOption, ElPopover, ElSelect, ElButton, ElIcon } from 'element-plus'
+import { ElOption, ElPopover, ElSelect, ElButton, ElIcon } from '../../lib/element-plus'
 import FadeTransition from '../../components/FadeTransition'
 import { Setting } from '@element-plus/icons-vue'
 import Colorbar from '../../components/Colorbar.vue'

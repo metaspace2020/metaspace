@@ -34,7 +34,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, reactive, watch } from 'vue'
-import { ElForm, ElInput, ElSwitch, ElFormItem } from 'element-plus'
+import { ElForm, ElInput, ElSwitch, ElFormItem } from '../../lib/element-plus'
 
 import { PrimaryLabelText, SecondaryLabelText } from '../../components/Form'
 

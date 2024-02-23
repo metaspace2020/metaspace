@@ -19,7 +19,7 @@
 <script lang="ts">
 import { defineComponent, computed } from 'vue'
 import useNewFeaturePopups from './useNewFeaturePopups'
-import { ElBadge, ElButton } from 'element-plus'
+import { ElBadge, ElButton } from '../../lib/element-plus'
 
 export default defineComponent({
   props: {

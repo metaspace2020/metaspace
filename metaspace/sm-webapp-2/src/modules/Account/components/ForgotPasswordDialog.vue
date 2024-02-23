@@ -22,7 +22,7 @@
 
 <script lang="ts">
 import { defineComponent, reactive, ref } from 'vue'
-import { ElForm } from 'element-plus'
+import { ElForm } from '../../../lib/element-plus'
 import { sendPasswordResetToken } from '../../../api/auth'
 import reportError from '../../../lib/reportError'
 import { useStore } from 'vuex'

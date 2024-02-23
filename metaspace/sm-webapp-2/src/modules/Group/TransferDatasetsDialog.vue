@@ -43,7 +43,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset'
 import DatasetCheckboxList from '../../components/DatasetCheckboxList.vue'
 import { currentUserIdQuery } from '../../api/user'
-import { ElDialog, ElButton, ElLoading } from 'element-plus'
+import { ElDialog, ElButton, ElLoading } from '../../lib/element-plus'
 
 export default defineComponent({
   components: {

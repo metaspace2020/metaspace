@@ -51,7 +51,7 @@ import { UserGroupRoleOptions as UGRO } from '../../../api/group'
 import { userProfileQuery } from '../../../api/user'
 import reportError from '../../../lib/reportError'
 import { allGroupsQuery, requestAccessToGroupMutation } from '../../../api/dataManagement'
-import { ElMessage, ElRow, ElDialog, ElForm, ElFormItem, ElSelect, ElButton } from 'element-plus'
+import { ElMessage, ElRow, ElDialog, ElForm, ElFormItem, ElSelect, ElButton } from '../../../lib/element-plus'
 
 export default defineComponent({
   name: 'FindGroupDialog',

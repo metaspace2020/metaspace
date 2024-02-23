@@ -68,7 +68,7 @@ import FadeTransition from '../../../../components/FadeTransition'
 import RoiSettings from '../../../../components/RoiSettings'
 import config from '../../../../lib/config'
 import { Setting } from '@element-plus/icons-vue'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../../../lib/element-plus'
 
 const AspectRatioIcon = defineAsyncComponent(() => import('../../../../assets/inline/material/aspect-ratio.svg'))
 

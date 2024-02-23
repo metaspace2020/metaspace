@@ -1,5 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { ElButton, ElCheckbox } from 'element-plus'
+import { ElButton, ElCheckbox } from '../../lib/element-plus'
 import { nextTick, ref } from 'vue'
 import TransferDatasetsDialog from './TransferDatasetsDialog.vue'
 import router from '../../router'

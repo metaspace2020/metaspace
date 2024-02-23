@@ -36,7 +36,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, watch, nextTick, computed } from 'vue'
 import { useStore } from 'vuex'
-import { ElSelect, ElOption } from 'element-plus'
+import { ElSelect, ElOption } from '../../../lib/element-plus'
 import TagFilter from './TagFilter.vue'
 import searchableFilterQueries, { Option } from './searchableFilterQueries'
 

@@ -16,7 +16,7 @@ import {
   VisualMapContinuousComponent,
 } from 'echarts/components'
 import './DatasetBrowserKendrickPlot.scss'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
 
 use([

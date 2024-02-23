@@ -107,7 +107,7 @@ import { GroupListItem, oneGroupQuery, oneProjectQuery } from '../../../api/data
 import './FormSection.scss'
 import gql from 'graphql-tag' // imported directly so that the Project pages aren't pulled into the bundle
 import { MetaspaceOptions } from '../formStructure'
-import { ElRow, ElCol, ElForm, ElCollapseTransition } from 'element-plus'
+import { ElRow, ElCol, ElForm, ElCollapseTransition } from '../../../lib/element-plus'
 
 const FIND_GROUP = 'FIND_GROUP'
 const NO_GROUP = 'NO_GROUP'

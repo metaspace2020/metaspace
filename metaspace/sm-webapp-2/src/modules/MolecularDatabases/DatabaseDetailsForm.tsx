@@ -5,7 +5,7 @@ import { RichTextArea } from '../../components/RichText'
 
 import { MolecularDB, MolecularDBDetails, UpdateDatabaseDetailsMutation } from '../../api/moldb'
 import { formatDatabaseLabel, getDatabaseDetails } from './formatting'
-import { ElMessage, ElInput } from 'element-plus'
+import { ElMessage, ElInput } from '../../lib/element-plus'
 
 interface State {
   model: MolecularDBDetails
@@ -17,13 +17,13 @@ interface Props {
   submit: (update: UpdateDatabaseDetailsMutation) => void
 }
 
-const Details = defineComponent<Props>({
+const Details = defineComponent({
   name: 'DatabaseDetailsForm',
   props: {
-    db: { type: Object, required: true },
+    db: { type: Object as any, required: true },
     submit: { type: Function, required: true },
   },
-  setup(props) {
+  setup(props: Props) {
     const state = reactive<State>({
       model: getDatabaseDetails(props.db),
       loading: false,

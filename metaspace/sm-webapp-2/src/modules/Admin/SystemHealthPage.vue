@@ -23,7 +23,7 @@ import { defineComponent, ref, computed, onMounted, inject } from 'vue'
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore, updateSystemHealthMutation } from '../../api/system'
 import { currentUserRoleQuery } from '../../api/user'
-import { ElButton, ElForm, ElFormItem, ElInput, ElLoading, ElRadio, ElRadioGroup } from 'element-plus'
+import { ElButton, ElForm, ElFormItem, ElInput, ElLoading, ElRadio, ElRadioGroup } from '../../lib/element-plus'
 export default defineComponent({
   name: 'SystemHealthPage',
   components: {

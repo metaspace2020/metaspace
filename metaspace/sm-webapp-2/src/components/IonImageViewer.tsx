@@ -6,7 +6,7 @@ import { renderIonImages, IonImageLayer } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
 import { debounce, throttle } from 'lodash-es'
 import { ReferenceObject } from 'popper.js'
-import { ElLoading, ElTooltip } from 'element-plus'
+import { ElLoading, ElTooltip } from '../lib/element-plus'
 
 const formatMatrix3d = (t: readonly number[][]) =>
   `matrix3d(${t[0][0]}, ${t[1][0]}, 0, ${t[2][0]},

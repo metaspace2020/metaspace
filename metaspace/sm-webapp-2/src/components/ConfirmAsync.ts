@@ -1,4 +1,4 @@
-import { ElMessageBox } from 'element-plus'
+import { ElMessageBox } from '../lib/element-plus'
 import reportError from '../lib/reportError'
 import './ConfirmAsync.scss'
 

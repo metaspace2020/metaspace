@@ -1,6 +1,6 @@
 import { defineComponent } from 'vue'
 import { Clock, Close, InfoFilled } from '@element-plus/icons-vue'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../../lib/element-plus'
 
 export const TagFilterOuter = defineComponent({
   setup(_, { slots }) {

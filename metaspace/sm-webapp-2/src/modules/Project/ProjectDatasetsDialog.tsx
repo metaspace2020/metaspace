@@ -1,6 +1,6 @@
 import { defineComponent, computed, reactive, inject, watch } from 'vue'
 import { importDatasetsIntoProjectMutation, ProjectsListProject } from '../../api/project'
-import { ElDialog, ElCheckbox, ElButton } from 'element-plus'
+import { ElDialog, ElCheckbox, ElButton } from '../../lib/element-plus'
 import { uniqBy, isEmpty } from 'lodash'
 import './ProjectDatasetsDialog.scss'
 import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset'

@@ -5,7 +5,7 @@ import { plural } from '../../lib/vueFilters'
 import { useRouter } from 'vue-router'
 import { encodeParams } from '../Filters'
 import CopyButton from '../../components/CopyButton.vue'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../lib/element-plus'
 import { PictureFilled, EditPen } from '@element-plus/icons-vue'
 import './GroupsListItem.scss'
 

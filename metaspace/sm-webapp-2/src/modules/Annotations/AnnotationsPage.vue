@@ -61,7 +61,7 @@ import { FilterPanel } from '../Filters/index'
 import config from '../../lib/config'
 import { useRestoredState } from '../ImageViewer'
 import isSnapshot from '../../lib/isSnapshot'
-import { ElIcon, ElAlert } from 'element-plus'
+import { ElIcon, ElAlert } from '../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 

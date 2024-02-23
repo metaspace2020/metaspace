@@ -92,7 +92,7 @@ import { renderMassShift, renderMolFormula, renderMolFormulaHtml } from '../../.
 import safeJsonParse from '../../../../lib/safeJsonParse'
 import reportError from '../../../../lib/reportError'
 import config from '../../../../lib/config'
-import { ElAlert, ElLoading } from 'element-plus'
+import { ElAlert, ElLoading } from '../../../../lib/element-plus'
 
 interface AnnotationGroup {
   isReference: boolean

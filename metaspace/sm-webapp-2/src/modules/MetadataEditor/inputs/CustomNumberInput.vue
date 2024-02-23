@@ -11,7 +11,7 @@
 
 <script lang="ts">
 import { defineComponent, toRefs, computed, watch } from 'vue'
-import { ElInputNumber } from 'element-plus'
+import { ElInputNumber } from '../../../lib/element-plus'
 
 /**
  * Wrapper for el-input-number to make it slightly friendlier in forms:

@@ -1,5 +1,14 @@
 import { defineComponent, computed, reactive, ref, inject } from 'vue'
-import { ElDialog, ElButton, ElSelect, ElOption, ElInput, ElTable, ElTableColumn, ElPagination } from 'element-plus'
+import {
+  ElDialog,
+  ElButton,
+  ElSelect,
+  ElOption,
+  ElInput,
+  ElTable,
+  ElTableColumn,
+  ElPagination,
+} from '../../lib/element-plus'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { isEqual } from 'lodash-es'
 import moment from 'moment'

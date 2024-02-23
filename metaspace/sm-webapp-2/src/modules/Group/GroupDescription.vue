@@ -53,7 +53,7 @@ import { defineComponent, ref, watch, nextTick } from 'vue'
 import { parse } from 'marked'
 import sanitizeIt from '../../lib/sanitizeIt'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
-import { ElPopover, ElInput, ElButton, ElButtonGroup } from 'element-plus'
+import { ElPopover, ElInput, ElButton, ElButtonGroup } from '../../lib/element-plus'
 
 interface ViewGroupResult {
   // Define properties based on your requirements

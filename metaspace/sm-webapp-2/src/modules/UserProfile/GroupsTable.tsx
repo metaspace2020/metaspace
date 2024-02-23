@@ -1,6 +1,6 @@
 import './Table.css'
 
-import { ElButton, ElMessage } from 'element-plus'
+import { ElButton, ElMessage } from '../../lib/element-plus'
 import { defineComponent, reactive, computed } from 'vue'
 
 import confirmPrompt from '../../components/confirmPrompt'
@@ -67,12 +67,12 @@ function getRows(currentUser: User) {
   return []
 }
 
-const GroupsTable = defineComponent<Props>({
+const GroupsTable = defineComponent({
   props: {
-    currentUser: Object,
+    currentUser: Object as any,
     refetchData: Function,
   },
-  setup(props) {
+  setup(props: Props) {
     const rows = computed(() => getRows(props.currentUser))
     const state = reactive<State>({
       showTransferDatasetsDialog: false,

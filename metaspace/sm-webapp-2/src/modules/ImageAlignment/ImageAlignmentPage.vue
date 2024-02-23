@@ -154,7 +154,7 @@ import { defineComponent, ref, reactive, computed, watch, onMounted, onBeforeUnm
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from '../../lib/element-plus'
 import { annotationListQuery } from '../../api/annotation'
 import {
   addOpticalImageQuery,

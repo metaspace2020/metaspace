@@ -1,6 +1,6 @@
 import { defineAsyncComponent, defineComponent, nextTick, reactive } from 'vue'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
-import { ElButton, ElPopover } from 'element-plus'
+import { ElButton, ElPopover } from '../../../lib/element-plus'
 import FadeTransition from '../../../components/FadeTransition'
 import { useMutation } from '@vue/apollo-composable'
 import gql from 'graphql-tag'

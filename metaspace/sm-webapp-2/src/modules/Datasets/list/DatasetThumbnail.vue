@@ -49,7 +49,7 @@
 
 <script>
 import config from '../../../lib/config'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../../lib/element-plus'
 import { EditPen, Plus } from '@element-plus/icons-vue'
 export default {
   props: ['dataset', 'editable'],

@@ -1,6 +1,6 @@
 import { computed, defineComponent, defineAsyncComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import './DatasetComparisonAnnotationTable.scss'
-import { ElTable, ElTableColumn, ElPagination, ElButton, ElPopover, ElIcon } from 'element-plus'
+import { ElTable, ElTableColumn, ElPagination, ElButton, ElPopover, ElIcon } from '../../../lib/element-plus'
 import ProgressButton from '../../Annotations/ProgressButton.vue'
 import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue'
 import { findIndex, orderBy } from 'lodash-es'

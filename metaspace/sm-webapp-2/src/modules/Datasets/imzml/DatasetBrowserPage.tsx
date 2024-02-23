@@ -1,5 +1,14 @@
 import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from 'vue'
-import { ElSelect, ElOption, ElRadioGroup, ElRadio, ElInputNumber, ElInput, ElRadioButton, ElIcon } from 'element-plus'
+import {
+  ElSelect,
+  ElOption,
+  ElRadioGroup,
+  ElRadio,
+  ElInputNumber,
+  ElInput,
+  ElRadioButton,
+  ElIcon,
+} from '../../../lib/element-plus'
 import { useQuery } from '@vue/apollo-composable'
 import { getBrowserImage, GetDatasetByIdQuery, getDatasetByIdWithPathQuery, getSpectrum } from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
@@ -32,10 +41,6 @@ interface GlobalImageSettings {
   selectedLockTemplate: string | null
   globalLockedIntensities: [number | undefined, number | undefined]
   showOpticalImage: boolean
-}
-
-interface DatasetBrowserProps {
-  className: string
 }
 
 interface DatasetBrowserState {
@@ -85,7 +90,7 @@ const VIEWS = {
   KENDRICK: 'Kendrick plot',
 }
 
-export default defineComponent<DatasetBrowserProps>({
+export default defineComponent({
   name: 'DatasetBrowserPage',
   props: {
     className: {
@@ -425,7 +430,7 @@ export default defineComponent<DatasetBrowserProps>({
       state.dataRange = { maxX, maxY, minX, minY }
     }
 
-    onSpectrumResult(async (result) => {
+    onSpectrumResult(async (result: any) => {
       if (result && result.data && result.data.pixelSpectrum) {
         buildChartData(result.data.pixelSpectrum.ints, result.data.pixelSpectrum.mzs)
       }

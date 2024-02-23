@@ -1,5 +1,5 @@
 import { reactive, ref } from 'vue'
-import { ElBadge } from 'element-plus'
+import { ElBadge } from '../../lib/element-plus'
 import { defineComponent } from 'vue'
 // Import the CSS as needed
 import './NewFeatureBadge.css'

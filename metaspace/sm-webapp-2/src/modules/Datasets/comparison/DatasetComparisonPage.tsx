@@ -1,4 +1,4 @@
-import { ElButton, ElCollapse, ElCollapseItem, ElIcon, ElPopover } from 'element-plus'
+import { ElButton, ElCollapse, ElCollapseItem, ElIcon, ElPopover } from '../../../lib/element-plus'
 import { computed, defineComponent, onMounted, reactive, ref, watchEffect } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { annotationListQuery } from '../../../api/annotation'

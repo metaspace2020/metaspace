@@ -21,7 +21,7 @@
 import { defineComponent, PropType } from 'vue'
 import CustomNumberInput from './CustomNumberInput.vue'
 import { PixelSize } from '../formStructure'
-import { ElCol, ElRow, ElFormItem } from 'element-plus'
+import { ElCol, ElRow, ElFormItem } from '../../../lib/element-plus'
 
 export default defineComponent({
   name: 'PixelSizeInput',

@@ -1,5 +1,5 @@
 import { defineComponent } from 'vue'
-import { ElIcon, ElPopover } from 'element-plus'
+import { ElIcon, ElPopover } from '../../lib/element-plus'
 import FadeTransition from '../../components/FadeTransition'
 import RouterLink from '../../components/RouterLink'
 import { Share } from '@element-plus/icons-vue'
@@ -21,7 +21,7 @@ interface ShareLinkProps {
   globalLockedIntensities: [number | undefined, number | undefined]
 }
 
-export const ShareLink = defineComponent<ShareLinkProps>({
+export const ShareLink = defineComponent({
   name: 'ShareLink',
   props: {
     name: { type: String, required: true },
@@ -39,7 +39,7 @@ export const ShareLink = defineComponent<ShareLinkProps>({
     lockedIntensityTemplate: { type: String },
     globalLockedIntensities: { type: Array },
   },
-  setup(props) {
+  setup(props: ShareLinkProps) {
     const getUrl = () => {
       return {
         name: props.name,

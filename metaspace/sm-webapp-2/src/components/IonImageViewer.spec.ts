@@ -7,7 +7,7 @@ import { range } from 'lodash-es'
 import createColormap from '../lib/createColormap'
 import store from '../store'
 import router from '../router'
-import ElementPlus from 'element-plus'
+import ElementPlus from '../lib/element-plus'
 
 vi.mock('../lib/ionImageRendering')
 // @ts-ignore

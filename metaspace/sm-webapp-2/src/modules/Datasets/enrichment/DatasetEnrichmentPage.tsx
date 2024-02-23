@@ -9,7 +9,7 @@ import { uniqBy } from 'lodash-es'
 import './DatasetEnrichmentPage.scss'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { ElIcon } from 'element-plus'
+import { ElIcon } from '../../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
 
 interface DatasetEnrichmentPageProps {
