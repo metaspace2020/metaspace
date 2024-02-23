@@ -221,8 +221,15 @@ const UploadDialog = defineComponent({
         </SmForm>
         <p class="m-0 mt-3">
           Databases should be provided in{' '}
-          <a target="_blank" href="https://en.wikipedia.org/wiki/Tab-separated_values">
+          <a href="https://en.wikipedia.org/wiki/Tab-separated_values" target="_blank">
             TSV format
+          </a>
+          .
+        </p>
+        <p class="m-0 mt-1">
+          Having trouble uploading the database? Follow our{' '}
+          <a href="https://github.com/metaspace2020/metaspace/wiki/Custom-database" target="_blank">
+            instructions
           </a>
           .
         </p>

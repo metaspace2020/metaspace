@@ -133,6 +133,7 @@ const DatabasesTable = defineComponent({
           />
           <ElTableColumn prop="user.name" label="Uploaded by" minWidth={144} sortable />
           <CheckColumn prop="isPublic" label="Public annotations" />
+          <CheckColumn prop="isVisible" label="Public database" />
           <CheckColumn prop="archived" label="Archived" />
         </ElTable>
         {state.showUploadDialog && (

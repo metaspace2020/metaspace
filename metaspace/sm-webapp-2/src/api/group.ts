@@ -215,6 +215,7 @@ export const getGroupDatabasesQuery = gql`
         createdDT
         id
         isPublic
+        isVisible
         name
         version
         user {

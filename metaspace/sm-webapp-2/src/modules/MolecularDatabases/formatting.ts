@@ -15,13 +15,14 @@ export function formatDatabaseLabel(db: { name: string; version: string }) {
 }
 
 export function getDatabaseDetails(database: MolecularDB): MolecularDBDetails {
-  const { citation, description, fullName, isPublic, link } = database
+  const { citation, description, fullName, isPublic, isVisible, link } = database
 
   return {
     citation,
     description,
     fullName,
     isPublic,
+    isVisible,
     link,
   }
 }
