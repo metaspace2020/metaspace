@@ -1,30 +1,30 @@
-import { defineComponent, watch, onMounted, PropType } from 'vue';
-import { DialogType } from '../dialogs';
-import { useStore } from 'vuex';
+import { defineComponent, watch, onMounted, PropType } from 'vue'
+import { DialogType } from '../dialogs'
+import { useStore } from 'vuex'
 
 export default defineComponent({
   props: {
     dialog: {
       type: String as PropType<DialogType>,
-      required: true
-    }
+      required: true,
+    },
   },
   setup(props) {
-    const store = useStore();
+    const store = useStore()
 
     const showDialog = () => {
       store.commit('account/showDialog', {
         dialog: props.dialog,
         dialogCloseRedirect: '/',
-      });
-    };
+      })
+    }
 
     // Watcher
-    watch(() => props.dialog, showDialog);
+    watch(() => props.dialog, showDialog)
 
     // Created Lifecycle Hook
-    onMounted(showDialog);
+    onMounted(showDialog)
 
-    return () => null; // Render function
-  }
-});
+    return () => null // Render function
+  },
+})

@@ -8,9 +8,7 @@ export class Sub extends Mark {
   }
 
   parseHTML() {
-    return [
-      { tag: 'sub' },
-    ]
+    return [{ tag: 'sub' }]
   }
 
   renderHTML({ HTMLAttributes }) {
@@ -19,7 +17,7 @@ export class Sub extends Mark {
 
   addCommands() {
     return {
-      toggleSub: () => toggleMark(this.name)
+      toggleSub: () => toggleMark(this.name),
     }
   }
 }
@@ -30,9 +28,7 @@ export class Sup extends Mark {
   }
 
   parseHTML() {
-    return [
-      { tag: 'sup' },
-    ]
+    return [{ tag: 'sup' }]
   }
 
   renderHTML({ HTMLAttributes }) {
@@ -41,7 +37,7 @@ export class Sup extends Mark {
 
   addCommands() {
     return {
-      toggleSup: () => toggleMark(this.name)
+      toggleSup: () => toggleMark(this.name),
     }
   }
 }
@@ -54,7 +50,7 @@ export class OnEscape extends Extension {
 
   addKeyboardShortcuts() {
     return {
-      'Escape': () => this.cb()
+      Escape: () => this.cb(),
     }
   }
 }

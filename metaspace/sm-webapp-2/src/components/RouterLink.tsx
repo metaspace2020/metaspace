@@ -1,15 +1,15 @@
-import {defineComponent} from "vue";
-import {useRouter} from "vue-router";
+import { defineComponent } from 'vue'
+import { useRouter } from 'vue-router'
 
 export default defineComponent({
   name: 'RouterLink',
   props: ['to', 'class', 'id', 'newTab'],
-  setup(props, {slots}) {
+  setup(props, { slots }) {
     const router = useRouter()
     const handleNavigation = async (params: any) => {
       if (props.newTab) {
-        const route = router.resolve(params);
-        window.open(route.href, '_blank');
+        const route = router.resolve(params)
+        window.open(route.href, '_blank')
         return
       }
       await router.push(params)
@@ -23,6 +23,6 @@ export default defineComponent({
       >
         {slots.default ? slots.default() : ''}
       </div>
-    );
+    )
   },
-});
+})

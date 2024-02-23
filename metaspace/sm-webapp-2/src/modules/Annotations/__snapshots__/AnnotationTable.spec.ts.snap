@@ -119,14 +119,14 @@ exports[`AnnotationTable > should match snapshot 1`] = `
                           <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover cell-span\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" virtual-triggering=\\"\\" placement=\\"right\\" virtual-ref=\\"[object HTMLDivElement]\\">
                             <div data-v-dd35c778=\\"\\" class=\\"leading-5 py-2 px-3 font-normal content text-sm text-left\\">
                               <!--v-if-->
-                              <p data-v-dd35c778=\\"\\" class=\\"title\\"> Candidate molecule </p>
+                              <p data-v-dd35c778=\\"\\" class=\\"title\\">Candidate molecule</p>
                               <ul data-v-dd35c778=\\"\\" class=\\"p-0 list-none leading-7\\">
                                 <li data-v-dd35c778=\\"\\">C.I. Food Red 6</li>
                                 <!--v-if-->
                               </ul>
                               <div data-v-dd35c778=\\"\\">
                                 <p data-v-dd35c778=\\"\\" class=\\"title\\"><span data-v-dd35c778=\\"\\">2 isomeric ions were annotated</span></p>
-                                <p data-v-dd35c778=\\"\\"> Check the <b data-v-dd35c778=\\"\\">Molecules</b> panel for more candidates. </p>
+                                <p data-v-dd35c778=\\"\\">Check the <b data-v-dd35c778=\\"\\">Molecules</b> panel for more candidates.</p>
                               </div>
                               <!--v-if-->
                             </div>
@@ -198,11 +198,11 @@ exports[`AnnotationTable > should match snapshot 1`] = `
       </div>
       <div id=\\"annot-count\\" class=\\"mt-2\\"><b>1</b> matching record</div>
       <div class=\\"mt-2\\">
-        <div class=\\"fdr-legend-header\\"> FDR levels: </div>
-        <div class=\\"fdr-legend fdr-5\\"> 5% </div>
-        <div class=\\"fdr-legend fdr-10\\"> 10% </div>
-        <div class=\\"fdr-legend fdr-20\\"> 20% </div>
-        <div class=\\"fdr-legend fdr-50\\"> 50% </div>
+        <div class=\\"fdr-legend-header\\">FDR levels:</div>
+        <div class=\\"fdr-legend fdr-5\\">5%</div>
+        <div class=\\"fdr-legend fdr-10\\">10%</div>
+        <div class=\\"fdr-legend fdr-20\\">20%</div>
+        <div class=\\"fdr-legend fdr-50\\">50%</div>
       </div>
     </div>
     <div class=\\"flex w-full items-center justify-end flex-wrap\\">
@@ -299,8 +299,8 @@ exports[`AnnotationTable > should match snapshot 1`] = `
         </div>
       </div>
       <div class=\\"mock-el-popover select-btn-wrapper ml-2 mt-1\\" popper-class=\\"export-pop\\" trigger=\\"click\\">
-        <p class=\\"export-option\\"> Annotations table </p>
-        <p class=\\"export-option\\"> Pixel intensities </p>
+        <p class=\\"export-option\\">Annotations table</p>
+        <p class=\\"export-option\\">Pixel intensities</p>
       </div>
       <div class=\\"ml-2 mt-1\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button full-screen-btn\\">
           <!--v-if--><span class=\\"\\"><svg class=\\"full-screen-icon\\"></svg></span>
@@ -419,14 +419,14 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
                           <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover cell-span\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" virtual-triggering=\\"\\" placement=\\"right\\" virtual-ref=\\"[object HTMLDivElement]\\">
                             <div data-v-dd35c778=\\"\\" class=\\"leading-5 py-2 px-3 font-normal content text-sm text-left\\">
                               <!--v-if-->
-                              <p data-v-dd35c778=\\"\\" class=\\"title\\"> Candidate molecule </p>
+                              <p data-v-dd35c778=\\"\\" class=\\"title\\">Candidate molecule</p>
                               <ul data-v-dd35c778=\\"\\" class=\\"p-0 list-none leading-7\\">
                                 <li data-v-dd35c778=\\"\\">C.I. Food Red 6</li>
                                 <!--v-if-->
                               </ul>
                               <div data-v-dd35c778=\\"\\">
                                 <p data-v-dd35c778=\\"\\" class=\\"title\\"><span data-v-dd35c778=\\"\\">2 isomeric ions were annotated</span></p>
-                                <p data-v-dd35c778=\\"\\"> Check the <b data-v-dd35c778=\\"\\">Molecules</b> panel for more candidates. </p>
+                                <p data-v-dd35c778=\\"\\">Check the <b data-v-dd35c778=\\"\\">Molecules</b> panel for more candidates.</p>
                               </div>
                               <!--v-if-->
                             </div>
@@ -498,11 +498,11 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
       </div>
       <div id=\\"annot-count\\" class=\\"mt-2\\"><b>1</b> matching record</div>
       <div class=\\"mt-2\\">
-        <div class=\\"fdr-legend-header\\"> FDR levels: </div>
-        <div class=\\"fdr-legend fdr-5\\"> 5% </div>
-        <div class=\\"fdr-legend fdr-10\\"> 10% </div>
-        <div class=\\"fdr-legend fdr-20\\"> 20% </div>
-        <div class=\\"fdr-legend fdr-50\\"> 50% </div>
+        <div class=\\"fdr-legend-header\\">FDR levels:</div>
+        <div class=\\"fdr-legend fdr-5\\">5%</div>
+        <div class=\\"fdr-legend fdr-10\\">10%</div>
+        <div class=\\"fdr-legend fdr-20\\">20%</div>
+        <div class=\\"fdr-legend fdr-50\\">50%</div>
       </div>
     </div>
     <div class=\\"flex w-full items-center justify-end flex-wrap\\">
@@ -599,8 +599,8 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
         </div>
       </div>
       <div class=\\"mock-el-popover select-btn-wrapper ml-2 mt-1\\" popper-class=\\"export-pop\\" trigger=\\"click\\">
-        <p class=\\"export-option\\"> Annotations table </p>
-        <p class=\\"export-option\\"> Pixel intensities </p>
+        <p class=\\"export-option\\">Annotations table</p>
+        <p class=\\"export-option\\">Pixel intensities</p>
       </div>
       <div class=\\"ml-2 mt-1\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button full-screen-btn\\">
           <!--v-if--><span class=\\"\\"><svg class=\\"full-screen-icon\\"></svg></span>

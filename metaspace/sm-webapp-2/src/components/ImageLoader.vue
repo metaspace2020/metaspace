@@ -1,8 +1,5 @@
 <template>
-  <div
-    ref="container"
-    v-resize="onResize"
-  >
+  <div ref="container" v-resize="onResize">
     <ion-image-viewer
       ref="imageLoader"
       :ion-image-layers="ionImageLayers"
@@ -21,15 +18,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch, computed, onMounted } from 'vue';
+import { defineComponent, ref, watch, computed, onMounted } from 'vue'
 // @ts-ignore
 import resize from 'vue3-resize-directive'
-import config from '../lib/config';
-import IonImageViewer from './IonImageViewer';
-import { IonImage, loadPngFromUrl, processIonImage, IonImageLayer } from '../lib/ionImageRendering';
-import fitImageToArea, { FitImageToAreaResult } from '../lib/fitImageToArea';
-import reportError from '../lib/reportError';
-import createColormap, { OpacityMode } from '../lib/createColormap';
+import config from '../lib/config'
+import IonImageViewer from './IonImageViewer'
+import { IonImage, loadPngFromUrl, processIonImage, IonImageLayer } from '../lib/ionImageRendering'
+import fitImageToArea, { FitImageToAreaResult } from '../lib/fitImageToArea'
+import reportError from '../lib/reportError'
+import createColormap, { OpacityMode } from '../lib/createColormap'
 
 export default defineComponent({
   directives: {
@@ -44,26 +41,24 @@ export default defineComponent({
     imageStyle: Object,
     minIntensity: Number,
     maxIntensity: Number,
-    pixelAspectRatio: { type: Number},
+    pixelAspectRatio: { type: Number },
     scaleType: Object,
     colormap: { type: String, default: 'Viridis' },
     opacityMode: String,
     annotImageOpacity: Number,
     normalizationData: Object,
   },
-  setup(props, { emit, attrs  }) {
-    const container = ref(null);
-    const imageLoader = ref(null);
-    const ionImage = ref<IonImage | null>(null);
-    const ionImageIsLoading = ref(false);
-    const containerWidth = ref(500);
-    const containerHeight = ref(500);
+  setup(props, { emit, attrs }) {
+    const container = ref(null)
+    const imageLoader = ref(null)
+    const ionImage = ref<IonImage | null>(null)
+    const ionImageIsLoading = ref(false)
+    const containerWidth = ref(500)
+    const containerHeight = ref(500)
 
     const listeners = computed(() => {
-      return Object.fromEntries(
-        Object.entries(attrs).filter(([, value]) => typeof value === 'function')
-      );
-    });
+      return Object.fromEntries(Object.entries(attrs).filter(([, value]) => typeof value === 'function'))
+    })
 
     const updateIonImage = async () => {
       // Keep track of which image is loading so that this can bail if src changes before the download finishes
@@ -75,8 +70,15 @@ export default defineComponent({
           const png = await loadPngFromUrl((config.imageStorage || '') + newUrl)
 
           if (newUrl === props.src) {
-            ionImage.value = processIonImage(png, props.minIntensity, props.maxIntensity, props.scaleType as any,
-              undefined, undefined, props.normalizationData as any)
+            ionImage.value = processIonImage(
+              png,
+              props.minIntensity,
+              props.maxIntensity,
+              props.scaleType as any,
+              undefined,
+              undefined,
+              props.normalizationData as any
+            )
             ionImageIsLoading.value = false
           }
         } catch (err) {
@@ -87,17 +89,17 @@ export default defineComponent({
           }
         }
       }
-    };
+    }
 
-    watch(() => props.src, updateIonImage);
-    watch(() => props.normalizationData, updateIonImage);
+    watch(() => props.src, updateIonImage)
+    watch(() => props.normalizationData, updateIonImage)
 
     const onResize = () => {
       if (container.value != null) {
         containerWidth.value = container.value.clientWidth
         containerHeight.value = container.value.clientHeight
       }
-    };
+    }
 
     const imageFit = computed((): FitImageToAreaResult => {
       return fitImageToArea({
@@ -106,29 +108,31 @@ export default defineComponent({
         areaWidth: containerWidth.value,
         areaHeight: containerHeight.value,
       })
-    });
+    })
 
     const ionImageLayers = computed((): IonImageLayer[] => {
       if (ionImage.value) {
-        return [{
-          ionImage: ionImage.value,
-          colorMap: createColormap(props.colormap, props.opacityMode as OpacityMode, props.annotImageOpacity),
-        }]
+        return [
+          {
+            ionImage: ionImage.value,
+            colorMap: createColormap(props.colormap, props.opacityMode as OpacityMode, props.annotImageOpacity),
+          },
+        ]
       }
       return []
-    });
+    })
 
     const zoom = computed(() => {
-      return (props.imagePosition && props.imagePosition.zoom || 1) * imageFit.value.imageZoom
-    });
+      return ((props.imagePosition && props.imagePosition.zoom) || 1) * imageFit.value.imageZoom
+    })
 
     const xOffset = computed(() => {
-      return props.imagePosition && props.imagePosition.xOffset || 0
-    });
+      return (props.imagePosition && props.imagePosition.xOffset) || 0
+    })
 
     const yOffset = computed(() => {
-      return props.imagePosition && props.imagePosition.yOffset || 0
-    });
+      return (props.imagePosition && props.imagePosition.yOffset) || 0
+    })
 
     const emitRedrawEvent = () => {
       emit('redraw', {
@@ -141,14 +145,13 @@ export default defineComponent({
 
     watch(imageFit, () => {
       emitRedrawEvent()
-    });
+    })
 
     onMounted(() => {
       // ignored promise on start
       updateIonImage()
-      onResize();
-    });
-
+      onResize()
+    })
 
     return {
       container,
@@ -164,8 +167,8 @@ export default defineComponent({
       xOffset,
       yOffset,
       listeners,
-      attrs
-    };
+      attrs,
+    }
   },
-});
+})
 </script>

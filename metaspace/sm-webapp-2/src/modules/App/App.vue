@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="min-h-screen m-0 relative"
-    :class="{ 'flex flex-col': route.meta.flex }"
-  >
+  <div class="min-h-screen m-0 relative" :class="{ 'flex flex-col': route.meta.flex }">
     <metaspace-header :class="route.meta.headerClass" />
 
     <!--
@@ -10,11 +7,7 @@
       This ensures that a loading screen is displayed and no unnecessary state is retained when e.g. switching
       between group profile pages or datasets
     -->
-    <router-view
-      :key="route.path"
-      class="sm-main-content"
-      :class="{ 'flex-grow w-full': route.meta.flex }"
-    />
+    <router-view :key="route.path" class="sm-main-content" :class="{ 'flex-grow w-full': route.meta.flex }" />
 
     <metaspace-footer v-if="route.meta.footer" />
 
@@ -23,10 +16,7 @@
 
     <new-feature-popups />
 
-    <tour-step
-      ref="tour"
-      :tour="store.state.currentTour"
-    />
+    <tour-step ref="tour" :tour="store.state.currentTour" />
 
     <cookie-banner />
   </div>
@@ -35,9 +25,9 @@
 <script>
 import { useCookies } from 'vue3-cookies'
 import config from '../../lib/config'
-import { useStore } from 'vuex';
-import {useRoute} from 'vue-router';
-import { watch } from 'vue';
+import { useStore } from 'vuex'
+import { useRoute } from 'vue-router'
+import { watch } from 'vue'
 import CookieBanner from './CookieBanner'
 import NewFeaturePopups from './NewFeaturePopups.vue'
 
@@ -45,7 +35,6 @@ import TourStep from './TourStep.vue'
 import MetaspaceHeader from './MetaspaceHeader'
 import MetaspaceFooter from './MetaspaceFooter.vue'
 import { DialogController } from '../Account'
-
 
 /** @type {ComponentOptions<Vue> & Vue} */
 export default {
@@ -69,16 +58,23 @@ export default {
     if (flashMessage) {
       try {
         if (flashMessage.type === 'verify_email_success') {
-          await this.$alert('Your email address was successfully verified. You may now upload datasets to METASPACE.',
-            'Welcome to METASPACE', { type: 'success' })
+          await this.$alert(
+            'Your email address was successfully verified. You may now upload datasets to METASPACE.',
+            'Welcome to METASPACE',
+            { type: 'success' }
+          )
         } else if (flashMessage.type === 'verify_email_failure') {
-          await this.$alert('This email verification link is invalid or has expired. '
-            + 'Try signing in or resetting your password. '
-            + 'If this keeps happening, please <a href="mailto:contact@metaspace2020.eu">let us know</a>.',
-            'Something went wrong!', { type: 'warning', dangerouslyUseHTMLString: true })
+          await this.$alert(
+            'This email verification link is invalid or has expired. ' +
+              'Try signing in or resetting your password. ' +
+              'If this keeps happening, please <a href="mailto:contact@metaspace2020.eu">let us know</a>.',
+            'Something went wrong!',
+            { type: 'warning', dangerouslyUseHTMLString: true }
+          )
         } else if (flashMessage.type === 'review_token_success') {
-          await this.$alert('You have been granted access to a private project.',
-            'Welcome to METASPACE', { type: 'success' })
+          await this.$alert('You have been granted access to a private project.', 'Welcome to METASPACE', {
+            type: 'success',
+          })
         }
       } catch (err) {
         // Ignore any errors - promise rejection here just means that the user cancelled out of the dialog
@@ -88,17 +84,20 @@ export default {
     }
   },
   setup() {
-    const store = useStore();
-    const route = useRoute();
+    const store = useStore()
+    const route = useRoute()
 
-    watch(route, (newRoute) => {
-      store.commit('updateRoute', {
-        path: newRoute.path,
-        params: newRoute.params,
-        query: newRoute.query,
-      });
-    }, { immediate: true });
-
+    watch(
+      route,
+      (newRoute) => {
+        store.commit('updateRoute', {
+          path: newRoute.path,
+          params: newRoute.params,
+          query: newRoute.query,
+        })
+      },
+      { immediate: true }
+    )
 
     return {
       store,
@@ -107,7 +106,6 @@ export default {
   },
 }
 </script>
-
 
 <style>
 @font-face {
@@ -120,9 +118,13 @@ export default {
 
 @font-face {
   font-display: swap;
-  font-family: "FuturaBT-Medium";
-  src: url("../../assets/fonts/futura/2FD17E_0_0.eot");
-  src: url("../../assets/fonts/futura/2FD17E_0_0.eot?#iefix") format("embedded-opentype"), url("../../assets/fonts/futura/2FD17E_0_0.woff2") format("woff2"), url("../../assets/fonts/futura/2FD17E_0_0.woff") format("woff"), url("../../assets/fonts/futura/2FD17E_0_0.ttf") format("truetype");
+  font-family: 'FuturaBT-Medium';
+  src: url('../../assets/fonts/futura/2FD17E_0_0.eot');
+  src:
+    url('../../assets/fonts/futura/2FD17E_0_0.eot?#iefix') format('embedded-opentype'),
+    url('../../assets/fonts/futura/2FD17E_0_0.woff2') format('woff2'),
+    url('../../assets/fonts/futura/2FD17E_0_0.woff') format('woff'),
+    url('../../assets/fonts/futura/2FD17E_0_0.ttf') format('truetype');
   font-style: normal;
   font-weight: normal;
 }
@@ -133,7 +135,8 @@ html {
 }
 
 /* http://matthewjamestaylor.com/blog/keeping-footers-at-the-bottom-of-the-page */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -145,7 +148,8 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2 {
+h1,
+h2 {
   @apply font-medium;
 }
 
@@ -165,7 +169,8 @@ a:hover {
   text-decoration: none;
 }
 
-input, button {
+input,
+button {
   font: inherit;
 }
 

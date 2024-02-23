@@ -18,14 +18,14 @@ import {
 import reportError from '../../lib/reportError'
 import { encodeParams } from '../Filters'
 import apolloClient from '../../api/graphqlClient'
-import RouterLink from "../../components/RouterLink";
+import RouterLink from '../../components/RouterLink'
 
 interface GroupRow {
-  id: string;
-  name: string;
-  role: UserGroupRole;
-  roleName: string;
-  numDatasets: number;
+  id: string
+  name: string
+  role: UserGroupRole
+  roleName: string
+  numDatasets: number
 }
 
 interface State {
@@ -105,33 +105,39 @@ const GroupsTable = defineComponent<Props>({
     }
 
     function handleLeave(groupRow: GroupRow) {
-      confirmPrompt({
-        message: `Are you sure you want to leave ${groupRow.name}?`,
-        confirmButtonText: 'Yes, leave the group',
-        confirmButtonLoadingText: 'Leaving...',
-      }, async() => {
-        await apolloClient.mutate({
-          mutation: leaveGroupMutation,
-          variables: { groupId: groupRow.id },
-        })
-        await props.refetchData()
-        ElMessage({ message: 'You have successfully left the group' })
-      })
+      confirmPrompt(
+        {
+          message: `Are you sure you want to leave ${groupRow.name}?`,
+          confirmButtonText: 'Yes, leave the group',
+          confirmButtonLoadingText: 'Leaving...',
+        },
+        async () => {
+          await apolloClient.mutate({
+            mutation: leaveGroupMutation,
+            variables: { groupId: groupRow.id },
+          })
+          await props.refetchData()
+          ElMessage({ message: 'You have successfully left the group' })
+        }
+      )
     }
 
     async function handleDeclineInvitation(groupRow: GroupRow) {
-      confirmPrompt({
-        message: `Are you sure you want to decline the invitation to ${groupRow.name}?`,
-        confirmButtonText: 'Yes, decline the invitation',
-        confirmButtonLoadingText: 'Leaving...',
-      }, async() => {
-        await apolloClient.mutate({
-          mutation: leaveGroupMutation,
-          variables: { groupId: groupRow.id },
-        })
-        await props.refetchData()
-        ElMessage({ message: 'You have declined the invitation' })
-      })
+      confirmPrompt(
+        {
+          message: `Are you sure you want to decline the invitation to ${groupRow.name}?`,
+          confirmButtonText: 'Yes, decline the invitation',
+          confirmButtonLoadingText: 'Leaving...',
+        },
+        async () => {
+          await apolloClient.mutate({
+            mutation: leaveGroupMutation,
+            variables: { groupId: groupRow.id },
+          })
+          await props.refetchData()
+          ElMessage({ message: 'You have declined the invitation' })
+        }
+      )
     }
 
     async function handleAcceptInvitation(groupRow: GroupRow) {
@@ -141,14 +147,16 @@ const GroupsTable = defineComponent<Props>({
 
     return () => (
       <div>
-        {state.showTransferDatasetsDialog
-          && <TransferDatasetsDialog
+        {state.showTransferDatasetsDialog && (
+          <TransferDatasetsDialog
             groupName={state.invitingGroup && state.invitingGroup.name}
             isInvited
             onAccept={handleAcceptTransferDatasets}
-            onClose={() => { state.showTransferDatasetsDialog = false }}
+            onClose={() => {
+              state.showTransferDatasetsDialog = false
+            }}
           />
-        }
+        )}
         <table class="sm-table sm-table-user-details">
           <tr>
             <th>Group</th>
@@ -156,68 +164,55 @@ const GroupsTable = defineComponent<Props>({
             <th>Datasets</th>
             <th></th>
           </tr>
-          {rows.value.length
-            ? rows.value.map(row =>
+          {rows.value.length ? (
+            rows.value.map((row) => (
               <tr>
                 <td>
                   <div class="sm-table-cell">
                     <RouterLink to={row.route}>{row.name}</RouterLink>
-                    {row.hasPendingRequest
-                      && <NotificationIcon
+                    {row.hasPendingRequest && (
+                      <NotificationIcon
                         tooltip={`${row.name} has a pending membership request.`}
                         tooltip-placement="right"
-                      />}
+                      />
+                    )}
                   </div>
                 </td>
                 <td>{row.roleName}</td>
-                <td>
-                  {row.numDatasets > 0
-                    ? <RouterLink to={row.datasetsRoute}>{row.numDatasets}</RouterLink>
-                    : '0'
-                  }
-                </td>
+                <td>{row.numDatasets > 0 ? <RouterLink to={row.datasetsRoute}>{row.numDatasets}</RouterLink> : '0'}</td>
                 <td>
                   <div class="sm-table-button-group">
-                    {row.role === 'MEMBER' && <ElButton
-                      size="small"
-                      icon="ArrowRight"
-                      onClick={() => handleLeave(row)}
-                    >
+                    {row.role === 'MEMBER' && (
+                      <ElButton size="small" icon="ArrowRight" onClick={() => handleLeave(row)}>
                         Leave
-                    </ElButton>}
-                    {row.role === 'GROUP_ADMIN' && <ElButton
-                      size="small"
-                      icon="ArrowRight"
-                      disabled
-                    >
+                      </ElButton>
+                    )}
+                    {row.role === 'GROUP_ADMIN' && (
+                      <ElButton size="small" icon="ArrowRight" disabled>
                         Leave
-                    </ElButton>}
-                    {row.role === 'INVITED' && <ElButton
-                      size="small"
-                      type="success"
-                      icon="Check"
-                      onClick={() => handleAcceptInvitation(row)}
-                    >
+                      </ElButton>
+                    )}
+                    {row.role === 'INVITED' && (
+                      <ElButton size="small" type="success" icon="Check" onClick={() => handleAcceptInvitation(row)}>
                         Accept
-                    </ElButton>}
-                    {row.role === 'INVITED' && <ElButton
-                      size="small"
-                      icon="Close"
-                      onClick={() => handleDeclineInvitation(row)}
-                    >
+                      </ElButton>
+                    )}
+                    {row.role === 'INVITED' && (
+                      <ElButton size="small" icon="Close" onClick={() => handleDeclineInvitation(row)}>
                         Decline
-                    </ElButton>}
+                      </ElButton>
+                    )}
                   </div>
                 </td>
-              </tr>,
-            ) : (
-              <tr class="sm-table-empty-row">
-                <td colspan="4">No data</td>
               </tr>
-            )
-          }
+            ))
+          ) : (
+            <tr class="sm-table-empty-row">
+              <td colspan="4">No data</td>
+            </tr>
+          )}
         </table>
-      </div >
+      </div>
     )
   },
 })

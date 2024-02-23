@@ -23,12 +23,12 @@ export default defineConfig({
       output: {
         entryFileNames: `assets/[name].js`,
         chunkFileNames: `assets/[name].js`,
-        assetFileNames: `assets/[name].[ext]`
-      }
-    }
+        assetFileNames: `assets/[name].[ext]`,
+      },
+    },
   },
   server: {
-    host: true,   // Equivalent to disableHostCheck: true in Webpack
+    host: true, // Equivalent to disableHostCheck: true in Webpack
     port: 8082,
     hmr: {
       overlay: false,
@@ -58,15 +58,16 @@ export default defineConfig({
         linkify: true,
         typographer: true,
       },
-    })
+    }),
   ],
   css: {
     preprocessorOptions: {
       scss: { additionalData: `@import '@/modules/App/element-plus.scss';` },
-    }
+    },
   },
   resolve: {
-    alias: { // @ts-ignore
+    alias: {
+      // @ts-ignore
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },

@@ -25,9 +25,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch } from 'vue';
-import ElapsedTime from '../components/ElapsedTime';
-import {ElCheckbox} from "element-plus";
+import { defineComponent, ref, watch } from 'vue'
+import ElapsedTime from '../components/ElapsedTime'
+import { ElCheckbox } from 'element-plus'
 import { DatasetListItem } from '../api/dataset'
 
 export default defineComponent({
@@ -47,59 +47,61 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
-    const selectedDatasets = ref({});
+    const selectedDatasets = ref({})
 
     const populateSelectedDatasetIds = () => {
       // Rebuild `selectedDatasets` so that the keys are in sync with the ids from `datasets`
-      const newSelectedDatasets = {};
-      props.datasets.forEach(dataset => {
-        newSelectedDatasets[dataset.id] = dataset.id in selectedDatasets.value
-          ? selectedDatasets.value[dataset.id]
-          : props.initSelectAll;
-      });
-      selectedDatasets.value = newSelectedDatasets;
-      emit('update:selectedDatasets', newSelectedDatasets);
-    };
+      const newSelectedDatasets = {}
+      props.datasets.forEach((dataset) => {
+        newSelectedDatasets[dataset.id] =
+          dataset.id in selectedDatasets.value ? selectedDatasets.value[dataset.id] : props.initSelectAll
+      })
+      selectedDatasets.value = newSelectedDatasets
+      emit('update:selectedDatasets', newSelectedDatasets)
+    }
 
-    watch(() => props.datasets, populateSelectedDatasetIds, { immediate: true });
+    watch(() => props.datasets, populateSelectedDatasetIds, { immediate: true })
 
     const handleChange = (datasetId: string) => {
       const newValue = !selectedDatasets.value[datasetId]
-       selectedDatasets.value[datasetId] = newValue
-       emit('update:modelValue', selectedDatasets.value);
+      selectedDatasets.value[datasetId] = newValue
+      emit('update:modelValue', selectedDatasets.value)
     }
 
-
     const handleSelectNone = () => {
-      Object.keys(selectedDatasets.value).forEach(key => { selectedDatasets.value[key] = false });
-      emit('update:modelValue', selectedDatasets.value);
-    };
+      Object.keys(selectedDatasets.value).forEach((key) => {
+        selectedDatasets.value[key] = false
+      })
+      emit('update:modelValue', selectedDatasets.value)
+    }
 
     const handleSelectAll = () => {
-      Object.keys(selectedDatasets.value).forEach(key => { selectedDatasets.value[key] = true });
-      emit('update:modelValue', selectedDatasets.value);
-    };
+      Object.keys(selectedDatasets.value).forEach((key) => {
+        selectedDatasets.value[key] = true
+      })
+      emit('update:modelValue', selectedDatasets.value)
+    }
 
     return {
       selectedDatasets,
       handleSelectNone,
       handleSelectAll,
       handleChange,
-    };
+    }
   },
-});
+})
 </script>
 
 <style scoped lang="scss">
-  .dataset-checkbox-list {
-    margin: 12px 0;
-    max-height: 50vh;
-    overflow: auto;
-  }
-  .select-buttons {
-    margin: 12px 0;
-  }
-  ::v-deep(.el-checkbox__label) {
-    @apply inline-flex flex-grow justify-between items-baseline overflow-hidden;
-  }
+.dataset-checkbox-list {
+  margin: 12px 0;
+  max-height: 50vh;
+  overflow: auto;
+}
+.select-buttons {
+  margin: 12px 0;
+}
+::v-deep(.el-checkbox__label) {
+  @apply inline-flex flex-grow justify-between items-baseline overflow-hidden;
+}
 </style>

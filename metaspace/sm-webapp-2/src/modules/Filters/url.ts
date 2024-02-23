@@ -5,15 +5,15 @@ import { RouteLocation } from 'vue-router'
 // import { ScaleType } from '../../lib/ionImageRendering'
 import { DEFAULT_SCALE_TYPE } from '../../lib/constants'
 
- type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'hist' | 'test';
+type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'hist' | 'test'
 
 interface Dictionary<T> {
-  [key: string]: T;
+  [key: string]: T
 }
 
 interface SortSettings {
-  by: string;
-  dir: string;
+  by: string
+  dir: string
 }
 
 const FILTER_TO_URL: Record<FilterKey, string> = {
@@ -97,8 +97,11 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
       continue
     }
 
-
-    if (key in filter && (defaultFilter == null || (filter[key] === undefined ? !Object.keys(defaultFilter).includes(key) : filter[key] !== defaultFilter[key]))) {
+    if (
+      key in filter &&
+      (defaultFilter == null ||
+        (filter[key] === undefined ? !Object.keys(defaultFilter).includes(key) : filter[key] !== defaultFilter[key]))
+    ) {
       if (encoding === 'json') {
         q[FILTER_TO_URL[key]] = JSON.stringify(filter[key])
       } else if (encoding === 'list') {
@@ -242,16 +245,17 @@ export interface UrlSettings {
 }
 
 export function decodeSettings(location: RouteLocation): UrlSettings | undefined {
-  let { query } : any = location
-  const {  path } = location
+  let { query }: any = location
+  const { path } = location
   if (!query || !path) {
     return undefined
   }
 
   // When vue-router encounters the same query parameter more than once it supplies an array instead of a string.
   // To prevent type errors below, find any arrayified parameters and just take their first element
-  query = mapValues(query, (stringOrArray:string|string[]) =>
-    isArray(stringOrArray) ? stringOrArray[0] : stringOrArray)
+  query = mapValues(query, (stringOrArray: string | string[]) =>
+    isArray(stringOrArray) ? stringOrArray[0] : stringOrArray
+  )
 
   const settings: UrlSettings = {
     table: {
@@ -337,13 +341,13 @@ const dbIds: Record<string, number> = {
 }
 
 export function updateDBParam(queryString: string): string | null {
-  const searchParams = new URLSearchParams(queryString);
-  const db = searchParams.get('db');
+  const searchParams = new URLSearchParams(queryString)
+  const db = searchParams.get('db')
 
   if (typeof db === 'string' && db in dbIds) {
-    searchParams.set(FILTER_TO_URL.database, String(dbIds[db]));
-    return searchParams.toString();
+    searchParams.set(FILTER_TO_URL.database, String(dbIds[db]))
+    return searchParams.toString()
   }
 
-  return null;
+  return null
 }

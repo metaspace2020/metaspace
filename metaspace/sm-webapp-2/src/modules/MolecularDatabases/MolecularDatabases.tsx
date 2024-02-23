@@ -1,13 +1,13 @@
-import {defineComponent, watch, reactive, computed, onMounted} from 'vue'
+import { defineComponent, watch, reactive, computed, onMounted } from 'vue'
 import FadeTransition from '../../components/FadeTransition'
 
 import Table from './DatabasesTable'
 import DetailsView from './DatabaseDetailsView'
-import {useRoute, useRouter} from "vue-router";
+import { useRoute, useRouter } from 'vue-router'
 
 interface State {
-  selectedDatabase: number | null,
-  showUploadDialog: boolean,
+  selectedDatabase: number | null
+  showUploadDialog: boolean
 }
 
 export default defineComponent({
@@ -33,10 +33,9 @@ export default defineComponent({
     })
 
     onMounted(() => {
-      if(!dbQuery.value) return
+      if (!dbQuery.value) return
       setView(dbQuery.value)
     })
-
 
     const selectDatabase = (row: any) => {
       router.push({ query: { ...router.currentRoute.value.query, db: row.id } })
@@ -49,16 +48,11 @@ export default defineComponent({
 
     return () => (
       <FadeTransition>
-        { state.selectedDatabase !== null
-          ? <DetailsView
-            id={state.selectedDatabase}
-            canDelete={props.canDelete}
-            close={removeSelected}
-          />
-          : <Table
-            groupId={props.groupId}
-            handleRowClick={selectDatabase}
-          /> }
+        {state.selectedDatabase !== null ? (
+          <DetailsView id={state.selectedDatabase} canDelete={props.canDelete} close={removeSelected} />
+        ) : (
+          <Table groupId={props.groupId} handleRowClick={selectDatabase} />
+        )}
       </FadeTransition>
     )
   },

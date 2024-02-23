@@ -1,48 +1,39 @@
-import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
-import { useStore } from 'vuex';
-import { useMutation, useQuery } from '@vue/apollo-composable';
-import {ElButton, ElIcon, ElInput, ElNotification, ElPopover, ElTooltip} from "element-plus";
+import { defineComponent, ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useStore } from 'vuex'
+import { useMutation, useQuery } from '@vue/apollo-composable'
+import { ElButton, ElIcon, ElInput, ElNotification, ElPopover, ElTooltip } from 'element-plus'
 import * as FileSaver from 'file-saver'
-import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue';
-import './RoiSettings.scss';
+import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
+import './RoiSettings.scss'
 import { annotationListQuery } from '../api/annotation'
 import { addRoiMutation } from '../api/dataset'
-import config from '../lib/config';
-import { loadPngFromUrl, processIonImage } from '../lib/ionImageRendering';
-import isInsidePolygon from '../lib/isInsidePolygon';
-import StatefulIcon from '../components/StatefulIcon.vue';
-import reportError from '../lib/reportError';
-import {defineAsyncComponent} from "vue";
-import {Loading} from "@element-plus/icons-vue";
+import config from '../lib/config'
+import { loadPngFromUrl, processIonImage } from '../lib/ionImageRendering'
+import isInsidePolygon from '../lib/isInsidePolygon'
+import StatefulIcon from '../components/StatefulIcon.vue'
+import reportError from '../lib/reportError'
+import { defineAsyncComponent } from 'vue'
+import { Loading } from '@element-plus/icons-vue'
 
-const VisibleIcon = defineAsyncComponent(() =>
-  import('../assets/inline/refactoring-ui/icon-view-visible.svg')
-);
+const VisibleIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-view-visible.svg'))
 
-const HiddenIcon = defineAsyncComponent(() =>
-  import('../assets/inline/refactoring-ui/icon-view-hidden.svg')
-);
+const HiddenIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-view-hidden.svg'))
 
-const RoiIcon = defineAsyncComponent(() =>
-  import('../assets/inline/roi-icon.svg')
-);
+const RoiIcon = defineAsyncComponent(() => import('../assets/inline/roi-icon.svg'))
 
-const SaveIcon = defineAsyncComponent(() =>
-  import('../assets/inline/save-icon.svg')
-);
-
+const SaveIcon = defineAsyncComponent(() => import('../assets/inline/save-icon.svg'))
 
 interface RoiSettingsProps {
-  annotation: any,
+  annotation: any
 }
 
 interface RoiSettingsState {
-  updatingPopper: boolean,
-  isUpdatingRoi: boolean,
-  isDownloading: boolean,
-  offset: number,
-  rows: any[],
-  cols: any[],
+  updatingPopper: boolean
+  isUpdatingRoi: boolean
+  isDownloading: boolean
+  offset: number
+  rows: any[]
+  cols: any[]
 }
 
 const channels: any = {
@@ -65,7 +56,7 @@ export default defineComponent({
     annotation: { type: Object, default: () => {} },
   },
   setup(props: RoiSettingsProps | any) {
-    const store = useStore();
+    const store = useStore()
     const { mutate } = useMutation(addRoiMutation)
     const updateRois = mutate as unknown as (variables: any) => void
 
@@ -104,11 +95,9 @@ export default defineComponent({
       offset: state.offset,
     }))
 
-    const {
-      onResult: onAnnotationsResult,
-    } = useQuery<any>(annotationListQuery, queryVars, queryOptions)
+    const { onResult: onAnnotationsResult } = useQuery<any>(annotationListQuery, queryVars, queryOptions)
 
-    onAnnotationsResult(async(result) => {
+    onAnnotationsResult(async (result) => {
       if (result && result.data) {
         for (let i = 0; i < result.data.allAnnotations.length; i++) {
           const annotation = result.data.allAnnotations[i]
@@ -121,8 +110,10 @@ export default defineComponent({
           queryOptions.enabled = false
           const csv = state.rows.map((e: any) => e.join(',')).join('\n')
           const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
-          FileSaver.saveAs(blob, `${props.annotation.dataset.name.replace(/\s/g, '_')}_ROI${isNormalized.value
-            ? '_tic_normalized' : ''}.csv`)
+          FileSaver.saveAs(
+            blob,
+            `${props.annotation.dataset.name.replace(/\s/g, '_')}_ROI${isNormalized.value ? '_tic_normalized' : ''}.csv`
+          )
           state.isDownloading = false
           state.offset = 0
           state.rows = []
@@ -140,43 +131,60 @@ export default defineComponent({
     })
 
     const resizeHandler = () => {
-      if (popover.value && !state.updatingPopper && typeof popover.value.updatePopper === 'function') { // update popper position
+      if (popover.value && !state.updatingPopper && typeof popover.value.updatePopper === 'function') {
+        // update popper position
         state.updatingPopper = true
         popover.value.updatePopper()
-        setTimeout(() => { state.updatingPopper = false }, 100)
+        setTimeout(() => {
+          state.updatingPopper = false
+        }, 100)
       }
     }
 
-    watch(() => store.getters.filter, () => {
-      // hack to update popper position when some filters change reduces table width and misplace its position
-      setTimeout(() => { resizeHandler() }, 0)
-    })
+    watch(
+      () => store.getters.filter,
+      () => {
+        // hack to update popper position when some filters change reduces table width and misplace its position
+        setTimeout(() => {
+          resizeHandler()
+        }, 0)
+      }
+    )
 
-    const ionImage = (ionImagePng: any, isotopeImage: any,
-      scaleType: any = 'linear', userScaling: any = [0, 1], normalizedData: any = null) => {
+    const ionImage = (
+      ionImagePng: any,
+      isotopeImage: any,
+      scaleType: any = 'linear',
+      userScaling: any = [0, 1],
+      normalizedData: any = null
+    ) => {
       if (!isotopeImage || !ionImagePng) {
         return null
       }
       const { minIntensity, maxIntensity } = isotopeImage
-      return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType
-        , userScaling, undefined, normalizedData)
+      return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType, userScaling, undefined, normalizedData)
     }
 
-    const formatRow = async(annotation: any, normalizationData: any) => {
+    const formatRow = async (annotation: any, normalizationData: any) => {
       const [isotopeImage] = annotation.isotopeImages
       const ionImagePng = await loadPngFromUrl(isotopeImage.url)
-      const molFormula : any = annotation.ionFormula
-      const molName : any = annotation.possibleCompounds.map((m : any) => m.name).join(',')
-      const molIds : any = annotation.possibleCompounds.map((m : any) => m.information[0].databaseId).join(',')
-      const adduct : any = annotation.adduct
-      const mz : any = annotation.mz
-      const finalImage : any = ionImage(ionImagePng, annotation.isotopeImages[0], undefined,
-        undefined, normalizationData)
-      const row : any = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
+      const molFormula: any = annotation.ionFormula
+      const molName: any = annotation.possibleCompounds.map((m: any) => m.name).join(',')
+      const molIds: any = annotation.possibleCompounds.map((m: any) => m.information[0].databaseId).join(',')
+      const adduct: any = annotation.adduct
+      const mz: any = annotation.mz
+      const finalImage: any = ionImage(
+        ionImagePng,
+        annotation.isotopeImages[0],
+        undefined,
+        undefined,
+        normalizationData
+      )
+      const row: any = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
       const roiInfo = getRoi()
       const { width, height, intensityValues } = finalImage
-      const cols : any[] = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
-      const rows : any = state.rows
+      const cols: any[] = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
+      const rows: any = state.rows
 
       roiInfo.forEach((roi: any) => {
         const roiCoordinates = roi.coordinates.map((coordinate: any) => {
@@ -206,8 +214,11 @@ export default defineComponent({
 
     const getRoi = () => {
       if (
-        props.annotation && props.annotation.dataset?.id && store.state.roiInfo
-        && Object.keys(store.state.roiInfo).includes(props.annotation.dataset.id)) {
+        props.annotation &&
+        props.annotation.dataset?.id &&
+        store.state.roiInfo &&
+        Object.keys(store.state.roiInfo).includes(props.annotation.dataset.id)
+      ) {
         return store.state.roiInfo[props.annotation.dataset.id] || []
       }
       return []
@@ -222,7 +233,7 @@ export default defineComponent({
       e.preventDefault()
       const roiInfo = getRoi()
       const index = roiInfo.length % Object.keys(channels).length
-      const channel : any = Object.values(channels)[index]
+      const channel: any = Object.values(channels)[index]
 
       roiInfo.push({
         coordinates: [],
@@ -239,13 +250,12 @@ export default defineComponent({
       store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
-    const toggleAllHidden = (e: any = undefined, visible : boolean | any = undefined) => {
+    const toggleAllHidden = (e: any = undefined, visible: boolean | any = undefined) => {
       if (e) {
         e.stopPropagation()
         e.preventDefault()
       }
-      const isVisible = visible !== undefined ? visible
-        : !store.state.roiInfo.visible
+      const isVisible = visible !== undefined ? visible : !store.state.roiInfo.visible
       store.commit('toggleRoiVisibility', isVisible)
 
       // iterates through all datasets to ensure all are toggled and ion image is updated
@@ -256,7 +266,7 @@ export default defineComponent({
           if (index < 0) {
             return
           }
-          roiInfo[index] = { ...roiInfo[index], allVisible: isVisible };
+          roiInfo[index] = { ...roiInfo[index], allVisible: isVisible }
           store.commit('setRoiInfo', { key, roi: roiInfo })
         }
       })
@@ -272,7 +282,7 @@ export default defineComponent({
       try {
         Object.keys(store.state.roiInfo).forEach((key: string) => {
           const roiInfo = store.state.roiInfo[key]
-          const geoJson : any = {
+          const geoJson: any = {
             type: 'FeatureCollection',
             features: [],
           }
@@ -317,19 +327,19 @@ export default defineComponent({
 
     const handleNameEdit = (value: any, index: number) => {
       const roiInfo = getRoi()
-      roiInfo[index] = { ...roiInfo[index], name: value };
+      roiInfo[index] = { ...roiInfo[index], name: value }
       store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
     const toggleEdit = (index: number) => {
       const roiInfo = getRoi()
-      roiInfo[index] = { ...roiInfo[index], edit: !roiInfo[index].edit };
+      roiInfo[index] = { ...roiInfo[index], edit: !roiInfo[index].edit }
       store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
     const toggleHidden = (index: number) => {
       const roiInfo = getRoi()
-      roiInfo[index] = { ...roiInfo[index], visible: !roiInfo[index].visible };
+      roiInfo[index] = { ...roiInfo[index], visible: !roiInfo[index].visible }
       store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
@@ -347,7 +357,7 @@ export default defineComponent({
         rgb: channels[channel],
         strokeColor: channels[channel].replace('rgb', 'rgba').replace(')', ', 0)'),
         color: channels[channel].replace('rgb', 'rgba').replace(')', ', 0.4)'),
-      };
+      }
 
       store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
@@ -361,10 +371,8 @@ export default defineComponent({
             class={`roi-btn button-reset flex h-6 w-6 mr-3 ${isVisible ? 'active' : ''}`}
             onClick={toggleAllHidden}
           >
-            <StatefulIcon
-              class='roi-badge h-6 w-7'
-              active={isVisible}>
-              <RoiIcon class='roi-icon fill-current'/>
+            <StatefulIcon class="roi-badge h-6 w-7" active={isVisible}>
+              <RoiIcon class="roi-icon fill-current" />
             </StatefulIcon>
           </ElButton>
         </div>
@@ -372,17 +380,13 @@ export default defineComponent({
     }
 
     const renderRoiIconContent = () => {
-      return (
-        <div class="max-w-xs">
-          Create and save ROIs, export ROI pixels intensities.
-        </div>
-      )
+      return <div class="max-w-xs">Create and save ROIs, export ROI pixels intensities.</div>
     }
 
     const renderMainPopoverReference = () => {
       const isVisible = isRoiVisible()
 
-      return(
+      return (
         <div>
           <ElPopover
             trigger="hover"
@@ -390,8 +394,9 @@ export default defineComponent({
             disabled={isVisible}
             v-slots={{
               reference: renderRoiIcon,
-              default: renderRoiIconContent
-            }}/>
+              default: renderRoiIconContent,
+            }}
+          />
         </div>
       )
     }
@@ -399,100 +404,86 @@ export default defineComponent({
     const renderRoiSettings = () => {
       const roiInfo = getRoi()
 
-      return(
-        <div class='roi-content'>
-          <div class='roi-options'>
-            {
-              roiInfo.length > 0
-              && !state.isDownloading
-              && <ElButton
-                class="button-reset roi-download-icon"
-                icon="Download"
-                onClick={triggerDownload}/>
-            }
-            {
-              roiInfo.length > 0
-              && state.isDownloading
-              && <div class="button-reset roi-download-icon">
-                <ElIcon class="is-loading"><Loading/></ElIcon>
+      return (
+        <div class="roi-content">
+          <div class="roi-options">
+            {roiInfo.length > 0 && !state.isDownloading && (
+              <ElButton class="button-reset roi-download-icon" icon="Download" onClick={triggerDownload} />
+            )}
+            {roiInfo.length > 0 && state.isDownloading && (
+              <div class="button-reset roi-download-icon">
+                <ElIcon class="is-loading">
+                  <Loading />
+                </ElIcon>
               </div>
-            }
+            )}
             <ElTooltip
-              popperClass='roi-save-tooltip'
-              content={'Click to save the ROIs. This requires being the owner or having the '
-                + 'edit access to this dataset.'}
-              placement="top">
-              {
-                !state.isUpdatingRoi
-                && <ElButton
-                  class={`button-reset roi-save-icon-wrapper ${props.annotation?.dataset?.canEdit
-                    ? '' : 'save-disabled'}`}
+              popperClass="roi-save-tooltip"
+              content={
+                'Click to save the ROIs. This requires being the owner or having the ' + 'edit access to this dataset.'
+              }
+              placement="top"
+            >
+              {!state.isUpdatingRoi && (
+                <ElButton
+                  class={`button-reset roi-save-icon-wrapper ${
+                    props.annotation?.dataset?.canEdit ? '' : 'save-disabled'
+                  }`}
                   onClick={handleSave}
                 >
-                  <StatefulIcon
-                    class='roi-save-icon-wrapper'
-                    active={props.annotation?.dataset?.canEdit}>
-                    <SaveIcon class='roi-save-icon fill-current'/>
+                  <StatefulIcon class="roi-save-icon-wrapper" active={props.annotation?.dataset?.canEdit}>
+                    <SaveIcon class="roi-save-icon fill-current" />
                   </StatefulIcon>
                 </ElButton>
-              }
-              {
-                state.isUpdatingRoi
-                && <div class="button-reset roi-download-icon">
-                  <ElIcon class="is-loading"><Loading/></ElIcon>
+              )}
+              {state.isUpdatingRoi && (
+                <div class="button-reset roi-download-icon">
+                  <ElIcon class="is-loading">
+                    <Loading />
+                  </ElIcon>
                 </div>
-              }
+              )}
             </ElTooltip>
           </div>
-          {
-            roiInfo.map((roi: any, roiIndex: number) => {
-              return (
-                <div class='roi-item relative'>
-                  <div class='flex w-full justify-between items-center w-28'>
-                    {
-                      !roi.edit
-                      && <span class='roi-label' style={ { color: roi.channel } }>
+          {roiInfo.map((roi: any, roiIndex: number) => {
+            return (
+              <div class="roi-item relative">
+                <div class="flex w-full justify-between items-center w-28">
+                  {!roi.edit && (
+                    <span class="roi-label" style={{ color: roi.channel }}>
                       {roi.name}
                     </span>
-                    }
-                    {
-                      roi.edit
-                      && <ElInput
-                        class='roi-label'
-                        size='small'
-                        modelValue={roi.name}
-                        onChange={() => toggleEdit(roiIndex)}
-                        onInput={(value: any) => { handleNameEdit(value, roiIndex) }}/>
-                    }
-                    <div class='flex justify-center items-center'>
-                      <ElButton
-                        class="button-reset h-5"
-                        icon="Edit"
-                        onClick={() => toggleEdit(roiIndex)}/>
-                      <ElButton class="button-reset h-5" onClick={() => toggleHidden(roiIndex)}>
-                        {
-                          roi.visible
-                          && <VisibleIcon class="fill-current w-5 h-5 text-gray-800"/>
-                        } {
-                        !roi.visible
-                        && <HiddenIcon class="fill-current w-5 h-5 text-gray-800"/>
-                      }
-                      </ElButton>
-                    </div>
-
-                  </div>
-                  <div class='roi-channels'>
-                    <ChannelSelector
-                      class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
-                      value={roi.channel} // @ts-ignore
-                      onRemove={() => removeRoi(roiIndex)}
-                      onInput={(value: any) => changeRoi(value, roiIndex)}
+                  )}
+                  {roi.edit && (
+                    <ElInput
+                      class="roi-label"
+                      size="small"
+                      modelValue={roi.name}
+                      onChange={() => toggleEdit(roiIndex)}
+                      onInput={(value: any) => {
+                        handleNameEdit(value, roiIndex)
+                      }}
                     />
+                  )}
+                  <div class="flex justify-center items-center">
+                    <ElButton class="button-reset h-5" icon="Edit" onClick={() => toggleEdit(roiIndex)} />
+                    <ElButton class="button-reset h-5" onClick={() => toggleHidden(roiIndex)}>
+                      {roi.visible && <VisibleIcon class="fill-current w-5 h-5 text-gray-800" />}{' '}
+                      {!roi.visible && <HiddenIcon class="fill-current w-5 h-5 text-gray-800" />}
+                    </ElButton>
                   </div>
                 </div>
-              )
-            })
-          }
+                <div class="roi-channels">
+                  <ChannelSelector
+                    class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
+                    value={roi.channel} // @ts-ignore
+                    onRemove={() => removeRoi(roiIndex)}
+                    onInput={(value: any) => changeRoi(value, roiIndex)}
+                  />
+                </div>
+              </div>
+            )
+          })}
           <ElButton
             class="button-reset h-9 rounded-lg flex items-center justify-center px-2 hover:bg-gray-100 w-full"
             onClick={addRoi}
@@ -509,16 +500,16 @@ export default defineComponent({
       return (
         <ElPopover
           ref={popover}
-          popperClass='roi-popper'
+          popperClass="roi-popper"
           placement="bottom"
           width="200"
           visible={isVisible}
           v-slots={{
-          reference: renderMainPopoverReference,
-          default: renderRoiSettings
-        }}/>
+            reference: renderMainPopoverReference,
+            default: renderRoiSettings,
+          }}
+        />
       )
     }
   },
-
 })

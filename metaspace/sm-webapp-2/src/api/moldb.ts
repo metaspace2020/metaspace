@@ -15,9 +15,9 @@ export interface MolecularDB {
     shortName: string
   }
   user?: {
-    id: string;
-    name: string | null;
-    email: string | null;
+    id: string
+    name: string | null
+    email: string | null
   }
   createdDT: string
   archived: boolean
@@ -25,15 +25,16 @@ export interface MolecularDB {
   hidden?: boolean
 }
 
-export const createDatabaseQuery =
-  gql`mutation ($input: CreateMolecularDBInput!) {
-      createMolecularDB(databaseDetails: $input) {
-        id
-      }
-  }`
+export const createDatabaseQuery = gql`
+  mutation ($input: CreateMolecularDBInput!) {
+    createMolecularDB(databaseDetails: $input) {
+      id
+    }
+  }
+`
 
-export const databaseDetailsQuery =
-  gql`query getDatabaseDetails ($id: Int!) {
+export const databaseDetailsQuery = gql`
+  query getDatabaseDetails($id: Int!) {
     database: molecularDB(databaseId: $id) {
       archived
       citation
@@ -46,22 +47,28 @@ export const databaseDetailsQuery =
       group {
         id
       }
-      user { id name email}
+      user {
+        id
+        name
+        email
+      }
       downloadLink
     }
-  }`
+  }
+`
 
 export interface DatabaseDetailsQuery {
   database: MolecularDB
 }
 
-export const updateDatabaseDetailsMutation =
-  gql`mutation updateDatabaseDetails ($id: Int!, $details: UpdateMolecularDBInput!) {
+export const updateDatabaseDetailsMutation = gql`
+  mutation updateDatabaseDetails($id: Int!, $details: UpdateMolecularDBInput!) {
     updateMolecularDB(databaseId: $id, databaseDetails: $details) {
       id
       archived
     }
-  }`
+  }
+`
 
 export interface MolecularDBDetails {
   isPublic: boolean
@@ -72,29 +79,31 @@ export interface MolecularDBDetails {
 }
 
 export interface UpdateDatabaseDetailsMutation {
-  id: number,
-  details: MolecularDBDetails,
+  id: number
+  details: MolecularDBDetails
 }
 
-export const deleteDatabaseMutation =
-  gql`mutation deleteDatabaseMutation ($id: Int!) {
+export const deleteDatabaseMutation = gql`
+  mutation deleteDatabaseMutation($id: Int!) {
     deleteMolecularDB(databaseId: $id)
-  }`
+  }
+`
 
 export interface DeleteDatabaseMutation {
-  id: number,
+  id: number
 }
 
-
-export const getDatabaseOptionsQuery = gql`query DatabaseOptions {
-  allMolecularDBs {
-    id
-    name
-    version
-    archived
-    group {
+export const getDatabaseOptionsQuery = gql`
+  query DatabaseOptions {
+    allMolecularDBs {
       id
-      shortName
+      name
+      version
+      archived
+      group {
+        id
+        shortName
+      }
     }
   }
-}`
+`

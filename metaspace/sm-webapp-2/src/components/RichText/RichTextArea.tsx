@@ -1,7 +1,7 @@
 import './RichTextArea.css'
 
-import { defineComponent, reactive } from 'vue';
-import { EditorContent } from '@tiptap/vue-3';
+import { defineComponent, reactive } from 'vue'
+import { EditorContent } from '@tiptap/vue-3'
 
 import MenuItems from './MenuItems'
 import useEditor from './useEditor'
@@ -19,11 +19,15 @@ const MenuWrapper = defineComponent({
             { 'visible opacity-100': parent.menu.isActive },
           ]}
           style={`left: ${parent.menu.left}px; bottom: ${parent.menu.bottom}px`}
-          onClick={(e: Event) => { e.preventDefault() /* Prevent form submission */ }}
+          onClick={(e: Event) => {
+            e.preventDefault() /* Prevent form submission */
+          }}
         >
           {slots.default()}
         </div>
-      ) : <div />
+      ) : (
+        <div />
+      )
   },
 })
 
@@ -38,7 +42,7 @@ const RichTextArea = defineComponent({
     content: String,
     onUpdate: Function,
   },
-  setup(props: Props |any, { emit, slots }) {
+  setup(props: Props | any, { emit, slots }) {
     const state = reactive<any>({
       editor: useEditor({
         content: props.content,
@@ -50,7 +54,15 @@ const RichTextArea = defineComponent({
 
     return () => (
       <div class="sm-RichText sm-RichTextArea relative">
-        {slots.label && <label onClick={() => { editor.chain().focus() }}>{slots.label()}</label>}
+        {slots.label && (
+          <label
+            onClick={() => {
+              editor.chain().focus()
+            }}
+          >
+            {slots.label()}
+          </label>
+        )}
         <EditorContent
           class={[
             'h-40 w-full box-border overflow-y-auto cursor-text text-gray-800 text-sm',
@@ -68,7 +80,9 @@ const RichTextArea = defineComponent({
         <p
           class="sm-RichTextArea-description cursor-help"
           title="Highlight a word or phrase for formatting options"
-          onClick={() => { editor.chain().focus() }}
+          onClick={() => {
+            editor.chain().focus()
+          }}
         >
           Rich Text
         </p>

@@ -1,5 +1,5 @@
 // @ts-nocheck
-import {markRaw} from "vue";
+import { markRaw } from 'vue'
 import Panel from './filtering/steps/00-panel.md'
 import Click from './filtering/steps/10-click.md'
 import Select from './filtering/steps/20-select.md'
@@ -9,12 +9,5 @@ import Datasets from './filtering/steps/50-datasets.md'
 
 export default {
   id: 'sm-tour-filtering',
-  steps: [
-    markRaw(Panel),
-    markRaw(Click),
-    markRaw(Select),
-    markRaw(Edit),
-    markRaw(Remove),
-    markRaw(Datasets),
-  ],
+  steps: [markRaw(Panel), markRaw(Click), markRaw(Select), markRaw(Edit), markRaw(Remove), markRaw(Datasets)],
 }

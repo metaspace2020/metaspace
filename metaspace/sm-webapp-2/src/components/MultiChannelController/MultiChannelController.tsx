@@ -1,6 +1,6 @@
 import { defineComponent, onMounted, reactive, ref } from 'vue'
 import FadeTransition from '../FadeTransition'
-import {ElButton, ElPopover} from 'element-plus'
+import { ElButton, ElPopover } from 'element-plus'
 import CandidateMoleculesPopover from '../../modules/Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../MolecularFormula'
 import VisibleIcon from '../../assets/inline/refactoring-ui/icon-view-visible.svg'
@@ -14,10 +14,10 @@ import ClippingNotice from '../../modules/ImageViewer/ClippingNotice.vue'
 import './MultiChannelController.scss'
 
 interface MultiChannelControllerProps {
-  menuItems: any[],
-  activeLayer: boolean,
-  showClippingNotice: boolean,
-  isNormalized: boolean,
+  menuItems: any[]
+  activeLayer: boolean
+  showClippingNotice: boolean
+  isNormalized: boolean
   mode: string
 }
 
@@ -35,7 +35,7 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
     mode: { type: String, default: 'MULTI' },
   },
   // @ts-ignore
-  setup: function(props, { emit }) {
+  setup: function (props, { emit }) {
     const state = reactive<MultiChannelControllerState>({
       refsLoaded: false,
     })
@@ -46,15 +46,15 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       state.refsLoaded = true
     })
 
-    const refs = ref({});
+    const refs = ref({})
 
     const setRef = (el, index) => {
       if (el) {
         // Construct a unique key for each element
-        const key = `range-slider-${index}`;
-        refs.value[key] = el;
+        const key = `range-slider-${index}`
+        refs.value[key] = el
       }
-    };
+    }
 
     const handleIonIntensityLockChange = (value: number | undefined, index: number, type: string) => {
       emit('intensityLockChange', value, index, type)
@@ -88,12 +88,15 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       const minColor = range[0]
       const maxColor = range[range.length - 1]
       const scaleBarUrl = item.scaleBar
-      const gradient = scaledMinIntensity === scaledMaxIntensity
-        ? `linear-gradient(to right, ${range.join(',')})`
-        : item.scaleBar ? `url(${scaleBarUrl})` : ''
+      const gradient =
+        scaledMinIntensity === scaledMaxIntensity
+          ? `linear-gradient(to right, ${range.join(',')})`
+          : item.scaleBar
+          ? `url(${scaleBarUrl})`
+          : ''
       const [minScale, maxScale] = scaleRange
-      const minStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * minScale))
-      const maxStop = Math.ceil(THUMB_WIDTH + ((width - THUMB_WIDTH * 2) * maxScale))
+      const minStop = Math.ceil(THUMB_WIDTH + (width - THUMB_WIDTH * 2) * minScale)
+      const maxStop = Math.ceil(THUMB_WIDTH + (width - THUMB_WIDTH * 2) * maxScale)
       return {
         background: [
           `0px / ${minStop}px 100% linear-gradient(${minColor},${minColor}) no-repeat`,
@@ -113,17 +116,17 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
       const { mode } = props
 
       // @ts-ignore TS2604
-      const candidateMolecules = (annotation) => <CandidateMoleculesPopover
-        placement="right"
-        limit={10}
-        possibleCompounds={annotation.possibleCompounds}
-        isomers={annotation.isomers}
-        isobars={annotation.isobars}>
-        <MolecularFormula
-          class="truncate font-medium h-6 text-sm"
-          ion={annotation.ion}
-        />
-      </CandidateMoleculesPopover>
+      const candidateMolecules = (annotation) => (
+        <CandidateMoleculesPopover
+          placement="right"
+          limit={10}
+          possibleCompounds={annotation.possibleCompounds}
+          isomers={annotation.isomers}
+          isobars={annotation.isobars}
+        >
+          <MolecularFormula class="truncate font-medium h-6 text-sm" ion={annotation.ion} />
+        </CandidateMoleculesPopover>
+      )
 
       return (
         <div class="relative">
@@ -135,110 +138,89 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
               outline: props.mode === 'MULTI' ? '' : 'none',
               paddingBottom: props.mode === 'MULTI' ? '' : '2px',
             }}
-            onClick={removeNewLayer}>
-            <div class='menu-item'>
-              {
-                mode === 'MULTI'
-              && <p class="flex justify-between m-0 items-center flex-wrap">
-                {candidateMolecules(item.annotation)}
-                <ElButton
-                  title={item.settings.visible ? 'Hide layer' : 'Show layer'}
-                  class="button-reset h-5"
-                  onClick={() => { handleToggleVisibility(itemIndex) }}
-                >
-                  {
-                    item.settings.visible
-                    && <VisibleIcon class="fill-current w-4 h-4 text-gray-800"/>
-                  }
-                  {
-                    !item.settings.visible
-                    && <HiddenIcon class="fill-current w-4 h-4 text-gray-600"/>
-                  }
-                </ElButton>
-              </p>
-              }
-              <div
-                ref={(el) => setRef(el, itemIndex)}
-                class="h-9 relative w-full text-center">
-                {
-                  mode === 'MULTI'
-                && item.isEmpty
-                && <span class='text-base no-data-text'>No data</span>}
-                {
-                  state.refsLoaded
-                && !item.isEmpty
-                && <RangeSlider
-                  // class="ds-comparison-opacity-item"
-                  value={item.userScaling}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  style={buildRangeSliderStyle(item, itemIndex)}
-                  onInput={(nextRange: number[]) =>
-                    handleScalingChange(nextRange, itemIndex)}
-                />
-                }
-                {
-                  item.intensity
-                && !item.isEmpty
-                && <div
-                  class="ds-intensities-wrapper">
-                  <IonIntensity
-                    intensities={item.intensity?.min}
-                    label="Minimum intensity"
-                    placeholder="min."
-                    onInput={(value: number) =>
-                      handleIonIntensityChange(value, itemIndex,
-                        'min')}
-                    onLock={(value: number) =>
-                      handleIonIntensityLockChange(value, itemIndex, 'min')}
+            onClick={removeNewLayer}
+          >
+            <div class="menu-item">
+              {mode === 'MULTI' && (
+                <p class="flex justify-between m-0 items-center flex-wrap">
+                  {candidateMolecules(item.annotation)}
+                  <ElButton
+                    title={item.settings.visible ? 'Hide layer' : 'Show layer'}
+                    class="button-reset h-5"
+                    onClick={() => {
+                      handleToggleVisibility(itemIndex)
+                    }}
+                  >
+                    {item.settings.visible && <VisibleIcon class="fill-current w-4 h-4 text-gray-800" />}
+                    {!item.settings.visible && <HiddenIcon class="fill-current w-4 h-4 text-gray-600" />}
+                  </ElButton>
+                </p>
+              )}
+              <div ref={(el) => setRef(el, itemIndex)} class="h-9 relative w-full text-center">
+                {mode === 'MULTI' && item.isEmpty && <span class="text-base no-data-text">No data</span>}
+                {state.refsLoaded && !item.isEmpty && (
+                  <RangeSlider
+                    // class="ds-comparison-opacity-item"
+                    value={item.userScaling}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    style={buildRangeSliderStyle(item, itemIndex)}
+                    onInput={(nextRange: number[]) => handleScalingChange(nextRange, itemIndex)}
                   />
-                  <ElPopover
-                    ref={popover}
-                    class="block"
-                    placement="bottom"
-                    trigger="hover"
-                    disabled={!props.showClippingNotice || mode === 'MULTI'}
-                    popper-class="w-full max-w-measure-1 text-left text-sm leading-5"
-                    v-slots={{
-                      reference: () => (
-                        <IonIntensity
-                          intensities={item.intensity?.max}
-                          label="Maximum intensity"
-                          placeholder="max."
-                          onHidePopover={() => {
-                            if (popover.value && typeof popover.value.doClose === 'function') {
-                              popover.value.doClose()
-                            }
-                          }}
-                          onInput={(value: number) =>
-                            handleIonIntensityChange(value, itemIndex,
-                              'max')}
-                          onLock={(value: number) =>
-                            handleIonIntensityLockChange(value, itemIndex, 'max')}
-                        />
-                      ),
-                      default: () => (
-                        <ClippingNotice
-                          type="hotspot-removal"
-                          isNormalized={props.isNormalized}
-                          intensity={item.intensity}
-                        />
-                      ),
-                    }}/>
-                </div>
-                }
+                )}
+                {item.intensity && !item.isEmpty && (
+                  <div class="ds-intensities-wrapper">
+                    <IonIntensity
+                      intensities={item.intensity?.min}
+                      label="Minimum intensity"
+                      placeholder="min."
+                      onInput={(value: number) => handleIonIntensityChange(value, itemIndex, 'min')}
+                      onLock={(value: number) => handleIonIntensityLockChange(value, itemIndex, 'min')}
+                    />
+                    <ElPopover
+                      ref={popover}
+                      class="block"
+                      placement="bottom"
+                      trigger="hover"
+                      disabled={!props.showClippingNotice || mode === 'MULTI'}
+                      popper-class="w-full max-w-measure-1 text-left text-sm leading-5"
+                      v-slots={{
+                        reference: () => (
+                          <IonIntensity
+                            intensities={item.intensity?.max}
+                            label="Maximum intensity"
+                            placeholder="max."
+                            onHidePopover={() => {
+                              if (popover.value && typeof popover.value.doClose === 'function') {
+                                popover.value.doClose()
+                              }
+                            }}
+                            onInput={(value: number) => handleIonIntensityChange(value, itemIndex, 'max')}
+                            onLock={(value: number) => handleIonIntensityLockChange(value, itemIndex, 'max')}
+                          />
+                        ),
+                        default: () => (
+                          <ClippingNotice
+                            type="hotspot-removal"
+                            isNormalized={props.isNormalized}
+                            intensity={item.intensity}
+                          />
+                        ),
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
-            {
-              mode === 'MULTI'
-            && <ChannelSelector
-              class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
-              value={item.settings.channel}
-              onRemove={() => removeLayer(itemIndex)}
-              onInput={(value: any) => changeLayerColor(value, itemIndex)}
-            />
-            }
+            {mode === 'MULTI' && (
+              <ChannelSelector
+                class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
+                value={item.settings.channel}
+                onRemove={() => removeLayer(itemIndex)}
+                onInput={(value: any) => changeLayerColor(value, itemIndex)}
+              />
+            )}
           </div>
         </div>
       )
@@ -255,12 +237,9 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
             paddingTop: mode === 'MULTI' ? '' : 0,
           }}
         >
-          {
-            menuItems.map((item: any, itemIndex: number) => renderItem(item, itemIndex))
-          }
-          {
-            mode === 'MULTI'
-            && <ElButton
+          {menuItems.map((item: any, itemIndex: number) => renderItem(item, itemIndex))}
+          {mode === 'MULTI' && (
+            <ElButton
               class={'button-reset p-3 h-12 w-full cursor-default text-gray-700 text-center m-0'}
               onClick={() => {
                 if (activeLayer) {
@@ -268,28 +247,18 @@ export const MultiChannelController = defineComponent<MultiChannelControllerProp
                 } else {
                   emit('addLayer')
                 }
-              }}>
+              }}
+            >
               <FadeTransition className="text-xs tracking-wide font-medium text-inherit">
-                {
-                  activeLayer
-                  && <span
-                    key="active"
-                  >
-                  Select annotation
+                {activeLayer && <span key="active">Select annotation</span>}
+                {!activeLayer && (
+                  <span key="inactive" class="flex items-center justify-center">
+                    Add ion image
                   </span>
-                }
-                {
-                  !activeLayer
-                  && <span
-                    key="inactive"
-                    class="flex items-center justify-center"
-                  >
-                  Add ion image
-                  </span>
-                }
+                )}
               </FadeTransition>
             </ElButton>
-          }
+          )}
         </div>
       )
     }

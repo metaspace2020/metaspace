@@ -1,11 +1,13 @@
 import { DatasetComparisonAnnotationTable } from './DatasetComparisonAnnotationTable'
-import { nextTick, h, defineComponent } from 'vue';
-import { mount, flushPromises } from '@vue/test-utils';
+import { nextTick, h, defineComponent } from 'vue'
+import { mount, flushPromises } from '@vue/test-utils'
 import store from '../../../store'
 import router from '../../../router'
 
 describe('DatasetComparisonAnnotationTable', () => {
-  const mockHandleRowChange = vi.fn((idx: number) => { return idx })
+  const mockHandleRowChange = vi.fn((idx: number) => {
+    return idx
+  })
   const propsData = {
     isLoading: false,
     annotations: [
@@ -68,38 +70,35 @@ describe('DatasetComparisonAnnotationTable', () => {
       DatasetComparisonAnnotationTable,
     },
     setup(props, { attrs }) {
-      return () => h(DatasetComparisonAnnotationTable, { ...attrs, ...props });
+      return () => h(DatasetComparisonAnnotationTable, { ...attrs, ...props })
     },
-  });
-
-
-
-  it('it should match snapshot', async() => {
-    const wrapper = mount(testHarness, {
-      global: {
-        plugins: [store, router],
-      },
-      props: propsData
-    });
-
-    await flushPromises();
-    await nextTick();
-
-    expect(wrapper.html()).toMatchSnapshot();
   })
 
-  it('it should match total count with number of annotations', async() => {
+  it('it should match snapshot', async () => {
     const wrapper = mount(testHarness, {
       global: {
         plugins: [store, router],
       },
-      props: propsData
-    });
+      props: propsData,
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.find('#annot-count').text())
-      .toBe(`${propsData.annotations.length} matching records`)
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+
+  it('it should match total count with number of annotations', async () => {
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+      },
+      props: propsData,
+    })
+
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.find('#annot-count').text()).toBe(`${propsData.annotations.length} matching records`)
   })
 })

@@ -1,8 +1,8 @@
 import { defineComponent } from 'vue'
-import {ElIcon, ElPopover} from 'element-plus'
+import { ElIcon, ElPopover } from 'element-plus'
 import FadeTransition from '../../components/FadeTransition'
-import RouterLink from "../../components/RouterLink";
-import {Share} from "@element-plus/icons-vue";
+import RouterLink from '../../components/RouterLink'
+import { Share } from '@element-plus/icons-vue'
 
 interface ShareLinkProps {
   name: string
@@ -57,10 +57,10 @@ export const ShareLink = defineComponent<ShareLinkProps>({
           placement="bottom"
           v-slots={{
             reference: () => (
-              <div
-                style={{color: 'gray'}}
-                class="h-6 w-6 flex items-center">
-                <ElIcon><Share/></ElIcon>
+              <div style={{ color: 'gray' }} class="h-6 w-6 flex items-center">
+                <ElIcon>
+                  <Share />
+                </ElIcon>
               </div>
             ),
             default: () => (
@@ -69,13 +69,12 @@ export const ShareLink = defineComponent<ShareLinkProps>({
                   <RouterLink newTab to={getUrl()} target="_blank">
                     Share this link
                   </RouterLink>
-                  <span class="block text-xs tracking-wide">
-                opens in a new window
-              </span>
+                  <span class="block text-xs tracking-wide">opens in a new window</span>
                 </div>
               </FadeTransition>
             ),
-          }}/>
+          }}
+        />
       )
     }
   },

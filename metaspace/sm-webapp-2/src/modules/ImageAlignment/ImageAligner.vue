@@ -1,32 +1,12 @@
 <template>
-  <div
-    class="image-alignment-box"
-    @mousemove="onMouseMove"
-  >
-    <div
-      v-loading="!opticalImageNaturalHeight"
-      class="optical-img-container"
-      style="border: 1px solid #ddf"
-    >
-      <img
-        ref="scan"
-        :src="opticalSrc"
-        :style="opticalImageStyle"
-        @load="onOpticalImageLoad"
-      >
+  <div class="image-alignment-box" @mousemove="onMouseMove">
+    <div v-loading="!opticalImageNaturalHeight" class="optical-img-container" style="border: 1px solid #ddf">
+      <img ref="scan" :src="opticalSrc" :style="opticalImageStyle" @load="onOpticalImageLoad" />
     </div>
 
     <div class="handles-container">
-      <svg
-        ref="handles"
-        :width="svgWidth"
-        :height="svgHeight"
-        :style="handleLayerStyle"
-      >
-        <g
-          v-if="!isNaN(scaleX * scaleY)"
-          :transform="layerTransform"
-        >
+      <svg ref="handles" :width="svgWidth" :height="svgHeight" :style="handleLayerStyle">
+        <g v-if="!isNaN(scaleX * scaleY)" :transform="layerTransform">
           <g v-if="fineTune">
             <circle
               v-for="(pos, idx) in handlePositions"
@@ -62,8 +42,8 @@
       ref="annotImage"
       :src="ionImageSrc"
       :style="annotImageStyle"
-      :image-style="{overflow: 'visible'}"
-      :image-fit-params="{areaWidth: naturalWidth || 1, areaHeight: naturalHeight || 1}"
+      :image-style="{ overflow: 'visible' }"
+      :image-fit-params="{ areaWidth: naturalWidth || 1, areaHeight: naturalHeight || 1 }"
       :max-height="100500"
       :annot-image-opacity="annotImageOpacity"
       :ion-image-transform="ionImageTransform"
@@ -79,15 +59,14 @@
 </template>
 
 <script>
-import {defineComponent, ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick, toRefs} from 'vue';
+import { defineComponent, ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick, toRefs } from 'vue'
 import ImageLoader from '../../components/ImageLoader.vue'
 import { scrollDistance } from '../../lib/util'
-
 
 export default defineComponent({
   name: 'ImageAligner',
   components: {
-    ImageLoader
+    ImageLoader,
   },
   props: {
     opticalSrc: {
@@ -112,7 +91,11 @@ export default defineComponent({
     },
     initialTransform: {
       type: Array,
-      default: () => [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+      default: () => [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ],
     },
     ticData: { type: Object },
   },
@@ -144,11 +127,7 @@ export default defineComponent({
     const layerTransform = computed(() => 'translate(0, 0)')
     const normalizationData = computed(() => props.ticData)
     const transform = computed(() => {
-      const scaleAnnot = numeric.diag([
-        state.naturalWidth / state.width,
-        state.naturalHeight / state.height,
-        1,
-      ])
+      const scaleAnnot = numeric.diag([state.naturalWidth / state.width, state.naturalHeight / state.height, 1])
       const scaleOptical = numeric.diag([
         state.opticalImageWidth / state.opticalImageNaturalWidth,
         state.opticalImageHeight / state.opticalImageNaturalHeight,
@@ -162,11 +141,12 @@ export default defineComponent({
       return computeHandlePositions(state.normalizedTransform, originalHandlePositions())
     })
     const centerPosition = computed(() => {
-      return computeHandlePositions(state.normalizedTransform,
-        [{
+      return computeHandlePositions(state.normalizedTransform, [
+        {
           x: state.naturalWidth / 2,
           y: state.naturalHeight / 2,
-        }])[0]
+        },
+      ])[0]
     })
     const scaleX = computed(() => {
       return state.opticalImageWidth / state.opticalImageNaturalWidth || 1
@@ -179,7 +159,7 @@ export default defineComponent({
     })
     const annotImageStyle = computed(() => {
       return {
-        'margin-top': (-svgHeight.value + padding.value) + 'px',
+        'margin-top': -svgHeight.value + padding.value + 'px',
         'margin-left': padding.value + 'px',
         'vertical-align': 'top',
         width: '500px', // fixed width to simplify calculations
@@ -205,7 +185,7 @@ export default defineComponent({
         'pointer-events': 'none', // pass mouse events to the lower levels
         'vertical-align': 'top',
         position: 'relative',
-        'margin-top': (-state.opticalImageHeight - padding.value * 2) + 'px',
+        'margin-top': -state.opticalImageHeight - padding.value * 2 + 'px',
       }
     })
     const padding = computed(() => props.padding)
@@ -238,7 +218,9 @@ export default defineComponent({
       }
 
       state.resizeThrottled = true
-      setTimeout(() => { state.resizeThrottled = false }, 50)
+      setTimeout(() => {
+        state.resizeThrottled = false
+      }, 50)
 
       if (!scan.value) {
         return
@@ -274,12 +256,13 @@ export default defineComponent({
       const rect = scan.value.getBoundingClientRect()
       const x = (event.clientX - rect.left) / scaleX.value
       const y = (event.clientY - rect.top) / scaleY.value
-      const m = [[zoom, 0, -(zoom - 1) * x],
+      const m = [
+        [zoom, 0, -(zoom - 1) * x],
         [0, zoom, -(zoom - 1) * y],
-        [0, 0, 1]]
+        [0, 0, 1],
+      ]
       state.normalizedTransform = numeric.dot(m, state.normalizedTransform)
     }
-
 
     function computeTransform(src, dst) {
       // http://franklinta.com/2014/09/08/computing-css-matrix3d-transforms/
@@ -313,34 +296,34 @@ export default defineComponent({
       return src.map(transformFunc)
     }
 
-
-
     const updateHandlePosition = (event) => {
-     const pos = handlePositions.value.slice()
+      const pos = handlePositions.value.slice()
 
-     if (state.draggedHandle !== null) { // dragging one handle
-       pos[state.draggedHandle] = {
-         x: state.handleStartX + (event.clientX - state.dragStartX) / scaleX.value,
-         y: state.handleStartY + (event.clientY - state.dragStartY) / scaleY.value,
-       }
-     } else { // dragging the image
-       pos[0] = {
-         x: state.handleStartX + (event.clientX - state.dragStartX) / scaleX.value,
-         y: state.handleStartY + (event.clientY - state.dragStartY) / scaleY.value,
-       }
-       for (let i = 1; i < 4; i++) {
-         pos[i] = {
-           x: handlePositions.value[i].x - handlePositions.value[0].x + pos[0].x,
-           y: handlePositions.value[i].y - handlePositions.value[0].y + pos[0].y,
-         }
-       }
-     }
+      if (state.draggedHandle !== null) {
+        // dragging one handle
+        pos[state.draggedHandle] = {
+          x: state.handleStartX + (event.clientX - state.dragStartX) / scaleX.value,
+          y: state.handleStartY + (event.clientY - state.dragStartY) / scaleY.value,
+        }
+      } else {
+        // dragging the image
+        pos[0] = {
+          x: state.handleStartX + (event.clientX - state.dragStartX) / scaleX.value,
+          y: state.handleStartY + (event.clientY - state.dragStartY) / scaleY.value,
+        }
+        for (let i = 1; i < 4; i++) {
+          pos[i] = {
+            x: handlePositions.value[i].x - handlePositions.value[0].x + pos[0].x,
+            y: handlePositions.value[i].y - handlePositions.value[0].y + pos[0].y,
+          }
+        }
+      }
 
-     try {
-       state.normalizedTransform = computeTransform(originalHandlePositions(), pos)
-     } catch (err) {
-       console.error(err)
-     }
+      try {
+        state.normalizedTransform = computeTransform(originalHandlePositions(), pos)
+      } catch (err) {
+        console.error(err)
+      }
     }
 
     const updateRotation = () => {
@@ -378,7 +361,9 @@ export default defineComponent({
       }
 
       state.dragThrottled = true
-      setTimeout(() => { state.dragThrottled = false }, 30)
+      setTimeout(() => {
+        state.dragThrottled = false
+      }, 30)
       updateHandlePosition(event)
     }
 
@@ -387,7 +372,9 @@ export default defineComponent({
         return
       }
       state.dragThrottled = true
-      setTimeout(() => { state.dragThrottled = false }, 30)
+      setTimeout(() => {
+        state.dragThrottled = false
+      }, 30)
       const cp = {
         x: centerPosition.value.x * scaleX.value + padding.value,
         y: centerPosition.value.x * scaleX.value + padding.value,
@@ -401,7 +388,6 @@ export default defineComponent({
       const b = {
         x: (event.clientX - rect.left) / scaleX.value,
         y: (event.clientY - rect.top) / scaleY.value,
-
       }
 
       const a1 = Math.atan2(a.x - cp.x, a.y - cp.y)
@@ -442,13 +428,15 @@ export default defineComponent({
     }
 
     const rotationMatrix = (degrees) => {
-      const c = Math.cos(degrees / 180 * Math.PI)
-      const s = Math.sin(degrees / 180 * Math.PI)
+      const c = Math.cos((degrees / 180) * Math.PI)
+      const s = Math.sin((degrees / 180) * Math.PI)
       const x = -state.naturalWidth / 2
       const y = -state.naturalHeight / 2
-      return [[c, -s, (c - 1) * x - s * y],
+      return [
+        [c, -s, (c - 1) * x - s * y],
         [s, c, (c - 1) * y + s * x],
-        [0, 0, 1]]
+        [0, 0, 1],
+      ]
     }
 
     watch(padding, async () => {
@@ -456,11 +444,8 @@ export default defineComponent({
       onResize()
     })
 
-    watch(rotationAngleDegrees,(deg) => {
-      state.normalizedTransform = numeric.dot(
-        state.normalizedTransform,
-        rotationMatrix(deg - state.lastRotationAngle),
-      )
+    watch(rotationAngleDegrees, (deg) => {
+      state.normalizedTransform = numeric.dot(state.normalizedTransform, rotationMatrix(deg - state.lastRotationAngle))
       state.lastRotationAngle = deg
     })
 
@@ -469,12 +454,12 @@ export default defineComponent({
     })
 
     onMounted(() => {
-      window.addEventListener('resize', onResize);
-    });
+      window.addEventListener('resize', onResize)
+    })
 
     onBeforeUnmount(() => {
-      window.removeEventListener('resize', onResize);
-    });
+      window.removeEventListener('resize', onResize)
+    })
 
     return {
       ...toRefs(state),
@@ -510,27 +495,28 @@ export default defineComponent({
       onDoubleClick,
       reset,
       rotationMatrix,
-    };
+    }
   },
-});
+})
 </script>
 <style>
- circle.handle {
-   cursor: move;
-   stroke-width: 4px;
-   stroke: #ffb000;
-   fill: none;
+circle.handle {
+  cursor: move;
+  stroke-width: 4px;
+  stroke: #ffb000;
+  fill: none;
 
-   /* we want the unpainted interior to respond to hover */
-   pointer-events: all;
- }
+  /* we want the unpainted interior to respond to hover */
+  pointer-events: all;
+}
 
- line.cross {
-   stroke: #f0fff0;
-   stroke-width: 2
- }
+line.cross {
+  stroke: #f0fff0;
+  stroke-width: 2;
+}
 
- .optical-img-container, .handles-container {
-   line-height: 0;
- }
+.optical-img-container,
+.handles-container {
+  line-height: 0;
+}
 </style>

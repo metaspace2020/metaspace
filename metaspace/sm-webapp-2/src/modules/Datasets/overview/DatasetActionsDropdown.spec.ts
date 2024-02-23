@@ -1,20 +1,19 @@
-import { nextTick, ref, h, defineComponent  } from 'vue';
+import { nextTick, ref, h, defineComponent } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
-import router from "../../../router";
-import store from "../../../store";
+import router from '../../../router'
+import store from '../../../store'
 import { DatasetActionsDropdown } from './DatasetActionsDropdown'
-import {initMockGraphqlClient} from "../../../tests/utils/mockGraphqlClient";
-import {DefaultApolloClient, useMutation, useQuery} from "@vue/apollo-composable";
-
+import { initMockGraphqlClient } from '../../../tests/utils/mockGraphqlClient'
+import { DefaultApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),
   useMutation: vi.fn(),
   useSubscription: vi.fn(() => ({ onResult: vi.fn() })),
   DefaultApolloClient: vi.fn(),
-}));
+}))
 
-let graphqlMocks: any;
+let graphqlMocks: any
 
 describe('DatasetActionsDropdown', () => {
   const mockDataset = {
@@ -83,29 +82,26 @@ describe('DatasetActionsDropdown', () => {
       DatasetActionsDropdown,
     },
     setup(props, { attrs }) {
-      return () => h(DatasetActionsDropdown, { ...attrs, ...props });
+      return () => h(DatasetActionsDropdown, { ...attrs, ...props })
     },
-  });
+  })
 
   const mockGraphql = async (qyeryParams, mutationParams) => {
     graphqlMocks = await initMockGraphqlClient({
-      Query: () => (qyeryParams),
-      Mutation: () => (mutationParams),
-    });
-
-    (useQuery as any).mockReturnValue({
+      Query: () => qyeryParams,
+      Mutation: () => mutationParams,
+    })
+    ;(useQuery as any).mockReturnValue({
       result: ref(Object.keys(qyeryParams).reduce((acc, key) => ({ ...acc, [key]: qyeryParams[key]() }), {})),
       loading: ref(false),
       onResult: vi.fn(),
-    });
-
-    (useMutation as any).mockReturnValue({
+    })
+    ;(useMutation as any).mockReturnValue({
       mutate: mutationParams,
-    });
-  };
+    })
+  }
 
-
-  const graphqlWithData = async() => {
+  const graphqlWithData = async () => {
     const queryParams = {
       enrichmentRequested: () => {
         return false
@@ -121,89 +117,88 @@ describe('DatasetActionsDropdown', () => {
     await mockGraphql(queryParams, mutationParams)
   }
 
-
   beforeAll(async () => {
     await graphqlWithData()
   })
 
-  it('it should match snapshot', async() => {
+  it('it should match snapshot', async () => {
     const wrapper = mount(testHarness, {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMocks
-        }
+          [DefaultApolloClient]: graphqlMocks,
+        },
       },
-      props: propsData
-    });
+      props: propsData,
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
+    expect(wrapper.html()).toMatchSnapshot()
   })
 
-  it('it show all options to the admin', async() => {
+  it('it show all options to the admin', async () => {
     const wrapper = mount(testHarness, {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMocks
-        }
+          [DefaultApolloClient]: graphqlMocks,
+        },
       },
-      props: propsData
-    });
+      props: propsData,
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
     expect(wrapper.findAll('.mock-el-dropdown-item').length).toBe(7)
   })
 
-  it('it show all options except reprocess if user is the ds owner, but not admin', async() => {
+  it('it show all options except reprocess if user is the ds owner, but not admin', async () => {
     const wrapper = mount(testHarness, {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMocks
-        }
+          [DefaultApolloClient]: graphqlMocks,
+        },
       },
-      props: propsDataOwner
-    });
+      props: propsDataOwner,
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
     expect(wrapper.findAll('.mock-el-dropdown-item').length).toBe(6)
   })
 
-  it('it show only canDownload option for normalUser', async() => {
+  it('it show only canDownload option for normalUser', async () => {
     const wrapper = mount(testHarness, {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMocks
-        }
+          [DefaultApolloClient]: graphqlMocks,
+        },
       },
-      props: propsDataNormal
-    });
+      props: propsDataNormal,
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
     expect(wrapper.findAll('.mock-el-dropdown-item').length).toBe(3)
   })
 
-  it('it show only canDownload option for normalUser', async() => {
+  it('it show only canDownload option for normalUser', async () => {
     const wrapper = mount(testHarness, {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMocks
-        }
+          [DefaultApolloClient]: graphqlMocks,
+        },
       },
-      props: propsDataNormalNoOptions
-    });
+      props: propsDataNormalNoOptions,
+    })
     expect(wrapper.findAll('.mock-el-dropdown-item').length).toBe(2)
     expect((wrapper.find('.mock-el-dropdown').element as any).style.visibility).toBe('hidden')
   })

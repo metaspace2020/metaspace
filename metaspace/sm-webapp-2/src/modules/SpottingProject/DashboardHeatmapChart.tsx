@@ -1,15 +1,8 @@
 import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
-import {
-  CanvasRenderer,
-} from 'echarts/renderers'
-import {
-  BarChart,
-  ScatterChart,
-  LineChart,
-  HeatmapChart,
-} from 'echarts/charts'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart, ScatterChart, LineChart, HeatmapChart } from 'echarts/charts'
 import {
   GridComponent,
   TooltipComponent,
@@ -129,10 +122,15 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       chartOptions: {
         tooltip: {
           position: 'top',
-          formatter: function(params: any) {
+          formatter: function (params: any) {
             const value = typeof params.value[4] === 'number' ? params.value[4] : params.value[3]
-            return (value || 0).toFixed(2) + ' '
-              + (params.data?.label?.y || '').replace(/-agg-/g, ' ') + ' in ' + (params.data?.label?.x || '')
+            return (
+              (value || 0).toFixed(2) +
+              ' ' +
+              (params.data?.label?.y || '').replace(/-agg-/g, ' ') +
+              ' in ' +
+              (params.data?.label?.x || '')
+            )
           },
         },
         grid: {
@@ -152,7 +150,7 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
             show: true,
             interval: 0,
             rotate: 30,
-            formatter: function(value :string) {
+            formatter: function (value: string) {
               return value?.length > 25 ? value.substring(0, 25) + '...' : value
             },
           },
@@ -203,25 +201,27 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
             },
           },
         },
-        series: [{
-          name: 'Punch Card',
-          type: 'heatmap',
-          markLine: {},
-          data: [],
-          label: {
-            fontSize: 8,
-            show: true,
-            formatter: (param: any) => {
-              return param.data?.label?.molecule ? '' : 'N/A'
+        series: [
+          {
+            name: 'Punch Card',
+            type: 'heatmap',
+            markLine: {},
+            data: [],
+            label: {
+              fontSize: 8,
+              show: true,
+              formatter: (param: any) => {
+                return param.data?.label?.molecule ? '' : 'N/A'
+              },
+            },
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowColor: 'rgba(0, 0, 0, 0.5)',
+              },
             },
           },
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowColor: 'rgba(0, 0, 0, 0.5)',
-            },
-          },
-        }],
+        ],
       },
     })
 
@@ -233,8 +233,8 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       }
 
       const auxOptions = state.chartOptions
-      const globalCategories : any = {}
-      const markData : any = []
+      const globalCategories: any = {}
+      const markData: any = []
       yAxisData.value.forEach((label: string, idx: number) => {
         const re = /(.+)\s-agg-\s(.+)/
         const found = label.match(re)
@@ -284,25 +284,23 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       }
 
       let maxLength = 0
-      auxOptions.yAxis.data = yAxisData.value
-        .map((label: string, index: number) => {
-          const re = /(.+)\s-agg-\s(.+)/
-          const cat = label.replace(re, '$1')
-          const value = label.replace(re, '$2')
+      auxOptions.yAxis.data = yAxisData.value.map((label: string, index: number) => {
+        const re = /(.+)\s-agg-\s(.+)/
+        const cat = label.replace(re, '$1')
+        const value = label.replace(re, '$2')
 
-          maxLength = (value.length + cat.length) > maxLength ? (value.length + cat.length) : maxLength
+        maxLength = value.length + cat.length > maxLength ? value.length + cat.length : maxLength
 
-          return globalCategories[cat] === index ? label : label.replace(/.+-agg-\s(.+)/, '$1')
-        })
+        return globalCategories[cat] === index ? label : label.replace(/.+-agg-\s(.+)/, '$1')
+      })
 
-      auxOptions.yAxis.axisLabel.formatter = function(label: any) {
+      auxOptions.yAxis.axisLabel.formatter = function (label: any) {
         const re = /(.+)\s-agg-\s(.+)/
         const found = label.match(re)
         const cat = label.replace(re, '$1')
         const value = label.replace(re, '$2')
         const repeat = maxLength - cat.length - value.length
-        return found ? `{b|${cat}}{h|${' '.repeat(repeat > 0 ? repeat : 0)}}${value}`
-          : value
+        return found ? `{b|${cat}}{h|${' '.repeat(repeat > 0 ? repeat : 0)}}${value}` : value
       }
 
       // add no Neutral label
@@ -319,13 +317,12 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
         auxOptions.visualMap = visualMap.value
       }
 
-
       return state.chartOptions
     })
 
     watch(chartOptions, () => {
       // reset visualmap range on data update
-      const chartRef : any = spectrumChart.value
+      const chartRef: any = spectrumChart.value
       setTimeout(() => {
         if (chartRef && chartRef.chart) {
           chartRef.chart.dispatchAction({
@@ -352,10 +349,13 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
     })
 
     // set images and annotation related items when selected annotation changes
-    watch(() => props.size, async() => {
-      state.size = props.size < 600 ? 600 : props.size
-      setTimeout(() => handleChartResize(), 500)
-    })
+    watch(
+      () => props.size,
+      async () => {
+        state.size = props.size < 600 ? 600 : props.size
+        setTimeout(() => handleChartResize(), 500)
+      }
+    )
 
     const handleZoomReset = () => {
       if (spectrumChart.value) {
@@ -380,36 +380,29 @@ export const DashboardHeatmapChart = defineComponent<DashboardHeatmapChartProps>
       const { isLoading, isDataLoading } = props
 
       return (
-        <div class='chart-holder'
-          style={{ height: `${state.size}px` }}>
-          {
-            (isLoading || isDataLoading)
-            && <div class='loader-holder'>
+        <div class="chart-holder" style={{ height: `${state.size}px` }}>
+          {(isLoading || isDataLoading) && (
+            <div class="loader-holder">
               <div>
-                <i
-                  class="el-icon-loading"
-                />
+                <i class="el-icon-loading" />
               </div>
             </div>
-          }
+          )}
           <ECharts
             ref={spectrumChart}
             autoResize={true}
-            {...{'onZr:dblclick': handleZoomReset}}
+            {...{ 'onZr:dblclick': handleZoomReset }}
             onClick={handleItemSelect}
-            class='chart'
+            class="chart"
             style={{ height: `${state.size}px` }}
-            option={chartOptions.value}/>
+            option={chartOptions.value}
+          />
         </div>
       )
     }
 
     return () => {
-      return (
-        <div class={'dataset-browser-spectrum-container'}>
-          {renderSpectrum()}
-        </div>
-      )
+      return <div class={'dataset-browser-spectrum-container'}>{renderSpectrum()}</div>
     }
   },
 })

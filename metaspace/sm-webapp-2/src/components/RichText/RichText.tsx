@@ -1,16 +1,16 @@
-import { defineComponent, reactive, onMounted, onBeforeUnmount } from 'vue';
-import { EditorContent } from '@tiptap/vue-3';
-import { useEditor } from '@tiptap/vue-3';
-import Placeholder from '@tiptap/extension-placeholder';
-import { OnEscape } from './tiptap';
-import StarterKit from '@tiptap/starter-kit';
-import TextStyle from '@tiptap/extension-text-style';
-import Subscript from '@tiptap/extension-subscript';
-import Superscript from '@tiptap/extension-superscript';
-import FadeTransition from '../../components/FadeTransition';
+import { defineComponent, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { EditorContent } from '@tiptap/vue-3'
+import { useEditor } from '@tiptap/vue-3'
+import Placeholder from '@tiptap/extension-placeholder'
+import { OnEscape } from './tiptap'
+import StarterKit from '@tiptap/starter-kit'
+import TextStyle from '@tiptap/extension-text-style'
+import Subscript from '@tiptap/extension-subscript'
+import Superscript from '@tiptap/extension-superscript'
+import FadeTransition from '../../components/FadeTransition'
 import MenuItems from './MenuItems'
-import './RichText.css';
-import safeJsonParse from "../../lib/safeJsonParse";
+import './RichText.css'
+import safeJsonParse from '../../lib/safeJsonParse'
 
 interface Props {
   content: string
@@ -43,28 +43,31 @@ const getSaveState = (saveState: string) => {
 const Underline = TextStyle.extend({
   name: 'underline',
   parseHTML() {
-    return [
-      { tag: 'u' },
-      { style: 'text-decoration', getAttrs: value => value === 'underline' && null },
-    ];
+    return [{ tag: 'u' }, { style: 'text-decoration', getAttrs: (value) => value === 'underline' && null }]
   },
   renderHTML({ HTMLAttributes }) {
-    return ['u', HTMLAttributes, 0];
+    return ['u', HTMLAttributes, 0]
   }, // @ts-ignore
   addCommands() {
     return {
-      setUnderline: () => ({ commands }) => {
-        return commands.setMark('underline');
-      },
-      toggleUnderline: () => ({ commands }) => {
-        return commands.toggleMark('underline');
-      },
-      unsetUnderline: () => ({ commands }) => {
-        return commands.unsetMark('underline');
-      },
-    };
+      setUnderline:
+        () =>
+        ({ commands }) => {
+          return commands.setMark('underline')
+        },
+      toggleUnderline:
+        () =>
+        ({ commands }) => {
+          return commands.toggleMark('underline')
+        },
+      unsetUnderline:
+        () =>
+        ({ commands }) => {
+          return commands.unsetMark('underline')
+        },
+    }
   },
-});
+})
 
 const RichText = defineComponent({
   props: {
@@ -79,7 +82,7 @@ const RichText = defineComponent({
       default: false,
     },
   },
-  setup(props : Props | any) {
+  setup(props: Props | any) {
     const state = reactive<any>({
       editor: useEditor({
         extensions: [
@@ -99,17 +102,14 @@ const RichText = defineComponent({
         ],
         editable: !props.readonly,
         content: safeJsonParse(props.content),
-        onUpdate: async({ editor }) => {
+        onUpdate: async ({ editor }) => {
           const content = JSON.stringify(editor.getJSON())
           // const content = editor.getText()
 
           state.saveState = saveStates.SAVING
           try {
             // wait a minimum of 500ms for the transition
-            await Promise.all([
-              props.update(content),
-              new Promise(resolve => setTimeout(resolve, 500)),
-            ])
+            await Promise.all([props.update(content), new Promise((resolve) => setTimeout(resolve, 500))])
             state.saveState = saveStates.SAVED
           } catch (e) {
             console.error(e)
@@ -122,7 +122,9 @@ const RichText = defineComponent({
     })
 
     if (!props.readonly) {
-      state.editor?.on('focus', () => { state.editing = true })
+      state.editor?.on('focus', () => {
+        state.editing = true
+      })
 
       const onOutclick = () => {
         state.editing = false
@@ -138,7 +140,9 @@ const RichText = defineComponent({
       })
     }
 
-    const stopPropagation = (e: Event) => { e.stopPropagation() }
+    const stopPropagation = (e: Event) => {
+      e.stopPropagation()
+    }
 
     const handleEditorClick = (e: Event) => {
       e.stopPropagation()
@@ -153,33 +157,33 @@ const RichText = defineComponent({
         {!props.readonly && (
           <header class="flex items-end h-8 mb-1">
             <FadeTransition>
-              {state.editing && state.editor
-                ? <div onClick={stopPropagation}>
-                    <MenuItems editor={state.editor} />
+              {state.editing && state.editor ? (
+                <div onClick={stopPropagation}>
+                  <MenuItems editor={state.editor} />
                 </div>
-                : <button
-                  onClick={handleEditorClick}
-                  class="button-reset text-sm italic text-gray-700 px-4 leading-6"
-                >
+              ) : (
+                <button onClick={handleEditorClick} class="button-reset text-sm italic text-gray-700 px-4 leading-6">
                   <i class="el-icon-edit" /> click to edit
-                </button>}
+                </button>
+              )}
             </FadeTransition>
-            {
-              !props.hideStateStatus
-              && <FadeTransition>
-                {state.editing && <p class="m-0 ml-auto text-sm leading-6 text-gray-700" onClick={stopPropagation}>
-                  <FadeTransition>
-                    {state.saveState === saveStates.FAILED
-                      ? <button class="el-button el-button--mini" onClick={() => state.editor.emitUpdate()}>
-                        Retry
-                      </button>
-                      : <span key={state.saveState}>
-                        {getSaveState(state.saveState)}
-                      </span>}
-                  </FadeTransition>
-                </p> }
+            {!props.hideStateStatus && (
+              <FadeTransition>
+                {state.editing && (
+                  <p class="m-0 ml-auto text-sm leading-6 text-gray-700" onClick={stopPropagation}>
+                    <FadeTransition>
+                      {state.saveState === saveStates.FAILED ? (
+                        <button class="el-button el-button--mini" onClick={() => state.editor.emitUpdate()}>
+                          Retry
+                        </button>
+                      ) : (
+                        <span key={state.saveState}>{getSaveState(state.saveState)}</span>
+                      )}
+                    </FadeTransition>
+                  </p>
+                )}
               </FadeTransition>
-            }
+            )}
           </header>
         )}
         <div onClick={stopPropagation}>

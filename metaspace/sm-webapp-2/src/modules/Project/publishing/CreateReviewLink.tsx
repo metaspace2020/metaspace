@@ -1,4 +1,4 @@
-import {defineComponent, reactive, computed} from 'vue'
+import { defineComponent, reactive, computed } from 'vue'
 import { ElButton } from 'element-plus'
 
 import { WorkflowStep } from '../../../components/Workflow'
@@ -39,7 +39,7 @@ const CreateReviewLink = defineComponent({
       loading: false,
     })
 
-    const submit = async() => {
+    const submit = async () => {
       if (props.createLink) {
         state.loading = true
         try {
@@ -51,70 +51,59 @@ const CreateReviewLink = defineComponent({
     }
 
     const undo = () => {
-      confirmPrompt({
-        title: '',
-        type: 'warning',
-        style: 'warning',
-        confirmButtonText: 'Confirm',
-        message: (
-          <p>
-            <strong>This will remove access to the project.</strong>
-            <br />
-            You will need to create a new link and send it to reviewers to grant access again.
-          </p>
-        ),
-      }, props.deleteLink)
+      confirmPrompt(
+        {
+          title: '',
+          type: 'warning',
+          style: 'warning',
+          confirmButtonText: 'Confirm',
+          message: (
+            <p>
+              <strong>This will remove access to the project.</strong>
+              <br />
+              You will need to create a new link and send it to reviewers to grant access again.
+            </p>
+          ),
+        },
+        props.deleteLink
+      )
     }
 
     return () => (
-      <WorkflowStep
-        active={props.active}
-        done={props.done}
-      >
+      <WorkflowStep active={props.active} done={props.done}>
         <h2 class="sm-workflow-header">Create link for reviewers</h2>
-        {!props.done
-          && <p>
-            A review link allows reviewers to access this project and its datasets
-            without making the project available to everyone.
-          </p>}
-        {props.active
-          && <form onSubmit={(e: Event) => e.preventDefault()}>
+        {!props.done && (
+          <p>
+            A review link allows reviewers to access this project and its datasets without making the project available
+            to everyone.
+          </p>
+        )}
+        {props.active && (
+          <form onSubmit={(e: Event) => e.preventDefault()}>
             <p class="italic">Creating a review link will prevent certain actions:</p>
             <ul class="italic p-0 list-disc">
-              <li>
-                the project cannot be deleted
-              </li>
-              <li>
-                datasets cannot be removed from the project
-              </li>
-              <li>
-                datasets in the project cannot be deleted
-              </li>
+              <li>the project cannot be deleted</li>
+              <li>datasets cannot be removed from the project</li>
+              <li>datasets in the project cannot be deleted</li>
             </ul>
             <p class="italic">These actions can be restored by removing the link.</p>
-            <ElButton
-              onClick={submit}
-              loading={state.loading}
-              type="primary"
-            >
+            <ElButton onClick={submit} loading={state.loading} type="primary">
               Create link
             </ElButton>
           </form>
-        }
-        {props.done
-          && <form>
-            <p class="pb-3"><em>Review links are temporary and will not work after the project is published.</em></p>
+        )}
+        {props.done && (
+          <form>
+            <p class="pb-3">
+              <em>Review links are temporary and will not work after the project is published.</em>
+            </p>
             <label>
               <span class="font-medium text-primary">Reviewers can access the project using this link:</span>
               <CopyToClipboard value={reviewLink.value} class="py-1" />
             </label>
-            <ElButton
-              onClick={undo}
-            >
-              Remove link
-            </ElButton>
+            <ElButton onClick={undo}>Remove link</ElButton>
           </form>
-        }
+        )}
       </WorkflowStep>
     )
   },

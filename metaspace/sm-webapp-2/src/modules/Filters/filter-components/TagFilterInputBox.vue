@@ -1,17 +1,10 @@
 <template>
-  <div
-    v-if="!editMode"
-    class="tf-value"
-    @click="enterEditMode"
-  >
+  <div v-if="!editMode" class="tf-value" @click="enterEditMode">
     <span class="tf-value-span">
       <span v-if="value">
         {{ value }}
       </span>
-      <span
-        v-else
-        style="display:inline-block; width: 15px;"
-      />
+      <span v-else style="display: inline-block; width: 15px" />
     </span>
   </div>
   <input
@@ -24,7 +17,7 @@
     maxlength="10"
     :value="value"
     @input="onChange($event.target.value)"
-  >
+  />
 
   <input
     v-else
@@ -34,7 +27,7 @@
     type="text"
     :value="value"
     @input="onChange($event.target.value)"
-  >
+  />
 </template>
 
 <script>
@@ -63,8 +56,9 @@ export default {
         this.$refs.input.select()
       })
     },
-    quitEditMode() { this.editMode = false },
+    quitEditMode() {
+      this.editMode = false
+    },
   },
 }
-
 </script>

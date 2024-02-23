@@ -21,12 +21,17 @@ const errorLink: any = onError(({ graphQLErrors, networkError, forward, operatio
 
     if (readOnlyErrors.length > 0) {
       if ($alert != null) {
-        readOnlyErrors.forEach(err => { (err as any).isHandled = true })
-        $alert('This operation could not be completed. '
-          + 'METASPACE is currently in read-only mode for scheduled maintenance. Please try again later.',
+        readOnlyErrors.forEach((err) => {
+          ;(err as any).isHandled = true
+        })
+        $alert(
+          'This operation could not be completed. ' +
+            'METASPACE is currently in read-only mode for scheduled maintenance. Please try again later.',
           'Scheduled Maintenance',
-          { type: 'error' })
-          .catch(() => { /* Ignore exception raised when alert is closed */ })
+          { type: 'error' }
+        ).catch(() => {
+          /* Ignore exception raised when alert is closed */
+        })
       }
     }
   } else if (networkError) {
@@ -47,7 +52,7 @@ const isReadOnlyError = (error: any) => {
   }
 }
 
-const authLink = setContext(async() => {
+const authLink = setContext(async () => {
   try {
     return {
       headers: {
@@ -80,14 +85,14 @@ const wsClient = new SubscriptionClient(wsGraphqlUrl, {
     // and can run an async operation before any messages are sent.
     // All subscription operations need to have their JWTs updated before they are reconnected, so do that before
     // supplying the connection params.
-    const operations = Object.values(wsClient.operations || {}).map(op => op.options)
+    const operations = Object.values(wsClient.operations || {}).map((op) => op.options)
     // @ts-ignore the private unsentMessagesQueue
     const queuedMessages: any[] = wsClient.unsentMessagesQueue.map((m: any) => m.payload)
     const payloads = [...operations, ...queuedMessages]
 
     if (payloads.length > 0) {
       const jwt = await tokenAutorefresh.getJwt()
-      payloads.forEach(payload => {
+      payloads.forEach((payload) => {
         payload.jwt = jwt
       })
     }
@@ -95,34 +100,35 @@ const wsClient = new SubscriptionClient(wsGraphqlUrl, {
     return {}
   },
 })
-wsClient.use([{
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  async applyMiddleware(operationOptions: any, next: Function) {
-    // Attach a JWT to each request
-    try {
-      operationOptions.jwt = await tokenAutorefresh.getJwt()
-    } catch (err) {
-      reportError(err)
-      next(err)
-    } finally {
-      next()
-    }
+wsClient.use([
+  {
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    async applyMiddleware(operationOptions: any, next: Function) {
+      // Attach a JWT to each request
+      try {
+        operationOptions.jwt = await tokenAutorefresh.getJwt()
+      } catch (err) {
+        reportError(err)
+        next(err)
+      } finally {
+        next()
+      }
+    },
   },
-}])
+])
 
 const wsLink = new WebSocketLink(wsClient)
 
-const link = errorLink.concat(authLink).concat(split(
-  ({ query }) => {
-    const def = getMainDefinition(query)
-    return (
-      def.kind === 'OperationDefinition'
-      && def.operation === 'subscription'
-    )
-  },
-  wsLink,
-  httpLink,
-))
+const link = errorLink.concat(authLink).concat(
+  split(
+    ({ query }) => {
+      const def = getMainDefinition(query)
+      return def.kind === 'OperationDefinition' && def.operation === 'subscription'
+    },
+    wsLink,
+    httpLink
+  )
+)
 
 const apolloClient = new ApolloClient({
   link,
@@ -134,7 +140,7 @@ const apolloClient = new ApolloClient({
   },
 })
 
-export const refreshLoginStatus = async() => {
+export const refreshLoginStatus = async () => {
   // Problem: `refreshJwt` updates the Vuex store, which sometimes immediately triggers new queries.
   // `apolloClient.resetStore()` has an error if there are any in-flight queries, so it's not suitable to run it
   // immediately after `refreshJwt`.

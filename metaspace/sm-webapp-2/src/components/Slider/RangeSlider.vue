@@ -1,9 +1,5 @@
 <template>
-  <slider-track
-    ref="track"
-    @click="onTrackClick"
-    @mousedown="lockTrackClick = false"
-  >
+  <slider-track ref="track" @click="onTrackClick" @mousedown="lockTrackClick = false">
     <slider-thumb
       :style="minStyle"
       :x="minThumb.x.value"
@@ -35,7 +31,7 @@ import { THUMB_WIDTH } from './constants'
 interface Props {
   min: number
   max: number
-  value: [ number, number ]
+  value: [number, number]
   step: number
   disabled: boolean
   minColor: string
@@ -140,20 +136,20 @@ const Slider = defineComponent({
 export default Slider
 </script>
 <style scoped>
-  span {
-    @apply absolute p-1 mb-1 text-xs tracking-wide shadow-sm rounded-sm leading-none bg-white;
-    @apply transition-opacity duration-300 ease-in-out pointer-events-none;
-    bottom: 100%;
-    visibility: hidden;
-    opacity: 0;
-  }
-  div:hover + span,
-  div:focus + span,
-  span:focus-within {
-    visibility: visible;
-    opacity: 1;
-  }
-  div:hover + span {
-    z-index: 1;
-  }
+span {
+  @apply absolute p-1 mb-1 text-xs tracking-wide shadow-sm rounded-sm leading-none bg-white;
+  @apply transition-opacity duration-300 ease-in-out pointer-events-none;
+  bottom: 100%;
+  visibility: hidden;
+  opacity: 0;
+}
+div:hover + span,
+div:focus + span,
+span:focus-within {
+  visibility: visible;
+  opacity: 1;
+}
+div:hover + span {
+  z-index: 1;
+}
 </style>

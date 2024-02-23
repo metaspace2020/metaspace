@@ -8,40 +8,18 @@
       @create="handleProjectCreated"
     />
     <div class="page-content">
-      <div
-        v-if="currentUser != null"
-        class="flex flex-row items-center justify-end flex-1 w-full py-4"
-      >
-        <el-button
-          type="primary"
-          size="default"
-          @click="handleOpenCreateProject"
-        >
-          Create project
-        </el-button>
+      <div v-if="currentUser != null" class="flex flex-row items-center justify-end flex-1 w-full py-4">
+        <el-button type="primary" size="default" @click="handleOpenCreateProject"> Create project </el-button>
       </div>
       <div class="header-row">
-        <filter-panel
-          level="projects"
-          :simple-filter-options="simpleFilterOptions"
-        />
-        <div
-          class="flex flex-row items-center justify-end flex-1"
-        >
-          <sort-dropdown
-            class="pb-2"
-            size="large"
-            :options="sortingOptions"
-            @sort="handleSortChange"
-          />
+        <filter-panel level="projects" :simple-filter-options="simpleFilterOptions" />
+        <div class="flex flex-row items-center justify-end flex-1">
+          <sort-dropdown class="pb-2" size="large" :options="sortingOptions" @sort="handleSortChange" />
         </div>
       </div>
 
       <div class="clearfix" />
-      <div
-        v-loading="loading"
-        style="min-height: 100px;"
-      >
+      <div v-loading="loading" style="min-height: 100px">
         <projects-list-item
           v-for="project in projects"
           :key="project.id"
@@ -50,40 +28,27 @@
           :refresh-data="handleRefreshData"
         />
       </div>
-      <div
-        v-if="projectsCount > pageSize || page !== 1"
-        style="text-align: center;"
-      >
-        <el-pagination
-          :total="projectsCount"
-          :page-size="pageSize"
-          :current-page="page"
-          layout="prev,pager,next"
-        />
+      <div v-if="projectsCount > pageSize || page !== 1" style="text-align: center">
+        <el-pagination :total="projectsCount" :page-size="pageSize" :current-page="page" layout="prev,pager,next" />
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch, computed, onMounted } from 'vue';
-import { useStore } from 'vuex';
-import {useRouter} from 'vue-router';
+import { defineComponent, ref, watch, computed, onMounted } from 'vue'
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 import { FilterPanel } from '../Filters'
-import QuickFilterBox from '../Filters/filter-components/SimpleFilterBox.vue';
-import ProjectsListItem from './ProjectsListItem.vue';
-import CreateProjectDialog from './CreateProjectDialog.vue';
-import { getLocalStorage } from '../../lib/localStorage';
+import QuickFilterBox from '../Filters/filter-components/SimpleFilterBox.vue'
+import ProjectsListItem from './ProjectsListItem.vue'
+import CreateProjectDialog from './CreateProjectDialog.vue'
+import { getLocalStorage } from '../../lib/localStorage'
 import SortDropdown from '../../components/SortDropdown/SortDropdown'
-import {
-  myProjectsListQuery,
-  projectsCountQuery,
-  ProjectsListProject,
-  projectsListQuery,
-} from '../../api/project'
+import { myProjectsListQuery, projectsCountQuery, ProjectsListProject, projectsListQuery } from '../../api/project'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
-import { useQuery } from '@vue/apollo-composable';
-import {ElButton, ElLoading, ElPagination} from "element-plus";
+import { useQuery } from '@vue/apollo-composable'
+import { ElButton, ElLoading, ElPagination } from 'element-plus'
 
 export default defineComponent({
   components: {
@@ -100,14 +65,14 @@ export default defineComponent({
     loading: ElLoading.directive,
   },
   setup() {
-    const store = useStore();
-    const router = useRouter();
-    const loading = ref(0);
-    const showCreateProjectDialog = ref(false);
-    const page = ref(1);
-    const pageSize = ref(10);
-    const orderBy = ref('ORDER_BY_POPULARITY');
-    const sortingOrder = ref('DESCENDING');
+    const store = useStore()
+    const router = useRouter()
+    const loading = ref(0)
+    const showCreateProjectDialog = ref(false)
+    const page = ref(1)
+    const pageSize = ref(10)
+    const orderBy = ref('ORDER_BY_POPULARITY')
+    const sortingOrder = ref('DESCENDING')
     const sortingOptions = ref([
       {
         value: 'ORDER_BY_POPULARITY',
@@ -139,44 +104,54 @@ export default defineComponent({
       },
     ])
 
-    const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, { fetchPolicy: 'cache-first' });
-    const currentUser = computed(() => currentUserResult.value?.currentUser as CurrentUserRoleResult | null);
+    const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, { fetchPolicy: 'cache-first' })
+    const currentUser = computed(() => currentUserResult.value?.currentUser as CurrentUserRoleResult | null)
 
     const filter = computed(() => {
-      const simpleFilter = store.getters.filter.simpleFilter;
-      return simpleFilter === 'my-projects' && currentUser.value != null ? 'my' : 'all';
-    });
-    const query = computed(() => store.getters.filter.simpleQuery || '');
+      const simpleFilter = store.getters.filter.simpleFilter
+      return simpleFilter === 'my-projects' && currentUser.value != null ? 'my' : 'all'
+    })
+    const query = computed(() => store.getters.filter.simpleQuery || '')
 
-  const { result: allProjectsResult, refetch: refetchAllProjects } = useQuery(projectsListQuery, () => ({
-      query: query.value,
-      offset: (page.value - 1) * pageSize.value,
-      limit: pageSize.value,
-      orderBy: orderBy.value,
-      sortingOrder: sortingOrder.value,
-    }), { fetchPolicy: 'cache-first' });
+    const { result: allProjectsResult, refetch: refetchAllProjects } = useQuery(
+      projectsListQuery,
+      () => ({
+        query: query.value,
+        offset: (page.value - 1) * pageSize.value,
+        limit: pageSize.value,
+        orderBy: orderBy.value,
+        sortingOrder: sortingOrder.value,
+      }),
+      { fetchPolicy: 'cache-first' }
+    )
 
-    const allProjects = computed(() => allProjectsResult.value?.allProjects as ProjectsListProject[] | null);
-    const { result: allProjectsCountResult, refetch: refetchAllProjectsCount } = useQuery(projectsCountQuery, () => ({
-      query: query.value,
-    }), { fetchPolicy: 'cache-first' });
-    const allProjectsCount = computed(() => allProjectsCountResult.value?.projectsCount || 0);
+    const allProjects = computed(() => allProjectsResult.value?.allProjects as ProjectsListProject[] | null)
+    const { result: allProjectsCountResult, refetch: refetchAllProjectsCount } = useQuery(
+      projectsCountQuery,
+      () => ({
+        query: query.value,
+      }),
+      { fetchPolicy: 'cache-first' }
+    )
+    const allProjectsCount = computed(() => allProjectsCountResult.value?.projectsCount || 0)
 
-    const { result: myProjectsResult, refetch: refetchMyProjects } = useQuery(myProjectsListQuery,
-      null, { fetchPolicy: 'cache-first' });
+    const { result: myProjectsResult, refetch: refetchMyProjects } = useQuery(myProjectsListQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
 
-    const myProjects = computed(() => myProjectsResult.value?.myProjects?.projects
-      ? myProjectsResult.value?.myProjects?.projects.map(userProject => userProject.project)
-      : []);
+    const myProjects = computed(() =>
+      myProjectsResult.value?.myProjects?.projects
+        ? myProjectsResult.value?.myProjects?.projects.map((userProject) => userProject.project)
+        : []
+    )
 
-
-    const filteredMyProjects = computed(()  => {
+    const filteredMyProjects = computed(() => {
       if (query.value && myProjects.value != null) {
-        return myProjects.value.filter(p => p.name.toLowerCase().includes(query.value.toLowerCase()))
+        return myProjects.value.filter((p) => p.name.toLowerCase().includes(query.value.toLowerCase()))
       } else {
         return myProjects.value || []
       }
-    });
+    })
 
     const projects = computed(() => {
       if (filter.value === 'my') {
@@ -184,7 +159,7 @@ export default defineComponent({
       } else {
         return allProjects.value
       }
-    });
+    })
 
     const projectsCount = computed(() => {
       if (filter.value === 'my') {
@@ -192,7 +167,7 @@ export default defineComponent({
       } else {
         return allProjectsCount.value
       }
-    });
+    })
 
     const simpleFilterOptions = computed(() => {
       if (currentUser.value == null) {
@@ -205,17 +180,17 @@ export default defineComponent({
       }
     })
 
-
     watch([query, filter], () => {
-      page.value = 1;
-    });
+      page.value = 1
+    })
 
     watch(currentUser, (newValue) => {
-      if(!newValue) return
+      if (!newValue) return
       // due to some misbehaviour from setting initial value from getLocalstorage with null values
       // on filterSpecs, the filter is being initialized here if user is logged
       const localSimpleFilter = store.getters.filter.simpleFilter
-        ? store.getters.filter.simpleFilter : (getLocalStorage('simpleFilter') || null)
+        ? store.getters.filter.simpleFilter
+        : getLocalStorage('simpleFilter') || null
       store.commit('updateFilter', {
         ...store.getters.filter,
         simpleFilter: localSimpleFilter,
@@ -223,34 +198,30 @@ export default defineComponent({
     })
 
     onMounted(() => {
-      store.commit('updateFilter', store.getters.filter);
-    });
+      store.commit('updateFilter', store.getters.filter)
+    })
 
     const handleRefreshData = async () => {
-      await Promise.all([
-        refetchAllProjects(),
-        refetchAllProjectsCount(),
-        refetchMyProjects(),
-      ]);
-    };
+      await Promise.all([refetchAllProjects(), refetchAllProjectsCount(), refetchMyProjects()])
+    }
 
     const handleOpenCreateProject = () => {
-      showCreateProjectDialog.value = true;
-    };
+      showCreateProjectDialog.value = true
+    }
 
     const handleCloseCreateProject = () => {
-      showCreateProjectDialog.value = false;
-    };
+      showCreateProjectDialog.value = false
+    }
 
     const handleSortChange = (value: string, order: string) => {
-      orderBy.value = value || 'ORDER_BY_POPULARITY';
-      sortingOrder.value = order || 'DESCENDING';
-    };
+      orderBy.value = value || 'ORDER_BY_POPULARITY'
+      sortingOrder.value = order || 'DESCENDING'
+    }
 
     const handleProjectCreated = async ({ id }: { id: string }) => {
-      handleRefreshData();
-      router.push({ name: 'project', params: { projectIdOrSlug: id } });
-    };
+      handleRefreshData()
+      router.push({ name: 'project', params: { projectIdOrSlug: id } })
+    }
 
     return {
       loading,
@@ -274,31 +245,30 @@ export default defineComponent({
       handleProjectCreated,
       sortingOptions,
       simpleFilterOptions,
-    };
-  }
-});
+    }
+  },
+})
 </script>
 
-
 <style scoped lang="scss">
-  .page {
-    display: flex;
-    justify-content: center;
-    min-height: 80vh; // Ensure there's space for the loading spinner before is visible
-  }
+.page {
+  display: flex;
+  justify-content: center;
+  min-height: 80vh; // Ensure there's space for the loading spinner before is visible
+}
 
-  .page-content {
-    width: 800px;
-  }
+.page-content {
+  width: 800px;
+}
 
-  .header-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+}
 
-  .el-pagination {
-    margin: 10px 0;
-  }
+.el-pagination {
+  margin: 10px 0;
+}
 </style>

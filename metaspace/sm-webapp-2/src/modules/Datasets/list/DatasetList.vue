@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="dataset-list"
-    :class="{'double-column': isDoubleColumn, 'allow-double-column': allowDoubleColumn}"
-  >
+  <div class="dataset-list" :class="{ 'double-column': isDoubleColumn, 'allow-double-column': allowDoubleColumn }">
     <dataset-item
       v-for="(dataset, i) in datasets"
       :key="dataset.id"
@@ -10,23 +7,18 @@
       :current-user="currentUser"
       :idx="i"
       :hide-group-menu="hideGroupMenu"
-      @filterUpdate="filter => $emit('filterUpdate', filter)"
+      @filterUpdate="(filter) => $emit('filterUpdate', filter)"
       @datasetMutated="$emit('datasetMutated')"
     />
-    <div
-      v-if="datasets == null || datasets.length === 0"
-      class="datasets-list-empty"
-    >
-      No datasets found
-    </div>
+    <div v-if="datasets == null || datasets.length === 0" class="datasets-list-empty">No datasets found</div>
   </div>
 </template>
 
 <script>
-import { defineComponent, onMounted, onBeforeUnmount, ref, watch } from 'vue';
-import DatasetItem from './DatasetItem.vue';
-import { useQuery } from '@vue/apollo-composable';
-import { currentUserRoleQuery } from '../../../api/user';
+import { defineComponent, onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import DatasetItem from './DatasetItem.vue'
+import { useQuery } from '@vue/apollo-composable'
+import { currentUserRoleQuery } from '../../../api/user'
 
 export default defineComponent({
   name: 'DatasetList',
@@ -39,34 +31,34 @@ export default defineComponent({
     hideGroupMenu: { type: Boolean, default: false },
   },
   setup(props) {
-    const { result: currentUser } = useQuery(currentUserRoleQuery, null, { fetchPolicy: 'cache-first' });
+    const { result: currentUser } = useQuery(currentUserRoleQuery, null, { fetchPolicy: 'cache-first' })
 
     // window.matchMedia is present on all our supported browsers, but not available in jsdom for tests
     const widthQuery = window.matchMedia ? window.matchMedia('(min-width: 1650px)') : null
 
-    const isDoubleColumn = ref(props.allowDoubleColumn && widthQuery != null && widthQuery.matches);
+    const isDoubleColumn = ref(props.allowDoubleColumn && widthQuery != null && widthQuery.matches)
 
     const computeDoubleColumn = () => {
-      isDoubleColumn.value = props.allowDoubleColumn && matchMedia('(min-width: 1650px)').matches;
-    };
+      isDoubleColumn.value = props.allowDoubleColumn && matchMedia('(min-width: 1650px)').matches
+    }
 
-    watch(() => props.allowDoubleColumn, computeDoubleColumn);
+    watch(() => props.allowDoubleColumn, computeDoubleColumn)
 
     onMounted(() => {
-      if(widthQuery != null) {
-        widthQuery.addListener(computeDoubleColumn);
+      if (widthQuery != null) {
+        widthQuery.addListener(computeDoubleColumn)
       }
-    });
+    })
 
     onBeforeUnmount(() => {
-      if(widthQuery != null) {
-        widthQuery.removeListener(computeDoubleColumn);
+      if (widthQuery != null) {
+        widthQuery.removeListener(computeDoubleColumn)
       }
-    });
+    })
 
-    return { currentUser, isDoubleColumn };
-  }
-});
+    return { currentUser, isDoubleColumn }
+  },
+})
 </script>
 
 <style scoped lang="scss">

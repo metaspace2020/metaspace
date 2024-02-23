@@ -1,58 +1,24 @@
 <template>
-  <el-popover
-    v-if="multiImagesEnabled"
-    placement="bottom"
-  >
+  <el-popover v-if="multiImagesEnabled" placement="bottom">
     <template v-slot:reference>
-      <button
-        class="button-reset h-6 w-6 block"
-        @click="handleClick"
-      >
+      <button class="button-reset h-6 w-6 block" @click="handleClick">
         <stateful-icon class="h-6 w-6 pointer-events-none">
           <external-window-svg />
         </stateful-icon>
       </button>
     </template>
     <fade-transition class="m-0 leading-5 text-center">
-      <p
-        v-if="status === 'SAVING'"
-        key="saving"
-      >
-        Saving &hellip;
-      </p>
-      <div
-        v-if="status === 'HAS_LINK'"
-        key="link"
-      >
-        <router-link
-          target="_blank"
-          :to="routeWithViewId"
-        >
-          Share this link<!-- -->
-        </router-link>
-        <span class="block text-xs tracking-wide">
-          opens in a new window
-        </span>
+      <p v-if="status === 'SAVING'" key="saving">Saving &hellip;</p>
+      <div v-if="status === 'HAS_LINK'" key="link">
+        <router-link target="_blank" :to="routeWithViewId"> Share this link<!-- --> </router-link>
+        <span class="block text-xs tracking-wide"> opens in a new window </span>
       </div>
-      <p
-        v-else
-        key="open"
-        class="m-0"
-      >
-        Link to this annotation
-      </p>
+      <p v-else key="open" class="m-0">Link to this annotation</p>
     </fade-transition>
   </el-popover>
-  <el-popover
-    v-else
-    trigger="hover"
-    placement="bottom"
-  >
+  <el-popover v-else trigger="hover" placement="bottom">
     <template v-slot:reference>
-      <router-link
-        target="_blank"
-        :to="route"
-      >
+      <router-link target="_blank" :to="route">
         <stateful-icon class="h-6 w-6">
           <external-window-svg />
         </stateful-icon>
@@ -62,23 +28,22 @@
   </el-popover>
 </template>
 <script lang="ts">
+import { defineComponent, ref, computed, defineAsyncComponent } from 'vue'
+import { useStore } from 'vuex'
+import gql from 'graphql-tag'
+import FadeTransition from '../../components/FadeTransition'
+import StatefulIcon from '../../components/StatefulIcon.vue'
+import { exportIonImageState } from './ionImageState'
+import { exportImageViewerState } from './state'
+import reportError from '../../lib/reportError'
+import config from '../../lib/config'
+import useOutClick from '../../lib/useOutClick'
+import { inject } from 'vue'
+import { DefaultApolloClient } from '@vue/apollo-composable'
 
-import { defineComponent, ref, computed, defineAsyncComponent } from 'vue';
-import { useStore } from 'vuex';
-import gql from 'graphql-tag';
-import FadeTransition from '../../components/FadeTransition';
-import StatefulIcon from '../../components/StatefulIcon.vue';
-import { exportIonImageState } from './ionImageState';
-import { exportImageViewerState } from './state';
-import reportError from '../../lib/reportError';
-import config from '../../lib/config';
-import useOutClick from '../../lib/useOutClick';
-import {inject} from "vue";
-import {DefaultApolloClient} from "@vue/apollo-composable";
-
-const ExternalWindowSvg = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-external-window.svg')
-);
+const ExternalWindowSvg = defineAsyncComponent(
+  () => import('../../assets/inline/refactoring-ui/icon-external-window.svg')
+)
 
 interface Route {
   query: Record<string, string>
@@ -103,8 +68,8 @@ export default defineComponent({
     route: Object,
   },
   setup(props: Props | any) {
-    const store = useStore();
-    const apolloClient = inject(DefaultApolloClient);
+    const store = useStore()
+    const apolloClient = inject(DefaultApolloClient)
     const viewId = ref<string>()
     const status = ref('OPEN')
 
@@ -118,31 +83,35 @@ export default defineComponent({
       },
     }))
 
-    const handleClick = async() => {
+    const handleClick = async () => {
       const imageViewer = exportImageViewerState()
       const ionImage = exportIonImageState()
 
       status.value = 'SAVING'
       try {
         const annotationIonsQuery = await apolloClient.query({
-          query: gql`query AnnotationNames($ids: String) {
-                    options: allAnnotations(filter: {annotationId: $ids}, limit: 100) {
-                      ion
-                      database
-                      databaseDetails {
-                        id
-                      }
-                    }
-                  }`,
+          query: gql`
+            query AnnotationNames($ids: String) {
+              options: allAnnotations(filter: { annotationId: $ids }, limit: 100) {
+                ion
+                database
+                databaseDetails {
+                  id
+                }
+              }
+            }
+          `,
           variables: {
             ids: ionImage.annotationIds.join('|'),
           },
         })
         const annotationIons = annotationIonsQuery.data.options
         const result = await apolloClient.mutate({
-          mutation: gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
-            saveImageViewerSnapshot(input: $input)
-          }`,
+          mutation: gql`
+            mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
+              saveImageViewerSnapshot(input: $input)
+            }
+          `,
           variables: {
             input: {
               version: 1,
@@ -162,7 +131,9 @@ export default defineComponent({
         })
         viewId.value = result.data.saveImageViewerSnapshot
         status.value = 'HAS_LINK'
-        useOutClick(() => { status.value = 'CLOSED' })
+        useOutClick(() => {
+          status.value = 'CLOSED'
+        })
       } catch (e) {
         reportError(e)
         status.value = 'CLOSED'

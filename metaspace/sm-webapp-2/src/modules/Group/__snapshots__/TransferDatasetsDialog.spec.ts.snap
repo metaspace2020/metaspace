@@ -55,7 +55,7 @@ exports[`TransferDatasetsDialog > should match snapshot (datasets to import, req
             </label></div>
         </div>
       </div>
-      <p data-v-28cb04fb=\\"\\"> An email will be sent to the group's principal investigator to confirm your access. </p>
+      <p data-v-28cb04fb=\\"\\">An email will be sent to the group's principal investigator to confirm your access.</p>
       <div data-v-28cb04fb=\\"\\" class=\\"button-bar\\"><button data-v-28cb04fb=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button\\">
           <!--v-if--><span class=\\"\\"> Cancel </span>
         </button><button data-v-28cb04fb=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
@@ -70,7 +70,7 @@ exports[`TransferDatasetsDialog > should match snapshot (no datasets, invited) 1
 "<div data-v-28cb04fb=\\"\\" class=\\"mock-el-dialog dialog\\" model-value=\\"true\\" append-to-body=\\"\\" title=\\"Join group\\" currentuserid=\\"current user id\\">
   <div data-v-28cb04fb=\\"\\">
     <div data-v-28cb04fb=\\"\\">
-      <p data-v-28cb04fb=\\"\\" style=\\"margin-top: 0px;\\"> Are you sure you want to join Group Name? </p>
+      <p data-v-28cb04fb=\\"\\" style=\\"margin-top: 0px;\\">Are you sure you want to join Group Name?</p>
       <div data-v-28cb04fb=\\"\\" class=\\"button-bar\\"><button data-v-28cb04fb=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--small\\">
           <!--v-if--><span class=\\"\\"> Cancel </span>
         </button><button data-v-28cb04fb=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary el-button--small\\">

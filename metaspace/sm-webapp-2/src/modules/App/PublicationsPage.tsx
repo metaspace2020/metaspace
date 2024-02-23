@@ -1,4 +1,4 @@
-import {computed, defineAsyncComponent, defineComponent} from 'vue'
+import { computed, defineAsyncComponent, defineComponent } from 'vue'
 import { CiteMetaspace } from './CiteMetaspace'
 import { useQuery } from '@vue/apollo-composable'
 import { countPublicationsQuery, countReviewsQuery } from '../../api/group'
@@ -6,9 +6,9 @@ import PublicationItem from './PublicationItem'
 import StatefulIcon from '../../components/StatefulIcon.vue'
 import './PublicationsPage.scss'
 
-const ExternalWindowSvg = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-external-window.svg')
-);
+const ExternalWindowSvg = defineAsyncComponent(
+  () => import('../../assets/inline/refactoring-ui/icon-external-window.svg')
+)
 
 interface Props {
   className: string
@@ -23,25 +23,21 @@ const PublicationsPage = defineComponent<Props>({
     },
   },
   setup() {
-    const {
-      result: publicationCountResult,
-    } = useQuery<{countPublications: any}>(countPublicationsQuery)
-    const publicationCount = computed(() => publicationCountResult.value != null
-      ? publicationCountResult.value.countPublications : null)
-    const {
-      result: reviewsCountResult,
-    } = useQuery<{countReviews: any}>(countReviewsQuery)
-    const reviewCount = computed(() => reviewsCountResult.value != null
-      ? reviewsCountResult.value.countReviews : null)
+    const { result: publicationCountResult } = useQuery<{ countPublications: any }>(countPublicationsQuery)
+    const publicationCount = computed(() =>
+      publicationCountResult.value != null ? publicationCountResult.value.countPublications : null
+    )
+    const { result: reviewsCountResult } = useQuery<{ countReviews: any }>(countReviewsQuery)
+    const reviewCount = computed(() =>
+      reviewsCountResult.value != null ? reviewsCountResult.value.countReviews : null
+    )
 
     return () => {
       return (
-        <div class='sm-publications-page'>
+        <div class="sm-publications-page">
           <div class="sm-content-page sm-main-content">
             <h1>Relevant Publications</h1>
-            <h2 id="ours">
-              Our publications presenting METASPACE or its methods (5)
-            </h2>
+            <h2 id="ours">Our publications presenting METASPACE or its methods (5)</h2>
             <ul>
               <PublicationItem
                 title="Spatial Metabolomics and Imaging Mass Spectrometry in the Age of Artificial Intelligence"
@@ -73,21 +69,23 @@ const PublicationsPage = defineComponent<Props>({
               />
               <PublicationItem
                 title="FDR-controlled metabolite annotation for high-resolution imaging mass spectrometry"
-                authors={'Palmer A, Phapale P, Chernyavsky I, Lavigne R, Fay D, Tarasov A, Kovalev V, Fuchser J, '
-                  + 'Nikolenko S, Pineau C, Becker M, Alexandrov T'}
+                authors={
+                  'Palmer A, Phapale P, Chernyavsky I, Lavigne R, Fay D, Tarasov A, Kovalev V, Fuchser J, ' +
+                  'Nikolenko S, Pineau C, Becker M, Alexandrov T'
+                }
                 publisher="Nat. Methods"
                 year="2017"
                 link="https://doi.org/10.1038/nmeth.4072"
               />
             </ul>
 
-            <h2 id="others">
-              Other publications
-            </h2>
+            <h2 id="others">Other publications</h2>
             <a
               class="publication-link flex items-center"
-              href={'https://scholar.google.com/scholar?q=%22METASPACE%22+AND+%28%22imaging+'
-                + 'mass+spectrometry%22+OR+%22mass+spectrometry+imaging%22%29'}
+              href={
+                'https://scholar.google.com/scholar?q=%22METASPACE%22+AND+%28%22imaging+' +
+                'mass+spectrometry%22+OR+%22mass+spectrometry+imaging%22%29'
+              }
               target="_blank"
             >
               Research articles using METASPACE ({(publicationCount.value || 332).toLocaleString()})
@@ -97,8 +95,10 @@ const PublicationsPage = defineComponent<Props>({
             </a>
             <a
               class="publication-link flex items-center mt-1"
-              href={'https://scholar.google.com/scholar?q=%22METASPACE%22+AND+%28%22imaging+'
-                + 'mass+spectrometry%22+OR+%22mass+spectrometry+imaging%22%29++AND+%22Review+article%22&btnG='}
+              href={
+                'https://scholar.google.com/scholar?q=%22METASPACE%22+AND+%28%22imaging+' +
+                'mass+spectrometry%22+OR+%22mass+spectrometry+imaging%22%29++AND+%22Review+article%22&btnG='
+              }
               target="_blank"
             >
               Reviews ({(reviewCount.value || 34).toLocaleString()})
@@ -106,7 +106,7 @@ const PublicationsPage = defineComponent<Props>({
                 <ExternalWindowSvg />
               </StatefulIcon>
             </a>
-            <CiteMetaspace/>
+            <CiteMetaspace />
           </div>
         </div>
       )

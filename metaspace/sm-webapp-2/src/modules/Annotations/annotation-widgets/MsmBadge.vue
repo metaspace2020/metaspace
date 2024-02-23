@@ -1,11 +1,9 @@
 <template>
-  <div :class="cssClass">
-    MSM {{ msmScore.toFixed(3) }}
-  </div>
+  <div :class="cssClass">MSM {{ msmScore.toFixed(3) }}</div>
 </template>
 
 <script>
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed } from 'vue'
 
 export default defineComponent({
   props: {
@@ -14,19 +12,19 @@ export default defineComponent({
   setup(props) {
     const cssClass = computed(() => {
       if (props.msmScore >= 0.9) {
-        return 'msm-badge msm-badge-900';
+        return 'msm-badge msm-badge-900'
       } else if (props.msmScore >= 0.5) {
-        return 'msm-badge msm-badge-500';
+        return 'msm-badge msm-badge-500'
       } else if (props.msmScore >= 0.1) {
-        return 'msm-badge msm-badge-100';
+        return 'msm-badge msm-badge-100'
       } else {
-        return 'msm-badge msm-badge-000';
+        return 'msm-badge msm-badge-000'
       }
-    });
+    })
 
-    return { cssClass };
+    return { cssClass }
   },
-});
+})
 </script>
 
 <style lang="scss" scoped>

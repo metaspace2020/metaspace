@@ -16,9 +16,7 @@
         @update:modelValue="handleUpdate"
       />
       <div v-if="allDatasets?.length > 0" class="mt-6">
-        <h4 class="m-0">
-          Would you like to include previously submitted datasets?
-        </h4>
+        <h4 class="m-0">Would you like to include previously submitted datasets?</h4>
         <dataset-checkbox-list
           :model-value="selectedDatasets"
           :datasets="allDatasets"
@@ -26,15 +24,8 @@
         />
       </div>
       <div class="button-bar">
-        <el-button :disabled="isSubmitting" @click="handleClose">
-          Cancel
-        </el-button>
-        <el-button
-          type="primary"
-          autofocus
-          :loading="isSubmitting"
-          @click="handleCreate"
-        >
+        <el-button :disabled="isSubmitting" @click="handleClose"> Cancel </el-button>
+        <el-button type="primary" autofocus :loading="isSubmitting" @click="handleCreate">
           {{ acceptText }}
         </el-button>
       </div>
@@ -43,23 +34,24 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, reactive } from 'vue';
-import { useQuery, useMutation } from '@vue/apollo-composable';
+import { defineComponent, ref, computed, reactive } from 'vue'
+import { useQuery, useMutation } from '@vue/apollo-composable'
 import { datasetListItemsQuery } from '../../api/dataset'
 import { createProjectMutation, importDatasetsIntoProjectMutation } from '../../api/project'
-import EditProjectForm from './EditProjectForm.vue';
-import DatasetCheckboxList from '../../components/DatasetCheckboxList.vue';
-import reportError from '../../lib/reportError';
-import {ElDialog, ElButton, ElLoading} from "element-plus";
+import EditProjectForm from './EditProjectForm.vue'
+import DatasetCheckboxList from '../../components/DatasetCheckboxList.vue'
+import reportError from '../../lib/reportError'
+import { ElDialog, ElButton, ElLoading } from 'element-plus'
 
 export default defineComponent({
   components: {
     EditProjectForm,
     DatasetCheckboxList,
-    ElDialog, ElButton,
+    ElDialog,
+    ElButton,
   },
   directives: {
-    'loading': ElLoading.directive,
+    loading: ElLoading.directive,
   },
   props: {
     currentUserId: {
@@ -72,42 +64,42 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
-    const projectForm = ref(null);
+    const projectForm = ref(null)
     const project = reactive({
       name: '',
       isPublic: false,
       urlSlug: '',
-    });
-    const selectedDatasets = reactive({});
-    const isSubmitting = ref(false);
+    })
+    const selectedDatasets = reactive({})
+    const isSubmitting = ref(false)
 
-    const { result, loading } = useQuery(datasetListItemsQuery, () => ({ dFilter: { submitter: props.currentUserId } }));
-    const allDatasets = computed(() => result.value?.allDatasets || []);
-    const numSelected = computed(() => Object.values(selectedDatasets).filter(selected => selected).length);
+    const { result, loading } = useQuery(datasetListItemsQuery, () => ({ dFilter: { submitter: props.currentUserId } }))
+    const allDatasets = computed(() => result.value?.allDatasets || [])
+    const numSelected = computed(() => Object.values(selectedDatasets).filter((selected) => selected).length)
     const acceptText = computed(() => {
-      const action = 'Create project';
+      const action = 'Create project'
       return numSelected.value === 0
         ? action
-        : `${action} and include ${numSelected.value} ${numSelected.value === 1 ? 'dataset' : 'datasets'}`;
-    });
+        : `${action} and include ${numSelected.value} ${numSelected.value === 1 ? 'dataset' : 'datasets'}`
+    })
 
-    const createProject = useMutation(createProjectMutation);
-    const importDatasets = useMutation(importDatasetsIntoProjectMutation);
+    const createProject = useMutation(createProjectMutation)
+    const importDatasets = useMutation(importDatasetsIntoProjectMutation)
 
     const handleClose = () => {
       if (!isSubmitting.value) {
-        emit('close');
+        emit('close')
       }
-    };
+    }
 
     const handleCreate = async () => {
       await projectForm.value.validate()
 
-      isSubmitting.value = true;
+      isSubmitting.value = true
 
       try {
-        const selectedDatasetIds = Object.keys(selectedDatasets).filter(key => selectedDatasets[key]);
-        const { name, isPublic, urlSlug } = project;
+        const selectedDatasetIds = Object.keys(selectedDatasets).filter((key) => selectedDatasets[key])
+        const { name, isPublic, urlSlug } = project
 
         const { data } = await createProject.mutate({
           projectDetails: {
@@ -115,30 +107,30 @@ export default defineComponent({
             isPublic,
             urlSlug: urlSlug != null && urlSlug !== '' ? urlSlug : null,
           },
-        });
+        })
 
-        const projectId = data.createProject.id;
+        const projectId = data.createProject.id
         if (selectedDatasetIds.length > 0) {
           await importDatasets.mutate({
             projectId,
             datasetIds: selectedDatasetIds,
-          });
+          })
         }
 
-        emit('create', { id: projectId, name });
+        emit('create', { id: projectId, name })
       } catch (err) {
-        reportError(err);
+        reportError(err)
       } finally {
-        isSubmitting.value = false;
+        isSubmitting.value = false
       }
-    };
+    }
 
     const handleUpdate = (newModel) => {
-      Object.assign(project, newModel);
-    };
+      Object.assign(project, newModel)
+    }
     const handleUpdateSelection = (newModel) => {
-      Object.assign(selectedDatasets, newModel);
-    };
+      Object.assign(selectedDatasets, newModel)
+    }
 
     return {
       projectForm,
@@ -153,33 +145,33 @@ export default defineComponent({
       handleCreate,
       handleUpdate,
       handleUpdateSelection,
-    };
+    }
   },
-});
+})
 </script>
 
 <style scoped lang="scss">
-  .dialog ::v-deep(.el-dialog) {
-    @apply max-w-lg;
+.dialog ::v-deep(.el-dialog) {
+  @apply max-w-lg;
 
-    .el-form-item {
-      margin-bottom: 10px;
-    }
-    .el-form-item__label {
-      line-height: 1.2em;
-    }
+  .el-form-item {
+    margin-bottom: 10px;
   }
-  .dialog ::v-deep(.el-dialog__header) {
-    padding-bottom: 0;
+  .el-form-item__label {
+    line-height: 1.2em;
   }
+}
+.dialog ::v-deep(.el-dialog__header) {
+  padding-bottom: 0;
+}
 
-  .dialog ::v-deep(.el-dialog__body) {
-    padding: 20px;
-  }
-  .button-bar {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    margin-top: 20px;
-  }
+.dialog ::v-deep(.el-dialog__body) {
+  padding: 20px;
+}
+.button-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
 </style>

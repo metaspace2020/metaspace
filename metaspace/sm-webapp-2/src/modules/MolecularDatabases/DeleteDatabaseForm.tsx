@@ -3,13 +3,9 @@ import { useMutation } from '@vue/apollo-composable'
 
 import confirmPrompt from '../../components/confirmPrompt'
 
-import {
-  deleteDatabaseMutation,
-  DeleteDatabaseMutation,
-  MolecularDB,
-} from '../../api/moldb'
+import { deleteDatabaseMutation, DeleteDatabaseMutation, MolecularDB } from '../../api/moldb'
 import { formatDatabaseLabel } from './formatting'
-import {ElButton, ElMessage} from "element-plus";
+import { ElButton, ElMessage } from 'element-plus'
 
 interface Props {
   db: MolecularDB
@@ -27,20 +23,23 @@ const Delete = defineComponent<Props>({
     const formattedName = formatDatabaseLabel(props.db)
 
     const handleDelete = () => {
-      confirmPrompt({
-        title: '',
-        message: `Are you sure you want to delete ${formattedName}?`,
-        confirmButtonText: 'Delete',
-        confirmButtonLoadingText: 'Deleting...',
-      }, async() => {
-        try {
-          await deleteDatabase({ id: props.db.id })
-          ElMessage({ message: `${formattedName} deleted`, type: 'success' })
-          emit('deleted')
-        } catch (e) {
-          ElMessage({ message: 'Something went wrong, please try again', type: 'error' })
+      confirmPrompt(
+        {
+          title: '',
+          message: `Are you sure you want to delete ${formattedName}?`,
+          confirmButtonText: 'Delete',
+          confirmButtonLoadingText: 'Deleting...',
+        },
+        async () => {
+          try {
+            await deleteDatabase({ id: props.db.id })
+            ElMessage({ message: `${formattedName} deleted`, type: 'success' })
+            emit('deleted')
+          } catch (e) {
+            ElMessage({ message: 'Something went wrong, please try again', type: 'error' })
+          }
         }
-      })
+      )
     }
 
     return () => (

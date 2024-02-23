@@ -22,18 +22,18 @@ export default defineComponent({
 })
 </script>
 <style scoped>
-  .sm-slider-track::before {
-    @apply absolute w-full h-full box-border border-2 border-solid border-transparent rounded-full;
-    content: '';
-  }
-  .sm-slider-track[disabled] {
-    @apply pointer-events-none;
-  }
-  .sm-slider-track[disabled]::before {
-    @apply border-gray-300;
-  }
+.sm-slider-track::before {
+  @apply absolute w-full h-full box-border border-2 border-solid border-transparent rounded-full;
+  content: '';
+}
+.sm-slider-track[disabled] {
+  @apply pointer-events-none;
+}
+.sm-slider-track[disabled]::before {
+  @apply border-gray-300;
+}
 
-  .sm-slider-track > div:focus {
-    z-index: 1;
-  }
+.sm-slider-track > div:focus {
+  z-index: 1;
+}
 </style>

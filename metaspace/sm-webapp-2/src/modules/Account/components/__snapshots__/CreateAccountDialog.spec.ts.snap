@@ -85,7 +85,7 @@ exports[`CreateAccountDialog > should match snapshot 1`] = `
       </div>
       <div data-v-b2005c23=\\"\\" class=\\"mid\\">
         <div data-v-b2005c23=\\"\\" class=\\"divider\\"></div>
-        <div data-v-b2005c23=\\"\\" class=\\"text\\"> or </div>
+        <div data-v-b2005c23=\\"\\" class=\\"text\\">or</div>
         <div data-v-b2005c23=\\"\\" class=\\"divider\\"></div>
       </div>
       <div data-v-b2005c23=\\"\\" class=\\"right-side\\"><a data-v-b2005c23=\\"\\" class=\\"google-button\\" href=\\"/api_auth/google\\">

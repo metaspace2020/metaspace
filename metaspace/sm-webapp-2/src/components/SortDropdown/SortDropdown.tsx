@@ -1,7 +1,7 @@
-import { defineComponent, reactive } from 'vue';
-import { ElSelect, ElOption, ElButton, ElTooltip } from 'element-plus';
-import './SortDropdown.css';
-import {Sort, SortUp, SortDown} from "@element-plus/icons-vue";
+import { defineComponent, reactive } from 'vue'
+import { ElSelect, ElOption, ElButton, ElTooltip } from 'element-plus'
+import './SortDropdown.css'
+import { Sort, SortUp, SortDown } from '@element-plus/icons-vue'
 
 const enum SortingOrder {
   Unsorted = '',
@@ -11,19 +11,19 @@ const enum SortingOrder {
 
 interface Props {
   options: Array<{
-    value: string;
-    label: string;
-  }>;
-  defaultOption: string;
-  defaultSorting: SortingOrder;
-  size: string;
-  clearable: boolean;
-  tooltipPlacement: string;
+    value: string
+    label: string
+  }>
+  defaultOption: string
+  defaultSorting: SortingOrder
+  size: string
+  clearable: boolean
+  tooltipPlacement: string
 }
 
 interface State {
-  value: string;
-  orderBy: SortingOrder;
+  value: string
+  orderBy: SortingOrder
 }
 
 export default defineComponent({
@@ -80,25 +80,30 @@ export default defineComponent({
     const state: State = reactive({
       value: props.defaultOption,
       orderBy: props.defaultSorting,
-    });
+    })
 
     const handleSort = () => {
-      if (!state.value) return;
+      if (!state.value) return
 
-      state.orderBy = state.orderBy === SortingOrder.Unsorted
-        ? SortingOrder.Desc
-        : (state.orderBy === SortingOrder.Asc ? SortingOrder.Desc : SortingOrder.Asc);
+      state.orderBy =
+        state.orderBy === SortingOrder.Unsorted
+          ? SortingOrder.Desc
+          : state.orderBy === SortingOrder.Asc
+          ? SortingOrder.Desc
+          : SortingOrder.Asc
 
-      emit('sort', state.value, state.orderBy);
-    };
+      emit('sort', state.value, state.orderBy)
+    }
 
     const handleSelect = (value: string) => {
-      state.value = value;
+      state.value = value
       state.orderBy = !value
         ? SortingOrder.Unsorted
-        : (state.orderBy === SortingOrder.Unsorted ? SortingOrder.Desc : state.orderBy);
-      emit('sort', state.value, state.orderBy);
-    };
+        : state.orderBy === SortingOrder.Unsorted
+        ? SortingOrder.Desc
+        : state.orderBy
+      emit('sort', state.value, state.orderBy)
+    }
 
     return () => (
       <div class="flex flex-row sort-dp-container">
@@ -109,7 +114,7 @@ export default defineComponent({
           onChange={handleSelect}
           clearable={props.clearable}
         >
-          {props.options.map(opt => (
+          {props.options.map((opt) => (
             <ElOption label={opt.label} value={opt.value} />
           ))}
         </ElSelect>
@@ -118,13 +123,20 @@ export default defineComponent({
             <ElButton
               size={props.size as any}
               class={`btn-internal ${!state.value ? 'cursor-not-allowed' : ''}`}
-              icon={state.orderBy === SortingOrder.Unsorted ?  <Sort/> : (state.orderBy === SortingOrder.Desc
-                ? <SortDown /> : <SortUp />)}
+              icon={
+                state.orderBy === SortingOrder.Unsorted ? (
+                  <Sort />
+                ) : state.orderBy === SortingOrder.Desc ? (
+                  <SortDown />
+                ) : (
+                  <SortUp />
+                )
+              }
               onClick={handleSort}
             />
           </ElTooltip>
         </div>
       </div>
-    );
+    )
   },
-});
+})

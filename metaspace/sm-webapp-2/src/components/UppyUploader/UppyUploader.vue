@@ -89,7 +89,7 @@ const UppyUploader = defineComponent({
       .on('error', (...args) => {
         console.log(args)
       })
-      .on('complete', result => {
+      .on('complete', (result) => {
         emit('complete', result)
       })
 
@@ -99,12 +99,15 @@ const UppyUploader = defineComponent({
         ...props.s3Options,
       })
 
-      watch(() => props.s3Options, (newOpts) => {
-        uppy.getPlugin('AwsS3Multipart').setOptions(newOpts)
-      })
+      watch(
+        () => props.s3Options,
+        (newOpts) => {
+          uppy.getPlugin('AwsS3Multipart').setOptions(newOpts)
+        }
+      )
     }
 
-    function getFileStatus(file?: UppyFile) : FileStatusName {
+    function getFileStatus(file?: UppyFile): FileStatusName {
       if (props.disabled) {
         return 'DISABLED'
       }
@@ -127,19 +130,18 @@ const UppyUploader = defineComponent({
     const files = computed(() => {
       const files = uppy.getFiles()
       if (props.requiredFileTypes) {
-        return props.requiredFileTypes
-          .map(ext => {
-            const matchingFile = files.find(f => f.extension.toLowerCase() === ext.toLowerCase())
-            return {
-              id: matchingFile?.id,
-              name: matchingFile?.name,
-              extension: matchingFile?.extension || ext,
-              progress: matchingFile?.progress?.percentage,
-              status: getFileStatus(matchingFile),
-            }
-          })
+        return props.requiredFileTypes.map((ext) => {
+          const matchingFile = files.find((f) => f.extension.toLowerCase() === ext.toLowerCase())
+          return {
+            id: matchingFile?.id,
+            name: matchingFile?.name,
+            extension: matchingFile?.extension || ext,
+            progress: matchingFile?.progress?.percentage,
+            status: getFileStatus(matchingFile),
+          }
+        })
       }
-      return files.map(f => ({
+      return files.map((f) => ({
         id: f.id,
         name: f.name,
         extension: f.extension,
@@ -175,11 +177,7 @@ const UppyUploader = defineComponent({
         }
         if (props.options?.restrictions) {
           const { maxNumberOfFiles } = props.options.restrictions
-          return (
-            maxNumberOfFiles === undefined
-            || maxNumberOfFiles === null
-            || maxNumberOfFiles > 1
-          )
+          return maxNumberOfFiles === undefined || maxNumberOfFiles === null || maxNumberOfFiles > 1
         }
         return true
       }),

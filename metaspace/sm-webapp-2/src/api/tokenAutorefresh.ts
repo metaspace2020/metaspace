@@ -31,7 +31,7 @@ class TokenAutorefresh {
     if (invalidateOldJwt) {
       this.jwt = undefined
     }
-    const promise = this.jwtPromise = getJWT()
+    const promise = (this.jwtPromise = getJWT())
     const jwt = await promise
 
     // Only overwrite the jwt if another refresh hasn't started while this one has been waiting

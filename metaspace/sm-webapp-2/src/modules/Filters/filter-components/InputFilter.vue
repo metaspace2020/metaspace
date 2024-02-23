@@ -1,17 +1,7 @@
 <template>
-  <tag-filter
-    :name="name"
-    :removable="removable"
-    @show="show"
-    @destroy="destroy"
-  >
+  <tag-filter :name="name" :removable="removable" @show="show" @destroy="destroy">
     <template v-slot:edit>
-      <el-input
-        ref="inputRef"
-        v-model="localValue"
-        type="text"
-        @input="onChange"
-      />
+      <el-input ref="inputRef" v-model="localValue" type="text" @input="onChange" />
     </template>
     <template v-slot:show>
       <span class="tf-value-span">
@@ -23,16 +13,16 @@
 </template>
 
 <script>
-import { defineComponent, ref, watch } from 'vue';
-import { debounce } from 'lodash-es';
-import TagFilter from './TagFilter.vue';
-import { ElInput } from 'element-plus';
+import { defineComponent, ref, watch } from 'vue'
+import { debounce } from 'lodash-es'
+import TagFilter from './TagFilter.vue'
+import { ElInput } from 'element-plus'
 
 export default defineComponent({
   name: 'InputFilter',
   components: {
     TagFilter,
-    ElInput
+    ElInput,
   },
   props: {
     name: String,
@@ -42,29 +32,32 @@ export default defineComponent({
     debounce: Boolean,
   },
   setup(props, { emit }) {
-    const localValue = ref(props.value);
-    const inputRef = ref(null);
+    const localValue = ref(props.value)
+    const inputRef = ref(null)
 
     const onChange = (val) => {
-      emit('input', val);
-      emit('change', val);
-    };
-    const debouncedOnChange = props.debounce ? debounce(onChange, 500) : onChange;
+      emit('input', val)
+      emit('change', val)
+    }
+    const debouncedOnChange = props.debounce ? debounce(onChange, 500) : onChange
 
     const destroy = () => {
-      emit('destroy', props.name);
-    };
+      emit('destroy', props.name)
+    }
 
     const show = () => {
-      const inputElement = inputRef.value?.$refs.input;
+      const inputElement = inputRef.value?.$refs.input
       if (inputElement) {
-        inputElement.focus();
+        inputElement.focus()
       }
-    };
+    }
 
-    watch(() => props.value, (newValue) => {
-      localValue.value = newValue;
-    });
+    watch(
+      () => props.value,
+      (newValue) => {
+        localValue.value = newValue
+      }
+    )
 
     return {
       localValue,
@@ -72,7 +65,7 @@ export default defineComponent({
       onChange: debouncedOnChange,
       destroy,
       show,
-    };
+    }
   },
-});
+})
 </script>

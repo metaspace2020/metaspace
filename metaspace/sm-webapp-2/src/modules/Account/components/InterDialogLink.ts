@@ -1,7 +1,7 @@
-import { defineComponent, computed, h } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { useStore } from 'vuex';
-import { dialogRoutes } from '../dialogs';
+import { defineComponent, computed, h } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useStore } from 'vuex'
+import { dialogRoutes } from '../dialogs'
 
 /**
  * This component is needed for a weird pattern in CreateAccountDialog/SignInDialog:
@@ -15,28 +15,33 @@ export default defineComponent({
   props: {
     dialog: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   setup(props, { slots }) {
-    const router = useRouter();
-    const route = useRoute();
-    const store = useStore();
+    const router = useRouter()
+    const route = useRoute()
+    const store = useStore()
 
-    const link = computed(() => dialogRoutes[props.dialog]);
+    const link = computed(() => dialogRoutes[props.dialog])
 
     const handleClick = (e: Event) => {
-      e.preventDefault();
+      e.preventDefault()
       if (store.state.account.dialogCloseRedirect != null) {
-        router.push(link.value);
+        router.push(link.value)
       } else {
-        store.commit('account/showDialog', props.dialog);
+        store.commit('account/showDialog', props.dialog)
       }
-    };
+    }
 
-    return () => h('a', {
-      href: router.resolve(link.value, route).href,
-      onClick: handleClick
-    }, slots.default ? slots.default() : []);
-  }
-});
+    return () =>
+      h(
+        'a',
+        {
+          href: router.resolve(link.value, route).href,
+          onClick: handleClick,
+        },
+        slots.default ? slots.default() : []
+      )
+  },
+})

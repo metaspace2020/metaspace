@@ -1,9 +1,5 @@
 <template>
-  <tag-filter
-    name="Class"
-    removable
-    @destroy="destroy"
-  >
+  <tag-filter name="Class" removable @destroy="destroy">
     <template v-slot:edit>
       <el-select
         :model-value="filterValues.molClass ? parseInt(filterValues.molClass, 10) : undefined"
@@ -12,14 +8,9 @@
         clearable
         :teleported="false"
         remote
-        @change="val => onChange('molClass', val)"
+        @change="(val) => onChange('molClass', val)"
       >
-        <el-option
-          v-for="item in molClasses"
-          :key="item.id"
-          :label="item.name"
-          :value="item.id"
-        />
+        <el-option v-for="item in molClasses" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <el-select
         :model-value="filterValues.term ? parseInt(filterValues.term, 10) : undefined"
@@ -29,21 +20,18 @@
         filterable
         clearable
         remote
-        @focus="() => {updateTermQuery('')}"
-        @change="val => onChange('term', val)"
+        @focus="
+          () => {
+            updateTermQuery('')
+          }
+        "
+        @change="(val) => onChange('term', val)"
       >
-        <el-option
-          v-for="item in termOptions"
-          :key="item.id"
-          :label="item.enrichmentName"
-          :value="item.id"
-        />
+        <el-option v-for="item in termOptions" :key="item.id" :label="item.enrichmentName" :value="item.id" />
       </el-select>
     </template>
     <template v-slot:show>
-      <span
-        class="tf-value-span"
-      >
+      <span class="tf-value-span">
         <span>{{ formatValue() }}</span>
       </span>
     </template>
@@ -51,10 +39,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue';
-import { useQuery } from '@vue/apollo-composable';
-import gql from 'graphql-tag';
-import TagFilter from './TagFilter.vue';
+import { defineComponent, ref, computed } from 'vue'
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import TagFilter from './TagFilter.vue'
 
 export default defineComponent({
   name: 'ClassFilter',
@@ -65,33 +53,38 @@ export default defineComponent({
     filterValues: Object as any,
   },
   setup(props, { emit }) {
-    const filterValues = ref(props.filterValues);
-    const termNameQuery = ref('');
+    const filterValues = ref(props.filterValues)
+    const termNameQuery = ref('')
 
-    const ENRICHMENT_DATABASES_QUERY = gql`query EnrichmentDatabases {
-          allEnrichmentDatabases {
-            id
-            name
-          }
-        }`;
-    const ENRICHMENT_TERMS_QUERY = gql`query EnrichmentTerms($databaseId: Int, $id: Int, $enrichmentName: String) {
-          allEnrichmentTerms(databaseId: $databaseId, id: $id, enrichmentName: $enrichmentName) {
-            id
-            enrichmentName
-          }
-        }`;
+    const ENRICHMENT_DATABASES_QUERY = gql`
+      query EnrichmentDatabases {
+        allEnrichmentDatabases {
+          id
+          name
+        }
+      }
+    `
+    const ENRICHMENT_TERMS_QUERY = gql`
+      query EnrichmentTerms($databaseId: Int, $id: Int, $enrichmentName: String) {
+        allEnrichmentTerms(databaseId: $databaseId, id: $id, enrichmentName: $enrichmentName) {
+          id
+          enrichmentName
+        }
+      }
+    `
 
-    const { result: molClassesResult } = useQuery(ENRICHMENT_DATABASES_QUERY);
+    const { result: molClassesResult } = useQuery(ENRICHMENT_DATABASES_QUERY)
     const { result: termOptionsResult, loading: termOptionsLoading } = useQuery(ENRICHMENT_TERMS_QUERY, () => ({
       databaseId: parseInt(filterValues.value.molClass, 10),
       id: filterValues.value.term ? parseInt(filterValues.value.term, 10) : undefined,
       enrichmentName: termNameQuery.value,
-    }));
-    const molClasses : any = computed(() => molClassesResult.value?.allEnrichmentDatabases);
-    const termOptions : any = computed(() => termOptionsResult.value?.allEnrichmentTerms || [{ id: -1, enrichmentName: 'No terms' }]);
+    }))
+    const molClasses: any = computed(() => molClassesResult.value?.allEnrichmentDatabases)
+    const termOptions: any = computed(
+      () => termOptionsResult.value?.allEnrichmentTerms || [{ id: -1, enrichmentName: 'No terms' }]
+    )
 
     const formatValue = () => {
-
       const { molClass, term } = props.filterValues
       const classItem = (molClasses.value || []).find((item: any) => item.id === parseInt(molClass, 10))
       const termItem = (termOptions.value || []).find((item: any) => item.id === parseInt(term, 10))
@@ -106,8 +99,8 @@ export default defineComponent({
     }
 
     const updateTermQuery = (query: string) => {
-      termNameQuery.value = query;
-    };
+      termNameQuery.value = query
+    }
 
     const onChange = (filterKey: 'molClass' | 'term', val: any) => {
       if (val) {
@@ -115,12 +108,12 @@ export default defineComponent({
       } else {
         emit('destroy', filterKey)
       }
-    };
+    }
 
     const destroy = () => {
-      emit('destroy', 'molClass');
-      emit('destroy', 'term');
-    };
+      emit('destroy', 'molClass')
+      emit('destroy', 'term')
+    }
 
     return {
       molClasses,
@@ -130,13 +123,13 @@ export default defineComponent({
       formatValue,
       onChange,
       destroy,
-    };
-  }
-});
+    }
+  },
+})
 </script>
 
 <style scoped>
-  .el-select {
-    width: 100%;
-  }
+.el-select {
+  width: 100%;
+}
 </style>

@@ -1,25 +1,25 @@
-import {nextTick} from 'vue';
-import { afterEach, expect, vi } from 'vitest';
-import DatasetTable from './DatasetTable.vue';
-import * as FileSaver from 'file-saver';
-import { merge } from 'lodash-es';
-import router from "../../../router";
-import store from "../../../store";
-import {DefaultApolloClient} from "@vue/apollo-composable";
-import {flushPromises, mount} from '@vue/test-utils';
-import {initMockGraphqlClient} from "../../../tests/utils/mockGraphqlClient";
+import { nextTick } from 'vue'
+import { afterEach, expect, vi } from 'vitest'
+import DatasetTable from './DatasetTable.vue'
+import * as FileSaver from 'file-saver'
+import { merge } from 'lodash-es'
+import router from '../../../router'
+import store from '../../../store'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { flushPromises, mount } from '@vue/test-utils'
+import { initMockGraphqlClient } from '../../../tests/utils/mockGraphqlClient'
 
 vi.mock('file-saver', () => ({
-  saveAs: vi.fn()
-}));
+  saveAs: vi.fn(),
+}))
 
-
-const blobToText = (blob: Blob) => new Promise<string>((resolve, reject) => {
-  const reader = new FileReader();
-  reader.onload = () => resolve(reader.result as string);
-  reader.onerror = (e) => reject(e.target.error);
-  reader.readAsText(blob);
-});
+const blobToText = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = (e) => reject(e.target.error)
+    reader.readAsText(blob)
+  })
 
 describe('DatasetTable', () => {
   const mockMetadataJson = JSON.stringify({
@@ -52,15 +52,12 @@ describe('DatasetTable', () => {
     canDelete: false,
   }
 
-
-
   afterEach(() => {
-    vi.useRealTimers();
-  });
-
+    vi.useRealTimers()
+  })
 
   it('should match snapshot', async () => {
-    const graphqlMockClient =  initMockGraphqlClient({
+    const graphqlMockClient = initMockGraphqlClient({
       Query: () => ({
         allDatasets: () => {
           return [
@@ -83,20 +80,19 @@ describe('DatasetTable', () => {
       global: {
         plugins: [router, store],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
-    });
+    })
 
     await flushPromises()
-    await nextTick();
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
-  });
-
+    expect(wrapper.html()).toMatchSnapshot()
+  })
 
   it('should be able to export a CSV', async () => {
-    const graphqlMockClient =  initMockGraphqlClient({
+    const graphqlMockClient = initMockGraphqlClient({
       Query: () => ({
         allDatasets: (_: any, params: any) => {
           const offset = params?.offset || 0
@@ -123,21 +119,20 @@ describe('DatasetTable', () => {
       }),
     })
 
-
     const wrapper = mount(DatasetTable, {
       global: {
         plugins: [router, store],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
-    });
+    })
 
     wrapper.vm.state.csvChunkSize = 2
-    await new Promise(resolve => setTimeout(resolve, 1))
+    await new Promise((resolve) => setTimeout(resolve, 1))
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
     await (wrapper.vm as any).startExport()
     expect(FileSaver.saveAs).toBeCalled()
@@ -146,8 +141,5 @@ describe('DatasetTable', () => {
     const csvWithoutDateHeader = csv.replace(/# Generated at .*\n/, '')
 
     expect(csvWithoutDateHeader).toMatchSnapshot()
-  });
-
-
-
-});
+  })
+})

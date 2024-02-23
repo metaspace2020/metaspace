@@ -6,24 +6,12 @@
       class="tour-popover-wrapper el-popover el-popper el-popover--plain max-w-sm leading-5 p-5 text-left relative"
     >
       <div class="h-5 pr-8 flex items-center">
-        <el-progress
-          class="w-full"
-          :percentage="progress"
-          :stroke-width="10"
-          :show-text="false"
-        />
+        <el-progress class="w-full" :percentage="progress" :stroke-width="10" :show-text="false" />
       </div>
       <h3 v-if="title !== ''" class="leading-10 m-0 mt-5">{{ title }}</h3>
-      <component
-        ref="mdRef"
-        :is="step"
-        v-if="step"
-        class="ts-content"
-      />
+      <component ref="mdRef" :is="step" v-if="step" class="ts-content" />
       <div class="h-10 mt-5 flex justify-end items-center">
-        <el-button v-if="stepNum > 0" :key="title + '-back'" size="small" @click="prevStep">
-          Back
-        </el-button>
+        <el-button v-if="stepNum > 0" :key="title + '-back'" size="small" @click="prevStep"> Back </el-button>
         <el-button :key="title + '-next'" size="small" type="primary" @click="nextStep">
           {{ stepNum == tour.steps.length - 1 ? 'Done' : 'Next' }}
         </el-button>
@@ -37,16 +25,14 @@
 </template>
 
 <script>
-import {defineComponent, ref, watch, onMounted, nextTick, defineAsyncComponent, computed} from 'vue';
-import { useRouter} from 'vue-router';
-import {useStore} from 'vuex';
-import {ElProgress, ElButton} from 'element-plus';
-import {createPopper} from '@popperjs/core';
-import Upload from '../../tours/intro/steps/00-upload.md';
+import { defineComponent, ref, watch, onMounted, nextTick, defineAsyncComponent, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
+import { ElProgress, ElButton } from 'element-plus'
+import { createPopper } from '@popperjs/core'
+import Upload from '../../tours/intro/steps/00-upload.md'
 
-const CloseIcon = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-close-circle.svg')
-);
+const CloseIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-close-circle.svg'))
 
 export default defineComponent({
   name: 'TourStep',
@@ -58,23 +44,22 @@ export default defineComponent({
   },
   props: ['tour'],
   setup(props) {
-    const store = useStore();
+    const store = useStore()
     const router = useRouter()
     const mdRef = ref(null)
 
-    const lastRoute = ref('help');
-    const stepNum = ref(0);
-    const container = ref(null);
-    const routeTransition = ref(false);
-    const popperInstance = ref(null);
-    const step = computed(() => props.tour?.steps ? props.tour.steps[stepNum.value] : null);
-    const progress = computed(() => 100 * (stepNum.value + 1) / props.tour.steps?.length);
-    const tourAux = computed(() => props.tour);
-    const title = computed(() => mdRef.value?.frontmatter?.title);
+    const lastRoute = ref('help')
+    const stepNum = ref(0)
+    const container = ref(null)
+    const routeTransition = ref(false)
+    const popperInstance = ref(null)
+    const step = computed(() => (props.tour?.steps ? props.tour.steps[stepNum.value] : null))
+    const progress = computed(() => (100 * (stepNum.value + 1)) / props.tour.steps?.length)
+    const tourAux = computed(() => props.tour)
+    const title = computed(() => mdRef.value?.frontmatter?.title)
 
-
-    watch(tourAux, async() => {
-      renderPopper();
+    watch(tourAux, async () => {
+      renderPopper()
     })
 
     // watch(() => route.path, (to, from) => {
@@ -88,47 +73,47 @@ export default defineComponent({
     // });
 
     const nextStep = () => {
-      stepNum.value++;
+      stepNum.value++
       if (props.tour.steps?.length === stepNum.value) {
-        close();
-        return;
+        close()
+        return
       }
-      popperInstance.value?.destroy();
-      renderPopper();
-    };
+      popperInstance.value?.destroy()
+      renderPopper()
+    }
 
     const prevStep = () => {
-      if (stepNum.value === 0) return; // Shouldn't happen
-      stepNum.value--;
-      popperInstance.value?.destroy();
-      renderPopper();
-    };
+      if (stepNum.value === 0) return // Shouldn't happen
+      stepNum.value--
+      popperInstance.value?.destroy()
+      renderPopper()
+    }
 
     const close = () => {
-      popperInstance.value?.destroy();
-      stepNum.value = 0;
-      lastRoute.value = 'help';
-      routeTransition.value = false;
-      store.commit('endTour');
-    };
+      popperInstance.value?.destroy()
+      stepNum.value = 0
+      lastRoute.value = 'help'
+      routeTransition.value = false
+      store.commit('endTour')
+    }
 
-    const renderPopper = async() => {
-      await nextTick();
-      const meta = mdRef.value?.frontmatter;
-      if(!meta) return
-      if(meta.route && meta.route !== router.currentRoute?.value?.path){
+    const renderPopper = async () => {
+      await nextTick()
+      const meta = mdRef.value?.frontmatter
+      if (!meta) return
+      if (meta.route && meta.route !== router.currentRoute?.value?.path) {
         await router.push({
           path: meta.route,
           query: meta.query,
         })
       }
 
-      await nextTick();
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await nextTick();
+      await nextTick()
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      await nextTick()
 
-      const targetElement = document.querySelector(meta.target);
-      const arrow = document.querySelector('#arrow');
+      const targetElement = document.querySelector(meta.target)
+      const arrow = document.querySelector('#arrow')
 
       console.log('targetElement', meta.target, targetElement)
 
@@ -149,21 +134,20 @@ export default defineComponent({
               },
             },
           ],
-        });
+        })
       }
-    };
+    }
 
     onMounted(() => {
-      if (props.tour) renderPopper();
-    });
+      if (props.tour) renderPopper()
+    })
 
-    return {mdRef, title, stepNum, step, close, nextStep, prevStep, progress, container};
+    return { mdRef, title, stepNum, step, close, nextStep, prevStep, progress, container }
   },
-});
+})
 </script>
 
 <style lang="scss" scoped>
-
 .tour-popover-wrapper {
   z-index: 10100 !important;
 }
@@ -171,12 +155,12 @@ export default defineComponent({
 #arrow {
   position: absolute;
   background-color: #fff;
-  top: -8px
+  top: -8px;
 }
 
 /* Positioning for the arrow */
 [data-popper-arrow]::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 3px;
   width: 10px;
@@ -219,7 +203,8 @@ export default defineComponent({
     @apply mt-5;
   }
 
-  ul, ol {
+  ul,
+  ol {
     @apply pl-4;
   }
 

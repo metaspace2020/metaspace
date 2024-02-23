@@ -1,12 +1,5 @@
-import {ElButton, ElCollapse, ElCollapseItem, ElIcon, ElPopover} from 'element-plus'
-import {
-  computed,
-  defineComponent,
-  onMounted,
-  reactive,
-  ref,
-  watchEffect,
-} from 'vue'
+import { ElButton, ElCollapse, ElCollapseItem, ElIcon, ElPopover } from 'element-plus'
+import { computed, defineComponent, onMounted, reactive, ref, watchEffect } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { annotationListQuery } from '../../../api/annotation'
 import safeJsonParse from '../../../lib/safeJsonParse'
@@ -17,10 +10,7 @@ import { DatasetComparisonGrid } from './DatasetComparisonGrid'
 import gql from 'graphql-tag'
 import FilterPanel from '../../Filters/FilterPanel.vue'
 import config from '../../../lib/config'
-import {
-  DatasetListItemWithDiagnostics,
-  datasetListItemsWithDiagnosticsQuery,
-} from '../../../api/dataset'
+import { DatasetListItemWithDiagnostics, datasetListItemsWithDiagnosticsQuery } from '../../../api/dataset'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
@@ -36,9 +26,9 @@ import FileSaver from 'file-saver'
 import FilterIcon from '../../../assets/inline/filter.svg'
 import { ANNOTATION_SPECIFIC_FILTERS } from '../../Filters/filterSpecs'
 import { parseFormulaAndCharge } from '../../../lib/formulaParser'
-import {useRoute} from "vue-router";
-import {useStore} from "vuex";
-import {Loading} from "@element-plus/icons-vue";
+import { useRoute } from 'vue-router'
+import { useStore } from 'vuex'
+import { Loading } from '@element-plus/icons-vue'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -49,11 +39,6 @@ interface GlobalImageSettings {
   selectedLockTemplate: string | null
   globalLockedIntensities: [number | undefined, number | undefined]
   showOpticalImage: boolean
-}
-
-interface DatasetComparisonPageProps {
-  className: string
-  defaultImagePosition: any
 }
 
 interface DatasetComparisonPageState {
@@ -98,7 +83,7 @@ const channels: any = {
 
 const CHUNK_SIZE = 1000
 
-export default defineComponent<DatasetComparisonPageProps>({
+export default defineComponent({
   name: 'DatasetComparisonPage',
   props: {
     className: {
@@ -119,11 +104,13 @@ export default defineComponent<DatasetComparisonPageProps>({
   setup() {
     const route = useRoute()
     const store = useStore()
-    const fetchImageViewerSnapshot = gql`query fetchImageViewerSnapshot($id: String!, $datasetId: String!) {
-      imageViewerSnapshot(id: $id, datasetId: $datasetId) {
-        snapshot
+    const fetchImageViewerSnapshot = gql`
+      query fetchImageViewerSnapshot($id: String!, $datasetId: String!) {
+        imageViewerSnapshot(id: $id, datasetId: $datasetId) {
+          snapshot
+        }
       }
-    }`
+    `
     const gridNode = ref(null)
     const imageGrid = ref(null)
     const state = reactive<DatasetComparisonPageState>({
@@ -164,26 +151,26 @@ export default defineComponent<DatasetComparisonPageProps>({
     })
     const { dataset_id: sourceDsId } = route.params
     const { viewId: snapshotId } = route.query
-    const {
-      result: settingsResult,
-    } = useQuery<any>(fetchImageViewerSnapshot, {
+    const { result: settingsResult } = useQuery<any>(fetchImageViewerSnapshot, {
       id: snapshotId,
       datasetId: sourceDsId,
     })
 
-    const gridSettings = computed(() => settingsResult.value != null
-      ? settingsResult.value.imageViewerSnapshot : null)
+    const gridSettings = computed(() =>
+      settingsResult.value != null ? settingsResult.value.imageViewerSnapshot : null
+    )
 
     const queryVariables = () => {
       const filter = store.getters.gqlAnnotationFilter
       const dFilter = store.getters.gqlDatasetFilter
       const colocalizationCoeffFilter = state.coloc
         ? {
-          colocalizedWith: filter.colocalizedWith,
-          colocalizationAlgo: null,
-          databaseId: filter.databaseId,
-          fdrLevel: filter.fdrLevel,
-        } : undefined
+            colocalizedWith: filter.colocalizedWith,
+            colocalizationAlgo: null,
+            databaseId: filter.databaseId,
+            fdrLevel: filter.fdrLevel,
+          }
+        : undefined
       const query = store.getters.ftsQuery
 
       return {
@@ -211,10 +198,11 @@ export default defineComponent<DatasetComparisonPageProps>({
       offset: state.offset,
     }))
 
-    const {
-      loading: annotationsLoading,
-      onResult: onAllAnnotationsResult,
-    } = useQuery<any>(annotationListQuery, annotationQueryVars, annotationQueryOptions)
+    const { loading: annotationsLoading, onResult: onAllAnnotationsResult } = useQuery<any>(
+      annotationListQuery,
+      annotationQueryVars,
+      annotationQueryOptions
+    )
 
     const aggregateAnnotations = () => {
       const annotationsByIon = groupBy(state.rawAnnotations, 'ion')
@@ -243,7 +231,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
     }
 
-    onAllAnnotationsResult(async(result) => {
+    onAllAnnotationsResult(async (result) => {
       let rawAnnotations = state.rawAnnotations
       if (result && result.data) {
         if (state.offset === 0) {
@@ -262,12 +250,13 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
     })
 
-    const {
-      loading: colocAnnotationsLoading,
-      onResult: oncolocAllAnnotationsResult,
-    } = useQuery<any>(annotationListQuery, colocAnnotationQueryVars, colocAnnotationQueryOptions)
+    const { loading: colocAnnotationsLoading, onResult: oncolocAllAnnotationsResult } = useQuery<any>(
+      annotationListQuery,
+      colocAnnotationQueryVars,
+      colocAnnotationQueryOptions
+    )
 
-    oncolocAllAnnotationsResult(async(result) => {
+    oncolocAllAnnotationsResult(async (result) => {
       let rawAnnotations = state.rawAnnotations
       if (result && result.data) {
         if (state.offset === 0 && datasetIds.value.indexOf(state.colocDsId) === 0) {
@@ -289,32 +278,34 @@ export default defineComponent<DatasetComparisonPageProps>({
       }
     })
 
-    const {
-      result: datasetsResult,
-      onResult: onDatasetsResult,
-    } = useQuery<{allDatasets: DatasetListItemWithDiagnostics[]}>(datasetListItemsWithDiagnosticsQuery,
+    const { result: datasetsResult, onResult: onDatasetsResult } = useQuery<{
+      allDatasets: DatasetListItemWithDiagnostics[]
+    }>(
+      datasetListItemsWithDiagnosticsQuery,
       () => ({
         dFilter: {
           ...queryVariables().dFilter,
-          ids:
-            gridSettings.value ? Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid || {})
-              .join('|') : '',
+          ids: gridSettings.value
+            ? Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid || {}).join('|')
+            : '',
         },
-      }), dsQueryOptions)
+      }),
+      dsQueryOptions
+    )
 
-    onDatasetsResult(async(result) => {
-      const normalizationData : any = {}
+    onDatasetsResult(async (result) => {
+      const normalizationData: any = {}
       // calculate normalization
       if (result && result.data && result.data.allDatasets) {
-        let databases : any[] = []
+        let databases: any[] = []
 
         for (let i = 0; i < result.data.allDatasets.length; i++) {
-          const dataset : any = result.data.allDatasets[i]
+          const dataset: any = result.data.allDatasets[i]
 
           databases = databases.concat(dataset.databases)
 
           try {
-            const tics = dataset.diagnostics.filter((diagnostic : any) => diagnostic.type === 'TIC')
+            const tics = dataset.diagnostics.filter((diagnostic: any) => diagnostic.type === 'TIC')
             const tic = tics[0].images.filter((image: any) => image.key === 'TIC' && image.format === 'NPY')
             const { data, shape } = await readNpy(tic[0].url)
             const metadata = safeJsonParse(tics[0].data)
@@ -348,17 +339,18 @@ export default defineComponent<DatasetComparisonPageProps>({
       state.normalizationData = normalizationData
     })
 
-    const loadAnnotations = () => { annotationQueryOptions.enabled = true }
+    const loadAnnotations = () => {
+      annotationQueryOptions.enabled = true
+    }
     const datasets = computed(() => {
       if (datasetsResult.value) {
         return datasetsResult.value.allDatasets
       }
       return null
     })
-    const datasetIds = computed(() => Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid
-      || {}))
+    const datasetIds = computed(() => Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid || {}))
 
-    const requestAnnotations = async() => {
+    const requestAnnotations = async () => {
       state.isLoading = true
       loadAnnotations()
       state.isLoading = false
@@ -370,31 +362,37 @@ export default defineComponent<DatasetComparisonPageProps>({
       store.commit('setViewerMode', 'SINGLE')
 
       // add listener to query annotations again in case the filters change
-      store.watch((_, getters) => [getters.gqlAnnotationFilter,
-        store.getters.gqlDatasetFilter, store.getters.gqlColocalizationFilter, store.getters.ftsQuery],
-      (filter, previousFilter) => {
-        if (filter[0].colocalizedWith) {
-          if (!state.coloc || filter[0].colocalizedWith !== previousFilter[0].colocalizedWith) {
-            colocAnnotationQueryOptions.enabled = true
-            annotationQueryOptions.enabled = false
-          }
-          state.coloc = true
-        } else {
-          state.coloc = false
-        }
-
-        if (state.annotations && !isEqual(filter, previousFilter)) {
-          state.offset = 0
-          if (state.coloc) {
-            colocAnnotationQueryOptions.enabled = true
-            state.colocDsId = datasetIds.value[0]
-            annotationQueryOptions.enabled = false
+      store.watch(
+        (_, getters) => [
+          getters.gqlAnnotationFilter,
+          store.getters.gqlDatasetFilter,
+          store.getters.gqlColocalizationFilter,
+          store.getters.ftsQuery,
+        ],
+        (filter, previousFilter) => {
+          if (filter[0].colocalizedWith) {
+            if (!state.coloc || filter[0].colocalizedWith !== previousFilter[0].colocalizedWith) {
+              colocAnnotationQueryOptions.enabled = true
+              annotationQueryOptions.enabled = false
+            }
+            state.coloc = true
           } else {
-            colocAnnotationQueryOptions.enabled = false
-            annotationQueryOptions.enabled = true
+            state.coloc = false
+          }
+
+          if (state.annotations && !isEqual(filter, previousFilter)) {
+            state.offset = 0
+            if (state.coloc) {
+              colocAnnotationQueryOptions.enabled = true
+              state.colocDsId = datasetIds.value[0]
+              annotationQueryOptions.enabled = false
+            } else {
+              colocAnnotationQueryOptions.enabled = false
+              annotationQueryOptions.enabled = true
+            }
           }
         }
-      })
+      )
     })
 
     const loadSnapshotChannels = (snapshotChannels: any) => {
@@ -410,7 +408,8 @@ export default defineComponent<DatasetComparisonPageProps>({
           annotations: annotationItem,
           settings: { ...settings, visible: true },
         })
-        if (!settings.visible) { // toggle visibility later, as the first intensity must be loaded
+        if (!settings.visible) {
+          // toggle visibility later, as the first intensity must be loaded
           setTimeout(() => {
             store.commit('updateChannel', { index, id, annotations: annotationItem, settings })
           }, 1000)
@@ -462,9 +461,7 @@ export default defineComponent<DatasetComparisonPageProps>({
       state.exportProgress = 0
     }
 
-
-
-    watchEffect(async() => {
+    watchEffect(async () => {
       if (!state.grid && gridSettings.value) {
         const auxSettings = safeJsonParse(gridSettings.value.snapshot)
         state.nCols = auxSettings.nCols
@@ -498,9 +495,10 @@ export default defineComponent<DatasetComparisonPageProps>({
         if (auxSettings.lockedIntensityTemplate) {
           handleTemplateChange(auxSettings.lockedIntensityTemplate)
         } else if (
-          Array.isArray(auxSettings.globalLockedIntensities)
-          && auxSettings.globalLockedIntensities.length === 2) {
-          const intensities : [number | undefined, number | undefined] = [
+          Array.isArray(auxSettings.globalLockedIntensities) &&
+          auxSettings.globalLockedIntensities.length === 2
+        ) {
+          const intensities: [number | undefined, number | undefined] = [
             auxSettings.globalLockedIntensities[0] === null ? undefined : auxSettings.globalLockedIntensities[0],
             auxSettings.globalLockedIntensities[1] === null ? undefined : auxSettings.globalLockedIntensities[1],
           ]
@@ -523,7 +521,6 @@ export default defineComponent<DatasetComparisonPageProps>({
       state.globalImageSettings.resetViewPort = !state.globalImageSettings.resetViewPort
     }
 
-
     const filterColocalized = (e) => {
       e.stopPropagation()
       const { annotations, currentAnnotationIdx } = state
@@ -540,16 +537,14 @@ export default defineComponent<DatasetComparisonPageProps>({
       })
     }
 
-
-    const startIntensitiesExport = async() => {
+    const startIntensitiesExport = async () => {
       async function formatIntensitiesRow(annotation: any, normalizationData: any) {
         const { isotopeImages, ionFormula: molFormula, possibleCompounds, adduct, mz, dataset } = annotation
         const isotopeImage = isotopeImages[0]
         const ionImagePng = await loadPngFromUrl(isotopeImage.url)
         const molName = possibleCompounds.map((m: any) => m.name).join(',')
         const molIds = possibleCompounds.map((m: any) => m.information[0].databaseId).join(',')
-        const finalImage : any = getIonImage(ionImagePng, isotopeImages[0], undefined,
-          undefined, normalizationData)
+        const finalImage: any = getIonImage(ionImagePng, isotopeImages[0], undefined, undefined, normalizationData)
         const row = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
         const { width, height, intensityValues } = finalImage
         const cols = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
@@ -569,33 +564,35 @@ export default defineComponent<DatasetComparisonPageProps>({
       state.isExporting = true
       const annotations = state.annotations.map((annotation: any) => annotation.annotations).flat()
       const totalCount = annotations?.length || 1
-      const datasetIds : string[] = Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid || {})
-      const annotationsByDsId : any = groupBy(annotations, 'dataset.id')
+      const datasetIds: string[] = Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid || {})
+      const annotationsByDsId: any = groupBy(annotations, 'dataset.id')
 
       // generate one file per dataset
-      for (let j : number = 0; j < datasetIds?.length; j++) {
-        const datasetId : string = datasetIds[j]
-        const currentAnnotations : any[] = annotationsByDsId[datasetId]
-        let fileName : string = ''
+      for (let j: number = 0; j < datasetIds?.length; j++) {
+        const datasetId: string = datasetIds[j]
+        const currentAnnotations: any[] = annotationsByDsId[datasetId]
+        let fileName: string = ''
         let rows = ''
         let fileCols
 
-        for (let i : number = 0; i < currentAnnotations?.length; i++) {
+        for (let i: number = 0; i < currentAnnotations?.length; i++) {
           if (!state.isExporting) {
             state.exportProgress = 0
             return
           }
-          const annotation : any = currentAnnotations[i]
+          const annotation: any = currentAnnotations[i]
           offset += 1
           state.exportProgress = offset / totalCount
           try {
-            const { cols, row, dsName } = await formatIntensitiesRow(annotation,
-              state.globalImageSettings.isNormalized
-                ? state.normalizationData[annotation.dataset.id] : undefined)
+            const { cols, row, dsName } = await formatIntensitiesRow(
+              annotation,
+              state.globalImageSettings.isNormalized ? state.normalizationData[annotation.dataset.id] : undefined
+            )
             if (!fileCols) {
               fileCols = formatCsvRow(cols)
-              fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${state.globalImageSettings.isNormalized
-                ? '_tic_normalized' : ''}.csv`
+              fileName = `${dsName.replace(/\s/g, '_')}_pixel_intensities${
+                state.globalImageSettings.isNormalized ? '_tic_normalized' : ''
+              }.csv`
             }
             rows += formatCsvRow(row)
           } catch (e) {
@@ -657,12 +654,13 @@ export default defineComponent<DatasetComparisonPageProps>({
     const renderInfo = () => {
       const { annotations, currentAnnotationIdx, globalImageSettings, nCols, nRows } = state
 
-      const selectedAnnotation = annotations && annotations[currentAnnotationIdx]
-      && Array.isArray(annotations[currentAnnotationIdx].annotations)
-        ? annotations[currentAnnotationIdx].annotations[0] : null
-      let possibleCompounds : any = []
-      let isomers : any = []
-      let isobars : any = []
+      const selectedAnnotation =
+        annotations && annotations[currentAnnotationIdx] && Array.isArray(annotations[currentAnnotationIdx].annotations)
+          ? annotations[currentAnnotationIdx].annotations[0]
+          : null
+      let possibleCompounds: any = []
+      let isomers: any = []
+      let isobars: any = []
 
       annotations[currentAnnotationIdx].annotations.forEach((annotation: any) => {
         possibleCompounds = possibleCompounds.concat(annotation.possibleCompounds)
@@ -671,37 +669,32 @@ export default defineComponent<DatasetComparisonPageProps>({
       })
 
       // @ts-ignore TS2604
-      const candidateMolecules = (annotation: any) => <CandidateMoleculesPopover
-        placement="bottom"
-        possibleCompounds={uniqBy(possibleCompounds, 'name')}
-        isomers={isomers}
-        isobars={isobars}>
-        <MolecularFormula
-          class="sf-big text-2xl"
-          ion={annotation.ion}
-        />
-      </CandidateMoleculesPopover>
+      const candidateMolecules = (annotation: any) => (
+        <CandidateMoleculesPopover
+          placement="bottom"
+          possibleCompounds={uniqBy(possibleCompounds, 'name')}
+          isomers={isomers}
+          isobars={isobars}
+        >
+          <MolecularFormula class="sf-big text-2xl" ion={annotation.ion} />
+        </CandidateMoleculesPopover>
+      )
 
       return (
-        <div class='ds-comparison-info relative'>
-          {
-            selectedAnnotation !== null
-            && candidateMolecules(selectedAnnotation)
-          }
-          {
-            selectedAnnotation !== null
-            && <CopyButton
-              class="ml-1"
-              text={parseFormulaAndCharge(selectedAnnotation?.ion)}>
-                Copy ion to clipboard
+        <div class="ds-comparison-info relative">
+          {selectedAnnotation !== null && candidateMolecules(selectedAnnotation)}
+          {selectedAnnotation !== null && (
+            <CopyButton class="ml-1" text={parseFormulaAndCharge(selectedAnnotation?.ion)}>
+              Copy ion to clipboard
             </CopyButton>
-          }
+          )}
           <span class="text-2xl flex items-baseline ml-4">
-            { selectedAnnotation && selectedAnnotation.mz ? selectedAnnotation.mz.toFixed(4) : '-'}
+            {selectedAnnotation && selectedAnnotation.mz ? selectedAnnotation.mz.toFixed(4) : '-'}
             <span class="ml-1 text-gray-700 text-sm">m/z</span>
             <CopyButton
               class="self-start"
-              text={selectedAnnotation && selectedAnnotation.mz ? selectedAnnotation.mz.toFixed(4) : '-'}>
+              text={selectedAnnotation && selectedAnnotation.mz ? selectedAnnotation.mz.toFixed(4) : '-'}
+            >
               Copy m/z to clipboard
             </CopyButton>
           </span>
@@ -716,10 +709,11 @@ export default defineComponent<DatasetComparisonPageProps>({
             colormap={globalImageSettings.colormap}
             settings={gridSettings.value?.snapshot}
             selectedAnnotation={currentAnnotationIdx}
-            sourceDsId={sourceDsId}
-            name={route.name}
+            sourceDsId={sourceDsId as string}
+            name={route.name as string}
             params={route.params}
-            query={route.query}/>
+            query={route.query}
+          />
           <DatasetComparisonModeButton
             class="absolute right-0 bottom-0 mr-5 mb-2"
             isActive={store.state.mode === 'MULTI'}
@@ -740,8 +734,8 @@ export default defineComponent<DatasetComparisonPageProps>({
             title: () => (
               <>
                 <MainImageHeader
-                  class='dataset-comparison-item-header dom-to-image-hidden'
-                    isActive={false}
+                  class="dataset-comparison-item-header dom-to-image-hidden"
+                  isActive={false}
                   scaleBarColor={globalImageSettings?.scaleBarColor}
                   onScaleBarColorChange={handleScaleBarColorChange}
                   scaleType={globalImageSettings?.scaleType}
@@ -769,31 +763,25 @@ export default defineComponent<DatasetComparisonPageProps>({
                   placement="bottom"
                   v-slots={{
                     reference: () => (
-                      <div class='coloc-filter-wrapper dom-to-image-hidden'>
+                      <div class="coloc-filter-wrapper dom-to-image-hidden">
                         <ElButton
                           class="w-5 h-5 button-reset av-icon-button"
                           title="Show in list"
                           onClick={filterColocalized}
                         >
-                          <FilterIcon class="w-5 h-5 fill-current"/>
+                          <FilterIcon class="w-5 h-5 fill-current" />
                         </ElButton>
                       </div>
                     ),
-                    default: () => (
-                      <span>
-                  Filter by colocalized annotations
-                </span>
-                    )
+                    default: () => <span>Filter by colocalized annotations</span>,
                   }}
                 />
               </>
             ),
             default: () => (
-              <div class='dataset-comparison-grid' ref={gridNode}>
-                {
-                  collapse.includes('images')
-                  && !(annotationsLoading.value || colocAnnotationsLoading.value)
-                  && <DatasetComparisonGrid
+              <div class="dataset-comparison-grid" ref={gridNode}>
+                {collapse.includes('images') && !(annotationsLoading.value || colocAnnotationsLoading.value) && (
+                  <DatasetComparisonGrid
                     ref={imageGrid}
                     nCols={nCols}
                     nRows={nRows}
@@ -815,61 +803,66 @@ export default defineComponent<DatasetComparisonPageProps>({
                     selectedAnnotation={currentAnnotationIdx}
                     isLoading={isLoading || annotationsLoading.value || colocAnnotationsLoading.value}
                   />
-                }
-                {
-                  collapse.includes('images')
-                  && (annotationsLoading.value || colocAnnotationsLoading.value)
-                  && <div class='w-full text-center'>
-                    <ElIcon class="is-loading"><Loading/></ElIcon>
+                )}
+                {collapse.includes('images') && (annotationsLoading.value || colocAnnotationsLoading.value) && (
+                  <div class="w-full text-center">
+                    <ElIcon class="is-loading">
+                      <Loading />
+                    </ElIcon>
                   </div>
-                }
+                )}
               </div>
-            )
+            ),
           }}
-        />)
+        />
+      )
     }
 
     const renderCompounds = () => {
-      const {annotations, collapse, currentAnnotationIdx, isLoading} = state
-      const selectedAnnotations = currentAnnotationIdx >= 0 && annotations[currentAnnotationIdx]
-        ? annotations[currentAnnotationIdx].annotations : []
+      const { annotations, collapse, currentAnnotationIdx, isLoading } = state
+      const selectedAnnotations =
+        currentAnnotationIdx >= 0 && annotations[currentAnnotationIdx]
+          ? annotations[currentAnnotationIdx].annotations
+          : []
 
       // @ts-ignore TS2604
-      const relatedMolecules = () => <RelatedMolecules
-        query="isomers"
-        annotation={selectedAnnotations[0]}
-        annotations={selectedAnnotations}
-        databaseId={store.getters.filter.database || 1}
-        hideFdr
-      />
+      const relatedMolecules = () => (
+        <RelatedMolecules
+          query="isomers"
+          annotation={selectedAnnotations[0]}
+          annotations={selectedAnnotations}
+          databaseId={store.getters.filter.database || 1}
+          hideFdr
+        />
+      )
 
-      return (<ElCollapseItem
-        id="annot-img-collapse"
-        name="compounds"
-        title="Molecules"
-        class="ds-collapse el-collapse-item--no-padding relative">
-        {
-          !isLoading
-          && collapse.includes('compounds')
-          && (Array.isArray(selectedAnnotations) && selectedAnnotations.length > 0)
-          && relatedMolecules()
-        }
-        {
-          !isLoading
-          && collapse.includes('compounds')
-          && (!Array.isArray(selectedAnnotations) || selectedAnnotations.length < 1)
-          && <div class='flex w-full items-center justify-center'>No data</div>
-        }
-      </ElCollapseItem>)
+      return (
+        <ElCollapseItem
+          id="annot-img-collapse"
+          name="compounds"
+          title="Molecules"
+          class="ds-collapse el-collapse-item--no-padding relative"
+        >
+          {!isLoading &&
+            collapse.includes('compounds') &&
+            Array.isArray(selectedAnnotations) &&
+            selectedAnnotations.length > 0 &&
+            relatedMolecules()}
+          {!isLoading &&
+            collapse.includes('compounds') &&
+            (!Array.isArray(selectedAnnotations) || selectedAnnotations.length < 1) && (
+              <div class="flex w-full items-center justify-center">No data</div>
+            )}
+        </ElCollapseItem>
+      )
     }
 
     const renderAnnotationTableWrapper = () => {
-      const {annotations} = state
+      const { annotations } = state
       return (
         <div class={`dataset-comparison-wrapper w-full ${state.tableFullScreen ? 'w-full' : 'md:w-6/12'} relative`}>
-          {
-            annotations
-            && <DatasetComparisonAnnotationTable
+          {annotations && (
+            <DatasetComparisonAnnotationTable
               isLoading={annotationsLoading.value || colocAnnotationsLoading.value}
               annotations={annotations.map((ion: any) => {
                 return {
@@ -892,16 +885,12 @@ export default defineComponent<DatasetComparisonPageProps>({
               onExport={startIntensitiesExport}
               onAbort={handleAbort}
             />
-          }
-          {
-            !annotations
-            && (annotationsLoading.value || colocAnnotationsLoading.value)
-            && <div class='w-full absolute text-center top-0'>
-              <i
-                class="el-icon-loading"
-              />
+          )}
+          {!annotations && (annotationsLoading.value || colocAnnotationsLoading.value) && (
+            <div class="w-full absolute text-center top-0">
+              <i class="el-icon-loading" />
             </div>
-          }
+          )}
         </div>
       )
     }
@@ -909,48 +898,41 @@ export default defineComponent<DatasetComparisonPageProps>({
     const renderAnnotationInfoWrapper = () => {
       const { nCols, nRows, collapse, currentAnnotationIdx, annotations } = state
 
-      if (
-        currentAnnotationIdx === undefined
-        || currentAnnotationIdx === -1
-        || !annotations[currentAnnotationIdx]) {
-        return <div class='dataset-comparison-wrapper  w-full  md:w-6/12'/>
+      if (currentAnnotationIdx === undefined || currentAnnotationIdx === -1 || !annotations[currentAnnotationIdx]) {
+        return <div class="dataset-comparison-wrapper  w-full  md:w-6/12" />
       }
 
       return (
-        <div class='dataset-comparison-wrapper  w-full  md:w-6/12'>
-          <ElCollapse
-            modelValue={collapse}
-            id="annot-content"
-            class="border-0"
-            onChange={handleCollapse}>
+        <div class="dataset-comparison-wrapper  w-full  md:w-6/12">
+          <ElCollapse modelValue={collapse} id="annot-content" class="border-0" onChange={handleCollapse}>
             {renderInfo()}
             {renderImageGallery(nCols, nRows)}
             {renderCompounds()}
           </ElCollapse>
-        </div>)
+        </div>
+      )
     }
 
     return () => {
       if (!snapshotId) {
         return (
-          <div class='dataset-comparison-page w-full flex flex-wrap flex-row items-center justify-center'>
+          <div class="dataset-comparison-page w-full flex flex-wrap flex-row items-center justify-center">
             Not found
-          </div>)
+          </div>
+        )
       }
 
       return (
-        <div class='dataset-comparison-page'>
-          {
-            state.databaseOptions
-            &&
+        <div class="dataset-comparison-page">
+          {state.databaseOptions && (
             <FilterPanel
-              class='w-full'
-              level='annotation'
+              class="w-full"
+              level="annotation"
               hiddenFilters={['datasetIds']}
               fixedOptions={state.databaseOptions}
             />
-          }
-          <div class='flex w-full flex-wrap flex-row'>
+          )}
+          <div class="flex w-full flex-wrap flex-row">
             {renderAnnotationTableWrapper()}
             {!state.tableFullScreen && renderAnnotationInfoWrapper()}
           </div>

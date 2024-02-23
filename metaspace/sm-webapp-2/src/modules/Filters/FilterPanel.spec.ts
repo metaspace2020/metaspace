@@ -1,23 +1,18 @@
-import {flushPromises, mount} from '@vue/test-utils';
-import FilterPanel from './FilterPanel.vue';
-import {nextTick} from "vue";
-import store from "../../store";
+import { flushPromises, mount } from '@vue/test-utils'
+import FilterPanel from './FilterPanel.vue'
+import { nextTick } from 'vue'
+import store from '../../store'
 
-import {
-  mockMolecularDatabases,
-  mockAdductSuggestions,
-  mockDatasetDatabases,
-} from "../../tests/utils/mockGraphqlData";
-import  {initMockGraphqlClient} from "../../tests/utils/mockGraphqlClient";
-import { DefaultApolloClient } from '@vue/apollo-composable';
-import {vi} from "vitest";
-import router from "../../router";
-import {encodeParams} from "../../modules/Filters/url";
-
+import { mockMolecularDatabases, mockAdductSuggestions, mockDatasetDatabases } from '../../tests/utils/mockGraphqlData'
+import { initMockGraphqlClient } from '../../tests/utils/mockGraphqlClient'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { vi } from 'vitest'
+import router from '../../router'
+import { encodeParams } from '../../modules/Filters/url'
 
 vi.mock('../../lib/util', () => ({
-  getJWT: vi.fn().mockResolvedValue({text: vi.fn()}), // Mock getJWT to return a resolved promise with a string
-}));
+  getJWT: vi.fn().mockResolvedValue({ text: vi.fn() }), // Mock getJWT to return a resolved promise with a string
+}))
 
 // const router = createRouter({
 //   history: createWebHistory(),
@@ -25,7 +20,6 @@ vi.mock('../../lib/util', () => ({
 // });
 
 let graphqlMockClient: any
-
 
 describe('FilterPanel', () => {
   const allFilters = {
@@ -51,7 +45,7 @@ describe('FilterPanel', () => {
     metadataType: 'ims',
   }
 
-  beforeEach(async() => {
+  beforeEach(async () => {
     graphqlMockClient = await initMockGraphqlClient({
       Query: () => ({
         adductSuggestions: mockAdductSuggestions,
@@ -63,13 +57,12 @@ describe('FilterPanel', () => {
     await store.dispatch('initFilterLists', graphqlMockClient)
   })
 
-  const updateFilter = async(newFilter: any) => {
+  const updateFilter = async (newFilter: any) => {
     await router.replace({ path: '/annotations' })
     await nextTick()
     await store.commit('updateFilter', newFilter)
     await nextTick() // Must wait after every change for vue-router to update the store
   }
-
 
   it('should match snapshot (no filters)', async () => {
     await updateFilter({})
@@ -78,17 +71,17 @@ describe('FilterPanel', () => {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
-      props: propsData
-    });
+      props: propsData,
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
-  });
+    expect(wrapper.html()).toMatchSnapshot()
+  })
 
   it('should match snapshot (database without dataset)', async () => {
     await updateFilter({ database: allFilters.database })
@@ -97,50 +90,49 @@ describe('FilterPanel', () => {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
-      props: propsData
-    });
+      props: propsData,
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
-  });
+    expect(wrapper.html()).toMatchSnapshot()
+  })
 
-  it('should match snapshot (all annotation filters)', async() => {
+  it('should match snapshot (all annotation filters)', async () => {
     await updateFilter(allFilters)
     const propsData = { level: 'annotation' }
     const wrapper = mount(FilterPanel, {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
-      props: propsData
-    });
+      props: propsData,
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
-  });
+    expect(wrapper.html()).toMatchSnapshot()
+  })
 
-
-  it('should update the route when filters change', async() => {
+  it('should update the route when filters change', async () => {
     await updateFilter(allFilters)
     const propsData = { level: 'annotation' }
     const wrapper = mount(FilterPanel, {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
-      props: propsData
-    });
+      props: propsData,
+    })
     const newFilters = {
       simpleQuery: 'lorem ipsum',
       // database: 2,
@@ -154,7 +146,7 @@ describe('FilterPanel', () => {
     // await nextTick();
 
     // simpleQuery - SearchBox
-    await wrapper.find('[data-test-key="simpleQuery"]').setValue(newFilters.simpleQuery);
+    await wrapper.find('[data-test-key="simpleQuery"]').setValue(newFilters.simpleQuery)
     // database - SingleSelectFilter
     // await wrapper.find('[data-test-key="database"]').trigger('change', newFilters.database);
     // project - SearchableFilter [multiple=false]
@@ -171,11 +163,9 @@ describe('FilterPanel', () => {
     // wrapper.find('[data-test-key="mz"]').trigger('click');
     // wrapper.find('[data-test-key="mz"] input').setValue(newFilters.mz);
     // wrapper.find('[data-test-key="mz"] input').trigger('change');
-    await nextTick();
-    await flushPromises();
+    await nextTick()
+    await flushPromises()
 
-    expect(router.currentRoute.value.query).toEqual(expect.objectContaining(encodeParams(newFilters)));
-  });
-
-
-});
+    expect(router.currentRoute.value.query).toEqual(expect.objectContaining(encodeParams(newFilters)))
+  })
+})

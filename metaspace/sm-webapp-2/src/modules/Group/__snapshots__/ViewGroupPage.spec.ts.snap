@@ -8,7 +8,7 @@ exports[`ViewGroupPage > datasets tab > should match snapshot (non-member) 1`] =
     <div data-v-89404ae2=\\"\\" class=\\"header-row\\">
       <div data-v-89404ae2=\\"\\" class=\\"header-names\\">
         <h1 data-v-89404ae2=\\"\\">group name</h1>
-        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\"> (groupShortName) </h2>
+        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\">(groupShortName)</h2>
       </div>
       <div data-v-89404ae2=\\"\\" class=\\"header-buttons\\"><button data-v-89404ae2=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
           <!--v-if--><span class=\\"\\"> Request access </span>
@@ -76,7 +76,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (invited) 1`] = `
     <div data-v-89404ae2=\\"\\" class=\\"header-row\\">
       <div data-v-89404ae2=\\"\\" class=\\"header-names\\">
         <h1 data-v-89404ae2=\\"\\">group name</h1>
-        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\"> (groupShortName) </h2>
+        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\">(groupShortName)</h2>
       </div>
       <div data-v-89404ae2=\\"\\" class=\\"header-buttons\\">
         <!--v-if-->
@@ -90,7 +90,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (invited) 1`] = `
           <!--v-if-->
           <p class=\\"el-alert__description\\">
           <div data-v-89404ae2=\\"\\" style=\\"padding: 0px 0px 20px 20px;\\">
-            <p data-v-89404ae2=\\"\\"> You have been invited to join group name. </p>
+            <p data-v-89404ae2=\\"\\">You have been invited to join group name.</p>
             <div data-v-89404ae2=\\"\\"><button data-v-89404ae2=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--danger\\">
                 <!--v-if--><span class=\\"\\"> Decline invitation </span>
               </button><button data-v-89404ae2=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
@@ -153,7 +153,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (manager, including
     <div data-v-89404ae2=\\"\\" class=\\"header-row\\">
       <div data-v-89404ae2=\\"\\" class=\\"header-names\\">
         <h1 data-v-89404ae2=\\"\\">group name</h1>
-        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\"> (groupShortName) </h2>
+        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\">(groupShortName)</h2>
       </div>
       <div data-v-89404ae2=\\"\\" class=\\"header-buttons\\">
         <!--v-if-->
@@ -201,7 +201,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (manager, including
                 <div data-v-0d45dd3a=\\"\\" class=\\"mock-el-option\\" label=\\"None (remove from group)\\" value=\\"\\"></div>
               </div>
               </p>
-              <p data-v-0d45dd3a=\\"\\"> Changing a member's role this way does not cause any notification emails to be sent. </p>
+              <p data-v-0d45dd3a=\\"\\">Changing a member's role this way does not cause any notification emails to be sent.</p>
               <div data-v-0d45dd3a=\\"\\" class=\\"el-row is-align-middle\\"><button data-v-0d45dd3a=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button\\">
                   <!--v-if--><span class=\\"\\"> Close </span>
                 </button><button data-v-0d45dd3a=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
@@ -249,7 +249,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (member) 1`] = `
     <div data-v-89404ae2=\\"\\" class=\\"header-row\\">
       <div data-v-89404ae2=\\"\\" class=\\"header-names\\">
         <h1 data-v-89404ae2=\\"\\">group name</h1>
-        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\"> (groupShortName) </h2>
+        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\">(groupShortName)</h2>
       </div>
       <div data-v-89404ae2=\\"\\" class=\\"header-buttons\\">
         <!--v-if-->
@@ -311,7 +311,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (non-member) 1`] = 
     <div data-v-89404ae2=\\"\\" class=\\"header-row\\">
       <div data-v-89404ae2=\\"\\" class=\\"header-names\\">
         <h1 data-v-89404ae2=\\"\\">group name</h1>
-        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\"> (groupShortName) </h2>
+        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\">(groupShortName)</h2>
       </div>
       <div data-v-89404ae2=\\"\\" class=\\"header-buttons\\"><button data-v-89404ae2=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
           <!--v-if--><span class=\\"\\"> Request access </span>
@@ -371,7 +371,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (published) 1`] 
     <div data-v-89404ae2=\\"\\" class=\\"header-row\\">
       <div data-v-89404ae2=\\"\\" class=\\"header-names\\">
         <h1 data-v-89404ae2=\\"\\">group name</h1>
-        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\"> (groupShortName) </h2>
+        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\">(groupShortName)</h2>
       </div>
       <div data-v-89404ae2=\\"\\" class=\\"header-buttons\\">
         <!--v-if-->
@@ -438,7 +438,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (under review) 1
     <div data-v-89404ae2=\\"\\" class=\\"header-row\\">
       <div data-v-89404ae2=\\"\\" class=\\"header-names\\">
         <h1 data-v-89404ae2=\\"\\">group name</h1>
-        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\"> (groupShortName) </h2>
+        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\">(groupShortName)</h2>
       </div>
       <div data-v-89404ae2=\\"\\" class=\\"header-buttons\\">
         <!--v-if-->
@@ -505,7 +505,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (unpublished) 1`
     <div data-v-89404ae2=\\"\\" class=\\"header-row\\">
       <div data-v-89404ae2=\\"\\" class=\\"header-names\\">
         <h1 data-v-89404ae2=\\"\\">group name</h1>
-        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\"> (groupShortName) </h2>
+        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\">(groupShortName)</h2>
       </div>
       <div data-v-89404ae2=\\"\\" class=\\"header-buttons\\">
         <!--v-if-->
@@ -572,7 +572,7 @@ exports[`ViewGroupPage > settings tab > should disable actions when under publis
     <div data-v-89404ae2=\\"\\" class=\\"header-row\\">
       <div data-v-89404ae2=\\"\\" class=\\"header-names\\">
         <h1 data-v-89404ae2=\\"\\">group name</h1>
-        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\"> (groupShortName) </h2>
+        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\">(groupShortName)</h2>
       </div>
       <div data-v-89404ae2=\\"\\" class=\\"header-buttons\\">
         <!--v-if-->
@@ -628,7 +628,7 @@ exports[`ViewGroupPage > settings tab > should disable actions when under review
     <div data-v-89404ae2=\\"\\" class=\\"header-row\\">
       <div data-v-89404ae2=\\"\\" class=\\"header-names\\">
         <h1 data-v-89404ae2=\\"\\">group name</h1>
-        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\"> (groupShortName) </h2>
+        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\">(groupShortName)</h2>
       </div>
       <div data-v-89404ae2=\\"\\" class=\\"header-buttons\\">
         <!--v-if-->
@@ -684,7 +684,7 @@ exports[`ViewGroupPage > settings tab > should match snapshot 1`] = `
     <div data-v-89404ae2=\\"\\" class=\\"header-row\\">
       <div data-v-89404ae2=\\"\\" class=\\"header-names\\">
         <h1 data-v-89404ae2=\\"\\">group name</h1>
-        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\"> (groupShortName) </h2>
+        <h2 data-v-89404ae2=\\"\\" class=\\"ml-3 text-gray-600\\">(groupShortName)</h2>
       </div>
       <div data-v-89404ae2=\\"\\" class=\\"header-buttons\\">
         <!--v-if-->

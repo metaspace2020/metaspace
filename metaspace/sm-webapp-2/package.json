@@ -22,7 +22,6 @@
     "test:unit": "vitest --run",
     "test:unit:dev": "cypress open --component",
     "type-check": "vue-tsc --noEmit -p tsconfig.cypress-ct.json --composite false",
-    "format": "prettier --write src/",
     "dev": "cross-env NODE_ENV=development vite",
     "test": "yarn run generate-local-graphql-schema && yarn install && cross-env NODE_ENV=test vitest --run",
     "test-ci": "cross-env NODE_ENV=test vitest --run --ci",
@@ -33,6 +32,7 @@
     "build": "yarn run deref-schema && cross-env NODE_ENV=production vite build",
     "build-ci": "cross-env NODE_ENV=production vite build",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "format": "prettier --write src/**/*.{vue,js,ts,tsx,css,scss,md} --ignore-path .gitignore",
     "analyze-size": "rm -rf dist ; NODE_ENV=production WEBPACK_STATS=true vite build ; npx vite-bundle-visualizer dist/stats.json dist/ -p 9900 -O"
   },
   "dependencies": {

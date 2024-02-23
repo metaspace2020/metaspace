@@ -10,8 +10,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, toRefs, computed, watch } from 'vue';
-import {ElInputNumber} from "element-plus";
+import { defineComponent, toRefs, computed, watch } from 'vue'
+import { ElInputNumber } from 'element-plus'
 
 /**
  * Wrapper for el-input-number to make it slightly friendlier in forms:
@@ -24,33 +24,33 @@ export default defineComponent({
   name: 'CustomNumberInput',
   inheritAttrs: false,
   components: {
-    ElInputNumber
+    ElInputNumber,
   },
   props: {
     value: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   setup(props, { emit }) {
-    const { value } = toRefs(props);
-    const computedValue = computed(() => props.value === null ? undefined : props.value);
+    const { value } = toRefs(props)
+    const computedValue = computed(() => (props.value === null ? undefined : props.value))
     const handleInput = (val: number | undefined) => {
-      emit('update:modelValue', val === undefined ? null : val);
-    };
+      emit('update:modelValue', val === undefined ? null : val)
+    }
 
     watch(value, (newValue) => {
       if (newValue === null || newValue === undefined) {
-        emit('update:modelValue', newValue);
+        emit('update:modelValue', newValue)
       }
-    });
+    })
 
     return {
       computedValue,
-      handleInput
-    };
-  }
-});
+      handleInput,
+    }
+  },
+})
 </script>
 
 <style lang="scss" scoped>

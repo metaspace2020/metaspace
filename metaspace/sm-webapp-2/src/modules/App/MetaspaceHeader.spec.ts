@@ -1,14 +1,14 @@
-import { nextTick, ref } from 'vue';
-import router from "../../router";
-import store from "../../store";
-import { mount} from '@vue/test-utils';
-import MetaspaceHeader from './MetaspaceHeader';
-import {expect} from "vitest";
+import { nextTick, ref } from 'vue'
+import router from '../../router'
+import store from '../../store'
+import { mount } from '@vue/test-utils'
+import MetaspaceHeader from './MetaspaceHeader'
+import { expect } from 'vitest'
 
 const currentUserMockResponses = [
   {
     data: {
-      currentUser:  {
+      currentUser: {
         id: '123',
         name: 'Test UserX',
         email: 'test@example.com',
@@ -34,10 +34,10 @@ const currentUserMockResponses = [
     data: {
       currentUser: null,
     },
-  }
-];
+  },
+]
 
-let mockIndex = 0; // This will determine which mock response to use
+let mockIndex = 0 // This will determine which mock response to use
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(() => ({
@@ -46,36 +46,33 @@ vi.mock('@vue/apollo-composable', () => ({
     error: ref(null),
     subscribeToMore: vi.fn(),
   })),
-}));
-
+}))
 
 // Mock router's push function or any other function you need
-router.push = vi.fn();
-
+router.push = vi.fn()
 
 describe('MetaspaceHeader', () => {
   it('should match snapshot (logged in)', async () => {
-    mockIndex = 0;
+    mockIndex = 0
     const wrapper = mount(MetaspaceHeader, {
       global: {
         plugins: [router, store],
       },
-    });
+    })
 
-    await nextTick();
-    expect(wrapper.html()).toMatchSnapshot();
-  });
+    await nextTick()
+    expect(wrapper.html()).toMatchSnapshot()
+  })
 
   it('should match snapshot (logged out)', async () => {
-    mockIndex = 1;
+    mockIndex = 1
     const wrapper = mount(MetaspaceHeader, {
       global: {
         plugins: [router, store],
       },
-    });
+    })
 
-    await nextTick();
-    expect(wrapper.html()).toMatchSnapshot();
-  });
-
-});
+    await nextTick()
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+})

@@ -1,36 +1,38 @@
-import {flushPromises, mount} from '@vue/test-utils';
-import AnnotationTable from './AnnotationTable.vue';
-import {nextTick} from "vue";
-import store from "../../store";
-import  {initMockGraphqlClient} from "../../tests/utils/mockGraphqlClient";
-import { DefaultApolloClient } from '@vue/apollo-composable';
-import {vi, expect} from "vitest";
-import router from "../../router";
+import { flushPromises, mount } from '@vue/test-utils'
+import AnnotationTable from './AnnotationTable.vue'
+import { nextTick } from 'vue'
+import store from '../../store'
+import { initMockGraphqlClient } from '../../tests/utils/mockGraphqlClient'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { vi, expect } from 'vitest'
+import router from '../../router'
 import * as FileSaver from 'file-saver'
-import ElementPlus from "element-plus";
+import ElementPlus from 'element-plus'
 import { merge } from 'lodash-es'
 
-
 vi.mock('../../lib/util', async () => {
-  const actual : any = await vi.importActual("../../lib/util")
+  const actual: any = await vi.importActual('../../lib/util')
   return {
     ...actual,
-    getJWT: vi.fn().mockResolvedValue({text: vi.fn()}), // Mock getJWT to return a resolved p
+    getJWT: vi.fn().mockResolvedValue({ text: vi.fn() }), // Mock getJWT to return a resolved p
   }
 })
 
-
-
 vi.mock('file-saver', () => ({
-  saveAs: vi.fn()
-}));
+  saveAs: vi.fn(),
+}))
 
-const blobToText = (blob: Blob) => new Promise<string>((resolve, reject) => {
-  const reader = new FileReader()
-  reader.addEventListener('load', () => { resolve(reader.result as string) })
-  reader.addEventListener('error', (e) => { reject((e as any).error) })
-  reader.readAsText(blob)
-})
+const blobToText = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.addEventListener('load', () => {
+      resolve(reader.result as string)
+    })
+    reader.addEventListener('error', (e) => {
+      reject((e as any).error)
+    })
+    reader.readAsText(blob)
+  })
 const mockAnnotation = {
   id: '2019-02-12_15h55m06s_HMDB-v4_2018-04-09_C19H18N2O7S2_minus_H',
   sumFormula: 'C19H18N2O7S2',
@@ -52,9 +54,7 @@ const mockAnnotation = {
     },
     groupApproved: true,
   },
-  possibleCompounds: [
-    { name: 'C.I. Food Red 6', information: [{ databaseId: 'HMDB0032738' }] },
-  ],
+  possibleCompounds: [{ name: 'C.I. Food Red 6', information: [{ databaseId: 'HMDB0032738' }] }],
   colocalizationCoeff: 0.840809,
   offSample: false,
   offSampleProb: 0.03,
@@ -63,10 +63,10 @@ const mockAnnotation = {
 describe('AnnotationTable', () => {
   const propsData = { hideColumns: ['OffSampleProb'] }
 
-  it('should match snapshot', async() => {
+  it('should match snapshot', async () => {
     const graphqlMockClient = await initMockGraphqlClient({
       Query: () => ({
-        allAnnotations: () => ([mockAnnotation]),
+        allAnnotations: () => [mockAnnotation],
         countAnnotations: () => 1,
       }),
     })
@@ -74,26 +74,23 @@ describe('AnnotationTable', () => {
       global: {
         plugins: [store, router, ElementPlus],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
-      props: propsData
-    });
+      props: propsData,
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
-  });
+    expect(wrapper.html()).toMatchSnapshot()
+  })
 
-
-  it('should match snapshot when loading snapshot', async() => {
+  it('should match snapshot when loading snapshot', async () => {
     const graphqlMockClient = await initMockGraphqlClient({
       Query: () => ({
-          allAnnotations: () => ([
-            mockAnnotation,
-          ]),
-          countAnnotations: () => 1,
+        allAnnotations: () => [mockAnnotation],
+        countAnnotations: () => 1,
       }),
     })
     await router.replace({
@@ -107,20 +104,19 @@ describe('AnnotationTable', () => {
       global: {
         plugins: [store, router, ElementPlus],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
-      props: propsData
-    });
+      props: propsData,
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
-  });
+    expect(wrapper.html()).toMatchSnapshot()
+  })
 
-
-  it('should be able to export a CSV', async() => {
+  it('should be able to export a CSV', async () => {
     const graphqlMockClient = await initMockGraphqlClient({
       Query: () => ({
         allAnnotations: (_: any, params: any) => {
@@ -141,17 +137,17 @@ describe('AnnotationTable', () => {
       global: {
         plugins: [store, router, ElementPlus],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
-      props: propsData
-    });
+      props: propsData,
+    })
 
     wrapper.vm.state.csvChunkSize = 2
-    await new Promise(resolve => setTimeout(resolve, 1))
+    await new Promise((resolve) => setTimeout(resolve, 1))
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
     await (wrapper.vm as any).startExport()
     expect(FileSaver.saveAs).toBeCalled()
@@ -160,7 +156,5 @@ describe('AnnotationTable', () => {
     const csvWithoutDateHeader = csv.replace(/# Generated at .*\n/, '')
 
     expect(csvWithoutDateHeader).toMatchSnapshot()
-  });
-
-
-});
+  })
+})

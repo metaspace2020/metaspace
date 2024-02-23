@@ -15,15 +15,16 @@ export const setLocalStorage = (key: string, value: any, cookieFallback = false)
     if (cookieFallback) {
       try {
         cookies.set('storage_' + key, json, 90 * DAY)
-      } catch (err2) { console.error(err2) }
+      } catch (err2) {
+        console.error(err2)
+      }
     }
   }
 }
 
-export const getLocalStorage = <T>(key: string): (T | undefined) => {
+export const getLocalStorage = <T>(key: string): T | undefined => {
   try {
-    const json = localStorage.getItem(key) || memoryStorage[key]
-      || JSON.stringify(cookies.get('storage_' + key))
+    const json = localStorage.getItem(key) || memoryStorage[key] || JSON.stringify(cookies.get('storage_' + key))
     return json && safeJsonParse(json)
   } catch (err) {
     console.error(err)
@@ -35,10 +36,14 @@ export const removeLocalStorage = (key: string) => {
   delete memoryStorage[key]
   try {
     localStorage.removeItem(key)
-  } catch (err) { console.error(err) }
+  } catch (err) {
+    console.error(err)
+  }
   try {
     cookies.remove('storage_' + key)
-  } catch (err) { console.error(err) }
+  } catch (err) {
+    console.error(err)
+  }
 }
 
 export const migrateLocalStorage = () => {
@@ -55,13 +60,19 @@ export const migrateLocalStorage = () => {
         setLocalStorage('hideReleaseNotes', hideReleaseNotes, true)
         cookies.remove('hideReleaseNotes')
       }
-    } catch (err) { console.error(err) }
+    } catch (err) {
+      console.error(err)
+    }
     try {
       const showDescrHint = cookies.get('show_descr_hint') as any
       if (showDescrHint != null) {
         setLocalStorage('hideMarkdownHint', showDescrHint === 0, true)
         cookies.remove('show_descr_hint')
       }
-    } catch (err) { console.error(err) }
-  } catch (err) { console.error(err) }
+    } catch (err) {
+      console.error(err)
+    }
+  } catch (err) {
+    console.error(err)
+  }
 }

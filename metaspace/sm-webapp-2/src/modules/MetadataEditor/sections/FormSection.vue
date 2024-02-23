@@ -1,34 +1,20 @@
 <template>
   <div class="metadata-section">
-    <el-form
-      class="flex"
-      size="default"
-      label-position="top"
-    >
+    <el-form class="flex" size="default" label-position="top">
       <el-col :span="6">
         <div class="metadata-section__title">
           {{ section?.title }}
-          <el-popover
-            v-if="section?.help"
-            trigger="hover"
-            placement="top"
-          >
+          <el-popover v-if="section?.help" trigger="hover" placement="top">
             <p>{{ section?.help }}</p>
             <template #reference>
-              <i
-                class="el-icon-question metadata-help-icon"
-              />
+              <i class="el-icon-question metadata-help-icon" />
             </template>
           </el-popover>
         </div>
       </el-col>
       <el-col :span="18">
         <el-row :gutter="8">
-          <el-col
-            v-for="(field, fieldKey) in section?.properties"
-            :key="fieldKey"
-            :span="field.smEditorColWidth"
-          >
+          <el-col v-for="(field, fieldKey) in section?.properties" :key="fieldKey" :span="field.smEditorColWidth">
             <form-field
               :type="field.smEditorType"
               :name="field.title"
@@ -40,7 +26,7 @@
               :required="section?.required && section?.required.includes(fieldKey)"
               :placeholder="field.description"
               :fetch-suggestions="fetchSuggestionsFunc(fieldKey)"
-              @input="val => onInput([sectionKey, fieldKey], val)"
+              @input="(val) => onInput([sectionKey, fieldKey], val)"
             />
           </el-col>
         </el-row>
@@ -50,12 +36,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
-import { memoize } from 'lodash-es';
-import FormField from '../inputs/FormField.vue';
-import { FormSectionProperty } from '../formStructure';
-import {ElCol, ElForm, ElPopover, ElRow} from "element-plus";
-import './FormSection.scss';
+import { defineComponent, PropType } from 'vue'
+import { memoize } from 'lodash-es'
+import FormField from '../inputs/FormField.vue'
+import { FormSectionProperty } from '../formStructure'
+import { ElCol, ElForm, ElPopover, ElRow } from 'element-plus'
+import './FormSection.scss'
 
 export default defineComponent({
   name: 'FormSection',
@@ -69,40 +55,40 @@ export default defineComponent({
   props: {
     sectionKey: {
       type: String as PropType<string>,
-      required: true
+      required: true,
     },
     section: {
       type: Object as PropType<FormSectionProperty>,
-      required: true
+      required: true,
     },
     value: {
       type: Object as PropType<Record<string, any>>,
-      required: true
+      required: true,
     },
     error: {
       type: Object as PropType<Record<string, any>>,
-      default: () => ({})
+      default: () => ({}),
     },
     getSuggestionsForField: {
       type: Function as PropType<(q: string, cb: any, ...path: string[]) => void>,
-      required: true
-    }
+      required: true,
+    },
   },
   setup(props, { emit }) {
     const fetchSuggestionsFunc = memoize((fieldKey: string) => {
       return (q: string, cb: any) => {
-        props.getSuggestionsForField(q, cb, props.sectionKey, fieldKey);
-      };
-    });
+        props.getSuggestionsForField(q, cb, props.sectionKey, fieldKey)
+      }
+    })
 
     const onInput = (path: string[], val: string) => {
-      emit('input', path, val);
-    };
+      emit('input', path, val)
+    }
 
     return {
       fetchSuggestionsFunc,
-      onInput
-    };
-  }
-});
+      onInput,
+    }
+  },
+})
 </script>

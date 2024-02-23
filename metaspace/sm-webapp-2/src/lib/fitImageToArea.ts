@@ -1,25 +1,24 @@
-
 export interface FitImageToAreaArgs {
-  imageWidth: number;
-  imageHeight: number;
-  areaWidth: number;
-  areaHeight: number;
+  imageWidth: number
+  imageHeight: number
+  areaWidth: number
+  areaHeight: number
   // Provide areaMinWidth/areaMinHeight if the area is able to shrink. Otherwise leave undefined for a constant size.
-  areaMinWidth?: number;
-  areaMinHeight?: number;
-  minZoom?: number;
-  maxZoom?: number;
-  mode?: 'contain' | 'cover';
+  areaMinWidth?: number
+  areaMinHeight?: number
+  minZoom?: number
+  maxZoom?: number
+  mode?: 'contain' | 'cover'
 }
 
 export interface FitImageToAreaResult {
-  imageX: number;
-  imageY: number;
-  imageWidth: number;
-  imageHeight: number;
-  imageZoom: number;
-  areaWidth: number;
-  areaHeight: number;
+  imageX: number
+  imageY: number
+  imageWidth: number
+  imageHeight: number
+  imageZoom: number
+  areaWidth: number
+  areaHeight: number
 }
 
 const clip = (val: number, min?: number | null, max?: number | null) => {
@@ -35,7 +34,7 @@ const fitImageToArea = (args: FitImageToAreaArgs): FitImageToAreaResult => {
   const isTall = imageAspect < areaAspect
   let imageZoom
 
-  if (isTall && mode === 'contain' || !isTall && mode === 'cover') {
+  if ((isTall && mode === 'contain') || (!isTall && mode === 'cover')) {
     imageZoom = areaHeight / imageHeight
   } else {
     imageZoom = areaWidth / imageWidth

@@ -1,10 +1,5 @@
 <template>
-  <tag-filter
-    :name="name"
-    :removable="removable"
-    :help-component="helpComponent"
-    @destroy="destroy"
-  >
+  <tag-filter :name="name" :removable="removable" :help-component="helpComponent" @destroy="destroy">
     <template v-slot:edit>
       <el-select
         :filterable="filterable"
@@ -34,13 +29,13 @@
 <script lang="ts">
 import { defineComponent, ref, watch } from 'vue'
 import TagFilter from './TagFilter.vue'
-import {ElSelect, ElOption} from "element-plus";
+import { ElSelect, ElOption } from 'element-plus'
 export default defineComponent({
   name: 'SingleSelectFilter',
   components: {
     TagFilter,
     ElSelect,
-    ElOption
+    ElOption,
   },
   props: {
     value: {
@@ -76,38 +71,41 @@ export default defineComponent({
   },
   emits: ['change', 'destroy'],
   setup(props, { emit }) {
-    const localValue = ref(props.value);
+    const localValue = ref(props.value)
 
-    watch(() => props.value, (newValue) => {
-      localValue.value = newValue;
-    });
+    watch(
+      () => props.value,
+      (newValue) => {
+        localValue.value = newValue
+      }
+    )
 
     const onChange = (val: any) => {
-      emit('change', val);
-    };
+      emit('change', val)
+    }
 
     const formatOption = (option: any): string => {
       if (props.optionFormatter) {
-        return props.optionFormatter(option, props.options);
+        return props.optionFormatter(option, props.options)
       } else {
-        return option + '';
+        return option + ''
       }
-    };
+    }
 
     const formatValue = (value: any): string => {
       if (props.valueGetter) {
-        const option = props.options.find(opt => props.valueGetter!(opt) === value);
-        return option != null ? formatOption(option) : value;
+        const option = props.options.find((opt) => props.valueGetter!(opt) === value)
+        return option != null ? formatOption(option) : value
       } else {
-        return value != null ? formatOption(value) : value;
+        return value != null ? formatOption(value) : value
       }
-    };
+    }
 
     const destroy = () => {
-      emit('destroy');
-    };
+      emit('destroy')
+    }
 
-    return { localValue, onChange, formatOption, formatValue, destroy };
+    return { localValue, onChange, formatOption, formatValue, destroy }
   },
-});
+})
 </script>

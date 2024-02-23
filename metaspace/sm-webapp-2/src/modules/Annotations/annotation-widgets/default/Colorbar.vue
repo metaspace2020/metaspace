@@ -3,12 +3,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed } from 'vue'
 // @ts-ignore
-import { PropType } from 'vue';
-import getColorScale from '../../../../lib/getColorScale';
-import { IonImage, renderScaleBar } from '../../../../lib/ionImageRendering';
-import createColormap from '../../../../lib/createColormap';
+import { PropType } from 'vue'
+import getColorScale from '../../../../lib/getColorScale'
+import { IonImage, renderScaleBar } from '../../../../lib/ionImageRendering'
+import createColormap from '../../../../lib/createColormap'
 
 export default defineComponent({
   name: 'color-bar',
@@ -29,25 +29,25 @@ export default defineComponent({
   setup(props) {
     const computedStyle = computed(() => {
       if (props.ionImage) {
-        const cmap = createColormap(props.map);
+        const cmap = createColormap(props.map)
         return {
           backgroundImage: `url(${renderScaleBar(props.ionImage, cmap, props.horizontal)})`,
           backgroundSize: 'contain',
           backgroundRepeat: 'repeat-x',
-        };
+        }
       } else {
-        const { domain, range } = getColorScale(props.map);
-        const direction = props.map[0] === '-' ? 'bottom' : 'top';
+        const { domain, range } = getColorScale(props.map)
+        const direction = props.map[0] === '-' ? 'bottom' : 'top'
 
-        const colors = domain.map((d, i) => `${range[i]} ${d * 100}%`);
+        const colors = domain.map((d, i) => `${range[i]} ${d * 100}%`)
 
         return {
           background: `linear-gradient(to ${props.horizontal ? 'right' : direction}, ${colors.join(', ')})`,
-        };
+        }
       }
-    });
+    })
 
-    return { computedStyle };
+    return { computedStyle }
   },
-});
+})
 </script>

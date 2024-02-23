@@ -1,11 +1,11 @@
-import { defineComponent, reactive, ref } from 'vue';
-import { ElInput, ElTooltip, ElButton } from 'element-plus';
-import copyToClipboard from '../../lib/copyToClipboard';
-import {DocumentCopy} from "@element-plus/icons-vue";
+import { defineComponent, reactive, ref } from 'vue'
+import { ElInput, ElTooltip, ElButton } from 'element-plus'
+import copyToClipboard from '../../lib/copyToClipboard'
+import { DocumentCopy } from '@element-plus/icons-vue'
 
 interface Props {
-  value: string;
-  type: string;
+  value: string
+  type: string
 }
 
 export default defineComponent({
@@ -21,23 +21,23 @@ export default defineComponent({
     const state = reactive({
       copied: false,
       focussed: false,
-    });
+    })
 
-    const inputRef = ref<InstanceType<typeof ElInput>>();
+    const inputRef = ref<InstanceType<typeof ElInput>>()
 
     const handleCopy = () => {
-      copyToClipboard(props.value);
-      state.copied = true;
-    };
+      copyToClipboard(props.value)
+      state.copied = true
+    }
 
     const handleFocus = () => {
-      inputRef.value?.select();
-      state.focussed = true;
-    };
+      inputRef.value?.select()
+      state.focussed = true
+    }
 
     const handleBlur = () => {
-      state.focussed = false;
-    };
+      state.focussed = false
+    }
 
     return () => (
       <ElInput
@@ -50,24 +50,24 @@ export default defineComponent({
       >
         {{
           append: () => (
-            <ElTooltip
-              visible={state.copied}
-              content="Copied!"
-              placement="right"
-            >
+            <ElTooltip visible={state.copied} content="Copied!" placement="right">
               <ElButton
                 icon={DocumentCopy}
                 onClick={handleCopy}
-                onMouseleave={() => { state.copied = false; }}
+                onMouseleave={() => {
+                  state.copied = false
+                }}
                 {...{
-                  onMouseleave: () => { state.copied = false; },
-                  title: 'Copy to clipboard'
+                  onMouseleave: () => {
+                    state.copied = false
+                  },
+                  title: 'Copy to clipboard',
                 }}
               />
             </ElTooltip>
           ),
         }}
       </ElInput>
-    );
+    )
   },
-});
+})

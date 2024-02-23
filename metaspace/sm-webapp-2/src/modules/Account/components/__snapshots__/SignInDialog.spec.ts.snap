@@ -44,7 +44,7 @@ exports[`SignInDialog > should match snapshot 1`] = `
     </div>
     <div data-v-86c49142=\\"\\" class=\\"mid\\">
       <div data-v-86c49142=\\"\\" class=\\"divider\\"></div>
-      <div data-v-86c49142=\\"\\" class=\\"text\\"> or </div>
+      <div data-v-86c49142=\\"\\" class=\\"text\\">or</div>
       <div data-v-86c49142=\\"\\" class=\\"divider\\"></div>
     </div>
     <div data-v-86c49142=\\"\\" class=\\"right-side\\"><a data-v-86c49142=\\"\\" class=\\"google-button\\" href=\\"/api_auth/google\\">
@@ -66,7 +66,7 @@ exports[`SignInDialog > should match snapshot 1`] = `
       </a></div>
   </div>
   <p data-v-86c49142=\\"\\"><a data-v-86c49142=\\"\\" href=\\"/account/forgot-password\\"> Forgot password? </a></p>
-  <p data-v-86c49142=\\"\\"> New user? <a data-v-86c49142=\\"\\" href=\\"/account/create-account\\"> Create an account </a></p>
+  <p data-v-86c49142=\\"\\">New user? <a data-v-86c49142=\\"\\" href=\\"/account/create-account\\"> Create an account </a></p>
   <p data-v-86c49142=\\"\\" style=\\"margin-bottom: 0px;\\"> Submitted data previously but never set a password? <a data-v-86c49142=\\"\\" href=\\"#\\">Click here</a></p>
   <!---->
 </div>"

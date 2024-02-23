@@ -1,8 +1,8 @@
 /* eslint-disable */
-import { AssertContext } from 'vitest';
+import { AssertContext } from 'vitest'
 
 declare module 'vitest' {
   interface AssertContext {
-    toMatchSnapshot(): void;
+    toMatchSnapshot(): void
   }
 }

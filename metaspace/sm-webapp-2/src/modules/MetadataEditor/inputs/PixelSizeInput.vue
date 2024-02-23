@@ -1,62 +1,35 @@
 <template>
   <el-row>
-    <el-col
-      class="subfield"
-      :span="12"
-    >
-      <el-form-item
-        :class="{'is-error': error && error.Xaxis}"
-        required
-      >
-        <custom-number-input
-          :value="value.Xaxis"
-          @input="val => onInput('Xaxis', val)"
-        />
-        <div class="subfield-label">
-          horizontal
-        </div>
-        <span
-          v-if="error && error.Xaxis"
-          class="error-msg"
-        >{{ error.Xaxis }}</span>
+    <el-col class="subfield" :span="12">
+      <el-form-item :class="{ 'is-error': error && error.Xaxis }" required>
+        <custom-number-input :value="value.Xaxis" @input="(val) => onInput('Xaxis', val)" />
+        <div class="subfield-label">horizontal</div>
+        <span v-if="error && error.Xaxis" class="error-msg">{{ error.Xaxis }}</span>
       </el-form-item>
     </el-col>
-    <el-col
-      class="subfield"
-      :span="12"
-    >
-      <el-form-item
-        :class="{'is-error': error && error.Yaxis}"
-        required
-      >
-        <custom-number-input
-          :value="value.Yaxis"
-          :required="required"
-          @input="val => onInput('Yaxis', val)"
-        />
-        <div class="subfield-label">
-          vertical
-        </div>
-        <span
-          v-if="error && error.Yaxis"
-          class="error-msg"
-        >{{ error.Yaxis }}</span>
+    <el-col class="subfield" :span="12">
+      <el-form-item :class="{ 'is-error': error && error.Yaxis }" required>
+        <custom-number-input :value="value.Yaxis" :required="required" @input="(val) => onInput('Yaxis', val)" />
+        <div class="subfield-label">vertical</div>
+        <span v-if="error && error.Yaxis" class="error-msg">{{ error.Yaxis }}</span>
       </el-form-item>
     </el-col>
   </el-row>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
-import CustomNumberInput from './CustomNumberInput.vue';
-import { PixelSize } from '../formStructure';
-import {ElCol, ElRow, ElFormItem} from "element-plus";
+import { defineComponent, PropType } from 'vue'
+import CustomNumberInput from './CustomNumberInput.vue'
+import { PixelSize } from '../formStructure'
+import { ElCol, ElRow, ElFormItem } from 'element-plus'
 
 export default defineComponent({
   name: 'PixelSizeInput',
   components: {
     CustomNumberInput,
-    ElCol, ElRow, ElFormItem,
+    ElCol,
+    ElRow,
+    ElFormItem,
   },
   props: {
     value: {
@@ -78,19 +51,19 @@ export default defineComponent({
       const newValue = {
         ...props.value,
         [fieldName]: value,
-      };
-      emit('input', newValue);
-    };
+      }
+      emit('input', newValue)
+    }
 
     return {
       onInput,
-    };
+    }
   },
-});
+})
 </script>
 
 <style>
-  .fw-num {
-    width: 100%;
-  }
+.fw-num {
+  width: 100%;
+}
 </style>

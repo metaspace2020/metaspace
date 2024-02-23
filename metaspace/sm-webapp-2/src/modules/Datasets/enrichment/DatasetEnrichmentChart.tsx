@@ -1,15 +1,9 @@
-import {computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch} from 'vue'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 // @ts-ignore
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
-import {
-  CanvasRenderer,
-} from 'echarts/renderers'
-import {
-  BarChart,
-  LineChart,
-  CustomChart,
-} from 'echarts/charts'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart, LineChart, CustomChart } from 'echarts/charts'
 import {
   GridComponent,
   TooltipComponent,
@@ -22,8 +16,8 @@ import {
 } from 'echarts/components'
 import './DatasetEnrichmentChart.scss'
 import getColorScale from '../../../lib/getColorScale'
-import {ElIcon} from "element-plus";
-import {InfoFilled, Loading} from "@element-plus/icons-vue";
+import { ElIcon } from 'element-plus'
+import { InfoFilled, Loading } from '@element-plus/icons-vue'
 
 use([
   CanvasRenderer,
@@ -136,7 +130,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
           inRange: {
             color: ['#65B581', '#FFCE34', '#FD665F'],
           },
-          formatter: function(value: any) {
+          formatter: function (value: any) {
             return value.toFixed(2)
           },
         },
@@ -168,7 +162,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
             itemStyle: {
               borderWidth: 1.5,
             },
-            renderItem: (params : any, api : any) => {
+            renderItem: (params: any, api: any) => {
               const xValue = api.value(0)
               const highPoint = api.coord([api.value(1), xValue])
               const lowPoint = api.coord([api.value(2), xValue])
@@ -176,7 +170,7 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
               const style = {
                 stroke: 'black',
                 fill: undefined,
-              };
+              }
               return {
                 type: 'group',
                 children: [
@@ -229,30 +223,24 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
         return state.chartOptions
       }
 
-      let maxX : number = 0
-      const barData : any = []
+      let maxX: number = 0
+      const barData: any = []
       const chartOptions = state.chartOptions
-      const categoryData : string[] = []
-      const errorData : any = []
-      const rawData : any = chartData.value
+      const categoryData: string[] = []
+      const errorData: any = []
+      const rawData: any = chartData.value
 
-      rawData
-        .reverse()
-        .forEach((item: any, index: number) => {
-          const intensity : number = item.qValue === 0 ? 0 : Math.min(10, -Math.log10(item.qValue))
+      rawData.reverse().forEach((item: any, index: number) => {
+        const intensity: number = item.qValue === 0 ? 0 : Math.min(10, -Math.log10(item.qValue))
 
-          categoryData.push(item.name)
-          errorData.push([
-            index,
-            item.median - item.std,
-            item.median + item.std,
-          ])
-          barData.push({ value: [item.median, index, intensity], label: item })
+        categoryData.push(item.name)
+        errorData.push([index, item.median - item.std, item.median + item.std])
+        barData.push({ value: [item.median, index, intensity], label: item })
 
-          if (item.median + item.std > maxX) {
-            maxX = Math.ceil(item.median + item.std)
-          }
-        })
+        if (item.median + item.std > maxX) {
+          maxX = Math.ceil(item.median + item.std)
+        }
+      })
 
       chartOptions.yAxis.data = categoryData
       chartOptions.xAxis.max = maxX
@@ -264,16 +252,20 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
       return chartOptions
     })
 
-
-    watch(() => chartOptions, () => {
-      if(!chartOptions.value.yAxis.data) return
-      const newSize = chartOptions.value.yAxis.data.length * 30
-      state.size = newSize < 600 ? 600 : newSize
-      setTimeout(() => { handleChartResize() }, 100)
-    })
+    watch(
+      () => chartOptions,
+      () => {
+        if (!chartOptions.value.yAxis.data) return
+        const newSize = chartOptions.value.yAxis.data.length * 30
+        state.size = newSize < 600 ? 600 : newSize
+        setTimeout(() => {
+          handleChartResize()
+        }, 100)
+      }
+    )
 
     const handleChartResize = () => {
-      const chartRef : any = spectrumChart.value
+      const chartRef: any = spectrumChart.value
       if (chartRef && chartRef.chart) {
         chartRef.resize()
       }
@@ -309,10 +301,12 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
 
     const renderEmptySpectrum = () => {
       return (
-        <div class='dataset-browser-empty-spectrum'>
-          <ElIcon class="info-icon mr-6"><InfoFilled/></ElIcon>
-          <div class='flex flex-col text-xs w-3/4'>
-            <p class='font-semibold mb-2'>Steps:</p>
+        <div class="dataset-browser-empty-spectrum">
+          <ElIcon class="info-icon mr-6">
+            <InfoFilled />
+          </ElIcon>
+          <div class="flex flex-col text-xs w-3/4">
+            <p class="font-semibold mb-2">Steps:</p>
             <p>1 - Select a pixel on the image viewer</p>
             <p>2 - Apply the filter you desire</p>
             <p>3 - The interaction is multi-way, so you can also update the ion image via spectrum interaction</p>
@@ -325,25 +319,26 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
       const { isLoading, isDataLoading } = props
 
       return (
-        <div class='chart-holder relative'
-          style={{ height: `${state.size}px` }}>
-          {
-            (isLoading || isDataLoading)
-            && <div class='loader-holder'>
+        <div class="chart-holder relative" style={{ height: `${state.size}px` }}>
+          {(isLoading || isDataLoading) && (
+            <div class="loader-holder">
               <div>
-                <ElIcon class="is-loading"><Loading/></ElIcon>
+                <ElIcon class="is-loading">
+                  <Loading />
+                </ElIcon>
               </div>
             </div>
-          }
+          )}
           <ECharts
             ref={spectrumChart}
             autoResize={true}
-            {...{'onZr:dblclick': handleZoomReset}}
+            {...{ 'onZr:dblclick': handleZoomReset }}
             onClick={handleItemSelect}
-            class='chart'
+            class="chart"
             style={{ height: `${state.size}px` }}
-            option={chartOptions.value}/>
-          <span class='heat-text'>-10log10Pvalue</span>
+            option={chartOptions.value}
+          />
+          <span class="heat-text">-10log10Pvalue</span>
         </div>
       )
     }
@@ -353,14 +348,8 @@ export const DatasetEnrichmentChart = defineComponent<DatasetEnrichmentChartProp
 
       return (
         <div class={'dataset-enrichment-chart-container'}>
-          {
-            isEmpty && !isLoading
-            && renderEmptySpectrum()
-          }
-          {
-            (!isEmpty || isLoading)
-            && renderSpectrum()
-          }
+          {isEmpty && !isLoading && renderEmptySpectrum()}
+          {(!isEmpty || isLoading) && renderSpectrum()}
         </div>
       )
     }

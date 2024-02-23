@@ -1,12 +1,12 @@
-import {flushPromises, mount} from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { ElButton, ElCheckbox } from 'element-plus'
-import {nextTick, ref} from 'vue'
+import { nextTick, ref } from 'vue'
 import TransferDatasetsDialog from './TransferDatasetsDialog.vue'
 import router from '../../router'
-import {initMockGraphqlClient} from "../../tests/utils/mockGraphqlClient";
-import {DefaultApolloClient, useQuery} from "@vue/apollo-composable";
-import {vi} from "vitest";
-import store from "../../store";
+import { initMockGraphqlClient } from '../../tests/utils/mockGraphqlClient'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
+import { vi } from 'vitest'
+import store from '../../store'
 
 let graphqlMocks
 
@@ -24,7 +24,7 @@ const mockProps = {
 const stubs = {
   DatasetItem: {
     template: '<div class="mock-ds-item"><slot></slot></div>',
-    props: ['dataset']
+    props: ['dataset'],
   },
   ElTable: {
     template: '<div class="mock-el-table"><slot></slot></div>',
@@ -39,27 +39,27 @@ const stubs = {
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),
   DefaultApolloClient: vi.fn(),
-}));
+}))
 const mockGraphql = async (params) => {
   graphqlMocks = await initMockGraphqlClient({
-    Query: () => (params),
-  });
-
-  (useQuery as any).mockReturnValue({
+    Query: () => params,
+  })
+  ;(useQuery as any).mockReturnValue({
     result: ref(Object.keys(params).reduce((acc, key) => ({ ...acc, [key]: params[key]() }), {})),
     loading: ref(false),
     onResult: vi.fn(),
-  });
-};
+  })
+}
 describe('TransferDatasetsDialog', () => {
-
-  [false, true].forEach(hasDatasets => {
-    [false, true].forEach(isInvited => {
-      it(`should match snapshot (${hasDatasets ? 'datasets to import' : 'no datasets'}, ${isInvited ? 'invited' : 'requesting access'})`, async () => {
+  ;[false, true].forEach((hasDatasets) => {
+    ;[false, true].forEach((isInvited) => {
+      it(`should match snapshot (${hasDatasets ? 'datasets to import' : 'no datasets'}, ${
+        isInvited ? 'invited' : 'requesting access'
+      })`, async () => {
         if (hasDatasets) {
-          await mockGraphql({allDatasets: () => (mockDatasets)})
-        }else{
-          await mockGraphql({allDatasets: () => ([])})
+          await mockGraphql({ allDatasets: () => mockDatasets })
+        } else {
+          await mockGraphql({ allDatasets: () => [] })
         }
         const props = { ...mockProps, isInvited }
         const wrapper = mount(TransferDatasetsDialog, {
@@ -67,7 +67,7 @@ describe('TransferDatasetsDialog', () => {
             plugins: [store, router],
             stubs,
             provide: {
-              [DefaultApolloClient]: graphqlMocks
+              [DefaultApolloClient]: graphqlMocks,
             },
           },
           props,
@@ -82,13 +82,13 @@ describe('TransferDatasetsDialog', () => {
   })
 
   it('should call back on success when some datasets are selected', async () => {
-    await mockGraphql({allDatasets: () => (mockDatasets)})
+    await mockGraphql({ allDatasets: () => mockDatasets })
     const wrapper = mount(TransferDatasetsDialog, {
       global: {
         plugins: [store, router],
         stubs,
         provide: {
-          [DefaultApolloClient]: graphqlMocks
+          [DefaultApolloClient]: graphqlMocks,
         },
       },
       props: mockProps,
@@ -100,12 +100,13 @@ describe('TransferDatasetsDialog', () => {
     await checkbox.trigger('click')
     await nextTick()
 
-    const primaryButton = wrapper.findAllComponents(ElButton).filter((b) => b.props().type === 'primary').at(0)
+    const primaryButton = wrapper
+      .findAllComponents(ElButton)
+      .filter((b) => b.props().type === 'primary')
+      .at(0)
     await primaryButton.trigger('click')
     await nextTick()
 
-    expect(wrapper.emitted('accept')).toEqual([
-      [mockDatasets.slice(1).map(ds => ds.id)],
-    ])
+    expect(wrapper.emitted('accept')).toEqual([[mockDatasets.slice(1).map((ds) => ds.id)]])
   })
 })

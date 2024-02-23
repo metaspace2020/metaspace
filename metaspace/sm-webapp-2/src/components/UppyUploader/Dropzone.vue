@@ -15,25 +15,16 @@
     @keyup="handleKeyup"
   >
     <slot>
-      <p class="m-0 font-medium pointer-events-none text-left p-3 mx-auto">
-        Drag and drop, or click to browse
-      </p>
+      <p class="m-0 font-medium pointer-events-none text-left p-3 mx-auto">Drag and drop, or click to browse</p>
     </slot>
-    <input
-      ref="input"
-      type="file"
-      hidden
-      :accept="accept"
-      :multiple="multiple"
-      @change="onInputChange"
-    />
+    <input ref="input" type="file" hidden :accept="accept" :multiple="multiple" @change="onInputChange" />
   </div>
 </template>
 <script lang="ts">
 import { defineComponent, reactive, ref } from 'vue'
 
 interface State {
-  dragover: boolean,
+  dragover: boolean
 }
 
 interface Props {
@@ -123,5 +114,4 @@ export default defineComponent({
     }
   },
 })
-
 </script>

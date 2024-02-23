@@ -1,14 +1,8 @@
 import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
-import {
-  CanvasRenderer,
-} from 'echarts/renderers'
-import {
-  BarChart,
-  ScatterChart,
-  LineChart,
-} from 'echarts/charts'
+import { CanvasRenderer } from 'echarts/renderers'
+import { BarChart, ScatterChart, LineChart } from 'echarts/charts'
 import {
   GridComponent,
   TooltipComponent,
@@ -23,8 +17,8 @@ import {
   MarkAreaComponent,
 } from 'echarts/components'
 import './DashboardScatterChart.scss'
-import {ElIcon} from "element-plus";
-import {Loading} from "@element-plus/icons-vue";
+import { ElIcon } from 'element-plus'
+import { Loading } from '@element-plus/icons-vue'
 
 use([
   CanvasRenderer,
@@ -146,10 +140,15 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         },
         tooltip: {
           position: 'top',
-          formatter: function(params: any) {
+          formatter: function (params: any) {
             const value = typeof params.value[4] === 'number' ? params.value[4] : params.value[3]
-            return (value || 0).toFixed(2) + ' '
-              + (params.data?.label?.y || '').replace(/-agg-/g, ' ') + ' in ' + (params.data?.label?.x || '')
+            return (
+              (value || 0).toFixed(2) +
+              ' ' +
+              (params.data?.label?.y || '').replace(/-agg-/g, ' ') +
+              ' in ' +
+              (params.data?.label?.x || '')
+            )
           },
         },
         grid: {
@@ -176,44 +175,43 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
             show: true,
             interval: 0,
             rotate: 30,
-            formatter: function(value :string) {
+            formatter: function (value: string) {
               return value?.length > 25 ? value.substring(0, 25) + '...' : value
             },
           },
           position: 'top',
         },
-        yAxis:
-          {
-            type: 'category',
-            data: [],
-            axisLine: {
-              show: false,
-            },
-            axisTick: {
-              show: false,
-            },
-            axisLabel: {
-              verticalAlign: 'middle',
-              show: true,
-              interval: 0,
-              fontFamily: 'monospace',
-              rich: {
-                b: {
-                  fontFamily: 'monospace',
-                  fontWeight: 'bold',
-                },
-                h: {
-                  fontFamily: 'monospace',
-                  color: '#fff',
-                },
+        yAxis: {
+          type: 'category',
+          data: [],
+          axisLine: {
+            show: false,
+          },
+          axisTick: {
+            show: false,
+          },
+          axisLabel: {
+            verticalAlign: 'middle',
+            show: true,
+            interval: 0,
+            fontFamily: 'monospace',
+            rich: {
+              b: {
+                fontFamily: 'monospace',
+                fontWeight: 'bold',
+              },
+              h: {
+                fontFamily: 'monospace',
+                color: '#fff',
               },
             },
           },
+        },
         series: {
           type: 'scatter',
           animation: false,
           markLine: {},
-          symbolSize: function(val: any) {
+          symbolSize: function (val: any) {
             return val[2] * 30
           },
           itemStyle: {
@@ -232,8 +230,8 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       }
 
       const auxOptions = state.chartOptions
-      const globalCategories : any = {}
-      const markData : any = []
+      const globalCategories: any = {}
+      const markData: any = []
       yAxisData.value.forEach((label: string, idx: number) => {
         const re = /(.+)\s-agg-\s(.+)/
         const found = label.match(re)
@@ -269,12 +267,12 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
 
       if (auxOptions.xAxis.data.length > 30) {
         auxOptions.xAxis.axisLabel.rotate = 90
-        auxOptions.series.symbolSize = function(val: any) {
+        auxOptions.series.symbolSize = function (val: any) {
           return val[2] * 10
         }
       } else {
         auxOptions.xAxis.axisLabel.rotate = 30
-        auxOptions.series.symbolSize = function(val: any) {
+        auxOptions.series.symbolSize = function (val: any) {
           return val[2] * 30
         }
       }
@@ -288,25 +286,23 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       }
 
       let maxLength = 0
-      auxOptions.yAxis.data = yAxisData.value
-        .map((label: string, index: number) => {
-          const re = /(.+)\s-agg-\s(.+)/
-          const cat = label.replace(re, '$1')
-          const value = label.replace(re, '$2')
+      auxOptions.yAxis.data = yAxisData.value.map((label: string, index: number) => {
+        const re = /(.+)\s-agg-\s(.+)/
+        const cat = label.replace(re, '$1')
+        const value = label.replace(re, '$2')
 
-          maxLength = (value.length + cat.length) > maxLength ? (value.length + cat.length) : maxLength
+        maxLength = value.length + cat.length > maxLength ? value.length + cat.length : maxLength
 
-          return globalCategories[cat] === index ? label : label.replace(/.+-agg-\s(.+)/, '$1')
-        })
+        return globalCategories[cat] === index ? label : label.replace(/.+-agg-\s(.+)/, '$1')
+      })
 
-      auxOptions.yAxis.axisLabel.formatter = function(label: any) {
+      auxOptions.yAxis.axisLabel.formatter = function (label: any) {
         const re = /(.+)\s-agg-\s(.+)/
         const found = label.match(re)
         const cat = label.replace(re, '$1')
         const value = label.replace(re, '$2')
         const repeat = maxLength - cat.length - value.length
-        return found ? `{b|${cat}}{h|${' '.repeat(repeat > 0 ? repeat : 0)}}${value}`
-          : value
+        return found ? `{b|${cat}}{h|${' '.repeat(repeat > 0 ? repeat : 0)}}${value}` : value
       }
 
       // add no Neutral label
@@ -324,13 +320,12 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
         auxOptions.visualMap = visualMap.value
       }
 
-
       return auxOptions
     })
 
     watch(chartOptions, () => {
       // reset visualmap range on data update
-      const chartRef : any = spectrumChart.value
+      const chartRef: any = spectrumChart.value
       setTimeout(() => {
         if (chartRef && chartRef.chart) {
           chartRef.chart.dispatchAction({
@@ -342,7 +337,7 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
     })
 
     const handleChartResize = () => {
-      const chartRef : any = spectrumChart.value
+      const chartRef: any = spectrumChart.value
       if (chartRef && chartRef.chart) {
         chartRef.chart.resize()
       }
@@ -357,10 +352,13 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
     })
 
     // set images and annotation related items when selected annotation changes
-    watch(() => props.size, async() => {
-      state.size = props.size < 600 ? 600 : props.size
-      setTimeout(() => handleChartResize(), 500)
-    })
+    watch(
+      () => props.size,
+      async () => {
+        state.size = props.size < 600 ? 600 : props.size
+        setTimeout(() => handleChartResize(), 500)
+      }
+    )
 
     const handleZoomReset = () => {
       if (spectrumChart.value) {
@@ -385,34 +383,31 @@ export const DashboardScatterChart = defineComponent<DashboardScatterChartProps>
       const { isLoading, isDataLoading } = props
 
       return (
-        <div class='chart-holder'
-          style={{ height: `${state.size}px`, width: '100%' }}>
-          {
-            (isLoading || isDataLoading)
-            && <div class='loader-holder'>
+        <div class="chart-holder" style={{ height: `${state.size}px`, width: '100%' }}>
+          {(isLoading || isDataLoading) && (
+            <div class="loader-holder">
               <div>
-                <ElIcon class="is-loading"><Loading/></ElIcon>
+                <ElIcon class="is-loading">
+                  <Loading />
+                </ElIcon>
               </div>
             </div>
-          }
+          )}
           <ECharts
             ref={spectrumChart}
             autoResize={true}
-            {...{'onZr:dblclick': handleZoomReset}}
+            {...{ 'onZr:dblclick': handleZoomReset }}
             onClick={handleItemSelect}
-            class='chart'
+            class="chart"
             style={{ height: `${state.size}px`, width: '100%' }}
-            option={chartOptions.value}/>
+            option={chartOptions.value}
+          />
         </div>
       )
     }
 
     return () => {
-      return (
-        <div class={'dataset-browser-scatter-container'}>
-          {renderSpectrum()}
-        </div>
-      )
+      return <div class={'dataset-browser-scatter-container'}>{renderSpectrum()}</div>
     }
   },
 })

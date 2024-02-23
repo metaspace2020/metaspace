@@ -1,20 +1,20 @@
-import {defineComponent, h, nextTick, ref} from 'vue';
-import { mount, flushPromises } from '@vue/test-utils';
-import {initMockGraphqlClient} from "../../tests/utils/mockGraphqlClient";
-import { vi } from 'vitest';
-import {DefaultApolloClient, useMutation, useQuery} from "@vue/apollo-composable";
-import router from "../../router";
-import store from "../../store";
-import MolecularDatabases from "./MolecularDatabases";
-import {mockMolecularDatabases} from "../../tests/utils/mockGraphqlData";
+import { defineComponent, h, nextTick, ref } from 'vue'
+import { mount, flushPromises } from '@vue/test-utils'
+import { initMockGraphqlClient } from '../../tests/utils/mockGraphqlClient'
+import { vi } from 'vitest'
+import { DefaultApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
+import router from '../../router'
+import store from '../../store'
+import MolecularDatabases from './MolecularDatabases'
+import { mockMolecularDatabases } from '../../tests/utils/mockGraphqlData'
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),
   useMutation: vi.fn(),
   useSubscription: vi.fn(() => ({ onResult: vi.fn() })),
   DefaultApolloClient: vi.fn(),
-}));
-let graphqlMocks: any;
+}))
+let graphqlMocks: any
 
 describe('MolecularDatabases', () => {
   const mockDatabases = mockMolecularDatabases()
@@ -49,21 +49,18 @@ describe('MolecularDatabases', () => {
   const mockDatabaseFn = vi.fn((): any => mockDatabase)
   const mockGraphql = async (params) => {
     graphqlMocks = await initMockGraphqlClient({
-      Query: () => (params),
-    });
-
-    (useQuery as any).mockReturnValue({
+      Query: () => params,
+    })
+    ;(useQuery as any).mockReturnValue({
       result: ref(Object.keys(params).reduce((acc, key) => ({ ...acc, [key]: params[key]() }), {})),
       loading: ref(false),
-      refetch:  vi.fn(),
+      refetch: vi.fn(),
       onResult: vi.fn(),
-    });
-
-    (useMutation as any).mockReturnValue({
+    })
+    ;(useMutation as any).mockReturnValue({
       mutate: vi.fn(),
-    });
-  };
-
+    })
+  }
 
   const TestMolecularDatabases = defineComponent({
     components: {
@@ -71,99 +68,99 @@ describe('MolecularDatabases', () => {
     },
     props: ['groupId', 'canDelete'],
     setup(props) {
-      return () => h(MolecularDatabases, { ...props });
+      return () => h(MolecularDatabases, { ...props })
     },
-  });
+  })
 
   const propsData = { groupId: mockGroup.id }
 
-  beforeEach(async() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
     await mockGraphql({
       currentUser: () => ({ id: 'userid' }),
       group: () => mockGroup,
       molecularDB: mockDatabaseFn,
-    });
+    })
   })
 
-  it('should match snapshot', async() => {
+  it('should match snapshot', async () => {
     const wrapper = mount(TestMolecularDatabases, {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMocks
+          [DefaultApolloClient]: graphqlMocks,
         },
       },
-      props: propsData
-    });
+      props: propsData,
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
+    expect(wrapper.html()).toMatchSnapshot()
   })
 
   describe('details view', () => {
-    beforeEach(async() => {
+    beforeEach(async () => {
       await router.replace({ query: { tab: 'databases', db: mockDatabase.id.toString() } })
     })
 
-    it('should match snapshot', async() => {
+    it('should match snapshot', async () => {
       const wrapper = mount(TestMolecularDatabases, {
         global: {
           plugins: [store, router],
           provide: {
-            [DefaultApolloClient]: graphqlMocks
+            [DefaultApolloClient]: graphqlMocks,
           },
         },
-        props: propsData
-      });
+        props: propsData,
+      })
 
-      await flushPromises();
-      await nextTick();
+      await flushPromises()
+      await nextTick()
 
-      expect(wrapper.html()).toMatchSnapshot();
+      expect(wrapper.html()).toMatchSnapshot()
     })
 
-    it('should match snapshot (archived)', async() => {
+    it('should match snapshot (archived)', async () => {
       await mockGraphql({
         currentUser: () => ({ id: 'userid' }),
         group: () => mockGroup,
-        molecularDB:  vi.fn(() => ({ ...mockDatabase, archived: true })),
-      });
+        molecularDB: vi.fn(() => ({ ...mockDatabase, archived: true })),
+      })
       const wrapper = mount(TestMolecularDatabases, {
         global: {
           plugins: [store, router],
           provide: {
-            [DefaultApolloClient]: graphqlMocks
+            [DefaultApolloClient]: graphqlMocks,
           },
         },
-        props: propsData
-      });
+        props: propsData,
+      })
 
-      await flushPromises();
-      await nextTick();
+      await flushPromises()
+      await nextTick()
 
-      expect(wrapper.html()).toMatchSnapshot();
+      expect(wrapper.html()).toMatchSnapshot()
     })
 
-    it('should match snapshot (manager)', async() => {
+    it('should match snapshot (manager)', async () => {
       initMockGraphqlClient(graphqlMocks)
       const _propsData = { ...propsData, canDelete: true }
       const wrapper = mount(TestMolecularDatabases, {
         global: {
           plugins: [store, router],
           provide: {
-            [DefaultApolloClient]: graphqlMocks
+            [DefaultApolloClient]: graphqlMocks,
           },
         },
-        props: _propsData
-      });
+        props: _propsData,
+      })
 
-      await flushPromises();
-      await nextTick();
+      await flushPromises()
+      await nextTick()
 
-      expect(wrapper.html()).toMatchSnapshot();
+      expect(wrapper.html()).toMatchSnapshot()
     })
   })
 })

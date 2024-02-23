@@ -5,15 +5,15 @@ import { RichTextArea } from '../../components/RichText'
 
 import { MolecularDB, MolecularDBDetails, UpdateDatabaseDetailsMutation } from '../../api/moldb'
 import { formatDatabaseLabel, getDatabaseDetails } from './formatting'
-import {ElMessage, ElInput} from "element-plus";
+import { ElMessage, ElInput } from 'element-plus'
 
 interface State {
-  model: MolecularDBDetails,
-  loading: boolean,
+  model: MolecularDBDetails
+  loading: boolean
 }
 
 interface Props {
-  db: MolecularDB,
+  db: MolecularDB
   submit: (update: UpdateDatabaseDetailsMutation) => void
 }
 
@@ -29,7 +29,7 @@ const Details = defineComponent<Props>({
       loading: false,
     })
 
-    const handleFormSubmit = async() => {
+    const handleFormSubmit = async () => {
       try {
         state.loading = true
         await props.submit({ id: props.db.id, details: state.model })
@@ -47,10 +47,7 @@ const Details = defineComponent<Props>({
           <label for="database-full-name">
             <PrimaryLabelText>Full name</PrimaryLabelText>
           </label>
-          <ElInput
-            id="database-full-name"
-            v-model={state.model.fullName}
-          />
+          <ElInput id="database-full-name" v-model={state.model.fullName} />
         </div>
         <RichTextArea
           content={state.model.description}
@@ -70,7 +67,9 @@ const Details = defineComponent<Props>({
             id="database-annotations-private"
             name="isPublic"
             checked={!state.model.isPublic}
-            onChange={() => { state.model.isPublic = false }}
+            onChange={() => {
+              state.model.isPublic = false
+            }}
           >
             <PrimaryLabelText>Annotations are private</PrimaryLabelText>
             <SecondaryLabelText>Results will be visible to group members only</SecondaryLabelText>
@@ -79,7 +78,9 @@ const Details = defineComponent<Props>({
             id="database-annotations-public"
             name="isPublic"
             checked={state.model.isPublic}
-            onChange={() => { state.model.isPublic = true }}
+            onChange={() => {
+              state.model.isPublic = true
+            }}
           >
             <PrimaryLabelText>Annotations are public</PrimaryLabelText>
             <SecondaryLabelText>Results will be visible to everyone</SecondaryLabelText>
@@ -89,7 +90,7 @@ const Details = defineComponent<Props>({
           <label for="database-link">
             <PrimaryLabelText>Link</PrimaryLabelText>
           </label>
-          <ElInput id="database-link" v-model={state.model.link}/>
+          <ElInput id="database-link" v-model={state.model.link} />
         </div>
         <RichTextArea
           content={state.model.citation}
@@ -101,9 +102,7 @@ const Details = defineComponent<Props>({
         >
           <PrimaryLabelText slot="label">Citation</PrimaryLabelText>
         </RichTextArea>
-        <button class="el-button el-button--primary">
-          Update details
-        </button>
+        <button class="el-button el-button--primary">Update details</button>
       </SmForm>
     )
   },

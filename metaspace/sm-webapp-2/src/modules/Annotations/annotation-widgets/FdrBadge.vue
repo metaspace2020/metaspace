@@ -1,11 +1,9 @@
 <template>
-  <div :class="cssClass">
-    {{ Math.round(fdrLevel * 100) }}% FDR
-  </div>
+  <div :class="cssClass">{{ Math.round(fdrLevel * 100) }}% FDR</div>
 </template>
 
 <script>
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed } from 'vue'
 
 export default defineComponent({
   props: {
@@ -14,21 +12,21 @@ export default defineComponent({
   setup(props) {
     const cssClass = computed(() => {
       if (props.fdrLevel <= 0.05) {
-        return 'fdr-badge fdr-badge-5';
-      } else if (props.fdrLevel <= 0.10) {
-        return 'fdr-badge fdr-badge-10';
-      } else if (props.fdrLevel <= 0.20) {
-        return 'fdr-badge fdr-badge-20';
+        return 'fdr-badge fdr-badge-5'
+      } else if (props.fdrLevel <= 0.1) {
+        return 'fdr-badge fdr-badge-10'
+      } else if (props.fdrLevel <= 0.2) {
+        return 'fdr-badge fdr-badge-20'
       } else {
-        return 'fdr-badge fdr-badge-50';
+        return 'fdr-badge fdr-badge-50'
       }
-    });
+    })
 
     return {
       cssClass,
-    };
+    }
   },
-});
+})
 </script>
 
 <style lang="scss" scoped>

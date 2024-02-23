@@ -1,10 +1,10 @@
-import { ElMessageBox as MessageBox, ElMessageBoxOptions } from 'element-plus';
-import reportError from '../lib/reportError';
-import './ConfirmAsync.scss';
+import { ElMessageBox as MessageBox, ElMessageBoxOptions } from 'element-plus'
+import reportError from '../lib/reportError'
+import './ConfirmAsync.scss'
 
 interface ExtraOptions {
-  confirmButtonLoadingText?: string;
-  style?: 'warning' | 'danger';
+  confirmButtonLoadingText?: string
+  style?: 'warning' | 'danger'
 }
 
 const createCustomClass = (options: ExtraOptions) => {
@@ -27,7 +27,7 @@ async function confirmPrompt(options: ElMessageBoxOptions & ExtraOptions, callba
       showInput,
       ...baseOptions,
       customClass: createCustomClass(options),
-      beforeClose: async(action: any, instance: any, done: Function) => {
+      beforeClose: async (action: any, instance: any, done: Function) => {
         const originalConfirmText = instance.confirmButtonText
         if (action === 'confirm') {
           instance.confirmButtonLoading = true

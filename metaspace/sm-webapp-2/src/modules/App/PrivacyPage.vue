@@ -10,29 +10,18 @@
     <p>
       It is our policy to respect your privacy regarding any information we may collect while operating our website.
       This Privacy Policy applies to
-      <a
-        href="https://metaspace2020.eu"
-        rel="noopener noreferrer nofollow"
-      >
-        https://metaspace2020.eu<!-- -->
-      </a>
-      (hereinafter, "us", "we", “METASPACE”, or
-      "<a
-        href="https://metaspace2020.eu"
-        rel="noopener noreferrer nofollow"
-      >
-        <!-- -->https://metaspace2020.eu<!-- -->
-      </a>"). We respect your privacy and are committed to protecting personally identifiable information you may
-      provide us through the Website. We have adopted this privacy policy ("Privacy Policy") to explain what
-      information may be collected on our Website, how we use this information, and under what circumstances we may
-      disclose the information to third parties. This Privacy Policy applies only to information we collect through
-      the Website and does not apply to our collection of information from other sources.
+      <a href="https://metaspace2020.eu" rel="noopener noreferrer nofollow"> https://metaspace2020.eu<!-- --> </a>
+      (hereinafter, "us", "we", “METASPACE”, or "<a href="https://metaspace2020.eu" rel="noopener noreferrer nofollow">
+        <!-- -->https://metaspace2020.eu<!-- --> </a
+      >"). We respect your privacy and are committed to protecting personally identifiable information you may provide
+      us through the Website. We have adopted this privacy policy ("Privacy Policy") to explain what information may be
+      collected on our Website, how we use this information, and under what circumstances we may disclose the
+      information to third parties. This Privacy Policy applies only to information we collect through the Website and
+      does not apply to our collection of information from other sources.
     </p>
     <p>
       This Privacy Policy, together with the
-      <router-link to="/terms">
-        Terms of Service<!-- -->
-      </router-link>
+      <router-link to="/terms"> Terms of Service<!-- --> </router-link>
       posted on our Website, set forth the general rules and policies governing your use of our Website. Depending on
       your activities when visiting our Website, you may be required to agree to additional terms and conditions.
     </p>
@@ -56,12 +45,8 @@
     <p>
       METASPACE also collects potentially personally-identifying information like Internet Protocol (IP) addresses for
       users accessing
-      <a
-        href="https://metaspace2020.eu"
-        rel="noopener noreferrer nofollow"
-      >
-        https://metaspace2020.eu<!-- -->
-      </a>. METASPACE only discloses logged in user IP addresses under the same circumstances that it uses and discloses
+      <a href="https://metaspace2020.eu" rel="noopener noreferrer nofollow"> https://metaspace2020.eu<!-- --> </a>.
+      METASPACE only discloses logged in user IP addresses under the same circumstances that it uses and discloses
       personally-identifying information as described below.
     </p>
     <h2>Personally-identifying information</h2>
@@ -71,9 +56,7 @@
       Your email address will be hidden from the general public, but may be shown to other users if you join a Group or
       Project.
     </p>
-    <p>
-      Your information may be shared with these third-party data processors:
-    </p>
+    <p>Your information may be shared with these third-party data processors:</p>
     <ul>
       <li>
         <p>
@@ -106,19 +89,11 @@
         href="https://www.embl.de/aboutus/administration/legal-services/data-protection/index.html"
         rel="noopener noreferrer nofollow"
       >
-        EMBL’s Data Protection Framework<!-- -->
-      </a>. Any questions regarding matters of data protection at EMBL should please be addressed to EMBL’s Data
-      Protection Officer via email at:
-      <a
-        href="mailto:dpo@embl.org"
-        rel="noopener noreferrer nofollow"
-      >
-        dpo@embl.org<!-- -->
-      </a>.
+        EMBL’s Data Protection Framework<!-- --> </a
+      >. Any questions regarding matters of data protection at EMBL should please be addressed to EMBL’s Data Protection
+      Officer via email at: <a href="mailto:dpo@embl.org" rel="noopener noreferrer nofollow"> dpo@embl.org<!-- --> </a>.
     </p>
-    <h2 id="cookies">
-      Cookies
-    </h2>
+    <h2 id="cookies">Cookies</h2>
     <p>
       To enrich and perfect your online experience, METASPACE uses "Cookies", similar technologies and services provided
       by others to display personalized content, appropriate advertising and store your preferences on your computer.
@@ -127,14 +102,10 @@
       A cookie is a string of information that a website stores on a visitor's computer, and that the visitor's browser
       provides to the website each time the visitor returns. METASPACE uses cookies to help METASPACE identify and track
       visitors, their usage of
-      <a
-        href="https://metaspace2020.eu"
-        rel="noopener noreferrer nofollow"
-      >
-        https://metaspace2020.eu<!-- -->
-      </a>, and their website access preferences. METASPACE visitors who do not wish to have cookies placed on their
-      computers should set their browsers to refuse cookies before using METASPACE's websites, with the drawback that
-      certain features of METASPACE's websites may not function properly without the aid of cookies.
+      <a href="https://metaspace2020.eu" rel="noopener noreferrer nofollow"> https://metaspace2020.eu<!-- --> </a>, and
+      their website access preferences. METASPACE visitors who do not wish to have cookies placed on their computers
+      should set their browsers to refuse cookies before using METASPACE's websites, with the drawback that certain
+      features of METASPACE's websites may not function properly without the aid of cookies.
     </p>
     <p>
       By continuing to navigate our website without changing your cookie settings, you hereby acknowledge and agree to
@@ -142,76 +113,56 @@
     </p>
     <p>
       Information on deleting or controlling cookies is available at
-      <a
-        href="http://www.aboutcookies.org"
-        rel="noopener noreferrer nofollow"
-      >
-        www.AboutCookies.org<!-- -->
-      </a>. Please note that by deleting our cookies or disabling future cookies you may not be able to access certain
-      areas or features of our site.
+      <a href="http://www.aboutcookies.org" rel="noopener noreferrer nofollow"> www.AboutCookies.org<!-- --> </a>.
+      Please note that by deleting our cookies or disabling future cookies you may not be able to access certain areas
+      or features of our site.
     </p>
     <p>
-      The following cookies are used by <a
-        href="https://metaspace2020.eu"
-        rel="noopener noreferrer nofollow"
-      >
-        https://metaspace2020.eu<!-- -->
-      </a>:&nbsp;
+      The following cookies are used by
+      <a href="https://metaspace2020.eu" rel="noopener noreferrer nofollow"> https://metaspace2020.eu<!-- --> </a
+      >:&nbsp;
     </p>
     <table>
       <tbody>
         <tr>
           <td>
-            <code>ga</code>,
-            <code>gat</code>,
-            <code>_gid</code>,
+            <code>ga</code>, <code>gat</code>, <code>_gid</code>,
             <code>IDE</code>
           </td>
           <td>
             Used by Google Analytics to distinguish visitors to the site.
-            <br>
+            <br />
             <a
               href="https://developers.google.com/analytics/devguides/collection/analyticsjs/cookie-usage#analyticsjs"
               rel="noopener noreferrer nofollow"
             >
               More info<!-- -->
-            </a> (we use “analytics.js”)
+            </a>
+            (we use “analytics.js”)
           </td>
         </tr>
         <tr>
           <td>
             <code>api.sid</code>
           </td>
-          <td>
-            Session id for associating your browser to your current login state
-          </td>
+          <td>Session id for associating your browser to your current login state</td>
         </tr>
         <tr>
           <td>
             <code>cookiebanner-accepted</code>
           </td>
-          <td>
-            Stores whether the cookie informational notice has been dismissed
-          </td>
+          <td>Stores whether the cookie informational notice has been dismissed</td>
         </tr>
         <tr>
           <td>
-            <code>_cfduid</code>,
-            <code>bizflagsA</code>,
-            <code>biznA</code>,
-            <code>bizpendingA</code>,
+            <code>_cfduid</code>, <code>bizflagsA</code>, <code>biznA</code>, <code>bizpendingA</code>,
             <code>bizsid</code>,
             <code>biz_uid</code>
           </td>
           <td>
             Used by the CloudFlare content delivery network to identify users.
-            <br>
-            <a
-              href="https://www.cloudflare.com/cookie-policy/"
-              rel="noopener noreferrer nofollow"
-            >
-              More info
-            </a>
+            <br />
+            <a href="https://www.cloudflare.com/cookie-policy/" rel="noopener noreferrer nofollow"> More info </a>
           </td>
         </tr>
       </tbody>
@@ -224,20 +175,15 @@
     </p>
     <h2>Credit and contact information</h2>
     <p>
-      This privacy policy was created by using <a
-        href="https://termsandconditionstemplate.com/privacy-policy-generator"
-        rel="noopener noreferrer nofollow"
-      >
-        https://termsandconditionstemplate.com/privacy-policy-generator<!-- -->
-      </a>.
+      This privacy policy was created by using
+      <a href="https://termsandconditionstemplate.com/privacy-policy-generator" rel="noopener noreferrer nofollow">
+        https://termsandconditionstemplate.com/privacy-policy-generator<!-- --> </a
+      >.
     </p>
     <p>
-      If you have any questions about this Privacy Policy, please contact us at <a
-        href="mailto:contact@metaspace2020.eu"
-        rel="noopener noreferrer nofollow"
-      >
-        contact@metaspace2020.eu<!-- -->
-      </a>.
+      If you have any questions about this Privacy Policy, please contact us at
+      <a href="mailto:contact@metaspace2020.eu" rel="noopener noreferrer nofollow"> contact@metaspace2020.eu<!-- --> </a
+      >.
     </p>
   </content-page>
 </template>
@@ -252,11 +198,11 @@ export default {
 }
 </script>
 <style scoped>
-  td:first-child {
-    @apply w-4/12;
-  }
+td:first-child {
+  @apply w-4/12;
+}
 
-  tr + tr > td {
-    @apply pt-6;
-  }
+tr + tr > td {
+  @apply pt-6;
+}
 </style>

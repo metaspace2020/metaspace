@@ -8,75 +8,41 @@
       <p>
         Change {{ editingRoleOfMember?.user?.name }}'s role to:
         <el-select v-model="newRole">
-          <el-option
-            v-for="role in allowedRoles"
-            :key="role"
-            :value="role"
-            :label="getRoleName(role as any)"
-          />
-          <el-option
-            :value="''"
-            :label="`None (remove from ${type})`"
-          />
+          <el-option v-for="role in allowedRoles" :key="role" :value="role" :label="getRoleName(role as any)" />
+          <el-option :value="''" :label="`None (remove from ${type})`" />
         </el-select>
       </p>
-      <p>
-        Changing a member's role this way does not cause any notification emails to be sent.
-      </p>
+      <p>Changing a member's role this way does not cause any notification emails to be sent.</p>
       <el-row align="middle">
-        <el-button @click="handleCloseEditRole">
-          Close
-        </el-button>
-        <el-button
-          type="primary"
-          @click="handleUpdateRole"
-        >
-          Save
-        </el-button>
+        <el-button @click="handleCloseEditRole"> Close </el-button>
+        <el-button type="primary" @click="handleUpdateRole"> Save </el-button>
       </el-row>
     </el-dialog>
     <el-table
       v-loading="loading"
       :data="currentPageData"
-      :row-key="row => row?.user.id"
+      :row-key="(row) => row?.user.id"
       element-loading-text="Loading results from the server..."
     >
       <template v-slot:empty>
-        <p>
-          You do not have access to view the member list.
-        </p>
+        <p>You do not have access to view the member list.</p>
       </template>
 
-      <el-table-column
-        label="Name"
-        min-width="200"
-      >
+      <el-table-column label="Name" min-width="200">
         <template v-slot="{ row }">
           {{ row?.user?.name }}
         </template>
       </el-table-column>
 
-      <el-table-column
-        v-if="shouldShowEmails"
-        label="Email"
-        min-width="200"
-      >
+      <el-table-column v-if="shouldShowEmails" label="Email" min-width="200">
         <template v-slot="{ row }">
           {{ row?.user?.email }}
         </template>
       </el-table-column>
 
-      <el-table-column
-        label="Role"
-        width="160"
-      >
+      <el-table-column label="Role" width="160">
         <template v-slot="{ row }">
-          <a
-            v-if="canEditRoleFor(row)"
-            href="#"
-            title="Change role"
-            @click.prevent="() => handleEditRole(row)"
-          >
+          <a v-if="canEditRoleFor(row)" href="#" title="Change role" @click.prevent="() => handleEditRole(row)">
             {{ getRoleName(row?.role) }}
           </a>
           <span v-else>
@@ -85,11 +51,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column
-        label="Datasets"
-        width="90"
-        align="center"
-      >
+      <el-table-column label="Datasets" width="90" align="center">
         <template v-slot="{ row }">
           <router-link :to="datasetsListLink(row?.user)">
             {{ row?.numDatasets }}
@@ -144,34 +106,36 @@
         layout="prev,pager,next"
       />
       <div class="flex-spacer" />
-      <el-button
-        v-if="canEdit"
-        @click="() => handleAddMember()"
-      >
-        Add member
-      </el-button>
+      <el-button v-if="canEdit" @click="() => handleAddMember()"> Add member </el-button>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue';
-import { UserGroupRole, UserGroupRoleOptions, getRoleName as getGroupRoleName } from '../api/group';
-import { ProjectRole, ProjectRoleOptions, getRoleName as getProjectRoleName } from '../api/project';
-import { encodeParams } from '../modules/Filters';
-import { CurrentUserRoleResult } from '../api/user';
+import { defineComponent, ref, computed } from 'vue'
+import { UserGroupRole, UserGroupRoleOptions, getRoleName as getGroupRoleName } from '../api/group'
+import { ProjectRole, ProjectRoleOptions, getRoleName as getProjectRoleName } from '../api/project'
+import { encodeParams } from '../modules/Filters'
+import { CurrentUserRoleResult } from '../api/user'
 import {
-  ElDialog, ElButton, ElSelect, ElOption,
-  ElRow, ElTableColumn, ElPagination, ElTable, ElLoading
-} from "element-plus";
+  ElDialog,
+  ElButton,
+  ElSelect,
+  ElOption,
+  ElRow,
+  ElTableColumn,
+  ElPagination,
+  ElTable,
+  ElLoading,
+} from 'element-plus'
 
 export interface Member {
-  role: UserGroupRole | ProjectRole,
-  numDatasets: number,
+  role: UserGroupRole | ProjectRole
+  numDatasets: number
   user: {
-    id: string;
-    name: string;
-    email: string | null;
+    id: string
+    name: string
+    email: string | null
   }
 }
 
@@ -185,7 +149,7 @@ export default defineComponent({
     ElRow,
     ElTableColumn,
     ElPagination,
-    ElTable
+    ElTable,
   },
   directives: {
     loading: ElLoading.directive,
@@ -193,59 +157,62 @@ export default defineComponent({
   props: {
     loading: {
       type: Boolean,
-      required: true
+      required: true,
     },
     currentUser: Object as () => CurrentUserRoleResult | null,
     members: {
       type: Array as () => Member[],
-      required: true
+      required: true,
     },
     canEdit: {
       type: Boolean,
-      required: true
+      required: true,
     },
     type: {
       type: String as () => 'group' | 'project',
-      required: true
+      required: true,
     },
-    filter: Object
+    filter: Object,
   },
   setup(props, { emit }) {
-    const pageSize = ref(10);
-    const page = ref(1);
-    const editingRoleOfMember = ref<Member | null>(null);
-    const newRole = ref<string | null>(null);
+    const pageSize = ref(10)
+    const page = ref(1)
+    const editingRoleOfMember = ref<Member | null>(null)
+    const newRole = ref<string | null>(null)
 
     const getRoleName = computed(() => {
-      return props.type === 'group' ? getGroupRoleName : getProjectRoleName;
-    });
+      return props.type === 'group' ? getGroupRoleName : getProjectRoleName
+    })
 
     const roles = computed(() => {
-      return props.type === 'group' ? Object.values(UserGroupRoleOptions) : Object.values(ProjectRoleOptions);
-    });
+      return props.type === 'group' ? Object.values(UserGroupRoleOptions) : Object.values(ProjectRoleOptions)
+    })
 
     const allowedRoles = computed(() => {
       if (props.currentUser?.role === 'admin') {
-        return roles.value;
+        return roles.value
       }
       return props.type === 'group'
         ? [UserGroupRoleOptions.MEMBER, UserGroupRoleOptions.GROUP_ADMIN]
-        : [ProjectRoleOptions.MEMBER, ProjectRoleOptions.MANAGER];
-    });
+        : [ProjectRoleOptions.MEMBER, ProjectRoleOptions.MANAGER]
+    })
 
     const currentPageData = computed(() => {
-      return props.members.slice((page.value - 1) * pageSize.value, page.value * pageSize.value);
-    });
+      return props.members.slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
+    })
 
     const shouldShowEmails = computed(() => {
-      return props.members.some(m => m.user.email != null);
-    });
+      return props.members.some((m) => m.user.email != null)
+    })
 
     const canEditRoleFor = (user: Member) => {
-      return props.canEdit
-        && props.currentUser
-        && (props.currentUser.role === 'admin' || (props.currentUser.id !== user?.user?.id && allowedRoles.value.includes(user?.role as any)));
-    };
+      return (
+        props.canEdit &&
+        props.currentUser &&
+        (props.currentUser.role === 'admin' ||
+          (props.currentUser.id !== user?.user?.id && allowedRoles.value.includes(user?.role as any)))
+      )
+    }
 
     const datasetsListLink = (user: Member['user']) => {
       return {
@@ -254,29 +221,29 @@ export default defineComponent({
           ...props.filter,
           submitter: user?.id,
         }),
-      };
-    };
+      }
+    }
 
     // Emit events
-    const handleRemoveUser = (user: Member) => emit('removeUser', user);
-    const handleCancelInvite = (user: Member) => emit('cancelInvite', user);
-    const handleAcceptUser = (user: Member) => emit('acceptUser', user);
-    const handleRejectUser = (user: Member) => emit('rejectUser', user);
-    const handleAddMember = () => emit('addMember');
+    const handleRemoveUser = (user: Member) => emit('removeUser', user)
+    const handleCancelInvite = (user: Member) => emit('cancelInvite', user)
+    const handleAcceptUser = (user: Member) => emit('acceptUser', user)
+    const handleRejectUser = (user: Member) => emit('rejectUser', user)
+    const handleAddMember = () => emit('addMember')
     const handleEditRole = (user: Member) => {
-      editingRoleOfMember.value = user;
-      newRole.value = user?.role;
-    };
+      editingRoleOfMember.value = user
+      newRole.value = user?.role
+    }
     const handleCloseEditRole = () => {
-      editingRoleOfMember.value = null;
-      newRole.value = null;
-    };
+      editingRoleOfMember.value = null
+      newRole.value = null
+    }
     const handleUpdateRole = () => {
       if (editingRoleOfMember.value) {
-        emit('updateRole', editingRoleOfMember.value, newRole.value);
-        handleCloseEditRole();
+        emit('updateRole', editingRoleOfMember.value, newRole.value)
+        handleCloseEditRole()
       }
-    };
+    }
 
     return {
       pageSize,
@@ -297,56 +264,55 @@ export default defineComponent({
       handleAddMember,
       handleEditRole,
       handleCloseEditRole,
-      handleUpdateRole
-    };
-  }
-});
+      handleUpdateRole,
+    }
+  },
+})
 </script>
 
 <style scoped lang="scss">
-  .page {
-    display: flex;
-    justify-content: center;
-  }
+.page {
+  display: flex;
+  justify-content: center;
+}
 
-  .page-content {
-    width: 950px;
-  }
+.page-content {
+  width: 950px;
+}
 
-  .header-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
 
-  .header-row-buttons {
-    display: flex;
-    margin-right: 3px;
-  }
+.header-row-buttons {
+  display: flex;
+  margin-right: 3px;
+}
 
-  .name {
-    display: inline-block;
-    width: 400px;
-  }
+.name {
+  display: inline-block;
+  width: 400px;
+}
 
-  .shortName {
-    display: inline-block;
-    width: 150px;
-    margin-left: 20px;
-  }
+.shortName {
+  display: inline-block;
+  width: 150px;
+  margin-left: 20px;
+}
 
-  .grid-button {
-    width: 80px;
-  }
+.grid-button {
+  width: 80px;
+}
 
-  .pagination-row {
-    display: flex;
-    align-items: center;
-    margin-top: 10px;
-  }
+.pagination-row {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
 
-  .flex-spacer {
-    flex-grow: 1;
-  }
-
+.flex-spacer {
+  flex-grow: 1;
+}
 </style>

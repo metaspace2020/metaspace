@@ -1,78 +1,78 @@
-import {flushPromises, mount} from '@vue/test-utils';
-import { createStore } from 'vuex';
-import { beforeEach, afterEach, vi } from 'vitest';
-import ElementPlus from 'element-plus';
-import CreateAccountDialog from './CreateAccountDialog.vue';
-import account from '../store/account';
-import { nextTick } from 'vue';
-import * as authApi from '../../../api/auth';
-import router from "../../../router";
+import { flushPromises, mount } from '@vue/test-utils'
+import { createStore } from 'vuex'
+import { beforeEach, afterEach, vi } from 'vitest'
+import ElementPlus from 'element-plus'
+import CreateAccountDialog from './CreateAccountDialog.vue'
+import account from '../store/account'
+import { nextTick } from 'vue'
+import * as authApi from '../../../api/auth'
+import router from '../../../router'
 
-vi.mock('../../../api/auth');
+vi.mock('../../../api/auth')
 
 const setFormField = (wrapper, fieldName, value) => {
-  const formItem = wrapper.findAllComponents({ name: 'ElFormItem' }).find(w => w.props().prop === fieldName);
-  formItem.find('input').setValue(value);
-};
+  const formItem = wrapper.findAllComponents({ name: 'ElFormItem' }).find((w) => w.props().prop === fieldName)
+  formItem.find('input').setValue(value)
+}
 
 describe('CreateAccountDialog', () => {
-  let store;
+  let store
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.clearAllMocks()
     store = createStore({
       modules: {
         account: account,
       },
-    });
-  });
+    })
+  })
 
   afterEach(() => {
     // Clean up or restore any global changes here
     // For example, if you had mocked global functions or properties
-  });
+  })
 
   it('should match snapshot', async () => {
     const wrapper = mount(CreateAccountDialog, {
       global: {
         plugins: [store, router, ElementPlus],
       },
-    });
-    await nextTick();
-    expect(wrapper.html()).toMatchSnapshot();
-  });
+    })
+    await nextTick()
+    expect(wrapper.html()).toMatchSnapshot()
+  })
 
   it('should be able to submit a valid form', async () => {
     // Import the mocked module
 
     // Arrange
-    const firstName = 'foo';
-    const lastName = 'bar';
-    const email = 'test@example.com';
-    const password = 'abcd1234';
+    const firstName = 'foo'
+    const lastName = 'bar'
+    const email = 'test@example.com'
+    const password = 'abcd1234'
     const wrapper = mount(CreateAccountDialog, {
       global: {
         plugins: [store, router, ElementPlus],
       },
-    });
-    await nextTick();
+    })
+    await nextTick()
 
     // Act
-    setFormField(wrapper, 'firstName', firstName);
-    setFormField(wrapper, 'lastName', lastName);
-    setFormField(wrapper, 'email', email);
-    setFormField(wrapper, 'password', password);
-    await wrapper.vm.form?.validate();
+    setFormField(wrapper, 'firstName', firstName)
+    setFormField(wrapper, 'lastName', lastName)
+    setFormField(wrapper, 'email', email)
+    setFormField(wrapper, 'password', password)
+    await wrapper.vm.form?.validate()
 
-    await wrapper.find('[data-testid="submit-btn"]').trigger('click');
+    await wrapper.find('[data-testid="submit-btn"]').trigger('click')
     await flushPromises()
-    await nextTick();
+    await nextTick()
 
     // Assert
-    expect(authApi.createAccountByEmail).toHaveBeenCalledTimes(1);
-    const paragraph = wrapper.find('p');
-    expect(paragraph.text()).toContain('Please click the link');
-  });
+    expect(authApi.createAccountByEmail).toHaveBeenCalledTimes(1)
+    const paragraph = wrapper.find('p')
+    expect(paragraph.text()).toContain('Please click the link')
+  })
 
   it('should not submit an invalid form', async () => {
     // Arrange
@@ -80,23 +80,23 @@ describe('CreateAccountDialog', () => {
       global: {
         plugins: [store, router, ElementPlus],
       },
-    });
-    await nextTick();
+    })
+    await nextTick()
 
     // Act
-    setFormField(wrapper, 'firstName', 'foo');
-    setFormField(wrapper, 'lastName', 'bar');
-    setFormField(wrapper, 'email', 'test@email.com');
-    setFormField(wrapper, 'password', ''); // Intentionally left empty
-    await wrapper.vm.form?.validate();
-    await nextTick();
+    setFormField(wrapper, 'firstName', 'foo')
+    setFormField(wrapper, 'lastName', 'bar')
+    setFormField(wrapper, 'email', 'test@email.com')
+    setFormField(wrapper, 'password', '') // Intentionally left empty
+    await wrapper.vm.form?.validate()
+    await nextTick()
 
-    await wrapper.find('[data-testid="submit-btn"]').trigger('click');
+    await wrapper.find('[data-testid="submit-btn"]').trigger('click')
 
     // await flushPromises()
-    await nextTick();
+    await nextTick()
 
     // Assert
-    expect(authApi.createAccountByEmail).not.toBeCalled();
-  });
-});
+    expect(authApi.createAccountByEmail).not.toBeCalled()
+  })
+})

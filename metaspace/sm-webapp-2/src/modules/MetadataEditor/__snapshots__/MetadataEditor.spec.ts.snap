@@ -68,7 +68,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
       <div class=\\"flex flex-row w-full flex-wrap mt-6 justify-end\\">
         <div class=\\"mock-el-popover\\" trigger=\\"click\\" placement=\\"left\\">
           <div class=\\"max-w-sm\\">
-            <div class=\\"mock-el-select\\" placeholder=\\"Start typing name\\" remote=\\"\\" filterable=\\"\\" clearable=\\"\\" remote-method=\\"async(name) => {
+            <div class=\\"mock-el-select\\" placeholder=\\"Start typing name\\" remote=\\"\\" filterable=\\"\\" clearable=\\"\\" remote-method=\\"async (name) => {
       state.loadingTemplates = true
       try {
         const resp = await apolloClient.query({
@@ -99,7 +99,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
         </div>
       </div>
       <div class=\\"flex flex-row w-full flex-wrap mt-6\\">
-        <div class=\\"metadata-section__title w-3/12\\"> Dataset description </div>
+        <div class=\\"metadata-section__title w-3/12\\">Dataset description</div>
         <section class=\\"sm-RichText\\" id=\\"description-container\\">
           <header class=\\"flex items-end h-8 mb-1\\">
             <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
@@ -134,7 +134,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div class=\\"mock-el-autocomplete md-ac\\" popper-class=\\"\\" model-value=\\"\\" required=\\"true\\" placeholder=\\"Species\\" trigger-on-focus=\\"true\\" fetch-suggestions=\\"(queryString, callback) => {
       const CHARS_BREAKPOINT = 26;
       props.fetchSuggestions(queryString, (results) => {
-        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some((result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT);
+        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some(
+          (result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT
+        );
         callback(results);
       });
     }\\"></div>
@@ -150,7 +152,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div class=\\"mock-el-autocomplete md-ac\\" popper-class=\\"\\" model-value=\\"\\" required=\\"true\\" placeholder=\\"Organ or organism part\\" trigger-on-focus=\\"true\\" fetch-suggestions=\\"(queryString, callback) => {
       const CHARS_BREAKPOINT = 26;
       props.fetchSuggestions(queryString, (results) => {
-        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some((result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT);
+        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some(
+          (result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT
+        );
         callback(results);
       });
     }\\"></div>
@@ -166,7 +170,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div class=\\"mock-el-autocomplete md-ac\\" popper-class=\\"\\" model-value=\\"\\" required=\\"true\\" placeholder=\\"E.g. wildtype, diseased\\" trigger-on-focus=\\"true\\" fetch-suggestions=\\"(queryString, callback) => {
       const CHARS_BREAKPOINT = 26;
       props.fetchSuggestions(queryString, (results) => {
-        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some((result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT);
+        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some(
+          (result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT
+        );
         callback(results);
       });
     }\\"></div>
@@ -183,7 +189,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div class=\\"mock-el-autocomplete md-ac\\" popper-class=\\"\\" model-value=\\"\\" required=\\"false\\" placeholder=\\"E.g. intervention, treatment\\" trigger-on-focus=\\"true\\" fetch-suggestions=\\"(queryString, callback) => {
       const CHARS_BREAKPOINT = 26;
       props.fetchSuggestions(queryString, (results) => {
-        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some((result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT);
+        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some(
+          (result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT
+        );
         callback(results);
       });
     }\\"></div>
@@ -212,7 +220,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div class=\\"mock-el-autocomplete md-ac\\" popper-class=\\"\\" model-value=\\"\\" required=\\"true\\" placeholder=\\"Preservation method\\" trigger-on-focus=\\"true\\" fetch-suggestions=\\"(queryString, callback) => {
       const CHARS_BREAKPOINT = 26;
       props.fetchSuggestions(queryString, (results) => {
-        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some((result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT);
+        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some(
+          (result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT
+        );
         callback(results);
       });
     }\\"></div>
@@ -228,7 +238,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div class=\\"mock-el-autocomplete md-ac\\" popper-class=\\"\\" model-value=\\"\\" required=\\"true\\" placeholder=\\"E.g. chemical modification\\" trigger-on-focus=\\"true\\" fetch-suggestions=\\"(queryString, callback) => {
       const CHARS_BREAKPOINT = 26;
       props.fetchSuggestions(queryString, (results) => {
-        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some((result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT);
+        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some(
+          (result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT
+        );
         callback(results);
       });
     }\\"></div>
@@ -244,7 +256,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div class=\\"mock-el-autocomplete md-ac\\" popper-class=\\"\\" model-value=\\"none\\" required=\\"true\\" placeholder=\\"MALDI matrix, if used\\" trigger-on-focus=\\"true\\" fetch-suggestions=\\"(queryString, callback) => {
       const CHARS_BREAKPOINT = 26;
       props.fetchSuggestions(queryString, (results) => {
-        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some((result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT);
+        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some(
+          (result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT
+        );
         callback(results);
       });
     }\\"></div>
@@ -260,7 +274,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div class=\\"mock-el-autocomplete md-ac\\" popper-class=\\"\\" model-value=\\"none\\" required=\\"true\\" placeholder=\\"Method of application, if used\\" trigger-on-focus=\\"true\\" fetch-suggestions=\\"(queryString, callback) => {
       const CHARS_BREAKPOINT = 26;
       props.fetchSuggestions(queryString, (results) => {
-        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some((result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT);
+        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some(
+          (result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT
+        );
         callback(results);
       });
     }\\"></div>
@@ -277,7 +293,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div class=\\"mock-el-autocomplete md-ac\\" popper-class=\\"\\" model-value=\\"none\\" required=\\"false\\" placeholder=\\"Solvent used e.g. for DESI or MALDI matrix\\" trigger-on-focus=\\"true\\" fetch-suggestions=\\"(queryString, callback) => {
       const CHARS_BREAKPOINT = 26;
       props.fetchSuggestions(queryString, (results) => {
-        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some((result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT);
+        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some(
+          (result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT
+        );
         callback(results);
       });
     }\\"></div>
@@ -320,7 +338,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div class=\\"mock-el-autocomplete md-ac\\" popper-class=\\"\\" model-value=\\"\\" required=\\"true\\" placeholder=\\"E.g. MALDI, DESI\\" trigger-on-focus=\\"true\\" fetch-suggestions=\\"(queryString, callback) => {
       const CHARS_BREAKPOINT = 26;
       props.fetchSuggestions(queryString, (results) => {
-        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some((result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT);
+        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some(
+          (result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT
+        );
         callback(results);
       });
     }\\"></div>
@@ -336,7 +356,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div class=\\"mock-el-autocomplete md-ac\\" popper-class=\\"\\" model-value=\\"\\" required=\\"true\\" placeholder=\\"E.g. FTICR, Orbitrap\\" trigger-on-focus=\\"true\\" fetch-suggestions=\\"(queryString, callback) => {
       const CHARS_BREAKPOINT = 26;
       props.fetchSuggestions(queryString, (results) => {
-        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some((result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT);
+        wideAutocomplete.value = Array.isArray(results) &amp;&amp; results.some(
+          (result) => result &amp;&amp; result.value &amp;&amp; result.value.length &amp;&amp; result.value.length >= CHARS_BREAKPOINT
+        );
         callback(results);
       });
     }\\"></div>
@@ -428,7 +450,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                                 <!--v-if-->
                               </div>
                             </div>
-                            <div class=\\"subfield-label\\"> horizontal </div>
+                            <div class=\\"subfield-label\\">horizontal</div>
                             <!--v-if-->
                           </div>
                         </div>
@@ -452,7 +474,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                                 <!--v-if-->
                               </div>
                             </div>
-                            <div class=\\"subfield-label\\"> vertical </div>
+                            <div class=\\"subfield-label\\">vertical</div>
                             <!--v-if-->
                           </div>
                         </div>
@@ -531,7 +553,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
               </div>
             </form>
             <div data-v-21d0472c=\\"\\" class=\\"mt-6\\">
-              <h4 data-v-21d0472c=\\"\\" class=\\"m-0\\"> Would you like to include previously submitted datasets? </h4>
+              <h4 data-v-21d0472c=\\"\\" class=\\"m-0\\">Would you like to include previously submitted datasets?</h4>
               <div data-v-c3668e62=\\"\\" data-v-21d0472c=\\"\\" model-value=\\"[object Object]\\">
                 <div data-v-c3668e62=\\"\\" class=\\"select-buttons\\"><a data-v-c3668e62=\\"\\" href=\\"#\\">Select none</a><span data-v-c3668e62=\\"\\"> | </span><a data-v-c3668e62=\\"\\" href=\\"#\\">Select all</a></div>
                 <div data-v-c3668e62=\\"\\" class=\\"dataset-checkbox-list leading-6\\">
@@ -560,7 +582,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
         </div>
         <div class=\\"el-row\\">
           <div class=\\"el-col el-col-6\\">
-            <div class=\\"metadata-section__title\\"> Data management </div>
+            <div class=\\"metadata-section__title\\">Data management</div>
           </div>
           <div class=\\"el-col el-col-18\\">
             <div class=\\"el-row\\" style=\\"margin-left: -4px; margin-right: -4px;\\">
@@ -643,7 +665,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
         <form class=\\"el-form el-form--default el-form--label-top\\">
           <div class=\\"el-row\\">
             <div class=\\"el-col el-col-6\\">
-              <div class=\\"metadata-section__title\\"> Annotation settings </div>
+              <div class=\\"metadata-section__title\\">Annotation settings</div>
             </div>
             <div class=\\"el-col el-col-18\\">
               <div class=\\"el-row\\" style=\\"margin-left: -4px; margin-right: -4px;\\">
@@ -669,7 +691,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div data-v-d29a3434=\\"\\" class=\\"adducts-help\\">
                       <p data-v-d29a3434=\\"\\"> Each selected adduct is applied to every molecule in the selected database. Only adducts that commonly form with the chosen ionization source or MALDI matrix should be selected, as searching for improbable adducts is likely to generate spurious annotations. </p>
                       <p data-v-d29a3434=\\"\\"> We recommend selecting <span class=\\"example-input\\" data-v-d29a3434=\\"\\">[M+H]⁺</span>, <span class=\\"example-input\\" data-v-d29a3434=\\"\\">[M+Na]⁺</span>, <span class=\\"example-input\\" data-v-d29a3434=\\"\\">[M+K]⁺</span> in positive mode, and <span class=\\"example-input\\" data-v-d29a3434=\\"\\">[M-H]⁻</span>,&nbsp;<span class=\\"example-input\\" data-v-d29a3434=\\"\\">[M+Cl]⁻</span> in negative mode. </p>
-                      <p data-v-d29a3434=\\"\\"> For ESI-based sources <span class=\\"example-input\\" data-v-d29a3434=\\"\\">[M+NH₄]⁺</span> should also be selected in positive mode. </p>
+                      <p data-v-d29a3434=\\"\\">For ESI-based sources <span class=\\"example-input\\" data-v-d29a3434=\\"\\">[M+NH₄]⁺</span> should also be selected in positive mode.</p>
                       <p data-v-d29a3434=\\"\\"><span class=\\"example-input\\" data-v-d29a3434=\\"\\">[M]⁺</span> and <span class=\\"example-input\\" data-v-d29a3434=\\"\\">[M]⁻</span> should generally only be selected when annotating custom databases that have had adducts merged into their molecular formulas, or in cases when a derivatization agent causes molecules to become permanently charged. </p>
                     </div>
                   </div></span>

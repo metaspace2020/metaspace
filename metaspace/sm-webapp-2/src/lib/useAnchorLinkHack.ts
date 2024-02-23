@@ -1,4 +1,4 @@
-import {nextTick, onMounted} from 'vue'
+import { nextTick, onMounted } from 'vue'
 
 const headerHeight = 64
 

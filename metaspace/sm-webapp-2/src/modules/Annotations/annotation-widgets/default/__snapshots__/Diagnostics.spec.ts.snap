@@ -90,7 +90,7 @@ exports[`Diagnostics > should match snapshot (with isobar) 1`] = `
     <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" virtual-triggering=\\"\\" placement=\\"top\\" open-delay=\\"100\\" virtual-ref=\\"[object HTMLDivElement]\\">
       <div data-v-dd35c778=\\"\\" class=\\"leading-5 py-2 px-3 font-normal content text-sm text-left\\">
         <!--v-if-->
-        <p data-v-dd35c778=\\"\\" class=\\"title\\"> Candidate molecule </p>
+        <p data-v-dd35c778=\\"\\" class=\\"title\\">Candidate molecule</p>
         <ul data-v-dd35c778=\\"\\" class=\\"p-0 list-none leading-7\\">
           <li data-v-dd35c778=\\"\\">C.I. Food Red 6</li>
           <!--v-if-->
@@ -139,7 +139,7 @@ exports[`Diagnostics > should match snapshot (with isobar) 1`] = `
   <div data-v-dd35c778=\\"\\" class=\\"mock-el-popover\\" hide-after=\\"0\\" show-after=\\"0\\" trigger=\\"hover\\" virtual-triggering=\\"\\" placement=\\"top\\" open-delay=\\"100\\" virtual-ref=\\"[object HTMLDivElement]\\">
     <div data-v-dd35c778=\\"\\" class=\\"leading-5 py-2 px-3 font-normal content text-sm text-left\\">
       <!--v-if-->
-      <p data-v-dd35c778=\\"\\" class=\\"title\\"> Candidate molecule </p>
+      <p data-v-dd35c778=\\"\\" class=\\"title\\">Candidate molecule</p>
       <ul data-v-dd35c778=\\"\\" class=\\"p-0 list-none leading-7\\">
         <li data-v-dd35c778=\\"\\">C.I. Food Red 6</li>
         <!--v-if-->

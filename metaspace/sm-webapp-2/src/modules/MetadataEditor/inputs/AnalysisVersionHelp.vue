@@ -1,7 +1,7 @@
 <template>
   <div class="analysis-version-help">
-    When comparing data between multiple datasets, it is recommended to process all datasets with the same
-    analysis version. Otherwise, select the latest version for best results.
+    When comparing data between multiple datasets, it is recommended to process all datasets with the same analysis
+    version. Otherwise, select the latest version for best results.
     <h4>Changes:</h4>
     <h5>v2.20230517 (METASPACE-ML):</h5>
     <ul>
@@ -19,7 +19,7 @@ export default {
 </script>
 
 <style scoped>
-  .analysis-version-help {
-    max-width: 400px;
-  }
+.analysis-version-help {
+  max-width: 400px;
+}
 </style>

@@ -56,5 +56,4 @@ module.exports = {
       preset: 'default',
     }),
   ],
-};
-
+}

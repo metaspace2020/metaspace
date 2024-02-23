@@ -11,41 +11,34 @@
     virtual-triggering
     v-bind="$attrs"
   >
-      <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
-        <p v-if="filteredCompounds.length > 1" class="title">
-          {{ filteredCompounds.length }} candidate molecules
+    <div class="leading-5 py-2 px-3 font-normal content text-sm text-left">
+      <p v-if="filteredCompounds.length > 1" class="title">{{ filteredCompounds.length }} candidate molecules</p>
+      <p v-if="filteredCompounds.length === 1" class="title">Candidate molecule</p>
+      <ul class="p-0 list-none leading-7">
+        <li v-for="(comp, i) in filteredCompounds" :key="i">
+          {{ comp.name }}
+        </li>
+        <li v-if="moreCount" class="text-xs tracking-wide font-medium">+ {{ moreCount }} more</li>
+      </ul>
+      <div v-if="showIsomers">
+        <p class="title">
+          <span v-if="isomers.length == 1">An isomeric ion was annotated</span>
+          <span v-else>{{ isomers.length }} isomeric ions were annotated</span>
         </p>
-        <p v-if="filteredCompounds.length === 1" class="title">
-          Candidate molecule
-        </p>
-        <ul class="p-0 list-none leading-7">
-          <li v-for="(comp, i) in filteredCompounds" :key="i">
-            {{ comp.name }}
-          </li>
-          <li v-if="moreCount" class="text-xs tracking-wide font-medium">
-            + {{ moreCount }} more
-          </li>
-        </ul>
-        <div v-if="showIsomers">
-          <p class="title">
-            <span v-if="isomers.length == 1">An isomeric ion was annotated</span>
-            <span v-else>{{ isomers.length }} isomeric ions were annotated</span>
-          </p>
-          <p>
-            Check the <b>Molecules</b> panel for more candidates.
-          </p>
-        </div>
-        <div v-if="showIsobars">
-          <p class="title">
-            <span v-if="isobars.length == 1">An isobaric ion was annotated</span>
-            <span v-else>{{ isobars.length }} isobaric ions were annotated</span>
-          </p>
-          <p class="max-w-measure-1">
-            Check the <b>Molecules</b> panel to see candidate molecules from the isobaric {{ isobars.length == 1 ? 'ion' : 'ions' }},
-            and the <b>Diagnostics</b> panel to compare the isotopic images and spectra.
-          </p>
-        </div>
+        <p>Check the <b>Molecules</b> panel for more candidates.</p>
       </div>
+      <div v-if="showIsobars">
+        <p class="title">
+          <span v-if="isobars.length == 1">An isobaric ion was annotated</span>
+          <span v-else>{{ isobars.length }} isobaric ions were annotated</span>
+        </p>
+        <p class="max-w-measure-1">
+          Check the <b>Molecules</b> panel to see candidate molecules from the isobaric
+          {{ isobars.length == 1 ? 'ion' : 'ions' }}, and the <b>Diagnostics</b> panel to compare the isotopic images
+          and spectra.
+        </p>
+      </div>
+    </div>
   </el-popover>
 </template>
 
@@ -66,9 +59,7 @@ export default defineComponent({
     const buttonRef = ref(null)
 
     const filteredCompounds = computed(() => {
-      return props.limit != null
-        ? props.possibleCompounds.slice(0, props.limit)
-        : props.possibleCompounds
+      return props.limit != null ? props.possibleCompounds.slice(0, props.limit) : props.possibleCompounds
     })
 
     const moreCount = computed(() => {
@@ -80,7 +71,7 @@ export default defineComponent({
     })
 
     const showIsobars = computed(() => {
-      return config.features.isobars && props.isobars && props.isobars.some(isobar => isobar.shouldWarn)
+      return config.features.isobars && props.isobars && props.isobars.some((isobar) => isobar.shouldWarn)
     })
 
     return {

@@ -10,7 +10,7 @@ exports[`RelatedMolecules > should match snapshot 1`] = `
             <div data-v-bd75ece3=\\"\\">
               <!--v-if--><span data-v-bd75ece3=\\"\\" class=\\"ion-formula\\">[C<sub class=\\"leading-none\\">10</sub>H<sub class=\\"leading-none\\">11</sub>NO + Na]⁺</span>
             </div>
-            <div data-v-22a3ab3a=\\"\\" data-v-bd75ece3=\\"\\" class=\\"fdr-badge fdr-badge-10\\">10% FDR </div>
+            <div data-v-22a3ab3a=\\"\\" data-v-bd75ece3=\\"\\" class=\\"fdr-badge fdr-badge-10\\">10% FDR</div>
             <!--v-if-->
           </div>
           <!--v-if-->
@@ -36,14 +36,14 @@ exports[`RelatedMolecules > should match snapshot 1`] = `
         <div data-v-bd75ece3=\\"\\" class=\\"ion-heading\\">
           <div data-v-bd75ece3=\\"\\" class=\\"ion-link\\">
             <div data-v-bd75ece3=\\"\\"><span data-v-bd75ece3=\\"\\">Isomer:</span><span data-v-bd75ece3=\\"\\" class=\\"ion-formula\\">[C<sub class=\\"leading-none\\">10</sub>H<sub class=\\"leading-none\\">13</sub>NO<sub class=\\"leading-none\\">2</sub> + Na - H<sub class=\\"leading-none\\">2</sub>O]⁺</span></div>
-            <div data-v-22a3ab3a=\\"\\" data-v-bd75ece3=\\"\\" class=\\"fdr-badge fdr-badge-20\\">20% FDR </div>
+            <div data-v-22a3ab3a=\\"\\" data-v-bd75ece3=\\"\\" class=\\"fdr-badge fdr-badge-20\\">20% FDR</div>
             <!--v-if-->
           </div>
           <div data-v-bd75ece3=\\"\\" class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\">
             <div data-v-bd75ece3=\\"\\" style=\\"max-width: 500px;\\">
               <p data-v-bd75ece3=\\"\\"> The False Discovery Rate (FDR) for each annotation is calculated among all ions that share the same adduct. </p>
               <p data-v-bd75ece3=\\"\\"> It is possible for isomeric annotations to show different FDRs due to having different adducts. In these cases, it is an indicator of certain adducts having a higher or lower probability of incorrectly labelling unknown molecules. </p>
-              <p data-v-bd75ece3=\\"\\"> The FDR should not be used to decide which isomeric molecule is more likely to be correct. </p>
+              <p data-v-bd75ece3=\\"\\">The FDR should not be used to decide which isomeric molecule is more likely to be correct.</p>
             </div>
           </div>
         </div>

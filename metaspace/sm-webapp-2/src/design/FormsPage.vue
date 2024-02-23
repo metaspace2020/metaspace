@@ -8,25 +8,15 @@
         <li><a href="#radio-button">Radio Button</a></li>
       </ul>
     </nav>
-    <h2 id="general-form-fields">
-      General Form Fields
-    </h2>
-    <p>
-      Based on the size 6/24px baseline. Optionally use <code>v-rhythm-6</code> to space fields out vertically.
-    </p>
+    <h2 id="general-form-fields">General Form Fields</h2>
+    <p>Based on the size 6/24px baseline. Optionally use <code>v-rhythm-6</code> to space fields out vertically.</p>
     <component-example>
       <sm-form :class="{ 'baseline-grid-6': formField.grid }">
         <div>
           <label for="label-example">
-            <primary-label-text>
-              Primary text: main description of the form field
-            </primary-label-text>
-            <secondary-label-text>
-              Secondary text: guidance such as purpose or validation rules
-            </secondary-label-text>
-            <error-label-text v-if="formField.error">
-              Error text: how to solve the issue
-            </error-label-text>
+            <primary-label-text> Primary text: main description of the form field </primary-label-text>
+            <secondary-label-text> Secondary text: guidance such as purpose or validation rules </secondary-label-text>
+            <error-label-text v-if="formField.error"> Error text: how to solve the issue </error-label-text>
           </label>
           <el-input
             id="label-example"
@@ -38,16 +28,10 @@
       </sm-form>
     </component-example>
     <div class="h-6">
-      <el-checkbox v-model="formField.error">
-        Show error style
-      </el-checkbox>
-      <el-checkbox v-model="formField.grid">
-        Show baseline grid
-      </el-checkbox>
+      <el-checkbox v-model="formField.error"> Show error style </el-checkbox>
+      <el-checkbox v-model="formField.grid"> Show baseline grid </el-checkbox>
     </div>
-    <h2 id="copy-to-clipboard">
-      Copy to Clipboard
-    </h2>
+    <h2 id="copy-to-clipboard">Copy to Clipboard</h2>
     <p>Form field with a copy button. Supports clicking to reveal sensitive info.</p>
     <props-table>
       <tr>
@@ -63,20 +47,11 @@
     </props-table>
     <component-example>
       <form class="flex item-center justify-between">
-        <copy-to-clipboard
-          class="w-1/3"
-          value="password"
-          type="password"
-        />
-        <input
-          class="el-input__inner w-1/3"
-          placeholder="Paste here"
-        />
+        <copy-to-clipboard class="w-1/3" value="password" type="password" />
+        <input class="el-input__inner w-1/3" placeholder="Paste here" />
       </form>
     </component-example>
-    <h2 id="radio-button">
-      Radio Button
-    </h2>
+    <h2 id="radio-button">Radio Button</h2>
     <p>Fancier than Element UI and uses native elements. Check mark has a hanging indent.</p>
     <props-table>
       <tr>
@@ -97,9 +72,7 @@
     </props-table>
     <component-example>
       <form class="pl-12">
-        <p class="m-0 pb-3 font-medium">
-          Choose one:
-        </p>
+        <p class="m-0 pb-3 font-medium">Choose one:</p>
         <radio-button
           id="radio-button-1"
           name="radio-button-example"

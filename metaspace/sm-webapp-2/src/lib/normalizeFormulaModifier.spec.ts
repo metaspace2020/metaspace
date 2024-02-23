@@ -6,8 +6,8 @@ describe('normalizeFormulaModifier', () => {
     '+CHIPS',
     '-O+C5H12N3O',
     // All allowed elements from the regex:
-    '+AcAgAlArAsAtAuBBaBeBiBrCCaCdCeClCoCrCsCuDyErEuFFeFrGaGdGeHHeHfHgHoIInIrKKrLaLiLuMgMnMo'
-    + 'NNaNbNdNeNiOOsPPaPbPdPmPoPrPtRbReRhRuSSbScSeSiSmSnSrTaTbTcTeTiTlTmUVWXeYYbZnZr',
+    '+AcAgAlArAsAtAuBBaBeBiBrCCaCdCeClCoCrCsCuDyErEuFFeFrGaGdGeHHeHfHgHoIInIrKKrLaLiLuMgMnMo' +
+      'NNaNbNdNeNiOOsPPaPbPdPmPoPrPtRbReRhRuSSbScSeSiSmSnSrTaTbTcTeTiTlTmUVWXeYYbZnZr',
   ]
   it.each(validCases)('should validate valid formula modifiers', (input) => {
     expect(normalizeFormulaModifier(input, '+')).toEqual(input)
@@ -31,7 +31,20 @@ describe('normalizeFormulaModifier', () => {
     'D', // Invalid element (Shorthand for Deuterium, but isotopes aren't supported)
     'Ee', // Invalid element (pyMSpec uses it for Electron - not supported)
     // Elements not supported by pyMSpec
-    'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg',
+    'Np',
+    'Pu',
+    'Am',
+    'Cm',
+    'Bk',
+    'Cf',
+    'Es',
+    'Fm',
+    'Md',
+    'No',
+    'Lr',
+    'Rf',
+    'Db',
+    'Sg',
   ]
   it.each(invalidCases)('should reject invalid formulas', (input) => {
     expect(normalizeFormulaModifier(input, '-')).toBe(null)

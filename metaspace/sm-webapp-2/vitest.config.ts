@@ -1,11 +1,10 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config'
 import virtual from 'vite-plugin-virtual'
-import {fileURLToPath, URL} from "node:url";
+import { fileURLToPath, URL } from 'node:url'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import AutoImport from 'unplugin-auto-import/vite'
-
 
 export default defineConfig({
   plugins: [
@@ -29,7 +28,8 @@ export default defineConfig({
     testTimeout: 10000, // Global timeout set to 10000ms (10 seconds)
   },
   resolve: {
-    alias: { // @ts-ignore
+    alias: {
+      // @ts-ignore
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },

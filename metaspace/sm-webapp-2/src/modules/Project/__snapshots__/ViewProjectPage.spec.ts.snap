@@ -175,7 +175,7 @@ exports[`ViewProjectPage > members tab > should match snapshot (invited) 1`] = `
           <!--v-if-->
           <p class=\\"el-alert__description\\">
           <div data-v-4e241df4=\\"\\" style=\\"padding: 0px 0px 20px 20px;\\">
-            <p data-v-4e241df4=\\"\\"> You have been invited to join project name. </p>
+            <p data-v-4e241df4=\\"\\">You have been invited to join project name.</p>
             <div data-v-4e241df4=\\"\\"><button data-v-4e241df4=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--danger\\">
                 <!--v-if--><span class=\\"\\"> Decline invitation </span>
               </button><button data-v-4e241df4=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
@@ -331,7 +331,7 @@ exports[`ViewProjectPage > members tab > should match snapshot (manager, includi
                   <div data-v-0d45dd3a=\\"\\" class=\\"mock-el-option\\" label=\\"None (remove from project)\\" value=\\"\\"></div>
                 </div>
                 </p>
-                <p data-v-0d45dd3a=\\"\\"> Changing a member's role this way does not cause any notification emails to be sent. </p>
+                <p data-v-0d45dd3a=\\"\\">Changing a member's role this way does not cause any notification emails to be sent.</p>
                 <div data-v-0d45dd3a=\\"\\" class=\\"el-row is-align-middle\\"><button data-v-0d45dd3a=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button\\">
                     <!--v-if--><span class=\\"\\"> Close </span>
                   </button><button data-v-0d45dd3a=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
@@ -1191,7 +1191,7 @@ exports[`ViewProjectPage > settings tab > should disable actions when under publ
                     <div data-v-e0556da7=\\"\\" class=\\"h-10 flex items-center\\">
                       <div data-v-e0556da7=\\"\\" class=\\"el-switch is-disabled is-checked\\"><input class=\\"el-switch__input\\" type=\\"checkbox\\" role=\\"switch\\" aria-checked=\\"true\\" aria-disabled=\\"true\\" name=\\"\\" true-value=\\"true\\" false-value=\\"false\\" disabled=\\"\\" id=\\"el-id-replaced\\"><span class=\\"el-switch__label el-switch__label--left\\"><!--v-if--><span aria-hidden=\\"true\\">Private</span></span><span class=\\"el-switch__core\\"><!--v-if--><div class=\\"el-switch__action\\"><!--v-if--></div></span><span class=\\"el-switch__label el-switch__label--right is-active\\"><!--v-if--><span aria-hidden=\\"false\\">Public</span></span></div>
                     </div>
-                    <p data-v-e0556da7=\\"\\" class=\\"m-0 italic text-sm text-gray-700\\"> published projects are always visible </p>
+                    <p data-v-e0556da7=\\"\\" class=\\"m-0 italic text-sm text-gray-700\\">published projects are always visible</p>
                   </div>
                 </form>
                 <div data-v-37081f7b=\\"\\"><label for=\\"project-settings-short-link\\"><span class=\\"text-base font-medium\\">Short link</span><span class=\\"block text-sm text-gray-800\\">Must be unique, min. 4 characters, using a–z, 0–9, hyphen or underscore</span>

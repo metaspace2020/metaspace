@@ -1,15 +1,15 @@
 import DatasetOverviewPage from './DatasetOverviewPage'
-import { nextTick, ref, h, defineComponent } from 'vue';
-import { mount, flushPromises } from '@vue/test-utils';
+import { nextTick, ref, h, defineComponent } from 'vue'
+import { mount, flushPromises } from '@vue/test-utils'
 import store from '../../../store'
 import router from '../../../router'
-import {initMockGraphqlClient} from "../../../tests/utils/mockGraphqlClient";
-import {DefaultApolloClient, useQuery} from "@vue/apollo-composable";
+import { initMockGraphqlClient } from '../../../tests/utils/mockGraphqlClient'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 
 vi.mock('@vue/apollo-composable', () => ({
   useQuery: vi.fn(),
   DefaultApolloClient: vi.fn(),
-}));
+}))
 vi.mock('./DatasetActionsDropdown', () => ({ default: vi.fn() }))
 vi.mock('../../../components/NewFeatureBadge', () => ({ default: vi.fn() }))
 
@@ -55,14 +55,10 @@ describe('DatasetOverviewPage', () => {
       },
     }),
     configJson: JSON.stringify({
-      database_ids: [
-        1,
-      ],
+      database_ids: [1],
       analysis_version: 3,
       isotope_generation: {
-        adducts: [
-          '+H',
-        ],
+        adducts: ['+H'],
         charge: 1,
         isocalc_sigma: 0.001238,
         instrument: 'Orbitrap',
@@ -102,22 +98,20 @@ describe('DatasetOverviewPage', () => {
       DatasetOverviewPage,
     },
     setup(props, { attrs }) {
-      return () => h(DatasetOverviewPage, { ...attrs, ...props });
+      return () => h(DatasetOverviewPage, { ...attrs, ...props })
     },
-  });
+  })
 
   const mockGraphql = async (qyeryParams) => {
     graphqlMocks = await initMockGraphqlClient({
-      Query: () => (qyeryParams),
-    });
-
-    (useQuery as any).mockReturnValue({
+      Query: () => qyeryParams,
+    })
+    ;(useQuery as any).mockReturnValue({
       result: ref(Object.keys(qyeryParams).reduce((acc, key) => ({ ...acc, [key]: qyeryParams[key]() }), {})),
       loading: ref(false),
       onResult: vi.fn(),
-    });
-
-  };
+    })
+  }
 
   const noDatasetQuery = async () => {
     await mockGraphql({
@@ -125,7 +119,7 @@ describe('DatasetOverviewPage', () => {
       currentUser: () => ({ id: 'userid', role: 'user' }),
     })
   }
-  const overviewQuery = async() => {
+  const overviewQuery = async () => {
     await mockGraphql({
       dataset: () => mockDataset,
       currentUser: () => ({ id: 'userid', role: 'user' }),
@@ -141,37 +135,37 @@ describe('DatasetOverviewPage', () => {
     })
   })
 
-  it('should match snapshot when dataset exist', async() => {
+  it('should match snapshot when dataset exist', async () => {
     await overviewQuery()
     const wrapper = mount(testHarness, {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMocks
-        }
+          [DefaultApolloClient]: graphqlMocks,
+        },
       },
-    });
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
+    expect(wrapper.html()).toMatchSnapshot()
   })
 
-  it('should match snapshot when dataset does not exist', async() => {
+  it('should match snapshot when dataset does not exist', async () => {
     await noDatasetQuery()
     const wrapper = mount(testHarness, {
       global: {
         plugins: [store, router],
         provide: {
-          [DefaultApolloClient]: graphqlMocks
-        }
+          [DefaultApolloClient]: graphqlMocks,
+        },
       },
-    });
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
+    expect(wrapper.html()).toMatchSnapshot()
   })
 })

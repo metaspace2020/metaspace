@@ -1,23 +1,23 @@
-import { Module } from 'vuex';
-import { DialogType } from '../dialogs';
-import router from '../../../router';
-import { RouteLocationRaw } from 'vue-router';
+import { Module } from 'vuex'
+import { DialogType } from '../dialogs'
+import router from '../../../router'
+import { RouteLocationRaw } from 'vue-router'
 
 export interface AccountState {
-  dialog: DialogType | null;
-  dialogCloseRedirect: RouteLocationRaw | null;
-  loginSuccessRedirect: RouteLocationRaw | null;
+  dialog: DialogType | null
+  dialogCloseRedirect: RouteLocationRaw | null
+  loginSuccessRedirect: RouteLocationRaw | null
 }
 
 interface ShowDialogOptions {
-  dialog: DialogType;
-  dialogCloseRedirect?: RouteLocationRaw;
-  loginSuccessRedirect?: RouteLocationRaw;
+  dialog: DialogType
+  dialogCloseRedirect?: RouteLocationRaw
+  loginSuccessRedirect?: RouteLocationRaw
 }
 
 interface HideDialogOptions {
-  dialog: DialogType;
-  isLoginSuccess?: boolean;
+  dialog: DialogType
+  isLoginSuccess?: boolean
 }
 
 const account: Module<AccountState, any> = {
@@ -29,32 +29,32 @@ const account: Module<AccountState, any> = {
   },
   mutations: {
     showDialog(state, payload: DialogType | ShowDialogOptions) {
-      const options: ShowDialogOptions = typeof payload === 'string' ? { dialog: payload } : payload;
+      const options: ShowDialogOptions = typeof payload === 'string' ? { dialog: payload } : payload
 
-      state.dialog = options.dialog;
+      state.dialog = options.dialog
       if (options.dialogCloseRedirect != null) {
-        state.dialogCloseRedirect = options.dialogCloseRedirect;
+        state.dialogCloseRedirect = options.dialogCloseRedirect
       }
       if (options.loginSuccessRedirect != null) {
-        state.loginSuccessRedirect = options.loginSuccessRedirect;
+        state.loginSuccessRedirect = options.loginSuccessRedirect
       }
     },
     hideDialog(state, payload: DialogType | HideDialogOptions) {
-      const options: HideDialogOptions = typeof payload === 'string' ? { dialog: payload } : payload;
+      const options: HideDialogOptions = typeof payload === 'string' ? { dialog: payload } : payload
 
       if (state.dialog === options.dialog) {
-        state.dialog = null;
+        state.dialog = null
         if (options.isLoginSuccess && state.loginSuccessRedirect != null) {
-          router.push(state.loginSuccessRedirect);
+          router.push(state.loginSuccessRedirect)
         } else if (state.dialogCloseRedirect != null) {
-          router.push(state.dialogCloseRedirect);
+          router.push(state.dialogCloseRedirect)
         }
 
-        state.dialogCloseRedirect = null;
-        state.loginSuccessRedirect = null;
+        state.dialogCloseRedirect = null
+        state.loginSuccessRedirect = null
       }
     },
   },
-};
+}
 
-export default account;
+export default account

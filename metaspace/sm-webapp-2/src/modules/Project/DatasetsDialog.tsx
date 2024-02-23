@@ -1,12 +1,17 @@
-import {defineComponent, computed, reactive, ref, inject} from 'vue';
-import { ElDialog, ElButton, ElSelect, ElOption, ElInput, ElTable, ElTableColumn, ElPagination } from 'element-plus';
-import {DefaultApolloClient, useQuery} from '@vue/apollo-composable';
-import { isEqual } from 'lodash-es';
-import moment from 'moment';
-import { importDatasetsIntoProjectMutation, ProjectsListProject } from '../../api/project';
-import { countDatasetsByStatusQuery, DatasetDetailItem, DatasetListItem, datasetListItemsQuery } from '../../api/dataset';
-import reportError from '../../lib/reportError';
-import './DatasetsDialog.scss';
+import { defineComponent, computed, reactive, ref, inject } from 'vue'
+import { ElDialog, ElButton, ElSelect, ElOption, ElInput, ElTable, ElTableColumn, ElPagination } from 'element-plus'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
+import { isEqual } from 'lodash-es'
+import moment from 'moment'
+import { importDatasetsIntoProjectMutation, ProjectsListProject } from '../../api/project'
+import {
+  countDatasetsByStatusQuery,
+  DatasetDetailItem,
+  DatasetListItem,
+  datasetListItemsQuery,
+} from '../../api/dataset'
+import reportError from '../../lib/reportError'
+import './DatasetsDialog.scss'
 
 interface DatasetsDialogState {
   selectedDatasets: any
@@ -38,7 +43,7 @@ export default defineComponent({
     refreshData: { type: Function, required: true },
   },
   setup(props: DatasetsDialogProps | any, { emit }) {
-    const apolloClient = inject(DefaultApolloClient);
+    const apolloClient = inject(DefaultApolloClient)
     const pageSizes = [2, 5, 15, 20, 25, 30]
     const table = ref(null)
 
@@ -53,13 +58,16 @@ export default defineComponent({
       nameFilter: '',
       pageSize: 5000,
       offset: 1,
-    });
+    })
 
     const queryVars = computed(() => ({
       dFilter: {
-        group: state.datasetOwnerFilter !== 'all-datasets'
-        && state.datasetOwnerFilter !== 'my-datasets' && state.datasetOwnerFilter !== 'project-datasets'
-          ? state.datasetOwnerFilter : undefined,
+        group:
+          state.datasetOwnerFilter !== 'all-datasets' &&
+          state.datasetOwnerFilter !== 'my-datasets' &&
+          state.datasetOwnerFilter !== 'project-datasets'
+            ? state.datasetOwnerFilter
+            : undefined,
         submitter: state.datasetOwnerFilter === 'my-datasets' ? props.currentUser.id : undefined,
         project: state.datasetOwnerFilter === 'project-datasets' ? props.project.id : undefined,
         metadataType: 'Imaging MS',
@@ -69,26 +77,31 @@ export default defineComponent({
       offset: (state.offset - 1) * state.pageSize,
     }))
 
-    const {
-      result: datasetResult,
-      refetch: datasetsRefetch,
-    } = useQuery<{allDatasets: DatasetDetailItem}>(datasetListItemsQuery, queryVars)
-    const datasets = computed(() => datasetResult.value != null ? datasetResult.value.allDatasets : null)
+    const { result: datasetResult, refetch: datasetsRefetch } = useQuery<{ allDatasets: DatasetDetailItem }>(
+      datasetListItemsQuery,
+      queryVars
+    )
+    const datasets = computed(() => (datasetResult.value != null ? datasetResult.value.allDatasets : null))
 
     const {
       result: projectDatasetsResult,
       refetch: projectDatasetsRefetch,
       onResult: onProjectDatasetsResult,
-    } = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery,
-      () => ({ dFilter: { project: props.project?.id } }))
-    const projectDatasets = computed(() => projectDatasetsResult.value != null
-      ? projectDatasetsResult.value.allDatasets : null)
+    } = useQuery<{ allDatasets: DatasetListItem[] }>(datasetListItemsQuery, () => ({
+      dFilter: { project: props.project?.id },
+    }))
+    const projectDatasets = computed(() =>
+      projectDatasetsResult.value != null ? projectDatasetsResult.value.allDatasets : null
+    )
 
-    const setDefaultSelectedDatasets = (defaultPageSize : number = 5) => {
+    const setDefaultSelectedDatasets = (defaultPageSize: number = 5) => {
       state.selectedDatasets.forEach((dataset: any) => {
         if (Array.isArray(datasets.value) && datasets.value.find((row: any) => row?.id === dataset?.id)) {
           // @ts-ignore
-          table.value!.toggleRowSelection(datasets.value.find((row: any) => row?.id === dataset?.id), true)
+          table.value!.toggleRowSelection(
+            datasets.value.find((row: any) => row?.id === dataset?.id),
+            true
+          )
         }
       })
 
@@ -96,7 +109,7 @@ export default defineComponent({
       state.pageSize = defaultPageSize
     }
 
-    onProjectDatasetsResult(async() => {
+    onProjectDatasetsResult(async () => {
       state.selectedDatasets = projectDatasets.value
     })
 
@@ -105,18 +118,19 @@ export default defineComponent({
       setDefaultSelectedDatasets()
     }
 
-    const onDialogClose = async() => {
+    const onDialogClose = async () => {
       state.datasetOwnerFilter = 'project-datasets'
       await projectDatasetsRefetch()
       await datasetsRefetch()
     }
 
-    const {
-      result: datasetCountResult,
-      refetch: datasetsCountRefetch,
-    } = useQuery<{countDatasetsPerGroup: any}>(countDatasetsByStatusQuery, queryVars)
-    const datasetCount = computed(() => datasetCountResult.value != null
-      ? datasetCountResult.value.countDatasetsPerGroup?.counts[0]?.count : 0)
+    const { result: datasetCountResult, refetch: datasetsCountRefetch } = useQuery<{ countDatasetsPerGroup: any }>(
+      countDatasetsByStatusQuery,
+      queryVars
+    )
+    const datasetCount = computed(() =>
+      datasetCountResult.value != null ? datasetCountResult.value.countDatasetsPerGroup?.counts[0]?.count : 0
+    )
     const handleClose = () => {
       emit('close')
     }
@@ -147,7 +161,7 @@ export default defineComponent({
       state.pageSize = value
     }
 
-    const handleUpdate = async() => {
+    const handleUpdate = async () => {
       const selectedDatasetIds = state.selectedDatasets.map((ds: any) => ds.id)
       const defaultDatasetIds = projectDatasets.value!.map((ds: any) => ds.id)
       const removedDatasetIds = defaultDatasetIds.filter((dsId: string) => !selectedDatasetIds.includes(dsId))
@@ -193,9 +207,7 @@ export default defineComponent({
     }
 
     return () => {
-      const {
-        visible, currentUser,
-      } = props
+      const { visible, currentUser } = props
       const selectedDatasetIds = (state.selectedDatasets || []).map((ds: any) => ds.id)
       const defaultDatasetIds = (projectDatasets.value || []).map((ds: any) => ds.id)
       const removedDatasetIds = defaultDatasetIds.filter((dsId: string) => !selectedDatasetIds.includes(dsId))
@@ -205,80 +217,60 @@ export default defineComponent({
       // @ts-ignore
       return (
         <ElDialog
-          class='project-datasets-dialog'
+          class="project-datasets-dialog"
           modelValue={visible}
           append-to-body
           title={'Add or remove datasets in this project'}
           lockScroll={false}
           onOpened={onDialogOpen}
           onClosed={onDialogClose}
-          onClose={handleClose}>
+          onClose={handleClose}
+        >
           <div class="mt-6">
-            <div class='filter-box'>
+            <div class="filter-box">
               <ElSelect
-                class='select-box-mini'
+                class="select-box-mini"
                 modelValue={state.datasetOwnerFilter}
                 onChange={handleGroupSelect}
-                placeholder='5%'
-                size='small'>
-                <ElOption label="All datasets" value={'all-datasets'}/>
-                <ElOption label="My datasets" value={'my-datasets'}/>
-                <ElOption label="Project datasets" value={'project-datasets'}/>
-                {
-                  currentUser
-                  && Array.isArray(currentUser.groups)
-                  && currentUser.groups.map((item: any) => <ElOption label={item.group.label} value={item.group.id}/>)
-                }
+                placeholder="5%"
+                size="small"
+              >
+                <ElOption label="All datasets" value={'all-datasets'} />
+                <ElOption label="My datasets" value={'my-datasets'} />
+                <ElOption label="Project datasets" value={'project-datasets'} />
+                {currentUser &&
+                  Array.isArray(currentUser.groups) &&
+                  currentUser.groups.map((item: any) => <ElOption label={item.group.label} value={item.group.id} />)}
               </ElSelect>
               <ElInput
-                class='query-filter'
+                class="query-filter"
                 modelValue={state.nameFilter}
                 onInput={handleQueryChange}
-                size='small'
-                placeholder='Enter dataset name'
+                size="small"
+                placeholder="Enter dataset name"
               />
             </div>
-            <div class='table-box mt-2'>
+            <div class="table-box mt-2">
               <ElTable
                 ref={table}
-                onSelection-change={state.handleSelectionDisabled ? () => {
-                } : handleSelectionChange}
+                onSelection-change={state.handleSelectionDisabled ? () => {} : handleSelectionChange}
                 data={(datasets.value || []) as any}
                 size="small"
                 element-loading-text="Loading results …"
                 width="100%"
                 stripe
-                rowKey="id">
-
-                <ElTableColumn
-                  type="selection"
-                  reserveSelection
-                />
-                <ElTableColumn
-                  key="name"
-                  property="name"
-                  label="Dataset"
-                  minWidth="100"
-                />
-                <ElTableColumn
-                  key="submitter.name"
-                  property="submitter.name"
-                  label="Submitter"
-                />
-                <ElTableColumn
-                  key="uploadDT"
-                  property="uploadDT"
-                  label="Upload date"
-                  formatter={dateFormatter}
-                />
+                rowKey="id"
+              >
+                <ElTableColumn type="selection" reserveSelection />
+                <ElTableColumn key="name" property="name" label="Dataset" minWidth="100" />
+                <ElTableColumn key="submitter.name" property="submitter.name" label="Submitter" />
+                <ElTableColumn key="uploadDT" property="uploadDT" label="Upload date" formatter={dateFormatter} />
               </ElTable>
             </div>
 
-            {
-              datasetCount.value > 0
-              &&
+            {datasetCount.value > 0 && (
               <ElPagination
-                class='mt-2'
+                class="mt-2"
                 total={datasetCount.value}
                 pageSizes={pageSizes}
                 pageSize={state.pageSize}
@@ -287,26 +279,25 @@ export default defineComponent({
                 onCurrentChange={handlePageChange}
                 layout={paginationLayout()}
               />
-            }
+            )}
             <div class="ds-dialog-bt-bar button-bar">
-              <div class='flex-col' style={{visibility: state.hasChanged ? 'visible' : 'hidden'}}>
-                <div style={{color: 'green'}}>
+              <div class="flex-col" style={{ visibility: state.hasChanged ? 'visible' : 'hidden' }}>
+                <div style={{ color: 'green' }}>
                   {addedDatasetIds.length > 0 ? `${addedDatasetIds.length} dataset to be added` : ''}
                 </div>
-                <div style={{color: 'red'}}>
+                <div style={{ color: 'red' }}>
                   {removedDatasetIds.length > 0 ? `${removedDatasetIds.length} dataset to be removed` : ''}
                 </div>
               </div>
               <div>
-                <ElButton onClick={handleClose}>
-                  Cancel
-                </ElButton>
+                <ElButton onClick={handleClose}>Cancel</ElButton>
                 <ElButton
-                  class='w-32'
+                  class="w-32"
                   loading={state.isSubmitting}
                   disabled={!state.hasChanged}
                   type="primary"
-                  onClick={handleUpdate}>
+                  onClick={handleUpdate}
+                >
                   Update
                 </ElButton>
               </div>
@@ -316,4 +307,4 @@ export default defineComponent({
       )
     }
   },
-});
+})

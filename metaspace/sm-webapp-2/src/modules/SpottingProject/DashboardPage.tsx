@@ -7,7 +7,7 @@ import {
   ElRadioButton,
   ElTooltip,
   ElButton,
-  ElIcon
+  ElIcon,
 } from 'element-plus'
 import { cloneDeep, flatten, groupBy, keyBy, maxBy, orderBy, uniq } from 'lodash-es'
 import { DashboardScatterChart } from './DashboardScatterChart'
@@ -19,13 +19,11 @@ import ScatterChart from '../../assets/inline/scatter_chart.svg'
 import SortDropdown from '../../components/SortDropdown/SortDropdown'
 import './DashboardPage.scss'
 import { useQuery } from '@vue/apollo-composable'
-import {
-  currentUserWithGroupDetectabilityQuery,
-} from '../../api/user'
-import {CirclePlusFilled, Grid, InfoFilled, Loading, QuestionFilled, RemoveFilled} from "@element-plus/icons-vue";
-import {useRoute, useRouter} from "vue-router";
+import { currentUserWithGroupDetectabilityQuery } from '../../api/user'
+import { CirclePlusFilled, Grid, InfoFilled, Loading, QuestionFilled, RemoveFilled } from '@element-plus/icons-vue'
+import { useRoute, useRouter } from 'vue-router'
 
-interface Options{
+interface Options {
   xAxis: any
   yAxis: any
   aggregation: any
@@ -33,8 +31,8 @@ interface Options{
 }
 
 interface DashboardState {
-  orderBy: string,
-  sortingOrder:string,
+  orderBy: string
+  sortingOrder: string
   colormap: any
   filter: any[]
   xAxisValues: any
@@ -51,11 +49,11 @@ interface DashboardState {
   isEmpty: boolean
   buildingChart: boolean
   predictions: any
-  datasets : any
-  classification : any
-  dataSource : any
-  pathways : any
-  wellmap : any
+  datasets: any
+  classification: any
+  dataSource: any
+  pathways: any
+  wellmap: any
   pagination: any
   baseData: any
   hiddenYValues: any[]
@@ -78,29 +76,70 @@ const FILTER_DISABLED_COMBINATIONS: any = {
 
 const ALLOWED_COMBINATIONS: any = {
   EMBL: {
-    Adducts: ['Class', 'Dataset id', 'Sample name', 'Matrix', 'Molecule', 'Neutral losses', 'Pathway',
-      'Pathway subclass', 'Polarity', 'Subclass'],
+    Adducts: [
+      'Class',
+      'Dataset id',
+      'Sample name',
+      'Matrix',
+      'Molecule',
+      'Neutral losses',
+      'Pathway',
+      'Pathway subclass',
+      'Polarity',
+      'Subclass',
+    ],
     Class: ['Adducts', 'Dataset id', 'Sample name', 'Matrix', 'Neutral losses', 'Polarity'],
-    'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway',
-      'Pathway subclass', 'Subclass'],
-    'Sample name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway',
-      'Pathway subclass', 'Subclass'],
+    'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
+    'Sample name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
     Molecule: ['Adducts', 'Dataset id', 'Sample name', 'Matrix', 'Neutral losses', 'Polarity'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Sample name', 'Matrix', 'Molecule',
-      'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
+    'Neutral losses': [
+      'Adducts',
+      'Class',
+      'Dataset id',
+      'Sample name',
+      'Matrix',
+      'Molecule',
+      'Pathway',
+      'Pathway subclass',
+      'Polarity',
+      'Subclass',
+    ],
     Pathway: ['Adducts', 'Dataset id', 'Sample name', 'Matrix', 'Neutral losses', 'Polarity'],
-    'Pathway subclass': ['Adducts', 'Dataset id', 'Sample name', 'Matrix', 'Neutral losses',
-      'Polarity'],
+    'Pathway subclass': ['Adducts', 'Dataset id', 'Sample name', 'Matrix', 'Neutral losses', 'Polarity'],
     Polarity: ['Adducts', 'Class', 'Matrix', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass'],
     Subclass: ['Adducts', 'Dataset id', 'Sample name', 'Matrix', 'Neutral losses', 'Polarity'],
   },
   ALL: {
-    Adducts: ['Class', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser',
-      'Matrix', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass',
-      'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Class: ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser',
-      'Matrix', 'Neutral losses', 'Polarity', 'Technology'],
+    Adducts: [
+      'Class',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Molecule',
+      'Neutral losses',
+      'Pathway',
+      'Pathway subclass',
+      'Polarity',
+      'Subclass',
+      'Technology',
+      'Source Pressure',
+    ],
+    Class: [
+      'Adducts',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Neutral losses',
+      'Polarity',
+      'Technology',
+    ],
     'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Sample name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Ionisation source': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
@@ -108,24 +147,93 @@ const ALLOWED_COMBINATIONS: any = {
     'Mass analyser': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
     Molecule: ['Adducts', 'Dataset id', 'Sample name', 'Lab', 'Matrix', 'Neutral losses'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab',
-      'Mass analyser', 'Matrix', 'Molecule', 'Pathway', 'Pathway subclass', 'Polarity',
-      'Subclass', 'Technology', 'Source Pressure'],
-    Pathway: ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
-      'Neutral losses', 'Polarity', 'Technology'],
-    'Pathway subclass': ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser',
-      'Matrix', 'Neutral losses', 'Polarity', 'Technology'],
+    'Neutral losses': [
+      'Adducts',
+      'Class',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Molecule',
+      'Pathway',
+      'Pathway subclass',
+      'Polarity',
+      'Subclass',
+      'Technology',
+      'Source Pressure',
+    ],
+    Pathway: [
+      'Adducts',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Neutral losses',
+      'Polarity',
+      'Technology',
+    ],
+    'Pathway subclass': [
+      'Adducts',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Neutral losses',
+      'Polarity',
+      'Technology',
+    ],
     Polarity: ['Adducts', 'Class', 'Matrix', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Subclass: ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
-      'Neutral losses', 'Polarity', 'Technology'],
+    Subclass: [
+      'Adducts',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Neutral losses',
+      'Polarity',
+      'Technology',
+    ],
     Technology: ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Source Pressure': ['Adducts', 'Neutral losses'],
   },
   INTERLAB: {
-    Adducts: ['Class', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix', 'Molecule',
-      'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Class: ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
-      'Neutral losses', 'Polarity', 'Technology'],
+    Adducts: [
+      'Class',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Molecule',
+      'Neutral losses',
+      'Pathway',
+      'Pathway subclass',
+      'Polarity',
+      'Subclass',
+      'Technology',
+      'Source Pressure',
+    ],
+    Class: [
+      'Adducts',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Neutral losses',
+      'Polarity',
+      'Technology',
+    ],
     'Dataset id': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Sample name': ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Ionisation source': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
@@ -133,21 +241,66 @@ const ALLOWED_COMBINATIONS: any = {
     'Mass analyser': ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     Matrix: ['Adducts', 'Class', 'Molecule', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass'],
     Molecule: ['Adducts', 'Dataset id', 'Sample name', 'Lab', 'Matrix', 'Neutral losses'],
-    'Neutral losses': ['Adducts', 'Class', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser',
-      'Matrix', 'Molecule', 'Pathway', 'Pathway subclass', 'Polarity', 'Subclass', 'Technology', 'Source Pressure'],
-    Pathway: ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
-      'Neutral losses', 'Polarity', 'Technology'],
-    'Pathway subclass': ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
-      'Neutral losses', 'Polarity', 'Technology'],
+    'Neutral losses': [
+      'Adducts',
+      'Class',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Molecule',
+      'Pathway',
+      'Pathway subclass',
+      'Polarity',
+      'Subclass',
+      'Technology',
+      'Source Pressure',
+    ],
+    Pathway: [
+      'Adducts',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Neutral losses',
+      'Polarity',
+      'Technology',
+    ],
+    'Pathway subclass': [
+      'Adducts',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Neutral losses',
+      'Polarity',
+      'Technology',
+    ],
     Polarity: ['Adducts', 'Class', 'Matrix', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
-    Subclass: ['Adducts', 'Dataset id', 'Sample name', 'Ionisation source', 'Lab', 'Mass analyser', 'Matrix',
-      'Neutral losses', 'Polarity', 'Technology'],
+    Subclass: [
+      'Adducts',
+      'Dataset id',
+      'Sample name',
+      'Ionisation source',
+      'Lab',
+      'Mass analyser',
+      'Matrix',
+      'Neutral losses',
+      'Polarity',
+      'Technology',
+    ],
     Technology: ['Adducts', 'Class', 'Neutral losses', 'Pathway', 'Pathway subclass', 'Subclass'],
     'Source Pressure': ['Adducts', 'Neutral losses'],
   },
 }
 
-const AXIS_VALUES : any = {
+const AXIS_VALUES: any = {
   EMBL: [
     {
       label: 'Adducts',
@@ -449,7 +602,7 @@ const VALUE_METRICS = {
   },
 }
 
-const filterMap : any = {
+const filterMap: any = {
   a: 'add',
   main_coarse_class: 'q',
   fine_class: 'q',
@@ -477,7 +630,7 @@ const sortingOptions: any[] = [
 
 export default defineComponent({
   name: 'detectability',
-  setup: function() {
+  setup: function () {
     const router = useRouter()
     const route = useRoute()
     const pageSizes = [5, 15, 30, 100]
@@ -525,18 +678,18 @@ export default defineComponent({
       pathways: null,
       wellmap: null,
     })
-    const {
-      result: currentUser,
-    } = useQuery<{currentUser: any}>(currentUserWithGroupDetectabilityQuery)
+    const { result: currentUser } = useQuery<{ currentUser: any }>(currentUserWithGroupDetectabilityQuery)
     const allowedSources = computed(() => {
       if (!currentUser.value) return []
 
       return flatten(
-          currentUser.value?.currentUser?.groups?.map(
-            (group: any) => group.group?.sources?.map((source: any) => source.source)))
+        currentUser.value?.currentUser?.groups?.map(
+          (group: any) => group.group?.sources?.map((source: any) => source.source)
+        )
+      )
     })
 
-    const initializeState = async() => {
+    const initializeState = async () => {
       if (route.query.src) {
         await handleDataSrcChange(route.query.src, false)
       }
@@ -562,8 +715,11 @@ export default defineComponent({
         handleVisualizationChange(parseInt(route.query.vis as string, 10))
       }
 
-      const filterSrc : any[] = !route.query.filter ? ['Polarity', 'nL']
-        : (Array.isArray(route.query.filter) ? route.query.filter : route.query.filter.split(','))
+      const filterSrc: any[] = !route.query.filter
+        ? ['Polarity', 'nL']
+        : Array.isArray(route.query.filter)
+        ? route.query.filter
+        : route.query.filter.split(',')
 
       filterSrc.forEach((item: any, index: number) => {
         if (index > 0) {
@@ -573,13 +729,14 @@ export default defineComponent({
       })
 
       if (route.query.filterValue) {
-        (route.query.filterValue as string).split('|').forEach((item: any, index: number) => {
+        ;(route.query.filterValue as string).split('|').forEach((item: any, index: number) => {
           const value = item.split('#')
           if (!Array.isArray(value) || (value.length > 0 && value[0])) {
             handleFilterValueChange(value, index, false)
           }
         })
-      } else if (!route.query.filter) { // default filters
+      } else if (!route.query.filter) {
+        // default filters
         handleFilterValueChange(['positive'], 0, false)
         handleFilterValueChange(['None'], 1, false)
       }
@@ -594,48 +751,52 @@ export default defineComponent({
       initializeState()
     })
 
-    const buildFilterOptions = async(filterIndex: number) => {
+    const buildFilterOptions = async (filterIndex: number) => {
       state.filter[filterIndex].loadingFilterOptions = true
 
       const options = await loadFilterValues(state.filter[filterIndex].src)
-      state.filter[filterIndex].options = uniq((options || []).map((item: any) => (item === null
-        || item === undefined || item === 'null') ? 'None' : item)).sort()
+      state.filter[filterIndex].options = uniq(
+        (options || []).map((item: any) => (item === null || item === undefined || item === 'null' ? 'None' : item))
+      ).sort()
       state.filter[filterIndex].loadingFilterOptions = false
     }
 
-    const loadData = async() => {
+    const loadData = async () => {
       try {
         state.loading = true
 
-        const nonEmptyFilters = (state.filter || []).filter((item: any) => item.src === 'nL'
-          || (Array.isArray(item.value)
-            ? item.value.join('#') : item.value))
+        const nonEmptyFilters = (state.filter || []).filter(
+          (item: any) => item.src === 'nL' || (Array.isArray(item.value) ? item.value.join('#') : item.value)
+        )
         const filter = nonEmptyFilters.map((item: any) => item.src).join(',')
         // .replace('main_coarse_class', 'coarse_class')
         // .replace('main_coarse_path', 'coarse_path')
-        const filterValues = nonEmptyFilters.map((item: any) => (item.src === 'nL' || Array.isArray(item.value))
-          ? item.value.join('#') : item.value).filter((x:any) => x).join('|')
+        const filterValues = nonEmptyFilters
+          .map((item: any) => (item.src === 'nL' || Array.isArray(item.value) ? item.value.join('#') : item.value))
+          .filter((x: any) => x)
+          .join('|')
 
         // load data
-        const params : any = {
+        const params: any = {
           predType: state.dataSource.toUpperCase(),
           xAxis: state.options.xAxis,
           yAxis: state.options.yAxis,
-          loadPathway: Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
-            || Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)
-            || (state.filter || [])
-              .findIndex((item: any) => Object.keys(PATHWAY_METRICS).includes(item.src)) !== -1,
-          loadClass: Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)
-            || Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)
-            || (state.filter || [])
-              .findIndex((item: any) => Object.keys(CLASSIFICATION_METRICS).includes(item.src)) !== -1,
+          loadPathway:
+            Object.keys(PATHWAY_METRICS).includes(state.options.xAxis) ||
+            Object.keys(PATHWAY_METRICS).includes(state.options.yAxis) ||
+            (state.filter || []).findIndex((item: any) => Object.keys(PATHWAY_METRICS).includes(item.src)) !== -1,
+          loadClass:
+            Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis) ||
+            Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis) ||
+            (state.filter || []).findIndex((item: any) => Object.keys(CLASSIFICATION_METRICS).includes(item.src)) !==
+              -1,
           queryType: 'data',
           filter,
           filterValues,
         }
 
         const query = Object.keys(params)
-          .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+          .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
         const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
@@ -653,30 +814,31 @@ export default defineComponent({
       }
     }
 
-    const loadFilterValues = async(filter:any) => {
+    const loadFilterValues = async (filter: any) => {
       try {
         // load data
 
         // filter = filter === 'main_coarse_class' ? 'coarse_class' : filter
         // filter = filter === 'main_coarse_path' ? 'coarse_path' : filter
-        const params : any = {
+        const params: any = {
           predType: state.dataSource.toUpperCase(),
           xAxis: state.options.xAxis,
           yAxis: state.options.yAxis,
-          loadPathway: Object.keys(PATHWAY_METRICS).includes(state.options.xAxis)
-            || Object.keys(PATHWAY_METRICS).includes(state.options.yAxis)
-            || (state.filter || [])
-              .findIndex((item: any) => Object.keys(PATHWAY_METRICS).includes(item.src)) !== -1,
-          loadClass: Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis)
-            || Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis)
-            || (state.filter || [])
-              .findIndex((item: any) => Object.keys(CLASSIFICATION_METRICS).includes(item.src)) !== -1,
+          loadPathway:
+            Object.keys(PATHWAY_METRICS).includes(state.options.xAxis) ||
+            Object.keys(PATHWAY_METRICS).includes(state.options.yAxis) ||
+            (state.filter || []).findIndex((item: any) => Object.keys(PATHWAY_METRICS).includes(item.src)) !== -1,
+          loadClass:
+            Object.keys(CLASSIFICATION_METRICS).includes(state.options.xAxis) ||
+            Object.keys(CLASSIFICATION_METRICS).includes(state.options.yAxis) ||
+            (state.filter || []).findIndex((item: any) => Object.keys(CLASSIFICATION_METRICS).includes(item.src)) !==
+              -1,
           filter,
           queryType: 'filterValues',
         }
 
         const query = Object.keys(params)
-          .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+          .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
           .join('&')
 
         const baseUrl = 'https://a5wtrqusve2xmrnjx7t3kpitcm0piciq.lambda-url.eu-west-1.on.aws' // prod docker
@@ -691,50 +853,62 @@ export default defineComponent({
       }
     }
 
-    const buildValues = async() => {
+    const buildValues = async () => {
       try {
         const chartData = state.usedData
         const data = chartData.data
-        let xAxisValues : string[] = chartData.xAxisSorting ? chartData.xAxisSorting : chartData.xAxis
-        let yAxisValues : string[] = chartData.yAxisSorting ? chartData.yAxisSorting : chartData.yAxis
+        let xAxisValues: string[] = chartData.xAxisSorting ? chartData.xAxisSorting : chartData.xAxis
+        let yAxisValues: string[] = chartData.yAxisSorting ? chartData.yAxisSorting : chartData.yAxis
 
         if (!chartData.yAxisSorting || state.orderBy === 'ORDER_BY_NAME') {
-          yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
-            ? 'desc' : 'asc'])
-          xAxisValues = orderBy(xAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
-            ? 'desc' : 'asc'])
+          yAxisValues = orderBy(
+            yAxisValues,
+            [(axis) => axis.toLowerCase()],
+            [state.sortingOrder === 'DESCENDING' ? 'desc' : 'asc']
+          )
+          xAxisValues = orderBy(
+            xAxisValues,
+            [(axis) => axis.toLowerCase()],
+            [state.sortingOrder === 'DESCENDING' ? 'desc' : 'asc']
+          )
         } else if (state.sortingOrder === 'DESCENDING') {
           yAxisValues = cloneDeep(yAxisValues).reverse()
           xAxisValues = cloneDeep(xAxisValues).reverse()
         }
 
         if (state.options.yAxis === 'fine_class' || state.options.yAxis === 'fine_path') {
-          yAxisValues = orderBy(yAxisValues, [axis => axis.toLowerCase()], [state.sortingOrder === 'DESCENDING'
-            ? 'desc' : 'asc'])
+          yAxisValues = orderBy(
+            yAxisValues,
+            [(axis) => axis.toLowerCase()],
+            [state.sortingOrder === 'DESCENDING' ? 'desc' : 'asc']
+          )
         }
 
-        const auxData : any = groupBy(data, state.options.xAxis)
+        const auxData: any = groupBy(data, state.options.xAxis)
         Object.keys(auxData).forEach((key: string) => {
-          auxData[key] = keyBy(auxData[key], (state.options.yAxis === 'fine_class'
-            || state.options.yAxis === 'fine_path')
-            ? 'class_full' : state.options.yAxis)
+          auxData[key] = keyBy(
+            auxData[key],
+            state.options.yAxis === 'fine_class' || state.options.yAxis === 'fine_path'
+              ? 'class_full'
+              : state.options.yAxis
+          )
         })
 
-        const dotValues : any = []
-        const yMaxValue : any = (maxBy(data!, 'fraction_detected')! as any)!.fraction_detected
-        let maxColor : number = 0
+        const dotValues: any = []
+        const yMaxValue: any = (maxBy(data!, 'fraction_detected')! as any)!.fraction_detected
+        let maxColor: number = 0
 
         // build chart
         xAxisValues.forEach((xKey: any, xIndex: number) => {
           yAxisValues.forEach((yKey: any, yIndex: number) => {
-            const isEmpty : any = auxData[xKey][yKey] === undefined
-            const item : any = auxData[xKey][yKey] || {}
-            const pointAggregation : any = isEmpty ? 0 : item[state.options.aggregation]
+            const isEmpty: any = auxData[xKey][yKey] === undefined
+            const item: any = auxData[xKey][yKey] || {}
+            const pointAggregation: any = isEmpty ? 0 : item[state.options.aggregation]
 
             maxColor = pointAggregation > maxColor ? pointAggregation : maxColor
 
-            const value : number = isEmpty ? 0 : item.fraction_detected
-            const normalizedValue = isEmpty ? 0 : (yMaxValue === 0 ? 0 : (value / yMaxValue))
+            const value: number = isEmpty ? 0 : item.fraction_detected
+            const normalizedValue = isEmpty ? 0 : yMaxValue === 0 ? 0 : value / yMaxValue
             dotValues.push({
               value: [xIndex, yIndex, normalizedValue, pointAggregation, value],
               label: {
@@ -767,7 +941,7 @@ export default defineComponent({
           orient: 'horizontal',
           min: 0,
           max: maxColor,
-          formatter: function(value: any) {
+          formatter: function (value: any) {
             return value.toFixed(2)
           },
         }
@@ -797,10 +971,11 @@ export default defineComponent({
       }
     }
 
-    const handleFilterValueChange = async(value: any, idx : any = 0, buildChart: boolean = true) => {
+    const handleFilterValueChange = async (value: any, idx: any = 0, buildChart: boolean = true) => {
       state.filter[idx].value = value
-      const filterValueParams = state.filter.map((item: any) => Array.isArray(item.value)
-        ? item.value.join('#') : item.value).join('|')
+      const filterValueParams = state.filter
+        .map((item: any) => (Array.isArray(item.value) ? item.value.join('#') : item.value))
+        .join('|')
 
       router.replace({
         name: 'detectability',
@@ -816,7 +991,7 @@ export default defineComponent({
       }
     }
 
-    const removeFilterItem = async() => {
+    const removeFilterItem = async () => {
       const value = state.filter[state.filter.length - 1].value
       state.filter.pop()
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation && value) {
@@ -838,13 +1013,14 @@ export default defineComponent({
       }
     }
 
-    const handleItemClick = (item: any) => { // get info from clicked chart item and open on a metaspace url
+    const handleItemClick = (item: any) => {
+      // get info from clicked chart item and open on a metaspace url
       const baseUrl = 'https://metaspace2020.eu/annotations?db_id=304'
       // const baseUrl = 'http://localhost:8999/annotations?db_id=304'
       let url = baseUrl
-      const formulas : string = item?.data?.label?.formulas?.join('|')
-      const yAxisFilter : any = filterMap[state.options.yAxis]
-      const xAxisFilter : any = filterMap[state.options.xAxis]
+      const formulas: string = item?.data?.label?.formulas?.join('|')
+      const yAxisFilter: any = filterMap[state.options.yAxis]
+      const xAxisFilter: any = filterMap[state.options.xAxis]
 
       // set dataset ids filter
       if ((item?.data?.label?.datasetIds || []).length > 0) {
@@ -852,17 +1028,27 @@ export default defineComponent({
       }
 
       if (yAxisFilter) {
-        const value = (state.options.yAxis === 'fine_class' || state.options.yAxis === 'main_coarse_class'
-          || state.options.yAxis === 'main_coarse_path'
-          || state.options.yAxis === 'fine_path')
-          ? formulas : (yAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.y)
+        const value =
+          state.options.yAxis === 'fine_class' ||
+          state.options.yAxis === 'main_coarse_class' ||
+          state.options.yAxis === 'main_coarse_path' ||
+          state.options.yAxis === 'fine_path'
+            ? formulas
+            : yAxisFilter.includes('matrix')
+            ? item.data.label.matrix.join('|')
+            : item.data.label.y
         url += `&${yAxisFilter}=${encodeURIComponent(value)}`
       }
       if (xAxisFilter) {
-        const value = (state.options.xAxis === 'fine_class' || state.options.xAxis === 'main_coarse_class'
-          || state.options.xAxis === 'main_coarse_path'
-          || state.options.xAxis === 'fine_path')
-          ? formulas : (xAxisFilter.includes('matrix') ? item.data.label.matrix.join('|') : item.data.label.x)
+        const value =
+          state.options.xAxis === 'fine_class' ||
+          state.options.xAxis === 'main_coarse_class' ||
+          state.options.xAxis === 'main_coarse_path' ||
+          state.options.xAxis === 'fine_path'
+            ? formulas
+            : xAxisFilter.includes('matrix')
+            ? item.data.label.matrix.join('|')
+            : item.data.label.x
         url += `&${xAxisFilter}=${encodeURIComponent(value)}`
       }
       window.open(url, '_blank')
@@ -874,10 +1060,11 @@ export default defineComponent({
     }
 
     const getQueryParams = () => {
-      const queryObj : any = {
+      const queryObj: any = {
         filter: state.filter.map((item: any) => item.src).join(','),
-        filterValue: state.filter.map((item: any) => Array.isArray(item.value)
-          ? item.value.join('#') : item.value).join('|'),
+        filterValue: state.filter
+          .map((item: any) => (Array.isArray(item.value) ? item.value.join('#') : item.value))
+          .join('|'),
         xAxis: state.options.xAxis,
         yAxis: state.options.yAxis,
         agg: state.options.aggregation,
@@ -902,11 +1089,13 @@ export default defineComponent({
       state.sortingOrder = !sortingOrder ? 'DESCENDING' : sortingOrder
       if (state.options.xAxis && state.options.yAxis && state.options.aggregation) {
         state.loading = true
-        setTimeout(() => { buildValues() }, 1000)
+        setTimeout(() => {
+          buildValues()
+        }, 1000)
       }
     }
 
-    const handleDataSrcChange = async(text: any, buildChart: boolean = true) => {
+    const handleDataSrcChange = async (text: any, buildChart: boolean = true) => {
       const changedValue = text !== state.dataSource
       const changedFromEmbl = changedValue && (text.toUpperCase() === 'EMBL' || state.dataSource === 'EMBL')
       state.dataSource = text.toUpperCase()
@@ -924,8 +1113,7 @@ export default defineComponent({
       if (state.options.xAxis && state.options.yAxis && changedValue) {
         state.filter = [cloneDeep(filterItem)]
       }
-      if (state.options.xAxis && state.options.yAxis && state.options.aggregation
-        && changedValue && buildChart) {
+      if (state.options.xAxis && state.options.yAxis && state.options.aggregation && changedValue && buildChart) {
         state.isEmpty = false
         await loadData()
         await handleAxisChange(state.options.xAxis, true, false)
@@ -936,53 +1124,69 @@ export default defineComponent({
       }
     }
 
-    const handleFilterSrcChange = (value: any, idx : any = 0, buildChart: boolean = true) => {
+    const handleFilterSrcChange = (value: any, idx: any = 0, buildChart: boolean = true) => {
       const isNew = value !== state.filter[idx]?.src
       const shouldLoad = isNew && state.filter[idx]?.value
 
       // fine_path
       state.filter[idx].src = value
       const filterSrcParams = state.filter.map((item: any) => item.src).join(',')
-      router.replace({ name: 'detectability', query: { ...getQueryParams(), filter: filterSrcParams } })
+      router.replace({
+        name: 'detectability',
+        query: { ...getQueryParams(), filter: filterSrcParams },
+      })
       buildFilterOptions(idx)
       if (isNew) {
         handleFilterValueChange(null, idx, buildChart ? shouldLoad : false)
       }
     }
 
-    const handleAxisSwap = async() => {
+    const handleAxisSwap = async () => {
       const { xAxis, yAxis } = state.options
       await handleAxisChange(yAxis, true, false)
       await handleAxisChange(xAxis, false, true)
     }
 
-    const handleAxisChange = async(value: any, isXAxis : boolean = true, buildChart : boolean = true) => {
-      const isNew : boolean = (isXAxis && value !== state.options.xAxis)
-      || (!isXAxis && value !== state.options.yAxis)
+    const handleAxisChange = async (value: any, isXAxis: boolean = true, buildChart: boolean = true) => {
+      const isNew: boolean = (isXAxis && value !== state.options.xAxis) || (!isXAxis && value !== state.options.yAxis)
       if (isXAxis) {
         state.options.xAxis = value
-        router.replace({ name: 'detectability', query: { ...getQueryParams(), xAxis: value } })
+        router.replace({
+          name: 'detectability',
+          query: { ...getQueryParams(), xAxis: value },
+        })
       } else {
         state.options.yAxis = value
-        router.replace({ name: 'detectability', query: { ...getQueryParams(), yAxis: value } })
+        router.replace({
+          name: 'detectability',
+          query: { ...getQueryParams(), yAxis: value },
+        })
       }
 
       // reassign class according to options
-      if (value === 'main_coarse_class'
-        && state.filter.findIndex((filter: any) => filter.src === 'coarse_class') !== -1) {
-        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'coarse_class')
+      if (
+        value === 'main_coarse_class' &&
+        state.filter.findIndex((filter: any) => filter.src === 'coarse_class') !== -1
+      ) {
+        const idx: number = state.filter.findIndex((filter: any) => filter.src === 'coarse_class')
         state.filter[idx].src = 'main_coarse_class'
-      } else if (value === 'fine_class'
-        && state.filter.findIndex((filter: any) => filter.src === 'main_coarse_class') !== -1) {
-        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'main_coarse_class')
+      } else if (
+        value === 'fine_class' &&
+        state.filter.findIndex((filter: any) => filter.src === 'main_coarse_class') !== -1
+      ) {
+        const idx: number = state.filter.findIndex((filter: any) => filter.src === 'main_coarse_class')
         state.filter[idx].src = 'coarse_class'
-      } else if (value === 'main_coarse_path'
-        && state.filter.findIndex((filter: any) => filter.src === 'coarse_path') !== -1) {
-        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'coarse_path')
+      } else if (
+        value === 'main_coarse_path' &&
+        state.filter.findIndex((filter: any) => filter.src === 'coarse_path') !== -1
+      ) {
+        const idx: number = state.filter.findIndex((filter: any) => filter.src === 'coarse_path')
         state.filter[idx].src = 'main_coarse_path'
-      } else if (value === 'fine_path'
-        && state.filter.findIndex((filter: any) => filter.src === 'main_coarse_path') !== -1) {
-        const idx : number = state.filter.findIndex((filter: any) => filter.src === 'main_coarse_path')
+      } else if (
+        value === 'fine_path' &&
+        state.filter.findIndex((filter: any) => filter.src === 'main_coarse_path') !== -1
+      ) {
+        const idx: number = state.filter.findIndex((filter: any) => filter.src === 'main_coarse_path')
         state.filter[idx].src = 'coarse_path'
       }
 
@@ -996,32 +1200,34 @@ export default defineComponent({
 
     const renderFilters = (xLabelItem: string, yLabelItem: string) => {
       return (
-        <div class='filter-container'>
-
-          <div class='filter-box m-2'>
-            <span class='filter-label mb-3'>
+        <div class="filter-container">
+          <div class="filter-box m-2">
+            <span class="filter-label mb-3">
               Data source
               <ElTooltip content="Select between the labs where the data was gathered from." placement="top">
-                <ElIcon class="help-icon text-sm ml-1 cursor-pointer"><QuestionFilled/></ElIcon>
+                <ElIcon class="help-icon text-sm ml-1 cursor-pointer">
+                  <QuestionFilled />
+                </ElIcon>
               </ElTooltip>
             </span>
             <ElRadioGroup
               disabled={state.loading}
               modelValue={state.dataSource}
               size="small"
-              onChange={async(text:any) => {
+              onChange={(text: any) => {
                 handleDataSrcChange(text)
-              }}>
-              <ElRadioButton label='EMBL'/>
-              {allowedSources.value?.includes('ALL') && <ElRadioButton label='ALL'/>}
-              {allowedSources.value?.includes('INTERLAB') && <ElRadioButton label='INTERLAB'/>}
+              }}
+            >
+              <ElRadioButton label="EMBL" size="default" />
+              {allowedSources.value?.includes('ALL') && <ElRadioButton label="ALL" />}
+              {allowedSources.value?.includes('INTERLAB') && <ElRadioButton label="INTERLAB" size="default" />}
             </ElRadioGroup>
           </div>
 
-          <div class='filter-box m-2'>
-            <span class='x-axis-label mb-2'>X axis</span>
+          <div class="filter-box m-2">
+            <span class="x-axis-label mb-2">X axis</span>
             <ElSelect
-              class='select-box-mini'
+              class="select-box-mini"
               clearable
               modelValue={state.options.xAxis}
               onClear={() => {
@@ -1030,29 +1236,35 @@ export default defineComponent({
               onChange={(value: number) => {
                 handleAxisChange(value)
               }}
-              placeholder='Select axis'
+              placeholder="Select axis"
               disabled={state.loading}
-              size='small'>
-              {
-                orderBy(AXIS_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
-                  return <ElOption
+              size="small"
+            >
+              {orderBy(AXIS_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
+                return (
+                  <ElOption
                     label={option.label}
                     value={option.src}
-                    disabled={state.options.yAxis && state.dataSource && ALLOWED_COMBINATIONS[state.dataSource]
-                      && yLabelItem
-                      && !ALLOWED_COMBINATIONS[state.dataSource][yLabelItem].includes(option.label)}/>
-                })
-              }
+                    disabled={
+                      state.options.yAxis &&
+                      state.dataSource &&
+                      ALLOWED_COMBINATIONS[state.dataSource] &&
+                      yLabelItem &&
+                      !ALLOWED_COMBINATIONS[state.dataSource][yLabelItem].includes(option.label)
+                    }
+                  />
+                )
+              })}
             </ElSelect>
           </div>
-          <div class='filter-box m-2 swap-box'>
-            <ElButton class='swap-btn' size='small' icon='Sort' onClick={handleAxisSwap} disabled={state.loading}/>
+          <div class="filter-box m-2 swap-box">
+            <ElButton class="swap-btn" size="small" icon="Sort" onClick={handleAxisSwap} disabled={state.loading} />
           </div>
-          <div class='filter-box m-2'>
-            <span class='y-axis-label mb-2'>Y axis</span>
+          <div class="filter-box m-2">
+            <span class="y-axis-label mb-2">Y axis</span>
             <ElSelect
               clearable
-              class='select-box-mini'
+              class="select-box-mini"
               modelValue={state.options.yAxis}
               onClear={() => {
                 state.options.yAxis = null
@@ -1061,25 +1273,31 @@ export default defineComponent({
                 handleAxisChange(value, false)
               }}
               disabled={state.loading}
-              placeholder='Select axis'
-              size='small'>
-              {
-                orderBy(AXIS_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
-                  return <ElOption
+              placeholder="Select axis"
+              size="small"
+            >
+              {orderBy(AXIS_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
+                return (
+                  <ElOption
                     label={option.label}
                     value={option.src}
-                    disabled={state.options.xAxis && state.dataSource && ALLOWED_COMBINATIONS[state.dataSource]
-                      && xLabelItem
-                      && !ALLOWED_COMBINATIONS[state.dataSource][xLabelItem].includes(option.label)}/>
-                })
-              }
+                    disabled={
+                      state.options.xAxis &&
+                      state.dataSource &&
+                      ALLOWED_COMBINATIONS[state.dataSource] &&
+                      xLabelItem &&
+                      !ALLOWED_COMBINATIONS[state.dataSource][xLabelItem].includes(option.label)
+                    }
+                  />
+                )
+              })}
             </ElSelect>
           </div>
-          <div class='filter-box m-2'>
-            <span class='aggregation-label mb-2'>Color</span>
+          <div class="filter-box m-2">
+            <span class="aggregation-label mb-2">Color</span>
             <ElSelect
               clearable
-              class='select-box-mini'
+              class="select-box-mini"
               modelValue={state.options.aggregation}
               onClear={() => {
                 state.options.aggregation = null
@@ -1088,22 +1306,21 @@ export default defineComponent({
                 handleAggregationChange(value)
               }}
               disabled={state.loading}
-              placeholder='Select color metric'
-              size='small'>
-              {
-                orderBy(AGGREGATED_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
-                  return <ElOption label={option.label} value={option.src}/>
-                })
-              }
+              placeholder="Select color metric"
+              size="small"
+            >
+              {orderBy(AGGREGATED_VALUES[state.dataSource], ['label'], ['asc']).map((option: any) => {
+                return <ElOption label={option.label} value={option.src} />
+              })}
             </ElSelect>
           </div>
 
-          <div class='filter-box m-2'>
-            <span class='filter-label mb-3'>Sorting </span>
+          <div class="filter-box m-2">
+            <span class="filter-label mb-3">Sorting </span>
             <SortDropdown
               class="pb-2"
               size="small"
-              tooltipPlacement='top'
+              tooltipPlacement="top"
               defaultOption={state.orderBy}
               defaultSorting={state.sortingOrder}
               options={sortingOptions}
@@ -1112,92 +1329,103 @@ export default defineComponent({
             />
           </div>
 
-          <div class='filter-box m-2'>
-            <span class='filter-label mb-2'>Filters</span>
-            {
-              state.filter.map((filter: any, filterIdx: number) => {
-                return (
-                  <div class='flex flex-wrap justify-center'>
-                    <ElSelect
-                      clearable
-                      class='select-box-mini mr-2'
-                      modelValue={filter.src}
-                      onChange={(value: number) => {
-                        handleFilterSrcChange(value, filterIdx)
-                      }}
-                      disabled={state.loading || state.usedData === undefined}
-                      placeholder='Select filter metric'
-                      size='small'>
-                      {
-                        orderBy(FILTER_VALUES, ['label'], ['asc']).map((option: any) => {
-                          if (
-                            (
-                              state.options.yAxis !== 'fine_class' && state.options.xAxis !== 'fine_class'
-                              && option.src === 'coarse_class'
-                            )
-                            || (
-                              state.options.yAxis !== 'fine_path' && state.options.xAxis !== 'fine_path'
-                              && option.src === 'coarse_path'
-                            )
-                            || (FILTER_DISABLED_COMBINATIONS[state.options.yAxis]
-                                && FILTER_DISABLED_COMBINATIONS[state.options.yAxis].includes(option.src))
-                              || (FILTER_DISABLED_COMBINATIONS[state.options.xAxis]
-                                && FILTER_DISABLED_COMBINATIONS[state.options.xAxis].includes(option.src))
-                          ) {
-                            return <div/>
+          <div class="filter-box m-2">
+            <span class="filter-label mb-2">Filters</span>
+            {state.filter.map((filter: any, filterIdx: number) => {
+              return (
+                <div class="flex flex-wrap justify-center">
+                  <ElSelect
+                    clearable
+                    class="select-box-mini mr-2"
+                    modelValue={filter.src}
+                    onChange={(value: number) => {
+                      handleFilterSrcChange(value, filterIdx)
+                    }}
+                    disabled={state.loading || state.usedData === undefined}
+                    placeholder="Select filter metric"
+                    size="small"
+                  >
+                    {orderBy(FILTER_VALUES, ['label'], ['asc']).map((option: any) => {
+                      if (
+                        (state.options.yAxis !== 'fine_class' &&
+                          state.options.xAxis !== 'fine_class' &&
+                          option.src === 'coarse_class') ||
+                        (state.options.yAxis !== 'fine_path' &&
+                          state.options.xAxis !== 'fine_path' &&
+                          option.src === 'coarse_path') ||
+                        (FILTER_DISABLED_COMBINATIONS[state.options.yAxis] &&
+                          FILTER_DISABLED_COMBINATIONS[state.options.yAxis].includes(option.src)) ||
+                        (FILTER_DISABLED_COMBINATIONS[state.options.xAxis] &&
+                          FILTER_DISABLED_COMBINATIONS[state.options.xAxis].includes(option.src))
+                      ) {
+                        return <div />
+                      }
+                      return (
+                        <ElOption
+                          disabled={
+                            state.filter.map((item: any) => item.src).includes(option.src) ||
+                            (FILTER_DISABLED_COMBINATIONS[state.options.yAxis] &&
+                              FILTER_DISABLED_COMBINATIONS[state.options.yAxis].includes(option.src)) ||
+                            (FILTER_DISABLED_COMBINATIONS[state.options.xAxis] &&
+                              FILTER_DISABLED_COMBINATIONS[state.options.xAxis].includes(option.src))
                           }
-                          return <ElOption
-                            disabled={state.filter.map((item: any) => item.src).includes(option.src)
-                            || (FILTER_DISABLED_COMBINATIONS[state.options.yAxis]
-                                && FILTER_DISABLED_COMBINATIONS[state.options.yAxis].includes(option.src))
-                            || (FILTER_DISABLED_COMBINATIONS[state.options.xAxis]
-                                && FILTER_DISABLED_COMBINATIONS[state.options.xAxis].includes(option.src))
-                            }
-                            label={option.label}
-                            value={option.src}/>
-                        })
-                      }
-                    </ElSelect>
-                    <ElSelect
-                      class='select-box-mini mr-2'
-                      modelValue={filter.value}
-                      loading={state.filter[filterIdx].loadingFilterOptions}
-                      filterable
-                      clearable
-                      multiple
-                      noDataText='No data'
-                      onChange={(value: number) => {
-                        handleFilterValueChange(value, filterIdx)
+                          label={option.label}
+                          value={option.src}
+                        />
+                      )
+                    })}
+                  </ElSelect>
+                  <ElSelect
+                    class="select-box-mini mr-2"
+                    modelValue={filter.value}
+                    loading={state.filter[filterIdx].loadingFilterOptions}
+                    filterable
+                    clearable
+                    multiple
+                    noDataText="No data"
+                    onChange={(value: number) => {
+                      handleFilterValueChange(value, filterIdx)
+                    }}
+                    disabled={state.loading}
+                    placeholder="Select filter value"
+                    size="small"
+                  >
+                    {filter.options.map((option: any) => {
+                      return <ElOption label={!option ? 'None' : option} value={!option ? 'None' : option} />
+                    })}
+                  </ElSelect>
+                  <div
+                    class="flex"
+                    style={{
+                      visibility: filterIdx !== 0 ? 'hidden' : 'visible',
+                    }}
+                  >
+                    <div
+                      class="icon"
+                      onClick={removeFilterItem}
+                      style={{
+                        visibility: state.filter.length < 2 ? 'hidden' : 'visible',
                       }}
-                      disabled={state.loading}
-                      placeholder='Select filter value'
-                      size='small'>
-                      {
-                        filter.options.map((option: any) => {
-                          return <ElOption
-                            label={!option ? 'None' : option}
-                            value={!option ? 'None' : option}/>
-                        })
-                      }
-                    </ElSelect>
-                    <div class='flex' style={{ visibility: filterIdx !== 0 ? 'hidden' : 'visible' }}>
-                      <div
-                        class='icon'
-                        onClick={removeFilterItem}
-                        style={{visibility: state.filter.length < 2 ? 'hidden' : 'visible'}}>
-                        <ElIcon><RemoveFilled/></ElIcon>
-                      </div>
-                      <div
-                        class='icon'
-                        onClick={addFilterItem}
-                        style={{visibility: state.filter.length >= FILTER_VALUES.length ? 'hidden' : 'visible'}}>
-                        <ElIcon><CirclePlusFilled/></ElIcon>
-                      </div>
+                    >
+                      <ElIcon>
+                        <RemoveFilled />
+                      </ElIcon>
+                    </div>
+                    <div
+                      class="icon"
+                      onClick={addFilterItem}
+                      style={{
+                        visibility: state.filter.length >= FILTER_VALUES.length ? 'hidden' : 'visible',
+                      }}
+                    >
+                      <ElIcon>
+                        <CirclePlusFilled />
+                      </ElIcon>
                     </div>
                   </div>
-                )
-              })
-            }
+                </div>
+              )
+            })}
           </div>
         </div>
       )
@@ -1205,30 +1433,34 @@ export default defineComponent({
 
     const renderVisualizations = (xLabelItem: string, yLabelItem: string, showChart: boolean) => {
       return (
-        <div class='visualization-container'>
+        <div class="visualization-container">
           {showChart && renderHelp(xLabelItem, yLabelItem)}
 
-          <div class='flex flex-col'>
+          <div class="flex flex-col">
             <a
-              href='https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v3/detectability_source.zip'
+              href="https://sm-spotting-project.s3.eu-west-1.amazonaws.com/data_v3/detectability_source.zip"
               class={'files-link mb-1'}
             >
               Download results of the study
             </a>
-            <div class='visualization-selector'>
-              <span class='filter-label'>Visualization</span>
+            <div class="visualization-selector">
+              <span class="filter-label">Visualization</span>
               <div class={`ml-2 icon-holder ${state.selectedView === VIEW.SCATTER ? 'selected' : ''}`}>
                 <ScatterChart
-                  class='roi-icon fill-current'
-                  onClick={() => { handleVisualizationChange(VIEW.SCATTER) }}/>
+                  class="roi-icon fill-current"
+                  onClick={() => {
+                    handleVisualizationChange(VIEW.SCATTER)
+                  }}
+                />
               </div>
               <div class={`icon-holder ${state.selectedView === VIEW.HEATMAP ? 'selected' : ''}`}>
                 <ElIcon
                   class="vis-icon mr-6 text-4xl"
                   onClick={() => {
                     handleVisualizationChange(VIEW.HEATMAP)
-                  }}>
-                  <Grid/>
+                  }}
+                >
+                  <Grid />
                 </ElIcon>
               </div>
             </div>
@@ -1238,16 +1470,19 @@ export default defineComponent({
     }
 
     const renderHelp = (xLabelItem: string, yLabelItem: string) => {
-      const colorLabelItem : any = AGGREGATED_VALUES[state.dataSource]
-        .find((item: any) => item.src === state.options.aggregation)
+      const colorLabelItem: any = AGGREGATED_VALUES[state.dataSource].find(
+        (item: any) => item.src === state.options.aggregation
+      )
 
       if (!xLabelItem && !yLabelItem && !colorLabelItem?.label) {
         return null
       }
 
       return (
-        <div class='help-container'>
-          <ElIcon class='help-icon'><QuestionFilled/></ElIcon>
+        <div class="help-container">
+          <ElIcon class="help-icon">
+            <QuestionFilled />
+          </ElIcon>
           You are looking at Color ({colorLabelItem?.label}) of ions broken down by X ({xLabelItem}) in Y ({yLabelItem})
         </div>
       )
@@ -1255,13 +1490,21 @@ export default defineComponent({
 
     const renderDashboardInstructions = () => {
       return (
-        <div class='dashboard-instructions'>
-          <ElIcon class="info-icon mr-6 text-4xl"><InfoFilled/></ElIcon>
-          <div class='flex flex-col text-xs w-2/4'>
-            <p class='instruction-title mb-2'>Steps:</p>
-            <p>1 - Select the x axis metric in the <span class='x-axis-label'>red</span> zone;</p>
-            <p>2 - Select the y axis metric in the <span class='y-axis-label'>green</span> zone;</p>
-            <p>3 - Select the color in the <span class='aggregation-label'>blue</span> zone;</p>
+        <div class="dashboard-instructions">
+          <ElIcon class="info-icon mr-6 text-4xl">
+            <InfoFilled />
+          </ElIcon>
+          <div class="flex flex-col text-xs w-2/4">
+            <p class="instruction-title mb-2">Steps:</p>
+            <p>
+              1 - Select the x axis metric in the <span class="x-axis-label">red</span> zone;
+            </p>
+            <p>
+              2 - Select the y axis metric in the <span class="y-axis-label">green</span> zone;
+            </p>
+            <p>
+              3 - Select the color in the <span class="aggregation-label">blue</span> zone;
+            </p>
             <p>4 - Apply the filters you desire.</p>
             <p>5 - Click on the dots to be redirected to the corresponding annotations in METASPACE.</p>
           </div>
@@ -1271,12 +1514,18 @@ export default defineComponent({
 
     const onPageChange = (newPage: number) => {
       state.pagination.currentPage = newPage
-      router.replace({ name: 'detectability', query: { ...getQueryParams(), page: newPage.toString() } })
+      router.replace({
+        name: 'detectability',
+        query: { ...getQueryParams(), page: newPage.toString() },
+      })
     }
 
     const onPageSizeChange = (newSize: number) => {
       state.pagination.pageSize = newSize
-      router.replace({ name: 'detectability', query: { ...getQueryParams(), pageSize: newSize.toString() } })
+      router.replace({
+        name: 'detectability',
+        query: { ...getQueryParams(), pageSize: newSize.toString() },
+      })
     }
 
     const renderPagination = (total: number) => {
@@ -1289,16 +1538,16 @@ export default defineComponent({
             currentPage={state.pagination.currentPage}
             onSizeChange={onPageSizeChange}
             onCurrentChange={onPageChange}
-            layout='prev,pager,next,sizes'
+            layout="prev,pager,next,sizes"
           />
           {/* {state.selectedView === VIEW.SCATTER && renderRadiusHelp()} */}
         </div>
       )
     }
 
-    const renderScatterChart = (yAxisValues: any, xAxisValues: any, total: number, chartData : any) => {
+    const renderScatterChart = (yAxisValues: any, xAxisValues: any, total: number, chartData: any) => {
       return (
-        <div class='chart-container'>
+        <div class="chart-container">
           <DashboardScatterChart
             xOption={state.options.xAxis}
             yOption={state.options.yAxis}
@@ -1314,9 +1563,9 @@ export default defineComponent({
       )
     }
 
-    const renderHeatmapChart = (yAxisValues: any, xAxisValues: any, total: number, chartData : any) => {
+    const renderHeatmapChart = (yAxisValues: any, xAxisValues: any, total: number, chartData: any) => {
       return (
-        <div class='chart-container'>
+        <div class="chart-container">
           <DashboardHeatmapChart
             xOption={state.options.xAxis}
             yOption={state.options.yAxis}
@@ -1333,19 +1582,20 @@ export default defineComponent({
     }
 
     return () => {
-      const showChart = ((route.query.xAxis && route.query.yAxis && route.query.agg)
-          || (state.options.xAxis && state.options.yAxis && state.options.aggregation))
+      const showChart =
+        (route.query.xAxis && route.query.yAxis && route.query.agg) ||
+        (state.options.xAxis && state.options.yAxis && state.options.aggregation)
       const { selectedView } = state
-      const isLoading = (state.loading || state.buildingChart)
-      const yLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.yAxis)
-      const xLabelItem : any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.xAxis)
+      const isLoading = state.loading || state.buildingChart
+      const yLabelItem: any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.yAxis)
+      const xLabelItem: any = AXIS_VALUES[state.dataSource].find((item: any) => item.src === state.options.xAxis)
 
       // paginate data on client-side
-      const yAxisValues : any[] = state.yAxisValues
-      let xAxisValues : any[] = state.xAxisValues
+      const yAxisValues: any[] = state.yAxisValues
+      let xAxisValues: any[] = state.xAxisValues
       const total = xAxisValues.length
-      const start = ((state.pagination.currentPage - 1) * state.pagination.pageSize)
-      const end = ((state.pagination.currentPage - 1) * state.pagination.pageSize) + state.pagination.pageSize
+      const start = (state.pagination.currentPage - 1) * state.pagination.pageSize
+      const end = (state.pagination.currentPage - 1) * state.pagination.pageSize + state.pagination.pageSize
       xAxisValues = xAxisValues.slice(start, end)
       const chartData = cloneDeep(state.data)
         .slice(yAxisValues.length * start, yAxisValues.length * end)
@@ -1355,32 +1605,32 @@ export default defineComponent({
         })
 
       return (
-        <div class='dashboard-container mb-4'>
+        <div class="dashboard-container mb-4">
           {renderFilters(xLabelItem?.label, yLabelItem?.label)}
           {renderVisualizations(xLabelItem?.label, yLabelItem?.label, showChart)}
-          <div class='content-container'>
-            {
-              showChart
-              && <div class='feature-box'>
-                <ShareLink name='detectability' query={getQueryParams()}/>
-                <ChartSettings onColor={handleColormapChange}/>
+          <div class="content-container">
+            {showChart && (
+              <div class="feature-box">
+                <ShareLink name="detectability" query={getQueryParams()} />
+                <ChartSettings onColor={handleColormapChange} />
               </div>
-            }
+            )}
             {!showChart && renderDashboardInstructions()}
-            {
-              !isLoading && showChart && selectedView === VIEW.SCATTER
-              && renderScatterChart(yAxisValues, xAxisValues, total, chartData)
-            }
-            {
-              !isLoading && showChart && selectedView === VIEW.HEATMAP
-              && renderHeatmapChart(yAxisValues, xAxisValues, total, chartData)
-            }
-            {
-              isLoading
-              && <div class='absolute'>
-                <ElIcon class="is-loading"><Loading/></ElIcon>
+            {!isLoading &&
+              showChart &&
+              selectedView === VIEW.SCATTER &&
+              renderScatterChart(yAxisValues, xAxisValues, total, chartData)}
+            {!isLoading &&
+              showChart &&
+              selectedView === VIEW.HEATMAP &&
+              renderHeatmapChart(yAxisValues, xAxisValues, total, chartData)}
+            {isLoading && (
+              <div class="absolute">
+                <ElIcon class="is-loading">
+                  <Loading />
+                </ElIcon>
               </div>
-            }
+            )}
           </div>
         </div>
       )

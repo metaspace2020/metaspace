@@ -1,7 +1,6 @@
-import { ElMessageBox } from 'element-plus';
-import reportError from '../lib/reportError';
-import './ConfirmAsync.scss';
-
+import { ElMessageBox } from 'element-plus'
+import reportError from '../lib/reportError'
+import './ConfirmAsync.scss'
 
 /**
  * Decorator that prompts the user with a dialog, only calls the wrapped function if the user confirms,
@@ -32,42 +31,38 @@ import './ConfirmAsync.scss';
  */
 
 interface ConfirmAsyncOptions {
-  confirmButtonLoadingText?: string;
-  title?: string;
-  message?: string;
-  showInput?: boolean;
-  inputPlaceholder?: string;
-  inputPattern?: RegExp;
-  inputErrorMessage?: string;
+  confirmButtonLoadingText?: string
+  title?: string
+  message?: string
+  showInput?: boolean
+  inputPlaceholder?: string
+  inputPattern?: RegExp
+  inputErrorMessage?: string
 }
 
 export function useConfirmAsync() {
   const confirmAsync = async (options: ConfirmAsyncOptions, action: (...args: any[]) => Promise<any>) => {
-    const { ...baseOptions } = options;
+    const { ...baseOptions } = options
 
     try {
-      const result = await ElMessageBox.confirm(
-        baseOptions.message,
-        baseOptions.title,
-        {
-          ...baseOptions,
-          showInput: baseOptions.showInput,
-          inputPattern: baseOptions.inputPattern,
-          inputErrorMessage: baseOptions.inputErrorMessage,
-          customClass: 'confirm-async-message-box',
-        }
-      );
+      const result = await ElMessageBox.confirm(baseOptions.message, baseOptions.title, {
+        ...baseOptions,
+        showInput: baseOptions.showInput,
+        inputPattern: baseOptions.inputPattern,
+        inputErrorMessage: baseOptions.inputErrorMessage,
+        customClass: 'confirm-async-message-box',
+      })
 
       try {
-        const args = baseOptions.showInput ? [result] : [];
-        await action(...args);
+        const args = baseOptions.showInput ? [result] : []
+        await action(...args)
       } catch (err) {
-        reportError(err);
+        reportError(err)
       }
     } catch {
       /* User clicked cancel or closed the dialog */
     }
-  };
+  }
 
-  return confirmAsync;
+  return confirmAsync
 }

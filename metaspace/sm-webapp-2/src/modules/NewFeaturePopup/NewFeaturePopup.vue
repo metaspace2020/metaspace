@@ -1,9 +1,5 @@
 <template>
-  <div
-    v-if="isActive"
-    ref="popover"
-    class="el-popover el-popper leading-5 p-5 text-left"
-  >
+  <div v-if="isActive" ref="popover" class="el-popover el-popper leading-5 p-5 text-left">
     <h3 class="leading-10 m-0 mt-2">
       <el-badge value="New">
         {{ title }}
@@ -13,31 +9,17 @@
       <slot name="default" />
     </div>
     <div class="flex justify-end items-center h-10 mt-5">
-      <el-button
-        size="small"
-        @click.stop="remindLater"
-      >
-        Remind me later
-      </el-button>
-      <el-button
-        size="small"
-        type="primary"
-        @click.stop="dismissPopup"
-      >
-        Got it!
-      </el-button>
+      <el-button size="small" @click.stop="remindLater"> Remind me later </el-button>
+      <el-button size="small" type="primary" @click.stop="dismissPopup"> Got it! </el-button>
     </div>
-    <div
-      class="popper__arrow"
-      x-arrow=""
-    />
+    <div class="popper__arrow" x-arrow="" />
   </div>
 </template>
 
 <script lang="ts">
-import {defineComponent, computed } from 'vue'
+import { defineComponent, computed } from 'vue'
 import useNewFeaturePopups from './useNewFeaturePopups'
-import {ElBadge, ElButton} from "element-plus";
+import { ElBadge, ElButton } from 'element-plus'
 
 export default defineComponent({
   props: {

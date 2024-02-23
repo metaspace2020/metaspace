@@ -1,7 +1,7 @@
-import { mount } from '@vue/test-utils';
-import { describe, it, expect, vi } from 'vitest';
-import ElapsedTime from './ElapsedTime';
-import {defineComponent, h, nextTick} from 'vue';
+import { mount } from '@vue/test-utils'
+import { describe, it, expect, vi } from 'vitest'
+import ElapsedTime from './ElapsedTime'
+import { defineComponent, h, nextTick } from 'vue'
 
 const TestElapsedTime = defineComponent({
   components: {
@@ -9,27 +9,26 @@ const TestElapsedTime = defineComponent({
   },
   props: ['date'],
   setup(props) {
-    return () => h(ElapsedTime, { ...props });
+    return () => h(ElapsedTime, { ...props })
   },
-});
+})
 
 describe('ElapsedTime', () => {
   it('should render correctly', async () => {
-    const spy = vi.spyOn(global.Date, 'now')
-      .mockImplementation(() => new Date('2020-01-03T00:00:00.000Z').valueOf());
+    const spy = vi.spyOn(global.Date, 'now').mockImplementation(() => new Date('2020-01-03T00:00:00.000Z').valueOf())
 
-    const wrapper = mount(TestElapsedTime, { props: { date: '2020-01-02T00:00:00.000Z' } });
+    const wrapper = mount(TestElapsedTime, { props: { date: '2020-01-02T00:00:00.000Z' } })
     await nextTick()
-    expect(wrapper.text()).toEqual('1 day ago');
-    expect(wrapper.attributes().title).toEqual('1/2/2020, 01:00');
+    expect(wrapper.text()).toEqual('1 day ago')
+    expect(wrapper.attributes().title).toEqual('1/2/2020, 01:00')
 
-    spy.mockRestore();
-  });
+    spy.mockRestore()
+  })
 
   it('should render placeholder content when date is not provided', () => {
-    const wrapper = mount(TestElapsedTime, { props: { date: '' } });
+    const wrapper = mount(TestElapsedTime, { props: { date: '' } })
 
-    expect(wrapper.text()).toEqual('some time ago');
-    expect(wrapper.attributes().title).toEqual('Date unavailable');
-  });
-});
+    expect(wrapper.text()).toEqual('some time ago')
+    expect(wrapper.attributes().title).toEqual('Date unavailable')
+  })
+})

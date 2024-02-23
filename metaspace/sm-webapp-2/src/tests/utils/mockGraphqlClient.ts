@@ -1,13 +1,13 @@
-import { ApolloClient, InMemoryCache, NormalizedCacheObject } from '@apollo/client/core';
-import { SchemaLink } from '@apollo/client/link/schema';
-import {  makeExecutableSchema } from '@graphql-tools/schema'; // Updated imports
-import { IMocks, addMocksToSchema } from '@graphql-tools/mock'; // Updated import for IMocks
-import buildClientSchema from "../../tests/utils/buildClientSchema";
+import { ApolloClient, InMemoryCache, NormalizedCacheObject } from '@apollo/client/core'
+import { SchemaLink } from '@apollo/client/link/schema'
+import { makeExecutableSchema } from '@graphql-tools/schema' // Updated imports
+import { IMocks, addMocksToSchema } from '@graphql-tools/mock' // Updated import for IMocks
+import buildClientSchema from '../../tests/utils/buildClientSchema'
 
 const lazyHash = (str: string) => Array.from(str).reduce((hash, char) => hash ^ char.charCodeAt(0), 0)
 
 const getPath = (info: any) => {
-  const path : any = []
+  const path: any = []
   let cur: any = info?.path
   while (cur != null) {
     path.push(cur.key)
@@ -21,15 +21,14 @@ const getID = (info: any) => {
   if (!/[0-9]/.test(path)) {
     // If there's no ID in the path, it's probably a get-by-id query so look through the query variables to find the id
     const IDs = Object.keys(info?.variableValues || {})
-      .filter(key => /^id$|Id$/.test(key) && typeof info?.variableValues[key] === 'string')
-      .map(key => info?.variableValues[key])
+      .filter((key) => /^id$|Id$/.test(key) && typeof info?.variableValues[key] === 'string')
+      .map((key) => info?.variableValues[key])
     if (IDs.length > 0) {
       return IDs.join(',')
     }
   }
   return path
 }
-
 
 const baseMocks: IMocks = {
   // Replace primitive types with non-randomized versions
@@ -42,9 +41,7 @@ const baseMocks: IMocks = {
   // Mutation: () => ...
 }
 
-
 let graphqlMockClient: ApolloClient<NormalizedCacheObject>
-
 
 const getGraphqlSchema = () => {
   // const serverUrl = config.graphqlUrl || 'http://localhost:8888/graphql';
@@ -63,14 +60,17 @@ const getGraphqlSchema = () => {
   // buildClientSchema expects `{__schema: {"queryType": ...}}`
   // apollo-cli produces `{"queryType": ...}`
   // graphql.js produces `{data:{__schema: {"queryType": ...}}}`
-  if (schemaJson.data) { schemaJson = schemaJson.data }
-  if (!schemaJson.__schema) { schemaJson = { __schema: schemaJson } }
+  if (schemaJson.data) {
+    schemaJson = schemaJson.data
+  }
+  if (!schemaJson.__schema) {
+    schemaJson = { __schema: schemaJson }
+  }
   return schemaJson
 }
 
-
 export const initMockGraphqlClient = (mocks?: IMocks) => {
-  const sdl = buildClientSchema(getGraphqlSchema());
+  const sdl = buildClientSchema(getGraphqlSchema())
   const schema = makeExecutableSchema({
     typeDefs: sdl,
   })
@@ -81,11 +81,11 @@ export const initMockGraphqlClient = (mocks?: IMocks) => {
       ...baseMocks,
       ...mocks,
     },
-  });
+  })
 
   // Remove mocked subscriptions so that they don't fire during tests.
   // It looks like graphql-tools and apollo-link-schema don't support mocking subscriptions yet
-  Object.entries(schema.getSubscriptionType()!.getFields()).forEach(([, field] : any) => {
+  Object.entries(schema.getSubscriptionType()!.getFields()).forEach(([, field]: any) => {
     field.resolve = () => new Promise(() => {})
   })
 
@@ -97,11 +97,11 @@ export const initMockGraphqlClient = (mocks?: IMocks) => {
         fetchPolicy: 'network-only',
       },
     },
-  });
+  })
 
   return graphqlMockClient
-};
+}
 
-export const refreshLoginStatus = vi.fn();
+export const refreshLoginStatus = vi.fn()
 
-export { graphqlMockClient as default };
+export { graphqlMockClient as default }

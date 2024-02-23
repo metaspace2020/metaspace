@@ -1,9 +1,5 @@
 <template>
-  <slider-track
-    ref="track"
-    class="cursor-pointer"
-    @click="onTrackClick"
-  >
+  <slider-track ref="track" class="cursor-pointer" @click="onTrackClick">
     <slider-thumb
       class="bg-gray-100"
       :x="thumbX"

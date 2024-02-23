@@ -1,4 +1,4 @@
-import {defineComponent, computed, inject, defineAsyncComponent} from 'vue'
+import { defineComponent, computed, inject, defineAsyncComponent } from 'vue'
 
 import { Workflow } from '../../../components/Workflow'
 import UpdateProjectDetails from './UpdateProjectDetails'
@@ -7,9 +7,7 @@ import PublishData from './PublishData'
 import FadeTransition from '../../../components/FadeTransition'
 import PrimaryIcon from '../../../components/PrimaryIcon.vue'
 
-const GlobeSvg = defineAsyncComponent(() =>
-  import('../../../assets/inline/refactoring-ui/icon-globe.svg')
-);
+const GlobeSvg = defineAsyncComponent(() => import('../../../assets/inline/refactoring-ui/icon-globe.svg'))
 
 import {
   updateProjectMutation,
@@ -19,7 +17,7 @@ import {
   publishProjectMutation,
   updateProjectDOIMutation,
 } from '../../../api/project'
-import {DefaultApolloClient} from "@vue/apollo-composable";
+import { DefaultApolloClient } from '@vue/apollo-composable'
 
 const statuses = {
   UNPUBLISHED: 'UNPUBLISHED',
@@ -28,9 +26,9 @@ const statuses = {
 }
 
 interface Props {
-  currentUserName: string,
+  currentUserName: string
   project: ViewProjectResult
-  refetchProject: Function,
+  refetchProject: Function
 }
 
 const ReviewWorkflow = defineComponent({
@@ -40,7 +38,7 @@ const ReviewWorkflow = defineComponent({
     refetchProject: Function,
   },
   setup(props: Props | any) {
-    const apolloClient = inject(DefaultApolloClient);
+    const apolloClient = inject(DefaultApolloClient)
     const activeStep = computed(() => {
       if (props.project.publicationStatus !== statuses.UNPUBLISHED) {
         return 3
@@ -51,9 +49,9 @@ const ReviewWorkflow = defineComponent({
       return 1
     })
 
-    const projectId = computed(() => props.project ? props.project.id : undefined)
+    const projectId = computed(() => (props.project ? props.project.id : undefined))
 
-    const updateProject = async(projectDetails: object) => {
+    const updateProject = async (projectDetails: object) => {
       await apolloClient.mutate({
         mutation: updateProjectMutation,
         variables: {
@@ -64,7 +62,7 @@ const ReviewWorkflow = defineComponent({
       await props.refetchProject()
     }
 
-    const createReviewLink = async() => {
+    const createReviewLink = async () => {
       await apolloClient.mutate({
         mutation: createReviewLinkMutation,
         variables: { projectId: projectId.value },
@@ -72,7 +70,7 @@ const ReviewWorkflow = defineComponent({
       await props.refetchProject()
     }
 
-    const deleteReviewLink = async() => {
+    const deleteReviewLink = async () => {
       await apolloClient.mutate({
         mutation: deleteReviewLinkMutation,
         variables: { projectId: projectId.value },
@@ -80,7 +78,7 @@ const ReviewWorkflow = defineComponent({
       await props.refetchProject()
     }
 
-    const publishProject = async(doi: string) => {
+    const publishProject = async (doi: string) => {
       await apolloClient.mutate({
         mutation: publishProjectMutation,
         variables: { projectId: projectId.value },
@@ -96,8 +94,8 @@ const ReviewWorkflow = defineComponent({
 
     return () => (
       <FadeTransition>
-        {props.project.publicationStatus === statuses.PUBLISHED
-          ? <div class="leading-6 text-center mt-12">
+        {props.project.publicationStatus === statuses.PUBLISHED ? (
+          <div class="leading-6 text-center mt-12">
             <PrimaryIcon class="mx-auto" large>
               <GlobeSvg />
             </PrimaryIcon>
@@ -108,7 +106,8 @@ const ReviewWorkflow = defineComponent({
               Thank you for your contribution.
             </p>
           </div>
-          : <Workflow class="sm-scientific-publishing">
+        ) : (
+          <Workflow class="sm-scientific-publishing">
             <UpdateProjectDetails
               active={activeStep.value === 1}
               currentUserName={props.currentUserName}
@@ -124,11 +123,9 @@ const ReviewWorkflow = defineComponent({
               projectId={projectId.value}
               reviewToken={props.project.reviewToken || undefined}
             />
-            <PublishData
-              active={activeStep.value === 3}
-              publishProject={publishProject}
-            />
-          </Workflow>}
+            <PublishData active={activeStep.value === 3} publishProject={publishProject} />
+          </Workflow>
+        )}
       </FadeTransition>
     )
   },

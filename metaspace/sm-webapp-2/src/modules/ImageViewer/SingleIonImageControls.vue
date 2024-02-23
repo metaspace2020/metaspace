@@ -20,11 +20,7 @@
           @popover="toggleClippingNotice"
         />
       </template>
-      <clipping-notice
-        :type="clippingNotice.type"
-        :intensity="intensity.value"
-        :is-normalized="isNormalized"
-      />
+      <clipping-notice :type="clippingNotice.type" :intensity="intensity.value" :is-normalized="isNormalized" />
     </el-popover>
   </overlay>
 </template>

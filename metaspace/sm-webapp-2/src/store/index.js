@@ -1,11 +1,9 @@
 import { createStore } from 'vuex'
-import mutations from './mutations';
-import getters from './getters';
-import actions from './actions.js';
+import mutations from './mutations'
+import getters from './getters'
+import actions from './actions.js'
 
-import {accountModule} from '../modules/Account';
-
-
+import { accountModule } from '../modules/Account'
 
 const store = createStore({
   state: {
@@ -24,7 +22,7 @@ const store = createStore({
     normalization: undefined,
 
     // roi settings
-    roiInfo: {visible: false},
+    roiInfo: { visible: false },
 
     // is annotation table loading?
     tableIsLoading: true,
@@ -49,8 +47,8 @@ const store = createStore({
   mutations,
   actions,
   modules: {
-    account: accountModule
-  }
+    account: accountModule,
+  },
 })
 
-export default store;
+export default store

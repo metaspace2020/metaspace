@@ -1,13 +1,9 @@
-import {computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch} from 'vue'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 // @ts-ignore
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
-import {
-  SVGRenderer,
-} from 'echarts/renderers'
-import {
-  ScatterChart,
-} from 'echarts/charts'
+import { SVGRenderer } from 'echarts/renderers'
+import { ScatterChart } from 'echarts/charts'
 import {
   GridComponent,
   TooltipComponent,
@@ -22,17 +18,9 @@ import { TRANSLATE_ANALYZER, TRANSLATE_MATRIX, TRANSLATE_SOURCE } from '../../..
 import { ElRadioButton, ElRadioGroup } from 'element-plus'
 import ImageSaver from '../../ImageViewer/ImageSaver.vue'
 import './MassSpecSummaryChart.scss'
-import {useStore} from "vuex";
+import { useStore } from 'vuex'
 
-use([
-  SVGRenderer,
-  ScatterChart,
-  GridComponent,
-  TooltipComponent,
-  ToolboxComponent,
-  LegendComponent,
-  MarkPointComponent,
-])
+use([SVGRenderer, ScatterChart, GridComponent, TooltipComponent, ToolboxComponent, LegendComponent, MarkPointComponent])
 
 interface MassSpecSummaryChartState {
   chartOptions: any
@@ -43,8 +31,7 @@ interface MassSpecSummaryChartState {
   polarity: string
 }
 
-interface MassSpecSummaryChartProps {
-}
+interface MassSpecSummaryChartProps {}
 
 const NEGATIVE_MODE = 'Negative mode'
 const POSITIVE_MODE = 'Positive mode'
@@ -67,14 +54,8 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
       chartOptions: {
         tooltip: {
           position: 'top',
-          formatter: function(params: any) {
-            return (
-              params.value[2]
-              + ' datasets in '
-              + params?.data?.label?.x
-              + ' of '
-              + params?.data?.label?.y
-            )
+          formatter: function (params: any) {
+            return params.value[2] + ' datasets in ' + params?.data?.label?.x + ' of ' + params?.data?.label?.y
           },
         },
         grid: {
@@ -83,23 +64,22 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
           right: 10,
           containLabel: true,
         },
-        xAxis:
-          {
-            type: 'category',
-            data: [],
-            axisLine: {
-              show: false,
-            },
-            axisTick: {
-              show: false,
-            },
-            axisLabel: {
-              show: true,
-              interval: 0,
-              rotate: 90,
-            },
-            position: 'top',
+        xAxis: {
+          type: 'category',
+          data: [],
+          axisLine: {
+            show: false,
           },
+          axisTick: {
+            show: false,
+          },
+          axisLabel: {
+            show: true,
+            interval: 0,
+            rotate: 90,
+          },
+          position: 'top',
+        },
         yAxis: {
           type: 'category',
           data: [],
@@ -124,51 +104,51 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
                 color: '#fff',
               },
             },
-
           },
         },
-        series:
-          {
-            type: 'scatter',
-            symbolSize: function(val: any) {
-              return val[3] ? val[3] * 11 + 15 : 0
+        series: {
+          type: 'scatter',
+          symbolSize: function (val: any) {
+            return val[3] ? val[3] * 11 + 15 : 0
+          },
+          data: [],
+          label: {
+            show: true,
+            color: 'black',
+            formatter: function (param: any) {
+              return param.data.value[2]
             },
-            data: [],
-            label: {
-              show: true,
-              color: 'black',
-              formatter: function(param: any) {
-                return param.data.value[2]
-              },
-              fontWeight: '300',
-              minMargin: 10,
-              verticalAlign: 'middle',
-            },
-          }
-        ,
+            fontWeight: '300',
+            minMargin: 10,
+            verticalAlign: 'middle',
+          },
+        },
       },
     })
 
-    const query =
-    gql`query GetMSSetupCounts($filter: DatasetFilter, $query: String) {
-      countDatasetsPerGroup(query: {
-        fields: [DF_ANALYZER_TYPE, DF_ION_SOURCE, DF_MALDI_MATRIX, DF_POLARITY],
-        filter: $filter,
-        simpleQuery: $query
-      }) {
-        counts {
-          fieldValues
-          count
+    const query = gql`
+      query GetMSSetupCounts($filter: DatasetFilter, $query: String) {
+        countDatasetsPerGroup(
+          query: {
+            fields: [DF_ANALYZER_TYPE, DF_ION_SOURCE, DF_MALDI_MATRIX, DF_POLARITY]
+            filter: $filter
+            simpleQuery: $query
+          }
+        ) {
+          counts {
+            fieldValues
+            count
+          }
         }
       }
-    }`
+    `
 
-    const convertSource = (source: string) => Object.keys(TRANSLATE_SOURCE).includes(source)
-      ? TRANSLATE_SOURCE[source] : 'Other'
-    const convertAnalyzer = (analyzer: string) => Object.keys(TRANSLATE_ANALYZER).includes(analyzer)
-      ? TRANSLATE_ANALYZER[analyzer] : 'Other'
-    const convertMatrix = (matrix: string) => Object.keys(TRANSLATE_MATRIX).includes(matrix)
-      ? TRANSLATE_MATRIX[matrix] : 'Other'
+    const convertSource = (source: string) =>
+      Object.keys(TRANSLATE_SOURCE).includes(source) ? TRANSLATE_SOURCE[source] : 'Other'
+    const convertAnalyzer = (analyzer: string) =>
+      Object.keys(TRANSLATE_ANALYZER).includes(analyzer) ? TRANSLATE_ANALYZER[analyzer] : 'Other'
+    const convertMatrix = (matrix: string) =>
+      Object.keys(TRANSLATE_MATRIX).includes(matrix) ? TRANSLATE_MATRIX[matrix] : 'Other'
     const isSourceMaldi = (sourceType: string) => /maldi/i.test(sourceType)
     const isNA = (val: string) => /^(n\/?a|none|other|\s*)$/i.test(val)
     const OTHER_ANALYZER = '(other analyzer)'
@@ -197,13 +177,11 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
       ...queryVariables(),
     }))
 
-    const {
-      result: receivedDatasetsResult,
-      loading: receivedDatasetsResultLoading,
-    } = useQuery<any>(query, queryVars)
+    const { result: receivedDatasetsResult, loading: receivedDatasetsResultLoading } = useQuery<any>(query, queryVars)
 
-    const dataChart = computed(() => receivedDatasetsResult.value != null
-      ? receivedDatasetsResult.value.countDatasetsPerGroup : null)
+    const dataChart = computed(() =>
+      receivedDatasetsResult.value != null ? receivedDatasetsResult.value.countDatasetsPerGroup : null
+    )
 
     const getData = () => {
       if (!dataChart.value) {
@@ -211,10 +189,10 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
       }
 
       const counts = dataChart.value.counts
-      const inverted : any = { positive: 'negative', negative: 'positive' }
-      const analyzerCounts : any = {}
-      const sourceCounts : any = {}
-      const matrixCounts : any = {}
+      const inverted: any = { positive: 'negative', negative: 'positive' }
+      const analyzerCounts: any = {}
+      const sourceCounts: any = {}
+      const matrixCounts: any = {}
 
       let normedCounts = counts.map((entry: any) => {
         let [analyzer, source, matrix, polarity] = entry.fieldValues
@@ -255,13 +233,17 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
         }
       })
 
-      let topAnalyzers = sortBy(Object.entries(analyzerCounts), 1).map(([key] : any) => key)
-      const topSources = sortBy(Object.entries(sourceCounts), 1).map(([key] : any) => key).reverse()
-      const topMatrixes = sortBy(Object.entries(matrixCounts), 1).map(([key] : any) => key).reverse()
+      let topAnalyzers = sortBy(Object.entries(analyzerCounts), 1).map(([key]: any) => key)
+      const topSources = sortBy(Object.entries(sourceCounts), 1)
+        .map(([key]: any) => key)
+        .reverse()
+      const topMatrixes = sortBy(Object.entries(matrixCounts), 1)
+        .map(([key]: any) => key)
+        .reverse()
       let sources = topSources
-      let hasOtherSource : boolean = false
-      let hasOtherMatrix : boolean = false
-      let hasOtherAnalyzer : boolean = false
+      let hasOtherSource: boolean = false
+      let hasOtherMatrix: boolean = false
+      let hasOtherAnalyzer: boolean = false
 
       normedCounts = normedCounts.filter((entry: any) => entry)
       normedCounts.forEach((entry: any) => {
@@ -291,9 +273,9 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
       }
 
       // Group by analyzer, isMaldi and sourceType. Sum counts by polarity.
-      const result : any = []
-      normedCounts.forEach(({ analyzer, isMaldi, sourceType, polarity, count } : any) => {
-        const datum : any = {
+      const result: any = []
+      normedCounts.forEach(({ analyzer, isMaldi, sourceType, polarity, count }: any) => {
+        const datum: any = {
           analyzer,
           isMaldi,
           sourceType,
@@ -303,10 +285,13 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
           },
           totalCount: count,
         }
-        const existing = result.find((other : any) => ['analyzer', 'isMaldi', 'sourceType']
-          .every(f => other[f] === datum[f]))
+        const existing = result.find((other: any) =>
+          ['analyzer', 'isMaldi', 'sourceType'].every((f) => other[f] === datum[f])
+        )
         if (existing) {
-          ['positive', 'negative'].forEach(pol => { existing.counts[pol] += datum.counts[pol] })
+          ;['positive', 'negative'].forEach((pol) => {
+            existing.counts[pol] += datum.counts[pol]
+          })
           existing.totalCount += datum.totalCount
         } else {
           result.push(datum)
@@ -317,9 +302,7 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
         const idxY = topAnalyzers.findIndex((item: any) => item === entry.analyzer)
         const idxX = sources.findIndex((item: any) => item === entry.sourceType)
         return {
-          value: [idxX,
-            idxY,
-            entry.totalCount, Math.log10(entry.totalCount + 1)],
+          value: [idxX, idxY, entry.totalCount, Math.log10(entry.totalCount + 1)],
           label: {
             x: entry.sourceType,
             y: entry.analyzer,
@@ -334,19 +317,18 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
 
     const chartOptions = computed(() => {
       const auxOptions = state.chartOptions
-      const chartData : any = getData()
+      const chartData: any = getData()
 
       auxOptions.series.data = chartData?.items
       auxOptions.xAxis.data = chartData?.xAxis
       auxOptions.yAxis.data = chartData?.yAxis
       auxOptions.color = state.polarity === POSITIVE_MODE ? 'rgba(18, 135, 238, 0.5)' : 'rgba(255, 0, 0, 0.5)'
 
-
       return auxOptions
     })
 
     watch(chartOptions, () => {
-      if(!chartOptions.value?.yAxis) return
+      if (!chartOptions.value?.yAxis) return
       state.size = chartOptions.value?.yAxis.data?.length < 7 ? 800 : chartOptions.value?.yAxis?.length * 100
     })
 
@@ -366,13 +348,9 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
     })
 
     const handleChartRendered = () => {
-      const chartRef : any = spectrumChart.value
-      if (
-        chartRef
-        && chartRef.chart
-        && chartOptions.value?.xAxis?.data?.length > 0
-      ) {
-        const auxOptions : any = chartOptions.value
+      const chartRef: any = spectrumChart.value
+      if (chartRef && chartRef.chart && chartOptions.value?.xAxis?.data?.length > 0) {
+        const auxOptions: any = chartOptions.value
         if (auxOptions) {
           auxOptions.series.data.forEach((item: any) => {
             const [chartX, chartY] = chartRef.convertToPixel({ seriesIndex: 0 }, [item.value[0], item.value[1]])
@@ -390,58 +368,53 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
 
     return () => {
       return (
-        <div
-          ref={container}
-          class='mass-spec-chart relative mt-4'>
-          <div class='chart-header dom-to-image-hidden'>
-            <div class='text-center font-medium'>Number of datasets per analyzer/ion source/matrix</div>
-            <div class='tool-box'>
+        <div ref={container} class="mass-spec-chart relative mt-4">
+          <div class="chart-header dom-to-image-hidden">
+            <div class="text-center font-medium">Number of datasets per analyzer/ion source/matrix</div>
+            <div class="tool-box">
               <ElRadioGroup
-                class='mr-2'
+                class="mr-2"
                 modelValue={state.polarity}
                 size="small"
-                onChange={(text:any) => {
+                onChange={(text: any) => {
                   state.polarity = text
-                }}>
-                <ElRadioButton label={POSITIVE_MODE}/>
-                <ElRadioButton label={NEGATIVE_MODE}/>
+                }}
+              >
+                <ElRadioButton label={POSITIVE_MODE} />
+                <ElRadioButton label={NEGATIVE_MODE} />
               </ElRadioGroup>
-              <ImageSaver
-                domNode={container.value}
-                fileName={`mass-spec-summary-${state.polarity}-chart`}
-              />
+              <ImageSaver domNode={container.value} fileName={`mass-spec-summary-${state.polarity}-chart`} />
             </div>
           </div>
-          <div class='chart-holder relative'>
-            {
-              receivedDatasetsResultLoading.value
-              && <div class='loader-holder'>
+          <div class="chart-holder relative">
+            {receivedDatasetsResultLoading.value && (
+              <div class="loader-holder">
                 <div>
-                  <i
-                    class="el-icon-loading mr-2"
-                  />
+                  <i class="el-icon-loading mr-2" />
                   Loading data...
                 </div>
               </div>
-            }
-            {
-              state.maldiX !== 0
-              && !receivedDatasetsResultLoading.value
-              && <div class='absolute maldi-label'
+            )}
+            {state.maldiX !== 0 && !receivedDatasetsResultLoading.value && (
+              <div
+                class="absolute maldi-label"
                 style={{
                   left: `${state.maldiX}px`,
                   width: state.maldiWidth,
-                }}>MALDI</div>
-            }
-            {
-              !receivedDatasetsResultLoading.value
-              && <ECharts
+                }}
+              >
+                MALDI
+              </div>
+            )}
+            {!receivedDatasetsResultLoading.value && (
+              <ECharts
                 ref={spectrumChart}
                 autoResize={true}
                 onRendered={handleChartRendered}
-                class='chart'
-                option={chartOptions.value}/>
-            }
+                class="chart"
+                option={chartOptions.value}
+              />
+            )}
           </div>
         </div>
       )

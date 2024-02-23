@@ -1,4 +1,3 @@
-
 import gql from 'graphql-tag'
 import reportError from '../../lib/reportError'
 
@@ -7,25 +6,27 @@ import { restoreIonImageState } from './ionImageState'
 import store from '../../store'
 import { annotationDetailItemFragment } from '../../api/annotation'
 
-export default async($apollo: any, id: string, datasetId: string, router: any) => {
+export default async ($apollo: any, id: string, datasetId: string, router: any) => {
   try {
     const result: any = await $apollo.query({
-      query: gql`query fetchImageViewerSnapshot(
-        $id: String!,
-        $datasetId: String!,
-        $colocalizationCoeffFilter: ColocalizationCoeffFilter,
-        $countIsomerCompounds: Boolean,
-        $type: OpticalImageType
-      ) {
-        imageViewerSnapshot(id: $id, datasetId: $datasetId) {
-          version
-          snapshot
-          annotations {
-            ...AnnotationDetailItem
+      query: gql`
+        query fetchImageViewerSnapshot(
+          $id: String!
+          $datasetId: String!
+          $colocalizationCoeffFilter: ColocalizationCoeffFilter
+          $countIsomerCompounds: Boolean
+          $type: OpticalImageType
+        ) {
+          imageViewerSnapshot(id: $id, datasetId: $datasetId) {
+            version
+            snapshot
+            annotations {
+              ...AnnotationDetailItem
+            }
           }
         }
-      }
-      ${annotationDetailItemFragment}`,
+        ${annotationDetailItemFragment}
+      `,
       variables: {
         id,
         datasetId,
@@ -36,7 +37,10 @@ export default async($apollo: any, id: string, datasetId: string, router: any) =
     const parsed = JSON.parse(snapshot)
     let filter = store.getters.filter
 
-    store.commit('setSnapshotAnnotationIds', annotations.map((annotation: any) => annotation.id))
+    store.commit(
+      'setSnapshotAnnotationIds',
+      annotations.map((annotation: any) => annotation.id)
+    )
 
     // set snapshot filters
     if (parsed.filter) {
@@ -74,10 +78,9 @@ export default async($apollo: any, id: string, datasetId: string, router: any) =
       params: router.currentRoute.value.params,
       query: {
         ...router.currentRoute.value.query,
-        ...parsed.query
+        ...parsed.query,
       },
-    });
-
+    })
 
     restoreImageViewerState({
       version,

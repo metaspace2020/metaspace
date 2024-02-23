@@ -1,59 +1,35 @@
 <template>
   <div id="alignment-page">
     <div class="image-alignment-top">
-      <div
-        class="image-alignment-header"
-        style="text-align: left"
-      >
-        <h3 style="margin: 5px; align-content: start;">
+      <div class="image-alignment-header" style="text-align: left">
+        <h3 style="margin: 5px; align-content: start">
           Optical image alignment for: <i>{{ datasetName }}</i>
         </h3>
-        <p> <b>upload</b> an optical image, <b>align</b> an annotation image, then <b>submit</b></p>
-        <el-button
-          id="hintsButton"
-          @click="toggleHints"
-        >
+        <p><b>upload</b> an optical image, <b>align</b> an annotation image, then <b>submit</b></p>
+        <el-button id="hintsButton" @click="toggleHints">
           {{ showHints.text }}
         </el-button>
-        <div
-          v-if="showHints.status === true"
-          id="hints"
-        >
+        <div v-if="showHints.status === true" id="hints">
           <ul class="hint-list">
             <li>
-              <img
-                class="mouse-hint-icon"
-                src="../../assets/translate-icon.png"
-                title="Show/hide optical image"
-              > Click and drag the annotation image to move it
+              <img class="mouse-hint-icon" src="../../assets/translate-icon.png" title="Show/hide optical image" />
+              Click and drag the annotation image to move it
             </li>
             <li>
-              <img
-                class="mouse-hint-icon"
-                src="../../assets/zoom-icon.png"
-                title="Show/hide optical image"
-              > Use the mouse scroll wheel to zoom in and out
+              <img class="mouse-hint-icon" src="../../assets/zoom-icon.png" title="Show/hide optical image" /> Use the
+              mouse scroll wheel to zoom in and out
             </li>
             <li>
-              <img
-                class="mouse-hint-icon"
-                src="../../assets/rotate-icon.png"
-                title="Show/hide optical image"
-              > Right-click and drag to rotate the annotation image
+              <img class="mouse-hint-icon" src="../../assets/rotate-icon.png" title="Show/hide optical image" />
+              Right-click and drag to rotate the annotation image
             </li>
             <li>
-              <img
-                class="mouse-hint-icon"
-                src="../../assets/images-icon.png"
-                title="Show/hide optical image"
-              > Choose an annotation image with a recognisable spatial distribution
+              <img class="mouse-hint-icon" src="../../assets/images-icon.png" title="Show/hide optical image" /> Choose
+              an annotation image with a recognisable spatial distribution
             </li>
             <li>
-              <img
-                class="mouse-hint-icon"
-                src="../../assets/corners-icon.jpg"
-                title="Show/hide optical image"
-              > Double click the annotation image to enable fine tuning
+              <img class="mouse-hint-icon" src="../../assets/corners-icon.jpg" title="Show/hide optical image" /> Double
+              click the annotation image to enable fine tuning
             </li>
           </ul>
         </div>
@@ -64,41 +40,26 @@
             <input
               type="file"
               class="input-optical-image"
-              style="display: none;"
+              style="display: none"
               accept=".jpg,.jpeg,.png"
               @change="onFileChange($event)"
-            >
+            />
             Select optical image
           </label>
 
-          <div style="padding: 3px; font-size: small;">
+          <div style="padding: 3px; font-size: small">
             {{ opticalImageFilename }}
           </div>
 
-          <div
-            id="tip"
-            class="el-upload__tip"
-          >
-            JPEG or PNG file less than {{ limitMB }}MB in size
-          </div>
+          <div id="tip" class="el-upload__tip">JPEG or PNG file less than {{ limitMB }}MB in size</div>
         </div>
 
         <div class="sliders-box">
           Optical image padding, px:
-          <el-slider
-            v-model="padding"
-            :min="0"
-            :max="500"
-            :step="10"
-          />
+          <el-slider v-model="padding" :min="0" :max="500" :step="10" />
 
           IMS image opacity:
-          <el-slider
-            v-model="annotImageOpacity"
-            :min="0"
-            :max="1"
-            :step="0.01"
-          />
+          <el-slider v-model="annotImageOpacity" :min="0" :max="1" :step="0.01" />
           <el-checkbox
             v-if="showTicOption"
             v-model="enableNormalization"
@@ -109,7 +70,7 @@
         </div>
 
         <div class="annotation-selection">
-          <span style="font-size: 14px; margin-bottom: 5px;">Annotation:</span>
+          <span style="font-size: 14px; margin-bottom: 5px">Annotation:</span>
           <el-pagination
             layout="prev,slot,next"
             :total="annotations ? annotations.length : 0"
@@ -124,76 +85,33 @@
               class="annotation-short-info"
               @change="(newIdx) => updateIndex(newIdx + 1)"
             >
-              <el-option
-                v-for="(annot, i) in annotations"
-                :key="annot.id"
-                :value="i"
-                :label="renderLabel(annot)"
-              >
+              <el-option v-for="(annot, i) in annotations" :key="annot.id" :value="i" :label="renderLabel(annot)">
                 <span v-html="renderAnnotation(annot)" />
               </el-option>
             </el-select>
           </el-pagination>
 
           Angle, °:
-          <el-slider
-            v-model="angle"
-            :min="-180"
-            :max="180"
-            :step="0.1"
-          />
+          <el-slider v-model="angle" :min="-180" :max="180" :step="0.1" />
         </div>
 
         <div class="optical-image-submit">
-          <el-row
-            :gutter="20"
-            style="margin-bottom: 10px"
-          >
-            <el-col
-              :span="12"
-              :offset="opticalImgUrl ? 0 : 12"
-            >
-              <el-button @click="cancel">
-                Cancel
-              </el-button>
+          <el-row :gutter="20" style="margin-bottom: 10px">
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
+              <el-button @click="cancel"> Cancel </el-button>
             </el-col>
-            <el-col
-              :span="12"
-              :offset="opticalImgUrl ? 0 : 12"
-            >
-              <el-button
-                v-show="opticalImgUrl"
-                style="margin-bottom: 10px;"
-                @click="reset"
-              >
-                Reset
-              </el-button>
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
+              <el-button v-show="opticalImgUrl" style="margin-bottom: 10px" @click="reset"> Reset </el-button>
             </el-col>
           </el-row>
           <el-row :gutter="20">
-            <el-col
-              :span="12"
-              :offset="opticalImgUrl ? 0 : 12"
-            >
-              <el-button
-                v-show="opticalImgUrl"
-                class="del-optical-image"
-                @click="deleteOpticalImages"
-              >
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
+              <el-button v-show="opticalImgUrl" class="del-optical-image" @click="deleteOpticalImages">
                 Delete
               </el-button>
             </el-col>
-            <el-col
-              :span="12"
-              :offset="opticalImgUrl ? 0 : 12"
-            >
-              <el-button
-                type="primary"
-                :disabled="!opticalImgUrl"
-                @click="submit"
-              >
-                Submit
-              </el-button>
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
+              <el-button type="primary" :disabled="!opticalImgUrl" @click="submit"> Submit </el-button>
             </el-col>
           </el-row>
         </div>
@@ -202,7 +120,7 @@
     <image-aligner
       v-if="opticalImgUrl && !hasNormalizationError"
       ref="aligner"
-      style="position:relative;top:0px;z-index:1;"
+      style="position: relative; top: 0px; z-index: 1"
       :annot-image-opacity="annotImageOpacity"
       :optical-src="opticalImgUrl"
       :tic-data="normalizationData"
@@ -212,20 +130,14 @@
       :ion-image-src="massSpecSrc"
       @updateRotationAngle="updateAngle"
     />
-    <div
-      v-if="hasNormalizationError"
-      class="normalization-error-wrapper"
-    >
+    <div v-if="hasNormalizationError" class="normalization-error-wrapper">
       <i class="el-icon-error info-icon mr-2" />
-      <p class="text-lg">
-        There was an error on normalization!
-      </p>
+      <p class="text-lg">There was an error on normalization!</p>
     </div>
   </div>
 </template>
 
 <script>
-
 import ImageAligner from './ImageAligner.vue'
 import { renderMolFormula, renderMolFormulaHtml } from '../../lib/util'
 
@@ -238,11 +150,11 @@ import config from '../../lib/config'
 import AwsS3Multipart from '@uppy/aws-s3-multipart'
 import Uppy from '@uppy/core'
 import createStore from '../../components/UppyUploader/store'
-import {defineComponent, ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRefs, inject} from 'vue';
-import {DefaultApolloClient, useQuery} from "@vue/apollo-composable";
-import {useStore} from "vuex";
-import {useRouter} from "vue-router";
-import {ElMessage} from "element-plus";
+import { defineComponent, ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRefs, inject } from 'vue'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { annotationListQuery } from '../../api/annotation'
 import {
   addOpticalImageQuery,
@@ -269,10 +181,10 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const store = useStore();
-    const router = useRouter();
-    const aligner = ref(null);
-    const apolloClient = inject(DefaultApolloClient);
+    const store = useStore()
+    const router = useRouter()
+    const aligner = ref(null)
+    const apolloClient = inject(DefaultApolloClient)
     const state = reactive({
       uppy: null,
       status: null,
@@ -289,7 +201,11 @@ export default defineComponent({
       originUuid: null,
       ticData: null,
       alreadyUploaded: false,
-      initialTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+      initialTransform: [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ],
       padding: 100,
       angle: 0,
       enableNormalization: false,
@@ -299,13 +215,12 @@ export default defineComponent({
         text: 'Hide hints',
       },
       datasetName: '',
-    });
+    })
 
-    const datasetId = computed(() => store.state.route.params.dataset_id);
-    const { onResult: onOpticalImageResult } = useQuery(rawOpticalImageQuery,
-      () => ({ ds_id: datasetId.value }));
+    const datasetId = computed(() => store.state.route.params.dataset_id)
+    const { onResult: onOpticalImageResult } = useQuery(rawOpticalImageQuery, () => ({ ds_id: datasetId.value }))
 
-    onOpticalImageResult(async(result) => {
+    onOpticalImageResult(async (result) => {
       const data = result?.data
       if (data?.rawOpticalImage != null && data.rawOpticalImage.transform != null) {
         const { url, transform, uuid } = data.rawOpticalImage
@@ -317,77 +232,76 @@ export default defineComponent({
       }
     })
 
-    const { result: annotationsResult } = useQuery(annotationListQuery,
-      () => ({
-        filter: { fdrLevel: 0.5 },
-        dFilter: { ids: datasetId.value },
-        offset: 0,
-        limit: 1000,
-        query: '',
-        orderBy: 'ORDER_BY_MSM',
-        sortingOrder: 'DESCENDING',
-        countIsomerCompounds: false,
-      }));
+    const { result: annotationsResult } = useQuery(annotationListQuery, () => ({
+      filter: { fdrLevel: 0.5 },
+      dFilter: { ids: datasetId.value },
+      offset: 0,
+      limit: 1000,
+      query: '',
+      orderBy: 'ORDER_BY_MSM',
+      sortingOrder: 'DESCENDING',
+      countIsomerCompounds: false,
+    }))
 
     const annotations = computed(() => {
       // get normalization data for selected annotation
       const annotation = annotationsResult.value?.allAnnotations[0]
       // add TIC reference
-      if (config.features.tic && annotation &&
-        annotation.id !== 'TIC Image') {
-        const ticAnnotation = [{
-          ...annotation,
-          id: 'TIC Image',
-          type: 'TIC Image',
-        }]
+      if (config.features.tic && annotation && annotation.id !== 'TIC Image') {
+        const ticAnnotation = [
+          {
+            ...annotation,
+            id: 'TIC Image',
+            type: 'TIC Image',
+          },
+        ]
         return ticAnnotation.concat(annotation)
       }
       return annotationsResult.value?.allAnnotations
-    });
-
+    })
 
     const { result: datasetPropertiesResult, onResult: onDatasetResult } = useQuery(
-      gql`query getDatasetName($id: String!) {
-                    dataset(id: $id) {
-                      id
-                      name
-                      metadataType
-                    }
-                  }`,
-      () => ({ id: datasetId.value }));
-    const datasetProperties = computed(() => datasetPropertiesResult.value?.dataset);
-    const datasetName = computed(() => datasetProperties.value?.name);
+      gql`
+        query getDatasetName($id: String!) {
+          dataset(id: $id) {
+            id
+            name
+            metadataType
+          }
+        }
+      `,
+      () => ({ id: datasetId.value })
+    )
+    const datasetProperties = computed(() => datasetPropertiesResult.value?.dataset)
+    const datasetName = computed(() => datasetProperties.value?.name)
 
-    onDatasetResult(async(result) => {
+    onDatasetResult(async (result) => {
       const data = result?.data
-      if(!data) return
+      if (!data) return
       // in case user just opened a link to optical image upload page w/o navigation in web-app,
       // filters are not set up
       store.commit('replaceFilter', { metadataType: data.dataset.metadataType })
     })
 
-    const {
-      result: currentUserResult,
-    } = useQuery(currentUserRoleQuery, null, {fetchPolicy: 'cache-first'})
+    const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, { fetchPolicy: 'cache-first' })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
 
-    const uuid = computed(() => state.storageKey.uuid);
-    const uploadEndpoint = computed(() => `${window.location.origin}/dataset_upload`);
-    const hasNormalizationError = computed(() => state.enableNormalization && state.ticData
-      && state.ticData.error);
-    const showTicOption = computed(() => config.features.tic);
-    const normalizationData = computed(() => (state.showFullTIC || state.enableNormalization) ? state.ticData : null);
-    const currentAnnotation = computed(() =>{
+    const uuid = computed(() => state.storageKey.uuid)
+    const uploadEndpoint = computed(() => `${window.location.origin}/dataset_upload`)
+    const hasNormalizationError = computed(() => state.enableNormalization && state.ticData && state.ticData.error)
+    const showTicOption = computed(() => config.features.tic)
+    const normalizationData = computed(() => (state.showFullTIC || state.enableNormalization ? state.ticData : null))
+    const currentAnnotation = computed(() => {
       if (!annotations.value || annotations.value.length === 0) {
         return null
       }
       return annotations.value[state.annotationIndex]
-    });
-    const massSpecSrc = computed(() =>{
+    })
+    const massSpecSrc = computed(() => {
       const url = currentAnnotation.value ? currentAnnotation.value.isotopeImages[0].url : null
       return url || null
-    });
-    const currentSumFormula = computed(() =>{
+    })
+    const currentSumFormula = computed(() => {
       if (!annotations.value) {
         return 'loading...'
       }
@@ -395,9 +309,8 @@ export default defineComponent({
         return 'no results'
       }
       return renderAnnotation(currentAnnotation.value)
-    });
-    const opticalImageFilename = computed(() => state.file ? state.file.name : '');
-
+    })
+    const opticalImageFilename = computed(() => (state.file ? state.file.name : ''))
 
     const updateAngle = (v) => {
       if (v < -180) {
@@ -408,7 +321,7 @@ export default defineComponent({
       state.angle = v
     }
 
-    const fetchStorageKey = async() => {
+    const fetchStorageKey = async () => {
       state.status = 'LOADING'
       try {
         const response = await fetch(`${uploadEndpoint.value}/s3/uuid`)
@@ -436,7 +349,7 @@ export default defineComponent({
       return annotation.type === 'TIC Image' ? 'TIC Image' : renderMolFormula(ion)
     }
 
-    const onFileChange = async(event) => {
+    const onFileChange = async (event) => {
       const file = event.target.files[0]
 
       if (!file) {
@@ -464,7 +377,11 @@ export default defineComponent({
       state.file = file
       state.opticalImgUrl = window.URL.createObjectURL(state.file)
       state.angle = 0
-      state.initialTransform = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+      state.initialTransform = [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ]
       state.alreadyUploaded = false
       document.querySelector('.input-optical-image').value = ''
     }
@@ -474,7 +391,7 @@ export default defineComponent({
       updateNormalizationData(currentAnnotation.value)
     }
 
-    const updateNormalizationData = async(currentAnnotation) => {
+    const updateNormalizationData = async (currentAnnotation) => {
       if (!currentAnnotation) {
         return null
       }
@@ -518,8 +435,7 @@ export default defineComponent({
       }
     }
 
-
-    const submit = async() => {
+    const submit = async () => {
       try {
         await addOpticalImage(!state.fileId ? state.originUuid : uuid.value)
         ElMessage({
@@ -532,7 +448,7 @@ export default defineComponent({
       }
     }
 
-    const addOpticalImage = async(imageUrl) => {
+    const addOpticalImage = async (imageUrl) => {
       ElMessage({
         message: 'Your optical image has been submitted! Please wait while it is saved...',
         type: 'success',
@@ -553,7 +469,7 @@ export default defineComponent({
       await graphqlClient.cache.reset()
     }
 
-    const deleteOpticalImages = async() => {
+    const deleteOpticalImages = async () => {
       try {
         const graphQLResp = await apolloClient.mutate({
           mutation: deleteOpticalImageQuery,
@@ -580,7 +496,6 @@ export default defineComponent({
         reportError(e)
       }
     }
-
 
     const destroyOptImage = () => {
       state.opticalImgUrl = window.URL.revokeObjectURL(state.opticalImgUrl)
@@ -640,7 +555,7 @@ export default defineComponent({
         .on('error', (...args) => {
           console.log(args)
         })
-        .on('complete', result => {
+        .on('complete', (result) => {
           console.log('Upload complete! We’ve uploaded these files:', result.successful)
         })
 
@@ -660,7 +575,6 @@ export default defineComponent({
       const annotation = newAnnotations[0]
       updateNormalizationData(annotation)
     })
-
 
     return {
       ...toRefs(state),
@@ -691,94 +605,92 @@ export default defineComponent({
       toggleHints,
       opticalImageFilename,
       annotations,
-    };
+    }
   },
-});
-
+})
 </script>
 
 <style>
+.image-alignment-header {
+  text-align: center;
+  width: 100%;
+  font-size: 14px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-bottom: dotted lightblue 1px;
+}
 
-  .image-alignment-header {
-    text-align: center;
-    width: 100%;
-    font-size: 14px;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-bottom: dotted lightblue 1px;
-  }
+.image-alignment-settings {
+  margin-bottom: 20px;
+  padding: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
 
-  .image-alignment-settings {
-    margin-bottom: 20px;
-    padding: 10px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-  }
+.image-alignment-top {
+  left: 0px;
+  top: 62px;
+  z-index: 500;
+  width: 100%;
+  background-color: white;
+}
 
-  .image-alignment-top {
-    left: 0px;
-    top: 62px;
-    z-index: 500;
-    width: 100%;
-    background-color: white;
-  }
+#alignment-page {
+  min-height: calc(100vh - 104px);
+  margin: 0;
+  overflow: auto;
+  padding: 20px;
+}
 
-  #alignment-page {
-    min-height: calc(100vh - 104px);
-    margin: 0;
-    overflow: auto;
-    padding: 20px;
-  }
+.sliders-box {
+  min-width: 150px;
+  margin: 0px 20px;
+  padding: 0px 20px;
+  border-left: solid #eef 2px;
+  font-size: 14px;
+}
 
-  .sliders-box {
-    min-width: 150px;
-    margin: 0px 20px;
-    padding: 0px 20px;
-    border-left: solid #eef 2px;
-    font-size: 14px;
-  }
+.annotation-short-info {
+  display: inline-block;
+  line-height: 23px;
+  border-left: solid lightgrey 1px;
+  border-right: solid lightgrey 1px;
+  padding: 0px 10px;
+  min-width: 180px;
+  text-align: center;
+}
 
-  .annotation-short-info {
-    display: inline-block;
-    line-height: 23px;
-    border-left: solid lightgrey 1px;
-    border-right: solid lightgrey 1px;
-    padding: 0px 10px;
-    min-width: 180px;
-    text-align: center;
-  }
+.el-pagination .annotation-short-info .el-input {
+  width: 180px;
+}
 
-  .el-pagination .annotation-short-info .el-input {
-    width: 180px;
-  }
+.optical-image-submit {
+  margin-left: 30px;
+}
 
-  .optical-image-submit {
-    margin-left: 30px;
-  }
+.optical-image-submit,
+.annotation-selection {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
-  .optical-image-submit, .annotation-selection {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
+.mouse-hint-icon {
+  width: 20px;
+  height: 20px;
+}
 
-  .mouse-hint-icon {
-    width:  20px;
-    height: 20px;
-  }
+.hint-list {
+  list-style-type: none;
+}
 
-  .hint-list{
-    list-style-type: none;
-  }
-
-  .normalization-error-wrapper{
-    height: 537px;
-    width: 100%;
-    @apply flex items-center justify-center;
-  }
-  .info-icon{
-    font-size: 20px;
-  }
-
+.normalization-error-wrapper {
+  height: 537px;
+  width: 100%;
+  @apply flex items-center justify-center;
+}
+.info-icon {
+  font-size: 20px;
+}
 </style>

@@ -19,19 +19,8 @@
       @click="() => setActiveLayer(null)"
     >
       <fade-transition class="text-xs tracking-wide font-medium text-inherit">
-        <span
-          v-if="activeLayer === null"
-          key="active"
-        >
-          Select annotation
-        </span>
-        <span
-          v-else
-          key="inactive"
-          class="flex items-center justify-center"
-        >
-          Add ion image
-        </span>
+        <span v-if="activeLayer === null" key="active"> Select annotation </span>
+        <span v-else key="inactive" class="flex items-center justify-center"> Add ion image </span>
       </fade-transition>
     </button>
   </overlay>

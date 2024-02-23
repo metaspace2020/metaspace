@@ -1,8 +1,5 @@
 <template>
-  <i
-    class="flex"
-    :class="{ active, hover, inverse }"
-  >
+  <i class="flex" :class="{ active, hover, inverse }">
     <slot />
   </i>
 </template>

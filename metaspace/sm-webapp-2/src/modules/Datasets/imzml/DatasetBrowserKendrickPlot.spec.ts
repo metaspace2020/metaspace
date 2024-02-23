@@ -1,27 +1,26 @@
 import { DatasetBrowserKendrickPlot } from './DatasetBrowserKendrickPlot'
-import { nextTick, h, defineComponent  } from 'vue';
+import { nextTick, h, defineComponent } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
-import router from "../../../router";
-import store from "../../../store";
-
+import router from '../../../router'
+import store from '../../../store'
 
 vi.mock('vue-echarts', () => ({ default: vi.fn() }))
 vi.mock('echarts', () => ({ default: vi.fn() }))
 vi.mock('echarts/core', () => ({ default: vi.fn(), use: vi.fn() }))
 vi.mock('echarts/renderers', async () => {
-  const actual : any = await vi.importActual("echarts/renderers")
+  const actual: any = await vi.importActual('echarts/renderers')
   return {
     ...actual,
   }
 })
 vi.mock('echarts/charts', async () => {
-  const actual : any = await vi.importActual("echarts/charts")
+  const actual: any = await vi.importActual('echarts/charts')
   return {
     ...actual,
   }
 })
 vi.mock('echarts/components', async () => {
-  const actual : any = await vi.importActual("echarts/charts")
+  const actual: any = await vi.importActual('echarts/charts')
   return {
     ...actual,
     GridComponent: vi.fn(),
@@ -36,18 +35,17 @@ vi.mock('echarts/components', async () => {
   }
 })
 
-
 describe('DatasetBrowserKendrickPlot', () => {
   const testHarness = defineComponent({
     components: {
       DatasetBrowserKendrickPlot,
     },
     setup(props, { attrs }) {
-      return () => h(DatasetBrowserKendrickPlot, { ...attrs, ...props });
+      return () => h(DatasetBrowserKendrickPlot, { ...attrs, ...props })
     },
-  });
+  })
 
-  it('it should match snapshot when empty', async() => {
+  it('it should match snapshot when empty', async () => {
     const wrapper = mount(testHarness, {
       global: {
         plugins: [store, router],
@@ -55,12 +53,12 @@ describe('DatasetBrowserKendrickPlot', () => {
       props: {
         isEmpty: true,
         isLoading: false,
-      }
-    });
+      },
+    })
 
-    await flushPromises();
-    await nextTick();
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
+    expect(wrapper.html()).toMatchSnapshot()
   })
 })

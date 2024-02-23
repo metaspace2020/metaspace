@@ -29,24 +29,15 @@
             :isomers="item.annotation.isomers"
             :isobars="item.annotation.isobars"
           >
-            <molecular-formula
-              class="truncate font-medium h-6 text-base"
-              :ion="item.annotation.ion"
-            />
+            <molecular-formula class="truncate font-medium h-6 text-base" :ion="item.annotation.ion" />
           </candidate-molecules-popover>
           <button
             :title="item.settings.visible ? 'Hide layer' : 'Show layer'"
             class="button-reset h-5"
             @click.stop.left="item.toggleVisibility"
           >
-            <visible-icon
-              v-if="item.settings.visible"
-              class="fill-current w-5 h-5 text-gray-800"
-            />
-            <hidden-icon
-              v-else
-              class="fill-current w-5 h-5 text-gray-600"
-            />
+            <visible-icon v-if="item.settings.visible" class="fill-current w-5 h-5 text-gray-800" />
+            <hidden-icon v-else class="fill-current w-5 h-5 text-gray-600" />
           </button>
         </p>
         <div class="h-9 relative">
@@ -57,7 +48,7 @@
             :intensity="item.intensity.value"
             :scale-range="item.scaleRange.value"
             :is-disabled="!item.settings.visible"
-            @thumb-start="usedSlider = true; $emit('slider-start')"
+            @thumb-start="handleThumbStart"
             @thumb-stop="$emit('slider-stop')"
             @popover="toggleClippingNotice"
           />
@@ -89,24 +80,9 @@ import CandidateMoleculesPopover from '../Annotations/annotation-widgets/Candida
 import ClippingNotice from './ClippingNotice.vue'
 import useClippingNotice from './useClippingNotice'
 
-const VisibleIcon = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-view-visible.svg')
-);
+const VisibleIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-view-visible.svg'))
 
-const HiddenIcon = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-view-hidden.svg')
-);
-
-
-
-interface Props {
-  item: {
-    id: string
-  },
-  isActive: boolean
-  popupsDisabled: boolean
-}
-
+const HiddenIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-view-hidden.svg'))
 
 export default defineComponent({
   components: {
@@ -126,26 +102,31 @@ export default defineComponent({
     isNormalized: Boolean,
     popupsDisabled: Boolean,
   },
-  setup(props: Props, { emit }) {
-    const usedSlider = ref(false); // to prevent active state changing when using the slider
-    const { clippingNotice, toggleClippingNotice } = useClippingNotice();
+  setup(props: any, { emit }) {
+    const usedSlider = ref(false) // to prevent active state changing when using the slider
+    const { clippingNotice, toggleClippingNotice } = useClippingNotice()
 
     const setActiveLayer = () => {
       if (!usedSlider.value) {
-        const item: any = props.item;
-        emit('active', item.id);
+        const item: any = props.item
+        emit('active', item.id)
       }
-    };
+    }
+
+    const handleThumbStart = () => {
+      usedSlider.value = true
+      emit('slider-start')
+    }
 
     const removeLayer = () => {
-      const item: any = props.item;
-      emit('remove', item.id);
-    };
+      const item: any = props.item
+      emit('remove', item.id)
+    }
 
     const setChannel = (newChannel) => {
-      const item: any = props.item;
-      item.settings.channel = newChannel;
-    };
+      const item: any = props.item
+      item.settings.channel = newChannel
+    }
 
     return {
       usedSlider,
@@ -154,7 +135,8 @@ export default defineComponent({
       setActiveLayer,
       removeLayer,
       setChannel,
-    };
+      handleThumbStart,
+    }
   },
-});
+})
 </script>

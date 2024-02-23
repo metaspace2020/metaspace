@@ -1,59 +1,58 @@
 $bgColor: hsl(208, 36%, 96%);
 
-
-.roi-content{
+.roi-content {
   @apply flex flex-col flex-wrap justify-center items-center;
 
-  .roi-options{
+  .roi-options {
     @apply flex flex-row flex-wrap justify-end items-center w-full pb-1;
     border-bottom: 1px solid lightgray;
   }
 
-  .save-disabled{
+  .save-disabled {
     @apply cursor-not-allowed;
     opacity: 0.5;
   }
 
-  .roi-save-icon-wrapper{
+  .roi-save-icon-wrapper {
     @apply flex justify-center items-center h-6 w-6;
     margin-left: 3px !important;
     margin-right: -2px;
   }
 
-  .roi-save-icon{
+  .roi-save-icon {
     scale: 0.8;
   }
 
-  .roi-download-icon{
+  .roi-download-icon {
     @apply flex justify-center items-center h-6 w-6;
   }
 
-  .roi-label{
+  .roi-label {
     @apply font-bold overflow-hidden truncate;
   }
 
-  .roi-item{
+  .roi-item {
     @apply flex w-full justify-center items-center flex-wrap;
     height: 60px;
     border-bottom: 1px solid lightgray;
   }
 
-  .roi-channels{
+  .roi-channels {
     @apply flex w-full justify-between items-center relative;
     height: 10px;
   }
 }
 
-.roi-popper{
+.roi-popper {
   background: $bgColor;
   min-width: 150px !important;
 
-  .popper__arrow::after{
+  .popper__arrow::after {
     border-bottom-color: $bgColor !important;
   }
 }
 
-.roi-btn{
+.roi-btn {
   position: relative;
   margin-right: -4px;
   padding-left: 8px;
@@ -69,11 +68,10 @@ $bgColor: hsl(208, 36%, 96%);
     border-style: solid;
     border-color: transparent;
   }
-
 }
 
-.roi-container{
-  .active{
+.roi-container {
+  .active {
     color: theme('colors.blue.300') !important;
 
     &::after {
@@ -83,15 +81,13 @@ $bgColor: hsl(208, 36%, 96%);
   }
 }
 
-
-.roi-badge{
+.roi-badge {
   color: transparent;
   @apply flex justify-center items-center;
 }
 
-.roi-badge-selected{
-
-  &::after{
+.roi-badge-selected {
+  &::after {
     content: '';
     position: absolute;
     top: -4px;
@@ -106,7 +102,7 @@ $bgColor: hsl(208, 36%, 96%);
   }
 }
 
-.roi-save-tooltip{
+.roi-save-tooltip {
   max-width: 220px;
   text-align: justify;
 }

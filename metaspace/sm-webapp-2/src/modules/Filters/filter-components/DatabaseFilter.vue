@@ -1,10 +1,5 @@
 <template>
-  <tag-filter
-    name="Database"
-    :removable="false"
-    :width="300"
-    @destroy="destroy"
-  >
+  <tag-filter name="Database" :removable="false" :width="300" @destroy="destroy">
     <template v-slot:edit>
       <el-select
         ref="selectRef"
@@ -20,11 +15,7 @@
         @change="onInput"
         @visible-change="filterOptions('')"
       >
-        <el-option-group
-          v-for="group in groups"
-          :key="group.label"
-          :label="group.label"
-        >
+        <el-option-group v-for="group in groups" :key="group.label" :label="group.label">
           <el-option
             v-for="option in group.options"
             :key="option.value"
@@ -45,51 +36,46 @@
           </el-option>
         </el-option-group>
       </el-select>
-      <filter-help-text
-        v-if="hasDatasetFilter"
-        icon="time"
-      >
+      <filter-help-text v-if="hasDatasetFilter" icon="time">
         Showing results from selected dataset{{ datasetFilter.length > 1 ? 's' : '' }}
       </filter-help-text>
-      <filter-help-text v-else>
-        Search to see archived versions
-      </filter-help-text>
+      <filter-help-text v-else> Search to see archived versions </filter-help-text>
     </template>
     <template v-slot:show>
       <span v-if="initialized" class="tf-value-span">
         {{ label }}
       </span>
-      <el-icon v-else class="is-loading"><Loading/></el-icon>
+      <el-icon v-else class="is-loading"><Loading /></el-icon>
     </template>
   </tag-filter>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch } from 'vue';
-import { useStore } from 'vuex';
-import { sortBy} from 'lodash-es';
-import gql from 'graphql-tag';
+import { defineComponent, ref, computed, watch } from 'vue'
+import { useStore } from 'vuex'
+import { sortBy } from 'lodash-es'
+import gql from 'graphql-tag'
 
-import TagFilter from './TagFilter.vue';
+import TagFilter from './TagFilter.vue'
 import { FilterHelpText } from './TagFilterComponents'
-import { MolecularDB } from '../../../api/moldb';
-import { formatDatabaseLabel, getDatabasesByGroup } from '../../MolecularDatabases/formatting';
+import { MolecularDB } from '../../../api/moldb'
+import { formatDatabaseLabel, getDatabasesByGroup } from '../../MolecularDatabases/formatting'
 
-import { inject, InjectionKey } from 'vue';
-import { DefaultApolloClient } from '@vue/apollo-composable';
-import { ApolloClient } from '@apollo/client/core';
-import {Loading} from "@element-plus/icons-vue";
-import {ElSelect, ElOption, ElOptionGroup} from "element-plus";
+import { inject, InjectionKey } from 'vue'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { ApolloClient } from '@apollo/client/core'
+import { Loading } from '@element-plus/icons-vue'
+import { ElSelect, ElOption, ElOptionGroup } from 'element-plus'
 
 interface Option {
-  value: string;
-  label: string;
-  archived: Boolean;
+  value: string
+  label: string
+  archived: Boolean
 }
 
 interface GroupOption {
-  label: string;
-  options: Option[];
+  label: string
+  options: Option[]
 }
 
 export default defineComponent({
@@ -100,24 +86,25 @@ export default defineComponent({
     Loading,
     ElOption,
     ElOptionGroup,
-    ElSelect
+    ElSelect,
   },
   props: {
     value: String,
     fixedOptions: Array,
   },
   setup(props, { emit }) {
-    const apolloClientKey: InjectionKey<ApolloClient<any>> = DefaultApolloClient as InjectionKey<ApolloClient<any>>;
-    const apolloClient = inject(apolloClientKey);
+    const apolloClientKey: InjectionKey<ApolloClient<any>> = DefaultApolloClient as InjectionKey<ApolloClient<any>>
+    const apolloClient = inject(apolloClientKey)
 
-    const selectRef = ref(null);
-    const groups = ref<GroupOption[]>([]);
-    const options = ref<Record<string, Option>>({});
-    const previousQuery = ref<string | null>(null);
-    const store = useStore();
-    const datasetFilter = ref(store.getters.filter.datasetIds);
-    const hasDatasetFilter = computed(() => datasetFilter.value?.length > 0);
-    const DATABASE_OPTIONS_QUERY = gql`query DatabaseOptions {
+    const selectRef = ref(null)
+    const groups = ref<GroupOption[]>([])
+    const options = ref<Record<string, Option>>({})
+    const previousQuery = ref<string | null>(null)
+    const store = useStore()
+    const datasetFilter = ref(store.getters.filter.datasetIds)
+    const hasDatasetFilter = computed(() => datasetFilter.value?.length > 0)
+    const DATABASE_OPTIONS_QUERY = gql`
+      query DatabaseOptions {
         allMolecularDBs {
           id
           name
@@ -128,8 +115,10 @@ export default defineComponent({
             shortName
           }
         }
-      }`;
-    const DATABASE_OPTIONS_FROM_DATASETS_QUERY = gql`query DatabaseOptionsFromDatasets($filter: DatasetFilter) {
+      }
+    `
+    const DATABASE_OPTIONS_FROM_DATASETS_QUERY = gql`
+      query DatabaseOptionsFromDatasets($filter: DatasetFilter) {
         allDatasets(filter: $filter) {
           id
           databases {
@@ -143,68 +132,71 @@ export default defineComponent({
             }
           }
         }
-      }`
-
-    let allDBsByGroup = ref();
-    let datasetDBsByGroup = ref();
-
-    watch(hasDatasetFilter, async(newVal) => {
-      if(!apolloClient){
-        return
       }
-      if (!newVal) {
-        const { data } = await apolloClient.query({
-          query:  DATABASE_OPTIONS_QUERY,
-          fetchPolicy: 'cache-first',
+    `
 
-        })
-        const moldbs = data.allMolecularDBs || []
+    let allDBsByGroup = ref()
+    let datasetDBsByGroup = ref()
 
-        allDBsByGroup.value = getDatabasesByGroup(moldbs);
-      } else {
-        const { data } = await apolloClient.query({
-          query:  DATABASE_OPTIONS_FROM_DATASETS_QUERY,
-          fetchPolicy: 'cache-first',
-          variables: () => ({
-            filter: { ids: datasetFilter.value.join('|') }
-          })
-        })
-        const dbs = {};
-        for (const { databases } of data.allDatasets) {
-          for (const db of databases) {
-            dbs[db.id] = db;
-          }
+    watch(
+      hasDatasetFilter,
+      async (newVal) => {
+        if (!apolloClient) {
+          return
         }
-        datasetDBsByGroup.value = getDatabasesByGroup(Object.values(dbs));
-      }
-    }, { immediate: true });
+        if (!newVal) {
+          const { data } = await apolloClient.query({
+            query: DATABASE_OPTIONS_QUERY,
+            fetchPolicy: 'cache-first',
+          })
+          const moldbs = data.allMolecularDBs || []
+
+          allDBsByGroup.value = getDatabasesByGroup(moldbs)
+        } else {
+          const { data } = await apolloClient.query({
+            query: DATABASE_OPTIONS_FROM_DATASETS_QUERY,
+            fetchPolicy: 'cache-first',
+            variables: () => ({
+              filter: { ids: datasetFilter.value.join('|') },
+            }),
+          })
+          const dbs = {}
+          for (const { databases } of data.allDatasets) {
+            for (const db of databases) {
+              dbs[db.id] = db
+            }
+          }
+          datasetDBsByGroup.value = getDatabasesByGroup(Object.values(dbs))
+        }
+      },
+      { immediate: true }
+    )
 
     const label = computed(() => {
-      if (props.value === undefined) return '(any)';
+      if (props.value === undefined) return '(any)'
       if (options.value[props.value] !== undefined) {
-        return options.value[props.value].label;
+        return options.value[props.value].label
       }
-      return '(unknown)';
-    });
+      return '(unknown)'
+    })
 
     const valueIfKnown = computed(() => {
-      return props.value && options.value[props.value] ? props.value : undefined;
-    });
+      return props.value && options.value[props.value] ? props.value : undefined
+    })
 
     const dbsByGroup = computed(() => {
       return hasDatasetFilter.value ? datasetDBsByGroup.value : allDBsByGroup.value
-    });
+    })
 
     const initialized = computed(() => {
-      return dbsByGroup.value !== null && groups.value !== null;
-    });
-
+      return dbsByGroup.value !== null && groups.value !== null
+    })
 
     watch(dbsByGroup, () => {
       previousQuery.value = null
       options.value = {}
       filterOptions('')
-    });
+    })
     // watch(props.fixedOptions, () => {
     //   previousQuery.value = null
     //   options.value = {}
@@ -213,7 +205,7 @@ export default defineComponent({
 
     function mapDBtoOption(db: MolecularDB): Option {
       return {
-        value: db.id ? (db.id).toString() : '',
+        value: db.id ? db.id.toString() : '',
         label: formatDatabaseLabel(db),
         archived: db.archived,
       }
@@ -228,8 +220,10 @@ export default defineComponent({
 
       try {
         const groupOptions: GroupOption[] = []
-        const sourceDatabases = Array.isArray(props.fixedOptions) && props.fixedOptions.length > 0
-          ? getDatabasesByGroup(props.fixedOptions) : dbsByGroup.value
+        const sourceDatabases =
+          Array.isArray(props.fixedOptions) && props.fixedOptions.length > 0
+            ? getDatabasesByGroup(props.fixedOptions)
+            : dbsByGroup.value
         const queryRegex = new RegExp(query, 'i')
 
         for (const group of sourceDatabases) {
@@ -237,7 +231,7 @@ export default defineComponent({
           for (const db of group.molecularDatabases) {
             const id = db.id.toString()
             if (!(id in options.value)) {
-              options.value[id] = mapDBtoOption(db);
+              options.value[id] = mapDBtoOption(db)
             }
             const option = options.value[id]
             if (hideArchived && db.archived && props.value !== option.value) {
@@ -265,12 +259,12 @@ export default defineComponent({
     }
 
     function onInput(val: string) {
-      emit('input', val);
-      emit('change', val);
+      emit('input', val)
+      emit('change', val)
     }
 
     function destroy() {
-      emit('destroy');
+      emit('destroy')
     }
 
     return {
@@ -286,18 +280,18 @@ export default defineComponent({
       onInput,
       destroy,
       groups,
-      selectRef
-    };
-  }
-});
+      selectRef,
+    }
+  },
+})
 </script>
 
 <style>
-  .el-select-dropdown.is-multiple .el-select-dropdown__wrap {
-    max-height: 600px;
-  }
-  .el-select-dropdown__item.hover > [data-archived-badge],
-  .el-select-dropdown__item:hover > [data-archived-badge] {
-    @apply bg-gray-200
-  }
+.el-select-dropdown.is-multiple .el-select-dropdown__wrap {
+  max-height: 600px;
+}
+.el-select-dropdown__item.hover > [data-archived-badge],
+.el-select-dropdown__item:hover > [data-archived-badge] {
+  @apply bg-gray-200;
+}
 </style>

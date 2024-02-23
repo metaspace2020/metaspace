@@ -1,8 +1,4 @@
-import {
-  computed,
-  defineComponent,
-  reactive,
-} from 'vue'
+import { computed, defineComponent, reactive } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { getDatasetByIdQuery, GetDatasetByIdQuery, getDatasetEnrichmentQuery } from '../../../api/dataset'
 import { DatasetEnrichmentChart } from './DatasetEnrichmentChart'
@@ -11,10 +7,10 @@ import { getEnrichedMolDatabasesQuery } from '../../../api/enrichmentdb'
 import FilterPanel from '../../Filters/FilterPanel.vue'
 import { uniqBy } from 'lodash-es'
 import './DatasetEnrichmentPage.scss'
-import {useRoute, useRouter} from "vue-router";
-import {useStore} from "vuex";
-import {ElIcon} from "element-plus";
-import {Loading} from "@element-plus/icons-vue";
+import { useRoute, useRouter } from 'vue-router'
+import { useStore } from 'vuex'
+import { ElIcon } from 'element-plus'
+import { Loading } from '@element-plus/icons-vue'
 
 interface DatasetEnrichmentPageProps {
   className: string
@@ -45,17 +41,14 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     })
     const datasetId = computed(() => route.params.dataset_id)
 
-    const {
-      result: datasetResult,
-    } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId.value })
+    const { result: datasetResult } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId.value })
 
-    const dataset = computed(() => datasetResult.value != null ? datasetResult.value.dataset : null)
-    const {
-      result: databasesResult,
-      onResult: handleMolDbLoad,
-    } = useQuery<any>(getEnrichedMolDatabasesQuery, { id: datasetId.value })
+    const dataset = computed(() => (datasetResult.value != null ? datasetResult.value.dataset : null))
+    const { result: databasesResult, onResult: handleMolDbLoad } = useQuery<any>(getEnrichedMolDatabasesQuery, {
+      id: datasetId.value,
+    })
 
-    handleMolDbLoad(async(result) => {
+    handleMolDbLoad(async (result) => {
       const filter = Object.assign({}, store.getters.filter)
 
       // set default db filter if not selected
@@ -65,22 +58,27 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       }
     })
 
-    const databases = computed(() => databasesResult.value != null
-      ? databasesResult.value.allEnrichedMolDatabases : null)
-    const {
-      result: enrichmentResult,
-      loading: enrichmentLoading,
-    } = useQuery<any>(getDatasetEnrichmentQuery, computed(() => ({
-      id: datasetId.value,
-      dbId: store.getters.gqlAnnotationFilter.databaseId,
-      fdr: store.getters.gqlAnnotationFilter.fdrLevel,
-      pValue: (store.getters.gqlAnnotationFilter.pValue === null
-        || store.getters.gqlAnnotationFilter.pValue === undefined)
-        ? undefined : store.getters.gqlAnnotationFilter.pValue,
-      offSample: (store.getters.gqlAnnotationFilter.offSample === null
-      || store.getters.gqlAnnotationFilter.offSample === undefined)
-        ? undefined : !!store.getters.gqlAnnotationFilter.offSample,
-    })), { fetchPolicy: 'cache-first' as const })
+    const databases = computed(() =>
+      databasesResult.value != null ? databasesResult.value.allEnrichedMolDatabases : null
+    )
+    const { result: enrichmentResult, loading: enrichmentLoading } = useQuery<any>(
+      getDatasetEnrichmentQuery,
+      computed(() => ({
+        id: datasetId.value,
+        dbId: store.getters.gqlAnnotationFilter.databaseId,
+        fdr: store.getters.gqlAnnotationFilter.fdrLevel,
+        pValue:
+          store.getters.gqlAnnotationFilter.pValue === null || store.getters.gqlAnnotationFilter.pValue === undefined
+            ? undefined
+            : store.getters.gqlAnnotationFilter.pValue,
+        offSample:
+          store.getters.gqlAnnotationFilter.offSample === null ||
+          store.getters.gqlAnnotationFilter.offSample === undefined
+            ? undefined
+            : !!store.getters.gqlAnnotationFilter.offSample,
+      })),
+      { fetchPolicy: 'cache-first' as const }
+    )
 
     const enrichment = computed(() => {
       if (enrichmentResult.value) {
@@ -120,37 +118,37 @@ export default defineComponent<DatasetEnrichmentPageProps>({
     }
 
     return () => {
-      const dataStart = ((state.offset - 1) * state.pageSize)
-      const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
+      const dataStart = (state.offset - 1) * state.pageSize
+      const dataEnd = (state.offset - 1) * state.pageSize + state.pageSize
       const data = enrichment.value || []
       const usedData = state.sortedData ? state.sortedData : data
       const pagedData = usedData.slice(dataStart, dataEnd)
-      const databaseOptions : any = databases.value || []
-      const filename : string = `${dataset.value?.name}_${(databases.value || []).find((database:any) => database.id
-        === store.getters.gqlAnnotationFilter.databaseId)?.name}`.replace(/\./g, '_')
+      const databaseOptions: any = databases.value || []
+      const filename: string = `${dataset.value?.name}_${(databases.value || []).find(
+        (database: any) => database.id === store.getters.gqlAnnotationFilter.databaseId
+      )?.name}`.replace(/\./g, '_')
 
       return (
-        <div class='dataset-enrichment-page'>
-          {
-            databases.value
-            && <FilterPanel
-              class='w-full'
-              level='enrichment'
+        <div class="dataset-enrichment-page">
+          {databases.value && (
+            <FilterPanel
+              class="w-full"
+              level="enrichment"
               fixedOptions={{
                 database: uniqBy(databaseOptions, 'id'),
               }}
             />
-          }
-          {
-            enrichmentLoading.value
-            && <div class='w-full h-full flex items-center justify-center'>
-              <ElIcon class="is-loading"><Loading/></ElIcon>
+          )}
+          {enrichmentLoading.value && (
+            <div class="w-full h-full flex items-center justify-center">
+              <ElIcon class="is-loading">
+                <Loading />
+              </ElIcon>
               <span>Loading...</span>
             </div>
-          }
-          {
-            !enrichmentLoading.value
-            && <div class={'dataset-enrichment-wrapper md:w-1/2 w-full'}>
+          )}
+          {!enrichmentLoading.value && (
+            <div class={'dataset-enrichment-wrapper md:w-1/2 w-full'}>
               <DatasetEnrichmentTable
                 dsName={dataset.value?.name}
                 data={data}
@@ -160,21 +158,23 @@ export default defineComponent<DatasetEnrichmentPageProps>({
                 onSortChange={handleSortChange}
               />
             </div>
-          }
-          {
-            !enrichmentLoading.value
-            && <div class={'dataset-enrichment-wrapper text-center md:w-1/2 w-full'}>
-              {dataset.value?.name} - <a target='_blank' href='http://www.lipidontology.com/'>LION</a> terms enrichment
-              {
-                !(!data || (data || []).length === 0)
-                && <DatasetEnrichmentChart
+          )}
+          {!enrichmentLoading.value && (
+            <div class={'dataset-enrichment-wrapper text-center md:w-1/2 w-full'}>
+              {dataset.value?.name} -{' '}
+              <a target="_blank" href="http://www.lipidontology.com/">
+                LION
+              </a>{' '}
+              terms enrichment
+              {!(!data || (data || []).length === 0) && (
+                <DatasetEnrichmentChart
                   data={pagedData}
                   onItemSelected={handleItemClick}
                   filename={`Enrichment_${filename}_LION`}
                 />
-              }
+              )}
             </div>
-          }
+          )}
         </div>
       )
     }

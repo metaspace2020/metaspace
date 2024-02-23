@@ -1,31 +1,41 @@
-import { defineComponent, h, nextTick } from 'vue';
-import { mount } from '@vue/test-utils';
-import { vi } from 'vitest';
-import IonImageViewer from './IonImageViewer';
-import * as _ionImageRendering from '../lib/ionImageRendering';
+import { defineComponent, h, nextTick } from 'vue'
+import { mount } from '@vue/test-utils'
+import { vi } from 'vitest'
+import IonImageViewer from './IonImageViewer'
+import * as _ionImageRendering from '../lib/ionImageRendering'
 import { range } from 'lodash-es'
 import createColormap from '../lib/createColormap'
-import store from "../store";
-import router from "../router";
-import ElementPlus from "element-plus";
+import store from '../store'
+import router from '../router'
+import ElementPlus from 'element-plus'
 
-vi.mock('../lib/ionImageRendering');
+vi.mock('../lib/ionImageRendering')
 // @ts-ignore
-const mockIonImageRendering = _ionImageRendering as vi.Mocked<typeof _ionImageRendering>;
+const mockIonImageRendering = _ionImageRendering as vi.Mocked<typeof _ionImageRendering>
 
-const W = 200;
-const H = 300;
+const W = 200
+const H = 300
 
 // Create a test harness component
 const TestHarness = defineComponent({
   components: {
     IonImageViewer,
   },
-  props: ['ionImageLayers', 'width', 'height', 'zoom', 'xOffset', 'yOffset', 'showPixelIntensity', 'showNormalizedIntensity', 'normalizationData'],
+  props: [
+    'ionImageLayers',
+    'width',
+    'height',
+    'zoom',
+    'xOffset',
+    'yOffset',
+    'showPixelIntensity',
+    'showNormalizedIntensity',
+    'normalizationData',
+  ],
   setup(props) {
-    return () => h(IonImageViewer, { ...props });
+    return () => h(IonImageViewer, { ...props })
   },
-});
+})
 
 describe('IonImageViewer', () => {
   const ionImageData = {
@@ -57,30 +67,30 @@ describe('IonImageViewer', () => {
     showPixelIntensity: true,
   }
 
-  mockIonImageRendering.renderIonImages.mockImplementation(
-    (layers: any, canvas: any) => {
-      if (canvas) {
-        canvas.setAttribute('data-images', layers.map((_: any) => _.ionImage.png.url).join(', '))
-      }
-      return undefined
-    },
-  )
+  mockIonImageRendering.renderIonImages.mockImplementation((layers: any, canvas: any) => {
+    if (canvas) {
+      canvas.setAttribute('data-images', layers.map((_: any) => _.ionImage.png.url).join(', '))
+    }
+    return undefined
+  })
 
   beforeEach(() => {
     // Set HTMLElements to have non-zero dimensions
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => // @ts-ignore
-      ({ left: 200, right: 200 + W, top: 100, bottom: 100 + H, width: W, height: H }));
-    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => W);
-    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => H);
-  });
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() =>
+      // @ts-ignore
+      ({ left: 200, right: 200 + W, top: 100, bottom: 100 + H, width: W, height: H })
+    )
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => W)
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => H)
+  })
 
   it('should match snapshot', async () => {
-    const wrapper = mount(TestHarness, { props: propsData });
-    await nextTick();
-    expect(wrapper.element).toMatchSnapshot();
-  });
+    const wrapper = mount(TestHarness, { props: propsData })
+    await nextTick()
+    expect(wrapper.element).toMatchSnapshot()
+  })
 
-  it('should match snapshot (with channels tooltip)', async() => {
+  it('should match snapshot (with channels tooltip)', async () => {
     const wrapper = mount(TestHarness, { propsData })
     await nextTick()
 
@@ -94,8 +104,7 @@ describe('IonImageViewer', () => {
     expect(wrapper.element).toMatchSnapshot()
   })
 
-
-  it('should match snapshot (with normalization)', async() => {
+  it('should match snapshot (with normalization)', async () => {
     const wrapper = mount(TestHarness, {
       plugins: [store, router, ElementPlus],
       propsData: {
@@ -121,5 +130,4 @@ describe('IonImageViewer', () => {
 
     expect(wrapper.html()).toMatchSnapshot()
   })
-
-});
+})

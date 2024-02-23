@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/browser'
 import { every } from 'lodash-es'
 import { Primitive } from 'ts-essentials'
 import { ElNotification } from 'element-plus/lib/components/notification'
-import {getLocalStorage, setLocalStorage} from "../lib/localStorage";
+import { getLocalStorage, setLocalStorage } from '../lib/localStorage'
 
 let $notify: typeof ElNotification
 
@@ -12,7 +12,7 @@ export function setErrorNotifier(_$notify: typeof ElNotification) {
 
 function isHandled(err: Error | any) {
   try {
-    return !!((err?.graphQLErrors && every(err.graphQLErrors, e => e && e.isHandled)) || err?.isHandled)
+    return !!((err?.graphQLErrors && every(err.graphQLErrors, (e) => e && e.isHandled)) || err?.isHandled)
   } catch {
     return false
   }
@@ -23,7 +23,7 @@ const DEFAULT_MESSAGE = 'Oops! Something went wrong. Please refresh the page and
 export default function reportError(
   err: Error | any,
   message: string | null = DEFAULT_MESSAGE,
-  extraData?: Record<string, Primitive>,
+  extraData?: Record<string, Primitive>
 ) {
   try {
     if (!isHandled(err)) {

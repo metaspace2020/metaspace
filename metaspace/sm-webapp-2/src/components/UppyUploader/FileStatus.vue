@@ -33,7 +33,7 @@
       </fade-transition>
       <fade-transition class="absolute top-0 right-0 -mt-3 -mr-6">
         <button
-          v-if="!(['EMPTY', 'DISABLED'].includes(status))"
+          v-if="!['EMPTY', 'DISABLED'].includes(status)"
           key="remove"
           title="Remove file"
           class="button-reset text-gray-600 hover:text-primary focus:text-primary leading-none"
@@ -43,65 +43,35 @@
         </button>
       </fade-transition>
       <fade-transition class="absolute bottom-0 right-0 -mb-2 -mr-2">
-        <check-icon
-          v-if="status === 'COMPLETE'"
-          class="sm-status-icon w-6 h-6 fill-current text-success"
-        />
-        <close-circle-icon
-          v-if="status === 'ERROR'"
-          class="sm-status-icon w-6 h-6 fill-current text-danger"
-        />
+        <check-icon v-if="status === 'COMPLETE'" class="sm-status-icon w-6 h-6 fill-current text-success" />
+        <close-circle-icon v-if="status === 'ERROR'" class="sm-status-icon w-6 h-6 fill-current text-danger" />
       </fade-transition>
     </div>
     <p class="m-0 mt-2 font-medium w-full overflow-hidden flex justify-center">
-      <span
-        v-if="status !== 'EMPTY'"
-        class="flex-shrink truncate"
-      >
+      <span v-if="status !== 'EMPTY'" class="flex-shrink truncate">
         {{ trimmedName }}
       </span>
       .{{ extension }}
       <span v-if="status === 'EMPTY'">&nbsp;file</span>
     </p>
     <fade-transition class="m-0">
-      <p
-        v-if="status === 'ERROR'"
-        key="error"
-        class="font-medium text-danger"
-      >
-        upload failed
-      </p>
-      <p
-        v-else-if="status === 'COMPLETE'"
-        key="complete"
-        class="font-medium text-primary"
-      >
-        upload complete
-      </p>
-      <p
-        v-else
-        :key="status"
-      >
+      <p v-if="status === 'ERROR'" key="error" class="font-medium text-danger">upload failed</p>
+      <p v-else-if="status === 'COMPLETE'" key="complete" class="font-medium text-primary">upload complete</p>
+      <p v-else :key="status">
         {{ statusText }}
       </p>
     </fade-transition>
   </div>
 </template>
 <script lang="ts">
-import {defineComponent, computed, defineAsyncComponent} from 'vue'
+import { defineComponent, computed, defineAsyncComponent } from 'vue'
 import FadeTransition from '../../components/FadeTransition'
 import ProgressRing from '../../components/ProgressRing'
-import {ElIcon} from "element-plus";
-import {RefreshLeft, Remove} from "@element-plus/icons-vue";
-const FileIcon = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-document.svg')
-);
-const CheckIcon = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-check.svg')
-);
-const CloseCircleIcon = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-close-circle.svg')
-);
+import { ElIcon } from 'element-plus'
+import { RefreshLeft, Remove } from '@element-plus/icons-vue'
+const FileIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-document.svg'))
+const CheckIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-check.svg'))
+const CloseCircleIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-close-circle.svg'))
 
 export type FileStatusName = 'EMPTY' | 'PENDING' | 'UPLOADING' | 'COMPLETE' | 'ERROR' | 'DISABLED'
 
@@ -122,7 +92,7 @@ export default defineComponent({
     CloseCircleIcon,
     ElIcon,
     RefreshLeft,
-    Remove
+    Remove,
   },
   props: {
     name: String,
@@ -149,7 +119,7 @@ export default defineComponent({
 })
 </script>
 <style scoped>
-.sm-file-icon{
+.sm-file-icon {
   @apply fill-blue-500;
 }
 .sm-file-icon .primary {

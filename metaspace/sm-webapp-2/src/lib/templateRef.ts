@@ -1,4 +1,4 @@
-import { ref, onMounted, onUpdated } from 'vue';
+import { ref, onMounted, onUpdated } from 'vue'
 
 /**
  * Returns a ref() that is synchronized with Vue.$refs[name].
@@ -17,15 +17,15 @@ import { ref, onMounted, onUpdated } from 'vue';
  * }
  */
 export const templateRef = <T = Element>(name: string) => {
-  const r = ref<T | null>(null);
+  const r = ref<T | null>(null)
 
   onMounted(() => {
-    r.value = document.querySelector(`[ref="${name}"]`) as T | null;
-  });
+    r.value = document.querySelector(`[ref="${name}"]`) as T | null
+  })
 
   onUpdated(() => {
-    r.value = document.querySelector(`[ref="${name}"]`) as T | null;
-  });
+    r.value = document.querySelector(`[ref="${name}"]`) as T | null
+  })
 
-  return r;
-};
+  return r
+}

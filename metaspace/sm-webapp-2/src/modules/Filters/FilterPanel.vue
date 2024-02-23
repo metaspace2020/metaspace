@@ -8,12 +8,7 @@
       @change="addFilter"
       size="large"
     >
-      <el-option
-        v-for="f in availableFilters"
-        :key="f.key"
-        :value="f.key"
-        :label="f.description"
-      />
+      <el-option v-for="f in availableFilters" :key="f.key" :value="f.key" :label="f.description" />
     </el-select>
 
     <component
@@ -30,25 +25,46 @@
 </template>
 
 <script>
-import {defineComponent, computed, ref, watch, onMounted} from 'vue'
+import { defineComponent, computed, ref, watch, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS } from './filterSpecs'
 import { isFunction, pick, get, uniq } from 'lodash-es'
 import { setLocalStorage } from '../../lib/localStorage'
-import {ElSelect, ElOption} from "element-plus";
+import { ElSelect, ElOption } from 'element-plus'
 
-import { inject } from 'vue';
-import { DefaultApolloClient } from '@vue/apollo-composable';
+import { inject } from 'vue'
+import { DefaultApolloClient } from '@vue/apollo-composable'
 
 const orderedFilterKeys = [
-  'database', 'fdrLevel', 'group', 'project', 'submitter', 'datasetIds', 'compoundName', 'mz', 'offSample', 'polarity',
-  'adduct', 'organism', 'organismPart', 'condition', 'growthConditions', 'analyzerType', 'ionisationSource', 'maldiMatrix',
-  'minMSM', 'simpleQuery', 'simpleFilter', 'datasetOwner', 'metadataType', 'molClass', 'opticalImage', 'pValue',
+  'database',
+  'fdrLevel',
+  'group',
+  'project',
+  'submitter',
+  'datasetIds',
+  'compoundName',
+  'mz',
+  'offSample',
+  'polarity',
+  'adduct',
+  'organism',
+  'organismPart',
+  'condition',
+  'growthConditions',
+  'analyzerType',
+  'ionisationSource',
+  'maldiMatrix',
+  'minMSM',
+  'simpleQuery',
+  'simpleFilter',
+  'datasetOwner',
+  'metadataType',
+  'molClass',
+  'opticalImage',
+  'pValue',
 ]
 
-const dsAnnotationHiddenFilters = [
-  'datasetIds',
-]
+const dsAnnotationHiddenFilters = ['datasetIds']
 
 const filterComponents = {}
 Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
@@ -56,7 +72,7 @@ Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
   if (!componentType.name && !(componentType.options && componentType.options.name)) {
     throw new Error('Missing name in FILTER_SPECIFICATIONS component type')
   }
-  const typeName = ('options' in componentType) ? componentType.options.name : componentType.name
+  const typeName = 'options' in componentType ? componentType.options.name : componentType.name
   if (!(typeName in accum)) {
     accum[typeName] = componentType
   }
@@ -72,34 +88,38 @@ export default defineComponent({
   },
   props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters', 'fixedOptions'],
   setup(props) {
-    const apolloClient = inject(DefaultApolloClient);
+    const apolloClient = inject(DefaultApolloClient)
     const store = useStore()
     const selectedFilterToAdd = ref(null)
 
-    onMounted(async() => {
+    onMounted(async () => {
       await store.dispatch('initFilterLists', apolloClient)
     })
 
     const storeFilter = computed(() => store.getters.filter)
     const activeKeys = computed(() => {
-      return uniq(store.state.orderedActiveFilters.map(filterKey =>
-        get(FILTER_SPECIFICATIONS, [filterKey, 'multiFilterParent'], filterKey)))
+      return uniq(
+        store.state.orderedActiveFilters.map((filterKey) =>
+          get(FILTER_SPECIFICATIONS, [filterKey, 'multiFilterParent'], filterKey)
+        )
+      )
     })
 
     const visibleFilters = computed(() => {
-      return activeKeys.value
-        .filter(shouldShowFilter)
-        .map(makeFilter)
+      return activeKeys.value.filter(shouldShowFilter).map(makeFilter)
     })
 
     const availableFilters = computed(() => {
       const available = []
       for (const key of orderedFilterKeys) {
         const filterSpec = FILTER_SPECIFICATIONS[key]
-        if (filterSpec.levels.includes(props.level)
-          && !activeKeys.value.includes(key)
-          && (filterSpec.hidden == null || filterSpec.hidden === false
-            || (isFunction(filterSpec.hidden) && !filterSpec.hidden()))) {
+        if (
+          filterSpec.levels.includes(props.level) &&
+          !activeKeys.value.includes(key) &&
+          (filterSpec.hidden == null ||
+            filterSpec.hidden === false ||
+            (isFunction(filterSpec.hidden) && !filterSpec.hidden()))
+        ) {
           available.push({ key, description: filterSpec.description })
         }
       }
@@ -115,24 +135,34 @@ export default defineComponent({
       return false
     })
 
-    watch(() => props.simpleFilterOptions, (newVal) => {
-      // Remove simpleFilter if it has a value that's no longer selectable
-      if (storeFilter.value.simpleFilter != null
-        && (newVal == null || !newVal.some(opt => opt.value === storeFilter.value.simpleFilter))) {
-        store.commit('updateFilter', { ...storeFilter.value, simpleFilter: null })
+    watch(
+      () => props.simpleFilterOptions,
+      (newVal) => {
+        // Remove simpleFilter if it has a value that's no longer selectable
+        if (
+          storeFilter.value.simpleFilter != null &&
+          (newVal == null || !newVal.some((opt) => opt.value === storeFilter.value.simpleFilter))
+        ) {
+          store.commit('updateFilter', { ...storeFilter.value, simpleFilter: null })
+        }
       }
-    })
+    )
 
-    watch(() => props.setDatasetOwnerOptions, (newVal) => {
-      if (storeFilter.value.datasetOwner != null
-        && (newVal == null || !newVal.some(opt => opt.value === storeFilter.value.datasetOwner))) {
-        store.commit('updateFilter', { ...storeFilter.value, datasetOwner: null })
+    watch(
+      () => props.setDatasetOwnerOptions,
+      (newVal) => {
+        if (
+          storeFilter.value.datasetOwner != null &&
+          (newVal == null || !newVal.some((opt) => opt.value === storeFilter.value.datasetOwner))
+        ) {
+          store.commit('updateFilter', { ...storeFilter.value, datasetOwner: null })
+        }
       }
-    })
+    )
 
     function shouldShowFilter(filterKey) {
       const { hidden } = FILTER_SPECIFICATIONS[filterKey]
-      if (typeof hidden === 'function' ? hidden() : (hidden != null && hidden)) {
+      if (typeof hidden === 'function' ? hidden() : hidden != null && hidden) {
         return false
       }
       if (filterKey === 'simpleFilter') {
@@ -150,7 +180,7 @@ export default defineComponent({
       return true
     }
 
-    function makeFilter(filterKey)  {
+    function makeFilter(filterKey) {
       const filterSpec = FILTER_SPECIFICATIONS[filterKey]
       const { type, isMultiFilter, ...attrs } = filterSpec
 
@@ -159,8 +189,7 @@ export default defineComponent({
           filterKey,
           type,
           onChange: (val, _filterKey) => {
-            store.commit('updateFilter',
-              Object.assign(storeFilter.value, { [_filterKey]: val }))
+            store.commit('updateFilter', Object.assign(storeFilter.value, { [_filterKey]: val }))
           },
           onDestroy: (_filterKey) => {
             store.commit('removeFilter', _filterKey)
@@ -194,9 +223,8 @@ export default defineComponent({
             }
 
             // update datasetOwner settings
-            if (filterKey === 'datasetOwner' || ('datasetOwner' in extraUpdatesAux)) {
-              const dsValue = ('datasetOwner' in extraUpdatesAux)
-                ? extraUpdatesAux.datasetOwner : val
+            if (filterKey === 'datasetOwner' || 'datasetOwner' in extraUpdatesAux) {
+              const dsValue = 'datasetOwner' in extraUpdatesAux ? extraUpdatesAux.datasetOwner : val
               setLocalStorage(filterKey, dsValue)
             }
 
@@ -205,8 +233,7 @@ export default defineComponent({
               setLocalStorage(filterKey, val)
             }
 
-           store.commit('updateFilter',
-              Object.assign(storeFilter.value, { [filterKey]: val, ...extraUpdatesAux }))
+            store.commit('updateFilter', Object.assign(storeFilter.value, { [filterKey]: val, ...extraUpdatesAux }))
           },
           onDestroy: () => {
             if (filterKey === 'annotationIds') {
@@ -265,7 +292,7 @@ export default defineComponent({
       return []
     }
 
-    function getFilterValue(filter, filterKey){
+    function getFilterValue(filter, filterKey) {
       const value = storeFilter.value[filterKey]
       if (filter.convertValueForComponent) {
         return filter.convertValueForComponent(value)
@@ -274,14 +301,22 @@ export default defineComponent({
     }
 
     return {
-      filter: storeFilter, activeKeys, selectedFilterToAdd, visibleFilters, availableFilters, anyOptionalFilterPresent,
-      addFilter, getFixedOptions, getFilterOptions, getFilterValue, makeFilter, shouldShowFilter,
+      filter: storeFilter,
+      activeKeys,
+      selectedFilterToAdd,
+      visibleFilters,
+      availableFilters,
+      anyOptionalFilterPresent,
+      addFilter,
+      getFixedOptions,
+      getFilterOptions,
+      getFilterValue,
+      makeFilter,
+      shouldShowFilter,
     }
-  }
+  },
 })
 </script>
-
-
 
 <style>
 .filter-panel {

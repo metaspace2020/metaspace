@@ -1,4 +1,4 @@
-import {defineComponent, reactive, onBeforeMount, defineAsyncComponent} from 'vue'
+import { defineComponent, reactive, onBeforeMount, defineAsyncComponent } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 
 import UploadDialog from './UploadDialog'
@@ -6,15 +6,10 @@ import ElapsedTime from '../../components/ElapsedTime'
 import PrimaryIcon from '../../components/PrimaryIcon.vue'
 import SecondaryIcon from '../../components/SecondaryIcon.vue'
 
+const CheckSvg = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-check.svg'))
+const GroupSvg = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-user-group.svg'))
 
-const CheckSvg = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-check.svg')
-);
-const GroupSvg = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-user-group.svg')
-);
-
-import {ElButton, ElLoading, ElTable, ElTableColumn} from "element-plus";
+import { ElButton, ElLoading, ElTable, ElTableColumn } from 'element-plus'
 
 import { getGroupDatabasesQuery } from '../../api/group'
 
@@ -34,11 +29,13 @@ const CheckColumn = defineComponent({
         v-slots={{
           default: (scope: { row: any }) => (
             <span class="flex justify-center items-center h-5">
-                { scope.row[props.prop]
-                  ? <SecondaryIcon><CheckSvg /></SecondaryIcon>
-                  : null }
-              </span>
-          )
+              {scope.row[props.prop] ? (
+                <SecondaryIcon>
+                  <CheckSvg />
+                </SecondaryIcon>
+              ) : null}
+            </span>
+          ),
         }}
       />
     )
@@ -57,7 +54,7 @@ const DatabasesTable = defineComponent<Props>({
     groupId: { type: String, required: true },
   },
   directives: {
-    'loading': ElLoading.directive,
+    loading: ElLoading.directive,
   },
   setup(props) {
     const state = reactive({
@@ -67,7 +64,7 @@ const DatabasesTable = defineComponent<Props>({
     const { result, loading, refetch } = useQuery(
       getGroupDatabasesQuery,
       { groupId: props.groupId },
-      { fetchPolicy: 'network-only' },
+      { fetchPolicy: 'network-only' }
     )
 
     onBeforeMount(refetch)
@@ -94,7 +91,12 @@ const DatabasesTable = defineComponent<Props>({
               You can choose to make derived annotations visible to others.
             </p>
           </div>
-          <ElButton type="primary" onClick={() => { state.showUploadDialog = true }}>
+          <ElButton
+            type="primary"
+            onClick={() => {
+              state.showUploadDialog = true
+            }}
+          >
             Upload Database
           </ElButton>
         </header>
@@ -102,7 +104,7 @@ const DatabasesTable = defineComponent<Props>({
           v-loading={loading.value}
           data={result.value?.group?.molecularDatabases}
           default-sort={{ prop: 'createdDT', order: 'descending' }}
-          style={{width: '100%'}}
+          style={{ width: '100%' }}
           onRowClick={props.handleRowClick}
           class="cursor-pointer"
         >
@@ -115,11 +117,9 @@ const DatabasesTable = defineComponent<Props>({
             v-slots={{
               default: ({ row }: { row: any }) => (
                 <span>
-                    <span class="text-body font-medium">{row.name}</span>
-                  {' '}
-                  <span class="text-gray-700">{row.version}</span>
-                  </span>
-              )
+                  <span class="text-body font-medium">{row.name}</span> <span class="text-gray-700">{row.version}</span>
+                </span>
+              ),
             }}
           />
           <ElTableColumn
@@ -128,32 +128,16 @@ const DatabasesTable = defineComponent<Props>({
             minWidth={144}
             sortable
             v-slots={{
-              default: ({ row }: { row: any }) => (
-                <ElapsedTime key={row.id} date={row.createdDT} />
-              )
+              default: ({ row }: { row: any }) => <ElapsedTime key={row.id} date={row.createdDT} />,
             }}
           />
-          <ElTableColumn
-            prop="user.name"
-            label="Uploaded by"
-            minWidth={144}
-            sortable
-          />
-          <CheckColumn
-            prop="isPublic"
-            label="Public annotations"
-          />
-          <CheckColumn
-            prop="archived"
-            label="Archived"
-          />
+          <ElTableColumn prop="user.name" label="Uploaded by" minWidth={144} sortable />
+          <CheckColumn prop="isPublic" label="Public annotations" />
+          <CheckColumn prop="archived" label="Archived" />
         </ElTable>
-        { state.showUploadDialog
-          && <UploadDialog
-            groupId={props.groupId}
-            onClose={onDialogClose}
-            onDone={onUploadComplete}
-          /> }
+        {state.showUploadDialog && (
+          <UploadDialog groupId={props.groupId} onClose={onDialogClose} onDone={onUploadComplete} />
+        )}
       </div>
     )
   },

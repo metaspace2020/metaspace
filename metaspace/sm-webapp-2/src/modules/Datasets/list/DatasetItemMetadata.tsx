@@ -7,12 +7,11 @@ import { capitalize, get } from 'lodash-es'
 import FilterLink from './FilterLink'
 import { formatDatabaseLabel } from '../../MolecularDatabases/formatting'
 import CopyButton from '../../../components/CopyButton.vue'
-import {useStore} from "vuex";
-import {useRouter} from "vue-router";
-import { ElDropdown, ElDropdownMenu, ElDropdownItem} from "element-plus";
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
+import { ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus'
 
-
-type FilterField = keyof DatasetDetailItem | 'analyzerType';
+type FilterField = keyof DatasetDetailItem | 'analyzerType'
 
 const DatasetItemMetadata = defineComponent({
   name: 'DatasetItemMetadata',
@@ -30,10 +29,12 @@ const DatasetItemMetadata = defineComponent({
     const store = useStore()
     const router = useRouter()
 
-    const databaseLabel = computed(() => formatDatabaseLabel({
-      name: props.dataset.fdrCounts.dbName,
-      version: props.dataset.fdrCounts.dbVersion,
-    }))
+    const databaseLabel = computed(() =>
+      formatDatabaseLabel({
+        name: props.dataset.fdrCounts.dbName,
+        version: props.dataset.fdrCounts.dbVersion,
+      })
+    )
 
     const addFilter = (field: FilterField) => {
       const filter = Object.assign({}, store.getters.filter)
@@ -71,36 +72,26 @@ const DatasetItemMetadata = defineComponent({
         get(metadata, ['MS_Analysis', 'Detector_Resolving_Power']) || {}
 
       const filterableItem = (field: FilterField, name: string, text: string) => (
-        <span
-          class="ds-add-filter"
-          title={`Filter by ${name}`}
-          onClick={() => addFilter(field)}
-        >
+        <span class="ds-add-filter" title={`Filter by ${name}`} onClick={() => addFilter(field)}>
           {text}
         </span>
       )
 
-
       return (
         <div class="ds-info">
           <div class="ds-item-line flex">
-            <span
-              title={dataset.name}
-              class="font-bold truncate"
-            >{dataset.name}</span>
+            <span title={dataset.name} class="font-bold truncate">
+              {dataset.name}
+            </span>
             {!dataset.isPublic && <VisibilityBadge datasetId={dataset.id} />}
-            <CopyButton
-              class="ml-1"
-              isId
-              text={dataset.id}>
+            <CopyButton class="ml-1" isId text={dataset.id}>
               Copy dataset id to clipboard
             </CopyButton>
           </div>
           <div class="ds-item-line text-gray-700">
             {filterableItem('organism', 'species', dataset.organism || '')}
             {', '}
-            {filterableItem('organismPart', 'organism part', (dataset.organismPart || '').toLowerCase())}
-            {' '}
+            {filterableItem('organismPart', 'organism part', (dataset.organismPart || '').toLowerCase())}{' '}
             {filterableItem('condition', 'condition', `(${(dataset.condition || '').toLowerCase()})`)}
           </div>
           <div class="ds-item-line">
@@ -119,41 +110,43 @@ const DatasetItemMetadata = defineComponent({
             Submitted <ElapsedTime date={dataset.uploadDT} />
             {' by '}
             {filterableItem('submitter', 'submitter', dataset.submitter?.name)}
-            {dataset.group && <span>
-              {', '}
-              <ElDropdown
-                showTimeout={50}
-                placement="bottom"
-                disabled={hideGroupMenu}
-                trigger={'hover'}
-                onCommand={handleDropdownCommand}
-                v-slots={{
-                  dropdown: () => (
-                    <ElDropdownMenu>
-                      <ElDropdownItem command="filter_group">Filter by this group</ElDropdownItem>
-                      <ElDropdownItem command="view_group">View group</ElDropdownItem>
-                    </ElDropdownMenu>),
-                  default: () => (
-                    <span
-                      class="text-base text-primary cursor-pointer"
-                      onClick={() => addFilter('group')}
-                    >
-                  {dataset.group?.shortName}
-                </span>)
-                }}
-              />
-            </span>}
+            {dataset.group && (
+              <span>
+                {', '}
+                <ElDropdown
+                  showTimeout={50}
+                  placement="bottom"
+                  disabled={hideGroupMenu}
+                  trigger={'hover'}
+                  onCommand={handleDropdownCommand}
+                  v-slots={{
+                    dropdown: () => (
+                      <ElDropdownMenu>
+                        <ElDropdownItem command="filter_group">Filter by this group</ElDropdownItem>
+                        <ElDropdownItem command="view_group">View group</ElDropdownItem>
+                      </ElDropdownMenu>
+                    ),
+                    default: () => (
+                      <span class="text-base text-primary cursor-pointer" onClick={() => addFilter('group')}>
+                        {dataset.group?.shortName}
+                      </span>
+                    ),
+                  }}
+                />
+              </span>
+            )}
           </div>
-          {dataset.status === 'FINISHED' && dataset.fdrCounts && <div class="ds-item-line">
-            <span>
-              <FilterLink filter={{database: dataset.fdrCounts.databaseId, datasetIds: [dataset.id]}}>
-                {plural(dataset.fdrCounts.counts.join(', '), 'annotation', 'annotations')}
-              </FilterLink>
-              {' @ FDR '}
-              {dataset.fdrCounts.levels.join(', ')}
-              % ({databaseLabel.value})
-            </span>
-          </div>}
+          {dataset.status === 'FINISHED' && dataset.fdrCounts && (
+            <div class="ds-item-line">
+              <span>
+                <FilterLink filter={{ database: dataset.fdrCounts.databaseId, datasetIds: [dataset.id] }}>
+                  {plural(dataset.fdrCounts.counts.join(', '), 'annotation', 'annotations')}
+                </FilterLink>
+                {' @ FDR '}
+                {dataset.fdrCounts.levels.join(', ')}% ({databaseLabel.value})
+              </span>
+            </div>
+          )}
         </div>
       )
     }

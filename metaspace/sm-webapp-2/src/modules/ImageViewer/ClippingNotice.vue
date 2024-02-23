@@ -2,21 +2,19 @@
   <p class="m-0">
     <span v-if="type === 'hotspot-removal'">
       <b>Hot-spot removal has been applied to this image</b>.
-      {{ isNormalized ? 'Relative intensities': 'Intensities' }} above the 99ᵗʰ percentile, {{ maxIntensities.clipped }},
-      have been reduced to {{ maxIntensities.clipped }}.
-      The highest intensity before hot-spot removal was {{ maxIntensities.original }}.
+      {{ isNormalized ? 'Relative intensities' : 'Intensities' }} above the 99ᵗʰ percentile,
+      {{ maxIntensities.clipped }}, have been reduced to {{ maxIntensities.clipped }}. The highest intensity before
+      hot-spot removal was {{ maxIntensities.original }}.
     </span>
     <span v-if="type === 'outlier-max'">
-      <b>Outlier clipping has been applied to this image</b>.
-      Intensities above the 99ᵗʰ percentile, {{ maxIntensities.clipped }},
-      have been reduced to {{ maxIntensities.clipped }}.
-      The highest intensity before outlier clipping was {{ maxIntensities.original }}.
+      <b>Outlier clipping has been applied to this image</b>. Intensities above the 99ᵗʰ percentile,
+      {{ maxIntensities.clipped }}, have been reduced to {{ maxIntensities.clipped }}. The highest intensity before
+      outlier clipping was {{ maxIntensities.original }}.
     </span>
     <span v-if="type === 'outlier-min'">
-      <b>Outlier clipping has been applied to this image</b>.
-      Intensities below the 1ˢᵗ percentile, {{ minIntensities.clipped }},
-      have been reduced to {{ minIntensities.clipped }}.
-      The lowest intensity before outlier clipping was {{ minIntensities.original }}.
+      <b>Outlier clipping has been applied to this image</b>. Intensities below the 1ˢᵗ percentile,
+      {{ minIntensities.clipped }}, have been reduced to {{ minIntensities.clipped }}. The lowest intensity before
+      outlier clipping was {{ minIntensities.original }}.
     </span>
   </p>
 </template>

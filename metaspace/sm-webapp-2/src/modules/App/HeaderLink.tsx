@@ -38,7 +38,6 @@ export const HeaderButton = defineComponent({
     onClick: Function,
   },
   setup(props, { slots }) {
-
     return () => (
       <button
         class={`button-reset ${classes}`} // @ts-ignore

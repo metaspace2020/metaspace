@@ -1,22 +1,22 @@
-import { reactive, ref } from 'vue';
-import { ElBadge } from 'element-plus';
-import {defineComponent} from "vue";
+import { reactive, ref } from 'vue'
+import { ElBadge } from 'element-plus'
+import { defineComponent } from 'vue'
 // Import the CSS as needed
-import './NewFeatureBadge.css';
+import './NewFeatureBadge.css'
 
 // Assuming getLocalStorage and setLocalStorage are compatible with Vue 3
-import { getLocalStorage, setLocalStorage } from '../../lib/localStorage';
+import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
-const storageKey = 'new_feature_badges';
+const storageKey = 'new_feature_badges'
 
-const store = reactive<any>(getLocalStorage(storageKey) || {});
+const store = reactive<any>(getLocalStorage(storageKey) || {})
 
 export function hideFeatureBadge(featureKey) {
   if (store[featureKey]) {
-    return;
+    return
   }
-  store[featureKey] = true;
-  setLocalStorage(storageKey, store);
+  store[featureKey] = true
+  setLocalStorage(storageKey, store)
 }
 
 export default defineComponent({
@@ -25,20 +25,20 @@ export default defineComponent({
     ElBadge,
   },
   props: {
-    customClass: { type: String, default: ''},
+    customClass: { type: String, default: '' },
     featureKey: { type: String, required: true },
     showUntil: { type: Date, required: false },
   },
   setup(props, { slots }) {
-    const isStale = ref(props.showUntil && props.showUntil.valueOf() < Date.now());
+    const isStale = ref(props.showUntil && props.showUntil.valueOf() < Date.now())
 
     if (!(props.featureKey in store)) {
-      store[props.featureKey] = false;
+      store[props.featureKey] = false
     }
 
     return () => {
       if (store[props.featureKey] || isStale.value) {
-        return slots.default ? slots.default() : null;
+        return slots.default ? slots.default() : null
       }
       return (
         <ElBadge
@@ -48,7 +48,7 @@ export default defineComponent({
         >
           {slots.default ? slots.default() : null}
         </ElBadge>
-      );
-    };
+      )
+    }
   },
-});
+})

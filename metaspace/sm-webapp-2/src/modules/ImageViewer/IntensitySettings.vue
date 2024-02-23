@@ -1,9 +1,7 @@
 <template>
   <overlay class="text-xs tracking-wider">
     <p class="leading-6 m-0 flex justify-between items-center">
-      <span class="text-gray-700 font-medium">
-        Lock intensity
-      </span>
+      <span class="text-gray-700 font-medium"> Lock intensity </span>
       <!-- z-index added for focus outline below -->
       <mini-switch
         class="relative z-10"
@@ -13,16 +11,8 @@
       />
     </p>
     <div class="flex justify-between">
-      <locked-intensity-field
-        v-model="settings.lockMin"
-        label="Minimum intensity"
-        placeholder="min."
-      />
-      <locked-intensity-field
-        v-model="settings.lockMax"
-        label="Maximum intensity"
-        placeholder="max."
-      />
+      <locked-intensity-field v-model="settings.lockMin" label="Minimum intensity" placeholder="min." />
+      <locked-intensity-field v-model="settings.lockMax" label="Maximum intensity" placeholder="max." />
     </div>
   </overlay>
 </template>

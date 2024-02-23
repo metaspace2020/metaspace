@@ -13,13 +13,13 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted } from 'vue';
-import { useStore } from 'vuex';
-import { ElTree, ElRow } from 'element-plus';
-import {defaultMetadataType, metadataSchemas} from '../lib/metadataRegistry';
-import { get, flatMap } from 'lodash-es';
-import { optionalSuffixInParens } from '../lib/vueFilters';
-import { getLocalStorage, setLocalStorage } from '../lib/localStorage';
+import { defineComponent, ref, computed, onMounted } from 'vue'
+import { useStore } from 'vuex'
+import { ElTree, ElRow } from 'element-plus'
+import { defaultMetadataType, metadataSchemas } from '../lib/metadataRegistry'
+import { get, flatMap } from 'lodash-es'
+import { optionalSuffixInParens } from '../lib/vueFilters'
+import { getLocalStorage, setLocalStorage } from '../lib/localStorage'
 
 export default defineComponent({
   name: 'DatasetInfo',
@@ -29,9 +29,8 @@ export default defineComponent({
   },
   props: ['metadata', 'expandedKeys', 'currentUser', 'additionalSettings'],
   setup(props) {
-    const store = useStore();
-    const expandedTreeNodes = ref(getLocalStorage('expandedTreeNodes') || []);
-
+    const store = useStore()
+    const expandedTreeNodes = ref(getLocalStorage('expandedTreeNodes') || [])
 
     const handleNodeCollapse = (node) => {
       const childs = getNonLeafNodeIds(node)
@@ -50,7 +49,8 @@ export default defineComponent({
     }
 
     const prettify = (str) => {
-      return str.toString()
+      return str
+        .toString()
         .replace(/_/g, ' ')
         .replace(/ [A-Z][a-z]/g, (x) => ' ' + x.slice(1).toLowerCase())
         .replace(/ freetext$/, '')
@@ -96,25 +96,21 @@ export default defineComponent({
       }
     }
 
-    const dsGroup = computed(() => props.metadata.Group);
-    const dsSubmitter = computed(() => props.metadata.Submitter);
-    const dsProjects = computed(() => props.metadata.Projects);
-    const dsPI = computed(() => props.metadata.PI);
+    const dsGroup = computed(() => props.metadata.Group)
+    const dsSubmitter = computed(() => props.metadata.Submitter)
+    const dsProjects = computed(() => props.metadata.Projects)
+    const dsPI = computed(() => props.metadata.PI)
 
-    const schema = computed( () => {
-      const metadataType = get(props.metadata, 'Metadata_Type')
-        || store.getters.filter.metadataType
-        || defaultMetadataType;
+    const schema = computed(() => {
+      const metadataType =
+        get(props.metadata, 'Metadata_Type') || store.getters.filter.metadataType || defaultMetadataType
 
-      return metadataSchemas[metadataType];
-    });
+      return metadataSchemas[metadataType]
+    })
 
     const treeData = computed(() => {
       const metadata = props.metadata
-      const {
-        image_generation: imageGeneration,
-        fdr: fdrSettings,
-      } = (props.additionalSettings || {})
+      const { image_generation: imageGeneration, fdr: fdrSettings } = props.additionalSettings || {}
       // eslint-disable-next-line camelcase
       const scoringModel = fdrSettings?.scoring_model ? 'METASPACE-ML' : 'Original MSM'
 
@@ -125,11 +121,11 @@ export default defineComponent({
       // and not others. This could creep users out and make them wonder if we're sharing their email address to
       // the public internet. Because of this, only show email addresses to admins here.
       const canSeeEmailAddresses = props.currentUser && props.currentUser.role === 'admin'
-      const submitter = optionalSuffixInParens(dsSubmitter.value.name,
-        canSeeEmailAddresses ? dsSubmitter.value.email : null)
-      const dataManagementChilds = [
-        { id: 'Submitter', label: `Submitter: ${submitter}` },
-      ]
+      const submitter = optionalSuffixInParens(
+        dsSubmitter.value.name,
+        canSeeEmailAddresses ? dsSubmitter.value.email : null
+      )
+      const dataManagementChilds = [{ id: 'Submitter', label: `Submitter: ${submitter}` }]
       const annotationSettingsChildren = [
         { id: 'PPM', label: `m/z tolerance (ppm): ${imageGeneration?.ppm}` },
         { id: 'engineV', label: `Analysis version: ${scoringModel}` },
@@ -143,7 +139,7 @@ export default defineComponent({
         dataManagementChilds.push({ id: 'Group', label: `Group: ${dsGroup.value.name}` })
       }
       if (dsProjects.value != null && dsProjects.value.length > 0) {
-        const allProjects = dsProjects.value.map(e => e.name).join(', ')
+        const allProjects = dsProjects.value.map((e) => e.name).join(', ')
         dataManagementChilds.push({ id: 'Projects', label: `Projects: ${allProjects}` })
       }
       schemaBasedVals.push({ id: 'Data Management', label: 'Data Management', children: dataManagementChilds })
@@ -153,15 +149,13 @@ export default defineComponent({
         children: annotationSettingsChildren,
       })
       return schemaBasedVals
-    });
+    })
 
-
-    onMounted( () => {
-
+    onMounted(() => {
       if (!expandedTreeNodes.value.length) {
-        expandedTreeNodes.value = flatMap(treeData.value, getNonLeafNodeIds);
+        expandedTreeNodes.value = flatMap(treeData.value, getNonLeafNodeIds)
       }
-    });
+    })
 
     return {
       expandedTreeNodes,
@@ -173,9 +167,9 @@ export default defineComponent({
       treeData,
       handleNodeCollapse,
       handleNodeExpand,
-    };
+    }
   },
-});
+})
 </script>
 
 <style lang="scss" scoped>

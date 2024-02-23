@@ -1,23 +1,11 @@
 <template>
   <div id="md-editor-container w-full">
-    <div
-      v-if="state.value != null"
-      style="position: relative;"
-    >
+    <div v-if="state.value != null" style="position: relative">
       <div id="md-section-list">
-        <div
-          v-if="isNew"
-          class="flex flex-row w-full flex-wrap mt-6 justify-end"
-        >
-          <el-popover
-            trigger="click"
-            placement="left"
-          >
+        <div v-if="isNew" class="flex flex-row w-full flex-wrap mt-6 justify-end">
+          <el-popover trigger="click" placement="left">
             <template #reference>
-              <el-button
-                type="primary"
-                class="mr-1"
-              >
+              <el-button type="primary" class="mr-1">
                 Copy metadata from another dataset...<i class="el-icon-document-copy ml-1"></i>
               </el-button>
             </template>
@@ -45,9 +33,7 @@
           </el-popover>
         </div>
         <div class="flex flex-row w-full flex-wrap mt-6">
-          <div class="metadata-section__title w-3/12">
-            Dataset description
-          </div>
+          <div class="metadata-section__title w-3/12">Dataset description</div>
           <rich-text
             id="description-container"
             :content="state.metaspaceOptions.description"
@@ -58,25 +44,16 @@
             content-class-name="customEditor"
           />
         </div>
-        <form-section
-          v-bind="sectionBinds('Sample_Information')"
-          v-on="sectionEvents('Sample_Information')"
-        />
-        <form-section
-          v-bind="sectionBinds('Sample_Preparation')"
-          v-on="sectionEvents('Sample_Preparation')"
-        />
-        <form-section
-          v-bind="sectionBinds('MS_Analysis')"
-          v-on="sectionEvents('MS_Analysis')"
-        />
+        <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')" />
+        <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')" />
+        <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')" />
         <data-management-section
           :value="state.metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :submitter="state.submitter"
           @change="onOptionChange"
         />
-        <visibility-option-section :is-public="state.metaspaceOptions.isPublic" @change="handleVisibilityChange"/>
+        <visibility-option-section :is-public="state.metaspaceOptions.isPublic" @change="handleVisibilityChange" />
         <metaspace-options-section
           :value="state.metaspaceOptions"
           :error="errors['metaspaceOptions']"
@@ -95,11 +72,7 @@
         />
       </div>
     </div>
-    <div
-      v-else
-      id="load-indicator"
-      v-loading="true"
-    />
+    <div v-else id="load-indicator" v-loading="true" />
   </div>
 </template>
 
@@ -122,21 +95,31 @@
     On submit button click, the form is checked for validity; if valid,
     a submit event is emitted with dataset ID and stringified form value.
   */
-import {defineComponent, reactive, computed, watch, inject, onBeforeMount} from 'vue'
+import { defineComponent, reactive, computed, watch, inject, onBeforeMount } from 'vue'
 import { useStore } from 'vuex'
-import {ElPopover, ElButton, ElSelect, ElOption, ElMessage, ElLoading} from 'element-plus'
+import { ElPopover, ElButton, ElSelect, ElOption, ElMessage, ElLoading } from 'element-plus'
 import RichText from '../../components/RichText/RichText'
 import FormSection from './sections/FormSection.vue'
 import MetaspaceOptionsSection from './sections/MetaspaceOptionsSection.vue'
 import VisibilityOptionSection from './sections/VisibilityOptionSection.vue'
 import DataManagementSection from './sections/DataManagementSection.vue'
 import {
-  get, set, cloneDeep, defaults,
-  isEmpty, isEqual, isPlainObject,
-  mapValues, forEach, without, omit,
-  uniq, omitBy, isNil,
+  get,
+  set,
+  cloneDeep,
+  defaults,
+  isEmpty,
+  isEqual,
+  isPlainObject,
+  mapValues,
+  forEach,
+  without,
+  omit,
+  uniq,
+  omitBy,
+  isNil,
 } from 'lodash-es'
-import {DefaultApolloClient} from "@vue/apollo-composable";
+import { DefaultApolloClient } from '@vue/apollo-composable'
 import { defaultMetadataType, metadataSchemas } from '../../lib/metadataRegistry'
 import { getDatabasesByGroup } from '../MolecularDatabases/formatting'
 import { deriveFullSchema } from './formStructure'
@@ -152,14 +135,14 @@ import safeJsonParse from '../../lib/safeJsonParse'
 import isValidTiptapJson from '../../lib/isValidTiptapJson'
 import { datasetListItemsQuery } from '../../api/dataset'
 import emailRegex from '../../lib/emailRegex'
-import config from '../../lib/config';
+import config from '../../lib/config'
 
 const factories = {
-  string: schema => schema.default || '',
-  number: schema => schema.default || 0,
-  object: schema => mapValues(schema.properties, prop => factories[prop.type](prop)),
-  array: schema => schema.default || [],
-  boolean: schema => schema.default || false,
+  string: (schema) => schema.default || '',
+  number: (schema) => schema.default || 0,
+  object: (schema) => mapValues(schema.properties, (prop) => factories[prop.type](prop)),
+  array: (schema) => schema.default || [],
+  boolean: (schema) => schema.default || false,
 }
 
 const defaultMetaspaceOptions = {
@@ -175,20 +158,26 @@ const defaultMetaspaceOptions = {
 export default defineComponent({
   name: 'MetadataEditor',
   components: {
-    ElPopover, ElButton, ElSelect, ElOption,
-    RichText, FormSection, MetaspaceOptionsSection,
-    VisibilityOptionSection, DataManagementSection,
+    ElPopover,
+    ElButton,
+    ElSelect,
+    ElOption,
+    RichText,
+    FormSection,
+    MetaspaceOptionsSection,
+    VisibilityOptionSection,
+    DataManagementSection,
   },
   directives: {
     loading: ElLoading.directive,
   },
   props: {
     datasetId: String,
-    validationErrors:  { type: Array, default: () => [] },
+    validationErrors: { type: Array, default: () => [] },
   },
   setup(props) {
     const store = useStore()
-    const apolloClient = inject(DefaultApolloClient);
+    const apolloClient = inject(DefaultApolloClient)
 
     const state = reactive({
       value: null,
@@ -209,24 +198,17 @@ export default defineComponent({
       templateOptions: [],
     })
 
-
-    const errors  = computed(() => {
+    const errors = computed(() => {
       const errors = cloneDeep(state.localErrors)
-      props.validationErrors.forEach(err => set(errors, err.dataPath.split('.').slice(1), err.message))
+      props.validationErrors.forEach((err) => set(errors, err.dataPath.split('.').slice(1), err.message))
       return errors
     })
-
 
     const isNew = computed(() => props.datasetId == null)
     const otherSections = computed(() => {
       const allSections = Object.keys(state.schema?.properties)
-      const specialSections = [
-        'Data_Type',
-        'Sample_Information',
-        'Sample_Preparation',
-        'MS_Analysis',
-      ]
-      return  without(allSections, ...specialSections)
+      const specialSections = ['Data_Type', 'Sample_Information', 'Sample_Preparation', 'MS_Analysis']
+      return without(allSections, ...specialSections)
     })
     const adductOptions = computed(() => {
       const polarity = get(state.value, ['MS_Analysis', 'Polarity']) || 'Positive'
@@ -238,12 +220,11 @@ export default defineComponent({
     })
 
     const metadataType = computed(() => store.getters.filter.metadataType)
-    const dataType = computed(() => state.value.Data_Type);
-
+    const dataType = computed(() => state.value.Data_Type)
 
     const getDefaultMetadataValue = (metadataType) => {
       if (!metadataSchemas || !metadataSchemas[metadataType]) {
-        return {};
+        return {}
       }
       return factories.object(metadataSchemas[metadataType])
     }
@@ -273,12 +254,10 @@ export default defineComponent({
 
     const updateCurrentAdductOptions = () => {
       const selectedAdducts = state.metaspaceOptions.adducts || []
-      let newAdducts = selectedAdducts.filter(adduct => adductOptions.value.some(option => option.value === adduct))
+      let newAdducts = selectedAdducts.filter((adduct) => adductOptions.value.some((option) => option.value === adduct))
       // If no selected adducts are still valid, reset to the default adducts
       if (newAdducts.length === 0) {
-        newAdducts = adductOptions.value
-          .filter(option => option.default)
-          .map(option => option.value)
+        newAdducts = adductOptions.value.filter((option) => option.default).map((option) => option.value)
       }
       state.metaspaceOptions.adducts = newAdducts
     }
@@ -294,8 +273,8 @@ export default defineComponent({
       // Load options
       const { adducts, molecularDatabases, scoringModels } = options
       state.possibleAdducts = {
-        Positive: adducts.filter(a => a.charge > 0),
-        Negative: adducts.filter(a => a.charge < 0),
+        Positive: adducts.filter((a) => a.charge > 0),
+        Negative: adducts.filter((a) => a.charge < 0),
       }
       state.scoringModels = scoringModels
       state.defaultDb = molecularDatabases.find((db) => db.default) || {}
@@ -311,8 +290,8 @@ export default defineComponent({
       const selectedDbs = dataset.databases || []
 
       // enable default db normal edit if dataset already registered and does not have it
-      state.defaultDb = !isNew.value && !selectedDbs.map((db) => db.id).includes(state.defaultDb.id) ? {}
-        : state.defaultDb
+      state.defaultDb =
+        !isNew.value && !selectedDbs.map((db) => db.id).includes(state.defaultDb.id) ? {} : state.defaultDb
 
       if (isNew.value) {
         // If this is a prepopulated form from a previous submission and metabolite databases have changed since that submission,
@@ -320,12 +299,13 @@ export default defineComponent({
         // This is because it's expensive to change database later. We want a smart default for new users,
         // but if the user has previously selected a value that is now invalid, they should be made aware so that they
         // can choose an appropriate substitute.
-        metaspaceOptions.databaseIds = uniq(selectedDbs.map((db) => db.id)
-          .concat(molecularDatabases.filter(d => d.default).map(_ => _.id)))
+        metaspaceOptions.databaseIds = uniq(
+          selectedDbs.map((db) => db.id).concat(molecularDatabases.filter((d) => d.default).map((_) => _.id))
+        )
         if (selectedDbs.length > 0) {
           for (const db of selectedDbs) {
-            if (molecularDatabases.find(_ => _.id === db.id) === undefined) {
-              metaspaceOptions.databaseIds = molecularDatabases.filter(d => d.default).map(_ => _.id)
+            if (molecularDatabases.find((_) => _.id === db.id) === undefined) {
+              metaspaceOptions.databaseIds = molecularDatabases.filter((d) => d.default).map((_) => _.id)
               break
             }
           }
@@ -345,20 +325,18 @@ export default defineComponent({
       updateCurrentAdductOptions()
     }
 
-    const loadOptions = async() => {
+    const loadOptions = async () => {
       const { data } = await apolloClient.query({
         query: metadataOptionsQuery,
         fetchPolicy: 'network-only',
       })
       return {
         ...data,
-        adducts: config.features.all_adducts
-          ? data.adducts
-          : data.adducts.filter(ad => !ad.hidden),
+        adducts: config.features.all_adducts ? data.adducts : data.adducts.filter((ad) => !ad.hidden),
       }
     }
 
-    const reloadForm = async(mdType) => {
+    const reloadForm = async (mdType) => {
       const dataset = {
         metadata: state.value,
         metaspaceOptions: state.metaspaceOptions,
@@ -404,13 +382,14 @@ export default defineComponent({
       state.localErrors = errors
     }
 
-
     const getSuggestionsForField = (query, callback, ...args) => {
       const path = args.join('.')
-      apolloClient.query({
-        query: fetchAutocompleteSuggestionsQuery,
-        variables: { field: path, query: query || '' },
-      }).then(resp => callback(resp.data.metadataSuggestions.map(val => ({ value: val }))))
+      apolloClient
+        .query({
+          query: fetchAutocompleteSuggestionsQuery,
+          variables: { field: path, query: query || '' },
+        })
+        .then((resp) => callback(resp.data.metadataSuggestions.map((val) => ({ value: val }))))
     }
 
     const sectionBinds = (sectionKey) => {
@@ -434,11 +413,13 @@ export default defineComponent({
       set(state.value, path, val)
 
       // recommend ppm to 10 if resolving power below 70000 and 3 if greater than 70000
-      if (isNew.value && isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power'])
-        && val.Resolving_Power < 70000) {
+      if (isNew.value && isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power']) && val.Resolving_Power < 70000) {
         state.metaspaceOptions.ppm = 10
-      } else if (isNew.value && isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power'])
-        && val.Resolving_Power >= 70000) {
+      } else if (
+        isNew.value &&
+        isEqual(path, ['MS_Analysis', 'Detector_Resolving_Power']) &&
+        val.Resolving_Power >= 70000
+      ) {
         state.metaspaceOptions.ppm = 3
       }
 
@@ -460,7 +441,7 @@ export default defineComponent({
     const handleVisibilityChange = (isPublic) => {
       state.metaspaceOptions.isPublic = isPublic
     }
-    const onOptionChange = ({field, val}) => {
+    const onOptionChange = ({ field, val }) => {
       state.metaspaceOptions[field] = val
     }
 
@@ -494,21 +475,28 @@ export default defineComponent({
 
     const metaspaceOptionsFromDataset = (dataset, isNew) => {
       const {
-        isPublic, configJson, databases, adducts,
-        name, group, projects, submitter, principalInvestigator,
-        description, isEnriched,
+        isPublic,
+        configJson,
+        databases,
+        adducts,
+        name,
+        group,
+        projects,
+        submitter,
+        principalInvestigator,
+        description,
+        isEnriched,
       } = dataset
 
       const config = safeJsonParse(configJson)
       return {
         submitterId: submitter ? submitter.id : null,
         groupId: group ? group.id : null,
-        projectIds: projects ? projects.map(p => p.id) : [],
+        projectIds: projects ? projects.map((p) => p.id) : [],
         principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
-        description: isValidTiptapJson(safeJsonParse(description))
-          ? safeJsonParse(description) : null,
+        description: isValidTiptapJson(safeJsonParse(description)) ? safeJsonParse(description) : null,
         isPublic,
-        databaseIds: databases.map(_ => _.id),
+        databaseIds: databases.map((_) => _.id),
         adducts,
         name,
         neutralLosses: isNew ? [] : get(config, 'isotope_generation.neutral_losses') || [],
@@ -522,7 +510,7 @@ export default defineComponent({
       }
     }
 
-    const loadDataset = async() => {
+    const loadDataset = async () => {
       if (!props.datasetId) {
         const { data } = await apolloClient.query({
           query: newDatasetQuery,
@@ -530,11 +518,12 @@ export default defineComponent({
         const dataset = data.currentUserLastSubmittedDataset
 
         return {
-          metadata: dataset && safeJsonParse(dataset.metadataJson) || {},
+          metadata: (dataset && safeJsonParse(dataset.metadataJson)) || {},
           metaspaceOptions: {
             ...(dataset != null ? metaspaceOptionsFromDataset(dataset, true) : null),
             submitterId: store.state.currentTour ? null : data.currentUser.id,
-            groupId: store.state.currentTour ? null
+            groupId: store.state.currentTour
+              ? null
               : data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
           },
           submitter: data.currentUser,
@@ -566,7 +555,7 @@ export default defineComponent({
       }
     }
 
-    const fetchDatasets = async(name) => {
+    const fetchDatasets = async (name) => {
       state.loadingTemplates = true
       try {
         const resp = await apolloClient.query({
@@ -598,11 +587,12 @@ export default defineComponent({
           variables: { id: datasetId },
         })
         const dataset = {
-          metadata: data.dataset && safeJsonParse(data.dataset.metadataJson) || {},
+          metadata: (data.dataset && safeJsonParse(data.dataset.metadataJson)) || {},
           metaspaceOptions: {
             ...(data.dataset != null ? metaspaceOptionsFromDataset(data.dataset, true) : null),
             submitterId: store.state.currentTour ? null : data.currentUser.id,
-            groupId: store.state.currentTour ? null
+            groupId: store.state.currentTour
+              ? null
               : data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
           },
           submitter: data.currentUser,
@@ -613,13 +603,11 @@ export default defineComponent({
         reportError(e)
       }
     }
-    const initializeForm = async() => {
+    const initializeForm = async () => {
       const [dataset, options] = await Promise.all([loadDataset(), loadOptions()])
-      const mdType = (
-        isNew.value
-          ? store.getters.filter.metadataType
-          : (dataset && dataset.metadata && dataset.metadata.Data_Type)
-      ) || defaultMetadataType
+      const mdType =
+        (isNew.value ? store.getters.filter.metadataType : dataset && dataset.metadata && dataset.metadata.Data_Type) ||
+        defaultMetadataType
       await loadForm(dataset, options, mdType)
       if (isNew.value) {
         await fetchDatasets()
@@ -630,30 +618,36 @@ export default defineComponent({
       if (isNew.value && newMdType !== dataType.value) {
         reloadForm(newMdType)
       }
-    });
+    })
 
-    watch(() => state.metaspaceOptions.submitterId, async (newSubmitterId) => {
-      if (newSubmitterId != null && (state.submitter == null || state.submitter.id !== newSubmitterId)) {
-        const result = await apolloClient.query({
-          query: datasetSubmitterQuery,
-          variables: { userId: newSubmitterId },
-        });
-        state.submitter = result.data.user;
+    watch(
+      () => state.metaspaceOptions.submitterId,
+      async (newSubmitterId) => {
+        if (newSubmitterId != null && (state.submitter == null || state.submitter.id !== newSubmitterId)) {
+          const result = await apolloClient.query({
+            query: datasetSubmitterQuery,
+            variables: { userId: newSubmitterId },
+          })
+          state.submitter = result.data.user
+        }
       }
-    });
+    )
 
-    watch(() => state.metaspaceOptions.analysisVersion, (newAnalysisVersion) => {
-      if (newAnalysisVersion === 1 && state.metaspaceOptions.scoringModel != null) {
-        state.metaspaceOptions.scoringModel = null;
-      } else if (
-        newAnalysisVersion !== 1
-        && state.metaspaceOptions.scoringModel == null
-        && (state.initialMetaspaceOptions.scoringModel != null || state.scoringModels.some(m => m.name === 'v3_default'))
-      ) {
-        state.metaspaceOptions.scoringModel = state.initialMetaspaceOptions.scoringModel ?? 'v3_default';
+    watch(
+      () => state.metaspaceOptions.analysisVersion,
+      (newAnalysisVersion) => {
+        if (newAnalysisVersion === 1 && state.metaspaceOptions.scoringModel != null) {
+          state.metaspaceOptions.scoringModel = null
+        } else if (
+          newAnalysisVersion !== 1 &&
+          state.metaspaceOptions.scoringModel == null &&
+          (state.initialMetaspaceOptions.scoringModel != null ||
+            state.scoringModels.some((m) => m.name === 'v3_default'))
+        ) {
+          state.metaspaceOptions.scoringModel = state.initialMetaspaceOptions.scoringModel ?? 'v3_default'
+        }
       }
-    });
-
+    )
 
     onBeforeMount(() => {
       state.loadingPromise = initializeForm()
@@ -682,41 +676,40 @@ export default defineComponent({
 </script>
 
 <style>
- #md-editor-container {
-   display: flex;
-   justify-content: center;
-   margin-bottom: 50px;
- }
+#md-editor-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 50px;
+}
 
- #md-section-list {
-   display: flex;
-   flex-direction: column;
- }
+#md-section-list {
+  display: flex;
+  flex-direction: column;
+}
 
- #load-indicator {
-   min-height: 300px;
- }
+#load-indicator {
+  min-height: 300px;
+}
 
- #description-container{
-   @apply p-0 border rounded border-solid;
-   width: calc(75% - 10px);
-   border-color: #BCCDDC;
-   margin-left: 4px;
-   overflow: hidden;
- }
+#description-container {
+  @apply p-0 border rounded border-solid;
+  width: calc(75% - 10px);
+  border-color: #bccddc;
+  margin-left: 4px;
+  overflow: hidden;
+}
 
- #description-container > div > div > div {
-   @apply p-2;
-   min-height: calc(50px - 1rem);
-   background: #F1F5F8;
- }
+#description-container > div > div > div {
+  @apply p-2;
+  min-height: calc(50px - 1rem);
+  background: #f1f5f8;
+}
 
- .focus-visible{
-   outline: 1px solid hsl(208,87%,50%);
-   outline-offset: 1px;
- }
+.focus-visible {
+  outline: 1px solid hsl(208, 87%, 50%);
+  outline-offset: 1px;
+}
 
- #description-container > div > div > div > p {
-
- }
+#description-container > div > div > div > p {
+}
 </style>

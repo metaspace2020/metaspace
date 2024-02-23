@@ -11,8 +11,11 @@
     "noImplicitAny": false,
     "strictNullChecks": false,
     "baseUrl": ".",
-    "lib": ["dom", "esnext"],
-    "module": "esnext",
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
+    "module": "ESNext",
     "moduleResolution": "node",
     "noEmit": true,
     "jsx": "preserve"

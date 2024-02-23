@@ -9,16 +9,15 @@ import * as Sentry from '@sentry/vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import apolloClient, { setMaintenanceMessageHandler } from './api/graphqlClient'
 
-
 // import 'element-plus/dist/index.css'
-import 'element-plus/es/components/radio-button/style/css';
-import 'element-plus/es/components/dropdown/style/css';
-import 'element-plus/es/components/notification/style/css';
-import 'element-plus/es/components/message-box/style/css';
-import 'element-plus/es/components/message/style/css';
-import 'element-plus/es/components/dialog/style/css';
-import 'element-plus/es/components/table/style/css';
-import 'element-plus/es/components/alert/style/css';
+import 'element-plus/es/components/radio-button/style/css'
+import 'element-plus/es/components/dropdown/style/css'
+import 'element-plus/es/components/notification/style/css'
+import 'element-plus/es/components/message-box/style/css'
+import 'element-plus/es/components/message/style/css'
+import 'element-plus/es/components/dialog/style/css'
+import 'element-plus/es/components/table/style/css'
+import 'element-plus/es/components/alert/style/css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import './modules/App/element-overrides.css'
 import './modules/App/tailwind.scss'
@@ -31,8 +30,8 @@ import VueGtag from 'vue-gtag'
 import { setErrorNotifier } from './lib/reportError'
 import { migrateLocalStorage } from './lib/localStorage'
 
-import {ElMessageBox, ElNotification} from "element-plus";
-import {Route} from "@sentry/vue/types/router";
+import { ElMessageBox, ElNotification } from 'element-plus'
+import { Route } from '@sentry/vue/types/router'
 
 const isProd = process.env.NODE_ENV === 'production'
 
@@ -43,7 +42,7 @@ const app = createApp({
 
   render: () => h(App),
 })
-app.provide(DefaultApolloClient, apolloClient);
+app.provide(DefaultApolloClient, apolloClient)
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
@@ -91,10 +90,14 @@ router.afterEach((to: Route) => {
   store.commit('updateFilterOnNavigate', to)
 })
 
-app.use(VueGtag, {
-  config: { id: 'UA-73509518-1' },
-  enabled: isProd, // disabled in dev because it impairs "break on uncaught exception"
-}, router)
+app.use(
+  VueGtag,
+  {
+    config: { id: 'UA-73509518-1' },
+    enabled: isProd, // disabled in dev because it impairs "break on uncaught exception"
+  },
+  router
+)
 
 const head = createHead()
 app.use(head)

@@ -1,10 +1,5 @@
 <template>
-  <number-filter
-    v-bind="$attrs"
-    :max="1"
-    :min="0"
-    :step="0.01"
-  />
+  <number-filter v-bind="$attrs" :max="1" :min="0" :step="0.01" />
 </template>
 
 <script>
@@ -16,5 +11,5 @@ export default defineComponent({
   components: {
     NumberFilter,
   },
-});
+})
 </script>

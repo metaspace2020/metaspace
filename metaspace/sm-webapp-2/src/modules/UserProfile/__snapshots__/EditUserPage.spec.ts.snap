@@ -3,7 +3,7 @@
 exports[`EditUserPage > should match snapshot 1`] = `
 "<div data-v-608ec0a2=\\"\\" class=\\"main-content\\">
   <div data-v-608ec0a2=\\"\\" class=\\"mock-el-dialog delete-account-dialog\\" title=\\"Delete account\\" model-value=\\"false\\" width=\\"500px\\" lock-scroll=\\"false\\">
-    <p data-v-608ec0a2=\\"\\"> If you delete your account, you will lose access to all private datasets. </p>
+    <p data-v-608ec0a2=\\"\\">If you delete your account, you will lose access to all private datasets.</p>
     <p data-v-608ec0a2=\\"\\"> Please select whether you would like to delete all your datasets or keep them within METASPACE accessible by the group members: </p>
     <!--Changed the Text below to the above version after discussion with Theo, plz consider if it fits-->
     <!--If you delete your account, you will lose access to any datasets, groups and-->

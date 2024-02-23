@@ -10,7 +10,7 @@
   >
     <div>
       <el-form-item label="Full name" prop="name" class="name">
-        <el-input v-model="formValue.name" :max-length="50"/>
+        <el-input v-model="formValue.name" :max-length="50" />
       </el-form-item>
       <el-form-item label="Short name" prop="shortName" class="shortName">
         <template v-slot:label>
@@ -29,22 +29,22 @@
     </div>
     <div v-if="showGroupAdmin">
       <el-form-item label="Group admin" prop="groupAdminEmail">
-        <el-input v-model="formValue.groupAdminEmail" placeholder="Email address"/>
+        <el-input v-model="formValue.groupAdminEmail" placeholder="Email address" />
       </el-form-item>
     </div>
   </el-form>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive, PropType, watch } from 'vue';
-import { ElForm, ElFormItem, ElInput, ElPopover, ElIcon } from 'element-plus';
-import { QuestionFilled } from "@element-plus/icons-vue";
-import emailRegex from '../../lib/emailRegex';
+import { defineComponent, ref, reactive, PropType, watch } from 'vue'
+import { ElForm, ElFormItem, ElInput, ElPopover, ElIcon } from 'element-plus'
+import { QuestionFilled } from '@element-plus/icons-vue'
+import emailRegex from '../../lib/emailRegex'
 
 interface Model {
-  name: string;
-  shortName: string;
-  groupAdminEmail?: string;
+  name: string
+  shortName: string
+  groupAdminEmail?: string
 }
 
 export default defineComponent({
@@ -62,18 +62,26 @@ export default defineComponent({
     showGroupAdmin: { type: Boolean, default: false },
   },
   setup(props, { emit }) {
-    const formRef = ref<InstanceType<typeof ElForm>>();
-    const formValue = reactive({ ...props.modelValue });
+    const formRef = ref<InstanceType<typeof ElForm>>()
+    const formValue = reactive({ ...props.modelValue })
 
-    watch(formValue, (newVal) => {
-      emit('update:modelValue', newVal);
-    }, { deep: true });
+    watch(
+      formValue,
+      (newVal) => {
+        emit('update:modelValue', newVal)
+      },
+      { deep: true }
+    )
 
-    watch(() => props.modelValue, (newVal) => {
-      Object.assign(formValue, newVal);
-    }, { deep: true });
+    watch(
+      () => props.modelValue,
+      (newVal) => {
+        Object.assign(formValue, newVal)
+      },
+      { deep: true }
+    )
 
-    const shortNameMaxLength = 20;
+    const shortNameMaxLength = 20
 
     const rules = reactive({
       name: [
@@ -103,16 +111,15 @@ export default defineComponent({
           trigger: 'manual',
         },
       ],
-    });
-
+    })
 
     const validate = (): Promise<boolean> => {
-      return (formRef.value).validate()
+      return formRef.value.validate()
     }
 
     const handleSubmit = (e: Event) => {
       e.preventDefault()
-    };
+    }
 
     return {
       formRef,
@@ -121,9 +128,9 @@ export default defineComponent({
       validate,
       formValue,
       handleSubmit,
-    };
+    }
   },
-});
+})
 </script>
 
 <style scoped lang="scss">

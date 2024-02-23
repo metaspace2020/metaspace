@@ -1,21 +1,21 @@
 import './UploadDialog.css'
 
-import {defineComponent, reactive, onMounted, ref, inject} from 'vue'
+import { defineComponent, reactive, onMounted, ref, inject } from 'vue'
 import { UppyOptions, UploadResult } from '@uppy/core'
 
 import { SmForm, PrimaryLabelText } from '../../components/Form'
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 
-import {ElDialog, ElInput, ElButton} from "element-plus";
+import { ElDialog, ElInput, ElButton } from 'element-plus'
 
 import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
 import safeJsonParse from '../../lib/safeJsonParse'
 import reportError from '../../lib/reportError'
 import { convertUploadUrlToS3Path } from '../../lib/util'
-import {DefaultApolloClient} from "@vue/apollo-composable";
+import { DefaultApolloClient } from '@vue/apollo-composable'
 
-const uppyOptions : UppyOptions = {
+const uppyOptions: UppyOptions = {
   debug: true,
   autoProceed: true,
   restrictions: {
@@ -30,7 +30,7 @@ const s3Options = {
   companionUrl: `${window.location.origin}/database_upload`,
 }
 
-const formatErrorMsg = (e: any) : ErrorMessage => {
+const formatErrorMsg = (e: any): ErrorMessage => {
   if (e.graphQLErrors && e.graphQLErrors.length) {
     const [error] = e.graphQLErrors
     const message = safeJsonParse(error.message)
@@ -41,8 +41,9 @@ const formatErrorMsg = (e: any) : ErrorMessage => {
     }
     if (message?.type === 'malformed_csv') {
       return {
-        message: 'The file format does not look correct. Please check that the file is tab-separated'
-        + ' and contains three columns: id, name, and formula.',
+        message:
+          'The file format does not look correct. Please check that the file is tab-separated' +
+          ' and contains three columns: id, name, and formula.',
       }
     }
     if (message?.type === 'bad_data') {
@@ -56,9 +57,9 @@ const formatErrorMsg = (e: any) : ErrorMessage => {
 }
 
 interface Props {
-  name: string,
-  details?: MolecularDBDetails,
-  groupId: string,
+  name: string
+  details?: MolecularDBDetails
+  groupId: string
 }
 
 type ErrorMessage = {
@@ -68,12 +69,12 @@ type ErrorMessage = {
 
 interface State {
   model: {
-    name: string,
-    version: string,
-    filePath: string,
-  },
-  loading: boolean,
-  error: ErrorMessage | null,
+    name: string
+    version: string
+    filePath: string
+  }
+  loading: boolean
+  error: ErrorMessage | null
 }
 
 const UploadDialog = defineComponent<Props>({
@@ -84,7 +85,7 @@ const UploadDialog = defineComponent<Props>({
     groupId: String,
   },
   setup(props, { emit }) {
-    const apolloClient = inject(DefaultApolloClient);
+    const apolloClient = inject(DefaultApolloClient)
     const state = reactive<State>({
       model: {
         name: props.name,
@@ -119,7 +120,7 @@ const UploadDialog = defineComponent<Props>({
       state.model.filePath = ''
     }
 
-    const createDatabase = async() => {
+    const createDatabase = async () => {
       state.error = null
       state.loading = true
       try {
@@ -153,7 +154,9 @@ const UploadDialog = defineComponent<Props>({
 
     // need to do this otherwise the `opened` event doesn't fire
     const visible = ref(false)
-    onMounted(() => { visible.value = true })
+    onMounted(() => {
+      visible.value = true
+    })
 
     const renderFooter = () => {
       return (
@@ -178,22 +181,24 @@ const UploadDialog = defineComponent<Props>({
         onClose={handleClose}
         class="sm-database-upload-dialog"
         onOpened={focusHandler}
-        v-slots={{footer: renderFooter}}
+        v-slots={{ footer: renderFooter }}
       >
         <FadeTransition>
-          { state.error
-            && <div class="flex items-start mb-3 text-danger text-sm leading-5">
+          {state.error && (
+            <div class="flex items-start mb-3 text-danger text-sm leading-5">
               <i class="el-icon-warning-outline mr-2 text-lg" />
               <div>
-                <p class="m-0 flex items-start font-medium">
-                  {state.error.message}
-                </p>
-                { state.error.details
-                  && <ul class="overflow-y-auto m-0 mt-3 pl-6 max-h-25">
-                    { state.error.details.map(d => <li>{d}</li>) }
-                  </ul> }
+                <p class="m-0 flex items-start font-medium">{state.error.message}</p>
+                {state.error.details && (
+                  <ul class="overflow-y-auto m-0 mt-3 pl-6 max-h-25">
+                    {state.error.details.map((d) => (
+                      <li>{d}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            </div> }
+            </div>
+          )}
         </FadeTransition>
         <SmForm class="flex leading-6">
           <div class="flex-grow">
@@ -211,21 +216,17 @@ const UploadDialog = defineComponent<Props>({
             <label for="database-version">
               <PrimaryLabelText>Version</PrimaryLabelText>
             </label>
-            <ElInput
-              ref="versionInput"
-              id="database-version"
-              v-model={state.model.version}
-              disabled={state.loading}
-            />
+            <ElInput ref="versionInput" id="database-version" v-model={state.model.version} disabled={state.loading} />
           </div>
         </SmForm>
         <p class="m-0 mt-3">
           Databases should be provided in{' '}
-          <a target='_blank' href="https://en.wikipedia.org/wiki/Tab-separated_values">TSV format</a>.
+          <a target="_blank" href="https://en.wikipedia.org/wiki/Tab-separated_values">
+            TSV format
+          </a>
+          .
         </p>
-        <h4 class="m-0 mt-3 font-medium">
-          Example file:
-        </h4>
+        <h4 class="m-0 mt-3 font-medium">Example file:</h4>
         <pre class="m-0 mt-3">
           id{'\t'}name{'\t'}formula{'\n'}
           HMDB0000122{'\t'}Glucose{'\t'}C6H12O6{'\n'}

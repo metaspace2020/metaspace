@@ -1,6 +1,6 @@
 import { defineComponent } from 'vue'
 import { encodeParams } from '../../Filters'
-import {useStore} from "vuex";
+import { useStore } from 'vuex'
 
 interface Props {
   path?: string
@@ -24,11 +24,7 @@ const FilterLink = defineComponent({
         path: props.path,
         query: encodeParams(filter, props.path, store.state.filterLists),
       }
-      return (
-        <router-link to={to}>
-          {slots.default?.()}
-        </router-link>
-      )
+      return <router-link to={to}>{slots.default?.()}</router-link>
     }
   },
 })

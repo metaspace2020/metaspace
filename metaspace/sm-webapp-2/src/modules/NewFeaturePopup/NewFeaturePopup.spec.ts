@@ -3,8 +3,8 @@ import { nextTick } from 'vue'
 import NewFeaturePopup from './NewFeaturePopup.vue'
 import PopupAnchor from './PopupAnchor.vue'
 // import useNewFeaturePopups from './useNewFeaturePopups'
-import router from "../../router";
-import store from "../../store";
+import router from '../../router'
+import store from '../../store'
 
 import { ref } from 'vue'
 import * as useIntersectionObserver from '../../lib/useIntersectionObserver'
@@ -12,10 +12,9 @@ import * as useIntersectionObserver from '../../lib/useIntersectionObserver'
 
 vi.mock('popper.js')
 vi.mock('../../lib/useIntersectionObserver')
-const mockUseIntersectionObserver : any = useIntersectionObserver
+const mockUseIntersectionObserver: any = useIntersectionObserver
 vi.mock('../../lib/localStorage')
 // const mockLocalStorage : any = localStorage
-
 
 function mockIntersectionObserver({ isIntersecting = false, isFullyInView = false, intersectionRatio = 0 }) {
   mockUseIntersectionObserver.default.mockImplementation(() => ({
@@ -50,7 +49,7 @@ describe('NewFeaturePopup', () => {
     vi.resetAllMocks()
   })
 
-  it('should match snapshot (not in view)', async() => {
+  it('should match snapshot (not in view)', async () => {
     mockIntersectionObserver({ isFullyInView: false })
     const wrapper = mount(TestNewFeaturePopup, { global: { plugins: [store, router] } })
     await nextTick()
@@ -58,7 +57,7 @@ describe('NewFeaturePopup', () => {
     expect(wrapper.html()).toMatchSnapshot()
   })
 
-  it('should match snapshot (in view)', async() => {
+  it('should match snapshot (in view)', async () => {
     mockIntersectionObserver({
       isFullyInView: true,
     })
@@ -84,5 +83,4 @@ describe('NewFeaturePopup', () => {
   //   const popup = wrapper.findComponent(NewFeaturePopup)
   //   expect(popup.html()).toBe('')
   // })
-
 })

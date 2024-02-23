@@ -6,7 +6,7 @@ import { State } from '@uppy/core'
 type Listener = (prevState: State, nextState: State, patch: object) => void
 
 export default () => {
-  const state = ref<State| any>({})
+  const state = ref<State | any>({})
   const listeners = new Set<Listener>()
 
   return {
@@ -17,7 +17,7 @@ export default () => {
 
       state.value = nextState
 
-      listeners.forEach(listener => {
+      listeners.forEach((listener) => {
         listener(prevState, nextState, patch)
       })
     },

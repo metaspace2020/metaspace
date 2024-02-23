@@ -1,11 +1,5 @@
 <template>
-  <tag-filter
-    :name="name"
-    :removable="removable"
-    :width="256"
-    @show="show"
-    @destroy="destroy"
-  >
+  <tag-filter :name="name" :removable="removable" :width="256" @show="show" @destroy="destroy">
     <template #edit>
       <el-input
         v-if="rawInput"
@@ -29,9 +23,7 @@
         controls-position="right"
         @change="onChange"
       />
-      <filter-help-text>
-        Press <span class="font-medium">Enter</span> to confirm manual input
-      </filter-help-text>
+      <filter-help-text> Press <span class="font-medium">Enter</span> to confirm manual input </filter-help-text>
     </template>
     <template #show>
       <span v-if="value" class="tf-value-span">{{ value }}</span>
@@ -44,7 +36,7 @@
 <script>
 import { defineComponent, ref, watch, nextTick } from 'vue'
 import TagFilter from './TagFilter.vue'
-import {FilterHelpText} from './TagFilterComponents'
+import { FilterHelpText } from './TagFilterComponents'
 import { ElInputNumber, ElInput } from 'element-plus'
 
 export default defineComponent({
@@ -53,7 +45,7 @@ export default defineComponent({
     TagFilter,
     FilterHelpText,
     ElInputNumber,
-    ElInput
+    ElInput,
   },
   props: {
     name: String,
@@ -69,9 +61,12 @@ export default defineComponent({
     const localValue = ref(props.rawInput ? props.value : Number(props.value) || 0)
     const inputRef = ref(null)
 
-    watch(() => props.value, (newValue) => {
-      localValue.value = props.rawInput ? newValue : Number(newValue) || 0
-    })
+    watch(
+      () => props.value,
+      (newValue) => {
+        localValue.value = props.rawInput ? newValue : Number(newValue) || 0
+      }
+    )
 
     const onChange = (val) => {
       if (props.rawInput) {

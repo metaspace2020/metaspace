@@ -1,9 +1,6 @@
 <template>
   <div class="md-editor">
-    <help-dialog
-      :visible="state.helpDialog"
-      @close="state.helpDialog = false"
-    />
+    <help-dialog :visible="state.helpDialog" @close="state.helpDialog = false" />
     <requested-access-dialog
       :visible="state.showRequestedDialog"
       :ds-submission="true"
@@ -23,22 +20,12 @@
       <div v-else-if="isSignedIn || isTourRunning">
         <div class="metadata-section">
           <div class="el-row">
-            <div class="el-col el-col-6">
-              &nbsp;
-            </div>
+            <div class="el-col el-col-6">&nbsp;</div>
             <div class="el-col el-col-18">
               <div class="flex justify-between items-center form-margin h-10">
-                <el-button
-                  class="text-gray-600 mr-auto"
-                  @click="state.helpDialog = true"
-                >
-                  Need help?
-                </el-button>
+                <el-button class="text-gray-600 mr-auto" @click="state.helpDialog = true"> Need help? </el-button>
                 <fade-transition>
-                  <p
-                    v-if="state.autoSubmit"
-                    class="text-gray-700 m-0 mr-3 text-right text-sm leading-5"
-                  >
+                  <p v-if="state.autoSubmit" class="text-gray-700 m-0 mr-3 text-right text-sm leading-5">
                     submitting after upload &ndash;
                     <button
                       class="button-reset font-medium text-primary"
@@ -49,12 +36,7 @@
                     </button>
                   </p>
                 </fade-transition>
-                <el-button
-                  type="primary"
-                  :disabled="submitDisabled"
-                  :loading="state.autoSubmit"
-                  @click="onSubmit"
-                >
+                <el-button type="primary" :disabled="submitDisabled" :loading="state.autoSubmit" @click="onSubmit">
                   Submit
                 </el-button>
               </div>
@@ -63,19 +45,11 @@
         </div>
 
         <div class="metadata-section">
-          <form
-            class="el-form el-form--label-top el-row"
-            @submit.prevent
-          >
+          <form class="el-form el-form--label-top el-row" @submit.prevent>
             <div class="el-col el-col-6">
-              <div class="metadata-section__title">
-                Imaging MS data
-              </div>
+              <div class="metadata-section__title">Imaging MS data</div>
             </div>
-            <div
-              v-loading="state.status === 'LOADING'"
-              class="el-col el-col-18"
-            >
+            <div v-loading="state.status === 'LOADING'" class="el-col el-col-18">
               <div class="md-form-field">
                 <uppy-uploader
                   :key="state.storageKey.uuid"
@@ -93,35 +67,32 @@
             </div>
           </form>
         </div>
-        <metadata-editor
-          ref="editor"
-          :validation-errors="state.validationErrors"
-        />
+        <metadata-editor ref="editor" :validation-errors="state.validationErrors" />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import {defineComponent, ref, reactive, computed, watch, nextTick, inject, onMounted} from 'vue';
-import { useStore } from 'vuex';
-import { useRouter } from 'vue-router';
-import { useQuery, DefaultApolloClient} from '@vue/apollo-composable';
-import { ElMessage } from 'element-plus';
-import UppyUploader from '../../components/UppyUploader/UppyUploader.vue';
-import FadeTransition from '../../components/FadeTransition';
-import MetadataEditor from './MetadataEditor.vue';
-import HelpDialog from './HelpDialog.vue';
+import { defineComponent, ref, reactive, computed, watch, nextTick, inject, onMounted } from 'vue'
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
+import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
+import { ElMessage } from 'element-plus'
+import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
+import FadeTransition from '../../components/FadeTransition'
+import MetadataEditor from './MetadataEditor.vue'
+import HelpDialog from './HelpDialog.vue'
 import { RequestedAccessDialog } from '../Group/RequestedAccessDialog'
 import reportError from '../../lib/reportError'
 import { parseS3Url } from '../../lib/util'
-import config from '../../lib/config';
-import gql from 'graphql-tag';
+import config from '../../lib/config'
+import gql from 'graphql-tag'
 import { createDatasetQuery } from '../../api/dataset'
 import { currentUserIdQuery } from '../../api/user'
 import { ViewGroupFragment } from '../../api/group'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
-import {get} from 'lodash-es'
+import { get } from 'lodash-es'
 
 const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
@@ -129,12 +100,16 @@ const createInputPath = (url, uuid) => {
   return `s3a://${bucket}/${uuid}`
 }
 
-
-const basename = fname => fname.split('.').slice(0, -1).join('.')
-const groupRoleQuery = gql`query GroupProfileById($groupIdOrSlug: ID!) {
-              group(groupId: $groupIdOrSlug) { ...ViewGroupFragment hasPendingRequest }
-            }
-            ${ViewGroupFragment}`
+const basename = (fname) => fname.split('.').slice(0, -1).join('.')
+const groupRoleQuery = gql`
+  query GroupProfileById($groupIdOrSlug: ID!) {
+    group(groupId: $groupIdOrSlug) {
+      ...ViewGroupFragment
+      hasPendingRequest
+    }
+  }
+  ${ViewGroupFragment}
+`
 
 export default defineComponent({
   name: 'UploadPage',
@@ -146,10 +121,10 @@ export default defineComponent({
     RequestedAccessDialog,
   },
   setup() {
-    const store = useStore();
-    const router = useRouter();
-    const apolloClient = inject(DefaultApolloClient);
-    const editor = ref(null);
+    const store = useStore()
+    const router = useRouter()
+    const apolloClient = inject(DefaultApolloClient)
+    const editor = ref(null)
     const state = reactive({
       status: 'INIT',
       showRequestedDialog: false,
@@ -168,9 +143,8 @@ export default defineComponent({
       inputPath: null,
     })
 
-
-    const { result: currentUserResult, onResult } = useQuery(currentUserIdQuery, null,{
-      fetchPolicy: 'cache-first'
+    const { result: currentUserResult, onResult } = useQuery(currentUserIdQuery, null, {
+      fetchPolicy: 'cache-first',
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
 
@@ -186,8 +160,8 @@ export default defineComponent({
     })
 
     const { result: systemHealthResult, subscribeToMore } = useQuery(getSystemHealthQuery, null, {
-      fetchPolicy: 'cache-first'
-    });
+      fetchPolicy: 'cache-first',
+    })
     const systemHealth = computed(() => systemHealthResult.value?.systemHealth)
     const uuid = computed(() => state.storageKey.uuid)
     const isTourRunning = computed(() => store.state.currentTour != null)
@@ -245,7 +219,7 @@ export default defineComponent({
       router.go(-1)
     }
 
-    const fetchStorageKey = async() => {
+    const fetchStorageKey = async () => {
       state.status = 'LOADING'
       try {
         const response = await fetch(`${uploadEndpoint.value}/s3/uuid`)
@@ -263,16 +237,16 @@ export default defineComponent({
       }
     }
 
-    const onFileAdded = async(file) => {
+    const onFileAdded = async (file) => {
       const { name } = file
       const dsName = name.slice(0, name.lastIndexOf('.'))
       await nextTick()
       editor.value.fillDatasetName(dsName)
     }
 
-    const onFileRemoved = async(file) => {
+    const onFileRemoved = async (file) => {
       state.uploads[file.extension.toLowerCase()] = false
-      if (Object.values(state.uploads).every(flag => !flag)) {
+      if (Object.values(state.uploads).every((flag) => !flag)) {
         // Get a new storage key, because the old uploads may have different filenames which would cause later issues
         // when trying to determine which file to use if they were uploaded to the same prefix.
         await fetchStorageKey()
@@ -318,7 +292,7 @@ export default defineComponent({
       }
     }
 
-    const submitForm = async() => {
+    const submitForm = async () => {
       const formValue = editor.value.getFormValueForSubmit()
       if (formValue === null) return
 
@@ -352,7 +326,9 @@ export default defineComponent({
         let graphQLError = null
         try {
           graphQLError = JSON.parse(err.graphQLErrors[0].message)
-        } catch (err2) { /* The case where err does not contain a graphQL error is handled below */ }
+        } catch (err2) {
+          /* The case where err does not contain a graphQL error is handled below */
+        }
 
         if (get(err, 'graphQLErrors[0].isHandled')) {
           return false
@@ -365,15 +341,17 @@ export default defineComponent({
         } else if (graphQLError && graphQLError.type === 'wrong_moldb_name') {
           editor.value.resetMetaboliteDatabase()
           ElMessage({
-            message: 'An unrecognized metabolite database was selected. This field has been cleared, '
-              + 'please select the databases again and resubmit the form.',
+            message:
+              'An unrecognized metabolite database was selected. This field has been cleared, ' +
+              'please select the databases again and resubmit the form.',
             type: 'error',
           })
         } else {
           ElMessage({
-            message: 'There was an unexpected problem submitting the dataset. Please refresh the page and try again. '
-              + 'If this problem persists, please contact us at '
-              + '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
+            message:
+              'There was an unexpected problem submitting the dataset. Please refresh the page and try again. ' +
+              'If this problem persists, please contact us at ' +
+              '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
             dangerouslyUseHTMLString: true,
             type: 'error',
             duration: 0,
@@ -382,7 +360,8 @@ export default defineComponent({
           throw err
         }
       } finally {
-        if (state.status === 'SUBMITTING') { // i.e. if unsuccessful
+        if (state.status === 'SUBMITTING') {
+          // i.e. if unsuccessful
           state.status = 'UPLOADED'
         }
 
@@ -398,12 +377,11 @@ export default defineComponent({
       }
     }
 
-
     onMounted(() => {
       store.commit('updateFilter', store.getters.filter)
       fetchStorageKey()
-      subscribeToMore(getSystemHealthSubscribeToMore);
-    });
+      subscribeToMore(getSystemHealthSubscribeToMore)
+    })
 
     const status = computed(() => state.status)
 
@@ -431,48 +409,47 @@ export default defineComponent({
       onUploadComplete,
       systemHealth,
       cancel,
-    };
+    }
   },
-});
+})
 </script>
 
-
 <style scoped>
-  #filter-panel-container > * {
-    padding-left: 0;
-  }
+#filter-panel-container > * {
+  padding-left: 0;
+}
 
-  #sign-in-intro {
-    padding: 20px;
-  }
+#sign-in-intro {
+  padding: 20px;
+}
 
-  .sign-in-message {
-    margin: 1.5em 0;
-    font-size: 1.5em;
-  }
+.sign-in-message {
+  margin: 1.5em 0;
+  font-size: 1.5em;
+}
 
-  .upload-page-wrapper {
-    width: 950px;
-  }
+.upload-page-wrapper {
+  width: 950px;
+}
 
-  .md-editor {
-    padding: 0 20px 20px 20px;
-    display: flex;
-    justify-content: center;
-  }
+.md-editor {
+  padding: 0 20px 20px 20px;
+  display: flex;
+  justify-content: center;
+}
 
-  .md-editor-submit {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-  }
+.md-editor-submit {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
 
-  .md-editor-submit > button {
-    flex: 1 auto;
-    margin: 25px 5px;
-  }
+.md-editor-submit > button {
+  flex: 1 auto;
+  margin: 25px 5px;
+}
 
-  .form-margin {
-    margin: 0 5px;
-  }
+.form-margin {
+  margin: 0 5px;
+}
 </style>

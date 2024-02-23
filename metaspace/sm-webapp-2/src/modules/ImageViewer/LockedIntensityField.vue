@@ -1,10 +1,5 @@
 <template>
-  <form
-    class="relative"
-    spellcheck="false"
-    autocomplete="off"
-    @submit.prevent="onSubmit"
-  >
+  <form class="relative" spellcheck="false" autocomplete="off" @submit.prevent="onSubmit">
     <label>
       <span class="sr-only">
         {{ label }}
@@ -19,19 +14,10 @@
       />
     </label>
     <fade-transition class="button-reset absolute top-0 right-0 w-5 h-5 rounded-sm">
-      <button
-        v-if="inputText !== storedValue"
-        key="submit"
-        type="submit"
-      >
+      <button v-if="inputText !== storedValue" key="submit" type="submit">
         <ArrowIcon />
       </button>
-      <button
-        v-else-if="inputText.length"
-        key="clear"
-        type="text"
-        @click="inputText = '';"
-      >
+      <button v-else-if="inputText.length" key="clear" type="text" @click="inputText = ''">
         <CloseIcon />
       </button>
     </fade-transition>
@@ -42,14 +28,11 @@ import { defineComponent, ref, watch, defineAsyncComponent } from 'vue'
 
 import FadeTransition from '../../components/FadeTransition'
 
-const ArrowIcon = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-arrow-thin-right-circle.svg')
-);
+const ArrowIcon = defineAsyncComponent(
+  () => import('../../assets/inline/refactoring-ui/icon-arrow-thin-right-circle.svg')
+)
 
-const CloseIcon = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-close.svg')
-);
-
+const CloseIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-close.svg'))
 
 export default defineComponent({
   components: {
@@ -66,9 +49,12 @@ export default defineComponent({
     const inputRef = ref<HTMLInputElement | any>(null)
     const inputText = ref('')
 
-    watch(() => props.value, () => {
-      inputText.value = props.value?.toExponential(1) || ''
-    })
+    watch(
+      () => props.value,
+      () => {
+        inputText.value = props.value?.toExponential(1) || ''
+      }
+    )
 
     const hasError = ref(false)
     return {

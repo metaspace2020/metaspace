@@ -26,8 +26,8 @@ export default defineComponent({
     x: Number,
   },
   setup(props: Props, { emit }) {
-    const thumb = ref<HTMLElement|any>(null)
-    const state = reactive<State|any>({
+    const thumb = ref<HTMLElement | any>(null)
+    const state = reactive<State | any>({
       startX: props.x,
     })
 

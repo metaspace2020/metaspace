@@ -1,4 +1,3 @@
-
 export const mockAdductSuggestions = () => [
   // Positive mode
   { adduct: '+H', name: '[M + H]⁺', charge: 1, hidden: false, default: true },
@@ -14,21 +13,14 @@ export const mockAdductSuggestions = () => [
 const globalDatabase = { id: 1, name: 'foo', version: 'v1', group: null }
 const groupDatabase = { id: 2, name: 'bar', version: 'v1', group: { id: '123', shortName: 'test' } }
 
-export const mockMolecularDatabases = () => [
-  globalDatabase,
-  groupDatabase,
-]
+export const mockMolecularDatabases = () => [globalDatabase, groupDatabase]
 
 export const mockDatasetDatabases = () => [
   {
     id: 'CDEF',
     name: 'CDEF',
-    databases: [
-      globalDatabase,
-    ],
+    databases: [globalDatabase],
   },
 ]
 
-export const mockGroups = () => [
-  { id: '123', shortName: 'test' }
-]
+export const mockGroups = () => [{ id: '123', shortName: 'test' }]

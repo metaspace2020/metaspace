@@ -11,10 +11,7 @@
       :show-until="new Date('2021-03-01')"
       class="flex items-center"
     >
-      <stateful-icon
-        class="h-6 w-6"
-        :active="isActive"
-      >
+      <stateful-icon class="h-6 w-6" :active="isActive">
         <tune-svg />
       </stateful-icon>
       <span class="leading-none ml-1">Channels</span>
@@ -29,10 +26,7 @@ import StatefulIcon from '../../components/StatefulIcon.vue'
 
 import viewerState, { toggleMode } from './state'
 
-const TuneSvg = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-tune.svg')
-);
-
+const TuneSvg = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-tune.svg'))
 
 export default defineComponent({
   components: {

@@ -6,8 +6,8 @@ import { getUserGroupsQuery, ViewGroupResult } from '../../api/group'
 import { uniqBy } from 'lodash-es'
 import GroupsListItem from './GroupsListItem'
 import './GroupsListPage.scss'
-import {Loading, Search} from "@element-plus/icons-vue";
-import {useRouter} from "vue-router";
+import { Loading, Search } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
 
 interface GroupListPageProps {
   className: string
@@ -25,28 +25,25 @@ export default defineComponent<GroupListPageProps>({
       default: 'groups-list',
     },
   },
-  setup: function() {
+  setup: function () {
     const router = useRouter()
     const state = reactive<GroupListPageState>({
       groupNameFilter: '',
     })
 
-    const {
-      result: currentUserResult,
-    } = useQuery<CurrentUserRoleResult|any>(currentUserRoleQuery)
-    const currentUser = computed(() => currentUserResult.value != null ? currentUserResult.value.currentUser
-      : null)
+    const { result: currentUserResult } = useQuery<CurrentUserRoleResult | any>(currentUserRoleQuery)
+    const currentUser = computed(() => (currentUserResult.value != null ? currentUserResult.value.currentUser : null))
 
     const queryVars = computed(() => ({
       query: state.groupNameFilter,
       useRole: true,
     }))
-    const {
-      result: groupsResult,
-      loading: groupsLoading,
-    } = useQuery<ViewGroupResult|any>(getUserGroupsQuery, queryVars, {fetchPolicy: 'network-only'})
-    const groups = computed(() => groupsResult.value != null ? groupsResult.value.allGroups
-      : null)
+    const { result: groupsResult, loading: groupsLoading } = useQuery<ViewGroupResult | any>(
+      getUserGroupsQuery,
+      queryVars,
+      { fetchPolicy: 'network-only' }
+    )
+    const groups = computed(() => (groupsResult.value != null ? groupsResult.value.allGroups : null))
 
     const handleCreateGroup = async () => {
       await router.push('/group/create')
@@ -55,67 +52,62 @@ export default defineComponent<GroupListPageProps>({
     return () => {
       if (!currentUser.value && !groupsLoading.value) {
         return (
-          <div class='groups-list-container'>
-            <div class='groups-list-wrapper'>
-              <p class='font-normal text-center'>
+          <div class="groups-list-container">
+            <div class="groups-list-wrapper">
+              <p class="font-normal text-center">
                 Create an account/login, to create groups and make your work reach more people!
               </p>
             </div>
-          </div>)
+          </div>
+        )
       }
 
       return (
-        <div class='groups-list-container'>
-          <div class='groups-list-wrapper'>
-            <div class='groups-list-header'>
+        <div class="groups-list-container">
+          <div class="groups-list-wrapper">
+            <div class="groups-list-header">
               <ElInput
-                class='group-name-filter tf-outer w-auto'
+                class="group-name-filter tf-outer w-auto"
                 modelValue={state.groupNameFilter}
                 onInput={(value: string) => {
                   state.groupNameFilter = value
                 }}
-                placeholder='Enter keywords'
+                placeholder="Enter keywords"
                 v-slots={{
-                  prepend: () =>
+                  prepend: () => (
                     <ElIcon class="-mx-1">
-                      <Search/>
+                      <Search />
                     </ElIcon>
+                  ),
                 }}
               />
-              <ElButton
-                type="primary"
-                size='large'
-                class='group-list-create-btn'
-                onClick={handleCreateGroup}
-              >
+              <ElButton type="primary" size="large" class="group-list-create-btn" onClick={handleCreateGroup}>
                 Create group
               </ElButton>
             </div>
-            <div class='groups-list-content'>
-              {
-                groups.value?.length === 0
-                && !groupsLoading.value
-                && <p>Group not found!</p>
-              }
-              {
-                groups.value?.length > 0
-                && !groupsLoading.value
-                && uniqBy((groups.value || []) as any[], 'id').map((group: any) => {
-                  return <GroupsListItem
-                    id={group.id}
-                    name={group.name}
-                    shortName={group.shortName}
-                    urlSlug={group.urlSlug}
-                    currentUserRole={group.currentUserRole}
-                    numMembers={group.numMembers}/>
-                })
-              }
-              {
-                groupsLoading.value
-                && <p>
-                  <ElIcon class="is-loading"><Loading/></ElIcon>
+            <div class="groups-list-content">
+              {groups.value?.length === 0 && !groupsLoading.value && <p>Group not found!</p>}
+              {groups.value?.length > 0 &&
+                !groupsLoading.value &&
+                uniqBy((groups.value || []) as any[], 'id').map((group: any) => {
+                  return (
+                    <GroupsListItem
+                      id={group.id}
+                      name={group.name}
+                      shortName={group.shortName}
+                      urlSlug={group.urlSlug}
+                      currentUserRole={group.currentUserRole}
+                      numMembers={group.numMembers}
+                    />
+                  )
+                })}
+              {groupsLoading.value && (
+                <p>
+                  <ElIcon class="is-loading">
+                    <Loading />
+                  </ElIcon>
                 </p>
-              }
+              )}
             </div>
           </div>
         </div>

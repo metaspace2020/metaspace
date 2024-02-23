@@ -1,12 +1,6 @@
 <template>
-  <div
-    v-loading="!loaded"
-    class="page"
-  >
-    <div
-      v-if="group != null"
-      class="page-content"
-    >
+  <div v-loading="!loaded" class="page">
+    <div v-if="group != null" class="page-content">
       <transfer-datasets-dialog
         v-if="showTransferDatasetsDialog"
         :group-name="group.name"
@@ -22,62 +16,26 @@
       <div class="header-row">
         <div class="header-names">
           <h1>{{ group.name }}</h1>
-          <h2
-            v-if="group.name !== group.shortName"
-            class="ml-3 text-gray-600"
-          >
-            ({{ group.shortName }})
-          </h2>
+          <h2 v-if="group.name !== group.shortName" class="ml-3 text-gray-600">({{ group.shortName }})</h2>
         </div>
 
         <div class="header-buttons">
-          <el-button
-            v-if="currentUser != null && roleInGroup == null"
-            type="primary"
-            @click="handleRequestAccess"
-          >
+          <el-button v-if="currentUser != null && roleInGroup == null" type="primary" @click="handleRequestAccess">
             Request access
           </el-button>
-          <el-button
-            v-if="roleInGroup === 'PENDING'"
-            disabled
-          >
-            Request sent
-          </el-button>
+          <el-button v-if="roleInGroup === 'PENDING'" disabled> Request sent </el-button>
         </div>
-        <el-alert
-          v-if="roleInGroup === 'INVITED'"
-          type="info"
-          show-icon
-          :closable="false"
-          title=""
-        >
-          <div style="padding: 0 0 20px 20px;">
-            <p>
-              You have been invited to join {{ group.name }}.
-            </p>
+        <el-alert v-if="roleInGroup === 'INVITED'" type="info" show-icon :closable="false" title="">
+          <div style="padding: 0 0 20px 20px">
+            <p>You have been invited to join {{ group.name }}.</p>
             <div>
-              <el-button
-                type="danger"
-                @click="handleRejectInvite"
-              >
-                Decline invitation
-              </el-button>
-              <el-button
-                type="primary"
-                @click="handleAcceptInvite"
-              >
-                Join group
-              </el-button>
+              <el-button type="danger" @click="handleRejectInvite"> Decline invitation </el-button>
+              <el-button type="primary" @click="handleAcceptInvite"> Join group </el-button>
             </div>
           </div>
         </el-alert>
       </div>
-      <el-tabs
-        :model-value="tab"
-        class="with-badges"
-        @update:model-value="setTab"
-      >
+      <el-tabs :model-value="tab" class="with-badges" @update:model-value="setTab">
         <el-tab-pane
           v-if="canEdit || group.groupDescriptionAsHtml !== ''"
           name="description"
@@ -90,32 +48,22 @@
             @updateGroupDescription="saveMarkdown"
           />
         </el-tab-pane>
-        <el-tab-pane
-          name="datasets"
-          :label="optionalSuffixInParens('Datasets', countDatasets)"
-          lazy
-        >
+        <el-tab-pane name="datasets" :label="optionalSuffixInParens('Datasets', countDatasets)" lazy>
           <dataset-list
             :datasets="groupDatasets.slice(0, maxVisibleDatasets)"
             hide-group-menu
             @filterUpdate="handleFilterUpdate"
           />
           <div class="dataset-list-footer">
-            <router-link
-              v-if="countDatasets > maxVisibleDatasets"
-              :to="datasetsListLink"
-            >
+            <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">
               See all datasets
             </router-link>
           </div>
         </el-tab-pane>
-        <el-tab-pane
-          name="members"
-          lazy
-        >
+        <el-tab-pane name="members" lazy>
           <template v-slot:label>
             <span>
-              {{optionalSuffixInParens('Members', countMembers) }}
+              {{ optionalSuffixInParens('Members', countMembers) }}
               <notification-icon v-if="hasMembershipRequest" />
             </span>
           </template>
@@ -126,43 +74,24 @@
             :members="members"
             :refresh-data="refetchGroup"
           />
-          <p
-            v-if="countHiddenMembers > 0"
-            class="hidden-members-text"
-          >
+          <p v-if="countHiddenMembers > 0" class="hidden-members-text">
             + {{ plural(countHiddenMembers, 'hidden member', 'hidden members') }}.
           </p>
         </el-tab-pane>
-        <el-tab-pane
-          v-if="showDatabasesTab"
-          name="databases"
-          lazy
-        >
+        <el-tab-pane v-if="showDatabasesTab" name="databases" lazy>
           <template v-slot:label>
             <span>
-              <popup-anchor
-                feature-key="groupDatabasesTab"
-                :show-until="new Date('2021-03-01')"
-                placement="bottom"
-              >
-                {{  optionalSuffixInParens('Databases', countDatabases) }}
+              <popup-anchor feature-key="groupDatabasesTab" :show-until="new Date('2021-03-01')" placement="bottom">
+                {{ optionalSuffixInParens('Databases', countDatabases) }}
               </popup-anchor>
             </span>
           </template>
 
           <div>
-            <molecular-databases
-              :group-id="groupId"
-              :can-delete="canEdit"
-            />
+            <molecular-databases :group-id="groupId" :can-delete="canEdit" />
           </div>
         </el-tab-pane>
-        <el-tab-pane
-          v-if="canEdit && groupId != null"
-          name="settings"
-          label="Settings"
-          lazy
-        >
+        <el-tab-pane v-if="canEdit && groupId != null" name="settings" label="Settings" lazy>
           <group-settings :group-id="groupId" />
         </el-tab-pane>
       </el-tabs>
@@ -170,9 +99,9 @@
   </div>
 </template>
 <script lang="ts">
-import {defineComponent, ref, watch, computed, inject } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import {DefaultApolloClient, useQuery, useSubscription} from '@vue/apollo-composable';
+import { defineComponent, ref, watch, computed, inject } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { DefaultApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
 import { datasetDeletedQuery, DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset'
 import DatasetList from '../Datasets/list/DatasetList.vue'
 import {
@@ -202,14 +131,13 @@ import MolecularDatabases from '../MolecularDatabases'
 import config from '../../lib/config'
 import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
 import { RequestedAccessDialog } from './RequestedAccessDialog'
-import {ElTabs, ElButton, ElTabPane, ElLoading, ElAlert} from "element-plus";
-import {useStore} from "vuex";
+import { ElTabs, ElButton, ElTabPane, ElLoading, ElAlert } from 'element-plus'
+import { useStore } from 'vuex'
 
 interface ViewGroupProfileData {
-  allDatasets: DatasetDetailItem[];
-  countDatasets: number;
+  allDatasets: DatasetDetailItem[]
+  countDatasets: number
 }
-
 
 export default defineComponent({
   components: {
@@ -228,49 +156,61 @@ export default defineComponent({
     ElTabPane,
   },
   directives: {
-    'loading': ElLoading.directive,
+    loading: ElLoading.directive,
   },
   setup() {
-    const store = useStore();
-    const route = useRoute();
-    const router = useRouter();
-    const confirmAsync = useConfirmAsync();
-    const apolloClient = inject(DefaultApolloClient);
-    const loaded = ref(false);
-    const showTransferDatasetsDialog = ref(false);
-    const showRequestedDialog = ref(false);
-    const maxVisibleDatasets = ref(8);
+    const store = useStore()
+    const route = useRoute()
+    const router = useRouter()
+    const confirmAsync = useConfirmAsync()
+    const apolloClient = inject(DefaultApolloClient)
+    const loaded = ref(false)
+    const showTransferDatasetsDialog = ref(false)
+    const showRequestedDialog = ref(false)
+    const maxVisibleDatasets = ref(8)
 
     const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, {
-      fetchPolicy: 'cache-first'
-    });
-    const currentUser : any = computed(() => currentUserResult.value != null ? currentUserResult.value.currentUser
-      : null)
+      fetchPolicy: 'cache-first',
+    })
+    const currentUser: any = computed(() =>
+      currentUserResult.value != null ? currentUserResult.value.currentUser : null
+    )
     const groupIdOrSlug = computed(() => route.params?.groupIdOrSlug as string | null)
 
     const groupQuery = computed(() => {
       if (isUuid(groupIdOrSlug.value as string)) {
-        return gql`query GroupProfileById($groupIdOrSlug: ID!) {
-              group(groupId: $groupIdOrSlug) { ...ViewGroupFragment hasPendingRequest }
+        return gql`
+          query GroupProfileById($groupIdOrSlug: ID!) {
+            group(groupId: $groupIdOrSlug) {
+              ...ViewGroupFragment
+              hasPendingRequest
             }
-            ${ViewGroupFragment}`
+          }
+          ${ViewGroupFragment}
+        `
       } else {
-        return gql`query GroupProfileBySlug($groupIdOrSlug: String!) {
-              group: groupByUrlSlug(urlSlug: $groupIdOrSlug) { ...ViewGroupFragment hasPendingRequest }
+        return gql`
+          query GroupProfileBySlug($groupIdOrSlug: String!) {
+            group: groupByUrlSlug(urlSlug: $groupIdOrSlug) {
+              ...ViewGroupFragment
+              hasPendingRequest
             }
-            ${ViewGroupFragment}`
+          }
+          ${ViewGroupFragment}
+        `
       }
     })
 
-
-    const { result: groupResult, refetch: refetchGroup, loading: groupLoading } =
-      useQuery(groupQuery.value,
-        () => ({ groupIdOrSlug: groupIdOrSlug.value }), {
-        // Can't be 'no-cache' because `refetchGroup` is used for updating the cache, which in turn updates
-        // MetaspaceHeader's primaryGroup & the group.hasPendingRequest notification
-        fetchPolicy: 'network-only'
-      });
-    const group = computed(() => groupResult.value?.group as ViewGroupResult | null);
+    const {
+      result: groupResult,
+      refetch: refetchGroup,
+      loading: groupLoading,
+    } = useQuery(groupQuery.value, () => ({ groupIdOrSlug: groupIdOrSlug.value }), {
+      // Can't be 'no-cache' because `refetchGroup` is used for updating the cache, which in turn updates
+      // MetaspaceHeader's primaryGroup & the group.hasPendingRequest notification
+      fetchPolicy: 'network-only',
+    })
+    const group = computed(() => groupResult.value?.group as ViewGroupResult | null)
 
     const groupId = computed((): string | null => {
       if (isUuid(groupIdOrSlug.value as string)) {
@@ -280,10 +220,16 @@ export default defineComponent({
       }
     })
 
-    const { result: dataResult, onResult: onDataResult, refetch: refetchData } = useQuery(gql`query GroupProfileDatasets(
-          $groupId: ID!,
-          $maxVisibleDatasets: Int!,
-          $inpFdrLvls: [Int!] = [10],
+    const {
+      result: dataResult,
+      onResult: onDataResult,
+      refetch: refetchData,
+    } = useQuery(
+      gql`
+        query GroupProfileDatasets(
+          $groupId: ID!
+          $maxVisibleDatasets: Int!
+          $inpFdrLvls: [Int!] = [10]
           $checkLvl: Int = 10
         ) {
           allDatasets(offset: 0, limit: $maxVisibleDatasets, filter: { group: $groupId }) {
@@ -292,41 +238,45 @@ export default defineComponent({
           countDatasets(filter: { group: $groupId })
         }
 
-        ${datasetDetailItemFragment}`, () => (
-      {
+        ${datasetDetailItemFragment}
+      `,
+      () => ({
         maxVisibleDatasets: maxVisibleDatasets.value,
         groupId: groupId.value,
+      }),
+      () => {
+        return {
+          enabled: groupId.value != null,
+        }
       }
-    ), () => {
-      return {
-        enabled: groupId.value != null
-      }
-    });
+    )
     onDataResult(() => {
       // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
       // button that causes this query to refetch.
       setTimeout(() => {
-        loaded.value = true;
+        loaded.value = true
       }, 300)
-    });
-    const data = computed(() => dataResult.value as ViewGroupProfileData | null);
+    })
+    const data = computed(() => dataResult.value as ViewGroupProfileData | null)
 
-    const { onResult } = useSubscription(datasetDeletedQuery);
+    const { onResult } = useSubscription(datasetDeletedQuery)
 
     onResult(({ data }) => {
       if (data && data.datasetDeleted) {
-        removeDatasetFromAllDatasetsQuery('data', data.datasetDeleted.id);
+        removeDatasetFromAllDatasetsQuery('data', data.datasetDeleted.id)
       }
-    });
+    })
 
-    const currentUserId = computed(() => currentUser.value?.id);
-    const roleInGroup = computed(() => group.value?.currentUserRole);
-    const groupDatasets = computed(() : DatasetDetailItem[] => (data.value?.allDatasets || []).filter(ds => ds.status !== 'FAILED'))
-    const countDatasets = computed(() : number => (data.value?.countDatasets || 0))
-    const members = computed(() => (group.value?.members || []))
-    const countMembers = computed(() => (group.value?.numMembers || 0))
-    const countDatabases = computed(() => (group.value?.numDatabases || 0))
-    const isGroupMember = computed(() => (roleInGroup.value === 'MEMBER' || roleInGroup.value === 'GROUP_ADMIN'))
+    const currentUserId = computed(() => currentUser.value?.id)
+    const roleInGroup = computed(() => group.value?.currentUserRole)
+    const groupDatasets = computed((): DatasetDetailItem[] =>
+      (data.value?.allDatasets || []).filter((ds) => ds.status !== 'FAILED')
+    )
+    const countDatasets = computed((): number => data.value?.countDatasets || 0)
+    const members = computed(() => group.value?.members || [])
+    const countMembers = computed(() => group.value?.numMembers || 0)
+    const countDatabases = computed(() => group.value?.numDatabases || 0)
+    const isGroupMember = computed(() => roleInGroup.value === 'MEMBER' || roleInGroup.value === 'GROUP_ADMIN')
     const tab = computed(() => {
       if (['description', 'datasets', 'members', 'databases', 'settings'].includes(route.query.tab as string)) {
         return route.query.tab
@@ -334,14 +284,13 @@ export default defineComponent({
         return 'datasets'
       }
     })
-    const isInvited = computed((): boolean => roleInGroup.value === 'INVITED');
+    const isInvited = computed((): boolean => roleInGroup.value === 'INVITED')
     const datasetsListLink = computed(() => ({
       path: '/datasets',
       query: groupId.value && encodeParams({ group: groupId.value }),
-    }));
+    }))
     const canEdit = computed(() => {
-      return roleInGroup.value === UserGroupRoleOptions.GROUP_ADMIN
-        || currentUser.value?.role === 'admin'
+      return roleInGroup.value === UserGroupRoleOptions.GROUP_ADMIN || currentUser.value?.role === 'admin'
     })
     const countHiddenMembers = computed(() => {
       if (countMembers.value != null) {
@@ -350,46 +299,40 @@ export default defineComponent({
         return 0
       }
     })
-    const hasMembershipRequest = computed(() => members.value?.some(m => m.role === UserGroupRoleOptions.PENDING))
+    const hasMembershipRequest = computed(() => members.value?.some((m) => m.role === UserGroupRoleOptions.PENDING))
     const showDatabasesTab = computed(() => config.features.moldb_mgmt && (isGroupMember.value || canEdit.value))
 
     const setTab = (newTab: string | null) => {
-     router.replace({ query: { tab: newTab } })
+      router.replace({ query: { tab: newTab } })
     }
 
-
     const canonicalizeUrl = () => {
-      if (
-        group.value !== null
-        && group.value?.urlSlug !== null
-        && groupIdOrSlug.value !== group.value?.urlSlug
-      ) {
+      if (group.value !== null && group.value?.urlSlug !== null && groupIdOrSlug.value !== group.value?.urlSlug) {
         router.replace({
-          params: { groupIdOrSlug: group.value?.urlSlug},
+          params: { groupIdOrSlug: group.value?.urlSlug },
           query: route.query,
         })
       }
     }
 
     const groupSlug = computed(() => route.params?.groupIdOrSlug || group.value?.urlSlug)
-    watch(() => groupSlug, () => {
-      canonicalizeUrl()
-    });
+    watch(
+      () => groupSlug,
+      () => {
+        canonicalizeUrl()
+      }
+    )
 
     const handleRequestAccess = async () => {
       showTransferDatasetsDialog.value = true
-    };
+    }
 
     const handleAcceptInvite = async () => {
       showTransferDatasetsDialog.value = true
-    };
+    }
 
-
-    const refetch = async() => {
-      return Promise.all([
-        refetchGroup(),
-        refetchData(),
-      ])
+    const refetch = async () => {
+      return Promise.all([refetchGroup(), refetchData()])
     }
 
     const handleRejectInvite = async () => {
@@ -397,7 +340,7 @@ export default defineComponent({
         title: 'Decline invitation',
         message: 'Are you sure?',
         confirmButtonText: 'Decline invitation',
-      };
+      }
 
       await confirmAsync(confirmOptions, async () => {
         await apolloClient.mutate({
@@ -405,8 +348,8 @@ export default defineComponent({
           variables: { groupId: groupId.value },
         })
         await refetch()
-      });
-    };
+      })
+    }
 
     const handleAcceptTransferDatasets = async (selectedDatasetIds: string[]) => {
       try {
@@ -468,8 +411,6 @@ export default defineComponent({
       refetchGroup()
     }
 
-
-
     // Return everything that will be used in your template
     return {
       loaded,
@@ -509,42 +450,42 @@ export default defineComponent({
       countHiddenMembers,
       hasMembershipRequest,
       showDatabasesTab,
-    };
+    }
   },
-});
+})
 </script>
 <style scoped lang="scss">
-  @import "element-plus/theme-chalk/src/mixins/mixins";
+@import 'element-plus/theme-chalk/src/mixins/mixins';
 
-  .page {
-    display: flex;
-    justify-content: center;
-    min-height: 80vh; // Ensure there's space for the loading spinner before is visible
-  }
-  .page-content {
-    width: 950px;
-    margin-left: 20px;
-    margin-right: 20px;
-  }
+.page {
+  display: flex;
+  justify-content: center;
+  min-height: 80vh; // Ensure there's space for the loading spinner before is visible
+}
+.page-content {
+  width: 950px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
 
-  .header-row {
-    display: flex;
-    flex-wrap: wrap;
-  }
-  .header-names {
-    display: flex;
-    align-items: baseline;
-  }
-  .header-buttons {
-    display: flex;
-    justify-content: flex-end;
-    flex-grow: 1;
-    align-self: center;
-    margin-right: 3px;
-  }
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+.header-names {
+  display: flex;
+  align-items: baseline;
+}
+.header-buttons {
+  display: flex;
+  justify-content: flex-end;
+  flex-grow: 1;
+  align-self: center;
+  margin-right: 3px;
+}
 
-  .hidden-members-text {
-    @apply text-gray-600;
-    text-align: center;
-  }
+.hidden-members-text {
+  @apply text-gray-600;
+  text-align: center;
+}
 </style>

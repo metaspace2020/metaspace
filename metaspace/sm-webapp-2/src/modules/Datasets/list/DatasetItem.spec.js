@@ -1,10 +1,10 @@
-import { mount } from '@vue/test-utils';
-import DatasetItem from './DatasetItem.vue';
-import router from "../../../router";
-import store from "../../..//store";
-import { nextTick } from "vue";
-import {initMockGraphqlClient} from "../../../tests/utils/mockGraphqlClient";
-import {DefaultApolloClient} from "@vue/apollo-composable";
+import { mount } from '@vue/test-utils'
+import DatasetItem from './DatasetItem.vue'
+import router from '../../../router'
+import store from '../../..//store'
+import { nextTick } from 'vue'
+import { initMockGraphqlClient } from '../../../tests/utils/mockGraphqlClient'
+import { DefaultApolloClient } from '@vue/apollo-composable'
 
 let graphqlMockClient
 
@@ -41,7 +41,7 @@ describe('DatasetItem', () => {
     organismPart: 'organismPart',
     condition: 'condition',
     analyzer: {
-      type: 'type'
+      type: 'type',
     },
     projects: [],
     canEdit: true,
@@ -51,10 +51,10 @@ describe('DatasetItem', () => {
   const underReview = { name: 'project', publicationStatus: 'UNDER_REVIEW' }
   const published = { name: 'project', publicationStatus: 'PUBLISHED' }
 
-  beforeEach(async() => {
+  beforeEach(async () => {
     graphqlMockClient = await initMockGraphqlClient({
       Query: () => ({
-        allAnnotations: () => ([]),
+        allAnnotations: () => [],
         countAnnotations: () => 1,
       }),
     })
@@ -65,120 +65,119 @@ describe('DatasetItem', () => {
       global: {
         plugins: [router, store],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
       props: {
         currentUser: submitter,
         dataset,
       },
-    });
+    })
 
-    await nextTick();
+    await nextTick()
 
-    expect(wrapper.html()).toMatchSnapshot();
-  });
+    expect(wrapper.html()).toMatchSnapshot()
+  })
 
   it('should not show the publication status if cannot edit', async () => {
     const wrapper = mount(DatasetItem, {
       global: {
         plugins: [router, store],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
       props: {
         currentUser: user,
         dataset: {
           ...dataset,
           canEdit: false,
-          projects: [published]
+          projects: [published],
         },
       },
-    });
-    await nextTick();
+    })
+    await nextTick()
     expect(wrapper.find('.test-publication-status').exists()).toBe(false)
-  });
+  })
 
   it('should not show the publication status if processing', async () => {
     const wrapper = mount(DatasetItem, {
       global: {
         plugins: [router, store],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
       props: {
         currentUser: submitter,
         dataset: {
           ...dataset,
           projects: [published],
-          status: 'ANNOTATING'
-        }
+          status: 'ANNOTATING',
+        },
       },
-    });
-    await nextTick();
+    })
+    await nextTick()
     expect(wrapper.find('.test-publication-status').exists()).toBe(false)
-  });
+  })
 
   it('should show "Under review" status', async () => {
     const wrapper = mount(DatasetItem, {
       global: {
         plugins: [router, store],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
       props: {
         currentUser: submitter,
         dataset: {
           ...dataset,
-          projects: [underReview]
-        }
+          projects: [underReview],
+        },
       },
-    });
-    await nextTick();
+    })
+    await nextTick()
     expect(wrapper.find('.test-publication-status').text()).toBe('Under review')
-  });
+  })
 
   it('should show "Published" status', async () => {
     const wrapper = mount(DatasetItem, {
       global: {
         plugins: [router, store],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
       props: {
         currentUser: submitter,
         dataset: {
           ...dataset,
-          projects: [published]
-        }
+          projects: [published],
+        },
       },
-    });
-    await nextTick();
+    })
+    await nextTick()
     expect(wrapper.find('.test-publication-status').text()).toBe('Published')
-  });
+  })
 
   it('should prefer "Published" status', async () => {
     const wrapper = mount(DatasetItem, {
       global: {
         plugins: [router, store],
         provide: {
-          [DefaultApolloClient]: graphqlMockClient
-        }
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
       props: {
         currentUser: submitter,
         dataset: {
           ...dataset,
-          projects: [published, underReview]
-        }
+          projects: [published, underReview],
+        },
       },
-    });
-    await nextTick();
+    })
+    await nextTick()
     expect(wrapper.find('.test-publication-status').text()).toBe('Published')
-  });
-
-});
+  })
+})

@@ -1,15 +1,11 @@
 <template>
-  <form
-    v-bind="attrs"
-    action="#"
-    @submit.prevent="emit('submit')"
-  >
+  <form v-bind="attrs" action="#" @submit.prevent="emit('submit')">
     <slot />
   </form>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent } from 'vue'
 
 export default defineComponent({
   name: 'FormComponent',
@@ -18,9 +14,9 @@ export default defineComponent({
     return {
       attrs,
       emit,
-    };
+    }
   },
-});
+})
 </script>
 
 <style scoped>

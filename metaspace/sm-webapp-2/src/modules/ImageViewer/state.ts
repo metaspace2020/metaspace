@@ -1,4 +1,4 @@
-import { reactive, toRefs } from 'vue';
+import { reactive, toRefs } from 'vue'
 
 export type MenuStates = 'NONE' | 'ION' | 'OPTICAL'
 export type ViewerModes = 'SINGLE' | 'MULTI'
@@ -22,7 +22,7 @@ export function setMenu(name: MenuStates) {
 }
 
 export function toggleMode() {
-  state.mode = (state.mode === 'SINGLE' ? 'MULTI' : 'SINGLE')
+  state.mode = state.mode === 'SINGLE' ? 'MULTI' : 'SINGLE'
 }
 
 export function exportImageViewerState() {

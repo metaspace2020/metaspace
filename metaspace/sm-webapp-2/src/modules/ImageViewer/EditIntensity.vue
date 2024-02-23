@@ -19,7 +19,7 @@
         :class="[
           'w-full h-6 pl-2 pr-6 box-border border border-solid text-body border-gray-300 bg-white rounded-sm',
           'text-xs tracking-wider transition-colors duration-150 ease-in-out outline-none shadow',
-          error ? 'border-danger' : 'focus:border-primary hover:border-gray-500'
+          error ? 'border-danger' : 'focus:border-primary hover:border-gray-500',
         ]"
         type="text"
         :title="label"
@@ -28,19 +28,10 @@
       />
     </label>
     <fade-transition class="button-reset absolute top-0 right-0 w-5 h-5 rounded-sm">
-      <button
-        v-if="inputText !== initialValue"
-        key="submit"
-        type="submit"
-      >
+      <button v-if="inputText !== initialValue" key="submit" type="submit">
         <ArrowIcon />
       </button>
-      <button
-        v-else-if="inputText.length"
-        key="clear"
-        type="button"
-        @click="$emit('reset')"
-      >
+      <button v-else-if="inputText.length" key="clear" type="button" @click="$emit('reset')">
         <CloseIcon />
       </button>
     </fade-transition>
@@ -52,13 +43,11 @@ import { defineComponent, ref, onMounted, onBeforeUnmount, defineAsyncComponent 
 import FadeTransition from '../../components/FadeTransition'
 import useOutClick from '../../lib/useOutClick'
 
-const ArrowIcon = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-arrow-thin-right-circle.svg')
-);
+const ArrowIcon = defineAsyncComponent(
+  () => import('../../assets/inline/refactoring-ui/icon-arrow-thin-right-circle.svg')
+)
 
-const CloseIcon = defineAsyncComponent(() =>
-  import('../../assets/inline/refactoring-ui/icon-close.svg')
-);
+const CloseIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-close.svg'))
 
 export default defineComponent({
   components: {
