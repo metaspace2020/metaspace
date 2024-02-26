@@ -88,7 +88,7 @@ def upload_test_imzml(storage: Storage, sm_config, ds_config):
     bucket, prefix = sm_config['lithops']['sm_storage']['imzml']
     storage.put_cloudobject(imzml_content, bucket, f'{prefix}/test_ds/test.imzML')
     storage.put_cloudobject(ibd_content, bucket, f'{prefix}/test_ds/test.ibd')
-    return f'cos://{bucket}/{prefix}/test_ds'
+    return f's3a://{bucket}/{prefix}/test_ds'
 
 
 @contextmanager

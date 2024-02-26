@@ -142,6 +142,10 @@ const DatabasesTable = defineComponent<Props>({
             label="Public annotations"
           />
           <CheckColumn
+            prop="isVisible"
+            label="Public database"
+          />
+          <CheckColumn
             prop="archived"
             label="Archived"
           />

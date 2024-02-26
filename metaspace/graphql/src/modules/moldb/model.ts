@@ -51,6 +51,10 @@ export class MolecularDB {
   @Column({ type: 'boolean', default: false })
   isPublic: boolean;
 
+  // field name is `is_visible` in the database, flag to allow custom database to be used to annotation for all users
+  @Column({ type: 'boolean', default: false })
+  isVisible: boolean;
+
   @Column({ type: 'boolean', default: false })
   archived: boolean;
 

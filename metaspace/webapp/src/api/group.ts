@@ -192,6 +192,7 @@ export const getGroupDatabasesQuery =
         createdDT
         id
         isPublic
+        isVisible
         name
         version
         user { id name email}
@@ -205,6 +206,13 @@ export const getUserGroupsQuery =
       ...ViewGroupFragment
     }
   }${ViewGroupFragment}`
+
+export const getDetectabilitySourcesQuery =
+  gql`query GetDetectabilitySourcesQuery {
+    allSources {
+      source
+    }
+  }`
 
 export const countGroupDatasets =
   gql`query ($groupId: ID!) { countDatasets(filter: { group: $groupId }) }`

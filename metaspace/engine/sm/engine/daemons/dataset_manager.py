@@ -14,6 +14,7 @@ from sm.engine.annotation.job import del_jobs
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_spark.annotation_job import AnnotationJob
+from sm.engine.postprocessing.cloudwatch import get_costs, add_cost_to_perf_profile_entries
 from sm.engine.postprocessing.colocalization import Colocalization
 from sm.engine.daemons.actions import DaemonActionStage
 from sm.engine.dataset import Dataset, DatasetStatus
@@ -26,6 +27,7 @@ from sm.engine.postprocessing.ion_thumbnail import (
 )
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
 from sm.engine.postprocessing.off_sample_wrapper import classify_dataset_ion_images
+from sm.engine.postprocessing.ds_size_hash import save_size_hash
 from sm.engine.optical_image import del_optical_image
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import perf_profile
@@ -41,8 +43,17 @@ class DatasetManager:
         self.logger = logger or logging.getLogger()
 
         if 'aws' in self._sm_config:
+            self.cost = None
+
             self.ses = boto3.client(
                 'ses',
+                'eu-west-1',
+                aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+                aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
+            )
+
+            self.cloudwatch = boto3.client(
+                'logs',
                 'eu-west-1',
                 aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
                 aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'],
@@ -113,7 +124,8 @@ class DatasetManager:
         with perf_profile(self._db, 'annotate_lithops', ds.id) as perf:
             executor = Executor(self._sm_config['lithops'], perf=perf)
 
-            ServerAnnotationJob(executor, ds, perf, perform_enrichment=perform_enrichment).run()
+            job = ServerAnnotationJob(executor, ds, perf, perform_enrichment=perform_enrichment)
+            job.run()
 
             if self._sm_config['services'].get('colocalization', True):
                 Colocalization(self._db).run_coloc_job_lithops(executor, ds, reprocess=del_first)
@@ -125,6 +137,20 @@ class DatasetManager:
                     ds=ds,
                     only_if_needed=not del_first,
                 )
+
+            profile_id = perf._profile_id  # pylint: disable=protected-access
+
+        save_size_hash(
+            executor=executor, ds=ds, db=self._db, imzml_cobj=job.imzml_cobj, ibd_cobj=job.ibd_cobj
+        )
+
+        # costs from Cloudwatch Logs
+        log_groups = self._sm_config['lithops']['aws_lambda'].get('cloudwatch_log_groups')
+        if log_groups:
+            costs_by_step = get_costs(self.cloudwatch, self._db, log_groups, profile_id)
+            add_cost_to_perf_profile_entries(self._db, costs_by_step)
+            self.cost = round(sum(costs_by_step.values()), 4)
+            self.logger.info(f'Total costs: ${self.cost}')
 
     def index(self, ds: Dataset):
         """Re-index all search results for the dataset.

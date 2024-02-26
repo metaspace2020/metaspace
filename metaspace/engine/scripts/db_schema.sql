@@ -29,6 +29,7 @@ CREATE TABLE "public"."molecular_db" (
   "link" text, 
   "citation" text, 
   "is_public" boolean NOT NULL DEFAULT false, 
+  "is_visible" boolean NOT NULL DEFAULT false, 
   "archived" boolean NOT NULL DEFAULT false, 
   "targeted" boolean NOT NULL DEFAULT false, 
   "group_id" uuid, 

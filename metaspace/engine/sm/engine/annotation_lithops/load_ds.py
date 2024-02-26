@@ -1,30 +1,22 @@
 from __future__ import annotations
 
-import hashlib
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Any
 
 import numpy as np
 import pandas as pd
-from ibm_boto3.s3.transfer import TransferConfig, MB
+
 from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
-from sm.engine.annotation_lithops.executor import Executor
+from sm.engine.annotation_lithops.executor import Executor, MEM_LIMITS
 from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj
 from sm.engine.config import SMConfig
-from sm.engine.storage import get_s3_client
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
 logger = logging.getLogger('annotation-pipeline')
-
-
-def _print_times(start, name):
-    end = datetime.now().replace(microsecond=0)
-    print(f'{end.isoformat(" ")} - {name} - {(end - start).total_seconds()} sec')
 
 
 def _load_spectra(storage, imzml_reader):
@@ -45,45 +37,39 @@ def _load_spectra(storage, imzml_reader):
     chunk_bounds = np.linspace(0, imzml_reader.n_spectra, n_chunks + 1, dtype=np.int64)
     spectrum_chunks = zip(chunk_bounds, chunk_bounds[1:])
 
-    start = datetime.now().replace(microsecond=0)
     with ThreadPoolExecutor(4) as executor:
         for _ in executor.map(read_spectrum_chunk, spectrum_chunks):
             pass
 
-    _print_times(start, '_load_spectra')
     return np.concatenate(mz_arrays), np.concatenate(int_arrays), sp_lens
 
 
-def _sort_spectra(imzml_reader, mzs, ints, sp_lens):
+def _sort_spectra(imzml_reader, perf, mzs, ints, sp_lens):
     # Mergesort is used for 2 reasons:
     # * It's much faster than the default quicksort, because m/z data is already partially sorted
     #   and the underlying "Timsort" implementation is optimized for partially-sorted data.
     # * It's a "stable sort", meaning it will preserve the ordering by spectrum index if mz values
     #   are equal. The order of pixels affects some metrics, so this stability is important.
-    start_t = datetime.now().replace(microsecond=0)
     by_mz = np.argsort(mzs, kind='mergesort')
-    _print_times(start_t, 'by_mz')
+    perf.record_entry('by_mz')
 
     # The existing `mzs` and `ints` arrays can't be garbage-collected because the calling function
     # holds references to them. Overwrite the original arrays with the temp sorted arrays so that
     # the temp arrays can be freed instead.
-    start_t = datetime.now().replace(microsecond=0)
     mzs[:] = mzs[by_mz]
-    _print_times(start_t, 'sort mzs')
+    perf.record_entry('sort_mzs')
 
-    start_t = datetime.now().replace(microsecond=0)
     ints[:] = ints[by_mz]
-    _print_times(start_t, 'sort ints')
+    perf.record_entry('sort_ints')
 
     # Build sp_idxs after sorting mzs. Sorting mzs uses the most memory, so it's best to keep
     # sp_idxs in a compacted form with sp_lens until the last minute.
-    start_t = datetime.now().replace(microsecond=0)
     sp_idxs = np.empty(len(ints), np.uint32)
     sp_lens = np.insert(np.cumsum(sp_lens), 0, 0)
     for sp_idx, start, end in zip(imzml_reader.pixel_indexes, sp_lens[:-1], sp_lens[1:]):
         sp_idxs[start:end] = sp_idx
     sp_idxs = sp_idxs[by_mz]
-    _print_times(start_t, 'sort sp_idxs')
+    perf.record_entry('sort_idxs')
 
     return mzs, ints, sp_idxs
 
@@ -106,69 +92,69 @@ def _upload_segments(storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs)
         )
         return save_cobj(storage, df)
 
-    start_t = datetime.now().replace(microsecond=0)
     with ThreadPoolExecutor(4) as executor:
         ds_segms_cobjs = list(executor.map(upload_segm, segm_ranges))
-    _print_times(start_t, 'upload_segm')
 
     return ds_segms_cobjs, ds_segments_bounds, ds_segm_lens
 
 
-def _upload_imzml_browser_files_to_cos(storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs):
-    """Save imzml browser files on COS"""
+def _prepare_storage_imzml_browser_files(
+    imzml_cobject: CloudObject, conf: Dict[str, Any]
+) -> Tuple[Storage, str]:
+    """Storage initialization for imzml browser files"""
+    browser_storage = Storage(conf['lithops'])
+    browser_storage.bucket = conf['imzml_browser_storage']['bucket']
+    uuid = imzml_cobject.key.split('/')[0]
+    return browser_storage, uuid
 
-    def upload_file(data, key):
-        return storage.put_cloudobject(data.astype('f').tobytes(), key=key)
 
-    prefix = f'imzml_browser/{imzml_cobject.key.split("/")[1]}'
-    keys = [f'{prefix}/{var}.npy' for var in ['mzs', 'ints', 'sp_idxs']]
-    start_t = datetime.now().replace(microsecond=0)
+def _upload_imzml_browser_files(
+    mzs: np.array,
+    ints: np.array,
+    sp_idxs: np.array,
+    imzml_reader: LithopsImzMLReader,
+    browser_storage: Storage,
+    uuid: str,
+) -> None:
+    """Save imzML browser files on the object storage"""
+
+    def upload_file(data: np.array, key: str) -> CloudObject:
+        return browser_storage.put_cloudobject(data.astype('f').tobytes(), key=key)
+
+    # TODO: need reimplement save_cobj for file > 5 GB
+    # https://github.com/metaspace2020/metaspace/issues/1469
+    if mzs.itemsize > 4:
+        mzs = mzs.astype('f')
+    if ints.itemsize > 4:
+        ints = ints.astype('f')
+
+    if any(o.nbytes >= 5 * 1024 ** 3 for o in (mzs, ints, sp_idxs)):
+        print('At least one object has a size of more than 5 GB')
+        return
+
+    # there was no point in saving `sp_idxs` like float, it was a mistake
+    # due to the thousands of files stored on S3, we cannot now store this array as np.int32 now
+    keys = [f'{uuid}/{k}' for k in ['mzs.npy', 'ints.npy', 'sp_idxs.npy']]
     with ThreadPoolExecutor(3) as executor:
         cobjs = list(executor.map(upload_file, [mzs, ints, sp_idxs], keys))
-    _print_times(start_t, 'upload_imzml_files')
 
     chunk_records_number = 1024
-    data = mzs[::chunk_records_number].astype('f')
-    cobjs.append(storage.put_cloudobject(data.tobytes(), key=f'{prefix}/mz_index.npy'))
+    mz_index = mzs[::chunk_records_number]
+    cobjs.append(browser_storage.put_cloudobject(mz_index.tobytes(), key=f'{uuid}/mz_index.npy'))
 
-    data = imzml_reader.imzml_reader
-    cobjs.append(save_cobj(storage, data, key=f'{prefix}/portable_spectrum_reader.pickle'))
-
-    return cobjs
-
-
-def _get_hash(
-    storage: Storage, imzml_cobject: CloudObject, ibd_cobject: CloudObject
-) -> Dict[str, str]:
-    """Calculate md5 hash of imzML/ibd files"""
-
-    def calc_hash(file_object: CloudObject, chunk_size: int = 8 * 1024 * 1024) -> str:
-        md5_hash = hashlib.md5()
-        chunk = file_object.read(chunk_size)
-        while chunk:
-            md5_hash.update(chunk)
-            chunk = file_object.read(chunk_size)
-
-        return md5_hash.hexdigest()
-
-    start_t = datetime.now().replace(microsecond=0)
-    hash_sum = {
-        'imzml': calc_hash(storage.get_cloudobject(imzml_cobject, stream=True)),
-        'ibd': calc_hash(storage.get_cloudobject(ibd_cobject, stream=True)),
-    }
-    _print_times(start_t, 'calc_hash')
-
-    return hash_sum
+    key = f'{uuid}/portable_spectrum_reader.pickle'
+    cobjs.append(save_cobj(browser_storage, imzml_reader.imzml_reader, key=key))
 
 
 def _load_ds(
     imzml_cobject: CloudObject,
     ibd_cobject: CloudObject,
     ds_segm_size_mb: int,
+    conf: Dict[str, Any],
     *,
     storage: Storage,
     perf: SubtaskProfiler,
-) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray, List[CObj]]:
+) -> Tuple[LithopsImzMLReader, np.ndarray, List[CObj[pd.DataFrame]], np.ndarray]:
     logger.info('Loading .imzML file...')
     imzml_reader = LithopsImzMLReader(storage, imzml_cobject, ibd_cobject)
     perf.record_entry(
@@ -183,8 +169,7 @@ def _load_ds(
     perf.record_entry('read spectra', n_peaks=len(mzs))
 
     logger.info('Sorting spectra')
-    mzs, ints, sp_idxs = _sort_spectra(imzml_reader, mzs, ints, sp_lens)
-    perf.record_entry('sorted spectra')
+    mzs, ints, sp_idxs = _sort_spectra(imzml_reader, perf, mzs, ints, sp_lens)
 
     logger.info('Uploading segments')
     ds_segms_cobjs, ds_segments_bounds, ds_segm_lens = _upload_segments(
@@ -192,61 +177,17 @@ def _load_ds(
     )
     perf.record_entry('uploaded segments', n_segms=len(ds_segms_cobjs))
 
-    logger.info('Uploading related to imzml browser files')
-    imzml_browser_cobjs = _upload_imzml_browser_files_to_cos(
-        storage, imzml_cobject, imzml_reader, mzs, ints, sp_idxs
-    )
+    logger.info('Uploading imzml browser files')
+    browser_storage, uuid = _prepare_storage_imzml_browser_files(imzml_cobject, conf)
+    _upload_imzml_browser_files(mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid)
     perf.record_entry('uploaded imzml browser files')
-
-    logger.info('Calculating md5 hash of imzML/ibd files')
-    md5_hash = _get_hash(storage, imzml_cobject, ibd_cobject)
-    perf.record_entry('calculate hash')
 
     return (
         imzml_reader,
         ds_segments_bounds,
         ds_segms_cobjs,
         ds_segm_lens,
-        imzml_browser_cobjs,
-        md5_hash,
     )
-
-
-def _upload_imzml_browser_files(storage: Storage, imzml_browser_cobjs: List[CObj]):
-    """Move files from COS to S3"""
-    conf = SMConfig.get_conf()
-    s3_client = get_s3_client(sm_config=conf)
-    transfer_config = TransferConfig(
-        multipart_chunksize=20 * MB, max_concurrency=10, io_chunksize=1 * MB
-    )
-
-    def upload_file(cobj):
-        logger.info(f'Uploading {cobj.key}')
-        file_object = storage.get_cloudobject(cobj, stream=True)
-        s3_client.upload_fileobj(
-            Bucket=conf['imzml_browser_storage']['bucket'],
-            Key=cobj.key.split('/', 1)[-1],
-            Fileobj=file_object,
-            Config=transfer_config,
-        )
-
-    with ThreadPoolExecutor(3) as executor:
-        for _ in executor.map(upload_file, imzml_browser_cobjs):
-            pass
-
-
-def _get_size_hash(imzml_head, ibd_head, md5_hash, ds_id):
-    """Save hash and size only for ServerAnnotationJob (ds_id is not None)"""
-    size_hash = {}
-    if ds_id:
-        size_hash = {
-            'imzml_hash': md5_hash['imzml'],
-            'ibd_hash': md5_hash['ibd'],
-            'imzml_size': int(imzml_head['content-length']),
-            'ibd_size': int(ibd_head['content-length']),
-        }
-
-    return size_hash
 
 
 def load_ds(
@@ -259,8 +200,8 @@ def load_ds(
     try:
         imzml_head = executor.storage.head_object(imzml_cobject.bucket, imzml_cobject.key)
         ibd_head = executor.storage.head_object(ibd_cobject.bucket, ibd_cobject.key)
-        imzml_size_mb = int(imzml_head['content-length']) / 1024 // 1024
-        ibd_size_mb = int(ibd_head['content-length']) / 1024 // 1024
+        imzml_size_mb = int(int(imzml_head['content-length']) / 1024 ** 2)
+        ibd_size_mb = int(int(ibd_head['content-length']) / 1024 ** 2)
     except Exception:
         logger.warning("Couldn't read ibd or imzml size", exc_info=True)
         ibd_size_mb = 1024
@@ -269,34 +210,25 @@ def load_ds(
     # separate m/z arrays per spectrum) approximately 3x the ibd file size is used during the
     # most memory-intense part (sorting the m/z array). Also for uploading imzml browser files
     # need plus 1x the ibd file size RAM.
-    message = f'Found {ibd_size_mb}MB .ibd and {imzml_size_mb}MB .imzML files.'
-    if ibd_size_mb * 4 + 512 < 32 * 1024:
+    message = f'Found {ibd_size_mb} MB .ibd and {imzml_size_mb} MB .imzML files id {ds_id}.'
+    runtime_memory = ibd_size_mb * 4 + 512
+    if runtime_memory < MEM_LIMITS['aws_lambda']:
         logger.info(f'{message} Trying serverless load_ds')
-        runtime_memory = max(2048, int(2 ** np.ceil(np.log2(ibd_size_mb * 3 + 512))))
+        runtime_memory = max(2048, int(2 ** np.ceil(np.log2(runtime_memory))))
     else:
         logger.info(f'{message} Using VM-based load_ds')
-        runtime_memory = 128 * 1024
+        runtime_memory = int(2 ** np.ceil(np.log2(runtime_memory)))
 
-    (
-        imzml_reader,
-        ds_segments_bounds,
-        ds_segms_cobjs,
-        ds_segm_lens,
-        imzml_browser_cobjs,
-        md5_hash,
-    ) = executor.call(
+    conf = SMConfig.get_conf()
+
+    (imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens,) = executor.call(
         _load_ds,
-        (imzml_cobject, ibd_cobject, ds_segm_size_mb),
+        (imzml_cobject, ibd_cobject, ds_segm_size_mb, conf),
         runtime_memory=runtime_memory,
     )
     logger.info(f'Segmented dataset chunks into {len(ds_segms_cobjs)} segments')
 
-    _upload_imzml_browser_files(executor.storage, imzml_browser_cobjs)
-    logger.info('Moved imzml browser files to S3')
-
-    size_hash = _get_size_hash(imzml_head, ibd_head, md5_hash, ds_id)
-
-    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens, size_hash
+    return imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens
 
 
 def validate_ds_segments(fexec, imzml_reader, ds_segments_bounds, ds_segms_cobjs, ds_segm_lens):

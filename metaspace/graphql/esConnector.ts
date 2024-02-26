@@ -166,10 +166,10 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
     order = 'asc'
   }
 
-  const sortTerm = (field: string, order: 'asc' | 'desc') => {
+  const sortTerm = (field: string, order: 'asc' | 'desc', type = 'string') => {
     const obj: any = {}
     // unmapped_type to avoid exceptions in ES when where is nothing to sort
-    obj[field] = { order: order, unmapped_type: 'string' }
+    obj[field] = { order: order, unmapped_type: type }
     return obj
   }
 
@@ -189,8 +189,8 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
   } else if (orderBy === 'ORDER_BY_DATE') {
     // dataset orderings
     return [
-      sortTerm('ds_status_update_dt', order),
-      sortTerm('ds_last_finished', order),
+      sortTerm('ds_status_update_dt', order, 'date'),
+      sortTerm('ds_last_finished', order, 'date'),
     ]
   } else if (orderBy === 'ORDER_BY_DS_SUBMITTER_NAME') {
     return [sortTerm('ds_submitter_name', order)]
@@ -213,8 +213,8 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
     return [sortTerm('ds_name', order)]
   } else if (orderBy === 'ORDER_BY_UP_DATE') {
     return [
-      sortTerm('ds_upload_dt', order),
-      sortTerm('ds_last_finished', order),
+      sortTerm('ds_upload_dt', order, 'date'),
+      sortTerm('ds_last_finished', order, 'date'),
     ]
   } else if (orderBy === 'ORDER_BY_ADDUCT') {
     return [sortTerm('adduct', order)]

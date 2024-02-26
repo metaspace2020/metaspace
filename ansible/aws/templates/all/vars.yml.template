@@ -81,20 +81,22 @@ sm_cluster_autostart_redis:
   host: "{{ web_redis.host }}"
   port: "{{ web_redis.port }}"
 
-# Configuration for IBM Cloud / Lithops. See metaspace/engine/docs/Lithops.md for instructions on setting up an
-# IBM Cloud environment. Set `sm_lithops_daemon_nprocs` to `0` to disable Lithops.
+# Configuration for AWS Cloud / Lithops.
+# See metaspace/engine/docs/Lithops.md for instructions on setting up an IBM Cloud environment.
+# TODO: Update documentation
 sm_lithops_daemon_nprocs: 0
-sm_lithops_iam_api_key: "{{ vault_lithops_iam_api_key }}"
-sm_lithops_cos_access_key: "{{ vault_lithops_cos_access_key }}"
-sm_lithops_cos_secret_key: "{{ vault_lithops_cos_secret_key }}"
-sm_lithops_cos_bucket_temp:
-sm_lithops_cos_bucket_data:
-sm_lithops_cos_bucket_imzml:
-sm_lithops_cf_ns_name:
-sm_lithops_cf_ns_id:
-sm_lithops_vpc_instance_id:
-sm_lithops_vpc_instance_ip:
-sm_lithops_vpc_ssh_private_key: "{{ vault_lithops_vpc_ssh_private_key }}"
+sm_lithops_s3_bucket_temp:
+sm_lithops_s3_bucket_imzml:
+sm_lithops_s3_bucket_centroids:
+sm_lithops_aws_lambda_namespace:
+sm_lithops_aws_lambda_execution_role: "{{ vault_lithops_lambda_execution_role }}"
+sm_lithops_aws_lambda_runtime_name:
+sm_lithops_aws_ec2_runtime_name:
+sm_lithops_aws_ec2_ssh_key_filename: "{{ vault_lithops_ssh_key_filename }}"
+sm_lithops_aws_ec2_instance_id_32_gb: "{{ vault_lithops_ec_instance_id_32_gb }}"
+sm_lithops_aws_ec2_instance_id_64_gb: "{{ vault_lithops_ec_instance_id_64_gb }}"
+sm_lithops_aws_ec2_instance_id_128_gb: "{{ vault_lithops_ec_instance_id_128_gb }}"
+sm_lithops_aws_ec2_instance_id_256_gb: "{{ vault_lithops_ec_instance_id_256_gb }}"
 
 mol_db_home: "{{ metaspace_home }}/metaspace/mol-db"
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:5001/v1"

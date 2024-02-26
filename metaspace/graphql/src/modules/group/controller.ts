@@ -295,7 +295,7 @@ export const Resolvers = {
             })
             const data : string = await res.text()
             const dataJson = JSON.parse(data)
-            const nOfPublications = dataJson.search_information.total_results
+            const nOfPublications = dataJson.search_information?.total_results
 
             redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * MINUTES * SECONDS)
             return parseInt(nOfPublications, 10)
@@ -307,6 +307,12 @@ export const Resolvers = {
       } else {
         return null
       }
+    },
+
+    async allSources(_: any, args: any, ctx: Context): Promise<GroupDetectability[]|null> {
+      return await ctx.entityManager.getRepository(GroupDetectability)
+        .createQueryBuilder('group_detectability')
+        .getMany()
     },
 
     async countGroups(_: any, args: any, ctx: Context): Promise<number|null> {

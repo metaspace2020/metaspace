@@ -100,26 +100,26 @@ def _upload_if_needed(
             return cobject
 
 
-def _upload_imzmls_from_prefix_if_needed(src_path, storage, sm_storage, s3_client=None):
-    if src_path.startswith('cos://'):
-        bucket, prefix = src_path[len('cos://') :].split('/', maxsplit=1)
-        keys = [f'cos://{bucket}/{key}' for key in storage.list_keys(bucket, prefix)]
-    elif src_path.startswith('s3a://'):
-        bucket, prefix = split_s3_path(src_path)
-        response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
-        if 'Contents' in response:
-            keys = [f"s3a://{bucket}/{item['Key']}" for item in response['Contents']]
-        else:
-            keys = []
+def _return_imzml_ibd_cobj(src_path, storage, s3_client=None):
+    """
+    Return CloudObject for imzML/ibd files.
+    Check that there is only one imzML/ibd file in the directory in the AWS S3.
+    """
+    bucket, prefix = split_s3_path(src_path)
+    response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+    if 'Contents' in response:
+        keys = [f"s3a://{bucket}/{item['Key']}" for item in response['Contents']]
     else:
-        keys = [str(p) for p in Path(src_path).iterdir()]
+        keys = []
 
     imzml_keys = [key for key in keys if key.lower().endswith('.imzml')]
     ibd_keys = [key for key in keys if key.lower().endswith('.ibd')]
     assert len(imzml_keys) == 1, imzml_keys
     assert len(ibd_keys) == 1, ibd_keys
-    imzml_cobj = _upload_if_needed(imzml_keys[0], storage, sm_storage, 'imzml', s3_client)
-    ibd_cobj = _upload_if_needed(ibd_keys[0], storage, sm_storage, 'imzml', s3_client)
+    _, imzml_key = split_s3_path(imzml_keys[0])
+    _, ibd_key = split_s3_path(ibd_keys[0])
+    imzml_cobj = CloudObject(storage.backend, bucket, imzml_key)
+    ibd_cobj = CloudObject(storage.backend, bucket, ibd_key)
 
     return imzml_cobj, ibd_cobj
 
@@ -289,8 +289,8 @@ class ServerAnnotationJob:
         self.perform_enrichment = perform_enrichment
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
-        self.imzml_cobj, self.ibd_cobj = _upload_imzmls_from_prefix_if_needed(
-            self.ds.input_path, self.storage, self.sm_storage, self.s3_client
+        self.imzml_cobj, self.ibd_cobj = _return_imzml_ibd_cobj(
+            self.ds.input_path, self.storage, self.s3_client
         )
         self.moldb_defs = _upload_moldbs_from_db(
             self.ds.config['database_ids'], self.storage, self.sm_storage
@@ -351,9 +351,6 @@ class ServerAnnotationJob:
             # Save acq_geometry
             self.pipe.save_acq_geometry(self.ds)
 
-            # Save size and hash of imzML/ibd files
-            self.pipe.store_ds_size_hash()
-
             # Save images (if enabled)
             if self.store_images:
                 self.db_formula_image_ids = self.pipe.store_images_to_s3(self.ds.id)
@@ -400,6 +397,7 @@ class ServerAnnotationJob:
                     add_enrichment(self.ds.id, moldb_id, bootstrap_df, annot_ids, self.db)
 
                 update_finished_job(job_id, JobStatus.FINISHED)
+
         except Exception:
             for moldb_id, job_id in moldb_to_job_map.items():
                 update_finished_job(job_id, JobStatus.FAILED)
