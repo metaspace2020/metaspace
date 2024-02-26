@@ -41,7 +41,7 @@ exports[`MolecularDatabases > details view > should match snapshot (archived) 1`
             </div>
             <p class=\\"sm-RichTextArea-description cursor-help\\" title=\\"Highlight a word or phrase for formatting options\\">Rich Text</p>
           </div>
-          <div>
+          <div class=\\"radio-wrapper\\">
             <p class=\\"m-0 mb-3\\"><span class=\\"text-base font-medium\\">Annotation access</span></p>
             <div class=\\"flex -ml-12\\">
               <div class=\\"w-9 flex items-center\\">
@@ -56,7 +56,22 @@ exports[`MolecularDatabases > details view > should match snapshot (archived) 1`
               </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-annotations-public\\" name=\\"isPublic\\"><span class=\\"text-base font-medium\\">Annotations are public</span><span class=\\"block text-sm text-gray-800\\">Results will be visible to everyone</span></label>
             </div>
           </div>
-          <div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
+          <div>
+            <div class=\\"radio-wrapper\\">
+              <p class=\\"m-0 mb-3\\"><span class=\\"text-base font-medium\\">Custom database access</span></p>
+              <div class=\\"flex -ml-12\\">
+                <div class=\\"w-9 flex items-center\\">
+                  <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6\\"><svg></svg></i></transition>
+                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-private\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is private</span><span class=\\"block text-sm text-gray-800\\">Custom database will be available for group members only</span></label>
+              </div>
+              <div class=\\"flex -ml-12\\">
+                <div class=\\"w-9 flex items-center\\">
+                  <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+                    <!---->
+                  </transition>
+                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-public\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is public</span><span class=\\"block text-sm text-gray-800\\">Custom database will be available as annotation option to everyone</span></label>
+              </div>
+            </div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
             <div class=\\"el-input\\">
               <!-- input -->
               <!-- prepend slot -->
@@ -140,7 +155,7 @@ exports[`MolecularDatabases > details view > should match snapshot (manager) 1`]
             </div>
             <p class=\\"sm-RichTextArea-description cursor-help\\" title=\\"Highlight a word or phrase for formatting options\\">Rich Text</p>
           </div>
-          <div>
+          <div class=\\"radio-wrapper\\">
             <p class=\\"m-0 mb-3\\"><span class=\\"text-base font-medium\\">Annotation access</span></p>
             <div class=\\"flex -ml-12\\">
               <div class=\\"w-9 flex items-center\\">
@@ -155,7 +170,22 @@ exports[`MolecularDatabases > details view > should match snapshot (manager) 1`]
               </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-annotations-public\\" name=\\"isPublic\\"><span class=\\"text-base font-medium\\">Annotations are public</span><span class=\\"block text-sm text-gray-800\\">Results will be visible to everyone</span></label>
             </div>
           </div>
-          <div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
+          <div>
+            <div class=\\"radio-wrapper\\">
+              <p class=\\"m-0 mb-3\\"><span class=\\"text-base font-medium\\">Custom database access</span></p>
+              <div class=\\"flex -ml-12\\">
+                <div class=\\"w-9 flex items-center\\">
+                  <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6\\"><svg></svg></i></transition>
+                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-private\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is private</span><span class=\\"block text-sm text-gray-800\\">Custom database will be available for group members only</span></label>
+              </div>
+              <div class=\\"flex -ml-12\\">
+                <div class=\\"w-9 flex items-center\\">
+                  <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+                    <!---->
+                  </transition>
+                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-public\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is public</span><span class=\\"block text-sm text-gray-800\\">Custom database will be available as annotation option to everyone</span></label>
+              </div>
+            </div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
             <div class=\\"el-input\\">
               <!-- input -->
               <!-- prepend slot -->
@@ -244,7 +274,7 @@ exports[`MolecularDatabases > details view > should match snapshot 1`] = `
             </div>
             <p class=\\"sm-RichTextArea-description cursor-help\\" title=\\"Highlight a word or phrase for formatting options\\">Rich Text</p>
           </div>
-          <div>
+          <div class=\\"radio-wrapper\\">
             <p class=\\"m-0 mb-3\\"><span class=\\"text-base font-medium\\">Annotation access</span></p>
             <div class=\\"flex -ml-12\\">
               <div class=\\"w-9 flex items-center\\">
@@ -259,7 +289,22 @@ exports[`MolecularDatabases > details view > should match snapshot 1`] = `
               </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-annotations-public\\" name=\\"isPublic\\"><span class=\\"text-base font-medium\\">Annotations are public</span><span class=\\"block text-sm text-gray-800\\">Results will be visible to everyone</span></label>
             </div>
           </div>
-          <div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
+          <div>
+            <div class=\\"radio-wrapper\\">
+              <p class=\\"m-0 mb-3\\"><span class=\\"text-base font-medium\\">Custom database access</span></p>
+              <div class=\\"flex -ml-12\\">
+                <div class=\\"w-9 flex items-center\\">
+                  <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6\\"><svg></svg></i></transition>
+                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary bg-gray-100\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-private\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is private</span><span class=\\"block text-sm text-gray-800\\">Custom database will be available for group members only</span></label>
+              </div>
+              <div class=\\"flex -ml-12\\">
+                <div class=\\"w-9 flex items-center\\">
+                  <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
+                    <!---->
+                  </transition>
+                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-public\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is public</span><span class=\\"block text-sm text-gray-800\\">Custom database will be available as annotation option to everyone</span></label>
+              </div>
+            </div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
             <div class=\\"el-input\\">
               <!-- input -->
               <!-- prepend slot -->
@@ -320,6 +365,7 @@ exports[`MolecularDatabases > should match snapshot 1`] = `
           <div></div>
           <div></div>
           <div></div>
+          <div></div>
         </div>
         <div class=\\"el-table__header-wrapper\\">
           <table class=\\"el-table__header\\" border=\\"0\\" cellpadding=\\"0\\" cellspacing=\\"0\\">
@@ -329,6 +375,7 @@ exports[`MolecularDatabases > should match snapshot 1`] = `
               <col name=\\"el-table_1_column_3\\" width=\\"144\\">
               <col name=\\"el-table_1_column_4\\" width=\\"144\\">
               <col name=\\"el-table_1_column_5\\" width=\\"144\\">
+              <col name=\\"el-table_1_column_6\\" width=\\"144\\">
             </colgroup>
             <thead class=\\"\\">
               <tr class=\\"\\">
@@ -354,6 +401,12 @@ exports[`MolecularDatabases > should match snapshot 1`] = `
                   </div>
                 </th>
                 <th class=\\"el-table_1_column_5 is-center is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                  <div class=\\"cell\\">Public database
+                    <!---->
+                    <!---->
+                  </div>
+                </th>
+                <th class=\\"el-table_1_column_6 is-center is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
                   <div class=\\"cell\\">Archived
                     <!---->
                     <!---->
@@ -374,6 +427,7 @@ exports[`MolecularDatabases > should match snapshot 1`] = `
                     <col name=\\"el-table_1_column_3\\" width=\\"144\\">
                     <col name=\\"el-table_1_column_4\\" width=\\"144\\">
                     <col name=\\"el-table_1_column_5\\" width=\\"144\\">
+                    <col name=\\"el-table_1_column_6\\" width=\\"144\\">
                   </colgroup>
                   <!--v-if-->
                   <tbody tabindex=\\"-1\\">
@@ -403,6 +457,11 @@ exports[`MolecularDatabases > should match snapshot 1`] = `
                           <!----><span class=\\"flex justify-center items-center h-5\\"><!----></span>
                         </div>
                       </td>
+                      <td class=\\"el-table_1_column_6 is-center el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!----><span class=\\"flex justify-center items-center h-5\\"><!----></span>
+                        </div>
+                      </td>
                     </tr>
                     <tr class=\\"el-table__row\\">
                       <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
@@ -426,6 +485,11 @@ exports[`MolecularDatabases > should match snapshot 1`] = `
                         </div>
                       </td>
                       <td class=\\"el-table_1_column_5 is-center el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                        <div class=\\"cell\\">
+                          <!----><span class=\\"flex justify-center items-center h-5\\"><!----></span>
+                        </div>
+                      </td>
+                      <td class=\\"el-table_1_column_6 is-center el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                         <div class=\\"cell\\">
                           <!----><span class=\\"flex justify-center items-center h-5\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6\\"><svg></svg></i></span>
                         </div>

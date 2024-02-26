@@ -142,6 +142,7 @@ const ALLOWED_COMBINATIONS: any = {
       'Neutral losses',
       'Metabolic pathway group',
       'Metabolic pathway',
+      'Chemical subclass',
     ],
     'Chemical subclass': ['Adducts', 'Dataset id', 'Sample name', 'MALDI matrix', 'Neutral losses', 'Polarity'],
     'Ionisation source': [
