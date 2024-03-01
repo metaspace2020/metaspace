@@ -41,10 +41,9 @@ class DatasetManager:
         self._es: ESExporter = es
         self._status_queue = status_queue
         self.logger = logger or logging.getLogger()
+        self.costs = None
 
         if 'aws' in self._sm_config:
-            self.cost = None
-
             self.ses = boto3.client(
                 'ses',
                 'eu-west-1',
@@ -145,12 +144,12 @@ class DatasetManager:
         )
 
         # costs from Cloudwatch Logs
-        log_groups = self._sm_config['lithops']['aws_lambda'].get('cloudwatch_log_groups')
+        log_groups = self._sm_config['lithops'].get('aws_lambda', {}).get('cloudwatch_log_groups')
         if log_groups:
             costs_by_step = get_costs(self.cloudwatch, self._db, log_groups, profile_id)
             add_cost_to_perf_profile_entries(self._db, costs_by_step)
-            self.cost = round(sum(costs_by_step.values()), 4)
-            self.logger.info(f'Total costs: ${self.cost}')
+            self.costs = round(sum(costs_by_step.values()), 4)
+            self.logger.info(f'Total costs: ${self.costs}')
 
     def index(self, ds: Dataset):
         """Re-index all search results for the dataset.

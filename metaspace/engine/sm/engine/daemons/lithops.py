@@ -40,7 +40,8 @@ class LithopsDaemon:
         )
 
     def _on_success(self, msg):
-        msg['costs'] = f'${self._manager.cost}'
+        if self._manager.costs:
+            msg['costs'] = f'${self._manager.costs}'
         self.logger.info(' SM lithops daemon: success')
         self._manager.post_to_slack('dart', f' [v] Annotation succeeded: {json.dumps(msg)}')
 

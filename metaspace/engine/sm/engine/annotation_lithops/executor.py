@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 from lithops.future import ResponseFuture
 from lithops.storage import Storage
+from lithops.executors import StandaloneExecutor
 
 from sm.engine.utils.perf_profile import SubtaskProfiler, Profiler, NullProfiler
 
@@ -78,17 +79,20 @@ def _save_subtask_perf(
     runtime_memory: int,
     start_time: datetime,
 ):
+    request_ids = None
+    instance_type = None
     subtask_timings, subtask_data = SubtaskProfiler.make_report(subtask_perfs)
     cost_factors_plain = cost_factors.to_dict('list') if cost_factors is not None else None
     if futures:
         exec_times = [f.stats.get('worker_func_exec_time', -1) for f in futures]
         mem_usages = [int(f.stats.get('worker_peak_memory_end', -1) / 1024 ** 2) for f in futures]
         request_ids = [f.activation_id for f in futures]
+        if isinstance(futures.executor, StandaloneExecutor):
+            instance_type = futures.executor.compute_handler.backend.master.get_instance_data()['InstanceType']
     else:
         # debug_run_locally=True doesn't make futures
         exec_times = [sum(perf.entries.values()) for perf in subtask_perfs]
         mem_usages = [perf.extra_data['mem after'] for perf in subtask_perfs]
-        request_ids = []
     perf_data = {
         'num_actions': len(exec_times),
         'attempt': attempt,
@@ -100,8 +104,11 @@ def _save_subtask_perf(
         'mem_usages': mem_usages,
         'subtask_timings': subtask_timings,
         'subtask_data': subtask_data,
-        'request_ids': request_ids,
     }
+    if request_ids:
+        perf_data['request_ids'] = request_ids
+    if instance_type:
+        perf_data['instance_type'] = instance_type
     perf.record_entry(func_name, start_time, datetime.now(), **perf_data)
 
     # Print a summary
