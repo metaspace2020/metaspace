@@ -888,7 +888,9 @@ export default defineComponent({
           )}
           {!annotations && (annotationsLoading.value || colocAnnotationsLoading.value) && (
             <div class="w-full absolute text-center top-0">
-              <i class="el-icon-loading" />
+              <ElIcon class="is-loading">
+                <Loading />
+              </ElIcon>
             </div>
           )}
         </div>

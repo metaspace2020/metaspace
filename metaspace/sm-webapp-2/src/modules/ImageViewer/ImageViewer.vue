@@ -110,7 +110,9 @@
     </el-popover>
   </div>
   <div v-else class="normalization-error-wrapper">
-    <i class="el-icon-error info-icon mr-2" />
+    <el-icon class="info-icon mr-2">
+      <CircleCloseFilled />
+    </el-icon>
     <p class="text-lg">There was an error on normalization!</p>
   </div>
 </template>
@@ -134,6 +136,8 @@ import fitImageToArea from '../../lib/fitImageToArea'
 import { ScaleType } from '../../lib/ionImageRendering'
 import config from '../../lib/config'
 import { useStore } from 'vuex'
+import { ElIcon } from '../../lib/element-plus'
+import { CircleCloseFilled } from '@element-plus/icons-vue'
 
 interface Props {
   annotation: any
@@ -151,6 +155,7 @@ interface Props {
 export default defineComponent({
   name: 'ImageViewer',
   components: {
+    ElIcon,
     FadeTransition,
     ImageSaver,
     IonImageMenu,
@@ -158,16 +163,17 @@ export default defineComponent({
     SingleIonImageControls,
     IntensitySettings,
     OpacitySettings,
+    CircleCloseFilled,
   },
   directives: {
     resize,
   },
   props: {
-    annotation: { required: true, type: Object },
+    annotation: { required: true, type: Object as any },
     colormap: { required: true, type: String },
     opacity: { required: true, type: Number },
     opticalOpacity: { type: Number },
-    imageLoaderSettings: { required: true, type: Object },
+    imageLoaderSettings: { required: true, type: Object as any },
     applyImageMove: { required: true, type: Function },
     pixelSizeX: { type: Number },
     pixelSizeY: { type: Number },
@@ -192,7 +198,7 @@ export default defineComponent({
       }
     )
 
-    const imageArea = ref<HTMLElement | null>(null)
+    const imageArea = ref(null)
 
     const dimensions = reactive({
       width: 500,

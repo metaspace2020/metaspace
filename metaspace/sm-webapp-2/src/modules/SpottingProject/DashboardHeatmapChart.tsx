@@ -15,6 +15,8 @@ import {
   VisualMapContinuousComponent,
 } from 'echarts/components'
 import './DashboardHeatmapChart.scss'
+import { ElIcon } from '../../lib/element-plus'
+import { Loading } from '@element-plus/icons-vue'
 
 use([
   CanvasRenderer,
@@ -384,7 +386,9 @@ export const DashboardHeatmapChart = defineComponent({
           {(isLoading || isDataLoading) && (
             <div class="loader-holder">
               <div>
-                <i class="el-icon-loading" />
+                <ElIcon class="is-loading">
+                  <Loading />
+                </ElIcon>
               </div>
             </div>
           )}

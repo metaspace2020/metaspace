@@ -13,6 +13,7 @@ import {
   ElButton,
   ElNotification,
   ElMessageBox,
+  ElIcon,
 } from '../../../lib/element-plus'
 import reportError from '../../../lib/reportError'
 import DownloadDialog from '../list/DownloadDialog'
@@ -22,6 +23,7 @@ import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatur
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import './DatasetActionsDropdown.scss'
 import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
+import { ArrowDown } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 
 interface DatasetActionsDropdownProps {
@@ -326,8 +328,10 @@ export const DatasetActionsDropdown = defineComponent({
                       hideFeatureBadge('dataset-overview-actions')
                     }}
                   >
-                    <span class="ml-2">{actionLabel}</span>
-                    <i class="el-icon-arrow-down el-icon--right" />
+                    <span class="ml-2 mr-2">{actionLabel}</span>
+                    <ElIcon class="select-btn-icon">
+                      <ArrowDown />
+                    </ElIcon>
                   </ElButton>
                 </NewFeatureBadge>
                 {state.showDownloadDialog && (

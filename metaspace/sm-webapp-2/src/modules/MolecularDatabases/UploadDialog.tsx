@@ -7,13 +7,14 @@ import { SmForm, PrimaryLabelText } from '../../components/Form'
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 
-import { ElDialog, ElInput, ElButton } from '../../lib/element-plus'
+import { ElDialog, ElInput, ElButton, ElIcon } from '../../lib/element-plus'
 
 import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
 import safeJsonParse from '../../lib/safeJsonParse'
 import reportError from '../../lib/reportError'
 import { convertUploadUrlToS3Path } from '../../lib/util'
 import { DefaultApolloClient } from '@vue/apollo-composable'
+import { Warning } from '@element-plus/icons-vue'
 
 const uppyOptions: UppyOptions = {
   debug: true,
@@ -186,9 +187,13 @@ const UploadDialog = defineComponent({
         <FadeTransition>
           {state.error && (
             <div class="flex items-start mb-3 text-danger text-sm leading-5">
-              <i class="el-icon-warning-outline mr-2 text-lg" />
               <div>
-                <p class="m-0 flex items-start font-medium">{state.error.message}</p>
+                <p class="m-0 flex items-center font-medium">
+                  <ElIcon name="mr-2 text-lg">
+                    <Warning />
+                  </ElIcon>
+                  {state.error.message}
+                </p>
                 {state.error.details && (
                   <ul class="overflow-y-auto m-0 mt-3 pl-6 max-h-25">
                     {state.error.details.map((d) => (

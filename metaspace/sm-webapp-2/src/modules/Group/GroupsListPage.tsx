@@ -9,15 +9,11 @@ import './GroupsListPage.scss'
 import { Loading, Search } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 
-interface GroupListPageProps {
-  className: string
-}
-
 interface GroupListPageState {
   groupNameFilter: string | undefined
 }
 
-export default defineComponent<GroupListPageProps>({
+export default defineComponent({
   name: 'GroupsListPage',
   props: {
     className: {

@@ -1,6 +1,8 @@
 {
   "name": "sm-webapp-ng",
+  "description": "Metaspace web application",
   "version": "2.0.0",
+  "author": "Alexandrov Team, EMBL",
   "contributors": [
     "Andrew Palmer <andrew.palmer@embl.de>",
     "Artem Tarasov <artem.tarasov@embl.de>",
@@ -8,20 +10,12 @@
     "Lachlan Stuart <lachlan.stuart@embl.de>",
     "Lucas Maciel <lucas.maciel@embl.de>",
     "Renat Nigmetzianov <renat.nigmetzianov@embl.de>",
-    "Sergii Mamedov <sergii.mamedov@embl.de>",
     "Theodore Alexandrov <theodore.alexandrov@embl.de>",
     "Vitaly Kovalev <vitaly.kovalev@embl.de>",
     "Richard Goater <richard.goater@embl.de>"
   ],
   "private": true,
   "scripts": {
-    "test:e2e": "start-server-and-test preview http://localhost:8082 'cypress run --e2e'",
-    "test:e2e:dev": "start-server-and-test 'vite dev --port 4173' http://localhost:4173 'cypress open --e2e'",
-    "test:cypress:open": "cross-env CYPRESS_RUN=true cypress open",
-    "test:cypress": "cross-env CYPRESS_RUN=true cypress run",
-    "test:unit": "vitest --run",
-    "test:unit:dev": "cypress open --component",
-    "type-check": "vue-tsc --noEmit -p tsconfig.cypress-ct.json --composite false",
     "dev": "cross-env NODE_ENV=development vite",
     "test": "yarn run generate-local-graphql-schema && yarn install && cross-env NODE_ENV=test vitest --run",
     "test-ci": "cross-env NODE_ENV=test vitest --run --ci",
@@ -32,8 +26,9 @@
     "build": "yarn run deref-schema && cross-env NODE_ENV=production vite build",
     "build-ci": "cross-env NODE_ENV=production vite build",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "analyze-size": "rm -rf dist ; NODE_ENV=production WEBPACK_STATS=true vite build ; npx vite-bundle-visualizer dist/stats.json dist/ -p 9900 -O",
     "format": "prettier --write src/**/*.{vue,js,ts,tsx,css,scss,md} --ignore-path .gitignore",
-    "analyze-size": "rm -rf dist ; NODE_ENV=production WEBPACK_STATS=true vite build ; npx vite-bundle-visualizer dist/stats.json dist/ -p 9900 -O"
+    "test-e2e": "cross-env CYPRESS_RUN=true cypress open"
   },
   "dependencies": {
     "@apollo/client": "^3.8.6",

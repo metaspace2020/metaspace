@@ -6,7 +6,7 @@
           <el-popover trigger="click" placement="left">
             <template #reference>
               <el-button type="primary" class="mr-1">
-                Copy metadata from another dataset...<i class="el-icon-document-copy ml-1"></i>
+                Copy metadata from another dataset...<el-icon class="ml-1"><DocumentCopy /></el-icon>
               </el-button>
             </template>
             <div class="max-w-sm">
@@ -97,7 +97,7 @@
   */
 import { defineComponent, reactive, computed, watch, inject, onBeforeMount } from 'vue'
 import { useStore } from 'vuex'
-import { ElPopover, ElButton, ElSelect, ElOption, ElMessage, ElLoading } from '../../lib/element-plus'
+import { ElPopover, ElButton, ElSelect, ElOption, ElMessage, ElLoading, ElIcon } from '../../lib/element-plus'
 import RichText from '../../components/RichText/RichText'
 import FormSection from './sections/FormSection.vue'
 import MetaspaceOptionsSection from './sections/MetaspaceOptionsSection.vue'
@@ -136,6 +136,7 @@ import isValidTiptapJson from '../../lib/isValidTiptapJson'
 import { datasetListItemsQuery } from '../../api/dataset'
 import emailRegex from '../../lib/emailRegex'
 import config from '../../lib/config'
+import { DocumentCopy } from '@element-plus/icons-vue'
 
 const factories = {
   string: (schema) => schema.default || '',
@@ -167,6 +168,8 @@ export default defineComponent({
     MetaspaceOptionsSection,
     VisibilityOptionSection,
     DataManagementSection,
+    ElIcon,
+    DocumentCopy,
   },
   directives: {
     loading: ElLoading.directive,

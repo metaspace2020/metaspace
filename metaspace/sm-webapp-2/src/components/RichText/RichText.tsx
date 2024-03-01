@@ -11,6 +11,8 @@ import FadeTransition from '../../components/FadeTransition'
 import MenuItems from './MenuItems'
 import './RichText.css'
 import safeJsonParse from '../../lib/safeJsonParse'
+import { ElIcon } from '../../lib/element-plus'
+import { EditPen } from '@element-plus/icons-vue'
 
 interface Props {
   content: string
@@ -67,7 +69,7 @@ const Underline = TextStyle.extend({
         },
     }
   },
-})
+} as any)
 
 const RichText = defineComponent({
   props: {
@@ -163,7 +165,10 @@ const RichText = defineComponent({
                 </div>
               ) : (
                 <button onClick={handleEditorClick} class="button-reset text-sm italic text-gray-700 px-4 leading-6">
-                  <i class="el-icon-edit" /> click to edit
+                  <ElIcon>
+                    <EditPen />
+                  </ElIcon>{' '}
+                  click to edit
                 </button>
               )}
             </FadeTransition>

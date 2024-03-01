@@ -27,6 +27,13 @@
           :current-user="currentUser"
           :refresh-data="handleRefreshData"
         />
+        <div
+          v-if="allProjects && allProjectsCount == 0"
+          class="flex items-center justify-center p-4 text-gray-600"
+          style="height: 200px"
+        >
+          No projects found
+        </div>
       </div>
       <div v-if="projectsCount > pageSize || page !== 1" style="text-align: center">
         <el-pagination :total="projectsCount" :page-size="pageSize" :current-page="page" layout="prev,pager,next" />

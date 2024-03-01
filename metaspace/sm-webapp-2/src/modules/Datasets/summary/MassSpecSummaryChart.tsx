@@ -15,10 +15,11 @@ import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { sortBy } from 'lodash-es'
 import { TRANSLATE_ANALYZER, TRANSLATE_MATRIX, TRANSLATE_SOURCE } from '../../../lib/matrixTranslator'
-import { ElRadioButton, ElRadioGroup } from '../../../lib/element-plus'
+import { ElIcon, ElRadioButton, ElRadioGroup } from '../../../lib/element-plus'
 import ImageSaver from '../../ImageViewer/ImageSaver.vue'
 import './MassSpecSummaryChart.scss'
 import { useStore } from 'vuex'
+import { Loading } from '@element-plus/icons-vue'
 
 use([SVGRenderer, ScatterChart, GridComponent, TooltipComponent, ToolboxComponent, LegendComponent, MarkPointComponent])
 
@@ -390,7 +391,9 @@ export const MassSpecSummaryChart = defineComponent<MassSpecSummaryChartProps>({
             {receivedDatasetsResultLoading.value && (
               <div class="loader-holder">
                 <div>
-                  <i class="el-icon-loading mr-2" />
+                  <ElIcon class="is-loading  mr-2">
+                    <Loading />
+                  </ElIcon>
                   Loading data...
                 </div>
               </div>

@@ -3,7 +3,9 @@
     <filter-panel :level="currentLevel" />
     <div class="my-2 w-full">
       <router-link v-if="isFromDatasetOverview" :to="datasetOverviewLink">
-        <span><i class="el-icon-arrow-left"></i>Dataset Overview</span>
+        <div class="flex items-center">
+          <el-icon><ArrowLeft /></el-icon>Dataset Overview
+        </div>
       </router-link>
     </div>
     <el-row>
@@ -62,7 +64,7 @@ import config from '../../lib/config'
 import { useRestoredState } from '../ImageViewer'
 import isSnapshot from '../../lib/isSnapshot'
 import { ElIcon, ElAlert } from '../../lib/element-plus'
-import { Loading } from '@element-plus/icons-vue'
+import { Loading, ArrowLeft } from '@element-plus/icons-vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 
 export default defineComponent({
@@ -74,6 +76,7 @@ export default defineComponent({
     Loading,
     ElIcon,
     ElAlert,
+    ArrowLeft,
   },
   setup() {
     const apolloClient = inject(DefaultApolloClient)
@@ -190,7 +193,7 @@ export default defineComponent({
 @media (min-width: 1200px) {
   #annot-table-container {
     position: sticky;
-    position: -webkit-sticky;
+    //position: -webkit-sticky;
   }
 }
 

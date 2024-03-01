@@ -1,5 +1,5 @@
 import { defineComponent, reactive } from 'vue'
-import { ElButton, ElInput } from '../../../lib/element-plus'
+import { ElButton, ElIcon, ElInput } from '../../../lib/element-plus'
 
 import { WorkflowStep } from '../../../components/Workflow'
 import { RichTextArea } from '../../../components/RichText'
@@ -11,6 +11,7 @@ import { ViewProjectResult } from '../../../api/project'
 import { parseValidationErrors } from '../../../api/validation'
 
 import { PROJECT_URL_PREFIX } from '../../../router'
+import { Loading } from '@element-plus/icons-vue'
 
 function getInitialModel(project: ViewProjectResult, currentUserName = '') {
   const year = new Date().getFullYear()
@@ -120,7 +121,11 @@ const PrepareProject = defineComponent({
               ></RichTextArea>
               {/* Button component does not submit the form *shrug* */}
               <button class="el-button el-button--primary">
-                {state.loading && <i class="el-icon-loading" />}
+                {state.loading && (
+                  <ElIcon class="is-loading">
+                    <Loading />
+                  </ElIcon>
+                )}
                 <span>Update</span>
               </button>
               {state.editing && (

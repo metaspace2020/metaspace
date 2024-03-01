@@ -119,6 +119,7 @@ exports[`ProjectDatasetsDialog > it should match snapshot 1`] = `
         </div>
       </div>
     </div>
+    <div data-v-cce15054=\\"\\" class=\\"flex items-center justify-center p-4 text-gray-600\\" style=\\"height: 200px;\\"> No projects found </div>
   </div>
   <!--v-if-->
 </div>
@@ -240,6 +241,7 @@ exports[`ProjectDatasetsDialog > should change actions for projects under review
         </div>
       </div>
     </div>
+    <div data-v-cce15054=\\"\\" class=\\"flex items-center justify-center p-4 text-gray-600\\" style=\\"height: 200px;\\"> No projects found </div>
   </div>
   <!--v-if-->
 </div>
@@ -361,6 +363,7 @@ exports[`ProjectDatasetsDialog > should change actions for published projects 1`
         </div>
       </div>
     </div>
+    <div data-v-cce15054=\\"\\" class=\\"flex items-center justify-center p-4 text-gray-600\\" style=\\"height: 200px;\\"> No projects found </div>
   </div>
   <!--v-if-->
 </div>
@@ -479,6 +482,7 @@ exports[`ProjectDatasetsDialog > should filter projects by the keyword search on
           </div>
         </div>
       </div>
+      <!--v-if-->
     </div>
     <!--v-if-->
   </div>
@@ -653,6 +657,7 @@ exports[`ProjectDatasetsDialog > should show only my projects when on the My Pro
         </div>
       </div>
     </div>
+    <div data-v-cce15054=\\"\\" class=\\"flex items-center justify-center p-4 text-gray-600\\" style=\\"height: 200px;\\"> No projects found </div>
   </div>
   <!--v-if-->
 </div>

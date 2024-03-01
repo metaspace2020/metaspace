@@ -131,7 +131,9 @@
       @updateRotationAngle="updateAngle"
     />
     <div v-if="hasNormalizationError" class="normalization-error-wrapper">
-      <i class="el-icon-error info-icon mr-2" />
+      <el-icon class="info-icon mr-2">
+        <CircleCloseFilled />
+      </el-icon>
       <p class="text-lg">There was an error on normalization!</p>
     </div>
   </div>
@@ -154,7 +156,7 @@ import { defineComponent, ref, reactive, computed, watch, onMounted, onBeforeUnm
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import { ElMessage } from '../../lib/element-plus'
+import { ElMessage, ElIcon } from '../../lib/element-plus'
 import { annotationListQuery } from '../../api/annotation'
 import {
   addOpticalImageQuery,
@@ -163,11 +165,14 @@ import {
   rawOpticalImageQuery,
 } from '../../api/dataset'
 import { currentUserRoleQuery } from '../../api/user'
+import { CircleCloseFilled } from '@element-plus/icons-vue'
 
 export default defineComponent({
   name: 'ImageAlignmentPage',
   components: {
     ImageAligner,
+    ElIcon,
+    CircleCloseFilled,
   },
   props: {
     limitMB: {

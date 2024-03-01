@@ -116,11 +116,7 @@
               <colocalization-settings />
               <template #reference>
                 <button class="button-reset av-icon-button" @click.stop="">
-                  <el-icon
-                    id="colocalization-settings-icon"
-                    class="el-icon-setting"
-                    style="font-size: 20px; vertical-align: middle"
-                  >
+                  <el-icon id="colocalization-settings-icon" style="font-size: 20px; vertical-align: middle">
                     <Setting />
                   </el-icon>
                 </button>

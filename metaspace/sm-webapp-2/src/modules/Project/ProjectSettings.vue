@@ -28,7 +28,9 @@
         />
         <!-- el-button does not submit the form *shrug* -->
         <button class="el-button el-button--primary mt-5">
-          <i v-if="isSaving" class="el-icon-loading" />
+          <el-icon v-if="isSaving" class="is-loading">
+            <Loading />
+          </el-icon>
           <span> Update details </span>
         </button>
       </sm-form>
@@ -76,7 +78,8 @@ import reportError from '../../lib/reportError'
 import { parseValidationErrors } from '../../api/validation'
 import { useConfirmAsync } from '../../components/ConfirmAsync'
 import { currentUserRoleQuery } from '../../api/user'
-import { ElMessage, ElButton } from '../../lib/element-plus'
+import { ElMessage, ElButton, ElIcon } from '../../lib/element-plus'
+import { Loading } from '@element-plus/icons-vue'
 
 export default defineComponent({
   components: {
@@ -85,6 +88,8 @@ export default defineComponent({
     ShortLinkField,
     SmForm,
     ElButton,
+    Loading,
+    ElIcon,
   },
   props: {
     projectId: String,
