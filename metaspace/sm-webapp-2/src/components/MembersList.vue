@@ -36,7 +36,7 @@
 
       <el-table-column v-if="shouldShowEmails" label="Email" min-width="200">
         <template v-slot="{ row }">
-          {{ row?.user?.email }}
+          {{ isValidEmail(row?.user?.email) ? row?.user?.email : '' }}
         </template>
       </el-table-column>
 
@@ -177,8 +177,8 @@ export default defineComponent({
   setup(props, { emit }) {
     const pageSize = ref(10)
     const page = ref(1)
-    const editingRoleOfMember = ref<Member | null>(null)
-    const newRole = ref<string | null>(null)
+    const editingRoleOfMember = ref(null)
+    const newRole = ref(null)
 
     const getRoleName = computed(() => {
       return props.type === 'group' ? getGroupRoleName : getProjectRoleName
@@ -224,6 +224,11 @@ export default defineComponent({
       }
     }
 
+    const isValidEmail = (email) => {
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      return regex.test(email)
+    }
+
     // Emit events
     const handleRemoveUser = (user: Member) => emit('removeUser', user)
     const handleCancelInvite = (user: Member) => emit('cancelInvite', user)
@@ -265,6 +270,7 @@ export default defineComponent({
       handleEditRole,
       handleCloseEditRole,
       handleUpdateRole,
+      isValidEmail,
     }
   },
 })
