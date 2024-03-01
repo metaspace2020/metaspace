@@ -14,7 +14,7 @@ from sm.engine.postprocessing.cloudwatch import (
     get_cloudwatch_logs,
     extract_data_from_cloudwatch_logs,
     calc_costs,
-    add_cost_to_perf_profile_entries
+    add_cost_to_perf_profile_entries,
 )
 
 logger = logging.getLogger('engine')
