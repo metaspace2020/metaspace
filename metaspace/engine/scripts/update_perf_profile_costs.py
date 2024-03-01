@@ -1,7 +1,7 @@
 import argparse
 import logging
 from datetime import timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import boto3
 

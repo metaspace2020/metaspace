@@ -88,7 +88,9 @@ def _save_subtask_perf(
         mem_usages = [int(f.stats.get('worker_peak_memory_end', -1) / 1024 ** 2) for f in futures]
         request_ids = [f.activation_id for f in futures]
         if isinstance(futures.executor, StandaloneExecutor):
-            instance_type = futures.executor.compute_handler.backend.master.get_instance_data()['InstanceType']
+            instance_type = futures.executor.compute_handler.backend.master.get_instance_data()[
+                'InstanceType'
+            ]
     else:
         # debug_run_locally=True doesn't make futures
         exec_times = [sum(perf.entries.values()) for perf in subtask_perfs]
