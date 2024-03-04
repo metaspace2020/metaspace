@@ -121,6 +121,7 @@ import config from '../../lib/config'
 import gql from 'graphql-tag'
 import { ViewGroupFragment } from '@/api/group'
 import { RequestedAccessDialog } from '../Group/RequestedAccessDialog'
+import { MessageBox } from '../../lib/element-ui'
 
 const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
@@ -143,6 +144,24 @@ const uppyOptions = {
   },
   meta: {},
   onBeforeFileAdded: (newFile, fileLookup = {}) => {
+    // Check if the .ibd file is larger than 20GB
+    if (!config.features.ignore_ibd_size && newFile.name.endsWith('.ibd')) {
+      const GB = (1024 ** 3) // 1GB in bytes
+      const maxSize = 20
+
+      if (newFile.data.size > maxSize * GB) {
+        MessageBox.alert(`Files with .ibd extension must be smaller than ${maxSize}GB.
+<a target="_blank" href="mailto:contact@metaspace2020.eu">Contact us</a> if you need to upload larger files.`
+        ,
+        'File too large', {
+          dangerouslyUseHTMLString: true,
+          showConfirmButton: false,
+        })
+          .catch(() => { /* Ignore exception raised when alert is closed */ })
+        return false // Prevent the file from being added
+      }
+    }
+
     const currentFiles = Object.values(fileLookup)
     if (currentFiles.length === 0) return true
     if (currentFiles.length === 2) return false
