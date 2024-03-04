@@ -57,30 +57,45 @@ def get_aws_lambda_request_ids(perf_profile_entries: List[Dict[str, Any]]) -> Se
 
 def get_raw_cloudwatch_logs(
     cw_client: boto3.client, log_groups: List[str], start_dt: datetime, finish_dt: datetime
-) -> Dict[str, Any]:
+) -> List[List[Dict[str, Any]]]:
     """Return back response from Cloudwatch client"""
 
     query = (
         'fields @timestamp, @message | filter @message like /REPORT RequestId/ | '
         'sort @timestamp desc | limit 10000'
     )
-    delta = 15  # extend the endTime 15 minutes to cover stuck lambda function
+    time_delta = 15  # extend the endTime 15 minutes to cover stuck lambda function
+    time_step = 10  # size of the time window for which we search in Cloudwatch
 
-    start_query_response = cw_client.start_query(
-        logGroupNames=log_groups,
-        startTime=int((start_dt).timestamp()),
-        endTime=int((finish_dt + timedelta(minutes=delta)).timestamp()),
-        queryString=query,
-    )
+    start_t = start_dt
+    finish_t = finish_dt + timedelta(minutes=time_delta)
 
-    query_id = start_query_response['queryId']
-    response = {}
+    results = []
+    # Cloudwatch returns a maximum of 10_000 records
+    # For large datasets, time window can be several hours, due to which we may exceed this limit
+    # To avoid this, we divide the entire time window into intervals of 10 minutes
+    while start_t < finish_t:
+        start_query_response = cw_client.start_query(
+            logGroupNames=log_groups,
+            startTime=int(start_t.timestamp()),
+            endTime=int((start_t + timedelta(minutes=time_step)).timestamp()),
+            queryString=query,
+        )
 
-    while response == {} or response['status'] == 'Running':
-        time.sleep(5.0)
-        response = cw_client.get_query_results(queryId=query_id)
+        query_id = start_query_response['queryId']
+        response = {}
 
-    return response
+        while response == {} or response['status'] == 'Running':
+            time.sleep(3)
+            response = cw_client.get_query_results(queryId=query_id)
+
+        if int(response['statistics']['recordsMatched']) >= 10_000:
+            logger.warning('Found more 10_000 matched records in Cloudwatch logs')
+
+        start_t += timedelta(minutes=time_step)
+        results.extend(response['results'])
+
+    return results
 
 
 def get_cloudwatch_logs(
@@ -89,28 +104,26 @@ def get_cloudwatch_logs(
     start_dt: datetime,
     finish_dt: datetime,
     aws_lambda_request_ids: Set[str],
+    verbose: bool = False,
 ) -> List[List[Dict[str, str]]]:
     """Return back Cloudwatch Logs during job execution"""
 
     logger.info(f'Number of runs: {len(aws_lambda_request_ids)}')
     response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
-    cloudwatch_request_ids = set(extract_data_from_cloudwatch_logs(response['results']).keys())
+    cloudwatch_request_ids = set(extract_data_from_cloudwatch_logs(response).keys())
     # AWS Lambda logs are typically available in Cloudwatch Logs with a delay of several minutes
     # we repeat requests to Cloudwatch until all request_ids that are present
     # in the perf_profile_entries table are also available in Cloudwatch Logs
     while len(aws_lambda_request_ids - cloudwatch_request_ids) > 0:
         waiting_request_ids = aws_lambda_request_ids - cloudwatch_request_ids
         logger.info(f'Waiting {len(waiting_request_ids):>3} CloudWatch records')
-        if len(waiting_request_ids) == 1:
+        if verbose:
             logger.info(waiting_request_ids)
-        time.sleep(25)
+        time.sleep(30)
         response = get_raw_cloudwatch_logs(cw_client, log_groups, start_dt, finish_dt)
-        cloudwatch_request_ids = set(extract_data_from_cloudwatch_logs(response['results']).keys())
+        cloudwatch_request_ids = set(extract_data_from_cloudwatch_logs(response).keys())
 
-    if int(response['statistics']['recordsMatched']) >= 10_000:
-        logger.warning('Found more 10_000 matched records in Cloudwatch logs')
-
-    return response['results']
+    return response
 
 
 def extract_value(message: str) -> Dict[str, Union[float, int]]:
