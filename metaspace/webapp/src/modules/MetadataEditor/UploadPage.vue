@@ -225,6 +225,10 @@ export default {
         imzml: false,
         ibd: false,
       },
+      fileSize: {
+        imzml: false,
+        ibd: false,
+      },
       autoSubmit: false,
       helpDialog: false,
       group: null,
@@ -334,6 +338,7 @@ export default {
       }
       for (const file of result.successful) {
         this.uploads[file.extension.toLowerCase()] = true
+        this.fileSize[file.extension.toLowerCase()] = file.size
       }
 
       if (this.uploads.imzml === true && this.uploads.ibd === true) {
@@ -375,6 +380,7 @@ export default {
           variables: {
             input: {
               inputPath: this.inputPath,
+              sizeHashJson: JSON.stringify({ imzml_size: this.fileSize?.imzml, ibd_size: this.fileSize?.ibd }),
               metadataJson,
               ...metaspaceOptions,
             },
