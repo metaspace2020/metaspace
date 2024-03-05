@@ -87,7 +87,7 @@ class Dataset:
         input_path: str,
         upload_dt: datetime,
         metadata: Dict,
-        size_hash: Dict,
+        size_hash: Dict = None,
         config: DSConfig,
         status: str = DatasetStatus.QUEUED,
         status_update_dt: datetime = None,
