@@ -110,8 +110,6 @@ class SMapiDatasetManager:
         ds.input_path = doc.get('input_path', ds.input_path)
         if 'metadata' in doc:
             ds.metadata = doc['metadata']
-        # if 'size_hash' in doc:
-        #     ds.size_hash = doc['size_hash']
         ds.upload_dt = doc.get('upload_dt', ds.upload_dt)
         ds.is_public = doc.get('is_public', ds.is_public)
         ds.save(self._db, None if async_es_update else self._es)
