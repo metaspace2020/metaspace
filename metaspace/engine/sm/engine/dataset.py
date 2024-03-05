@@ -73,7 +73,8 @@ class Dataset:
         'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
         '   status_update_dt, is_public, size_hash) '
         'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, '
-        '   %(metadata)s, %(config)s, %(status)s, %(status_update_dt)s, %(is_public)s, %(size_hash)s)'
+        '   %(metadata)s, %(config)s, %(status)s, %(status_update_dt)s, '
+        '   %(is_public)s, %(size_hash)s)'
     )
 
     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
