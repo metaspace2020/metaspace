@@ -12,8 +12,7 @@ export default (point: [number, number], coordinates: [number, number][]) => {
     const xj = coordinates[j][0]
     const yj = coordinates[j][1]
 
-    const intersect = ((yi > y) !== (yj > y))
-      && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)
+    const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi
     if (intersect) inside = !inside
   }
 

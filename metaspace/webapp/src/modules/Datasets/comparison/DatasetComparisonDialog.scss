@@ -39,12 +39,17 @@
 
 
 .ds-options-popper {
-  max-width: 30%;
+  max-width: 400px;
 
   .el-select-dropdown__wrap {
     max-height: 186px !important;
   }
 }
+
+.ds-comp-step1{
+  max-width: 400px;
+}
+
 
 .grid-popper {
   max-width: 350px;
@@ -52,4 +57,8 @@
   .el-select-dropdown__wrap {
     max-height: 186px !important;
   }
+}
+
+.ds-comparison-option{
+  max-width: 400px;
 }

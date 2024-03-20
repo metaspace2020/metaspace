@@ -1,5 +1,22 @@
+
+
 .sm-about-page.sm-main-content {
-  @apply pt-0;
+  padding-top: 0 !important;
+
+  .svg-container {
+    width: 72px;
+    height: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    margin-right: 24px;
+  }
+
+  .svg-container svg {
+    width: 100%;
+    height: 100%;
+  }
 
   .sm-about h3 {
     @apply font-display font-medium leading-6 text-2xl tracking-snug py-2 m-0;

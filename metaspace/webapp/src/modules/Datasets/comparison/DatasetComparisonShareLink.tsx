@@ -1,8 +1,6 @@
-import { defineComponent, reactive } from '@vue/composition-api'
+import { defineAsyncComponent, defineComponent, nextTick, reactive } from 'vue'
 import StatefulIcon from '../../../components/StatefulIcon.vue'
-import { ExternalWindowSvg } from '../../../design/refactoringUIIcons'
-import { Button, Popover } from '../../../lib/element-ui'
-import Vue from 'vue'
+import { ElButton, ElPopover } from '../../../lib/element-plus'
 import FadeTransition from '../../../components/FadeTransition'
 import { useMutation } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
@@ -10,30 +8,19 @@ import safeJsonParse from '../../../lib/safeJsonParse'
 import reportError from '../../../lib/reportError'
 import useOutClick from '../../../lib/useOutClick'
 import { omit } from 'lodash-es'
+import RouterLink from '../../../components/RouterLink'
+import { useStore } from 'vuex'
 
-const RouterLink = Vue.component('router-link')
-const saveSettings = gql`mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
-  saveImageViewerSnapshot(input: $input)
-}`
+const saveSettings = gql`
+  mutation saveImageViewerSnapshotMutation($input: ImageViewerSnapshotInput!) {
+    saveImageViewerSnapshot(input: $input)
+  }
+`
+const ExternalWindowSvg = defineAsyncComponent(
+  () => import('../../../assets/inline/refactoring-ui/icon-external-window.svg')
+)
 
-interface DatasetComparisonShareLinkProps {
-  name: string
-  params: any
-  query: any
-  viewId: string
-  nCols: number
-  nRows: number
-  settings: string
-  colormap: string
-  scaleType: string
-  scaleBarColor: string
-  sourceDsId: string
-  selectedAnnotation: number
-  lockedIntensityTemplate: string
-  globalLockedIntensities: [number | undefined, number | undefined]
-}
-
-export const DatasetComparisonShareLink = defineComponent<DatasetComparisonShareLinkProps>({
+export const DatasetComparisonShareLink = defineComponent({
   name: 'DatasetComparisonShareLink',
   props: {
     name: { type: String, required: true },
@@ -51,10 +38,10 @@ export const DatasetComparisonShareLink = defineComponent<DatasetComparisonShare
     lockedIntensityTemplate: { type: String },
     globalLockedIntensities: { type: Array },
   },
-  setup(props, ctx) {
-    const { $store, $route } = ctx.root
+  setup(props) {
+    const store = useStore()
     const state = reactive({
-      status: 'CLOSED',
+      status: 'SAVING',
       viewId: null,
     })
     const { mutate: settingsMutation } = useMutation<any>(saveSettings)
@@ -70,15 +57,15 @@ export const DatasetComparisonShareLink = defineComponent<DatasetComparisonShare
       }
     }
 
-    const handleClick = async() => {
+    const handleClick = async () => {
       state.status = 'SAVING'
 
       try {
-        const filter = $store.getters.filter
+        const filter = store.getters.filter
         const settings = safeJsonParse(props.settings)
         const grid = settings.grid
         const datasetIds = Object.values(grid)
-        const variables : any = {
+        const variables: any = {
           input: {
             version: 1,
             ionFormulas: [],
@@ -95,11 +82,13 @@ export const DatasetComparisonShareLink = defineComponent<DatasetComparisonShare
               globalLockedIntensities: props.globalLockedIntensities,
               grid,
               filter,
-              mode: $store.state.mode,
-              channels: $store.state.mode === 'MULTI' && Array.isArray($store.state.channels)
-                ? $store.state.channels.map((annotation: any) => {
-                  return annotation ? omit(annotation, 'annotations') : {}
-                }) : [],
+              mode: store.state.mode,
+              channels:
+                store.state.mode === 'MULTI' && Array.isArray(store.state.channels)
+                  ? store.state.channels.map((annotation: any) => {
+                      return annotation ? omit(annotation, 'annotations') : {}
+                    })
+                  : [],
             }),
             datasetId: props.sourceDsId,
           },
@@ -107,51 +96,49 @@ export const DatasetComparisonShareLink = defineComponent<DatasetComparisonShare
         const result = await settingsMutation(variables)
         state.viewId = result.data.saveImageViewerSnapshot
         state.status = 'HAS_LINK'
-        useOutClick(() => { state.status = 'CLOSED' })
+        useOutClick(() => {
+          state.status = 'SAVING'
+        })
+        await nextTick()
       } catch (e) {
         reportError(e)
-        state.status = 'CLOSED'
+        state.status = 'SAVING'
       }
     }
 
     return () => {
       const { status } = state
-
       return (
-        <Popover
-          trigger="manual"
+        <ElPopover
+          hideAfter={0}
+          trigger="click"
           placement="bottom"
-          value={status !== 'CLOSED'}>
-          <Button
-            slot="reference"
-            class="button-reset h-6 w-6 block ml-2"
-            onClick={handleClick}>
-            <StatefulIcon class="h-6 w-6 pointer-events-none">
-              <ExternalWindowSvg class='fill-current'/>
-            </StatefulIcon>
-          </Button>
-          <FadeTransition class="m-0 leading-5 text-center">
-            {
-              status === 'OPEN'
-              && <p>Link to this annotation</p>
-            }
-            {
-              status === 'SAVING'
-              && <p>Saving</p>
-            }
-            {
-              status === 'HAS_LINK'
-              && <div>
-                <RouterLink to={getUrl()} target="_blank">
-                  Share this link
-                </RouterLink>
-                <span class="block text-xs tracking-wide">
-                opens in a new window
-                </span>
-              </div>
-            }
-          </FadeTransition>
-        </Popover>
+          v-slots={{
+            reference: () => (
+              <ElButton class="button-reset h-6 w-6 block ml-2" onClick={handleClick}>
+                <StatefulIcon class="h-6 w-6 pointer-events-none">
+                  <ExternalWindowSvg class="fill-current" />
+                </StatefulIcon>
+              </ElButton>
+            ),
+            default: () => (
+              <FadeTransition class="m-0 leading-5 text-center">
+                <div class="share-pop-wrapper">
+                  {status === 'OPEN' && <p>Link to this annotation</p>}
+                  {status === 'SAVING' && <p>Saving</p>}
+                  {status === 'HAS_LINK' && (
+                    <div>
+                      <RouterLink newTab to={getUrl()} target="_blank">
+                        Share this link
+                      </RouterLink>
+                      <span class="block text-xs tracking-wide">opens in a new window</span>
+                    </div>
+                  )}
+                </div>
+              </FadeTransition>
+            ),
+          }}
+        />
       )
     }
   },

@@ -1,20 +1,16 @@
 import { mount } from '@vue/test-utils'
-import Vue from 'vue'
-import Vuex from 'vuex'
-import router from '../../../router'
-import store from '../../../store'
-import { sync } from 'vuex-router-sync'
 import DatasetItem from './DatasetItem.vue'
-import { mockGenerateId, resetGenerateId } from '../../../../tests/utils/mockGenerateId'
+import router from '../../../router'
+import store from '../../..//store'
+import { nextTick } from 'vue'
+import { initMockGraphqlClient } from '../../../tests/utils/mockGraphqlClient'
+import { DefaultApolloClient } from '@vue/apollo-composable'
 
-Vue.use(Vuex)
-sync(store, router)
-
+let graphqlMockClient
 
 describe('DatasetItem', () => {
   const user = { id: 'user' }
   const submitter = { id: 'submitter' }
-  const admin = { id: 'admin', role: 'admin' }
   const dataset = {
     id: 'mockdataset',
     status: 'FINISHED',
@@ -45,117 +41,143 @@ describe('DatasetItem', () => {
     organismPart: 'organismPart',
     condition: 'condition',
     analyzer: {
-      type: 'type'
+      type: 'type',
     },
     projects: [],
     canEdit: true,
     canDelete: true,
     uploadDT: '2020-04-17T11:37:50.318667',
   }
-  const unpublished = { name: 'project', publicationStatus: 'UNPUBLISHED' }
   const underReview = { name: 'project', publicationStatus: 'UNDER_REVIEW' }
   const published = { name: 'project', publicationStatus: 'PUBLISHED' }
 
-  beforeEach(() => {
-    resetGenerateId()
+  beforeEach(async () => {
+    graphqlMockClient = await initMockGraphqlClient({
+      Query: () => ({
+        allAnnotations: () => [],
+        countAnnotations: () => 1,
+      }),
+    })
   })
 
-  it('should match snapshot', () => {
-    mockGenerateId(123)
-    const propsData = {
-      currentUser: submitter,
-      dataset,
-    }
-    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
-    expect(wrapper.element).toMatchSnapshot()
-  })
-
-  // NOTE: delete changed to dataset overview page (to be removed)
-  // it('should be able to delete if unpublished', () => {
-  //   const propsData = {
-  //     currentUser: submitter,
-  //     dataset: {
-  //       ...dataset,
-  //       projects: [unpublished]
-  //     },
-  //   }
-  //   const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
-  //   expect(wrapper.find('.ds-delete').exists()).toBe(true)
-  // })
-
-  it('should not show the publication status if cannot edit', () => {
-    const propsData = {
-      currentUser: user,
-      dataset: {
-        ...dataset,
-        canEdit: false,
-        projects: [published]
+  it('should match snapshot', async () => {
+    const wrapper = mount(DatasetItem, {
+      global: {
+        plugins: [router, store],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient,
+        },
       },
-    }
-    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
+      props: {
+        currentUser: submitter,
+        dataset,
+      },
+    })
+
+    await nextTick()
+
+    expect(wrapper.html()).toMatchSnapshot()
+  })
+
+  it('should not show the publication status if cannot edit', async () => {
+    const wrapper = mount(DatasetItem, {
+      global: {
+        plugins: [router, store],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient,
+        },
+      },
+      props: {
+        currentUser: user,
+        dataset: {
+          ...dataset,
+          canEdit: false,
+          projects: [published],
+        },
+      },
+    })
+    await nextTick()
     expect(wrapper.find('.test-publication-status').exists()).toBe(false)
   })
 
-  it('should not show the publication status if processing', () => {
-    const propsData = {
-      currentUser: submitter,
-      dataset: {
-        ...dataset,
-        projects: [published],
-        status: 'ANNOTATING'
-      }
-    }
-    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
+  it('should not show the publication status if processing', async () => {
+    const wrapper = mount(DatasetItem, {
+      global: {
+        plugins: [router, store],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient,
+        },
+      },
+      props: {
+        currentUser: submitter,
+        dataset: {
+          ...dataset,
+          projects: [published],
+          status: 'ANNOTATING',
+        },
+      },
+    })
+    await nextTick()
     expect(wrapper.find('.test-publication-status').exists()).toBe(false)
   })
 
-  it('should show "Under review" status', () => {
-    const propsData = {
-      currentUser: submitter,
-      dataset: {
-        ...dataset,
-        projects: [underReview]
-      }
-    }
-    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
+  it('should show "Under review" status', async () => {
+    const wrapper = mount(DatasetItem, {
+      global: {
+        plugins: [router, store],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient,
+        },
+      },
+      props: {
+        currentUser: submitter,
+        dataset: {
+          ...dataset,
+          projects: [underReview],
+        },
+      },
+    })
+    await nextTick()
     expect(wrapper.find('.test-publication-status').text()).toBe('Under review')
   })
 
-  it('should show "Published" status', () => {
-    const propsData = {
-      currentUser: submitter,
-      dataset: {
-        ...dataset,
-        projects: [published]
-      }
-    }
-    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
+  it('should show "Published" status', async () => {
+    const wrapper = mount(DatasetItem, {
+      global: {
+        plugins: [router, store],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient,
+        },
+      },
+      props: {
+        currentUser: submitter,
+        dataset: {
+          ...dataset,
+          projects: [published],
+        },
+      },
+    })
+    await nextTick()
     expect(wrapper.find('.test-publication-status').text()).toBe('Published')
   })
 
-  it('should prefer "Published" status', () => {
-    const propsData = {
-      currentUser: submitter,
-      dataset: {
-        ...dataset,
-        projects: [published, underReview]
-      }
-    }
-    const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
+  it('should prefer "Published" status', async () => {
+    const wrapper = mount(DatasetItem, {
+      global: {
+        plugins: [router, store],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient,
+        },
+      },
+      props: {
+        currentUser: submitter,
+        dataset: {
+          ...dataset,
+          projects: [published, underReview],
+        },
+      },
+    })
+    await nextTick()
     expect(wrapper.find('.test-publication-status').text()).toBe('Published')
   })
-
-  // NOTE: options changed to dataset overview page (to be removed)
-  // it('should show admin options', () => {
-  //   const propsData = {
-  //     currentUser: admin,
-  //     dataset: {
-  //       ...dataset,
-  //       projects: [published]
-  //     }
-  //   }
-  //   const wrapper = mount(DatasetItem, { parentComponent: { store, router }, propsData })
-  //   expect(wrapper.find('.ds-delete').exists()).toBe(true)
-  //   expect(wrapper.find('.ds-reprocess').exists()).toBe(true)
-  // })
 })

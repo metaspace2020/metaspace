@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import { onMounted, onUpdated, ref } from '@vue/composition-api'
+import { ref, onMounted, onUpdated } from 'vue'
 
 /**
  * Returns a ref() that is synchronized with Vue.$refs[name].
@@ -17,9 +16,16 @@ import { onMounted, onUpdated, ref } from '@vue/composition-api'
  *   return <div ref="someStringConstant">
  * }
  */
-export const templateRef = <T = Vue | Element>(name: string) => {
+export const templateRef = <T = Element>(name: string) => {
   const r = ref<T | null>(null)
-  onMounted(function(this: Vue) { r.value = this.$refs[name] as any as T | null })
-  onUpdated(function(this: Vue) { r.value = this.$refs[name] as any as T | null })
+
+  onMounted(() => {
+    r.value = document.querySelector(`[ref="${name}"]`) as T | null
+  })
+
+  onUpdated(() => {
+    r.value = document.querySelector(`[ref="${name}"]`) as T | null
+  })
+
   return r
 }

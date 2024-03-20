@@ -15,25 +15,16 @@
     @keyup="handleKeyup"
   >
     <slot>
-      <p class="m-0 font-medium pointer-events-none text-left p-3 mx-auto">
-        Drag and drop, or click to browse
-      </p>
+      <p class="m-0 font-medium pointer-events-none text-left p-3 mx-auto">Drag and drop, or click to browse</p>
     </slot>
-    <input
-      ref="input"
-      type="file"
-      hidden
-      :accept="accept"
-      :multiple="multiple"
-      @change="onInputChange"
-    />
+    <input ref="input" type="file" hidden :accept="accept" :multiple="multiple" @change="onInputChange" />
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, reactive, ref } from '@vue/composition-api'
+import { defineComponent, reactive, ref } from 'vue'
 
 interface State {
-  dragover: boolean,
+  dragover: boolean
 }
 
 interface Props {
@@ -42,14 +33,14 @@ interface Props {
   multiple: boolean
 }
 
-export default defineComponent<Props>({
+export default defineComponent({
   name: 'Dropzone',
   props: {
-    accept: Array,
+    accept: Array as any,
     disabled: Boolean,
     multiple: Boolean,
   },
-  setup(props, { emit }) {
+  setup(props: Props | any, { emit }) {
     const state = reactive<State>({
       dragover: false,
     })
@@ -123,5 +114,4 @@ export default defineComponent<Props>({
     }
   },
 })
-
 </script>

@@ -1,12 +1,12 @@
 // based on https://uppy.io/docs/stores/#Implementing-Stores
 
-import { ref } from '@vue/composition-api'
+import { ref } from 'vue'
 import { State } from '@uppy/core'
 
 type Listener = (prevState: State, nextState: State, patch: object) => void
 
 export default () => {
-  const state = ref<State>({})
+  const state = ref<State | any>({})
   const listeners = new Set<Listener>()
 
   return {
@@ -17,7 +17,7 @@ export default () => {
 
       state.value = nextState
 
-      listeners.forEach(listener => {
+      listeners.forEach((listener) => {
         listener(prevState, nextState, patch)
       })
     },

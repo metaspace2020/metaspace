@@ -19,25 +19,14 @@
       @click="() => setActiveLayer(null)"
     >
       <fade-transition class="text-xs tracking-wide font-medium text-inherit">
-        <span
-          v-if="activeLayer === null"
-          key="active"
-        >
-          Select annotation
-        </span>
-        <span
-          v-else
-          key="inactive"
-          class="flex items-center justify-center"
-        >
-          Add ion image
-        </span>
+        <span v-if="activeLayer === null" key="active"> Select annotation </span>
+        <span v-else key="inactive" class="flex items-center justify-center"> Add ion image </span>
       </fade-transition>
     </button>
   </overlay>
 </template>
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api'
+import { defineComponent, ref } from 'vue'
 
 import Overlay from './Overlay.vue'
 import IonImageMenuItem from './IonImageMenuItem.vue'
@@ -55,7 +44,7 @@ export default defineComponent({
     Overlay,
     FadeTransition,
   },
-  setup(props, { emit }) {
+  setup() {
     const { activeLayer, removeLayer, setActiveLayer } = useIonImageMenu()
 
     const popupsDisabled = ref(false)
@@ -70,17 +59,17 @@ export default defineComponent({
 })
 </script>
 <style scoped>
-.sm-menu-items >>> > * {
+.sm-menu-items > :deep(*) {
   @apply box-border border-0 border-t border-solid border-gray-200;
 }
-.sm-menu-items >>> > *:last-child {
+.sm-menu-items > :deep(*:last-child) {
   @apply border-b;
 }
-.sm-menu-items >>> > .focus-visible {
+.sm-menu-items > :deep(.focus-visible) {
   outline: 2px solid theme('colors.primary');
   outline-offset: -2px;
 }
-.sm-menu-items >>> > *:hover {
+.sm-menu-items > :deep(*:hover) {
   outline: 1px solid theme('colors.primary');
   outline-offset: -1px;
 }

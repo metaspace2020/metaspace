@@ -3,44 +3,50 @@
 </template>
 
 <script lang="ts">
+import { defineComponent, PropType, computed } from 'vue'
 import getColorScale from '../lib/getColorScale'
-import Vue, { ComponentOptions } from 'vue'
-import { Prop, Component } from 'vue-property-decorator'
 import { IonImage, renderScaleBar } from '../lib/ionImageRendering'
-import createColormap from '..//lib/createColormap'
+import createColormap from '../lib/createColormap'
 
- @Component({})
-export default class Colorbar extends Vue {
-   @Prop({ type: String, default: 'Viridis' })
-   map!: string;
+export default defineComponent({
+  name: 'Colorbar',
+  props: {
+    map: {
+      type: String,
+      default: 'Viridis',
+    },
+    horizontal: {
+      type: Boolean,
+      default: false,
+    },
+    ionImage: Object as PropType<IonImage>,
+  },
 
-   @Prop({ type: Boolean, default: false })
-   horizontal!: boolean;
+  setup(props) {
+    const style = computed(() => {
+      if (props.ionImage != null) {
+        const cmap = createColormap(props.map)
+        return {
+          backgroundImage: `url(${renderScaleBar(props.ionImage, cmap, props.horizontal)})`,
+          backgroundSize: 'contain',
+          backgroundRepeat: 'repeat-x',
+        }
+      } else {
+        const { domain, range } = getColorScale(props.map)
+        const colors = []
+        for (let i = 0; i < domain.length; i++) {
+          colors.push(range[i] + ' ' + (domain[i] * 100 + '%'))
+        }
 
-   @Prop({ type: Object })
-   ionImage!: IonImage;
+        return {
+          background: `linear-gradient(to ${props.horizontal ? 'right' : 'top'}, ${colors.join(', ')})`,
+        }
+      }
+    })
 
-   get style(): object {
-     if (this.ionImage != null) {
-       const cmap = createColormap(this.map)
-       return {
-         backgroundImage: `url(${renderScaleBar(this.ionImage, cmap, this.horizontal)})`,
-         backgroundSize: 'contain',
-         backgroundRepeat: 'repeat-x',
-       }
-     } else {
-       const { domain, range } = getColorScale(this.map)
-       const direction = this.map[0] === '-' ? 'bottom' : 'top'
-
-       const colors = []
-       for (let i = 0; i < domain.length; i++) {
-         colors.push(range[i] + ' ' + (domain[i] * 100 + '%'))
-       }
-
-       return {
-         background: `linear-gradient(to ${this.horizontal ? 'right' : 'top'}, ${colors.join(', ')}`,
-       }
-     }
-   }
-}
+    return {
+      style,
+    }
+  },
+})
 </script>

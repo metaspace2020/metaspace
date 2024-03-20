@@ -49,9 +49,9 @@
   }
 
   .dataset-comparison-extra{
-    position: absolute;
-    right: 8px;
-    top: 33px;
+    //position: absolute;
+    //right: 8px;
+    //top: 33px;
     @apply flex flex-row justify-center	items-center;
   }
 
@@ -103,12 +103,11 @@
   }
 
   .dataset-comparison-grid-item-header{
-    @apply flex flex-row;
+    @apply flex flex-row items-center justify-end;
     background: #F1F5F8;
     padding: 4px 8px;
     width: calc(100% - 16px);
     border-top: 1px dashed lightgray;
-    align-items: baseline;
     height: 22px;
 
     span{

@@ -3,10 +3,7 @@
   "wsGraphqlUrl": null,
   "google_client_id": "clientid",
   "ravenDsn": null,
-  "metadataTypes": [
-    "ims",
-    "lcms"
-  ],
+  "metadataTypes": ["ims", "lcms"],
   "features": {
     "coloc": true,
     "ion_thumbs": true,

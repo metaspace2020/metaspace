@@ -1,31 +1,39 @@
 <template>
-  <tag-filter
-    :removable="removable"
-    @destroy="destroy"
-  >
-    <span slot="show">{{ name }}</span>
+  <tag-filter :removable="removable" @destroy="destroy">
+    <template v-slot:show>
+      {{ name }}
+    </template>
   </tag-filter>
 </template>
 
 <script lang="ts">
+import { defineComponent } from 'vue'
 import TagFilter from './TagFilter.vue'
-import Vue from 'vue'
-import { Component, Prop } from 'vue-property-decorator'
 
- @Component({
-   components: {
-     TagFilter,
-   },
- })
-export default class BooleanFilter extends Vue {
-   @Prop({ required: true })
-   name!: string;
+export default defineComponent({
+  name: 'BooleanFilter',
+  components: {
+    TagFilter,
+  },
+  props: {
+    name: {
+      type: String,
+      required: true,
+    },
+    removable: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  setup(props, { emit }) {
+    const destroy = () => {
+      emit('destroy')
+    }
 
-   @Prop({ type: Boolean, default: true })
-   removable!: boolean;
-
-   destroy(): void {
-     this.$emit('destroy')
-   }
-}
+    return {
+      ...props,
+      destroy,
+    }
+  },
+})
 </script>

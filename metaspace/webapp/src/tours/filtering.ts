@@ -1,13 +1,13 @@
-import convertTourStep from './convertTourStep'
+// @ts-nocheck
+import { markRaw } from 'vue'
+import Panel from './filtering/steps/00-panel.md'
+import Click from './filtering/steps/10-click.md'
+import Select from './filtering/steps/20-select.md'
+import Edit from './filtering/steps/30-edit.md'
+import Remove from './filtering/steps/40-remove.md'
+import Datasets from './filtering/steps/50-datasets.md'
 
 export default {
   id: 'sm-tour-filtering',
-  steps: [
-    require('./filtering/steps/00-panel.md'),
-    require('./filtering/steps/10-click.md'),
-    require('./filtering/steps/20-select.md'),
-    require('./filtering/steps/30-edit.md'),
-    require('./filtering/steps/40-remove.md'),
-    require('./filtering/steps/50-datasets.md'),
-  ].map(convertTourStep),
+  steps: [markRaw(Panel), markRaw(Click), markRaw(Select), markRaw(Edit), markRaw(Remove), markRaw(Datasets)],
 }

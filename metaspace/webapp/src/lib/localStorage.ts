@@ -1,7 +1,9 @@
 import safeJsonParse from './safeJsonParse'
-import * as cookie from 'js-cookie'
+import { useCookies } from 'vue3-cookies'
 
 const memoryStorage: Record<string, string> = {}
+const { cookies } = useCookies()
+const DAY = 24 * 60 * 60
 
 export const setLocalStorage = (key: string, value: any, cookieFallback = false) => {
   const json = JSON.stringify(value)
@@ -12,15 +14,17 @@ export const setLocalStorage = (key: string, value: any, cookieFallback = false)
     console.error(err)
     if (cookieFallback) {
       try {
-        cookie.set('storage_' + key, json, { expires: 90 })
-      } catch (err2) { console.error(err2) }
+        cookies.set('storage_' + key, json, 90 * DAY)
+      } catch (err2) {
+        console.error(err2)
+      }
     }
   }
 }
 
-export const getLocalStorage = <T>(key: string): (T | undefined) => {
+export const getLocalStorage = <T>(key: string): T | undefined => {
   try {
-    const json = localStorage.getItem(key) || memoryStorage[key] || cookie.get('storage_' + key)
+    const json = localStorage.getItem(key) || memoryStorage[key] || JSON.stringify(cookies.get('storage_' + key))
     return json && safeJsonParse(json)
   } catch (err) {
     console.error(err)
@@ -32,10 +36,14 @@ export const removeLocalStorage = (key: string) => {
   delete memoryStorage[key]
   try {
     localStorage.removeItem(key)
-  } catch (err) { console.error(err) }
+  } catch (err) {
+    console.error(err)
+  }
   try {
-    cookie.remove('storage_' + key)
-  } catch (err) { console.error(err) }
+    cookies.remove('storage_' + key)
+  } catch (err) {
+    console.error(err)
+  }
 }
 
 export const migrateLocalStorage = () => {
@@ -47,18 +55,24 @@ export const migrateLocalStorage = () => {
 
     // Convert storage cookies to localStorage
     try {
-      const hideReleaseNotes = cookie.getJSON('hideReleaseNotes')
+      const hideReleaseNotes = cookies.get('hideReleaseNotes')
       if (hideReleaseNotes != null) {
         setLocalStorage('hideReleaseNotes', hideReleaseNotes, true)
-        cookie.remove('hideReleaseNotes')
+        cookies.remove('hideReleaseNotes')
       }
-    } catch (err) { console.error(err) }
+    } catch (err) {
+      console.error(err)
+    }
     try {
-      const showDescrHint = cookie.getJSON('show_descr_hint') as any
+      const showDescrHint = cookies.get('show_descr_hint') as any
       if (showDescrHint != null) {
         setLocalStorage('hideMarkdownHint', showDescrHint === 0, true)
-        cookie.remove('show_descr_hint')
+        cookies.remove('show_descr_hint')
       }
-    } catch (err) { console.error(err) }
-  } catch (err) { console.error(err) }
+    } catch (err) {
+      console.error(err)
+    }
+  } catch (err) {
+    console.error(err)
+  }
 }

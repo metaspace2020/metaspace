@@ -1,44 +1,64 @@
-import { mount } from '@vue/test-utils'
-import Vue from 'vue'
 import { DatasetBrowserSpectrumChart } from './DatasetBrowserSpectrumChart'
-import Vuex from 'vuex'
-import { sync } from 'vuex-router-sync'
-import store from '../../../store'
+import { nextTick, h, defineComponent } from 'vue'
+import { mount, flushPromises } from '@vue/test-utils'
 import router from '../../../router'
+import store from '../../../store'
 
-jest.mock('vue-echarts', () => ({ default: jest.fn() }))
-jest.mock('echarts', () => ({ default: jest.fn() }))
-jest.mock('echarts/core', () => ({ default: jest.fn(), use: jest.fn() }))
-jest.mock('echarts/renderers', () => ({ default: jest.fn() }))
-jest.mock('echarts/charts', () => ({ default: jest.fn() }))
-jest.mock('echarts/components', () => ({ default: jest.fn() }))
+vi.mock('vue-echarts', () => ({ default: vi.fn() }))
+vi.mock('echarts', () => ({ default: vi.fn() }))
+vi.mock('echarts/core', () => ({ default: vi.fn(), use: vi.fn() }))
+vi.mock('echarts/renderers', async () => {
+  const actual: any = await vi.importActual('echarts/renderers')
+  return {
+    ...actual,
+  }
+})
+vi.mock('echarts/charts', async () => {
+  const actual: any = await vi.importActual('echarts/charts')
+  return {
+    ...actual,
+  }
+})
+vi.mock('echarts/components', async () => {
+  const actual: any = await vi.importActual('echarts/charts')
+  return {
+    ...actual,
+    GridComponent: vi.fn(),
+    TooltipComponent: vi.fn(),
+    ToolboxComponent: vi.fn(),
+    LegendComponent: vi.fn(),
+    DataZoomComponent: vi.fn(),
+    MarkPointComponent: vi.fn(),
+    TitleComponent: vi.fn(),
+    VisualMapPiecewiseComponent: vi.fn(),
+    VisualMapContinuousComponent: vi.fn(),
+  }
+})
 
-describe('DatasetBrowserSpectrumChart', () => {
-  const testHarness = Vue.extend({
+describe('DatasetBrowserKendrickPlot', () => {
+  const testHarness = defineComponent({
     components: {
       DatasetBrowserSpectrumChart,
     },
-    render(h) {
-      return h(DatasetBrowserSpectrumChart, { props: this.$attrs })
+    setup(props, { attrs }) {
+      return () => h(DatasetBrowserSpectrumChart, { ...attrs, ...props })
     },
   })
 
-  beforeAll(() => {
-    Vue.use(Vuex)
-    sync(store, router)
-  })
-
-  it('it should match snapshot when empty', async() => {
+  it('it should match snapshot when empty', async () => {
     const wrapper = mount(testHarness, {
-      store,
-      router,
-      propsData: {
+      global: {
+        plugins: [store, router],
+      },
+      props: {
         isEmpty: true,
         isLoading: false,
       },
     })
-    await Vue.nextTick()
 
-    expect(wrapper.element).toMatchSnapshot()
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.html()).toMatchSnapshot()
   })
 })

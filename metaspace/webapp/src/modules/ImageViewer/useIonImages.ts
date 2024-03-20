@@ -1,4 +1,4 @@
-import { ref, Ref, computed, watch } from '@vue/composition-api'
+import { ref, Ref, computed, watch } from 'vue'
 import { Image } from 'upng-js'
 
 import { IonImage, loadPngFromUrl, processIonImage, renderScaleBar } from '../../lib/ionImageRendering'
@@ -11,42 +11,47 @@ import viewerState from './state'
 import { Annotation, IonImageLayer, useAnnotations, useIonImageSettings, useIonImageLayers } from './ionImageState'
 
 interface Props {
-  annotation: Annotation,
+  annotation: Annotation
   imageLoaderSettings: any
   colormap: string
   scaleType?: ScaleType
   ticData?: any
 }
 interface ColorBar {
-  minColor: string,
-  maxColor: string,
-  gradient: string,
+  minColor: string
+  maxColor: string
+  gradient: string
 }
 interface IntensityData {
-  image: number,
-  clipped: number,
-  scaled: number,
-  user: number,
-  quantile: number,
-  status: 'LOCKED' | 'CLIPPED' | undefined,
+  image: number
+  clipped: number
+  scaled: number
+  user: number
+  quantile: number
+  status: 'LOCKED' | 'CLIPPED' | undefined
 }
 
 interface ComputedImageData {
-  colorBar: Readonly<Ref<Readonly<ColorBar>>>,
-  colorMap: Readonly<Ref<Readonly<number[][]>>>,
-  image: Readonly<Ref<Readonly<IonImage | null>>>,
-  intensity: Readonly<Ref<Readonly<{min: IntensityData, max: IntensityData} | null>>>,
-  scaleRange: Readonly<Ref<Readonly<[number, number]>>>,
+  colorBar: Readonly<Ref<Readonly<ColorBar>>>
+  colorMap: Readonly<Ref<Readonly<number[][]>>>
+  image: Readonly<Ref<Readonly<IonImage | null>>>
+  intensity: Readonly<Ref<Readonly<{ min: IntensityData; max: IntensityData } | null>>>
+  scaleRange: Readonly<Ref<Readonly<[number, number]>>>
 }
 
 const { annotationCache, onAnnotationChange, activeAnnotation, getImageIntensities } = useAnnotations()
 const { lockedIntensities, lockedScaleRange } = useIonImageSettings()
 const { layerCache, orderedLayers } = useIonImageLayers()
 
-const rawImageCache : Record<string, Ref<Image | null>> = {}
+const rawImageCache: Record<string, Ref<Image | null>> = {}
 
 function getIntensityData(
-  image: number, clipped: number, scaled: number, user: number, quantile: number, isLocked?: boolean,
+  image: number,
+  clipped: number,
+  scaled: number,
+  user: number,
+  quantile: number,
+  isLocked?: boolean
 ): IntensityData {
   const isClipped = quantile > 0 && quantile < 1 && user === image
   return {
@@ -59,7 +64,7 @@ function getIntensityData(
   } as const
 }
 
-function createComputedImageData(props: Props, layer: IonImageLayer): ComputedImageData {
+function createComputedImageData(props: Props, layer: IonImageLayer): ComputedImageData | any {
   if (!(layer.id in rawImageCache)) {
     rawImageCache[layer.id] = ref<Image | null>(null)
   }
@@ -68,17 +73,18 @@ function createComputedImageData(props: Props, layer: IonImageLayer): ComputedIm
     const annotation = annotationCache[layer.id]
     const [isotopeImage] = annotation.isotopeImages
     if (isotopeImage && isotopeImage.url) {
-      loadPngFromUrl(isotopeImage.url).then(img => {
-        rawImageCache[layer.id].value = img
-      })
-        .catch(err => {
+      loadPngFromUrl(isotopeImage.url)
+        .then((img) => {
+          rawImageCache[layer.id].value = img
+        })
+        .catch((err) => {
           reportError(err, null)
         })
     }
   }
 
   const activeState = computed(() =>
-    viewerState.mode.value === 'SINGLE' ? layer.singleModeState : layer.multiModeState,
+    viewerState.mode.value === 'SINGLE' ? layer.singleModeState : layer.multiModeState
   )
 
   const userIntensities = computed(() => {
@@ -110,15 +116,14 @@ function createComputedImageData(props: Props, layer: IonImageLayer): ComputedIm
         props.scaleType,
         scaleRange.value,
         userIntensities.value,
-        props.ticData,
+        props.ticData
       )
     }
     return null
   })
 
-  const activeColorMap = computed(() => viewerState.mode.value === 'SINGLE'
-    ? props.colormap as string
-    : layer.settings.channel,
+  const activeColorMap = computed(() =>
+    viewerState.mode.value === 'SINGLE' ? (props.colormap as string) : layer.settings.channel
   )
 
   const colorMap = computed(() => {
@@ -133,20 +138,28 @@ function createComputedImageData(props: Props, layer: IonImageLayer): ComputedIm
     return {
       minColor: range[0],
       maxColor: range[range.length - 1],
-      gradient: scaledMinIntensity === scaledMaxIntensity
-        ? `linear-gradient(to right, ${range.join(',')})`
-        : image.value ? `url(${renderScaleBar(image.value, colorMap, true)})` : '',
+      gradient:
+        scaledMinIntensity === scaledMaxIntensity
+          ? `linear-gradient(to right, ${range.join(',')})`
+          : image.value
+          ? `url(${renderScaleBar(image.value, colorMap, true)})`
+          : '',
     }
   })
 
   const intensity = computed(() => {
     if (image.value !== null) {
       const {
-        minIntensity, maxIntensity,
-        clippedMinIntensity, clippedMaxIntensity,
-        scaledMinIntensity, scaledMaxIntensity,
-        userMinIntensity, userMaxIntensity,
-        lowQuantile, highQuantile,
+        minIntensity,
+        maxIntensity,
+        clippedMinIntensity,
+        clippedMaxIntensity,
+        scaledMinIntensity,
+        scaledMaxIntensity,
+        userMinIntensity,
+        userMaxIntensity,
+        lowQuantile,
+        highQuantile,
       } = image.value || {}
       const [lockedMin, lockedMax] = lockedIntensities.value
       return {
@@ -156,7 +169,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer): ComputedIm
           scaledMinIntensity,
           userMinIntensity,
           lowQuantile,
-          lockedMin !== undefined,
+          lockedMin !== undefined
         ),
         max: getIntensityData(
           maxIntensity,
@@ -164,7 +177,7 @@ function createComputedImageData(props: Props, layer: IonImageLayer): ComputedIm
           scaledMaxIntensity,
           userMaxIntensity,
           highQuantile,
-          lockedMax !== undefined,
+          lockedMax !== undefined
         ),
       }
     }
@@ -180,17 +193,17 @@ function createComputedImageData(props: Props, layer: IonImageLayer): ComputedIm
   }
 }
 
-const useIonImages = (props: Props) => {
+const useIonImages = (props: Props | any) => {
   const computedImageDataCache = new WeakMap<IonImageLayer, ComputedImageData>()
 
   const ionImagesWithData = computed(() => {
     let layers
     if (viewerState.mode.value === 'SINGLE') {
-      layers = (activeAnnotation.value ? [layerCache[activeAnnotation.value]] : [])
+      layers = activeAnnotation.value ? [layerCache[activeAnnotation.value]] : []
     } else {
       layers = orderedLayers.value
     }
-    return layers.map(layer => {
+    return layers.map((layer) => {
       let data = computedImageDataCache.get(layer)
       if (data == null) {
         data = createComputedImageData(props, layer)
@@ -200,19 +213,19 @@ const useIonImages = (props: Props) => {
     })
   })
 
-  const ionImagesLoading = computed(
-    () => ionImagesWithData.value.some(({ data }) => data.image.value === null),
-  )
+  const ionImagesLoading = computed(() => ionImagesWithData.value.some(({ data }) => data.image.value === null))
 
   const ionImageLayers = computed(() => {
     if (viewerState.mode.value === 'SINGLE') {
       if (ionImagesWithData.value.length) {
         const { image, colorMap } = ionImagesWithData.value[0].data
         if (image.value !== null) {
-          return [{
-            ionImage: image.value,
-            colorMap: colorMap.value,
-          }]
+          return [
+            {
+              ionImage: image.value,
+              colorMap: colorMap.value,
+            },
+          ]
         }
       }
       return []
@@ -280,6 +293,7 @@ const useIonImages = (props: Props) => {
     return { width: undefined, height: undefined }
   })
 
+  onAnnotationChange(props.annotation)
   watch(() => props.annotation, onAnnotationChange)
 
   return {

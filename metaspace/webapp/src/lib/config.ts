@@ -2,55 +2,56 @@
 import { defaultsDeep } from 'lodash-es'
 import { getLocalStorage, removeLocalStorage, setLocalStorage } from './localStorage'
 import { MAX_MOL_DBS_EXT, MAX_MOL_DBS } from './constants'
-const fileConfig = require('../clientConfig.json')
+// @ts-ignore
+import fileConfig from '../clientConfig.json'
 
 interface Features {
-  coloc: boolean;
-  enrichment: boolean;
-  show_dataset_overview: boolean;
-  imzml_browser: boolean;
-  detectability: boolean;
-  roi: boolean;
-  tic: boolean;
-  custom_cols: boolean;
-  ion_thumbs: boolean;
-  off_sample: boolean;
-  off_sample_col: boolean; // Not a "feature" - just shows an extra column for debugging
-  new_feature_popups: boolean;
-  optical_transform: boolean;
-  ignore_pixel_aspect_ratio: boolean;
-  all_dbs: boolean;
-  all_adducts: boolean;
-  neutral_losses: boolean;
-  neutral_losses_new_ds: boolean; // False prevents neutral losses being set on the first upload
-  chem_mods: boolean;
-  advanced_ds_config: boolean;
-  v2: boolean;
-  isomers: boolean;
-  isobars: boolean;
-  moldb_mgmt: boolean;
-  moldb_limit_ext: boolean;
-  multiple_ion_images: boolean;
-  lock_intensity: boolean;
-  lithops: boolean;
-  raw_fdr: boolean;
+  coloc: boolean
+  enrichment: boolean
+  show_dataset_overview: boolean
+  imzml_browser: boolean
+  detectability: boolean
+  roi: boolean
+  tic: boolean
+  custom_cols: boolean
+  ion_thumbs: boolean
+  off_sample: boolean
+  off_sample_col: boolean // Not a "feature" - just shows an extra column for debugging
+  new_feature_popups: boolean
+  optical_transform: boolean
+  ignore_pixel_aspect_ratio: boolean
+  all_dbs: boolean
+  all_adducts: boolean
+  neutral_losses: boolean
+  neutral_losses_new_ds: boolean // False prevents neutral losses being set on the first upload
+  chem_mods: boolean
+  advanced_ds_config: boolean
+  v2: boolean
+  isomers: boolean
+  isobars: boolean
+  moldb_mgmt: boolean
+  moldb_limit_ext: boolean
+  multiple_ion_images: boolean
+  lock_intensity: boolean
+  lithops: boolean
+  raw_fdr: boolean
 }
 
 interface ClientConfig {
-  graphqlUrl: string | null;
-  wsGraphqlUrl: string | null;
-  companionUrl: string | null;
-  imageStorage?: string | null;
+  graphqlUrl: string | null
+  wsGraphqlUrl: string | null
+  companionUrl: string | null
+  imageStorage?: string | null
 
-  google_client_id: string;
+  google_client_id: string
 
   sentry: null | {
-    dsn: string;
-    environment?: string;
-    release?: string;
-  };
-  metadataTypes: string[];
-  features: Features;
+    dsn: string
+    environment?: string
+    release?: string
+  }
+  metadataTypes: string[]
+  features: Features
 }
 
 const defaultConfig: ClientConfig = {
@@ -88,7 +89,7 @@ const defaultConfig: ClientConfig = {
     moldb_limit_ext: false,
     multiple_ion_images: true,
     lock_intensity: false,
-    lithops: false,
+    lithops: true,
     raw_fdr: false,
   },
 }
@@ -104,8 +105,8 @@ export const updateConfigFromQueryString = () => {
     const queryStringFeatures = (window.location.search || '')
       .substring(1)
       .split('&')
-      .filter(part => part.startsWith('feat='))
-      .map(features => features.substring('feat='.length).split(','))
+      .filter((part) => part.startsWith('feat='))
+      .map((features) => features.substring('feat='.length).split(','))
       .reduce((a, b) => a.concat(b), [])
 
     const overrides: Partial<Features> = {}
@@ -115,9 +116,9 @@ export const updateConfigFromQueryString = () => {
       Object.assign(overrides, getLocalStorage(FEATURE_STORAGE_KEY))
     }
 
-    queryStringFeatures.forEach(feat => {
+    queryStringFeatures.forEach((feat) => {
       const val = !feat.startsWith('-')
-      const key = (val ? feat : feat.substring(1))
+      const key = val ? feat : feat.substring(1)
       if (key !== 'reset' && key !== 'save') {
         overrides[key as keyof Features] = val
       }
@@ -135,14 +136,14 @@ export const replaceConfigWithDefaultForTests = () => {
   Object.assign(config, defaultConfig)
 }
 
-export default config
-
 interface Limits {
   maxMolDBs: number
 }
 
-export const limits : Limits = {
+export const limits: Limits = {
   get maxMolDBs() {
     return config.features.moldb_limit_ext ? MAX_MOL_DBS_EXT : MAX_MOL_DBS
   },
 }
+
+export default config

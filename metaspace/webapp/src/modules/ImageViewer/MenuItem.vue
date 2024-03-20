@@ -4,8 +4,8 @@
       'px-3 h-21 outline-none',
       {
         'bg-blue-100-alpha': isActive,
-        'text-gray-700': !visible
-      }
+        'text-gray-700': !visible,
+      },
     ]"
     tabindex="0"
     @keyup.enter.self="emitActive"
@@ -17,13 +17,7 @@
     @keydown.capture="$emit('keydown')"
   >
     <fade-transition>
-      <p
-        v-if="loading"
-        key="loading"
-        class="m-0 ml-3 text-gray-700 text-sm font-medium"
-      >
-        Loading image &hellip;
-      </p>
+      <p v-if="loading" key="loading" class="m-0 ml-3 text-gray-700 text-sm font-medium">Loading image &hellip;</p>
       <div v-else>
         <slot />
       </div>
@@ -31,7 +25,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent } from 'vue'
 
 import FadeTransition from '../../components/FadeTransition'
 

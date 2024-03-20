@@ -1,17 +1,13 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`MetaspaceFooter should match snapshot 1`] = `
-<footer class="bg-gray-100">
-  <div class="leading-6 max-w-4xl mx-auto px-18 py-16 box-border text-gray-700 text-sm text-center">
-    <p class="flex justify-center m-0 font-medium flex-wrap"><a href="/privacy" class="">
-        Privacy
-      </a> <a href="/terms" class="">
-        Terms
-      </a> <a href="/publications" class="">
-        Publications
-      </a> <a href="https://github.com/metaspace2020/metaspace">GitHub</a> <a href="https://twitter.com/metaspace2020">Twitter</a> <a href="mailto:contact@metaspace2020.eu">Contact</a></p>
-    <p class="m-0 mt-8">
-      © 2014–2023 <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov Team</a></p>
+exports[`MetaspaceFooter > should match snapshot 1`] = `
+"<footer data-v-d74f8df0=\\"\\" class=\\"bg-gray-100\\">
+  <div data-v-d74f8df0=\\"\\" class=\\"leading-6 max-w-4xl mx-auto px-18 py-16 box-border text-gray-700 text-sm text-center\\">
+    <p data-v-d74f8df0=\\"\\" class=\\"flex justify-center m-0 font-medium flex-wrap\\">
+    <div data-v-d74f8df0=\\"\\"> Privacy </div>
+    <div data-v-d74f8df0=\\"\\"> Terms </div>
+    <div data-v-d74f8df0=\\"\\"> Publications </div><a data-v-d74f8df0=\\"\\" href=\\"https://github.com/metaspace2020/metaspace\\">GitHub</a><a data-v-d74f8df0=\\"\\" href=\\"https://twitter.com/metaspace2020\\">Twitter</a><a data-v-d74f8df0=\\"\\" href=\\"mailto:contact@metaspace2020.eu\\">Contact</a></p>
+    <p data-v-d74f8df0=\\"\\" class=\\"m-0 mt-8\\"> © 2014–2023 <a data-v-d74f8df0=\\"\\" href=\\"https://www.embl.de/research/units/scb/alexandrov/\\">Alexandrov Team</a></p>
   </div>
-</footer>
+</footer>"
 `;

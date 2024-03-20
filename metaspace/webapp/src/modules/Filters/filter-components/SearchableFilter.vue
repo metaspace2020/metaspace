@@ -1,192 +1,188 @@
 <template>
-  <tag-filter
-    :name="name"
-    :removable="removable && !loading"
-    :width="multiple ? 900 : 300"
-    @destroy="destroy"
-  >
-    <el-select
-      slot="edit"
-      ref="select"
-      placeholder="Start typing name"
-      remote
-      filterable
-      :clearable="clearable"
-      :remote-method="fetchOptions"
-      :loading="loading"
-      loading-text="Loading matching entries..."
-      no-match-text="No matches"
-      :multiple="multiple"
-      :multiple-limit="10"
-      :value="safeValue"
-      @change="onInput"
-    >
-      <el-option
-        v-for="item in joinedOptions"
-        :key="item.value"
-        :label="item.label"
-        :value="item.value"
-      />
-    </el-select>
+  <tag-filter :name="name" :removable="removable && !loading" :width="multiple ? 900 : 300" @destroy="destroy">
+    <template v-slot:edit>
+      <el-select
+        ref="select"
+        placeholder="Start typing name"
+        remote
+        filterable
+        :clearable="clearable"
+        :remote-method="fetchOptions"
+        :loading="loading"
+        loading-text="Loading matching entries..."
+        no-match-text="No matches"
+        :multiple="multiple"
+        :multiple-limit="10"
+        :model-value="safeValue"
+        :teleported="false"
+        @update:model-value="onInput"
+      >
+        <el-option v-for="item in joinedOptions" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
+    </template>
 
-    <span
-      slot="show"
-      class="tf-value-span"
-    >
-      <span v-if="valueAsArray.length === 1">
-        {{ currentLabel }}
+    <template v-slot:show>
+      <span class="tf-value-span">
+        <span v-if="valueAsArray.length === 1">
+          {{ currentLabel }}
+        </span>
+        <span v-if="valueAsArray.length > 1"> ({{ value.length }} items selected) </span>
+        <span v-if="valueAsArray.length === 0"> (any) </span>
       </span>
-      <span v-if="valueAsArray.length > 1">
-        ({{ value.length }} items selected)
-      </span>
-      <span v-if="valueAsArray.length === 0">
-        (any)
-      </span>
-    </span>
+    </template>
   </tag-filter>
 </template>
 
 <script lang="ts">
+import { defineComponent, ref, onMounted, watch, nextTick, computed } from 'vue'
+import { useStore } from 'vuex'
+import { ElSelect, ElOption } from '../../../lib/element-plus'
 import TagFilter from './TagFilter.vue'
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator'
-import searchableFilterQueries, { SearchableFilterKey, Option } from './searchableFilterQueries'
+import searchableFilterQueries, { Option } from './searchableFilterQueries'
 
-  @Component({
-    components: {
-      TagFilter,
-    },
-  })
-export default class SearchableFilter extends Vue {
-    @Prop({ type: String, required: true })
-    name!: string;
+import { inject, InjectionKey } from 'vue'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { ApolloClient } from '@apollo/client/core'
 
-    @Prop({ type: Boolean, default: false })
-    multiple!: boolean;
+export default defineComponent({
+  name: 'SearchableFilter',
+  components: {
+    TagFilter,
+    ElSelect,
+    ElOption,
+  },
+  props: {
+    name: { type: String, required: true },
+    multiple: { type: Boolean, default: false },
+    clearable: { type: Boolean, default: true },
+    value: [String, Array],
+    filterKey: { type: String, required: true },
+    removable: { type: Boolean, default: true },
+  },
+  emits: ['input', 'change', 'destroy'],
+  setup(props, { emit }) {
+    const apolloClientKey: InjectionKey<ApolloClient<any>> = DefaultApolloClient as InjectionKey<ApolloClient<any>>
+    const apolloClient = inject(apolloClientKey)
+    const store = useStore()
+    const loading = ref(false)
+    const options = ref<Option[]>([])
+    const cachedOptions = ref<Option[]>([])
+    const currentLabel = ref('')
+    const select = ref<any>(null)
 
-    @Prop({ type: Boolean, default: true })
-    clearable!: boolean;
+    const valueAsArray = computed(() => {
+      return props.multiple ? ((props.value || []) as string[]) : props.value ? [props.value] : []
+    })
 
-    @Prop()
-    value!: string[] | string | undefined;
+    const safeValue = computed(() => {
+      return props.multiple ? valueAsArray.value : props.value
+    })
 
-    @Prop({ type: String, required: true })
-    filterKey!: SearchableFilterKey;
-
-    @Prop({ type: Boolean, default: true })
-    removable!: boolean;
-
-    loading = false;
-    options: Option[] = [];
-    cachedOptions: Option[] = [];
-    currentLabel = '';
-
-    created() {
-      this.fetchNames()
-      this.fetchOptions('')
-    }
-
-    get valueAsArray(): string[] {
-      if (this.multiple) {
-        return this.value != null ? this.value as string[] : []
-      } else {
-        return this.value != null && this.value !== '' ? [this.value as string] : []
-      }
-    }
-
-    get safeValue() {
-      if (this.multiple) {
-        return this.valueAsArray
-      } else {
-        return this.value
-      }
-    }
-
-    get joinedOptions() {
+    const joinedOptions = computed(() => {
       // adds/moves selected values to the top of the options list
 
       const valueToLabel: Record<string, string> = {}
-      for (const { value, label } of this.cachedOptions) {
+      for (const { value, label } of cachedOptions.value) {
         valueToLabel[value] = label
       }
 
-      const values = this.valueAsArray.slice()
-      const options = values.map(value => ({ value, label: valueToLabel[value] }))
+      const values = valueAsArray.value.slice()
+      const optionsAux = values.map((value) => ({ value, label: valueToLabel[value] }))
 
       // add currently selected values to the list
-      for (let i = 0; i < this.options.length; i++) {
-        const item = this.options[i]
+      for (let i = 0; i < options.value?.length; i++) {
+        const item = options.value[i]
         if (values.indexOf(item.value) === -1) {
           values.push(item.value)
-          options.push(item)
+          optionsAux.push(item)
         }
       }
 
-      return options
-    }
+      return optionsAux
+    })
 
-    @Watch('value')
-    async fetchNames() {
-      const foundOptions: Option[] = []
-      const missingValues: string[] = []
-      this.valueAsArray.forEach(value => {
-        const option = this.cachedOptions.find(option => option.value === value)
-                    || this.options.find(option => option.value === value)
+    const fetchNames = async () => {
+      const foundOptions = []
+      const missingValues = []
+
+      valueAsArray.value.forEach((value) => {
+        const option =
+          cachedOptions.value.find((option) => option.value === value) ||
+          options.value.find((option) => option.value === value) // props.options should be a reactive prop
         if (option != null) {
           foundOptions.push(option)
         } else {
           missingValues.push(value)
         }
       })
-      this.cachedOptions = foundOptions
+
+      cachedOptions.value = foundOptions
 
       if (missingValues.length > 0) {
-        const options = await searchableFilterQueries[this.filterKey].getById(this.$apollo, this.valueAsArray)
-        this.cachedOptions.push(...options)
+        const options = await searchableFilterQueries[props.filterKey].getById(apolloClient, valueAsArray.value)
+        cachedOptions.value.push(...options)
       }
 
-      if (this.valueAsArray.length === 1) {
+      if (valueAsArray.value.length === 1) {
         // data.options.length may be 0 if an invalid ID is passed due to URL truncation or a dataset becoming hidden
-        this.currentLabel = foundOptions.length > 0 ? foundOptions[0].label : this.valueAsArray[0]
+        currentLabel.value = foundOptions.length > 0 ? foundOptions[0].label : valueAsArray.value[0]
       }
 
-      this.$nextTick(() => {
-        // ElSelect is mocked in tests - do nothing if the ref or the setSelected method are missing
-        if (this.$refs.select != null && (this.$refs.select as any).setSelected != null) {
-          // WORKAROUND: The logic in this.joinedOptions creates labelless options for values that haven't been fetched yet.
-          // After fetching the options, el-select doesn't automatically refresh the label, showing the ID instead.
-          // Calling setSelected() forces it to recalculate the label.
-          (this.$refs.select as any).setSelected()
+      nextTick(() => {
+        if (select.value != null && typeof select.value.setSelected === 'function') {
+          select.value.setSelected()
         }
       })
     }
 
-    async fetchOptions(query: string) {
-      this.loading = true
+    watch(() => props.value, fetchNames, { immediate: true })
+
+    const fetchOptions = async (query) => {
+      loading.value = true
 
       try {
-        this.options = await searchableFilterQueries[this.filterKey].search(this.$apollo, this.$store, query)
-        this.loading = false
+        // Assuming searchableFilterQueries is an external API or utility
+        options.value = await searchableFilterQueries[props.filterKey].search(apolloClient, store, query)
       } catch (err) {
-        this.options = []
+        options.value = []
         throw err
+      } finally {
+        loading.value = false
       }
     }
 
-    onInput(val: string) {
-      this.$emit('input', val)
-      this.$emit('change', val)
+    function onInput(val: string) {
+      emit('input', val)
+      emit('change', val)
     }
 
-    destroy() {
-      this.$emit('destroy')
+    function destroy() {
+      emit('destroy')
     }
-}
+
+    onMounted(() => {
+      fetchNames()
+      fetchOptions('')
+    })
+
+    return {
+      loading,
+      options,
+      fetchOptions,
+      onInput,
+      destroy,
+      valueAsArray,
+      safeValue,
+      joinedOptions,
+      currentLabel,
+      select,
+    }
+  },
+})
 </script>
 
 <style>
-  .el-select-dropdown.is-multiple .el-select-dropdown__wrap {
-    max-height: 600px;
-  }
+.el-select-dropdown.is-multiple .el-select-dropdown__wrap {
+  max-height: 600px;
+}
 </style>

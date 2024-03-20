@@ -1,133 +1,96 @@
 <template>
   <div>
     <el-dialog
-      v-if="editingRoleOfMember"
-      visible
+      :model-value="editingRoleOfMember != null"
       :title="`Change ${type} member role`"
       @close="handleCloseEditRole"
     >
       <p>
-        Change {{ editingRoleOfMember.user.name }}'s role to:
+        Change {{ editingRoleOfMember?.user?.name }}'s role to:
         <el-select v-model="newRole">
-          <el-option
-            v-for="role in allowedRoles"
-            :key="role"
-            :value="role"
-            :label="getRoleName(role)"
-          />
-          <el-option
-            :value="null"
-            :label="`None (remove from ${type})`"
-          />
+          <el-option v-for="role in allowedRoles" :key="role" :value="role" :label="getRoleName(role as any)" />
+          <el-option :value="''" :label="`None (remove from ${type})`" />
         </el-select>
       </p>
-      <p>
-        Changing a member's role this way does not cause any notification emails to be sent.
-      </p>
-      <el-row align="right">
-        <el-button @click="handleCloseEditRole">
-          Close
-        </el-button>
-        <el-button
-          type="primary"
-          @click="handleUpdateRole"
-        >
-          Save
-        </el-button>
+      <p>Changing a member's role this way does not cause any notification emails to be sent.</p>
+      <el-row align="middle">
+        <el-button @click="handleCloseEditRole"> Close </el-button>
+        <el-button type="primary" @click="handleUpdateRole"> Save </el-button>
       </el-row>
     </el-dialog>
     <el-table
       v-loading="loading"
       :data="currentPageData"
-      :row-key="row => row.user.id"
+      :row-key="(row) => row?.user.id"
       element-loading-text="Loading results from the server..."
     >
-      <p slot="empty">
-        You do not have access to view the member list.
-      </p>
+      <template v-slot:empty>
+        <p>You do not have access to view the member list.</p>
+      </template>
 
-      <el-table-column
-        label="Name"
-        min-width="200"
-      >
-        <template slot-scope="scope">
-          {{ scope.row.user.name }}
+      <el-table-column label="Name" min-width="200">
+        <template v-slot="{ row }">
+          {{ row?.user?.name }}
         </template>
       </el-table-column>
 
-      <el-table-column
-        v-if="shouldShowEmails"
-        label="Email"
-        min-width="200"
-      >
-        <template slot-scope="scope">
-          {{ scope.row.user.email }}
+      <el-table-column v-if="shouldShowEmails" label="Email" min-width="200">
+        <template v-slot="{ row }">
+          {{ isValidEmail(row?.user?.email) ? row?.user?.email : '' }}
         </template>
       </el-table-column>
 
-      <el-table-column
-        label="Role"
-        width="160"
-      >
-        <template slot-scope="scope">
-          <a
-            v-if="canEditRoleFor(scope.row)"
-            href="#"
-            title="Change role"
-            @click.prevent="() => handleEditRole(scope.row)"
-          >
-            {{ getRoleName(scope.row.role) }}
+      <el-table-column label="Role" width="160">
+        <template v-slot="{ row }">
+          <a v-if="canEditRoleFor(row)" href="#" title="Change role" @click.prevent="() => handleEditRole(row)">
+            {{ getRoleName(row?.role) }}
           </a>
           <span v-else>
-            {{ getRoleName(scope.row.role) }}
+            {{ getRoleName(row?.role) }}
           </span>
         </template>
       </el-table-column>
 
-      <el-table-column
-        label="Datasets"
-        width="90"
-        align="center"
-      >
-        <template slot-scope="scope">
-          <router-link :to="datasetsListLink(scope.row.user)">
-            {{ scope.row.numDatasets }}
+      <el-table-column label="Datasets" width="90" align="center">
+        <template v-slot="{ row }">
+          <router-link :to="datasetsListLink(row?.user)">
+            {{ row?.numDatasets }}
           </router-link>
         </template>
       </el-table-column>
 
       <el-table-column width="200">
-        <template slot-scope="scope">
+        <template v-slot="{ row }">
           <el-button
-            v-if="canEdit && scope.row.role === 'MEMBER'"
-            size="mini"
+            v-if="canEdit && row?.role === 'MEMBER'"
+            size="small"
             class="grid-button"
-            @click="() => handleRemoveUser(scope.row)"
+            @click="() => handleRemoveUser(row)"
           >
             Remove
           </el-button>
           <el-button
-            v-if="canEdit && scope.row.role === 'INVITED'"
-            size="mini"
+            v-if="canEdit && row?.role === 'INVITED'"
+            size="small"
             class="grid-button"
-            @click="() => handleCancelInvite(scope.row)"
+            @click="() => handleCancelInvite(row)"
           >
             Cancel
           </el-button>
           <el-button
-            v-if="canEdit && scope.row.role === 'PENDING'"
-            size="mini"
+            v-if="canEdit && row?.role === 'PENDING'"
+            size="small"
             type="success"
             class="grid-button"
-            @click="() => handleAcceptUser(scope.row)"
+            @click="() => handleAcceptUser(row)"
           >
             Accept
           </el-button>
           <el-button
-            v-if="canEdit && scope.row.role === 'PENDING'"
-            size="mini"
+            v-if="canEdit && row?.role === 'PENDING'"
+            size="small"
             class="grid-button"
-            @click="() => handleRejectUser(scope.row)"
+            @click="() => handleRejectUser(row)"
           >
             Decline
           </el-button>
@@ -139,185 +102,223 @@
         v-if="members.length > pageSize || page !== 1"
         :total="members.length"
         :page-size="pageSize"
-        :current-page.sync="page"
+        :current-page="page"
         layout="prev,pager,next"
       />
       <div class="flex-spacer" />
-      <el-button
-        v-if="canEdit"
-        @click="() => handleAddMember()"
-      >
-        Add member
-      </el-button>
+      <el-button v-if="canEdit" @click="() => handleAddMember()"> Add member </el-button>
     </div>
   </div>
 </template>
+
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Emit, Prop } from 'vue-property-decorator'
-import { getRoleName as getGroupRoleName, UserGroupRole, UserGroupRoleOptions } from '../api/group'
-import { getRoleName as getProjectRoleName, ProjectRole, ProjectRoleOptions } from '../api/project'
+import { defineComponent, ref, computed } from 'vue'
+import { UserGroupRole, UserGroupRoleOptions, getRoleName as getGroupRoleName } from '../api/group'
+import { ProjectRole, ProjectRoleOptions, getRoleName as getProjectRoleName } from '../api/project'
 import { encodeParams } from '../modules/Filters'
 import { CurrentUserRoleResult } from '../api/user'
+import {
+  ElDialog,
+  ElButton,
+  ElSelect,
+  ElOption,
+  ElRow,
+  ElTableColumn,
+  ElPagination,
+  ElTable,
+  ElLoading,
+} from '../lib/element-plus'
 
 export interface Member {
-    role: UserGroupRole | ProjectRole,
-    numDatasets: number,
-    user: {
-      id: string;
-      name: string;
-      email: string | null;
-    }
+  role: UserGroupRole | ProjectRole
+  numDatasets: number
+  user: {
+    id: string
+    name: string
+    email: string | null
   }
+}
 
-  @Component({})
-export default class MembersList extends Vue {
-    @Prop({ type: Boolean, required: true })
-    loading!: boolean;
+export default defineComponent({
+  name: 'MembersList',
+  components: {
+    ElDialog,
+    ElButton,
+    ElSelect,
+    ElOption,
+    ElRow,
+    ElTableColumn,
+    ElPagination,
+    ElTable,
+  },
+  directives: {
+    loading: ElLoading.directive,
+  },
+  props: {
+    loading: {
+      type: Boolean,
+      required: true,
+    },
+    currentUser: Object as () => CurrentUserRoleResult | null,
+    members: {
+      type: Array as () => Member[],
+      required: true,
+    },
+    canEdit: {
+      type: Boolean,
+      required: true,
+    },
+    type: {
+      type: String as () => 'group' | 'project',
+      required: true,
+    },
+    filter: Object,
+  },
+  setup(props, { emit }) {
+    const pageSize = ref(10)
+    const page = ref(1)
+    const editingRoleOfMember = ref(null)
+    const newRole = ref(null)
 
-    @Prop({ type: Object })
-    currentUser!: CurrentUserRoleResult | null;
+    const getRoleName = computed(() => {
+      return props.type === 'group' ? getGroupRoleName : getProjectRoleName
+    })
 
-    @Prop({ type: Array, required: true })
-    members!: Member[];
+    const roles = computed(() => {
+      return props.type === 'group' ? Object.values(UserGroupRoleOptions) : Object.values(ProjectRoleOptions)
+    })
 
-    @Prop({ type: Boolean, required: true })
-    canEdit!: boolean;
-
-    @Prop({ type: String, required: true })
-    type!: 'group' | 'project';
-
-    @Prop({ required: true })
-    filter!: any;
-
-    pageSize: number = 10;
-    page: number = 1;
-    editingRoleOfMember: Member | null = null;
-    newRole: string | null = null;
-
-    get getRoleName() {
-      return this.type === 'group' ? getGroupRoleName : getProjectRoleName
-    }
-
-    get roles(): string[] {
-      return this.type === 'group' ? Object.values(UserGroupRoleOptions) : Object.values(ProjectRoleOptions)
-    }
-
-    get allowedRoles(): string[] {
-      if (this.currentUser != null && this.currentUser.role === 'admin') {
-        return this.roles
-      } else {
-        return this.type === 'group'
-          ? [UserGroupRoleOptions.MEMBER, UserGroupRoleOptions.GROUP_ADMIN]
-          : [ProjectRoleOptions.MEMBER, ProjectRoleOptions.MANAGER]
+    const allowedRoles = computed(() => {
+      if (props.currentUser?.role === 'admin') {
+        return roles.value
       }
+      return props.type === 'group'
+        ? [UserGroupRoleOptions.MEMBER, UserGroupRoleOptions.GROUP_ADMIN]
+        : [ProjectRoleOptions.MEMBER, ProjectRoleOptions.MANAGER]
+    })
+
+    const currentPageData = computed(() => {
+      return props.members.slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
+    })
+
+    const shouldShowEmails = computed(() => {
+      return props.members.some((m) => m.user.email != null)
+    })
+
+    const canEditRoleFor = (user: Member) => {
+      return (
+        props.canEdit &&
+        props.currentUser &&
+        (props.currentUser.role === 'admin' ||
+          (props.currentUser.id !== user?.user?.id && allowedRoles.value.includes(user?.role as any)))
+      )
     }
 
-    get currentPageData(): Member[] {
-      return this.members.slice((this.page - 1) * this.pageSize, this.page * this.pageSize)
-    }
-
-    get shouldShowEmails() {
-      return this.members.some(m => m.user.email != null)
-    }
-
-    canEditRoleFor(user: Member) {
-      return this.canEdit
-        && this.currentUser != null
-        && (this.currentUser.role === 'admin'
-          || (this.currentUser.id !== user.user.id && this.allowedRoles.includes(user.role)))
-    }
-
-    datasetsListLink(user: Member['user']) {
+    const datasetsListLink = (user: Member['user']) => {
       return {
         path: '/datasets',
         query: encodeParams({
-          ...this.filter,
-          submitter: user.id,
+          ...props.filter,
+          submitter: user?.id,
         }),
       }
     }
 
-    @Emit('removeUser')
-    handleRemoveUser(user: Member) {}
-
-    @Emit('cancelInvite')
-    handleCancelInvite(user: Member) {}
-
-    @Emit('acceptUser')
-    handleAcceptUser(user: Member) {}
-
-    @Emit('rejectUser')
-    handleRejectUser(user: Member) {}
-
-    @Emit('addMember')
-    handleAddMember() {}
-
-    handleEditRole(user: Member) {
-      this.editingRoleOfMember = user
-      this.newRole = user.role
+    const isValidEmail = (email) => {
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      return regex.test(email)
     }
 
-    handleCloseEditRole() {
-      this.editingRoleOfMember = null
-      this.newRole = null
+    // Emit events
+    const handleRemoveUser = (user: Member) => emit('removeUser', user)
+    const handleCancelInvite = (user: Member) => emit('cancelInvite', user)
+    const handleAcceptUser = (user: Member) => emit('acceptUser', user)
+    const handleRejectUser = (user: Member) => emit('rejectUser', user)
+    const handleAddMember = () => emit('addMember')
+    const handleEditRole = (user: Member) => {
+      editingRoleOfMember.value = user
+      newRole.value = user?.role
+    }
+    const handleCloseEditRole = () => {
+      editingRoleOfMember.value = null
+      newRole.value = null
+    }
+    const handleUpdateRole = () => {
+      if (editingRoleOfMember.value) {
+        emit('updateRole', editingRoleOfMember.value, newRole.value)
+        handleCloseEditRole()
+      }
     }
 
-    handleUpdateRole() {
-      this.updateRole(this.editingRoleOfMember!, this.newRole)
-      this.editingRoleOfMember = null
-      this.newRole = null
+    return {
+      pageSize,
+      page,
+      editingRoleOfMember,
+      newRole,
+      getRoleName,
+      roles,
+      allowedRoles,
+      currentPageData,
+      shouldShowEmails,
+      canEditRoleFor,
+      datasetsListLink,
+      handleRemoveUser,
+      handleCancelInvite,
+      handleAcceptUser,
+      handleRejectUser,
+      handleAddMember,
+      handleEditRole,
+      handleCloseEditRole,
+      handleUpdateRole,
+      isValidEmail,
     }
+  },
+})
+</script>
 
-    @Emit('updateRole')
-    updateRole(user: Member, role: string | null) {}
+<style scoped lang="scss">
+.page {
+  display: flex;
+  justify-content: center;
 }
 
-</script>
-<style scoped lang="scss">
-  .page {
-    display: flex;
-    justify-content: center;
-  }
+.page-content {
+  width: 950px;
+}
 
-  .page-content {
-    width: 950px;
-  }
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
 
-  .header-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+.header-row-buttons {
+  display: flex;
+  margin-right: 3px;
+}
 
-  .header-row-buttons {
-    display: flex;
-    margin-right: 3px;
-  }
+.name {
+  display: inline-block;
+  width: 400px;
+}
 
-  .name {
-    display: inline-block;
-    width: 400px;
-  }
+.shortName {
+  display: inline-block;
+  width: 150px;
+  margin-left: 20px;
+}
 
-  .shortName {
-    display: inline-block;
-    width: 150px;
-    margin-left: 20px;
-  }
+.grid-button {
+  width: 80px;
+}
 
-  .grid-button {
-    width: 80px;
-  }
+.pagination-row {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
 
-  .pagination-row {
-    display: flex;
-    align-items: center;
-    margin-top: 10px;
-  }
-
-  .flex-spacer {
-    flex-grow: 1;
-  }
-
+.flex-spacer {
+  flex-grow: 1;
+}
 </style>

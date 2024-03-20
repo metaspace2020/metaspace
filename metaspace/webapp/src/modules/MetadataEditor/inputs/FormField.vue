@@ -1,34 +1,23 @@
 <template>
-  <el-form-item
-    class="md-form-field"
-    :error="typeof error === 'string' ? error : null"
-  >
-    <span
-      slot="label"
-      class="field-label"
-    >
-      <span>{{ name }}</span><span
-        v-if="required"
-        style="color: red"
-      >*</span>
-      <el-popover
-        v-if="help"
-        trigger="hover"
-        placement="right"
-      >
-        <component :is="help" />
-        <i
-          slot="reference"
-          class="el-icon-question metadata-help-icon"
-        />
-      </el-popover>
-    </span>
+  <el-form-item class="md-form-field" :error="typeof error === 'string' ? error : null">
+    <template v-slot:label>
+      <span class="field-label flex items-center">
+        <span>{{ name }}</span
+        ><span v-if="required" style="color: red">*</span>
+        <el-popover v-if="help" trigger="hover" placement="right">
+          <component :is="help" />
+          <template #reference>
+            <el-icon class="metadata-help-icon"><QuestionFilled /></el-icon>
+          </template>
+        </el-popover>
+      </span>
+    </template>
 
     <el-autocomplete
       v-if="type === 'autocomplete'"
       class="md-ac"
       :popper-class="wideAutocomplete ? 'md-ac-popper--wide' : ''"
-      :value="value"
+      :model-value="value"
       :required="required"
       :placeholder="placeholder"
       :trigger-on-focus="true"
@@ -40,9 +29,9 @@
 
     <el-input
       v-else-if="type === 'textarea'"
-      :autosize="{minRows: 1.5, maxRows: 5}"
+      :autosize="{ minRows: 1.5, maxRows: 5 }"
       type="textarea"
-      :value="value"
+      :model-value="value"
       :required="required"
       :placeholder="placeholder"
       v-bind="$attrs"
@@ -51,7 +40,7 @@
 
     <el-input
       v-else-if="type === 'text'"
-      :value="value"
+      :model-value="value"
       :required="required"
       :placeholder="placeholder"
       v-bind="$attrs"
@@ -69,10 +58,10 @@
 
     <el-select
       v-else-if="type === 'select'"
-      :value="value"
+      :model-value="value"
       :required="required"
       v-bind="$attrs"
-      @input="onInput"
+      @change="onInput"
     >
       <el-option
         v-for="opt in options"
@@ -84,12 +73,12 @@
 
     <el-select
       v-else-if="type === 'selectMulti'"
-      :value="value"
+      :model-value="value"
       :required="required"
       multiple
       v-bind="$attrs"
       @remove-tag="onRemoveTag"
-      @input="onInput"
+      @change="onInput"
     >
       <slot name="options">
         <el-option
@@ -105,7 +94,7 @@
       v-else-if="type === 'selectMultiWithCreate'"
       popper-class="el-select-popper__with-create"
       no-data-text="Invalid value"
-      :value="value"
+      :model-value="value"
       :required="required"
       multiple
       filterable
@@ -115,7 +104,7 @@
       :loading="false"
       v-bind="$attrs"
       @remove-tag="onRemoveTag"
-      @input="onInput"
+      @change="onInput"
     >
       <slot name="options">
         <el-option
@@ -168,201 +157,197 @@
 
     <el-switch
       v-else-if="type === 'switch'"
-      :value="value"
+      :model-value="value"
       :error="typeof error !== 'string' ? error : null"
       :required="required"
       v-bind="$attrs"
       @input="onInput"
     />
 
-    <div
-      v-else
-      style="color: red"
-    >
-      Unrecognized form field type: {{ type }}
-    </div>
+    <div v-else style="color: red">Unrecognized form field type: {{ type }}</div>
   </el-form-item>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import { defineComponent, PropType, ref, computed } from 'vue'
 import TableInput from './TableInput.vue'
 import PersonInput from './PersonInput.vue'
 import DetectorResolvingPowerInput from './DetectorResolvingPowerInput.vue'
 import PixelSizeInput from './PixelSizeInput.vue'
-import { Component, Prop } from 'vue-property-decorator'
-import { FetchSuggestions, FetchSuggestionsCallback } from 'element-ui/types/autocomplete'
 import CustomNumberInput from './CustomNumberInput.vue'
-import { throttle, uniq } from 'lodash-es'
+import { uniq } from 'lodash-es'
+import { QuestionFilled } from '@element-plus/icons-vue'
+import {
+  ElIcon,
+  ElAutocomplete,
+  ElPopover,
+  ElSelect,
+  ElFormItem,
+  ElInput,
+  ElOption,
+  ElSwitch,
+} from '../../../lib/element-plus'
 
-  @Component({
-    inheritAttrs: false,
-    components: {
-      TableInput,
-      PersonInput,
-      DetectorResolvingPowerInput,
-      PixelSizeInput,
-      CustomNumberInput,
-    },
-  })
-export default class FormField extends Vue {
-    @Prop({ type: String, required: true })
-    type!: string;
+export default defineComponent({
+  name: 'FormField',
+  components: {
+    TableInput,
+    PersonInput,
+    DetectorResolvingPowerInput,
+    PixelSizeInput,
+    CustomNumberInput,
+    QuestionFilled,
+    ElIcon,
+    ElAutocomplete,
+    ElPopover,
+    ElSwitch,
+    ElSelect,
+    ElFormItem,
+    ElInput,
+    ElOption,
+  },
+  props: {
+    type: { type: String as PropType<string>, required: true },
+    name: { type: String as PropType<string>, required: true },
+    help: { type: Object as PropType<any> },
+    value: { type: [String, Object, Array, Number, Boolean] as PropType<any>, default: null },
+    error: { type: [String, Object, Array] as PropType<any> },
+    fields: { type: Object as PropType<any> },
+    options: { type: Array as PropType<any[]> },
+    required: { type: Boolean, default: false },
+    placeholder: { type: String as PropType<string> },
+    fetchSuggestions: { type: Function as any },
+    normalizeInput: { type: Function as PropType<(value: string) => string | null> },
+  },
+  emits: ['input', 'select', 'remove-tag'],
+  setup(props, { emit }) {
+    const wideAutocomplete = ref(false)
+    const createItemPreviewOptions = ref([])
 
-    @Prop({ type: String, required: true })
-    name!: string;
+    const optionsAreStrings = computed(
+      () => props.options && props.options.length > 0 && typeof props.options[0] === 'string'
+    )
+    const createOptionsAreStrings = computed(
+      () => createItemPreviewOptions.value.length > 0 && typeof createItemPreviewOptions.value[0] === 'string'
+    )
 
-    @Prop()
-    help?: any;
-
-    @Prop({ validator: val => val !== undefined })
-    value!: any;
-
-    @Prop([String, Object, Array])
-    error?: string | object | any[];
-
-    @Prop(Object)
-    fields?: object;
-
-    @Prop(Array)
-    options?: any[];
-
-    @Prop({ type: Boolean, default: false })
-    required!: Boolean;
-
-    @Prop(String)
-    placeholder?: String;
-
-    @Prop(Function)
-    fetchSuggestions!: FetchSuggestions;
-
-    @Prop(Function)
-    normalizeInput?: (value: string) => string | null;
-
-    wideAutocomplete = false;
-    createItemPreviewOptions: string[] = []
-
-    created() {
-      // WORKAROUND: Currently there's a delay that causes the autocomplete box to stutter when opening on focus.
-      // Fix PR: https://github.com/ElemeFE/element/pull/17302
-      // The current workaround is to disable debouncing on the component and instead use throttle here so that
-      // the first call happens without delay
-      this.fetchSuggestionsAndTestWidth = throttle(this.fetchSuggestionsAndTestWidth)
+    const onSelect = (val: any) => {
+      emit('select', val)
     }
 
-    get optionsAreStrings() {
-      return this.options && this.options.length > 0 && typeof this.options[0] === 'string'
-    }
-
-    get createOptionsAreStrings() {
-      return this.createItemPreviewOptions.length > 0 && typeof this.createItemPreviewOptions[0] === 'string'
-    }
-
-    onSelect(val: any) {
-      this.$emit('select', val)
-    }
-
-    onInput(val: any) {
-      if (this.type === 'selectMultiWithCreate') {
+    const onInput = (val: any) => {
+      if (props.type === 'selectMultiWithCreate') {
         const valArray = val as string[]
-        const normalizedVals = valArray.flatMap(newVal => {
-          if (valArray.includes(newVal) || !this.normalizeInput) {
+        const normalizedVals = valArray.flatMap((newVal) => {
+          if (valArray.includes(newVal) || !props.normalizeInput) {
             // Don't change existing values, don't normalize if no normalization function
             return [newVal]
           }
-          const normalizedVal = this.normalizeInput(newVal)
+          const normalizedVal = props.normalizeInput(newVal)
           return normalizedVal != null ? [normalizedVal] : []
         })
-
-        this.$emit('input', uniq(normalizedVals))
+        emit('input', uniq(normalizedVals))
       } else {
-        this.$emit('input', val)
+        emit('input', val)
       }
     }
 
-    onRemoveTag(val: any) {
-      this.$emit('remove-tag', val)
+    const onRemoveTag = (val: any) => {
+      emit('remove-tag', val)
     }
 
-    onCreateItemInput(val: any) {
+    const onCreateItemInput = (val: any) => {
       // WORKAROUND: This uses ElSelect's remote search interface to show the validated, normalized form of the
       // user's input. If the input is null after normalization, the options list is empty and
       // ElSelect shows the no-data-text instead.
-      const normalizedVal = this.normalizeInput != null ? this.normalizeInput(val) : val
-      this.createItemPreviewOptions = normalizedVal != null ? [normalizedVal] : []
+      const normalizedVal = props.normalizeInput != null ? props.normalizeInput(val) : val
+      createItemPreviewOptions.value = normalizedVal != null ? [normalizedVal] : []
     }
 
-    fetchSuggestionsAndTestWidth(queryString: string, callback: FetchSuggestionsCallback) {
+    const fetchSuggestionsAndTestWidth = (queryString: string, callback: any) => {
       const CHARS_BREAKPOINT = 26
-      this.fetchSuggestions(queryString, results => {
-        this.wideAutocomplete = Array.isArray(results)
-          && results.some(result => result
-            && result.value
-            && result.value.length
-            && result.value.length >= CHARS_BREAKPOINT)
+      props.fetchSuggestions(queryString, (results) => {
+        wideAutocomplete.value =
+          Array.isArray(results) &&
+          results.some(
+            (result) => result && result.value && result.value.length && result.value.length >= CHARS_BREAKPOINT
+          )
         callback(results)
       })
     }
-}
+
+    return {
+      wideAutocomplete,
+      createItemPreviewOptions,
+      optionsAreStrings,
+      createOptionsAreStrings,
+      onSelect,
+      onInput,
+      onRemoveTag,
+      onCreateItemInput,
+      fetchSuggestionsAndTestWidth,
+    }
+  },
+})
 </script>
 
 <style lang="scss">
-  .md-form-field {
-    padding: 0 5px 10px;
-    margin-bottom: 0;
+.md-form-field {
+  padding: 0 5px 10px;
+  margin-bottom: 0;
 
-    .el-form-item__content {
-      line-height: normal;
-    }
-
-    .el-form-item__error {
-      position: absolute;
-    }
-
-    > .el-form-item__label {
-      padding: 0;
-      font-size: 14px;
-      line-height: 24px;
-    }
-
-    .el-select {
-      width: 100%;
-    }
+  .el-form-item__content {
+    line-height: normal;
   }
 
-  .md-ac {
-    width: 100%;
+  .el-form-item__error {
+    position: absolute;
   }
 
-  .md-ac-popper--wide {
-    min-width: 400px;
-  }
-
-  .subfield {
-    padding-right: 20px;
-  }
-
-  .subfield-label {
-    @apply text-gray-600;
-    font-size: 13px;
-    padding: 2px 0 5px 5px;
-  }
-
-  .error-msg {
-    font-size: 12px;
-    color: red;
-  }
-
-  .el-input__inner {
-    width: 100%;
-  }
-
-  .el-select-popper__with-create .el-select-dropdown__list::after {
-    @apply pt-2 px-5 text-center;
-    display: list-item;
-    content: 'Press enter to confirm';
-    // Style to match the no-data-text
+  > .el-form-item__label {
+    padding: 0;
     font-size: 14px;
-    color: #999;
+    line-height: 24px;
   }
+
+  .el-select {
+    width: 100%;
+  }
+}
+
+.md-ac {
+  width: 100%;
+}
+
+.md-ac-popper--wide {
+  min-width: 400px;
+}
+
+.subfield {
+  padding-right: 20px;
+}
+
+.subfield-label {
+  @apply text-gray-600;
+  font-size: 13px;
+  padding: 2px 0 5px 5px;
+}
+
+.error-msg {
+  font-size: 12px;
+  color: red;
+}
+
+.el-input__inner {
+  width: 100%;
+}
+
+.el-select-popper__with-create .el-select-dropdown__list::after {
+  @apply pt-2 px-5 text-center;
+  display: list-item;
+  content: 'Press enter to confirm';
+  // Style to match the no-data-text
+  font-size: 14px;
+  color: #999;
+}
 </style>

@@ -4,7 +4,7 @@
   .coloc-filter-wrapper{
     @apply absolute mt-2 mr-2;
     left: 176px;
-    top: 6px;
+    top: -8px;
   }
 
   .av-icon-button {
@@ -148,6 +148,12 @@
   .text-danger{
     @apply mt-0 text-right;
   }
+}
+
+.share-pop-wrapper{
+  width: 150px;
+  margin: 0;
+  padding: 0;
 }
 
 

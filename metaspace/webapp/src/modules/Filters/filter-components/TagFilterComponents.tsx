@@ -1,12 +1,10 @@
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent } from 'vue'
+import { Clock, Close, InfoFilled } from '@element-plus/icons-vue'
+import { ElIcon } from '../../../lib/element-plus'
 
 export const TagFilterOuter = defineComponent({
   setup(_, { slots }) {
-    return () => (
-      <div class="tf-outer border-gray-300 border border-solid text-sm pr-3">
-        {slots.default()}
-      </div>
-    )
+    return () => <div class="tf-outer border-gray-300 border border-solid text-sm pr-3">{slots.default()}</div>
   },
 })
 
@@ -21,13 +19,17 @@ export const TagFilterName = defineComponent({
 })
 
 export const TagFilterRemove = defineComponent({
-  setup(_, { listeners }) {
+  setup(_, { emit }) {
     return () => (
       <button
         title="Remove filter"
-        class="tf-remove button-reset el-icon-close ml-3 text-gray-700 text-base"
-        onClick={listeners.click}
-      />
+        class="tf-remove flex button-reset el-icon-close ml-3 text-gray-700 text-base"
+        onClick={() => emit('click')}
+      >
+        <ElIcon>
+          <Close />
+        </ElIcon>
+      </button>
     )
   },
 })
@@ -39,7 +41,10 @@ export const FilterHelpText = defineComponent({
   setup(props, { slots }) {
     return () => (
       <p class="leading-5 text-sm m-0 mt-3 text-gray-700">
-        <i class={['text-gray-600 mr-1', `el-icon-${props.icon}`]} />
+        <ElIcon class="text-gray-600 mr-1">
+          {props.icon === 'info' && <InfoFilled />}
+          {props.icon === 'time' && <Clock />}
+        </ElIcon>
         {slots.default()}
       </p>
     )

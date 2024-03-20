@@ -1,23 +1,23 @@
 import { Module } from 'vuex'
 import { DialogType } from '../dialogs'
 import router from '../../../router'
-import { RawLocation } from 'vue-router/types/router'
+import { RouteLocationRaw } from 'vue-router'
 
 export interface AccountState {
-  dialog: DialogType | null;
-  dialogCloseRedirect: RawLocation | null;
-  loginSuccessRedirect: RawLocation | null;
+  dialog: DialogType | null
+  dialogCloseRedirect: RouteLocationRaw | null
+  loginSuccessRedirect: RouteLocationRaw | null
 }
 
 interface ShowDialogOptions {
-  dialog: DialogType;
-  dialogCloseRedirect?: RawLocation;
-  loginSuccessRedirect?: RawLocation;
+  dialog: DialogType
+  dialogCloseRedirect?: RouteLocationRaw
+  loginSuccessRedirect?: RouteLocationRaw
 }
 
 interface HideDialogOptions {
-  dialog: DialogType;
-  isLoginSuccess?: boolean;
+  dialog: DialogType
+  isLoginSuccess?: boolean
 }
 
 const account: Module<AccountState, any> = {

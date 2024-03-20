@@ -1,14 +1,12 @@
-import Vue from 'vue'
-import { computed, defineComponent, onMounted, onUpdated, reactive, ref, watch } from '@vue/composition-api'
-import { Ref, SetupContext } from '@vue/composition-api'
-
+import { computed, defineComponent, onMounted, onUpdated, reactive, ref, watch, nextTick } from 'vue'
+import { Ref } from 'vue'
 import { getOS, scrollDistance, WheelEventCompat } from '../lib/util'
 import config from '../lib/config'
 import { renderIonImages, IonImageLayer } from '../lib/ionImageRendering'
 import ScaleBar from './ScaleBar.vue'
 import { debounce, throttle } from 'lodash-es'
 import { ReferenceObject } from 'popper.js'
-import { templateRef } from '../lib/templateRef'
+import { ElLoading, ElTooltip } from '../lib/element-plus'
 
 const formatMatrix3d = (t: readonly number[][]) =>
   `matrix3d(${t[0][0]}, ${t[1][0]}, 0, ${t[2][0]},
@@ -17,7 +15,7 @@ const formatMatrix3d = (t: readonly number[][]) =>
              ${t[0][2]}, ${t[1][2]}, 0, ${t[2][2]})`
 
 interface Props {
-  roiInfo: any[];
+  roiInfo: any[]
   ionImageLayers: IonImageLayer[]
   isLoading: boolean
   // width & height of HTML element
@@ -79,22 +77,22 @@ const useScrollBlock = () => {
       state.overlayFadingIn = false
     }, 1100)
   }
-  const renderScrollBlock = () => (<div
-    class={{
-      'absolute inset-0 z-30 pointer-events-none bg-body flex items-center justify-center': true,
-      'opacity-0 duration-1000': !state.overlayFadingIn,
-      'opacity-75 duration-700': state.overlayFadingIn,
-    }}
-  >
-    <p class="relative block z-40 m-0 text-white text-2xl">
-      Use { messageOS.value } to zoom the image
-    </p>
-  </div>)
+  const renderScrollBlock = () => (
+    <div
+      class={{
+        'absolute inset-0 z-30 pointer-events-none bg-body flex items-center justify-center': true,
+        'opacity-0 duration-1000': !state.overlayFadingIn,
+        'opacity-75 duration-700': state.overlayFadingIn,
+      }}
+    >
+      <p class="relative block z-40 m-0 text-white text-2xl">Use {messageOS.value} to zoom the image</p>
+    </div>
+  )
 
   return { showScrollBlock, renderScrollBlock }
 }
 
-const useScaleBar = (props: Props) => {
+const useScaleBar = (props: Props | any) => {
   const xScale = computed(() => {
     if (props.pixelSizeX != null && props.pixelSizeX !== 0) {
       return props.pixelSizeX / props.zoom
@@ -104,28 +102,29 @@ const useScaleBar = (props: Props) => {
   })
   const yScale = computed(() => {
     if (props.pixelSizeY != null && props.pixelSizeY !== 0) {
-      return props.pixelSizeY / props.zoom * props.pixelAspectRatio
+      return (props.pixelSizeY / props.zoom) * props.pixelAspectRatio
     } else {
       return 1
     }
   })
 
   const renderScaleBar = () => {
-    return props.scaleBarColor && <ScaleBar
-      x-scale={xScale.value}
-      y-scale={yScale.value}
-      scale-bar-color={props.scaleBarColor}
-    />
+    return (
+      props.scaleBarColor && (
+        <ScaleBar x-scale={xScale.value} y-scale={yScale.value} scale-bar-color={props.scaleBarColor} />
+      )
+    )
   }
   return { renderScaleBar }
 }
 
 const usePixelIntensityDisplay = (
-  props: Props,
+  props: Props | any,
   imageLoaderRef: Ref<ReferenceObject | null>,
-  emit: (event: string, ...args: any[]) => void,
+  emit: (event: string, ...args: any[]) => void
 ) => {
-  const pixelIntensityTooltipRef = templateRef<any>('pixelIntensityTooltip')
+  // const pixelIntensityTooltipRef = templateRef<any>('pixelIntensityTooltip')
+  const pixelIntensityTooltipRef = ref<any>(null)
   const cursorPixelPos = ref<[number, number] | null>(null)
   const zoomX = computed(() => props.zoom)
   const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
@@ -136,14 +135,14 @@ const usePixelIntensityDisplay = (
       const [x, y] = cursorPixelPos.value
       for (const { ionImage, colorMap } of props.ionImageLayers) {
         const { width, height, mask, intensityValues } = ionImage
-        if (x >= 0 && x < width
-          && y >= 0 && y < height
-          && mask[y * width + x] !== 0) {
+        if (x >= 0 && x < width && y >= 0 && y < height && mask[y * width + x] !== 0) {
           const idx = y * width + x
           const [r, g, b] = colorMap[colorMap.length - 1]
           layers.push({
-            intensity: (props.showNormalizedIntensity ? ((intensityValues[idx] / TIC_MULTIPLIER)
-              * props.normalizationData?.data?.[idx]) : intensityValues[idx]).toExponential(1),
+            intensity: (props.showNormalizedIntensity
+              ? (intensityValues[idx] / TIC_MULTIPLIER) * props.normalizationData?.data?.[idx]
+              : intensityValues[idx]
+            ).toExponential(1),
             normalizedIntensity: intensityValues[idx].toExponential(1),
             color: props.ionImageLayers.length > 1 ? `rgb(${r},${g},${b})` : null,
           })
@@ -153,17 +152,19 @@ const usePixelIntensityDisplay = (
     return layers
   })
   const pixelIntensityStyle = computed(() => {
-    if (props.showPixelIntensity
-      && props.ionImageLayers.length
-      && cursorPixelPos.value != null
-      && cursorOverLayers.value.length) {
+    if (
+      props.showPixelIntensity &&
+      props.ionImageLayers?.length &&
+      cursorPixelPos.value != null &&
+      cursorOverLayers.value.length
+    ) {
       const { width, height } = props.ionImageLayers[0].ionImage
       const baseX = props.width / 2 + (props.xOffset - width / 2) * zoomX.value
       const baseY = props.height / 2 + (props.yOffset - height / 2) * zoomY.value
       const [cursorX, cursorY] = cursorPixelPos.value
       return {
-        left: (baseX + cursorX * zoomX.value - 0.5) + 'px',
-        top: (baseY + cursorY * zoomY.value - 0.5) + 'px',
+        left: baseX + cursorX * zoomX.value - 0.5 + 'px',
+        top: baseY + cursorY * zoomY.value - 0.5 + 'px',
         width: `${zoomX.value - 0.5}px`,
         height: `${zoomY.value - 0.5}px`,
       }
@@ -175,31 +176,33 @@ const usePixelIntensityDisplay = (
   const updatePixelIntensity = throttle(() => {
     // WORKAROUND: el-tooltip and el-popover don't correctly open if they're mounted in an already-visible state
     // Calling updatePopper causes it to refresh its visibility
-    if (pixelIntensityTooltipRef.value != null) {
-      pixelIntensityTooltipRef.value.updatePopper()
+    if (pixelIntensityTooltipRef.value != null && typeof pixelIntensityTooltipRef.value!.updatePopper === 'function') {
+      ;(pixelIntensityTooltipRef.value as any).updatePopper()
     }
-  })
-  watch(pixelIntensityStyle, () => {
-    Vue.nextTick(updatePixelIntensity)
+  }, 10)
+  watch(pixelIntensityStyle, async () => {
+    await nextTick(updatePixelIntensity)
   })
 
   const movePixelIntensity = (clientX: number | null, clientY: number | null, updatePixel: boolean = false) => {
     if (imageLoaderRef.value != null && props.ionImageLayers.length && clientX != null && clientY != null) {
-      const rect = imageLoaderRef.value.getBoundingClientRect()
+      const rect: any = imageLoaderRef.value?.getBoundingClientRect()
       const { width = 0, height = 0 } = props.ionImageLayers[0].ionImage
       // Includes a 2px offset up and left so that the selected pixel is less obscured by the mouse cursor
-      const x = Math.floor((clientX - (rect.left + rect.right) / 2 - 2)
-        / zoomX.value - props.xOffset + width / 2)
-      const y = Math.floor((clientY - (rect.top + rect.bottom) / 2 - 2)
-        / zoomY.value - props.yOffset + height / 2)
+      const x = Math.floor((clientX - (rect.left + rect.right) / 2 - 2) / zoomX.value - props.xOffset + width / 2)
+      const y = Math.floor((clientY - (rect.top + rect.bottom) / 2 - 2) / zoomY.value - props.yOffset + height / 2)
 
       if (!props.keepPixelSelected) {
         cursorPixelPos.value = [x, y]
       } else if (
-        updatePixel && props.keepPixelSelected
-        && x >= 0 && y >= 0 && y < props.ionImageLayers[0].ionImage.height
-        && x < props.ionImageLayers[0].ionImage.width
-      ) { // check if pixel pos should update and if it is inside ionImage boundary
+        updatePixel &&
+        props.keepPixelSelected &&
+        x >= 0 &&
+        y >= 0 &&
+        y < props.ionImageLayers[0].ionImage.height &&
+        x < props.ionImageLayers[0].ionImage.width
+      ) {
+        // check if pixel pos should update and if it is inside ionImage boundary
         cursorPixelPos.value = [x, y]
         emit('pixel-select', { x: cursorPixelPos.value[0], y: cursorPixelPos.value[1] })
       }
@@ -208,69 +211,70 @@ const usePixelIntensityDisplay = (
     }
   }
 
-  const renderPixelIntensity = () => pixelIntensityStyle.value != null
-    ? <div>
-      <el-tooltip
-        ref="pixelIntensityTooltip"
-        manual={true}
-        value={true}
-        popper-class="pointer-events-none"
-        placement="top"
-      >
-        {cursorOverLayers.value?.length > 1
-          ? <ul slot="content" class="list-none p-0 m-0">
-            {cursorOverLayers.value?.map(({ intensity, color, normalizedIntensity }) =>
-              <li class="flex leading-5 items-center">
-                { color && <i
+  const renderPixelIntensity = () => {
+    if (!pixelIntensityStyle.value) return null
+
+    const tooltipContent = () => {
+      return cursorOverLayers.value.length > 1 ? (
+        <ul class="list-none p-0 m-0">
+          {cursorOverLayers.value.map(({ intensity, color, normalizedIntensity }) => (
+            <li class="flex leading-5 items-center">
+              {color && (
+                <i
                   class="w-3 h-3 border border-solid border-gray-400 box-border mr-1 rounded-full"
                   style={{ background: color }}
-                /> }
-                <div class='flex flex-col leading-snug'>
-                  <div>
-                    {
-                      props.showNormalizedIntensity
-                    && <span>Intensity: </span>
-                    }
-                    <span>{intensity}</span>
-                  </div>
-                  {
-                    props.showNormalizedIntensity
-                  && <div class='mb-1'>
-                    <span>TIC-relative intensity: </span>
-                    <span>
-                      {normalizedIntensity}
-                    </span>
-                  </div>
-                  }
+                />
+              )}
+              <div class="flex flex-col leading-snug">
+                <div>
+                  {props.showNormalizedIntensity && <span>Intensity: </span>}
+                  <span>{intensity}</span>
                 </div>
-              </li>
-            )}
-          </ul>
-          : <div slot="content" class='flex flex-col'>
-            <div>
-              {
-                props.showNormalizedIntensity
-                && <span>Intensity: </span>
-              }
-              <span>{cursorOverLayers.value?.[0].intensity}</span>
-            </div>
-            {
-              props.showNormalizedIntensity
-              && <div>
-                <span>TIC-relative intensity: </span>
-                <span>
-                  {cursorOverLayers.value?.[0].normalizedIntensity}
-                </span>
+                {props.showNormalizedIntensity && (
+                  <div class="mb-1">
+                    <span>TIC-relative intensity: </span>
+                    <span>{normalizedIntensity}</span>
+                  </div>
+                )}
               </div>
-            }
-          </div> }
-        <div
-          style={pixelIntensityStyle.value}
-          class="absolute block border-solid z-30 pointer-events-none box-border"
-        />
-      </el-tooltip>
-    </div>
-    : null
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="flex flex-col">
+          <div>
+            {props.showNormalizedIntensity && <span>Intensity: </span>}
+            <span>{cursorOverLayers.value[0]?.intensity}</span>
+          </div>
+          {props.showNormalizedIntensity && (
+            <div>
+              <span>TIC-relative intensity: </span>
+              <span>{cursorOverLayers.value[0]?.normalizedIntensity}</span>
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <div>
+        <el-tooltip
+          ref={pixelIntensityTooltipRef}
+          manual
+          visible
+          popper-class="pointer-events-none"
+          placement="top"
+          v-slots={{ content: tooltipContent }}
+        >
+          <div
+            style={pixelIntensityStyle.value}
+            class="absolute block border-solid z-30 pointer-events-none box-border"
+          />
+        </el-tooltip>
+      </div>
+    )
+  }
+
   return {
     movePixelIntensity,
     renderPixelIntensity,
@@ -278,10 +282,10 @@ const usePixelIntensityDisplay = (
 }
 
 const usePanAndZoom = (
-  props: Props,
+  props: Props | any,
   imageLoaderRef: Ref<ReferenceObject | null>,
   emit: (event: string, ...args: any[]) => void,
-  imageSize: Ref<{ width: number, height: number }>,
+  imageSize: Ref<{ width: number; height: number }>
 ) => {
   const state = reactive({
     dragStartX: 0,
@@ -310,9 +314,9 @@ const usePanAndZoom = (
 
   const handleZoom = (sY: number, clientX: number, clientY: number) => {
     if (imageLoaderRef.value != null) {
-      const newZoomX = Math.max(props.minZoom, Math.min(props.maxZoom, props.zoom - props.zoom * sY / 10.0))
+      const newZoomX = Math.max(props.minZoom, Math.min(props.maxZoom, props.zoom - (props.zoom * sY) / 10.0))
       const newZoomY = newZoomX / props.pixelAspectRatio
-      const rect = imageLoaderRef.value.getBoundingClientRect()
+      const rect: any = imageLoaderRef.value?.getBoundingClientRect()
 
       // Adjust the offsets so that the pixel under the mouse stays still while the image expands around it
       const mouseXOffset = (clientX - (rect.left + rect.right) / 2) / zoomX.value
@@ -358,17 +362,17 @@ const usePanAndZoom = (
   return { viewBoxStyle, handleZoom, handlePanStart }
 }
 
-const useBufferedOpticalImage = (props: Props) => {
+const useBufferedOpticalImage = (props: Props | any) => {
   const opticalImageStyle = computed(() => ({
-    transform: (props.opticalTransform ? formatMatrix3d(props.opticalTransform) : ''),
+    transform: props.opticalTransform ? formatMatrix3d(props.opticalTransform) : '',
   }))
-  const opticalImageUrl = computed(() => props.opticalSrc ? (config.imageStorage || '') + props.opticalSrc : null)
+  const opticalImageUrl = computed(() => (props.opticalSrc ? (config.imageStorage || '') + props.opticalSrc : null))
 
   const state = reactive({
     // Cache the last loaded optical image so that it doesn't flicker when changing zoom levels
     loadedOpticalImageUrl: props.opticalSrc ? (config.imageStorage || '') + props.opticalSrc : null,
     loadedOpticalImageStyle: {
-      transform: (props.opticalTransform ? formatMatrix3d(props.opticalTransform) : ''),
+      transform: props.opticalTransform ? formatMatrix3d(props.opticalTransform) : '',
     },
   })
   const onOpticalImageLoaded = () => {
@@ -381,42 +385,55 @@ const useBufferedOpticalImage = (props: Props) => {
   // Always test against IE11 when touching this code - IE11's @load event doesn't always fire on img elements.
   const renderOpticalImage = () => (
     <div>
-      {opticalImageUrl.value
-      && <img
-        key={state.loadedOpticalImageUrl}
-        crossOrigin="anonymous"
-        src={state.loadedOpticalImageUrl}
-        class="absolute top-0 left-0 -z-10 origin-top-left"
-        style={{
-          ...state.loadedOpticalImageStyle,
-          filter: props.opticalOpacity !== undefined ? `brightness(${100 - ((1 - props.opticalOpacity) * 100
-              * 0.75)}%) grayscale(${(1 - (props.opticalOpacity || 0)) * 100}%)` : '',
-        }}
-      />}
+      {opticalImageUrl.value && (
+        <img
+          key={state.loadedOpticalImageUrl as string} // @ts-ignore
+          crossOrigin="anonymous"
+          src={state.loadedOpticalImageUrl as string}
+          class="absolute top-0 left-0 -z-10 origin-top-left"
+          style={{
+            ...state.loadedOpticalImageStyle,
+            filter:
+              props.opticalOpacity !== undefined
+                ? `brightness(${100 - (1 - props.opticalOpacity) * 100 * 0.75}%) grayscale(${
+                    (1 - (props.opticalOpacity || 0)) * 100
+                  }%)`
+                : '',
+          }}
+        />
+      )}
 
-      {opticalImageUrl.value
-      && state.loadedOpticalImageUrl !== opticalImageUrl.value
-      && <img
-        key={opticalImageUrl.value}
-        crossOrigin="anonymous"
-        src={opticalImageUrl.value}
-        class="absolute top-0 left-0 -z-20 origin-top-left opacity-1"
-        style={{
-          ...opticalImageStyle.value,
-          filter: props.opticalOpacity !== undefined ? `brightness(${100 - ((1 - props.opticalOpacity) * 100
-              * 0.75)}%) grayscale(${(1 - (props.opticalOpacity || 0)) * 100}%)` : '',
-        }}
-        onLoad={onOpticalImageLoaded}
-      />}
-    </div>)
+      {opticalImageUrl.value && state.loadedOpticalImageUrl !== opticalImageUrl.value && (
+        <img
+          key={opticalImageUrl.value} // @ts-ignore
+          crossOrigin="anonymous"
+          src={opticalImageUrl.value}
+          class="absolute top-0 left-0 -z-20 origin-top-left opacity-1"
+          style={{
+            ...opticalImageStyle.value,
+            filter:
+              props.opticalOpacity !== undefined
+                ? `brightness(${100 - (1 - props.opticalOpacity) * 100 * 0.75}%) grayscale(${
+                    (1 - (props.opticalOpacity || 0)) * 100
+                  }%)`
+                : '',
+          }}
+          onLoad={onOpticalImageLoaded}
+        />
+      )}
+    </div>
+  )
   return { renderOpticalImage }
 }
 
-const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: number }>,
+const useIonImageView = (
+  props: Props | any,
+  imageSize: Ref<{ width: number; height: number }>,
   imageLoaderRef: Ref<ReferenceObject | null>,
-  emit: (event: string, ...args: any[]) => void,
+  emit: (event: string, ...args: any[]) => void
 ) => {
-  const canvasRef = templateRef<HTMLCanvasElement>('ionImageCanvas')
+  // const canvasRef = templateRef<HTMLCanvasElement>('ionImageCanvas')
+  const canvasRef = ref(null)
 
   const renderToCanvas = () => {
     const { width, height } = imageSize.value
@@ -432,44 +449,56 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
     e.stopPropagation()
 
     if (
-      props.roiInfo[props.roiInfo.length - 1].isDrawing
-      && imageLoaderRef.value != null && props.ionImageLayers.length && e.clientX != null && e.clientY != null) {
+      props.roiInfo[props.roiInfo.length - 1].isDrawing &&
+      imageLoaderRef.value != null &&
+      props.ionImageLayers.length &&
+      e.clientX != null &&
+      e.clientY != null
+    ) {
       const cursorPixelPos = ref<[number, number] | null>(null)
       const { width = 0, height = 0 } = props.ionImageLayers[0].ionImage
       const zoomX = computed(() => props.zoom)
       const zoomY = computed(() => props.zoom / props.pixelAspectRatio)
-      const rect = imageLoaderRef.value.getBoundingClientRect()
-      const x = Math.floor((e.clientX - (rect.left + rect.right) / 2)
-        / zoomX.value - props.xOffset + width / 2)
-      const y = Math.floor((e.clientY - (rect.top + rect.bottom) / 2)
-        / zoomY.value - props.yOffset + height / 2)
+      const rect: any = imageLoaderRef.value?.getBoundingClientRect()
+      const x = Math.floor((e.clientX - (rect.left + rect.right) / 2) / zoomX.value - props.xOffset + width / 2)
+      const y = Math.floor((e.clientY - (rect.top + rect.bottom) / 2) / zoomY.value - props.yOffset + height / 2)
 
       cursorPixelPos.value = [x, y]
       emit('roi-coordinate', { x: cursorPixelPos.value[0], y: cursorPixelPos.value[1], isFixed })
     }
   }
-
   onMounted(renderToCanvas)
   onUpdated(renderToCanvas)
 
   const renderIonImageView = () => {
     const { width, height } = imageSize.value
-    const roiEnabled = Array.isArray(props.roiInfo) && props.roiInfo.length > 0
-      && props.roiInfo[props.roiInfo.length - 1].isDrawing
+    const roiEnabled =
+      Array.isArray(props.roiInfo) && props.roiInfo.length > 0 && props.roiInfo[props.roiInfo.length - 1].isDrawing
 
     return (
       <canvas
-        ref="ionImageCanvas"
+        ref={canvasRef}
         width={width}
         height={height}
-        onmousemove={roiEnabled ? debounce((e) => { handleMouseDown(e, false) }, 100,
-          { leading: true }) : () => {}}
-        onmousedown={roiEnabled ? debounce(handleMouseDown, 100, { leading: true }) : () => {}}
+        onMousemove={
+          roiEnabled
+            ? debounce(
+                (e) => {
+                  handleMouseDown(e, false)
+                },
+                100,
+                { leading: true }
+              )
+            : () => {}
+        }
+        onMousedown={roiEnabled ? debounce(handleMouseDown, 100, { leading: true }) : () => {}}
         class="absolute top-0 left-0 z-10 origin-top-left select-none pixelated"
         style={{
-          cursor: props.roiInfo && props.roiInfo.length > 0 && props.roiInfo[props.roiInfo.length - 1].isDrawing
-            ? 'crosshair' : '',
-          transform: (props.ionImageTransform ? formatMatrix3d(props.ionImageTransform) : ''),
+          cursor:
+            props.roiInfo && props.roiInfo.length > 0 && props.roiInfo[props.roiInfo.length - 1].isDrawing
+              ? 'crosshair'
+              : '',
+          transform: props.ionImageTransform ? formatMatrix3d(props.ionImageTransform) : '',
         }}
       />
     )
@@ -477,7 +506,7 @@ const useIonImageView = (props: Props, imageSize: Ref<{ width: number, height: n
   return { renderIonImageView }
 }
 
-const useImageSize = (props: Props) => {
+const useImageSize = (props: Props | any) => {
   const imageSize = computed(() => {
     const [layer] = props.ionImageLayers || []
     const { imageWidth = layer?.ionImage.width, imageHeight = layer?.ionImage.height } = props
@@ -491,8 +520,11 @@ const useImageSize = (props: Props) => {
   }
 }
 
-export default defineComponent<Props>({
+export default defineComponent({
   name: 'IonImageViewer',
+  components: {
+    ElTooltip,
+  },
   props: {
     ionImageLayers: Array,
     isLoading: { type: Boolean, default: false },
@@ -534,26 +566,28 @@ export default defineComponent<Props>({
     normalizationData: { type: Object },
     roiInfo: { type: Array, default: () => [] },
   },
-  setup(props: Props, { emit }: SetupContext) {
-    const imageLoaderRef = templateRef<ReferenceObject>('imageLoader')
+  directives: {
+    loading: ElLoading.directive,
+  },
+  setup(props: Props | any, { emit }: any) {
+    // const imageLoaderRef = templateRef<ReferenceObject>('imageLoader')
+    const imageLoaderRef = ref(null)
     const { showScrollBlock, renderScrollBlock } = useScrollBlock()
     const { renderScaleBar } = useScaleBar(props)
-
     const { imageSize } = useImageSize(props)
     const { renderPixelIntensity, movePixelIntensity } = usePixelIntensityDisplay(props, imageLoaderRef, emit)
     const { viewBoxStyle, handleZoom, handlePanStart } = usePanAndZoom(props, imageLoaderRef, emit, imageSize)
     const { renderIonImageView } = useIonImageView(props, imageSize, imageLoaderRef, emit)
     const { renderOpticalImage } = useBufferedOpticalImage(props)
 
-    const onWheel = (event: WheelEventCompat) => {
+    const onWheel = async (event: WheelEventCompat) => {
       // TODO: add pinch event handler for mobile devices
       if (event.ctrlKey || event.metaKey) {
         event.preventDefault()
         handleZoom(scrollDistance(event), event.clientX, event.clientY)
 
-        Vue.nextTick(() => {
-          movePixelIntensity(event.clientX, event.clientY)
-        })
+        await nextTick()
+        movePixelIntensity(event.clientX, event.clientY)
       } else {
         showScrollBlock()
       }
@@ -561,35 +595,35 @@ export default defineComponent<Props>({
 
     return () => (
       <div
-        ref="imageLoader"
+        ref={imageLoaderRef}
         v-loading={props.isLoading}
-        class="relative overflow-hidden"
+        class="overflow-hidden"
         style={{ width: props.width + 'px', height: props.height + 'px' }}
-        onwheel={onWheel}
-        onmousedown={handlePanStart}
+        onMousedown={handlePanStart}
+        onWheel={onWheel}
+        onMousemove={({ clientX, clientY }: MouseEvent) => {
+          if (!props.keepPixelSelected) {
+            movePixelIntensity(clientX, clientY)
+          }
+        }}
         onClick={({ clientX, clientY }: MouseEvent) => {
           if (props.keepPixelSelected) {
             movePixelIntensity(clientX, clientY, true)
           }
         }}
-        onmousemove={({ clientX, clientY }: MouseEvent) => {
-          if (!props.keepPixelSelected) {
-            movePixelIntensity(clientX, clientY)
-          }
-        }}
       >
-        {viewBoxStyle.value
-          && <div data-test-key="ion-image-panel" style={viewBoxStyle.value}>
+        {viewBoxStyle.value && (
+          <div data-test-key="ion-image-panel" style={viewBoxStyle.value}>
             {renderIonImageView()}
             {renderOpticalImage()}
-          </div>}
+          </div>
+        )}
 
         {renderPixelIntensity()}
 
         {renderScaleBar()}
 
         {props.scrollBlock && renderScrollBlock()}
-
       </div>
     )
   },

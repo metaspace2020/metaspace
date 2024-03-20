@@ -12,21 +12,23 @@ export interface EnrichmentTerm {
   enrichmentDB: EnrichmentDB
 }
 
-export const checkIfEnrichmentRequested =
-gql`query enrichmentRequested($id: String!) {
-  enrichmentRequested(datasetId: $id)
-}`
+export const checkIfEnrichmentRequested = gql`
+  query enrichmentRequested($id: String!) {
+    enrichmentRequested(datasetId: $id)
+  }
+`
 
-export const getEnrichedMolDatabasesQuery =
-gql`query allEnrichedMolDatabases($id: String!) {
-  allEnrichedMolDatabases(datasetId: $id) {
-    id
-    name
-    version
-    archived
-    group {
+export const getEnrichedMolDatabasesQuery = gql`
+  query allEnrichedMolDatabases($id: String!) {
+    allEnrichedMolDatabases(datasetId: $id) {
       id
-      shortName
+      name
+      version
+      archived
+      group {
+        id
+        shortName
+      }
     }
   }
-}`
+`

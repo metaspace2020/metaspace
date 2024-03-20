@@ -1,44 +1,35 @@
 <template>
-  <div>
-    <el-row id="isotope-plot-container">
-      <isotope-pattern-plot
-        :data="plotData"
-        :legend-items="isotopeLegendItems"
-      />
+  <div class="relative">
+    <el-row id="isotope-plot-container" class="relative w-full">
+      <isotope-pattern-plot :data="plotData" :legend-items="isotopeLegendItems" />
     </el-row>
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Prop } from 'vue-property-decorator'
-
+import { defineComponent, computed } from 'vue'
 import IsotopePatternPlot from './IsotopePatternPlot.vue'
 import { renderMolFormulaHtml } from '../../../lib/util'
+import { ElRow } from '../../../lib/element-plus'
 
-@Component({
+export default defineComponent({
+  name: 'DiagnosticsPlot',
   components: {
     IsotopePatternPlot,
+    ElRow,
   },
-})
-export default class DiagnosticsPlot extends Vue {
-    @Prop()
-    peakChartData: any;
-
-    @Prop()
-    ion: any;
-
-    @Prop()
-    comparisonPeakChartData: any;
-
-    @Prop()
-    comparisonIon: any;
-
-    get isotopeLegendItems(): any[] {
-      if (this.peakChartData != null) {
-        const ionHtml = renderMolFormulaHtml(this.ion)
-        if (this.comparisonPeakChartData != null) {
-          const compIonHtml = renderMolFormulaHtml(this.comparisonIon)
+  props: {
+    peakChartData: [Object, String],
+    ion: [Object, String],
+    comparisonPeakChartData: [Object, String],
+    comparisonIon: [Object, String],
+  },
+  setup(props: any) {
+    const isotopeLegendItems = computed(() => {
+      if (props.peakChartData != null) {
+        const ionHtml = renderMolFormulaHtml(props.ion)
+        if (props.comparisonPeakChartData != null) {
+          const compIonHtml = renderMolFormulaHtml(props.comparisonIon)
           return [
             { labelHtml: `${ionHtml}<br> Theoretical`, cssClass: 'refTheor', type: 'theor' },
             { labelHtml: `${ionHtml}<br> Sample`, cssClass: 'refSample', type: 'sample' },
@@ -54,85 +45,91 @@ export default class DiagnosticsPlot extends Vue {
       } else {
         return []
       }
-    }
+    })
 
-    get plotData(): any {
-      if (!this.peakChartData) {
+    const plotData = computed(() => {
+      if (!props.peakChartData) {
         return null
       }
-      const { sampleData, theor, ppm } = this.peakChartData
+      const { sampleData, theor, ppm } = props.peakChartData
       const sampleDatas = [sampleData]
       const theors = [theor]
-      if (this.comparisonPeakChartData) {
-        sampleDatas.push(this.comparisonPeakChartData.sampleData)
-        theors.push(this.comparisonPeakChartData.theor)
+      if (props.comparisonPeakChartData) {
+        sampleDatas.push(props.comparisonPeakChartData.sampleData)
+        theors.push(props.comparisonPeakChartData.theor)
       }
 
       return {
         sampleDatas,
         theors,
         ppm,
-        sampleClasses: this.comparisonPeakChartData ? ['refSample', 'compSample'] : ['soloSample'],
-        theorClasses: this.comparisonPeakChartData ? ['refTheor', 'compTheor'] : ['soloTheor'],
+        sampleClasses: props.comparisonPeakChartData ? ['refSample', 'compSample'] : ['soloSample'],
+        theorClasses: props.comparisonPeakChartData ? ['refTheor', 'compTheor'] : ['soloTheor'],
       }
+    })
+
+    return {
+      isotopeLegendItems,
+      plotData,
     }
-}
+  },
+})
 </script>
 
 <style lang="scss" scoped>
-    $refColor: rgb(72, 120, 208);
-    $compColor: rgb(214, 95, 95);
-    #isotope-plot-container /deep/ .soloSample {
-        circle {
-            fill: rgba($compColor, 0.75);
-        }
-        line {
-            stroke: rgba($compColor, 0.75);
-        }
-        rect {
-            fill: rgba($compColor, 0.2);
-        }
-    }
-    #isotope-plot-container /deep/ .soloTheor {
-        path {
-            stroke: rgba($refColor, 0.75);
-        }
-    }
+$refColor: rgb(72, 120, 208);
+$compColor: rgb(214, 95, 95);
+#isotope-plot-container ::v-deep(.soloSample) {
+  circle {
+    fill: rgba($compColor, 0.75);
+  }
+  line {
+    stroke: rgba($compColor, 0.75);
+  }
+  rect {
+    fill: rgba($compColor, 0.2);
+  }
+}
+#isotope-plot-container ::v-deep(.soloTheor) {
+  path {
+    stroke: rgba($refColor, 0.75);
+  }
+}
 
-    #isotope-plot-container /deep/ .refSample {
-        circle {
-            fill: rgba($refColor, 0.75);
-        }
-        line {
-            stroke: rgba($refColor, 0.75);
-        }
-        rect {
-            fill: rgba($refColor, 0.2);
-        }
-    }
-    #isotope-plot-container /deep/ .refTheor {
-        path {
-            stroke: rgba($refColor, 0.75);
-        }
-    }
+#isotope-plot-container ::v-deep(.refSample) {
+  circle {
+    fill: rgba($refColor, 0.75);
+  }
+  line {
+    stroke: rgba($refColor, 0.75);
+  }
+  rect {
+    fill: rgba($refColor, 0.2);
+  }
+}
+#isotope-plot-container ::v-deep(.refTheor) {
+  path {
+    stroke: rgba($refColor, 0.75);
+  }
+}
 
-    #isotope-plot-container /deep/ .compSample {
-        circle {
-            fill: rgba($compColor, 0.75);
-        }
-        line {
-            stroke: rgba($compColor, 0.75);
-            stroke-dasharray: 5, 5;
-        }
-        rect {
-            fill: rgba($compColor, 0.2);
-            mask: url(#mask-stripe);
-        }
-    }
-    #isotope-plot-container /deep/ .compTheor {
-        path {
-            stroke: rgba($compColor, 0.75);
-            stroke-dasharray: 5, 5;
-        }
-    }
+#isotope-plot-container ::v-deep(.compSample) {
+  circle {
+    fill: rgba($compColor, 0.75);
+  }
+  line {
+    stroke: rgba($compColor, 0.75);
+    stroke-dasharray: 5, 5;
+  }
+  rect {
+    fill: rgba($compColor, 0.2);
+    mask: url(#mask-stripe);
+  }
+}
+#isotope-plot-container ::v-deep(.compTheor) {
+  path {
+    stroke: rgba($compColor, 0.75);
+    stroke-dasharray: 5, 5;
+  }
+}
 </style>

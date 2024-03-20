@@ -1,13 +1,8 @@
 import { mount } from '@vue/test-utils'
-import router from '../../router'
-import store from '../../store/index'
-import Vue from 'vue'
-import Vuex from 'vuex'
-import { sync } from 'vuex-router-sync'
+import { defineComponent, nextTick, h } from 'vue'
 import { RequestedAccessDialog } from './RequestedAccessDialog'
-
-Vue.use(Vuex)
-sync(store, router)
+import router from '../../router'
+import store from '../../store'
 
 describe('RequestedAccessDialog', () => {
   const propsData = {
@@ -50,33 +45,39 @@ describe('RequestedAccessDialog', () => {
     visible: true,
   }
 
-  const testHarness = Vue.extend({
+  const testHarness = defineComponent({
     components: {
       RequestedAccessDialog,
     },
-    render(h) {
-      return h(RequestedAccessDialog, { props: this.$attrs })
+    props: ['group', 'visible', 'dsSubmission'],
+    setup(props) {
+      return () => h(RequestedAccessDialog, { ...props })
     },
   })
 
-  it('it should match snapshot', async() => {
-    const wrapper = mount(testHarness, { store, router })
-    await Vue.nextTick()
-
-    expect(wrapper).toMatchSnapshot()
+  it('it should match snapshot', async () => {
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+      },
+      props: propsData,
+    })
+    await nextTick()
+    expect(wrapper.html()).toMatchSnapshot()
   })
 
-  it('it should match dataset processing snapshot', async() => {
+  it('it should match dataset processing snapshot', async () => {
     const wrapper = mount(testHarness, {
-      store,
-      router,
-      propsData: {
+      global: {
+        plugins: [store, router],
+      },
+      props: {
         ...propsData,
         dsSubmission: true,
       },
     })
-    await Vue.nextTick()
+    await nextTick()
 
-    expect(wrapper).toMatchSnapshot()
+    expect(wrapper.html()).toMatchSnapshot()
   })
 })

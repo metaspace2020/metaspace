@@ -1,12 +1,12 @@
-import { computed, defineComponent } from '@vue/composition-api'
-
-import config from '../../../../lib/config'
-import safeJsonParse from '../../../../lib/safeJsonParse'
+import { defineComponent, computed } from 'vue'
+import { ElPopover, ElRow } from '../../../../lib/element-plus'
 import { sortBy } from 'lodash-es'
-import { Popover } from '../../../../lib/element-ui'
+import safeJsonParse from '../../../../lib/safeJsonParse'
+import config from '../../../../lib/config'
+import { ElIcon } from '../../../../lib/element-plus'
+import { Loading } from '@element-plus/icons-vue'
 
-const interleave = <T extends any>(arr: T[], separator: T): T[] =>
-  arr.flatMap(item => [separator, item]).slice(1)
+const interleave = <T extends any>(arr: T[], separator: T): T[] => arr.flatMap((item) => [separator, item]).slice(1)
 
 const formatOffSampleProb = (offSampleProb: number) => {
   if (offSampleProb < 0.1) {
@@ -14,40 +14,56 @@ const formatOffSampleProb = (offSampleProb: number) => {
   } else if (offSampleProb > 0.9) {
     return 'greater than 90%'
   } else {
-    return (+offSampleProb * 100).toFixed(0) + '%'
+    return `${(offSampleProb * 100).toFixed(0)}%`
   }
 }
 
-const DiagnosticsMetrics = defineComponent({
+export default defineComponent({
   name: 'DiagnosticsMetrics',
-  props: {
-    loading: { type: Number },
-    annotation: { type: Object as () => any },
-  },
+  components: { ElPopover, ElRow },
+  props: ['loading', 'annotation'],
   setup(props) {
     const metrics = computed(() => {
       const order = ['spatial', 'spectral', 'chaos', 'mz_err_abs', 'mz_err_rel']
       let metrics = props.annotation?.metricsJson != null ? safeJsonParse(props.annotation.metricsJson) : null
       if (metrics != null) {
         const sorted = sortBy(
-          Object.entries(metrics).filter(([k, v]) => order.includes(k)),
-          ([k, v]) => order.indexOf(k),
+          Object.entries(metrics).filter(([k]) => order.includes(k)),
+          ([k]) => order.indexOf(k)
         )
         metrics = Object.fromEntries(sorted)
       }
       return metrics
     })
 
-    const scoringModel = computed(() => {
-      // eslint-disable-next-line camelcase
-      return props.annotation != null ? safeJsonParse(props.annotation.dataset.configJson)?.fdr.scoring_model : null
-    })
+    const scoringModel = computed(() =>
+      props.annotation != null ? safeJsonParse(props.annotation.dataset.configJson)?.fdr.scoring_model : null
+    )
+
+    const renderPopoverContent = () => {
+      return (
+        <>Image analysis gave an off-sample probability of {formatOffSampleProb(props.annotation.offSampleProb)}.</>
+      )
+    }
+    const renderPopoverReference = () => {
+      return (
+        <span class={props.annotation.offSample ? 'off-sample-tag' : 'on-sample-tag'}>
+          {props.annotation.offSample ? 'Off-sample' : 'On-sample'}
+        </span>
+      )
+    }
 
     return () => {
       const { loading, annotation } = props
       let metricsFormula
       if (loading) {
-        metricsFormula = <div v-loading="1" class="msm-score-calc h-4" />
+        metricsFormula = (
+          <div class="msm-score-calc h-4">
+            <ElIcon class="is-loading el-icon-loading">
+              <Loading />
+            </ElIcon>
+          </div>
+        )
       } else if (metrics.value != null) {
         const isV1 = scoringModel.value == null
         const metricItems = [
@@ -59,12 +75,12 @@ const DiagnosticsMetrics = defineComponent({
           metricItems.push(
             {
               name: ['m/z error', <sub>abs</sub>],
-              formattedVal: [(metrics.value.mz_err_abs).toFixed(5)],
+              formattedVal: [metrics.value.mz_err_abs.toFixed(5)],
             },
             {
               name: ['m/z error', <sub>rel</sub>],
-              formattedVal: [(metrics.value.mz_err_rel).toFixed(5)],
-            },
+              formattedVal: [metrics.value.mz_err_rel.toFixed(5)],
+            }
           )
         }
 
@@ -72,10 +88,11 @@ const DiagnosticsMetrics = defineComponent({
           metricsFormula = (
             <div class="msm-score-calc">
               {'MSM score = '}
-              <span>{ annotation.msmScore.toFixed(3) }</span>
+              <span>{annotation.msmScore.toFixed(3)}</span>
               {' = '}
               {interleave<any>(
-                metricItems.map(item => ([item.formattedVal, ' (', item.name, ')'])), ' × ',
+                metricItems.map((item) => [item.formattedVal, ' (', item.name, ')']),
+                ' × '
               )}
             </div>
           )
@@ -83,10 +100,11 @@ const DiagnosticsMetrics = defineComponent({
           metricsFormula = (
             <div class="msm-score-calc">
               {'METASPACE-ML score = '}
-              <span>{ annotation.msmScore.toFixed(3) }</span>
+              <span>{annotation.msmScore.toFixed(3)}</span>
               {' = ML ('}
               {interleave<any>(
-                metricItems.map(item => ([item.name, ' = ', item.formattedVal])), ', ',
+                metricItems.map((item) => [item.name, ' = ', item.formattedVal]),
+                ', '
               )}
               )
             </div>
@@ -96,17 +114,17 @@ const DiagnosticsMetrics = defineComponent({
         metricsFormula = <div />
       }
 
-      let offSampleTag
-      if (config.features.off_sample && annotation?.offSample != null) {
+      let offSampleTag = null
+      if (config.features.off_sample && props.annotation?.offSample != null) {
         offSampleTag = (
-          <div>
-            <Popover trigger="hover" open-delay={100}>
-              Image analysis gave an off-sample probability of { formatOffSampleProb(annotation.offSampleProb) }.
-              <span slot="reference" class={annotation.offSample ? 'off-sample-tag' : 'on-sample-tag'}>
-                { props.annotation.offSample ? 'Off-sample' : 'On-sample' }
-              </span>
-            </Popover>
-          </div>
+          <ElPopover
+            trigger="hover"
+            open-delay={100}
+            v-slots={{
+              reference: renderPopoverReference,
+              default: renderPopoverContent,
+            }}
+          />
         )
       } else {
         offSampleTag = null
@@ -121,5 +139,3 @@ const DiagnosticsMetrics = defineComponent({
     }
   },
 })
-
-export default DiagnosticsMetrics

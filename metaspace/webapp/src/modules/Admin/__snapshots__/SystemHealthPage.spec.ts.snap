@@ -1,43 +1,33 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`SystemHealthPage should match snapshot logged as admin 1`] = `
-<div class="mx-auto max-w-4xl" mock-v-loading="0">
-  <form class="el-form el-form--label-top">
-    <div class="el-form-item">
-      <!---->
-      <div class="el-form-item__content">
-        <div role="radiogroup" class="el-radio-group"><label role="radio" aria-checked="true" tabindex="0" class="el-radio is-bordered is-checked"><span class="el-radio__input is-checked"><span class="el-radio__inner"></span><input type="radio" aria-hidden="true" tabindex="-1" class="el-radio__original" value="0"></span><span class="el-radio__label">
-          Enable everything
-        <!----></span></label> <label role="radio" tabindex="-1" class="el-radio is-bordered"><span class="el-radio__input"><span class="el-radio__inner"></span><input type="radio" aria-hidden="true" tabindex="-1" class="el-radio__original" value="1"></span><span class="el-radio__label">
-          Disable dataset upload/reprocessing
-        <!----></span></label> <label role="radio" tabindex="-1" class="el-radio is-bordered"><span class="el-radio__input"><span class="el-radio__inner"></span><input type="radio" aria-hidden="true" tabindex="-1" class="el-radio__original" value="2"></span><span class="el-radio__label">
-          Read-only mode
-        <!----></span></label></div>
-        <transition-stub name="el-zoom-in-top">
-          <!---->
-        </transition-stub>
+exports[`SystemHealthPage > should match snapshot logged as admin 1`] = `
+"<div data-v-979003de=\\"\\" class=\\"mx-auto max-w-4xl\\">
+  <form data-v-979003de=\\"\\" class=\\"el-form el-form--default el-form--label-top\\">
+    <div data-v-979003de=\\"\\" class=\\"el-form-item asterisk-left\\">
+      <!--v-if-->
+      <div class=\\"el-form-item__content\\">
+        <div data-v-979003de=\\"\\" class=\\"el-radio-group radio-group-wrapper\\" role=\\"radiogroup\\" aria-labelledby=\\"el-id-replaced\\" id=\\"el-id-replaced\\"><label data-v-979003de=\\"\\" class=\\"el-radio is-bordered is-checked\\"><span class=\\"el-radio__input is-checked\\"><input class=\\"el-radio__original\\" name=\\"el-id-replaced\\" type=\\"radio\\" value=\\"0\\"><span class=\\"el-radio__inner\\"></span></span><span class=\\"el-radio__label\\"> Enable everything </span></label><label data-v-979003de=\\"\\" class=\\"el-radio is-bordered\\"><span class=\\"el-radio__input\\"><input class=\\"el-radio__original\\" name=\\"el-id-replaced\\" type=\\"radio\\" value=\\"1\\"><span class=\\"el-radio__inner\\"></span></span><span class=\\"el-radio__label\\"> Disable dataset upload/reprocessing </span></label><label data-v-979003de=\\"\\" class=\\"el-radio is-bordered\\"><span class=\\"el-radio__input\\"><input class=\\"el-radio__original\\" name=\\"el-id-replaced\\" type=\\"radio\\" value=\\"2\\"><span class=\\"el-radio__inner\\"></span></span><span class=\\"el-radio__label\\"> Read-only mode </span></label></div>
       </div>
     </div>
-    <div class="el-form-item"><label class="el-form-item__label">Maintenance message (optional)</label>
-      <div class="el-form-item__content">
-        <div class="el-input" style="width: 450px;">
-          <!----><input type="text" autocomplete="off" class="el-input__inner">
-          <!---->
-          <!---->
-          <!---->
-          <!---->
+    <div data-v-979003de=\\"\\" class=\\"el-form-item asterisk-left\\"><label id=\\"el-id-replaced\\" for=\\"el-id-replaced\\" class=\\"el-form-item__label\\">Maintenance message (optional)</label>
+      <div class=\\"el-form-item__content\\">
+        <div data-v-979003de=\\"\\" class=\\"el-input\\" style=\\"width: 450px;\\">
+          <!-- input -->
+          <!-- prepend slot -->
+          <!--v-if-->
+          <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
+            <!-- prefix slot -->
+            <!--v-if--><input class=\\"el-input__inner\\" type=\\"text\\" autocomplete=\\"off\\" tabindex=\\"0\\" id=\\"el-id-replaced\\"><!-- suffix slot -->
+            <!--v-if-->
+          </div><!-- append slot -->
+          <!--v-if-->
         </div>
-        <transition-stub name="el-zoom-in-top">
-          <!---->
-        </transition-stub>
       </div>
-    </div> <button type="button" class="el-button el-button--primary">
-      <!---->
-      <!----><span>
-      Update
-    </span></button>
+    </div><button data-v-979003de=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
+      <!--v-if--><span class=\\"\\">Update</span>
+    </button>
   </form>
-</div>
+</div>"
 `;
 
-exports[`SystemHealthPage should match snapshot logged as non-admin 1`] = ``;
+exports[`SystemHealthPage > should match snapshot logged as non-admin 1`] = `"<!--v-if-->"`;

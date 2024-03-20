@@ -2,51 +2,32 @@
   <div class="main-content">
     <el-dialog
       title="Delete account"
-      custom-class="delete-account-dialog"
-      :visible.sync="showDeleteAccountDialog"
+      class="delete-account-dialog"
+      :model-value="showDeleteAccountDialog"
       width="500px"
       :lock-scroll="false"
     >
+      <p>If you delete your account, you will lose access to all private datasets.</p>
       <p>
-        If you delete your account, you will lose access to all private datasets.
-      </p>
-      <p>
-        Please select whether you would like to delete all your datasets or keep them within METASPACE accessible by the group members:
+        Please select whether you would like to delete all your datasets or keep them within METASPACE accessible by the
+        group members:
       </p>
       <!--Changed the Text below to the above version after discussion with Theo, plz consider if it fits-->
       <!--If you delete your account, you will lose access to any datasets, groups and-->
       <!--projects that have been explicitly shared with you-->
-      <el-checkbox
-        v-model="delDatasets"
-        style="margin: 10px 20px"
-      >
-        Delete datasets that I have submitted
-      </el-checkbox>
-      <div style="margin: 10px 0 20px; text-align: right;">
-        <el-button
-          title="Cancel"
-          @click="closeDeleteAccountDialog"
-        >
-          Cancel
-        </el-button>
-        <el-button
-          type="danger"
-          title="Delete account"
-          :loading="isUserDeletionLoading"
-          @click="deleteAccount()"
-        >
+      <el-checkbox v-model="delDatasets" style="margin: 10px 20px"> Delete datasets that I have submitted </el-checkbox>
+      <div style="margin: 10px 0 20px; text-align: right">
+        <el-button title="Cancel" @click="closeDeleteAccountDialog"> Cancel </el-button>
+        <el-button type="danger" title="Delete account" :loading="isUserDeletionLoading" @click="deleteAccount">
           Delete account
         </el-button>
       </div>
       <p>
-        <b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them
-        deleted later by emailing the <a href="mailto:contact@metaspace2020.eu">METASPACE administrators</a>.
+        <b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them deleted later by
+        emailing the <a target="_blank" href="mailto:contact@metaspace2020.eu">METASPACE administrators</a>.
       </p>
     </el-dialog>
-    <div
-      v-loading="!isLoaded"
-      class="user-edit-page"
-    >
+    <div v-loading="!isLoaded" class="user-edit-page">
       <el-row>
         <el-col :span="16">
           <h2>User details</h2>
@@ -66,46 +47,33 @@
       </el-row>
       <el-row :gutter="20">
         <el-form
-          ref="form"
+          ref="formRef"
+          class="w-full"
           :disabled="isUserDetailsLoading"
           :rules="rules"
           :model="model"
           label-position="top"
         >
-          <div>
+          <div class="flex flex-wrap w-full">
             <el-col :span="8">
-              <el-form-item
-                prop="name"
-                label="Full name"
-              >
-                <el-input
-                  v-model="model.name"
-                  name="name"
-                />
+              <el-form-item prop="name" label="Full name">
+                <el-input v-model="model.name" name="name" />
               </el-form-item>
             </el-col>
             <el-col :span="8">
-              <el-form-item
-                prop="email"
-                label="Email address"
-              >
-                <el-input
-                  v-model="model.email"
-                  name="email"
-                />
+              <el-form-item prop="email" label="Email address">
+                <el-input v-model="model.email" name="email" />
               </el-form-item>
               <p v-if="isEmailChangePending">
                 <b>Please click the link that has been sent to your new email address to verify the change.</b>
               </p>
             </el-col>
             <el-col :span="8">
-              <el-form-item
-                label="Password"
-                required
-              >
+              <el-form-item label="Password" required>
                 <el-button
-                  style="margin-left: 16px"
-                  type="text"
+                  class="cursor-pointer"
+                  style="color: #1768af; margin-left: 16px; line-height: 32px"
+                  link
                   @click="handleChangePassword"
                 >
                   Click to change...
@@ -118,17 +86,14 @@
 
       <div>
         <h2>Groups</h2>
-        <groups-table
-          :current-user="currentUser"
-          :refetch-data="refetchData"
-        />
+        <groups-table :current-user="currentUser" :refetch-data="refetchData" />
         <div v-if="currentUser && currentUser.groups && currentUser.groups.length > 1">
           <p>Primary group:</p>
           <el-select
             v-model="primaryGroupId"
             v-loading="isChangingPrimaryGroup"
             placeholder="Select"
-            style="width: 400px;"
+            style="width: 400px"
             @change="handleChangePrimaryGroup"
           >
             <el-option
@@ -141,12 +106,9 @@
         </div>
       </div>
 
-      <div style="margin-top: 40px;">
+      <div style="margin-top: 40px">
         <h2>Projects</h2>
-        <projects-table
-          :current-user="currentUser"
-          :refetch-data="refetchData"
-        />
+        <projects-table :current-user="currentUser" :refetch-data="refetchData" />
       </div>
       <!--The section below will be introduced in vFuture-->
       <!--<div class="notifications" style="margin-top: 30px">-->
@@ -193,32 +155,20 @@
         <h2>API access</h2>
         <div class="action-with-message">
           <p class="max-w-measure-4">
-            To <a href="https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client">access METASPACE programmatically</a>
+            To
+            <a target="_blank" href="https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client"
+              >access METASPACE programmatically</a
+            >
             or integrate with trusted third-party applications, an API key can be used to avoid sharing your password.
           </p>
-          <el-button
-            v-if="currentUser && !currentUser.apiKey"
-            @click="handleGenerateApiKey"
-          >
+          <el-button v-if="currentUser && !currentUser.apiKey" @click="handleGenerateApiKey">
             Generate API key
           </el-button>
         </div>
         <el-row v-if="isLoaded && currentUser">
-          <div
-            v-if="currentUser.apiKey"
-            class="action-with-message"
-          >
-            <copy-to-clipboard
-              class="max-w-measure-1"
-              :value="currentUser.apiKey"
-              type="password"
-            />
-            <el-button
-              type="danger"
-              @click="handleRevokeApiKey"
-            >
-              Revoke key
-            </el-button>
+          <div v-if="currentUser.apiKey" class="action-with-message">
+            <copy-to-clipboard class="max-w-measure-1" :value="currentUser.apiKey" type="password" />
+            <el-button type="danger" @click="handleRevokeApiKey"> Revoke key </el-button>
           </div>
         </el-row>
       </section>
@@ -226,16 +176,10 @@
         <h2>Delete account</h2>
         <div class="action-with-message">
           <p class="max-w-measure-3">
-            If you delete your METASPACE account, you can optionally remove all of your datasets.
-            If datasets are not removed, the private data will still be accessible by the group members only.
+            If you delete your METASPACE account, you can optionally remove all of your datasets. If datasets are not
+            removed, the private data will still be accessible by the group members only.
           </p>
-          <el-button
-            type="danger"
-            title="Delete account"
-            @click="openDeleteAccountDialog()"
-          >
-            Delete account
-          </el-button>
+          <el-button type="danger" title="Delete account" @click="openDeleteAccountDialog"> Delete account </el-button>
         </div>
       </section>
     </div>
@@ -243,170 +187,193 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Watch } from 'vue-property-decorator'
+import { defineComponent, ref, reactive, computed, inject } from 'vue'
 import {
-  updateUserMutation,
-  deleteUserMutation,
-  userProfileQuery,
-  UserProfileQuery, resetUserApiKeyMutation,
-} from '../../api/user'
+  ElForm,
+  ElMessage,
+  ElMessageBox,
+  ElCheckbox,
+  ElButton,
+  ElCol,
+  ElRow,
+  ElInput,
+  ElFormItem,
+  ElLoading,
+} from '../../lib/element-plus'
+import { updateUserMutation, deleteUserMutation, userProfileQuery, resetUserApiKeyMutation } from '../../api/user'
 import reportError from '../../lib/reportError'
 import { refreshLoginStatus } from '../../api/graphqlClient'
-import { ElForm } from 'element-ui/types/form'
-import { TransferDatasetsDialog } from '../Group/index'
 import emailRegex from '../../lib/emailRegex'
 import GroupsTable from './GroupsTable'
 import ProjectsTable from './ProjectsTable.vue'
-import ConfirmAsync from '../../components/ConfirmAsync'
+import { useConfirmAsync } from '../../components/ConfirmAsync'
 import { sendPasswordResetToken } from '../../api/auth'
 import CopyToClipboard from '../../components/Form/CopyToClipboard'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
+import { useRouter } from 'vue-router'
 
-  interface Model {
-    name: string;
-    email: string | null;
-  }
+export default defineComponent({
+  name: 'EditUserPage',
 
-  @Component<EditUserPage>({
-    components: {
-      TransferDatasetsDialog,
-      GroupsTable,
-      ProjectsTable,
-      CopyToClipboard,
-    },
-    apollo: {
-      currentUser: {
-        query: userProfileQuery,
-        result({ data }: {data: {currentUser: UserProfileQuery}}) {
-          if (!this.isLoaded) {
-            // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
-            // button that causes this query to refetch
-            this.isLoaded = true
-          }
-        },
-      },
-    },
-  })
-export default class EditUserPage extends Vue {
-    isLoaded = false;
-    showApiKey = false;
-    showDeleteAccountDialog: boolean = false;
-    isUserDetailsLoading: boolean = false;
-    isUserDeletionLoading: boolean = false;
-    isEmailChangePending: boolean = false;
-    isChangingPrimaryGroup: boolean = false;
+  components: {
+    GroupsTable,
+    ProjectsTable,
+    CopyToClipboard,
+    ElCheckbox,
+    ElButton,
+    ElCol,
+    ElRow,
+    ElInput,
+    ElFormItem,
+    ElForm,
+  },
 
-    currentUser: UserProfileQuery | null = null;
-    model: Model = {
+  directives: {
+    loading: ElLoading.directive,
+  },
+
+  setup() {
+    const router = useRouter()
+    const apolloClient = inject(DefaultApolloClient)
+    const confirmAsync = useConfirmAsync()
+    const formRef = ref<InstanceType<typeof ElForm>>()
+
+    const isLoaded = ref(false)
+    const showApiKey = ref(false)
+    const showDeleteAccountDialog = ref(false)
+    const isUserDetailsLoading = ref(false)
+    const isUserDeletionLoading = ref(false)
+    const isEmailChangePending = ref(false)
+    const isChangingPrimaryGroup = ref(false)
+    const primaryGroupId = ref(null)
+    const delDatasets = ref(false)
+
+    const model = reactive({
       name: '',
       email: '',
-    };
+    })
 
-    primaryGroupId: string | null = null;
-
-    delDatasets: boolean = false;
-    rules: object = {
-      name: [
-        { required: true, min: 3, max: 50, message: 'Please enter a correct fullname', trigger: 'blur' },
-      ],
+    const rules = {
+      name: [{ required: true, min: 3, max: 50, message: 'Please enter a correct fullname', trigger: 'blur' }],
       email: [
         {
           required: true,
           pattern: emailRegex,
           message: 'Please enter a valid email address',
           trigger: 'blur',
-        }],
-    };
-
-    get isUserDetailsPristine() {
-      return this.currentUser == null
-        || (this.model.name === this.currentUser.name && this.model.email === this.currentUser.email)
+        },
+      ],
     }
 
-    @Watch('isLoaded')
-    @Watch('currentUser', { deep: true })
-    onCurrentUserChanged(this: any) {
-      if (this.currentUser) {
-        this.model.name = this.currentUser.name
-        if (!this.isEmailChangePending) {
-          this.model.email = this.currentUser.email
+    const {
+      result: currentUserResult,
+      onResult: onUserProfileResult,
+      refetch: currentUserRefetch,
+    } = useQuery(userProfileQuery, null, { fetchPolicy: 'network-only' })
+    const currentUser = computed(() => currentUserResult.value?.currentUser)
+    onUserProfileResult(() => {
+      if (!isLoaded.value) {
+        // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
+        // button that causes this query to refetch
+        isLoaded.value = true
+      }
+      onCurrentUserChanged()
+    })
+
+    const isUserDetailsPristine = computed(() => {
+      return (
+        currentUser.value == null || (model.name === currentUser.value.name && model.email === currentUser.value.email)
+      )
+    })
+
+    const onCurrentUserChanged = () => {
+      if (currentUser.value) {
+        model.name = currentUser.value.name
+        if (!isEmailChangePending.value) {
+          model.email = currentUser.value.email
         }
-        this.primaryGroupId = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null
-      } else if (this.isLoaded) {
-        this.$router.push('/account/sign-in')
+        primaryGroupId.value =
+          currentUser.value.primaryGroup && currentUser.value.primaryGroup.group.id
+            ? currentUser.value.primaryGroup.group.id
+            : null
+      } else if (isLoaded.value) {
+        router.push('/account/sign-in')
       }
     }
 
-    openDeleteAccountDialog() {
-      this.showDeleteAccountDialog = true
+    const openDeleteAccountDialog = () => {
+      showDeleteAccountDialog.value = true
     }
 
-    closeDeleteAccountDialog() {
-      this.showDeleteAccountDialog = false
+    const closeDeleteAccountDialog = () => {
+      showDeleteAccountDialog.value = false
     }
 
-    async updateUserDetails() {
+    const updateUserDetails = async () => {
       try {
-        await (this.$refs.form as ElForm).validate()
+        await (formRef.value as any).validate()
       } catch (err) {
         return
       }
       try {
-        const emailChanged = this.currentUser!.email !== this.model.email
+        const emailChanged = model.email && currentUser.value.email && currentUser.value.email !== model.email
         if (emailChanged) {
           try {
-            await this.$confirm(
-              'Are you sure you want to change email address? '
-              + 'A verification email will be sent to your new address to confirm the change.',
-              'Confirm email address change', {
+            await ElMessageBox.confirm(
+              'Are you sure you want to change email address? ' +
+                'A verification email will be sent to your new address to confirm the change.',
+              'Confirm email address change',
+              {
                 confirmButtonText: 'Yes, send verification email',
                 lockScroll: false,
-              })
-            this.isEmailChangePending = true
+              }
+            )
+            isEmailChangePending.value = true
           } catch {
             return
           }
         }
-        this.isUserDetailsLoading = true
+        isUserDetailsLoading.value = true
 
-        await this.$apollo.mutate({
+        await apolloClient.mutate({
           mutation: updateUserMutation,
           variables: {
-            userId: this.currentUser!.id,
+            userId: currentUser.value.id,
             update: {
               // Only send fields that have changed, per API requirements
               // This relies on `undefined` values being discarded during JSON stringification
-              name: this.model.name !== this.currentUser!.name ? this.model.name : undefined,
-              email: this.model.email !== this.currentUser!.email ? this.model.email : undefined,
+              name: model.name !== currentUser.value.name ? model.name : undefined,
+              email: model.email !== currentUser.value.email ? model.email : undefined,
             },
           },
         })
-        await this.$apollo.queries.currentUser.refetch()
-        this.$message({
+
+        await currentUserRefetch()
+        ElMessage({
           type: 'success',
           message: emailChanged
-            ? 'A verification link has been sent to your new email address. '
-            + 'Please click the link in this email to confirm the change.'
+            ? 'A verification link has been sent to your new email address. ' +
+              'Please click the link in this email to confirm the change.'
             : 'Your details have been saved',
         })
       } catch (err) {
         reportError(err)
       } finally {
-        this.isUserDetailsLoading = false
+        isUserDetailsLoading.value = false
       }
     }
 
-    async deleteAccount(this: any) {
+    const deleteAccount = async () => {
       try {
-        this.isUserDeletionLoading = true
-        await this.$apollo.mutate({
+        isUserDeletionLoading.value = true
+        await apolloClient.mutate({
           mutation: deleteUserMutation,
           variables: {
-            userId: this.currentUser.id,
-            deleteDatasets: this.delDatasets,
+            userId: currentUser.value.id,
+            deleteDatasets: delDatasets.value,
           },
         })
-        this.$message({
+        ElMessage({
           type: 'success',
           message: 'You have successfully deleted your account!',
         })
@@ -414,47 +381,49 @@ export default class EditUserPage extends Vue {
         reportError(err)
       } finally {
         await refreshLoginStatus()
-        this.closeDeleteAccountDialog()
-        this.isUserDeletionLoading = false
+        closeDeleteAccountDialog()
+        isUserDeletionLoading.value = false
       }
     }
 
-    @ConfirmAsync(function(this: EditUserPage) {
-      return {
-        message: 'This will send you an email with a link and instructions to change your password. '
-          + 'Do you wish to proceed?',
+    const handleChangePassword = async () => {
+      const confirmOptions = {
+        message:
+          'This will send you an email with a link and instructions to change your password. ' +
+          'Do you wish to proceed?',
         confirmButtonText: 'Change password',
         confirmButtonLoadingText: 'Sending email...',
       }
-    })
-    async handleChangePassword() {
-      // TODO: Customize this so it's not so obviously a rip off of the reset password process
-      await sendPasswordResetToken(this.currentUser!.email!)
-      this.$message({ message: 'Email sent!', type: 'success' })
+
+      await confirmAsync(confirmOptions, async () => {
+        // TODO: Customize this so it's not so obviously a rip off of the reset password process
+        await sendPasswordResetToken(currentUser.value.email!)
+        ElMessage({ message: 'Email sent!', type: 'success' })
+      })
     }
 
-    async handleChangePrimaryGroup() {
-      const oldPrimaryGroupId = this.currentUser!.primaryGroup != null ? this.currentUser!.primaryGroup!.group.id : null
+    const handleChangePrimaryGroup = async () => {
+      const oldPrimaryGroupId = currentUser.value.primaryGroup != null ? currentUser.value.primaryGroup!.group.id : null
 
-      if (this.primaryGroupId !== oldPrimaryGroupId) {
-        this.isChangingPrimaryGroup = true
+      if (primaryGroupId.value !== oldPrimaryGroupId) {
+        isChangingPrimaryGroup.value = true
         try {
-          await this.$apollo.mutate({
+          await apolloClient.mutate({
             mutation: updateUserMutation,
             variables: {
-              userId: this.currentUser!.id,
-              update: { primaryGroupId: this.primaryGroupId },
+              userId: currentUser.value.id,
+              update: { primaryGroupId: primaryGroupId.value },
             },
           })
-          await this.$apollo.queries.currentUser.refetch()
+          await currentUserRefetch()
         } finally {
-          this.isChangingPrimaryGroup = false
+          isChangingPrimaryGroup.value = false
         }
       }
     }
 
-    @ConfirmAsync(function(this: EditUserPage) {
-      return {
+    const handleGenerateApiKey = async () => {
+      const confirmOptions = {
         dangerouslyUseHTMLString: true,
         message: `API keys allow almost full access to your account, including data shared with you by others,
         and should not be shared with anybody you don't trust.<br><br>
@@ -463,43 +432,44 @@ export default class EditUserPage extends Vue {
         confirmButtonText: 'I understand, generate the key',
         confirmButtonLoadingText: 'Generating...',
       }
-    })
-    async handleGenerateApiKey() {
-      await this.$apollo.mutate({
-        mutation: resetUserApiKeyMutation,
-        variables: {
-          userId: this.currentUser!.id,
-          removeKey: false,
-        },
-      })
-      await this.$apollo.queries.currentUser.refetch()
-    }
 
-    @ConfirmAsync(function(this: EditUserPage) {
-      return {
+      await confirmAsync(confirmOptions, async () => {
+        await apolloClient.mutate({
+          mutation: resetUserApiKeyMutation,
+          variables: {
+            userId: currentUser.value.id,
+            removeKey: false,
+          },
+        })
+        await currentUserRefetch()
+      })
+    }
+    const handleRevokeApiKey = async () => {
+      const confirmOptions = {
         message: 'Are you sure you want to revoke the API key?',
         confirmButtonText: 'Revoke key',
         confirmButtonLoadingText: 'Revoking...',
       }
-    })
-    async handleRevokeApiKey() {
-      await this.$apollo.mutate({
-        mutation: resetUserApiKeyMutation,
-        variables: {
-          userId: this.currentUser!.id,
-          removeKey: true,
-        },
+
+      await confirmAsync(confirmOptions, async () => {
+        await apolloClient.mutate({
+          mutation: resetUserApiKeyMutation,
+          variables: {
+            userId: currentUser.value.id,
+            removeKey: true,
+          },
+        })
+        await currentUserRefetch()
       })
-      await this.$apollo.queries.currentUser.refetch()
     }
 
-    handleCopyApiKey() {
-      if (this.currentUser && this.currentUser.apiKey) {
+    const handleCopyApiKey = () => {
+      if (currentUser.value && currentUser.value.apiKey) {
         if ('clipboard' in navigator) {
-          navigator.clipboard.writeText(this.currentUser.apiKey)
+          navigator.clipboard.writeText(currentUser.value.apiKey)
         } else {
           const el = document.createElement('textarea')
-          el.value = this.currentUser!.apiKey
+          el.value = currentUser.value.apiKey
           el.style.position = 'absolute'
           el.style.left = '-9999px'
           document.body.appendChild(el)
@@ -513,63 +483,91 @@ export default class EditUserPage extends Vue {
       }
     }
 
-    async refetchData() {
-      await this.$apollo.queries.currentUser.refetch()
+    const refetchData = async () => {
+      await currentUserRefetch()
     }
-}
+
+    return {
+      formRef,
+      isLoaded,
+      showApiKey,
+      showDeleteAccountDialog,
+      isUserDetailsLoading,
+      isUserDeletionLoading,
+      isEmailChangePending,
+      isChangingPrimaryGroup,
+      currentUser,
+      model,
+      primaryGroupId,
+      delDatasets,
+      rules,
+      isUserDetailsPristine,
+      openDeleteAccountDialog,
+      closeDeleteAccountDialog,
+      updateUserDetails,
+      deleteAccount,
+      handleChangePassword,
+      handleChangePrimaryGroup,
+      handleGenerateApiKey,
+      handleRevokeApiKey,
+      handleCopyApiKey,
+      refetchData,
+    }
+  },
+})
 </script>
 
 <style scoped>
-  .main-content {
-    @apply px-6 py-3;
-    display: flex;
-    justify-content: center;
-  }
+.main-content {
+  @apply px-6 py-3;
+  display: flex;
+  justify-content: center;
+}
 
-  .user-edit-page {
-    max-width: 950px;
-    width: 100%;
-  }
+.user-edit-page {
+  max-width: 950px;
+  width: 100%;
+}
 
-  .api-key /deep/ input {
-    background-color: white !important;
-    cursor: text !important;
-  }
+.api-key ::v-deep(input) {
+  background-color: white !important;
+  cursor: text !important;
+}
 
-  .saveButton {
-    width: 100px;
-    padding: 8px;
-    float: right;
-    margin: 20px 0;
-  }
+.saveButton {
+  width: 100px;
+  padding: 8px;
+  float: right;
+  margin: 20px 0;
+}
 
-  /deep/ .delete-account-dialog .el-dialog__body {
-    padding: 0 20px 20px 20px;
-  }
+::v-deep(.delete-account-dialog) .el-dialog__body {
+  padding: 0 20px 20px 20px;
+}
 
-  /* Uncomment when the vFuture notifications will be introduced */
-  /*.notifications_checkbox {*/
-    /*margin-left: 0;*/
-    /*padding: 0;*/
-  /*}*/
+/* Uncomment when the vFuture notifications will be introduced */
+/*.notifications_checkbox {*/
+/*margin-left: 0;*/
+/*padding: 0;*/
+/*}*/
 
-  .action-with-message {
-    align-items: flex-start;
-    display: flex;
-    justify-content: space-between;
-  }
+.action-with-message {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+}
 
-  .action-with-message > :first-child {
-    margin-top: 0;
-    margin-right: 20px;
-  }
+.action-with-message > :first-child {
+  margin-top: 0;
+  margin-right: 20px;
+}
 
-  .action-with-message p {
-    font-size: 16px;
-    line-height: 1.5;
-  }
+.action-with-message p {
+  font-size: 16px;
+  line-height: 1.5;
+}
 
-  section + section {
-    @apply my-12;
-  }
+section + section {
+  @apply my-12;
+}
 </style>

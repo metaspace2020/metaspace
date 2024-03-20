@@ -1,13 +1,10 @@
 <template>
-  <i
-    class="flex"
-    :class="{ active, hover, inverse }"
-  >
+  <i class="flex" :class="{ active, hover, inverse }">
     <slot />
   </i>
 </template>
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent } from 'vue'
 export default defineComponent({
   props: {
     active: Boolean,
@@ -17,31 +14,31 @@ export default defineComponent({
 })
 </script>
 <style scoped>
-i >>> svg {
+i ::v-deep(svg) {
   width: 100%;
 }
 
-i >>> .primary,
-i.inverse >>> .secondary {
+i ::v-deep(.primary),
+i.inverse ::v-deep(.secondary) {
   @apply fill-current text-gray-400;
 }
 
-i >>> .secondary,
-i.inverse >>> .primary {
+i ::v-deep(.secondary),
+i.inverse ::v-deep(.primary) {
   @apply fill-current text-gray-800;
 }
 
-i.active >>> .primary,
-i.hover:hover >>> .primary,
-i.active.inverse >>> .secondary,
-i.hover.inverse:hover >>> .secondary {
+i.active ::v-deep(.primary),
+i.hover:hover ::v-deep(.primary),
+i.active.inverse ::v-deep(.secondary),
+i.hover.inverse:hover ::v-deep(.secondary) {
   @apply text-blue-400;
 }
 
-i.active >>> .secondary,
-i.hover:hover >>> .secondary,
-i.active.inverse >>> .primary,
-i.hover.inverse:hover >>> .primary {
+i.active ::v-deep(.secondary),
+i.hover:hover ::v-deep(.secondary),
+i.active.inverse ::v-deep(.primary),
+i.hover.inverse:hover ::v-deep(.primary) {
   @apply text-blue-800;
 }
 </style>

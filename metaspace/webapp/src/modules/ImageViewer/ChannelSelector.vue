@@ -1,8 +1,5 @@
 <template>
-  <div
-    ref="clickContainer"
-    @click.stop
-  >
+  <div ref="clickContainer" @click.stop>
     <button
       title="More options"
       class="button-reset h-3 w-6 rounded-full box-content sm-more-button"
@@ -17,7 +14,8 @@
     <fade-transition>
       <div
         v-if="isOpen"
-        class="channel-popover absolute top-0 w-full mt-1 shadow rounded-md bg-gray-100 p-1 text-center z-10"
+        :teleported="false"
+        class="channel-popover absolute top-0 left-0 w-full mt-1 shadow rounded-md bg-gray-100 p-1 text-center z-10"
       >
         <div class="flex w-full justify-around items-center my-1">
           <button
@@ -32,7 +30,7 @@
         </div>
         <button
           class="button-reset text-danger h-3 leading-none text-xs tracking-wide font-medium"
-          @click="isOpen = !isOpen;$emit('remove')"
+          @click="handleRemove"
         >
           remove
         </button>
@@ -41,13 +39,14 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, ref, watch, onBeforeUnmount } from '@vue/composition-api'
+import { defineComponent, ref, watch, onBeforeUnmount, defineAsyncComponent } from 'vue'
 
 import FadeTransition from '../../components/FadeTransition'
-import DotsIcon from '../../assets/inline/refactoring-ui/icon-dots-horizontal.svg'
 
 import { channels } from '../../lib/getColorScale'
 import useOutClick from '../../lib/useOutClick'
+
+const DotsIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-dots-horizontal.svg'))
 
 export default defineComponent({
   components: {
@@ -56,15 +55,17 @@ export default defineComponent({
   },
   props: {
     value: String,
-  },
-  setup(_, { emit }) {
+  }, // @ts-ignore
+  setup(props, { emit }) {
     const clickContainer = ref<HTMLElement>()
     const isOpen = ref(false)
 
     let removeEventListeners: (() => void) | null
-    watch(isOpen, value => {
+    watch(isOpen, (value) => {
       if (value === true) {
-        removeEventListeners = useOutClick(() => { isOpen.value = false }, clickContainer)
+        removeEventListeners = useOutClick(() => {
+          isOpen.value = false
+        }, clickContainer)
       } else if (removeEventListeners) {
         removeEventListeners()
         removeEventListeners = null
@@ -77,9 +78,15 @@ export default defineComponent({
       }
     })
 
+    const handleRemove = () => {
+      isOpen.value = false
+      emit('remove')
+    }
+
     return {
       clickContainer,
       isOpen,
+      handleRemove,
       channels: Object.entries(channels).map(([name, color]) => ({ name, color })),
       closeDropdown() {
         isOpen.value = false
@@ -89,24 +96,24 @@ export default defineComponent({
 })
 </script>
 <style scoped>
-  .sm-channel-button {
-    position: relative;
-    width: 14px;
-    height: 14px;
-  }
-  .sm-channel-button::after {
-    content: '';
-    @apply h-3 w-3 border-solid border-transparent absolute rounded-full;
-    border-width: 3px;
-    left: -3px;
-    top: -3px;
-  }
-  .sm-channel-button.border-primary::after {
-    @apply border-primary;
-  }
+.sm-channel-button {
+  position: relative;
+  width: 14px;
+  height: 14px;
+}
+.sm-channel-button::after {
+  content: '';
+  @apply h-3 w-3 border-solid border-transparent absolute rounded-full;
+  border-width: 3px;
+  left: -3px;
+  top: -3px;
+}
+.sm-channel-button.border-primary::after {
+  /*@apply border-primary;*/
+}
 
-  .sm-more-button {
-    margin-bottom: 2px;
-    padding: 0 1px;
-  }
+.sm-more-button {
+  margin-bottom: 2px;
+  padding: 0 1px;
+}
 </style>

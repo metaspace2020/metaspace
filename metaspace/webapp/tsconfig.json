@@ -1,14 +1,17 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "target": "es5",
+    "target": "esnext",
     "strict": true,
     "sourceMap": true,
+    "resolveJsonModule": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "baseUrl": ".",
     "lib": [
-      "ES2015",
       "ESNext",
       "DOM"
     ],
@@ -17,6 +20,18 @@
     "noEmit": true,
     "jsx": "preserve"
   },
+  "paths": {
+    "@/*": [
+      "src/*"
+    ]
+  },
+  "types": [
+    "webpack-env",
+    "element-plus/global",
+    "@vue/apollo-composable",
+    "@vue/runtime-core",
+    "jest"
+  ],
   "include": [
     "src/types/*.d.ts",
     "src/**/*.ts",
@@ -28,3 +43,4 @@
     "tests/e2e"
   ]
 }
+

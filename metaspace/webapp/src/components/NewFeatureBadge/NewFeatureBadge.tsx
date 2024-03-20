@@ -1,47 +1,54 @@
+import { reactive, ref } from 'vue'
+import { ElBadge } from '../../lib/element-plus'
+import { defineComponent } from 'vue'
+// Import the CSS as needed
 import './NewFeatureBadge.css'
 
-import Vue from 'vue'
-import { defineComponent, reactive } from '@vue/composition-api'
-
+// Assuming getLocalStorage and setLocalStorage are compatible with Vue 3
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
 const storageKey = 'new_feature_badges'
 
-const store: { [key: string]: boolean } = reactive(
-  getLocalStorage(storageKey) || {},
-)
+const store = reactive<any>(getLocalStorage(storageKey) || {})
 
-export function hideFeatureBadge(featureKey: string) {
+export function hideFeatureBadge(featureKey) {
   if (store[featureKey]) {
     return
   }
-  Vue.set(store, featureKey, true)
+  store[featureKey] = true
   setLocalStorage(storageKey, store)
 }
 
-const NewFeatureBadge = defineComponent({
+export default defineComponent({
   name: 'NewFeatureBadge',
+  components: {
+    ElBadge,
+  },
   props: {
+    customClass: { type: String, default: '' },
     featureKey: { type: String, required: true },
-    showUntil: Date as any as () => Date,
+    showUntil: { type: Date, required: false },
   },
   setup(props, { slots }) {
-    const isStale = props.showUntil && props.showUntil.valueOf() < Date.now()
+    const isStale = ref(props.showUntil && props.showUntil.valueOf() < Date.now())
+
     if (!(props.featureKey in store)) {
-      Vue.set(store, props.featureKey, false)
+      store[props.featureKey] = false
     }
-    if (store[props.featureKey] || isStale) {
-      return () => slots.default()
+
+    return () => {
+      if (store[props.featureKey] || isStale.value) {
+        return slots.default ? slots.default() : null
+      }
+      return (
+        <ElBadge
+          value="New"
+          isDot
+          class={['sm-feature-badge', { 'sm-feature-badge--hidden': store[props.featureKey] }, props.customClass]}
+        >
+          {slots.default ? slots.default() : null}
+        </ElBadge>
+      )
     }
-    return () => (
-      <el-badge
-        value="New"
-        class={['sm-feature-badge', { 'sm-feature-badge--hidden': store[props.featureKey] }]}
-      >
-        {slots.default()}
-      </el-badge>
-    )
   },
 })
-
-export default NewFeatureBadge

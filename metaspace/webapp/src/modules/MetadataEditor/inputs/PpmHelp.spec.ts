@@ -1,14 +1,18 @@
 import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import PpmHelp from './PpmHelp.vue'
 import router from '../../../router'
-import store from '../../../store/index'
-import Vue from 'vue'
+import store from '../../../store'
 
 describe('PpmHelp', () => {
-  it('should match snapshot', async() => {
-    const wrapper = mount(PpmHelp, { store, router })
-    await Vue.nextTick()
+  it('should match snapshot', async () => {
+    const wrapper = mount(PpmHelp, {
+      global: {
+        plugins: [store, router],
+      },
+    })
 
-    expect(wrapper).toMatchSnapshot()
+    await nextTick()
+    expect(wrapper.html()).toMatchSnapshot()
   })
 })

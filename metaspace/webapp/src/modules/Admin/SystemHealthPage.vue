@@ -1,43 +1,17 @@
 <template>
-  <div
-    v-if="isAdmin"
-    v-loading="loading"
-    class="mx-auto max-w-4xl"
-  >
+  <div v-if="isAdmin" v-loading="loading" class="mx-auto max-w-4xl">
     <el-form label-position="top">
       <el-form-item>
-        <el-radio-group v-model="mode">
-          <el-radio
-            border
-            :label="0"
-          >
-            Enable everything
-          </el-radio>
-          <el-radio
-            border
-            :label="1"
-          >
-            Disable dataset upload/reprocessing
-          </el-radio>
-          <el-radio
-            border
-            :label="2"
-          >
-            Read-only mode
-          </el-radio>
+        <el-radio-group class="radio-group-wrapper" v-model="mode">
+          <el-radio border :label="0"> Enable everything </el-radio>
+          <el-radio border :label="1"> Disable dataset upload/reprocessing </el-radio>
+          <el-radio border :label="2"> Read-only mode </el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="Maintenance message (optional)">
-        <el-input
-          v-model="message"
-          style="width: 450px;"
-        />
+        <el-input v-model="message" style="width: 450px" />
       </el-form-item>
-      <el-button
-        :type="buttonType"
-        :loading="isUpdating"
-        @click="handleSubmit"
-      >
+      <el-button :type="buttonType" :loading="isUpdating" @click="handleSubmit">
         {{ buttonText }}
       </el-button>
     </el-form>
@@ -45,81 +19,104 @@
 </template>
 
 <script>
+import { defineComponent, ref, computed, onMounted, inject } from 'vue'
+import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore, updateSystemHealthMutation } from '../../api/system'
-import reportError from '../../lib/reportError'
 import { currentUserRoleQuery } from '../../api/user'
-
-/** @type {ComponentOptions<Vue> & Vue} */
-const SystemHealthPage = {
+import { ElButton, ElForm, ElFormItem, ElInput, ElLoading, ElRadio, ElRadioGroup } from '../../lib/element-plus'
+export default defineComponent({
   name: 'SystemHealthPage',
-  data() {
-    return {
-      mode: 0,
-      message: '',
-      loading: 0,
-      isUpdating: false,
-      buttonType: 'primary',
-      buttonText: 'Update',
-      currentUser: null,
-      systemHealth: null,
-    }
+  components: {
+    ElButton,
+    ElForm,
+    ElFormItem,
+    ElInput,
+    ElRadio,
+    ElRadioGroup,
   },
-  computed: {
-    isAdmin() {
-      return this.currentUser && this.currentUser.role === 'admin'
-    },
+  directives: {
+    loading: ElLoading.directive,
   },
-  apollo: {
-    currentUser: {
-      query: currentUserRoleQuery,
-      fetchPolicy: 'cache-first',
-    },
-    systemHealth: {
-      query: getSystemHealthQuery,
-      subscribeToMore: getSystemHealthSubscribeToMore,
-      loadingKey: 'isLoadingInitial',
-      result(res) {
-        const { canMutate, canProcessDatasets, message } = res.data.systemHealth
-        this.mode = !canMutate ? 2 : !canProcessDatasets ? 1 : 0
-        this.message = message
-      },
-    },
-  },
-  methods: {
-    async handleSubmit() {
+  setup() {
+    const apolloClient = inject(DefaultApolloClient)
+
+    const mode = ref(0)
+    const message = ref('')
+    const loading = ref(0)
+    const isUpdating = ref(false)
+    const buttonType = ref('primary')
+    const buttonText = ref('Update')
+
+    const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, { fetchPolicy: 'cache-first' })
+    const currentUser = computed(() => currentUserResult.value?.currentUser)
+
+    const {
+      result: systemHealthResult,
+      subscribeToMore,
+      onResult: onSystemHealthResult,
+    } = useQuery(getSystemHealthQuery)
+    const systemHealth = computed(() => systemHealthResult.value?.systemHealth)
+
+    onSystemHealthResult((res) => {
+      const { canMutate, canProcessDatasets, message: sysMsg } = res.data?.systemHealth || {}
+      mode.value = !canMutate ? 2 : !canProcessDatasets ? 1 : 0
+      message.value = sysMsg
+    })
+
+    const isAdmin = computed(() => currentUser.value?.role === 'admin')
+
+    const handleSubmit = async () => {
       try {
-        this.isUpdating = true
-        await this.$apollo.mutate({
+        isUpdating.value = true
+        await apolloClient.mutate({
           mutation: updateSystemHealthMutation,
           variables: {
             health: {
-              canMutate: this.mode < 2,
-              canProcessDatasets: this.mode < 1,
-              message: this.message ? this.message : null,
+              canMutate: mode.value < 2,
+              canProcessDatasets: mode.value < 1,
+              message: message.value ? message.value : null,
             },
           },
         })
-        this.buttonType = 'success'
-        this.buttonText = 'Updated'
+        buttonType.value = 'success'
+        buttonText.value = 'Updated'
       } catch (err) {
-        // reportError(err)
-        this.buttonType = 'danger'
-        this.buttonText = 'Error'
+        buttonType.value = 'danger'
+        buttonText.value = 'Error'
       } finally {
-        this.isUpdating = false
+        isUpdating.value = false
       }
-    },
-  },
-}
+    }
 
-export default SystemHealthPage
+    onMounted(() => {
+      subscribeToMore(getSystemHealthSubscribeToMore)
+    })
+
+    return {
+      mode,
+      message,
+      loading,
+      isUpdating,
+      buttonType,
+      buttonText,
+      currentUser,
+      systemHealth,
+      isAdmin,
+      handleSubmit,
+    }
+  },
+})
 </script>
 
 <style scoped>
-  .el-radio {
-    display: block;
-  }
-  .el-radio + .el-radio {
-    margin: 5px 0 !important;
-  }
+.el-radio {
+  display: block;
+}
+.el-radio + .el-radio {
+  margin: 5px 0 !important;
+}
+.radio-group-wrapper {
+  @apply flex flex-col;
+  align-items: flex-start !important;
+}
 </style>

@@ -1,19 +1,8 @@
-<template>
-  <span
-    slot="title"
-    class="w-full"
-  >
-    <span v-if="!hideOptions && !hideTitle">
-      Image viewer
-    </span>
-    <div
-      class="flex items-center pr-4 cursor-default"
-      @click.stop
-    >
-      <el-popover
-        placement="bottom"
-        trigger="click"
-      >
+<template v-slot:title>
+  <span class="w-full">
+    <span v-if="!hideOptions && !hideTitle"> Image viewer </span>
+    <div class="flex items-center pr-4 cursor-default" @click.stop>
+      <el-popover placement="bottom" trigger="click">
         <ion-image-settings
           :hide-normalization="hideNormalization"
           :default-colormap="colormap"
@@ -27,20 +16,17 @@
           @normalizationChange="onNormalizationChange"
           @templateChange="onTemplateChange"
         />
-        <button
-          v-if="!hideOptions"
-          slot="reference"
-          class="button-reset av-icon-button"
-          @click="$event.stopPropagation()"
-        >
-          <i
-            class="el-icon-setting"
-            style="font-size: 20px; vertical-align: middle;"
-            data-feature-anchor="ion-image-settings"
-          />
-        </button>
+        <template #reference>
+          <button v-if="!hideOptions" class="button-reset av-icon-button" @click="$event.stopPropagation()">
+            <el-icon
+              class="el-icon-setting"
+              style="font-size: 20px; vertical-align: middle"
+              data-feature-anchor="ion-image-settings"
+              ><Setting
+            /></el-icon>
+          </button>
+        </template>
       </el-popover>
-
       <button
         v-if="!hideOptions"
         class="button-reset av-icon-button"
@@ -50,13 +36,8 @@
         <AspectRatioIcon class="w-6 h-6 fill-current text-gray-900" />
       </button>
       <fade-transition v-if="showRoi">
-        <div
-          v-if="isActive"
-          class="roi-container"
-        >
-          <roi-settings
-            :annotation="annotation"
-          />
+        <div v-if="isActive" class="roi-container">
+          <roi-settings :annotation="annotation" />
         </div>
       </fade-transition>
       <button
@@ -66,132 +47,87 @@
         title="Show/hide optical image"
         @click="toggleOpticalImage"
       >
-        <img
-          class="setting-icon"
-          src="../../../../assets/microscope-icon.png"
-        >
+        <img class="setting-icon" src="../../../../assets/microscope-icon.png" />
       </button>
     </div>
     <fade-transition v-if="isNormalized">
-      <div
-        class="norm-badge"
-      >
-        TIC normalized
-      </div>
+      <div class="norm-badge">TIC normalized</div>
     </fade-transition>
-    <fade-transition v-if="multiImageFlag">
-      <MenuButtons
-        v-if="isActive"
-        class="ml-auto"
-      />
+    <fade-transition v-if="multiImageFlag" class="ml-auto">
+      <MenuButtons v-if="isActive" />
     </fade-transition>
   </span>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Prop } from 'vue-property-decorator'
+import { defineComponent, computed, defineAsyncComponent } from 'vue'
+import { useStore } from 'vuex'
 import IonImageSettings from './IonImageSettings.vue'
 import { MenuButtons } from '../../../ImageViewer'
 import FadeTransition from '../../../../components/FadeTransition'
-import AspectRatioIcon from '../../../../assets/inline/material/aspect-ratio.svg'
 import RoiSettings from '../../../../components/RoiSettings'
-
 import config from '../../../../lib/config'
+import { Setting } from '@element-plus/icons-vue'
+import { ElIcon } from '../../../../lib/element-plus'
 
-interface colorObjType {
-  code: string,
-  colorName: string
-}
+const AspectRatioIcon = defineAsyncComponent(() => import('../../../../assets/inline/material/aspect-ratio.svg'))
 
-@Component({
-  name: 'main-image-header',
+export default defineComponent({
+  name: 'MainImageHeader',
   components: {
     IonImageSettings,
     MenuButtons,
     AspectRatioIcon,
     FadeTransition,
     RoiSettings,
+    Setting,
+    ElIcon,
+  },
+  props: {
+    hasOpticalImage: { type: Boolean, required: true },
+    showOpticalImage: { type: Boolean, required: true },
+    annotation: { type: Object, default: () => ({}) },
+    colormap: { type: String, default: '' },
+    lockedTemplate: { type: String, default: '' },
+    scaleType: { type: String, default: '' },
+    lockTemplateOptions: { type: Array, default: () => [] },
+    resetViewport: { type: Function, required: true },
+    toggleOpticalImage: { type: Function, required: true },
+    isActive: { type: Boolean, required: true },
+    showNormalizedBadge: { type: Boolean, default: false },
+    hideOptions: { type: Boolean, default: false },
+    hideNormalization: { type: Boolean, default: () => !config.features.tic },
+    showIntensityTemplate: { type: Boolean, default: false },
+    hideTitle: { type: Boolean, default: false },
+  },
+  setup(props, { emit }) {
+    const store = useStore()
+    const isNormalized = computed(() => {
+      return props.showNormalizedBadge || (store.getters.settings.annotationView.normalization && props.isActive)
+    })
+
+    const showRoi = computed(() => config.features.roi)
+    const multiImageFlag = computed(() => config.features.multiple_ion_images)
+
+    // Event handlers
+    const onScaleBarColorChange = (color) => emit('scaleBarColorChange', color)
+    const onTemplateChange = (dsId) => emit('templateChange', dsId)
+    const onColormapChange = (color) => emit('colormapChange', color)
+    const onScaleTypeChange = (scaleType) => emit('scaleTypeChange', scaleType)
+    const onNormalizationChange = (value) => emit('normalizationChange', value)
+
+    return {
+      isNormalized,
+      showRoi,
+      multiImageFlag,
+      onScaleBarColorChange,
+      onTemplateChange,
+      onColormapChange,
+      onScaleTypeChange,
+      onNormalizationChange,
+    }
   },
 })
-export default class MainImageHeader extends Vue {
-    @Prop({ required: true, type: Boolean })
-    hasOpticalImage!: boolean;
-
-    @Prop({ required: true, type: Boolean })
-    showOpticalImage!: boolean;
-
-    @Prop({ type: Object })
-    annotation: string | undefined;
-
-    @Prop({ type: String })
-    colormap: string | undefined;
-
-    @Prop({ type: String })
-    lockedTemplate: string | undefined;
-
-    @Prop({ type: String })
-    scaleType: string | undefined;
-
-    @Prop({ type: Array })
-    lockTemplateOptions: any[] | undefined;
-
-    @Prop({ required: true, type: Function })
-    resetViewport!: Function;
-
-    @Prop({ required: true, type: Function })
-    toggleOpticalImage!: Function;
-
-    @Prop({ required: true, type: Boolean })
-    isActive!: boolean
-
-    @Prop({ type: Boolean })
-    showNormalizedBadge: boolean | undefined
-
-    @Prop({ type: Boolean })
-    hideOptions: boolean | undefined
-
-    @Prop({ type: Boolean, default: () => !config.features.tic })
-    hideNormalization: boolean | undefined
-
-    @Prop({ type: Boolean })
-    showIntensityTemplate: boolean | undefined
-
-    @Prop({ type: Boolean })
-    hideTitle: boolean | undefined
-
-    get showRoi() {
-      return config.features.roi
-    }
-
-    get multiImageFlag() {
-      return config.features.multiple_ion_images
-    }
-
-    get isNormalized() {
-      return this.showNormalizedBadge || (this.$store.getters.settings.annotationView.normalization && this.isActive)
-    }
-
-    onScaleBarColorChange(color: string | null) {
-      this.$emit('scaleBarColorChange', color)
-    }
-
-    onTemplateChange(dsId: string) {
-      this.$emit('templateChange', dsId)
-    }
-
-    onColormapChange(color: string | null) {
-      this.$emit('colormapChange', color)
-    }
-
-    onScaleTypeChange(scaleType: string | null) {
-      this.$emit('scaleTypeChange', scaleType)
-    }
-
-    onNormalizationChange(value: boolean) {
-      this.$emit('normalizationChange', value)
-    }
-}
 </script>
 
 <style scoped>
@@ -199,12 +135,12 @@ export default class MainImageHeader extends Vue {
   opacity: 0.3;
 }
 
-.roi-container{
+.roi-container {
   margin-left: 16px;
 }
 
-.norm-badge{
-  background: rgba(0,0,0,0.3);
+.norm-badge {
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 16px;
   color: white;
   padding: 0 5px;
@@ -215,9 +151,10 @@ export default class MainImageHeader extends Vue {
   position: absolute;
   right: 50px;
   height: 25px;
+  bottom: 10px;
 }
 
-.norm-info{
+.norm-info {
   max-width: 250px;
   text-align: left;
 }

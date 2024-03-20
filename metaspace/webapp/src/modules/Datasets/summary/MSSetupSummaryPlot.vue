@@ -1,156 +1,153 @@
 <template>
   <div v-loading="loading">
-    <svg ref="mass_spec_setup_plot" />
+    <svg ref="massSpecSetupPlot" />
   </div>
 </template>
 
 <script>
-
 import { configureSvg, addLegend, pieScatterPlot, setTickSize } from './utils'
 import * as d3 from 'd3'
 import gql from 'graphql-tag'
-import { groupBy, map, mapValues, sumBy, sortBy, orderBy, without } from 'lodash-es'
+import { groupBy, map, sumBy, sortBy, orderBy } from 'lodash-es'
+import { defineComponent, ref, watch, onMounted, computed } from 'vue'
+import { useStore } from 'vuex'
+import { useQuery } from '@vue/apollo-composable'
 
-const MALDI = 'maldi'
-const OTHER_ANALYZER = '(other analyzer)'
-const OTHER_SOURCE = '(other ion source)'
-const OTHER_MATRIX = '(other matrix)'
+export default defineComponent({
+  name: 'MassSpecSetupPlot',
+  setup() {
+    const store = useStore()
+    const massSpecSetupPlot = ref(null)
 
-function matrixName(matrix) {
-  if (matrix !== OTHER_MATRIX) {
-    const match = matrix.replace('_', ' ').match(/\(([A-Z0-9]{2,10})\)/i)
-    if (match) {
-      return match[1]
-    }
-  }
-  return matrix
-}
-
-const query =
-   gql`query GetMSSetupCounts($filter: DatasetFilter, $query: String) {
-      countDatasetsPerGroup(query: {
-        fields: [DF_ANALYZER_TYPE, DF_ION_SOURCE, DF_MALDI_MATRIX, DF_POLARITY],
-        filter: $filter,
-        simpleQuery: $query
-      }) {
-        counts {
-          fieldValues
-          count
+    const query = gql`
+      query GetMSSetupCounts($filter: DatasetFilter, $query: String) {
+        countDatasetsPerGroup(
+          query: {
+            fields: [DF_ANALYZER_TYPE, DF_ION_SOURCE, DF_MALDI_MATRIX, DF_POLARITY]
+            filter: $filter
+            simpleQuery: $query
+          }
+        ) {
+          counts {
+            fieldValues
+            count
+          }
         }
       }
-  }`
+    `
 
-const geometry = {
-  margin: {
-    left: 150,
-    top: 80,
-    right: 20,
-    bottom: 190,
-  },
-  height: 300,
-  width: 600,
-  pie: {
-    maxRadius: 35,
-  },
-}
+    const {
+      result: countsResult,
+      loading,
+      refetch,
+    } = useQuery(query, () => ({
+      filter: Object.assign({ status: 'FINISHED' }, store.getters.gqlDatasetFilter),
+      query: store.getters.ftsQuery,
+    }))
+    const counts = computed(() => countsResult.value?.countDatasetsPerGroup?.counts)
 
-const config = {
-  geometry,
+    const OTHER_ANALYZER = '(other analyzer)'
+    const OTHER_SOURCE = '(other ion source)'
+    const OTHER_MATRIX = '(other matrix)'
 
-  mainTitle: 'Number of datasets per analyzer/ion source/matrix',
-
-  variables: {
-    x: d => d.sourceType,
-    y: d => d.analyzer,
-    count: d => d.totalCount,
-  },
-
-  showSideHistograms: {
-    x: true,
-    y: true,
-  },
-
-  sideHistogramColor: 'rgb(170, 204, 255)',
-
-  pie: {
-    showCounts: true,
-    sectors: [
-      {
-        label: 'Positive',
-        count: d => d.counts.positive,
-        color: '#e55',
-      },
-      {
-        label: 'Negative',
-        count: d => d.counts.negative,
-        color: '#55e',
-      },
-    ],
-  },
-}
-
-const isSourceMaldi = sourceType => /maldi/i.test(sourceType)
-const isNA = val => /^(n\/?a|none|other|\s*)$/i.test(val)
-
-function drawMaldiCurlyBrace(svg, data, xScale) {
-  const maldiData = data.filter(d => d.isMaldi)
-  if (maldiData.length === 0) {
-    return
-  }
-
-  const maldiRange = d3.extent(maldiData.map(d => xScale(d.sourceType)))
-
-  const makeCurlyBrace = function(len, w, q) {
-    return `M 0 0 Q 0 ${-q * w} ${0.25 * len} ${q * w - w} T ${0.5 * len} ${-w}`
-            + `M ${len} 0 Q ${len} ${-q * w} ${0.75 * len} ${q * w - w} T ${0.5 * len} ${-w}`
-  }
-
-  const maldiBrace = svg.append('g').attr('transform', `translate(${maldiRange[0]}, 0)`)
-
-  const maldiWidth = maldiRange[1] - maldiRange[0] + xScale.bandwidth()
-  maldiBrace
-    .append('path')
-    .attr('d', makeCurlyBrace(maldiWidth, -10, 0.6))
-    .attr('stroke', 'black').attr('stroke-width', 1).attr('fill', 'none')
-
-  maldiBrace
-    .append('text')
-    .attr('transform', `translate(${maldiWidth / 2}, 25)`)
-    .attr('text-anchor', 'middle')
-    .text('MALDI')
-
-  return maldiBrace
-}
-
-export default {
-  name: 'MassSpecSetupPlot',
-
-  data() {
-    return {
-      counts: [],
-      loading: 0,
-    }
-  },
-
-  apollo: {
-    counts: {
-      query: query,
-      loadingKey: 'loading',
-      variables() {
-        return {
-          filter: Object.assign({ status: 'FINISHED' }, this.$store.getters.gqlDatasetFilter),
-          query: this.$store.getters.ftsQuery,
+    function matrixName(matrix) {
+      if (matrix !== OTHER_MATRIX) {
+        const match = matrix.replace('_', ' ').match(/\(([A-Z0-9]{2,10})\)/i)
+        if (match) {
+          return match[1]
         }
-      },
-      update(data) {
-        return data.countDatasetsPerGroup.counts
-      },
-    },
-  },
+      }
+      return matrix
+    }
 
-  computed: {
-    data() {
-      if (!this.counts) {
+    const geometry = {
+      margin: {
+        left: 150,
+        top: 80,
+        right: 20,
+        bottom: 190,
+      },
+      height: 300,
+      width: 600,
+      pie: {
+        maxRadius: 35,
+      },
+    }
+
+    const config = {
+      geometry,
+
+      mainTitle: 'Number of datasets per analyzer/ion source/matrix',
+
+      variables: {
+        x: (d) => d.sourceType,
+        y: (d) => d.analyzer,
+        count: (d) => d.totalCount,
+      },
+
+      showSideHistograms: {
+        x: true,
+        y: true,
+      },
+
+      sideHistogramColor: 'rgb(170, 204, 255)',
+
+      pie: {
+        showCounts: true,
+        sectors: [
+          {
+            label: 'Positive',
+            count: (d) => d.counts.positive,
+            color: '#e55',
+          },
+          {
+            label: 'Negative',
+            count: (d) => d.counts.negative,
+            color: '#55e',
+          },
+        ],
+      },
+    }
+
+    const isSourceMaldi = (sourceType) => /maldi/i.test(sourceType)
+    const isNA = (val) => /^(n\/?a|none|other|\s*)$/i.test(val)
+
+    function drawMaldiCurlyBrace(svg, data, xScale) {
+      const maldiData = data.filter((d) => d.isMaldi)
+      if (maldiData.length === 0) {
+        return
+      }
+
+      const maldiRange = d3.extent(maldiData.map((d) => xScale(d.sourceType)))
+
+      const makeCurlyBrace = function (len, w, q) {
+        return (
+          `M 0 0 Q 0 ${-q * w} ${0.25 * len} ${q * w - w} T ${0.5 * len} ${-w}` +
+          `M ${len} 0 Q ${len} ${-q * w} ${0.75 * len} ${q * w - w} T ${0.5 * len} ${-w}`
+        )
+      }
+
+      const maldiBrace = svg.append('g').attr('transform', `translate(${maldiRange[0]}, 0)`)
+
+      const maldiWidth = maldiRange[1] - maldiRange[0] + xScale.bandwidth()
+      maldiBrace
+        .append('path')
+        .attr('d', makeCurlyBrace(maldiWidth, -10, 0.6))
+        .attr('stroke', 'black')
+        .attr('stroke-width', 1)
+        .attr('fill', 'none')
+
+      maldiBrace
+        .append('text')
+        .attr('transform', `translate(${maldiWidth / 2}, 25)`)
+        .attr('text-anchor', 'middle')
+        .text('MALDI')
+
+      return maldiBrace
+    }
+
+    const chartData = computed(() => {
+      if (!counts.value) {
         return []
       }
 
@@ -159,7 +156,7 @@ export default {
       const sourceCounts = {}
       const matrixCounts = {}
 
-      const normedCounts = this.counts.map(entry => {
+      const normedCounts = counts.value.map((entry) => {
         let [analyzer, source, matrix, polarity] = entry.fieldValues
         const isMaldi = isSourceMaldi(source)
         if (isNA(analyzer)) {
@@ -192,10 +189,16 @@ export default {
       })
 
       // Limit to the top 10 analyzers/sources/matrixes. Change everything else to "Other"
-      const topAnalyzers = sortBy(Object.entries(analyzerCounts), 1).map(([key]) => key).slice(-10)
-      const topSources = sortBy(Object.entries(sourceCounts), 1).map(([key]) => key).slice(-6)
-      const topMatrixes = sortBy(Object.entries(matrixCounts), 1).map(([key]) => key).slice(-10)
-      normedCounts.forEach(entry => {
+      const topAnalyzers = sortBy(Object.entries(analyzerCounts), 1)
+        .map(([key]) => key)
+        .slice(-10)
+      const topSources = sortBy(Object.entries(sourceCounts), 1)
+        .map(([key]) => key)
+        .slice(-6)
+      const topMatrixes = sortBy(Object.entries(matrixCounts), 1)
+        .map(([key]) => key)
+        .slice(-10)
+      normedCounts.forEach((entry) => {
         if (!topAnalyzers.includes(entry.analyzer)) {
           entry.analyzer = OTHER_ANALYZER
         }
@@ -220,9 +223,13 @@ export default {
           },
           totalCount: count,
         }
-        const existing = result.find(other => ['analyzer', 'isMaldi', 'sourceType'].every(f => other[f] === datum[f]))
+        const existing = result.find((other) =>
+          ['analyzer', 'isMaldi', 'sourceType'].every((f) => other[f] === datum[f])
+        )
         if (existing) {
-          ['positive', 'negative'].forEach(pol => { existing.counts[pol] += datum.counts[pol] })
+          ;['positive', 'negative'].forEach((pol) => {
+            existing.counts[pol] += datum.counts[pol]
+          })
           existing.totalCount += datum.totalCount
         } else {
           result.push(datum)
@@ -230,44 +237,57 @@ export default {
       })
 
       return result
-    },
-  },
+    })
 
-  watch: {
-    data() {
-      const elem = d3.select(this.$refs.mass_spec_setup_plot)
+    // Watch the data and draw the chart
+    watch(counts, () => {
+      const elem = d3.select(massSpecSetupPlot.value)
       elem.selectAll('*').remove()
       const svg = configureSvg(elem, geometry)
 
-      let xData = map(groupBy(this.data, d => d.isMaldi + '@@' + d.sourceType), (items) => ({
-        key: items[0].sourceType,
-        count: sumBy(items, 'totalCount'),
-        isMaldi: items[0].isMaldi,
-        isOther: items[0].sourceType === OTHER_SOURCE || items[0].sourceType === OTHER_MATRIX,
-      }))
+      let xData = map(
+        groupBy(chartData.value, (d) => d.isMaldi + '@@' + d.sourceType),
+        (items) => ({
+          key: items[0].sourceType,
+          count: sumBy(items, 'totalCount'),
+          isMaldi: items[0].isMaldi,
+          isOther: items[0].sourceType === OTHER_SOURCE || items[0].sourceType === OTHER_MATRIX,
+        })
+      )
       xData = orderBy(xData, ['isMaldi', 'isOther', 'count'], ['asc', 'asc', 'desc'])
-      let yData = map(groupBy(this.data, 'analyzer'), (items, analyzer) => ({
+      let yData = map(groupBy(chartData.value, 'analyzer'), (items, analyzer) => ({
         key: analyzer,
         count: sumBy(items, 'totalCount'),
         isOther: analyzer === OTHER_ANALYZER,
       }))
       yData = orderBy(yData, ['isOther', 'count'], ['desc', 'desc'])
 
-      const { scales } = pieScatterPlot(svg, this.data, config, xData, yData)
+      const { scales } = pieScatterPlot(svg, chartData.value, config, xData, yData)
 
-      const brace = drawMaldiCurlyBrace(svg, this.data, scales.x)
+      const brace = drawMaldiCurlyBrace(svg, chartData.value, scales.x)
       if (brace) {
-        brace.attr('transform', function() {
+        brace.attr('transform', function () {
           return this.getAttribute('transform') + ` translate(0, ${geometry.height + 100})`
         })
       }
 
-      const polarities = config.pie.sectors.map(d => d.label + ' mode')
-      addLegend(svg, polarities, d3.scaleOrdinal(config.pie.sectors.map(d => d.color)).domain(polarities))
-        .attr('transform', `translate(${10 - geometry.margin.left}, ${geometry.height + 80})`)
+      const polarities = config.pie.sectors.map((d) => d.label + ' mode')
+      addLegend(svg, polarities, d3.scaleOrdinal(config.pie.sectors.map((d) => d.color)).domain(polarities)).attr(
+        'transform',
+        `translate(${10 - geometry.margin.left}, ${geometry.height + 80})`
+      )
 
       setTickSize('12px')
-    },
+    })
+
+    onMounted(() => {
+      refetch()
+    })
+
+    return {
+      loading,
+      massSpecSetupPlot,
+    }
   },
-}
+})
 </script>

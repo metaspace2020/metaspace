@@ -1,87 +1,107 @@
 <template>
   <el-form
-    ref="form"
-    :model="model"
+    ref="formRef"
+    :model="formValue"
     :disabled="disabled"
     :rules="rules"
     label-position="top"
+    class="leading-6"
+    @submit="handleSubmit"
   >
     <div>
-      <el-form-item
-        label="Full name"
-        prop="name"
-        class="name"
-      >
-        <el-input
-          v-model="model.name"
-          :max-length="50"
-        />
+      <el-form-item label="Full name" prop="name" class="name">
+        <el-input v-model="formValue.name" :max-length="50" />
       </el-form-item>
-      <el-form-item
-        label="Short name"
-        prop="shortName"
-        class="shortName"
-      >
-        <span slot="label">
-          Short name
-          <el-popover
-            trigger="hover"
-            placement="right"
-          >
-            <i
-              slot="reference"
-              class="el-icon-question metadata-help-icon"
-            />
-            <p>The short name will be shown whenever space is limited.</p>
-          </el-popover>
-        </span>
-        <el-input
-          v-model="model.shortName"
-          :max-length="shortNameMaxLength"
-        />
+      <el-form-item label="Short name" prop="shortName" class="shortName">
+        <template v-slot:label>
+          <span>
+            Short name
+            <el-popover trigger="hover" placement="right">
+              <template #reference>
+                <el-icon class="metadata-help-icon"><QuestionFilled /></el-icon>
+              </template>
+              <p>The short name will be shown whenever space is limited.</p>
+            </el-popover>
+          </span>
+        </template>
+        <el-input v-model="formValue.shortName" :max-length="shortNameMaxLength" />
       </el-form-item>
     </div>
     <div v-if="showGroupAdmin">
-      <el-form-item
-        label="Group admin"
-        prop="groupAdminEmail"
-      >
-        <el-input
-          v-model="model.groupAdminEmail"
-          placeholder="Email address"
-        />
+      <el-form-item label="Group admin" prop="groupAdminEmail">
+        <el-input v-model="formValue.groupAdminEmail" placeholder="Email address" />
       </el-form-item>
     </div>
   </el-form>
 </template>
+
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Prop } from 'vue-property-decorator'
+import { defineComponent, ref, reactive, PropType, watch } from 'vue'
+import { ElForm, ElFormItem, ElInput, ElPopover, ElIcon } from '../../lib/element-plus'
+import { QuestionFilled } from '@element-plus/icons-vue'
 import emailRegex from '../../lib/emailRegex'
-import { ElForm } from 'element-ui/types/form'
 
-  interface Model {
-    name: string;
-    shortName: string;
-    groupAdminEmail?: string;
-  }
+interface Model {
+  name: string
+  shortName: string
+  groupAdminEmail?: string
+}
 
-  @Component
-export default class EditGroupForm extends Vue {
-    @Prop({ type: Object, required: true })
-    model!: Model;
+export default defineComponent({
+  components: {
+    ElForm,
+    ElFormItem,
+    ElInput,
+    ElPopover,
+    ElIcon,
+    QuestionFilled,
+  },
+  props: {
+    modelValue: { type: Object as PropType<Model>, required: true },
+    disabled: { type: Boolean, default: false },
+    showGroupAdmin: { type: Boolean, default: false },
+  },
+  setup(props, { emit }) {
+    const formRef = ref<InstanceType<typeof ElForm>>()
+    const formValue = reactive({ ...props.modelValue })
 
-    @Prop({ type: Boolean, default: false })
-    disabled!: Boolean;
+    watch(
+      formValue,
+      (newVal) => {
+        emit('update:modelValue', newVal)
+      },
+      { deep: true }
+    )
 
-    @Prop({ type: Boolean, default: false })
-    showGroupAdmin!: Boolean;
+    watch(
+      () => props.modelValue,
+      (newVal) => {
+        Object.assign(formValue, newVal)
+      },
+      { deep: true }
+    )
 
-    shortNameMaxLength = 20;
+    const shortNameMaxLength = 20
 
-    rules = {
-      name: [{ type: 'string', required: true, min: 2, message: 'Full name is required', trigger: 'manual' }],
-      shortName: [{ type: 'string', required: true, min: 2, message: 'Short name is required', trigger: 'manual' }],
+    const rules = reactive({
+      name: [
+        {
+          type: 'string',
+          required: true,
+          min: 2,
+          message: 'Full name is required',
+          trigger: 'manual',
+        },
+      ],
+      shortName: [
+        {
+          type: 'string',
+          required: true,
+          min: 2,
+          message: 'Short name is required',
+          trigger: 'manual',
+        },
+      ],
       groupAdminEmail: [
         {
           type: 'string',
@@ -91,23 +111,37 @@ export default class EditGroupForm extends Vue {
           trigger: 'manual',
         },
       ],
-    };
+    })
 
-    async validate(): Promise<boolean> {
-      return (this.$refs.form as ElForm).validate()
+    const validate = (): Promise<boolean> => {
+      return formRef.value.validate()
     }
+
+    const handleSubmit = (e: Event) => {
+      e.preventDefault()
+    }
+
+    return {
+      formRef,
+      shortNameMaxLength,
+      rules,
+      validate,
+      formValue,
+      handleSubmit,
+    }
+  },
+})
+</script>
+
+<style scoped lang="scss">
+.name {
+  display: inline-block;
+  width: 400px;
 }
 
-</script>
-<style scoped lang="scss">
-  .name {
-    display: inline-block;
-    width: 400px;
-  }
-
-  .shortName {
-    display: inline-block;
-    width: 150px;
-    margin-left: 20px;
-  }
+.shortName {
+  display: inline-block;
+  width: 150px;
+  margin-left: 20px;
+}
 </style>

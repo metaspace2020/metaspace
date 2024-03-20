@@ -1,9 +1,6 @@
 <template>
   <div class="analysis-version-help">
-    When performing <a
-      target="_blank"
-      href="http://www.lipidontology.com/"
-    >LION</a> enrichment, a lipid enrichment
+    When performing <a target="_blank" href="http://www.lipidontology.com/">LION</a> enrichment, a lipid enrichment
     analysis will be performed based on LION.
     <h5>Available databases:</h5>
     <ul>
@@ -22,7 +19,7 @@ export default {
 </script>
 
 <style scoped>
-  .analysis-version-help {
-    max-width: 400px;
-  }
+.analysis-version-help {
+  max-width: 400px;
+}
 </style>

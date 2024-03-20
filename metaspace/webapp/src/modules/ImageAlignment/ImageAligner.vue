@@ -1,32 +1,12 @@
 <template>
-  <div
-    class="image-alignment-box"
-    @mousemove="onMouseMove"
-  >
-    <div
-      v-loading="!opticalImageNaturalHeight"
-      class="optical-img-container"
-      style="border: 1px solid #ddf"
-    >
-      <img
-        ref="scan"
-        :src="opticalSrc"
-        :style="opticalImageStyle"
-        @load="onOpticalImageLoad"
-      >
+  <div class="image-alignment-box" @mousemove="onMouseMove">
+    <div v-loading="!opticalImageNaturalHeight" class="optical-img-container" style="border: 1px solid #ddf">
+      <img ref="scan" :src="opticalSrc" :style="opticalImageStyle" @load="onOpticalImageLoad" />
     </div>
 
     <div class="handles-container">
-      <svg
-        ref="handles"
-        :width="svgWidth"
-        :height="svgHeight"
-        :style="handleLayerStyle"
-      >
-        <g
-          v-if="!isNaN(scaleX * scaleY)"
-          :transform="layerTransform"
-        >
+      <svg ref="handles" :width="svgWidth" :height="svgHeight" :style="handleLayerStyle">
+        <g v-if="!isNaN(scaleX * scaleY)" :transform="layerTransform">
           <g v-if="fineTune">
             <circle
               v-for="(pos, idx) in handlePositions"
@@ -62,60 +42,28 @@
       ref="annotImage"
       :src="ionImageSrc"
       :style="annotImageStyle"
-      :image-style="{overflow: 'visible'}"
-      :image-fit-params="{areaWidth: naturalWidth || 1, areaHeight: naturalHeight || 1}"
+      :image-style="{ overflow: 'visible' }"
+      :image-fit-params="{ areaWidth: naturalWidth || 1, areaHeight: naturalHeight || 1 }"
       :max-height="100500"
       :annot-image-opacity="annotImageOpacity"
       :ion-image-transform="ionImageTransform"
       :normalization-data="normalizationData"
       opacity-mode="linear"
-      @dblclick.native="onDoubleClick"
-      @mousedown.native="onImageMouseDown"
-      @contextmenu.native="onImageRightMouseDown"
-      @wheel.native="onWheel"
+      @dblclick="onDoubleClick"
+      @mousedown="onImageMouseDown"
+      @contextmenu="onImageRightMouseDown"
+      @wheel="onWheel"
       @redraw="onLoad"
     />
   </div>
 </template>
 
 <script>
+import { defineComponent, ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick, toRefs } from 'vue'
 import ImageLoader from '../../components/ImageLoader.vue'
-import { inv, dot, diag } from 'numeric'
 import { scrollDistance } from '../../lib/util'
 
-function computeTransform(src, dst) {
-  // http://franklinta.com/2014/09/08/computing-css-matrix3d-transforms/
-  const A = []
-  const b = []
-  for (let i = 0; i < 4; i++) {
-    A.push([src[i].x, src[i].y, 1, 0, 0, 0, -src[i].x * dst[i].x, -src[i].y * dst[i].x])
-    b.push(dst[i].x)
-    A.push([0, 0, 0, src[i].x, src[i].y, 1, -src[i].x * dst[i].y, -src[i].y * dst[i].y])
-    b.push(dst[i].y)
-  }
-
-  const coeffs = dot(inv(A), b)
-
-  return [
-    [coeffs[0], coeffs[1], coeffs[2]],
-    [coeffs[3], coeffs[4], coeffs[5]],
-    [coeffs[6], coeffs[7], 1],
-  ]
-}
-
-function computeHandlePositions(transformationMatrix, src) {
-  function transformFunc({ x, y }) {
-    const a = transformationMatrix
-    const w = a[2][0] * x + a[2][1] * y + a[2][2]
-    const x_ = (a[0][0] * x + a[0][1] * y + a[0][2]) / w
-    const y_ = (a[1][0] * x + a[1][1] * y + a[1][2]) / w
-    return { x: x_, y: y_ }
-  }
-
-  return src.map(transformFunc)
-}
-
-export default {
+export default defineComponent({
   name: 'ImageAligner',
   components: {
     ImageLoader,
@@ -143,12 +91,16 @@ export default {
     },
     initialTransform: {
       type: Array,
-      default: () => [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+      default: () => [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ],
     },
     ticData: { type: Object },
   },
-  data() {
-    return {
+  setup(props, { emit }) {
+    const state = reactive({
       width: 0,
       height: 0,
       naturalWidth: 0,
@@ -164,353 +116,407 @@ export default {
       dragStartY: null,
       dragThrottled: false,
       resizeThrottled: false,
-      normalizedTransform: this.initialTransform,
-      lastRotationAngle: this.rotationAngleDegrees,
+      normalizedTransform: props.initialTransform,
+      lastRotationAngle: props.rotationAngleDegrees,
       startRotationAngle: null,
       fineTune: false,
       imageDrag: true, // or rotate if false
-    }
-  },
-  computed: {
-    layerTransform() {
-      return 'translate(0, 0)'
-    },
+    })
+    const scan = ref(null)
 
-    normalizationData() {
-      return this.ticData
-    },
-
-    transform() {
-      const scaleAnnot = diag([
-        this.naturalWidth / this.width,
-        this.naturalHeight / this.height,
-        1,
-      ])
-      const scaleOptical = diag([
-        this.opticalImageWidth / this.opticalImageNaturalWidth,
-        this.opticalImageHeight / this.opticalImageNaturalHeight,
+    const layerTransform = computed(() => 'translate(0, 0)')
+    const normalizationData = computed(() => props.ticData)
+    const transform = computed(() => {
+      const scaleAnnot = numeric.diag([state.naturalWidth / state.width, state.naturalHeight / state.height, 1])
+      const scaleOptical = numeric.diag([
+        state.opticalImageWidth / state.opticalImageNaturalWidth,
+        state.opticalImageHeight / state.opticalImageNaturalHeight,
         1,
       ])
 
-      return dot(scaleOptical, dot(this.normalizedTransform, scaleAnnot))
-    },
-
-    handlePositions() {
+      return numeric.dot(scaleOptical, numeric.dot(state.normalizedTransform, scaleAnnot))
+    })
+    const handlePositions = computed(() => {
       // in original optical image dimensions
-      return computeHandlePositions(this.normalizedTransform, this.originalHandlePositions())
-    },
-
-    centerPosition() {
-      return computeHandlePositions(this.normalizedTransform,
-        [{
-          x: this.naturalWidth / 2,
-          y: this.naturalHeight / 2,
-        }])[0]
-    },
-
-    scaleX() {
-      return this.opticalImageWidth / this.opticalImageNaturalWidth || 1
-    },
-
-    scaleY() {
-      return this.opticalImageHeight / this.opticalImageNaturalHeight || 1
-    },
-    ionImageTransform() {
-      return dot(diag([this.scaleX, this.scaleY, 1]), this.normalizedTransform)
-    },
-
-    annotImageStyle() {
+      return computeHandlePositions(state.normalizedTransform, originalHandlePositions())
+    })
+    const centerPosition = computed(() => {
+      return computeHandlePositions(state.normalizedTransform, [
+        {
+          x: state.naturalWidth / 2,
+          y: state.naturalHeight / 2,
+        },
+      ])[0]
+    })
+    const scaleX = computed(() => {
+      return state.opticalImageWidth / state.opticalImageNaturalWidth || 1
+    })
+    const scaleY = computed(() => {
+      return state.opticalImageHeight / state.opticalImageNaturalHeight || 1
+    })
+    const ionImageTransform = computed(() => {
+      return numeric.dot(numeric.diag([scaleX.value, scaleY.value, 1]), state.normalizedTransform)
+    })
+    const annotImageStyle = computed(() => {
       return {
-        'margin-top': (-this.svgHeight + this.padding) + 'px',
-        'margin-left': this.padding + 'px',
+        'margin-top': -svgHeight.value + padding.value + 'px',
+        'margin-left': padding.value + 'px',
         'vertical-align': 'top',
         width: '500px', // fixed width to simplify calculations
         'z-index': 8,
       }
-    },
-
-    opticalImageStyle() {
+    })
+    const opticalImageStyle = computed(() => {
       return {
         'z-index': 1,
-        margin: this.padding + 'px',
-        width: `calc(100% - ${this.padding * 2}px)`,
+        margin: padding.value + 'px',
+        width: `calc(100% - ${padding.value * 2}px)`,
       }
-    },
-
-    svgWidth() {
-      return this.opticalImageWidth + 2 * this.padding
-    },
-
-    svgHeight() {
-      return this.opticalImageHeight + 2 * this.padding
-    },
-
-    handleLayerStyle() {
+    })
+    const svgWidth = computed(() => {
+      return state.opticalImageWidth + 2 * padding.value
+    })
+    const svgHeight = computed(() => {
+      return state.opticalImageHeight + 2 * padding.value
+    })
+    const handleLayerStyle = computed(() => {
       return {
         'z-index': 10,
         'pointer-events': 'none', // pass mouse events to the lower levels
         'vertical-align': 'top',
         position: 'relative',
-        'margin-top': (-this.opticalImageHeight - this.padding * 2) + 'px',
+        'margin-top': -state.opticalImageHeight - padding.value * 2 + 'px',
       }
-    },
-  },
+    })
+    const padding = computed(() => props.padding)
+    const rotationAngleDegrees = computed(() => props.rotationAngleDegrees)
+    const initialTransform = computed(() => props.initialTransform)
 
-  watch: {
-    padding() {
-      this.$nextTick(() => {
-        this.onResize()
-      })
-    },
-
-    rotationAngleDegrees(deg) {
-      this.normalizedTransform = dot(
-        this.normalizedTransform,
-        this.rotationMatrix(deg - this.lastRotationAngle),
-      )
-      this.lastRotationAngle = deg
-    },
-
-    initialTransform() {
-      this.normalizedTransform = this.initialTransform
-    },
-  },
-
-  mounted: function() {
-    window.addEventListener('resize', this.onResize)
-  },
-
-  beforeDestroy: function() {
-    window.removeEventListener('resize', this.onResize)
-  },
-
-  methods: {
-    originalHandlePositions() {
+    const originalHandlePositions = () => {
       return [
         { x: 0, y: 0 },
-        { x: 0, y: this.naturalHeight },
-        { x: this.naturalWidth, y: 0 },
-        { x: this.naturalWidth, y: this.naturalHeight },
+        { x: 0, y: state.naturalHeight },
+        { x: state.naturalWidth, y: 0 },
+        { x: state.naturalWidth, y: state.naturalHeight },
       ]
-    },
+    }
 
-    onOpticalImageLoad() {
+    const onOpticalImageLoad = () => {
       // Ignore if the image loads after the user has left the page
-      if (this.$refs.scan != null) {
-        this.opticalImageWidth = this.$refs.scan.width
-        this.opticalImageHeight = this.$refs.scan.height
-        this.opticalImageNaturalWidth = this.$refs.scan.naturalWidth
-        this.opticalImageNaturalHeight = this.$refs.scan.naturalHeight
-        this.normalizedTransform = this.initialTransform
+      if (scan.value != null) {
+        state.opticalImageWidth = scan.value.width
+        state.opticalImageHeight = scan.value.height
+        state.opticalImageNaturalWidth = scan.value.naturalWidth
+        state.opticalImageNaturalHeight = scan.value.naturalHeight
+        state.normalizedTransform = initialTransform.value
       }
-    },
+    }
 
-    onResize() {
-      if (this.resizeThrottled) {
+    const onResize = () => {
+      if (state.resizeThrottled) {
         return
       }
 
-      this.resizeThrottled = true
-      setTimeout(() => { this.resizeThrottled = false }, 50)
+      state.resizeThrottled = true
+      setTimeout(() => {
+        state.resizeThrottled = false
+      }, 50)
 
-      if (!this.$refs.scan) {
+      if (!scan.value) {
         return
       }
 
-      this.opticalImageWidth = this.$refs.scan.width
-      this.opticalImageHeight = this.$refs.scan.height
-      this.opticalImageNaturalWidth = this.$refs.scan.naturalWidth
-      this.opticalImageNaturalHeight = this.$refs.scan.naturalHeight
-    },
+      state.opticalImageWidth = scan.value.width
+      state.opticalImageHeight = scan.value.height
+      state.opticalImageNaturalWidth = scan.value.naturalWidth
+      state.opticalImageNaturalHeight = scan.value.naturalHeight
+    }
 
-    onLoad({ width, height, naturalWidth, naturalHeight }) {
-      this.width = width
-      this.height = height
-      this.naturalWidth = naturalWidth
-      this.naturalHeight = naturalHeight
-    },
+    const onLoad = ({ width, height, naturalWidth, naturalHeight }) => {
+      state.width = width
+      state.height = height
+      state.naturalWidth = naturalWidth
+      state.naturalHeight = naturalHeight
+    }
 
-    onMouseDown(event, handleIndex) {
+    const onMouseDown = (event, handleIndex) => {
       event.preventDefault()
-      this.draggedHandle = handleIndex
-      this.dragStartX = event.clientX
-      this.dragStartY = event.clientY
-      this.handleStartX = this.handlePositions[handleIndex].x
-      this.handleStartY = this.handlePositions[handleIndex].y
-      document.addEventListener('mouseup', this.onMouseUp)
-    },
+      state.draggedHandle = handleIndex
+      state.dragStartX = event.clientX
+      state.dragStartY = event.clientY
+      state.handleStartX = handlePositions.value[handleIndex].x
+      state.handleStartY = handlePositions.value[handleIndex].y
+      document.addEventListener('mouseup', onMouseUp)
+    }
 
-    onWheel(event) {
+    const onWheel = (event) => {
       event.preventDefault()
 
       const zoom = 1 - scrollDistance(event) / 30.0
-      const rect = this.$refs.scan.getBoundingClientRect()
-      const x = (event.clientX - rect.left) / this.scaleX
-      const y = (event.clientY - rect.top) / this.scaleY
-      const m = [[zoom, 0, -(zoom - 1) * x],
+      const rect = scan.value.getBoundingClientRect()
+      const x = (event.clientX - rect.left) / scaleX.value
+      const y = (event.clientY - rect.top) / scaleY.value
+      const m = [
+        [zoom, 0, -(zoom - 1) * x],
         [0, zoom, -(zoom - 1) * y],
-        [0, 0, 1]]
-      this.normalizedTransform = dot(m, this.normalizedTransform)
-    },
+        [0, 0, 1],
+      ]
+      state.normalizedTransform = numeric.dot(m, state.normalizedTransform)
+    }
 
-    updateHandlePosition(event) {
-      const pos = this.handlePositions.slice()
+    function computeTransform(src, dst) {
+      // http://franklinta.com/2014/09/08/computing-css-matrix3d-transforms/
+      const A = []
+      const b = []
+      for (let i = 0; i < 4; i++) {
+        A.push([src[i].x, src[i].y, 1, 0, 0, 0, -src[i].x * dst[i].x, -src[i].y * dst[i].x])
+        b.push(dst[i].x)
+        A.push([0, 0, 0, src[i].x, src[i].y, 1, -src[i].x * dst[i].y, -src[i].y * dst[i].y])
+        b.push(dst[i].y)
+      }
 
-      if (this.draggedHandle !== null) { // dragging one handle
-        pos[this.draggedHandle] = {
-          x: this.handleStartX + (event.clientX - this.dragStartX) / this.scaleX,
-          y: this.handleStartY + (event.clientY - this.dragStartY) / this.scaleY,
+      const coeffs = numeric.dot(numeric.inv(A), b)
+
+      return [
+        [coeffs[0], coeffs[1], coeffs[2]],
+        [coeffs[3], coeffs[4], coeffs[5]],
+        [coeffs[6], coeffs[7], 1],
+      ]
+    }
+
+    function computeHandlePositions(transformationMatrix, src) {
+      function transformFunc({ x, y }) {
+        const a = transformationMatrix
+        const w = a[2][0] * x + a[2][1] * y + a[2][2]
+        const x_ = (a[0][0] * x + a[0][1] * y + a[0][2]) / w
+        const y_ = (a[1][0] * x + a[1][1] * y + a[1][2]) / w
+        return { x: x_, y: y_ }
+      }
+
+      return src.map(transformFunc)
+    }
+
+    const updateHandlePosition = (event) => {
+      const pos = handlePositions.value.slice()
+
+      if (state.draggedHandle !== null) {
+        // dragging one handle
+        pos[state.draggedHandle] = {
+          x: state.handleStartX + (event.clientX - state.dragStartX) / scaleX.value,
+          y: state.handleStartY + (event.clientY - state.dragStartY) / scaleY.value,
         }
-      } else { // dragging the image
+      } else {
+        // dragging the image
         pos[0] = {
-          x: this.handleStartX + (event.clientX - this.dragStartX) / this.scaleX,
-          y: this.handleStartY + (event.clientY - this.dragStartY) / this.scaleY,
+          x: state.handleStartX + (event.clientX - state.dragStartX) / scaleX.value,
+          y: state.handleStartY + (event.clientY - state.dragStartY) / scaleY.value,
         }
         for (let i = 1; i < 4; i++) {
           pos[i] = {
-            x: this.handlePositions[i].x - this.handlePositions[0].x + pos[0].x,
-            y: this.handlePositions[i].y - this.handlePositions[0].y + pos[0].y,
+            x: handlePositions.value[i].x - handlePositions.value[0].x + pos[0].x,
+            y: handlePositions.value[i].y - handlePositions.value[0].y + pos[0].y,
           }
         }
       }
 
       try {
-        this.normalizedTransform = computeTransform(this.originalHandlePositions(), pos)
+        state.normalizedTransform = computeTransform(originalHandlePositions(), pos)
       } catch (err) {
         console.error(err)
       }
-    },
+    }
 
-    updateRotation(event) {
-    },
+    const updateRotation = () => {
+      // pass
+    }
 
-    onMouseUp(event) {
-      this.updateHandlePosition(event)
-      this.draggedHandle = null
-      this.dragThrottled = false
-      document.removeEventListener('mouseup', this.onMouseUp)
-      this.dragStartX = this.dragStartY = null
-    },
+    const onMouseUp = (event) => {
+      updateHandlePosition(event)
+      state.draggedHandle = null
+      state.dragThrottled = false
+      document.removeEventListener('mouseup', onMouseUp)
+      state.dragStartX = state.dragStartY = null
+    }
 
-    onRightMouseUp(event) {
-      this.updateRotation(event)
-      this.draggedHandle = null
-      this.dragThrottled = false
-      document.removeEventListener('mouseup', this.onRightMouseUp)
-      this.dragStartX = this.dragStartY = null
-      this.imageDrag = true
-    },
+    const onRightMouseUp = (event) => {
+      updateRotation(event)
+      state.draggedHandle = null
+      state.dragThrottled = false
+      document.removeEventListener('mouseup', onRightMouseUp)
+      state.dragStartX = state.dragStartY = null
+      state.imageDrag = true
+    }
 
-    onMouseMove(event) {
-      if (this.imageDrag === true) {
-        this.onImageDrag(event)
+    const onMouseMove = (event) => {
+      if (state.imageDrag === true) {
+        onImageDrag(event)
       } else {
-        this.onImageRotate(event)
+        onImageRotate(event)
       }
-    },
+    }
 
-    onImageDrag(event) {
-      if (this.dragStartX === null || this.dragThrottled) {
+    const onImageDrag = (event) => {
+      if (state.dragStartX === null || state.dragThrottled) {
         return
       }
 
-      this.dragThrottled = true
-      setTimeout(() => { this.dragThrottled = false }, 30)
-      this.updateHandlePosition(event)
-    },
+      state.dragThrottled = true
+      setTimeout(() => {
+        state.dragThrottled = false
+      }, 30)
+      updateHandlePosition(event)
+    }
 
-    onImageRotate(event) {
-      if (this.dragStartX === null || this.dragThrottled) {
+    const onImageRotate = (event) => {
+      if (state.dragStartX === null || state.dragThrottled) {
         return
       }
-      this.dragThrottled = true
-      setTimeout(() => { this.dragThrottled = false }, 30)
+      state.dragThrottled = true
+      setTimeout(() => {
+        state.dragThrottled = false
+      }, 30)
       const cp = {
-        x: this.centerPosition.x * this.scaleX + this.padding,
-        y: this.centerPosition.x * this.scaleX + this.padding,
+        x: centerPosition.value.x * scaleX.value + padding.value,
+        y: centerPosition.value.x * scaleX.value + padding.value,
       }
-      const rect = this.$refs.scan.getBoundingClientRect()
+      const rect = scan.value.getBoundingClientRect()
 
       const a = {
-        x: (this.dragStartX - rect.left) / this.scaleX,
-        y: (this.dragStartY - rect.top) / this.scaleY,
+        x: (state.dragStartX - rect.left) / scaleX.value,
+        y: (state.dragStartY - rect.top) / scaleY.value,
       }
       const b = {
-        x: (event.clientX - rect.left) / this.scaleX,
-        y: (event.clientY - rect.top) / this.scaleY,
-
+        x: (event.clientX - rect.left) / scaleX.value,
+        y: (event.clientY - rect.top) / scaleY.value,
       }
 
       const a1 = Math.atan2(a.x - cp.x, a.y - cp.y)
       const a2 = Math.atan2(b.x - cp.x, b.y - cp.y)
       const deltaAngle = (360.0 / Math.PI) * (a1 - a2)
 
-      this.$emit('updateRotationAngle', this.startRotationAngle + deltaAngle)
-    },
+      emit('updateRotationAngle', state.startRotationAngle + deltaAngle)
+    }
 
-    onImageMouseDown(event) {
+    const onImageMouseDown = (event) => {
       event.preventDefault()
-      this.dragStartX = event.clientX
-      this.dragStartY = event.clientY
-      this.handleStartX = this.handlePositions[0].x
-      this.handleStartY = this.handlePositions[0].y
-      document.addEventListener('mouseup', this.onMouseUp)
-    },
+      state.dragStartX = event.clientX
+      state.dragStartY = event.clientY
+      state.handleStartX = handlePositions.value[0].x
+      state.handleStartY = handlePositions.value[0].y
+      document.addEventListener('mouseup', onMouseUp)
+    }
 
-    onImageRightMouseDown(event) {
+    const onImageRightMouseDown = (event) => {
       event.preventDefault()
-      this.imageDrag = false
-      this.startRotationAngle = this.rotationAngleDegrees
-      document.removeEventListener('mouseup', this.onMouseUp)
-      this.dragStartX = event.clientX
-      this.dragStartY = event.clientY
-      this.handleStartX = this.handlePositions[0].x
-      this.handleStartY = this.handlePositions[0].y
-      document.addEventListener('mouseup', this.onRightMouseUp)
-    },
+      state.imageDrag = false
+      state.startRotationAngle = rotationAngleDegrees.value
+      document.removeEventListener('mouseup', onMouseUp)
+      state.dragStartX = event.clientX
+      state.dragStartY = event.clientY
+      state.handleStartX = handlePositions.value[0].x
+      state.handleStartY = handlePositions.value[0].y
+      document.addEventListener('mouseup', onRightMouseUp)
+    }
 
-    onDoubleClick(event) {
-      this.fineTune = !this.fineTune
-    },
+    const onDoubleClick = () => {
+      state.fineTune = !state.fineTune
+    }
 
-    reset() {
-      this.normalizedTransform = dot(diag([
-        (this.width / this.naturalWidth) / this.scaleX,
-        (this.height / this.naturalHeight) / this.scaleY,
-        1,
-      ]), this.rotationMatrix(this.rotationAngleDegrees))
-    },
+    const reset = () => {
+      state.normalizedTransform = props.initialTransform
+      state.lastRotationAngle = props.rotationAngleDegrees
+    }
 
-    rotationMatrix(degrees) {
-      const c = Math.cos(degrees / 180 * Math.PI)
-      const s = Math.sin(degrees / 180 * Math.PI)
-      const x = -this.naturalWidth / 2
-      const y = -this.naturalHeight / 2
-      return [[c, -s, (c - 1) * x - s * y],
+    const rotationMatrix = (degrees) => {
+      const c = Math.cos((degrees / 180) * Math.PI)
+      const s = Math.sin((degrees / 180) * Math.PI)
+      const x = -state.naturalWidth / 2
+      const y = -state.naturalHeight / 2
+      return [
+        [c, -s, (c - 1) * x - s * y],
         [s, c, (c - 1) * y + s * x],
-        [0, 0, 1]]
-    },
+        [0, 0, 1],
+      ]
+    }
+
+    watch(padding, async () => {
+      await nextTick()
+      onResize()
+    })
+
+    watch(rotationAngleDegrees, (deg) => {
+      state.normalizedTransform = numeric.dot(state.normalizedTransform, rotationMatrix(deg - state.lastRotationAngle))
+      state.lastRotationAngle = deg
+    })
+
+    watch(initialTransform, async () => {
+      state.normalizedTransform = initialTransform.value
+    })
+
+    onMounted(() => {
+      window.addEventListener('resize', onResize)
+    })
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('resize', onResize)
+    })
+
+    return {
+      ...toRefs(state),
+      scan,
+      layerTransform,
+      normalizationData,
+      transform,
+      handlePositions,
+      centerPosition,
+      scaleX,
+      scaleY,
+      ionImageTransform,
+      annotImageStyle,
+      opticalImageStyle,
+      svgWidth,
+      svgHeight,
+      handleLayerStyle,
+      originalHandlePositions,
+      onOpticalImageLoad,
+      onResize,
+      onLoad,
+      onMouseDown,
+      onWheel,
+      updateHandlePosition,
+      updateRotation,
+      onMouseUp,
+      onRightMouseUp,
+      onMouseMove,
+      onImageDrag,
+      onImageRotate,
+      onImageMouseDown,
+      onImageRightMouseDown,
+      onDoubleClick,
+      reset,
+      rotationMatrix,
+    }
   },
-}
+})
 </script>
-
 <style>
- circle.handle {
-   cursor: move;
-   stroke-width: 4px;
-   stroke: #ffb000;
-   fill: none;
+circle.handle {
+  cursor: move;
+  stroke-width: 4px;
+  stroke: #ffb000;
+  fill: none;
 
-   /* we want the unpainted interior to respond to hover */
-   pointer-events: all;
- }
+  /* we want the unpainted interior to respond to hover */
+  pointer-events: all;
+}
 
- line.cross {
-   stroke: #f0fff0;
-   stroke-width: 2
- }
+line.cross {
+  stroke: #f0fff0;
+  stroke-width: 2;
+}
 
- .optical-img-container, .handles-container {
-   line-height: 0;
- }
+.optical-img-container,
+.handles-container {
+  line-height: 0;
+}
 </style>

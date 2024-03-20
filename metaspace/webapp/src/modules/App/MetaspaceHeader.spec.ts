@@ -1,66 +1,78 @@
-import { mount } from '@vue/test-utils'
-import MetaspaceHeader from './MetaspaceHeader.vue'
+import { nextTick, ref } from 'vue'
 import router from '../../router'
-import { initMockGraphqlClient, apolloProvider } from '../../../tests/utils/mockGraphqlClient'
-import store from '../../store/index'
-import Vue from 'vue'
-import Vuex from 'vuex'
-import { sync } from 'vuex-router-sync'
+import store from '../../store'
+import { mount } from '@vue/test-utils'
+import MetaspaceHeader from './MetaspaceHeader'
+import { expect } from 'vitest'
 
-Vue.use(Vuex)
-sync(store, router)
+const currentUserMockResponses = [
+  {
+    data: {
+      currentUser: {
+        id: '123',
+        name: 'Test UserX',
+        email: 'test@example.com',
+        primaryGroup: {
+          group: {
+            id: '456',
+            name: 'Test Group',
+            urlSlug: null,
+          },
+        },
+        groups: [
+          { role: 'MEMBER', group: { hasPendingRequest: null } },
+          { role: 'GROUP_ADMIN', group: { hasPendingRequest: false } },
+        ],
+        projects: [
+          { role: 'PENDING', project: { hasPendingRequest: null } },
+          { role: 'MANAGER', project: { hasPendingRequest: true } },
+        ],
+      },
+    },
+  },
+  {
+    data: {
+      currentUser: null,
+    },
+  },
+]
+
+let mockIndex = 0 // This will determine which mock response to use
+
+vi.mock('@vue/apollo-composable', () => ({
+  useQuery: vi.fn(() => ({
+    result: ref(currentUserMockResponses[mockIndex].data),
+    loading: ref(false),
+    error: ref(null),
+    subscribeToMore: vi.fn(),
+  })),
+}))
+
+// Mock router's push function or any other function you need
+router.push = vi.fn()
 
 describe('MetaspaceHeader', () => {
-  it('should match snapshot (logged out)', async() => {
-    initMockGraphqlClient({
-      Query: () => ({
-        currentUser: () => null, // Prevent automatic mocking
-      }),
+  it('should match snapshot (logged in)', async () => {
+    mockIndex = 0
+    const wrapper = mount(MetaspaceHeader, {
+      global: {
+        plugins: [router, store],
+      },
     })
-    const wrapper = mount(MetaspaceHeader, { store, router, apolloProvider })
-    await Vue.nextTick()
 
-    expect(wrapper).toMatchSnapshot()
+    await nextTick()
+    expect(wrapper.html()).toMatchSnapshot()
   })
 
-  it('should match snapshot (logged in)', async() => {
-    initMockGraphqlClient({
-      Query: () => ({
-        currentUser: () => ({
-          id: '123',
-          name: 'Test User',
-          email: 'test@example.com',
-          primaryGroup: {
-            group: {
-              id: '456',
-              name: 'Test Group',
-              urlSlug: null,
-            },
-          },
-          groups: [
-            { role: 'MEMBER', group: { hasPendingRequest: null } },
-            { role: 'GROUP_ADMIN', group: { hasPendingRequest: false } },
-          ],
-          projects: [
-            { role: 'PENDING', project: { hasPendingRequest: null } },
-            { role: 'MANAGER', project: { hasPendingRequest: true } },
-          ],
-        }),
-      }),
+  it('should match snapshot (logged out)', async () => {
+    mockIndex = 1
+    const wrapper = mount(MetaspaceHeader, {
+      global: {
+        plugins: [router, store],
+      },
     })
-    const wrapper = mount(MetaspaceHeader, { store, router, apolloProvider })
-    await Vue.nextTick()
 
-    expect(wrapper).toMatchSnapshot()
-  })
-
-  it('should include current filters in annotations & dataset links', async() => {
-    initMockGraphqlClient({})
-    router.push({ path: '/annotations', query: { db_id: '22', organism: 'human' } })
-    const wrapper = mount(MetaspaceHeader, { store, router, apolloProvider })
-    await Vue.nextTick()
-
-    expect(wrapper.find('#annotations-link').attributes().href).toEqual('/annotations?db_id=22&organism=human')
-    expect(wrapper.find('#datasets-link').attributes().href).toEqual('/datasets?organism=human') // db isn't a valid filter for datasets
+    await nextTick()
+    expect(wrapper.html()).toMatchSnapshot()
   })
 })

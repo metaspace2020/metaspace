@@ -1,23 +1,18 @@
-import { reactive, computed, ref } from '@vue/composition-api'
+import { reactive, computed, ref } from 'vue'
 import { isArray } from 'lodash-es'
 
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
 
 const STORAGE_KEY = 'dismissedFeaturePopups'
 
-export const FEATURE_KEYS = [
-  'uploadCustomDatabases',
-  'groupDatabasesTab',
-  'multipleIonImages',
-  'v2',
-]
+export const FEATURE_KEYS = ['uploadCustomDatabases', 'groupDatabasesTab', 'multipleIonImages', 'v2']
 
 function getDismissedPopups() {
   try {
     const list = getLocalStorage(STORAGE_KEY)
     if (isArray(list)) {
       // Filter out invalid/old entries
-      return list.filter(item => FEATURE_KEYS.includes(item))
+      return list.filter((item) => FEATURE_KEYS.includes(item))
     } else {
       return []
     }
@@ -43,7 +38,9 @@ function closeActivePopup() {
   // before a new one is opened.
   state.queued.unshift(null)
   setTimeout(() => {
-    if (state.queued[0] === null) { state.queued.shift() }
+    if (state.queued[0] === null) {
+      state.queued.shift()
+    }
   }, 50)
   return popup
 }

@@ -21,19 +21,46 @@ function formatFDR(fdr: number) {
 }
 
 function formatPValue(pValue: number) {
-  return pValue ? (pValue).toFixed(2) : ''
+  return pValue ? pValue.toFixed(2) : ''
 }
 
-export type Level = 'annotation' | 'dataset' | 'upload' | 'projects' | 'dataset-annotation' | 'enrichment';
+export type Level = 'annotation' | 'dataset' | 'upload' | 'projects' | 'dataset-annotation' | 'enrichment'
 
-export type FilterKey = 'annotationIds' | 'database' | 'datasetIds' | 'minMSM' | 'compoundName'
-  | 'chemMod' | 'neutralLoss' | 'adduct' | 'mz' | 'fdrLevel'
-  | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
-  | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
-  | 'colocalizedWith' | 'colocalizationSamples' | 'offSample' | 'datasetOwner' | 'molClass' | 'term'
-  | 'opticalImage' | 'pValue';
+export type FilterKey =
+  | 'annotationIds'
+  | 'database'
+  | 'datasetIds'
+  | 'minMSM'
+  | 'compoundName'
+  | 'chemMod'
+  | 'neutralLoss'
+  | 'adduct'
+  | 'mz'
+  | 'fdrLevel'
+  | 'group'
+  | 'project'
+  | 'submitter'
+  | 'polarity'
+  | 'organism'
+  | 'organismPart'
+  | 'condition'
+  | 'growthConditions'
+  | 'ionisationSource'
+  | 'maldiMatrix'
+  | 'analyzerType'
+  | 'simpleFilter'
+  | 'simpleQuery'
+  | 'metadataType'
+  | 'colocalizedWith'
+  | 'colocalizationSamples'
+  | 'offSample'
+  | 'datasetOwner'
+  | 'molClass'
+  | 'term'
+  | 'opticalImage'
+  | 'pValue'
 
-export type MetadataLists = Record<string, any[]>;
+export type MetadataLists = Record<string, any[]>
 
 /**
  The specifications below describe the presentation logic of filters.
@@ -57,49 +84,54 @@ export type MetadataLists = Record<string, any[]>;
  */
 export interface FilterSpecification {
   /** Component used for input/display e.g. SingleSelectFilter */
-  type: Component;
+  type: Component
   /** Name shown on component */
-  name: string;
+  name: string
   /** Text used to refer to the filter in the "Add filter" drop-down list */
-  description?: string;
+  description?: string
   /** Component that contains help text to be displayed as a question mark icon with a popover. Only supported by specific input components */
-  helpComponent?: Component;
+  helpComponent?: Component
   /** List of which pages the filter makes sense */
-  levels: Level[];
+  levels: Level[]
   /** List of which pages the filter should be visible by default */
-  defaultInLevels?: Level[];
+  defaultInLevels?: Level[]
   /** Initial value of the filter when it is added, or if it is visible by default. Can be a function that is called after MetadataLists is loaded. */
-  initialValue: undefined | null | number | string | boolean | ((lists: MetadataLists) => any);
+  initialValue: undefined | null | number | string | boolean | ((lists: MetadataLists) => any) | any
   /** List of options for SingleSelectFilter. Can be a function that is called after MetadataLists is loaded. */
-  options?: string | number[] | boolean[] | string[] | ((lists: MetadataLists) => any[]) | SingleSelectFilterType[];
-  removable?: boolean;
-  filterable?: boolean;
-  multiple?: boolean;
-  clearable?: boolean;
-  hidden?: boolean | (() => boolean);
-  debounce?: boolean;
+  options?: string | number[] | boolean[] | string[] | ((lists: MetadataLists) => any[]) | SingleSelectFilterType[]
+  removable?: boolean
+  filterable?: boolean
+  multiple?: boolean
+  clearable?: boolean
+  hidden?: boolean | (() => boolean)
+  debounce?: boolean
   /** How to encode/decode this filter from the URL */
-  encoding?: 'list' | 'json' | 'bool' | 'number';
+  encoding?: 'list' | 'json' | 'bool' | 'number'
   /** Callback to format options for display. "options" parameter may be an empty array while the page is loading */
-  optionFormatter?(value: any, options: any[]): string;
+  optionFormatter?(value: any, options: any[]): string
   /** Callback to extract the "value" of an object-based option */
-  valueGetter?(option: any): any;
-  sortOrder?: number;
-  isMultiFilter?: boolean;
+  valueGetter?(option: any): any
+  sortOrder?: number
+  isMultiFilter?: boolean
   /** Other filter that should be used for displaying this filter's value */
-  multiFilterParent?: FilterKey;
+  multiFilterParent?: FilterKey
   /** List of other filters whose removal should cause this filter to also be removed */
-  dependsOnFilters?: FilterKey[];
+  dependsOnFilters?: FilterKey[]
   /** List of other filters whose addition should cause this filter to be removed */
-  conflictsWithFilters?: FilterKey[];
+  conflictsWithFilters?: FilterKey[]
   convertValueForComponent?: (value: any) => any
 }
 
 /** Attrs to pass to the component that will render the filter */
 export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
-  'name', 'helpComponent',
-  'removable', 'filterable', 'multiple', 'clearable',
-  'optionFormatter', 'valueGetter',
+  'name',
+  'helpComponent',
+  'removable',
+  'filterable',
+  'multiple',
+  'clearable',
+  'optionFormatter',
+  'valueGetter',
   'debounce',
 ]
 
@@ -111,8 +143,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Select database',
     levels: ['annotation', 'dataset-annotation', 'enrichment'],
     defaultInLevels: ['annotation', 'enrichment'],
-    initialValue: lists =>
-      lists.molecularDatabases?.filter(d => d.default)[0]?.id,
+    initialValue: (lists) => lists.molecularDatabases?.filter((d) => d.default)[0]?.id,
     encoding: 'number',
     convertValueForComponent: (v) => v?.toString(),
   },
@@ -134,8 +165,9 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation'],
     defaultInLevels: ['annotation'],
     hidden: () => !isSnapshot(),
-    initialValue: lists =>// @ts-ignore
-      lists.annotationIds?.value?.length > 1 ? lists.annotationIds.value : undefined,
+    initialValue: (
+      lists // @ts-ignore
+    ) => (lists.annotationIds?.value?.length > 1 ? lists.annotationIds.value : undefined),
     multiple: true,
     encoding: 'list',
   },
@@ -180,7 +212,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Select adduct',
     levels: ['annotation', 'dataset-annotation'],
     initialValue: undefined,
-    options: lists => lists.adducts.filter(a => config.features.all_adducts || !a.hidden),
+    options: (lists) => lists.adducts.filter((a) => config.features.all_adducts || !a.hidden),
     isMultiFilter: true,
   },
 
@@ -419,7 +451,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     initialValue: false,
     options: [true, false],
     encoding: 'bool',
-    optionFormatter: option => `${option ? 'Off' : 'On'}-sample only`,
+    optionFormatter: (option) => `${option ? 'Off' : 'On'}-sample only`,
     hidden: () => !config.features.off_sample,
   },
 
@@ -432,22 +464,48 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     initialValue: true,
     options: [true, false],
     encoding: 'bool',
-    optionFormatter: option => `${option ? 'With' : 'Without'} optical images only`,
+    optionFormatter: (option) => `${option ? 'With' : 'Without'} optical images only`,
   },
 }
 
 export const DATASET_FILTERS: FilterKey[] = [
-  'datasetIds', 'group', 'project', 'submitter', 'polarity', 'organism', 'organismPart', 'condition',
-  'growthConditions', 'ionisationSource', 'maldiMatrix', 'analyzerType', 'metadataType', 'datasetOwner', 'opticalImage',
+  'datasetIds',
+  'group',
+  'project',
+  'submitter',
+  'polarity',
+  'organism',
+  'organismPart',
+  'condition',
+  'growthConditions',
+  'ionisationSource',
+  'maldiMatrix',
+  'analyzerType',
+  'metadataType',
+  'datasetOwner',
+  'opticalImage',
 ]
 /** = all annotation-affecting filters - dataset-affecting filters */
 export const ANNOTATION_FILTERS: FilterKey[] = [
-  'annotationIds', 'database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample',
+  'annotationIds',
+  'database',
+  'minMSM',
+  'compoundName',
+  'adduct',
+  'mz',
+  'fdrLevel',
+  'colocalizedWith',
+  'offSample',
   'opticalImage',
 ]
 /** Filters that are very specific to particular annotations and should be cleared when navigating to other annotations */
 export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = [
-  'compoundName', 'adduct', 'mz', 'colocalizedWith', 'colocalizationSamples', 'simpleQuery',
+  'compoundName',
+  'adduct',
+  'mz',
+  'colocalizedWith',
+  'colocalizationSamples',
+  'simpleQuery',
 ]
 
 export function getFilterInitialValue(key: FilterKey, filterLists?: MetadataLists) {

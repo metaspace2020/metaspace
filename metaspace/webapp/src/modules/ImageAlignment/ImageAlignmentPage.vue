@@ -1,59 +1,35 @@
 <template>
   <div id="alignment-page">
     <div class="image-alignment-top">
-      <div
-        class="image-alignment-header"
-        style="text-align: left"
-      >
-        <h3 style="margin: 5px; align-content: left">
+      <div class="image-alignment-header" style="text-align: left">
+        <h3 style="margin: 5px; align-content: start">
           Optical image alignment for: <i>{{ datasetName }}</i>
         </h3>
-        <p> <b>upload</b> an optical image, <b>align</b> an annotation image, then <b>submit</b></p>
-        <el-button
-          id="hintsButton"
-          @click="toggleHints"
-        >
+        <p><b>upload</b> an optical image, <b>align</b> an annotation image, then <b>submit</b></p>
+        <el-button id="hintsButton" @click="toggleHints">
           {{ showHints.text }}
         </el-button>
-        <div
-          v-if="showHints.status === true"
-          id="hints"
-        >
+        <div v-if="showHints.status === true" id="hints">
           <ul class="hint-list">
             <li>
-              <img
-                class="mouse-hint-icon"
-                src="../../assets/translate-icon.png"
-                title="Show/hide optical image"
-              > Click and drag the annotation image to move it
+              <img class="mouse-hint-icon" src="../../assets/translate-icon.png" title="Show/hide optical image" />
+              Click and drag the annotation image to move it
             </li>
             <li>
-              <img
-                class="mouse-hint-icon"
-                src="../../assets/zoom-icon.png"
-                title="Show/hide optical image"
-              > Use the mouse scroll wheel to zoom in and out
+              <img class="mouse-hint-icon" src="../../assets/zoom-icon.png" title="Show/hide optical image" /> Use the
+              mouse scroll wheel to zoom in and out
             </li>
             <li>
-              <img
-                class="mouse-hint-icon"
-                src="../../assets/rotate-icon.png"
-                title="Show/hide optical image"
-              > Right-click and drag to rotate the annotation image
+              <img class="mouse-hint-icon" src="../../assets/rotate-icon.png" title="Show/hide optical image" />
+              Right-click and drag to rotate the annotation image
             </li>
             <li>
-              <img
-                class="mouse-hint-icon"
-                src="../../assets/images-icon.png"
-                title="Show/hide optical image"
-              > Choose an annotation image with a recognisable spatial distribution
+              <img class="mouse-hint-icon" src="../../assets/images-icon.png" title="Show/hide optical image" /> Choose
+              an annotation image with a recognisable spatial distribution
             </li>
             <li>
-              <img
-                class="mouse-hint-icon"
-                src="../../assets/corners-icon.jpg"
-                title="Show/hide optical image"
-              > Double click the annotation image to enable fine tuning
+              <img class="mouse-hint-icon" src="../../assets/corners-icon.jpg" title="Show/hide optical image" /> Double
+              click the annotation image to enable fine tuning
             </li>
           </ul>
         </div>
@@ -64,41 +40,26 @@
             <input
               type="file"
               class="input-optical-image"
-              style="display: none;"
+              style="display: none"
               accept=".jpg,.jpeg,.png"
               @change="onFileChange($event)"
-            >
+            />
             Select optical image
           </label>
 
-          <div style="padding: 3px; font-size: small;">
+          <div style="padding: 3px; font-size: small">
             {{ opticalImageFilename }}
           </div>
 
-          <div
-            slot="tip"
-            class="el-upload__tip"
-          >
-            JPEG or PNG file less than {{ limitMB }}MB in size
-          </div>
+          <div id="tip" class="el-upload__tip">JPEG or PNG file less than {{ limitMB }}MB in size</div>
         </div>
 
         <div class="sliders-box">
           Optical image padding, px:
-          <el-slider
-            v-model="padding"
-            :min="0"
-            :max="500"
-            :step="10"
-          />
+          <el-slider v-model="padding" :min="0" :max="500" :step="10" />
 
           IMS image opacity:
-          <el-slider
-            v-model="annotImageOpacity"
-            :min="0"
-            :max="1"
-            :step="0.01"
-          />
+          <el-slider v-model="annotImageOpacity" :min="0" :max="1" :step="0.01" />
           <el-checkbox
             v-if="showTicOption"
             v-model="enableNormalization"
@@ -109,7 +70,7 @@
         </div>
 
         <div class="annotation-selection">
-          <span style="font-size: 14px; margin-bottom: 5px;">Annotation:</span>
+          <span style="font-size: 14px; margin-bottom: 5px">Annotation:</span>
           <el-pagination
             layout="prev,slot,next"
             :total="annotations ? annotations.length : 0"
@@ -124,76 +85,33 @@
               class="annotation-short-info"
               @change="(newIdx) => updateIndex(newIdx + 1)"
             >
-              <el-option
-                v-for="(annot, i) in annotations"
-                :key="annot.id"
-                :value="i"
-                :label="renderLabel(annot)"
-              >
+              <el-option v-for="(annot, i) in annotations" :key="annot.id" :value="i" :label="renderLabel(annot)">
                 <span v-html="renderAnnotation(annot)" />
               </el-option>
             </el-select>
           </el-pagination>
 
           Angle, °:
-          <el-slider
-            v-model="angle"
-            :min="-180"
-            :max="180"
-            :step="0.1"
-          />
+          <el-slider v-model="angle" :min="-180" :max="180" :step="0.1" />
         </div>
 
         <div class="optical-image-submit">
-          <el-row
-            :gutter="20"
-            style="margin-bottom: 10px"
-          >
-            <el-col
-              :span="12"
-              :offset="opticalImgUrl ? 0 : 12"
-            >
-              <el-button @click="cancel">
-                Cancel
-              </el-button>
+          <el-row :gutter="20" style="margin-bottom: 10px">
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
+              <el-button @click="cancel"> Cancel </el-button>
             </el-col>
-            <el-col
-              :span="12"
-              :offset="opticalImgUrl ? 0 : 12"
-            >
-              <el-button
-                v-show="opticalImgUrl"
-                style="margin-bottom: 10px;"
-                @click="reset"
-              >
-                Reset
-              </el-button>
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
+              <el-button v-show="opticalImgUrl" style="margin-bottom: 10px" @click="reset"> Reset </el-button>
             </el-col>
           </el-row>
           <el-row :gutter="20">
-            <el-col
-              :span="12"
-              :offset="opticalImgUrl ? 0 : 12"
-            >
-              <el-button
-                v-show="opticalImgUrl"
-                class="del-optical-image"
-                @click="deleteOpticalImages"
-              >
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
+              <el-button v-show="opticalImgUrl" class="del-optical-image" @click="deleteOpticalImages">
                 Delete
               </el-button>
             </el-col>
-            <el-col
-              :span="12"
-              :offset="opticalImgUrl ? 0 : 12"
-            >
-              <el-button
-                type="primary"
-                :disabled="!opticalImgUrl"
-                @click="submit"
-              >
-                Submit
-              </el-button>
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
+              <el-button type="primary" :disabled="!opticalImgUrl" @click="submit"> Submit </el-button>
             </el-col>
           </el-row>
         </div>
@@ -202,7 +120,7 @@
     <image-aligner
       v-if="opticalImgUrl && !hasNormalizationError"
       ref="aligner"
-      style="position:relative;top:0px;z-index:1;"
+      style="position: relative; top: 0px; z-index: 1"
       :annot-image-opacity="annotImageOpacity"
       :optical-src="opticalImgUrl"
       :tic-data="normalizationData"
@@ -212,21 +130,33 @@
       :ion-image-src="massSpecSrc"
       @updateRotationAngle="updateAngle"
     />
-    <div
-      v-if="hasNormalizationError"
-      class="normalization-error-wrapper"
-    >
-      <i class="el-icon-error info-icon mr-2" />
-      <p class="text-lg">
-        There was an error on normalization!
-      </p>
+    <div v-if="hasNormalizationError" class="normalization-error-wrapper">
+      <el-icon class="info-icon mr-2">
+        <CircleCloseFilled />
+      </el-icon>
+      <p class="text-lg">There was an error on normalization!</p>
     </div>
   </div>
 </template>
 
 <script>
-
 import ImageAligner from './ImageAligner.vue'
+import { renderMolFormula, renderMolFormulaHtml } from '../../lib/util'
+
+import gql from 'graphql-tag'
+import reportError from '../../lib/reportError'
+import graphqlClient from '../../api/graphqlClient'
+import { readNpy } from '../../lib/npyHandler'
+import safeJsonParse from '../../lib/safeJsonParse'
+import config from '../../lib/config'
+import AwsS3Multipart from '@uppy/aws-s3-multipart'
+import Uppy from '@uppy/core'
+import createStore from '../../components/UppyUploader/store'
+import { defineComponent, ref, reactive, computed, watch, onMounted, onBeforeUnmount, toRefs, inject } from 'vue'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
+import { ElMessage, ElIcon } from '../../lib/element-plus'
 import { annotationListQuery } from '../../api/annotation'
 import {
   addOpticalImageQuery,
@@ -234,25 +164,16 @@ import {
   getDatasetDiagnosticsQuery,
   rawOpticalImageQuery,
 } from '../../api/dataset'
-import { renderMolFormula, renderMolFormulaHtml } from '../../lib/util'
-
-import gql from 'graphql-tag'
-import reportError from '../../lib/reportError'
-import graphqlClient from '../../api/graphqlClient'
-import { readNpy } from '@/lib/npyHandler'
-import safeJsonParse from '@/lib/safeJsonParse'
-import config from '@/lib/config'
-import AwsS3Multipart from '@uppy/aws-s3-multipart'
-import Uppy from '@uppy/core'
-import createStore from '../../components/UppyUploader/store'
 import { currentUserRoleQuery } from '../../api/user'
+import { CircleCloseFilled } from '@element-plus/icons-vue'
 
-export default {
+export default defineComponent({
   name: 'ImageAlignmentPage',
   components: {
     ImageAligner,
+    ElIcon,
+    CircleCloseFilled,
   },
-
   props: {
     limitMB: {
       type: Number,
@@ -264,9 +185,14 @@ export default {
       default: '/fs/raw_optical_images',
     },
   },
-
-  data() {
-    return {
+  setup(props) {
+    const store = useStore()
+    const router = useRouter()
+    const aligner = ref(null)
+    const apolloClient = inject(DefaultApolloClient)
+    const state = reactive({
+      uppy: null,
+      status: null,
       uppyImageUrl: null,
       storageKey: {
         uuid: null,
@@ -280,7 +206,11 @@ export default {
       originUuid: null,
       ticData: null,
       alreadyUploaded: false,
-      initialTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+      initialTransform: [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ],
       padding: 100,
       angle: 0,
       enableNormalization: false,
@@ -290,275 +220,196 @@ export default {
         text: 'Hide hints',
       },
       datasetName: '',
-    }
-  },
+    })
 
-  apollo: {
-    rawOpticalImage: {
-      query: rawOpticalImageQuery,
-      variables() {
-        return { ds_id: this.datasetId }
-      },
-      update(data) {
-        if (data.rawOpticalImage != null && data.rawOpticalImage.transform != null) {
-          const { url, transform, uuid } = data.rawOpticalImage
-          this.originUuid = uuid
-          this.opticalImgUrl = url
-          this.initialTransform = transform
-          this.angle = 0
-          this.alreadyUploaded = true
-        }
-      },
-    },
+    const datasetId = computed(() => store.state.route.params.dataset_id)
+    const { onResult: onOpticalImageResult } = useQuery(rawOpticalImageQuery, () => ({ ds_id: datasetId.value }))
 
-    annotations: {
-      query: annotationListQuery,
-      variables() {
-        return {
-          filter: { fdrLevel: 0.5 },
-          dFilter: { ids: this.datasetId },
-          offset: 0,
-          limit: 1000,
-          query: '',
-          orderBy: 'ORDER_BY_MSM',
-          sortingOrder: 'DESCENDING',
-          countIsomerCompounds: false,
-        }
-      },
-      update(data) {
-        // get normalization data for selected annotation
-        const annotation = this.currentAnnotation || data.allAnnotations[0]
-        this.updateNormalizationData(annotation)
-        // add TIC reference
-        if (config.features.tic && data.allAnnotations[0] && data.allAnnotations[0].id !== 'TIC Image') {
-          const ticAnnotation = [{
-            ...data.allAnnotations[0],
+    onOpticalImageResult(async (result) => {
+      const data = result?.data
+      if (data?.rawOpticalImage != null && data.rawOpticalImage.transform != null) {
+        const { url, transform, uuid } = data.rawOpticalImage
+        state.originUuid = uuid
+        state.opticalImgUrl = url
+        state.initialTransform = transform
+        state.angle = 0
+        state.alreadyUploaded = true
+      }
+    })
+
+    const { result: annotationsResult } = useQuery(annotationListQuery, () => ({
+      filter: { fdrLevel: 0.5 },
+      dFilter: { ids: datasetId.value },
+      offset: 0,
+      limit: 1000,
+      query: '',
+      orderBy: 'ORDER_BY_MSM',
+      sortingOrder: 'DESCENDING',
+      countIsomerCompounds: false,
+    }))
+
+    const annotations = computed(() => {
+      // get normalization data for selected annotation
+      const annotation = annotationsResult.value?.allAnnotations[0]
+      // add TIC reference
+      if (config.features.tic && annotation && annotation.id !== 'TIC Image') {
+        const ticAnnotation = [
+          {
+            ...annotation,
             id: 'TIC Image',
             type: 'TIC Image',
-          }]
-          data.allAnnotations = ticAnnotation.concat(data.allAnnotations)
-          this.updateNormalizationData(ticAnnotation[0])
+          },
+        ]
+        return ticAnnotation.concat(annotation)
+      }
+      return annotationsResult.value?.allAnnotations
+    })
+
+    const { result: datasetPropertiesResult, onResult: onDatasetResult } = useQuery(
+      gql`
+        query getDatasetName($id: String!) {
+          dataset(id: $id) {
+            id
+            name
+            metadataType
+          }
         }
-        return data.allAnnotations
-      },
-    },
+      `,
+      () => ({ id: datasetId.value })
+    )
+    const datasetProperties = computed(() => datasetPropertiesResult.value?.dataset)
+    const datasetName = computed(() => datasetProperties.value?.name)
 
-    datasetProperties: {
-      query: gql`query getDatasetName($id: String!) {
-                    dataset(id: $id) {
-                      id
-                      name
-                      metadataType
-                    }
-                  }`,
-      variables() {
-        return { id: this.datasetId }
-      },
-      update(data) {
-        this.datasetName = data.dataset.name
+    onDatasetResult(async (result) => {
+      const data = result?.data
+      if (!data) return
+      // in case user just opened a link to optical image upload page w/o navigation in web-app,
+      // filters are not set up
+      store.commit('replaceFilter', { metadataType: data.dataset.metadataType })
+    })
 
-        // in case user just opened a link to optical image upload page w/o navigation in web-app,
-        // filters are not set up
-        this.$store.commit('replaceFilter', { metadataType: data.dataset.metadataType })
-      },
-    },
+    const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, { fetchPolicy: 'cache-first' })
+    const currentUser = computed(() => currentUserResult.value?.currentUser)
 
-    currentUser: {
-      query: currentUserRoleQuery,
-      fetchPolicy: 'cache-first',
-    },
-  },
-
-  computed: {
-    uuid() {
-      return this.storageKey.uuid
-    },
-
-    uploadEndpoint() {
-      return `${window.location.origin}/dataset_upload`
-    },
-
-    datasetId() {
-      return this.$store.state.route.params.dataset_id
-    },
-
-    hasNormalizationError() {
-      return this.enableNormalization && this.ticData
-      && this.ticData.error
-    },
-
-    showTicOption() {
-      return config.features.tic
-    },
-
-    normalizationData() {
-      return (this.showFullTIC || this.enableNormalization) ? this.ticData : null
-    },
-
-    currentAnnotation() {
-      if (!this.annotations || this.annotations.length === 0) {
+    const uuid = computed(() => state.storageKey.uuid)
+    const uploadEndpoint = computed(() => `${window.location.origin}/dataset_upload`)
+    const hasNormalizationError = computed(() => state.enableNormalization && state.ticData && state.ticData.error)
+    const showTicOption = computed(() => config.features.tic)
+    const normalizationData = computed(() => (state.showFullTIC || state.enableNormalization ? state.ticData : null))
+    const currentAnnotation = computed(() => {
+      if (!annotations.value || annotations.value.length === 0) {
         return null
       }
-      return this.annotations[this.annotationIndex]
-    },
-
-    massSpecSrc() {
-      const url = this.currentAnnotation ? this.currentAnnotation.isotopeImages[0].url : null
+      return annotations.value[state.annotationIndex]
+    })
+    const massSpecSrc = computed(() => {
+      const url = currentAnnotation.value ? currentAnnotation.value.isotopeImages[0].url : null
       return url || null
-    },
-
-    currentSumFormula() {
-      if (!this.annotations) {
+    })
+    const currentSumFormula = computed(() => {
+      if (!annotations.value) {
         return 'loading...'
       }
-      if (this.annotations.length === 0) {
+      if (annotations.value.length === 0) {
         return 'no results'
       }
-      return this.renderAnnotation(this.currentAnnotation)
-    },
-
-    opticalImageFilename() {
-      return this.file ? this.file.name : ''
-    },
-  },
-
-  mounted() {
-    this.fetchStorageKey()
-    const uppy = Uppy({
-      debug: true,
-      autoProceed: true,
-      allowMultipleUploads: false,
-      restrictions: {
-        maxFileSize: this.limitMB * 1024 * 1024,
-        maxNumberOfFiles: 1,
-      },
-      meta: {},
-      store: createStore(),
+      return renderAnnotation(currentAnnotation.value)
     })
-      .on('file-added', (file) => {
-        if (this.fileId) {
-          this.uppy.removeFile(this.fileId)
-        }
-        this.fileId = file.id
-      })
-      .on('file-removed', (file) => {
-        console.log('file-removed', file)
-      })
-      .on('upload', () => {
-        console.log('upload')
-      })
-      .on('upload-error', (...args) => {
-        console.log(args)
-      })
-      .on('upload-success', (file, response) => {
-        this.uppyImageUrl = response.uploadURL
-      })
-      .on('error', (...args) => {
-        console.log(args)
-      })
-      .on('complete', result => {
-        console.log('Upload complete! We’ve uploaded these files:', result.successful)
-      })
+    const opticalImageFilename = computed(() => (state.file ? state.file.name : ''))
 
-    uppy.use(AwsS3Multipart, {
-      limit: 2,
-      companionUrl: `${window.location.origin}/raw_opt_upload`,
-    })
-
-    this.uppy = uppy
-  },
-  beforeDestroy() {
-    this.uppy.close()
-  },
-
-  methods: {
-    updateAngle(v) {
+    const updateAngle = (v) => {
       if (v < -180) {
         v = 360 + v
       } else if (v > 180) {
         v = v - 360
       }
-      this.angle = v
-    },
+      state.angle = v
+    }
 
-    async fetchStorageKey() {
-      this.status = 'LOADING'
+    const fetchStorageKey = async () => {
+      state.status = 'LOADING'
       try {
-        const response = await fetch(`${this.uploadEndpoint}/s3/uuid`)
+        const response = await fetch(`${uploadEndpoint.value}/s3/uuid`)
         if (response.status < 200 || response.status >= 300) {
           const responseBody = await response.text()
           reportError(new Error(`Unexpected server response getting upload UUID: ${response.status} ${responseBody}`))
         } else {
           // uuid and uuidSignature
-          this.storageKey = await response.json()
+          state.storageKey = await response.json()
         }
       } catch (e) {
         reportError(e)
       } finally {
-        this.status = 'READY'
+        state.status = 'READY'
       }
-    },
+    }
 
-    renderAnnotation(annotation) {
+    const renderAnnotation = (annotation) => {
       const { ion } = annotation
       return annotation.type === 'TIC Image' ? 'TIC Image' : renderMolFormulaHtml(ion)
-    },
+    }
 
-    renderLabel(annotation) {
+    const renderLabel = (annotation) => {
       const { ion } = annotation
       return annotation.type === 'TIC Image' ? 'TIC Image' : renderMolFormula(ion)
-    },
+    }
 
-    async onFileChange(event) {
+    const onFileChange = async (event) => {
       const file = event.target.files[0]
 
       if (!file) {
         return
       }
 
-      if (file.size > this.limitMB * 1024 * 1024) {
-        this.$message({
+      if (file.size > props.limitMB * 1024 * 1024) {
+        ElMessage({
           type: 'error',
-          message: `The file exceeds ${this.limitMB} MB limit`,
+          message: `The file exceeds ${props.limitMB} MB limit`,
         })
         return
       }
 
-      await this.uppy.removeFile(this.fileId)
+      await state.uppy.removeFile(state.fileId)
 
-      await this.uppy.addFile({
+      await state.uppy.addFile({
         name: file.name,
         type: file.type,
-        meta: { user: this.currentUser?.id, source: 'webapp', datasetId: this.datasetId, uuid: this.uuid },
+        meta: { user: currentUser.value?.id, source: 'webapp', datasetId: datasetId.value, uuid: uuid.value },
         data: file,
       })
 
-      window.URL.revokeObjectURL(this.opticalImgUrl)
-      this.file = file
-      this.opticalImgUrl = window.URL.createObjectURL(this.file)
-      this.angle = 0
-      this.initialTransform = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-      this.alreadyUploaded = false
+      window.URL.revokeObjectURL(state.opticalImgUrl)
+      state.file = file
+      state.opticalImgUrl = window.URL.createObjectURL(state.file)
+      state.angle = 0
+      state.initialTransform = [
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ]
+      state.alreadyUploaded = false
       document.querySelector('.input-optical-image').value = ''
-    },
-    updateIndex(newIdx) {
-      this.annotationIndex = newIdx - 1
-      this.updateNormalizationData(this.currentAnnotation)
-    },
-    async updateNormalizationData(currentAnnotation) {
+    }
+
+    const updateIndex = (newIdx) => {
+      state.annotationIndex = newIdx - 1
+      updateNormalizationData(currentAnnotation.value)
+    }
+
+    const updateNormalizationData = async (currentAnnotation) => {
       if (!currentAnnotation) {
         return null
       }
 
       try {
-        const resp = await this.$apollo.query({
+        const resp = await apolloClient.query({
           query: getDatasetDiagnosticsQuery,
           variables: {
             id: currentAnnotation.dataset.id,
           },
           fetchPolicy: 'cache-first',
         })
-        this.showFullTIC = currentAnnotation.type === 'TIC Image'
+        state.showFullTIC = currentAnnotation.type === 'TIC Image'
         const dataset = resp.data.dataset
         const tics = dataset.diagnostics.filter((diagnostic) => diagnostic.type === 'TIC')
         const tic = tics[0].images.filter((image) => image.key === 'TIC' && image.format === 'NPY')
@@ -569,7 +420,7 @@ export default {
         delete metadata.max_tic
         delete metadata.min_tic
 
-        this.ticData = {
+        state.ticData = {
           data,
           shape,
           metadata: metadata,
@@ -578,7 +429,7 @@ export default {
           showFullTIC: currentAnnotation.type === 'TIC Image',
         }
       } catch (e) {
-        this.ticData = {
+        state.ticData = {
           data: null,
           shape: null,
           metadata: null,
@@ -587,32 +438,33 @@ export default {
           error: true,
         }
       }
-    },
-    async submit() {
+    }
+
+    const submit = async () => {
       try {
-        await this.addOpticalImage(!this.fileId ? this.originUuid : this.uuid)
-        this.$message({
+        await addOpticalImage(!state.fileId ? state.originUuid : uuid.value)
+        ElMessage({
           type: 'success',
           message: 'The image and alignment were successfully saved',
         })
-        this.$router.go(-1)
+        router.go(-1)
       } catch (e) {
         reportError(e)
       }
-    },
+    }
 
-    async addOpticalImage(imageUrl) {
-      this.$message({
+    const addOpticalImage = async (imageUrl) => {
+      ElMessage({
         message: 'Your optical image has been submitted! Please wait while it is saved...',
         type: 'success',
       })
       // TODO if there are no iso images found prevent optical image addition
-      await this.$apollo.mutate({
+      await apolloClient.mutate({
         mutation: addOpticalImageQuery,
         variables: {
-          datasetId: this.datasetId,
+          datasetId: datasetId.value,
           imageUrl,
-          transform: this.$refs.aligner.normalizedTransform,
+          transform: aligner.value.normalizedTransform,
         },
       })
       // Reset the GraphQL cache because thumbnails are cached.
@@ -620,27 +472,27 @@ export default {
       // cache eviction mechanism is so specific that it's hard to be sure that you've caught all affected queries.
       // It's better to waste bandwidth here than to lose time debugging cache issues in the future.
       await graphqlClient.cache.reset()
-    },
+    }
 
-    async deleteOpticalImages() {
+    const deleteOpticalImages = async () => {
       try {
-        const graphQLResp = await this.$apollo.mutate({
+        const graphQLResp = await apolloClient.mutate({
           mutation: deleteOpticalImageQuery,
           variables: {
-            id: this.datasetId,
+            id: datasetId.value,
           },
         })
         // Reset the GraphQL cache - see comment in addOpticalImage for rationale
         await graphqlClient.cache.reset()
         const resp = JSON.parse(graphQLResp.data.deleteOpticalImage)
         if (resp.status !== 'success') {
-          this.$message({
+          ElMessage({
             type: 'error',
             message: "Couldn't delete optical image due to an error",
           })
         } else {
-          this.destroyOptImage()
-          this.$message({
+          destroyOptImage()
+          ElMessage({
             type: 'success',
             message: 'The image and alignment were successfully deleted!',
           })
@@ -648,118 +500,202 @@ export default {
       } catch (e) {
         reportError(e)
       }
-    },
+    }
 
-    destroyOptImage() {
-      this.opticalImgUrl = window.URL.revokeObjectURL(this.opticalImgUrl)
-      this.file = ''
-    },
+    const destroyOptImage = () => {
+      state.opticalImgUrl = window.URL.revokeObjectURL(state.opticalImgUrl)
+      state.file = ''
+    }
 
-    reset() {
-      this.$refs.aligner.reset()
-      this.angle = 0
-    },
+    const reset = () => {
+      aligner.value.reset()
+      state.angle = 0
+    }
 
-    cancel() {
-      this.$router.go(-1)
-    },
+    const cancel = () => {
+      router.go(-1)
+    }
 
-    toggleHints() {
-      this.showHints.status = !this.showHints.status
+    const toggleHints = () => {
+      state.showHints.status = !state.showHints.status
 
-      if (this.showHints.status) {
-        this.showHints.text = 'Hide hints'
+      if (state.showHints.status) {
+        state.showHints.text = 'Hide hints'
       } else {
-        this.showHints.text = 'Show hints'
+        state.showHints.text = 'Show hints'
       }
-    },
-  },
-}
+    }
 
+    onMounted(() => {
+      fetchStorageKey()
+      const uppy = new Uppy({
+        debug: true,
+        autoProceed: true,
+        allowMultipleUploads: false,
+        restrictions: {
+          maxFileSize: props.limitMB * 1024 * 1024,
+          maxNumberOfFiles: 1,
+        },
+        meta: {},
+        store: createStore(),
+      })
+        .on('file-added', (file) => {
+          if (state.fileId) {
+            state.uppy.removeFile(state.fileId)
+          }
+          state.fileId = file.id
+        })
+        .on('file-removed', (file) => {
+          console.log('file-removed', file)
+        })
+        .on('upload', () => {
+          console.log('upload')
+        })
+        .on('upload-error', (...args) => {
+          console.log(args)
+        })
+        .on('upload-success', (file, response) => {
+          state.uppyImageUrl = response.uploadURL
+        })
+        .on('error', (...args) => {
+          console.log(args)
+        })
+        .on('complete', (result) => {
+          console.log('Upload complete! We’ve uploaded these files:', result.successful)
+        })
+
+      uppy.use(AwsS3Multipart, {
+        limit: 2,
+        companionUrl: `${window.location.origin}/raw_opt_upload`,
+      })
+
+      state.uppy = uppy
+    })
+
+    onBeforeUnmount(() => {
+      state.uppy.close()
+    })
+
+    watch(annotations, (newAnnotations) => {
+      const annotation = newAnnotations[0]
+      updateNormalizationData(annotation)
+    })
+
+    return {
+      ...toRefs(state),
+      aligner,
+      uuid,
+      uploadEndpoint,
+      datasetId,
+      datasetName,
+      hasNormalizationError,
+      showTicOption,
+      normalizationData,
+      currentAnnotation,
+      massSpecSrc,
+      currentSumFormula,
+      updateAngle,
+      fetchStorageKey,
+      renderAnnotation,
+      renderLabel,
+      onFileChange,
+      updateIndex,
+      updateNormalizationData,
+      submit,
+      addOpticalImage,
+      deleteOpticalImages,
+      destroyOptImage,
+      reset,
+      cancel,
+      toggleHints,
+      opticalImageFilename,
+      annotations,
+    }
+  },
+})
 </script>
 
 <style>
+.image-alignment-header {
+  text-align: center;
+  width: 100%;
+  font-size: 14px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-bottom: dotted lightblue 1px;
+}
 
-  .image-alignment-header {
-    text-align: center;
-    width: 100%;
-    font-size: 14px;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-bottom: dotted lightblue 1px;
-  }
+.image-alignment-settings {
+  margin-bottom: 20px;
+  padding: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
 
-  .image-alignment-settings {
-    margin-bottom: 20px;
-    padding: 10px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-  }
+.image-alignment-top {
+  left: 0px;
+  top: 62px;
+  z-index: 500;
+  width: 100%;
+  background-color: white;
+}
 
-  .image-alignment-top {
-    left: 0px;
-    top: 62px;
-    z-index: 500;
-    width: 100%;
-    background-color: white;
-  }
+#alignment-page {
+  min-height: calc(100vh - 104px);
+  margin: 0;
+  overflow: auto;
+  padding: 20px;
+}
 
-  #alignment-page {
-    min-height: calc(100vh - 104px);
-    margin: 0;
-    overflow: auto;
-    padding: 20px;
-  }
+.sliders-box {
+  min-width: 150px;
+  margin: 0px 20px;
+  padding: 0px 20px;
+  border-left: solid #eef 2px;
+  font-size: 14px;
+}
 
-  .sliders-box {
-    min-width: 150px;
-    margin: 0px 20px;
-    padding: 0px 20px;
-    border-left: solid #eef 2px;
-    font-size: 14px;
-  }
+.annotation-short-info {
+  display: inline-block;
+  line-height: 23px;
+  border-left: solid lightgrey 1px;
+  border-right: solid lightgrey 1px;
+  padding: 0px 10px;
+  min-width: 180px;
+  text-align: center;
+}
 
-  .annotation-short-info {
-    display: inline-block;
-    line-height: 23px;
-    border-left: solid lightgrey 1px;
-    border-right: solid lightgrey 1px;
-    padding: 0px 10px;
-    min-width: 180px;
-    text-align: center;
-  }
+.el-pagination .annotation-short-info .el-input {
+  width: 180px;
+}
 
-  .el-pagination .annotation-short-info .el-input {
-    width: 180px;
-  }
+.optical-image-submit {
+  margin-left: 30px;
+}
 
-  .optical-image-submit {
-    margin-left: 30px;
-  }
+.optical-image-submit,
+.annotation-selection {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
-  .optical-image-submit, .annotation-selection {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
+.mouse-hint-icon {
+  width: 20px;
+  height: 20px;
+}
 
-  .mouse-hint-icon {
-    width:  20px;
-    height: 20px;
-  }
+.hint-list {
+  list-style-type: none;
+}
 
-  .hint-list{
-    list-style-type: none;
-  }
-
-  .normalization-error-wrapper{
-    height: 537px;
-    width: 100%;
-    @apply flex items-center justify-center;
-  }
-  .info-icon{
-    font-size: 20px;
-  }
-
+.normalization-error-wrapper {
+  height: 537px;
+  width: 100%;
+  @apply flex items-center justify-center;
+}
+.info-icon {
+  font-size: 20px;
+}
 </style>

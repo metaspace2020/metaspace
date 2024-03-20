@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="el-button"
-    :style="buttonStyle"
-    @click="$emit('click')"
-  >
+  <div class="el-button flex justify-start" :style="buttonStyle" @click="$emit('click')">
     <div :style="progressStyle" />
     <div :style="textStyle">
       <slot />
@@ -12,42 +8,44 @@
 </template>
 
 <script lang="ts">
+import { defineComponent, computed } from 'vue'
 
-import Vue from 'vue'
-
-export default Vue.extend({
+export default defineComponent({
   name: 'ProgressButton',
   props: {
     width: Number,
     height: Number,
     percentage: Number,
   },
-  computed: {
-    buttonStyle(): Object {
-      return {
-        width: this.width + 'px',
-        height: this.height + 'px',
-        padding: 0,
-      }
-    },
-    textStyle(): Object {
-      return Object.assign({
-        'z-index': 2,
-        position: 'absolute',
-        display: 'flex',
-        'flex-direction': 'column',
-        'justify-content': 'center',
-      }, this.buttonStyle)
-    },
-    progressStyle(): Object {
-      return {
-        'background-color': 'rgb(152, 255, 152)',
-        width: ((this.width - 2) * this.percentage / 100.0) + 'px',
-        height: (this.height - 2) + 'px',
-        position: 'absolute',
-        'z-index': 1,
-      }
-    },
+  setup(props) {
+    const buttonStyle = computed(() => ({
+      width: props.width + 'px',
+      height: props.height + 'px',
+      padding: 0,
+    }))
+
+    const textStyle = computed(() => ({
+      'z-index': 2,
+      position: 'absolute',
+      display: 'flex',
+      'flex-direction': 'column',
+      'justify-content': 'center',
+      ...buttonStyle.value,
+    }))
+
+    const progressStyle = computed(() => ({
+      'background-color': 'rgb(152, 255, 152)',
+      width: ((props.width - 2) * props.percentage) / 100.0 + 'px',
+      height: props.height - 2 + 'px',
+      position: 'absolute',
+      'z-index': 1,
+    }))
+
+    return {
+      buttonStyle,
+      textStyle,
+      progressStyle,
+    }
   },
 })
 </script>

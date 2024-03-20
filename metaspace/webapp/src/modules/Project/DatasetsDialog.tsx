@@ -1,14 +1,25 @@
-import { defineComponent, computed, reactive, ref } from '@vue/composition-api'
-import { importDatasetsIntoProjectMutation, ProjectsListProject } from '../../api/project'
-import { Dialog, Button, Select, Option, Input, Table, TableColumn, Pagination } from '../../lib/element-ui'
+import { defineComponent, computed, reactive, ref, inject } from 'vue'
 import {
-  countDatasetsByStatusQuery, DatasetDetailItem,
-  DatasetListItem, datasetListItemsQuery,
-} from '../../api/dataset'
-import { useQuery } from '@vue/apollo-composable'
-import reportError from '../../lib/reportError'
+  ElDialog,
+  ElButton,
+  ElSelect,
+  ElOption,
+  ElInput,
+  ElTable,
+  ElTableColumn,
+  ElPagination,
+} from '../../lib/element-plus'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { isEqual } from 'lodash-es'
 import moment from 'moment'
+import { importDatasetsIntoProjectMutation, ProjectsListProject } from '../../api/project'
+import {
+  countDatasetsByStatusQuery,
+  DatasetDetailItem,
+  DatasetListItem,
+  datasetListItemsQuery,
+} from '../../api/dataset'
+import reportError from '../../lib/reportError'
 import './DatasetsDialog.scss'
 
 interface DatasetsDialogState {
@@ -31,8 +42,7 @@ interface DatasetsDialogProps {
   isManager: boolean
   refreshData: () => Promise<any>
 }
-
-export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
+export default defineComponent({
   name: 'DatasetsDialog',
   props: {
     project: { type: Object, default: undefined },
@@ -41,30 +51,32 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
     isManager: { type: Boolean, default: false },
     refreshData: { type: Function, required: true },
   },
-  setup(props, ctx) {
-    const { emit, root } = ctx
-    const { $apollo } = root
+  setup(props: DatasetsDialogProps | any, { emit }) {
+    const apolloClient = inject(DefaultApolloClient)
     const pageSizes = [2, 5, 15, 20, 25, 30]
     const table = ref(null)
 
     const state = reactive<DatasetsDialogState>({
-      selectedDatasets: [],
-      removedDatasets: [],
+      selectedDatasets: [] as any[],
+      removedDatasets: [] as string[],
       isSubmitting: false,
       handleSelectionDisabled: true,
       updateValueDisabled: false,
       hasChanged: false,
       datasetOwnerFilter: 'project-datasets',
-      nameFilter: undefined,
-      pageSize: 5000, // needed to select all datasets before rendering
+      nameFilter: '',
+      pageSize: 5000,
       offset: 1,
     })
 
     const queryVars = computed(() => ({
       dFilter: {
-        group: state.datasetOwnerFilter !== 'all-datasets'
-        && state.datasetOwnerFilter !== 'my-datasets' && state.datasetOwnerFilter !== 'project-datasets'
-          ? state.datasetOwnerFilter : undefined,
+        group:
+          state.datasetOwnerFilter !== 'all-datasets' &&
+          state.datasetOwnerFilter !== 'my-datasets' &&
+          state.datasetOwnerFilter !== 'project-datasets'
+            ? state.datasetOwnerFilter
+            : undefined,
         submitter: state.datasetOwnerFilter === 'my-datasets' ? props.currentUser.id : undefined,
         project: state.datasetOwnerFilter === 'project-datasets' ? props.project.id : undefined,
         metadataType: 'Imaging MS',
@@ -74,26 +86,31 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
       offset: (state.offset - 1) * state.pageSize,
     }))
 
-    const {
-      result: datasetResult,
-      refetch: datasetsRefetch,
-    } = useQuery<{allDatasets: DatasetDetailItem}>(datasetListItemsQuery, queryVars)
-    const datasets = computed(() => datasetResult.value != null ? datasetResult.value.allDatasets : null)
+    const { result: datasetResult, refetch: datasetsRefetch } = useQuery<{ allDatasets: DatasetDetailItem }>(
+      datasetListItemsQuery,
+      queryVars
+    )
+    const datasets = computed(() => (datasetResult.value != null ? datasetResult.value.allDatasets : null))
 
     const {
       result: projectDatasetsResult,
       refetch: projectDatasetsRefetch,
       onResult: onProjectDatasetsResult,
-    } = useQuery<{allDatasets: DatasetListItem[]}>(datasetListItemsQuery,
-      () => ({ dFilter: { project: props.project?.id } }))
-    const projectDatasets = computed(() => projectDatasetsResult.value != null
-      ? projectDatasetsResult.value.allDatasets : null)
+    } = useQuery<{ allDatasets: DatasetListItem[] }>(datasetListItemsQuery, () => ({
+      dFilter: { project: props.project?.id },
+    }))
+    const projectDatasets = computed(() =>
+      projectDatasetsResult.value != null ? projectDatasetsResult.value.allDatasets : null
+    )
 
-    const setDefaultSelectedDatasets = (defaultPageSize : number = 5) => {
+    const setDefaultSelectedDatasets = (defaultPageSize: number = 5) => {
       state.selectedDatasets.forEach((dataset: any) => {
         if (Array.isArray(datasets.value) && datasets.value.find((row: any) => row?.id === dataset?.id)) {
-            // @ts-ignore
-            table.value!.toggleRowSelection(datasets.value.find((row: any) => row?.id === dataset?.id), true)
+          // @ts-ignore
+          table.value!.toggleRowSelection(
+            datasets.value.find((row: any) => row?.id === dataset?.id),
+            true
+          )
         }
       })
 
@@ -101,7 +118,7 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
       state.pageSize = defaultPageSize
     }
 
-    onProjectDatasetsResult(async(result) => {
+    onProjectDatasetsResult(async () => {
       state.selectedDatasets = projectDatasets.value
     })
 
@@ -110,20 +127,19 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
       setDefaultSelectedDatasets()
     }
 
-    const onDialogClose = async() => {
+    const onDialogClose = async () => {
       state.datasetOwnerFilter = 'project-datasets'
       await projectDatasetsRefetch()
       await datasetsRefetch()
     }
 
-    const {
-      result: datasetCountResult,
-      loading: datasetCountLoading,
-      refetch: datasetsCountRefetch,
-    } = useQuery<{countDatasetsPerGroup: any}>(countDatasetsByStatusQuery, queryVars)
-    const datasetCount = computed(() => datasetCountResult.value != null
-      ? datasetCountResult.value.countDatasetsPerGroup?.counts[0]?.count : null)
-
+    const { result: datasetCountResult, refetch: datasetsCountRefetch } = useQuery<{ countDatasetsPerGroup: any }>(
+      countDatasetsByStatusQuery,
+      queryVars
+    )
+    const datasetCount = computed(() =>
+      datasetCountResult.value != null ? datasetCountResult.value.countDatasetsPerGroup?.counts[0]?.count : 0
+    )
     const handleClose = () => {
       emit('close')
     }
@@ -154,7 +170,7 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
       state.pageSize = value
     }
 
-    const handleUpdate = async() => {
+    const handleUpdate = async () => {
       const selectedDatasetIds = state.selectedDatasets.map((ds: any) => ds.id)
       const defaultDatasetIds = projectDatasets.value!.map((ds: any) => ds.id)
       const removedDatasetIds = defaultDatasetIds.filter((dsId: string) => !selectedDatasetIds.includes(dsId))
@@ -162,7 +178,7 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
       try {
         state.isSubmitting = true
         if (addedDatasetIds.length > 0 || removedDatasetIds.length > 0) {
-          await $apollo.mutate({
+          await apolloClient.mutate({
             mutation: importDatasetsIntoProjectMutation,
             variables: { projectId: props.project?.id, datasetIds: addedDatasetIds, removedDatasetIds },
           })
@@ -195,107 +211,86 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
       return 'prev,pager,next,sizes'
     }
 
-    const dateFormatter = (row: any, column: any, cellValue: any, index: number) => {
+    const dateFormatter = (row: any, column: any, cellValue: any) => {
       return moment(cellValue).format('D MMMM, YYYY')
     }
 
     return () => {
-      const {
-        visible, currentUser,
-      } = props
+      const { visible, currentUser } = props
       const selectedDatasetIds = (state.selectedDatasets || []).map((ds: any) => ds.id)
       const defaultDatasetIds = (projectDatasets.value || []).map((ds: any) => ds.id)
       const removedDatasetIds = defaultDatasetIds.filter((dsId: string) => !selectedDatasetIds.includes(dsId))
       const addedDatasetIds = selectedDatasetIds.filter((dsId: string) => !defaultDatasetIds.includes(dsId))
 
+      // @ts-ignore
+      // @ts-ignore
       return (
-        <Dialog
-          customClass='project-datasets-dialog'
-          visible={visible}
+        <ElDialog
+          class="project-datasets-dialog"
+          modelValue={visible}
           append-to-body
           title={'Add or remove datasets in this project'}
           lockScroll={false}
           onOpened={onDialogOpen}
           onClosed={onDialogClose}
-          onClose={handleClose}>
+          onClose={handleClose}
+        >
           <div class="mt-6">
-            <div class='filter-box'>
-              <Select
-                class='select-box-mini'
-                value={state.datasetOwnerFilter}
+            <div class="filter-box">
+              <ElSelect
+                class="select-box-mini"
+                modelValue={state.datasetOwnerFilter}
                 onChange={handleGroupSelect}
-                placeholder='5%'
-                size='mini'>
-                <Option label="All datasets" value={'all-datasets'}/>
-                <Option label="My datasets" value={'my-datasets'}/>
-                <Option label="Project datasets" value={'project-datasets'}/>
-                {
-                  currentUser
-                && Array.isArray(currentUser.groups)
-                && currentUser.groups.map((item: any) => <Option label={item.group.label} value={item.group.id}/>)
-                }
-              </Select>
-              <Input
-                class='query-filter'
-                value={state.nameFilter}
+                placeholder="5%"
+                size="small"
+              >
+                <ElOption label="All datasets" value={'all-datasets'} />
+                <ElOption label="My datasets" value={'my-datasets'} />
+                <ElOption label="Project datasets" value={'project-datasets'} />
+                {currentUser &&
+                  Array.isArray(currentUser.groups) &&
+                  currentUser.groups.map((item: any) => <ElOption label={item.group.label} value={item.group.id} />)}
+              </ElSelect>
+              <ElInput
+                class="query-filter"
+                modelValue={state.nameFilter}
                 onInput={handleQueryChange}
-                size='mini'
-                placeholder='Enter dataset name'
+                size="small"
+                placeholder="Enter dataset name"
               />
             </div>
-            <div class='table-box mt-2'>
-              <Table
-                id="annot-table"
+            <div class="table-box mt-2">
+              <ElTable
                 ref={table}
-                data={datasets.value || []}
-                size="mini"
-                current
-                elementLoadingText="Loading results …"
+                onSelection-change={state.handleSelectionDisabled ? () => {} : handleSelectionChange}
+                data={(datasets.value || []) as any}
+                size="small"
+                element-loading-text="Loading results …"
                 width="100%"
                 stripe
-                {...{
-                  on: {
-                    'selection-change': state.handleSelectionDisabled ? () => {} : handleSelectionChange,
-                  },
-                }}
                 rowKey="id"
-                tabindex="1">
-
-                <TableColumn
-                  type="selection"
-                  reserveSelection
-                />
-                <TableColumn
-                  key="name"
-                  property="name"
-                  label="Dataset"
-                  minWidth="100"
-                />
-                <TableColumn
-                  key="submitter.name"
-                  property="submitter.name"
-                  label="Submitter"
-                />
-                <TableColumn
-                  key="uploadDT"
-                  property="uploadDT"
-                  label="Upload date"
-                  formatter={dateFormatter}
-                />
-              </Table>
+              >
+                <ElTableColumn type="selection" reserveSelection />
+                <ElTableColumn key="name" property="name" label="Dataset" minWidth="100" />
+                <ElTableColumn key="submitter.name" property="submitter.name" label="Submitter" />
+                <ElTableColumn key="uploadDT" property="uploadDT" label="Upload date" formatter={dateFormatter} />
+              </ElTable>
             </div>
-            <Pagination
-              class='mt-2'
-              total={datasetCount.value}
-              pageSize={state.pageSize}
-              pageSizes={pageSizes}
-              currentPage={state.offset}
-              {...{ on: { 'update:currentPage': handlePageChange } }}
-              {...{ on: { 'update:pageSize': handlePageSizeChange } }}
-              layout={paginationLayout()}
-            />
+
+            {datasetCount.value > 0 && (
+              <ElPagination
+                class="mt-2"
+                total={datasetCount.value}
+                pageSizes={pageSizes}
+                pageSize={state.pageSize}
+                onSizeChange={handlePageSizeChange}
+                currentPage={state.offset}
+                onCurrentChange={handlePageChange}
+                layout={paginationLayout()}
+              />
+            )}
             <div class="ds-dialog-bt-bar button-bar">
-              <div class='flex-col' style={{ visibility: state.hasChanged ? '' : 'hidden' }}>
+              <div class="flex-col" style={{ visibility: state.hasChanged ? 'visible' : 'hidden' }}>
                 <div style={{ color: 'green' }}>
                   {addedDatasetIds.length > 0 ? `${addedDatasetIds.length} dataset to be added` : ''}
                 </div>
@@ -304,21 +299,20 @@ export const DatasetsDialog = defineComponent<DatasetsDialogProps>({
                 </div>
               </div>
               <div>
-                <Button onClick={handleClose}>
-                  Cancel
-                </Button>
-                <Button
-                  class='w-32'
+                <ElButton onClick={handleClose}>Cancel</ElButton>
+                <ElButton
+                  class="w-32"
                   loading={state.isSubmitting}
                   disabled={!state.hasChanged}
                   type="primary"
-                  onClick={handleUpdate}>
+                  onClick={handleUpdate}
+                >
                   Update
-                </Button>
+                </ElButton>
               </div>
             </div>
           </div>
-        </Dialog>
+        </ElDialog>
       )
     }
   },

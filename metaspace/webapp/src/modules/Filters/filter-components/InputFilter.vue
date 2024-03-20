@@ -1,41 +1,28 @@
 <template>
-  <tag-filter
-    :name="name"
-    :removable="removable"
-    @show="show"
-    @destroy="destroy"
-  >
-    <el-input
-      ref="input"
-      slot="edit"
-      v-model="localValue"
-      type="text"
-      @input="onChange"
-    />
-    <span
-      slot="show"
-      class="tf-value-span"
-    >
-      <span v-if="value">
-        {{ value }}
+  <tag-filter :name="name" :removable="removable" @show="show" @destroy="destroy">
+    <template v-slot:edit>
+      <el-input ref="inputRef" v-model="localValue" type="text" @input="onChange" />
+    </template>
+    <template v-slot:show>
+      <span class="tf-value-span">
+        <span v-if="value">{{ value }}</span>
+        <span v-else class="inline-block w-4" />
       </span>
-      <span
-        v-else
-        class="inline-block w-4"
-      />
-    </span>
+    </template>
   </tag-filter>
 </template>
 
 <script>
+import { defineComponent, ref, watch } from 'vue'
 import { debounce } from 'lodash-es'
 import TagFilter from './TagFilter.vue'
-import Vue from 'vue'
+import { ElInput } from '../../../lib/element-plus'
 
-export default Vue.extend({
+export default defineComponent({
   name: 'InputFilter',
   components: {
     TagFilter,
+    ElInput,
   },
   props: {
     name: String,
@@ -44,36 +31,41 @@ export default Vue.extend({
     mode: { type: String, default: 'text' },
     debounce: Boolean,
   },
-  data(vm) {
-    return {
-      localValue: vm.value,
+  setup(props, { emit }) {
+    const localValue = ref(props.value)
+    const inputRef = ref(null)
+
+    const onChange = (val) => {
+      emit('input', val)
+      emit('change', val)
     }
-  },
-  watch: {
-    value: function() {
-      this.localValue = this.value
-    },
-  },
-  created() {
-    if (this.debounce) {
-      this.onChange = debounce(this.onChange, 500)
+    const debouncedOnChange = props.debounce ? debounce(onChange, 500) : onChange
+
+    const destroy = () => {
+      emit('destroy', props.name)
     }
-  },
-  methods: {
-    onChange(val) {
-      this.$emit('input', val)
-      this.$emit('change', val)
-    },
-    destroy() {
-      this.$emit('destroy', this.name)
-    },
-    show() {
-      if (this.$refs.input) {
-        const componentInstance = this.$refs.input
-        const input = componentInstance.$refs.input
-        input.focus()
+
+    const show = () => {
+      const inputElement = inputRef.value?.$refs.input
+      if (inputElement) {
+        inputElement.focus()
       }
-    },
+    }
+
+    watch(
+      () => props.value,
+      (newValue) => {
+        localValue.value = newValue
+      }
+    )
+
+    return {
+      localValue,
+      inputRef,
+      onChange: debouncedOnChange,
+      destroy,
+      show,
+    }
   },
 })
 </script>

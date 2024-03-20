@@ -1,13 +1,13 @@
-import { mount } from '@vue/test-utils'
-import Vue from 'vue'
 import { DatasetComparisonAnnotationTable } from './DatasetComparisonAnnotationTable'
-import Vuex from 'vuex'
-import { sync } from 'vuex-router-sync'
+import { nextTick, h, defineComponent } from 'vue'
+import { mount, flushPromises } from '@vue/test-utils'
 import store from '../../../store'
 import router from '../../../router'
 
 describe('DatasetComparisonAnnotationTable', () => {
-  const mockHandleRowChange = jest.fn((idx: number) => { return idx })
+  const mockHandleRowChange = vi.fn((idx: number) => {
+    return idx
+  })
   const propsData = {
     isLoading: false,
     annotations: [
@@ -65,32 +65,40 @@ describe('DatasetComparisonAnnotationTable', () => {
     onRowChange: mockHandleRowChange,
   }
 
-  const testHarness = Vue.extend({
+  const testHarness = defineComponent({
     components: {
       DatasetComparisonAnnotationTable,
     },
-    render(h) {
-      return h(DatasetComparisonAnnotationTable, { props: this.$attrs })
+    setup(props, { attrs }) {
+      return () => h(DatasetComparisonAnnotationTable, { ...attrs, ...props })
     },
   })
 
-  beforeAll(() => {
-    Vue.use(Vuex)
-    sync(store, router)
+  it('it should match snapshot', async () => {
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+      },
+      props: propsData,
+    })
+
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.html()).toMatchSnapshot()
   })
 
-  it('it should match snapshot', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
+  it('it should match total count with number of annotations', async () => {
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+      },
+      props: propsData,
+    })
 
-    expect(wrapper).toMatchSnapshot()
-  })
+    await flushPromises()
+    await nextTick()
 
-  it('it should match total count with number of annotations', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
-
-    expect(wrapper.find('#annot-count').text())
-      .toBe(`${propsData.annotations.length} matching records`)
+    expect(wrapper.find('#annot-count').text()).toBe(`${propsData.annotations.length} matching records`)
   })
 })

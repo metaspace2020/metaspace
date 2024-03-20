@@ -10,45 +10,34 @@
     >
       <molecular-formula :ion="annotation.ion" />
 
-      <span
-        v-if="annotation.id in channelSwatches"
-        class="flex"
-      >
+      <span v-if="annotation.id in channelSwatches" class="flex">
         <i
           class="block mt-1 w-3 h-3 mx-1 box-content border border-solid border-gray-400 rounded-full"
           :style="{ background: channelSwatches[annotation.id] }"
         />
       </span>
-      <span
-        v-if="highlightByIon && annotation.ion in channelSwatchesByIon"
-        class="flex"
-      >
+      <span v-if="highlightByIon && annotation.ion in channelSwatchesByIon" class="flex">
         <i
           class="block mt-1 w-3 h-3 mx-1 box-content border border-solid border-gray-400 rounded-full"
           :style="{ background: channelSwatchesByIon[annotation.ion] }"
         />
       </span>
     </candidate-molecules-popover>
-    <filter-icon
-      v-if="!hasCompoundNameFilter"
-      class="cell-filter-button"
-      @click="handleFilter"
-    >
+    <filter-icon v-if="!hasCompoundNameFilter" class="cell-filter-button" @click="handleFilter">
       <title>Limit results to this molecular formula</title>
     </filter-icon>
   </div>
 </template>
 
 <script>
-import { defineComponent, computed } from '@vue/composition-api'
-import FilterIcon from '../../assets/inline/filter.svg'
+import { defineComponent, computed, inject, defineAsyncComponent } from 'vue'
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
+import MolecularFormula from '../../components/MolecularFormula'
 import { useChannelSwatches } from '../ImageViewer/ionImageState'
 import useFilter from '../../lib/useFilter'
-import MolecularFormula from '../../components/MolecularFormula'
 import { channels as channelToRGB } from '../../lib/getColorScale'
 
-const channelSwatches = useChannelSwatches()
+const FilterIcon = defineAsyncComponent(() => import('../../assets/inline/filter.svg'))
 
 /**
  * This table cell has been extracted to minimize redraws of CandidateMoleculePopover.
@@ -65,15 +54,17 @@ export default defineComponent({
     FilterIcon,
   },
   props: ['annotation', 'highlightByIon'],
-  setup(props, { root }) {
-    const { $store } = root
-    const compoundNameFilter = useFilter($store, 'compoundName')
+  setup(props) {
+    const store = inject('store') // Inject the store
+    const compoundNameFilter = useFilter(store, 'compoundName')
     const hasCompoundNameFilter = computed(() => compoundNameFilter.value != null)
-    const handleFilter = () => { compoundNameFilter.value = props.annotation.sumFormula }
-    const orderedLayers = computed(() => $store.state.channels)
+    const handleFilter = () => {
+      compoundNameFilter.value = props.annotation.sumFormula
+    }
+    const orderedLayers = computed(() => store.state.channels)
     const channelSwatchesByIon = computed(() => {
       const swatches = {}
-      if ($store.state.mode === 'MULTI' && props.highlightByIon) {
+      if (store.state.mode === 'MULTI' && props.highlightByIon) {
         for (const layer of orderedLayers.value) {
           swatches[layer.id] = channelToRGB[layer.settings.channel]
         }
@@ -83,7 +74,7 @@ export default defineComponent({
 
     return {
       hasCompoundNameFilter,
-      channelSwatches,
+      channelSwatches: useChannelSwatches(),
       channelSwatchesByIon,
       handleFilter,
     }

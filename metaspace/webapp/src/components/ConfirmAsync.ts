@@ -1,16 +1,6 @@
-import {
-  ElMessageBoxComponent,
-  ElMessageBoxOptions,
-  MessageBoxCloseAction,
-} from 'element-ui/types/message-box'
+import { ElMessageBox } from '../lib/element-plus'
 import reportError from '../lib/reportError'
-import Vue from 'vue'
 import './ConfirmAsync.scss'
-
-interface ExtraOptions {
-  confirmButtonLoadingText?: string;
-}
-type ValueOrCallback<T> = T | ((...args: any[]) => T);
 
 /**
  * Decorator that prompts the user with a dialog, only calls the wrapped function if the user confirms,
@@ -39,56 +29,40 @@ type ValueOrCallback<T> = T | ((...args: any[]) => T);
  *
  *
  */
-function ConfirmAsync(options: ValueOrCallback<ElMessageBoxOptions & ExtraOptions>) {
-  return function decorate<This extends Vue, T extends(this: This, ...args: any[])
-    => Promise<any>>(target: This, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) {
-    const originalFunc = descriptor.value as any as Function
 
-    async function wrappedFunc(this: This, ...args: any[]) {
-      const { confirmButtonLoadingText, showInput, ...baseOptions } = typeof options === 'function'
-        ? options.apply(this, args)
-        : options
-
-      try {
-        await this.$msgbox({
-          showCancelButton: true,
-          lockScroll: false,
-          showInput,
-          customClass: 'confirm-async-message-box',
-          ...baseOptions,
-          beforeClose: async(action: MessageBoxCloseAction, instance: ElMessageBoxComponent, done: Function) => {
-            const originalConfirmText = instance.confirmButtonText
-            if (action === 'confirm') {
-              instance.confirmButtonLoading = true
-              if (confirmButtonLoadingText != null) {
-                instance.confirmButtonText = confirmButtonLoadingText
-              }
-              try {
-                // if showInput is used, append the input value to `args`
-                const newArgs = showInput ? args.concat([instance.inputValue]) : args
-                await originalFunc.apply(this, newArgs)
-              } catch (err) {
-                reportError(err)
-              } finally {
-                // Restore instance to its previous state, because MessageBox keeps some state even after closing
-                instance.confirmButtonLoading = false
-                instance.confirmButtonText = originalConfirmText
-                done()
-              }
-            } else {
-              done()
-            }
-          },
-        })
-      } catch {
-        /* User clicked cancel */
-      }
-    }
-    return {
-      ...descriptor,
-      value: wrappedFunc,
-    }
-  }
+interface ConfirmAsyncOptions {
+  confirmButtonLoadingText?: string
+  title?: string
+  message?: string
+  showInput?: boolean
+  inputPlaceholder?: string
+  inputPattern?: RegExp
+  inputErrorMessage?: string
 }
 
-export default ConfirmAsync
+export function useConfirmAsync() {
+  const confirmAsync = async (options: ConfirmAsyncOptions, action: (...args: any[]) => Promise<any>) => {
+    const { ...baseOptions } = options
+
+    try {
+      const result = await ElMessageBox.confirm(baseOptions.message, baseOptions.title, {
+        ...baseOptions,
+        showInput: baseOptions.showInput,
+        inputPattern: baseOptions.inputPattern,
+        inputErrorMessage: baseOptions.inputErrorMessage,
+        customClass: 'confirm-async-message-box',
+      })
+
+      try {
+        const args = baseOptions.showInput ? [result] : []
+        await action(...args)
+      } catch (err) {
+        reportError(err)
+      }
+    } catch {
+      /* User clicked cancel or closed the dialog */
+    }
+  }
+
+  return confirmAsync
+}

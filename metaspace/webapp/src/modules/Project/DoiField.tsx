@@ -1,6 +1,5 @@
-import { defineComponent, computed } from '@vue/composition-api'
-import { Input } from '../../lib/element-ui'
-
+import { defineComponent, ref, watch } from 'vue'
+import { ElInput } from '../../lib/element-plus'
 import * as Form from '../../components/Form'
 
 export const DOI_ORG_DOMAIN = 'https://doi.org/'
@@ -9,51 +8,57 @@ interface Props {
   value: string
 }
 
-const DoiField = defineComponent<Props>({
-  inheritAttrs: false,
+export default defineComponent({
+  name: 'DoiField',
   props: {
-    value: String,
+    modelValue: {
+      type: String,
+      default: '',
+    },
+    id: {
+      type: String,
+      default: '',
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
   },
-  setup(props, { attrs, listeners }) {
-    const inputValue = computed(() =>
-      props.value
-        ? props.value.replace(DOI_ORG_DOMAIN, '')
-        : '',
-    )
+  setup(props: Props | any, { emit }) {
+    const inputValue = ref(props.modelValue.replace(DOI_ORG_DOMAIN, ''))
 
+    watch(
+      () => props.modelValue,
+      (newValue) => {
+        inputValue.value = newValue.replace(DOI_ORG_DOMAIN, '')
+      }
+    )
     const onInput = (value: string) => {
-      listeners.input(value.length ? `${DOI_ORG_DOMAIN}${value}` : '')
+      emit('update:modelValue', value.length ? `${DOI_ORG_DOMAIN}${value}` : '')
     }
+
+    const appendContent = () => (
+      <a href={props.modelValue || null} target="_blank" rel="noopener" class="text-inherit">
+        Test link
+      </a>
+    )
 
     return () => (
       <div>
-        <label for={attrs.id}>
-          <Form.PrimaryLabelText>
-            Publication DOI
-          </Form.PrimaryLabelText>
-          <Form.SecondaryLabelText>
-            Should link to the published paper
-          </Form.SecondaryLabelText>
+        <label for={props.id}>
+          <Form.PrimaryLabelText>Publication DOI</Form.PrimaryLabelText>
+          <Form.SecondaryLabelText>Should link to the published paper</Form.SecondaryLabelText>
         </label>
-        <Input
-          id={attrs.id}
-          disabled={attrs.disabled}
-          onInput={onInput}
-          value={inputValue.value}
-        >
-          <span slot="prepend">{DOI_ORG_DOMAIN}</span>
-          <span slot="append">
-            <a
-              href={props.value || null}
-              target="_blank"
-              rel="noopener"
-              class="text-inherit"
-            >Test link</a>
-          </span>
-        </Input>
+        <ElInput
+          id={props.id}
+          modelValue={inputValue.value}
+          {...{ 'onUpdate:modelValue': onInput }}
+          v-slots={{
+            prepend: () => <span>{DOI_ORG_DOMAIN}</span>,
+            append: appendContent,
+          }}
+        />
       </div>
     )
   },
 })
-
-export default DoiField

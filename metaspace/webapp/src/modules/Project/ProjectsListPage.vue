@@ -1,46 +1,25 @@
 <template>
   <div class="page">
     <create-project-dialog
-      :visible="showCreateProjectDialog && currentUser != null"
+      v-if="currentUser != null"
+      :visible="showCreateProjectDialog"
       :current-user-id="currentUser && currentUser.id"
       @close="handleCloseCreateProject"
       @create="handleProjectCreated"
     />
     <div class="page-content">
-      <div
-        v-if="currentUser"
-        class="flex flex-row items-center justify-end flex-1 w-full py-4"
-      >
-        <el-button
-          type="primary"
-          size="small"
-          @click="handleOpenCreateProject"
-        >
-          Create project
-        </el-button>
+      <div v-if="currentUser != null" class="flex flex-row items-center justify-end flex-1 w-full py-4">
+        <el-button type="primary" size="default" @click="handleOpenCreateProject"> Create project </el-button>
       </div>
       <div class="header-row">
-        <filter-panel
-          level="projects"
-          :simple-filter-options="simpleFilterOptions"
-        />
-        <div
-          class="flex flex-row items-center justify-end flex-1"
-        >
-          <sort-dropdown
-            class="pb-2"
-            size="default"
-            :options="sortingOptions"
-            @sort="handleSortChange"
-          />
+        <filter-panel level="projects" :simple-filter-options="simpleFilterOptions" />
+        <div class="flex flex-row items-center justify-end flex-1">
+          <sort-dropdown class="pb-2" size="large" :options="sortingOptions" @sort="handleSortChange" />
         </div>
       </div>
 
       <div class="clearfix" />
-      <div
-        v-loading="loading !== 0"
-        style="min-height: 100px;"
-      >
+      <div v-loading="loading" style="min-height: 100px">
         <projects-list-item
           v-for="project in projects"
           :key="project.id"
@@ -48,106 +27,60 @@
           :current-user="currentUser"
           :refresh-data="handleRefreshData"
         />
+        <div
+          v-if="allProjects && allProjectsCount == 0"
+          class="flex items-center justify-center p-4 text-gray-600"
+          style="height: 200px"
+        >
+          No projects found
+        </div>
       </div>
-      <div
-        v-if="projectsCount > pageSize || page !== 1"
-        style="text-align: center;"
-      >
-        <el-pagination
-          :total="projectsCount"
-          :page-size="pageSize"
-          :current-page.sync="page"
-          layout="prev,pager,next"
-        />
+      <div v-if="projectsCount > pageSize || page !== 1" style="text-align: center">
+        <el-pagination :total="projectsCount" :page-size="pageSize" :current-page="page" layout="prev,pager,next" />
       </div>
     </div>
   </div>
 </template>
+
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Watch } from 'vue-property-decorator'
-import {
-  MyProjectsListQuery,
-  myProjectsListQuery,
-  projectsCountQuery,
-  ProjectsListProject,
-  projectsListQuery,
-} from '../../api/project'
-import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
+import { defineComponent, ref, watch, computed, onMounted } from 'vue'
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 import { FilterPanel } from '../Filters'
 import QuickFilterBox from '../Filters/filter-components/SimpleFilterBox.vue'
 import ProjectsListItem from './ProjectsListItem.vue'
 import CreateProjectDialog from './CreateProjectDialog.vue'
 import { getLocalStorage } from '../../lib/localStorage'
-import { SortDropdown } from '../../components/SortDropdown/SortDropdown'
+import SortDropdown from '../../components/SortDropdown/SortDropdown'
+import { myProjectsListQuery, projectsCountQuery, ProjectsListProject, projectsListQuery } from '../../api/project'
+import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
+import { useQuery } from '@vue/apollo-composable'
+import { ElButton, ElLoading, ElPagination } from '../../lib/element-plus'
 
-  @Component<ProjectsListPage>({
-    components: {
-      FilterPanel,
-      ProjectsListItem,
-      CreateProjectDialog,
-      QuickFilterBox,
-      SortDropdown,
-    },
-    apollo: {
-      currentUser: {
-        query: currentUserRoleQuery,
-        fetchPolicy: 'cache-first',
-        loadingKey: 'loading',
-      },
-      allProjects: {
-        query: projectsListQuery,
-        loadingKey: 'loading',
-        skip() {
-          return this.filter !== 'all'
-        },
-        variables() {
-          return {
-            query: this.query,
-            offset: (this.page - 1) * this.pageSize,
-            limit: this.pageSize,
-            orderBy: this.orderBy,
-            sortingOrder: this.sortingOrder,
-          }
-        },
-      },
-      allProjectsCount: {
-        query: projectsCountQuery,
-        skip() {
-          return this.filter !== 'all'
-        },
-        variables() {
-          return {
-            query: this.query,
-          }
-        },
-        update(data: any) {
-          return data.projectsCount
-        },
-      },
-      myProjects: {
-        query: myProjectsListQuery,
-        loadingKey: 'loading',
-        skip() {
-          return this.filter !== 'my'
-        },
-        update(data: MyProjectsListQuery) {
-          return data.myProjects && data.myProjects.projects
-            ? data.myProjects.projects.map(userProject => userProject.project)
-            : []
-        },
-      },
-    },
-  })
-export default class ProjectsListPage extends Vue {
-    loading = 0;
-    currentUser: CurrentUserRoleResult | null = null;
-    allProjects: ProjectsListProject[] | null = null;
-    myProjects: ProjectsListProject[] | null = null;
-    allProjectsCount = 0;
-    orderBy : string = 'ORDER_BY_POPULARITY';
-    sortingOrder : string = 'DESCENDING';
-    sortingOptions: any[] = [
+export default defineComponent({
+  components: {
+    FilterPanel,
+    ProjectsListItem,
+    CreateProjectDialog,
+    // eslint-disable-next-line vue/no-unused-components
+    QuickFilterBox,
+    SortDropdown,
+    ElButton,
+    ElPagination,
+  },
+  directives: {
+    loading: ElLoading.directive,
+  },
+  setup() {
+    const store = useStore()
+    const router = useRouter()
+    const loading = ref(0)
+    const showCreateProjectDialog = ref(false)
+    const page = ref(1)
+    const pageSize = ref(10)
+    const orderBy = ref('ORDER_BY_POPULARITY')
+    const sortingOrder = ref('DESCENDING')
+    const sortingOptions = ref([
       {
         value: 'ORDER_BY_POPULARITY',
         label: 'Project size',
@@ -176,121 +109,173 @@ export default class ProjectsListPage extends Vue {
         value: 'ORDER_BY_MEMBERS_COUNT',
         label: 'Number of members',
       },
-    ]
+    ])
 
-    showCreateProjectDialog = false;
-    page = 1;
-    pageSize = 10;
+    const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, { fetchPolicy: 'cache-first' })
+    const currentUser = computed(() => currentUserResult.value?.currentUser as CurrentUserRoleResult | null)
 
-    get query(): string {
-      return this.$store.getters.filter.simpleQuery || ''
-    }
+    const filter = computed(() => {
+      const simpleFilter = store.getters.filter.simpleFilter
+      return simpleFilter === 'my-projects' && currentUser.value != null ? 'my' : 'all'
+    })
+    const query = computed(() => store.getters.filter.simpleQuery || '')
 
-    get filter(): 'all' | 'my' {
-      const { simpleFilter } = this.$store.getters.filter
-      return simpleFilter === 'my-projects' && this.currentUser != null ? 'my' : 'all'
-    }
+    const { result: allProjectsResult, refetch: refetchAllProjects } = useQuery(
+      projectsListQuery,
+      () => ({
+        query: query.value,
+        offset: (page.value - 1) * pageSize.value,
+        limit: pageSize.value,
+        orderBy: orderBy.value,
+        sortingOrder: sortingOrder.value,
+      }),
+      { fetchPolicy: 'cache-first' }
+    )
 
-    get filteredMyProjects() {
-      if (this.query && this.myProjects != null) {
-        return this.myProjects.filter(p => p.name.toLowerCase().includes(this.query.toLowerCase()))
+    const allProjects = computed(() => allProjectsResult.value?.allProjects as ProjectsListProject[] | null)
+    const { result: allProjectsCountResult, refetch: refetchAllProjectsCount } = useQuery(
+      projectsCountQuery,
+      () => ({
+        query: query.value,
+      }),
+      { fetchPolicy: 'cache-first' }
+    )
+    const allProjectsCount = computed(() => allProjectsCountResult.value?.projectsCount || 0)
+
+    const { result: myProjectsResult, refetch: refetchMyProjects } = useQuery(myProjectsListQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
+
+    const myProjects = computed(() =>
+      myProjectsResult.value?.myProjects?.projects
+        ? myProjectsResult.value?.myProjects?.projects.map((userProject) => userProject.project)
+        : []
+    )
+
+    const filteredMyProjects = computed(() => {
+      if (query.value && myProjects.value != null) {
+        return myProjects.value.filter((p) => p.name.toLowerCase().includes(query.value.toLowerCase()))
       } else {
-        return this.myProjects || []
+        return myProjects.value || []
       }
-    }
+    })
 
-    get projects() {
-      if (this.filter === 'my') {
-        return this.filteredMyProjects.slice((this.page - 1) * this.pageSize, this.page * this.pageSize)
+    const projects = computed(() => {
+      if (filter.value === 'my') {
+        return filteredMyProjects.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
       } else {
-        return this.allProjects
+        return allProjects.value
       }
-    }
+    })
 
-    get projectsCount() {
-      if (this.filter === 'my') {
-        return this.filteredMyProjects.length
+    const projectsCount = computed(() => {
+      if (filter.value === 'my') {
+        return filteredMyProjects.value.length
       } else {
-        return this.allProjectsCount
+        return allProjectsCount.value
       }
-    }
+    })
 
-    get simpleFilterOptions() {
-      if (this.currentUser == null) {
+    const simpleFilterOptions = computed(() => {
+      if (currentUser.value == null) {
         return null
       } else {
-        // due to some misbehaviour from setting initial value from getLocalstorage with null values
-        // on filterSpecs, the filter is being initialized here if user is logged
-        const localSimpleFilter = this.$store.getters.filter.simpleFilter
-          ? this.$store.getters.filter.simpleFilter : (getLocalStorage('simpleFilter') || null)
-        this.$store.commit('updateFilter', {
-          ...this.$store.getters.filter,
-          simpleFilter: localSimpleFilter,
-        })
-
         return [
-          { value: null, label: 'All projects' },
+          { value: '', label: 'All projects' },
           { value: 'my-projects', label: 'My projects' },
         ]
       }
+    })
+
+    watch([query, filter], () => {
+      page.value = 1
+    })
+
+    watch(currentUser, (newValue) => {
+      if (!newValue) return
+      // due to some misbehaviour from setting initial value from getLocalstorage with null values
+      // on filterSpecs, the filter is being initialized here if user is logged
+      const localSimpleFilter = store.getters.filter.simpleFilter
+        ? store.getters.filter.simpleFilter
+        : getLocalStorage('simpleFilter') || null
+      store.commit('updateFilter', {
+        ...store.getters.filter,
+        simpleFilter: localSimpleFilter,
+      })
+    })
+
+    onMounted(() => {
+      store.commit('updateFilter', store.getters.filter)
+    })
+
+    const handleRefreshData = async () => {
+      await Promise.all([refetchAllProjects(), refetchAllProjectsCount(), refetchMyProjects()])
     }
 
-    @Watch('query')
-    @Watch('tab')
-    resetPagination() {
-      this.page = 1
+    const handleOpenCreateProject = () => {
+      showCreateProjectDialog.value = true
     }
 
-    created() {
-      this.$store.commit('updateFilter', this.$store.getters.filter)
+    const handleCloseCreateProject = () => {
+      showCreateProjectDialog.value = false
     }
 
-    async handleRefreshData() {
-      await Promise.all([
-        this.$apollo.queries.allProjects.refetch(),
-        this.$apollo.queries.myProjects.refetch(),
-        this.$apollo.queries.allProjectsCount.refetch(),
-      ])
+    const handleSortChange = (value: string, order: string) => {
+      orderBy.value = value || 'ORDER_BY_POPULARITY'
+      sortingOrder.value = order || 'DESCENDING'
     }
 
-    handleOpenCreateProject() {
-      this.showCreateProjectDialog = true
+    const handleProjectCreated = async ({ id }: { id: string }) => {
+      handleRefreshData()
+      router.push({ name: 'project', params: { projectIdOrSlug: id } })
     }
 
-    handleCloseCreateProject() {
-      this.showCreateProjectDialog = false
+    return {
+      loading,
+      currentUser,
+      allProjects,
+      myProjects,
+      allProjectsCount,
+      showCreateProjectDialog,
+      page,
+      pageSize,
+      orderBy,
+      sortingOrder,
+      query,
+      filter,
+      projects,
+      projectsCount,
+      handleRefreshData,
+      handleOpenCreateProject,
+      handleCloseCreateProject,
+      handleSortChange,
+      handleProjectCreated,
+      sortingOptions,
+      simpleFilterOptions,
     }
+  },
+})
+</script>
 
-    handleSortChange(value: string, sortingOrder: string) {
-      this.orderBy = !value ? 'ORDER_BY_POPULARITY' : value
-      this.sortingOrder = !sortingOrder ? 'DESCENDING' : sortingOrder
-    }
-
-    handleProjectCreated({ id }: {id: string}) {
-      this.$router.push({ name: 'project', params: { projectIdOrSlug: id } })
-    }
+<style scoped lang="scss">
+.page {
+  display: flex;
+  justify-content: center;
+  min-height: 80vh; // Ensure there's space for the loading spinner before is visible
 }
 
-</script>
-<style scoped lang="scss">
-  .page {
-    display: flex;
-    justify-content: center;
-    min-height: 80vh; // Ensure there's space for the loading spinner before is visible
-  }
+.page-content {
+  width: 800px;
+}
 
-  .page-content {
-    width: 800px;
-  }
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+}
 
-  .header-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-
-  .el-pagination {
-    margin: 10px 0;
-  }
+.el-pagination {
+  margin: 10px 0;
+}
 </style>

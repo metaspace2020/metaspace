@@ -1,24 +1,31 @@
 <template>
-  <form
-    v-bind="$attrs"
-    action="#"
-    @submit.prevent="$listeners.submit"
-  >
+  <form v-bind="attrs" action="#" @submit.prevent="emit('submit')">
     <slot />
   </form>
 </template>
+
 <script lang="ts">
-import Vue from 'vue'
-export default Vue.extend({
-  // for running in .jsx files
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  name: 'FormComponent',
+  emits: ['submit'],
+  setup(props, { emit, attrs }) {
+    return {
+      attrs,
+      emit,
+    }
+  },
 })
 </script>
+
 <style scoped>
-form >>> .el-input {
+form ::v-deep(.el-input) {
   @apply py-1;
 }
-form >>> .sm-form-error .el-input__inner,
-form >>> input:invalid {
+
+form ::v-deep(.sm-form-error .el-input__inner),
+form ::v-deep(input:invalid) {
   @apply border-danger;
 }
 </style>

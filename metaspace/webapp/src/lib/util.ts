@@ -1,12 +1,12 @@
 import { orderBy, zipObject } from 'lodash-es'
 
-type JWT = string;
+type JWT = string
 
 const NORMAL_TO_SUPERSCRIPT = zipObject('0123456789+-', '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻')
 const NORMAL_TO_SUPERSCRIPT_RE = /[0-9+-]/g
 
 export function superscript(s: string): string {
-  return s.replace(NORMAL_TO_SUPERSCRIPT_RE, c => NORMAL_TO_SUPERSCRIPT[c])
+  return s.replace(NORMAL_TO_SUPERSCRIPT_RE, (c: any) => NORMAL_TO_SUPERSCRIPT[c])
 }
 
 export function reorderAdducts(formula: string): string {
@@ -17,7 +17,7 @@ export function reorderAdducts(formula: string): string {
   const [baseFormula, ...components] = formula.split(/(?=[+-])/g)
   const reordered = [
     baseFormula,
-    ...orderBy(components, component => KNOWN_IONIZING_ADDUCTS.includes(component) ? 0 : 1),
+    ...orderBy(components, (component) => (KNOWN_IONIZING_ADDUCTS.includes(component) ? 0 : 1)),
   ]
 
   return reordered.join('')
@@ -25,8 +25,8 @@ export function reorderAdducts(formula: string): string {
 
 export function renderMolFormula(ion: string): string {
   const match = /^(.*?)([+-]\d*)?$/.exec(ion)
-  const formula = match && match[1] || ion
-  const charge = match && match[2] || undefined
+  const formula = (match && match[1]) || ion
+  const charge = (match && match[2]) || undefined
   const formattedCharge = charge ? superscript(charge) : ''
   const formattedFormula = reorderAdducts(formula).replace(/([+-])/g, ' $1 ')
 
@@ -63,7 +63,7 @@ export function checkStatus(response: Response): Response {
   if (response.status >= 200 && response.status < 300) {
     return response
   } else {
-    var error = new Error(response.statusText)
+    const error = new Error(response.statusText)
     throw error
   }
 }
@@ -75,8 +75,19 @@ export async function getJWT(): Promise<JWT> {
   return response.text()
 }
 
-export function decodePayload(jwt: JWT) {
-  return JSON.parse(Buffer.from(jwt.split('.')[1], 'base64').toString())
+export function decodePayload(jwt) {
+  const base64Url = jwt.split('.')[1]
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+  const jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split('')
+      .map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      })
+      .join('')
+  )
+
+  return JSON.parse(jsonPayload)
 }
 
 export function mzFilterPrecision(value: number | string): string {
@@ -90,12 +101,21 @@ export function mzFilterPrecision(value: number | string): string {
   }
 }
 
-export interface WheelEventCompat extends WheelEvent { wheelDelta?: number }
+export interface WheelEventCompat extends WheelEvent {
+  wheelDelta?: number
+}
 export function scrollDistance(event: WheelEventCompat) {
   let sY = 0
-  if ('detail' in event) { sY = event.detail * 2 }
-  if ('wheelDelta' in event) { sY = -event.wheelDelta! / 120 }
-  if (('deltaY' in event) && !sY) { sY = (event.deltaY < 1) ? -1 : 1 }
+  if ('detail' in event) {
+    sY = event.detail * 2
+  }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  if ('wheelDelta' in event) {
+    sY = -event.wheelDelta! / 120
+  }
+  if ('deltaY' in event && !sY) {
+    sY = event.deltaY < 1 ? -1 : 1
+  }
   return sY
 }
 
@@ -110,7 +130,7 @@ export function getOS() {
   const macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K']
   const windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE']
   const iosPlatforms = ['iPhone', 'iPad', 'iPod']
-  let os = null
+  let os: any = null
 
   if (macosPlatforms.indexOf(platform) !== -1) {
     os = 'Mac OS'

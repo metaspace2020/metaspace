@@ -5,143 +5,87 @@
     <nav class="text-sm leading-5">
       <ul class="list-none">
         <li>
-          <a href="#confirm-prompt">
-            Confirm Prompt
-          </a>
+          <a href="#confirm-prompt"> Confirm Prompt </a>
         </li>
         <li>
-          <a href="#copy-button">
-            Copy Button
-          </a>
+          <a href="#copy-button"> Copy Button </a>
         </li>
         <li>
-          <a href="#elapsed-time">
-            Elapsed Time
-          </a>
+          <a href="#elapsed-time"> Elapsed Time </a>
         </li>
         <li>
-          <a href="#fade-transition">
-            Fade Transition
-          </a>
+          <a href="#fade-transition"> Fade Transition </a>
         </li>
         <li>
-          <a href="#mini-switch">
-            Mini-switch
-          </a>
+          <a href="#mini-switch"> Mini-switch </a>
         </li>
         <li>
-          <a href="#molecular-formula">
-            Molecular Formula
-          </a>
+          <a href="#molecular-formula"> Molecular Formula </a>
         </li>
         <li>
-          <a href="#new-feature-badge">
-            New Feature Badge
-          </a>
+          <a href="#new-feature-badge"> New Feature Badge </a>
         </li>
         <li>
-          <a href="#progress-ring">
-            Progress Ring
-          </a>
+          <a href="#progress-ring"> Progress Ring </a>
         </li>
         <li>
-          <a href="#rich-text-editor">
-            Rich Text Editor
-          </a>
+          <a href="#rich-text-editor"> Rich Text Editor </a>
         </li>
         <li>
-          <a href="#rich-text-area">
-            Rich Text Area
-          </a>
+          <a href="#rich-text-area"> Rich Text Area </a>
         </li>
         <li>
-          <a href="#slider">
-            Slider
-          </a>
+          <a href="#slider"> Slider </a>
         </li>
         <li>
-          <a href="#range-slider">
-            Range Slider
-          </a>
+          <a href="#range-slider"> Range Slider </a>
         </li>
         <li>
-          <a href="#uppy-uploader">
-            Uppy Uploader
-          </a>
+          <a href="#uppy-uploader"> Uppy Uploader </a>
         </li>
         <li>
-          <a href="#workflow">
-            Workflow
-          </a>
+          <a href="#workflow"> Workflow </a>
         </li>
       </ul>
     </nav>
-    <h2 id="confirm-prompt">
-      Confirm Prompt
-    </h2>
+    <h2 id="confirm-prompt">Confirm Prompt</h2>
     <p>Function version of <code>ConfirmAsync</code>, for when directives cannot be used.</p>
     <component-example>
-      <el-button @click="showPrompt">
-        Confirm
-      </el-button>
+      <el-button @click="showPrompt"> Confirm </el-button>
     </component-example>
-    <h2 id="copy-button">
-      Copy Button
-    </h2>
+    <h2 id="copy-button">Copy Button</h2>
     <p>Copy pieces of text in one click, useful for formatted text like formulae.</p>
     <props-table>
       <tr>
-        <td>
-          text
-        </td>
+        <td>text</td>
         <td>
           <code>string</code>
         </td>
-        <td>
-          The text to be copied.
-        </td>
+        <td>The text to be copied.</td>
       </tr>
     </props-table>
     <component-example>
       <div class="flex items-center justify-between">
         <span class="inline-flex">
           Lorem Ipsum
-          <copy-button
-            class="-mt-1 ml-1"
-            text="Lorem Ipsum"
-          >
-            Copy to clipboard
-          </copy-button>
+          <copy-button class="-mt-1 ml-1" text="Lorem Ipsum"> Copy to clipboard </copy-button>
         </span>
-        <input
-          placeholder="paste it here"
-          class="w-1/3 text-sm el-input__inner"
-        />
+        <input placeholder="paste it here" class="w-1/3 text-sm el-input__inner" />
       </div>
     </component-example>
-    <h2 id="fade-transition">
-      Fade Transition
-    </h2>
+    <h2 id="fade-transition">Fade Transition</h2>
     <p>Consistent fading in and out. Conditionally show 0 or 1 children inside.</p>
     <component-example>
-      <el-checkbox v-model="fadeIn">
-        visible
-      </el-checkbox>
+      <el-checkbox v-model="fadeIn"> visible </el-checkbox>
       <fade-transition class="ml-6">
-        <span v-if="fadeIn">
-          I am visible
-        </span>
+        <span v-if="fadeIn"> I am visible </span>
       </fade-transition>
     </component-example>
-    <h2 id="elapsed-time">
-      Elapsed Time
-    </h2>
+    <h2 id="elapsed-time">Elapsed Time</h2>
     <p>Display durations in a friendly format. Hover to see the precise time.</p>
     <props-table>
       <tr>
-        <td>
-          date
-        </td>
+        <td>date</td>
         <td>
           <code>string</code>
         </td>
@@ -153,14 +97,12 @@
     <component-example>
       <p class="text-sm leading-5">
         <elapsed-time :date="new Date().toString()" />,
-        <elapsed-time :date="new Date(dateDotNow - (1000 * 60)).toString()" />,
-        <elapsed-time :date="new Date(dateDotNow - (1000 * 60 * 60)).toString()" />,
-        <elapsed-time :date="new Date(dateDotNow - (1000 * 60 * 60 * 24)).toString()" />
+        <elapsed-time :date="new Date(dateDotNow - 1000 * 60).toString()" />,
+        <elapsed-time :date="new Date(dateDotNow - 1000 * 60 * 60).toString()" />,
+        <elapsed-time :date="new Date(dateDotNow - 1000 * 60 * 60 * 24).toString()" />
       </p>
     </component-example>
-    <h2 id="mini-switch">
-      Mini-switch
-    </h2>
+    <h2 id="mini-switch">Mini-switch</h2>
     <p>For tight spaces, setting the thumb to size 3/12px. Same props as <code>el-switch</code>.</p>
     <component-example>
       <el-switch
@@ -169,15 +111,9 @@
         @change="miniSwitch.original = !miniSwitch.original"
       />
       <span class="text-lg mx-3">--></span>
-      <mini-switch
-        :value="miniSwitch.mini"
-        active-text="mini size"
-        @change="miniSwitch.mini = !miniSwitch.mini"
-      />
+      <mini-switch :value="miniSwitch.mini" active-text="mini size" @click="miniSwitch.mini = !miniSwitch.mini" />
     </component-example>
-    <h2 id="molecular-formula">
-      Molecular Formula
-    </h2>
+    <h2 id="molecular-formula">Molecular Formula</h2>
     <p>Proper formatting for formulae, probably the most relevant thing here!</p>
     <props-table>
       <tr>
@@ -189,46 +125,30 @@
     <component-example>
       <molecular-formula ion="C44H86NO8P+H+" />
     </component-example>
-    <h2 id="new-feature-badge">
-      New Feature Badge
-    </h2>
+    <h2 id="new-feature-badge">New Feature Badge</h2>
     <p>Attention-grabbing badge to indicate a new feature without a description.</p>
     <props-table>
       <tr>
-        <td>
-          feature-key
-        </td>
+        <td>feature-key</td>
         <td>
           <code>string</code>
         </td>
-        <td>
-          Unique key to reference badge in local storage.
-        </td>
+        <td>Unique key to reference badge in local storage.</td>
       </tr>
       <tr>
-        <td>
-          show-until
-        </td>
+        <td>show-until</td>
         <td>
           <code>Date</code>
         </td>
-        <td>
-          Badge is not shown after this date.
-        </td>
+        <td>Badge is not shown after this date.</td>
       </tr>
     </props-table>
     <component-example>
       <new-feature-badge :feature-key="`nfb-example-${dateDotNow}`">
-        <el-button
-          @click="hideFeatureBadge(`nfb-example-${dateDotNow}`)"
-        >
-          Click to acknowledge
-        </el-button>
+        <el-button @click="hideFeatureBadge(`nfb-example-${dateDotNow}`)"> Click to acknowledge </el-button>
       </new-feature-badge>
     </component-example>
-    <h2 id="progress-ring">
-      Progress Ring
-    </h2>
+    <h2 id="progress-ring">Progress Ring</h2>
     <p>Circular SVG progress bar.</p>
     <props-table>
       <tr>
@@ -253,21 +173,16 @@
           class="text-primary bg-gray-100 rounded-full"
           :radius="20"
           :stroke="4"
-          :progress="progress"
+          :progress="parseInt(progress as string, 10)"
         />
-        <el-input
-          v-model="progress"
-          class="w-1/3 inline-block"
-          type="number"
-          :min="0"
-          :max="100"
-        />
+        <el-input v-model="progress" class="w-1/3 inline-block" type="number" :min="0" :max="100" />
       </div>
     </component-example>
-    <h2 id="rich-text-editor">
-      Rich Text Editor
-    </h2>
-    <p>A miniature word processor for long-form text, with keyboard shortcuts. Includes sub and superscripts for formulae.</p>
+    <h2 id="rich-text-editor">Rich Text Editor</h2>
+    <p>
+      A miniature word processor for long-form text, with keyboard shortcuts. Includes sub and superscripts for
+      formulae.
+    </p>
     <props-table>
       <tr>
         <td>content</td>
@@ -291,14 +206,9 @@
       </tr>
     </props-table>
     <component-example>
-      <rich-text
-        placeholder="Tell me a story"
-        :update="richTextUpdate"
-      />
+      <rich-text placeholder="Tell me a story" :update="richTextUpdate" />
     </component-example>
-    <h2 id="rich-text-area">
-      Rich Text Area
-    </h2>
+    <h2 id="rich-text-area">Rich Text Area</h2>
     <p>Form field version of editor. Select text to reveal controls.</p>
     <props-table>
       <tr>
@@ -315,9 +225,7 @@
     <component-example>
       <rich-text-area :update="richTextUpdate" />
     </component-example>
-    <h2 id="slider">
-      Slider
-    </h2>
+    <h2 id="slider">Slider</h2>
     <p>Customizable single-value slider with track-clicking. Supports <code>v-model</code>.</p>
     <props-table>
       <tr>
@@ -349,17 +257,18 @@
     <component-example>
       <form class="flex items-center">
         <slider
-          v-model="sliderValue"
           class="w-1/3"
+          :value="sliderValue"
+          @input="
+            (value) => {
+              sliderValue = value
+            }
+          "
         />
-        <p class="text-sm ml-3">
-          value: {{ sliderValue }}
-        </p>
+        <p class="text-sm ml-3">value: {{ sliderValue }}</p>
       </form>
     </component-example>
-    <h2 id="range-slider">
-      Range Slider
-    </h2>
+    <h2 id="range-slider">Range Slider</h2>
     <p>Double-value slider with track-clicking and overlap prevention. Supports <code>v-model</code>.</p>
     <props-table>
       <tr>
@@ -390,16 +299,21 @@
     </props-table>
     <component-example>
       <form class="w-1/3">
-        <range-slider v-model="rangeSliderValue" />
+        <range-slider
+          :value="rangeSliderValue"
+          @input="
+            (nextRange) => {
+              rangeSliderValue = nextRange
+            }
+          "
+        />
         <p class="text-sm flex items-start justify-between">
           <span>{{ rangeSliderValue[0] }}</span>
           <span>{{ rangeSliderValue[1] }}</span>
         </p>
       </form>
     </component-example>
-    <h2 id="uppy-uploader">
-      Uppy Uploader
-    </h2>
+    <h2 id="uppy-uploader">Uppy Uploader</h2>
     <p>Uploads files using the <a href="https://uppy.io">Uppy framework</a>. Currently supports S3 Multipart only.</p>
     <props-table>
       <tr>
@@ -425,13 +339,9 @@
     </props-table>
     <component-example>
       <uppy-uploader class="mb-3" />
-      <p class="italic text-sm">
-        N.B. this demo does not upload any files.
-      </p>
+      <p class="italic text-sm">N.B. this demo does not upload any files.</p>
     </component-example>
-    <h2 id="workflow">
-      Workflow
-    </h2>
+    <h2 id="workflow">Workflow</h2>
     <p>Break a task into a series of steps. Props below are for the <code>WorkflowStep</code> component.</p>
     <props-table>
       <tr>
@@ -447,45 +357,27 @@
     </props-table>
     <component-example>
       <workflow>
-        <workflow-step
-          :active="workflowStep === 1"
-          :done="workflowStep > 1"
-        >
-          <p class="sm-workflow-header">
-            This is the first step
-          </p>
+        <workflow-step :active="workflowStep === 1" :done="workflowStep > 1">
+          <p class="sm-workflow-header">This is the first step</p>
           <form v-if="workflowStep === 1">
-            <el-button @click="workflowStep = 2">
-              Next
-            </el-button>
+            <el-button @click="workflowStep = 2"> Next </el-button>
           </form>
         </workflow-step>
-        <workflow-step
-          :active="workflowStep === 2"
-          :done="workflowStep > 2"
-        >
-          <p class="sm-workflow-header">
-            This is the second step
-          </p>
+        <workflow-step :active="workflowStep === 2" :done="workflowStep > 2">
+          <p class="sm-workflow-header">This is the second step</p>
           <form v-if="workflowStep === 2">
-            <el-button @click="workflowStep = 3">
-              Next
-            </el-button>
+            <el-button @click="workflowStep = 3"> Next </el-button>
           </form>
         </workflow-step>
-        <workflow-step
-          :active="workflowStep === 3"
-        >
-          <p class="sm-workflow-header">
-            This is the final step
-          </p>
+        <workflow-step :active="workflowStep === 3">
+          <p class="sm-workflow-header">This is the final step</p>
         </workflow-step>
       </workflow>
     </component-example>
   </content-page>
 </template>
 <script lang="ts">
-import { defineComponent, ref, reactive } from '@vue/composition-api'
+import { defineComponent, ref, reactive } from 'vue'
 
 import PropsTable from './PropsTable.vue'
 import ComponentExample from './ComponentExample.vue'
@@ -531,14 +423,19 @@ export default defineComponent({
       hideFeatureBadge,
       rangeSliderValue: ref([0, 100]),
       richTextUpdate: () => Promise.resolve(),
-      showPrompt: () => confirmPrompt({
-        title: '',
-        message: 'Are you sure?',
-        confirmButtonText: 'Yes',
-        confirmButtonLoadingText: 'Confirming...',
-      }, async() => new Promise(resolve => {
-        setTimeout(resolve, 1000)
-      })),
+      showPrompt: () =>
+        confirmPrompt(
+          {
+            title: '',
+            message: 'Are you sure?',
+            confirmButtonText: 'Yes',
+            confirmButtonLoadingText: 'Confirming...',
+          },
+          async () =>
+            new Promise((resolve) => {
+              setTimeout(resolve, 1000)
+            })
+        ),
       sliderValue: ref(0),
       workflowStep: ref(1),
       progress: ref(0),

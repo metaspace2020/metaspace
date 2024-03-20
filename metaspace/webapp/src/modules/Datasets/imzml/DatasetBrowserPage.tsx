@@ -1,12 +1,16 @@
-import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from '@vue/composition-api'
-import { Select, Option, RadioGroup, Radio, InputNumber, Input, RadioButton } from '../../../lib/element-ui'
-import { useQuery } from '@vue/apollo-composable'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref } from 'vue'
 import {
-  getBrowserImage,
-  GetDatasetByIdQuery,
-  getDatasetByIdWithPathQuery,
-  getSpectrum,
-} from '../../../api/dataset'
+  ElSelect,
+  ElOption,
+  ElRadioGroup,
+  ElRadio,
+  ElInputNumber,
+  ElInput,
+  ElRadioButton,
+  ElIcon,
+} from '../../../lib/element-plus'
+import { useQuery } from '@vue/apollo-composable'
+import { getBrowserImage, GetDatasetByIdQuery, getDatasetByIdWithPathQuery, getSpectrum } from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
 import safeJsonParse from '../../../lib/safeJsonParse'
@@ -21,10 +25,12 @@ import FadeTransition from '../../../components/FadeTransition'
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
-import Vue from 'vue'
-import FileSaver from 'file-saver'
+import * as FileSaver from 'file-saver'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
 import { get, uniq } from 'lodash-es'
+import { useRoute } from 'vue-router'
+import { useStore } from 'vuex'
+import { InfoFilled, Loading } from '@element-plus/icons-vue'
 
 interface GlobalImageSettings {
   resetViewPort: boolean
@@ -35,10 +41,6 @@ interface GlobalImageSettings {
   selectedLockTemplate: string | null
   globalLockedIntensities: [number | undefined, number | undefined]
   showOpticalImage: boolean
-}
-
-interface DatasetBrowserProps {
-  className: string
 }
 
 interface DatasetBrowserState {
@@ -88,7 +90,7 @@ const VIEWS = {
   KENDRICK: 'Kendrick plot',
 }
 
-export default defineComponent<DatasetBrowserProps>({
+export default defineComponent({
   name: 'DatasetBrowserPage',
   props: {
     className: {
@@ -96,8 +98,9 @@ export default defineComponent<DatasetBrowserProps>({
       default: 'dataset-browser',
     },
   },
-  setup: function(props, ctx) {
-    const { $route, $store } = ctx.root
+  setup: function () {
+    const route = useRoute()
+    const store = useStore()
     const state = reactive<DatasetBrowserState>({
       dataRange: { maxX: 0, maxY: 0, minX: 0, minY: 0 },
       peakFilter: PEAK_FILTER.ALL,
@@ -146,10 +149,10 @@ export default defineComponent<DatasetBrowserProps>({
     const container = ref<any>(null)
 
     const queryVariables = () => {
-      const filter = $store.getters.gqlAnnotationFilter
-      const dFilter = $store.getters.gqlDatasetFilter
-      const colocalizationCoeffFilter = $store.getters.gqlColocalizationFilter
-      const query = $store.getters.ftsQuery
+      const filter = store.getters.gqlAnnotationFilter
+      const dFilter = store.getters.gqlDatasetFilter
+      const colocalizationCoeffFilter = store.getters.gqlColocalizationFilter
+      const query = store.getters.ftsQuery
 
       return {
         filter,
@@ -164,15 +167,15 @@ export default defineComponent<DatasetBrowserProps>({
       }
     }
 
-    const datasetId = computed(() => $route.params.dataset_id)
-    const {
-      result: datasetResult,
-      onResult: onDatasetsResult,
-    } = useQuery<GetDatasetByIdQuery>(getDatasetByIdWithPathQuery, {
-      id: datasetId,
-    })
+    const datasetId = computed(() => route.params.dataset_id)
+    const { result: datasetResult, onResult: onDatasetsResult } = useQuery<GetDatasetByIdQuery>(
+      getDatasetByIdWithPathQuery,
+      () => ({
+        id: datasetId.value,
+      })
+    )
 
-    onDatasetsResult(async(result) => {
+    onDatasetsResult(async (result) => {
       try {
         const dataset = result!.data.dataset
 
@@ -218,52 +221,53 @@ export default defineComponent<DatasetBrowserProps>({
         fdrLevel: state.fdrFilter,
         databaseId: state.databaseFilter,
       },
-      dFilter: { ...queryVariables().dFilter, ids: datasetId },
+      dFilter: { ...queryVariables().dFilter, ids: datasetId.value },
     }))
 
     const imageQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
 
-    const {
-      result: browserResult,
-      onResult: onImageResult,
-    } = useQuery<any>(getBrowserImage, () => ({
-      datasetId: datasetId,
-      mzLow: state.mzLow,
-      mzHigh: state.mzHigh,
-    }),
-    imageQueryOptions)
+    const { result: browserResult, onResult: onImageResult } = useQuery<any>(
+      getBrowserImage,
+      () => ({
+        datasetId: datasetId.value,
+        mzLow: state.mzLow,
+        mzHigh: state.mzHigh,
+      }),
+      imageQueryOptions
+    )
 
     const spectrumQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
 
-    const {
-      result: spectrumResult,
-      onResult: onSpectrumResult,
-    } = useQuery<any>(getSpectrum, () => ({ datasetId: datasetId, x: state.x, y: state.y }),
-      spectrumQueryOptions)
+    const { result: spectrumResult, onResult: onSpectrumResult } = useQuery<any>(
+      getSpectrum,
+      () => ({ datasetId: datasetId.value, x: state.x, y: state.y }),
+      spectrumQueryOptions
+    )
+    const pixelSpectrum = computed(() => spectrumResult.value.pixelSpectrum)
 
     const buildChartData = (ints: any, mzs: any) => {
-      let maxX : number = 0
-      let minX : number = -1
-      let maxY : number = 0
-      let minY : number = -1
-      const addedIndexes : number[] = []
-      const auxData : any[] = []
-      const unAnnotItemStyle : any = {
+      let maxX: number = 0
+      let minX: number = -1
+      let maxY: number = 0
+      let minY: number = -1
+      const addedIndexes: number[] = []
+      const auxData: any[] = []
+      const unAnnotItemStyle: any = {
         color: '#DC3220',
       }
-      const annotItemStyle : any = {
+      const annotItemStyle: any = {
         color: '#005AB5',
       }
-      const exactMass : number = state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz
-      const threshold : number = 1
+      const exactMass: number = state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz
+      const threshold: number = 1
 
       if (state.peakFilter !== PEAK_FILTER.OFF) {
-        const annotatedPeaks : any = {}
+        const annotatedPeaks: any = {}
 
         // build tooltips databases
         annotations.value.forEach((annotation: any) => {
-          let tooltip : string = ''
-          const mz : number = annotation.mz
+          let tooltip: string = ''
+          const mz: number = annotation.mz
 
           annotation.possibleCompounds.forEach((compound: any) => {
             tooltip += compound.name.substring(0, 50) + (compound.name.length > 50 ? '...' : '') + '<br>'
@@ -275,7 +279,8 @@ export default defineComponent<DatasetBrowserProps>({
 
           if (!annotatedPeaks[annotation.database][mz]) {
             annotatedPeaks[annotation.database][mz] =
-              Object.keys(annotatedPeaks).length === 1 ? `Candidate molecules ${annotation.database}: <br>` + tooltip
+              Object.keys(annotatedPeaks).length === 1
+                ? `Candidate molecules ${annotation.database}: <br>` + tooltip
                 : `<br>Candidate molecules ${annotation.database}: <br>` + tooltip
           } else {
             annotatedPeaks[annotation.database][mz] = tooltip
@@ -283,13 +288,15 @@ export default defineComponent<DatasetBrowserProps>({
         })
 
         annotations.value.forEach((annotation: any) => {
-          const mz : number = annotation.mz
-          const mzLow : number = mz - (mz * state.mzmShiftFilter! * 1e-6) // ppm
-          const mzHigh : number = mz + (mz * state.mzmShiftFilter! * 1e-6) // ppm
-          const inRangeIdx : number = mzs.findIndex((value: number) => { return value >= mzLow && value <= mzHigh })
+          const mz: number = annotation.mz
+          const mzLow: number = mz - mz * state.mzmShiftFilter! * 1e-6 // ppm
+          const mzHigh: number = mz + mz * state.mzmShiftFilter! * 1e-6 // ppm
+          const inRangeIdx: number = mzs.findIndex((value: number) => {
+            return value >= mzLow && value <= mzHigh
+          })
           if (inRangeIdx !== -1) {
-            const int : number = ints[inRangeIdx]
-            const kendrickMass = mz * Math.round(exactMass) / exactMass
+            const int: number = ints[inRangeIdx]
+            const kendrickMass = (mz * Math.round(exactMass)) / exactMass
             const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
             const radius = Math.log10(int / threshold)
 
@@ -310,23 +317,23 @@ export default defineComponent<DatasetBrowserProps>({
 
             let tooltip = ''
             Object.keys(annotatedPeaks).forEach((db: any) => {
-              const auxItem : any = annotatedPeaks[db]
-              Object.keys(auxItem).forEach((hashMz:any) => {
+              const auxItem: any = annotatedPeaks[db]
+              Object.keys(auxItem).forEach((hashMz: any) => {
                 if (parseFloat(hashMz) === mz) {
                   tooltip += auxItem[hashMz]
                 }
               })
             })
 
-            const dbs : any = tooltip.split('Candidate molecules ')
+            const dbs: any = tooltip.split('Candidate molecules ')
             let finalTooltip: any = ''
             dbs.forEach((db: any, dbIdx: number) => {
-              const mols : any = uniq(db.split('<br>'))
+              const mols: any = uniq(db.split('<br>'))
               if (mols[0]) {
-                finalTooltip += dbIdx > 1 ? `<br>Candidate molecules ${mols[0]}<br>`
-                  : `Candidate molecules ${mols[0]}<br>`
-                finalTooltip += mols.slice(1, 6).join('<br>')
-                  + `${mols.length > 7 ? `<br>and more ${(mols.length - 7)}...` : ''}<br>`
+                finalTooltip +=
+                  dbIdx > 1 ? `<br>Candidate molecules ${mols[0]}<br>` : `Candidate molecules ${mols[0]}<br>`
+                finalTooltip +=
+                  mols.slice(1, 6).join('<br>') + `${mols.length > 7 ? `<br>and more ${mols.length - 7}...` : ''}<br>`
               }
             })
 
@@ -365,10 +372,10 @@ export default defineComponent<DatasetBrowserProps>({
       }
 
       if (state.peakFilter !== PEAK_FILTER.FDR) {
-        mzs.forEach((mz:any, index: any) => {
+        mzs.forEach((mz: any, index: any) => {
           if (!addedIndexes.includes(index)) {
-            const int : number = ints[index]
-            const kendrickMass = mz * Math.round(exactMass) / exactMass
+            const int: number = ints[index]
+            const kendrickMass = (mz * Math.round(exactMass)) / exactMass
             const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
             const radius = Math.log10(int / threshold)
 
@@ -423,7 +430,7 @@ export default defineComponent<DatasetBrowserProps>({
       state.dataRange = { maxX, maxY, minX, minY }
     }
 
-    onSpectrumResult(async(result) => {
+    onSpectrumResult(async (result: any) => {
       if (result && result.data && result.data.pixelSpectrum) {
         buildChartData(result.data.pixelSpectrum.ints, result.data.pixelSpectrum.mzs)
       }
@@ -450,7 +457,7 @@ export default defineComponent<DatasetBrowserProps>({
       if (container.value && container.value.clientWidth > width) {
         width = container.value.clientWidth
       }
-      if (container && container.value.clientHeight > height) {
+      if (container.value?.clientHeight > height) {
         height = container.value.clientHeight
       }
       if (width !== 0 && height !== 0) {
@@ -479,22 +486,24 @@ export default defineComponent<DatasetBrowserProps>({
       return blob
     }
 
-    onImageResult(async(result) => {
+    onImageResult(async (result) => {
       if (result?.data?.browserImage?.image) {
         const blob = b64toBlob(result?.data?.browserImage?.image.replace('data:image/png;base64,', ''), 'image/png')
         state.ionImageUrl = URL.createObjectURL(blob)
 
-        let currentAnnotationIdx : number = -1
+        let currentAnnotationIdx: number = -1
 
         if (annotations.value) {
           const theoreticalMz = state.mz as number
           const highestMz = theoreticalMz * 1.000003
           const lowestMz = theoreticalMz * 0.999997
-          currentAnnotationIdx = annotations.value
-            .findIndex((annotation: any) => annotation.mz >= lowestMz && annotation.mz <= highestMz)
+          currentAnnotationIdx = annotations.value.findIndex(
+            (annotation: any) => annotation.mz >= lowestMz && annotation.mz <= highestMz
+          )
         }
 
-        if (currentAnnotationIdx === -1) { // not annotated
+        if (currentAnnotationIdx === -1) {
+          // not annotated
           state.annotation = {
             dataset: annotations.value[0]?.dataset,
             mz: state.mz,
@@ -522,7 +531,7 @@ export default defineComponent<DatasetBrowserProps>({
         }
 
         if (spectrumResult.value) {
-          buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+          buildChartData(pixelSpectrum.value?.ints, pixelSpectrum.value?.mzs)
         }
         state.noData = false
       } else {
@@ -535,11 +544,11 @@ export default defineComponent<DatasetBrowserProps>({
       result: annotationsResult,
       loading: annotationsLoading,
       onResult: onAnnotationsResult,
-    } = useQuery<any>(annotationListQuery, queryVars,
-      queryOptions)
-    const dataset = computed(() => datasetResult.value != null ? datasetResult.value.dataset : null)
-    const annotations = computed(() => annotationsResult.value != null
-      ? annotationsResult.value.allAnnotations : null)
+    } = useQuery<any>(annotationListQuery, queryVars, queryOptions)
+    const dataset = computed(() => (datasetResult.value != null ? datasetResult.value.dataset : null))
+    const annotations = computed(() =>
+      annotationsResult.value != null ? annotationsResult.value.allAnnotations : null
+    )
 
     const annotatedPeaks = computed(() => {
       if (annotations.value) {
@@ -553,18 +562,18 @@ export default defineComponent<DatasetBrowserProps>({
       return []
     })
 
-    const requestSpectrum = async(x: number = 0, y: number = 0) => {
+    const requestSpectrum = async (x: number = 0, y: number = 0) => {
       try {
         if (x !== state.x || y !== state.y) {
           state.chartLoading = true
         } else if (spectrumResult.value) {
-          buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+          buildChartData(pixelSpectrum.value?.ints, pixelSpectrum.value?.mzs)
         }
         state.x = x
         state.y = y
         spectrumQueryOptions.enabled = true
         if (state.showFullTIC) {
-          const i = (y * state.normalizationData.shape[1]) + x
+          const i = y * state.normalizationData.shape[1] + x
           state.normalization = state.normalizationData.data[i] // ticPixel
         }
       } catch (e) {
@@ -574,16 +583,24 @@ export default defineComponent<DatasetBrowserProps>({
 
     const handleDownload = () => {
       const cols = ['dataset_name', 'dataset_id', 'x', 'y', 'mz', 'intensity', 'KMD', 'is_annotated']
-      const rows : any = [cols]
+      const rows: any = [cols]
 
-      state.sampleData.forEach((item: any, idx: number) => {
-        const mz : number = item.dot.mz
-        const int : number = item.dot.value[1]
+      state.sampleData.forEach((item: any) => {
+        const mz: number = item.dot.mz
+        const int: number = item.dot.value[1]
         const exactMass = state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz
-        const kendrickMass = mz * Math.round(exactMass) / exactMass
+        const kendrickMass = (mz * Math.round(exactMass)) / exactMass
         const KendrickMassDefect = kendrickMass - Math.floor(kendrickMass)
-        rows.push([dataset?.value?.name, dataset?.value?.id, state.x,
-          state.y, mz, int, KendrickMassDefect, item.isAnnotated])
+        rows.push([
+          dataset?.value?.name,
+          dataset?.value?.id,
+          state.x,
+          state.y,
+          mz,
+          int,
+          KendrickMassDefect,
+          item.isAnnotated,
+        ])
       })
 
       const csv = rows.map((e: any) => e.join(',')).join('\n')
@@ -591,12 +608,12 @@ export default defineComponent<DatasetBrowserProps>({
       FileSaver.saveAs(blob, `${dataset?.value?.name.replace(/\s/g, '_')}_plot.csv`)
     }
 
-    const requestIonImage = async(mzValue : number | undefined = state.mzmScoreFilter) => {
+    const requestIonImage = async (mzValue: number | undefined = state.mzmScoreFilter) => {
       try {
         state.imageLoading = true
         state.mz = mzValue
-        state.mzLow = mzValue! - (mzValue! * state.mzmShiftFilter! * 1e-6) // ppm
-        state.mzHigh = mzValue! + (mzValue! * state.mzmShiftFilter! * 1e-6) // ppm
+        state.mzLow = mzValue! - mzValue! * state.mzmShiftFilter! * 1e-6 // ppm
+        state.mzHigh = mzValue! + mzValue! * state.mzmShiftFilter! * 1e-6 // ppm
         imageQueryOptions.enabled = true
       } catch (e) {
         reportError(e)
@@ -605,12 +622,13 @@ export default defineComponent<DatasetBrowserProps>({
       }
     }
 
-    onAnnotationsResult(async(result) => {
+    onAnnotationsResult(async (result) => {
       if (dataset.value && result) {
+        const mz = result.data.allAnnotations[0].mz
+        const config = safeJsonParse(dataset.value?.configJson)
+        const ppm = get(config, 'image_generation.ppm') || 3
+
         if (!state.mzmScoreFilter) {
-          const mz = result.data.allAnnotations[0].mz
-          const config = safeJsonParse(dataset.value?.configJson)
-          const ppm = get(config, 'image_generation.ppm') || 3
           state.mzmScoreFilter = mz
           state.mzmShiftFilter = ppm
           state.mzmScaleFilter = 'ppm'
@@ -627,7 +645,7 @@ export default defineComponent<DatasetBrowserProps>({
       queryOptions.enabled = false
     })
 
-    const metadata : any = computed(() => {
+    const metadata: any = computed(() => {
       let metadataAux = {}
 
       if (dataset.value) {
@@ -654,16 +672,14 @@ export default defineComponent<DatasetBrowserProps>({
     }
 
     const getPixelSizeX = () => {
-      if (metadata.value && metadata.value.MS_Analysis != null
-        && metadata.value.MS_Analysis.Pixel_Size != null) {
+      if (metadata.value && metadata.value.MS_Analysis != null && metadata.value.MS_Analysis.Pixel_Size != null) {
         return metadata.value.MS_Analysis.Pixel_Size.Xaxis
       }
       return 0
     }
 
     const getPixelSizeY = () => {
-      if (metadata.value && metadata.value.MS_Analysis != null
-        && metadata.value.MS_Analysis.Pixel_Size != null) {
+      if (metadata.value && metadata.value.MS_Analysis != null && metadata.value.MS_Analysis.Pixel_Size != null) {
         return metadata.value.MS_Analysis.Pixel_Size.Yaxis
       }
       return 0
@@ -699,12 +715,12 @@ export default defineComponent<DatasetBrowserProps>({
 
     const renderBrowsingFilters = () => {
       return (
-        <div class='dataset-browser-holder-filter-box'>
-          <p class='font-semibold'>Browsing filters</p>
-          <div class='filter-holder justify-between'>
-            <RadioGroup
-              class='w-3/5'
-              onInput={(value: any) => {
+        <div class="dataset-browser-holder-filter-box">
+          <p class="font-semibold">Browsing filters</p>
+          <div class="filter-holder justify-between">
+            <ElRadioGroup
+              class="w-3/5"
+              onChange={(value: any) => {
                 state.peakFilter = value
 
                 if (dataset.value && state.databaseFilter === undefined) {
@@ -717,21 +733,26 @@ export default defineComponent<DatasetBrowserProps>({
                   // state.fdrFilter = undefined
                   // state.databaseFilter = undefined
                 }
-              }}
-              onChange={() => {
                 if (state.x !== undefined && state.y !== undefined) {
                   queryOptions.enabled = true
                 }
               }}
-              value={state.peakFilter}
-              size='mini'>
-              <Radio class='w-full' label={PEAK_FILTER.ALL}>All Peaks</Radio>
-              <Radio class='w-full mt-1 ' label={PEAK_FILTER.OFF}>Unannotated Peaks</Radio>
-              <div>
-                <Radio class='mr-1' label={PEAK_FILTER.FDR}>Show annotated at FDR:</Radio>
-                <Select
-                  class='select-box-mini'
-                  value={state.fdrFilter}
+              modelValue={state.peakFilter}
+              size="small"
+            >
+              <ElRadio class="w-full" label={PEAK_FILTER.ALL}>
+                All Peaks
+              </ElRadio>
+              <ElRadio class="w-full mt-1 " label={PEAK_FILTER.OFF}>
+                Unannotated Peaks
+              </ElRadio>
+              <div class="flex">
+                <ElRadio class="mr-1" label={PEAK_FILTER.FDR}>
+                  Show annotated at FDR:
+                </ElRadio>
+                <ElSelect
+                  class="select-box-mini"
+                  modelValue={state.fdrFilter}
                   onChange={(value: number) => {
                     state.fdrFilter = value
                     state.peakFilter = PEAK_FILTER.FDR
@@ -739,88 +760,93 @@ export default defineComponent<DatasetBrowserProps>({
                       queryOptions.enabled = true
                     }
                   }}
-                  placeholder='5%'
-                  size='mini'>
-                  <Option label="5%" value={0.05}/>
-                  <Option label="10%" value={0.1}/>
-                  <Option label="20%" value={0.2}/>
-                  <Option label="50%" value={0.5}/>
-                </Select>
+                  placeholder="5%"
+                  size="small"
+                >
+                  <ElOption label="5%" value={0.05} />
+                  <ElOption label="10%" value={0.1} />
+                  <ElOption label="20%" value={0.2} />
+                  <ElOption label="50%" value={0.5} />
+                </ElSelect>
               </div>
-            </RadioGroup>
-            <div class='flex flex-col w-1/4'>
-              <span class='text-xs'>Database</span>
-              <Select
-                value={state.databaseFilter}
-                size='mini'
+            </ElRadioGroup>
+            <div class="flex flex-col w-1/4">
+              <span class="text-xs">Database</span>
+              <ElSelect
+                modelValue={state.databaseFilter}
+                size="small"
                 onChange={(value: number) => {
                   state.databaseFilter = value
                   if (state.x !== undefined && state.y !== undefined) {
                     queryOptions.enabled = true
                   }
                 }}
-                placeholder='HMDB - v4'>
-                {
-                  dataset.value
-                  && dataset.value.databases.map((database: any) => {
-                    return (
-                      <Option label={`${database.name} - ${database.version}`} value={database.id}/>
-                    )
-                  })
-                }
-                <Option label='All databases' value={undefined}/>
-              </Select>
+                placeholder="HMDB - v4"
+              >
+                {dataset.value &&
+                  dataset.value.databases.map((database: any) => {
+                    return <ElOption label={`${database.name} - ${database.version}`} value={database.id} />
+                  })}
+                <ElOption label="All databases" value={''} />
+              </ElSelect>
             </div>
           </div>
           <FadeTransition>
             <div
-              class='flex flex-row w-full items-start mt-4 flex-wrap'
+              class="flex flex-row w-full items-start mt-4 flex-wrap"
               style={{
-                visibility: state.currentView === VIEWS.KENDRICK ? '' : 'hidden',
-              }}>
-              <div class='font-semibold w-full'>Mass reference</div>
-              <Select
-                class='reference-box mr-4'
-                value={state.fixedMassReference}
+                visibility: state.currentView === VIEWS.KENDRICK ? 'visible' : 'hidden',
+              }}
+            >
+              <div class="font-semibold w-full">Mass reference</div>
+              <ElSelect
+                class="reference-box mr-4"
+                modelValue={state.fixedMassReference}
                 onChange={(value: number) => {
                   state.fixedMassReference = value
                   if (value !== -1) {
-                    buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+                    buildChartData(pixelSpectrum.value?.ints, pixelSpectrum.value?.mzs)
                   }
                 }}
-                placeholder='CH2'
-                size='mini'>
-                <Option label="CH2" value={14.01565006}/>
-                <Option label="13C" value={1.00335484}/>
-                <Option label="Unsaturation" value={2.015650064}/>
-                <Option label="Deuterium" value={1.006276745}/>
-                <Option label="Other" value={-1}/>
-              </Select>
-              <div class='flex flex-1 flex-col' style={{ visibility: state.fixedMassReference === -1 ? '' : 'hidden' }}>
-                <Input
+                placeholder="CH2"
+                size="small"
+              >
+                <ElOption label="CH2" value={14.01565006} />
+                <ElOption label="13C" value={1.00335484} />
+                <ElOption label="Unsaturation" value={2.015650064} />
+                <ElOption label="Deuterium" value={1.006276745} />
+                <ElOption label="Other" value={-1} />
+              </ElSelect>
+              <div
+                class="flex flex-1 flex-col"
+                style={{ visibility: state.fixedMassReference === -1 ? 'visible' : 'hidden' }}
+              >
+                <ElInput
                   class={'max-formula-input' + (state.invalidReferenceFormula ? ' formula-input-error' : '')}
-                  value={state.referenceFormula}
-                  onInput={(value: string) => {
+                  modelValue={state.referenceFormula}
+                  onChange={(value: string) => {
                     if (value && !isFormulaValid(value)) {
                       state.invalidReferenceFormula = true
                     } else {
                       state.invalidReferenceFormula = false
                     }
                     state.referenceFormula = value
-                  }}
-                  onChange={() => {
-                    const { referenceFormula } : any = state
+
+                    const { referenceFormula }: any = state
                     if (!state.invalidReferenceFormula) {
                       const newMz = calculateMzFromFormula(referenceFormula as string, dataset.value?.polarity)
                       state.referenceFormulaMz = newMz
-                      buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+                      buildChartData(pixelSpectrum.value?.ints, pixelSpectrum.value?.mzs)
                     }
                   }}
-                  size='mini'
-                  placeholder='Type the formula'
+                  size="small"
+                  placeholder="Type the formula"
                 />
-                <span class='error-message' style={{ visibility: !state.invalidReferenceFormula ? 'hidden' : '' }}>
-                Invalid formula!
+                <span
+                  class="error-message"
+                  style={{ visibility: !state.invalidReferenceFormula ? 'hidden' : 'visible' }}
+                >
+                  Invalid formula!
                 </span>
               </div>
             </div>
@@ -833,17 +859,17 @@ export default defineComponent<DatasetBrowserProps>({
       const { annotation } = state
 
       if (!annotation) {
-        return <div class='info'/>
+        return <div class="info" />
       }
 
       if (state.showFullTIC) {
         return (
-          <div class='info'>
-            <span class="text-2xl flex items-baseline ml-4">
-                TIC image
-            </span>
-            <div class="flex items-baseline ml-4 w-full justify-center items-center text-xl"
-              style={{ visibility: state.x === undefined && state.y === undefined ? 'hidden' : '' }}>
+          <div class="info">
+            <span class="text-2xl flex items-baseline ml-4">TIC image</span>
+            <div
+              class="flex items-baseline ml-4 w-full justify-center items-center text-xl"
+              style={{ visibility: state.x === undefined && state.y === undefined ? 'hidden' : 'visible' }}
+            >
               {`X: ${state.x}, Y: ${state.y}`}
             </div>
           </div>
@@ -851,38 +877,39 @@ export default defineComponent<DatasetBrowserProps>({
       }
 
       // @ts-ignore TS2604
-      const candidateMolecules = () => <CandidateMoleculesPopover
-        placement="bottom"
-        style={{ display: !annotation?.ion ? 'none' : '' }}
-        possibleCompounds={annotation?.possibleCompounds || []}
-        isomers={annotation?.isomers}
-        isobars={annotation?.isobars}>
-        <MolecularFormula
-          class="sf-big text-2xl"
-          ion={annotation?.ion || '-'}
-        />
-      </CandidateMoleculesPopover>
+      const candidateMolecules = () => (
+        <CandidateMoleculesPopover
+          placement="bottom"
+          style={{ display: !annotation?.ion ? 'none' : '' }}
+          possibleCompounds={annotation?.possibleCompounds || []}
+          isomers={annotation?.isomers}
+          isobars={annotation?.isobars}
+        >
+          <MolecularFormula class="sf-big text-2xl" ion={annotation?.ion || '-'} />
+        </CandidateMoleculesPopover>
+      )
 
       return (
-        <div class='info'>
+        <div class="info">
           {candidateMolecules()}
           <CopyButton
             class="ml-1"
             style={{ display: !annotation?.ion ? 'none' : '' }}
-            text={annotation?.ion ? parseFormulaAndCharge(annotation?.ion) : '-'}>
+            text={annotation?.ion ? parseFormulaAndCharge(annotation?.ion) : '-'}
+          >
             Copy ion to clipboard
           </CopyButton>
           <span class="text-2xl flex items-baseline ml-4">
-            { annotation.mz.toFixed(4) }
+            {annotation.mz.toFixed(4)}
             <span class="ml-1 text-gray-700 text-sm">m/z</span>
-            <CopyButton
-              class="self-start"
-              text={annotation.mz.toFixed(4)}>
+            <CopyButton class="self-start" text={annotation.mz.toFixed(4)}>
               Copy m/z to clipboard
             </CopyButton>
           </span>
-          <div class="flex items-baseline ml-4 w-full justify-center items-center text-xl"
-            style={{ visibility: state.x === undefined && state.y === undefined ? 'hidden' : '' }}>
+          <div
+            class="flex items-baseline ml-4 w-full justify-center items-center text-xl"
+            style={{ visibility: state.x === undefined && state.y === undefined ? 'hidden' : 'visible' }}
+          >
             {`X: ${state.x}, Y: ${state.y}`}
           </div>
         </div>
@@ -891,13 +918,13 @@ export default defineComponent<DatasetBrowserProps>({
 
     const renderImageFilters = () => {
       return (
-        <div class='dataset-browser-holder-filter-box'>
-          <p class='font-semibold'>Image filters</p>
-          <div class='filter-holder'>
-            <span class='label'>m/z</span>
-            <InputNumber
-              value={state.showFullTIC ? undefined : state.mzmScoreFilter}
-              onInput={(value: number) => {
+        <div class="dataset-browser-holder-filter-box">
+          <p class="font-semibold">Image filters</p>
+          <div class="filter-holder">
+            <span class="label">m/z</span>
+            <ElInputNumber
+              modelValue={state.showFullTIC ? undefined : state.mzmScoreFilter}
+              onChange={(value: number) => {
                 if (value) {
                   state.showFullTIC = false
                   state.normalizationData = {
@@ -910,8 +937,6 @@ export default defineComponent<DatasetBrowserProps>({
                   }
                 }
                 state.mzmScoreFilter = value
-              }}
-              onChange={() => {
                 if (state.moleculeFilter) {
                   state.moleculeFilter = undefined
                   state.invalidFormula = false
@@ -920,45 +945,44 @@ export default defineComponent<DatasetBrowserProps>({
               }}
               precision={4}
               step={0.0001}
-              size='mini'
-              placeholder='174.0408'
+              size="small"
+              placeholder="174.0408"
             />
-            <span class='mx-1'>+-</span>
-            <InputNumber
-              class='mr-2 select-box'
-              value={state.mzmShiftFilter}
-              onInput={(value: number) => {
+            <span class="mx-1">+-</span>
+            <ElInputNumber
+              class="mr-2 select-box"
+              modelValue={state.mzmShiftFilter}
+              onChange={(value: number) => {
                 state.mzmShiftFilter = value
                 state.moleculeFilter = undefined
-              }}
-              onChange={() => {
                 requestIonImage()
               }}
               precision={0}
               step={1}
               min={1}
-              size='mini'
-              placeholder='2.5'
+              size="small"
+              placeholder="2.5"
             />
-            <Select
-              class='select-box-mini ml-px'
-              value={state.mzmScaleFilter}
+            <ElSelect
+              class="select-box-mini ml-px"
+              modelValue={state.mzmScaleFilter}
               onChange={(value: string) => {
                 state.mzmScaleFilter = value
                 state.moleculeFilter = undefined
                 requestIonImage()
               }}
-              size='mini'
-              placeholder='ppm'>
-              <Option label="ppm" value='ppm'/>
-            </Select>
+              size="small"
+              placeholder="ppm"
+            >
+              <ElOption label="ppm" value="ppm" />
+            </ElSelect>
           </div>
-          <div class='flex flex-row w-full items-start mt-2'>
-            <span class='label'>Formula</span>
-            <div class='formula-input-wrapper'>
-              <Input
+          <div class="flex flex-row w-full items-start mt-2">
+            <span class="label">Formula</span>
+            <div class="formula-input-wrapper">
+              <ElInput
                 class={'formula-input' + (state.invalidFormula ? ' formula-input-error' : '')}
-                value={state.moleculeFilter}
+                modelValue={state.moleculeFilter}
                 onInput={(value: string) => {
                   if (value && !isFormulaValid(value)) {
                     state.invalidFormula = true
@@ -968,17 +992,17 @@ export default defineComponent<DatasetBrowserProps>({
                   state.moleculeFilter = value
                 }}
                 onChange={() => {
-                  const { moleculeFilter } : any = state
+                  const { moleculeFilter }: any = state
                   if (!state.invalidFormula) {
                     const newMz = calculateMzFromFormula(moleculeFilter as string, dataset.value?.polarity)
                     state.mzmScoreFilter = newMz
                     requestIonImage(newMz)
                   }
                 }}
-                size='mini'
-                placeholder='H2O+H'
+                size="small"
+                placeholder="H2O+H"
               />
-              <span class='error-message' style={{ visibility: !state.invalidFormula ? 'hidden' : '' }}>
+              <span class="error-message" style={{ visibility: !state.invalidFormula ? 'hidden' : 'visible' }}>
                 Invalid formula!
               </span>
             </div>
@@ -989,10 +1013,12 @@ export default defineComponent<DatasetBrowserProps>({
 
     const renderEmptySpectrum = () => {
       return (
-        <div class='dataset-browser-empty-spectrum'>
-          <i class="el-icon-info info-icon mr-6"/>
-          <div class='flex flex-col text-xs w-3/4'>
-            <p class='font-semibold mb-2'>Steps:</p>
+        <div class="dataset-browser-empty-spectrum">
+          <ElIcon class="info-icon mr-6">
+            <InfoFilled />
+          </ElIcon>
+          <div class="flex flex-col text-xs w-3/4">
+            <p class="font-semibold mb-2">Steps:</p>
             <p>1 - Select a pixel on the image viewer</p>
             <p>2 - Apply the filter you desire</p>
             <p>3 - The interaction is multi-way, so you can also update the ion image via spectrum interaction</p>
@@ -1003,17 +1029,18 @@ export default defineComponent<DatasetBrowserProps>({
 
     const renderChartOptions = () => {
       return (
-        <RadioGroup
-          size='small'
-          class='w-full flex ml-4'
-          onInput={(value: any) => {
+        <ElRadioGroup
+          size="small"
+          class="w-full flex ml-4"
+          onChange={(value: any) => {
             state.currentView = value
-            buildChartData(spectrumResult.value.pixelSpectrum.ints, spectrumResult.value.pixelSpectrum.mzs)
+            buildChartData(pixelSpectrum.value?.ints, pixelSpectrum.value?.mzs)
           }}
-          value={state.currentView}>
-          <RadioButton class='ml-2' label={VIEWS.SPECTRUM}/>
-          <RadioButton label={VIEWS.KENDRICK}/>
-        </RadioGroup>
+          modelValue={state.currentView}
+        >
+          <ElRadioButton class="ml-2" label={VIEWS.SPECTRUM} />
+          <ElRadioButton label={VIEWS.KENDRICK} />
+        </ElRadioGroup>
       )
     }
 
@@ -1034,7 +1061,7 @@ export default defineComponent<DatasetBrowserProps>({
           referenceMz={state.fixedMassReference !== -1 ? state.fixedMassReference : state.referenceFormulaMz}
           onItemSelected={(mz: number) => {
             state.showFullTIC = false
-            Vue.set(state.normalizationData, 'showFullTIC', false)
+            state.normalizationData['showFullTIC'] = false
             state.mzmScoreFilter = mz
             requestIonImage()
           }}
@@ -1061,7 +1088,7 @@ export default defineComponent<DatasetBrowserProps>({
           dataRange={state.dataRange}
           onItemSelected={(mz: number) => {
             state.showFullTIC = false
-            Vue.set(state.normalizationData, 'showFullTIC', false)
+            state.normalizationData['showFullTIC'] = false
             state.mzmScoreFilter = mz
             requestIonImage()
           }}
@@ -1076,26 +1103,22 @@ export default defineComponent<DatasetBrowserProps>({
       return (
         <div class={'dataset-browser-container'}>
           <div class={'dataset-browser-wrapper w-full lg:w-1/2'}>
-            <div class='dataset-browser-holder'>
-              <div class='dataset-browser-holder-header'>
-                Spectrum browser
-              </div>
+            <div class="dataset-browser-holder">
+              <div class="dataset-browser-holder-header">Spectrum browser</div>
               {renderBrowsingFilters()}
-              {!state.noData && renderChartOptions() }
+              {!state.noData && renderChartOptions()}
               {isEmpty && !state.chartLoading && renderEmptySpectrum()}
               {state.currentView === VIEWS.KENDRICK && !state.noData && renderKmChart(isEmpty)}
               {state.currentView === VIEWS.SPECTRUM && !state.noData && renderSpectrum(isEmpty)}
             </div>
           </div>
-          <div class='dataset-browser-wrapper w-full lg:w-1/2'>
-            <div class='dataset-browser-holder'>
-              <div class='dataset-browser-holder-header'>
-                Image viewer
-              </div>
+          <div class="dataset-browser-wrapper w-full lg:w-1/2">
+            <div class="dataset-browser-holder">
+              <div class="dataset-browser-holder-header">Image viewer</div>
               {renderImageFilters()}
               {renderInfo()}
               <MainImageHeader
-                class='viewer-item-header dom-to-image-hidden'
+                class="viewer-item-header dom-to-image-hidden"
                 annotation={state.annotation}
                 slot="title"
                 isActive={false}
@@ -1110,30 +1133,26 @@ export default defineComponent<DatasetBrowserProps>({
                 onNormalizationChange={handleNormalizationChange}
                 lockedIntensityTemplate={state.globalImageSettings.selectedLockTemplate}
                 globalLockedIntensities={state.globalImageSettings.globalLockedIntensities}
-                hasOpticalImage={
-                  state.annotation?.dataset?.opticalImages[0]?.url
-                  !== undefined}
+                hasOpticalImage={state.annotation?.dataset?.opticalImages[0]?.url !== undefined}
                 resetViewport={() => {
                   state.globalImageSettings.resetViewPort = true
-                  setTimeout(() => { state.globalImageSettings.resetViewPort = false }, 500)
+                  setTimeout(() => {
+                    state.globalImageSettings.resetViewPort = false
+                  }, 500)
                 }}
               />
-              <div
-                ref={container}
-                class='ion-image-holder'>
-                {
-                  (annotationsLoading.value || state.imageLoading || state.chartLoading)
-                  && <div class='loader-holder'>
+              <div ref={container} class="ion-image-holder">
+                {(annotationsLoading.value || state.imageLoading || state.chartLoading) && (
+                  <div class="loader-holder">
                     <div>
-                      <i
-                        class="el-icon-loading"
-                      />
+                      <ElIcon class="is-loading">
+                        <Loading />
+                      </ElIcon>
                     </div>
                   </div>
-                }
-                {
-                  state.annotation
-                  && <SimpleIonImageViewer
+                )}
+                {state.annotation && (
+                  <SimpleIonImageViewer
                     annotations={[state.annotation]}
                     forceUpdate
                     hideClipping={state.showFullTIC}
@@ -1154,7 +1173,7 @@ export default defineComponent<DatasetBrowserProps>({
                     scaleBarColor={state.globalImageSettings.scaleBarColor}
                     isNormalized={state.showFullTIC || state.globalImageSettings.isNormalized}
                   />
-                }
+                )}
               </div>
             </div>
           </div>

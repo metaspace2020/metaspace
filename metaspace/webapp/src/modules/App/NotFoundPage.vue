@@ -9,10 +9,13 @@
     </p>
   </content-page>
 </template>
+
 <script>
 import ContentPage from '../../components/ContentPage.vue'
 import PrimaryIcon from '../../components/PrimaryIcon.vue'
-import SignSvg from '../../assets/inline/refactoring-ui/icon-sign.svg'
+import { defineAsyncComponent } from 'vue'
+
+const SignSvg = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-sign.svg'))
 
 export default {
   name: 'NotFoundPage',

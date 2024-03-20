@@ -1,123 +1,129 @@
-import { countGroupsQuery, UserGroupRole } from './group'
+import { UserGroupRole } from './group'
 import gql from 'graphql-tag'
 import { ProjectRole } from './project'
 
-export type UserRole = 'admin' | 'user' | 'anonymous';
+export type UserRole = 'admin' | 'user' | 'anonymous'
 
 export interface UserProfileQueryGroup {
-  role: UserGroupRole;
-  numDatasets: number;
+  role: UserGroupRole
+  numDatasets: number
   group: {
-    id: string;
-    name: string;
-    shortName: string;
-    urlSlug: string | null;
-    hasPendingRequest: boolean | null;
-  };
+    id: string
+    name: string
+    shortName: string
+    urlSlug: string | null
+    hasPendingRequest: boolean | null
+  }
 }
 export interface UserProfileQueryProject {
-  role: ProjectRole;
-  numDatasets: number;
+  role: ProjectRole
+  numDatasets: number
   project: {
-    id: string,
+    id: string
     name: string
-    urlSlug: string | null;
-    hasPendingRequest: boolean | null;
-  };
+    urlSlug: string | null
+    hasPendingRequest: boolean | null
+  }
 }
 
 export interface UserProfileQuery {
-  id: string;
-  name: string;
-  role: string;
-  email: string | null;
-  apiKey: string | null;
-  groups: UserProfileQueryGroup[] | null;
-  primaryGroup: UserProfileQueryGroup | null;
-  projects: UserProfileQueryProject[] | null;
+  id: string
+  name: string
+  role: string
+  email: string | null
+  apiKey: string | null
+  groups: UserProfileQueryGroup[] | null
+  primaryGroup: UserProfileQueryGroup | null
+  projects: UserProfileQueryProject[] | null
 }
 
-const userProfileFragment =
-  gql`fragment UserProfileFragment on User {
-  id
-  name
-  role
-  email
-  apiKey
-  primaryGroup {
-    ...UserProfileQueryGroup
+const userProfileFragment = gql`
+  fragment UserProfileFragment on User {
+    id
+    name
+    role
+    email
+    apiKey
+    primaryGroup {
+      ...UserProfileQueryGroup
+    }
+    groups {
+      ...UserProfileQueryGroup
+    }
+    projects {
+      role
+      numDatasets
+      project {
+        id
+        name
+        urlSlug
+        hasPendingRequest
+      }
+    }
   }
-  groups {
-    ...UserProfileQueryGroup
-  }
-  projects {
+  fragment UserProfileQueryGroup on UserGroup {
     role
     numDatasets
-    project {
+    group {
       id
       name
+      shortName
       urlSlug
       hasPendingRequest
     }
   }
-}
-fragment UserProfileQueryGroup on UserGroup {
-  role
-  numDatasets
-  group {
-    id
-    name
-    shortName
-    urlSlug
-    hasPendingRequest
-  }
-}
 `
-export const userProfileQuery =
-  gql`query UserProfileQuery {
-  currentUser {
-    ...UserProfileFragment
+export const userProfileQuery = gql`
+  query UserProfileQuery {
+    currentUser {
+      ...UserProfileFragment
+    }
   }
-}
-${userProfileFragment}
+  ${userProfileFragment}
 `
 
-export const updateUserMutation =
-  gql`mutation ($userId: ID!, $update: UpdateUserInput!) {
-  updateUser(userId: $userId, update: $update) {
-    ...UserProfileFragment
+export const updateUserMutation = gql`
+  mutation ($userId: ID!, $update: UpdateUserInput!) {
+    updateUser(userId: $userId, update: $update) {
+      ...UserProfileFragment
+    }
   }
-}
-${userProfileFragment}`
+  ${userProfileFragment}
+`
 
-export const resetUserApiKeyMutation =
-  gql`mutation ($userId: ID!, $removeKey: Boolean!) {
-  resetUserApiKey(userId: $userId, removeKey: $removeKey) {
-    ...UserProfileFragment
+export const resetUserApiKeyMutation = gql`
+  mutation ($userId: ID!, $removeKey: Boolean!) {
+    resetUserApiKey(userId: $userId, removeKey: $removeKey) {
+      ...UserProfileFragment
+    }
   }
-}
-${userProfileFragment}`
+  ${userProfileFragment}
+`
 
 export interface DatasetSubmitterFragment {
-  id: string;
-  name: string;
-  email: string;
-  groups: {
-    group: {
-      id: string;
-      name: string;
-    }
-  }[] | null;
-  projects: {
-    project: {
-      id: string;
-      name: string;
-    }
-  }[] | null;
+  id: string
+  name: string
+  email: string
+  groups:
+    | {
+        group: {
+          id: string
+          name: string
+        }
+      }[]
+    | null
+  projects:
+    | {
+        project: {
+          id: string
+          name: string
+        }
+      }[]
+    | null
 }
 
-export const datasetSubmitterFragment =
-  gql`fragment DatasetSubmitterFragment on User {
+export const datasetSubmitterFragment = gql`
+  fragment DatasetSubmitterFragment on User {
     id
     name
     email
@@ -133,79 +139,90 @@ export const datasetSubmitterFragment =
         name
       }
     }
-  }`
+  }
+`
 
-export const deleteUserMutation =
-  gql`mutation ($userId: ID!, $deleteDatasets: Boolean!) {
-  deleteUser(userId: $userId, deleteDatasets: $deleteDatasets)
-}`
+export const deleteUserMutation = gql`
+  mutation ($userId: ID!, $deleteDatasets: Boolean!) {
+    deleteUser(userId: $userId, deleteDatasets: $deleteDatasets)
+  }
+`
 
 export interface CurrentUserIdResult {
-  id: string;
+  id: string
 }
 
 // Always use fetchPolicy: 'cache-first' for this
-export const currentUserIdQuery =
-  gql`query CurrentUserIdQuery {
-  currentUser { id }
-}
+export const currentUserIdQuery = gql`
+  query CurrentUserIdQuery {
+    currentUser {
+      id
+    }
+  }
 `
 
 export interface CurrentUserRoleResult {
-  id: string;
-  name: string;
-  role: UserRole;
+  id: string
+  name: string
+  role: UserRole
 }
 
 export interface CurrentUserRoleWithGroupResult {
-  id: string;
-  name: string;
-  role: UserRole;
-  groups: any;
+  id: string
+  name: string
+  role: UserRole
+  groups: any
 }
 
 // Always use fetchPolicy: 'cache-first' for this
-export const currentUserRoleQuery =
-  gql`query CurrentUserRoleQuery {
-  currentUser { id name role }
-}
+export const currentUserRoleQuery = gql`
+  query CurrentUserRoleQuery {
+    currentUser {
+      id
+      name
+      role
+    }
+  }
 `
 // Always use fetchPolicy: 'cache-first' for this
-export const currentUserRoleWithGroupQuery =
-  gql`query MyGroupOptions {
-          currentUser {
-            id,
-            name,
-            role
-            groups {
-              group {
-                id
-                value: id
-                label: name
-              }
-            }
-          }
-        }`
+export const currentUserRoleWithGroupQuery = gql`
+  query MyGroupOptions {
+    currentUser {
+      id
+      name
+      role
+      groups {
+        group {
+          id
+          value: id
+          label: name
+        }
+      }
+    }
+  }
+`
 
-export const currentUserWithGroupDetectabilityQuery =
-  gql`query MyGroupOptions {
-          currentUser {
-            id,
-            name,
-            groups {
-              group {
-                id
-                value: id
-                label: name
-                sources {
-                  source
-                }
-              }
-            }
+export const currentUserWithGroupDetectabilityQuery = gql`
+  query MyGroupOptions {
+    currentUser {
+      id
+      name
+      groups {
+        group {
+          id
+          value: id
+          label: name
+          sources {
+            source
           }
-        }`
+        }
+      }
+    }
+  }
+`
 
-export const countUsersQuery =
-gql`query countUsers {
-  countUsers
-}`
+export const countUsersQuery = gql`
+  query countUsers {
+    countUsers
+  }
+`

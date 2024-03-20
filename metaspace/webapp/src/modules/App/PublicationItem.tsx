@@ -1,4 +1,4 @@
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent } from 'vue'
 
 interface Props {
   publisher: string
@@ -27,21 +27,17 @@ const PublicationItem = defineComponent<Props>({
       type: String,
     },
   },
-  setup(props, ctx) {
+  setup(props) {
     return () => {
       return (
         <li>
-          <h3 class="text-blue-800 text-base font-medium m-0">
-            { props.title }
-          </h3>
-          <p>
-            { props.authors }
-          </p>
+          <h3 class="text-blue-800 text-base font-medium m-0">{props.title}</h3>
+          <p>{props.authors}</p>
           <p class="text-sm font-medium">
-            <span class="text-green-800">{ props.publisher }</span>, <time>{ props.year }</time>
+            <span class="text-green-800">{props.publisher}</span>, <time>{props.year}</time>
           </p>
           <p class="text-sm truncate text-primary">
-            <a href={props.link}>{ props.link }</a>
+            <a href={props.link}>{props.link}</a>
           </p>
         </li>
       )

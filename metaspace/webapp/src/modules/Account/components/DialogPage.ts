@@ -1,26 +1,30 @@
-import Vue from 'vue'
-import { Component, Prop, Watch } from 'vue-property-decorator'
+import { defineComponent, watch, onMounted, PropType } from 'vue'
 import { DialogType } from '../dialogs'
-import config from '../../../lib/config'
+import { useStore } from 'vuex'
 
-@Component
-export default class DialogPage extends Vue {
-  @Prop({ type: String, required: true })
-  dialog!: DialogType;
+export default defineComponent({
+  props: {
+    dialog: {
+      type: String as PropType<DialogType>,
+      required: true,
+    },
+  },
+  setup(props) {
+    const store = useStore()
 
-  render() {
-    return null
-  }
+    const showDialog = () => {
+      store.commit('account/showDialog', {
+        dialog: props.dialog,
+        dialogCloseRedirect: '/',
+      })
+    }
 
-  created() {
-    this.showDialog()
-  }
+    // Watcher
+    watch(() => props.dialog, showDialog)
 
-  @Watch('dialog')
-  showDialog() {
-    this.$store.commit('account/showDialog', {
-      dialog: this.dialog,
-      dialogCloseRedirect: '/',
-    })
-  }
-}
+    // Created Lifecycle Hook
+    onMounted(showDialog)
+
+    return () => null // Render function
+  },
+})

@@ -1,17 +1,17 @@
-import { mount } from '@vue/test-utils'
-import Vue from 'vue'
 import { DatasetComparisonGrid } from './DatasetComparisonGrid'
-import Vuex from 'vuex'
-import { sync } from 'vuex-router-sync'
+import { nextTick, h, defineComponent } from 'vue'
+import { mount, flushPromises } from '@vue/test-utils'
 import store from '../../../store'
 import router from '../../../router'
 
 // Mock loadPngFromUrl to prevent network requests, but keep the rest of ionImageRendering as it's actually used
-jest.mock('../../../lib/ionImageRendering', () => Object.assign(
-  {},
-  jest.requireActual('../../../lib/ionImageRendering'),
-  { loadPngFromUrl: jest.fn() },
-))
+vi.mock('../../../lib/ionImageRendering', async () => {
+  const actual: any = await vi.importActual('../../../lib/util')
+  return {
+    ...actual,
+    loadPngFromUrl: vi.fn(),
+  }
+})
 
 describe('DatasetComparisonGrid', () => {
   const datasets = [
@@ -44,15 +44,16 @@ describe('DatasetComparisonGrid', () => {
       ],
       name: 'New test create',
       polarity: 'POSITIVE',
-      metadataJson: '{"Data_Type":"Imaging MS","Sample_Information":'
-      + '{"Condition":"wild","Organism":"Fish","Organism_Part":"tail",'
-      + '"Sample_Growth_Conditions":""},"Sample_Preparation":'
-      + '{"MALDI_Matrix":"none","Tissue_Modification":"chemical",'
-      + '"Sample_Stabilisation":"water","MALDI_Matrix_Application":'
-      + '"none","Solvent":"none"},"MS_Analysis":{"Polarity":"Positive"'
-      + ',"Ionisation_Source":"MALDI","Analyzer":"Orbittrap",'
-      + '"Detector_Resolving_Power":{"Resolving_Power":140000,"mz":200},"'
-      + 'Pixel_Size":{"Xaxis":12,"Yaxis":12}},"Additional_Information":{"Supplementary":""}}',
+      metadataJson:
+        '{"Data_Type":"Imaging MS","Sample_Information":' +
+        '{"Condition":"wild","Organism":"Fish","Organism_Part":"tail",' +
+        '"Sample_Growth_Conditions":""},"Sample_Preparation":' +
+        '{"MALDI_Matrix":"none","Tissue_Modification":"chemical",' +
+        '"Sample_Stabilisation":"water","MALDI_Matrix_Application":' +
+        '"none","Solvent":"none"},"MS_Analysis":{"Polarity":"Positive"' +
+        ',"Ionisation_Source":"MALDI","Analyzer":"Orbittrap",' +
+        '"Detector_Resolving_Power":{"Resolving_Power":140000,"mz":200},"' +
+        'Pixel_Size":{"Xaxis":12,"Yaxis":12}},"Additional_Information":{"Supplementary":""}}',
       isPublic: true,
       opticalImages: [],
     },
@@ -77,15 +78,16 @@ describe('DatasetComparisonGrid', () => {
       ],
       name: 'New 2',
       polarity: 'POSITIVE',
-      metadataJson: '{"Data_Type":"Imaging MS","Sample_Information":'
-      + '{"Condition":"wild","Organism":"Fish","Organism_Part":"tail",'
-      + '"Sample_Growth_Conditions":""},"Sample_Preparation":'
-      + '{"MALDI_Matrix":"none","Tissue_Modification":"chemical",'
-      + '"Sample_Stabilisation":"water","MALDI_Matrix_Application":'
-      + '"none","Solvent":"none"},"MS_Analysis":{"Polarity":"Positive"'
-      + ',"Ionisation_Source":"MALDI","Analyzer":"Orbittrap",'
-      + '"Detector_Resolving_Power":{"Resolving_Power":140000,"mz":200},"'
-      + 'Pixel_Size":{"Xaxis":12,"Yaxis":12}},"Additional_Information":{"Supplementary":""}}',
+      metadataJson:
+        '{"Data_Type":"Imaging MS","Sample_Information":' +
+        '{"Condition":"wild","Organism":"Fish","Organism_Part":"tail",' +
+        '"Sample_Growth_Conditions":""},"Sample_Preparation":' +
+        '{"MALDI_Matrix":"none","Tissue_Modification":"chemical",' +
+        '"Sample_Stabilisation":"water","MALDI_Matrix_Application":' +
+        '"none","Solvent":"none"},"MS_Analysis":{"Polarity":"Positive"' +
+        ',"Ionisation_Source":"MALDI","Analyzer":"Orbittrap",' +
+        '"Detector_Resolving_Power":{"Resolving_Power":140000,"mz":200},"' +
+        'Pixel_Size":{"Xaxis":12,"Yaxis":12}},"Additional_Information":{"Supplementary":""}}',
       isPublic: true,
       opticalImages: [],
     },
@@ -104,10 +106,7 @@ describe('DatasetComparisonGrid', () => {
       {
         ion: 'c10h11no+na+',
         dbId: '1',
-        datasetIds: [
-          '2021-03-31_08h41m01s',
-          '2021-04-14_07h23m35s',
-        ],
+        datasetIds: ['2021-03-31_08h41m01s', '2021-04-14_07h23m35s'],
         annotations: [
           {
             id: '2021-03-31_08h41m01s_4580',
@@ -165,14 +164,8 @@ describe('DatasetComparisonGrid', () => {
                 ion: 'C7H15NO2+K+',
                 ionFormula: 'C7H15NO2K',
                 peakNs: [
-                  [
-                    1,
-                    1,
-                  ],
-                  [
-                    3,
-                    2,
-                  ],
+                  [1, 1],
+                  [3, 2],
                 ],
                 shouldWarn: true,
               },
@@ -288,14 +281,8 @@ describe('DatasetComparisonGrid', () => {
                 ion: 'C7H15NO2+K+',
                 ionFormula: 'C7H15NO2K',
                 peakNs: [
-                  [
-                    1,
-                    1,
-                  ],
-                  [
-                    3,
-                    2,
-                  ],
+                  [1, 1],
+                  [3, 2],
                 ],
                 shouldWarn: true,
               },
@@ -360,33 +347,41 @@ describe('DatasetComparisonGrid', () => {
     isLoading: false,
   }
 
-  const testHarness = Vue.extend({
+  const testHarness = defineComponent({
     components: {
       DatasetComparisonGrid,
     },
-    render(h) {
-      return h(DatasetComparisonGrid, { props: this.$attrs })
+    setup(props, { attrs }) {
+      return () => h(DatasetComparisonGrid, { ...attrs, ...props })
     },
   })
 
-  beforeAll(() => {
-    Vue.use(Vuex)
-    sync(store, router)
+  it('it should match snapshot', async () => {
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+      },
+      props: propsData,
+    })
+
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.html()).toMatchSnapshot()
   })
 
-  it('it should match snapshot', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
-    expect(wrapper.element).toMatchSnapshot()
-  })
+  it('it should match the number of cols and rows passed via props', async () => {
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+      },
+      props: propsData,
+    })
 
-  it('it should match the number of cols and rows passed via props', async() => {
-    const wrapper = mount(testHarness, { store, router, propsData })
-    await Vue.nextTick()
+    await flushPromises()
+    await nextTick()
 
-    expect(wrapper.findAll('.dataset-comparison-grid-row').length)
-      .toBe(propsData.nRows)
-    expect(wrapper.findAll('.dataset-comparison-grid-col').length)
-      .toBe(propsData.nCols)
+    expect(wrapper.findAll('.dataset-comparison-grid-row').length).toBe(propsData.nRows)
+    expect(wrapper.findAll('.dataset-comparison-grid-col').length).toBe(propsData.nCols)
   })
 })

@@ -1,15 +1,19 @@
-import { mount } from '@vue/test-utils'
 import DatasetOverviewPage from './DatasetOverviewPage'
-import Vue from 'vue'
-import Vuex from 'vuex'
-import { sync } from 'vuex-router-sync'
+import { nextTick, ref, h, defineComponent } from 'vue'
+import { mount, flushPromises } from '@vue/test-utils'
 import store from '../../../store'
 import router from '../../../router'
-import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/mockGraphqlClient'
+import { initMockGraphqlClient } from '../../../tests/utils/mockGraphqlClient'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 
-jest.mock('./DatasetActionsDropdown', () => ({ default: jest.fn() }))
-jest.mock('../../../components/NewFeatureBadge', () => ({ default: jest.fn() }))
+vi.mock('@vue/apollo-composable', () => ({
+  useQuery: vi.fn(),
+  DefaultApolloClient: vi.fn(),
+}))
+vi.mock('./DatasetActionsDropdown', () => ({ default: vi.fn() }))
+vi.mock('../../../components/NewFeatureBadge', () => ({ default: vi.fn() }))
 
+let graphqlMocks
 describe('DatasetOverviewPage', () => {
   const mockDataset = {
     id: 'dataset1',
@@ -51,14 +55,10 @@ describe('DatasetOverviewPage', () => {
       },
     }),
     configJson: JSON.stringify({
-      database_ids: [
-        1,
-      ],
+      database_ids: [1],
       analysis_version: 3,
       isotope_generation: {
-        adducts: [
-          '+H',
-        ],
+        adducts: ['+H'],
         charge: 1,
         isocalc_sigma: 0.001238,
         instrument: 'Orbitrap',
@@ -93,36 +93,41 @@ describe('DatasetOverviewPage', () => {
     }),
   }
 
-  const testHarness = Vue.extend({
+  const testHarness = defineComponent({
     components: {
       DatasetOverviewPage,
     },
-    render(h) {
-      return h(DatasetOverviewPage, { props: this.$attrs })
+    setup(props, { attrs }) {
+      return () => h(DatasetOverviewPage, { ...attrs, ...props })
     },
   })
 
-  const noDatasetQuery = () => {
-    initMockGraphqlClient({
-      Query: () => ({
-        dataset: () => null,
-        currentUser: () => ({ id: 'userid', role: 'user' }),
-      }),
+  const mockGraphql = async (qyeryParams) => {
+    graphqlMocks = await initMockGraphqlClient({
+      Query: () => qyeryParams,
     })
-  }
-  const overviewQuery = () => {
-    initMockGraphqlClient({
-      Query: () => ({
-        dataset: () => mockDataset,
-        currentUser: () => ({ id: 'userid', role: 'user' }),
-      }),
+    ;(useQuery as any).mockReturnValue({
+      result: ref(Object.keys(qyeryParams).reduce((acc, key) => ({ ...acc, [key]: qyeryParams[key]() }), {})),
+      loading: ref(false),
+      onResult: vi.fn(),
     })
   }
 
-  beforeAll(() => {
-    Vue.use(Vuex)
-    sync(store, router)
-    router.replace({
+  const noDatasetQuery = async () => {
+    await mockGraphql({
+      dataset: () => null,
+      currentUser: () => ({ id: 'userid', role: 'user' }),
+    })
+  }
+  const overviewQuery = async () => {
+    await mockGraphql({
+      dataset: () => mockDataset,
+      currentUser: () => ({ id: 'userid', role: 'user' }),
+    })
+  }
+
+  beforeAll(async () => {
+    await router.replace({
       name: 'dataset-overview',
       params: {
         dataset_id: 'dataset1',
@@ -130,19 +135,37 @@ describe('DatasetOverviewPage', () => {
     })
   })
 
-  it('should match snapshot when dataset exist', async() => {
-    overviewQuery()
-    const wrapper = mount(testHarness, { store, router, apolloProvider })
-    await Vue.nextTick()
+  it('should match snapshot when dataset exist', async () => {
+    await overviewQuery()
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlMocks,
+        },
+      },
+    })
 
-    expect(wrapper).toMatchSnapshot()
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.html()).toMatchSnapshot()
   })
 
-  it('should match snapshot when dataset does not exist', async() => {
-    noDatasetQuery()
-    const wrapper = mount(testHarness, { store, router, apolloProvider })
-    await Vue.nextTick()
+  it('should match snapshot when dataset does not exist', async () => {
+    await noDatasetQuery()
+    const wrapper = mount(testHarness, {
+      global: {
+        plugins: [store, router],
+        provide: {
+          [DefaultApolloClient]: graphqlMocks,
+        },
+      },
+    })
 
-    expect(wrapper).toMatchSnapshot()
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.html()).toMatchSnapshot()
   })
 })

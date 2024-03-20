@@ -1,8 +1,8 @@
-import { defineComponent } from '@vue/composition-api'
+import { defineAsyncComponent, defineComponent } from 'vue'
 import FadeTransition from '../FadeTransition'
 
 import SecondaryIcon from '../SecondaryIcon.vue'
-import CheckSvg from '../../assets/inline/refactoring-ui/icon-check.svg'
+const CheckSvg = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-check.svg'))
 
 const RadioButton = defineComponent({
   name: 'RadioButton',
@@ -16,7 +16,11 @@ const RadioButton = defineComponent({
       <div class="flex -ml-12">
         <div class="w-9 flex items-center">
           <FadeTransition>
-            {props.checked && <SecondaryIcon><CheckSvg /></SecondaryIcon>}
+            {props.checked && (
+              <SecondaryIcon>
+                <CheckSvg />
+              </SecondaryIcon>
+            )}
           </FadeTransition>
         </div>
         <label
@@ -30,10 +34,12 @@ const RadioButton = defineComponent({
           <input
             class="sr-only"
             type="radio"
-            id={attrs.id}
+            id={attrs.id as string}
             name={props.name}
             checked={props.checked}
-            onChange={() => { emit('change') }}
+            onChange={() => {
+              emit('change')
+            }}
           />
           {slots.default()}
         </label>

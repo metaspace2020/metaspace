@@ -1,7 +1,6 @@
-import { defineComponent } from '@vue/composition-api'
-import distanceInWords from 'date-fns/distance_in_words_strict'
-import parse from 'date-fns/parse'
-import isValid from 'date-fns/is_valid'
+import { defineComponent, computed } from 'vue'
+// @ts-ignore
+import { parseISO, formatDistanceToNow, isValid } from 'date-fns'
 
 const formatOptions: Intl.DateTimeFormatOptions = {
   year: 'numeric',
@@ -12,35 +11,28 @@ const formatOptions: Intl.DateTimeFormatOptions = {
   hour12: false,
 }
 
-function getTitle(date: Date) {
-  return date.toLocaleString([], formatOptions)
-}
-
-const dateConfig = { addSuffix: true }
-const seconds = /seconds/
-
-function getValue(date: Date) {
-  const value = distanceInWords(Date.now(), date, dateConfig)
-  if (seconds.test(value)) {
-    return 'just now'
-  }
-  return value
-}
-
 export default defineComponent({
   name: 'ElapsedTime',
-  props: {
-    date: { type: String, required: true },
-  },
+  props: ['date'],
   setup(props) {
-    const parsedDate = parse(props.date)
-    const valid = isValid(parsedDate)
+    const parsedDate = computed(() => parseISO(props.date))
+    const valid = computed(() => isValid(parsedDate.value))
+
+    const title = computed(() =>
+      valid.value ? parsedDate.value.toLocaleString([], formatOptions) : 'Date unavailable'
+    )
+
+    const elapsedTime = computed(() => {
+      if (!valid.value) {
+        return 'some time ago'
+      }
+      const value = formatDistanceToNow(parsedDate.value, { addSuffix: true })
+      return value.includes('seconds') ? 'just now' : value
+    })
+
     return () => (
-      <span
-        class="sm-elapsed-time"
-        title={valid ? getTitle(parsedDate) : 'Date unavailable'}
-      >
-        {valid ? getValue(parsedDate) : 'some time ago'}
+      <span class="sm-elapsed-time" title={title.value}>
+        {elapsedTime.value}
       </span>
     )
   },

@@ -1,7 +1,0 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`DatasetBrowserKendrickPlot > it should match snapshot when empty 1`] = `
-"<div class=\\"dataset-browser-kendrick-container\\">
-  <!---->
-</div>"
-`;

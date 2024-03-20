@@ -1,40 +1,41 @@
-import { defineComponent, reactive } from '@vue/composition-api'
+import { defineComponent, reactive } from 'vue'
 
 import { SmForm, PrimaryLabelText, SecondaryLabelText, RadioButton } from '../../components/Form'
 import { RichTextArea } from '../../components/RichText'
 
 import { MolecularDB, MolecularDBDetails, UpdateDatabaseDetailsMutation } from '../../api/moldb'
 import { formatDatabaseLabel, getDatabaseDetails } from './formatting'
+import { ElMessage, ElInput } from '../../lib/element-plus'
 
 interface State {
-  model: MolecularDBDetails,
-  loading: boolean,
+  model: MolecularDBDetails
+  loading: boolean
 }
 
 interface Props {
-  db: MolecularDB,
+  db: MolecularDB
   submit: (update: UpdateDatabaseDetailsMutation) => void
 }
 
-const Details = defineComponent<Props>({
+const Details = defineComponent({
   name: 'DatabaseDetailsForm',
   props: {
-    db: { type: Object, required: true },
+    db: { type: Object as any, required: true },
     submit: { type: Function, required: true },
   },
-  setup(props, { root }) {
+  setup(props: Props) {
     const state = reactive<State>({
       model: getDatabaseDetails(props.db),
       loading: false,
     })
 
-    const handleFormSubmit = async() => {
+    const handleFormSubmit = async () => {
       try {
         state.loading = true
         await props.submit({ id: props.db.id, details: state.model })
-        root.$message({ message: `${formatDatabaseLabel(props.db)} updated`, type: 'success' })
+        ElMessage({ message: `${formatDatabaseLabel(props.db)} updated`, type: 'success' })
       } catch (e) {
-        root.$message({ message: 'Something went wrong, please try again later', type: 'error' })
+        ElMessage({ message: 'Something went wrong, please try again later', type: 'error' })
       } finally {
         state.loading = false
       }
@@ -46,10 +47,7 @@ const Details = defineComponent<Props>({
           <label for="database-full-name">
             <PrimaryLabelText>Full name</PrimaryLabelText>
           </label>
-          <el-input
-            id="database-full-name"
-            v-model={state.model.fullName}
-          />
+          <ElInput id="database-full-name" v-model={state.model.fullName} />
         </div>
         <RichTextArea
           content={state.model.description}
@@ -61,7 +59,7 @@ const Details = defineComponent<Props>({
         >
           <PrimaryLabelText slot="label">Description</PrimaryLabelText>
         </RichTextArea>
-        <div class='radio-wrapper'>
+        <div class="radio-wrapper">
           <p class="m-0 mb-3">
             <PrimaryLabelText>Annotation access</PrimaryLabelText>
           </p>
@@ -82,43 +80,49 @@ const Details = defineComponent<Props>({
             id="database-annotations-public"
             name="isPublic"
             checked={state.model.isPublic}
-            onChange={() => { state.model.isPublic = true }}
+            onChange={() => {
+              state.model.isPublic = true
+            }}
           >
             <PrimaryLabelText>Annotations are public</PrimaryLabelText>
             <SecondaryLabelText>Results will be visible to everyone</SecondaryLabelText>
           </RadioButton>
         </div>
-        <div class='radio-wrapper'>
-          <p class="m-0 mb-3">
-            <PrimaryLabelText>Custom database access</PrimaryLabelText>
-          </p>
-          <RadioButton
-            id="database-private"
-            name="isVisible"
-            checked={!state.model.isVisible}
-            onChange={() => { state.model.isVisible = false }}
-          >
-            <PrimaryLabelText>Custom database is private</PrimaryLabelText>
-            <SecondaryLabelText>Custom database will be available for group members only</SecondaryLabelText>
-          </RadioButton>
-          <RadioButton
-            id="database-public"
-            name="isVisible"
-            checked={state.model.isVisible}
-            onChange={() => {
-              state.model.isVisible = true
-              state.model.isPublic = true
-            }}
-          >
-            <PrimaryLabelText>Custom database is public</PrimaryLabelText>
-            <SecondaryLabelText>Custom database will be available as annotation option to everyone</SecondaryLabelText>
-          </RadioButton>
-        </div>
         <div>
+          <div class="radio-wrapper">
+            <p class="m-0 mb-3">
+              <PrimaryLabelText>Custom database access</PrimaryLabelText>
+            </p>
+            <RadioButton
+              id="database-private"
+              name="isVisible"
+              checked={!state.model.isVisible}
+              onChange={() => {
+                state.model.isVisible = false
+              }}
+            >
+              <PrimaryLabelText>Custom database is private</PrimaryLabelText>
+              <SecondaryLabelText>Custom database will be available for group members only</SecondaryLabelText>
+            </RadioButton>
+            <RadioButton
+              id="database-public"
+              name="isVisible"
+              checked={state.model.isVisible}
+              onChange={() => {
+                state.model.isVisible = true
+                state.model.isPublic = true
+              }}
+            >
+              <PrimaryLabelText>Custom database is public</PrimaryLabelText>
+              <SecondaryLabelText>
+                Custom database will be available as annotation option to everyone
+              </SecondaryLabelText>
+            </RadioButton>
+          </div>
           <label for="database-link">
             <PrimaryLabelText>Link</PrimaryLabelText>
           </label>
-          <el-input id="database-link" v-model={state.model.link}/>
+          <ElInput id="database-link" v-model={state.model.link} />
         </div>
         <RichTextArea
           content={state.model.citation}
@@ -130,9 +134,7 @@ const Details = defineComponent<Props>({
         >
           <PrimaryLabelText slot="label">Citation</PrimaryLabelText>
         </RichTextArea>
-        <button class="el-button el-button--primary">
-          Update details
-        </button>
+        <button class="el-button el-button--primary">Update details</button>
       </SmForm>
     )
   },

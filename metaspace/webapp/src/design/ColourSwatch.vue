@@ -1,9 +1,6 @@
 <template>
   <div>
-    <div
-      class="h-10 rounded mb-2"
-      :class="[{ 'opacity-bg': hasOpacity }, colourClass]"
-    ></div>
+    <div class="h-10 rounded mb-2" :class="[{ 'opacity-bg': hasOpacity }, colourClass]"></div>
     <p class="font-medium">
       {{ name }}
     </p>
@@ -13,8 +10,9 @@
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-export default Vue.extend({
+import { defineComponent } from 'vue'
+export default defineComponent({
+  name: 'ColourSwatch',
   props: {
     colourClass: String,
     name: String,

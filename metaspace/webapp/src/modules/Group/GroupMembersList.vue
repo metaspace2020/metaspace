@@ -2,7 +2,7 @@
   <members-list
     :loading="loading || loadingInternal"
     :current-user="currentUser"
-    :members="members"
+    :members="sortedMembers"
     type="group"
     :filter="datasetsListFilter"
     :can-edit="canEdit"
@@ -10,13 +10,18 @@
     @cancelInvite="handleRemoveUser"
     @acceptUser="handleAcceptUser"
     @rejectUser="handleRejectUser"
-    @addMember="() => handleAddMember(/* Discard the event argument. ConfirmAsync adds an argument to the end of the arguments list, so the arguments list must be predictable */)"
+    @addMember="
+      () =>
+        handleAddMember(/* Discard the event argument. ConfirmAsync adds an argument to the end of the arguments list, so the arguments list must be predictable */)
+    "
     @updateRole="handleUpdateRole"
   />
 </template>
+
 <script lang="ts">
-import Vue from 'vue'
-import { Prop } from 'vue-property-decorator'
+import { defineComponent, reactive, toRefs, computed, inject } from 'vue'
+import { sortBy } from 'lodash-es'
+import MembersList from '../../components/MembersList.vue'
 import {
   acceptRequestToJoinGroupMutation,
   EditGroupQuery,
@@ -27,112 +32,104 @@ import {
   UserGroupRole,
   UserGroupRoleOptions as UGRO,
 } from '../../api/group'
-import MembersList from '../../components/MembersList.vue'
-import ConfirmAsync from '../../components/ConfirmAsync'
-import emailRegex from '../../lib/emailRegex'
 import { CurrentUserRoleResult } from '../../api/user'
-import { sortBy } from 'lodash-es'
-import Component from 'vue-class-component'
+import emailRegex from '../../lib/emailRegex'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { useConfirmAsync } from '../../components/ConfirmAsync'
 
-  @Component({
-    components: {
-      MembersList,
+export default defineComponent({
+  name: 'GroupMembersList',
+  components: {
+    MembersList,
+  },
+  props: {
+    currentUser: Object as () => CurrentUserRoleResult | null,
+    group: Object as () => EditGroupQuery | null,
+    members: {
+      type: Array as () => EditGroupQueryMember[],
+      required: true,
     },
-  })
-export default class GroupMembersList extends Vue {
-    @Prop()
-    currentUser!: CurrentUserRoleResult | null;
+    loading: Boolean,
+    refreshData: Function,
+  },
+  setup(props) {
+    const apolloClient = inject(DefaultApolloClient)
+    const state = reactive({
+      loadingInternal: false,
+    })
+    const confirmAsync = useConfirmAsync()
+    const canEdit = computed(() => {
+      return props.currentUser?.role === 'admin' || props.group?.currentUserRole === 'GROUP_ADMIN'
+    })
 
-    @Prop()
-    group!: EditGroupQuery | null;
+    const groupId = computed(() => props.group?.id)
+    const groupName = computed(() => props.group?.name)
 
-    @Prop({ type: Array, required: true })
-    members!: EditGroupQueryMember[];
+    const datasetsListFilter = computed(() => ({
+      group: groupId.value,
+    }))
 
-    @Prop({ type: Boolean })
-    loading!: boolean;
-
-    @Prop({ type: Function })
-    refreshData!: () => Promise<any>;
-
-    loadingInternal: boolean = false;
-
-    get canEdit(): boolean {
-      return (this.currentUser && this.currentUser.role === 'admin')
-        || (this.group && this.group.currentUserRole === 'GROUP_ADMIN')
-        || false
-    }
-
-    get groupId() {
-      return this.group && this.group.id
-    }
-
-    get groupName() {
-      return this.group ? this.group.name : ''
-    }
-
-    get datasetsListFilter() {
-      return {
-        group: this.groupId,
-      }
-    }
-
-    get sortedMembers() {
+    const sortedMembers = computed(() => {
       const roleOrder = [UGRO.GROUP_ADMIN, UGRO.MEMBER, UGRO.PENDING, UGRO.INVITED]
-      return sortBy(this.members, m => roleOrder.indexOf(m.role))
-    }
+      return sortBy(props.members, (m) => roleOrder.indexOf(m.role))
+    })
 
-    @ConfirmAsync(function(this: GroupMembersList, member: EditGroupQueryMember) {
-      return {
-        message: `Are you sure you want to remove ${member.user.name} from ${this.groupName}?`,
+    const handleRemoveUser = async (member: EditGroupQueryMember) => {
+      const confirmOptions = {
+        message: `Are you sure you want to remove ${member.user.name} from ${groupName.value}?`,
         confirmButtonText: 'Remove user',
         confirmButtonLoadingText: 'Removing...',
       }
-    })
-    async handleRemoveUser(member: EditGroupQueryMember) {
-      await this.$apollo.mutate({
-        mutation: removeUserFromGroupMutation,
-        variables: { groupId: this.groupId, userId: member.user.id },
+
+      await confirmAsync(confirmOptions, async () => {
+        await apolloClient.mutate({
+          mutation: removeUserFromGroupMutation,
+          variables: { groupId: groupId.value, userId: member.user.id },
+        })
+        await props.refreshData()
       })
-      await this.refreshData()
     }
 
-    @ConfirmAsync(function(this: GroupMembersList, member: EditGroupQueryMember) {
-      return {
-        message: `This will allow ${member.user.name} to access all private datasets that are in ${this.groupName}. `
-        + 'Are you sure you want to accept them into the group?',
+    const handleAcceptUser = async (member: EditGroupQueryMember) => {
+      const confirmOptions = {
+        message:
+          `This will allow ${member.user.name} to access all private datasets that are in ${groupName.value}. ` +
+          'Are you sure you want to accept them into the group?',
         confirmButtonText: 'Accept request',
         confirmButtonLoadingText: 'Accepting...',
       }
-    })
-    async handleAcceptUser(member: EditGroupQueryMember) {
-      await this.$apollo.mutate({
-        mutation: acceptRequestToJoinGroupMutation,
-        variables: { groupId: this.groupId, userId: member.user.id },
+
+      await confirmAsync(confirmOptions, async () => {
+        await apolloClient.mutate({
+          mutation: acceptRequestToJoinGroupMutation,
+          variables: { groupId: groupId.value, userId: member.user.id },
+        })
+        await props.refreshData()
       })
-      await this.refreshData()
     }
 
-    @ConfirmAsync(function(this: GroupMembersList, member: EditGroupQueryMember) {
-      return {
-        message: `Are you sure you want to decline ${member.user.name}'s request for access to ${this.groupName}?`,
+    const handleRejectUser = async (member: EditGroupQueryMember) => {
+      const confirmOptions = {
+        message: `Are you sure you want to decline ${member.user.name}'s request for access to ${groupName.value}?`,
         confirmButtonText: 'Decline request',
         confirmButtonLoadingText: 'Declining...',
       }
-    })
-    async handleRejectUser(member: EditGroupQueryMember) {
-      await this.$apollo.mutate({
-        mutation: removeUserFromGroupMutation,
-        variables: { groupId: this.groupId, userId: member.user.id },
+
+      await confirmAsync(confirmOptions, async () => {
+        await apolloClient.mutate({
+          mutation: removeUserFromGroupMutation,
+          variables: { groupId: groupId.value, userId: member.user.id },
+        })
+        await props.refreshData()
       })
-      await this.refreshData()
     }
 
-    @ConfirmAsync(function(this: GroupMembersList) {
-      return {
+    const handleAddMember = async () => {
+      const confirmOptions = {
         title: 'Add member',
-        message: 'An email will be sent inviting them to join the group. '
-        + `If they accept the invitation, they will be able to access the private datasets of ${this.groupName}.`,
+        message:
+          'An email will be sent inviting them to join the group. ' +
+          `If they accept the invitation, they will be able to access the private datasets of ${groupName.value}.`,
         showInput: true,
         inputPlaceholder: 'Email address',
         inputPattern: emailRegex,
@@ -140,31 +137,47 @@ export default class GroupMembersList extends Vue {
         confirmButtonText: 'Invite to group',
         confirmButtonLoadingText: 'Sending invitation...',
       }
-    })
-    async handleAddMember(email: string) {
-      await this.$apollo.mutate({
-        mutation: inviteUserToGroupMutation,
-        variables: { groupId: this.groupId, email },
+
+      await confirmAsync(confirmOptions, async (params) => {
+        const email: string = params.value
+        await apolloClient.mutate({
+          mutation: inviteUserToGroupMutation,
+          variables: { groupId: groupId.value, email },
+        })
+        await props.refreshData()
       })
-      await this.refreshData()
     }
 
-    async handleUpdateRole(member: EditGroupQueryMember, role: UserGroupRole | null) {
+    const handleUpdateRole = async (member: EditGroupQueryMember, role: UserGroupRole | null | string) => {
       try {
-        this.loadingInternal = true
-        await this.$apollo.mutate({
+        state.loadingInternal = true
+        await apolloClient.mutate({
           mutation: updateUserGroupMutation,
           variables: {
-            groupId: this.groupId,
+            groupId: groupId.value,
             userId: member.user.id,
-            update: { role },
+            update: { role: role === '' ? null : role },
           },
         })
-        await this.refreshData()
+        await props.refreshData()
       } finally {
-        this.loadingInternal = false
+        state.loadingInternal = false
       }
     }
-}
 
+    return {
+      ...toRefs(state),
+      groupId,
+      groupName,
+      canEdit,
+      datasetsListFilter,
+      sortedMembers,
+      handleAcceptUser,
+      handleRemoveUser,
+      handleRejectUser,
+      handleAddMember,
+      handleUpdateRole,
+    }
+  },
+})
 </script>
