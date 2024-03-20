@@ -50,7 +50,7 @@ const getGraphqlSchema = () => {
 
   let schemaJson
   try {
-    schemaJson = require('./graphql-schema.json')
+    schemaJson = require('../../../tests/utils/graphql-schema.json')
   } catch (err) {
     console.error('tests/utils/graphql-schema.json not found. Please run `yarn run generate-local-graphql-schema`.')
     throw err
