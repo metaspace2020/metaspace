@@ -24,6 +24,10 @@ export default defineConfig({
   test: {
     globals: true,
     setupFiles: 'src/tests/setupTests.ts',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+    },
     environment: 'jsdom',
     testTimeout: 10000, // Global timeout set to 10000ms (10 seconds)
   },
