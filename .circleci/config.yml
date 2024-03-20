@@ -5,7 +5,7 @@ jobs:
 
   test-graphql:
     docker:
-      - image: node:16.20.0-alpine3.17
+      - image: cimg/node:16.20.0
 
       - image: postgres:9.5-alpine
         environment:
@@ -58,7 +58,7 @@ jobs:
 
   generate-graphql-schema:
     docker:
-      - image: node:16.20.0-alpine3.17
+      - image: cimg/node:16.20.0
 
       - image: postgres:9.5-alpine
         environment:
@@ -110,7 +110,7 @@ jobs:
 
   test-webapp:
     docker:
-      - image: node:16.20.0-alpine3.17
+      - image: cimg/node:16.20.0
 
     working_directory: ~/metaspace/metaspace/webapp
     steps:
@@ -166,7 +166,7 @@ jobs:
 
   test-webapp-e2e:
     docker:
-      - image: node:16.20.0-alpine3.17
+      - image: cimg/node:16.20.0
 
       - image: postgres:9.5-alpine
         environment:
