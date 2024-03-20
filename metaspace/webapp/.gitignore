@@ -1,4 +1,4 @@
-clientConfig.json
+#clientConfig.json
 db.sqlite
 coverage*
 
