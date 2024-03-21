@@ -193,8 +193,24 @@ export function setupGlobalVariables() {
   // };
 }
 
+// Set a fixed date for your tests
+const FIXED_DATE = '2020-01-03T00:00:00.000Z'
+
 // Set up any global hooks or utilities for Apollo or Vue Testing
 beforeAll(() => {
+  vi.spyOn(global.Date, 'now').mockImplementation(() => new Date(FIXED_DATE).getTime())
+  // Mock moment to return a fixed moment object when called without arguments
+  vi.mock('moment', async () => {
+    const actualMoment = (await vi.importActual('moment')).default // Correctly access the default export
+
+    const mockedMoment = (...args) => {
+      return args.length ? actualMoment(...args) : actualMoment(FIXED_DATE)
+    }
+
+    // Return the mocked function as the default export
+    return { default: mockedMoment, __esModule: true }
+  })
+
   moment.tz.setDefault('UTC')
 
   // Setup before all tests run, e.g., initializing Apollo Client
@@ -214,6 +230,7 @@ process.on('rejectionHandled', (promise) => {
 })
 
 afterAll(() => {
+  vi.restoreAllMocks()
   moment.tz.setDefault()
 
   // Cleanup after all tests have run

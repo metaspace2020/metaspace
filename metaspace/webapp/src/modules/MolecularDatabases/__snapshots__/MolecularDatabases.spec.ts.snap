@@ -439,7 +439,7 @@ exports[`MolecularDatabases > should match snapshot 1`] = `
                       </td>
                       <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                         <div class=\\"cell\\">
-                          <!----><span class=\\"sm-elapsed-time\\" title=\\"2024/03/21, 09:47\\">just now</span>
+                          <!----><span class=\\"sm-elapsed-time\\" title=\\"2020/01/03, 00:00\\">just now</span>
                         </div>
                       </td>
                       <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
@@ -471,7 +471,7 @@ exports[`MolecularDatabases > should match snapshot 1`] = `
                       </td>
                       <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                         <div class=\\"cell\\">
-                          <!----><span class=\\"sm-elapsed-time\\" title=\\"2024/03/21, 09:47\\">just now</span>
+                          <!----><span class=\\"sm-elapsed-time\\" title=\\"2020/01/03, 00:00\\">just now</span>
                         </div>
                       </td>
                       <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">

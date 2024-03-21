@@ -60,7 +60,7 @@ exports[`ProjectDatasetsDialog > it should match snapshot 1`] = `
                 <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
                 <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
               </div>
-              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Created <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/29, 05:00\\">6 years ago</span></span></div>
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Created <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/29, 05:00\\">a year ago</span></span></div>
               <!--v-if-->
             </div>
           </div>
@@ -103,7 +103,7 @@ exports[`ProjectDatasetsDialog > it should match snapshot 1`] = `
               <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
               <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
             </div>
-            <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/01, 09:00\\">6 years ago</span></span></div>
+            <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/01, 09:00\\">a year ago</span></span></div>
             <!--v-if-->
           </div>
         </div>
@@ -225,7 +225,7 @@ exports[`ProjectDatasetsDialog > should change actions for projects under review
               <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
               <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
             </div>
-            <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/01, 09:00\\">6 years ago</span></span></div>
+            <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/01, 09:00\\">a year ago</span></span></div>
             <!--v-if-->
           </div>
         </div>
@@ -471,7 +471,7 @@ exports[`ProjectDatasetsDialog > should filter projects by the keyword search on
                 <!--v-if--> undefined members
               </div>
               <!--v-if-->
-              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/29, 05:00\\">6 years ago</span></span></div>
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/29, 05:00\\">a year ago</span></span></div>
               <!--v-if-->
             </div>
           </div>
@@ -598,7 +598,7 @@ exports[`ProjectDatasetsDialog > should show only my projects when on the My Pro
                 <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
                 <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
               </div>
-              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Created <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/29, 05:00\\">6 years ago</span></span></div>
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Created <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/29, 05:00\\">a year ago</span></span></div>
               <!--v-if-->
             </div>
           </div>
@@ -641,7 +641,7 @@ exports[`ProjectDatasetsDialog > should show only my projects when on the My Pro
               <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
               <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
             </div>
-            <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/01, 09:00\\">6 years ago</span></span></div>
+            <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/01, 09:00\\">a year ago</span></span></div>
             <!--v-if-->
           </div>
         </div>
