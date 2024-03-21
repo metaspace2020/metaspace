@@ -213,6 +213,15 @@ beforeAll(() => {
 
   moment.tz.setDefault('UTC')
 
+  // Disable animations and transitions globally in tests
+  const style = document.createElement('style')
+  style.type = 'text/css'
+  style.innerHTML = `* {
+    animation: none !important;
+    transition: none !important;
+  }`
+  document.head.appendChild(style)
+
   // Setup before all tests run, e.g., initializing Apollo Client
   // setupGlobalPlugins()
   setupGlobalVariables()

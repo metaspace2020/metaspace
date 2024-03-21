@@ -1,5 +1,5 @@
 <template>
-  <div v-loading="!isLoaded" class="page">
+  <div v-loading="!isLoaded && showLoading" class="page">
     <div v-if="project != null" class="page-content">
       <datasets-dialog
         :visible="showProjectDatasetsDialog && currentUser != null"
@@ -102,7 +102,7 @@
       </el-tabs>
     </div>
     <div v-if="isLoaded && project == null">This project does not exist, or you do not have access to it.</div>
-    <div v-else-if="!isLoaded && project == null">
+    <div v-else-if="!isLoaded && project == null && showLoading">
       <el-icon class="is-loading"><Loading /></el-icon>
     </div>
   </div>
@@ -163,6 +163,9 @@ export default defineComponent({
     NewFeatureBadge,
     ElIcon,
     Loading,
+  },
+  props: {
+    showLoading: { type: Boolean, default: true },
   },
   directives: {
     loading: ElLoading.directive,

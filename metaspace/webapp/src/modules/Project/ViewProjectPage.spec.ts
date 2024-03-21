@@ -1,4 +1,4 @@
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, h } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import ViewProjectPage from './ViewProjectPage.vue'
 import { initMockGraphqlClient } from '../../tests/utils/mockGraphqlClient'
@@ -12,6 +12,19 @@ vi.mock('@vue/apollo-composable', () => ({
   useSubscription: vi.fn(() => ({ onResult: vi.fn() })),
   DefaultApolloClient: vi.fn(),
 }))
+
+vi.mock('@element-plus/icons-vue', async () => {
+  const actual = await vi.importActual('@element-plus/icons-vue') // Import the actual module
+  return {
+    ...actual,
+    Loading: {
+      default: {
+        name: 'LoadingMock',
+        template: '<div>Loading...</div>', // Simplified mock of the Loading component
+      },
+    },
+  }
+})
 
 let graphqlMocks: any
 
@@ -116,6 +129,7 @@ describe('ViewProjectPage', () => {
       const maxVisibleDatasets = ref(3) // Create a ref for the reactive property
 
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {
@@ -144,6 +158,7 @@ describe('ViewProjectPage', () => {
 
     it('should match snapshot (non-member)', async () => {
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {
@@ -171,6 +186,7 @@ describe('ViewProjectPage', () => {
       })
 
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {
@@ -198,6 +214,7 @@ describe('ViewProjectPage', () => {
       })
 
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {
@@ -225,6 +242,7 @@ describe('ViewProjectPage', () => {
       })
 
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {
@@ -258,6 +276,7 @@ describe('ViewProjectPage', () => {
       })
 
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {
@@ -285,6 +304,7 @@ describe('ViewProjectPage', () => {
       })
 
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {
@@ -312,6 +332,7 @@ describe('ViewProjectPage', () => {
       })
 
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {
@@ -345,6 +366,7 @@ describe('ViewProjectPage', () => {
       })
 
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {
@@ -382,6 +404,7 @@ describe('ViewProjectPage', () => {
       })
 
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {
@@ -409,6 +432,7 @@ describe('ViewProjectPage', () => {
       })
 
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {
@@ -436,6 +460,7 @@ describe('ViewProjectPage', () => {
       })
 
       const wrapper = mount(ViewProjectPage, {
+        props: { showLoading: false },
         global: {
           plugins: [store, router],
           provide: {

@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`ViewProjectPage > datasets tab > should match snapshot (non-member) 1`] = `
-"<div data-v-4e241df4=\\"\\" class=\\"page el-loading-parent--relative\\" loading-number=\\"1\\">
+"<div data-v-4e241df4=\\"\\" class=\\"page\\">
   <div data-v-4e241df4=\\"\\" class=\\"page-content\\">
     <div data-v-4e241df4=\\"\\" class=\\"mock-el-dialog project-datasets-dialog\\" modelvalue=\\"false\\" append-to-body=\\"true\\" title=\\"Add or remove datasets in this project\\" lockscroll=\\"false\\">
       <div class=\\"mt-6\\">
@@ -99,18 +99,11 @@ exports[`ViewProjectPage > datasets tab > should match snapshot (non-member) 1`]
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-    <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-        <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-      </svg>
-      <!---->
-    </div>
-  </div>
 </div>"
 `;
 
 exports[`ViewProjectPage > members tab > should match snapshot (invited) 1`] = `
-"<div data-v-4e241df4=\\"\\" class=\\"page el-loading-parent--relative\\" loading-number=\\"1\\">
+"<div data-v-4e241df4=\\"\\" class=\\"page\\">
   <div data-v-4e241df4=\\"\\" class=\\"page-content\\">
     <div data-v-4e241df4=\\"\\" class=\\"mock-el-dialog project-datasets-dialog\\" modelvalue=\\"false\\" append-to-body=\\"true\\" title=\\"Add or remove datasets in this project\\" lockscroll=\\"false\\">
       <div class=\\"mt-6\\">
@@ -220,18 +213,11 @@ exports[`ViewProjectPage > members tab > should match snapshot (invited) 1`] = `
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-    <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-        <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-      </svg>
-      <!---->
-    </div>
-  </div>
 </div>"
 `;
 
 exports[`ViewProjectPage > members tab > should match snapshot (manager, including table) 1`] = `
-"<div data-v-4e241df4=\\"\\" class=\\"page el-loading-parent--relative\\" loading-number=\\"1\\">
+"<div data-v-4e241df4=\\"\\" class=\\"page\\">
   <div data-v-4e241df4=\\"\\" class=\\"page-content\\">
     <div data-v-4e241df4=\\"\\" class=\\"mock-el-dialog project-datasets-dialog\\" modelvalue=\\"false\\" append-to-body=\\"true\\" title=\\"Add or remove datasets in this project\\" lockscroll=\\"false\\">
       <div class=\\"mt-6\\">
@@ -363,18 +349,11 @@ exports[`ViewProjectPage > members tab > should match snapshot (manager, includi
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-    <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-        <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-      </svg>
-      <!---->
-    </div>
-  </div>
 </div>"
 `;
 
 exports[`ViewProjectPage > members tab > should match snapshot (member) 1`] = `
-"<div data-v-4e241df4=\\"\\" class=\\"page el-loading-parent--relative\\" loading-number=\\"1\\">
+"<div data-v-4e241df4=\\"\\" class=\\"page\\">
   <div data-v-4e241df4=\\"\\" class=\\"page-content\\">
     <div data-v-4e241df4=\\"\\" class=\\"mock-el-dialog project-datasets-dialog\\" modelvalue=\\"false\\" append-to-body=\\"true\\" title=\\"Add or remove datasets in this project\\" lockscroll=\\"false\\">
       <div class=\\"mt-6\\">
@@ -466,18 +445,11 @@ exports[`ViewProjectPage > members tab > should match snapshot (member) 1`] = `
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-    <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-        <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-      </svg>
-      <!---->
-    </div>
-  </div>
 </div>"
 `;
 
 exports[`ViewProjectPage > members tab > should match snapshot (non-member) 1`] = `
-"<div data-v-4e241df4=\\"\\" class=\\"page el-loading-parent--relative\\" loading-number=\\"1\\">
+"<div data-v-4e241df4=\\"\\" class=\\"page\\">
   <div data-v-4e241df4=\\"\\" class=\\"page-content\\">
     <div data-v-4e241df4=\\"\\" class=\\"mock-el-dialog project-datasets-dialog\\" modelvalue=\\"false\\" append-to-body=\\"true\\" title=\\"Add or remove datasets in this project\\" lockscroll=\\"false\\">
       <div class=\\"mt-6\\">
@@ -570,18 +542,11 @@ exports[`ViewProjectPage > members tab > should match snapshot (non-member) 1`] 
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-    <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-        <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-      </svg>
-      <!---->
-    </div>
-  </div>
 </div>"
 `;
 
 exports[`ViewProjectPage > publishing tab > should match snapshot (published) 1`] = `
-"<div data-v-4e241df4=\\"\\" class=\\"page el-loading-parent--relative\\" loading-number=\\"1\\">
+"<div data-v-4e241df4=\\"\\" class=\\"page\\">
   <div data-v-4e241df4=\\"\\" class=\\"page-content\\">
     <div data-v-4e241df4=\\"\\" class=\\"mock-el-dialog project-datasets-dialog\\" modelvalue=\\"false\\" append-to-body=\\"true\\" title=\\"Add or remove datasets in this project\\" lockscroll=\\"false\\">
       <div class=\\"mt-6\\">
@@ -684,18 +649,11 @@ exports[`ViewProjectPage > publishing tab > should match snapshot (published) 1`
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-    <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-        <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-      </svg>
-      <!---->
-    </div>
-  </div>
 </div>"
 `;
 
 exports[`ViewProjectPage > publishing tab > should match snapshot (under review) 1`] = `
-"<div data-v-4e241df4=\\"\\" class=\\"page el-loading-parent--relative\\" loading-number=\\"1\\">
+"<div data-v-4e241df4=\\"\\" class=\\"page\\">
   <div data-v-4e241df4=\\"\\" class=\\"page-content\\">
     <div data-v-4e241df4=\\"\\" class=\\"mock-el-dialog project-datasets-dialog\\" modelvalue=\\"false\\" append-to-body=\\"true\\" title=\\"Add or remove datasets in this project\\" lockscroll=\\"false\\">
       <div class=\\"mt-6\\">
@@ -875,18 +833,11 @@ exports[`ViewProjectPage > publishing tab > should match snapshot (under review)
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-    <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-        <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-      </svg>
-      <!---->
-    </div>
-  </div>
 </div>"
 `;
 
 exports[`ViewProjectPage > publishing tab > should match snapshot (unpublished) 1`] = `
-"<div data-v-4e241df4=\\"\\" class=\\"page el-loading-parent--relative\\" loading-number=\\"1\\">
+"<div data-v-4e241df4=\\"\\" class=\\"page\\">
   <div data-v-4e241df4=\\"\\" class=\\"page-content\\">
     <div data-v-4e241df4=\\"\\" class=\\"mock-el-dialog project-datasets-dialog\\" modelvalue=\\"false\\" append-to-body=\\"true\\" title=\\"Add or remove datasets in this project\\" lockscroll=\\"false\\">
       <div class=\\"mt-6\\">
@@ -1049,18 +1000,11 @@ exports[`ViewProjectPage > publishing tab > should match snapshot (unpublished) 
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-    <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-        <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-      </svg>
-      <!---->
-    </div>
-  </div>
 </div>"
 `;
 
 exports[`ViewProjectPage > settings tab > should disable actions when under published 1`] = `
-"<div data-v-4e241df4=\\"\\" class=\\"page el-loading-parent--relative\\" loading-number=\\"1\\">
+"<div data-v-4e241df4=\\"\\" class=\\"page\\">
   <div data-v-4e241df4=\\"\\" class=\\"page-content\\">
     <div data-v-4e241df4=\\"\\" class=\\"mock-el-dialog project-datasets-dialog\\" modelvalue=\\"false\\" append-to-body=\\"true\\" title=\\"Add or remove datasets in this project\\" lockscroll=\\"false\\">
       <div class=\\"mt-6\\">
@@ -1236,18 +1180,11 @@ exports[`ViewProjectPage > settings tab > should disable actions when under publ
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-    <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-        <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-      </svg>
-      <!---->
-    </div>
-  </div>
 </div>"
 `;
 
 exports[`ViewProjectPage > settings tab > should disable actions when under review 1`] = `
-"<div data-v-4e241df4=\\"\\" class=\\"page el-loading-parent--relative\\" loading-number=\\"1\\">
+"<div data-v-4e241df4=\\"\\" class=\\"page\\">
   <div data-v-4e241df4=\\"\\" class=\\"page-content\\">
     <div data-v-4e241df4=\\"\\" class=\\"mock-el-dialog project-datasets-dialog\\" modelvalue=\\"false\\" append-to-body=\\"true\\" title=\\"Add or remove datasets in this project\\" lockscroll=\\"false\\">
       <div class=\\"mt-6\\">
@@ -1415,18 +1352,11 @@ exports[`ViewProjectPage > settings tab > should disable actions when under revi
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-    <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-        <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-      </svg>
-      <!---->
-    </div>
-  </div>
 </div>"
 `;
 
 exports[`ViewProjectPage > settings tab > should match snapshot 1`] = `
-"<div data-v-4e241df4=\\"\\" class=\\"page el-loading-parent--relative\\" loading-number=\\"1\\">
+"<div data-v-4e241df4=\\"\\" class=\\"page\\">
   <div data-v-4e241df4=\\"\\" class=\\"page-content\\">
     <div data-v-4e241df4=\\"\\" class=\\"mock-el-dialog project-datasets-dialog\\" modelvalue=\\"false\\" append-to-body=\\"true\\" title=\\"Add or remove datasets in this project\\" lockscroll=\\"false\\">
       <div class=\\"mt-6\\">
@@ -1595,12 +1525,5 @@ exports[`ViewProjectPage > settings tab > should match snapshot 1`] = `
     </div>
   </div>
   <!--v-if-->
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-    <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-        <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-      </svg>
-      <!---->
-    </div>
-  </div>
 </div>"
 `;

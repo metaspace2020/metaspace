@@ -8,7 +8,9 @@ import { nextTick } from 'vue'
 import * as authApi from '../../../api/auth'
 import router from '../../../router'
 
-vi.mock('../../../api/auth')
+vi.mock('../../../api/auth', () => ({
+  createAccountByEmail: vi.fn(() => Promise.resolve()),
+}))
 
 const setFormField = (wrapper, fieldName, value) => {
   const formItem = wrapper.findAllComponents({ name: 'ElFormItem' }).find((w) => w.props().prop === fieldName)
@@ -19,7 +21,6 @@ describe('CreateAccountDialog', () => {
   let store
 
   beforeEach(() => {
-    vi.clearAllMocks()
     store = createStore({
       modules: {
         account: account,
@@ -28,8 +29,8 @@ describe('CreateAccountDialog', () => {
   })
 
   afterEach(() => {
-    // Clean up or restore any global changes here
-    // For example, if you had mocked global functions or properties
+    vi.clearAllMocks() // Clears all mocks to prevent test leakage
+    vi.resetModules() // Reset any module state, very useful when modules have side effects
   })
 
   it('should match snapshot', async () => {
@@ -43,9 +44,6 @@ describe('CreateAccountDialog', () => {
   })
 
   it('should be able to submit a valid form', async () => {
-    // Import the mocked module
-
-    // Arrange
     const firstName = 'foo'
     const lastName = 'bar'
     const email = 'test@example.com'
@@ -57,25 +55,21 @@ describe('CreateAccountDialog', () => {
     })
     await nextTick()
 
-    // Act
     setFormField(wrapper, 'firstName', firstName)
     setFormField(wrapper, 'lastName', lastName)
     setFormField(wrapper, 'email', email)
     setFormField(wrapper, 'password', password)
-    await wrapper.vm.form?.validate()
 
     await wrapper.find('[data-testid="submit-btn"]').trigger('click')
     await flushPromises()
     await nextTick()
 
-    // Assert
     expect(authApi.createAccountByEmail).toHaveBeenCalledTimes(1)
     const paragraph = wrapper.find('p')
     expect(paragraph.text()).toContain('Please click the link')
   })
 
   it('should not submit an invalid form', async () => {
-    // Arrange
     const wrapper = mount(CreateAccountDialog, {
       global: {
         plugins: [store, router, ElementPlus],
@@ -83,20 +77,13 @@ describe('CreateAccountDialog', () => {
     })
     await nextTick()
 
-    // Act
     setFormField(wrapper, 'firstName', 'foo')
     setFormField(wrapper, 'lastName', 'bar')
     setFormField(wrapper, 'email', 'test@email.com')
     setFormField(wrapper, 'password', '') // Intentionally left empty
-    await wrapper.vm.form?.validate()
-    await nextTick()
-
     await wrapper.find('[data-testid="submit-btn"]').trigger('click')
-
-    // await flushPromises()
     await nextTick()
 
-    // Assert
-    expect(authApi.createAccountByEmail).not.toBeCalled()
+    expect(authApi.createAccountByEmail).not.toHaveBeenCalled()
   })
 })
