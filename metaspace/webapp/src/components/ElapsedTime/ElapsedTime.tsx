@@ -20,7 +20,6 @@ export default defineComponent({
       if (!valid.value) {
         return 'some time ago'
       }
-      console.log('moment', moment().format('YYYY/MM/DD, HH:mm'))
       const value = parsedDate.value.fromNow(true) // true to remove suffix
       return value.includes('seconds') ? 'just now' : value + ' ago'
     })

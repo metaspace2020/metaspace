@@ -25,7 +25,7 @@ describe('ElapsedTime', () => {
     await nextTick()
 
     expect(wrapper.text()).toEqual('a day ago')
-    expect(wrapper.attributes().title).toEqual('2020/01/02, 01:00')
+    expect(wrapper.attributes().title).toEqual('2020/01/02, 00:00')
 
     spy.mockRestore()
   })

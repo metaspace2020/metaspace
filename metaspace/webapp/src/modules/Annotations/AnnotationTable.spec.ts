@@ -133,6 +133,13 @@ describe('AnnotationTable', () => {
         countAnnotations: () => 4,
       }),
     })
+    await router.replace({
+      name: 'annotations',
+      query: {
+        viewId: 'xxxx',
+        ds: '2019-02-12_15h55m06s',
+      },
+    })
     const wrapper = mount(AnnotationTable, {
       global: {
         plugins: [store, router, ElementPlus],

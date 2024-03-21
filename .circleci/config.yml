@@ -153,6 +153,7 @@ jobs:
       - run:
           name: Run tests
           command: |
+            cp ~/workspace/graphql-schema.json ./tests/utils/graphql-schema.json
             yarn run test-ci --mode CI --coverage
       - run:
           name: Upload coverage

@@ -6,6 +6,7 @@ import { customSerializer } from './customSerializer'
 import { config } from '@vue/test-utils'
 import ElementPlus from 'element-plus'
 import { h } from 'vue'
+import moment from 'moment-timezone'
 
 expect.addSnapshotSerializer(customSerializer)
 
@@ -194,11 +195,12 @@ export function setupGlobalVariables() {
 
 // Set up any global hooks or utilities for Apollo or Vue Testing
 beforeAll(() => {
+  moment.tz.setDefault('UTC')
+
   // Setup before all tests run, e.g., initializing Apollo Client
   // setupGlobalPlugins()
   setupGlobalVariables()
   setupGlobalStubs()
-  setupGlobalVariables()
 })
 
 // Track unhandled rejections
@@ -212,6 +214,8 @@ process.on('rejectionHandled', (promise) => {
 })
 
 afterAll(() => {
+  moment.tz.setDefault()
+
   // Cleanup after all tests have run
   // Check for unhandled rejections and fail the test if any are found
   if (unhandledRejections.size > 0) {
