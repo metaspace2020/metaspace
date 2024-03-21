@@ -59,9 +59,9 @@ describe('FilterPanel', () => {
 
   const updateFilter = async (newFilter: any) => {
     await router.replace({ path: '/annotations' })
-    await nextTick()
+    // await nextTick()
     await store.commit('updateFilter', newFilter)
-    await nextTick() // Must wait after every change for vue-router to update the store
+    // await nextTick() // Must wait after every change for vue-router to update the store
   }
 
   it('should match snapshot (no filters)', async () => {
@@ -77,8 +77,8 @@ describe('FilterPanel', () => {
       props: propsData,
     })
 
-    await flushPromises()
-    await nextTick()
+    // await flushPromises()
+    // await nextTick()
 
     expect(wrapper.html()).toMatchSnapshot()
   })
@@ -97,7 +97,7 @@ describe('FilterPanel', () => {
     })
 
     await flushPromises()
-    await nextTick()
+    // await nextTick()
 
     expect(wrapper.html()).toMatchSnapshot()
   })
