@@ -34,7 +34,7 @@ exports[`DatasetItem > should match snapshot 1`] = `
     </div>
     <div class=\\"ds-item-line text-gray-700\\"><span class=\\"ds-add-filter\\" title=\\"Filter by species\\">organism</span>, <span class=\\"ds-add-filter\\" title=\\"Filter by organism part\\">organismpart</span> <span class=\\"ds-add-filter\\" title=\\"Filter by condition\\">(condition)</span></div>
     <div class=\\"ds-item-line\\"><span class=\\"ds-add-filter\\" title=\\"Filter by ionisation source\\"><!----></span> + <span class=\\"ds-add-filter\\" title=\\"Filter by analyzer type\\">type</span>, <span class=\\"ds-add-filter\\" title=\\"Filter by polarity\\">positive mode</span>, RP 123k @ 1234</div>
-    <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"4/17/2020, 11:37\\">almost 4 years ago</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"><!----></span>
+    <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"2020/04/17, 11:37\\">4 years ago</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"><!----></span>
       <!---->
     </div>
     <div class=\\"ds-item-line\\"><span><div>20 annotations</div> @ FDR 10% (HMDB-v2.5)</span></div>

@@ -25,10 +25,10 @@ export default defineConfig({
     globals: true,
     setupFiles: 'src/tests/setupTests.ts',
     coverage: {
-      provider: 'istanbul',
+      provider: 'v8',
     },
     environment: 'jsdom',
-    testTimeout: 10000, // Global timeout set to 10000ms (10 seconds)
+    testTimeout: 20000, // Global timeout set to 10000ms (10 seconds)
   },
   resolve: {
     alias: {

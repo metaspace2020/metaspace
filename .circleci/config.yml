@@ -110,7 +110,7 @@ jobs:
 
   test-webapp:
     docker:
-      - image: cimg/node:16.20.0
+      - image: lmaciel94/sm-webapp:latest
 
     working_directory: ~/metaspace/metaspace/webapp
     steps:
@@ -153,8 +153,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            cp ~/workspace/graphql-schema.json ./tests/utils/graphql-schema.json
-            yarn run test-ci
+            yarn run test-ci --mode CI --coverage
       - run:
           name: Upload coverage
           command: |

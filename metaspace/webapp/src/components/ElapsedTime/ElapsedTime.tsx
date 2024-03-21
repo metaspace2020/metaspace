@@ -1,33 +1,28 @@
 import { defineComponent, computed } from 'vue'
-// @ts-ignore
-import { parseISO, formatDistanceToNow, isValid } from 'date-fns'
-
-const formatOptions: Intl.DateTimeFormatOptions = {
-  year: 'numeric',
-  month: 'numeric',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-}
+// Import moment
+import moment from 'moment'
 
 export default defineComponent({
   name: 'ElapsedTime',
   props: ['date'],
   setup(props) {
-    const parsedDate = computed(() => parseISO(props.date))
-    const valid = computed(() => isValid(parsedDate.value))
+    const parsedDate = computed(() => moment(props.date))
+    const valid = computed(() => parsedDate.value.isValid())
 
-    const title = computed(() =>
-      valid.value ? parsedDate.value.toLocaleString([], formatOptions) : 'Date unavailable'
-    )
+    const title = computed(() => {
+      if (!valid.value) {
+        return 'Date unavailable'
+      }
+      return parsedDate.value.format('YYYY/MM/DD, HH:mm')
+    })
 
     const elapsedTime = computed(() => {
       if (!valid.value) {
         return 'some time ago'
       }
-      const value = formatDistanceToNow(parsedDate.value, { addSuffix: true })
-      return value.includes('seconds') ? 'just now' : value
+      console.log('moment', moment().format('YYYY/MM/DD, HH:mm'))
+      const value = parsedDate.value.fromNow(true) // true to remove suffix
+      return value.includes('seconds') ? 'just now' : value + ' ago'
     })
 
     return () => (
