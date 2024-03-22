@@ -234,7 +234,7 @@ export default defineComponent({
           message: `${props.defaultDb.group?.shortName || 'METASPACE'}
         ${formatDatabaseLabel(props.defaultDb)} is the default database and It can not be removed.`,
         })
-        onInput('databaseIds', props.value?.databaseIds)
+        onInput('databaseIds', props.value?.databaseIds.concat(val))
       }
     }
 

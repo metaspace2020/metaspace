@@ -38,6 +38,8 @@ exports[`FilterPanel > should match snapshot (all annotation filters) 1`] = `
         const groupOptions = [];
         const sourceDatabases = Array.isArray(props.fixedOptions) &amp;&amp; props.fixedOptions.length > 0 ? __vite_ssr_import_6__.getDatabasesByGroup(props.fixedOptions) : dbsByGroup.value;
         const queryRegex = new RegExp(query, &quot;i&quot;);
+        if (!sourceDatabases)
+          return;
         for (const group of sourceDatabases) {
           const localOptions = [];
           for (const db of group.molecularDatabases) {
@@ -505,6 +507,8 @@ exports[`FilterPanel > should match snapshot (database without dataset) 1`] = `
         const groupOptions = [];
         const sourceDatabases = Array.isArray(props.fixedOptions) &amp;&amp; props.fixedOptions.length > 0 ? __vite_ssr_import_6__.getDatabasesByGroup(props.fixedOptions) : dbsByGroup.value;
         const queryRegex = new RegExp(query, &quot;i&quot;);
+        if (!sourceDatabases)
+          return;
         for (const group of sourceDatabases) {
           const localOptions = [];
           for (const db of group.molecularDatabases) {

@@ -11,7 +11,7 @@
         no-data-text="No matches"
         no-match-text="No matches"
         reserve-keyword
-        :value="valueIfKnown"
+        :model-value="valueIfKnown"
         @change="onInput"
         @visible-change="filterOptions('')"
       >
@@ -101,7 +101,7 @@ export default defineComponent({
     const options = ref<Record<string, Option>>({})
     const previousQuery = ref(null)
     const store = useStore()
-    const datasetFilter = ref(store.getters.filter.datasetIds)
+    const datasetFilter = computed(() => store.getters.filter.datasetIds)
     const hasDatasetFilter = computed(() => datasetFilter.value?.length > 0)
     const DATABASE_OPTIONS_QUERY = gql`
       query DatabaseOptions {
@@ -225,6 +225,8 @@ export default defineComponent({
             ? getDatabasesByGroup(props.fixedOptions)
             : dbsByGroup.value
         const queryRegex = new RegExp(query, 'i')
+
+        if (!sourceDatabases) return
 
         for (const group of sourceDatabases) {
           const localOptions: Option[] = []
