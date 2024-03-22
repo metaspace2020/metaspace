@@ -28,7 +28,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "analyze-size": "rm -rf dist ; NODE_ENV=production WEBPACK_STATS=true vite build ; npx vite-bundle-visualizer dist/stats.json dist/ -p 9900 -O",
     "format": "prettier --write src/**/*.{vue,js,ts,tsx,css,scss,md} --ignore-path .gitignore",
-    "format-check": "prettier --check src/**/*.{vue,js,ts,tsx} --ignore-path .gitignore",
+    "format-check": "prettier --check src/**/*.{vue,js,ts,tsx} --ignore-path .prettierignore",
     "test-e2e": "cross-env CYPRESS_RUN=true cypress open"
   },
   "dependencies": {
