@@ -7,6 +7,7 @@ import fileConfig from '../clientConfig.json'
 
 interface Features {
   coloc: boolean
+  ignore_ibd_size: boolean
   enrichment: boolean
   show_dataset_overview: boolean
   imzml_browser: boolean
@@ -63,6 +64,7 @@ const defaultConfig: ClientConfig = {
   metadataTypes: ['ims'],
   features: {
     coloc: true,
+    ignore_ibd_size: false,
     enrichment: true,
     show_dataset_overview: true,
     imzml_browser: true,
