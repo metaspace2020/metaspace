@@ -95,7 +95,7 @@ export default defineComponent({
       offset: state.offset,
     }))
 
-    const { onResult: onAnnotationsResult } = useQuery<any>(annotationListQuery, queryVars, queryOptions)
+    const { onResult: onAnnotationsResult } = useQuery<any>(annotationListQuery, queryVars, queryOptions as any)
 
     onAnnotationsResult(async (result) => {
       if (result && result.data) {

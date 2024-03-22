@@ -18,25 +18,6 @@ const ExternalWindowSvg = defineAsyncComponent(
 
 const MonitorSvg = defineAsyncComponent(() => import('../../../assets/inline/refactoring-ui/icon-monitor.svg'))
 
-interface DatasetComparisonGridProps {
-  nCols: number
-  nRows: number
-  settings: any
-  colormap: string
-  scaleType: string
-  scaleBarColor: string
-  selectedAnnotation: number
-  annotations: any[]
-  normalizationData: any
-  datasets: any[]
-  isLoading: boolean
-  resetViewPort: boolean
-  isNormalized: boolean
-  lockedIntensityTemplate: string
-  globalLockedIntensities: [number | undefined, number | undefined]
-  mode: string
-}
-
 interface GridCellState {
   showOpticalImage: boolean
   isActive: boolean
@@ -68,7 +49,7 @@ const channels: any = {
   white: 'rgb(255, 255, 255)',
 }
 
-export const DatasetComparisonGrid = defineComponent<DatasetComparisonGridProps>({
+export const DatasetComparisonGrid = defineComponent({
   name: 'DatasetComparisonGrid',
   props: {
     nCols: {

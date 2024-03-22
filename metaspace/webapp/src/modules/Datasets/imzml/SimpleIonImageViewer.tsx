@@ -32,15 +32,6 @@ interface ImageSettings {
   colorBar?: any
 }
 
-interface SimpleIonImageViewerProps {
-  isNormalized: boolean
-  annotation: any
-  normalizationData: any
-  ionImageUrl: string | null
-  pixelSizeX: number
-  pixelSizeY: number
-}
-
 interface SimpleIonImageViewerState {
   scaleIntensity: boolean
   ionImageUrl: any
@@ -49,7 +40,7 @@ interface SimpleIonImageViewerState {
   imageSettings: ImageSettings
 }
 
-export default defineComponent<SimpleIonImageViewerProps>({
+export default defineComponent({
   name: 'SimpleIonImageViewer',
   props: {
     annotation: {

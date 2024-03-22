@@ -182,9 +182,9 @@ export default defineComponent({
       }
     }
 
-    const annotationQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
-    const colocAnnotationQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
-    const dsQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+    const annotationQueryOptions: any = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+    const colocAnnotationQueryOptions: any = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+    const dsQueryOptions: any = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const annotationQueryVars = computed(() => ({
       ...queryVariables(),
       dFilter: { ...queryVariables().dFilter, ids: Object.values(state.grid || {}).join('|') },
@@ -207,7 +207,7 @@ export default defineComponent({
     const aggregateAnnotations = () => {
       const annotationsByIon = groupBy(state.rawAnnotations, 'ion')
       const processedAnnotations = Object.keys(annotationsByIon).map((ion: string) => {
-        const annotations = annotationsByIon[ion]
+        const annotations: any = annotationsByIon[ion]
         const dbId = annotations[0].databaseDetails.id
         const datasetIds = uniq(annotations.map((annotation: any) => annotation.dataset.id))
 

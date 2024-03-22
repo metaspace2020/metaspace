@@ -8,12 +8,14 @@ declare module '@vue/apollo-composable' {
   // Example of extending useQuery with more specific types
   function useQuery<TData, TVariables>(
     query: DocumentNode,
-    variables?: Ref<TVariables> | TVariables
+    variables?: Ref<TVariables> | TVariables,
+    options?: any
   ): UseQueryReturn<TData, TVariables>
 
   // Example of extending useMutation with more specific types
   function useMutation<TData, TVariables>(
     mutation: DocumentNode,
-    variables?: Ref<TVariables> | TVariables
+    variables?: Ref<TVariables> | TVariables,
+    options?: any
   ): UseMutationReturn<TData, TVariables>
 }

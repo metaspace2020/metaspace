@@ -78,7 +78,7 @@ const httpLink = new BatchHttpLink({
   uri: graphqlUrl,
   batchInterval: 10,
 })
-const wsClient = new SubscriptionClient(wsGraphqlUrl, {
+const wsClient: any = new SubscriptionClient(wsGraphqlUrl, {
   reconnect: true,
   async connectionParams() {
     // WORKAROUND: This is not the right place for this, but it's the only callback that gets called after a reconnect

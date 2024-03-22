@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive, watchEffect } from 'vue'
+import { computed, defineComponent, reactive, watchEffect, watch, ref } from 'vue'
 import { Workflow, WorkflowStep } from '../../../components/Workflow'
 import { ElSelect, ElOption, ElInputNumber, ElButton, ElDialog } from '../../../lib/element-plus'
 import { ErrorLabelText } from '../../../components/Form'
@@ -62,6 +62,8 @@ export const DatasetComparisonDialog = defineComponent({
       cachedOptions: [],
       datasetName: '',
     })
+    const MAX_REFETCH_ATTEMPTS = 5
+    const refetchCount = ref(0)
 
     const queryVars = computed(() => ({
       dFilter: {
@@ -74,10 +76,12 @@ export const DatasetComparisonDialog = defineComponent({
       query: '',
       limit: 100,
     }))
-    const { result: datasetResult, loading: datasetLoading } = useQuery<{ allDatasets: DatasetDetailItem }>(
-      datasetListItemsQuery,
-      queryVars
-    )
+    const {
+      result: datasetResult,
+      loading: datasetLoading,
+      error,
+      refetch,
+    } = useQuery<{ allDatasets: DatasetDetailItem }>(datasetListItemsQuery, queryVars)
     const { result: receivedDatasetsResult, loading: receivedDatasetsResultLoading } = useQuery<{
       allDatasets: DatasetDetailItem
     }>(
@@ -97,6 +101,20 @@ export const DatasetComparisonDialog = defineComponent({
       receivedDatasetsResult.value != null ? receivedDatasetsResult.value.allDatasets : null
     )
     const { mutate: settingsMutation } = useMutation<any>(saveSettings)
+
+    watch(error, (errorValue) => {
+      // sometimes the query fails when dialog is
+      // created, so we need to refetch
+      if (errorValue && refetchCount.value < MAX_REFETCH_ATTEMPTS) {
+        refetch()
+          .then(() => {
+            refetchCount.value = 0
+          })
+          .catch((err) => {
+            console.log('Refetch Error:', err)
+          })
+      }
+    })
 
     const annotationsLink = async () => {
       const variables: any = {

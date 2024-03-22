@@ -16,15 +16,7 @@ import NewFeatureBadge from '../../../components/NewFeatureBadge'
 import './DatasetOverviewPage.scss'
 import { useRoute, useRouter } from 'vue-router'
 
-interface Props {
-  className: string
-  annotationLabel: string
-  detailLabel: string
-  projectLabel: string
-  inpFdrLvls: number[]
-}
-
-const DatasetOverviewPage = defineComponent<Props>({
+const DatasetOverviewPage = defineComponent({
   name: 'DatasetOverviewPage',
   props: {
     className: {

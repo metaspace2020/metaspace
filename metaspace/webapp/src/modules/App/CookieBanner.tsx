@@ -17,7 +17,7 @@ export default defineComponent({
 
     return () =>
       state.agreed ? null : (
-        <div class="fixed bottom-0 left-0 right-0 bg-body text-white leading-6 py-1 text-sm" style="z-index: 999">
+        <div class="fixed bottom-0 left-0 right-0 bg-body text-white leading-6 py-1 text-sm" style="z-index: 2999">
           <button class="button-reset float-right cursor-pointer mx-1 h-6" onClick={agree} title="Agree and close">
             <CloseIcon class="h-6 w-6 fill-current text-blue-100" />
           </button>
