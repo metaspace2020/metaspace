@@ -111,6 +111,11 @@ describe('ViewProjectPage', () => {
     })
   }
 
+  const vLoadingStub = {
+    mounted() {},
+    updated() {},
+  }
+
   beforeAll(async () => {
     await mockGraphql(defaultParams)
   })
@@ -131,6 +136,9 @@ describe('ViewProjectPage', () => {
       const wrapper = mount(ViewProjectPage, {
         props: { showLoading: false },
         global: {
+          directives: {
+            loading: vLoadingStub,
+          },
           plugins: [store, router],
           provide: {
             [DefaultApolloClient]: graphqlMocks,
@@ -160,6 +168,9 @@ describe('ViewProjectPage', () => {
       const wrapper = mount(ViewProjectPage, {
         props: { showLoading: false },
         global: {
+          directives: {
+            loading: vLoadingStub,
+          },
           plugins: [store, router],
           provide: {
             [DefaultApolloClient]: graphqlMocks,
@@ -188,6 +199,9 @@ describe('ViewProjectPage', () => {
       const wrapper = mount(ViewProjectPage, {
         props: { showLoading: false },
         global: {
+          directives: {
+            loading: vLoadingStub,
+          },
           plugins: [store, router],
           provide: {
             [DefaultApolloClient]: graphqlMocks,
@@ -216,6 +230,9 @@ describe('ViewProjectPage', () => {
       const wrapper = mount(ViewProjectPage, {
         props: { showLoading: false },
         global: {
+          directives: {
+            loading: vLoadingStub,
+          },
           plugins: [store, router],
           provide: {
             [DefaultApolloClient]: graphqlMocks,
@@ -244,6 +261,9 @@ describe('ViewProjectPage', () => {
       const wrapper = mount(ViewProjectPage, {
         props: { showLoading: false },
         global: {
+          directives: {
+            loading: vLoadingStub,
+          },
           plugins: [store, router],
           provide: {
             [DefaultApolloClient]: graphqlMocks,
@@ -278,6 +298,9 @@ describe('ViewProjectPage', () => {
       const wrapper = mount(ViewProjectPage, {
         props: { showLoading: false },
         global: {
+          directives: {
+            loading: vLoadingStub,
+          },
           plugins: [store, router],
           provide: {
             [DefaultApolloClient]: graphqlMocks,
@@ -306,6 +329,9 @@ describe('ViewProjectPage', () => {
       const wrapper = mount(ViewProjectPage, {
         props: { showLoading: false },
         global: {
+          directives: {
+            loading: vLoadingStub,
+          },
           plugins: [store, router],
           provide: {
             [DefaultApolloClient]: graphqlMocks,
@@ -334,6 +360,9 @@ describe('ViewProjectPage', () => {
       const wrapper = mount(ViewProjectPage, {
         props: { showLoading: false },
         global: {
+          directives: {
+            loading: vLoadingStub,
+          },
           plugins: [store, router],
           provide: {
             [DefaultApolloClient]: graphqlMocks,
@@ -368,6 +397,9 @@ describe('ViewProjectPage', () => {
       const wrapper = mount(ViewProjectPage, {
         props: { showLoading: false },
         global: {
+          directives: {
+            loading: vLoadingStub,
+          },
           plugins: [store, router],
           provide: {
             [DefaultApolloClient]: graphqlMocks,
@@ -406,6 +438,9 @@ describe('ViewProjectPage', () => {
       const wrapper = mount(ViewProjectPage, {
         props: { showLoading: false },
         global: {
+          directives: {
+            loading: vLoadingStub,
+          },
           plugins: [store, router],
           provide: {
             [DefaultApolloClient]: graphqlMocks,
@@ -434,6 +469,9 @@ describe('ViewProjectPage', () => {
       const wrapper = mount(ViewProjectPage, {
         props: { showLoading: false },
         global: {
+          directives: {
+            loading: vLoadingStub,
+          },
           plugins: [store, router],
           provide: {
             [DefaultApolloClient]: graphqlMocks,

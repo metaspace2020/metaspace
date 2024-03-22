@@ -30,7 +30,8 @@
     "element-plus/global",
     "@vue/apollo-composable",
     "@vue/runtime-core",
-    "jest"
+    "@types/jest",
+    "vitest/globals"
   ],
   "include": [
     "src/types/*.d.ts",

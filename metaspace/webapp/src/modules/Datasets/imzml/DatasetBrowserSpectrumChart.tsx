@@ -28,18 +28,6 @@ use([
   MarkPointComponent,
 ])
 
-interface DatasetBrowserSpectrumChartProps {
-  isEmpty: boolean
-  isLoading: boolean
-  isDataLoading: boolean
-  data: any[]
-  annotatedData: any[]
-  peakFilter: number
-  normalization: number | undefined
-  dataRange: any
-  annotatedLabel: string
-}
-
 interface DatasetBrowserSpectrumChartState {
   scaleIntensity: boolean
   chartOptions: any
@@ -51,7 +39,7 @@ const PEAK_FILTER = {
   OFF: 3,
 }
 
-export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectrumChartProps>({
+export const DatasetBrowserSpectrumChart = defineComponent({
   name: 'DatasetBrowserSpectrumChart',
   props: {
     isEmpty: {
@@ -74,7 +62,7 @@ export const DatasetBrowserSpectrumChart = defineComponent<DatasetBrowserSpectru
       default: () => [],
     },
     dataRange: {
-      type: Object,
+      type: Object as any,
       default: () => {
         return { maxX: 0, maxY: 0, minX: 0, minY: 0 }
       },

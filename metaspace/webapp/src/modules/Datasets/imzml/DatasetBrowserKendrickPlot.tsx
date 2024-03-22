@@ -34,18 +34,6 @@ use([
   VisualMapContinuousComponent,
 ])
 
-interface DatasetBrowserKendrickPlotProps {
-  isEmpty: boolean
-  isLoading: boolean
-  isDataLoading: boolean
-  data: any[]
-  annotatedData: any[]
-  peakFilter: number
-  referenceMz: number
-  dataRange: any
-  annotatedLabel: string
-}
-
 interface DatasetBrowserKendrickPlotState {
   scaleIntensity: boolean
   chartOptions: any
@@ -57,7 +45,7 @@ const PEAK_FILTER = {
   OFF: 3,
 }
 
-export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrickPlotProps>({
+export const DatasetBrowserKendrickPlot = defineComponent({
   name: 'DatasetBrowserKendrickPlot',
   props: {
     isEmpty: {
@@ -92,7 +80,7 @@ export const DatasetBrowserKendrickPlot = defineComponent<DatasetBrowserKendrick
       default: 14.0156, // m_CH2=14.0156
     },
     dataRange: {
-      type: Object,
+      type: Object as any,
       default: () => {
         return { maxX: 0, maxY: 0, minX: 0, minY: 0 }
       },
