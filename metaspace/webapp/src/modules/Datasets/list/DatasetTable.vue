@@ -196,9 +196,10 @@ export default defineComponent({
       return counts
     }
 
-    watch(currentUserResult, (newResult) => {
+    watch(currentUserResult, async (newResult) => {
       if (newResult) {
-        store.commit('updateCurrentUser', newResult.currentUser)
+        await store.commit('updateCurrentUser', newResult.currentUser)
+        await initializeTable()
       }
     })
 
@@ -311,8 +312,7 @@ export default defineComponent({
       }
     }
 
-    // Mounted hook
-    onMounted(async () => {
+    const initializeTable = async () => {
       await getDatasets()
       await countDatasets()
 
@@ -324,6 +324,11 @@ export default defineComponent({
           : getLocalStorage('datasetOwner') || null
         store.commit('updateFilter', { ...store.getters.filter, datasetOwner: localDsOwner })
       }
+    }
+
+    // Mounted hook
+    onMounted(() => {
+      initializeTable()
     })
 
     const categories = computed(() => {

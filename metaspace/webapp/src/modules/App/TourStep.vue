@@ -115,8 +115,6 @@ export default defineComponent({
       const targetElement = document.querySelector(meta.target)
       const arrow = document.querySelector('#arrow')
 
-      console.log('targetElement', meta.target, targetElement)
-
       if (targetElement && container.value) {
         popperInstance.value = createPopper(targetElement, container.value, {
           placement: meta.placement,

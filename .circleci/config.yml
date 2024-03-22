@@ -151,6 +151,10 @@ jobs:
           when: always
           command: yarn run lint --max-warnings 0 --no-fix
       - run:
+          name: Prettier code style check
+          when: always
+          command: yarn run lint format-check
+      - run:
           name: Run tests
           command: |
             cp ~/workspace/graphql-schema.json ./tests/utils/graphql-schema.json

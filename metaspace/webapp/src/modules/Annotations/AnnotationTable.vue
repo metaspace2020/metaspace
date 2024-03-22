@@ -417,7 +417,7 @@ import { readNpy } from '../../lib/npyHandler'
 import safeJsonParse from '../../lib/safeJsonParse'
 import { invert, isEqual, uniqBy } from 'lodash-es'
 import config from '../../lib/config'
-import { DefaultApolloClient } from '@vue/apollo-composable'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { annotationListQuery, tableExportQuery } from '../../api/annotation'
 import { useRoute, useRouter } from 'vue-router'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
@@ -429,6 +429,7 @@ import formatCsvRow, { csvExportHeader, formatCsvTextArray, csvExportIntensityHe
 import * as FileSaver from 'file-saver'
 import { getIonImage, loadPngFromUrl } from '../../lib/ionImageRendering'
 import { getDatasetDiagnosticsQuery, getRoisQuery } from '../../api/dataset'
+import { currentUserRoleWithGroupQuery } from '@/api/user'
 
 const FilterIcon = defineAsyncComponent(() => import('../../assets/inline/filter.svg'))
 
@@ -793,7 +794,17 @@ export default defineComponent({
       state.columns = columns
     }
 
-    onMounted(() => {
+    const { result: currentUserResult } = useQuery(currentUserRoleWithGroupQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
+    const currentUser = computed(() => currentUserResult.value?.currentUser)
+
+    // refetch if logged in or off
+    watch(currentUser, () => {
+      initialize()
+    })
+
+    const initialize = async () => {
       const nCells = (window.innerHeight - 150) / 43
       const pageSizes = state.pageSizes.filter((n) => nCells >= n).slice(-1)
       if (state.pageSizes.length > 0) {
@@ -803,6 +814,10 @@ export default defineComponent({
       updateColumns()
       updateDatasetColumns()
       updateColocSort()
+    }
+
+    onMounted(() => {
+      initialize()
     })
 
     const executeQuery = async () => {

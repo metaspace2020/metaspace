@@ -416,7 +416,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     description: 'Select data type',
     levels: ['dataset'],
     defaultInLevels: ['dataset'],
-    initialValue: null,
+    initialValue: '',
     removable: false,
     sortOrder: 1,
   },
