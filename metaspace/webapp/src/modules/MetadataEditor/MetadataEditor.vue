@@ -176,6 +176,7 @@ export default defineComponent({
   },
   props: {
     datasetId: String,
+    currentUser: { type: Object },
     validationErrors: { type: Array, default: () => [] },
   },
   setup(props) {
@@ -270,7 +271,7 @@ export default defineComponent({
       const metaspaceOptions = defaults({}, omitBy(dataset.metaspaceOptions, isNil), defaultMetaspaceOptions)
       // in case user just opened a link to metadata editing page w/o navigation in web-app,
       // filters are not set up
-      store.commit('updateFilter', { metadataType: mdType })
+      // store.commit('updateFilter', { metadataType: mdType })
       const metadata = importMetadata(loadedMetadata, mdType)
 
       // Load options
@@ -513,47 +514,72 @@ export default defineComponent({
       }
     }
 
-    const loadDataset = async () => {
-      if (!props.datasetId) {
-        const { data } = await apolloClient.query({
+    const fetchUserData = async (retryCount = 0, maxRetries = 3) => {
+      // fail safe when query fails on compenent start
+      try {
+        return await apolloClient.query({
           query: newDatasetQuery,
+          fetchPolicy: 'network-only',
         })
-        const dataset = data.currentUserLastSubmittedDataset
-
-        return {
-          metadata: (dataset && safeJsonParse(dataset.metadataJson)) || {},
-          metaspaceOptions: {
-            ...(dataset != null ? metaspaceOptionsFromDataset(dataset, true) : null),
-            submitterId: store.state.currentTour ? null : data.currentUser.id,
-            groupId: store.state.currentTour
-              ? null
-              : data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
-          },
-          submitter: data.currentUser,
-          databases: dataset ? dataset.databases : [],
-        }
-      } else {
-        const { data } = await apolloClient.query({
-          query: editDatasetQuery,
-          variables: { id: props.datasetId },
-        })
-        let submitter
-        // If submitter is not the current user, we need to make a second request after finding the submitter's userId
-        // to get the rest of the submitter data (groups, projects, etc.)
-        if (data.currentUser != null && data.dataset.submitter.id === data.currentUser.id) {
-          submitter = data.currentUser
+      } catch (error) {
+        if (retryCount < maxRetries) {
+          console.log(`Retrying... Attempt ${retryCount + 1} of ${maxRetries}`)
+          return await fetchUserData(retryCount + 1, maxRetries)
         } else {
-          const { data: submitterData } = await apolloClient.query({
-            query: editDatasetSubmitterQuery,
-            variables: { userId: data.dataset.submitter.id },
-          })
-          submitter = submitterData.user
+          throw new Error(`Could not fetch user info`)
         }
+      }
+    }
+
+    const loadDataset = async () => {
+      try {
+        if (!props.datasetId) {
+          const result = await fetchUserData()
+          const data = result.data
+          const dataset = data.currentUserLastSubmittedDataset
+
+          return {
+            metadata: (dataset && safeJsonParse(dataset.metadataJson)) || {},
+            metaspaceOptions: {
+              ...(dataset != null ? metaspaceOptionsFromDataset(dataset, true) : null),
+              submitterId: store.state.currentTour ? null : data.currentUser.id,
+              groupId: store.state.currentTour
+                ? null
+                : data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
+            },
+            submitter: data.currentUser,
+            databases: dataset ? dataset.databases : [],
+          }
+        } else {
+          const { data } = await apolloClient.query({
+            query: editDatasetQuery,
+            variables: { id: props.datasetId },
+          })
+          let submitter
+          // If submitter is not the current user, we need to make a second request after finding the submitter's userId
+          // to get the rest of the submitter data (groups, projects, etc.)
+          if (data.currentUser != null && data.dataset.submitter.id === data.currentUser.id) {
+            submitter = data.currentUser
+          } else {
+            const { data: submitterData } = await apolloClient.query({
+              query: editDatasetSubmitterQuery,
+              variables: { userId: data.dataset.submitter.id },
+            })
+            submitter = submitterData.user
+          }
+          return {
+            metadata: JSON.parse(data.dataset.metadataJson),
+            metaspaceOptions: metaspaceOptionsFromDataset(data.dataset, false),
+            submitter,
+            databases: data.dataset.databases,
+          }
+        }
+      } catch (e) {
         return {
-          metadata: JSON.parse(data.dataset.metadataJson),
-          metaspaceOptions: metaspaceOptionsFromDataset(data.dataset, false),
-          submitter,
-          databases: data.dataset.databases,
+          metadata: {},
+          metaspaceOptions: {},
+          databases: [],
+          submitter: props.currentUser || {},
         }
       }
     }

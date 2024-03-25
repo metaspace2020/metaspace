@@ -67,7 +67,7 @@
             </div>
           </form>
         </div>
-        <metadata-editor ref="editor" :validation-errors="state.validationErrors" />
+        <metadata-editor ref="editor" :validation-errors="state.validationErrors" :current-user="currentUser" />
       </div>
     </div>
   </div>
