@@ -103,6 +103,15 @@ export const DatasetEnrichmentChart = defineComponent({
             },
           },
         },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow',
+          },
+          formatter: (params: any) => {
+            return params[0]?.name // display full y-axis label in the tooltip
+          },
+        },
         yAxis: {
           type: 'category',
           triggerEvent: true,
@@ -111,10 +120,28 @@ export const DatasetEnrichmentChart = defineComponent({
             show: true,
           },
           axisLabel: {
+            verticalAlign: 'middle',
+            show: true,
+            interval: 0,
+            fontFamily: 'monospace',
+            rich: {
+              b: {
+                fontFamily: 'monospace',
+                fontWeight: 'bold',
+              },
+              h: {
+                fontFamily: 'monospace',
+                color: '#fff',
+              },
+            },
             fontSize: 12,
             overflow: 'break',
-            width: 140,
+            width: 160,
             fontStyle: '400',
+            formatter: (value: string) => {
+              // Truncate the label and append '...' if necessary
+              return value.length > 30 ? value.slice(0, 30) + '...' : value
+            },
           },
         },
         visualMap: {

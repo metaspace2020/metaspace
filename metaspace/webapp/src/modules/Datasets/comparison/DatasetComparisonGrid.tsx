@@ -421,25 +421,20 @@ export const DatasetComparisonGrid = defineComponent({
       return (
         <div key={col} class="dataset-comparison-grid-col overflow-hidden relative" style={{ height: 200, width: 200 }}>
           {renderDatasetName(dataset?.name)}
-          <div
-            v-slots={{
-              title: () => (
-                <>
-                  <MainImageHeader
-                    class="dataset-comparison-extra  dom-to-image-hidden"
-                    annotation={annData}
-                    isActive={false}
-                    hideOptions={true}
-                    showOpticalImage={!!gridCell?.showOpticalImage}
-                    toggleOpticalImage={(e: any) => toggleOpticalImage(e, key)}
-                    hasOpticalImage={annData?.dataset?.opticalImages[0]?.url !== undefined}
-                    resetViewport={() => {}}
-                  />
-                </>
-              ),
-            }}
-          ></div>
-          <div class="dataset-comparison-grid-item-header dom-to-image-hidden">
+          <div class="dataset-comparison-grid-item-header dom-to-image-hidden relative">
+            <MainImageHeader
+              class="dataset-comparison-extra  dom-to-image-hidden absolute top-1 left-0.5"
+              annotation={annData}
+              isActive={false}
+              hideOptions={true}
+              showOpticalImage={!!gridCell?.showOpticalImage}
+              toggleOpticalImage={(e: any) => toggleOpticalImage(e, key)}
+              hasOpticalImage={annData?.dataset?.opticalImages[0]?.url !== undefined}
+              resetViewport={() => {}}
+              v-slots={{
+                title: () => <div />, // this is a hack to avoid the title
+              }}
+            />
             <div class="dataset-comparison-msm-badge">
               MSM <b>{formatMSM(annData?.msmScore)}</b>
             </div>

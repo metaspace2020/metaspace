@@ -2,7 +2,7 @@
   <span class="w-full">
     <span v-if="!hideOptions && !hideTitle"> Image viewer </span>
     <div class="flex items-center pr-4 cursor-default" @click.stop>
-      <el-popover placement="bottom" trigger="click">
+      <el-popover v-if="!hideOptions" placement="bottom" trigger="click">
         <ion-image-settings
           :hide-normalization="hideNormalization"
           :default-colormap="colormap"
@@ -17,7 +17,7 @@
           @templateChange="onTemplateChange"
         />
         <template #reference>
-          <button v-if="!hideOptions" class="button-reset av-icon-button" @click="$event.stopPropagation()">
+          <button class="button-reset av-icon-button" @click="$event.stopPropagation()">
             <el-icon
               class="el-icon-setting"
               style="font-size: 20px; vertical-align: middle"
@@ -103,7 +103,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const store = useStore()
     const isNormalized = computed(() => {
-      return props.showNormalizedBadge || (store.getters.settings.annotationView.normalization && props.isActive)
+      return props.showNormalizedBadge || (store.getters?.settings?.annotationView?.normalization && props.isActive)
     })
 
     const showRoi = computed(() => config.features.roi)

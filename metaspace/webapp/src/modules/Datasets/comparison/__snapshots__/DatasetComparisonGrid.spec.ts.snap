@@ -5,8 +5,7 @@ exports[`DatasetComparisonGrid > it should match snapshot 1`] = `
   <div class=\\"dataset-comparison-grid-row\\">
     <div class=\\"dataset-comparison-grid-col overflow-hidden relative\\">
       <div class=\\"ds-comparison-item-line\\"><span class=\\"dataset-comparison-grid-ds-name truncate\\">New test create</span></div>
-      <div></div>
-      <div class=\\"dataset-comparison-grid-item-header dom-to-image-hidden\\">
+      <div class=\\"dataset-comparison-grid-item-header dom-to-image-hidden relative\\"><span data-v-02a2f7f6=\\"\\" class=\\"w-full dataset-comparison-extra  dom-to-image-hidden absolute top-1 left-0.5\\"><!--v-if--><div data-v-02a2f7f6=\\"\\" class=\\"flex items-center pr-4 cursor-default\\"><!--v-if--><!--v-if--><transition data-v-02a2f7f6=\\"\\" mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\"><!--v-if--></transition><!--v-if--></div><!--v-if--><transition data-v-02a2f7f6=\\"\\" mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\" class=\\"ml-auto\\"><!--v-if--></transition></span>
         <div class=\\"dataset-comparison-msm-badge\\">MSM <b>0.736</b></div>
         <div class=\\"dataset-comparison-fdr-badge\\">FDR <b>5%</b></div>
         <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\" teleport=\\"false\\" opendelay=\\"500\\"><span>Individual dataset annotation page</span></div><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button active button-reset flex h-6 ml-1 channel-toggle\\" title=\\"Ion image controls\\">
@@ -56,8 +55,7 @@ exports[`DatasetComparisonGrid > it should match snapshot 1`] = `
     </div>
     <div class=\\"dataset-comparison-grid-col overflow-hidden relative\\">
       <div class=\\"ds-comparison-item-line\\"><span class=\\"dataset-comparison-grid-ds-name truncate\\">New 2</span></div>
-      <div></div>
-      <div class=\\"dataset-comparison-grid-item-header dom-to-image-hidden\\">
+      <div class=\\"dataset-comparison-grid-item-header dom-to-image-hidden relative\\"><span data-v-02a2f7f6=\\"\\" class=\\"w-full dataset-comparison-extra  dom-to-image-hidden absolute top-1 left-0.5\\"><!--v-if--><div data-v-02a2f7f6=\\"\\" class=\\"flex items-center pr-4 cursor-default\\"><!--v-if--><!--v-if--><transition data-v-02a2f7f6=\\"\\" mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\"><!--v-if--></transition><!--v-if--></div><!--v-if--><transition data-v-02a2f7f6=\\"\\" mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\" class=\\"ml-auto\\"><!--v-if--></transition></span>
         <div class=\\"dataset-comparison-msm-badge\\">MSM <b>0.736</b></div>
         <div class=\\"dataset-comparison-fdr-badge\\">FDR <b>5%</b></div>
         <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\" teleport=\\"false\\" opendelay=\\"500\\"><span>Individual dataset annotation page</span></div><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button active button-reset flex h-6 ml-1 channel-toggle\\" title=\\"Ion image controls\\">

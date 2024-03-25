@@ -380,7 +380,7 @@ export default defineComponent({
             state.coloc = false
           }
 
-          if (state.annotations && !isEqual(filter, previousFilter)) {
+          if (state.annotations && !isEqual(filter, previousFilter) && previousFilter[0].databaseId !== null) {
             state.offset = 0
             if (state.coloc) {
               colocAnnotationQueryOptions.enabled = true
