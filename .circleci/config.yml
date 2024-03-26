@@ -110,7 +110,7 @@ jobs:
 
   test-webapp:
     docker:
-      - image: lmaciel94/sm-webapp:latest
+      - image: metaspace2020/sm-webapp:0.12
 
     working_directory: ~/metaspace/metaspace/webapp
     steps:
@@ -157,7 +157,6 @@ jobs:
       - run:
           name: Run tests
           command: |
-            cp ~/workspace/graphql-schema.json ./tests/utils/graphql-schema.json
             yarn run test-ci --mode CI --coverage
       - run:
           name: Upload coverage
