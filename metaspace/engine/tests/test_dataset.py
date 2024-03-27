@@ -61,6 +61,7 @@ def test_dataset_load_existing_ds_works(fill_db, metadata, ds_config):
         upload_dt=upload_dt,
         metadata=metadata,
         config=ds_config,
+        size_hash=None,
         status=DatasetStatus.FINISHED,
         status_update_dt=upload_dt,
         is_public=True,

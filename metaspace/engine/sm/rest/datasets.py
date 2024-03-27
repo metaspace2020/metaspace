@@ -80,6 +80,7 @@ def add(ds_man, ds_id=None, params=None):
             input_path
             upload_dt
             metadata
+            size_hash
             is_public
             (ds_config keys from sm.engine.dataset.FLAT_DS_CONFIG_KEYS)
         }

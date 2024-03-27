@@ -83,6 +83,7 @@ class SMapiDatasetManager:
             input_path=doc.get('input_path'),
             upload_dt=doc.get('upload_dt', now.isoformat()),
             metadata=doc.get('metadata'),
+            size_hash=doc.get('size_hash'),
             config=config,
             is_public=doc.get('is_public'),
             status=DatasetStatus.QUEUED,

@@ -314,7 +314,7 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
 
   const url = `/v1/datasets/${datasetId}/add`
   await smApiDatasetRequest(url, {
-    doc: { ...input, metadata },
+    doc: { ...input, metadata, size_hash: input.sizeHashJson ? JSON.parse(input.sizeHashJson) : undefined },
     priority: priority,
     use_lithops: useLithops,
     perform_enrichment: performEnrichment,
