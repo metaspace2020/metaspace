@@ -60,7 +60,7 @@ class Dataset:
 
     DS_SEL = (
         'SELECT id, name, input_path, upload_dt, metadata, config, status, '
-        '   status_update_dt, is_public '
+        '   status_update_dt, is_public, size_hash '
         'FROM dataset WHERE id = %s'
     )
     DS_UPD = (
@@ -71,9 +71,10 @@ class Dataset:
     )
     DS_INSERT = (
         'INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
-        '   status_update_dt, is_public) '
+        '   status_update_dt, is_public, size_hash) '
         'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, '
-        '   %(metadata)s, %(config)s, %(status)s, %(status_update_dt)s, %(is_public)s)'
+        '   %(metadata)s, %(config)s, %(status)s, %(status_update_dt)s, '
+        '   %(is_public)s, %(size_hash)s)'
     )
 
     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
@@ -87,6 +88,7 @@ class Dataset:
         input_path: str,
         upload_dt: datetime,
         metadata: Dict,
+        size_hash: Dict = None,
         config: DSConfig,
         status: str = DatasetStatus.QUEUED,
         status_update_dt: datetime = None,
@@ -101,6 +103,7 @@ class Dataset:
         self.is_public = is_public
 
         self.metadata = metadata
+        self.size_hash = size_hash
         self.config = config
         self._sm_config = SMConfig.get_conf()
 
@@ -134,6 +137,7 @@ class Dataset:
             'input_path': self.input_path,
             'upload_dt': self.upload_dt,
             'metadata': json.dumps(self.metadata or {}),
+            'size_hash': json.dumps(self.size_hash or {}) if self.size_hash else None,
             'config': json.dumps(self.config or {}),
             'status': self.status,
             'status_update_dt': self.status_update_dt,
