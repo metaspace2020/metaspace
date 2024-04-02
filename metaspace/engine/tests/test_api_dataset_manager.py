@@ -75,7 +75,12 @@ class TestSMapiDatasetManager:
 
         ds_man.add(ds_doc, use_lithops=False, priority=DatasetActionPriority.HIGH)
 
-        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.ANNOTATE}
+        msg = {
+            'ds_id': ds_id,
+            'ds_name': 'ds_name',
+            'ibd_size': '0.00 GB',
+            'action': DaemonAction.ANNOTATE,
+        }
         action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.HIGH)])
 
     def test_delete_ds(self, fill_db, metadata, ds_config):
@@ -85,5 +90,10 @@ class TestSMapiDatasetManager:
 
         ds_man.delete(ds.id)
 
-        msg = {'ds_id': ds.id, 'ds_name': 'ds_name', 'action': DaemonAction.DELETE}
+        msg = {
+            'ds_id': ds.id,
+            'ds_name': 'ds_name',
+            'ibd_size': '0.00 GB',
+            'action': DaemonAction.DELETE,
+        }
         update_queue.publish.assert_has_calls([call(msg, DatasetActionPriority.STANDARD)])

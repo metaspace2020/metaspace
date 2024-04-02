@@ -216,6 +216,7 @@ input DatasetCreateInput {
   inputPath: String!
   uploadDT: String
   description: String
+  sizeHashJson: String
   metadataJson: String!
   databaseIds: [Int!]
   molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")

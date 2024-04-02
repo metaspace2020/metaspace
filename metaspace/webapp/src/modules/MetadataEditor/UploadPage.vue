@@ -138,6 +138,10 @@ export default defineComponent({
         imzml: false,
         ibd: false,
       },
+      fileSize: {
+        imzml: false,
+        ibd: false,
+      },
       autoSubmit: false,
       helpDialog: false,
       group: null,
@@ -286,6 +290,7 @@ export default defineComponent({
       }
       for (const file of result.successful) {
         state.uploads[file.extension.toLowerCase()] = true
+        state.fileSize[file.extension.toLowerCase()] = file.size
       }
 
       if (state.uploads.imzml === true && state.uploads.ibd === true) {
@@ -328,6 +333,7 @@ export default defineComponent({
             input: {
               inputPath: state.inputPath,
               metadataJson,
+              sizeHashJson: JSON.stringify({ imzml_size: state.fileSize?.imzml, ibd_size: state.fileSize?.ibd }),
               ...metaspaceOptions,
             },
             useLithops: config.features.lithops,
@@ -337,7 +343,7 @@ export default defineComponent({
 
         state.inputPath = null
         state.validationErrors = []
-        fetchStorageKey()
+        await fetchStorageKey()
         editor.value.resetAfterSubmit()
         ElMessage({
           message: 'Your dataset was successfully submitted!',

@@ -97,7 +97,7 @@ const UppyUploader = defineComponent({
       uppy.use(AwsS3Multipart, {
         limit: 2,
         ...props.s3Options,
-      })
+      } as any)
 
       watch(
         () => props.s3Options,
@@ -156,7 +156,7 @@ const UppyUploader = defineComponent({
           uppy.addFile({
             name: file.name,
             type: file.type,
-            meta: { user: props.currentUser?.id, source: 'webapp' },
+            meta: { user: props.currentUser?.id, source: 'webapp', size: file.size },
             data: file,
           })
         }

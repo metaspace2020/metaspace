@@ -186,7 +186,7 @@ def multipart_upload(
                 print(f'{ex}\nRetrying...')
 
     def init_multipart_upload(
-        filename, file_type, headers={}, current_user_id=None, dataset_id=None
+        filename, file_type, headers={}, current_user_id=None, dataset_id=None, size=None
     ):
         url = companion_url + '/s3/multipart'
         data = {
@@ -196,6 +196,7 @@ def multipart_upload(
                 'name': filename,
                 'type': file_type,
                 'source': 'api',
+                'size': str(size) if size else 'not-provided',
                 'user': current_user_id if current_user_id else 'not-provided',
                 'datasetId': dataset_id if dataset_id else 'not-provided',
                 'uuid': headers['uuid'] if headers.get('uuid') else 'not-provided',
@@ -272,6 +273,7 @@ def multipart_upload(
     key, upload_id = init_multipart_upload(
         Path(local_path).name,
         file_type,
+        size=Path(local_path).stat().st_size,
         headers=headers,
         current_user_id=current_user_id,
         dataset_id=dataset_id,
@@ -1849,11 +1851,16 @@ class SMInstance(object):
             description_json = None
 
         # Upload the files. Keep this as late as possible to minimize chances of error after upload
+        file_size = None
         if input_path is None:
             assert imzml_fn and ibd_fn, 'imzml_fn and ibd_fn must be supplied'
             input_path = _dataset_upload(
                 imzml_fn, ibd_fn, self._config['dataset_upload_url'], current_user_id
             )
+            file_size = {
+                'imzml_size': Path(imzml_fn).stat().st_size,
+                'ibd_size': Path(ibd_fn).stat().st_size,
+            }
 
         graphql_response = self._gqclient.create_dataset(
             {
@@ -1861,6 +1868,7 @@ class SMInstance(object):
                 'inputPath': input_path,
                 'description': description_json,
                 'metadataJson': json.dumps(metadata),
+                'sizeHashJson': json.dumps(file_size) if file_size else None,
                 'databaseIds': database_ids,
                 'adducts': adducts,
                 'neutralLosses': neutral_losses,

@@ -13,6 +13,7 @@ from sm.engine.errors import DSIsBusy, UnknownDSID
 from sm.engine.daemons.actions import DaemonAction, DaemonActionStage
 from sm.engine.optical_image import add_optical_image, del_optical_image
 from sm.engine.config import SMConfig
+from sm.engine.utils.files_util import format_size
 
 
 class DatasetActionPriority:
@@ -51,7 +52,10 @@ class SMapiDatasetManager:
         ds.set_status(self._db, self._es, DatasetStatus.QUEUED)
 
     def _post_sm_msg(self, ds, queue, priority=DatasetActionPriority.DEFAULT, **kwargs):
-        msg = {'ds_id': ds.id, 'ds_name': ds.name}
+        size_in_bytes = ds.size_hash.get('ibd_size', 0) if ds.size_hash else 0
+        formatted_ibd_size = format_size(size_in_bytes)
+
+        msg = {'ds_id': ds.id, 'ds_name': ds.name, 'ibd_size': formatted_ibd_size}
         msg.update(kwargs)
 
         queue.publish(msg, priority)
@@ -83,6 +87,7 @@ class SMapiDatasetManager:
             input_path=doc.get('input_path'),
             upload_dt=doc.get('upload_dt', now.isoformat()),
             metadata=doc.get('metadata'),
+            size_hash=doc.get('size_hash'),
             config=config,
             is_public=doc.get('is_public'),
             status=DatasetStatus.QUEUED,

@@ -47,8 +47,9 @@ export default function(httpServer?: http.Server) {
 
       const source = req.body?.metadata?.source
       const user = req.body?.metadata?.user
+      const size = req.body?.metadata?.size || 'not-provided'
 
-      logger.debug(`[${source}] File ${filename} uploaded to ${uuid} from user ${user}`)
+      logger.debug(`[${source}] File ${filename} uploaded to ${uuid} from user ${user}, size: ${size} bytes`)
 
       return `${uuid}/${filename}`
     }
