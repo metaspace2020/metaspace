@@ -122,8 +122,8 @@ export default defineComponent({
       // the public internet. Because of this, only show email addresses to admins here.
       const canSeeEmailAddresses = props.currentUser && props.currentUser.role === 'admin'
       const submitter = optionalSuffixInParens(
-        dsSubmitter.value.name,
-        canSeeEmailAddresses ? dsSubmitter.value.email : null
+        dsSubmitter.value?.name,
+        canSeeEmailAddresses ? dsSubmitter.value?.email : null
       )
       const dataManagementChilds = [{ id: 'Submitter', label: `Submitter: ${submitter}` }]
       const annotationSettingsChildren = [

@@ -1,6 +1,6 @@
 import 'focus-visible'
 
-import { createApp, provide, h } from 'vue'
+import { createApp, h } from 'vue'
 import { createHead } from '@unhead/vue'
 
 import config, { updateConfigFromQueryString } from './lib/config'
@@ -27,10 +27,6 @@ import { Route } from '@sentry/vue/types/router'
 const isProd = process.env.NODE_ENV === 'production'
 
 const app = createApp({
-  setup() {
-    provide(DefaultApolloClient, apolloClient)
-  },
-
   render: () => h(App),
 })
 app.provide(DefaultApolloClient, apolloClient)
@@ -75,7 +71,7 @@ if (config.sentry != null && config.sentry.dsn !== '') {
 migrateLocalStorage()
 
 app.use(router)
-app.use(store)
+app.use(store as any)
 app.use(ElementPlusCustom)
 
 router.afterEach((to: Route) => {
@@ -83,7 +79,7 @@ router.afterEach((to: Route) => {
 })
 
 app.use(
-  VueGtag,
+  VueGtag as any,
   {
     config: { id: 'UA-73509518-1' },
     enabled: isProd, // disabled in dev because it impairs "break on uncaught exception"
@@ -95,6 +91,7 @@ const head = createHead()
 app.use(head)
 
 // app.config.devtools = process.env.NODE_ENV === 'development'
+// @ts-ignore
 app.config.performance = process.env.NODE_ENV === 'development'
 
 app.mount('#app')

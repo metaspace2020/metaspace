@@ -60,7 +60,7 @@ import {
 } from '../../../api/dataset'
 import { datasetOwnerOptions } from '../../../lib/filterTypes'
 import { FilterPanel } from '../../../modules/Filters'
-import { useQuery, useSubscription } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import { merge, orderBy } from 'lodash-es'
 import { currentUserRoleWithGroupQuery } from '../../../api/user'
 import { getLocalStorage } from '../../../lib/localStorage'
@@ -71,7 +71,6 @@ import delay from '../../../lib/delay'
 import * as FileSaver from 'file-saver'
 import { metadataExportQuery } from '../../../api/metadata'
 import DatasetList from './DatasetList.vue'
-import updateApolloCache, { removeDatasetFromAllDatasetsQuery } from '../../../lib/updateApolloCache'
 import {
   ElLoading,
   ElForm,
@@ -136,7 +135,7 @@ export default defineComponent({
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
 
-    const loading = computed(() => state.datasetsLoading || state.datasetCountsLoading || currentUserLoading.value)
+    const loading = computed(() => datasetsLoading.value || datasetCountsLoading.value || currentUserLoading.value)
 
     const setCurrentPage = (page) => {
       // ignore the initial "sync"
@@ -156,14 +155,6 @@ export default defineComponent({
             (sum, key) => sum + (state.categories.includes(key) ? parseInt(counts[key] || 0, 10) : 0),
             0
           )
-    })
-
-    const noFilters = computed(() => {
-      const df = store.getters.filter
-      for (var key in df) {
-        if (df[key]) return false
-      }
-      return true
     })
 
     const setDatasetOwnerOptions = computed(() => {
@@ -207,52 +198,13 @@ export default defineComponent({
       return state.datasetCounts ? `(${state.datasetCounts[status] || 0})` : ''
     }
 
-    useSubscription(datasetDeletedQuery, undefined, {
-      onNext({ data }) {
-        const datasetId = data.datasetDeleted.id
-        removeDatasetFromAllDatasetsQuery(state.allDatasets, datasetId)
-      },
-    })
-
-    useSubscription(datasetStatusUpdatedQuery, undefined, {
-      onNext({ data }) {
-        const { dataset, action, stage, isNew } = data.datasetStatusUpdated
-        if (noFilters.value && dataset != null) {
-          if (action === 'ANNOTATE' && stage === 'QUEUED' && isNew) {
-            updateApolloCache(this, 'allDatasets', (oldVal) => {
-              return {
-                ...oldVal,
-                allDatasets: oldVal.allDatasets && [dataset, ...oldVal.allDatasets],
-              }
-            })
-          }
-          if (state.allDatasets != null) {
-            // Make a best effort to update counts.
-            const oldDataset = state.allDatasets.find((ds) => ds.id === dataset.id)
-            const oldStatus = oldDataset && oldDataset.status
-            const newStatus = dataset.status
-            updateApolloCache(this, 'datasetCounts', (oldVal) => {
-              const oldCounts = extractGroupedStatusCounts(oldVal)
-              return {
-                ...oldVal,
-                counts: Object.entries(oldCounts).map(([status, count]) => ({
-                  fieldValues: [status],
-                  count: count - (status === oldStatus ? 1 : 0) + (status === newStatus ? 1 : 0),
-                })),
-              }
-            })
-          }
-        }
-      },
-    })
-
     const nonEmpty = computed(() => {
       return datasets.value.length > 0
     })
 
     const datasets = computed(() => {
       const statusOrder = ['QUEUED', 'ANNOTATING']
-      let datasets = state.allDatasets || []
+      let datasets = allDatasets.value || []
       datasets = datasets.filter((ds) => state.categories.includes(ds.status))
 
       if (state.orderBy === 'ORDER_BY_DATE') {
@@ -270,52 +222,38 @@ export default defineComponent({
       return currentUser.value != null && (currentUser.value?.role === 'admin' || state.datasetCounts?.FAILED > 0)
     })
 
-    const getDatasets = async () => {
-      try {
-        state.datasetsLoading = true
-        const result = await apolloClient.query({
-          query: datasetDetailItemsQuery,
-          variables: {
-            ...queryVariables.value,
-            dFilter: {
-              ...queryVariables.value.dFilter,
-              status: state.categories.join('|'),
-            },
-          },
-          fetchPolicy: 'cache-first',
-        })
+    const queryOptions = reactive({ enabled: true, fetchPolicy: 'cache-first', throttle: 1000 })
+    const {
+      result: datasetQueryResult,
+      loading: datasetsLoading,
+      refetch: refetchDatasets,
+      subscribeToMore,
+    } = useQuery(
+      datasetDetailItemsQuery,
+      () => ({
+        ...queryVariables.value,
+        dFilter: {
+          ...queryVariables.value.dFilter,
+          status: state.categories.join('|'),
+        },
+      }),
+      queryOptions
+    )
+    const allDatasets = computed(() => datasetQueryResult.value?.allDatasets)
 
-        const { data } = result
-        state.allDatasets = data.allDatasets
-      } catch (e) {
-        // pass
-      } finally {
-        state.datasetsLoading = false
-      }
-    }
-    const countDatasets = async () => {
-      try {
-        state.datasetCountsLoading = true
-        const result = await apolloClient.query({
-          query: countDatasetsByStatusQuery,
-          variables: queryVariables.value,
-          fetchPolicy: 'cache-first',
-          throttle: 1000,
-        })
-        const { data } = result
-
-        state.datasetCounts = extractGroupedStatusCounts(data)
-      } catch (e) {
-        // pass
-      } finally {
-        state.datasetCountsLoading = false
-      }
-    }
+    const {
+      loading: datasetCountsLoading,
+      onResult: onCountResult,
+      refetch: refetchCounts,
+      subscribeToMore: subscribeToMoreCounts,
+    } = useQuery(countDatasetsByStatusQuery, () => queryVariables.value, queryOptions)
+    onCountResult((result) => {
+      state.datasetCounts = extractGroupedStatusCounts(result.data)
+    })
 
     const initializeTable = async () => {
-      await getDatasets()
-      await countDatasets()
-
+      await refetchDatasets()
+      await refetchCounts()
       if (currentUser.value) {
         // due to some misbehaviour from setting initial value from getLocalstorage with null values
         // on filterSpecs, the filter is being initialized here if user is logged
@@ -326,18 +264,20 @@ export default defineComponent({
       }
     }
 
-    // Mounted hook
-    onMounted(() => {
-      initializeTable()
-    })
-
-    const categories = computed(() => {
-      return state.categories
-    })
-
-    watch([queryVariables, categories], async () => {
-      await getDatasets()
-      await countDatasets()
+    onMounted(async () => {
+      subscribeToMore({
+        document: datasetStatusUpdatedQuery,
+        updateQuery: () => {
+          initializeTable()
+        },
+      })
+      subscribeToMoreCounts({
+        document: datasetDeletedQuery,
+        updateQuery: () => {
+          initializeTable()
+        },
+      })
+      await initializeTable()
     })
 
     function handleSortChange(value, sortingOrder) {
