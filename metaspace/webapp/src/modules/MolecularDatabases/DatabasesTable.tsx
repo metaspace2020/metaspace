@@ -1,4 +1,4 @@
-import { defineComponent, reactive, onBeforeMount } from '@vue/composition-api'
+import { defineComponent, reactive, onBeforeMount, defineAsyncComponent } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 
 import UploadDialog from './UploadDialog'
@@ -6,8 +6,10 @@ import ElapsedTime from '../../components/ElapsedTime'
 import PrimaryIcon from '../../components/PrimaryIcon.vue'
 import SecondaryIcon from '../../components/SecondaryIcon.vue'
 
-import CheckSvg from '../../assets/inline/refactoring-ui/icon-check.svg'
-import GroupSvg from '../../assets/inline/refactoring-ui/icon-user-group.svg'
+const CheckSvg = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-check.svg'))
+const GroupSvg = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-user-group.svg'))
+
+import { ElButton, ElLoading, ElTable, ElTableColumn } from '../../lib/element-plus'
 
 import { getGroupDatabasesQuery } from '../../api/group'
 
@@ -19,21 +21,21 @@ const CheckColumn = defineComponent({
   },
   setup(props) {
     return () => (
-      <el-table-column
+      <ElTableColumn
         prop={props.prop}
         label={props.label}
         width={144}
         align="center"
-        {...{
-          scopedSlots: {
-            default: (scope: { row: any }) => (
-              <span class="flex justify-center items-center h-5">
-                { scope.row[props.prop]
-                  ? <SecondaryIcon><CheckSvg /></SecondaryIcon>
-                  : null }
-              </span>
-            ),
-          },
+        v-slots={{
+          default: (scope: { row: any }) => (
+            <span class="flex justify-center items-center h-5">
+              {scope.row[props.prop] ? (
+                <SecondaryIcon>
+                  <CheckSvg />
+                </SecondaryIcon>
+              ) : null}
+            </span>
+          ),
         }}
       />
     )
@@ -45,13 +47,16 @@ interface Props {
   groupId: string
 }
 
-const DatabasesTable = defineComponent<Props>({
+const DatabasesTable = defineComponent({
   name: 'DatabasesTable',
   props: {
     handleRowClick: { type: Function, required: true },
     groupId: { type: String, required: true },
   },
-  setup(props) {
+  directives: {
+    loading: ElLoading.directive,
+  },
+  setup(props: Props) {
     const state = reactive({
       showUploadDialog: false,
     })
@@ -59,7 +64,7 @@ const DatabasesTable = defineComponent<Props>({
     const { result, loading, refetch } = useQuery(
       getGroupDatabasesQuery,
       { groupId: props.groupId },
-      { fetchPolicy: 'network-only' },
+      { fetchPolicy: 'network-only' }
     )
 
     onBeforeMount(refetch)
@@ -86,76 +91,54 @@ const DatabasesTable = defineComponent<Props>({
               You can choose to make derived annotations visible to others.
             </p>
           </div>
-          <el-button type="primary" onClick={() => { state.showUploadDialog = true }}>
+          <ElButton
+            type="primary"
+            onClick={() => {
+              state.showUploadDialog = true
+            }}
+          >
             Upload Database
-          </el-button>
+          </ElButton>
         </header>
-        <el-table
+        <ElTable
           v-loading={loading.value}
           data={result.value?.group?.molecularDatabases}
           default-sort={{ prop: 'createdDT', order: 'descending' }}
-          style="width: 100%"
-          on={{
-            'row-click': props.handleRowClick,
-          }}
-          row-class-name="cursor-pointer"
+          style={{ width: '100%' }}
+          onRowClick={props.handleRowClick}
+          class="cursor-pointer"
         >
-          <el-table-column
+          <ElTableColumn
             prop="name"
             label="Name"
             minWidth={144}
             sortable
             sortBy={['name', 'version']}
-            {...{
-              scopedSlots: {
-                default: ({ row }: { row: any }) => (
-                  <span>
-                    <span class="text-body font-medium">{row.name}</span>
-                    {' '}
-                    <span class="text-gray-700">{row.version}</span>
-                  </span>
-                ),
-              },
+            v-slots={{
+              default: ({ row }: { row: any }) => (
+                <span>
+                  <span class="text-body font-medium">{row.name}</span> <span class="text-gray-700">{row.version}</span>
+                </span>
+              ),
             }}
           />
-          <el-table-column
+          <ElTableColumn
             prop="createdDT"
             label="Uploaded"
             minWidth={144}
             sortable
-            {...{
-              scopedSlots: {
-                default: ({ row }: { row: any }) => (
-                  <ElapsedTime key={row.id} date={row.createdDT} />
-                ),
-              },
+            v-slots={{
+              default: ({ row }: { row: any }) => <ElapsedTime key={row.id} date={row.createdDT} />,
             }}
           />
-          <el-table-column
-            prop="user.name"
-            label="Uploaded by"
-            minWidth={144}
-            sortable
-          />
-          <CheckColumn
-            prop="isPublic"
-            label="Public annotations"
-          />
-          <CheckColumn
-            prop="isVisible"
-            label="Public database"
-          />
-          <CheckColumn
-            prop="archived"
-            label="Archived"
-          />
-        </el-table>
-        { state.showUploadDialog
-          && <UploadDialog
-            groupId={props.groupId}
-            onClose={onDialogClose}
-            onDone={onUploadComplete}
-          /> }
+          <ElTableColumn prop="user.name" label="Uploaded by" minWidth={144} sortable />
+          <CheckColumn prop="isPublic" label="Public annotations" />
+          <CheckColumn prop="isVisible" label="Public database" />
+          <CheckColumn prop="archived" label="Archived" />
+        </ElTable>
+        {state.showUploadDialog && (
+          <UploadDialog groupId={props.groupId} onClose={onDialogClose} onDone={onUploadComplete} />
+        )}
       </div>
     )
   },

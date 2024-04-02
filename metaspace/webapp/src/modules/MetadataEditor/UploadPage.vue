@@ -1,14 +1,11 @@
 <template>
   <div class="md-editor">
-    <help-dialog
-      :visible="helpDialog"
-      @close="helpDialog = false"
-    />
+    <help-dialog :visible="state.helpDialog" @close="state.helpDialog = false" />
     <requested-access-dialog
-      :visible="showRequestedDialog"
+      :visible="state.showRequestedDialog"
       :ds-submission="true"
-      :group="group"
-      @close="showRequestedDialog = false"
+      :group="state.group"
+      @close="state.showRequestedDialog = false"
     />
     <div class="upload-page-wrapper">
       <div
@@ -23,38 +20,23 @@
       <div v-else-if="isSignedIn || isTourRunning">
         <div class="metadata-section">
           <div class="el-row">
-            <div class="el-col el-col-6">
-              &nbsp;
-            </div>
+            <div class="el-col el-col-6">&nbsp;</div>
             <div class="el-col el-col-18">
               <div class="flex justify-between items-center form-margin h-10">
-                <el-button
-                  class="text-gray-600 mr-auto"
-                  @click="helpDialog = true"
-                >
-                  Need help?
-                </el-button>
+                <el-button class="text-gray-600 mr-auto" @click="state.helpDialog = true"> Need help? </el-button>
                 <fade-transition>
-                  <p
-                    v-if="autoSubmit"
-                    class="text-gray-700 m-0 mr-3 text-right text-sm leading-5"
-                  >
+                  <p v-if="state.autoSubmit" class="text-gray-700 m-0 mr-3 text-right text-sm leading-5">
                     submitting after upload &ndash;
                     <button
                       class="button-reset font-medium text-primary"
                       title="Cancel automatic submit"
-                      @click="autoSubmit = false"
+                      @click="state.autoSubmit = false"
                     >
                       cancel
                     </button>
                   </p>
                 </fade-transition>
-                <el-button
-                  type="primary"
-                  :disabled="submitDisabled"
-                  :loading="autoSubmit"
-                  @click="onSubmit"
-                >
+                <el-button type="primary" :disabled="submitDisabled" :loading="state.autoSubmit" @click="onSubmit">
                   Submit
                 </el-button>
               </div>
@@ -63,23 +45,15 @@
         </div>
 
         <div class="metadata-section">
-          <form
-            class="el-form el-form--label-top el-row"
-            @submit.prevent
-          >
+          <form class="el-form el-form--label-top el-row" @submit.prevent>
             <div class="el-col el-col-6">
-              <div class="metadata-section__title">
-                Imaging MS data
-              </div>
+              <div class="metadata-section__title">Imaging MS data</div>
             </div>
-            <div
-              v-loading="status === 'LOADING'"
-              class="el-col el-col-18"
-            >
+            <div v-loading="state.status === 'LOADING'" class="el-col el-col-18">
               <div class="md-form-field">
                 <uppy-uploader
-                  :key="storageKey.uuid"
-                  :disabled="status === 'SUBMITTING'"
+                  :key="state.storageKey.uuid"
+                  :disabled="state.status === 'SUBMITTING'"
                   :required-file-types="['imzML', 'ibd']"
                   :s3-options="s3Options"
                   :options="uppyOptions"
@@ -93,35 +67,33 @@
             </div>
           </form>
         </div>
-        <metadata-editor
-          ref="editor"
-          :validation-errors="validationErrors"
-        />
+        <metadata-editor ref="editor" :validation-errors="state.validationErrors" :current-user="currentUser" />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import Vue from 'vue'
-import { Message } from 'element-ui/'
-
+import { defineComponent, ref, reactive, computed, watch, nextTick, inject, onMounted } from 'vue'
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
+import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
+import { ElMessage } from '../../lib/element-plus'
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 import MetadataEditor from './MetadataEditor.vue'
 import HelpDialog from './HelpDialog.vue'
-
-import { createDatasetQuery } from '../../api/dataset'
-import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
-import get from 'lodash-es/get'
-import { currentUserIdQuery } from '../../api/user'
+import { RequestedAccessDialog } from '../Group/RequestedAccessDialog'
 import reportError from '../../lib/reportError'
 import { parseS3Url } from '../../lib/util'
 import config from '../../lib/config'
 import gql from 'graphql-tag'
-import { ViewGroupFragment } from '@/api/group'
-import { RequestedAccessDialog } from '../Group/RequestedAccessDialog'
-import { MessageBox } from '../../lib/element-ui'
+import { createDatasetQuery } from '../../api/dataset'
+import { currentUserIdQuery } from '../../api/user'
+import { ViewGroupFragment } from '../../api/group'
+import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
+import { get } from 'lodash-es'
+import { ElMessageBox } from '../../lib/element-plus'
 
 const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
@@ -129,82 +101,19 @@ const createInputPath = (url, uuid) => {
   return `s3a://${bucket}/${uuid}`
 }
 
-const basename = fname => fname.split('.').slice(0, -1).join('.')
-const groupRoleQuery = gql`query GroupProfileById($groupIdOrSlug: ID!) {
-              group(groupId: $groupIdOrSlug) { ...ViewGroupFragment hasPendingRequest }
-            }
-            ${ViewGroupFragment}`
-const uppyOptions = {
-  debug: true,
-  autoProceed: true,
-  restrictions: {
-    maxNumberOfFiles: 2,
-    minNumberOfFiles: 2, // add both files before uploading
-    allowedFileTypes: ['.imzML', '.ibd'],
-  },
-  meta: {},
-  onBeforeFileAdded: (newFile, fileLookup = {}) => {
-    // Check if the .ibd file is larger than 20GB
-    if (!config.features.ignore_ibd_size && newFile.name.endsWith('.ibd')) {
-      const GB = (1024 ** 3) // 1GB in bytes
-      const maxSize = 20
-
-      if (newFile.data.size > maxSize * GB) {
-        MessageBox.alert(`Files with .ibd extension must be smaller than ${maxSize}GB.
-<a target="_blank" href="mailto:contact@metaspace2020.eu">Contact us</a> if you need to upload larger files.`
-        ,
-        'File too large', {
-          dangerouslyUseHTMLString: true,
-          showConfirmButton: false,
-        })
-          .catch(() => { /* Ignore exception raised when alert is closed */ })
-        return false // Prevent the file from being added
-      }
+const basename = (fname) => fname.split('.').slice(0, -1).join('.')
+const groupRoleQuery = gql`
+  query GroupProfileById($groupIdOrSlug: ID!) {
+    group(groupId: $groupIdOrSlug) {
+      ...ViewGroupFragment
+      hasPendingRequest
     }
+  }
+  ${ViewGroupFragment}
+`
 
-    const currentFiles = Object.values(fileLookup)
-    if (currentFiles.length === 0) return true
-    if (currentFiles.length === 2) return false
-
-    const [existingFile] = currentFiles
-
-    if (newFile.extension === existingFile.extension) return false
-
-    const existingName = basename(existingFile.name)
-    const newName = basename(newFile.name)
-
-    if (existingName !== newName) {
-      Message({
-        message: 'Please make sure the files have the same name before the extension',
-        type: 'error',
-      })
-      return false
-    }
-  },
-}
-
-export default {
+export default defineComponent({
   name: 'UploadPage',
-  apollo: {
-    systemHealth: {
-      query: getSystemHealthQuery,
-      subscribeToMore: getSystemHealthSubscribeToMore,
-      fetchPolicy: 'cache-first',
-    },
-    currentUser: {
-      query: currentUserIdQuery,
-      fetchPolicy: 'cache-first',
-      result({ data }) {
-        if (data.currentUser == null && this.$store.state.currentTour == null) {
-          this.$store.commit('account/showDialog', {
-            dialog: 'signIn',
-            dialogCloseRedirect: '/',
-            loginSuccessRedirect: '/upload',
-          })
-        }
-      },
-    },
-  },
   components: {
     UppyUploader,
     MetadataEditor,
@@ -212,8 +121,12 @@ export default {
     FadeTransition,
     RequestedAccessDialog,
   },
-  data() {
-    return {
+  setup() {
+    const store = useStore()
+    const router = useRouter()
+    const apolloClient = inject(DefaultApolloClient)
+    const editor = ref(null)
+    const state = reactive({
       status: 'INIT',
       showRequestedDialog: false,
       validationErrors: [],
@@ -232,156 +145,195 @@ export default {
       autoSubmit: false,
       helpDialog: false,
       group: null,
-      systemHealth: null,
-      currentUser: null,
       inputPath: null,
-    }
-  },
+    })
 
-  computed: {
+    const { result: currentUserResult, onResult } = useQuery(currentUserIdQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
+    const currentUser = computed(() => currentUserResult.value?.currentUser)
 
-    uuid() {
-      return this.storageKey.uuid
-    },
+    onResult((result) => {
+      const { data } = result
+      if (data?.currentUser == null && store.state.currentTour == null) {
+        store.commit('account/showDialog', {
+          dialog: 'signIn',
+          dialogCloseRedirect: '/',
+          loginSuccessRedirect: '/upload',
+        })
+      }
+    })
 
-    submitDisabled() {
-      return this.isTourRunning || ['INIT', 'LOADING', 'SUBMITTING'].includes(this.status)
-    },
-
-    isTourRunning() {
-      return this.$store.state.currentTour != null
-    },
-
-    isSignedIn() {
-      return this.currentUser != null && this.currentUser.id != null
-    },
-
-    enableUploads() {
-      return !this.systemHealth || (this.systemHealth.canMutate && this.systemHealth.canProcessDatasets)
-    },
-
-    uploadEndpoint() {
+    const { result: systemHealthResult, subscribeToMore } = useQuery(getSystemHealthQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
+    const systemHealth = computed(() => systemHealthResult.value?.systemHealth)
+    const uuid = computed(() => state.storageKey.uuid)
+    const isTourRunning = computed(() => store.state.currentTour != null)
+    const submitDisabled = computed(() => {
+      return isTourRunning.value || ['INIT', 'LOADING', 'SUBMITTING'].includes(state.status)
+    })
+    const isSignedIn = computed(() => currentUser.value != null && currentUser.value.id != null)
+    const enableUploads = computed(() => {
+      return !systemHealth.value || (systemHealth.value.canMutate && systemHealth.value.canProcessDatasets)
+    })
+    const uploadEndpoint = computed(() => {
       return `${window.location.origin}/dataset_upload`
-    },
-
-    s3Options() {
+    })
+    const s3Options = computed(() => {
       return {
-        companionUrl: this.uploadEndpoint,
-        companionHeaders: this.storageKey,
+        companionUrl: uploadEndpoint.value,
+        companionHeaders: state.storageKey,
       }
-    },
+    })
 
-    uppyOptions() {
-      return uppyOptions
-    },
-  },
+    const uppyOptions = computed(() => {
+      return {
+        debug: true,
+        autoProceed: true,
+        restrictions: {
+          maxNumberOfFiles: 2,
+          minNumberOfFiles: 2, // add both files before uploading
+          allowedFileTypes: ['.imzML', '.ibd'],
+        },
+        meta: {},
+        onBeforeFileAdded: (newFile, fileLookup = {}) => {
+          // Check if the .ibd file is larger than 20GB
+          if (!config.features.ignore_ibd_size && newFile.name.endsWith('.ibd')) {
+            const GB = 1024 ** 3 // 1GB in bytes
+            const maxSize = 20
+            if (newFile.data.size > maxSize * GB) {
+              ElMessageBox.alert(
+                `Files with .ibd extension must be smaller than ${maxSize}GB.
+<a target="_blank" href="mailto:contact@metaspace2020.eu">Contact us</a> if you need to upload larger files.`,
+                'File too large',
+                {
+                  dangerouslyUseHTMLString: true,
+                  showConfirmButton: false,
+                }
+              ).catch(() => {
+                /* Ignore exception raised when alert is closed */
+              })
+              return false // Prevent the file from being added
+            }
+          }
 
-  watch: {
-    status(status) {
-      if (status === 'UPLOADED' && this.autoSubmit) {
-        this.autoSubmit = false
-        this.submitForm()
+          const currentFiles = Object.values(fileLookup)
+          if (currentFiles.length === 0) return true
+          if (currentFiles.length === 2) return false
+
+          const [existingFile] = currentFiles
+
+          if (newFile.extension === existingFile.extension) return false
+
+          const existingName = basename(existingFile.name)
+          const newName = basename(newFile.name)
+
+          if (existingName !== newName) {
+            ElMessage({
+              message: 'Please make sure the files have the same name before the extension',
+              type: 'error',
+            })
+            return false
+          }
+        },
       }
-    },
-  },
+    })
 
-  created() {
-    this.$store.commit('updateFilter', this.$store.getters.filter)
-    this.fetchStorageKey()
-  },
+    const cancel = () => {
+      router.go(-1)
+    }
 
-  methods: {
-    async fetchStorageKey() {
-      this.status = 'LOADING'
+    const fetchStorageKey = async () => {
+      state.status = 'LOADING'
       try {
-        const response = await fetch(`${this.uploadEndpoint}/s3/uuid`)
+        const response = await fetch(`${uploadEndpoint.value}/s3/uuid`)
         if (response.status < 200 || response.status >= 300) {
           const responseBody = await response.text()
           reportError(new Error(`Unexpected server response getting upload UUID: ${response.status} ${responseBody}`))
         } else {
           // uuid and uuidSignature
-          this.storageKey = await response.json()
+          state.storageKey = await response.json()
         }
       } catch (e) {
         reportError(e)
       } finally {
-        this.status = 'READY'
+        state.status = 'READY'
       }
-    },
+    }
 
-    onFileAdded(file) {
+    const onFileAdded = async (file) => {
       const { name } = file
       const dsName = name.slice(0, name.lastIndexOf('.'))
-      Vue.nextTick(() => {
-        this.$refs.editor.fillDatasetName(dsName)
-      })
-    },
+      await nextTick()
+      editor.value.fillDatasetName(dsName)
+    }
 
-    async onFileRemoved(file) {
-      this.uploads[file.extension.toLowerCase()] = false
-      if (Object.values(this.uploads).every(flag => !flag)) {
+    const onFileRemoved = async (file) => {
+      state.uploads[file.extension.toLowerCase()] = false
+      if (Object.values(state.uploads).every((flag) => !flag)) {
         // Get a new storage key, because the old uploads may have different filenames which would cause later issues
         // when trying to determine which file to use if they were uploaded to the same prefix.
-        await this.fetchStorageKey()
+        await fetchStorageKey()
       } else {
-        this.status = 'READY'
+        state.status = 'READY'
       }
-    },
+    }
 
-    onUploadStart() {
-      this.status = 'UPLOADING'
-    },
+    const onUploadStart = () => {
+      state.status = 'UPLOADING'
+    }
 
-    onUploadComplete(result) {
+    const onUploadComplete = (result) => {
       for (const file of result.failed) {
-        this.uploads[file.extension.toLowerCase()] = false
+        state.uploads[file.extension.toLowerCase()] = false
       }
       for (const file of result.successful) {
-        this.uploads[file.extension.toLowerCase()] = true
-        this.fileSize[file.extension.toLowerCase()] = file.size
+        state.uploads[file.extension.toLowerCase()] = true
+        state.fileSize[file.extension.toLowerCase()] = file.size
       }
 
-      if (this.uploads.imzml === true && this.uploads.ibd === true) {
+      if (state.uploads.imzml === true && state.uploads.ibd === true) {
         const [file] = result.successful
         const { uploadURL } = file
 
-        this.inputPath = createInputPath(uploadURL, this.uuid)
-        this.status = 'UPLOADED'
+        state.inputPath = createInputPath(uploadURL, uuid.value)
+        state.status = 'UPLOADED'
       } else {
         if (result.failed.length) {
           reportError()
         }
-        this.status = 'READY'
+        state.status = 'READY'
       }
-    },
+    }
 
-    onSubmit() {
+    const onSubmit = () => {
       // Prevent duplicate submissions if user double-clicks
-      if (this.status === 'SUBMITTING') return
+      if (state.status === 'SUBMITTING') return
 
-      if (this.status !== 'UPLOADED') {
-        this.autoSubmit = true
+      if (state.status !== 'UPLOADED') {
+        state.autoSubmit = true
       } else {
-        this.submitForm()
+        submitForm()
       }
-    },
+    }
 
-    async submitForm() {
-      const formValue = this.$refs.editor.getFormValueForSubmit()
+    const submitForm = async () => {
+      const formValue = editor.value.getFormValueForSubmit()
       if (formValue === null) return
 
-      this.status = 'SUBMITTING'
+      state.status = 'SUBMITTING'
       const { metadataJson, metaspaceOptions } = formValue
       const performEnrichment = metaspaceOptions.performEnrichment
       delete metaspaceOptions.performEnrichment
       try {
-        await this.$apollo.mutate({
+        await apolloClient.mutate({
           mutation: createDatasetQuery,
           variables: {
             input: {
-              inputPath: this.inputPath,
-              sizeHashJson: JSON.stringify({ imzml_size: this.fileSize?.imzml, ibd_size: this.fileSize?.ibd }),
+              inputPath: state.inputPath,
               metadataJson,
+              sizeHashJson: JSON.stringify({ imzml_size: state.fileSize?.imzml, ibd_size: state.fileSize?.ibd }),
               ...metaspaceOptions,
             },
             useLithops: config.features.lithops,
@@ -389,11 +341,11 @@ export default {
           },
         })
 
-        this.inputPath = null
-        this.validationErrors = []
-        this.fetchStorageKey()
-        this.$refs.editor.resetAfterSubmit()
-        this.$message({
+        state.inputPath = null
+        state.validationErrors = []
+        await fetchStorageKey()
+        editor.value.resetAfterSubmit()
+        ElMessage({
           message: 'Your dataset was successfully submitted!',
           type: 'success',
         })
@@ -401,28 +353,32 @@ export default {
         let graphQLError = null
         try {
           graphQLError = JSON.parse(err.graphQLErrors[0].message)
-        } catch (err2) { /* The case where err does not contain a graphQL error is handled below */ }
+        } catch (err2) {
+          /* The case where err does not contain a graphQL error is handled below */
+        }
 
         if (get(err, 'graphQLErrors[0].isHandled')) {
           return false
         } else if (graphQLError && graphQLError.type === 'failed_validation') {
-          this.validationErrors = graphQLError.validation_errors
-          this.$message({
+          state.validationErrors = graphQLError.validation_errors
+          ElMessage({
             message: 'Please fix the highlighted fields and submit again',
             type: 'error',
           })
         } else if (graphQLError && graphQLError.type === 'wrong_moldb_name') {
-          this.$refs.editor.resetMetaboliteDatabase()
-          this.$message({
-            message: 'An unrecognized metabolite database was selected. This field has been cleared, '
-             + 'please select the databases again and resubmit the form.',
+          editor.value.resetMetaboliteDatabase()
+          ElMessage({
+            message:
+              'An unrecognized metabolite database was selected. This field has been cleared, ' +
+              'please select the databases again and resubmit the form.',
             type: 'error',
           })
         } else {
-          this.$message({
-            message: 'There was an unexpected problem submitting the dataset. Please refresh the page and try again. '
-               + 'If this problem persists, please contact us at '
-               + '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
+          ElMessage({
+            message:
+              'There was an unexpected problem submitting the dataset. Please refresh the page and try again. ' +
+              'If this problem persists, please contact us at ' +
+              '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
             dangerouslyUseHTMLString: true,
             type: 'error',
             duration: 0,
@@ -431,66 +387,96 @@ export default {
           throw err
         }
       } finally {
-        if (this.status === 'SUBMITTING') { // i.e. if unsuccessful
-          this.status = 'UPLOADED'
+        if (state.status === 'SUBMITTING') {
+          // i.e. if unsuccessful
+          state.status = 'UPLOADED'
         }
 
         // check if group approval is pending
         if (metaspaceOptions.groupId) {
-          const resp = await this.$apollo.query({
+          const resp = await apolloClient.query({
             query: groupRoleQuery,
             variables: { groupIdOrSlug: metaspaceOptions.groupId },
           })
-          this.group = resp.data.group
-          this.showRequestedDialog = resp.data?.group?.currentUserRole === 'PENDING'
+          state.group = resp.data.group
+          state.showRequestedDialog = resp.data?.group?.currentUserRole === 'PENDING'
         }
       }
-    },
+    }
 
-    cancel() {
-      this.$router.go(-1)
-    },
+    onMounted(() => {
+      store.commit('updateFilter', store.getters.filter)
+      fetchStorageKey()
+      subscribeToMore(getSystemHealthSubscribeToMore)
+    })
+
+    const status = computed(() => state.status)
+
+    watch(status, (status) => {
+      if (status === 'UPLOADED' && state.autoSubmit) {
+        state.autoSubmit = false
+        submitForm()
+      }
+    })
+
+    return {
+      state,
+      editor,
+      enableUploads,
+      isSignedIn,
+      isTourRunning,
+      submitDisabled,
+      onSubmit,
+      s3Options,
+      uppyOptions,
+      currentUser,
+      onFileAdded,
+      onFileRemoved,
+      onUploadStart,
+      onUploadComplete,
+      systemHealth,
+      cancel,
+    }
   },
-}
-
+})
 </script>
 
 <style scoped>
-  #filter-panel-container > * {
-    padding-left: 0;
-  }
+#filter-panel-container > * {
+  padding-left: 0;
+}
 
-  #sign-in-intro {
-    padding: 20px;
-  }
+#sign-in-intro {
+  padding: 20px;
+}
 
-  .sign-in-message {
-    margin: 1.5em 0;
-    font-size: 1.5em;
-  }
+.sign-in-message {
+  margin: 1.5em 0;
+  font-size: 1.5em;
+}
 
-  .upload-page-wrapper {
-    width: 950px;
-  }
+.upload-page-wrapper {
+  width: 950px;
+}
 
-  .md-editor {
-    padding: 0 20px 20px 20px;
-    display: flex;
-    justify-content: center;
-  }
+.md-editor {
+  padding: 0 20px 20px 20px;
+  display: flex;
+  justify-content: center;
+}
 
-  .md-editor-submit {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-  }
+.md-editor-submit {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
 
-  .md-editor-submit > button {
-    flex: 1 auto;
-    margin: 25px 5px;
-  }
+.md-editor-submit > button {
+  flex: 1 auto;
+  margin: 25px 5px;
+}
 
-  .form-margin {
-    margin: 0 5px;
-  }
+.form-margin {
+  margin: 0 5px;
+}
 </style>

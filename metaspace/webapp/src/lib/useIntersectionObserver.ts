@@ -1,10 +1,10 @@
 // Based on https://github.com/Tarektouati/vue-use-web/blob/master/src/IntersectionObserver.ts
 
-import { onMounted, Ref, ref, onUnmounted } from '@vue/composition-api'
+import { onMounted, Ref, ref, onUnmounted } from 'vue'
 
-export default function(
+export default function (
   target: Ref<HTMLElement | undefined>,
-  options: IntersectionObserverInit = { root: null, rootMargin: '0px' },
+  options: IntersectionObserverInit = { root: null, rootMargin: '0px' }
 ) {
   const intersectionRatio = ref(0)
   const isIntersecting = ref(false)

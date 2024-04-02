@@ -1,8 +1,7 @@
-
 interface FrontMatterMarkdownObject {
-  attributes: any;
-  body: string;
-  html: string;
+  attributes: any
+  body: string
+  html: string
 }
 
 /**

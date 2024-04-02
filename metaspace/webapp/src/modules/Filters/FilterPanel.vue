@@ -2,17 +2,13 @@
   <div class="filter-panel">
     <el-select
       v-if="anyOptionalFilterPresent"
-      v-model="selectedFilterToAdd"
+      :value="selectedFilterToAdd"
       class="filter-select"
       placeholder="Add filter"
       @change="addFilter"
+      size="large"
     >
-      <el-option
-        v-for="f in availableFilters"
-        :key="f.key"
-        :value="f.key"
-        :label="f.description"
-      />
+      <el-option v-for="f in availableFilters" :key="f.key" :value="f.key" :label="f.description" />
     </el-select>
 
     <component
@@ -29,10 +25,15 @@
 </template>
 
 <script>
+import { defineComponent, computed, ref, watch, onMounted } from 'vue'
+import { useStore } from 'vuex'
 import { FILTER_COMPONENT_PROPS, FILTER_SPECIFICATIONS } from './filterSpecs'
 import { isFunction, pick, get, uniq } from 'lodash-es'
 import { setLocalStorage } from '../../lib/localStorage'
-import { computed } from '@vue/composition-api'
+import { ElSelect, ElOption } from '../../lib/element-plus'
+
+import { inject } from 'vue'
+import { DefaultApolloClient } from '@vue/apollo-composable'
 
 const orderedFilterKeys = [
   'database',
@@ -63,119 +64,123 @@ const orderedFilterKeys = [
   'pValue',
 ]
 
-const dsAnnotationHiddenFilters = [
-  'datasetIds',
-]
+const dsAnnotationHiddenFilters = ['datasetIds']
 
 const filterComponents = {}
 Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
   const componentType = FILTER_SPECIFICATIONS[cur].type
-  // a bit hacky way of getting component name b/c of different ways of initialization
   if (!componentType.name && !(componentType.options && componentType.options.name)) {
     throw new Error('Missing name in FILTER_SPECIFICATIONS component type')
   }
-  const typeName = ('options' in componentType) ? componentType.options.name : componentType.name
+  const typeName = 'options' in componentType ? componentType.options.name : componentType.name
   if (!(typeName in accum)) {
     accum[typeName] = componentType
   }
   return accum
 }, filterComponents)
 
-/** @type {ComponentOptions<Vue> & Vue} */
-const FilterPanel = {
+export default defineComponent({
   name: 'filter-panel',
-  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters', 'fixedOptions'],
-  components: filterComponents,
-  mounted() {
-    this.$store.dispatch('initFilterLists')
+  components: {
+    ...filterComponents,
+    ElSelect,
+    ElOption,
   },
-  computed: {
-    filter() {
-      return this.$store.getters.filter
-    },
+  props: ['level', 'simpleFilterOptions', 'setDatasetOwnerOptions', 'hiddenFilters', 'fixedOptions'],
+  setup(props) {
+    const apolloClient = inject(DefaultApolloClient)
+    const store = useStore()
+    const selectedFilterToAdd = ref(null)
 
-    activeKeys() {
-      // For multi-filters, override child filters with their specified parent filter, preventing duplicates
-      const keys = this.$store.state.orderedActiveFilters
-        .map(filterKey => get(FILTER_SPECIFICATIONS, [filterKey, 'multiFilterParent'], filterKey))
+    onMounted(async () => {
+      await store.dispatch('initFilterLists', apolloClient)
+    })
 
-      return uniq(keys)
-    },
+    const storeFilter = computed(() => store.getters.filter)
+    const activeKeys = computed(() => {
+      return uniq(
+        store.state.orderedActiveFilters.map((filterKey) =>
+          get(FILTER_SPECIFICATIONS, [filterKey, 'multiFilterParent'], filterKey)
+        )
+      )
+    })
 
-    visibleFilters() {
-      return this.activeKeys
-        .filter(this.shouldShowFilter)
-        .map(this.makeFilter)
-    },
+    const visibleFilters = computed(() => {
+      return activeKeys.value.filter(shouldShowFilter).map(makeFilter)
+    })
 
-    availableFilters() {
+    const availableFilters = computed(() => {
       const available = []
       for (const key of orderedFilterKeys) {
         const filterSpec = FILTER_SPECIFICATIONS[key]
-        if (filterSpec.levels.includes(this.level)
-           && !this.activeKeys.includes(key)
-           && (filterSpec.hidden == null || filterSpec.hidden === false
-             || (isFunction(filterSpec.hidden) && !filterSpec.hidden()))) {
+        if (
+          filterSpec.levels.includes(props.level) &&
+          !activeKeys.value.includes(key) &&
+          (filterSpec.hidden == null ||
+            filterSpec.hidden === false ||
+            (isFunction(filterSpec.hidden) && !filterSpec.hidden()))
+        ) {
           available.push({ key, description: filterSpec.description })
         }
       }
       return available
-    },
+    })
 
-    anyOptionalFilterPresent() {
-      for (const filter of this.availableFilters) {
+    const anyOptionalFilterPresent = computed(() => {
+      for (const filter of availableFilters.value) {
         if (!('removable' in FILTER_SPECIFICATIONS[filter.key]) || FILTER_SPECIFICATIONS[filter.key].removable) {
           return true
         }
       }
       return false
-    },
-  },
+    })
 
-  watch: {
-    simpleFilterOptions(newVal) {
-      // Remove simpleFilter if it has a value that's no longer selectable
-      if (this.filter.simpleFilter != null
-         && (newVal == null || !newVal.some(opt => opt.value === this.filter.simpleFilter))) {
-        this.$store.commit('updateFilter', { ...this.filter, simpleFilter: null })
+    watch(
+      () => props.simpleFilterOptions,
+      (newVal) => {
+        // Remove simpleFilter if it has a value that's no longer selectable
+        if (
+          storeFilter.value.simpleFilter != null &&
+          (newVal == null || !newVal.some((opt) => opt.value === storeFilter.value.simpleFilter))
+        ) {
+          store.commit('updateFilter', { ...storeFilter.value, simpleFilter: null })
+        }
       }
-    },
-    setDatasetOwnerOptions(newVal) {
-      if (this.filter.datasetOwner != null
-        && (newVal == null || !newVal.some(opt => opt.value === this.filter.datasetOwner))) {
-        this.$store.commit('updateFilter', { ...this.filter, datasetOwner: null })
+    )
+
+    watch(
+      () => props.setDatasetOwnerOptions,
+      (newVal) => {
+        if (
+          storeFilter.value.datasetOwner != null &&
+          (newVal == null || !newVal.some((opt) => opt.value === storeFilter.value.datasetOwner))
+        ) {
+          store.commit('updateFilter', { ...storeFilter.value, datasetOwner: null })
+        }
       }
-    },
-  },
+    )
 
-  data() {
-    return {
-      selectedFilterToAdd: null,
-    }
-  },
-
-  methods: {
-    shouldShowFilter(filterKey) {
+    function shouldShowFilter(filterKey) {
       const { hidden } = FILTER_SPECIFICATIONS[filterKey]
-      if (typeof hidden === 'function' ? hidden() : (hidden != null && hidden)) {
+      if (typeof hidden === 'function' ? hidden() : hidden != null && hidden) {
         return false
       }
       if (filterKey === 'simpleFilter') {
-        return this.simpleFilterOptions != null
+        return props.simpleFilterOptions != null
       }
-      if (this.level === 'dataset-annotation' && dsAnnotationHiddenFilters.includes(filterKey)) {
+      if (props.level === 'dataset-annotation' && dsAnnotationHiddenFilters.includes(filterKey)) {
         return false
       }
-      if (this.hiddenFilters && this.hiddenFilters.includes(filterKey)) {
+      if (props.hiddenFilters && props.hiddenFilters.includes(filterKey)) {
         return false
       }
       if (filterKey === 'datasetOwner') {
-        return this.setDatasetOwnerOptions != null
+        return props.setDatasetOwnerOptions != null
       }
       return true
-    },
+    }
 
-    makeFilter(filterKey) {
+    function makeFilter(filterKey) {
       const filterSpec = FILTER_SPECIFICATIONS[filterKey]
       const { type, isMultiFilter, ...attrs } = filterSpec
 
@@ -184,15 +189,14 @@ const FilterPanel = {
           filterKey,
           type,
           onChange: (val, _filterKey) => {
-            this.$store.commit('updateFilter',
-              Object.assign(this.filter, { [_filterKey]: val }))
+            store.commit('updateFilter', Object.assign(storeFilter.value, { [_filterKey]: val }))
           },
           onDestroy: (_filterKey) => {
-            this.$store.commit('removeFilter', _filterKey)
+            store.commit('removeFilter', _filterKey)
           },
           attrs: {
             ...pick(attrs, FILTER_COMPONENT_PROPS),
-            filterValues: this.filter,
+            filterValues: storeFilter.value,
           },
         }
       } else {
@@ -201,7 +205,7 @@ const FilterPanel = {
           type,
           // passing the value of undefined destroys the tag element
           onChange: (val) => {
-            const { datasetOwner, submitter, group } = this.filter
+            const { datasetOwner, submitter, group } = storeFilter.value
             const extraUpdatesAux = {}
 
             // unset conflicting group filters
@@ -219,9 +223,8 @@ const FilterPanel = {
             }
 
             // update datasetOwner settings
-            if (filterKey === 'datasetOwner' || ('datasetOwner' in extraUpdatesAux)) {
-              const dsValue = ('datasetOwner' in extraUpdatesAux)
-                ? extraUpdatesAux.datasetOwner : val
+            if (filterKey === 'datasetOwner' || 'datasetOwner' in extraUpdatesAux) {
+              const dsValue = 'datasetOwner' in extraUpdatesAux ? extraUpdatesAux.datasetOwner : val
               setLocalStorage(filterKey, dsValue)
             }
 
@@ -230,52 +233,50 @@ const FilterPanel = {
               setLocalStorage(filterKey, val)
             }
 
-            this.$store.commit('updateFilter',
-              Object.assign(this.filter, { [filterKey]: val, ...extraUpdatesAux }))
+            store.commit('updateFilter', Object.assign(storeFilter.value, { [filterKey]: val, ...extraUpdatesAux }))
           },
           onDestroy: () => {
             if (filterKey === 'annotationIds') {
-              this.$store.commit('setFilterLists', {
-                ...this.$store.state.filterLists,
+              store.commit('setFilterLists', {
+                ...store.state.filterLists,
                 annotationIds: computed(() => undefined),
               })
             }
-            this.$store.commit('removeFilter', filterKey)
+            store.commit('removeFilter', filterKey)
           },
           attrs: {
             ...pick(attrs, FILTER_COMPONENT_PROPS),
-            value: this.getFilterValue(filterSpec, filterKey),
-            fixedOptions: this.getFixedOptions(filterSpec, filterKey),
-            options: this.getFilterOptions(filterSpec, filterKey),
+            value: getFilterValue(filterSpec, filterKey),
+            fixedOptions: getFixedOptions(filterSpec, filterKey),
+            options: getFilterOptions(filterSpec, filterKey),
           },
         }
       }
-    },
+    }
 
-    addFilter(key) {
+    function addFilter(key) {
       if (key) {
-        this.selectedFilterToAdd = null
-        this.$store.commit('addFilter', key)
+        selectedFilterToAdd.value = null
+        store.commit('addFilter', key)
       }
-    },
+    }
 
-    getFixedOptions(filter, filterKey) {
-      if (this.fixedOptions && Object.keys(this.fixedOptions).includes(filterKey)) {
-        return this.fixedOptions[filterKey]
+    function getFixedOptions(filter, filterKey) {
+      if (props.fixedOptions && Object.keys(props.fixedOptions).includes(filterKey)) {
+        return props.fixedOptions[filterKey]
       }
       return undefined
-    },
+    }
 
-    getFilterOptions(filter, filterKey) {
-      const { filterLists } = this.$store.state
-
+    function getFilterOptions(filter, filterKey) {
+      const { filterLists } = store.state
       // dynamically generated options are supported:
       // either specify a function of optionLists or one of its field names
       if (filterKey === 'simpleFilter') {
-        return this.simpleFilterOptions
+        return props.simpleFilterOptions
       }
       if (filterKey === 'datasetOwner') {
-        return this.setDatasetOwnerOptions
+        return props.setDatasetOwnerOptions
       }
       if (typeof filter.options === 'object') {
         return filter.options
@@ -289,35 +290,49 @@ const FilterPanel = {
         return filter.options(filterLists)
       }
       return []
-    },
+    }
 
-    getFilterValue(filter, filterKey) {
-      const value = this.filter[filterKey]
+    function getFilterValue(filter, filterKey) {
+      const value = storeFilter.value[filterKey]
       if (filter.convertValueForComponent) {
         return filter.convertValueForComponent(value)
       }
       return value
-    },
+    }
+
+    return {
+      filter: storeFilter,
+      activeKeys,
+      selectedFilterToAdd,
+      visibleFilters,
+      availableFilters,
+      anyOptionalFilterPresent,
+      addFilter,
+      getFixedOptions,
+      getFilterOptions,
+      getFilterValue,
+      makeFilter,
+      shouldShowFilter,
+    }
   },
-}
-export default FilterPanel
+})
 </script>
 
 <style>
- .filter-panel {
-   display: inline-flex;
-   align-items: flex-start;
-   flex-wrap: wrap;
-   margin: -5px -5px 5px; /* Remove margins of .tf-outer so that they're properly aligned. Add margin to bottom to fit well with other components */
- }
+.filter-panel {
+  display: inline-flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin: -5px -5px 5px; /* Remove margins of .tf-outer so that they're properly aligned. Add margin to bottom to fit well with other components */
+}
 
- .filter-select {
-   width: 200px;
-   margin: 5px;
- }
+.filter-select {
+  width: 200px;
+  margin: 5px;
+}
 
- .el-select-dropdown__wrap {
-   /* so that no scrolling is necessary */
-    max-height: 500px;
- }
+.el-select-dropdown__wrap {
+  /* so that no scrolling is necessary */
+  max-height: 500px;
+}
 </style>

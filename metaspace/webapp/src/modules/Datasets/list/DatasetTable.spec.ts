@@ -1,26 +1,25 @@
-import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
+import { afterEach, expect, vi } from 'vitest'
 import DatasetTable from './DatasetTable.vue'
-import router from '../../../router'
-import { initMockGraphqlClient, apolloProvider } from '../../../../tests/utils/mockGraphqlClient'
-import store from '../../../store/index'
-import Vue from 'vue'
-import Vuex from 'vuex'
-import { sync } from 'vuex-router-sync'
 import * as FileSaver from 'file-saver'
 import { merge } from 'lodash-es'
-import { mockGenerateId, resetGenerateId } from '../../../../tests/utils/mockGenerateId'
-jest.mock('file-saver')
-const mockFileSaver = FileSaver as jest.Mocked<typeof FileSaver>
+import router from '../../../router'
+import store from '../../../store'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { flushPromises, mount } from '@vue/test-utils'
+import { initMockGraphqlClient } from '../../../tests/utils/mockGraphqlClient'
 
-Vue.use(Vuex)
-sync(store, router)
+vi.mock('file-saver', () => ({
+  saveAs: vi.fn(),
+}))
 
-const blobToText = (blob: Blob) => new Promise<string>((resolve, reject) => {
-  const reader = new FileReader()
-  reader.addEventListener('load', () => { resolve(reader.result as string) })
-  reader.addEventListener('error', (e) => { reject((e as any).error) })
-  reader.readAsText(blob)
-})
+const blobToText = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = (e) => reject(e.target.error)
+    reader.readAsText(blob)
+  })
 
 describe('DatasetTable', () => {
   const mockMetadataJson = JSON.stringify({
@@ -54,13 +53,11 @@ describe('DatasetTable', () => {
   }
 
   afterEach(() => {
-    jest.useRealTimers()
-    resetGenerateId()
+    vi.useRealTimers()
   })
 
-  it('should match snapshot', async() => {
-    mockGenerateId(123)
-    initMockGraphqlClient({
+  it('should match snapshot', async () => {
+    const graphqlMockClient = initMockGraphqlClient({
       Query: () => ({
         allDatasets: () => {
           return [
@@ -78,16 +75,30 @@ describe('DatasetTable', () => {
         }),
       }),
     })
-    const wrapper = mount(DatasetTable, { parentComponent: { store, router }, apolloProvider })
-    await Vue.nextTick()
 
-    expect(wrapper.element).toMatchSnapshot()
+    const wrapper = mount(DatasetTable, {
+      global: {
+        plugins: [router, store],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient,
+        },
+      },
+    })
+
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.html()).toMatchSnapshot()
   })
 
-  it('should be able to export a CSV', async() => {
-    initMockGraphqlClient({
+  it('should be able to export a CSV', async () => {
+    const graphqlMockClient = initMockGraphqlClient({
       Query: () => ({
-        allDatasets: (_: any, { filter: { status }, offset }: any) => {
+        allDatasets: (_: any, params: any) => {
+          const offset = params?.offset || 0
+          const filter = params?.filter
+          const status = filter?.status || 'FINISHED'
+
           return [
             merge({}, mockDataset, { principalInvestigator: null, id: `${status}1`, status }),
             merge({}, mockDataset, { principalInvestigator: null, groupApproved: false, id: `${status}2`, status }),
@@ -107,13 +118,25 @@ describe('DatasetTable', () => {
         countDatasets: () => 4,
       }),
     })
-    const wrapper = mount(DatasetTable, { parentComponent: { store, router }, apolloProvider })
-    wrapper.setData({ csvChunkSize: 2 })
-    await Vue.nextTick()
+
+    const wrapper = mount(DatasetTable, {
+      global: {
+        plugins: [router, store],
+        provide: {
+          [DefaultApolloClient]: graphqlMockClient,
+        },
+      },
+    })
+
+    wrapper.vm.state.csvChunkSize = 2
+    await new Promise((resolve) => setTimeout(resolve, 1))
+
+    await flushPromises()
+    await nextTick()
 
     await (wrapper.vm as any).startExport()
-    expect(mockFileSaver.saveAs).toBeCalled()
-    const blob: Blob = mockFileSaver.saveAs.mock.calls[0][0]
+    expect(FileSaver.saveAs).toBeCalled()
+    const blob: Blob = (FileSaver.saveAs as any).mock.calls[0][0]
     const csv = await blobToText(blob)
     const csvWithoutDateHeader = csv.replace(/# Generated at .*\n/, '')
 

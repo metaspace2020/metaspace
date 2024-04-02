@@ -1,18 +1,19 @@
 import { FILTER_SPECIFICATIONS, FilterKey, getDefaultFilter, Level, MetadataLists } from './filterSpecs'
 
 import { invert, isArray, mapValues } from 'lodash-es'
-import { Location } from 'vue-router'
-import { ScaleType } from '../../lib/ionImageRendering'
+import { RouteLocation } from 'vue-router'
+// import { ScaleType } from '../../lib/ionImageRendering'
 import { DEFAULT_SCALE_TYPE } from '../../lib/constants'
-import qs from 'querystring'
+
+type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'hist' | 'test'
 
 interface Dictionary<T> {
-  [key: string]: T;
+  [key: string]: T
 }
 
 interface SortSettings {
-  by: string;
-  dir: string;
+  by: string
+  dir: string
 }
 
 const FILTER_TO_URL: Record<FilterKey, string> = {
@@ -96,17 +97,21 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
       continue
     }
 
-    if (key in filter && (defaultFilter == null || filter[key] !== defaultFilter[key])) {
+    if (
+      key in filter &&
+      (defaultFilter == null ||
+        (filter[key] === undefined ? !Object.keys(defaultFilter).includes(key) : filter[key] !== defaultFilter[key]))
+    ) {
       if (encoding === 'json') {
         q[FILTER_TO_URL[key]] = JSON.stringify(filter[key])
       } else if (encoding === 'list') {
-        q[FILTER_TO_URL[key]] = filter[key] ? filter[key].join(',') : undefined
+        q[FILTER_TO_URL[key]] = filter[key] ? filter[key].join(',') : ''
       } else if (encoding === 'bool') {
         q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0'
       } else if (encoding === 'number') {
         q[FILTER_TO_URL[key]] = String(filter[key] ?? '')
       } else {
-        q[FILTER_TO_URL[key]] = filter[key]
+        q[FILTER_TO_URL[key]] = filter[key] || ''
       }
     }
   }
@@ -116,7 +121,7 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
 
 export function stripFilteringParams(query: Dictionary<string>): Dictionary<string> {
   const q: Dictionary<string> = {}
-  for (var key in query) {
+  for (const key in query) {
     const fKey = URL_TO_FILTER[key]
     if (!fKey) {
       q[key] = query[key]
@@ -125,7 +130,7 @@ export function stripFilteringParams(query: Dictionary<string>): Dictionary<stri
   return q
 }
 
-export function decodeParams(location: Location, filterLists: any): Object {
+export function decodeParams(location: RouteLocation, filterLists: any): Object {
   const { query, path } = location
   const level = path ? getLevel(path) : null
 
@@ -135,7 +140,7 @@ export function decodeParams(location: Location, filterLists: any): Object {
 
   const filter = getDefaultFilter(level, filterLists)
 
-  for (var key in query) {
+  for (const key in query) {
     const fKey = URL_TO_FILTER[key]
     if (!fKey) {
       continue
@@ -144,7 +149,8 @@ export function decodeParams(location: Location, filterLists: any): Object {
     const { levels, encoding } = FILTER_SPECIFICATIONS[fKey]
     // If necessary, unwrap array parameters and take their first element. Array-valued parameters can happen
     // if someone changes the URL and adds a second copy of an existing parameter.
-    const value = isArray(query[key]) ? query[key][0] : query[key]
+    // @ts-ignore
+    const value: string = isArray(query[key]) ? query[key][0] : query[key]
 
     if (levels.indexOf(level) === -1) {
       continue
@@ -238,16 +244,18 @@ export interface UrlSettings {
   datasets: UrlDatasetsSettings
 }
 
-export function decodeSettings(location: Location): UrlSettings | undefined {
-  let { query, path } = location
+export function decodeSettings(location: RouteLocation): UrlSettings | undefined {
+  let { query }: any = location
+  const { path } = location
   if (!query || !path) {
     return undefined
   }
 
   // When vue-router encounters the same query parameter more than once it supplies an array instead of a string.
   // To prevent type errors below, find any arrayified parameters and just take their first element
-  query = mapValues(query, (stringOrArray:string|string[]) =>
-    isArray(stringOrArray) ? stringOrArray[0] : stringOrArray)
+  query = mapValues(query, (stringOrArray: string | string[]) =>
+    isArray(stringOrArray) ? stringOrArray[0] : stringOrArray
+  )
 
   const settings: UrlSettings = {
     table: {
@@ -333,12 +341,13 @@ const dbIds: Record<string, number> = {
 }
 
 export function updateDBParam(queryString: string): string | null {
-  const { db, ...params } = qs.parse(queryString)
-  if (typeof db === 'string') {
-    if (db in dbIds) {
-      return qs.stringify({ ...params, [FILTER_TO_URL.database]: dbIds[db] })
-    }
-    // return not found?
+  const searchParams = new URLSearchParams(queryString)
+  const db = searchParams.get('db')
+
+  if (typeof db === 'string' && db in dbIds) {
+    searchParams.set(FILTER_TO_URL.database, String(dbIds[db]))
+    return searchParams.toString()
   }
+
   return null
 }

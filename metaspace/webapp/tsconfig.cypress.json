@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["./cypress/e2e/**/*", "./cypress/support/**/*"],
+  "compilerOptions": {
+    "isolatedModules": false,
+    "target": "es5",
+    "lib": ["es5", "dom"],
+    "types": ["cypress"],
+    "sourceMap": false,
+  }
+}

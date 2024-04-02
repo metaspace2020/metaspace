@@ -1,71 +1,45 @@
 <template>
   <div>
-    <div
-      v-if="modes.saved || modes.preview"
-      v-html="embedMarkdownAsHtml()"
-    />
-    <el-popover
-      v-if="modes.edit"
-      placement="top-end"
-      trigger="manual"
-      :value="showHint"
-    >
+    <div v-if="modes.saved || modes.preview" v-html="embedMarkdownAsHtml()" />
+    <el-popover v-if="modes.edit" placement="top-end" :visible="showHint">
       <div>
         You can use markdown language to format your description.
-        <br>
+        <br />
         <a
           style="margin-top: 5px"
           rel="nofollow noopener noreferrer"
           target="_blank"
           href="http://www.unexpected-vortices.com/sw/rippledoc/quick-markdown-example.html"
         >
-          Learn more about it</a>
-        <br><el-button
-          style="margin-top: 5px"
-          type="primary"
-          size="mini"
-          @click="disableHint"
+          Learn more about it</a
         >
-          It's clear
-        </el-button>
+        <br />
+        <el-button style="margin-top: 5px" type="primary" size="small" @click="disableHint"> It's clear </el-button>
       </div>
-      <el-input
-        slot="reference"
-        v-model="groupDescriptionAsHtml"
-        type="textarea"
-        :autosize="{ minRows: 10, maxRows: 50 }"
-      />
+      <template #reference>
+        <el-input v-model="groupDescriptionAsHtml" type="textarea" :autosize="{ minRows: 10, maxRows: 50 }" />
+      </template>
     </el-popover>
-    <el-button-group
-      v-if="canEdit"
-      class="btngroup"
-    >
+    <el-button-group v-if="canEdit" class="btngroup">
       <el-button
         v-if="modes.saved || modes.preview"
         class="btn"
         type="primary"
-        size="medium"
-        icon="el-icon-edit"
+        size="default"
+        icon="EditPen"
         @click="editTextDescr"
       >
         Edit
       </el-button>
-      <el-button
-        v-if="modes.edit"
-        class="btn"
-        type="primary"
-        size="medium"
-        icon="el-icon-view"
-        @click="prevMarkdown"
-      >
+      <el-button v-if="modes.edit" class="btn" type="primary" size="default" icon="View" @click="prevMarkdown">
         Preview
       </el-button>
       <el-button
         v-if="modes.edit || modes.preview"
         class="btn"
         type="success"
-        size="medium"
-        icon="el-icon-check"
+        size="default"
+        icon="Check"
         @click="saveMarkdown"
       >
         Save
@@ -75,92 +49,99 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Prop } from 'vue-property-decorator'
+import { defineComponent, ref, watch, nextTick } from 'vue'
 import { parse } from 'marked'
-import {
-  ViewGroupResult,
-} from '../../api/group'
 import sanitizeIt from '../../lib/sanitizeIt'
 import { getLocalStorage, setLocalStorage } from '../../lib/localStorage'
+import { ElPopover, ElInput, ElButton, ElButtonGroup } from '../../lib/element-plus'
 
-  interface Modes {
-    preview: boolean
-    saved: boolean,
-    edit: boolean
-  }
+interface ViewGroupResult {
+  // Define properties based on your requirements
+  groupDescriptionAsHtml?: string
+}
 
-  @Component<GroupDescription>({
-    name: 'group-description',
-  })
-export default class GroupDescription extends Vue {
-    @Prop()
-    group: ViewGroupResult | undefined ;
+interface Modes {
+  preview: boolean
+  saved: boolean
+  edit: boolean
+}
 
-    @Prop({ required: true, default: false })
-    canEdit!: boolean;
+export default defineComponent({
+  components: {
+    ElPopover,
+    ElInput,
+    ElButton,
+    ElButtonGroup,
+  },
+  props: {
+    group: Object as () => ViewGroupResult | undefined,
+    canEdit: { type: Boolean, default: false },
+  },
+  setup(props, { emit }) {
+    const groupDescriptionAsHtml = ref(props.group?.groupDescriptionAsHtml || '')
+    const showHint = ref(false)
+    const modes = ref<Modes>({ preview: false, saved: true, edit: false })
 
-    groupDescriptionAsHtml: string = this.group && this.group.groupDescriptionAsHtml || '';
-    showHint: boolean = false;
-    modes: Modes = {
-      preview: false,
-      saved: true,
-      edit: false,
-    };
-
-    editTextDescr() {
-      this.modes = {
-        preview: false,
-        saved: false,
-        edit: true,
+    watch(
+      () => props.group?.groupDescriptionAsHtml,
+      (newVal) => {
+        groupDescriptionAsHtml.value = newVal || ''
       }
-      this.$nextTick(() => {
-        this.showHint = !getLocalStorage<boolean>('hideMarkdownHint')
+    )
+
+    const editTextDescr = () => {
+      modes.value = { preview: false, saved: false, edit: true }
+      nextTick(() => {
+        showHint.value = !getLocalStorage<boolean>('hideMarkdownHint')
       })
     }
 
-    async saveMarkdown() {
-      this.$emit('updateGroupDescription', this.groupDescriptionAsHtml)
-      this.modes = {
-        preview: false,
-        saved: true,
-        edit: false,
-      }
-      this.$nextTick(() => {
-        if (this.showHint) {
-          this.showHint = false
+    const saveMarkdown = () => {
+      emit('updateGroupDescription', groupDescriptionAsHtml.value)
+      modes.value = { preview: false, saved: true, edit: false }
+      nextTick(() => {
+        if (showHint.value) {
+          showHint.value = false
         }
       })
     }
 
-    async prevMarkdown() {
-      if (this.showHint) {
-        this.showHint = false
+    const prevMarkdown = () => {
+      if (showHint.value) {
+        showHint.value = false
       }
-      this.modes = {
-        preview: true,
-        saved: false,
-        edit: false,
-      }
+      modes.value = { preview: true, saved: false, edit: false }
     }
 
-    disableHint() {
-      this.showHint = false
+    const disableHint = () => {
+      showHint.value = false
       setLocalStorage('hideMarkdownHint', true)
     }
 
-    embedMarkdownAsHtml() {
-      return sanitizeIt(parse(this.groupDescriptionAsHtml))
+    const embedMarkdownAsHtml = () => {
+      return sanitizeIt(parse(groupDescriptionAsHtml.value))
     }
-}
+
+    return {
+      groupDescriptionAsHtml,
+      showHint,
+      modes,
+      editTextDescr,
+      saveMarkdown,
+      prevMarkdown,
+      disableHint,
+      embedMarkdownAsHtml,
+    }
+  },
+})
 </script>
 
 <style scoped>
-  .btngroup{
-    margin: 20px 0;
-  }
+.btngroup {
+  margin: 20px 0;
+}
 
-  .btn {
-    padding: 8px 20px;
-  }
+.btn {
+  padding: 8px 20px;
+}
 </style>

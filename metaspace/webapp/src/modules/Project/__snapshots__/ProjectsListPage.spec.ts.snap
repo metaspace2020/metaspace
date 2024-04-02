@@ -1,620 +1,665 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`ProjectsListPage should change actions for projects under review 1`] = `
-<div class="page">
-  <mock-el-dialog append-to-body="" title="Create project" class="dialog">
-    <div mock-v-loading="0">
-      <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
-        <div><label><span class="text-base font-medium">Title</span>
-            <div class="el-form-item is-required">
-              <!---->
-              <div class="el-form-item__content">
-                <div class="py-1 el-input">
-                  <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
-                  <!---->
-                  <!---->
-                  <!---->
-                  <!---->
-                </div>
-                <transition-stub name="el-zoom-in-top">
-                  <!---->
-                </transition-stub>
+exports[`ProjectDatasetsDialog > it should match snapshot 1`] = `
+"<div data-v-cce15054=\\"\\" class=\\"page\\">
+  <!--v-if-->
+  <div data-v-cce15054=\\"\\" class=\\"page-content\\">
+    <!--v-if-->
+    <div data-v-cce15054=\\"\\" class=\\"header-row\\">
+      <div data-v-cce15054=\\"\\" class=\\"filter-panel\\">
+        <!--v-if-->
+      </div>
+      <div data-v-cce15054=\\"\\" class=\\"flex flex-row items-center justify-end flex-1\\">
+        <div data-v-cce15054=\\"\\" class=\\"flex flex-row sort-dp-container pb-2\\">
+          <div class=\\"mock-el-select\\" size=\\"large\\" modelvalue=\\"\\" placeholder=\\"Sort by\\" clearable=\\"true\\">
+            <div class=\\"mock-el-option\\" label=\\"Project size\\" value=\\"ORDER_BY_POPULARITY\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Creation date\\" value=\\"ORDER_BY_DATE\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Publication date\\" value=\\"ORDER_BY_UP_DATE\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Project name\\" value=\\"ORDER_BY_NAME\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Manager name\\" value=\\"ORDER_BY_MANAGER_NAME\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Number of datasets\\" value=\\"ORDER_BY_DATASETS_COUNT\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Number of members\\" value=\\"ORDER_BY_MEMBERS_COUNT\\"></div>
+          </div>
+          <div class=\\"el-input-group__append sort-dp-btn\\">
+            <div class=\\"mock-el-tooltip\\" content=\\"Sorting order\\" placement=\\"right\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--large btn-internal cursor-not-allowed\\">
+                <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                    <path fill=\\"currentColor\\" d=\\"M384 96a32 32 0 0 1 64 0v786.752a32 32 0 0 1-54.592 22.656L95.936 608a32 32 0 0 1 0-45.312h.128a32 32 0 0 1 45.184 0L384 805.632V96zm192 45.248a32 32 0 0 1 54.592-22.592L928.064 416a32 32 0 0 1 0 45.312h-.128a32 32 0 0 1-45.184 0L640 218.496V928a32 32 0 1 1-64 0V141.248z\\"></path>
+                  </svg></div>
+                <!--v-if-->
+              </button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div data-v-cce15054=\\"\\" class=\\"clearfix\\"></div>
+    <div data-v-cce15054=\\"\\" style=\\"min-height: 100px;\\">
+      <div data-v-95b97432=\\"\\" data-v-cce15054=\\"\\" class=\\"project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200\\">
+        <div data-v-95b97432=\\"\\" class=\\"underlay\\"></div>
+        <div data-v-95b97432=\\"\\" class=\\"item-body\\">
+          <div data-v-95b97432=\\"\\" class=\\"info\\">
+            <div data-v-95b97432=\\"\\" class=\\"info-line project-name pr-5 flex items-start\\">
+              <div data-v-95b97432=\\"\\" class=\\"text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2\\">project one</div>
+              <div data-v-95b97432=\\"\\" class=\\"mock-el-icon ml-2 text-xl\\" title=\\"This project is only visible to its members and METASPACE administrators\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M224 448a32 32 0 0 0-32 32v384a32 32 0 0 0 32 32h576a32 32 0 0 0 32-32V480a32 32 0 0 0-32-32H224zm0-64h576a96 96 0 0 1 96 96v384a96 96 0 0 1-96 96H224a96 96 0 0 1-96-96V480a96 96 0 0 1 96-96z\\"></path>
+                  <path fill=\\"currentColor\\" d=\\"M512 544a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V576a32 32 0 0 1 32-32zm192-160v-64a192 192 0 1 0-384 0v64h384zM512 64a256 256 0 0 1 256 256v128H256V320A256 256 0 0 1 512 64z\\"></path>
+                </svg></div>
+              <div data-v-0bc4b279=\\"\\" data-v-95b97432=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+                <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\"> Copy project id to clipboard </p>
               </div>
-            </div></label>
-          <div class="hidden el-input">
-            <!----><input type="text" autocomplete="off" class="el-input__inner">
-            <!---->
-            <!---->
-            <!---->
-            <!---->
-          </div>
-        </div>
-        <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
-        Visibility of the project only, does not apply to included datasets
-      </span></label>
-          <div class="h-10 flex items-center">
-            <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
-          </div>
-          <!---->
-        </div>
-      </form>
-      <div class="mt-6">
-        <h4 class="m-0">
-          Would you like to include previously submitted datasets?
-        </h4>
-        <div>
-          <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
-          <div class="dataset-checkbox-list leading-6">
-            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
-          allDatasets.0.name
-        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
-                <!----></span></label></div>
-            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
-          allDatasets.1.name
-        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
-                <!----></span></label></div>
-          </div>
-        </div>
-      </div>
-      <div class="button-bar"><button type="button" class="el-button el-button--default">
-          <!---->
-          <!----><span>
-        Cancel
-      </span></button> <button autofocus="autofocus" type="button" class="el-button el-button--primary">
-          <!---->
-          <!----><span>
-        Create project
-      </span></button></div>
-    </div>
-  </mock-el-dialog>
-  <div class="page-content">
-    <div class="flex flex-row items-center justify-end flex-1 w-full py-4"><button type="button" class="el-button el-button--primary el-button--small">
-        <!---->
-        <!----><span>
-        Create project
-      </span></button></div>
-    <div class="header-row">
-      <div class="filter-panel">
-        <!---->
-        <mock-el-select class="filter-select" data-test-key="simpleFilter" filter-key="simpleFilter">
-          <mock-el-option label="All projects"></mock-el-option>
-          <mock-el-option value="my-projects" label="My projects"></mock-el-option>
-        </mock-el-select>
-        <div class="tf-outer w-auto el-input el-input-group el-input-group--prepend" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
-          <div class="el-input-group__prepend">
-            <div>
-              <mock-el-tooltip placement="bottom">
-                <div slot-key="content"><span>
-        You can use
-        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" target="_blank">regular expression syntax</a> when searching for the dataset name.
-      </span></div>
-                <div slot-key="default"> <i class="el-icon-search -mx-1"></i></div>
-              </mock-el-tooltip>
             </div>
-          </div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
-          <!---->
-          <!---->
-          <!---->
-          <!---->
-        </div>
-      </div>
-      <div class="flex flex-row items-center justify-end flex-1">
-        <div class="pb-2 flex flex-row sort-dp-container">
-          <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
-            <mock-el-option label="Project size" value="ORDER_BY_POPULARITY"></mock-el-option>
-            <mock-el-option label="Creation date" value="ORDER_BY_DATE"></mock-el-option>
-            <mock-el-option label="Publication date" value="ORDER_BY_UP_DATE"></mock-el-option>
-            <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
-            <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
-            <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
-            <mock-el-option label="Number of members" value="ORDER_BY_MEMBERS_COUNT"></mock-el-option>
-          </mock-el-select>
-          <div class="el-input-group__append sort-dp-btn">
-            <mock-el-tooltip content="Sorting order" placement="right"><button type="button" class="el-button el-button--default cursor-not-allowed">
-                <!----><i class="el-icon-sort"></i>
-                <!----></button></mock-el-tooltip>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="" mock-v-loading="true" class="clearfix"></div>
-    <div style="min-height: 100px;" mock-v-loading="false">
-      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
-        <div class="item-body">
-          <div class="info">
-            <div class="info-line project-name pr-5 flex items-start"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
-                project one
-              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i>
-              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
-                <div slot-key="default">
-                  <p class="leading-none m-0">
-                    Copy project id to clipboard
-                  </p>
-                </div>
-                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
-              </mock-el-popover>
-            </div>
-            <div>
-              <div class="info-line">
-                <!---->
-                1 member
+            <div data-v-95b97432=\\"\\">
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\">
+                <!--v-if--> 1 member
               </div>
-              <div class="info-line">
-                Managed by
-                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.0.members.0.user.primaryGroup.group.id" class="">
-                  allProjects.0.members.0.user.primaryGroup.group.shortName</a>
-                <!----></span></div>
-              <div class="info-line"><span>
-            Under review
-          </span></div>
-              <!---->
-            </div>
-          </div>
-          <div class="actions">
-            <!---->
-            <div><i class="el-icon-edit"></i> <a href="/project/proj-one?tab=settings" class="">
-                Manage project
-              </a></div>
-            <!---->
-          </div>
-        </div>
-      </div>
-      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
-        <div class="item-body">
-          <div class="info">
-            <div class="info-line project-name pr-5 flex items-start"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
-                project two
-              </a>
-              <!---->
-              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
-                <div slot-key="default">
-                  <p class="leading-none m-0">
-                    Copy project id to clipboard
-                  </p>
-                </div>
-                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
-              </mock-el-popover>
-            </div>
-            <div>
-              <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 datasets</span></a>,
-                </span>
-                20 members
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"> Managed by <span data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\" class=\\"font-medium\\">TestUser1</span>
+                <!--
+              --><span data-v-95b97432=\\"\\"><!--v-if--></span><!--              <router-link-->
+                <!--                v-if=\\"manager.user.primaryGroup\\"-->
+                <!--                :to=\\"groupHref(manager)\\"-->
+                <!--              >-->
+                <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
+                <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
               </div>
-              <div class="info-line">
-                Managed by
-                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.1.members.0.user.primaryGroup.group.id" class="">
-                  allProjects.1.members.0.user.primaryGroup.group.shortName</a>
-                <!----></span></div>
-              <div class="info-line"><span>
-            Last submission <mock-elapsed-time date="2018-08-01T09:00:00.000"></mock-elapsed-time></span></div>
-              <!---->
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Created <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/29, 05:00\\">a year ago</span></span></div>
+              <!--v-if-->
             </div>
           </div>
-          <div class="actions">
-            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
-                Browse annotations
-              </a></div>
-            <!---->
-            <!---->
+          <div data-v-95b97432=\\"\\" class=\\"actions\\">
+            <!--v-if-->
+            <div data-v-95b97432=\\"\\" class=\\"flex items-center\\">
+              <div data-v-95b97432=\\"\\" class=\\"mock-el-icon\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"m199.04 672.64 193.984 112 224-387.968-193.92-112-224 388.032zm-23.872 60.16 32.896 148.288 144.896-45.696L175.168 732.8zM455.04 229.248l193.92 112 56.704-98.112-193.984-112-56.64 98.112zM104.32 708.8l384-665.024 304.768 175.936L409.152 884.8h.064l-248.448 78.336L104.32 708.8zm384 254.272v-64h448v64h-448z\\"></path>
+                </svg></div>
+              <div data-v-95b97432=\\"\\"> Manage project </div>
+            </div>
+            <div data-v-95b97432=\\"\\" class=\\"flex items-center\\">
+              <div data-v-95b97432=\\"\\" class=\\"mock-el-icon\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M160 256H96a32 32 0 0 1 0-64h256V95.936a32 32 0 0 1 32-32h256a32 32 0 0 1 32 32V192h256a32 32 0 1 1 0 64h-64v672a32 32 0 0 1-32 32H192a32 32 0 0 1-32-32V256zm448-64v-64H416v64h192zM224 896h576V256H224v640zm192-128a32 32 0 0 1-32-32V416a32 32 0 0 1 64 0v320a32 32 0 0 1-32 32zm192 0a32 32 0 0 1-32-32V416a32 32 0 0 1 64 0v320a32 32 0 0 1-32 32z\\"></path>
+                </svg></div><a data-v-95b97432=\\"\\" href=\\"#\\" class=\\"text-danger\\">Delete project</a>
+            </div>
           </div>
         </div>
       </div>
+      <div data-v-95b97432=\\"\\" data-v-cce15054=\\"\\" class=\\"project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200\\">
+        <div data-v-95b97432=\\"\\" class=\\"underlay\\"></div>
+        <div data-v-95b97432=\\"\\" class=\\"item-body\\">
+          <div data-v-95b97432=\\"\\" class=\\"info\\">
+            <div data-v-95b97432=\\"\\" class=\\"info-line project-name pr-5 flex items-start\\">
+              <div data-v-95b97432=\\"\\" class=\\"text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2\\">project two</div>
+              <!--v-if-->
+              <div data-v-0bc4b279=\\"\\" data-v-95b97432=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+                <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\"> Copy project id to clipboard </p>
+              </div>
+            </div>
+            <div data-v-95b97432=\\"\\">
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"><div data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\">20 datasets</span></div>, </span> 20 members
+            </div>
+            <div data-v-95b97432=\\"\\" class=\\"info-line\\"> Managed by <span data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\" class=\\"font-medium\\">TestUser1</span>
+              <!--
+              --><span data-v-95b97432=\\"\\"><!--v-if--></span><!--              <router-link-->
+              <!--                v-if=\\"manager.user.primaryGroup\\"-->
+              <!--                :to=\\"groupHref(manager)\\"-->
+              <!--              >-->
+              <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
+              <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
+            </div>
+            <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/01, 09:00\\">a year ago</span></span></div>
+            <!--v-if-->
+          </div>
+        </div>
+        <div data-v-95b97432=\\"\\" class=\\"actions\\">
+          <div data-v-95b97432=\\"\\" class=\\"flex items-center\\">
+            <div data-v-95b97432=\\"\\" class=\\"mock-el-icon\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                <path fill=\\"currentColor\\" d=\\"M96 896a32 32 0 0 1-32-32V160a32 32 0 0 1 32-32h832a32 32 0 0 1 32 32v704a32 32 0 0 1-32 32H96zm315.52-228.48-68.928-68.928a32 32 0 0 0-45.248 0L128 768.064h778.688l-242.112-290.56a32 32 0 0 0-49.216 0L458.752 665.408a32 32 0 0 1-47.232 2.112zM256 384a96 96 0 1 0 192.064-.064A96 96 0 0 0 256 384z\\"></path>
+              </svg></div>
+            <div data-v-95b97432=\\"\\"> Browse annotations </div>
+          </div>
+          <!--v-if-->
+          <!--v-if-->
+        </div>
+      </div>
     </div>
-    <div style="text-align: center;">
-      <mock-el-pagination total="69" page-size="10" current-page="1" layout="prev,pager,next"></mock-el-pagination>
-    </div>
+    <div data-v-cce15054=\\"\\" class=\\"flex items-center justify-center p-4 text-gray-600\\" style=\\"height: 200px;\\"> No projects found </div>
   </div>
+  <!--v-if-->
 </div>
+</div>"
 `;
 
-exports[`ProjectsListPage should change actions for published projects 1`] = `
-<div class="page">
-  <mock-el-dialog append-to-body="" title="Create project" class="dialog">
-    <div mock-v-loading="0">
-      <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
-        <div><label><span class="text-base font-medium">Title</span>
-            <div class="el-form-item is-required">
-              <!---->
-              <div class="el-form-item__content">
-                <div class="py-1 el-input">
-                  <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
-                  <!---->
-                  <!---->
-                  <!---->
-                  <!---->
-                </div>
-                <transition-stub name="el-zoom-in-top">
-                  <!---->
-                </transition-stub>
+exports[`ProjectDatasetsDialog > should change actions for projects under review 1`] = `
+"<div data-v-cce15054=\\"\\" class=\\"page\\">
+  <!--v-if-->
+  <div data-v-cce15054=\\"\\" class=\\"page-content\\">
+    <!--v-if-->
+    <div data-v-cce15054=\\"\\" class=\\"header-row\\">
+      <div data-v-cce15054=\\"\\" class=\\"filter-panel\\">
+        <!--v-if-->
+      </div>
+      <div data-v-cce15054=\\"\\" class=\\"flex flex-row items-center justify-end flex-1\\">
+        <div data-v-cce15054=\\"\\" class=\\"flex flex-row sort-dp-container pb-2\\">
+          <div class=\\"mock-el-select\\" size=\\"large\\" modelvalue=\\"\\" placeholder=\\"Sort by\\" clearable=\\"true\\">
+            <div class=\\"mock-el-option\\" label=\\"Project size\\" value=\\"ORDER_BY_POPULARITY\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Creation date\\" value=\\"ORDER_BY_DATE\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Publication date\\" value=\\"ORDER_BY_UP_DATE\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Project name\\" value=\\"ORDER_BY_NAME\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Manager name\\" value=\\"ORDER_BY_MANAGER_NAME\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Number of datasets\\" value=\\"ORDER_BY_DATASETS_COUNT\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Number of members\\" value=\\"ORDER_BY_MEMBERS_COUNT\\"></div>
+          </div>
+          <div class=\\"el-input-group__append sort-dp-btn\\">
+            <div class=\\"mock-el-tooltip\\" content=\\"Sorting order\\" placement=\\"right\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--large btn-internal cursor-not-allowed\\">
+                <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                    <path fill=\\"currentColor\\" d=\\"M384 96a32 32 0 0 1 64 0v786.752a32 32 0 0 1-54.592 22.656L95.936 608a32 32 0 0 1 0-45.312h.128a32 32 0 0 1 45.184 0L384 805.632V96zm192 45.248a32 32 0 0 1 54.592-22.592L928.064 416a32 32 0 0 1 0 45.312h-.128a32 32 0 0 1-45.184 0L640 218.496V928a32 32 0 1 1-64 0V141.248z\\"></path>
+                  </svg></div>
+                <!--v-if-->
+              </button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div data-v-cce15054=\\"\\" class=\\"clearfix\\"></div>
+    <div data-v-cce15054=\\"\\" style=\\"min-height: 100px;\\">
+      <div data-v-95b97432=\\"\\" data-v-cce15054=\\"\\" class=\\"project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200\\">
+        <div data-v-95b97432=\\"\\" class=\\"underlay\\"></div>
+        <div data-v-95b97432=\\"\\" class=\\"item-body\\">
+          <div data-v-95b97432=\\"\\" class=\\"info\\">
+            <div data-v-95b97432=\\"\\" class=\\"info-line project-name pr-5 flex items-start\\">
+              <div data-v-95b97432=\\"\\" class=\\"text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2\\">project one</div>
+              <div data-v-95b97432=\\"\\" class=\\"mock-el-icon ml-2 text-xl\\" title=\\"This project is only visible to its members and METASPACE administrators\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M224 448a32 32 0 0 0-32 32v384a32 32 0 0 0 32 32h576a32 32 0 0 0 32-32V480a32 32 0 0 0-32-32H224zm0-64h576a96 96 0 0 1 96 96v384a96 96 0 0 1-96 96H224a96 96 0 0 1-96-96V480a96 96 0 0 1 96-96z\\"></path>
+                  <path fill=\\"currentColor\\" d=\\"M512 544a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V576a32 32 0 0 1 32-32zm192-160v-64a192 192 0 1 0-384 0v64h384zM512 64a256 256 0 0 1 256 256v128H256V320A256 256 0 0 1 512 64z\\"></path>
+                </svg></div>
+              <div data-v-0bc4b279=\\"\\" data-v-95b97432=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+                <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\"> Copy project id to clipboard </p>
               </div>
-            </div></label>
-          <div class="hidden el-input">
-            <!----><input type="text" autocomplete="off" class="el-input__inner">
-            <!---->
-            <!---->
-            <!---->
-            <!---->
-          </div>
-        </div>
-        <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
-        Visibility of the project only, does not apply to included datasets
-      </span></label>
-          <div class="h-10 flex items-center">
-            <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
-          </div>
-          <!---->
-        </div>
-      </form>
-      <div class="mt-6">
-        <h4 class="m-0">
-          Would you like to include previously submitted datasets?
-        </h4>
-        <div>
-          <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
-          <div class="dataset-checkbox-list leading-6">
-            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
-          allDatasets.0.name
-        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
-                <!----></span></label></div>
-            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
-          allDatasets.1.name
-        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
-                <!----></span></label></div>
-          </div>
-        </div>
-      </div>
-      <div class="button-bar"><button type="button" class="el-button el-button--default">
-          <!---->
-          <!----><span>
-        Cancel
-      </span></button> <button autofocus="autofocus" type="button" class="el-button el-button--primary">
-          <!---->
-          <!----><span>
-        Create project
-      </span></button></div>
-    </div>
-  </mock-el-dialog>
-  <div class="page-content">
-    <div class="flex flex-row items-center justify-end flex-1 w-full py-4"><button type="button" class="el-button el-button--primary el-button--small">
-        <!---->
-        <!----><span>
-        Create project
-      </span></button></div>
-    <div class="header-row">
-      <div class="filter-panel">
-        <!---->
-        <mock-el-select class="filter-select" data-test-key="simpleFilter" filter-key="simpleFilter">
-          <mock-el-option label="All projects"></mock-el-option>
-          <mock-el-option value="my-projects" label="My projects"></mock-el-option>
-        </mock-el-select>
-        <div class="tf-outer w-auto el-input el-input-group el-input-group--prepend" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
-          <div class="el-input-group__prepend">
-            <div>
-              <mock-el-tooltip placement="bottom">
-                <div slot-key="content"><span>
-        You can use
-        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" target="_blank">regular expression syntax</a> when searching for the dataset name.
-      </span></div>
-                <div slot-key="default"> <i class="el-icon-search -mx-1"></i></div>
-              </mock-el-tooltip>
             </div>
-          </div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
-          <!---->
-          <!---->
-          <!---->
-          <!---->
-        </div>
-      </div>
-      <div class="flex flex-row items-center justify-end flex-1">
-        <div class="pb-2 flex flex-row sort-dp-container">
-          <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
-            <mock-el-option label="Project size" value="ORDER_BY_POPULARITY"></mock-el-option>
-            <mock-el-option label="Creation date" value="ORDER_BY_DATE"></mock-el-option>
-            <mock-el-option label="Publication date" value="ORDER_BY_UP_DATE"></mock-el-option>
-            <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
-            <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
-            <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
-            <mock-el-option label="Number of members" value="ORDER_BY_MEMBERS_COUNT"></mock-el-option>
-          </mock-el-select>
-          <div class="el-input-group__append sort-dp-btn">
-            <mock-el-tooltip content="Sorting order" placement="right"><button type="button" class="el-button el-button--default cursor-not-allowed">
-                <!----><i class="el-icon-sort"></i>
-                <!----></button></mock-el-tooltip>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="" mock-v-loading="true" class="clearfix"></div>
-    <div style="min-height: 100px;" mock-v-loading="false">
-      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
-        <div class="item-body">
-          <div class="info">
-            <div class="info-line project-name pr-5 flex items-start"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
-                project one
-              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i>
-              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
-                <div slot-key="default">
-                  <p class="leading-none m-0">
-                    Copy project id to clipboard
-                  </p>
-                </div>
-                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
-              </mock-el-popover>
-            </div>
-            <div>
-              <div class="info-line">
-                <!---->
-                1 member
+            <div data-v-95b97432=\\"\\">
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\">
+                <!--v-if--> 1 member
               </div>
-              <div class="info-line">
-                Managed by
-                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.0.members.0.user.primaryGroup.group.id" class="">
-                  allProjects.0.members.0.user.primaryGroup.group.shortName</a>
-                <!----></span></div>
-              <div class="info-line"><span>
-            Published <mock-elapsed-time></mock-elapsed-time></span></div>
-              <!---->
-            </div>
-          </div>
-          <div class="actions">
-            <!---->
-            <div><i class="el-icon-edit"></i> <a href="/project/proj-one?tab=settings" class="">
-                Manage project
-              </a></div>
-            <!---->
-          </div>
-        </div>
-      </div>
-      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
-        <div class="item-body">
-          <div class="info">
-            <div class="info-line project-name pr-5 flex items-start"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
-                project two
-              </a>
-              <!---->
-              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
-                <div slot-key="default">
-                  <p class="leading-none m-0">
-                    Copy project id to clipboard
-                  </p>
-                </div>
-                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
-              </mock-el-popover>
-            </div>
-            <div>
-              <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 datasets</span></a>,
-                </span>
-                20 members
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"> Managed by <span data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\" class=\\"font-medium\\">TestUser1</span>
+                <!--
+              --><span data-v-95b97432=\\"\\"><!--v-if--></span><!--              <router-link-->
+                <!--                v-if=\\"manager.user.primaryGroup\\"-->
+                <!--                :to=\\"groupHref(manager)\\"-->
+                <!--              >-->
+                <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
+                <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
               </div>
-              <div class="info-line">
-                Managed by
-                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.1.members.0.user.primaryGroup.group.id" class="">
-                  allProjects.1.members.0.user.primaryGroup.group.shortName</a>
-                <!----></span></div>
-              <div class="info-line"><span>
-            Published <mock-elapsed-time></mock-elapsed-time></span></div>
-              <!---->
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Under review </span></div>
+              <!--v-if-->
             </div>
           </div>
-          <div class="actions">
-            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
-                Browse annotations
-              </a></div>
-            <!---->
-            <!---->
+          <div data-v-95b97432=\\"\\" class=\\"actions\\">
+            <!--v-if-->
+            <div data-v-95b97432=\\"\\" class=\\"flex items-center\\">
+              <div data-v-95b97432=\\"\\" class=\\"mock-el-icon\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"m199.04 672.64 193.984 112 224-387.968-193.92-112-224 388.032zm-23.872 60.16 32.896 148.288 144.896-45.696L175.168 732.8zM455.04 229.248l193.92 112 56.704-98.112-193.984-112-56.64 98.112zM104.32 708.8l384-665.024 304.768 175.936L409.152 884.8h.064l-248.448 78.336L104.32 708.8zm384 254.272v-64h448v64h-448z\\"></path>
+                </svg></div>
+              <div data-v-95b97432=\\"\\"> Manage project </div>
+            </div>
+            <!--v-if-->
           </div>
         </div>
       </div>
+      <div data-v-95b97432=\\"\\" data-v-cce15054=\\"\\" class=\\"project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200\\">
+        <div data-v-95b97432=\\"\\" class=\\"underlay\\"></div>
+        <div data-v-95b97432=\\"\\" class=\\"item-body\\">
+          <div data-v-95b97432=\\"\\" class=\\"info\\">
+            <div data-v-95b97432=\\"\\" class=\\"info-line project-name pr-5 flex items-start\\">
+              <div data-v-95b97432=\\"\\" class=\\"text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2\\">project two</div>
+              <!--v-if-->
+              <div data-v-0bc4b279=\\"\\" data-v-95b97432=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+                <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\"> Copy project id to clipboard </p>
+              </div>
+            </div>
+            <div data-v-95b97432=\\"\\">
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"><div data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\">20 datasets</span></div>, </span> 20 members
+            </div>
+            <div data-v-95b97432=\\"\\" class=\\"info-line\\"> Managed by <span data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\" class=\\"font-medium\\">TestUser1</span>
+              <!--
+              --><span data-v-95b97432=\\"\\"><!--v-if--></span><!--              <router-link-->
+              <!--                v-if=\\"manager.user.primaryGroup\\"-->
+              <!--                :to=\\"groupHref(manager)\\"-->
+              <!--              >-->
+              <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
+              <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
+            </div>
+            <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/01, 09:00\\">a year ago</span></span></div>
+            <!--v-if-->
+          </div>
+        </div>
+        <div data-v-95b97432=\\"\\" class=\\"actions\\">
+          <div data-v-95b97432=\\"\\" class=\\"flex items-center\\">
+            <div data-v-95b97432=\\"\\" class=\\"mock-el-icon\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                <path fill=\\"currentColor\\" d=\\"M96 896a32 32 0 0 1-32-32V160a32 32 0 0 1 32-32h832a32 32 0 0 1 32 32v704a32 32 0 0 1-32 32H96zm315.52-228.48-68.928-68.928a32 32 0 0 0-45.248 0L128 768.064h778.688l-242.112-290.56a32 32 0 0 0-49.216 0L458.752 665.408a32 32 0 0 1-47.232 2.112zM256 384a96 96 0 1 0 192.064-.064A96 96 0 0 0 256 384z\\"></path>
+              </svg></div>
+            <div data-v-95b97432=\\"\\"> Browse annotations </div>
+          </div>
+          <!--v-if-->
+          <!--v-if-->
+        </div>
+      </div>
     </div>
-    <div style="text-align: center;">
-      <mock-el-pagination total="69" page-size="10" current-page="1" layout="prev,pager,next"></mock-el-pagination>
-    </div>
+    <div data-v-cce15054=\\"\\" class=\\"flex items-center justify-center p-4 text-gray-600\\" style=\\"height: 200px;\\"> No projects found </div>
   </div>
+  <!--v-if-->
 </div>
+</div>"
 `;
 
-exports[`ProjectsListPage should match snapshot 1`] = `
-<div class="page">
-  <mock-el-dialog append-to-body="" title="Create project" class="dialog">
-    <div mock-v-loading="0">
-      <form class="el-form leading-6 v-rhythm-3 el-form--label-top" size="mini">
-        <div><label><span class="text-base font-medium">Title</span>
-            <div class="el-form-item is-required">
-              <!---->
-              <div class="el-form-item__content">
-                <div class="py-1 el-input">
-                  <!----><input type="text" autocomplete="off" max-length="50" min-length="2" class="el-input__inner">
-                  <!---->
-                  <!---->
-                  <!---->
-                  <!---->
-                </div>
-                <transition-stub name="el-zoom-in-top">
-                  <!---->
-                </transition-stub>
-              </div>
-            </div></label>
-          <div class="hidden el-input">
-            <!----><input type="text" autocomplete="off" class="el-input__inner">
-            <!---->
-            <!---->
-            <!---->
-            <!---->
+exports[`ProjectDatasetsDialog > should change actions for published projects 1`] = `
+"<div data-v-cce15054=\\"\\" class=\\"page\\">
+  <!--v-if-->
+  <div data-v-cce15054=\\"\\" class=\\"page-content\\">
+    <!--v-if-->
+    <div data-v-cce15054=\\"\\" class=\\"header-row\\">
+      <div data-v-cce15054=\\"\\" class=\\"filter-panel\\">
+        <!--v-if-->
+      </div>
+      <div data-v-cce15054=\\"\\" class=\\"flex flex-row items-center justify-end flex-1\\">
+        <div data-v-cce15054=\\"\\" class=\\"flex flex-row sort-dp-container pb-2\\">
+          <div class=\\"mock-el-select\\" size=\\"large\\" modelvalue=\\"\\" placeholder=\\"Sort by\\" clearable=\\"true\\">
+            <div class=\\"mock-el-option\\" label=\\"Project size\\" value=\\"ORDER_BY_POPULARITY\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Creation date\\" value=\\"ORDER_BY_DATE\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Publication date\\" value=\\"ORDER_BY_UP_DATE\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Project name\\" value=\\"ORDER_BY_NAME\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Manager name\\" value=\\"ORDER_BY_MANAGER_NAME\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Number of datasets\\" value=\\"ORDER_BY_DATASETS_COUNT\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Number of members\\" value=\\"ORDER_BY_MEMBERS_COUNT\\"></div>
+          </div>
+          <div class=\\"el-input-group__append sort-dp-btn\\">
+            <div class=\\"mock-el-tooltip\\" content=\\"Sorting order\\" placement=\\"right\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--large btn-internal cursor-not-allowed\\">
+                <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                    <path fill=\\"currentColor\\" d=\\"M384 96a32 32 0 0 1 64 0v786.752a32 32 0 0 1-54.592 22.656L95.936 608a32 32 0 0 1 0-45.312h.128a32 32 0 0 1 45.184 0L384 805.632V96zm192 45.248a32 32 0 0 1 54.592-22.592L928.064 416a32 32 0 0 1 0 45.312h-.128a32 32 0 0 1-45.184 0L640 218.496V928a32 32 0 1 1-64 0V141.248z\\"></path>
+                  </svg></div>
+                <!--v-if-->
+              </button></div>
           </div>
         </div>
-        <div><label><span class="text-base font-medium">Privacy</span> <span class="block text-sm text-gray-800">
-        Visibility of the project only, does not apply to included datasets
-      </span></label>
-          <div class="h-10 flex items-center">
-            <div role="switch" class="el-switch"><input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left is-active"><!----><span>Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right"><!----><span aria-hidden="true">Public</span></span></div>
+      </div>
+    </div>
+    <div data-v-cce15054=\\"\\" class=\\"clearfix\\"></div>
+    <div data-v-cce15054=\\"\\" style=\\"min-height: 100px;\\">
+      <div data-v-95b97432=\\"\\" data-v-cce15054=\\"\\" class=\\"project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200\\">
+        <div data-v-95b97432=\\"\\" class=\\"underlay\\"></div>
+        <div data-v-95b97432=\\"\\" class=\\"item-body\\">
+          <div data-v-95b97432=\\"\\" class=\\"info\\">
+            <div data-v-95b97432=\\"\\" class=\\"info-line project-name pr-5 flex items-start\\">
+              <div data-v-95b97432=\\"\\" class=\\"text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2\\">project one</div>
+              <div data-v-95b97432=\\"\\" class=\\"mock-el-icon ml-2 text-xl\\" title=\\"This project is only visible to its members and METASPACE administrators\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M224 448a32 32 0 0 0-32 32v384a32 32 0 0 0 32 32h576a32 32 0 0 0 32-32V480a32 32 0 0 0-32-32H224zm0-64h576a96 96 0 0 1 96 96v384a96 96 0 0 1-96 96H224a96 96 0 0 1-96-96V480a96 96 0 0 1 96-96z\\"></path>
+                  <path fill=\\"currentColor\\" d=\\"M512 544a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V576a32 32 0 0 1 32-32zm192-160v-64a192 192 0 1 0-384 0v64h384zM512 64a256 256 0 0 1 256 256v128H256V320A256 256 0 0 1 512 64z\\"></path>
+                </svg></div>
+              <div data-v-0bc4b279=\\"\\" data-v-95b97432=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+                <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\"> Copy project id to clipboard </p>
+              </div>
+            </div>
+            <div data-v-95b97432=\\"\\">
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\">
+                <!--v-if--> 1 member
+              </div>
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"> Managed by <span data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\" class=\\"font-medium\\">TestUser1</span>
+                <!--
+              --><span data-v-95b97432=\\"\\"><!--v-if--></span><!--              <router-link-->
+                <!--                v-if=\\"manager.user.primaryGroup\\"-->
+                <!--                :to=\\"groupHref(manager)\\"-->
+                <!--              >-->
+                <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
+                <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
+              </div>
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Published <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span></span></div>
+              <!--v-if-->
+            </div>
           </div>
-          <!---->
+          <div data-v-95b97432=\\"\\" class=\\"actions\\">
+            <!--v-if-->
+            <div data-v-95b97432=\\"\\" class=\\"flex items-center\\">
+              <div data-v-95b97432=\\"\\" class=\\"mock-el-icon\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"m199.04 672.64 193.984 112 224-387.968-193.92-112-224 388.032zm-23.872 60.16 32.896 148.288 144.896-45.696L175.168 732.8zM455.04 229.248l193.92 112 56.704-98.112-193.984-112-56.64 98.112zM104.32 708.8l384-665.024 304.768 175.936L409.152 884.8h.064l-248.448 78.336L104.32 708.8zm384 254.272v-64h448v64h-448z\\"></path>
+                </svg></div>
+              <div data-v-95b97432=\\"\\"> Manage project </div>
+            </div>
+            <!--v-if-->
+          </div>
+        </div>
+      </div>
+      <div data-v-95b97432=\\"\\" data-v-cce15054=\\"\\" class=\\"project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200\\">
+        <div data-v-95b97432=\\"\\" class=\\"underlay\\"></div>
+        <div data-v-95b97432=\\"\\" class=\\"item-body\\">
+          <div data-v-95b97432=\\"\\" class=\\"info\\">
+            <div data-v-95b97432=\\"\\" class=\\"info-line project-name pr-5 flex items-start\\">
+              <div data-v-95b97432=\\"\\" class=\\"text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2\\">project two</div>
+              <!--v-if-->
+              <div data-v-0bc4b279=\\"\\" data-v-95b97432=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+                <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\"> Copy project id to clipboard </p>
+              </div>
+            </div>
+            <div data-v-95b97432=\\"\\">
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"><div data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\">20 datasets</span></div>, </span> 20 members
+            </div>
+            <div data-v-95b97432=\\"\\" class=\\"info-line\\"> Managed by <span data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\" class=\\"font-medium\\">TestUser1</span>
+              <!--
+              --><span data-v-95b97432=\\"\\"><!--v-if--></span><!--              <router-link-->
+              <!--                v-if=\\"manager.user.primaryGroup\\"-->
+              <!--                :to=\\"groupHref(manager)\\"-->
+              <!--              >-->
+              <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
+              <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
+            </div>
+            <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Published <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span></span></div>
+            <!--v-if-->
+          </div>
+        </div>
+        <div data-v-95b97432=\\"\\" class=\\"actions\\">
+          <div data-v-95b97432=\\"\\" class=\\"flex items-center\\">
+            <div data-v-95b97432=\\"\\" class=\\"mock-el-icon\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                <path fill=\\"currentColor\\" d=\\"M96 896a32 32 0 0 1-32-32V160a32 32 0 0 1 32-32h832a32 32 0 0 1 32 32v704a32 32 0 0 1-32 32H96zm315.52-228.48-68.928-68.928a32 32 0 0 0-45.248 0L128 768.064h778.688l-242.112-290.56a32 32 0 0 0-49.216 0L458.752 665.408a32 32 0 0 1-47.232 2.112zM256 384a96 96 0 1 0 192.064-.064A96 96 0 0 0 256 384z\\"></path>
+              </svg></div>
+            <div data-v-95b97432=\\"\\"> Browse annotations </div>
+          </div>
+          <!--v-if-->
+          <!--v-if-->
+        </div>
+      </div>
+    </div>
+    <div data-v-cce15054=\\"\\" class=\\"flex items-center justify-center p-4 text-gray-600\\" style=\\"height: 200px;\\"> No projects found </div>
+  </div>
+  <!--v-if-->
+</div>
+</div>"
+`;
+
+exports[`ProjectDatasetsDialog > should filter projects by the keyword search on the My Projects tab 1`] = `
+"<div data-v-cce15054=\\"\\" class=\\"page\\">
+  <div data-v-21d0472c=\\"\\" data-v-cce15054=\\"\\" class=\\"mock-el-dialog dialog\\" model-value=\\"false\\" append-to-body=\\"\\" title=\\"Create project\\" lock-scroll=\\"false\\">
+    <div data-v-21d0472c=\\"\\">
+      <form data-v-e0556da7=\\"\\" data-v-21d0472c=\\"\\" class=\\"el-form el-form--small el-form--label-top leading-6 v-rhythm-3\\">
+        <div data-v-e0556da7=\\"\\"><label data-v-e0556da7=\\"\\"><span data-v-e0556da7=\\"\\" class=\\"text-base font-medium\\">Title</span>
+            <div data-v-e0556da7=\\"\\" class=\\"el-form-item el-form-item--small is-required asterisk-left\\">
+              <!--v-if-->
+              <div class=\\"el-form-item__content\\">
+                <div data-v-e0556da7=\\"\\" class=\\"el-input el-input--small py-1\\">
+                  <!-- input -->
+                  <!-- prepend slot -->
+                  <!--v-if-->
+                  <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
+                    <!-- prefix slot -->
+                    <!--v-if--><input class=\\"el-input__inner\\" max-length=\\"50\\" min-length=\\"2\\" type=\\"text\\" autocomplete=\\"off\\" tabindex=\\"0\\" id=\\"el-id-replaced\\"><!-- suffix slot -->
+                    <!--v-if-->
+                  </div><!-- append slot -->
+                  <!--v-if-->
+                </div>
+              </div>
+            </div>
+          </label>
+          <div data-v-e0556da7=\\"\\" class=\\"el-input el-input--small hidden\\">
+            <!-- input -->
+            <!-- prepend slot -->
+            <!--v-if-->
+            <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
+              <!-- prefix slot -->
+              <!--v-if--><input class=\\"el-input__inner\\" type=\\"text\\" autocomplete=\\"off\\" tabindex=\\"0\\" id=\\"el-id-replaced\\"><!-- suffix slot -->
+              <!--v-if-->
+            </div><!-- append slot -->
+            <!--v-if-->
+          </div>
+        </div>
+        <div data-v-e0556da7=\\"\\"><label data-v-e0556da7=\\"\\"><span data-v-e0556da7=\\"\\" class=\\"text-base font-medium\\">Privacy</span><span data-v-e0556da7=\\"\\" class=\\"block text-sm text-gray-800\\"> Visibility of the project only, does not apply to included datasets </span></label>
+          <div data-v-e0556da7=\\"\\" class=\\"h-10 flex items-center\\">
+            <div data-v-e0556da7=\\"\\" class=\\"el-switch el-switch--small\\"><input class=\\"el-switch__input\\" type=\\"checkbox\\" role=\\"switch\\" aria-checked=\\"false\\" aria-disabled=\\"false\\" name=\\"\\" true-value=\\"true\\" false-value=\\"false\\" id=\\"el-id-replaced\\"><span class=\\"el-switch__label el-switch__label--left is-active\\"><!--v-if--><span aria-hidden=\\"false\\">Private</span></span><span class=\\"el-switch__core\\"><!--v-if--><div class=\\"el-switch__action\\"><!--v-if--></div></span><span class=\\"el-switch__label el-switch__label--right\\"><!--v-if--><span aria-hidden=\\"true\\">Public</span></span></div>
+          </div>
+          <!--v-if-->
         </div>
       </form>
-      <div class="mt-6">
-        <h4 class="m-0">
-          Would you like to include previously submitted datasets?
-        </h4>
-        <div>
-          <div class="select-buttons"><a href="#">Select none</a> <span> | </span> <a href="#">Select all</a></div>
-          <div class="dataset-checkbox-list leading-6">
-            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.0.name" class="truncate">
-          allDatasets.0.name
-        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.0.uploadDT"></mock-elapsed-time></span>
-                <!----></span></label></div>
-            <div><label class="el-checkbox flex h-6 items-center"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label"><span title="allDatasets.1.name" class="truncate">
-          allDatasets.1.name
-        </span> <span class="text-gray-700 text-xs tracking-wide pl-1"><mock-elapsed-time date="allDatasets.1.uploadDT"></mock-elapsed-time></span>
-                <!----></span></label></div>
-          </div>
-        </div>
-      </div>
-      <div class="button-bar"><button type="button" class="el-button el-button--default">
-          <!---->
-          <!----><span>
-        Cancel
-      </span></button> <button autofocus="autofocus" type="button" class="el-button el-button--primary">
-          <!---->
-          <!----><span>
-        Create project
-      </span></button></div>
-    </div>
-  </mock-el-dialog>
-  <div class="page-content">
-    <div class="flex flex-row items-center justify-end flex-1 w-full py-4"><button type="button" class="el-button el-button--primary el-button--small">
-        <!---->
-        <!----><span>
-        Create project
-      </span></button></div>
-    <div class="header-row">
-      <div class="filter-panel">
-        <!---->
-        <mock-el-select class="filter-select" data-test-key="simpleFilter" filter-key="simpleFilter">
-          <mock-el-option label="All projects"></mock-el-option>
-          <mock-el-option value="my-projects" label="My projects"></mock-el-option>
-        </mock-el-select>
-        <div class="tf-outer w-auto el-input el-input-group el-input-group--prepend" data-test-key="simpleQuery" filter-key="simpleQuery" name="Simple query" options="">
-          <div class="el-input-group__prepend">
-            <div>
-              <mock-el-tooltip placement="bottom">
-                <div slot-key="content"><span>
-        You can use
-        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet" target="_blank">regular expression syntax</a> when searching for the dataset name.
-      </span></div>
-                <div slot-key="default"> <i class="el-icon-search -mx-1"></i></div>
-              </mock-el-tooltip>
-            </div>
-          </div><input type="text" autocomplete="off" placeholder="Enter keywords" class="el-input__inner">
-          <!---->
-          <!---->
-          <!---->
-          <!---->
-        </div>
-      </div>
-      <div class="flex flex-row items-center justify-end flex-1">
-        <div class="pb-2 flex flex-row sort-dp-container">
-          <mock-el-select size="default" value="" placeholder="Sort by" clearable="true">
-            <mock-el-option label="Project size" value="ORDER_BY_POPULARITY"></mock-el-option>
-            <mock-el-option label="Creation date" value="ORDER_BY_DATE"></mock-el-option>
-            <mock-el-option label="Publication date" value="ORDER_BY_UP_DATE"></mock-el-option>
-            <mock-el-option label="Project name" value="ORDER_BY_NAME"></mock-el-option>
-            <mock-el-option label="Manager name" value="ORDER_BY_MANAGER_NAME"></mock-el-option>
-            <mock-el-option label="Number of datasets" value="ORDER_BY_DATASETS_COUNT"></mock-el-option>
-            <mock-el-option label="Number of members" value="ORDER_BY_MEMBERS_COUNT"></mock-el-option>
-          </mock-el-select>
-          <div class="el-input-group__append sort-dp-btn">
-            <mock-el-tooltip content="Sorting order" placement="right"><button type="button" class="el-button el-button--default cursor-not-allowed">
-                <!----><i class="el-icon-sort"></i>
-                <!----></button></mock-el-tooltip>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="" mock-v-loading="true" class="clearfix"></div>
-    <div style="min-height: 100px;" mock-v-loading="false">
-      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/proj-one" class="underlay"></a>
-        <div class="item-body">
-          <div class="info">
-            <div class="info-line project-name pr-5 flex items-start"><a href="/project/proj-one" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
-                project one
-              </a> <i title="This project is only visible to its members and METASPACE administrators" class="el-icon-lock ml-2 text-xl"></i>
-              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
-                <div slot-key="default">
-                  <p class="leading-none m-0">
-                    Copy project id to clipboard
-                  </p>
-                </div>
-                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
-              </mock-el-popover>
-            </div>
-            <div>
-              <div class="info-line">
-                <!---->
-                1 member
-              </div>
-              <div class="info-line">
-                Managed by
-                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.0.members.0.user.primaryGroup.group.id" class="">
-                  allProjects.0.members.0.user.primaryGroup.group.shortName</a>
-                <!----></span></div>
-              <div class="info-line"><span>
-            Created <mock-elapsed-time date="2018-08-29T05:00:00.000"></mock-elapsed-time></span></div>
-              <!---->
-            </div>
-          </div>
-          <div class="actions">
-            <!---->
-            <div><i class="el-icon-edit"></i> <a href="/project/proj-one?tab=settings" class="">
-                Manage project
-              </a></div>
-            <div><i class="el-icon-delete"></i> <a href="#" class="text-danger">Delete project</a></div>
-          </div>
-        </div>
-      </div>
-      <div class="project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200"><a href="/project/project%202" class="underlay"></a>
-        <div class="item-body">
-          <div class="info">
-            <div class="info-line project-name pr-5 flex items-start"><a href="/project/project%202" class="text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2">
-                project two
-              </a>
-              <!---->
-              <mock-el-popover trigger="hover" placement="top" popper-class="min-w-0" class="ml-1">
-                <div slot-key="default">
-                  <p class="leading-none m-0">
-                    Copy project id to clipboard
-                  </p>
-                </div>
-                <div slot-key="reference"><button class="button-reset flex  w-6 h-6"><svg data-icon="copy-id" class="h-full w-full text-gray-400 hover:text-gray-500 sm-copy-icon"></svg></button></div>
-              </mock-el-popover>
-            </div>
-            <div>
-              <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 datasets</span></a>,
-                </span>
-                20 members
-              </div>
-              <div class="info-line">
-                Managed by
-                <span><span class="font-medium">TestUser1</span><span><span>, </span></span> <a href="/group/allProjects.1.members.0.user.primaryGroup.group.id" class="">
-                  allProjects.1.members.0.user.primaryGroup.group.shortName</a>
-                <!----></span></div>
-              <div class="info-line"><span>
-            Last submission <mock-elapsed-time date="2018-08-01T09:00:00.000"></mock-elapsed-time></span></div>
-              <!---->
-            </div>
-          </div>
-          <div class="actions">
-            <div><i class="el-icon-picture"></i> <a href="/annotations?db_id=&amp;prj=project%202" class="">
-                Browse annotations
-              </a></div>
-            <!---->
-            <!---->
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="text-align: center;">
-      <mock-el-pagination total="69" page-size="10" current-page="1" layout="prev,pager,next"></mock-el-pagination>
+      <!--v-if-->
+      <div data-v-21d0472c=\\"\\" class=\\"button-bar\\"><button data-v-21d0472c=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button\\">
+          <!--v-if--><span class=\\"\\"> Cancel </span>
+        </button><button data-v-21d0472c=\\"\\" ariadisabled=\\"false\\" autofocus=\\"\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
+          <!--v-if--><span class=\\"\\">Create project</span>
+        </button></div>
     </div>
   </div>
+  <div data-v-cce15054=\\"\\" class=\\"page-content\\">
+    <div data-v-cce15054=\\"\\" class=\\"flex flex-row items-center justify-end flex-1 w-full py-4\\"><button data-v-cce15054=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary el-button--default\\">
+        <!--v-if--><span class=\\"\\"> Create project </span>
+      </button></div>
+    <div data-v-cce15054=\\"\\" class=\\"header-row\\">
+      <div data-v-cce15054=\\"\\" class=\\"filter-panel\\">
+        <!--v-if-->
+      </div>
+      <div data-v-cce15054=\\"\\" class=\\"flex flex-row items-center justify-end flex-1\\">
+        <div data-v-cce15054=\\"\\" class=\\"flex flex-row sort-dp-container pb-2\\">
+          <div class=\\"mock-el-select\\" size=\\"large\\" modelvalue=\\"\\" placeholder=\\"Sort by\\" clearable=\\"true\\">
+            <div class=\\"mock-el-option\\" label=\\"Project size\\" value=\\"ORDER_BY_POPULARITY\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Creation date\\" value=\\"ORDER_BY_DATE\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Publication date\\" value=\\"ORDER_BY_UP_DATE\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Project name\\" value=\\"ORDER_BY_NAME\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Manager name\\" value=\\"ORDER_BY_MANAGER_NAME\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Number of datasets\\" value=\\"ORDER_BY_DATASETS_COUNT\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Number of members\\" value=\\"ORDER_BY_MEMBERS_COUNT\\"></div>
+          </div>
+          <div class=\\"el-input-group__append sort-dp-btn\\">
+            <div class=\\"mock-el-tooltip\\" content=\\"Sorting order\\" placement=\\"right\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--large btn-internal cursor-not-allowed\\">
+                <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                    <path fill=\\"currentColor\\" d=\\"M384 96a32 32 0 0 1 64 0v786.752a32 32 0 0 1-54.592 22.656L95.936 608a32 32 0 0 1 0-45.312h.128a32 32 0 0 1 45.184 0L384 805.632V96zm192 45.248a32 32 0 0 1 54.592-22.592L928.064 416a32 32 0 0 1 0 45.312h-.128a32 32 0 0 1-45.184 0L640 218.496V928a32 32 0 1 1-64 0V141.248z\\"></path>
+                  </svg></div>
+                <!--v-if-->
+              </button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div data-v-cce15054=\\"\\" class=\\"clearfix\\"></div>
+    <div data-v-cce15054=\\"\\" style=\\"min-height: 100px;\\">
+      <div data-v-95b97432=\\"\\" data-v-cce15054=\\"\\" class=\\"project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200\\">
+        <div data-v-95b97432=\\"\\" class=\\"underlay\\"></div>
+        <div data-v-95b97432=\\"\\" class=\\"item-body\\">
+          <div data-v-95b97432=\\"\\" class=\\"info\\">
+            <div data-v-95b97432=\\"\\" class=\\"info-line project-name pr-5 flex items-start\\">
+              <div data-v-95b97432=\\"\\" class=\\"text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2\\">Project AAA</div>
+              <div data-v-95b97432=\\"\\" class=\\"mock-el-icon ml-2 text-xl\\" title=\\"This project is only visible to its members and METASPACE administrators\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M224 448a32 32 0 0 0-32 32v384a32 32 0 0 0 32 32h576a32 32 0 0 0 32-32V480a32 32 0 0 0-32-32H224zm0-64h576a96 96 0 0 1 96 96v384a96 96 0 0 1-96 96H224a96 96 0 0 1-96-96V480a96 96 0 0 1 96-96z\\"></path>
+                  <path fill=\\"currentColor\\" d=\\"M512 544a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V576a32 32 0 0 1 32-32zm192-160v-64a192 192 0 1 0-384 0v64h384zM512 64a256 256 0 0 1 256 256v128H256V320A256 256 0 0 1 512 64z\\"></path>
+                </svg></div>
+              <div data-v-0bc4b279=\\"\\" data-v-95b97432=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+                <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\"> Copy project id to clipboard </p>
+              </div>
+            </div>
+            <div data-v-95b97432=\\"\\">
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\">
+                <!--v-if--> undefined members
+              </div>
+              <!--v-if-->
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/29, 05:00\\">a year ago</span></span></div>
+              <!--v-if-->
+            </div>
+          </div>
+          <div data-v-95b97432=\\"\\" class=\\"actions\\">
+            <!--v-if-->
+            <!--v-if-->
+            <!--v-if-->
+          </div>
+        </div>
+      </div>
+      <!--v-if-->
+    </div>
+    <!--v-if-->
+  </div>
+</div>"
+`;
+
+exports[`ProjectDatasetsDialog > should show only my projects when on the My Projects tab 1`] = `
+"<div data-v-cce15054=\\"\\" class=\\"page\\">
+  <div data-v-21d0472c=\\"\\" data-v-cce15054=\\"\\" class=\\"mock-el-dialog dialog\\" model-value=\\"false\\" append-to-body=\\"\\" title=\\"Create project\\" lock-scroll=\\"false\\">
+    <div data-v-21d0472c=\\"\\">
+      <form data-v-e0556da7=\\"\\" data-v-21d0472c=\\"\\" class=\\"el-form el-form--small el-form--label-top leading-6 v-rhythm-3\\">
+        <div data-v-e0556da7=\\"\\"><label data-v-e0556da7=\\"\\"><span data-v-e0556da7=\\"\\" class=\\"text-base font-medium\\">Title</span>
+            <div data-v-e0556da7=\\"\\" class=\\"el-form-item el-form-item--small is-required asterisk-left\\">
+              <!--v-if-->
+              <div class=\\"el-form-item__content\\">
+                <div data-v-e0556da7=\\"\\" class=\\"el-input el-input--small py-1\\">
+                  <!-- input -->
+                  <!-- prepend slot -->
+                  <!--v-if-->
+                  <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
+                    <!-- prefix slot -->
+                    <!--v-if--><input class=\\"el-input__inner\\" max-length=\\"50\\" min-length=\\"2\\" type=\\"text\\" autocomplete=\\"off\\" tabindex=\\"0\\" id=\\"el-id-replaced\\"><!-- suffix slot -->
+                    <!--v-if-->
+                  </div><!-- append slot -->
+                  <!--v-if-->
+                </div>
+              </div>
+            </div>
+          </label>
+          <div data-v-e0556da7=\\"\\" class=\\"el-input el-input--small hidden\\">
+            <!-- input -->
+            <!-- prepend slot -->
+            <!--v-if-->
+            <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
+              <!-- prefix slot -->
+              <!--v-if--><input class=\\"el-input__inner\\" type=\\"text\\" autocomplete=\\"off\\" tabindex=\\"0\\" id=\\"el-id-replaced\\"><!-- suffix slot -->
+              <!--v-if-->
+            </div><!-- append slot -->
+            <!--v-if-->
+          </div>
+        </div>
+        <div data-v-e0556da7=\\"\\"><label data-v-e0556da7=\\"\\"><span data-v-e0556da7=\\"\\" class=\\"text-base font-medium\\">Privacy</span><span data-v-e0556da7=\\"\\" class=\\"block text-sm text-gray-800\\"> Visibility of the project only, does not apply to included datasets </span></label>
+          <div data-v-e0556da7=\\"\\" class=\\"h-10 flex items-center\\">
+            <div data-v-e0556da7=\\"\\" class=\\"el-switch el-switch--small\\"><input class=\\"el-switch__input\\" type=\\"checkbox\\" role=\\"switch\\" aria-checked=\\"false\\" aria-disabled=\\"false\\" name=\\"\\" true-value=\\"true\\" false-value=\\"false\\" id=\\"el-id-replaced\\"><span class=\\"el-switch__label el-switch__label--left is-active\\"><!--v-if--><span aria-hidden=\\"false\\">Private</span></span><span class=\\"el-switch__core\\"><!--v-if--><div class=\\"el-switch__action\\"><!--v-if--></div></span><span class=\\"el-switch__label el-switch__label--right\\"><!--v-if--><span aria-hidden=\\"true\\">Public</span></span></div>
+          </div>
+          <!--v-if-->
+        </div>
+      </form>
+      <!--v-if-->
+      <div data-v-21d0472c=\\"\\" class=\\"button-bar\\"><button data-v-21d0472c=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button\\">
+          <!--v-if--><span class=\\"\\"> Cancel </span>
+        </button><button data-v-21d0472c=\\"\\" ariadisabled=\\"false\\" autofocus=\\"\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
+          <!--v-if--><span class=\\"\\">Create project</span>
+        </button></div>
+    </div>
+  </div>
+  <div data-v-cce15054=\\"\\" class=\\"page-content\\">
+    <div data-v-cce15054=\\"\\" class=\\"flex flex-row items-center justify-end flex-1 w-full py-4\\"><button data-v-cce15054=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary el-button--default\\">
+        <!--v-if--><span class=\\"\\"> Create project </span>
+      </button></div>
+    <div data-v-cce15054=\\"\\" class=\\"header-row\\">
+      <div data-v-cce15054=\\"\\" class=\\"filter-panel\\">
+        <!--v-if-->
+      </div>
+      <div data-v-cce15054=\\"\\" class=\\"flex flex-row items-center justify-end flex-1\\">
+        <div data-v-cce15054=\\"\\" class=\\"flex flex-row sort-dp-container pb-2\\">
+          <div class=\\"mock-el-select\\" size=\\"large\\" modelvalue=\\"\\" placeholder=\\"Sort by\\" clearable=\\"true\\">
+            <div class=\\"mock-el-option\\" label=\\"Project size\\" value=\\"ORDER_BY_POPULARITY\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Creation date\\" value=\\"ORDER_BY_DATE\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Publication date\\" value=\\"ORDER_BY_UP_DATE\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Project name\\" value=\\"ORDER_BY_NAME\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Manager name\\" value=\\"ORDER_BY_MANAGER_NAME\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Number of datasets\\" value=\\"ORDER_BY_DATASETS_COUNT\\"></div>
+            <div class=\\"mock-el-option\\" label=\\"Number of members\\" value=\\"ORDER_BY_MEMBERS_COUNT\\"></div>
+          </div>
+          <div class=\\"el-input-group__append sort-dp-btn\\">
+            <div class=\\"mock-el-tooltip\\" content=\\"Sorting order\\" placement=\\"right\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--large btn-internal cursor-not-allowed\\">
+                <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                    <path fill=\\"currentColor\\" d=\\"M384 96a32 32 0 0 1 64 0v786.752a32 32 0 0 1-54.592 22.656L95.936 608a32 32 0 0 1 0-45.312h.128a32 32 0 0 1 45.184 0L384 805.632V96zm192 45.248a32 32 0 0 1 54.592-22.592L928.064 416a32 32 0 0 1 0 45.312h-.128a32 32 0 0 1-45.184 0L640 218.496V928a32 32 0 1 1-64 0V141.248z\\"></path>
+                  </svg></div>
+                <!--v-if-->
+              </button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div data-v-cce15054=\\"\\" class=\\"clearfix\\"></div>
+    <div data-v-cce15054=\\"\\" style=\\"min-height: 100px;\\">
+      <div data-v-95b97432=\\"\\" data-v-cce15054=\\"\\" class=\\"project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200\\">
+        <div data-v-95b97432=\\"\\" class=\\"underlay\\"></div>
+        <div data-v-95b97432=\\"\\" class=\\"item-body\\">
+          <div data-v-95b97432=\\"\\" class=\\"info\\">
+            <div data-v-95b97432=\\"\\" class=\\"info-line project-name pr-5 flex items-start\\">
+              <div data-v-95b97432=\\"\\" class=\\"text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2\\">project one</div>
+              <div data-v-95b97432=\\"\\" class=\\"mock-el-icon ml-2 text-xl\\" title=\\"This project is only visible to its members and METASPACE administrators\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M224 448a32 32 0 0 0-32 32v384a32 32 0 0 0 32 32h576a32 32 0 0 0 32-32V480a32 32 0 0 0-32-32H224zm0-64h576a96 96 0 0 1 96 96v384a96 96 0 0 1-96 96H224a96 96 0 0 1-96-96V480a96 96 0 0 1 96-96z\\"></path>
+                  <path fill=\\"currentColor\\" d=\\"M512 544a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V576a32 32 0 0 1 32-32zm192-160v-64a192 192 0 1 0-384 0v64h384zM512 64a256 256 0 0 1 256 256v128H256V320A256 256 0 0 1 512 64z\\"></path>
+                </svg></div>
+              <div data-v-0bc4b279=\\"\\" data-v-95b97432=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+                <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\"> Copy project id to clipboard </p>
+              </div>
+            </div>
+            <div data-v-95b97432=\\"\\">
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\">
+                <!--v-if--> 1 member
+              </div>
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"> Managed by <span data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\" class=\\"font-medium\\">TestUser1</span>
+                <!--
+              --><span data-v-95b97432=\\"\\"><!--v-if--></span><!--              <router-link-->
+                <!--                v-if=\\"manager.user.primaryGroup\\"-->
+                <!--                :to=\\"groupHref(manager)\\"-->
+                <!--              >-->
+                <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
+                <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
+              </div>
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Created <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/29, 05:00\\">a year ago</span></span></div>
+              <!--v-if-->
+            </div>
+          </div>
+          <div data-v-95b97432=\\"\\" class=\\"actions\\">
+            <!--v-if-->
+            <div data-v-95b97432=\\"\\" class=\\"flex items-center\\">
+              <div data-v-95b97432=\\"\\" class=\\"mock-el-icon\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"m199.04 672.64 193.984 112 224-387.968-193.92-112-224 388.032zm-23.872 60.16 32.896 148.288 144.896-45.696L175.168 732.8zM455.04 229.248l193.92 112 56.704-98.112-193.984-112-56.64 98.112zM104.32 708.8l384-665.024 304.768 175.936L409.152 884.8h.064l-248.448 78.336L104.32 708.8zm384 254.272v-64h448v64h-448z\\"></path>
+                </svg></div>
+              <div data-v-95b97432=\\"\\"> Manage project </div>
+            </div>
+            <div data-v-95b97432=\\"\\" class=\\"flex items-center\\">
+              <div data-v-95b97432=\\"\\" class=\\"mock-el-icon\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                  <path fill=\\"currentColor\\" d=\\"M160 256H96a32 32 0 0 1 0-64h256V95.936a32 32 0 0 1 32-32h256a32 32 0 0 1 32 32V192h256a32 32 0 1 1 0 64h-64v672a32 32 0 0 1-32 32H192a32 32 0 0 1-32-32V256zm448-64v-64H416v64h192zM224 896h576V256H224v640zm192-128a32 32 0 0 1-32-32V416a32 32 0 0 1 64 0v320a32 32 0 0 1-32 32zm192 0a32 32 0 0 1-32-32V416a32 32 0 0 1 64 0v320a32 32 0 0 1-32 32z\\"></path>
+                </svg></div><a data-v-95b97432=\\"\\" href=\\"#\\" class=\\"text-danger\\">Delete project</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-v-95b97432=\\"\\" data-v-cce15054=\\"\\" class=\\"project-item border border-solid border-gray-200 leading-5 relative rounded w-full p-5 box-border transition-shadow ease-in-out duration-200\\">
+        <div data-v-95b97432=\\"\\" class=\\"underlay\\"></div>
+        <div data-v-95b97432=\\"\\" class=\\"item-body\\">
+          <div data-v-95b97432=\\"\\" class=\\"info\\">
+            <div data-v-95b97432=\\"\\" class=\\"info-line project-name pr-5 flex items-start\\">
+              <div data-v-95b97432=\\"\\" class=\\"text-2xl tracking-snug font-medium text-inherit no-underline truncate leading-none pb-2\\">project two</div>
+              <!--v-if-->
+              <div data-v-0bc4b279=\\"\\" data-v-95b97432=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+                <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\"> Copy project id to clipboard </p>
+              </div>
+            </div>
+            <div data-v-95b97432=\\"\\">
+              <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"><div data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\">20 datasets</span></div>, </span> 20 members
+            </div>
+            <div data-v-95b97432=\\"\\" class=\\"info-line\\"> Managed by <span data-v-95b97432=\\"\\"><span data-v-95b97432=\\"\\" class=\\"font-medium\\">TestUser1</span>
+              <!--
+              --><span data-v-95b97432=\\"\\"><!--v-if--></span><!--              <router-link-->
+              <!--                v-if=\\"manager.user.primaryGroup\\"-->
+              <!--                :to=\\"groupHref(manager)\\"-->
+              <!--              >-->
+              <!--                {{ manager.user.primaryGroup.group.shortName }}&lt;!&ndash;-->
+              <!--              &ndash;&gt;</router-link><span v-if=\\"(ind+1 < projectManagers.length) && manager.user.primaryGroup\\">, </span>--></span>
+            </div>
+            <div data-v-95b97432=\\"\\" class=\\"info-line\\"><span data-v-95b97432=\\"\\"> Last submission <span data-v-95b97432=\\"\\" class=\\"sm-elapsed-time\\" title=\\"2018/08/01, 09:00\\">a year ago</span></span></div>
+            <!--v-if-->
+          </div>
+        </div>
+        <div data-v-95b97432=\\"\\" class=\\"actions\\">
+          <div data-v-95b97432=\\"\\" class=\\"flex items-center\\">
+            <div data-v-95b97432=\\"\\" class=\\"mock-el-icon\\"><svg data-v-95b97432=\\"\\" xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                <path fill=\\"currentColor\\" d=\\"M96 896a32 32 0 0 1-32-32V160a32 32 0 0 1 32-32h832a32 32 0 0 1 32 32v704a32 32 0 0 1-32 32H96zm315.52-228.48-68.928-68.928a32 32 0 0 0-45.248 0L128 768.064h778.688l-242.112-290.56a32 32 0 0 0-49.216 0L458.752 665.408a32 32 0 0 1-47.232 2.112zM256 384a96 96 0 1 0 192.064-.064A96 96 0 0 0 256 384z\\"></path>
+              </svg></div>
+            <div data-v-95b97432=\\"\\"> Browse annotations </div>
+          </div>
+          <!--v-if-->
+          <!--v-if-->
+        </div>
+      </div>
+    </div>
+    <div data-v-cce15054=\\"\\" class=\\"flex items-center justify-center p-4 text-gray-600\\" style=\\"height: 200px;\\"> No projects found </div>
+  </div>
+  <!--v-if-->
 </div>
+</div>"
 `;

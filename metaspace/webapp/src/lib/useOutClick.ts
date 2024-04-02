@@ -1,4 +1,4 @@
-import { Ref } from '@vue/composition-api'
+import { Ref } from 'vue'
 
 export default (onOutClick: () => void, containerRef?: Ref<HTMLElement | undefined>) => {
   const removeListeners = () => {

@@ -2,69 +2,78 @@
 import { cloneDeep, mapValues } from 'lodash-es'
 import { Component } from 'vue'
 
-export type Polarity = 'Positive' | 'Negative';
-export type DetectorResolvingPower = { mz: number; Resolving_Power: number; };
-export type PixelSize = { Xaxis: number; Yaxis: number; }
-export type Person = { First_Name: string; Last_Name: string; Email: string; };
+export type Polarity = 'Positive' | 'Negative'
+export type DetectorResolvingPower = { mz: number; Resolving_Power: number }
+export type PixelSize = { Xaxis: number; Yaxis: number }
+export type Person = { First_Name: string; Last_Name: string; Email: string }
 
 export interface JsonSchemaProperty {
-  type?: 'string' | 'boolean' | 'array' | 'object';
-  enum?: any[];
-  items?: JsonSchemaProperty;
-  properties?: Record<string, JsonSchemaProperty>;
-  required?: string[];
-  title?: string;
-  description?: string;
-  smEditorType?: FormFieldEditorType;
-  smEditorColWidth?: number;
-  help?: string;
+  type?: 'string' | 'boolean' | 'array' | 'object'
+  enum?: any[]
+  items?: JsonSchemaProperty
+  properties?: Record<string, JsonSchemaProperty>
+  required?: string[]
+  title?: string
+  description?: string
+  smEditorType?: FormFieldEditorType
+  smEditorColWidth?: number
+  help?: string
 }
 
-export type FormFieldEditorType = 'textarea' | 'select' | 'autocomplete' | 'checkbox' | 'table' | 'selectMulti'
-  | 'person' | 'detectorResolvingPower' | 'text' | 'pixelSize';
+export type FormFieldEditorType =
+  | 'textarea'
+  | 'select'
+  | 'autocomplete'
+  | 'checkbox'
+  | 'table'
+  | 'selectMulti'
+  | 'person'
+  | 'detectorResolvingPower'
+  | 'text'
+  | 'pixelSize'
 
 export interface FormFieldProperty extends JsonSchemaProperty {
-  title: string;
-  smEditorType: FormFieldEditorType;
-  smEditorColWidth: number;
-  smEditorHelp?: Component;
+  title: string
+  smEditorType: FormFieldEditorType
+  smEditorColWidth: number
+  smEditorHelp?: Component
 }
 
 export interface FormSectionProperty extends JsonSchemaProperty {
-  type: 'object';
-  properties: Record<string, FormFieldProperty>;
-  title: string;
+  type: 'object'
+  properties: Record<string, FormFieldProperty>
+  title: string
 }
 
 export interface DataTypeSectionProperty extends JsonSchemaProperty {
-  type: 'string';
+  type: 'string'
 }
 
 export interface FormSchema extends JsonSchemaProperty {
   properties: {
-    [sectionKey: string]: FormSectionProperty | DataTypeSectionProperty;
-  };
+    [sectionKey: string]: FormSectionProperty | DataTypeSectionProperty
+  }
 }
 
 export interface MetaspaceOptions {
-  name: string;
-  isPublic: boolean;
-  performEnrichment: boolean;
-  databaseIds: number[];
-  adducts: string[];
-  neutralLosses: string[];
-  chemMods: string[];
-  groupId: string | null;
-  projectIds: string[];
+  name: string
+  isPublic: boolean
+  performEnrichment: boolean
+  databaseIds: number[]
+  adducts: string[]
+  neutralLosses: string[]
+  chemMods: string[]
+  groupId: string | null
+  projectIds: string[]
   principalInvestigator: {
-    name: string;
-    email: string;
-  } | null;
-  analysisVersion: number;
-  scoringModel: string;
-  ppm: number;
-  numPeaks: number;
-  decoySampleSize: number;
+    name: string
+    email: string
+  } | null
+  analysisVersion: number
+  scoringModel: string
+  ppm: number
+  numPeaks: number
+  decoySampleSize: number
 }
 
 const FIELD_WIDTH: Record<string, number> = {

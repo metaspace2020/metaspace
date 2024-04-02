@@ -1,12 +1,6 @@
 <template>
-  <div
-    v-loading="!loaded"
-    class="page"
-  >
-    <div
-      v-if="project != null"
-      class="page-content"
-    >
+  <div v-loading="!isLoaded && showLoading" class="page">
+    <div v-if="project != null" class="page-content">
       <datasets-dialog
         :visible="showProjectDatasetsDialog && currentUser != null"
         :refresh-data="refetch"
@@ -18,93 +12,40 @@
       />
       <div class="header-row">
         <div class="header-names">
-          <h1
-            class="py-1 leading-tight"
-            :class="{ 'mb-0': projectDOI }"
-          >
+          <h1 class="py-1 leading-tight" :class="{ 'mb-0': projectDOI }">
             {{ project.name }}
           </h1>
-          <p
-            v-if="projectDOI"
-            class="mt-0 leading-6 text-sm font-medium"
-          >
+          <p v-if="projectDOI" class="mt-0 leading-6 text-sm font-medium">
             Publication:
-            <a
-              :href="projectDOI"
-              class=""
-              target="_blank"
-              rel="noopener"
-            >
+            <a :href="projectDOI" class="" target="_blank" rel="noopener">
               {{ projectDOI }}
             </a>
           </p>
         </div>
 
         <div class="header-buttons">
-          <el-button
-            v-if="currentUser != null && roleInProject == null"
-            type="primary"
-            @click="handleRequestAccess"
-          >
+          <el-button v-if="currentUser != null && roleInProject == null" type="primary" @click="handleRequestAccess">
             Request access
           </el-button>
-          <el-button
-            v-if="roleInProject === 'PENDING'"
-            disabled
-          >
-            Request sent
-          </el-button>
-          <new-feature-badge
-            v-if="showManageDataset"
-            class="ml-2"
-            feature-key="manage_project_datasets"
-          >
-            <el-button
-              @click="handleOpenProjectDatasetsDialog"
-            >
-              Manage datasets
-            </el-button>
+          <el-button v-if="roleInProject === 'PENDING'" disabled> Request sent </el-button>
+          <new-feature-badge v-if="showManageDataset" custom-class="ml-2" feature-key="manage_project_datasets">
+            <el-button @click="handleOpenProjectDatasetsDialog"> Manage datasets </el-button>
           </new-feature-badge>
         </div>
-        <el-alert
-          v-if="roleInProject === 'INVITED'"
-          type="info"
-          show-icon
-          :closable="false"
-          title=""
-        >
-          <div style="padding: 0 0 20px 20px;">
-            <p>
-              You have been invited to join {{ project.name }}.
-            </p>
+        <el-alert v-if="roleInProject === 'INVITED'" type="info" show-icon :closable="false" title="">
+          <div style="padding: 0 0 20px 20px">
+            <p>You have been invited to join {{ project.name }}.</p>
             <div>
-              <el-button
-                type="danger"
-                @click="handleRejectInvite"
-              >
-                Decline invitation
-              </el-button>
-              <el-button
-                type="primary"
-                :loading="isAcceptingInvite"
-                @click="handleAcceptInvite"
-              >
+              <el-button type="danger" @click="handleRejectInvite"> Decline invitation </el-button>
+              <el-button type="primary" :loading="isAcceptingInvite" @click="handleAcceptInvite">
                 Join project
               </el-button>
             </div>
           </div>
         </el-alert>
       </div>
-      <el-tabs
-        v-model="tab"
-        class="with-badges"
-      >
-        <el-tab-pane
-          v-if="visibleTabs.includes('about')"
-          name="about"
-          label="About"
-          lazy
-        >
+      <el-tabs :model-value="tab" class="with-badges" @update:model-value="setTab">
+        <el-tab-pane v-if="visibleTabs.includes('about')" name="about" label="About" lazy>
           <rich-text
             class="max-w-measure-5 mx-auto mb-6"
             :placeholder="descriptionPlaceholder"
@@ -113,46 +54,32 @@
             :update="updateDescription"
           />
         </el-tab-pane>
-        <el-tab-pane
-          name="datasets"
-          :label="'Datasets' | optionalSuffixInParens(countDatasets)"
-          lazy
-        >
-          <dataset-list
-            :datasets="projectDatasets.slice(0, maxVisibleDatasets)"
-            @filterUpdate="handleFilterUpdate"
-          />
+        <el-tab-pane name="datasets" :label="optionalSuffixInParens('Datasets', countDatasets)" lazy>
+          <dataset-list :datasets="projectDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" />
 
           <div class="dataset-list-footer">
-            <router-link
-              v-if="countDatasets > maxVisibleDatasets"
-              :to="datasetsListLink"
-            >
+            <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">
               See all datasets
             </router-link>
           </div>
         </el-tab-pane>
-        <el-tab-pane
-          name="members"
-          lazy
-        >
-          <span slot="label">
-            {{ 'Members' | optionalSuffixInParens(countMembers) }}
-            <notification-icon v-if="hasMembershipRequest" />
-          </span>
+        <el-tab-pane name="members" lazy>
+          <template v-slot:label>
+            <span>
+              {{ optionalSuffixInParens('Members', countMembers) }}
+              <notification-icon v-if="hasMembershipRequest" />
+            </span>
+          </template>
           <div style="max-width: 950px">
             <project-members-list
-              :loading="projectLoading !== 0"
+              :loading="projectLoading"
               :current-user="currentUser"
               :project="project"
               :members="members"
               :refresh-data="refetchProject"
             />
-            <p
-              v-if="countHiddenMembers > 0"
-              class="hidden-members-text"
-            >
-              + {{ countHiddenMembers | plural('hidden member', 'hidden members') }}.
+            <p v-if="countHiddenMembers > 0" class="hidden-members-text">
+              + {{ plural(countHiddenMembers, 'hidden member', 'hidden members') }}.
             </p>
           </div>
         </el-tab-pane>
@@ -162,57 +89,47 @@
           class="tab-with-badge sm-publishing-tab"
           lazy
         >
-          <span slot="label">
-            <new-feature-badge feature-key="scientific_publishing">
-              Publishing
-            </new-feature-badge>
-          </span>
-          <publishing
-            :current-user-name="currentUserName"
-            :project="project"
-            :refetch-project="refetchProject"
-          />
+          <template v-slot:label>
+            <span>
+              <new-feature-badge feature-key="scientific_publishing"> Publishing </new-feature-badge>
+            </span>
+          </template>
+          <publishing :current-user-name="currentUserName" :project="project" :refetch-project="refetchProject" />
         </el-tab-pane>
-        <el-tab-pane
-          v-if="visibleTabs.includes('settings')"
-          name="settings"
-          label="Settings"
-          lazy
-        >
+        <el-tab-pane v-if="visibleTabs.includes('settings')" name="settings" label="Settings" lazy>
           <project-settings :project-id="projectId" />
         </el-tab-pane>
       </el-tabs>
     </div>
-    <div v-if="projectLoaded && project == null">
-      This project does not exist, or you do not have access to it.
+    <div v-if="isLoaded && project == null">This project does not exist, or you do not have access to it.</div>
+    <div v-else-if="!isLoaded && project == null && showLoading">
+      <el-icon class="is-loading"><Loading /></el-icon>
     </div>
   </div>
 </template>
+
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Watch } from 'vue-property-decorator'
-import {
-  datasetDeletedQuery,
-  DatasetDetailItem,
-  datasetDetailItemFragment,
-} from '../../api/dataset'
+import { defineComponent, ref, watch, onMounted, computed, inject } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useStore } from 'vuex'
+import { ElButton, ElAlert, ElTabs, ElTabPane, ElLoading } from '../../lib/element-plus'
 import DatasetList from '../Datasets/list/DatasetList.vue'
+import { datasetDeletedQuery, DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset'
 import {
   acceptProjectInvitationMutation,
   leaveProjectMutation,
-  ProjectRole,
   ProjectRoleOptions,
-  requestAccessToProjectMutation, updateProjectMutation, UpdateProjectMutation,
+  requestAccessToProjectMutation,
+  updateProjectMutation,
   ViewProjectFragment,
   ViewProjectResult,
 } from '../../api/project'
+import { currentUserRoleWithGroupQuery, CurrentUserRoleWithGroupResult } from '../../api/user'
 import gql from 'graphql-tag'
 import { encodeParams } from '../Filters'
-import ConfirmAsync from '../../components/ConfirmAsync'
-import confirmPrompt from '../../components/confirmPrompt'
+import { useConfirmAsync } from '../../components/ConfirmAsync'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import reportError from '../../lib/reportError'
-import { currentUserRoleWithGroupQuery, CurrentUserRoleWithGroupResult } from '../../api/user'
 import isUuid from '../../lib/isUuid'
 import ProjectMembersList from './ProjectMembersList.vue'
 import ProjectSettings from './ProjectSettings.vue'
@@ -221,66 +138,119 @@ import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import RichText from '../../components/RichText'
 import Publishing from './publishing'
 import NewFeatureBadge, { hideFeatureBadge } from '../../components/NewFeatureBadge'
-import { ProjectDatasetsDialog } from '../Project/ProjectDatasetsDialog'
-import { DatasetsDialog } from './DatasetsDialog'
+import DatasetsDialog from './DatasetsDialog'
+import { DefaultApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
+import { ElIcon } from '../../lib/element-plus'
+import { Loading } from '@element-plus/icons-vue'
+interface ViewProjectPageData {
+  allDatasets: DatasetDetailItem[]
+  countDatasets: number
+}
 
-  interface ViewProjectPageData {
-    allDatasets: DatasetDetailItem[];
-    countDatasets: number;
-  }
+export default defineComponent({
+  components: {
+    ElButton,
+    ElAlert,
+    ElTabs,
+    ElTabPane,
+    DatasetList,
+    DatasetsDialog,
+    ProjectMembersList,
+    ProjectSettings,
+    NotificationIcon,
+    RichText,
+    Publishing,
+    NewFeatureBadge,
+    ElIcon,
+    Loading,
+  },
+  props: {
+    showLoading: { type: Boolean, default: true },
+  },
+  directives: {
+    loading: ElLoading.directive,
+  },
+  setup() {
+    const router = useRouter()
+    const route = useRoute()
+    const store = useStore()
+    const confirmAsync = useConfirmAsync()
+    const apolloClient = inject(DefaultApolloClient)
+    const tab = ref(null as string | null)
 
-  @Component<ViewProjectPage>({
-    components: {
-      DatasetsDialog,
-      DatasetList,
-      ProjectMembersList,
-      ProjectSettings,
-      NotificationIcon,
-      RichText,
-      Publishing,
-      NewFeatureBadge,
-      ProjectDatasetsDialog,
-    },
-    filters: {
-      optionalSuffixInParens,
-      plural,
-    },
-    apollo: {
-      currentUser: {
-        query: currentUserRoleWithGroupQuery,
-        fetchPolicy: 'cache-first',
-      },
-      project: {
-        query() {
-          if (isUuid(this.$route.params.projectIdOrSlug)) {
-            return gql`query ProjectProfileById($projectIdOrSlug: ID!) {
-              project(projectId: $projectIdOrSlug) { ...ViewProjectFragment hasPendingRequest }
+    const projectLoaded = ref(false)
+    const loaded = ref(false)
+    const isAcceptingInvite = ref(false)
+    const showProjectDatasetsDialog = ref(false)
+    const maxVisibleDatasets = ref(8)
+
+    const projectQuery = computed(() => {
+      if (isUuid(route.params.projectIdOrSlug as string)) {
+        return gql`
+          query ProjectProfileById($projectIdOrSlug: ID!) {
+            project(projectId: $projectIdOrSlug) {
+              ...ViewProjectFragment
+              hasPendingRequest
             }
-            ${ViewProjectFragment}`
-          } else {
-            return gql`query ProjectProfileBySlug($projectIdOrSlug: String!) {
-              project: projectByUrlSlug(urlSlug: $projectIdOrSlug) { ...ViewProjectFragment hasPendingRequest }
-            }
-            ${ViewProjectFragment}`
           }
-        },
-        variables() {
-          return { projectIdOrSlug: this.$route.params.projectIdOrSlug }
-        },
-        update(data) {
-          this.projectLoaded = true
-          return data.project
-        },
+          ${ViewProjectFragment}
+        `
+      } else {
+        return gql`
+          query ProjectProfileBySlug($projectIdOrSlug: String!) {
+            project: projectByUrlSlug(urlSlug: $projectIdOrSlug) {
+              ...ViewProjectFragment
+              hasPendingRequest
+            }
+          }
+          ${ViewProjectFragment}
+        `
+      }
+    })
+
+    const { result: currentUserResult } = useQuery(currentUserRoleWithGroupQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
+    const currentUser = computed(() => currentUserResult.value?.currentUser as CurrentUserRoleWithGroupResult | null)
+
+    const {
+      result: projectResult,
+      onResult: onProjectResult,
+      refetch: refetchProject,
+      loading: projectLoading,
+    } = useQuery(
+      projectQuery.value,
+      { projectIdOrSlug: route.params.projectIdOrSlug },
+      {
         // Can't be 'no-cache' because `refetchProject` is used for updating the cache, which in turn updates
         // MetaspaceHeader's project.hasPendingRequest notification
         fetchPolicy: 'network-only',
-        loadingKey: 'projectLoading',
-      },
-      data: {
-        query: gql`query ProjectProfileDatasets(
-          $projectId: ID!,
-          $maxVisibleDatasets: Int!,
-          $inpFdrLvls: [Int!] = [10],
+      }
+    )
+    onProjectResult(() => {
+      setTimeout(() => {
+        projectLoaded.value = true
+      }, 300)
+    })
+    const project = computed(() => projectResult.value?.project as ViewProjectResult | null)
+    const projectId = computed((): string | null => {
+      if (isUuid(route.params.projectIdOrSlug as string)) {
+        return route.params.projectIdOrSlug as string // If it's possible to get the ID from the route, use that because it's faster than projectById/projectBySlug.
+      } else {
+        return project.value && project.value?.id
+      }
+    })
+
+    const {
+      result: dataResult,
+      onResult: onDataResult,
+      refetch: refetchData,
+    } = useQuery(
+      gql`
+        query ProjectProfileDatasets(
+          $projectId: ID!
+          $maxVisibleDatasets: Int!
+          $inpFdrLvls: [Int!] = [10]
           $checkLvl: Int = 10
         ) {
           allDatasets(offset: 0, limit: $maxVisibleDatasets, filter: { project: $projectId }) {
@@ -289,323 +259,339 @@ import { DatasetsDialog } from './DatasetsDialog'
           countDatasets(filter: { project: $projectId })
         }
 
-        ${datasetDetailItemFragment}`,
-        variables() {
-          return {
-            maxVisibleDatasets: this.maxVisibleDatasets,
-            projectId: this.projectId,
-          }
-        },
-        update(data) {
-          // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
-          // button that causes this query to refetch.
-          this.loaded = true
-          return data
-        },
-        skip() {
-          const skip = this.projectId == null
-          if (skip) {
-            this.loaded = true
-          }
-          return skip
-        },
+        ${datasetDetailItemFragment}
+      `,
+      {
+        maxVisibleDatasets: maxVisibleDatasets.value,
+        projectId: projectId.value,
       },
-      $subscribe: {
-        datasetDeleted: {
-          query: datasetDeletedQuery,
-          result({ data }) {
-            removeDatasetFromAllDatasetsQuery(this, 'data', data.datasetDeleted.id)
-          },
-        },
-      },
-    },
-  })
-export default class ViewProjectPage extends Vue {
-    projectLoading = 0;
-    projectLoaded = false;
-    loaded = false;
-    isAcceptingInvite = false;
-    currentUser: CurrentUserRoleWithGroupResult | null = null;
-    project: ViewProjectResult | null = null;
-    data: ViewProjectPageData | null = null;
-    showProjectDatasetsDialog: boolean = false;
+      {
+        enabled: computed(() => projectId.value != null),
+      }
+    )
+    onDataResult(() => {
+      setTimeout(() => {
+        loaded.value = true
+      }, 300)
+    })
+    const data = computed(() => dataResult.value as ViewProjectPageData | null)
 
-    get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
-    get roleInProject(): ProjectRole | null { return this.project && this.project.currentUserRole }
-    get showManageDataset(): boolean {
-      const canEditRole = this.currentUser && (this.project?.currentUserRole === ProjectRoleOptions.MANAGER
-        || this.project?.currentUserRole === ProjectRoleOptions.MEMBER || this.currentUser.role === 'admin')
-      return !!(this.currentUser && this.currentUser.id
-        && canEditRole && this.$route?.query?.tab === 'datasets')
-    }
+    const { onResult } = useSubscription(datasetDeletedQuery)
 
-    get currentUserName() {
-      if (this.currentUser && this.currentUser.name) {
-        return this.currentUser.name
+    onResult(({ data }) => {
+      if (data && data.datasetDeleted) {
+        removeDatasetFromAllDatasetsQuery('data', data.datasetDeleted.id)
+      }
+    })
+
+    const currentUserId = computed(() => currentUser.value?.id)
+    const roleInProject = computed(() => project.value?.currentUserRole)
+    const showManageDataset = computed((): boolean => {
+      const canEditRole =
+        currentUser.value &&
+        (project.value?.currentUserRole === ProjectRoleOptions.MANAGER ||
+          project.value?.currentUserRole === ProjectRoleOptions.MEMBER ||
+          currentUser.value?.role === 'admin')
+      return !!(currentUser.value && currentUser.value?.id && canEditRole && route?.query?.tab === 'datasets')
+    })
+    const currentUserName = computed((): string => {
+      if (currentUser.value && currentUser.value?.name) {
+        return currentUser.value?.name
       }
       return ''
-    }
-
-    get projectDatasets(): DatasetDetailItem[] {
-      return (this.data && this.data.allDatasets || []).filter(ds => ds.status !== 'FAILED')
-    }
-
-    get countDatasets(): number { return this.data && this.data.countDatasets || 0 }
-    get members() { return this.project && this.project.members || [] }
-    get countMembers() { return this.project && this.project.numMembers }
-    maxVisibleDatasets = 8;
-
-    get projectId(): string | null {
-      if (isUuid(this.$route.params.projectIdOrSlug)) {
-        return this.$route.params.projectIdOrSlug // If it's possible to get the ID from the route, use that because it's faster than projectById/projectBySlug.
-      } else {
-        return this.project && this.project.id
-      }
-    }
-
-    // extra protection in case `projectDescription` is omitted
-    get projectDescription() {
-      if (this.project && this.project.projectDescription) {
-        return this.project.projectDescription
-      }
-      return null
-    }
-
-    get visibleTabs() {
-      if (this.project === null) {
+    })
+    const projectDatasets = computed((): DatasetDetailItem[] =>
+      (data.value?.allDatasets || []).filter((ds) => ds.status !== 'FAILED')
+    )
+    const countDatasets = computed((): number => data.value?.countDatasets || 0)
+    const members = computed(() => project.value?.members || [])
+    const countMembers = computed(() => project.value?.numMembers || 0)
+    const projectDescription = computed(() => project.value?.projectDescription)
+    const canEdit = computed(() => {
+      return (
+        roleInProject.value === ProjectRoleOptions.MANAGER || (currentUser.value && currentUser.value?.role === 'admin')
+      )
+    })
+    const visibleTabs = computed(() => {
+      if (project.value === null) {
         return []
       }
-      if (this.canEdit) {
+      if (canEdit.value) {
         return ['about', 'datasets', 'members', 'publishing', 'settings']
       }
-      if (this.project && this.project.projectDescription !== null) {
+      if (project.value && project.value?.projectDescription !== null) {
         return ['about', 'datasets', 'members']
       }
       return ['datasets', 'members']
+    })
+    const setTab = (newTab: string | null) => {
+      if (newTab !== null && visibleTabs.value.includes(newTab)) {
+        router.replace({ query: { tab: newTab } })
+        tab.value = newTab
+      }
     }
-
-    get tab(): string | null {
-      const tabs = this.visibleTabs
+    const initializeTab = (): string | null => {
+      const tabs = visibleTabs.value
       if (tabs.length === 0) {
-        return null
+        setTab(null)
       }
-      const selectedTab = this.$route.query.tab
+      const selectedTab = route.query.tab as string
+
       if (tabs.includes(selectedTab)) {
-        return selectedTab
+        setTab(selectedTab)
       }
-      if (selectedTab !== undefined) {
-        this.tab = tabs[0]
+      if (selectedTab === undefined) {
+        setTab(tabs[0])
       }
       return tabs[0]
     }
-
-    set tab(tab: string | null) {
-      if (tab !== null && this.visibleTabs.includes(tab)) {
-        this.$router.replace({ query: { tab } })
-      }
-    }
-
-    @Watch('tab')
-    checkFeatureBadges() {
-      if (this.tab === 'publishing') {
+    const isLoaded = computed(() => projectLoaded.value && loaded.value)
+    const checkFeatureBadges = () => {
+      if (tab.value === 'publishing') {
         hideFeatureBadge('scientific_publishing')
       }
     }
 
-    get isInvited(): boolean {
-      return this.roleInProject === 'INVITED'
-    }
+    const isInvited = computed(() => roleInProject.value === ProjectRoleOptions.INVITED)
 
-    get datasetsListLink() {
-      return {
-        path: '/datasets',
-        query: this.projectId && encodeParams({ project: this.projectId }),
-      }
-    }
+    const datasetsListLink = computed(() => ({
+      path: '/datasets',
+      query: projectId.value && encodeParams({ project: projectId.value }),
+    }))
 
-    get canEdit() {
-      return this.roleInProject === ProjectRoleOptions.MANAGER
-        || (this.currentUser && this.currentUser.role === 'admin')
-    }
-
-    get isManager() {
-      return this.currentUser
-        && (this.roleInProject === ProjectRoleOptions.MANAGER || this.currentUser.role === 'admin')
-    }
-
-    get countHiddenMembers() {
-      if (this.countMembers != null) {
-        return Math.max(0, this.countMembers - this.members.length)
+    const isManager = computed(
+      () => roleInProject.value === ProjectRoleOptions.MANAGER || currentUser.value?.role === 'admin'
+    )
+    const countHiddenMembers = computed(() => {
+      if (countMembers.value != null) {
+        return Math.max(0, countMembers.value - members.value.length)
       } else {
         return 0
       }
-    }
-
-    get hasMembershipRequest() {
-      return this.members.some(m => m.role === ProjectRoleOptions.PENDING)
-    }
-
-    get projectDOI() {
-      if (this.project !== null) {
-        for (const item of this.project.externalLinks) {
+    })
+    const projectDOI = computed(() => {
+      if (project.value !== null && Array.isArray(project.value.externalLinks)) {
+        // eslint-disable-next-line no-unsafe-optional-chaining
+        for (const item of project.value?.externalLinks) {
           if (item.provider === 'DOI') {
             return item.link
           }
         }
       }
       return null
-    }
+    })
+    const hasMembershipRequest = computed(() => members.value?.some((m) => m.role === ProjectRoleOptions.PENDING))
+    const descriptionPlaceholder = computed(() => {
+      if (canEdit.value) {
+        return 'Describe this project …'
+      }
+      return 'Project has no description.'
+    })
 
-    @Watch('$route.params.projectIdOrSlug')
-    @Watch('project.urlSlug')
-    canonicalizeUrl() {
+    const canonicalizeUrl = () => {
       if (
-        this.project !== null
-        && this.projectId !== null
-        && this.$route.params.projectIdOrSlug !== this.project.urlSlug
+        project.value !== null &&
+        projectId.value !== null &&
+        route.params.projectIdOrSlug !== project.value?.urlSlug
       ) {
-        this.$router.replace({
-          params: { projectIdOrSlug: this.project.urlSlug || this.projectId },
-          query: this.$route.query,
+        router.replace({
+          params: { projectIdOrSlug: project.value?.urlSlug || projectId.value },
+          query: route.query,
         })
       }
     }
 
-    @ConfirmAsync({
-      title: '',
-      message: 'An email will be sent to the project\'s manager to confirm your access.',
-      confirmButtonText: 'Request access',
+    watch(tab, () => {
+      checkFeatureBadges()
     })
-    async handleRequestAccess() {
-      await this.joinProject()
-    }
 
-    async handleAcceptInvite() {
-      try {
-        this.isAcceptingInvite = true
-        await this.joinProject()
-      } catch (err) {
-        reportError(err)
-      } finally {
-        this.isAcceptingInvite = true
-      }
-    }
-
-    @ConfirmAsync({
-      title: 'Decline invitation',
-      message: 'Are you sure?',
-      confirmButtonText: 'Decline invitation',
+    onMounted(() => {
+      initializeTab()
     })
-    async handleRejectInvite() {
-      await this.$apollo.mutate({
-        mutation: leaveProjectMutation,
-        variables: { projectId: this.projectId },
-      })
-      await this.refetch()
+
+    const refetch = async () => {
+      return Promise.all([refetchProject(), refetchData()])
     }
 
-    handleFilterUpdate(newFilter: any) {
-      this.$store.commit('updateFilter', {
-        ...newFilter,
-        project: this.projectId,
-      })
-
-      this.$router.push({
-        path: '/datasets',
-        query: this.$route.query,
-      })
+    const handleOpenProjectDatasetsDialog = () => {
+      showProjectDatasetsDialog.value = true
+      hideFeatureBadge('manage_project_datasets')
+    }
+    const handleCloseProjectDatasetsDialog = () => {
+      showProjectDatasetsDialog.value = false
+    }
+    const handleUpdateProjectDatasetsDialog = () => {
+      showProjectDatasetsDialog.value = false
+      // TODO: Remove
+      window.location.reload()
     }
 
-    async joinProject() {
-      await this.$apollo.mutate({
-        mutation: this.isInvited ? acceptProjectInvitationMutation : requestAccessToProjectMutation,
-        variables: { projectId: this.projectId },
+    const joinProject = async () => {
+      await apolloClient.mutate({
+        mutation: isInvited.value ? acceptProjectInvitationMutation : requestAccessToProjectMutation,
+        variables: { projectId: projectId.value },
       })
-      await this.refetch()
+      await refetch()
     }
 
-    get descriptionPlaceholder() {
-      if (this.canEdit) {
-        return 'Describe this project …'
-      }
-      return 'Project has no description.'
-    }
-
-    async updateDescription(newProjectDescription: string) {
-      await this.$apollo.mutate<UpdateProjectMutation>({
+    const updateDescription = async (newProjectDescription: string) => {
+      await apolloClient.mutate({
         mutation: updateProjectMutation,
         variables: {
-          projectId: this.projectId,
+          projectId: projectId.value,
           projectDetails: {
             projectDescription: newProjectDescription,
           },
         },
       })
-      this.refetchProject()
+      await refetchProject()
     }
 
-    async refetchProject() {
-      await this.$apollo.queries.project.refetch()
+    const handleRequestAccess = async () => {
+      const confirmOptions = {
+        title: '',
+        message: "An email will be sent to the project's manager to confirm your access.",
+        confirmButtonText: 'Request access',
+      }
+
+      await confirmAsync(confirmOptions, async () => {
+        await joinProject()
+      })
     }
 
-    async refetch() {
-      return Promise.all([
-        this.$apollo.queries.project.refetch(),
-        this.$apollo.queries.data.refetch(),
-      ])
+    const handleRejectInvite = async () => {
+      const confirmOptions = {
+        title: 'Decline invitation',
+        message: 'Are you sure?',
+        confirmButtonText: 'Decline invitation',
+      }
+
+      await confirmAsync(confirmOptions, async () => {
+        await apolloClient.mutate({
+          mutation: leaveProjectMutation,
+          variables: { projectId: projectId.value },
+        })
+        await refetch()
+      })
     }
 
-    handleOpenProjectDatasetsDialog() {
-      this.showProjectDatasetsDialog = true
-      hideFeatureBadge('manage_project_datasets')
+    const handleAcceptInvite = async () => {
+      try {
+        isAcceptingInvite.value = true
+        await joinProject()
+      } catch (err) {
+        reportError(err)
+      } finally {
+        isAcceptingInvite.value = true
+      }
     }
 
-    handleCloseProjectDatasetsDialog() {
-      this.showProjectDatasetsDialog = false
+    const handleFilterUpdate = (newFilter: any) => {
+      store.commit('updateFilter', {
+        ...newFilter,
+        project: projectId.value,
+      })
+
+      router.push({
+        path: '/datasets',
+        query: route.query,
+      })
     }
 
-    handleUpdateProjectDatasetsDialog() {
-      this.showProjectDatasetsDialog = false
-      // TODO: Remove
-      window.location.reload()
+    const projectIdOrSlug = computed(() => route.params?.projectIdOrSlug || project.value?.urlSlug)
+
+    watch(projectIdOrSlug, () => {
+      canonicalizeUrl()
+    })
+
+    watch(visibleTabs, () => {
+      initializeTab()
+    })
+
+    return {
+      projectLoading,
+      projectLoaded,
+      loaded,
+      isAcceptingInvite,
+      currentUserId,
+      roleInProject,
+      handleRequestAccess,
+      tab,
+      plural,
+      project,
+      projectId,
+      projectIdOrSlug,
+      showProjectDatasetsDialog,
+      maxVisibleDatasets,
+      currentUser,
+      data,
+      showManageDataset,
+      currentUserName,
+      projectDatasets,
+      countDatasets,
+      members,
+      countMembers,
+      projectDescription,
+      visibleTabs,
+      isInvited,
+      datasetsListLink,
+      canEdit,
+      isManager,
+      countHiddenMembers,
+      hasMembershipRequest,
+      projectDOI,
+      refetch,
+      handleAcceptInvite,
+      handleRejectInvite,
+      handleFilterUpdate,
+      updateDescription,
+      refetchProject,
+      handleOpenProjectDatasetsDialog,
+      handleCloseProjectDatasetsDialog,
+      handleUpdateProjectDatasetsDialog,
+      optionalSuffixInParens,
+      descriptionPlaceholder,
+      isLoaded,
+      setTab,
     }
+  },
+})
+</script>
+
+<style scoped lang="scss">
+@import 'element-plus/theme-chalk/src/mixins/mixins';
+
+.page {
+  display: flex;
+  justify-content: center;
+  min-height: 80vh; // Ensure there's space for the loading spinner before is visible
+}
+.page-content {
+  width: 950px;
+  margin-left: 20px;
+  margin-right: 20px;
 }
 
-</script>
-<style scoped lang="scss">
-  @import "~element-ui/packages/theme-chalk/src/common/var";
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+}
 
-  .page {
-    display: flex;
-    justify-content: center;
-    min-height: 80vh; // Ensure there's space for the loading spinner before is visible
-  }
-  .page-content {
-    width: 950px;
-    margin-left: 20px;
-    margin-right: 20px;
-  }
+.header-buttons {
+  display: flex;
+  justify-content: flex-end;
+  flex-grow: 1;
+  align-self: center;
+  margin-right: 3px;
+}
 
-  .header-row {
-    display: flex;
-    flex-wrap: wrap;
-  }
-
-  .header-buttons {
-    display: flex;
-    justify-content: flex-end;
-    flex-grow: 1;
-    align-self: center;
-    margin-right: 3px;
-  }
-
-  .hidden-members-text {
-    @apply text-gray-600;
-    text-align: center;
-  }
+.hidden-members-text {
+  @apply text-gray-600;
+  text-align: center;
+}
 </style>
 <style>
-  .el-tab-pane.sm-publishing-tab {
-    margin-top: 24px;
-  }
+.el-tab-pane.sm-publishing-tab {
+  margin-top: 24px;
+}
 </style>

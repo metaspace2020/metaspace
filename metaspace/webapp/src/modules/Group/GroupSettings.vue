@@ -5,34 +5,27 @@
       <div class="flex-spacer" />
 
       <div class="header-row-buttons">
-        <el-button
-          v-if="canEdit && group"
-          type="primary"
-          :loading="isSaving"
-          @click="handleSave"
-        >
-          Save
-        </el-button>
+        <el-button v-if="canEdit && group" type="primary" :loading="isSaving" @click="handleSave"> Save </el-button>
       </div>
     </div>
     <edit-group-form
-      :model="model"
+      ref="editForm"
       :disabled="isSaving || !canEdit"
+      :model-value="model"
+      class="mt-3 mb-6 v-rhythm-6"
+      @update:modelValue="handleUpdate"
     />
-    <div
-      v-if="group != null"
-      style="margin-bottom: 2em"
-    >
+    <div v-if="group != null" style="margin-bottom: 2em">
       <h2>Custom URL</h2>
       <div v-if="canEditUrlSlug">
         <router-link :to="groupUrlRoute">
           {{ groupUrlPrefix }}
         </router-link>
-        <input v-model="model.urlSlug">
+        <input v-model="model.urlSlug" />
       </div>
       <div v-if="!canEditUrlSlug && group && group.urlSlug">
         <router-link :to="groupUrlRoute">
-          {{ groupUrlPrefix }}<span class="urlSlug">{{ group.urlSlug }}</span>
+          {{ groupUrlPrefix }}<span class="urlSlug">{{ group?.urlSlug }}</span>
         </router-link>
       </div>
       <div v-if="!canEditUrlSlug && group && !group.urlSlug">
@@ -46,187 +39,203 @@
     </div>
     <div v-if="canDelete && group">
       <h2>Delete group</h2>
-      <p>
-        Please ensure all datasets have been removed before deleting a group.
-      </p>
-      <div style="text-align: right; margin: 1em 0;">
-        <el-button
-          type="danger"
-          :loading="isDeletingGroup"
-          @click="handleDeleteGroup"
-        >
-          Delete group
-        </el-button>
+      <p>Please ensure all datasets have been removed before deleting a group.</p>
+      <div style="text-align: right; margin: 1em 0">
+        <el-button type="danger" :loading="isDeletingGroup" @click="handleDeleteGroup"> Delete group </el-button>
       </div>
     </div>
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Prop, Watch } from 'vue-property-decorator'
-import {
-  deleteGroupMutation,
-  editGroupQuery,
-  EditGroupQuery,
-  UpdateGroupMutation,
-  updateGroupMutation,
-} from '../../api/group'
+import { defineComponent, ref, watch, computed, inject, reactive } from 'vue'
 import EditGroupForm from './EditGroupForm.vue'
-import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
-import ConfirmAsync from '../../components/ConfirmAsync'
+import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
+import { deleteGroupMutation, editGroupQuery, updateGroupMutation } from '../../api/group'
+import { useRoute, useRouter } from 'vue-router'
+import { useConfirmAsync } from '../../components/ConfirmAsync'
 import reportError from '../../lib/reportError'
+import { currentUserRoleQuery } from '../../api/user'
+import { ElMessage, ElButton } from '../../lib/element-plus'
+import { parseValidationErrors } from '../../api/validation'
 
-  @Component<GroupSettings>({
-    components: {
-      EditGroupForm,
-    },
-    apollo: {
-      currentUser: {
-        query: currentUserRoleQuery,
-        fetchPolicy: 'cache-first',
-      },
-      group: {
-        query: editGroupQuery,
-        loadingKey: 'membersLoading',
-        variables() { return { groupId: this.groupId } },
-      },
-    },
-  })
-export default class GroupSettings extends Vue {
-    groupLoading = 0;
-    isDeletingGroup = false;
-    isSaving = false;
-    model = {
+export default defineComponent({
+  components: {
+    EditGroupForm,
+    ElButton,
+  },
+  props: {
+    groupId: String,
+  },
+  setup(props) {
+    const route = useRoute()
+    const router = useRouter()
+    const apolloClient = inject(DefaultApolloClient)
+
+    const editForm = ref(null)
+    const model = reactive({
       name: '',
       shortName: '',
       urlSlug: '',
-    };
+    })
+    const errors = ref<any>({})
+    const isDeletingGroup = ref(false)
+    const isSaving = ref(false)
+    const confirmAsync = useConfirmAsync()
 
-    currentUser: CurrentUserRoleResult | null = null;
-    group: EditGroupQuery | null = null;
+    const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
+    const currentUser = computed(() => currentUserResult.value?.currentUser)
 
-    @Prop()
-    groupId!: string;
+    const {
+      result: groupResult,
+      loading: groupLoading,
+      refetch: refetchGroup,
+    } = useQuery(editGroupQuery, () => ({ groupId: props.groupId }), { fetchPolicy: 'network-only' })
+    const group = computed(() => groupResult.value?.group)
 
-    get canDelete(): boolean {
-      return this.currentUser && this.currentUser.role === 'admin' || false
-    }
+    const canDelete = computed(() => currentUser.value?.role === 'admin')
+    const canEdit = computed(
+      () => currentUser.value?.role === 'admin' || group.value?.currentUserRole === 'GROUP_ADMIN'
+    )
+    const canEditUrlSlug = computed(() => currentUser.value?.role === 'admin')
 
-    get canEdit(): boolean {
-      return (this.currentUser && this.currentUser.role === 'admin')
-        || (this.group && this.group.currentUserRole === 'GROUP_ADMIN')
-        || false
-    }
-
-    get canEditUrlSlug(): boolean {
-      return this.currentUser && this.currentUser.role === 'admin' || false
-    }
-
-    get groupName() {
-      return this.group ? this.group.name : ''
-    }
-
-    get groupUrlRoute() {
-      const groupIdOrSlug = this.group ? this.group.urlSlug || this.group.id : ''
-      return { name: 'group', params: { groupIdOrSlug } }
-    }
-
-    get groupUrlPrefix() {
-      const { href } = this.$router.resolve({ name: 'group', params: { groupIdOrSlug: 'REMOVE' } }, undefined, true)
+    const groupName = computed(() => group.value?.name || '')
+    const groupUrlRoute = computed(() => ({
+      name: 'group',
+      params: { groupIdOrSlug: group.value?.urlSlug || group.value?.id || '' },
+    }))
+    const groupUrlPrefix = computed(() => {
+      const { href } = router.resolve({ name: 'group', params: { groupIdOrSlug: 'REMOVE' } }, undefined)
       return location.origin + href.replace('REMOVE', '')
+    })
+
+    const handleUpdate = (newModel) => {
+      Object.assign(model, newModel)
     }
 
-    @Watch('group')
-    setModel() {
-      this.model.name = this.group && this.group.name || ''
-      this.model.shortName = this.group && this.group.shortName || ''
-      this.model.urlSlug = this.group && this.group.urlSlug || ''
-    }
+    watch(group, (newGroup) => {
+      if (newGroup) {
+        model.name = newGroup.name || ''
+        model.shortName = newGroup.shortName || ''
+        model.urlSlug = newGroup.urlSlug || ''
+      }
+    })
 
-    @ConfirmAsync(function(this: GroupSettings) {
-      return {
-        message: `Are you sure you want to delete ${this.groupName}?`,
+    const handleDeleteGroup = async () => {
+      const confirmOptions = {
+        message: `Are you sure you want to delete ${groupName.value}?`,
         confirmButtonText: 'Delete group',
         confirmButtonLoadingText: 'Deleting...',
       }
-    })
-    async handleDeleteGroup() {
-      this.isDeletingGroup = true
-      try {
-        const groupName = this.groupName
-        await this.$apollo.mutate({
-          mutation: deleteGroupMutation,
-          variables: { groupId: this.groupId },
-        })
-        this.$message({ message: `${groupName} has been deleted`, type: 'success' })
-        this.$router.push('/')
-      } catch (err) {
-        reportError(err)
-      } finally {
-        this.isDeletingGroup = false
-      }
+
+      await confirmAsync(confirmOptions, async () => {
+        isDeletingGroup.value = true
+        try {
+          await apolloClient.mutate({
+            mutation: deleteGroupMutation,
+            variables: { groupId: props.groupId },
+          })
+          ElMessage({ message: `${groupName.value} has been deleted`, type: 'success' })
+          await router.push('/')
+        } catch (err) {
+          reportError(err)
+        } finally {
+          isDeletingGroup.value = false
+        }
+      })
     }
 
-    async handleSave() {
-      this.isSaving = true
+    const handleSave = async () => {
+      errors.value = {}
+      isSaving.value = true
       try {
-        const { name, shortName, urlSlug } = this.model
-        await this.$apollo.mutate<UpdateGroupMutation>({
+        await editForm.value.validate()
+        const { name, shortName, urlSlug } = model
+        await apolloClient.mutate({
           mutation: updateGroupMutation,
           variables: {
-            groupId: this.groupId,
+            groupId: props.groupId,
             groupDetails: {
               name,
               shortName,
               // Avoid sending a null urlSlug unless it's being intentionally unset
-              ...(this.canEditUrlSlug ? { urlSlug: urlSlug || null } : {}),
+              ...(canEditUrlSlug.value ? { urlSlug: urlSlug || null } : {}),
             },
           },
         })
-        this.$message({ message: `${name} has been saved`, type: 'success' })
-        if (this.canEditUrlSlug) {
-          this.$router.replace({
-            params: { groupIdOrSlug: urlSlug || this.groupId },
-            query: this.$route.query,
+
+        ElMessage({ message: `${name} has been saved`, type: 'success' })
+        if (canEditUrlSlug.value) {
+          await router.replace({
+            params: { groupIdOrSlug: urlSlug || props.groupId },
+            query: route.query,
           })
         }
       } catch (err) {
-        reportError(err)
+        if (err !== false) {
+          // false is the project validation form
+          try {
+            errors.value = parseValidationErrors(err)
+          } finally {
+            reportError(err)
+          }
+        }
       } finally {
-        this.isSaving = false
+        isSaving.value = false
       }
     }
 
-    async refreshData() {
-      await this.$apollo.queries.group.refetch()
+    const refreshData = async () => {
+      await refetchGroup()
     }
+
+    return {
+      groupLoading,
+      isDeletingGroup,
+      isSaving,
+      model,
+      currentUser,
+      group,
+      canDelete,
+      canEdit,
+      canEditUrlSlug,
+      groupName,
+      groupUrlRoute,
+      groupUrlPrefix,
+      handleDeleteGroup,
+      handleSave,
+      refreshData,
+      editForm,
+      handleUpdate,
+    }
+  },
+})
+</script>
+
+<style scoped lang="scss">
+.group-settings {
+  width: 950px;
+  min-height: 80vh; // Ensure there's space for the loading spinner before is visible
 }
 
-</script>
-<style scoped lang="scss">
-  .group-settings {
-    width: 950px;
-    min-height: 80vh; // Ensure there's space for the loading spinner before is visible
-  }
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
 
-  .header-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+.header-row-buttons {
+  display: flex;
+  margin-right: 3px;
+}
 
-  .header-row-buttons {
-    display: flex;
-    margin-right: 3px;
-  }
+.flex-spacer {
+  flex-grow: 1;
+}
 
-  .flex-spacer {
-    flex-grow: 1;
-  }
-
-  .urlSlug {
-    padding: 4px 0;
-    background-color: #EEEEEE;
-  }
-
+.urlSlug {
+  padding: 4px 0;
+  background-color: #eeeeee;
+}
 </style>

@@ -1,19 +1,22 @@
 import './UploadDialog.css'
 
-import { defineComponent, reactive, onMounted, ref } from '@vue/composition-api'
-import { ApolloError } from 'apollo-client-preset'
+import { defineComponent, reactive, onMounted, ref, inject } from 'vue'
 import { UppyOptions, UploadResult } from '@uppy/core'
 
 import { SmForm, PrimaryLabelText } from '../../components/Form'
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 
+import { ElDialog, ElInput, ElButton, ElIcon } from '../../lib/element-plus'
+
 import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
 import safeJsonParse from '../../lib/safeJsonParse'
 import reportError from '../../lib/reportError'
 import { convertUploadUrlToS3Path } from '../../lib/util'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { Warning } from '@element-plus/icons-vue'
 
-const uppyOptions : UppyOptions = {
+const uppyOptions: UppyOptions = {
   debug: true,
   autoProceed: true,
   restrictions: {
@@ -28,7 +31,7 @@ const s3Options = {
   companionUrl: `${window.location.origin}/database_upload`,
 }
 
-const formatErrorMsg = (e: ApolloError) : ErrorMessage => {
+const formatErrorMsg = (e: any): ErrorMessage => {
   if (e.graphQLErrors && e.graphQLErrors.length) {
     const [error] = e.graphQLErrors
     const message = safeJsonParse(error.message)
@@ -39,8 +42,9 @@ const formatErrorMsg = (e: ApolloError) : ErrorMessage => {
     }
     if (message?.type === 'malformed_csv') {
       return {
-        message: 'The file format does not look correct. Please check that the file is tab-separated'
-        + ' and contains three columns: id, name, and formula.',
+        message:
+          'The file format does not look correct. Please check that the file is tab-separated' +
+          ' and contains three columns: id, name, and formula.',
       }
     }
     if (message?.type === 'bad_data') {
@@ -54,9 +58,9 @@ const formatErrorMsg = (e: ApolloError) : ErrorMessage => {
 }
 
 interface Props {
-  name: string,
-  details?: MolecularDBDetails,
-  groupId: string,
+  name: string
+  details?: MolecularDBDetails
+  groupId: string
 }
 
 type ErrorMessage = {
@@ -66,22 +70,23 @@ type ErrorMessage = {
 
 interface State {
   model: {
-    name: string,
-    version: string,
-    filePath: string,
-  },
-  loading: boolean,
-  error: ErrorMessage | null,
+    name: string
+    version: string
+    filePath: string
+  }
+  loading: boolean
+  error: ErrorMessage | null
 }
 
-const UploadDialog = defineComponent<Props>({
+const UploadDialog = defineComponent({
   name: 'UploadDialog',
   props: {
     name: String,
     details: Object,
     groupId: String,
   },
-  setup(props, { emit, root }) {
+  setup(props: Props | any, { emit }) {
+    const apolloClient = inject(DefaultApolloClient)
     const state = reactive<State>({
       model: {
         name: props.name,
@@ -116,11 +121,11 @@ const UploadDialog = defineComponent<Props>({
       state.model.filePath = ''
     }
 
-    const createDatabase = async() => {
+    const createDatabase = async () => {
       state.error = null
       state.loading = true
       try {
-        await root.$apollo.mutate({
+        await apolloClient.mutate({
           mutation: createDatabaseQuery,
           variables: {
             input: {
@@ -139,8 +144,8 @@ const UploadDialog = defineComponent<Props>({
       }
     }
 
-    const nameInput = ref<HTMLInputElement | null>(null)
-    const versionInput = ref<HTMLInputElement | null>(null)
+    const nameInput = ref(null)
+    const versionInput = ref(null)
     const focusHandler = () => {
       const inputRef = isNewVersion ? versionInput : nameInput
       if (inputRef.value !== null) {
@@ -150,38 +155,62 @@ const UploadDialog = defineComponent<Props>({
 
     // need to do this otherwise the `opened` event doesn't fire
     const visible = ref(false)
-    onMounted(() => { visible.value = true })
+    onMounted(() => {
+      visible.value = true
+    })
+
+    const renderFooter = () => {
+      return (
+        <span>
+          <ElButton
+            type="primary"
+            onClick={createDatabase}
+            disabled={!state.model.filePath || !state.model.name}
+            loading={state.loading}
+          >
+            Continue
+          </ElButton>
+        </span>
+      )
+    }
 
     return () => (
-      <el-dialog
-        visible={visible.value}
+      <ElDialog
+        modelValue={visible.value}
         append-to-body
         title="Upload database"
         onClose={handleClose}
         class="sm-database-upload-dialog"
         onOpened={focusHandler}
+        v-slots={{ footer: renderFooter }}
       >
         <FadeTransition>
-          { state.error
-            && <div class="flex items-start mb-3 text-danger text-sm leading-5">
-              <i class="el-icon-warning-outline mr-2 text-lg" />
+          {state.error && (
+            <div class="flex items-start mb-3 text-danger text-sm leading-5">
               <div>
-                <p class="m-0 flex items-start font-medium">
+                <p class="m-0 flex items-center font-medium">
+                  <ElIcon name="mr-2 text-lg">
+                    <Warning />
+                  </ElIcon>
                   {state.error.message}
                 </p>
-                { state.error.details
-                  && <ul class="overflow-y-auto m-0 mt-3 pl-6 max-h-25">
-                    { state.error.details.map(d => <li>{d}</li>) }
-                  </ul> }
+                {state.error.details && (
+                  <ul class="overflow-y-auto m-0 mt-3 pl-6 max-h-25">
+                    {state.error.details.map((d) => (
+                      <li>{d}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            </div> }
+            </div>
+          )}
         </FadeTransition>
         <SmForm class="flex leading-6">
           <div class="flex-grow">
             <label for="database-name">
               <PrimaryLabelText>Name</PrimaryLabelText>
             </label>
-            <el-input
+            <ElInput
               ref="nameInput"
               id="database-name"
               v-model={state.model.name}
@@ -192,25 +221,24 @@ const UploadDialog = defineComponent<Props>({
             <label for="database-version">
               <PrimaryLabelText>Version</PrimaryLabelText>
             </label>
-            <el-input
-              ref="versionInput"
-              id="database-version"
-              v-model={state.model.version}
-              disabled={state.loading}
-            />
+            <ElInput ref="versionInput" id="database-version" v-model={state.model.version} disabled={state.loading} />
           </div>
         </SmForm>
         <p class="m-0 mt-3">
           Databases should be provided in{' '}
-          <a href="https://en.wikipedia.org/wiki/Tab-separated_values" target= '_blank'>TSV format</a>.
+          <a href="https://en.wikipedia.org/wiki/Tab-separated_values" target="_blank">
+            TSV format
+          </a>
+          .
         </p>
         <p class="m-0 mt-1">
           Having trouble uploading the database? Follow our{' '}
-          <a href="https://github.com/metaspace2020/metaspace/wiki/Custom-database" target= '_blank'>instructions</a>.
+          <a href="https://github.com/metaspace2020/metaspace/wiki/Custom-database" target="_blank">
+            instructions
+          </a>
+          .
         </p>
-        <h4 class="m-0 mt-3 font-medium">
-          Example file:
-        </h4>
+        <h4 class="m-0 mt-3 font-medium">Example file:</h4>
         <pre class="m-0 mt-3">
           id{'\t'}name{'\t'}formula{'\n'}
           HMDB0000122{'\t'}Glucose{'\t'}C6H12O6{'\n'}
@@ -225,17 +253,7 @@ const UploadDialog = defineComponent<Props>({
           onFile-removed={handleRemoveFile} /* ugly alert */
           onComplete={handleUploadComplete}
         />
-        <span slot="footer">
-          <el-button
-            type="primary"
-            onClick={createDatabase}
-            disabled={!state.model.filePath || !state.model.name}
-            loading={state.loading}
-          >
-            Continue
-          </el-button>
-        </span>
-      </el-dialog>
+      </ElDialog>
     )
   },
 })

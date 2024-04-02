@@ -1,17 +1,11 @@
-import {
-  ElMessageBoxComponent,
-  ElMessageBoxOptions,
-  MessageBoxCloseAction,
-} from 'element-ui/types/message-box'
-import { MessageBox } from '../lib/element-ui'
+import { ElMessageBox as MessageBox, ElMessageBoxOptions } from 'element-plus'
 import reportError from '../lib/reportError'
 import './ConfirmAsync.scss'
 
 interface ExtraOptions {
-  confirmButtonLoadingText?: string;
-  style?: 'warning' | 'danger';
+  confirmButtonLoadingText?: string
+  style?: 'warning' | 'danger'
 }
-type ValueOrCallback<T> = T | ((...args: any[]) => T);
 
 const createCustomClass = (options: ExtraOptions) => {
   let customClass = 'confirm-async-message-box'
@@ -33,7 +27,7 @@ async function confirmPrompt(options: ElMessageBoxOptions & ExtraOptions, callba
       showInput,
       ...baseOptions,
       customClass: createCustomClass(options),
-      beforeClose: async(action: MessageBoxCloseAction, instance: ElMessageBoxComponent, done: Function) => {
+      beforeClose: async (action: any, instance: any, done: Function) => {
         const originalConfirmText = instance.confirmButtonText
         if (action === 'confirm') {
           instance.confirmButtonLoading = true

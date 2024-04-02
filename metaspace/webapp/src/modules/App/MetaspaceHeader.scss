@@ -1,0 +1,69 @@
+.sm-header {
+  .fixed {
+    // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
+    // don't overlap the header, but can't be higher than v-tooltip's initial z-index (2001)
+    z-index: 2001;
+  }
+
+  .header-items {
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+
+  .limit-width {
+    max-width: 250px;
+    overflow-wrap: break-word;
+    text-align: center;
+    overflow: hidden;
+    line-height: 1.2em;
+    max-height: 2.4em;
+
+    @media (max-width: 1279px) {
+      max-width: 150px;
+    }
+  }
+
+  .el-alert.is-light {
+    color: inherit;
+    background: inherit;
+  }
+
+  .sm-menu-icon .primary,
+  .sm-menu-icon .secondary {
+    stroke-width: 1px;
+    fill: #fff;
+  }
+
+  .responsive-menu{
+    display: none;
+
+    .header-items {
+      width: 100%;
+
+      .header-link{
+        background-color: theme('colors.primary');
+        width: 100%;
+        text-align: center;
+        border-radius: 0;
+
+        &:hover{
+          @apply bg-blue-700;
+        }
+      }
+    }
+  }
+
+  .non-responsive-menu {
+    display: flex;
+  }
+
+  @media screen and (max-width: 768px) { // md
+    .responsive-menu{
+      display: flex;
+    }
+    .non-responsive-menu{
+      display: none;
+    }
+  }
+}

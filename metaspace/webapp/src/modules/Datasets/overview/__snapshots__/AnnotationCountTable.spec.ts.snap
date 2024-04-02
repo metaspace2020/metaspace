@@ -1,133 +1,194 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AnnotationCountTable it should match snapshot 1`] = `
-<div class="relative text-center" data="[object Object],[object Object]" id="xxxx" header="5,10,20,50">
+exports[`AnnotationCountTable > it should match snapshot 1`] = `
+"<div class=\\"relative text-center\\">
   <h4># of annotations with FDR% &lt;=</h4>
-  <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" style="width: 100%; margin-top: 20px;">
-    <div class="hidden-columns">
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
+  <div class=\\"el-table--fit el-table--enable-row-hover el-table--enable-row-transition has-footer el-table el-table--layout-fixed\\" style=\\"width: 100%;\\" data-prefix=\\"el\\">
+    <div class=\\"el-table__inner-wrapper\\">
+      <div class=\\"hidden-columns\\">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      <div class=\\"el-table__header-wrapper\\">
+        <table class=\\"el-table__header\\" border=\\"0\\" cellpadding=\\"0\\" cellspacing=\\"0\\">
+          <colgroup>
+            <col name=\\"el-table_1_column_1\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_2\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_3\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_4\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_5\\" width=\\"80\\">
+          </colgroup>
+          <thead class=\\"\\">
+            <tr class=\\"\\">
+              <th class=\\"el-table_1_column_1 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">Database<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_1_column_2 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">5%<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_1_column_3 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">10%<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_1_column_4 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">20%<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_1_column_5 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">50%<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div class=\\"el-table__body-wrapper\\">
+        <div class=\\"el-scrollbar\\">
+          <div class=\\"el-scrollbar__wrap el-scrollbar__wrap--hidden-default\\">
+            <div class=\\"el-scrollbar__view\\" style=\\"display: inline-block; vertical-align: middle;\\">
+              <table class=\\"el-table__body\\" cellspacing=\\"0\\" cellpadding=\\"0\\" border=\\"0\\" style=\\"table-layout: fixed;\\">
+                <colgroup>
+                  <col name=\\"el-table_1_column_1\\" width=\\"80\\">
+                  <col name=\\"el-table_1_column_2\\" width=\\"80\\">
+                  <col name=\\"el-table_1_column_3\\" width=\\"80\\">
+                  <col name=\\"el-table_1_column_4\\" width=\\"80\\">
+                  <col name=\\"el-table_1_column_5\\" width=\\"80\\">
+                </colgroup>
+                <!--v-if-->
+                <tbody tabindex=\\"-1\\">
+                  <tr class=\\"el-table__row\\">
+                    <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;}}\\">HMDB-v4</div>
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.05&quot;}}\\">55</div>
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.1&quot;}}\\">104</div>
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_4 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.2&quot;}}\\">196</div>
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_5 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">224</div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class=\\"el-table__row\\">
+                    <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;}}\\">ChEBI-2018-01</div>
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.05&quot;}}\\">65</div>
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.1&quot;}}\\">90</div>
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_4 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.2&quot;}}\\">177</div>
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_5 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">190</div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+                <!--v-if-->
+              </table>
+              <!--v-if-->
+              <!--v-if-->
+            </div>
+          </div>
+          <div class=\\"el-scrollbar__bar is-horizontal\\" style=\\"display: none;\\">
+            <div class=\\"el-scrollbar__thumb\\" style=\\"transform: translateX(0%);\\"></div>
+          </div>
+          <div class=\\"el-scrollbar__bar is-vertical\\" style=\\"display: none;\\">
+            <div class=\\"el-scrollbar__thumb\\" style=\\"transform: translateY(0%);\\"></div>
+          </div>
+        </div>
+      </div>
+      <div class=\\"el-table__footer-wrapper\\">
+        <table class=\\"el-table__footer\\" cellspacing=\\"0\\" cellpadding=\\"0\\" border=\\"0\\">
+          <colgroup>
+            <col name=\\"el-table_1_column_1\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_2\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_3\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_4\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_5\\" width=\\"80\\">
+          </colgroup>
+          <tfoot>
+            <tr>
+              <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_1 is-leaf\\">
+                <div class=\\"cell\\">Total Annotations</div>
+              </td>
+              <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_2 is-leaf\\">
+                <div class=\\"cell\\">
+                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.05&quot;}}\\">120</div>
+                </div>
+              </td>
+              <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_3 is-leaf\\">
+                <div class=\\"cell\\">
+                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.1&quot;}}\\">194</div>
+                </div>
+              </td>
+              <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_4 is-leaf\\">
+                <div class=\\"cell\\">
+                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.2&quot;}}\\">373</div>
+                </div>
+              </td>
+              <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_5 is-leaf\\">
+                <div class=\\"cell\\">
+                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">414</div>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <!--v-if-->
     </div>
-    <div class="el-table__header-wrapper">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 400px;">
-        <colgroup>
-          <col name="el-table_1_column_1" width="80">
-          <col name="el-table_1_column_2" width="80">
-          <col name="el-table_1_column_3" width="80">
-          <col name="el-table_1_column_4" width="80">
-          <col name="el-table_1_column_5" width="80">
-        </colgroup>
-        <thead class="">
-          <tr class="">
-            <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf is-sortable">
-              <div class="cell">Database<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
-            </th>
-            <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf is-sortable">
-              <div class="cell">5%<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
-            </th>
-            <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf is-sortable">
-              <div class="cell">10%<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
-            </th>
-            <th colspan="1" rowspan="1" class="el-table_1_column_4     is-leaf is-sortable">
-              <div class="cell">20%<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
-            </th>
-            <th colspan="1" rowspan="1" class="el-table_1_column_5     is-leaf is-sortable">
-              <div class="cell">50%<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
-            </th>
-          </tr>
-        </thead>
-      </table>
-    </div>
-    <div class="el-table__body-wrapper is-scrolling-left">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 400px;">
-        <colgroup>
-          <col name="el-table_1_column_1" width="80">
-          <col name="el-table_1_column_2" width="80">
-          <col name="el-table_1_column_3" width="80">
-          <col name="el-table_1_column_4" width="80">
-          <col name="el-table_1_column_5" width="80">
-        </colgroup>
-        <tbody>
-          <tr class="el-table__row">
-            <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx" class="">HMDB-v4</a></div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.05" class="">55</a></div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.1" class="">104</a></div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.2" class="">196</a></div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=1&amp;ds=xxxx&amp;fdr=0.5" class="">224</a></div>
-            </td>
-          </tr>
-          <tr class="el-table__row">
-            <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx" class="">ChEBI-2018-01</a></div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.05" class="">65</a></div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.1" class="">90</a></div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.2" class="">177</a></div>
-            </td>
-            <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
-              <div class="cell"><a href="/dataset/xxxx/annotations?db_id=6&amp;ds=xxxx&amp;fdr=0.5" class="">190</a></div>
-            </td>
-          </tr>
-          <!---->
-        </tbody>
-      </table>
-      <!---->
-      <!---->
-    </div>
-    <div class="el-table__footer-wrapper">
-      <table cellspacing="0" cellpadding="0" border="0" class="el-table__footer" style="width: 400px;">
-        <colgroup>
-          <col name="el-table_1_column_1" width="80">
-          <col name="el-table_1_column_2" width="80">
-          <col name="el-table_1_column_3" width="80">
-          <col name="el-table_1_column_4" width="80">
-          <col name="el-table_1_column_5" width="80">
-        </colgroup>
-        <tbody class="">
-          <tr>
-            <td colspan="1" rowspan="1" class="el-table_1_column_1 is-leaf">
-              <div class="cell">Total Annotations</div>
-            </td>
-            <td colspan="1" rowspan="1" class="el-table_1_column_2 is-leaf">
-              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.05" class="">120</a></div>
-            </td>
-            <td colspan="1" rowspan="1" class="el-table_1_column_3 is-leaf">
-              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.1" class="">194</a></div>
-            </td>
-            <td colspan="1" rowspan="1" class="el-table_1_column_4 is-leaf">
-              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.2" class="">373</a></div>
-            </td>
-            <td colspan="1" rowspan="1" class="el-table_1_column_5 is-leaf">
-              <div class="cell"><a href="/dataset/xxxx/annotations?ds=xxxx&amp;fdr=0.5" class="">414</a></div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <!---->
-    <!---->
-    <!---->
-    <div class="el-table__column-resize-proxy" style="display: none;"></div>
+    <div class=\\"el-table__column-resize-proxy\\" style=\\"display: none;\\"></div>
   </div>
-  <div class="text-right mt-2"><button type="button" class="el-button el-button--default">
-      <!---->
-      <!----><span>Browse annotations</span></button></div>
-</div>
+  <div class=\\"text-right mt-2\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button\\">
+      <!--v-if--><span class=\\"\\">Browse annotations</span>
+    </button></div>
+</div>"
 `;

@@ -21,6 +21,8 @@
   "metadataTypes": ["ims", "lcms"],
 
   "features": {
-    "newAuth": true
+    "newAuth": true,
+    "all_adducts": true,
+    "neutral_losses": true
   }
 }

@@ -1,8 +1,7 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`DatasetBrowserSpectrumChart it should match snapshot when empty 1`] = `
-<div
-  class="dataset-browser-spectrum-container"
-  isempty="true"
-/>
+exports[`DatasetBrowserKendrickPlot > it should match snapshot when empty 1`] = `
+"<div class=\\"dataset-browser-spectrum-container\\">
+  <!---->
+</div>"
 `;

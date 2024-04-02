@@ -1,8 +1,5 @@
 <template>
-  <div
-    ref="container"
-    v-resize="onResize"
-  >
+  <div ref="container" v-resize="onResize">
     <ion-image-viewer
       ref="imageLoader"
       :ion-image-layers="ionImageLayers"
@@ -14,161 +11,164 @@
       :x-offset="xOffset"
       :y-offset="yOffset"
       :style="imageStyle"
-      v-bind="$attrs"
-      v-on="$listeners"
+      v-bind="attrs"
+      v-on="listeners"
     />
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import resize from 'vue-resize-directive'
+import { defineComponent, ref, watch, computed, onMounted } from 'vue'
+// @ts-ignore
+import resize from 'vue3-resize-directive'
 import config from '../lib/config'
-import { Component, Prop, Watch } from 'vue-property-decorator'
 import IonImageViewer from './IonImageViewer'
-import { IonImage, loadPngFromUrl, processIonImage, ScaleType, IonImageLayer } from '../lib/ionImageRendering'
+import { IonImage, loadPngFromUrl, processIonImage, IonImageLayer } from '../lib/ionImageRendering'
 import fitImageToArea, { FitImageToAreaResult } from '../lib/fitImageToArea'
 import reportError from '../lib/reportError'
 import createColormap, { OpacityMode } from '../lib/createColormap'
 
-  @Component({
-    inheritAttrs: false,
-    directives: {
-      resize,
-    },
-    components: {
-      IonImageViewer,
-    },
-  })
-export default class ImageLoader extends Vue {
-    $refs: any;
+export default defineComponent({
+  directives: {
+    resize,
+  },
+  components: {
+    IonImageViewer,
+  },
+  props: {
+    src: { type: String, default: null },
+    imagePosition: Object,
+    imageStyle: Object,
+    minIntensity: Number,
+    maxIntensity: Number,
+    pixelAspectRatio: { type: Number },
+    scaleType: Object,
+    colormap: { type: String, default: 'Viridis' },
+    opacityMode: String,
+    annotImageOpacity: Number,
+    normalizationData: Object,
+  },
+  setup(props, { emit, attrs }) {
+    const container = ref(null)
+    const imageLoader = ref(null)
+    const ionImage = ref<IonImage | null>(null)
+    const ionImageIsLoading = ref(false)
+    const containerWidth = ref(500)
+    const containerHeight = ref(500)
 
-    @Prop()
-    src!: string | null;
+    const listeners = computed(() => {
+      return Object.fromEntries(Object.entries(attrs).filter(([, value]) => typeof value === 'function'))
+    })
 
-    @Prop()
-    imagePosition!: any;
-
-    @Prop()
-    imageStyle!: any;
-
-    @Prop()
-    minIntensity?: number;
-
-    @Prop()
-    maxIntensity?: number;
-
-    @Prop()
-    pixelAspectRatio!: number;
-
-    @Prop({ type: String })
-    scaleType?: ScaleType;
-
-    @Prop({ default: 'Viridis' })
-    colormap!: string;
-
-    @Prop()
-    opacityMode?: OpacityMode;
-
-    @Prop()
-    annotImageOpacity?: number;
-
-    @Prop()
-    normalizationData?: any;
-
-    containerWidth = 500;
-    containerHeight = 500;
-    ionImage: IonImage | null = null;
-    ionImageIsLoading = false;
-
-    created() {
-      const ignoredPromise = this.updateIonImage()
-    }
-
-    mounted() {
-      this.onResize()
-    }
-
-    onResize() {
-      if (this.$refs.container != null) {
-        this.containerWidth = this.$refs.container.clientWidth
-        this.containerHeight = this.$refs.container.clientHeight
-      }
-    }
-
-    async updateIonImage() {
+    const updateIonImage = async () => {
       // Keep track of which image is loading so that this can bail if src changes before the download finishes
-      const newUrl = this.src
+      const newUrl = props.src
 
       if (newUrl != null) {
-        this.ionImageIsLoading = true
+        ionImageIsLoading.value = true
         try {
           const png = await loadPngFromUrl((config.imageStorage || '') + newUrl)
 
-          if (newUrl === this.src) {
-            this.ionImage = processIonImage(png, this.minIntensity, this.maxIntensity, this.scaleType,
-              undefined, undefined, this.normalizationData)
-            this.ionImageIsLoading = false
+          if (newUrl === props.src) {
+            ionImage.value = processIonImage(
+              png,
+              props.minIntensity,
+              props.maxIntensity,
+              props.scaleType as any,
+              undefined,
+              undefined,
+              props.normalizationData as any
+            )
+            ionImageIsLoading.value = false
           }
         } catch (err) {
           reportError(err, null)
-          if (newUrl === this.src) {
-            this.ionImage = null
-            this.ionImageIsLoading = false
+          if (newUrl === props.src) {
+            ionImage.value = null
+            ionImageIsLoading.value = false
           }
         }
       }
     }
 
-    @Watch('src')
-    async updateImageSrc() {
-      this.updateIonImage()
+    watch(() => props.src, updateIonImage)
+    watch(() => props.normalizationData, updateIonImage)
+
+    const onResize = () => {
+      if (container.value != null) {
+        containerWidth.value = container.value.clientWidth
+        containerHeight.value = container.value.clientHeight
+      }
     }
 
-    @Watch('normalizationData')
-    async updateIonImageNormalization() {
-      this.updateIonImage()
-    }
-
-    get zoom() {
-      return (this.imagePosition && this.imagePosition.zoom || 1) * this.imageFit.imageZoom
-    }
-
-    get xOffset() {
-      return this.imagePosition && this.imagePosition.xOffset || 0
-    }
-
-    get yOffset() {
-      return this.imagePosition && this.imagePosition.yOffset || 0
-    }
-
-    get imageFit(): FitImageToAreaResult {
+    const imageFit = computed((): FitImageToAreaResult => {
       return fitImageToArea({
-        imageWidth: this.ionImage ? this.ionImage.width : this.containerWidth,
-        imageHeight: (this.ionImage ? this.ionImage.height : this.containerHeight) / this.pixelAspectRatio,
-        areaWidth: this.containerWidth,
-        areaHeight: this.containerHeight,
+        imageWidth: ionImage.value ? ionImage.value.width : containerWidth.value,
+        imageHeight: (ionImage.value ? ionImage.value.height : containerHeight.value) / props.pixelAspectRatio,
+        areaWidth: containerWidth.value,
+        areaHeight: containerHeight.value,
       })
-    }
+    })
 
-    get ionImageLayers(): IonImageLayer[] {
-      if (this.ionImage) {
-        return [{
-          ionImage: this.ionImage,
-          colorMap: createColormap(this.colormap, this.opacityMode, this.annotImageOpacity),
-        }]
+    const ionImageLayers = computed((): IonImageLayer[] => {
+      if (ionImage.value) {
+        return [
+          {
+            ionImage: ionImage.value,
+            colorMap: createColormap(props.colormap, props.opacityMode as OpacityMode, props.annotImageOpacity),
+          },
+        ]
       }
       return []
-    }
+    })
 
-    @Watch('imageFit')
-    emitRedrawEvent() {
-      this.$emit('redraw', {
-        width: this.imageFit.areaWidth,
-        height: this.imageFit.areaHeight,
-        naturalWidth: this.ionImage ? this.ionImage.width : 0,
-        naturalHeight: this.ionImage ? this.ionImage.height : 0,
+    const zoom = computed(() => {
+      return ((props.imagePosition && props.imagePosition.zoom) || 1) * imageFit.value.imageZoom
+    })
+
+    const xOffset = computed(() => {
+      return (props.imagePosition && props.imagePosition.xOffset) || 0
+    })
+
+    const yOffset = computed(() => {
+      return (props.imagePosition && props.imagePosition.yOffset) || 0
+    })
+
+    const emitRedrawEvent = () => {
+      emit('redraw', {
+        width: imageFit.value.areaWidth,
+        height: imageFit.value.areaHeight,
+        naturalWidth: ionImage.value ? ionImage.value.width : 0,
+        naturalHeight: ionImage.value ? ionImage.value.height : 0,
       })
     }
-}
+
+    watch(imageFit, () => {
+      emitRedrawEvent()
+    })
+
+    onMounted(() => {
+      // ignored promise on start
+      updateIonImage()
+      onResize()
+    })
+
+    return {
+      container,
+      imageLoader,
+      ionImage,
+      ionImageIsLoading,
+      containerWidth,
+      containerHeight,
+      onResize,
+      imageFit,
+      ionImageLayers,
+      zoom,
+      xOffset,
+      yOffset,
+      listeners,
+      attrs,
+    }
+  },
+})
 </script>

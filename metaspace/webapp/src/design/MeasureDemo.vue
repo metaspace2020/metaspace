@@ -1,11 +1,9 @@
 <template>
   <div>
     <p class="text-xs leading-4">
-      <span
-        class="block mb-2 p-2 -ml-2 bg-gray-100 rounded box-border"
-        :class="twClass"
-      >
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+      <span class="block mb-2 p-2 -ml-2 bg-gray-100 rounded box-border" :class="twClass">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
+        magna aliqua.
       </span>
     </p>
     <p>
@@ -17,7 +15,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent } from 'vue'
 
 import tailwindConfig from '../../tailwind.config'
 

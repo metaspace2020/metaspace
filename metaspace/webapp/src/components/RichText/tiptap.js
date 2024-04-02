@@ -1,63 +1,56 @@
-import { Mark, Extension } from 'tiptap'
+// Import necessary functionalities from TiPTaP v2
+import { Mark, Extension } from '@tiptap/core'
 import { toggleMark } from 'tiptap-commands'
 
 export class Sub extends Mark {
-
-  get name() {
+  static get name() {
     return 'sub'
   }
 
-  get schema() {
+  parseHTML() {
+    return [{ tag: 'sub' }]
+  }
+
+  renderHTML({ HTMLAttributes }) {
+    return ['sub', HTMLAttributes, 0]
+  }
+
+  addCommands() {
     return {
-      parseDOM: [
-        {
-          tag: 'sub',
-        },
-      ],
-      toDOM: () => ['sub', 0],
+      toggleSub: () => toggleMark(this.name),
     }
   }
-
-  commands({ type }) {
-    return () => toggleMark(type)
-  }
-
 }
 
 export class Sup extends Mark {
-
-  get name() {
+  static get name() {
     return 'sup'
   }
 
-  get schema() {
+  parseHTML() {
+    return [{ tag: 'sup' }]
+  }
+
+  renderHTML({ HTMLAttributes }) {
+    return ['sup', HTMLAttributes, 0]
+  }
+
+  addCommands() {
     return {
-      parseDOM: [
-        {
-          tag: 'sup',
-        },
-      ],
-      toDOM: () => ['sup', 0],
+      toggleSup: () => toggleMark(this.name),
     }
   }
-
-  commands({ type }) {
-    return () => toggleMark(type)
-  }
-
 }
 
 export class OnEscape extends Extension {
-
   constructor(cb) {
     super()
-    this.cb = cb;
+    this.cb = cb
   }
 
-  keys() {
+  addKeyboardShortcuts() {
     return {
-      'Escape': () => this.cb()
+      Escape: () => this.cb(),
     }
   }
-
 }

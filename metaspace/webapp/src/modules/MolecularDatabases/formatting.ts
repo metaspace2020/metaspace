@@ -3,7 +3,7 @@ import { sortBy } from 'lodash-es'
 import { MolecularDB, MolecularDBDetails } from '../../api/moldb'
 
 // loose input type for dataset fdrCounts
-export function formatDatabaseLabel(db: { name: string, version: string }) {
+export function formatDatabaseLabel(db: { name: string; version: string }) {
   let label = ''
   if (db.name) {
     label += db.name
@@ -14,15 +14,8 @@ export function formatDatabaseLabel(db: { name: string, version: string }) {
   return label
 }
 
-export function getDatabaseDetails(database: MolecularDB) : MolecularDBDetails {
-  const {
-    citation,
-    description,
-    fullName,
-    isPublic,
-    isVisible,
-    link,
-  } = database
+export function getDatabaseDetails(database: MolecularDB): MolecularDBDetails {
+  const { citation, description, fullName, isPublic, isVisible, link } = database
 
   return {
     citation,
@@ -39,7 +32,7 @@ export interface MolDBsByGroup {
   molecularDatabases: MolecularDB[]
 }
 
-export function getDatabasesByGroup(molDBs: MolecularDB[]) : MolDBsByGroup[] {
+export function getDatabasesByGroup(molDBs: MolecularDB[]): MolDBsByGroup[] {
   const metaspaceDBs = []
   const groups: Record<string, MolDBsByGroup> = {}
 
@@ -56,8 +49,5 @@ export function getDatabasesByGroup(molDBs: MolecularDB[]) : MolDBsByGroup[] {
     }
   }
 
-  return [
-    { shortName: 'METASPACE', molecularDatabases: metaspaceDBs },
-    ...sortBy(Object.values(groups), 'shortName'),
-  ]
+  return [{ shortName: 'METASPACE', molecularDatabases: metaspaceDBs }, ...sortBy(Object.values(groups), 'shortName')]
 }

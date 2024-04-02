@@ -17,11 +17,9 @@
   </dropzone>
 </template>
 <script lang="ts">
-import { defineComponent, reactive, onUnmounted, computed, watch } from '@vue/composition-api'
+import { defineComponent, reactive, onUnmounted, computed, watch } from 'vue'
 import Uppy, { UppyOptions, UppyFile } from '@uppy/core'
 import AwsS3Multipart, { AwsS3MultipartOptions } from '@uppy/aws-s3-multipart'
-
-import FadeTransition from '../../components/FadeTransition'
 
 import Dropzone from './Dropzone.vue'
 import FileStatus, { FileStatusName } from './FileStatus.vue'
@@ -53,13 +51,12 @@ interface Props {
   s3Options: AwsS3MultipartOptions
 }
 
-const UppyUploader = defineComponent<Props>({
+const UppyUploader = defineComponent({
   name: 'UppyUploader',
   inheritAttrs: false, // class is passed down to child components
   components: {
     Dropzone,
     FileStatus,
-    FadeTransition,
   },
   props: {
     disabled: Boolean,
@@ -68,14 +65,14 @@ const UppyUploader = defineComponent<Props>({
     s3Options: Object,
     currentUser: Object,
   },
-  setup(props, { emit }) {
+  setup(props: Props | any, { emit }) {
     const state = reactive<State>({
       status: 'DROPPING',
     })
 
     preventDropEvents()
 
-    const uppy = Uppy({ ...props.options, store: createStore() })
+    const uppy = new Uppy({ ...props.options, store: createStore() })
       .on('file-added', (file) => {
         emit('file-added', file)
       })
@@ -92,7 +89,7 @@ const UppyUploader = defineComponent<Props>({
       .on('error', (...args) => {
         console.log(args)
       })
-      .on('complete', result => {
+      .on('complete', (result) => {
         emit('complete', result)
       })
 
@@ -100,14 +97,17 @@ const UppyUploader = defineComponent<Props>({
       uppy.use(AwsS3Multipart, {
         limit: 2,
         ...props.s3Options,
-      })
+      } as any)
 
-      watch(() => props.s3Options, (newOpts) => {
-        uppy.getPlugin('AwsS3Multipart').setOptions(newOpts)
-      })
+      watch(
+        () => props.s3Options,
+        (newOpts) => {
+          uppy.getPlugin('AwsS3Multipart').setOptions(newOpts)
+        }
+      )
     }
 
-    function getFileStatus(file?: UppyFile) : FileStatusName {
+    function getFileStatus(file?: UppyFile): FileStatusName {
       if (props.disabled) {
         return 'DISABLED'
       }
@@ -130,19 +130,18 @@ const UppyUploader = defineComponent<Props>({
     const files = computed(() => {
       const files = uppy.getFiles()
       if (props.requiredFileTypes) {
-        return props.requiredFileTypes
-          .map(ext => {
-            const matchingFile = files.find(f => f.extension.toLowerCase() === ext.toLowerCase())
-            return {
-              id: matchingFile?.id,
-              name: matchingFile?.name,
-              extension: matchingFile?.extension || ext,
-              progress: matchingFile?.progress?.percentage,
-              status: getFileStatus(matchingFile),
-            }
-          })
+        return props.requiredFileTypes.map((ext) => {
+          const matchingFile = files.find((f) => f.extension.toLowerCase() === ext.toLowerCase())
+          return {
+            id: matchingFile?.id,
+            name: matchingFile?.name,
+            extension: matchingFile?.extension || ext,
+            progress: matchingFile?.progress?.percentage,
+            status: getFileStatus(matchingFile),
+          }
+        })
       }
-      return files.map(f => ({
+      return files.map((f) => ({
         id: f.id,
         name: f.name,
         extension: f.extension,
@@ -161,7 +160,8 @@ const UppyUploader = defineComponent<Props>({
             data: file,
           })
         }
-      } catch (err) {
+        uppy.upload()
+      } catch (err: any) {
         uppy.log(err)
       }
     }
@@ -177,11 +177,7 @@ const UppyUploader = defineComponent<Props>({
         }
         if (props.options?.restrictions) {
           const { maxNumberOfFiles } = props.options.restrictions
-          return (
-            maxNumberOfFiles === undefined
-            || maxNumberOfFiles === null
-            || maxNumberOfFiles > 1
-          )
+          return maxNumberOfFiles === undefined || maxNumberOfFiles === null || maxNumberOfFiles > 1
         }
         return true
       }),

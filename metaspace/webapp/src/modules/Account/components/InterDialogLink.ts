@@ -1,5 +1,6 @@
-import Vue, { CreateElement } from 'vue'
-import { Prop, Component } from 'vue-property-decorator'
+import { defineComponent, computed, h } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useStore } from 'vuex'
 import { dialogRoutes } from '../dialogs'
 
 /**
@@ -9,30 +10,38 @@ import { dialogRoutes } from '../dialogs'
  * * when they display as a stand-alone page, they should behave like a page and internal links should navigate away
  * In both cases, links should have a `href`
  */
-@Component
-export default class InterDialogLink extends Vue {
-  @Prop({ type: String, required: true })
-  dialog!: string;
+export default defineComponent({
+  name: 'InterDialogLink',
+  props: {
+    dialog: {
+      type: String,
+      required: true,
+    },
+  },
+  setup(props, { slots }) {
+    const router = useRouter()
+    const route = useRoute()
+    const store = useStore()
 
-  get link() {
-    return dialogRoutes[this.dialog]
-  }
+    const link = computed(() => dialogRoutes[props.dialog])
 
-  render(h: CreateElement) {
-    return h('a', {
-      attrs: {
-        href: this.$router.resolve(this.link, this.$route).href,
-      },
-      on: {
-        click: (e: Event) => {
-          e.preventDefault()
-          if (this.$store.state.account.dialogCloseRedirect != null) {
-            this.$router.push(this.link)
-          } else {
-            this.$store.commit('account/showDialog', this.dialog)
-          }
+    const handleClick = (e: Event) => {
+      e.preventDefault()
+      if (store.state.account.dialogCloseRedirect != null) {
+        router.push(link.value)
+      } else {
+        store.commit('account/showDialog', props.dialog)
+      }
+    }
+
+    return () =>
+      h(
+        'a',
+        {
+          href: router.resolve(link.value, route).href,
+          onClick: handleClick,
         },
-      },
-    }, this.$slots.default)
-  }
-}
+        slots.default ? slots.default() : []
+      )
+  },
+})

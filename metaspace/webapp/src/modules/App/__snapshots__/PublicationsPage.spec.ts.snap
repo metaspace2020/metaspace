@@ -1,52 +1,49 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`PublicationsPage should match snapshot 1`] = `
-<div class="sm-publications-page">
-  <div class="sm-content-page sm-main-content">
+exports[`PublicationsPage > should match snapshot 1`] = `
+"<div class=\\"sm-publications-page\\">
+  <div class=\\"sm-content-page sm-main-content\\">
     <h1>Relevant Publications</h1>
-    <h2 id="ours">Our publications presenting METASPACE or its methods (5)</h2>
+    <h2 id=\\"ours\\">Our publications presenting METASPACE or its methods (5)</h2>
     <ul>
       <li>
-        <h3 class="text-blue-800 text-base font-medium m-0">Spatial Metabolomics and Imaging Mass Spectrometry in the Age of Artificial Intelligence</h3>
+        <h3 class=\\"text-blue-800 text-base font-medium m-0\\">Spatial Metabolomics and Imaging Mass Spectrometry in the Age of Artificial Intelligence</h3>
         <p>Alexandrov T</p>
-        <p class="text-sm font-medium"><span class="text-green-800">Annu. Rev. Biomed. Data Sci.</span>, <time>2020</time></p>
-        <p class="text-sm truncate text-primary"><a href="https://doi.org/10.1146/annurev-biodatasci-011420-031537">https://doi.org/10.1146/annurev-biodatasci-011420-031537</a></p>
+        <p class=\\"text-sm font-medium\\"><span class=\\"text-green-800\\">Annu. Rev. Biomed. Data Sci.</span>, <time>2020</time></p>
+        <p class=\\"text-sm truncate text-primary\\"><a href=\\"https://doi.org/10.1146/annurev-biodatasci-011420-031537\\">https://doi.org/10.1146/annurev-biodatasci-011420-031537</a></p>
       </li>
       <li>
-        <h3 class="text-blue-800 text-base font-medium m-0">OffsampleAI: artificial intelligence approach to recognize off-sample mass spectrometry images</h3>
+        <h3 class=\\"text-blue-800 text-base font-medium m-0\\">OffsampleAI: artificial intelligence approach to recognize off-sample mass spectrometry images</h3>
         <p>Ovchinnikova K, Kovalev V, Stuart L, Alexandrov T</p>
-        <p class="text-sm font-medium"><span class="text-green-800">BMC Bioinformatics</span>, <time>2020</time></p>
-        <p class="text-sm truncate text-primary"><a href="https://doi.org/10.1186/s12859-020-3425-x">https://doi.org/10.1186/s12859-020-3425-x</a></p>
+        <p class=\\"text-sm font-medium\\"><span class=\\"text-green-800\\">BMC Bioinformatics</span>, <time>2020</time></p>
+        <p class=\\"text-sm truncate text-primary\\"><a href=\\"https://doi.org/10.1186/s12859-020-3425-x\\">https://doi.org/10.1186/s12859-020-3425-x</a></p>
       </li>
       <li>
-        <h3 class="text-blue-800 text-base font-medium m-0">ColocML: Machine learning quantifies co-localization between mass spectrometry images</h3>
+        <h3 class=\\"text-blue-800 text-base font-medium m-0\\">ColocML: Machine learning quantifies co-localization between mass spectrometry images</h3>
         <p>Ovchinnikova K, Stuart L, Rakhlin A, Nikolenko S, Alexandrov T</p>
-        <p class="text-sm font-medium"><span class="text-green-800">Bioinformatics</span>, <time>2020</time></p>
-        <p class="text-sm truncate text-primary"><a href="https://doi.org/10.1093/bioinformatics/btaa085">https://doi.org/10.1093/bioinformatics/btaa085</a></p>
+        <p class=\\"text-sm font-medium\\"><span class=\\"text-green-800\\">Bioinformatics</span>, <time>2020</time></p>
+        <p class=\\"text-sm truncate text-primary\\"><a href=\\"https://doi.org/10.1093/bioinformatics/btaa085\\">https://doi.org/10.1093/bioinformatics/btaa085</a></p>
       </li>
       <li>
-        <h3 class="text-blue-800 text-base font-medium m-0">METASPACE: A community-populated knowledge base of spatial metabolomes in health and disease</h3>
+        <h3 class=\\"text-blue-800 text-base font-medium m-0\\">METASPACE: A community-populated knowledge base of spatial metabolomes in health and disease</h3>
         <p>Alexandrov T, Ovchnnikova K, Palmer A, Kovalev V, et al.</p>
-        <p class="text-sm font-medium"><span class="text-green-800">BioRxiv</span>, <time>2019</time></p>
-        <p class="text-sm truncate text-primary"><a href="https://www.biorxiv.org/content/10.1101/539478v1.abstract">https://www.biorxiv.org/content/10.1101/539478v1.abstract</a></p>
+        <p class=\\"text-sm font-medium\\"><span class=\\"text-green-800\\">BioRxiv</span>, <time>2019</time></p>
+        <p class=\\"text-sm truncate text-primary\\"><a href=\\"https://www.biorxiv.org/content/10.1101/539478v1.abstract\\">https://www.biorxiv.org/content/10.1101/539478v1.abstract</a></p>
       </li>
       <li>
-        <h3 class="text-blue-800 text-base font-medium m-0">FDR-controlled metabolite annotation for high-resolution imaging mass spectrometry</h3>
+        <h3 class=\\"text-blue-800 text-base font-medium m-0\\">FDR-controlled metabolite annotation for high-resolution imaging mass spectrometry</h3>
         <p>Palmer A, Phapale P, Chernyavsky I, Lavigne R, Fay D, Tarasov A, Kovalev V, Fuchser J, Nikolenko S, Pineau C, Becker M, Alexandrov T</p>
-        <p class="text-sm font-medium"><span class="text-green-800">Nat. Methods</span>, <time>2017</time></p>
-        <p class="text-sm truncate text-primary"><a href="https://doi.org/10.1038/nmeth.4072">https://doi.org/10.1038/nmeth.4072</a></p>
+        <p class=\\"text-sm font-medium\\"><span class=\\"text-green-800\\">Nat. Methods</span>, <time>2017</time></p>
+        <p class=\\"text-sm truncate text-primary\\"><a href=\\"https://doi.org/10.1038/nmeth.4072\\">https://doi.org/10.1038/nmeth.4072</a></p>
       </li>
     </ul>
-    <h2 id="others">Other publications</h2><a href="https://scholar.google.com/scholar?q=%22METASPACE%22+AND+%28%22imaging+mass+spectrometry%22+OR+%22mass+spectrometry+imaging%22%29" target="_blank" class="publication-link flex items-center">Research articles using METASPACE (76)<anonymous-stub class="h-4 w-4 pointer-events-none">
-        <anonymous-stub></anonymous-stub>
-      </anonymous-stub></a><a href="https://scholar.google.com/scholar?q=%22METASPACE%22+AND+%28%22imaging+mass+spectrometry%22+OR+%22mass+spectrometry+imaging%22%29++AND+%22Review+article%22&amp;btnG=" target="_blank" class="publication-link flex items-center mt-1">Reviews (42)<anonymous-stub class="h-4 w-4 pointer-events-none">
-        <anonymous-stub></anonymous-stub>
-      </anonymous-stub></a>
-    <div class="cite-meta-wrapper">
+    <h2 id=\\"others\\">Other publications</h2><a class=\\"publication-link flex items-center\\" href=\\"https://scholar.google.com/scholar?q=%22METASPACE%22+AND+%28%22imaging+mass+spectrometry%22+OR+%22mass+spectrometry+imaging%22%29\\" target=\\"_blank\\">Research articles using METASPACE (332)<i data-v-1083ec30=\\"\\" class=\\"flex h-4 w-4 pointer-events-none\\"><svg></svg></i></a><a class=\\"publication-link flex items-center mt-1\\" href=\\"https://scholar.google.com/scholar?q=%22METASPACE%22+AND+%28%22imaging+mass+spectrometry%22+OR+%22mass+spectrometry+imaging%22%29++AND+%22Review+article%22&amp;btnG=\\" target=\\"_blank\\">Reviews (34)<i data-v-1083ec30=\\"\\" class=\\"flex h-4 w-4 pointer-events-none\\"><svg></svg></i></a>
+    <div class=\\"cite-meta-wrapper\\">
       <h3>How should I cite METASPACE?</h3>
-      <p class="cite-meta-p">Please cite our publication (<a href="http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html">Palmer et al., 2016, Nature Methods</a>) and refer to <a href="https://metaspace2020.eu">https://metaspace2020.eu</a>.</p>
-      <p>If you are preparing a scientific publication based on METASPACE annotations, create a<vuecomponent-stub to="/projects" tag="a" event="click">project</vuecomponent-stub> and follow the ‘Scientific Publishing’ workflow.</p>
+      <p class=\\"cite-meta-p\\">Please cite our publication (<a href=\\"http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html\\">Palmer et al., 2016, Nature Methods</a>) and refer to <a href=\\"https://metaspace2020.eu\\">https://metaspace2020.eu</a>.</p>
+      <p>If you are preparing a scientific publication based on METASPACE annotations, create a
+      <div>project</div> and follow the ‘Scientific Publishing’ workflow.</p>
     </div>
   </div>
-</div>
+</div>"
 `;

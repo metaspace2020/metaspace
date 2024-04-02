@@ -1,4 +1,4 @@
-import { Ref, computed } from '@vue/composition-api'
+import { Ref, computed } from 'vue'
 
 interface SliderProps {
   value: number
@@ -15,19 +15,19 @@ interface Range {
 }
 
 export type SliderThumbInstance = {
-  x: Ref<number>,
-  getValue: (x: number) => number,
-  increment: (factor: number) => number,
-  decrement: (factor: number) => number,
+  x: Ref<number>
+  getValue: (x: number) => number
+  increment: (factor: number) => number
+  decrement: (factor: number) => number
 }
 
-function applyBounds(value: number, { min, minBound = min, max, maxBound = max } : SliderProps) {
+function applyBounds(value: number, { min, minBound = min, max, maxBound = max }: SliderProps) {
   if (value < minBound) return minBound
   if (value > maxBound) return maxBound
   return value
 }
 
-export default (getProps: () => SliderProps, range: Ref<Range>) : SliderThumbInstance => {
+export default (getProps: () => SliderProps | any, range: Ref<Range>): SliderThumbInstance | any => {
   return {
     getValue(x: number) {
       const props = getProps()
@@ -37,23 +37,23 @@ export default (getProps: () => SliderProps, range: Ref<Range>) : SliderThumbIns
       let value = ratio * (max - min) + min
 
       if (step !== 0.0) {
-        value = step * Math.floor((value / step))
+        value = step * Math.floor(value / step)
       }
 
       return applyBounds(value, props)
     },
     x: computed(() => {
       const { value, min, max } = getProps()
-      const ratio = ((value - min) / (max - min))
+      const ratio = (value - min) / (max - min)
       return Math.ceil(ratio * (range.value.maxX - range.value.minX) + range.value.minX)
     }),
     increment(factor) {
       const props = getProps()
-      return applyBounds(props.value + (props.step * factor), props)
+      return applyBounds(props.value + props.step * factor, props)
     },
     decrement(factor) {
       const props = getProps()
-      return applyBounds(props.value - (props.step * factor), props)
+      return applyBounds(props.value - props.step * factor, props)
     },
   }
 }

@@ -1,24 +1,38 @@
+// Import necessary Vue 3 and Vuex 4 functionalities
+import { defineComponent, nextTick, h } from 'vue'
 import { mount } from '@vue/test-utils'
-import Vue from 'vue'
 import NewFeatureBadge, { hideFeatureBadge } from './NewFeatureBadge'
 
-const TestNewFeatureBadge = Vue.component('test', {
-  functional: true,
-  render: (h, { props }) => h(NewFeatureBadge, { props }, [h('span', {}, 'Badge Content')]),
+const TestNewFeatureBadge = defineComponent({
+  name: 'TestNewFeatureBadge',
+  props: {
+    featureKey: String,
+  },
+  setup(props) {
+    return () =>
+      h(
+        NewFeatureBadge,
+        { ...props },
+        {
+          default: () => h('span', {}, 'Badge Content'),
+          // Include other named slots if necessary
+        }
+      )
+  },
 })
 
 const featureKey = 'test'
 
 describe('NewFeatureBadge', () => {
-  it('should render a badge', () => {
+  it('should render a badge', async () => {
     const wrapper = mount(TestNewFeatureBadge, { propsData: { featureKey } })
     expect(wrapper.classes()).toMatchSnapshot()
   })
 
-  it('should hide the badge', async() => {
+  it('should hide the badge', async () => {
     const wrapper = mount(TestNewFeatureBadge, { propsData: { featureKey } })
     hideFeatureBadge(featureKey)
-    await Vue.nextTick()
+    await nextTick()
     expect(wrapper.classes()).toMatchSnapshot()
   })
 
@@ -29,11 +43,16 @@ describe('NewFeatureBadge', () => {
   })
 
   it('should not render the badge if stale', () => {
-    const spy = jest.spyOn(global.Date, 'now').mockImplementation(() => new Date('2020-01-02T00:00:00.000').valueOf())
+    const originalDateNow = Date.now
+    Date.now = vi.fn(() => new Date('2020-01-02T00:00:00.000').valueOf())
+
     const wrapper = mount(TestNewFeatureBadge, {
-      propsData: { featureKey, showUntil: new Date('2020-01-01T00:00:00.000') },
+      props: { featureKey, showUntil: new Date('2020-01-01T00:00:00.000') },
     })
+
     expect(wrapper.classes()).toMatchSnapshot()
-    spy.mockRestore()
+
+    // Restore the original Date.now() function
+    Date.now = originalDateNow
   })
 })

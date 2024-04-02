@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import { onMounted } from '@vue/composition-api'
+import { nextTick, onMounted } from 'vue'
 
 const headerHeight = 64
 
@@ -8,16 +7,14 @@ const headerHeight = 64
   It should scroll to the anchor tag in a new tab / direct navigation.
 */
 export default () => {
-  onMounted(() => {
+  onMounted(async () => {
     if (location.hash) {
-      Vue.nextTick(() => { // allows page to render
-        const el = document.querySelector(location.hash) as HTMLElement
-        if (el) {
-          Vue.nextTick(() => { // allows initial reset of scroll position
-            window.scrollTo(0, el.offsetTop - headerHeight)
-          })
-        }
-      })
+      await nextTick() // allows page to render
+      const el = document.querySelector(location.hash) as HTMLElement
+      if (el) {
+        await nextTick() // allows initial reset of scroll position
+        window.scrollTo(0, el.offsetTop - headerHeight)
+      }
     }
   })
 }

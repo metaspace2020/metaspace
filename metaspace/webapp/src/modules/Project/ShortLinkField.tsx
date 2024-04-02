@@ -1,50 +1,45 @@
-import { defineComponent } from '@vue/composition-api'
-import { Input } from '../../lib/element-ui'
+import { defineComponent } from 'vue'
+import { ElInput } from '../../lib/element-plus'
 
 import * as Form from '../../components/Form'
 import { PROJECT_URL_PREFIX } from '../../router'
 
-interface Props {
-  error: string
-  label: string
-  value: string
-}
-
-const ShortLinkField = defineComponent<Props>({
+const ShortLinkField = defineComponent({
   inheritAttrs: false,
   props: {
     error: String,
     label: { type: String, default: 'Short link' },
-    value: String,
+    modelValue: String,
+    id: String,
+    disabled: Boolean,
   },
-  setup(props, { attrs, listeners }) {
+  setup(props, { emit }) {
+    const onInput = (value: string) => {
+      emit('update:modelValue', value)
+    }
+
+    // @ts-ignore
     return () => (
       <div>
-        <label for={attrs.id}>
-          <Form.PrimaryLabelText>
-            { props.label }
-          </Form.PrimaryLabelText>
+        <label for={props.id}>
+          <Form.PrimaryLabelText>{props.label}</Form.PrimaryLabelText>
           <Form.SecondaryLabelText>
             Must be unique, min. 4 characters, using a&ndash;z, 0&ndash;9, hyphen or underscore
           </Form.SecondaryLabelText>
-          { props.error
-            && <Form.ErrorLabelText>
-              { props.error }
-            </Form.ErrorLabelText> }
+          {props.error && <Form.ErrorLabelText>{props.error}</Form.ErrorLabelText>}
         </label>
-        <Input
+        <ElInput
           class={{ 'sm-form-error': props.error }}
-          disabled={attrs.disabled}
-          id={attrs.id}
+          disabled={props.disabled}
+          id={props.id}
           maxlength="50"
           minlength="4"
-          onInput={listeners.input}
+          {...{ 'onUpdate:modelValue': onInput }}
           pattern="[a-zA-Z0-9_-]+"
           title="min. 4 characters, a–z, 0–9, hyphen or underscore"
-          value={props.value}
-        >
-          <span slot="prepend">{PROJECT_URL_PREFIX}</span>
-        </Input>
+          modelValue={props.modelValue}
+          v-slots={{ prepend: () => <span>{PROJECT_URL_PREFIX}</span> }}
+        />
       </div>
     )
   },

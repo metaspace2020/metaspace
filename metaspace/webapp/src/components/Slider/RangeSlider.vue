@@ -1,13 +1,7 @@
 <template>
-  <slider-track
-    ref="track"
-    :disabled="disabled"
-    @click="onTrackClick"
-    @mousedown="lockTrackClick = false"
-  >
+  <slider-track ref="track" @click="onTrackClick" @mousedown="lockTrackClick = false">
     <slider-thumb
       :style="minStyle"
-      :disabled="disabled"
       :x="minThumb.x.value"
       @change="onMinChange"
       @increment="onMinIncrement"
@@ -17,7 +11,6 @@
     />
     <slider-thumb
       :style="maxStyle"
-      :disabled="disabled"
       :x="maxThumb.x.value"
       @change="onMaxChange"
       @increment="onMaxIncrement"
@@ -28,8 +21,7 @@
   </slider-track>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import { defineComponent, ref, computed } from '@vue/composition-api'
+import { defineComponent, ref, computed } from 'vue'
 
 import SliderTrack from './SliderTrack.vue'
 import SliderThumb from './SliderThumb.vue'
@@ -39,14 +31,14 @@ import { THUMB_WIDTH } from './constants'
 interface Props {
   min: number
   max: number
-  value: [ number, number ]
+  value: [number, number]
   step: number
   disabled: boolean
   minColor: string
   maxColor: string
 }
 
-const Slider = defineComponent<Props>({
+const Slider = defineComponent({
   components: {
     SliderThumb,
     SliderTrack,
@@ -60,8 +52,8 @@ const Slider = defineComponent<Props>({
     minColor: String,
     maxColor: String,
   },
-  setup(props, { emit }) {
-    const track = ref<Vue>(null)
+  setup(props: Props, { emit }) {
+    const track = ref<any>(null)
 
     // hides aliasing around thumbs
     const padding = 1
@@ -71,11 +63,11 @@ const Slider = defineComponent<Props>({
     })
 
     const getMinProps = () => ({
-      value: props.value[0],
+      value: props.value![0],
       min: props.min,
       max: props.max,
       step: props.step,
-      maxBound: props.value[1],
+      maxBound: props.value![1],
     })
 
     const minRange = computed(() => ({
@@ -86,11 +78,11 @@ const Slider = defineComponent<Props>({
     const minThumb = useSliderThumb(getMinProps, minRange)
 
     const getMaxProps = () => ({
-      value: props.value[1],
+      value: props.value![1],
       min: props.min,
       max: props.max,
       step: props.step,
-      minBound: props.value[0],
+      minBound: props.value![0],
     })
 
     const maxRange = computed(() => ({
@@ -100,8 +92,8 @@ const Slider = defineComponent<Props>({
 
     const maxThumb = useSliderThumb(getMaxProps, maxRange)
 
-    const emitMinChange = (value: number) => emit('input', [value, props.value[1]])
-    const emitMaxChange = (value: number) => emit('input', [props.value[0], value])
+    const emitMinChange = (value: number) => emit('input', [value, props.value![1]])
+    const emitMaxChange = (value: number) => emit('input', [props.value![0], value])
 
     const lockTrackClick = ref(false)
 
@@ -129,7 +121,7 @@ const Slider = defineComponent<Props>({
         emit('thumb-stop')
       },
       onTrackClick(x: number) {
-        if (lockTrackClick.value) {
+        if (lockTrackClick.value || typeof x !== 'number') {
           return
         }
         const diffMin = Math.abs(x - minThumb.x.value)
@@ -144,20 +136,20 @@ const Slider = defineComponent<Props>({
 export default Slider
 </script>
 <style scoped>
-  span {
-    @apply absolute p-1 mb-1 text-xs tracking-wide shadow-sm rounded-sm leading-none bg-white;
-    @apply transition-opacity duration-300 ease-in-out pointer-events-none;
-    bottom: 100%;
-    visiblity: hidden;
-    opacity: 0;
-  }
-  div:hover + span,
-  div:focus + span,
-  span:focus-within {
-    visibility: visible;
-    opacity: 1;
-  }
-  div:hover + span {
-    z-index: 1;
-  }
+span {
+  @apply absolute p-1 mb-1 text-xs tracking-wide shadow-sm rounded-sm leading-none bg-white;
+  @apply transition-opacity duration-300 ease-in-out pointer-events-none;
+  bottom: 100%;
+  visibility: hidden;
+  opacity: 0;
+}
+div:hover + span,
+div:focus + span,
+span:focus-within {
+  visibility: visible;
+  opacity: 1;
+}
+div:hover + span {
+  z-index: 1;
+}
 </style>

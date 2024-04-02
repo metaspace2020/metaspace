@@ -1,4 +1,4 @@
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent } from 'vue'
 
 /* checked and purging looks ok */
 const classes = `
@@ -15,10 +15,12 @@ export const HeaderLink = defineComponent({
   props: {
     to: { type: [String, Object] },
     isActive: Boolean,
+    id: String,
   },
   setup(props, { slots }) {
     return () => (
       <router-link
+        id={props.id}
         to={props.to}
         class={[classes, props.isActive && activeClass]}
         activeClass={activeClass}
@@ -32,11 +34,14 @@ export const HeaderLink = defineComponent({
 export default HeaderLink
 
 export const HeaderButton = defineComponent({
-  setup(props, { slots, listeners }) {
+  props: {
+    onClick: Function,
+  },
+  setup(props, { slots }) {
     return () => (
       <button
-        class={`button-reset ${classes}`}
-        onClick={listeners.click}
+        class={`button-reset ${classes}`} // @ts-ignore
+        onClick={props.onClick}
       >
         {slots.default()}
       </button>

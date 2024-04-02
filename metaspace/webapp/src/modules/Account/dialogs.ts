@@ -1,5 +1,4 @@
-
-export type DialogType = 'signIn' | 'createAccount' | 'forgotPassword';
+export type DialogType = 'signIn' | 'createAccount' | 'forgotPassword'
 
 export const dialogRoutes: Record<string, string> = {
   signIn: '/account/sign-in',

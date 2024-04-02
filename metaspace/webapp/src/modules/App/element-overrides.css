@@ -1,7 +1,8 @@
 /* Original */
 
 .el-collapse-item__header {
-  padding-left: 10px
+  padding-left: 10px;
+  position: relative;
 }
 
 .el-collapse-item__arrow {
@@ -21,8 +22,10 @@
 .el-dialog__body,
 .el-popover {
   word-break: normal;
+  width: auto !important;
+  max-width: 100%;
+  /*min-width: 0 !important;*/
 }
-
 
 /* New */
 

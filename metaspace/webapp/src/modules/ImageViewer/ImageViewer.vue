@@ -1,31 +1,25 @@
 <template>
-  <div
-    v-if="!hasNormalizationError"
-    class="relative"
-  >
-    <div
-      ref="imageArea"
-      v-resize="onResize"
-    >
+  <div v-if="!hasNormalizationError" class="relative">
+    <div ref="imageArea" v-resize="onResize">
       <ion-image-viewer
-        :height="dimensions.height"
-        :image-height="ionImageDimensions.height"
-        :image-width="ionImageDimensions.width"
+        :height="dimensions?.height"
+        :image-height="ionImageDimensions?.height"
+        :image-width="ionImageDimensions?.width"
         :ion-image-layers="ionImageLayers"
         :is-loading="isLoading"
-        :max-zoom="imageFit.imageZoom * 20"
-        :min-zoom="imageFit.imageZoom / 4"
+        :max-zoom="imageFit?.imageZoom * 20"
+        :min-zoom="imageFit?.imageZoom / 4"
         :pixel-size-x="pixelSizeX"
         :pixel-size-y="pixelSizeY"
         :scale-bar-color="scaleBarColor"
         :scale-type="scaleType"
-        :width="dimensions.width"
+        :width="dimensions?.width"
         :show-normalized-intensity="showNormalizedIntensity"
         :normalization-data="normalizationData"
         :roi-info="roiInfo"
-        :x-offset="imageLoaderSettings.imagePosition.xOffset"
-        :y-offset="imageLoaderSettings.imagePosition.yOffset"
-        :zoom="imageLoaderSettings.imagePosition.zoom * imageFit.imageZoom"
+        :x-offset="imageLoaderSettings?.imagePosition?.xOffset"
+        :y-offset="imageLoaderSettings?.imagePosition?.yOffset"
+        :zoom="imageLoaderSettings?.imagePosition?.zoom * imageFit?.imageZoom"
         scroll-block
         show-pixel-intensity
         v-bind="imageLoaderSettings"
@@ -38,7 +32,7 @@
     <div
       class="absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-between items-end w-0 v-rhythm-3 sm-side-bar"
     >
-      <fade-transition v-if="openMenu === 'ION'">
+      <fade-transition v-if="openMenu === 'ION' && !isHidden">
         <ion-image-menu
           v-if="mode === 'MULTI'"
           key="multi"
@@ -53,14 +47,8 @@
           v-bind="singleIonImageControls"
         />
       </fade-transition>
-      <div
-        v-if="openMenu === 'ION'"
-        class="ion-slider-wrapper"
-      >
-        <div
-          v-if="hasOpticalImage && !isIE"
-          class="ion-slider-holder"
-        >
+      <div v-if="openMenu === 'ION' && !isHidden" class="ion-slider-wrapper">
+        <div v-if="hasOpticalImage && !isIE" class="ion-slider-holder">
           <fade-transition class="w-full">
             <opacity-settings
               key="opticalOpacity"
@@ -71,10 +59,7 @@
             />
           </fade-transition>
         </div>
-        <div
-          v-if="hasOpticalImage"
-          class="ion-slider-holder"
-        >
+        <div v-if="hasOpticalImage" class="ion-slider-holder">
           <fade-transition class="w-full">
             <opacity-settings
               key="opacity"
@@ -85,10 +70,7 @@
             />
           </fade-transition>
         </div>
-        <div
-          v-if="lockIntensityEnabled"
-          class="ion-slider-holder"
-        >
+        <div v-if="lockIntensityEnabled" class="ion-slider-holder">
           <fade-transition>
             <intensity-settings
               v-if="openMenu === 'ION'"
@@ -114,34 +96,30 @@
       class="popover"
       popper-class="w-full max-w-measure-1 text-left text-sm leading-5"
     >
-      <div
-        slot="reference"
-        class="alert-icon-wrapper"
-      >
-        <div
-          class="alert-icon"
-        />
-      </div>
-      The METASPACE annotation engine organizes all the isotopic peaks and selects the top N = 4 among them.
-      From these top 4 peaks, it chooses the one with the lowest m/z value. The displayed image corresponds
-      to a selected m/z value that is not the monoisotopic m/z. <br /> <br />
+      <template #reference>
+        <div class="alert-icon-wrapper">
+          <div class="alert-icon" />
+        </div>
+      </template>
+      The METASPACE annotation engine organizes all the isotopic peaks and selects the top N = 4 among them. From these
+      top 4 peaks, it chooses the one with the lowest m/z value. The displayed image corresponds to a selected m/z value
+      that is not the monoisotopic m/z. <br />
+      <br />
       <b>Monoisotopic m/z:</b> {{ annotation.mz.toFixed(6) }} <br />
       <b>Displayed m/z:</b> {{ annotation.centroidMz.toFixed(6) }} <br />
     </el-popover>
   </div>
-  <div
-    v-else
-    class="normalization-error-wrapper"
-  >
-    <i class="el-icon-error info-icon mr-2" />
-    <p class="text-lg">
-      There was an error on normalization!
-    </p>
+  <div v-else class="normalization-error-wrapper">
+    <el-icon class="info-icon mr-2">
+      <CircleCloseFilled />
+    </el-icon>
+    <p class="text-lg">There was an error on normalization!</p>
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, computed, reactive, ref, onMounted } from '@vue/composition-api'
-import resize from 'vue-resize-directive'
+import { defineComponent, computed, reactive, ref, onMounted } from 'vue'
+// @ts-ignore
+import resize from 'vue3-resize-directive'
 
 import IonImageViewer from '../../components/IonImageViewer'
 import FadeTransition from '../../components/FadeTransition'
@@ -157,6 +135,9 @@ import useIonImages from './useIonImages'
 import fitImageToArea from '../../lib/fitImageToArea'
 import { ScaleType } from '../../lib/ionImageRendering'
 import config from '../../lib/config'
+import { useStore } from 'vuex'
+import { ElIcon } from '../../lib/element-plus'
+import { CircleCloseFilled } from '@element-plus/icons-vue'
 
 interface Props {
   annotation: any
@@ -171,9 +152,10 @@ interface Props {
   keepPixelSelected: boolean
 }
 
-const ImageViewer = defineComponent<Props>({
+export default defineComponent({
   name: 'ImageViewer',
   components: {
+    ElIcon,
     FadeTransition,
     ImageSaver,
     IonImageMenu,
@@ -181,41 +163,42 @@ const ImageViewer = defineComponent<Props>({
     SingleIonImageControls,
     IntensitySettings,
     OpacitySettings,
+    CircleCloseFilled,
   },
   directives: {
     resize,
   },
   props: {
-    annotation: { required: true, type: Object },
+    annotation: { required: true, type: Object as any },
     colormap: { required: true, type: String },
     opacity: { required: true, type: Number },
     opticalOpacity: { type: Number },
-    imageLoaderSettings: { required: true, type: Object },
+    imageLoaderSettings: { required: true, type: Object as any },
     applyImageMove: { required: true, type: Function },
     pixelSizeX: { type: Number },
     pixelSizeY: { type: Number },
     scaleBarColor: { type: String },
     scaleType: { type: String },
     keepPixelSelected: { type: Boolean },
+    isHidden: { type: Boolean, default: false },
     ticData: { type: Object },
   },
-  setup(props, { root, emit }) {
-    const {
-      ionImageLayers,
-      ionImageMenuItems,
-      singleIonImageControls,
-      ionImagesLoading,
-      ionImageDimensions,
-    } = useIonImages(props)
+  setup(props: Props | any, { emit }) {
+    const store = useStore()
+    const { ionImageLayers, ionImageMenuItems, singleIonImageControls, ionImagesLoading, ionImageDimensions } =
+      useIonImages(props)
     // don't think this is the best way to do it
-    root.$store.watch((_, getters) => getters.filter.datasetIds, (datasetIds = [], previous) => {
-      if (datasetIds.length !== 1 || (previous && previous[0] !== datasetIds[0])) {
-        resetIonImageState()
-        resetImageViewerState()
+    store.watch(
+      (_, getters) => getters.filter.datasetIds,
+      (datasetIds = [], previous) => {
+        if (datasetIds.length !== 1 || (previous && previous[0] !== datasetIds[0])) {
+          resetIonImageState()
+          resetImageViewerState()
+        }
       }
-    })
+    )
 
-    const imageArea = ref<HTMLElement | null>(null)
+    const imageArea = ref(null)
 
     const dimensions = reactive({
       width: 500,
@@ -224,7 +207,7 @@ const ImageViewer = defineComponent<Props>({
 
     function onResize() {
       if (imageArea.value != null) {
-        dimensions.width = imageArea.value.clientWidth
+        dimensions.width = imageArea.value?.clientWidth
         dimensions.height = Math.min(Math.max(window.innerHeight - 520, 500), 1000)
       }
     }
@@ -242,8 +225,7 @@ const ImageViewer = defineComponent<Props>({
     })
 
     const imageFileName = computed(() => {
-      return `${props.annotation?.ion}_${props.annotation?.dataset?.id}`
-        .replace(/\./g, '_')
+      return `${props.annotation?.ion}_${props.annotation?.dataset?.id}`.replace(/\./g, '_')
     })
 
     const imageTitle = computed(() => {
@@ -257,9 +239,12 @@ const ImageViewer = defineComponent<Props>({
 
     const roiInfo = computed(() => {
       if (
-        props.annotation && props.annotation?.dataset?.id && root.$store.state.roiInfo
-        && Object.keys(root.$store.state.roiInfo).includes(props.annotation?.dataset?.id)) {
-        return root.$store.state.roiInfo[props.annotation?.dataset?.id] || []
+        props.annotation &&
+        props.annotation?.dataset?.id &&
+        store.state.roiInfo &&
+        Object.keys(store.state.roiInfo).includes(props.annotation?.dataset?.id)
+      ) {
+        return store.state.roiInfo[props.annotation?.dataset?.id] || []
       }
       return []
     })
@@ -298,19 +283,20 @@ const ImageViewer = defineComponent<Props>({
       emitOpticalOpacity(value: number) {
         emit('opticalOpacity', value)
       },
-      hasNormalizationError: computed(() =>
-        root.$store.getters.settings.annotationView.normalization && root.$store.state.normalization
-      && root.$store.state.normalization.error),
-      showNormalizedIntensity: computed(() => root.$store.getters.settings.annotationView.normalization),
+      hasNormalizationError: computed(
+        () =>
+          store.getters?.settings?.annotationView?.normalization &&
+          store.state?.normalization &&
+          store.state.normalization.error
+      ),
+      showNormalizedIntensity: computed(() => store.getters?.settings?.annotationView?.normalization),
       roiInfo,
-      normalizationData: computed(() => root.$store.state.normalization),
+      normalizationData: computed(() => store.state.normalization),
       hasOpticalImage: computed(() => !!props.imageLoaderSettings.opticalSrc),
       lockIntensityEnabled: config.features.lock_intensity,
     }
   },
 })
-
-export default ImageViewer
 </script>
 <style scoped>
 .sm-side-bar > * {
@@ -321,26 +307,26 @@ export default ImageViewer
   margin-top: calc(-1 * theme('spacing.3') / 2); /* hacking */
 }
 
-.ion-slider-wrapper{
+.ion-slider-wrapper {
   display: flex;
   flex-wrap: wrap;
 }
-.ion-slider-holder{
+.ion-slider-holder {
   display: flex;
   flex-wrap: wrap;
   width: 240px;
   @apply mt-2 ml-2;
 }
-.normalization-error-wrapper{
+.normalization-error-wrapper {
   height: 537px;
   width: 100%;
   @apply flex items-center justify-center;
 }
-.info-icon{
+.info-icon {
   font-size: 20px;
 }
 @media (min-width: 768px) {
-  .ion-slider-wrapper{
+  .ion-slider-wrapper {
     min-width: max-content;
   }
 }
@@ -351,8 +337,8 @@ export default ImageViewer
   position: absolute;
   top: 0;
   left: 3rem;
-  background: #F1F5F8;
-  border: 1px solid #F1F5F8;
+  background: #f1f5f8;
+  border: 1px solid #f1f5f8;
   border-radius: 100%;
   text-align: center;
   @apply mt-3 ml-1;

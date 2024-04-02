@@ -1,20 +1,19 @@
-import { defineComponent } from '@vue/composition-api'
+import { defineComponent, h } from 'vue'
 
-interface Props {}
-
-export default defineComponent<Props>({
+export default defineComponent({
   name: 'FadeTransition',
-  setup(_, { slots }) {
-    return () => (
-      <transition
-        mode="out-in"
-        enter-class="opacity-0"
-        leave-to-class="opacity-0"
-        enter-active-class="duration-150 transition-opacity ease-in-out"
-        leave-active-class="duration-150 transition-opacity ease-in-out"
-      >
-        {slots.default && slots.default()}
-      </transition>
-    )
+  setup(props, { slots }) {
+    return () =>
+      h(
+        'transition',
+        {
+          mode: 'out-in',
+          enterClass: 'opacity-0',
+          leaveToClass: 'opacity-0',
+          enterActiveClass: 'duration-150 transition-opacity ease-in-out',
+          leaveActiveClass: 'duration-150 transition-opacity ease-in-out',
+        },
+        slots.default ? slots.default() : []
+      )
   },
 })

@@ -1,8 +1,8 @@
-import { reactive } from '@vue/composition-api'
+import { reactive } from 'vue'
 
 export default () => {
   const clippingNotice = reactive({
-    type: null as String | null,
+    type: null as string | null,
     visible: false,
   })
 

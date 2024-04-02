@@ -4,32 +4,28 @@
       class="block"
       placement="bottom"
       popper-class="w-full max-w-measure-1 text-left text-sm leading-5"
-      trigger="manual"
-      :value="clippingNotice.visible"
+      :visible="clippingNotice.visible"
       :visible-arrow="false"
       :disabled="popupsDisabled"
       @after-leave="clippingNotice.type = null"
     >
-      <ion-intensity-slider
-        slot="reference"
-        :model="state"
-        :color-bar="colorBar.value"
-        :intensity="intensity.value"
-        :scale-range="scaleRange.value"
-        @thumb-start="popupsDisabled = true"
-        @thumb-stop="popupsDisabled = false"
-        @popover="toggleClippingNotice"
-      />
-      <clipping-notice
-        :type="clippingNotice.type"
-        :intensity="intensity.value"
-        :is-normalized="isNormalized"
-      />
+      <template #reference>
+        <ion-intensity-slider
+          :model="state"
+          :color-bar="colorBar.value"
+          :intensity="intensity.value"
+          :scale-range="scaleRange.value"
+          @thumb-start="popupsDisabled = true"
+          @thumb-stop="popupsDisabled = false"
+          @popover="toggleClippingNotice"
+        />
+      </template>
+      <clipping-notice :type="clippingNotice.type" :intensity="intensity.value" :is-normalized="isNormalized" />
     </el-popover>
   </overlay>
 </template>
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api'
+import { defineComponent, ref } from 'vue'
 
 import Overlay from './Overlay.vue'
 import IonIntensitySlider from './IonIntensitySlider.vue'

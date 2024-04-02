@@ -1,25 +1,25 @@
-import { defineComponent, computed } from '@vue/composition-api'
-
+import { defineComponent, computed } from 'vue'
 import { reorderAdducts, superscript } from '../lib/util'
 
-const MolecularFormula = defineComponent({
+export default defineComponent({
+  name: 'MolecularFormula',
   props: {
-    ion: { type: String, required: true },
+    ion: {
+      type: String,
+      required: true,
+    },
   },
   setup(props) {
     const formulaAndCharge = computed(() => {
       const match = /^(.*?)([+-]\d*)?$/.exec(props.ion)
-      const formula = match && match[1] || props.ion
-      const charge = match && match[2] || undefined
+      const formula = (match && match[1]) || props.ion
+      const charge = (match && match[2]) || undefined
       return { formula, charge }
     })
 
     const fmtCharge = computed(() => {
       const { charge } = formulaAndCharge.value
-      if (charge !== undefined) {
-        return superscript(charge)
-      }
-      return ''
+      return charge !== undefined ? superscript(charge) : ''
     })
 
     const parts = computed<string[]>(() => {
@@ -30,15 +30,12 @@ const MolecularFormula = defineComponent({
 
     return () => (
       <span>
-        [{parts.value.map((p, i) => {
-          if (i % 2 !== 0) {
-            return <sub class="leading-none">{p}</sub>
-          }
-          return p
-        })}]{fmtCharge.value}
+        [
+        {parts.value.map((part, index) => {
+          return index % 2 === 0 ? part : <sub class="leading-none">{part}</sub>
+        })}
+        ]{fmtCharge.value}
       </span>
     )
   },
 })
-
-export default MolecularFormula

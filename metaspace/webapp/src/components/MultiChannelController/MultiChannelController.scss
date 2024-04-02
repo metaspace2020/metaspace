@@ -1,6 +1,7 @@
+
 .multi-channel-ctrl-wrapper{
   width: 185px;
-  @apply py-3 bg-gray-100 rounded-lg box-border shadow-xs mr-1 overflow-x-hidden overflow-y-auto;
+  @apply py-3 bg-gray-100 rounded-lg box-border mr-1 overflow-x-hidden overflow-y-auto;
   max-height: calc(100% - 1.5rem);
 
   .channel-popover{
@@ -29,7 +30,7 @@
     }
   }
 
-  .sm-menu-items >>> > .focus-visible {
+  .sm-menu-items ::v-deep(.focus-visible) {
     outline: 2px solid theme('colors.primary');
     outline-offset: -2px;
   }

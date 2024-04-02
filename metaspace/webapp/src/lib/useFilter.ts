@@ -1,4 +1,4 @@
-import { computed, ref, watch } from '@vue/composition-api'
+import { computed, ref, watch } from 'vue'
 import { FilterKey } from '../modules/Filters/filterSpecs'
 
 /**
@@ -13,9 +13,12 @@ export default ($store: any, filterName: FilterKey) => {
   // Proxying the value through a ref seems to stop unnecessarily triggering watchers when the value hasn't changed.
   const filter = ref($store.getters.filter[filterName])
 
-  watch(() => $store.getters.filter, () => {
-    filter.value = $store.getters.filter[filterName]
-  })
+  watch(
+    () => $store.getters.filter,
+    () => {
+      filter.value = $store.getters.filter[filterName]
+    }
+  )
 
   return computed({
     get: () => filter.value,

@@ -1,4 +1,4 @@
-import { computed, reactive, ref, toRefs } from '@vue/composition-api'
+import { computed, reactive, ref, toRefs } from 'vue'
 
 import { channels as channelToRGB } from '../../lib/getColorScale'
 
@@ -9,7 +9,7 @@ export interface Annotation {
   id: string
   ion: string
   mz: number
-  isotopeImages: { minIntensity: number, maxIntensity: number, url: string }[]
+  isotopeImages: { minIntensity: number; maxIntensity: number; url: string }[]
 }
 
 export interface IonImageState {
@@ -99,10 +99,10 @@ const settings = reactive<Settings>({
 })
 const activeAnnotation = ref<string>() // local copy of prop value to allow watcher to run
 
-const annotationCache : Record<string, Annotation> = {}
-const layerCache : Record<string, IonImageLayer> = {}
+const annotationCache: Record<string, Annotation> = {}
+const layerCache: Record<string, IonImageLayer> = {}
 
-const orderedLayers = computed(() => state.order.map(id => layerCache[id]))
+const orderedLayers = computed(() => state.order.map((id) => layerCache[id]))
 
 export const useIonImageLayers = () => ({
   layerCache,
@@ -118,10 +118,7 @@ const lockedIntensities = computed(() => {
 
 const lockedScaleRange = computed(() => {
   const [min, max] = lockedIntensities.value
-  return [
-    min === undefined ? undefined : settings.lockMinScale,
-    max === undefined ? undefined : settings.lockMaxScale,
-  ]
+  return [min === undefined ? undefined : settings.lockMinScale, max === undefined ? undefined : settings.lockMaxScale]
 })
 
 export const useIonImageSettings = () => ({
@@ -130,7 +127,7 @@ export const useIonImageSettings = () => ({
   settings,
 })
 
-function removeLayer(id: string) : number {
+function removeLayer(id: string): number {
   const idx = state.order.indexOf(id)
   state.order.splice(idx, 1)
   if (idx in state.order) {
@@ -233,8 +230,8 @@ function onAnnotationChange(annotation: Annotation) {
     const idx = removeLayer(state.activeLayer)
     state.order.splice(idx, 0, annotation.id)
   } else {
-    const usedChannels = orderedLayers.value.map(layer => layer.settings.channel)
-    const unusedChannels = channels.filter(c => !(usedChannels.includes(c)))
+    const usedChannels = orderedLayers.value.map((layer) => layer.settings.channel)
+    const unusedChannels = channels.filter((c) => !usedChannels.includes(c))
     if (unusedChannels.length) {
       channel = unusedChannels[0]
       // channel = unusedChannels[Math.floor(Math.random() * (unusedChannels.length - 1))]
@@ -264,15 +261,16 @@ export const useAnnotations = () => ({
   getImageIntensities,
 })
 
-export const useChannelSwatches = () => computed(() => {
-  const swatches : Record<string, string> = {}
-  if (viewerState.mode.value === 'MULTI') {
-    for (const layer of orderedLayers.value) {
-      swatches[layer.id] = channelToRGB[layer.settings.channel]
+export const useChannelSwatches = () =>
+  computed(() => {
+    const swatches: Record<string, string> = {}
+    if (viewerState.mode.value === 'MULTI') {
+      for (const layer of orderedLayers.value) {
+        swatches[layer.id] = channelToRGB[layer.settings.channel]
+      }
     }
-  }
-  return swatches
-})
+    return swatches
+  })
 
 type Snapshot = {
   state: State
@@ -285,7 +283,7 @@ type Export = {
   annotationIds: string[]
 }
 
-export const exportIonImageState = () : Export => {
+export const exportIonImageState = (): Export => {
   return {
     snapshot: {
       state,
@@ -298,7 +296,7 @@ export const exportIonImageState = () : Export => {
 
 type Import = {
   version: number
-  snapshot: Snapshot,
+  snapshot: Snapshot
   annotations: Annotation[]
 }
 

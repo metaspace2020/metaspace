@@ -1,40 +1,39 @@
-import { computed, defineComponent, reactive, ref } from '@vue/composition-api'
-import { Select, OptionGroup, Option, Carousel, CarouselItem } from '../../../lib/element-ui'
-import { intersection, keyBy } from 'lodash'
+import { computed, defineComponent, reactive } from 'vue'
+import { ElSelect, ElOptionGroup, ElOption, ElCarousel, ElCarouselItem } from '../../../lib/element-plus'
+import { keyBy } from 'lodash'
 import ImageLoader from '../../../components/ImageLoader.vue'
 import './DatasetOverviewGallery.scss'
 import safeJsonParse from '../../../lib/safeJsonParse'
-import { templateRef } from '../../../lib/templateRef'
 
-  enum ITEM_TYPES {
-    IMAGE = 'image',
-    TEXT = 'text'
-  }
+enum ITEM_TYPES {
+  IMAGE = 'image',
+  TEXT = 'text',
+}
 
-  interface RawDiagnosticData {
-    id: string;
-    data: string;
-    imageIds: string[];
-    metadata: string;
-  }
+interface RawDiagnosticData {
+  id: string
+  data: string
+  imageIds: string[]
+  metadata: string
+}
 
-  interface DatasetOverviewGalleryOption {
-    label: string,
-    value: any
-    type?: string
-    options?: DatasetOverviewGalleryOption[]
-  }
+interface DatasetOverviewGalleryOption {
+  label: string
+  value: any
+  type?: string
+  options?: DatasetOverviewGalleryOption[]
+}
 
-  interface DatasetOverviewGalleryProps {
-    data: RawDiagnosticData[],
-    options: any[]
-  }
+interface DatasetOverviewGalleryProps {
+  data: RawDiagnosticData[]
+  options: any[]
+}
 
-  interface DatasetOverviewGalleryState {
-    selectedOption: DatasetOverviewGalleryOption,
-    selectedValue: any
-    showCarouselItem: boolean
-  }
+interface DatasetOverviewGalleryState {
+  selectedOption: DatasetOverviewGalleryOption
+  selectedValue: any
+  showCarouselItem: boolean
+}
 
 export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProps>({
   name: 'DatasetOverviewGallery',
@@ -58,7 +57,8 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
               type: 'text',
             },
           ],
-        }, {
+        },
+        {
           value: 2,
           label: 'Defined regions',
           options: [
@@ -77,9 +77,7 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
       ],
     },
   },
-  setup(props, ctx) {
-    const carousel = templateRef<any>('carousel')
-
+  setup(props) {
     const diagnosticDataLookup = computed(() => {
       const parsed = props.data?.map(({ data, ...rest }) => ({ ...rest, data: JSON.parse(data) }))
       return keyBy(parsed, 'id')
@@ -98,10 +96,14 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
 
     const state = reactive<DatasetOverviewGalleryState>({
       showCarouselItem: true,
-      selectedValue: setSelectedValue((Array.isArray(props.options[0]?.options)
-        ? props.options[0]?.options[0] : undefined) as DatasetOverviewGalleryOption),
+      selectedValue: setSelectedValue(
+        (Array.isArray(props.options[0]?.options)
+          ? props.options[0]?.options[0]
+          : undefined) as DatasetOverviewGalleryOption
+      ),
       selectedOption: (Array.isArray(props.options[0]?.options)
-        ? props.options[0]?.options[0] : undefined) as DatasetOverviewGalleryOption,
+        ? props.options[0]?.options[0]
+        : undefined) as DatasetOverviewGalleryOption,
     })
 
     const handleOptionChange = (option: any) => {
@@ -109,7 +111,7 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
       state.selectedValue = setSelectedValue(option)
     }
 
-    const handleCarouselChange = (index: number) => {
+    const handleCarouselChange = () => {
       // quick fix to imageloader redraw
       state.showCarouselItem = false
       setTimeout(() => {
@@ -122,68 +124,56 @@ export const DatasetOverviewGallery = defineComponent<DatasetOverviewGalleryProp
       const { selectedOption, selectedValue, showCarouselItem } = state
 
       return (
-        <div class='dataset-overview-gallery-wrapper'>
-          <Select
-            class='ds-overview-select'
+        <div class="dataset-overview-gallery-wrapper">
+          <ElSelect
+            class="ds-overview-select"
             value={selectedOption}
             onChange={handleOptionChange}
-            placeholder="Select">
-            {
-              Array.isArray(options) && options.map((groupOption) => {
+            placeholder="Select"
+          >
+            {Array.isArray(options) &&
+              options.map((groupOption) => {
                 return (
-                  <OptionGroup key={groupOption.value} label={groupOption.label}>
-                    {
-                      Array.isArray(groupOption.options) && groupOption.options.map((option: any) => {
-                        return (
-                          <Option key={option.value} label={option.label} value={option}/>
-                        )
-                      })
-                    }
-                  </OptionGroup>
+                  <ElOptionGroup key={groupOption.value} label={groupOption.label}>
+                    {Array.isArray(groupOption.options) &&
+                      groupOption.options.map((option: any) => {
+                        return <ElOption key={option.value} label={option.label} value={option} />
+                      })}
+                  </ElOptionGroup>
                 )
-              })
-            }
-          </Select>
-          <div class='ds-overview-container'>
-            {
-              selectedOption?.type === ITEM_TYPES.IMAGE
-              && <Carousel
+              })}
+          </ElSelect>
+          <div class="ds-overview-container">
+            {selectedOption?.type === ITEM_TYPES.IMAGE && (
+              <ElCarousel
                 onChange={handleCarouselChange}
                 arrow={`${Array.isArray(mockImg) && mockImg.length > 1 ? 'always' : 'never'}`}
                 indicatorPosition={`${Array.isArray(mockImg) && mockImg.length > 1 ? 'outside' : 'none'}`}
-                autoplay={false}>
-                {
-                  Array.isArray(selectedValue) && selectedValue.map((image, imageIndex) => {
+                autoplay={false}
+              >
+                {Array.isArray(selectedValue) &&
+                  selectedValue.map((image) => {
                     return (
-                      <CarouselItem>
-                        {
-                          showCarouselItem
-                          && <ImageLoader
-                            ref='carousel'
+                      <ElCarouselItem>
+                        {showCarouselItem && (
+                          <ImageLoader
+                            ref="carousel"
                             src={image}
                             imagePosition={{ zoom: 1, xOffset: 0, yOffset: 0 }}
                             minIntensity={0}
                             maxIntensity={1}
                             pixelAspectRatio={1}
                           />
-                        }
-                      </CarouselItem>
+                        )}
+                      </ElCarouselItem>
                     )
-                  })
-                }
-              </Carousel>
-            }
-            {
-              selectedOption?.type === ITEM_TYPES.TEXT
-              && Object.keys(selectedValue).map((metaKey) => {
-                return (
-                  <div>
-                    {metaKey}
-                  </div>
-                )
-              })
-
-            }
+                  })}
+              </ElCarousel>
+            )}
+            {selectedOption?.type === ITEM_TYPES.TEXT &&
+              Object.keys(selectedValue).map((metaKey) => {
+                return <div>{metaKey}</div>
+              })}
           </div>
         </div>
       )

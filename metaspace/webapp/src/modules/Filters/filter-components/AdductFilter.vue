@@ -1,55 +1,42 @@
 <template>
-  <tag-filter
-    name="Adduct"
-    removable
-    @destroy="destroy"
-  >
-    <div slot="edit">
+  <tag-filter name="Adduct" removable @destroy="destroy">
+    <template v-slot:edit>
       <el-select
-        :value="filterValues.adduct"
+        :teleported="false"
+        :model-value="filterValues.adduct"
         placeholder="Select ionising adduct"
         filterable
         clearable
         remote
-        @change="val => onChange('adduct', val)"
+        @change="(val) => onChange('adduct', val)"
       >
-        <el-option
-          v-for="item in adductOptions"
-          :key="item.adduct"
-          :label="item.name"
-          :value="item.adduct"
-        />
+        <el-option v-for="item in adductOptions" :key="item.adduct" :label="item.name" :value="item.adduct" />
       </el-select>
       <el-select
         v-if="showChemMods"
-        :value="filterValues.chemMod"
+        :model-value="filterValues.chemMod"
         :remote-method="updateChemModQuery"
-        :loading="chemModOptionsLoading !== 0"
+        :loading="chemModOptionsLoading"
         placeholder="Select chemical modification"
         filterable
         clearable
         remote
         @focus="() => updateChemModQuery('')"
-        @change="val => onChange('chemMod', val)"
+        @change="(val) => onChange('chemMod', val)"
       >
-        <el-option
-          v-for="item in chemModOptions"
-          :key="item.chemMod"
-          :label="item.name"
-          :value="item.chemMod"
-        />
+        <el-option v-for="item in chemModOptions" :key="item.chemMod" :label="item.name" :value="item.chemMod" />
       </el-select>
       <el-select
         v-if="showNeutralLosses"
-        :value="filterValues.neutralLoss"
+        :model-value="filterValues.neutralLoss"
         :remote-method="updateNeutralLossQuery"
-        :loading="neutralLossOptionsLoading !== 0"
+        :loading="neutralLossOptionsLoading"
         placeholder="Select neutral loss"
         filterable
         clearable
         remote
         @focus="() => updateNeutralLossQuery('')"
-        @change="val => onChange('neutralLoss', val)"
+        @change="(val) => onChange('neutralLoss', val)"
       >
         <el-option
           v-for="item in neutralLossOptions"
@@ -58,96 +45,70 @@
           :value="item.neutralLoss"
         />
       </el-select>
-    </div>
+    </template>
 
-    <span
-      slot="show"
-      class="tf-value-span"
-    >
-      <span>{{ formatValue() }}</span>
-    </span>
+    <template v-slot:show>
+      <span class="tf-value-span">
+        <span>{{ formatValue }}</span>
+      </span>
+    </template>
   </tag-filter>
 </template>
 
 <script lang="ts">
+import { defineComponent, computed, ref } from 'vue'
+import { useQuery } from '@vue/apollo-composable'
 import TagFilter from './TagFilter.vue'
-import Vue from 'vue'
-import { Component, Prop } from 'vue-property-decorator'
+import { useStore } from 'vuex'
+import { AdductSuggestion, chemModSuggestionQuery, neutralLossSuggestionQuery } from '../../../api/metadata'
 import config from '../../../lib/config'
-import {
-  AdductSuggestion,
-  ChemModSuggestion,
-  chemModSuggestionQuery,
-  NeutralLossSuggestion, neutralLossSuggestionQuery,
-} from '../../../api/metadata'
+import { ElSelect, ElOption } from '../../../lib/element-plus'
 
-  @Component<AdductFilter>({
-    components: {
-      TagFilter,
-    },
-    apollo: {
-      chemModOptions: {
-        query: chemModSuggestionQuery,
-        fetchPolicy: 'cache-first',
-        loadingKey: 'chemModOptionsLoading',
-        variables() {
-          return { query: this.chemModQuery }
-        },
-        update({ chemMods }: {chemMods: ChemModSuggestion[]}) {
-          return [
-            ...(this.chemModQuery ? [] : [{ chemMod: 'none', name: 'No chemical modification' }]),
-            ...chemMods,
-          ]
-        },
-      },
-      neutralLossOptions: {
-        query: neutralLossSuggestionQuery,
-        fetchPolicy: 'cache-first',
-        loadingKey: 'neutralLossOptionsLoading',
-        variables() {
-          return { query: this.neutralLossQuery }
-        },
-        update({ neutralLosses }: {neutralLosses: NeutralLossSuggestion[]}) {
-          return [
-            ...(this.neutralLossQuery ? [] : [{ neutralLoss: 'none', name: 'No neutral loss' }]),
-            ...neutralLosses,
-          ]
-        },
-      },
-    },
-  })
-export default class AdductFilter extends Vue {
-    @Prop(Object)
-    filterValues: any;
+export default defineComponent({
+  name: 'AdductFilter',
+  components: {
+    TagFilter,
+    ElSelect,
+    ElOption,
+  },
+  props: {
+    filterValues: Object,
+  },
+  setup(props, { emit }) {
+    // Accessing the Vuex store using useStore
+    const store = useStore()
 
-    chemModQuery: string = '';
-    neutralLossQuery: string = '';
-    chemModOptions!: ChemModSuggestion[];
-    neutralLossOptions!: NeutralLossSuggestion[];
-    chemModOptionsLoading = 0;
-    neutralLossOptionsLoading = 0;
+    // Creating reactive state variables
+    const chemModQuery = ref('')
+    const neutralLossQuery = ref('')
 
-    get filterLists() {
-      return this.$store.state.filterLists || {
-        adducts: [],
-      }
-    }
+    // Apollo GraphQL queries
+    const { result: chemModOptionsResult, loading: chemModOptionsLoading } = useQuery(chemModSuggestionQuery, () => ({
+      query: chemModQuery.value,
+    }))
+    const { result: neutralLossOptionsResult, loading: neutralLossOptionsLoading } = useQuery(
+      neutralLossSuggestionQuery,
+      () => ({ query: neutralLossQuery.value })
+    )
 
-    get adductOptions() {
-      return this.filterLists.adducts
-        .filter((a: AdductSuggestion) => config.features.all_adducts || !a.hidden)
-    }
+    // Computed property for chemModOptions
+    const chemModOptions = computed(() => {
+      const chemMods = chemModOptionsResult.value?.chemMods || []
+      return [...(chemModQuery.value ? [] : [{ chemMod: 'none', name: 'No chemical modification' }]), ...chemMods]
+    })
 
-    get showChemMods() {
-      return config.features.chem_mods || this.filterValues.chemMod != null
-    }
+    // Computed property for neutralLossOptions
+    const neutralLossOptions = computed(() => {
+      const neutralLosses = neutralLossOptionsResult.value?.neutralLosses || []
+      return [...(neutralLossQuery.value ? [] : [{ neutralLoss: 'none', name: 'No neutral loss' }]), ...neutralLosses]
+    })
 
-    get showNeutralLosses() {
-      return config.features.neutral_losses || this.filterValues.neutralLoss != null
-    }
+    // Accessing the Vuex state
+    const filterLists = computed(() => store.state.filterLists || { adducts: [] })
 
-    formatValue() {
-      const { chemMod, neutralLoss, adduct } = this.filterValues
+    // Computed property to format the display value
+    const formatValue = computed(() => {
+      const { chemMod, neutralLoss, adduct } = props.filterValues
       let suffix = ''
       if (chemMod && chemMod !== 'none') {
         suffix += chemMod
@@ -158,8 +119,8 @@ export default class AdductFilter extends Vue {
       suffix = suffix.replace(/([+-])/g, ' $1 ')
 
       if (adduct) {
-        const adductInfo = this.filterLists.adducts.find((a:any) => a.adduct === adduct)
-        return (adductInfo && adductInfo.name || adduct).replace(']', suffix + ']')
+        const adductInfo = filterLists.value.adducts.find((a: any) => a.adduct === adduct)
+        return ((adductInfo && adductInfo.name) || adduct).replace(']', suffix + ']')
       } else if ((chemMod && chemMod !== 'none') || (neutralLoss && neutralLoss !== 'none')) {
         return `[M + ?${suffix}]`
       } else if (chemMod === 'none' && neutralLoss === 'none') {
@@ -171,33 +132,68 @@ export default class AdductFilter extends Vue {
       } else {
         return '(Any)'
       }
+    })
+
+    // Method to update the chemMod query
+    const updateChemModQuery = (query: string) => {
+      chemModQuery.value = query
     }
 
-    updateChemModQuery(query: string) {
-      this.chemModQuery = query
+    // Method to update the neutralLoss query
+    const updateNeutralLossQuery = (query: string) => {
+      neutralLossQuery.value = query
     }
 
-    updateNeutralLossQuery(query: string) {
-      this.neutralLossQuery = query
-    }
+    // Method to update the neutralLoss query
+    const showChemMods = computed(() => {
+      return config.features.chem_mods || props.filterValues?.chemMod != null
+    })
 
-    onChange(filterKey: 'chemMod' | 'neutralLoss' | 'adduct', val: any) {
+    const showNeutralLosses = computed(() => {
+      return config.features.neutral_losses || props.filterValues?.neutralLoss != null
+    })
+
+    const adductOptions = computed(() => {
+      return filterLists.value.adducts.filter((a: AdductSuggestion) => config.features.all_adducts || !a.hidden)
+    })
+
+    // Method to handle changes in filter options
+    const onChange = (filterKey: 'chemMod' | 'neutralLoss' | 'adduct', val: any) => {
       if (val) {
-        this.$emit('change', val, filterKey)
+        emit('change', val, filterKey)
       } else {
-        this.$emit('destroy', filterKey)
+        emit('destroy', filterKey)
       }
     }
 
-    destroy(): void {
-      this.$emit('destroy', 'chemMod')
-      this.$emit('destroy', 'neutralLoss')
-      this.$emit('destroy', 'adduct')
+    // Method to handle the destruction of a filter
+    const destroy = () => {
+      emit('destroy', 'chemMod')
+      emit('destroy', 'neutralLoss')
+      emit('destroy', 'adduct')
     }
-}
+
+    // Exposing properties and methods to the template
+    return {
+      chemModOptions,
+      chemModOptionsLoading,
+      neutralLossOptions,
+      neutralLossOptionsLoading,
+      updateChemModQuery,
+      updateNeutralLossQuery,
+      formatValue,
+      onChange,
+      destroy,
+      showChemMods,
+      showNeutralLosses,
+      adductOptions,
+    }
+  },
+})
 </script>
+
 <style scoped>
-  .el-select {
-    width: 100%;
-  }
+.el-select {
+  width: 100%;
+}
 </style>

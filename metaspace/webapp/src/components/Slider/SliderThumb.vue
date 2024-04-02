@@ -8,10 +8,8 @@
   />
 </template>
 <script lang="ts">
-import { defineComponent, reactive, ref, computed, onMounted } from '@vue/composition-api'
+import { defineComponent, reactive, ref, computed, onMounted } from 'vue'
 import { throttle } from 'lodash-es'
-
-import { THUMB_WIDTH } from './constants'
 
 interface State {
   startX: number
@@ -22,14 +20,14 @@ interface Props {
   x: number
 }
 
-export default defineComponent<Props>({
+export default defineComponent({
   props: {
     disabled: { type: Boolean, default: false },
     x: Number,
   },
-  setup(props, { emit }) {
-    const thumb = ref<HTMLElement>(null)
-    const state = reactive<State>({
+  setup(props: Props, { emit }) {
+    const thumb = ref<HTMLElement | any>(null)
+    const state = reactive<State | any>({
       startX: props.x,
     })
 

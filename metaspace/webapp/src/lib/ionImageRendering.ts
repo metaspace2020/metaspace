@@ -1,4 +1,4 @@
-import { decode, Image, toRGBA8 } from 'upng-js'
+import * as UPNG from 'upng-js'
 import { quantile } from 'simple-statistics'
 import { range } from 'lodash-es'
 import { DEFAULT_SCALE_TYPE } from './constants'
@@ -6,41 +6,41 @@ import { DEFAULT_SCALE_TYPE } from './constants'
 import PxBrush from 'px-brush'
 
 export interface IonImage {
-  intensityValues: Float32Array;
-  clippedValues: Uint8ClampedArray; // Intensity values scaled into 0-255
-  mask: Uint8ClampedArray; // 0 = empty, 255 = filled, no other values
-  width: number;
-  height: number;
-  minIntensity: number;
-  maxIntensity: number;
-  clippedMinIntensity: number;
-  clippedMaxIntensity: number;
-  scaledMinIntensity: number;
-  scaledMaxIntensity: number;
-  userMinIntensity: number;
-  userMaxIntensity: number;
+  intensityValues: Float32Array
+  clippedValues: Uint8ClampedArray // Intensity values scaled into 0-255
+  mask: Uint8ClampedArray // 0 = empty, 255 = filled, no other values
+  width: number
+  height: number
+  minIntensity: number
+  maxIntensity: number
+  clippedMinIntensity: number
+  clippedMaxIntensity: number
+  scaledMinIntensity: number
+  scaledMaxIntensity: number
+  userMinIntensity: number
+  userMaxIntensity: number
   // scaleBarValues - Quantization of linear intensity values, used for showing the distribution of colors on the scale bar
   // Always length 256
-  scaleBarValues: Uint8ClampedArray;
-  lowQuantile: number;
-  highQuantile: number;
+  scaleBarValues: Uint8ClampedArray
+  lowQuantile: number
+  highQuantile: number
 }
 
 export interface Normalization {
   data: Float32Array | null
-  shape: [number, number] | null,
-  metadata: any,
-  type: string | null,
-  showFullTIC: boolean | null,
-  error: boolean,
+  shape: [number, number] | null
+  metadata: any
+  type: string | null
+  showFullTIC: boolean | null
+  error: boolean
 }
 
 export type ColorMap = readonly number[][]
 
-export type IonImageLayer = { ionImage: IonImage, colorMap: ColorMap }
+export type IonImageLayer = { ionImage: IonImage; colorMap: ColorMap }
 
-export type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'hist' | 'test';
-export type ScaleMode = 'linear' | 'log' | 'hist';
+export type ScaleType = 'linear' | 'linear-full' | 'log' | 'log-full' | 'hist' | 'test'
+export type ScaleMode = 'linear' | 'log' | 'hist'
 
 const SCALES: Record<ScaleType, [ScaleMode, number, number]> = {
   linear: ['linear', 0, 0.99],
@@ -86,19 +86,19 @@ const getNormalizationIntensityAndMask = (normalizationData: Normalization) => {
   return { intensityValues, mask, width, height }
 }
 
-const extractIntensityAndMask = (png: Image, min: number, max: number, normalizationData?: Normalization) => {
+const extractIntensityAndMask = (png: UPNG.Image, min: number, max: number, normalizationData?: Normalization) => {
   const { width, height, depth, ctype } = png
   const hasAlpha = ctype === 4 || ctype === 6
   const isRGB = ctype === 6
   const bytesPerComponent = depth <= 8 ? 1 : 2
-  const numPixels = (width * height)
+  const numPixels = width * height
   const numComponents = (ctype & 2 ? 3 : 1) + (hasAlpha ? 1 : 0)
   const rangeVal = Number(max - min) / (bytesPerComponent === 1 ? 255 : 65535)
   const baseVal = Number(min)
   // NOTE: pngDataBuffer usually has some trailing padding bytes. TypedArrays should have explicit sizes specified to
   // prevent over-reading // if hasAlpha, 16bit and not grayscale uses toRGBA to translate frames
-  const pngDataBuffer = (hasAlpha && bytesPerComponent > 1 && !isRGB) ? toRGBA8(png)[0]
-    : (png.data as any as Uint8Array).buffer // The typings are wrong
+  const pngDataBuffer =
+    hasAlpha && bytesPerComponent > 1 && !isRGB ? UPNG.toRGBA8(png)[0] : (png.data as any as Uint8Array).buffer // The typings are wrong
   const TIC_MULTIPLIER = 1000000
 
   // NOTE: This function is a bit verbose. It's intentionally structured this way so that the JS engine can
@@ -112,13 +112,14 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
       let intensity = dataView.getUint8(byteOffset) * rangeVal + baseVal
       // apply normalization
       if (
-        normalizationData && normalizationData.data
-        && normalizationData.data.length === numPixels
-        && normalizationData.data[i] && !isNaN(normalizationData.data[i])) {
+        normalizationData &&
+        normalizationData.data &&
+        normalizationData.data.length === numPixels &&
+        normalizationData.data[i] &&
+        !isNaN(normalizationData.data[i])
+      ) {
         intensity = (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
-      } else if (
-        normalizationData && normalizationData.data
-        && normalizationData.data.length === numPixels) {
+      } else if (normalizationData && normalizationData.data && normalizationData.data.length === numPixels) {
         intensity = 0
       }
 
@@ -140,14 +141,14 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
 
       // apply normalization
       if (
-        normalizationData && normalizationData.data
-        && normalizationData.data.length === numPixels
-        && normalizationData.data[i] && !isNaN(normalizationData.data[i])
+        normalizationData &&
+        normalizationData.data &&
+        normalizationData.data.length === numPixels &&
+        normalizationData.data[i] &&
+        !isNaN(normalizationData.data[i])
       ) {
         intensity = (intensity / normalizationData.data[i]) * TIC_MULTIPLIER
-      } else if (
-        normalizationData && normalizationData.data
-          && normalizationData.data.length === numPixels) {
+      } else if (normalizationData && normalizationData.data && normalizationData.data.length === numPixels) {
         intensity = 0
       }
       intensityValues[i] = intensity
@@ -166,8 +167,8 @@ const extractIntensityAndMask = (png: Image, min: number, max: number, normaliza
   return { intensityValues, mask }
 }
 
-function safeQuantile(values: number[], q: number): number;
-function safeQuantile(values: number[], q: number[]): number[];
+function safeQuantile(values: number[], q: number): number
+function safeQuantile(values: number[], q: number[]): number[]
 function safeQuantile(values: number[], q: number | number[]): any {
   // Handle cases when `values` is empty gracefully
   if (values.length > 0) {
@@ -180,7 +181,7 @@ function safeQuantile(values: number[], q: number | number[]): any {
 }
 
 const getQuantileValues = (intensityValues: Float32Array, mask: Uint8ClampedArray, minValueConsidered: number = 0) => {
-  const values = []
+  const values: any = []
   for (let i = 0; i < mask.length; i++) {
     if (intensityValues[i] > minValueConsidered && mask[i] !== 0) {
       values.push(intensityValues[i])
@@ -190,8 +191,9 @@ const getQuantileValues = (intensityValues: Float32Array, mask: Uint8ClampedArra
 }
 
 const getRankValues = (values: number[], lowQuantile: number, highQuantile: number) => {
-  const lo = lowQuantile || 0; const hi = highQuantile || 1
-  const quantiles = range(256).map(i => lo + (hi - lo) * i / 255)
+  const lo = lowQuantile || 0
+  const hi = highQuantile || 1
+  const quantiles = range(256).map((i) => lo + ((hi - lo) * i) / 255)
   return new Float32Array(safeQuantile(values, quantiles))
 }
 
@@ -246,8 +248,13 @@ const quantizeIonImageRank = (intensityValues: Float32Array, rankValues: Float32
   return clippedValues
 }
 
-const quantizeIonImage = (intensityValues: Float32Array, minIntensity: number, maxIntensity: number,
-  rankValues: Float32Array | null, scaleMode: ScaleMode): Uint8ClampedArray => {
+const quantizeIonImage = (
+  intensityValues: Float32Array,
+  minIntensity: number,
+  maxIntensity: number,
+  rankValues: Float32Array | null,
+  scaleMode: ScaleMode
+): Uint8ClampedArray => {
   if (scaleMode === 'hist') {
     return quantizeIonImageRank(intensityValues, rankValues!)
   } else if (scaleMode === 'log') {
@@ -257,33 +264,43 @@ const quantizeIonImage = (intensityValues: Float32Array, minIntensity: number, m
   }
 }
 
-const quantizeScaleBar = (minIntensity: number, maxIntensity: number,
-  rankValues: Float32Array | null, scaleMode: ScaleMode): Uint8ClampedArray => {
-  const linearDistribution =
-    new Float32Array(range(256).map(i => minIntensity + (maxIntensity - minIntensity) * i / 255))
+const quantizeScaleBar = (
+  minIntensity: number,
+  maxIntensity: number,
+  rankValues: Float32Array | null,
+  scaleMode: ScaleMode
+): Uint8ClampedArray => {
+  const linearDistribution = new Float32Array(
+    range(256).map((i) => minIntensity + ((maxIntensity - minIntensity) * i) / 255)
+  )
   return quantizeIonImage(linearDistribution, minIntensity, maxIntensity, rankValues, scaleMode)
 }
 
-export const loadPngFromUrl = async(url: string): Promise<Image> => {
+export const loadPngFromUrl = async (url: string): Promise<UPNG.Image> => {
   const response = await fetch(url, { credentials: 'omit' })
   if (response.status !== 200) {
     throw Object.assign(
-      new Error(`Invalid response fetching image: ${response.status} ${response.statusText}`),
+      new Error(`Invalid response fetching UPNG.Image: ${response.status} ${response.statusText}`),
       // Don't report 403s/404s to Sentry - they're virtually always caused by deleted datasets
-      { isHandled: response.status === 403 || response.status === 404 },
+      { isHandled: response.status === 403 || response.status === 404 }
     )
   }
   const buffer = await response.arrayBuffer()
-  return decode(buffer)
+  return UPNG.decode(buffer)
 }
 
 export const processIonImage = (
-  png: Image, minIntensity: number = 0, maxIntensity: number = 1, scaleType: ScaleType = DEFAULT_SCALE_TYPE,
+  png: UPNG.Image | any,
+  minIntensity: number = 0,
+  maxIntensity: number = 1,
+  scaleType: ScaleType = DEFAULT_SCALE_TYPE,
   userScaling: readonly [number, number] = [0, 1],
   userIntensities: readonly [number?, number?] = [],
-  normalizationData?: Normalization): IonImage => {
+  normalizationData?: Normalization
+): IonImage => {
   const [scaleMode, lowQuantile, highQuantile] = SCALES[scaleType]
   const { width, height } = png
+  // eslint-disable-next-line prefer-const
   let [userMin = minIntensity, userMax = maxIntensity] = userIntensities
 
   const { intensityValues, mask } = normalizationData?.showFullTIC
@@ -292,7 +309,7 @@ export const processIonImage = (
 
   // assign normalized intensities
   if (normalizationData && normalizationData.metadata && scaleType !== 'hist') {
-    maxIntensity = normalizationData ? maxIntensity / normalizationData.metadata.maxTic * 1000000 : maxIntensity
+    maxIntensity = normalizationData ? (maxIntensity / normalizationData.metadata.maxTic) * 1000000 : maxIntensity
     userMax = maxIntensity
   }
 
@@ -300,7 +317,7 @@ export const processIonImage = (
   // For compatibility with the previous version where images were loaded as 8-bit, linear scale's thresholds exclude pixels
   // whose values would round down to zero. This can make a big difference - some ion images have as high as 40% of
   // their pixels set to values that are zero when loaded as 8-bit but non-zero when loaded as 16-bit.
-  const minValueConsidered = (scaleMode === 'linear' ? maxIntensity / 256 : 0)
+  const minValueConsidered = scaleMode === 'linear' ? maxIntensity / 256 : 0
   const quantileValues = getQuantileValues(intensityValues, mask, minValueConsidered)
 
   let min = minIntensity
@@ -317,8 +334,8 @@ export const processIonImage = (
   }
 
   const [minScale, maxScale] = userScaling
-  let scaledMin = min + ((max - min) * minScale)
-  let scaledMax = min + ((max - min) * maxScale)
+  let scaledMin = min + (max - min) * minScale
+  let scaledMax = min + (max - min) * maxScale
 
   let rankValues = null
   if (scaleType === 'hist') {
@@ -326,11 +343,12 @@ export const processIonImage = (
       ? getNormalizationIntensityAndMask(normalizationData)
       : extractIntensityAndMask(png, scaledMin, scaledMax, normalizationData)
     const values = getQuantileValues(intensityValues, mask)
+    // @ts-ignore
     rankValues = getRankValues(values, lowQuantile, highQuantile)
 
     // reassign intensity values to be displayed if normalized
     if (normalizationData && normalizationData.metadata) {
-      maxIntensity = normalizationData ? maxIntensity / normalizationData.metadata.maxTic * 1000000 : maxIntensity
+      maxIntensity = normalizationData ? (maxIntensity / normalizationData.metadata.maxTic) * 1000000 : maxIntensity
       userMax = maxIntensity
       max = maxIntensity
 
@@ -339,8 +357,8 @@ export const processIonImage = (
       } else if (highQuantile < 1) {
         max = safeQuantile(quantileValues, highQuantile)
       }
-      scaledMin = min + ((max - min) * minScale)
-      scaledMax = min + ((max - min) * maxScale)
+      scaledMin = min + (max - min) * minScale
+      scaledMax = min + (max - min) * maxScale
     }
   }
 
@@ -367,7 +385,7 @@ export const processIonImage = (
   }
 }
 
-function getCmapComponents(cmap: ColorMap, buffer : ArrayBuffer = new ArrayBuffer(256 * 4)) {
+function getCmapComponents(cmap: ColorMap, buffer: ArrayBuffer = new ArrayBuffer(256 * 4)) {
   const cmapComponents = new Uint8ClampedArray(buffer)
   for (let i = 0; i < 256; i++) {
     if (cmap != null) {
@@ -405,8 +423,13 @@ export const renderIonImageToBuffer = (ionImage: IonImage, cmap: readonly number
   return outputBuffer
 }
 
-export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasElement, width: number, height: number,
-  roiInfo?: any[]) => {
+export const renderIonImages = (
+  layers: IonImageLayer[],
+  canvas: HTMLCanvasElement,
+  width: number,
+  height: number,
+  roiInfo?: any[]
+) => {
   const ctx = canvas.getContext('2d')!
   ctx.clearRect(0, 0, width, height)
   const pxBrush = new PxBrush(canvas)
@@ -462,7 +485,8 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
               color: roiItem.rgb,
             })
             ctx.lineTo(roiItem.coordinates[index].x + 0.5, roiItem.coordinates[index].y + 0.5)
-            if (roiItem.coordinates[index].isEndPoint) { // closes path if last point
+            if (roiItem.coordinates[index].isEndPoint) {
+              // closes path if last point
               ctx.closePath()
             }
           }
@@ -474,7 +498,7 @@ export const renderIonImages = (layers: IonImageLayer[], canvas: HTMLCanvasEleme
   }
 }
 
-export const renderScaleBar = (ionImage: IonImage, cmap: ColorMap, horizontal: boolean) => {
+export const renderScaleBar = (ionImage: IonImage | any, cmap: ColorMap, horizontal: boolean) => {
   const outputBytes = new Uint8ClampedArray(256 * 4)
   for (let i = 0; i < ionImage.scaleBarValues.length; i++) {
     const val = ionImage.scaleBarValues[i]
@@ -490,12 +514,16 @@ export const renderScaleBar = (ionImage: IonImage, cmap: ColorMap, horizontal: b
   }
 }
 
-export const getIonImage = (ionImagePng: any, isotopeImage: any,
-  scaleType: any = 'linear', userScaling: any = [0, 1], normalizedData: any = null) => {
+export const getIonImage = (
+  ionImagePng: any,
+  isotopeImage: any,
+  scaleType: any = 'linear',
+  userScaling: any = [0, 1],
+  normalizedData: any = null
+) => {
   if (!isotopeImage || !ionImagePng) {
     return null
   }
   const { minIntensity, maxIntensity } = isotopeImage
-  return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType
-    , userScaling, undefined, normalizedData)
+  return processIonImage(ionImagePng, minIntensity, maxIntensity, scaleType, userScaling, undefined, normalizedData)
 }

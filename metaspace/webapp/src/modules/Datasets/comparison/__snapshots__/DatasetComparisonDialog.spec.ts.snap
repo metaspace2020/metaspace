@@ -1,66 +1,33 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`DatasetComparisonDialog it should match snapshot 1`] = `
-<transition-stub name="dialog-fade" class="dataset-comparison-dialog sm-content-page el-dialog-lean" selecteddatasetids="2021-03-31_11h01m28s,2021-03-30_18h22m18s,2021-04-06_08h33m04s" style="z-index: 2001;">
-  <div class="el-dialog__wrapper">
-    <div role="dialog" aria-modal="true" aria-label="dialog" class="el-dialog w-11/12 lg:w-1/2 xl:w-5/12" style="margin-top: 15vh;">
-      <div class="el-dialog__header"><span class="el-dialog__title"></span><button type="button" aria-label="Close" class="el-dialog__headerbtn"><i class="el-dialog__close el-icon el-icon-close"></i></button></div>
-      <div class="el-dialog__body">
-        <h1>Datasets Comparison</h1>
-        <ol class="sm-workflow leading-6 m-0 p-0">
-          <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 active">
-            <p class="sm-workflow-header">Select the datasets</p>
-            <form class="ds-comparison-step">
-              <div class="el-select w-full ">
-                <div class="el-select__tags" style="max-width: -32px; width: 100%;">
-                  <!---->
-                  <transition-group-stub><span class="el-tag el-tag--info el-tag--small el-tag--light"><span class="el-select__tags-text">Mock (1)</span><i class="el-tag__close el-icon-close"></i></span><span class="el-tag el-tag--info el-tag--small el-tag--light"><span class="el-select__tags-text">Mock (2)</span><i class="el-tag__close el-icon-close"></i></span><span class="el-tag el-tag--info el-tag--small el-tag--light"><span class="el-select__tags-text">Mock (3)</span><i class="el-tag__close el-icon-close"></i></span></transition-group-stub><input type="text" autocomplete="off" class="el-select__input" style="flex-grow: 1; width: -0.625%; max-width: -42px;">
-                </div>
-                <div class="el-input el-input--suffix">
-                  <!----><input tabindex="-1" type="text" readonly="readonly" autocomplete="off" placeholder="" class="el-input__inner" style="height: 40px;">
-                  <!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-"></i><!----><!----><!----><!----><!----></span>
-                  <!----></span>
-                  <!---->
-                  <!---->
-                </div>
-                <transition-stub name="el-zoom-in-top">
-                  <div class="el-select-dropdown el-popper is-multiple ds-options-popper" style="display: none;">
-                    <div class="el-scrollbar" style="">
-                      <div class="el-select-dropdown__wrap el-scrollbar__wrap el-scrollbar__wrap--hidden-default">
-                        <ul class="el-scrollbar__view el-select-dropdown__list">
-                          <!---->
-                          <li class="el-select-dropdown__item selected"><span>Mock (1)</span></li>
-                          <li class="el-select-dropdown__item selected"><span>Mock (2)</span></li>
-                          <li class="el-select-dropdown__item selected"><span>Mock (3)</span></li>
-                          <li class="el-select-dropdown__item"><span>Mock (4)</span></li>
-                          <li class="el-select-dropdown__item"><span>Mock (5)</span></li>
-                        </ul>
-                      </div>
-                      <div class="el-scrollbar__bar is-horizontal">
-                        <div class="el-scrollbar__thumb" style="transform: translateX(0%); webkit-transform: translateX(0%);"></div>
-                      </div>
-                      <div class="el-scrollbar__bar is-vertical">
-                        <div class="el-scrollbar__thumb" style="transform: translateY(0%); webkit-transform: translateY(0%);"></div>
-                      </div>
-                    </div>
-                    <!---->
-                  </div>
-                </transition-stub>
-              </div><span class="block text-sm font-medium text-danger mt-0" style="visibility: hidden;">Only up to 12 datasets can be selected!</span><button type="button" class="el-button el-button--primary">
-                <!---->
-                <!----><span>Next</span></button>
-            </form>
-          </li>
-          <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300">
-            <p class="sm-workflow-header">Set the grid size</p>
-          </li>
-          <li class="sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300">
-            <p class="sm-workflow-header">Arrange the datasets</p>
-          </li>
-        </ol>
-      </div>
+exports[`DatasetComparisonDialog > it should match snapshot 1`] = `
+"<div class=\\"mock-el-dialog dataset-comparison-dialog sm-content-page el-dialog-lean w-11/12 lg:w-1/2 xl:w-5/12\\" model-value=\\"true\\" lockscroll=\\"true\\" nativeon=\\"[object Object]\\">
+  <h1>Datasets Comparison</h1>
+  <ol class=\\"sm-workflow leading-6 m-0 p-0\\">
+    <li class=\\"sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300 active\\">
+      <p class=\\"sm-workflow-header\\">Select the datasets</p>
+      <form class=\\"ds-comparison-step\\">
+        <div class=\\"mock-el-select ds-comp-step1 w-full\\" popperclass=\\"ds-options-popper\\" popperappendtobody=\\"false\\" modelvalue=\\"2021-03-31_11h01m28s,2021-03-30_18h22m18s,2021-04-06_08h33m04s\\" multiple=\\"true\\" filterable=\\"true\\" remote=\\"true\\" remotemethod=\\"async query => {
+      state.datasetName = query;
+    }\\" loading=\\"false\\" placeholder=\\"Start typing name\\" loadingtext=\\"Loading matching entries...\\" nomatchtext=\\"No matches\\">
+          <div class=\\"mock-el-option w-full ds-comparison-option\\" label=\\"Mock (1)\\" value=\\"2021-03-31_11h01m28s\\"></div>
+          <div class=\\"mock-el-option w-full ds-comparison-option\\" label=\\"Mock (2)\\" value=\\"2021-03-30_18h22m18s\\"></div>
+          <div class=\\"mock-el-option w-full ds-comparison-option\\" label=\\"Mock (3)\\" value=\\"2021-04-06_08h33m04s\\"></div>
+          <div class=\\"mock-el-option w-full ds-comparison-option\\" label=\\"Mock (4)\\" value=\\"2021-03-30_18h23m18s\\"></div>
+          <div class=\\"mock-el-option w-full ds-comparison-option\\" label=\\"Mock (5)\\" value=\\"2021-04-06_08h34m04s\\"></div>
+        </div><span class=\\"block text-sm font-medium text-danger mt-0\\" style=\\"visibility: hidden;\\">Only up to 12 datasets can be selected!</span><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\">
+          <!--v-if--><span class=\\"\\">Next</span>
+        </button>
+      </form>
+    </li>
+    <li class=\\"sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300\\">
+      <p class=\\"sm-workflow-header\\">Set the grid size</p>
       <!---->
-    </div>
-  </div>
-</transition-stub>
+    </li>
+    <li class=\\"sm-workflow-step flex flex-col relative text-gray-600 max-w-measure-3 ml-8 pl-12 border-solid border-0 border-l-2 border-gray-300 transition-colors ease-in-out duration-300\\">
+      <p class=\\"sm-workflow-header\\">Arrange the datasets</p>
+      <!---->
+    </li>
+  </ol>
+</div>"
 `;

@@ -1,16 +1,16 @@
-import Vue from 'vue';
-import Vuex from 'vuex';
-Vue.use(Vuex);
+import { createStore } from 'vuex'
+import mutations from './mutations'
+import getters from './getters'
+import actions from './actions.js'
 
-import getters from './getters.js';
-import mutations from './mutations.js';
-import actions from './actions.js';
-import {accountModule} from '../modules/Account';
+import { accountModule } from '../modules/Account'
 
-const store = new Vuex.Store({
+const store = createStore({
   state: {
     // names of currently shown filters
     orderedActiveFilters: [],
+
+    reportError: false,
 
     filterLists: null,
     filterListsLoading: false,
@@ -22,7 +22,7 @@ const store = new Vuex.Store({
     normalization: undefined,
 
     // roi settings
-    roiInfo: {visible: false},
+    roiInfo: { visible: false },
 
     // is annotation table loading?
     tableIsLoading: true,
@@ -35,15 +35,20 @@ const store = new Vuex.Store({
 
     // ion image global viewer settings
     channels: [],
-    mode: 'SINGLE'
+    mode: 'SINGLE',
+    route: {
+      path: '',
+      params: {},
+      query: {},
+    },
   },
 
   getters,
   mutations,
   actions,
   modules: {
-    account: accountModule
-  }
+    account: accountModule,
+  },
 })
 
-export default store;
+export default store

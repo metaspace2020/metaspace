@@ -1,12 +1,6 @@
 <template>
-  <div
-    v-loading="!loaded"
-    class="page"
-  >
-    <div
-      v-if="group != null"
-      class="page-content"
-    >
+  <div v-loading="!loaded" class="page">
+    <div v-if="group != null" class="page-content">
       <transfer-datasets-dialog
         v-if="showTransferDatasetsDialog"
         :group-name="group.name"
@@ -22,61 +16,26 @@
       <div class="header-row">
         <div class="header-names">
           <h1>{{ group.name }}</h1>
-          <h2
-            v-if="group.name !== group.shortName"
-            class="ml-3 text-gray-600"
-          >
-            ({{ group.shortName }})
-          </h2>
+          <h2 v-if="group.name !== group.shortName" class="ml-3 text-gray-600">({{ group.shortName }})</h2>
         </div>
 
         <div class="header-buttons">
-          <el-button
-            v-if="currentUser != null && roleInGroup == null"
-            type="primary"
-            @click="handleRequestAccess"
-          >
+          <el-button v-if="currentUser != null && roleInGroup == null" type="primary" @click="handleRequestAccess">
             Request access
           </el-button>
-          <el-button
-            v-if="roleInGroup === 'PENDING'"
-            disabled
-          >
-            Request sent
-          </el-button>
+          <el-button v-if="roleInGroup === 'PENDING'" disabled> Request sent </el-button>
         </div>
-        <el-alert
-          v-if="roleInGroup === 'INVITED'"
-          type="info"
-          show-icon
-          :closable="false"
-          title=""
-        >
-          <div style="padding: 0 0 20px 20px;">
-            <p>
-              You have been invited to join {{ group.name }}.
-            </p>
+        <el-alert v-if="roleInGroup === 'INVITED'" type="info" show-icon :closable="false" title="">
+          <div style="padding: 0 0 20px 20px">
+            <p>You have been invited to join {{ group.name }}.</p>
             <div>
-              <el-button
-                type="danger"
-                @click="handleRejectInvite"
-              >
-                Decline invitation
-              </el-button>
-              <el-button
-                type="primary"
-                @click="handleAcceptInvite"
-              >
-                Join group
-              </el-button>
+              <el-button type="danger" @click="handleRejectInvite"> Decline invitation </el-button>
+              <el-button type="primary" @click="handleAcceptInvite"> Join group </el-button>
             </div>
           </div>
         </el-alert>
       </div>
-      <el-tabs
-        v-model="tab"
-        class="with-badges"
-      >
+      <el-tabs :model-value="tab" class="with-badges" @update:model-value="setTab">
         <el-tab-pane
           v-if="canEdit || group.groupDescriptionAsHtml !== ''"
           name="description"
@@ -89,74 +48,50 @@
             @updateGroupDescription="saveMarkdown"
           />
         </el-tab-pane>
-        <el-tab-pane
-          name="datasets"
-          :label="'Datasets' | optionalSuffixInParens(countDatasets)"
-          lazy
-        >
+        <el-tab-pane name="datasets" :label="optionalSuffixInParens('Datasets', countDatasets)" lazy>
           <dataset-list
             :datasets="groupDatasets.slice(0, maxVisibleDatasets)"
             hide-group-menu
             @filterUpdate="handleFilterUpdate"
           />
           <div class="dataset-list-footer">
-            <router-link
-              v-if="countDatasets > maxVisibleDatasets"
-              :to="datasetsListLink"
-            >
+            <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">
               See all datasets
             </router-link>
           </div>
         </el-tab-pane>
-        <el-tab-pane
-          name="members"
-          lazy
-        >
-          <span slot="label">
-            {{ 'Members' | optionalSuffixInParens(countMembers) }}
-            <notification-icon v-if="hasMembershipRequest" />
-          </span>
+        <el-tab-pane name="members" lazy>
+          <template v-slot:label>
+            <span>
+              {{ optionalSuffixInParens('Members', countMembers) }}
+              <notification-icon v-if="hasMembershipRequest" />
+            </span>
+          </template>
           <group-members-list
-            :loading="groupLoading !== 0"
+            :loading="groupLoading"
             :current-user="currentUser"
             :group="group"
             :members="members"
             :refresh-data="refetchGroup"
           />
-          <p
-            v-if="countHiddenMembers > 0"
-            class="hidden-members-text"
-          >
-            + {{ countHiddenMembers | plural('hidden member', 'hidden members') }}.
+          <p v-if="countHiddenMembers > 0" class="hidden-members-text">
+            + {{ plural(countHiddenMembers, 'hidden member', 'hidden members') }}.
           </p>
         </el-tab-pane>
-        <el-tab-pane
-          v-if="showDatabasesTab"
-          name="databases"
-          lazy
-        >
-          <span slot="label">
-            <popup-anchor
-              feature-key="groupDatabasesTab"
-              :show-until="new Date('2021-03-01')"
-              placement="bottom"
-            >
-              {{ 'Databases' | optionalSuffixInParens(countDatabases) }}
-            </popup-anchor>
-          </span>
+        <el-tab-pane v-if="showDatabasesTab" name="databases" lazy>
+          <template v-slot:label>
+            <span>
+              <popup-anchor feature-key="groupDatabasesTab" :show-until="new Date('2021-03-01')" placement="bottom">
+                {{ optionalSuffixInParens('Databases', countDatabases) }}
+              </popup-anchor>
+            </span>
+          </template>
+
           <div>
-            <molecular-databases
-              :group-id="groupId"
-              :can-delete="canEdit"
-            />
+            <molecular-databases :group-id="groupId" :can-delete="canEdit" />
           </div>
         </el-tab-pane>
-        <el-tab-pane
-          v-if="canEdit && groupId != null"
-          name="settings"
-          label="Settings"
-          lazy
-        >
+        <el-tab-pane v-if="canEdit && groupId != null" name="settings" label="Settings" lazy>
           <group-settings :group-id="groupId" />
         </el-tab-pane>
       </el-tabs>
@@ -164,8 +99,9 @@
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Watch } from 'vue-property-decorator'
+import { defineComponent, ref, watch, computed, inject } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { DefaultApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
 import { datasetDeletedQuery, DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset'
 import DatasetList from '../Datasets/list/DatasetList.vue'
 import {
@@ -174,8 +110,6 @@ import {
   leaveGroupMutation,
   requestAccessToGroupMutation,
   updateGroupMutation,
-  UpdateGroupMutation,
-  UserGroupRole,
   UserGroupRoleOptions,
   ViewGroupFragment,
   ViewGroupResult,
@@ -185,10 +119,10 @@ import TransferDatasetsDialog from './TransferDatasetsDialog.vue'
 import GroupMembersList from './GroupMembersList.vue'
 import GroupSettings from './GroupSettings.vue'
 import { encodeParams } from '../Filters'
-import ConfirmAsync from '../../components/ConfirmAsync'
+import { useConfirmAsync } from '../../components/ConfirmAsync'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import reportError from '../../lib/reportError'
-import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
+import { currentUserRoleQuery } from '../../api/user'
 import isUuid from '../../lib/isUuid'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
 import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
@@ -197,60 +131,105 @@ import MolecularDatabases from '../MolecularDatabases'
 import config from '../../lib/config'
 import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
 import { RequestedAccessDialog } from './RequestedAccessDialog'
+import { ElTabs, ElButton, ElTabPane, ElLoading, ElAlert } from '../../lib/element-plus'
+import { useStore } from 'vuex'
 
 interface ViewGroupProfileData {
-    allDatasets: DatasetDetailItem[];
-    countDatasets: number;
-  }
+  allDatasets: DatasetDetailItem[]
+  countDatasets: number
+}
 
-  @Component<ViewGroupPage>({
-    components: {
-      DatasetList,
-      GroupMembersList,
-      GroupSettings,
-      TransferDatasetsDialog,
-      NotificationIcon,
-      GroupDescription,
-      MolecularDatabases,
-      PopupAnchor,
-      RequestedAccessDialog,
-    },
-    filters: {
-      optionalSuffixInParens,
-      plural,
-    },
-    apollo: {
-      currentUser: {
-        query: currentUserRoleQuery,
-        fetchPolicy: 'cache-first',
-      },
-      group: {
-        query() {
-          if (isUuid(this.$route.params.groupIdOrSlug)) {
-            return gql`query GroupProfileById($groupIdOrSlug: ID!) {
-              group(groupId: $groupIdOrSlug) { ...ViewGroupFragment hasPendingRequest }
+export default defineComponent({
+  components: {
+    DatasetList,
+    GroupMembersList,
+    GroupSettings,
+    TransferDatasetsDialog,
+    NotificationIcon,
+    GroupDescription,
+    MolecularDatabases,
+    PopupAnchor,
+    RequestedAccessDialog,
+    ElTabs,
+    ElButton,
+    ElAlert,
+    ElTabPane,
+  },
+  directives: {
+    loading: ElLoading.directive,
+  },
+  setup() {
+    const store = useStore()
+    const route = useRoute()
+    const router = useRouter()
+    const confirmAsync = useConfirmAsync()
+    const apolloClient = inject(DefaultApolloClient)
+    const loaded = ref(false)
+    const showTransferDatasetsDialog = ref(false)
+    const showRequestedDialog = ref(false)
+    const maxVisibleDatasets = ref(8)
+
+    const { result: currentUserResult } = useQuery(currentUserRoleQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
+    const currentUser: any = computed(() =>
+      currentUserResult.value != null ? currentUserResult.value.currentUser : null
+    )
+    const groupIdOrSlug = computed(() => route.params?.groupIdOrSlug as string | null)
+
+    const groupQuery = computed(() => {
+      if (isUuid(groupIdOrSlug.value as string)) {
+        return gql`
+          query GroupProfileById($groupIdOrSlug: ID!) {
+            group(groupId: $groupIdOrSlug) {
+              ...ViewGroupFragment
+              hasPendingRequest
             }
-            ${ViewGroupFragment}`
-          } else {
-            return gql`query GroupProfileBySlug($groupIdOrSlug: String!) {
-              group: groupByUrlSlug(urlSlug: $groupIdOrSlug) { ...ViewGroupFragment hasPendingRequest }
-            }
-            ${ViewGroupFragment}`
           }
-        },
-        variables() {
-          return { groupIdOrSlug: this.$route.params.groupIdOrSlug }
-        },
-        // Can't be 'no-cache' because `refetchGroup` is used for updating the cache, which in turn updates
-        // MetaspaceHeader's primaryGroup & the group.hasPendingRequest notification
-        fetchPolicy: 'network-only',
-        loadingKey: 'groupLoading',
-      },
-      data: {
-        query: gql`query GroupProfileDatasets(
-          $groupId: ID!,
-          $maxVisibleDatasets: Int!,
-          $inpFdrLvls: [Int!] = [10],
+          ${ViewGroupFragment}
+        `
+      } else {
+        return gql`
+          query GroupProfileBySlug($groupIdOrSlug: String!) {
+            group: groupByUrlSlug(urlSlug: $groupIdOrSlug) {
+              ...ViewGroupFragment
+              hasPendingRequest
+            }
+          }
+          ${ViewGroupFragment}
+        `
+      }
+    })
+
+    const {
+      result: groupResult,
+      refetch: refetchGroup,
+      loading: groupLoading,
+    } = useQuery(groupQuery.value, () => ({ groupIdOrSlug: groupIdOrSlug.value }), {
+      // Can't be 'no-cache' because `refetchGroup` is used for updating the cache, which in turn updates
+      // MetaspaceHeader's primaryGroup & the group.hasPendingRequest notification
+      fetchPolicy: 'network-only',
+    })
+    const group = computed(() => groupResult.value?.group as ViewGroupResult | null)
+
+    const groupId = computed((): string | null => {
+      if (isUuid(groupIdOrSlug.value as string)) {
+        return groupIdOrSlug.value as string // If it's possible to get the ID from the route, use that because it's faster than groupById/groupBySlug.
+      } else {
+        return group.value?.id
+      }
+    })
+
+    const {
+      result: dataResult,
+      onResult: onDataResult,
+      refetch: refetchData,
+    } = useQuery(
+      gql`
+        query GroupProfileDatasets(
+          $groupId: ID!
+          $maxVisibleDatasets: Int!
+          $inpFdrLvls: [Int!] = [10]
           $checkLvl: Int = 10
         ) {
           allDatasets(offset: 0, limit: $maxVisibleDatasets, filter: { group: $groupId }) {
@@ -259,263 +238,254 @@ interface ViewGroupProfileData {
           countDatasets(filter: { group: $groupId })
         }
 
-        ${datasetDetailItemFragment}`,
-        variables() {
-          return {
-            maxVisibleDatasets: this.maxVisibleDatasets,
-            groupId: this.groupId,
-          }
-        },
-        update(data) {
-          // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
-          // button that causes this query to refetch.
-          this.loaded = true
-          return data
-        },
-        skip() {
-          return this.groupId == null
-        },
-      },
-      $subscribe: {
-        datasetDeleted: {
-          query: datasetDeletedQuery,
-          result({ data }) {
-            removeDatasetFromAllDatasetsQuery(this, 'data', data.datasetDeleted.id)
-          },
-        },
-      },
-    },
-  })
-export default class ViewGroupPage extends Vue {
-    groupLoading = 0;
-    loaded = false;
-    showTransferDatasetsDialog: boolean = false;
-    showRequestedDialog: boolean = false;
-    showUploadDatabaseDialog: boolean = false;
-    currentUser: CurrentUserRoleResult | null = null;
-    group: ViewGroupResult | null = null;
-    data: ViewGroupProfileData | null = null;
-
-    get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
-    get roleInGroup(): UserGroupRole | null { return this.group && this.group.currentUserRole }
-
-    get groupDatasets(): DatasetDetailItem[] {
-      return (this.data && this.data.allDatasets || []).filter(ds => ds.status !== 'FAILED')
-    }
-
-    get countDatasets(): number { return this.data && this.data.countDatasets || 0 }
-    get members() { return this.group && this.group.members || [] }
-    get countMembers() { return this.group && this.group.numMembers }
-    maxVisibleDatasets = 8;
-
-    get countDatabases() { return this.group?.numDatabases || 0 }
-
-    get isGroupMember() {
-      return this.roleInGroup === 'MEMBER' || this.roleInGroup === 'GROUP_ADMIN'
-    }
-
-    // get canEditGroupDescr() {
-    //   if (!this.canEdit() && this.group.groupDescriptionAsHtml === '') {
-    //     return false
-    //   } else {
-    //     return true
-    //   }
-    // }
-
-    get groupId(): string | null {
-      if (isUuid(this.$route.params.groupIdOrSlug)) {
-        return this.$route.params.groupIdOrSlug // If it's possible to get the ID from the route, use that because it's faster than groupById/groupBySlug.
-      } else {
-        return this.group && this.group.id
+        ${datasetDetailItemFragment}
+      `,
+      () => ({
+        maxVisibleDatasets: maxVisibleDatasets.value,
+        groupId: groupId.value,
+      }),
+      () => {
+        return {
+          enabled: groupId.value != null,
+        }
       }
-    }
+    )
+    onDataResult(() => {
+      // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
+      // button that causes this query to refetch.
+      setTimeout(() => {
+        loaded.value = true
+      }, 300)
+    })
+    const data = computed(() => dataResult.value as ViewGroupProfileData | null)
 
-    get tab() {
-      if (['description', 'datasets', 'members', 'databases', 'settings'].includes(this.$route.query.tab)) {
-        return this.$route.query.tab
+    const { onResult } = useSubscription(datasetDeletedQuery)
+
+    onResult(({ data }) => {
+      if (data && data.datasetDeleted) {
+        removeDatasetFromAllDatasetsQuery('data', data.datasetDeleted.id)
+      }
+    })
+
+    const currentUserId = computed(() => currentUser.value?.id)
+    const roleInGroup = computed(() => group.value?.currentUserRole)
+    const groupDatasets = computed((): DatasetDetailItem[] =>
+      (data.value?.allDatasets || []).filter((ds) => ds.status !== 'FAILED')
+    )
+    const countDatasets = computed((): number => data.value?.countDatasets || 0)
+    const members = computed(() => group.value?.members || [])
+    const countMembers = computed(() => group.value?.numMembers || 0)
+    const countDatabases = computed(() => group.value?.numDatabases || 0)
+    const isGroupMember = computed(() => roleInGroup.value === 'MEMBER' || roleInGroup.value === 'GROUP_ADMIN')
+    const tab = computed(() => {
+      if (['description', 'datasets', 'members', 'databases', 'settings'].includes(route.query.tab as string)) {
+        return route.query.tab
       } else {
         return 'datasets'
       }
-    }
-
-    set tab(tab: string) {
-      this.$router.replace({ query: { tab } })
-    }
-
-    get isInvited(): boolean {
-      return this.roleInGroup === 'INVITED'
-    }
-
-    get datasetsListLink() {
-      return {
-        path: '/datasets',
-        query: this.groupId && encodeParams({
-          group: this.groupId,
-        }),
-      }
-    }
-
-    get canEdit() {
-      return this.roleInGroup === UserGroupRoleOptions.GROUP_ADMIN
-        || (this.currentUser && this.currentUser.role === 'admin')
-    }
-
-    get countHiddenMembers() {
-      if (this.countMembers != null) {
-        return Math.max(0, this.countMembers - this.members.length)
+    })
+    const isInvited = computed((): boolean => roleInGroup.value === 'INVITED')
+    const datasetsListLink = computed(() => ({
+      path: '/datasets',
+      query: groupId.value && encodeParams({ group: groupId.value }),
+    }))
+    const canEdit = computed(() => {
+      return roleInGroup.value === UserGroupRoleOptions.GROUP_ADMIN || currentUser.value?.role === 'admin'
+    })
+    const countHiddenMembers = computed(() => {
+      if (countMembers.value != null) {
+        return Math.max(0, countMembers.value - members.value.length)
       } else {
         return 0
       }
+    })
+    const hasMembershipRequest = computed(() => members.value?.some((m) => m.role === UserGroupRoleOptions.PENDING))
+    const showDatabasesTab = computed(() => config.features.moldb_mgmt && (isGroupMember.value || canEdit.value))
+
+    const setTab = (newTab: string | null) => {
+      router.replace({ query: { tab: newTab } })
     }
 
-    get hasMembershipRequest() {
-      return this.members.some(m => m.role === UserGroupRoleOptions.PENDING)
-    }
-
-    get showDatabasesTab() {
-      return config.features.moldb_mgmt && (this.isGroupMember || this.canEdit)
-    }
-
-    @Watch('$route.params.groupIdOrSlug')
-    @Watch('group.urlSlug')
-    canonicalizeUrl() {
-      if (this.group != null
-              && this.group.urlSlug != null
-              && this.$route.params.groupIdOrSlug !== this.group.urlSlug) {
-        this.$router.replace({
-          params: { groupIdOrSlug: this.group.urlSlug },
-          query: this.$route.query,
+    const canonicalizeUrl = () => {
+      if (group.value !== null && group.value?.urlSlug !== null && groupIdOrSlug.value !== group.value?.urlSlug) {
+        router.replace({
+          params: { groupIdOrSlug: group.value?.urlSlug },
+          query: route.query,
         })
       }
     }
 
-    async handleRequestAccess() {
-      this.showTransferDatasetsDialog = true
+    const groupSlug = computed(() => route.params?.groupIdOrSlug || group.value?.urlSlug)
+    watch(
+      () => groupSlug,
+      () => {
+        canonicalizeUrl()
+      }
+    )
+
+    const handleRequestAccess = async () => {
+      showTransferDatasetsDialog.value = true
     }
 
-    async handleAcceptInvite() {
-      this.showTransferDatasetsDialog = true
+    const handleAcceptInvite = async () => {
+      showTransferDatasetsDialog.value = true
     }
 
-    @ConfirmAsync({
-      title: 'Decline invitation',
-      message: 'Are you sure?',
-      confirmButtonText: 'Decline invitation',
-    })
-    async handleRejectInvite() {
-      await this.$apollo.mutate({
-        mutation: leaveGroupMutation,
-        variables: { groupId: this.groupId },
+    const refetch = async () => {
+      return Promise.all([refetchGroup(), refetchData()])
+    }
+
+    const handleRejectInvite = async () => {
+      const confirmOptions = {
+        title: 'Decline invitation',
+        message: 'Are you sure?',
+        confirmButtonText: 'Decline invitation',
+      }
+
+      await confirmAsync(confirmOptions, async () => {
+        await apolloClient.mutate({
+          mutation: leaveGroupMutation,
+          variables: { groupId: groupId.value },
+        })
+        await refetch()
       })
-      await this.refetch()
     }
 
-    async handleAcceptTransferDatasets(selectedDatasetIds: string[]) {
+    const handleAcceptTransferDatasets = async (selectedDatasetIds: string[]) => {
       try {
-        if (this.isInvited) {
-          await this.$apollo.mutate({
+        if (isInvited.value) {
+          await apolloClient.mutate({
             mutation: acceptGroupInvitationMutation,
-            variables: { groupId: this.groupId },
+            variables: { groupId: groupId.value },
           })
         } else {
-          await this.$apollo.mutate({
+          await apolloClient.mutate({
             mutation: requestAccessToGroupMutation,
-            variables: { groupId: this.groupId },
+            variables: { groupId: groupId.value },
           })
         }
         if (selectedDatasetIds.length > 0) {
-          await this.$apollo.mutate({
+          await apolloClient.mutate({
             mutation: importDatasetsIntoGroupMutation,
-            variables: { groupId: this.groupId, datasetIds: selectedDatasetIds },
+            variables: { groupId: groupId.value, datasetIds: selectedDatasetIds },
           })
         }
-        await this.refetch()
+        await refetch()
       } catch (err) {
         reportError(err)
       } finally {
-        this.showTransferDatasetsDialog = false
-        this.showRequestedDialog = true
+        showTransferDatasetsDialog.value = false
+        showRequestedDialog.value = true
       }
     }
 
-    handleCloseTransferDatasetsDialog() {
-      this.showTransferDatasetsDialog = false
+    const handleCloseTransferDatasetsDialog = () => {
+      showTransferDatasetsDialog.value = false
+    }
+    const handleCloseRequestedAccessDialog = () => {
+      showRequestedDialog.value = false
     }
 
-    handleCloseRequestedAccessDialog() {
-      this.showRequestedDialog = false
-    }
-
-    handleFilterUpdate(newFilter: any) {
-      this.$store.commit('updateFilter', {
+    const handleFilterUpdate = (newFilter: any) => {
+      store.commit('updateFilter', {
         ...newFilter,
-        group: this.groupId,
+        group: groupId.value,
       })
 
-      this.$router.push({
+      router.push({
         path: '/datasets',
-        query: this.$route.query,
+        query: route.query,
       })
     }
 
-    async saveMarkdown(newGroupDescription: string) {
-      await this.$apollo.mutate<UpdateGroupMutation>({
+    const saveMarkdown = async (newGroupDescription: string) => {
+      await apolloClient.mutate({
         mutation: updateGroupMutation,
         variables: {
-          groupId: this.groupId,
+          groupId: groupId.value,
           groupDetails: {
             groupDescriptionAsHtml: newGroupDescription,
           },
         },
       })
-      this.refetchGroup()
+      refetchGroup()
     }
 
-    async refetchGroup() {
-      return this.$apollo.queries.group.refetch()
+    // Return everything that will be used in your template
+    return {
+      loaded,
+      showTransferDatasetsDialog,
+      showRequestedDialog,
+      currentUser,
+      group,
+      data,
+      handleRequestAccess,
+      handleAcceptInvite,
+      handleRejectInvite,
+      handleFilterUpdate,
+      handleAcceptTransferDatasets,
+      handleCloseTransferDatasetsDialog,
+      handleCloseRequestedAccessDialog,
+      refetchGroup,
+      saveMarkdown,
+      optionalSuffixInParens,
+      plural,
+      maxVisibleDatasets,
+      groupLoading,
+      currentUserId,
+      roleInGroup,
+      groupDatasets,
+      countDatasets,
+      members,
+      countMembers,
+      countDatabases,
+      isGroupMember,
+      groupId,
+      groupSlug,
+      tab,
+      setTab,
+      isInvited,
+      datasetsListLink,
+      canEdit,
+      countHiddenMembers,
+      hasMembershipRequest,
+      showDatabasesTab,
     }
-
-    async refetch() {
-      return Promise.all([
-        this.$apollo.queries.group.refetch(),
-        this.$apollo.queries.data.refetch(),
-      ])
-    }
-}
-
+  },
+})
 </script>
 <style scoped lang="scss">
-  @import "~element-ui/packages/theme-chalk/src/common/var";
+@import 'element-plus/theme-chalk/src/mixins/mixins';
 
-  .page {
-    display: flex;
-    justify-content: center;
-    min-height: 80vh; // Ensure there's space for the loading spinner before is visible
-  }
-  .page-content {
-    width: 950px;
-    margin-left: 20px;
-    margin-right: 20px;
-  }
+.page {
+  display: flex;
+  justify-content: center;
+  min-height: 80vh; // Ensure there's space for the loading spinner before is visible
+}
+.page-content {
+  width: 950px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
 
-  .header-row {
-    display: flex;
-    flex-wrap: wrap;
-  }
-  .header-names {
-    display: flex;
-    align-items: baseline;
-  }
-  .header-buttons {
-    display: flex;
-    justify-content: flex-end;
-    flex-grow: 1;
-    align-self: center;
-    margin-right: 3px;
-  }
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+.header-names {
+  display: flex;
+  align-items: baseline;
+}
+.header-buttons {
+  display: flex;
+  justify-content: flex-end;
+  flex-grow: 1;
+  align-self: center;
+  margin-right: 3px;
+}
 
-  .hidden-members-text {
-    @apply text-gray-600;
-    text-align: center;
-  }
+.hidden-members-text {
+  @apply text-gray-600;
+  text-align: center;
+}
 </style>

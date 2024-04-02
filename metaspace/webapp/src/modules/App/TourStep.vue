@@ -3,238 +3,211 @@
     <div
       v-if="tour"
       ref="container"
-      class="el-popover el-popper el-popover--plain max-w-sm leading-5 p-5 text-left relative"
+      class="tour-popover-wrapper el-popover el-popper el-popover--plain max-w-sm leading-5 p-5 text-left relative"
     >
       <div class="h-5 pr-8 flex items-center">
-        <el-progress
-          class="w-full"
-          :percentage="100 * (stepNum + 1) / tour.steps.length"
-          :stroke-width="10"
-          :show-text="false"
-        />
+        <el-progress class="w-full" :percentage="progress" :stroke-width="10" :show-text="false" />
       </div>
-
-      <h3
-        v-if="step.title !== ''"
-        class="leading-10 m-0 mt-5"
-      >
-        {{ step.title }}
-      </h3>
-      <div
-        v-if="step.content !== ''"
-        class="ts-content"
-        v-html="step.content"
-      />
+      <h3 v-if="title !== ''" class="leading-10 m-0 mt-5">{{ title }}</h3>
+      <component ref="mdRef" :is="step" v-if="step" class="ts-content" />
       <div class="h-10 mt-5 flex justify-end items-center">
-        <el-button
-          v-if="stepNum > 0"
-          :key="step.title + '-back'"
-          size="small"
-          @click.native="prevStep"
-        >
-          Back
-        </el-button>
-        <el-button
-          :key="step.title + '-next'"
-          size="small"
-          type="primary"
-          @click.native="nextStep"
-        >
+        <el-button v-if="stepNum > 0" :key="title + '-back'" size="small" @click="prevStep"> Back </el-button>
+        <el-button :key="title + '-next'" size="small" type="primary" @click="nextStep">
           {{ stepNum == tour.steps.length - 1 ? 'Done' : 'Next' }}
         </el-button>
       </div>
-      <button
-        class="button-reset ts-close"
-        title="Exit tour"
-        @click="close"
-      >
-        <close-icon class="fill-current h-6 w-6 leading-6 block" />
+      <button class="button-reset ts-close" title="Exit tour" @click="close">
+        <CloseIcon class="fill-current h-6 w-6 leading-6 block" />
       </button>
-      <div
-        class="popper__arrow"
-        x-arrow=""
-      />
+      <div id="arrow" data-popper-arrow></div>
     </div>
   </div>
 </template>
 
 <script>
-import Vue from 'vue'
-import Popper from 'popper.js'
+import { defineComponent, ref, watch, onMounted, nextTick, defineAsyncComponent, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
+import { ElProgress, ElButton } from '../../lib/element-plus'
+import { createPopper } from '@popperjs/core'
+import Upload from '../../tours/intro/steps/00-upload.md'
 
-import router from '../../router'
-import CloseIcon from '../../assets/inline/refactoring-ui/icon-close-circle.svg'
+const CloseIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-close-circle.svg'))
 
-const startingRoute = 'help'
-
-export default {
+export default defineComponent({
   name: 'TourStep',
   components: {
+    ElProgress,
+    ElButton,
     CloseIcon,
+    Upload,
   },
   props: ['tour'],
-  data() {
-    return {
-      lastRoute: startingRoute,
-      stepNum: 0,
-      popper: null,
-      container: null,
-      routeTransition: false,
-    }
-  },
-  computed: {
-    step() {
-      if (!this.tour) {
-        return null
-      }
-      return this.tour.steps[this.stepNum]
-    },
-  },
-  created() {
-    router.beforeEach((to, from, next) => {
-      if (!this.tour || to.path === from.path) {
-        next()
-        return
-      }
+  setup(props) {
+    const store = useStore()
+    const router = useRouter()
+    const mdRef = ref(null)
 
-      if (this.routeTransition) {
-        this.routeTransition = false
-        next()
-      } else {
-        this.close()
-        next()
-      }
+    const lastRoute = ref('help')
+    const stepNum = ref(0)
+    const container = ref(null)
+    const routeTransition = ref(false)
+    const popperInstance = ref(null)
+    const step = computed(() => (props.tour?.steps ? props.tour.steps[stepNum.value] : null))
+    const progress = computed(() => (100 * (stepNum.value + 1)) / props.tour.steps?.length)
+    const tourAux = computed(() => props.tour)
+    const title = computed(() => mdRef.value?.frontmatter?.title)
+
+    watch(tourAux, async () => {
+      renderPopper()
     })
-  },
-  mounted() {
-    if (this.tour) {
-      this.render()
-    }
-  },
-  updated() {
-    if (this.tour) {
-      this.render()
-    }
-  },
-  methods: {
-    nextStep() {
-      this.stepNum += 1
-      if (this.tour.steps.length === this.stepNum) {
-        this.close()
+
+    // watch(() => route.path, (to, from) => {
+    //   if (!props.tour || to === from) return;
+    //
+    //   if (routeTransition.value) {
+    //     routeTransition.value = false;
+    //   } else {
+    //     close();
+    //   }
+    // });
+
+    const nextStep = () => {
+      stepNum.value++
+      if (props.tour.steps?.length === stepNum.value) {
+        close()
         return
       }
+      popperInstance.value?.destroy()
+      renderPopper()
+    }
 
-      this.popper.destroy()
-      this.render()
-    },
+    const prevStep = () => {
+      if (stepNum.value === 0) return // Shouldn't happen
+      stepNum.value--
+      popperInstance.value?.destroy()
+      renderPopper()
+    }
 
-    prevStep() {
-      if (this.stepNum === 0) {
-        return
-      } // shouldn't happen
-      this.stepNum -= 1
-      this.popper.destroy()
-      this.render()
-    },
+    const close = () => {
+      popperInstance.value?.destroy()
+      stepNum.value = 0
+      lastRoute.value = 'help'
+      routeTransition.value = false
+      store.commit('endTour')
+    }
 
-    render() {
-      // FIXME: simplify the logic here and make it more universal
-      if (this.step.route && this.lastRoute !== this.step.route) {
-        this.lastRoute = this.step.route
-        this.routeTransition = true
-        if (this.step.query) {
-          router.push({ path: this.lastRoute, query: this.step.query })
-        } else {
-          router.push({ path: this.lastRoute })
-        }
-      } else if (this.step.query) {
-        router.replace({ query: this.step.query })
+    const renderPopper = async () => {
+      await nextTick()
+      const meta = mdRef.value?.frontmatter
+      if (!meta) return
+      if (meta.route && meta.route !== router.currentRoute?.value?.path) {
+        await router.push({
+          path: meta.route,
+          query: meta.query,
+        })
       }
 
-      const minTimeout = 20 /* ms */
-      const maxTimeout = 2000
-      const factor = 2
+      await nextTick()
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      await nextTick()
 
-      const self = this
-      let timeout = minTimeout
+      const targetElement = document.querySelector(meta.target)
+      const arrow = document.querySelector('#arrow')
 
-      function showStep() {
-        if (self.step != null) {
-          const el = document.querySelector(self.step.target)
-          if (!el) {
-            timeout *= factor
-            if (timeout > maxTimeout) {
-              return
-            }
-            window.setTimeout(showStep, timeout)
-            return
-          }
-
-          self.popper = new Popper(el, self.$refs.container, { placement: self.step.placement })
-        }
+      if (targetElement && container.value) {
+        popperInstance.value = createPopper(targetElement, container.value, {
+          placement: meta.placement,
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [0, 8], // Adjusts the offset of the popover from the button
+              },
+            },
+            {
+              name: 'arrow', // Enables the arrow modifier
+              options: {
+                element: arrow, // Tells Popper.js which element is the arrow
+              },
+            },
+          ],
+        })
       }
+    }
 
-      Vue.nextTick(() => {
-        window.setTimeout(showStep, timeout)
-      })
-    },
+    onMounted(() => {
+      if (props.tour) renderPopper()
+    })
 
-    close() {
-      if (this.popper) {
-        this.popper.destroy()
-      }
-      this.stepNum = 0
-      this.lastRoute = startingRoute
-      this.routeTransition = false
-      this.$store.commit('endTour')
-    },
+    return { mdRef, title, stepNum, step, close, nextStep, prevStep, progress, container }
   },
-}
+})
 </script>
 
 <style lang="scss" scoped>
-  .el-popover {
-    z-index: 10100;
+.tour-popover-wrapper {
+  z-index: 10100 !important;
+}
+
+#arrow {
+  position: absolute;
+  background-color: #fff;
+  top: -8px;
+}
+
+/* Positioning for the arrow */
+[data-popper-arrow]::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  width: 10px;
+  height: 10px;
+  background-color: inherit;
+  transform: rotate(45deg);
+}
+
+::v-deep(.ts-close) {
+  @apply rounded-full text-gray-700;
+  position: absolute;
+  top: 18px;
+  right: 14px;
+
+  &:active,
+  &:focus {
+    outline: none;
   }
 
-  /deep/ .ts-close {
-    @apply rounded-full text-gray-700;
-    position: absolute;
-    // hard coded to center it against progress bar
-    top: 18px;
-    right: 14px;
+  svg .primary {
+    fill: none;
+  }
 
-    &:active,
-    &:focus {
-      outline: none;
-    }
-
+  &:hover,
+  &:focus {
+    @apply text-blue-700;
     svg .primary {
-      fill: none;
-    }
-
-    &:hover,
-    &:focus {
-      @apply text-blue-700;
-      svg .primary {
-        @apply fill-current text-blue-100;
-      }
+      @apply fill-current text-blue-100;
     }
   }
+}
 
-  /deep/ .ts-content {
-    > * {
-      margin: 0;
-    }
-    > * + *,
-    ul > li + li {
-      @apply mt-5;
-    }
-    ul, ol {
-      @apply pl-4;
-    }
-    sub {
-      line-height: 1;
-    }
+::v-deep(.ts-content) {
+  > * {
+    margin: 0;
   }
+
+  > * + *,
+  ul > li + li {
+    @apply mt-5;
+  }
+
+  ul,
+  ol {
+    @apply pl-4;
+  }
+
+  sub {
+    line-height: 1;
+  }
+}
 </style>

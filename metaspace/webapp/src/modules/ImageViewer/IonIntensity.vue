@@ -13,6 +13,9 @@
     <div
       v-else
       class="h-5 flex items-center sm-flex-direction"
+      :class="{
+        'flex-row-reverse': reverse,
+      }"
     >
       <button
         title="Click to edit"
@@ -20,13 +23,13 @@
         :class="{
           'font-medium text-red-700': status === 'CLIPPED',
           'font-medium text-blue-700': status === 'LOCKED',
-          'cursor-default': tooltipDisabled
+          'cursor-default': tooltipDisabled,
         }"
         @mouseover="showPopover"
         @mouseleave="hidePopover"
         @focus="showPopover"
         @blur="hidePopover"
-        @click.stop="editing = true; hidePopover()"
+        @click.stop="handleClickStop"
       >
         {{ intensity }}
       </button>
@@ -37,53 +40,51 @@
       >
         <lock-icon class="fill-current text-gray-600" />
       </button>
-      <check-icon
-        v-if="status === 'LOCKED'"
-        class="h-6 w-6 -mx-2 sm-fill-secondary text-blue-500 relative -z-10"
-      />
+      <el-icon v-if="status === 'LOCKED'" class="h-6 w-6 -mx-2 sm-fill-secondary text-blue-500 relative -z-10"
+        ><Check />
+      </el-icon>
     </div>
   </fade-transition>
 </template>
 <script lang="ts">
-import { defineComponent, computed, ref, watch } from '@vue/composition-api'
+import { defineComponent, computed, ref, defineAsyncComponent } from 'vue'
 
 import EditIntensity from './EditIntensity.vue'
 import FadeTransition from '../../components/FadeTransition'
+import { ElIcon } from '../../lib/element-plus'
+import { Check } from '@element-plus/icons-vue'
 
-import LockIcon from '../../assets/inline/refactoring-ui/icon-lock.svg'
-import CheckIcon from '../../assets/inline/refactoring-ui/icon-check.svg'
+const LockIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-lock.svg'))
 
-import { IonImageIntensity } from './ionImageState'
-
-interface Props {
-  clippingType: string
-  intensities: IonImageIntensity
-  label: string
-  placeholder: string
-  tooltipDisabled: boolean
-  value: number
-}
-
-export default defineComponent<Props>({
+export default defineComponent({
   props: {
     clippingType: String,
     intensities: Object,
     label: String,
     placeholder: String,
     tooltipDisabled: Boolean,
+    reverse: Boolean,
     value: Number,
   },
   components: {
     FadeTransition,
     EditIntensity,
     LockIcon,
-    CheckIcon,
+    ElIcon,
+    Check,
   },
   setup(props, { emit }) {
     const editing = ref(false)
-
     const status = computed(() => props.intensities.status)
     const intensity = computed(() => props.intensities.scaled.toExponential(1))
+    const hidePopover = () => {
+      emit('hide-popover')
+    }
+
+    const handleClickStop = () => {
+      editing.value = true
+      hidePopover()
+    }
 
     return {
       editing,
@@ -93,9 +94,8 @@ export default defineComponent<Props>({
           emit('show-popover')
         }
       },
-      hidePopover() {
-        emit('hide-popover')
-      },
+      hidePopover,
+      handleClickStop,
       status,
       submit(floatValue: number) {
         if (status.value === 'LOCKED') {
@@ -106,33 +106,33 @@ export default defineComponent<Props>({
         editing.value = false
       },
       reset() {
-        emit('input', props.intensities.image)
+        emit('input', (props.intensities as any).image)
         editing.value = false
       },
       lock() {
-        emit('lock', status.value === 'LOCKED' ? undefined : props.intensities.scaled)
+        emit('lock', status.value === 'LOCKED' ? undefined : (props.intensities as any).scaled)
       },
     }
   },
 })
 </script>
 <style scoped>
-  .sm-top-margin {
-    margin-top: 2px;
-  }
+.sm-top-margin {
+  margin-top: 2px;
+}
 
-  button svg {
-    height: 14px;
-    width: 14px;
-  }
-  .sm-flex-direction:last-child {
-    flex-direction: row-reverse;
-  }
+button svg {
+  height: 14px;
+  width: 14px;
+}
+/*.sm-flex-direction:last-child {*/
+/*  flex-direction: row-reverse;*/
+/*}*/
 
-  .sm-fill-secondary {
-    fill: none;
-  }
-  .sm-fill-secondary .secondary {
-    fill: currentColor;
-  }
+.sm-fill-secondary {
+  fill: none;
+}
+.sm-fill-secondary .secondary {
+  fill: currentColor;
+}
 </style>

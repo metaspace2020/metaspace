@@ -1,8 +1,9 @@
 <template>
   <el-row>
     <create-project-dialog
+      v-if="currentUser"
       :visible="showCreateProjectDialog && currentUser != null"
-      :current-user-id="currentUser && currentUser.id"
+      :current-user-id="currentUser.id"
       @close="handleCloseCreateProjectDialog"
       @create="handleCreateProject"
     />
@@ -13,10 +14,7 @@
         <th>Datasets</th>
         <th />
       </tr>
-      <tr
-        v-for="row in rows"
-        :key="row.id"
-      >
+      <tr v-for="row in rows" :key="row.id">
         <td>
           <div class="sm-table-cell">
             <router-link :to="row.route">
@@ -33,57 +31,33 @@
           {{ row.roleName }}
         </td>
         <td>
-          <router-link
-            v-if="row.numDatasets > 0"
-            :to="row.datasetsRoute"
-          >
+          <router-link v-if="row.numDatasets > 0" :to="row.datasetsRoute">
             {{ row.numDatasets }}
           </router-link>
           <span v-if="row.numDatasets === 0">{{ row.numDatasets }}</span>
         </td>
         <td>
-          <el-button
-            v-if="row.role === 'MEMBER'"
-            size="mini"
-            icon="el-icon-arrow-right"
-            @click="handleLeave(row)"
-          >
+          <el-button v-if="row.role === 'MEMBER'" size="small" icon="ArrowRight" @click="handleLeave(row)">
             Leave
           </el-button>
-          <el-button
-            v-if="row.role === 'MANAGER'"
-            size="mini"
-            icon="el-icon-arrow-right"
-            disabled
-          >
-            Leave
-          </el-button>
+          <el-button v-if="row.role === 'MANAGER'" size="small" icon="ArrowRight" disabled> Leave </el-button>
           <el-button
             v-if="row.role === 'INVITED'"
-            size="mini"
+            size="small"
             type="success"
-            icon="el-icon-check"
+            icon="Check"
             @click="handleAcceptInvitation(row)"
           >
             Accept
           </el-button>
-          <el-button
-            v-if="row.role === 'INVITED'"
-            size="mini"
-            icon="el-icon-close"
-            @click="handleDeclineInvitation(row)"
-          >
+          <el-button v-if="row.role === 'INVITED'" size="small" icon="Close" @click="handleDeclineInvitation(row)">
             Decline
           </el-button>
         </td>
       </tr>
     </table>
     <el-row>
-      <el-button
-        ref="createBtn"
-        style="float: right; margin: 10px 0;"
-        @click="handleOpenCreateProjectDialog"
-      >
+      <el-button ref="createBtnRef" style="float: right; margin: 10px 0" @click="handleOpenCreateProjectDialog">
         Create project
       </el-button>
     </el-row>
@@ -92,45 +66,52 @@
 
 <script lang="ts">
 import './Table.css'
-
-import Vue from 'vue'
-import { Component, Prop } from 'vue-property-decorator'
+import { defineComponent, ref, computed, inject } from 'vue'
 import { UserProfileQuery } from '../../api/user'
 import { acceptProjectInvitationMutation, getRoleName, leaveProjectMutation, ProjectRole } from '../../api/project'
 import reportError from '../../lib/reportError'
-import ConfirmAsync from '../../components/ConfirmAsync'
+import { useConfirmAsync } from '../../components/ConfirmAsync'
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { encodeParams } from '../Filters'
 import { CreateProjectDialog } from '../Project'
+import { ElMessage, ElButton, ElRow } from '../../lib/element-plus'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { useRouter } from 'vue-router'
 
-  interface ProjectRow {
-    id: string;
-    name: string;
-    role: ProjectRole;
-    roleName: string;
-    numDatasets: number;
-  }
+interface ProjectRow {
+  id: string
+  name: string
+  role: ProjectRole
+  roleName: string
+  numDatasets: number
+  route: any
+  datasetsRoute: any
+}
 
-  @Component({
-    components: {
-      CreateProjectDialog,
-      NotificationIcon,
-    },
-  })
-export default class ProjectsTable extends Vue {
-    @Prop()
-    currentUser!: UserProfileQuery | null;
+export default defineComponent({
+  name: 'ProjectsTable',
+  components: {
+    CreateProjectDialog,
+    NotificationIcon,
+    ElButton,
+    ElRow,
+  },
+  props: {
+    currentUser: Object as () => UserProfileQuery | null,
+    refetchData: Function as () => void,
+  },
+  setup(props) {
+    const apolloClient = inject(DefaultApolloClient)
+    const router = useRouter()
+    const createBtnRef = ref(null)
+    const showTransferDatasetsDialog = ref(false)
+    const showCreateProjectDialog = ref(false)
+    const invitingProject = ref<ProjectRow | null>(null)
+    const confirmAsync = useConfirmAsync()
 
-    @Prop()
-    refetchData!: () => void;
-
-    showTransferDatasetsDialog: boolean = false;
-    showCreateProjectDialog: boolean = false;
-    invitingProject: ProjectRow | null = null;
-
-    get rows(): ProjectRow[] {
-      if (this.currentUser != null && this.currentUser.projects != null) {
-        return this.currentUser.projects.map((item) => {
+    const rows = computed(() => {
+      if (props.currentUser != null && props.currentUser.projects != null) {
+        return props.currentUser.projects.map((item: any) => {
           const { project, numDatasets, role } = item
           const { id, name, urlSlug, hasPendingRequest } = project
 
@@ -147,79 +128,100 @@ export default class ProjectsTable extends Vue {
             },
             datasetsRoute: {
               path: '/datasets',
-              query: encodeParams({ submitter: this.currentUser!.id, project: id }),
+              query: encodeParams({ submitter: props.currentUser!.id, project: id }),
             },
           }
         })
       }
       return []
-    }
+    })
 
-    @ConfirmAsync((projectRow: ProjectRow) => ({
-      message: `Are you sure you want to leave ${projectRow.name}?`,
-      confirmButtonText: 'Yes, leave the project',
-      confirmButtonLoadingText: 'Leaving...',
-    }))
-    async handleLeave(projectRow: ProjectRow) {
-      await this.$apollo.mutate({
-        mutation: leaveProjectMutation,
-        variables: { projectId: projectRow.id },
+    const handleLeave = async (projectRow: ProjectRow) => {
+      const confirmOptions = {
+        message: `Are you sure you want to leave ${projectRow.name}?`,
+        confirmButtonText: 'Yes, leave the project',
+        confirmButtonLoadingText: 'Leaving...',
+      }
+
+      await confirmAsync(confirmOptions, async () => {
+        await apolloClient.mutate({
+          mutation: leaveProjectMutation,
+          variables: { projectId: projectRow.id },
+        })
+        await props.refetchData()
+        ElMessage({ message: 'You have successfully left the project' })
       })
-      await this.refetchData()
-      this.$message({ message: 'You have successfully left the project' })
     }
 
-    @ConfirmAsync((projectRow: ProjectRow) => ({
-      message: `Are you sure you want to decline the invitation to ${projectRow.name}?`,
-      confirmButtonText: 'Yes, decline the invitation',
-      confirmButtonLoadingText: 'Leaving...',
-    }))
-    async handleDeclineInvitation(projectRow: ProjectRow) {
-      await this.$apollo.mutate({
-        mutation: leaveProjectMutation,
-        variables: { projectId: projectRow.id },
+    const handleDeclineInvitation = async (projectRow: ProjectRow) => {
+      const confirmOptions = {
+        message: `Are you sure you want to decline the invitation to ${projectRow.name}?`,
+        confirmButtonText: 'Yes, decline the invitation',
+        confirmButtonLoadingText: 'Leaving...',
+      }
+
+      await confirmAsync(confirmOptions, async () => {
+        await apolloClient.mutate({
+          mutation: leaveProjectMutation,
+          variables: { projectId: projectRow.id },
+        })
+        await props.refetchData()
+        ElMessage({ message: 'You have declined the invitation' })
       })
-      await this.refetchData()
-      this.$message({ message: 'You have declined the invitation' })
     }
 
-    async handleAcceptInvitation(projectRow: ProjectRow) {
+    const handleAcceptInvitation = async (projectRow: ProjectRow) => {
       try {
-        await this.$apollo.mutate({
+        await apolloClient.mutate({
           mutation: acceptProjectInvitationMutation,
           variables: { projectId: projectRow.id },
         })
-        await this.refetchData()
-        this.$message({
+        await props.refetchData()
+        ElMessage({
           type: 'success',
           message: `You are now a member of ${projectRow.name}`,
         })
       } catch (err) {
         reportError(err)
       } finally {
-        this.showTransferDatasetsDialog = false
+        showTransferDatasetsDialog.value = false
       }
     }
 
-    handleOpenCreateProjectDialog() {
+    const handleOpenCreateProjectDialog = () => {
       // blur on open dialog, so the dialog button can be focused
-      const createBtn : any = this.$refs.createBtn as any
+      const createBtn: any = createBtnRef.value as any
       createBtn.$el.blur()
-      this.showCreateProjectDialog = true
+      showCreateProjectDialog.value = true
     }
 
-    handleCloseCreateProjectDialog() {
-      this.showCreateProjectDialog = false
+    const handleCloseCreateProjectDialog = () => {
+      showCreateProjectDialog.value = false
     }
 
-    handleCreateProject({ id }: {id: string}) {
-      this.$router.push({ name: 'project', params: { projectIdOrSlug: id } })
+    const handleCreateProject = ({ id }: { id: string }) => {
+      router.push({ name: 'project', params: { projectIdOrSlug: id } })
     }
-}
+
+    return {
+      createBtnRef,
+      showTransferDatasetsDialog,
+      showCreateProjectDialog,
+      invitingProject,
+      rows,
+      handleLeave,
+      handleAcceptInvitation,
+      handleDeclineInvitation,
+      handleOpenCreateProjectDialog,
+      handleCloseCreateProjectDialog,
+      handleCreateProject,
+    }
+  },
+})
 </script>
 
 <style scoped>
-  .table.el-table /deep/ .cell {
-    word-break: normal !important;
-  }
+.table.el-table ::v-deep(.cell) {
+  word-break: normal !important;
+}
 </style>

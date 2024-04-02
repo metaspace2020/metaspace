@@ -1,15 +1,9 @@
 <template>
-  <tag-filter
-    :name="name"
-    :removable="removable"
-    :width="256"
-    @show="show"
-    @destroy="destroy"
-  >
-    <div slot="edit">
+  <tag-filter :name="name" :removable="removable" :width="256" @show="show" @destroy="destroy">
+    <template #edit>
       <el-input
         v-if="rawInput"
-        ref="input"
+        ref="inputRef"
         v-model="localValue"
         :step="step"
         :max="max"
@@ -20,8 +14,8 @@
       />
       <el-input-number
         v-else
-        ref="input"
-        v-model="localValue"
+        ref="inputRef"
+        :value="localValue"
         :step="step"
         :max="max"
         :min="min"
@@ -29,40 +23,33 @@
         controls-position="right"
         @change="onChange"
       />
-      <filter-help-text>
-        Press <span class="font-medium">Enter</span> to confirm manual input
-      </filter-help-text>
-    </div>
-    <span slot="show">
-      <span
-        v-if="value"
-        class="tf-value-span"
-      >
-        {{ value }}
-      </span>
-      <span
-        v-else
-        class="inline-block w-4 tf-value-span"
-      />
-      <slot name="default" />
-    </span>
+      <filter-help-text> Press <span class="font-medium">Enter</span> to confirm manual input </filter-help-text>
+    </template>
+    <template #show>
+      <span v-if="value" class="tf-value-span">{{ value }}</span>
+      <span v-else class="inline-block w-4 tf-value-span"></span>
+      <slot />
+    </template>
   </tag-filter>
 </template>
 
 <script>
-import Vue from 'vue'
+import { defineComponent, ref, watch, nextTick } from 'vue'
 import TagFilter from './TagFilter.vue'
 import { FilterHelpText } from './TagFilterComponents'
+import { ElInputNumber, ElInput } from '../../../lib/element-plus'
 
-export default Vue.extend({
+export default defineComponent({
   name: 'NumberFilter',
   components: {
     TagFilter,
     FilterHelpText,
+    ElInputNumber,
+    ElInput,
   },
   props: {
     name: String,
-    value: [String, Number], // string if from query string, number if edited
+    value: [String, Number],
     removable: { type: Boolean, default: true },
     min: Number,
     max: Number,
@@ -70,36 +57,46 @@ export default Vue.extend({
     step: Number,
     rawInput: { type: Boolean, default: false },
   },
-  data(vm) {
-    return {
-      localValue: (this.rawInput ? vm.value : Number(vm.value)) || 0,
-    }
-  },
-  watch: {
-    value: function() {
-      this.localValue = (this.rawInput ? this.value : Number(this.value)) || 0
-    },
-  },
-  methods: {
-    onChange(val) {
-      if (this.rawInput) {
+  setup(props, { emit }) {
+    const localValue = ref(props.rawInput ? props.value : Number(props.value) || 0)
+    const inputRef = ref(null)
+
+    watch(
+      () => props.value,
+      (newValue) => {
+        localValue.value = props.rawInput ? newValue : Number(newValue) || 0
+      }
+    )
+
+    const onChange = (val) => {
+      if (props.rawInput) {
         val = val.replace(/[^.\d]/g, '').replace(/^(\d*\.?)|(\d*)\.?/g, '$1$2')
       }
-      /* sending undefined causes an issue */
       const v = val === undefined ? 0 : val
-      this.$emit('input', v)
-      this.$emit('change', v)
-    },
-    destroy() {
-      this.$emit('destroy', this.name)
-    },
-    show() {
-      if (this.$refs.input) {
-        const componentInstance = this.$refs.input
-        const input = componentInstance.$refs.input
-        input.focus()
-      }
-    },
+      emit('input', v)
+      emit('change', v)
+    }
+
+    const destroy = () => {
+      emit('destroy', props.name)
+    }
+
+    const show = () => {
+      nextTick(() => {
+        if (inputRef.value) {
+          const inputElement = inputRef.value.$refs.input
+          inputElement.focus()
+        }
+      })
+    }
+
+    return {
+      localValue,
+      inputRef,
+      onChange,
+      destroy,
+      show,
+    }
   },
 })
 </script>

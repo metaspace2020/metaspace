@@ -19,6 +19,7 @@
     width: 100%;
   }
 
+
   .dataset-browser-empty-spectrum{
     @apply border-2 border-dashed border-gray-200 relative rounded m-6 p-2 flex flex-row items-center justify-center;
     background: rgba(224,224,224,0.2);
@@ -30,6 +31,7 @@
     width: 100%;
     background: rgba(0,0,0,0.01);
     height: 100%;
+    margin-top: 6px;
   }
 
   //.loader-holder{

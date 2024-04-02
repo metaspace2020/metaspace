@@ -3,20 +3,25 @@
     <slot />
   </i>
 </template>
+
 <script lang="ts">
-import Vue from 'vue'
-export default Vue.extend({
-  // needed for use in tsx files
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  name: 'SecondaryIcon',
 })
 </script>
+
 <style scoped>
-i >>> svg {
+i ::v-deep(svg) {
   width: 100%;
 }
-i >>> .primary {
+
+i ::v-deep(.primary) {
   @apply fill-current  text-blue-100;
 }
-i >>> .secondary {
+
+i ::v-deep(.secondary) {
   @apply fill-current text-blue-800;
 }
 </style>

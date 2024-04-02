@@ -1,14 +1,14 @@
-import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from '@vue/composition-api'
-import { Table, TableColumn, Pagination, Button, Popover } from '../../../lib/element-ui'
+import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { ElTable, ElTableColumn, ElPagination, ElButton, ElPopover, ElIcon } from '../../../lib/element-plus'
 import ProgressButton from '../../Annotations/ProgressButton.vue'
-import AnnotationTableMolName from '../../Annotations/AnnotationTableMolName.vue'
 import { findIndex } from 'lodash-es'
-import config from '../../../lib/config'
-import FileSaver from 'file-saver'
-import formatCsvRow, { csvExportHeader, formatCsvTextArray } from '../../../lib/formatCsvRow'
-import ExternalWindowSvg from '../../../assets/inline/refactoring-ui/icon-external-window.svg'
+import * as FileSaver from 'file-saver'
+import formatCsvRow from '../../../lib/formatCsvRow'
 import './DatasetEnrichmentTable.scss'
 import moment from 'moment'
+import { useRoute } from 'vue-router'
+import { useStore } from 'vuex'
+import { Loading, QuestionFilled } from '@element-plus/icons-vue'
 
 interface DatasetEnrichmentTableProps {
   data: any[]
@@ -40,7 +40,7 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_NAME: 'name',
 }
 
-export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProps>({
+export const DatasetEnrichmentTable = defineComponent({
   name: 'DatasetEnrichmentTable',
   props: {
     data: {
@@ -55,8 +55,9 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       default: 'enrichment.csv',
     },
   },
-  setup: function(props, { emit, root }) {
-    const { $store, $route } = root
+  setup: function (props: DatasetEnrichmentTableProps, { emit }) {
+    const route = useRoute()
+    const store = useStore()
     const table = ref(null)
     const pageSizes = [15, 20, 25, 30]
     const state = reactive<DatasetEnrichmentTableState>({
@@ -72,12 +73,13 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
 
     const onKeyUp = (event: any) => {
       const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
-      if (!shouldMoveFocus) { // ignore event if focused on filters
+      if (!shouldMoveFocus) {
+        // ignore event if focused on filters
         return
       }
 
       // @ts-ignore
-      const action : string = KEY_TO_ACTION[event.key]
+      const action: string = KEY_TO_ACTION[event.key]
 
       if (!action) {
         return
@@ -129,6 +131,7 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       if (!state.keyListenerAdded) {
         state.keyListenerAdded = true
         window.addEventListener('keyup', onKeyUp)
+        window.addEventListener('keydown', onKeyDown)
       }
     })
 
@@ -136,23 +139,27 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       if (state.keyListenerAdded) {
         state.keyListenerAdded = false
         window.removeEventListener('keyup', onKeyUp)
+        window.removeEventListener('keydown', onKeyDown)
       }
     })
 
-    watch(() => props.isLoading, (newValue, oldValue) => {
-      if (newValue === true && oldValue === false) { // check for filter updates to re-render
-        initializeTable()
+    watch(
+      () => props.isLoading,
+      (newValue, oldValue) => {
+        if (newValue === true && oldValue === false) {
+          // check for filter updates to re-render
+          initializeTable()
+        }
       }
-    })
+    )
 
     const initializeTable = () => {
-      const { sort, row, page } = $route.query
+      const { sort, row, page } = route.query as any
       const order = sort ? (sort.indexOf('-') === 0 ? 'descending' : 'ascending') : 'descending'
       const prop = sort ? sort.replace('-', '') : 'median'
       handleSortChange({ order, prop }, false)
 
-      state.selectedRow = row ? props.data[parseInt(row, 10)]
-        : state.processedAnnotations[0]
+      state.selectedRow = row ? props.data[parseInt(row, 10)] : state.processedAnnotations[0]
       onPageChange(page ? parseInt(page, 10) : 1, true)
     }
 
@@ -166,15 +173,17 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
     }
 
     const getCurrentRowIndex = () => {
-      const dataStart = ((state.offset - 1) * state.pageSize)
-      const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
-      return findIndex(state.processedAnnotations.slice(dataStart, dataEnd),
-        (annotation: any) => { return state.selectedRow?.id === annotation?.id })
+      const dataStart = (state.offset - 1) * state.pageSize
+      const dataEnd = (state.offset - 1) * state.pageSize + state.pageSize
+      return findIndex(state.processedAnnotations.slice(dataStart, dataEnd), (annotation: any) => {
+        return state.selectedRow?.id === annotation?.id
+      })
     }
 
     const getDataItemIndex = () => {
-      return findIndex(state.processedAnnotations,
-        (annotation: any) => { return state.selectedRow?.id === annotation?.id })
+      return findIndex(state.processedAnnotations, (annotation: any) => {
+        return state.selectedRow?.id === annotation?.id
+      })
     }
 
     const getNumberOfPages = () => {
@@ -188,12 +197,11 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       if (state.currentRowIndex !== currentIndex && state.currentRowIndex !== -1) {
         setTimeout(() => {
           if (
-            document.querySelectorAll('.el-table__row')
-            && document.querySelectorAll('.el-table__row').length > state.currentRowIndex
-            && document.querySelectorAll('.el-table__row')[state.currentRowIndex]
-          ) {
+            document.querySelectorAll('.el-table__row') &&
+            document.querySelectorAll('.el-table__row').length > state.currentRowIndex &&
             document.querySelectorAll('.el-table__row')[state.currentRowIndex]
-              .classList.remove('current-row')
+          ) {
+            document.querySelectorAll('.el-table__row')[state.currentRowIndex].classList.remove('current-row')
           }
           state.currentRowIndex = currentIndex
         }, 100)
@@ -203,9 +211,9 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
         // gives time to clear and render the new selection
         setTimeout(() => {
           if (
-            document.querySelectorAll('.el-table__row')
-            && document.querySelectorAll('.el-table__row').length > currentIndex
-            && document.querySelectorAll('.el-table__row')[currentIndex]
+            document.querySelectorAll('.el-table__row') &&
+            document.querySelectorAll('.el-table__row').length > currentIndex &&
+            document.querySelectorAll('.el-table__row')[currentIndex]
           ) {
             document.querySelectorAll('.el-table__row')[currentIndex].classList.add('current-row')
           }
@@ -223,15 +231,16 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
     const handleCurrentRowChange = (row: any) => {
       if (row) {
         state.selectedRow = row
-        const currentIndex = findIndex(props.data,
-          (annotation) => { return row.id === annotation.id })
+        const currentIndex = findIndex(props.data, (annotation: any) => {
+          return row.id === annotation.id
+        })
 
         if (state.currentRowIndex === -1) {
           state.currentRowIndex = currentIndex
         }
 
         if (currentIndex !== -1) {
-          $store.commit('setRow', currentIndex)
+          store.commit('setRow', currentIndex)
           emit('rowChange', currentIndex)
           // for same reason setCurrentRow and clearSelection are not working so
           // I had to add the current row class by hand
@@ -241,18 +250,23 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
     }
 
     const handleSortName = (order: string) => {
-      state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
-        (order === 'ascending' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name))))
+      state.processedAnnotations = computed(() =>
+        props.data
+          .slice()
+          .sort((a, b) => (order === 'ascending' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)))
+      )
     }
 
     const handleSortId = (order: string) => {
-      state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
-        (order === 'ascending' ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id))))
+      state.processedAnnotations = computed(() =>
+        props.data.slice().sort((a, b) => (order === 'ascending' ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id)))
+      )
     }
 
     const handleSortNumber = (prop: number, order: string) => {
-      state.processedAnnotations = computed(() => props.data.slice().sort((a, b) =>
-        (order === 'ascending' ? 1 : -1) * (a[prop] - b[prop])))
+      state.processedAnnotations = computed(() =>
+        props.data.slice().sort((a, b) => (order === 'ascending' ? 1 : -1) * (a[prop] - b[prop]))
+      )
     }
 
     const handleSortChange = (settings: any, setCurrentRow: boolean = true) => {
@@ -268,7 +282,7 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
         handleSortNumber(prop, order)
       }
 
-      $store.commit('setSortOrder', {
+      store.commit('setSortOrder', {
         by: prop,
         dir: order?.toUpperCase(),
       })
@@ -287,25 +301,26 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       emit('sizeChange', newSize)
     }
 
-    const onPageChange = (newPage: number, fromUpDownArrow : boolean = false) => {
+    const onPageChange = (newPage: number, fromUpDownArrow: boolean = false) => {
       const currentDataIndex = getDataItemIndex()
 
       // right
       if (!fromUpDownArrow && newPage > state.offset) {
-        const newIndex = Math.min(currentDataIndex + (state.pageSize * (newPage - state.offset)),
-          props.data.length - 1)
+        const newIndex = Math.min(currentDataIndex + state.pageSize * (newPage - state.offset), props.data.length - 1)
         state.selectedRow = state.processedAnnotations[newIndex]
-      } else if (!fromUpDownArrow && newPage < state.offset) { // left
-        const newIndex = Math.max(0, currentDataIndex - (state.pageSize * (state.offset - newPage)))
+      } else if (!fromUpDownArrow && newPage < state.offset) {
+        // left
+        const newIndex = Math.max(0, currentDataIndex - state.pageSize * (state.offset - newPage))
         state.selectedRow = state.processedAnnotations[newIndex]
-      } else if (currentDataIndex === -1 && state.processedAnnotations.length > 0) { // keep row selected
+      } else if (currentDataIndex === -1 && state.processedAnnotations.length > 0) {
+        // keep row selected
         state.selectedRow = state.processedAnnotations[0]
       }
 
       newPage = newPage < 1 ? 1 : newPage
       state.offset = newPage
 
-      $store.commit('setCurrentPage', newPage)
+      store.commit('setCurrentPage', newPage)
       emit('pageChange', newPage)
 
       handleCurrentRowChange(state.selectedRow)
@@ -325,10 +340,45 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       return 'prev,pager,next,sizes'
     }
 
-    const startExport = async() => {
+    const onKeyDown = (event) => {
+      const action = KEY_TO_ACTION[event.key]
+      if (action) {
+        event.preventDefault()
+        return false
+      }
+      return true
+    }
+
+    const getRowClass = (info: any) => {
+      const { row } = info
+      const { fdrLevel, colocalization } = row
+      const fdrClass =
+        fdrLevel == null
+          ? 'fdr-null'
+          : fdrLevel <= 0.051
+          ? 'fdr-5'
+          : fdrLevel <= 0.101
+          ? 'fdr-10'
+          : fdrLevel <= 0.201
+          ? 'fdr-20'
+          : 'fdr-50'
+      const colocClass =
+        colocalization === null || colocalization === 0
+          ? ''
+          : colocalization >= 0.949
+          ? 'coloc-95'
+          : colocalization >= 0.899
+          ? 'coloc-90'
+          : colocalization >= 0.799
+          ? 'coloc-80'
+          : 'coloc-50'
+
+      return `${fdrClass} ${colocClass}`
+    }
+
+    const startExport = async () => {
       const dateStr = moment().format('YYYY-MM-DD HH:mm:ss')
-      let csv = `# Generated at ${dateStr}.\n`
-        + `# URL: ${window.location.href}\n`
+      let csv = `# Generated at ${dateStr}.\n` + `# URL: ${window.location.href}\n`
 
       const columns = ['ID', 'Name', 'n', 'Observed', 'Expected', 'Median', 'σ', 'p-value', 'q-value']
 
@@ -338,18 +388,8 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
         return parseFloat(value).toFixed(4)
       }
 
-      function formatRow(row : any) {
-        const {
-          id,
-          median,
-          expected,
-          name,
-          observed,
-          pValue,
-          qValue,
-          std,
-          n,
-        } = row
+      function formatRow(row: any) {
+        const { id, median, expected, name, observed, pValue, qValue, std, n } = row
         const cells = [
           id,
           name,
@@ -383,43 +423,47 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
       state.exportProgress = 0
     }
 
-    const renderExplainedHeader = (column : any, explanation: string) => {
-      return <div class="explained-header">
-        {column.label}
-        <Popover
-          trigger="hover"
-          placement="right"
-        >
-          <i
-            slot="reference"
-            class="el-icon-question help-icon ml-0.5"
+    const renderExplainedHeader = (label: any, explanation: string) => {
+      return (
+        <div class="explained-header">
+          {label}
+          <ElPopover
+            trigger="hover"
+            placement="right"
+            v-slots={{
+              reference: () => (
+                <ElIcon class="help-icon ml-0.5">
+                  <QuestionFilled />
+                </ElIcon>
+              ),
+              default: () => <span>{explanation}</span>,
+            }}
           />
-          {explanation}
-        </Popover>
-      </div>
+        </div>
+      )
     }
 
     return () => {
       const totalCount = props.data.length
-      const dataStart = ((state.offset - 1) * state.pageSize)
-      const dataEnd = ((state.offset - 1) * state.pageSize) + state.pageSize
+      const dataStart = (state.offset - 1) * state.pageSize
+      const dataEnd = (state.offset - 1) * state.pageSize + state.pageSize
       if (props.isLoading) {
         return (
-          <div class='ds-comparison-annotation-table-loading-wrapper'>
-            <i
-              class="el-icon-loading"
-            />
+          <div class="ds-comparison-annotation-table-loading-wrapper">
+            <ElIcon class="is-loading">
+              <Loading />
+            </ElIcon>
           </div>
         )
       }
 
       return (
         <div class="dataset-enrichment-table">
-          <Table
+          <ElTable
             id="annot-table"
             ref={table}
             data={state.processedAnnotations.slice(dataStart, dataEnd)}
-            size="mini"
+            size="small"
             border
             current
             elementLoadingText="Loading results …"
@@ -428,81 +472,70 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
             stripe
             tabindex="1"
             defaultSort={getDefaultTableSort()}
-            {...{
-              on: {
-                'current-change': handleCurrentRowChange,
-                'sort-change': handleSortChange,
-              },
-            }}
+            onKeyDown={onKeyDown}
+            onKeyUp={onKeyDown}
+            rowClassName={getRowClass}
+            onCurrentChange={handleCurrentRowChange}
+            onSortChange={handleSortChange}
           >
-            <TableColumn
-              key="id"
-              property="id"
-              label="ID"
-              sortable={'custom'}
-              minWidth="100"
-            />
-            <TableColumn
-              key="name"
-              property="name"
-              label="Name"
-              sortable="custom"
-              minWidth="140"
-            />
-            <TableColumn
+            <ElTableColumn key="id" property="id" label="ID" sortable={'custom'} minWidth="100" />
+            <ElTableColumn key="name" property="name" label="Name" sortable="custom" minWidth="140" />
+            <ElTableColumn
               key="n"
               property="n"
               label="n"
               sortable="custom"
               minWidth="60"
-              renderHeader={(h : any, { column } : any) => renderExplainedHeader(column,
-                'Median number of molecules matched with term..')}
+              v-slots={{
+                header: () => renderExplainedHeader('n', 'Median number of molecules matched with term..'),
+              }}
             />
-            <TableColumn
+            <ElTableColumn
               key="observed"
               property="observed"
               label="Observed"
               sortable="custom"
               minWidth="110"
-              renderHeader={(h : any, { column } : any) => renderExplainedHeader(column,
-                'Observed ratio over background in term.')}
+              v-slots={{
+                header: () => renderExplainedHeader('Observed', 'Observed ratio over background in term.'),
+              }}
               formatter={(row: any) => formatFloat(row.observed)}
-
             />
-            <TableColumn
+            <ElTableColumn
               key="expected"
               property="expected"
               label="Expected"
               sortable="custom"
               minWidth="110"
-              renderHeader={(h : any, { column } : any) => renderExplainedHeader(column,
-                'Expected ratio over background in term.')}
+              v-slots={{
+                header: () => renderExplainedHeader('Expected', 'Expected ratio over background in term.'),
+              }}
               formatter={(row: any) => formatFloat(row.expected)}
-
             />
-            <TableColumn
+            <ElTableColumn
               key="median"
               property="median"
               label="Median"
               sortable="custom"
               minWidth="100"
-              renderHeader={(h : any, { column } : any) => renderExplainedHeader(column,
-                'Fold enrichment median.')}
+              v-slots={{
+                header: () => renderExplainedHeader('Median', 'Fold enrichment median.'),
+              }}
               formatter={(row: any) => formatFloat(row.median)}
-
             />
-            <TableColumn
+            <ElTableColumn
               key="std"
               property="std"
               label="σ"
-              className="fdr-cell"
+              class="fdr-cell"
               sortable="custom"
               minWidth="80"
-              renderHeader={(h : any, { column } : any) => renderExplainedHeader(column,
-                'Standard deviation.')}
+              v-slots={{
+                header: () => renderExplainedHeader('σ', 'Standard deviation.'),
+              }}
               formatter={(row: any) => formatFloat(row.std)}
             />
-            <TableColumn
+            <ElTableColumn
               key="p-value"
               property="pValue"
               label="p-value"
@@ -510,7 +543,7 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
               minWidth="80"
               formatter={(row: any) => formatFloat(row.pValue)}
             />
-            <TableColumn
+            <ElTableColumn
               key="qValue"
               property="qValue"
               label="q-value"
@@ -518,48 +551,38 @@ export const DatasetEnrichmentTable = defineComponent<DatasetEnrichmentTableProp
               minWidth="80"
               formatter={(row: any) => formatFloat(row.qValue)}
             />
-          </Table>
+          </ElTable>
           <div class="flex justify-between items-start mt-2">
             <div>
-              <Pagination
+              <ElPagination
                 total={totalCount}
                 pageSize={state.pageSize}
                 pageSizes={pageSizes}
                 currentPage={state.offset}
-                {...{ on: { 'update:currentPage': onPageChange } }}
-                {...{ on: { 'update:pageSize': onPageSizeChange } }}
+                onSizeChange={onPageSizeChange}
+                onCurrentChange={onPageChange}
                 layout={paginationLayout()}
               />
-              <div
-                id="annot-count"
-                class="mt-2">
-                <b>{ totalCount }</b> matching { totalCount === 1 ? 'record' : 'records' }
+              <div id="annot-count" class="mt-2">
+                <b>{totalCount}</b> matching {totalCount === 1 ? 'record' : 'records'}
               </div>
             </div>
-            {
-              state.isExporting
-                && totalCount > 5000
-                && <ProgressButton
-                  class="export-btn"
-                  width={130}
-                  height={40}
-                  percentage={state.exportProgress * 100}
-                  onClick={abortExport}
-                >
-                  Cancel
-                </ProgressButton>
-            }
-            {
-              !(state.isExporting
-                  && totalCount > 5000)
-                && <Button
-                  class="export-btn"
-                  disabled={state.isExporting}
-                  onClick={startExport}
-                >
-                  Export to CSV
-                </Button>
-            }
+            {state.isExporting && totalCount > 5000 && (
+              <ProgressButton
+                class="export-btn"
+                width={130}
+                height={40}
+                percentage={state.exportProgress * 100}
+                onClick={abortExport}
+              >
+                Cancel
+              </ProgressButton>
+            )}
+            {!(state.isExporting && totalCount > 5000) && (
+              <ElButton class="export-btn" disabled={state.isExporting} onClick={startExport}>
+                Export to CSV
+              </ElButton>
+            )}
           </div>
         </div>
       )

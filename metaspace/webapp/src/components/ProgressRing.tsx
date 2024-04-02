@@ -1,26 +1,26 @@
 import './ProgressRing.css'
 
-import { defineComponent, computed } from '@vue/composition-api'
+import { defineComponent, computed } from 'vue'
 
 interface Props {
-  radius: number,
-  progress: number,
-  stroke: number,
+  radius: number
+  progress: number
+  stroke: number
 }
 
 // https://css-tricks.com/building-progress-ring-quickly/
-export default defineComponent<Props>({
+export default defineComponent({
   name: 'ProgressRing',
   props: {
     radius: Number,
     progress: Number,
     stroke: Number,
   },
-  setup(props) {
+  setup(props: Props | any) {
     // const normalizedRadius = computed(() => props.radius - props.stroke * 2)
     const circumference = computed(() => props.radius * 2 * Math.PI)
     const progress = computed(() => Math.max(props.progress, 1))
-    const strokeDashoffset = computed(() => circumference.value - progress.value / 100 * circumference.value)
+    const strokeDashoffset = computed(() => circumference.value - (progress.value / 100) * circumference.value)
 
     return () => (
       <svg height={props.radius * 2} width={props.radius * 2} class="overflow-visible sm-progress-ring">

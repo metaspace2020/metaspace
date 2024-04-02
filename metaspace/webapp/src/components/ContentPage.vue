@@ -4,7 +4,8 @@
   </div>
 </template>
 <style>
-.sm-content-page.sm-main-content { /* .sm-main-content is added to page routes */
+.sm-content-page.sm-main-content {
+  /* .sm-main-content is added to page routes */
   @apply p-18 max-w-4xl box-border mx-auto leading-6 text-base;
 }
 
@@ -34,12 +35,12 @@
   @apply p-0 my-0;
 }
 
-.sm-content-page  ol.sm-ordered-list {
+.sm-content-page ol.sm-ordered-list {
   list-style: none;
   counter-reset: primary-nums;
 }
 
-.sm-content-page  ol.sm-ordered-list > li {
+.sm-content-page ol.sm-ordered-list > li {
   @apply mt-6 relative;
 }
 
@@ -49,7 +50,7 @@
 
   counter-increment: primary-nums;
   content: counter(primary-nums);
-  left: calc(-1 * theme('spacing.9'))
+  left: calc(-1 * theme('spacing.9'));
 }
 
 .sm-content-page p {

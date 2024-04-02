@@ -1,6 +1,6 @@
 ---
 title: Table navigation
-target: '#annot-table tr:nth-child(5)'
+target: '#annot-table tr:nth-child(2)'
 placement: right
 nextOnTargetClick: true
 route: '/annotations'

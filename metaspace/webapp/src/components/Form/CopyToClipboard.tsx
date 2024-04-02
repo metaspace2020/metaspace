@@ -1,64 +1,73 @@
-import { defineComponent, reactive, ref } from '@vue/composition-api'
-import { Input } from '../../lib/element-ui'
-
+import { defineComponent, reactive, ref } from 'vue'
+import { ElInput, ElTooltip, ElButton } from '../../lib/element-plus'
 import copyToClipboard from '../../lib/copyToClipboard'
+import { DocumentCopy } from '@element-plus/icons-vue'
 
 interface Props {
   value: string
   type: string
 }
 
-export default defineComponent<Props>({
+export default defineComponent({
+  name: 'YourComponentName',
   props: {
-    value: { type: String },
-    type: { type: String, default: 'text' },
+    value: String,
+    type: {
+      type: String,
+      default: 'text',
+    },
   },
-  setup(props) {
+  setup(props: Props | any) {
     const state = reactive({
       copied: false,
       focussed: false,
     })
 
-    const input = ref<Input | null>(null)
+    const inputRef = ref<InstanceType<typeof ElInput>>()
 
-    function handleCopy() {
+    const handleCopy = () => {
       copyToClipboard(props.value)
       state.copied = true
     }
 
-    function handleFocus() {
-      input.value!.select()
+    const handleFocus = () => {
+      inputRef.value?.select()
       state.focussed = true
     }
 
-    function handleBlur() {
+    const handleBlur = () => {
       state.focussed = false
     }
 
     return () => (
-      <el-input
-        ref={input}
-        value={props.value}
+      <ElInput
+        ref={inputRef}
+        modelValue={props.value}
         type={state.focussed ? 'text' : props.type}
         onFocus={handleFocus}
         onBlur={handleBlur}
         readonly
       >
-        <el-tooltip
-          slot="append"
-          manual
-          value={state.copied}
-          content="Copied!"
-          placement="right"
-        >
-          <el-button
-            title="Copy to clipboard"
-            icon="el-icon-document-copy"
-            onClick={handleCopy}
-            nativeOnMouseleave={() => { state.copied = false }}
-          />
-        </el-tooltip>
-      </el-input>
+        {{
+          append: () => (
+            <ElTooltip visible={state.copied} content="Copied!" placement="right">
+              <ElButton
+                icon={DocumentCopy}
+                onClick={handleCopy}
+                onMouseleave={() => {
+                  state.copied = false
+                }}
+                {...{
+                  onMouseleave: () => {
+                    state.copied = false
+                  },
+                  title: 'Copy to clipboard',
+                }}
+              />
+            </ElTooltip>
+          ),
+        }}
+      </ElInput>
     )
   },
 })

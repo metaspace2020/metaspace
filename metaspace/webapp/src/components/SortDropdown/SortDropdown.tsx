@@ -1,7 +1,7 @@
-import { defineComponent, reactive } from '@vue/composition-api'
-import { Option } from '../../lib/element-ui'
+import { defineComponent, reactive } from 'vue'
+import { ElSelect, ElOption, ElButton, ElTooltip } from '../../lib/element-plus'
 import './SortDropdown.css'
-import { UnwrapRef } from '@vue/composition-api/dist/reactivity'
+import { Sort, SortUp, SortDown } from '@element-plus/icons-vue'
 
 const enum SortingOrder {
   Unsorted = '',
@@ -10,24 +10,27 @@ const enum SortingOrder {
 }
 
 interface Props {
-  options: Option[]
+  options: Array<{
+    value: string
+    label: string
+  }>
   defaultOption: string
-  defaultSorting: string
+  defaultSorting: SortingOrder
   size: string
   clearable: boolean
   tooltipPlacement: string
-  onSortChange(value: any, orderBy: SortingOrder): any
 }
 
 interface State {
-  value: any
+  value: string
   orderBy: SortingOrder
 }
 
-export const SortDropdown = defineComponent<Props>({
+export default defineComponent({
+  name: 'SortDropdown',
   props: {
     options: {
-      type: Array,
+      type: Array as () => Props['options'],
       default: () => [
         {
           value: 'ORDER_BY_DATE',
@@ -51,83 +54,87 @@ export const SortDropdown = defineComponent<Props>({
         },
       ],
     },
-    onSortChange: {
-      type: Function,
-      default: () => {},
-    },
-    size: {
-      type: String,
-      default: 'small',
-    },
     defaultOption: {
       type: String,
       default: '',
     },
     defaultSorting: {
-      type: String,
+      type: String as () => SortingOrder,
       default: SortingOrder.Unsorted,
     },
-    tooltipPlacement: {
+    size: {
       type: String,
-      default: 'right',
+      default: 'small',
     },
     clearable: {
       type: Boolean,
       default: true,
     },
+    tooltipPlacement: {
+      type: String,
+      default: 'right',
+    },
   },
-  // Last reprocessed date (as currently)/Upload date/Number of annotations for FDR 10%/User name/Dataset name
-  setup(props, ctx) {
-    const { emit } = ctx
-
-    const state : UnwrapRef<State> = reactive({
-      orderBy: props.defaultSorting,
+  emits: ['sort'],
+  setup(props: Props, { emit }) {
+    const state: State = reactive({
       value: props.defaultOption,
+      orderBy: props.defaultSorting,
     })
 
     const handleSort = () => {
-      if (!state.value) { return null }
+      if (!state.value) return
 
-      state.orderBy = state.orderBy === SortingOrder.Unsorted ? SortingOrder.Desc : (state.orderBy === SortingOrder.Asc
-        ? SortingOrder.Desc : SortingOrder.Asc)
+      state.orderBy =
+        state.orderBy === SortingOrder.Unsorted
+          ? SortingOrder.Desc
+          : state.orderBy === SortingOrder.Asc
+          ? SortingOrder.Desc
+          : SortingOrder.Asc
+
       emit('sort', state.value, state.orderBy)
     }
 
     const handleSelect = (value: string) => {
       state.value = value
-      state.orderBy = !value ? SortingOrder.Unsorted : (state.orderBy === SortingOrder.Unsorted
-        ? SortingOrder.Desc : state.orderBy)
+      state.orderBy = !value
+        ? SortingOrder.Unsorted
+        : state.orderBy === SortingOrder.Unsorted
+        ? SortingOrder.Desc
+        : state.orderBy
       emit('sort', state.value, state.orderBy)
     }
 
     return () => (
       <div class="flex flex-row sort-dp-container">
-        <el-select
-          size={props.size}
-          value={state.value}
+        <ElSelect
+          size={props.size as any}
+          modelValue={state.value}
           placeholder="Sort by"
           onChange={handleSelect}
-          clearable={props.clearable}>
-          {
-            props.options.map((opt) => {
-              return <el-option
-                label={opt.label}
-                value={opt.value}/>
-            })
-          }
-        </el-select>
+          clearable={props.clearable}
+        >
+          {props.options.map((opt) => (
+            <ElOption label={opt.label} value={opt.value} />
+          ))}
+        </ElSelect>
         <div class="el-input-group__append sort-dp-btn">
-          <el-tooltip
-            content="Sorting order"
-            placement={props.tooltipPlacement}
-          >
-            <el-button
-              class={`${!state.value ? 'cursor-not-allowed' : ''}`}
-              icon={state.orderBy === SortingOrder.Unsorted ? 'el-icon-sort' : (state.orderBy === SortingOrder.Desc
-                ? 'el-icon-sort-down' : 'el-icon-sort-up')}
+          <ElTooltip content="Sorting order" placement={props.tooltipPlacement as any}>
+            <ElButton
+              size={props.size as any}
+              class={`btn-internal ${!state.value ? 'cursor-not-allowed' : ''}`}
+              icon={
+                state.orderBy === SortingOrder.Unsorted ? (
+                  <Sort />
+                ) : state.orderBy === SortingOrder.Desc ? (
+                  <SortDown />
+                ) : (
+                  <SortUp />
+                )
+              }
               onClick={handleSort}
             />
-          </el-tooltip>
+          </ElTooltip>
         </div>
       </div>
     )

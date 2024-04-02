@@ -1,7 +1,7 @@
 import moment from 'moment'
 
 export default (values: string[]): string => {
-  const escaped = values.map(v => {
+  const escaped = values.map((v) => {
     if (v != null) {
       return `"${String(v).replace(/"/g, '""')}"`
     } else {
@@ -14,15 +14,16 @@ export default (values: string[]): string => {
 
 export const csvExportHeader = () => {
   const dateStr = moment().format('YYYY-MM-DD HH:mm:ss')
-  return `# Generated at ${dateStr}. For help see https://bit.ly/3Bzs6Z4\n`
-  + `# URL: ${window.location.href}\n`
+  return `# Generated at ${dateStr}. For help see https://bit.ly/3Bzs6Z4\n` + `# URL: ${window.location.href}\n`
 }
 
 export const csvExportIntensityHeader = (isNormalized: boolean = false) => {
   const dateStr = moment().format('YYYY-MM-DD HH:mm:ss')
-  return `# Generated at ${dateStr}. Hot-spot removal has been applied and the intensity values might `
-  + `differ from the api results.${isNormalized ? 'The intensities were TIC normalized' : ''}\n`
-  + `# URL: ${window.location.href}\n`
+  return (
+    `# Generated at ${dateStr}. Hot-spot removal has been applied and the intensity values might ` +
+    `differ from the api results.${isNormalized ? 'The intensities were TIC normalized' : ''}\n` +
+    `# URL: ${window.location.href}\n`
+  )
 }
 
 /**
@@ -33,6 +34,4 @@ export const csvExportIntensityHeader = (isNormalized: boolean = false) => {
  * strict requirement
  */
 export const formatCsvTextArray = (values: string[]): string =>
-  values
-    .map(val => (val ?? '').replace(/, +/g, ','))
-    .join(', ')
+  values.map((val) => (val ?? '').replace(/, +/g, ',')).join(', ')

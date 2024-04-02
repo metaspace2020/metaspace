@@ -1,7 +1,7 @@
 // @ts-ignore
 import { fromArrayBuffer } from 'numpy-parser'
 
-export const readNpy = async(npyFile: string) => {
+export const readNpy = async (npyFile: string) => {
   try {
     const response = await fetch(npyFile)
     const arrayBuffer = await response.arrayBuffer()

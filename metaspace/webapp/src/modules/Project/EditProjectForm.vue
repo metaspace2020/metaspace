@@ -1,7 +1,7 @@
 <template>
   <el-form
-    ref="form"
-    :model="value"
+    ref="formRef"
+    :model="formValue"
     :disabled="disabled"
     :rules="rules"
     label-position="top"
@@ -12,20 +12,10 @@
       <label>
         <primary-label-text>Title</primary-label-text>
         <el-form-item prop="name">
-          <el-input
-            v-model="value.name"
-            class="py-1"
-            :max-length="50"
-            :min-length="2"
-            validate-event
-          />
+          <el-input v-model="formValue.name" class="py-1" :max-length="50" :min-length="2" validate-event />
         </el-form-item>
       </label>
-      <!--      empty and hidden input to prevent press enter reload vue bug
-       https://forum.framework7.io/t/vue-pressing-enter-key-in-input-causes-app-to-reload/2585 -->
-      <el-input
-        class="hidden"
-      />
+      <el-input class="hidden" />
     </div>
     <div>
       <label>
@@ -35,64 +25,94 @@
         </secondary-label-text>
       </label>
       <div class="h-10 flex items-center">
-        <el-switch
-          v-model="value.isPublic"
-          :disabled="isPublished"
-          active-text="Public"
-          inactive-text="Private"
-        />
+        <el-switch v-model="formValue.isPublic" :disabled="isPublished" active-text="Public" inactive-text="Private" />
       </div>
-      <p
-        v-if="isPublished"
-        class="m-0 italic text-sm text-gray-700"
-      >
-        published projects are always visible
-      </p>
+      <p v-if="isPublished" class="m-0 italic text-sm text-gray-700">published projects are always visible</p>
     </div>
   </el-form>
 </template>
+
 <script lang="ts">
-import Vue from 'vue'
-import { Component, Model, Prop } from 'vue-property-decorator'
-import { ElForm } from 'element-ui/types/form'
+import { defineComponent, ref, reactive, watch } from 'vue'
+import { ElForm, ElInput, ElSwitch, ElFormItem } from '../../lib/element-plus'
 
 import { PrimaryLabelText, SecondaryLabelText } from '../../components/Form'
 
-  interface Model {
-    name: string;
-    isPublic: boolean;
-  }
+interface Model {
+  name: string
+  isPublic: boolean
+}
 
-  @Component({
-    components: {
-      PrimaryLabelText,
-      SecondaryLabelText,
+export default defineComponent({
+  name: 'EditProjectForm',
+  components: {
+    PrimaryLabelText,
+    SecondaryLabelText,
+    ElForm,
+    ElInput,
+    ElSwitch,
+    ElFormItem,
+  },
+  props: {
+    modelValue: {
+      type: Object as () => Model,
+      required: true,
     },
-  })
-export default class EditProjectForm extends Vue {
-    @Model('input', { type: Object, required: true })
-    value!: Model;
+    disabled: Boolean,
+    isPublished: Boolean,
+  },
+  setup(props, { emit }) {
+    const formRef = ref<InstanceType<typeof ElForm>>()
+    const formValue = reactive({ ...props.modelValue })
 
-    @Prop({ type: Boolean, default: false })
-    disabled!: Boolean;
+    watch(
+      formValue,
+      (newVal) => {
+        emit('update:modelValue', newVal)
+      },
+      { deep: true }
+    )
 
-    @Prop({ type: Boolean, default: false })
-    isPublished!: Boolean;
+    watch(
+      () => props.modelValue,
+      (newVal) => {
+        Object.assign(formValue, newVal)
+      },
+      { deep: true }
+    )
 
-    rules = {
+    const rules = {
       name: [
         { required: true, message: 'Name is required', trigger: 'manual' },
         { min: 2, max: 50, message: 'Length should be 2 to 50', trigger: 'change' },
       ],
-    };
-
-    async validate(): Promise<boolean> {
-      return (this.$refs.form as ElForm).validate()
     }
 
-    handleSubmit(e: Event) {
+    const validate = (): Promise<boolean> => {
+      return formRef.value.validate()
+    }
+    const handleSubmit = (e: Event) => {
       e.preventDefault()
     }
+
+    return {
+      formRef,
+      formValue,
+      rules,
+      handleSubmit,
+      validate,
+    }
+  },
+})
+</script>
+
+<style scoped>
+.el-input {
+  @apply py-1;
 }
 
-</script>
+.sm-form-error .el-input__inner,
+input:invalid {
+  @apply border-danger;
+}
+</style>

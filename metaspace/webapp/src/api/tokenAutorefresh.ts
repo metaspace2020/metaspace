@@ -4,10 +4,10 @@ import delay from '../lib/delay'
 const REFRESH_INTERVAL_MS = 30000
 
 class TokenAutorefresh {
-  jwt?: string;
-  jwtPromise?: Promise<string>;
-  jwtCanExpire: boolean = true;
-  refreshLoopRunning: boolean = false;
+  jwt?: string
+  jwtPromise?: Promise<string>
+  jwtCanExpire = true
+  refreshLoopRunning = false
 
   constructor() {
     // noinspection JSIgnoredPromiseFromCall
@@ -27,11 +27,11 @@ class TokenAutorefresh {
     await this.getJwt()
   }
 
-  async refreshJwt(invalidateOldJwt: boolean = false) {
+  async refreshJwt(invalidateOldJwt = false) {
     if (invalidateOldJwt) {
       this.jwt = undefined
     }
-    const promise = this.jwtPromise = getJWT()
+    const promise = (this.jwtPromise = getJWT())
     const jwt = await promise
 
     // Only overwrite the jwt if another refresh hasn't started while this one has been waiting
@@ -49,6 +49,7 @@ class TokenAutorefresh {
       return
     }
     this.refreshLoopRunning = true
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
         if (!this.jwt || this.jwtCanExpire) {

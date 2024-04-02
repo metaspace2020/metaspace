@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive } from '@vue/composition-api'
+import { computed, defineComponent, inject, reactive } from 'vue'
 import {
   checkIfHasBrowserFiles,
   DatasetDetailItem,
@@ -6,15 +6,25 @@ import {
   reprocessDatasetQuery,
 } from '../../../api/dataset'
 import { CurrentUserRoleResult } from '../../../api/user'
-import { Dropdown, DropdownItem, DropdownMenu, Button } from '../../../lib/element-ui'
+import {
+  ElDropdown,
+  ElDropdownItem,
+  ElDropdownMenu,
+  ElButton,
+  ElNotification,
+  ElMessageBox,
+  ElIcon,
+} from '../../../lib/element-plus'
 import reportError from '../../../lib/reportError'
 import DownloadDialog from '../list/DownloadDialog'
 import { DatasetComparisonDialog } from '../comparison/DatasetComparisonDialog'
 import config from '../../../lib/config'
 import NewFeatureBadge, { hideFeatureBadge } from '../../../components/NewFeatureBadge'
-import { useQuery } from '@vue/apollo-composable'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import './DatasetActionsDropdown.scss'
 import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
+import { ArrowDown } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
 
 interface DatasetActionsDropdownProps {
   actionLabel: string
@@ -29,7 +39,7 @@ interface DatasetActionsDropdownProps {
   currentUser: CurrentUserRoleResult
 }
 
-interface DatasetActionsDropdownState{
+interface DatasetActionsDropdownState {
   disabled: boolean
   showMetadataDialog: boolean
   showCompareDialog: boolean
@@ -37,7 +47,7 @@ interface DatasetActionsDropdownState{
   showDownloadDialog: boolean
 }
 
-export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProps>({
+export const DatasetActionsDropdown = defineComponent({
   name: 'DatasetActionsDropdown',
   props: {
     actionLabel: { type: String, default: 'Actions' },
@@ -51,9 +61,11 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     currentUser: { type: Object as () => CurrentUserRoleResult },
   },
-  setup(props, ctx) {
-    const { emit, root } = ctx
-    const { $router, $confirm, $apollo, $notify } = root
+  setup(props: DatasetActionsDropdownProps, ctx) {
+    const { emit } = ctx
+    const router = useRouter()
+    const apolloClient = inject(DefaultApolloClient)
+
     const state = reactive<DatasetActionsDropdownState>({
       disabled: false,
       showMetadataDialog: false,
@@ -62,24 +74,27 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       showDownloadDialog: false,
     })
 
-    const {
-      result: enrichmentResult,
-      refetch: enrichmentRefetch,
-    } = useQuery<any>(checkIfEnrichmentRequested, { id: props.dataset?.id },
-      { fetchPolicy: 'no-cache' })
-    const enrichmentRequested = computed(() => enrichmentResult.value != null
-      ? enrichmentResult.value.enrichmentRequested : null)
+    const { result: enrichmentResult, refetch: enrichmentRefetch } = useQuery<any>(
+      checkIfEnrichmentRequested,
+      { id: props.dataset?.id },
+      { fetchPolicy: 'no-cache' }
+    )
+    const enrichmentRequested = computed(() =>
+      enrichmentResult.value != null ? enrichmentResult.value.enrichmentRequested : null
+    )
 
-    const confirmReprocessEnrichment = async() => {
+    const confirmReprocessEnrichment = async () => {
       try {
-        await $confirm('The changes to the analysis options require the dataset to be reprocessed. '
-          + 'This dataset will be unavailable until reprocessing has completed. Do you wish to continue?',
-        'Reprocessing required',
-        {
-          type: 'warning',
-          confirmButtonText: 'Continue',
-          cancelButtonText: 'Cancel',
-        })
+        await ElMessageBox.confirm(
+          'The changes to the analysis options require the dataset to be reprocessed. ' +
+            'This dataset will be unavailable until reprocessing has completed. Do you wish to continue?',
+          'Reprocessing required',
+          {
+            type: 'warning',
+            confirmButtonText: 'Continue',
+            cancelButtonText: 'Cancel',
+          }
+        )
         return true
       } catch (e) {
         // Ignore - user clicked cancel
@@ -87,24 +102,24 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       }
     }
 
-    const {
-      result: browserResult,
-      refetch: browserRefetch,
-    } = useQuery<any>(checkIfHasBrowserFiles, { datasetId: props.dataset?.id },
-      { fetchPolicy: 'no-cache' as const })
-    const hasBrowserFiles = computed(() => browserResult.value != null
-      ? browserResult.value.hasImzmlFiles : null)
+    const { result: browserResult, refetch: browserRefetch } = useQuery<any>(
+      checkIfHasBrowserFiles,
+      { datasetId: props.dataset?.id },
+      { fetchPolicy: 'no-cache' as const }
+    )
+    const hasBrowserFiles = computed(() => (browserResult.value != null ? browserResult.value.hasImzmlFiles : null))
 
-    const openDeleteDialog = async() => {
+    const openDeleteDialog = async () => {
       const force = props.dataset?.status === 'QUEUED' || props.dataset?.status === 'ANNOTATING'
       try {
         let msg = `Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${props.dataset.name}?`
         if (props.dataset.status !== 'FINISHED' && props.dataset.status !== 'FAILED') {
-          msg += '\nAs this dataset is currently processing, you may receive an annotation failure email - this can be '
-            + 'safely ignored.'
+          msg +=
+            '\nAs this dataset is currently processing, you may receive an annotation failure email - this can be ' +
+            'safely ignored.'
         }
 
-        await $confirm(msg, {
+        await ElMessageBox.confirm(msg, {
           type: force ? 'warning' : undefined,
           lockScroll: false,
         })
@@ -114,7 +129,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
 
       try {
         state.disabled = true
-        await $apollo.mutate({
+        await apolloClient.mutate({
           mutation: deleteDatasetQuery,
           variables: {
             id: props.dataset?.id,
@@ -123,8 +138,8 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
         })
 
         emit('datasetMutated')
-        $notify.success(`Dataset deleted ${props.dataset?.name}`)
-        $router.replace('/datasets')
+        ElNotification.success(`Dataset deleted ${props.dataset?.name}`)
+        router.replace('/datasets')
       } catch (err) {
         state.disabled = false
         reportError(err, 'Deletion failed :( Please contact us at contact@metaspace2020.eu')
@@ -147,16 +162,16 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       state.showCompareDialog = false
     }
 
-    const handleEnrichmentRequest = async() => {
+    const handleEnrichmentRequest = async () => {
       if (await confirmReprocessEnrichment()) {
         handleReprocess(true)
       }
     }
 
-    const handleReprocess = async(performEnrichment = false) => {
+    const handleReprocess = async (performEnrichment = false) => {
       try {
         state.disabled = true
-        await $apollo.mutate({
+        await apolloClient.mutate({
           mutation: reprocessDatasetQuery,
           variables: {
             id: props.dataset?.id,
@@ -164,7 +179,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
             performEnrichment: performEnrichment,
           },
         })
-        $notify.success('Dataset sent for reprocessing')
+        ElNotification.success('Dataset sent for reprocessing')
         emit('datasetMutated')
       } catch (err) {
         reportError(err)
@@ -173,16 +188,18 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       }
     }
 
-    const confirmReprocess = async() => {
+    const confirmReprocess = async () => {
       try {
-        await $confirm('The changes to the analysis options require the dataset to be reprocessed. '
-          + 'This dataset will be unavailable until reprocessing has completed. Do you wish to continue?',
-        'Reprocessing required',
-        {
-          type: 'warning',
-          confirmButtonText: 'Continue',
-          cancelButtonText: 'Cancel',
-        })
+        await ElMessageBox.confirm(
+          'The changes to the analysis options require the dataset to be reprocessed. ' +
+            'This dataset will be unavailable until reprocessing has completed. Do you wish to continue?',
+          'Reprocessing required',
+          {
+            type: 'warning',
+            confirmButtonText: 'Continue',
+            cancelButtonText: 'Cancel',
+          }
+        )
         return true
       } catch (e) {
         // Ignore - user clicked cancel
@@ -190,10 +207,10 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       }
     }
 
-    const handleCommand = async(command: string) => {
+    const handleCommand = async (command: string) => {
       switch (command) {
         case 'edit':
-          $router.push({
+          router.push({
             name: 'edit-metadata',
             params: { dataset_id: props.dataset?.id },
           })
@@ -201,7 +218,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
         case 'enrichment':
           await enrichmentRefetch()
           if (enrichmentRequested.value) {
-            $router.push({
+            router.push({
               name: 'dataset-enrichment',
               params: { dataset_id: props.dataset?.id },
               query: { db_id: props.dataset?.databases[0]?.id?.toString() },
@@ -214,7 +231,7 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
           await browserRefetch()
           hideFeatureBadge('imzmlBrowser')
           if (hasBrowserFiles.value) {
-            $router.push({
+            router.push({
               name: 'dataset-browser',
               params: { dataset_id: props.dataset?.id },
             })
@@ -240,77 +257,94 @@ export const DatasetActionsDropdown = defineComponent<DatasetActionsDropdownProp
       }
     }
 
-    return () => {
+    const renderDropdown = () => {
       const {
-        actionLabel, currentUser, dataset, editActionLabel, deleteActionLabel,
-        downloadActionLabel, reprocessActionLabel, compareActionLabel,
-        enrichmentActionLabel, browserActionLabel,
+        currentUser,
+        dataset,
+        editActionLabel,
+        deleteActionLabel,
+        downloadActionLabel,
+        reprocessActionLabel,
+        compareActionLabel,
+        enrichmentActionLabel,
+        browserActionLabel,
       } = props
       const { role } = currentUser || {}
-      const { canEdit, canDelete, canDownload, id, name } = dataset || {}
-      const canReprocess = (role === 'admin') || (dataset?.status === 'FAILED' && canEdit)
+      const { canEdit, canDelete, canDownload } = dataset || {}
+      const canReprocess = role === 'admin' || (dataset?.status === 'FAILED' && canEdit)
 
       return (
-        <Dropdown
-          class='dataset-actions-dropdown'
+        <ElDropdownMenu class="dataset-overview-menu p-2">
+          {canDownload && <ElDropdownItem command="download">{downloadActionLabel}</ElDropdownItem>}
+          <ElDropdownItem command="compare">{compareActionLabel}</ElDropdownItem>
+          {config.features.imzml_browser && (
+            <ElDropdownItem command="browser">
+              <div class="relative actionBadge">
+                <NewFeatureBadge featureKey="imzmlBrowser">{browserActionLabel}</NewFeatureBadge>
+              </div>
+            </ElDropdownItem>
+          )}
+          {config.features.enrichment && (enrichmentRequested.value || canEdit) && (
+            <ElDropdownItem command="enrichment">{enrichmentActionLabel}</ElDropdownItem>
+          )}
+          {canEdit && <ElDropdownItem command="edit">{editActionLabel}</ElDropdownItem>}
+          {canDelete && (
+            <ElDropdownItem class="text-red-500" command="delete">
+              {deleteActionLabel}
+            </ElDropdownItem>
+          )}
+          {canReprocess && (
+            <ElDropdownItem class="text-red-500" command="reprocess">
+              {reprocessActionLabel}
+            </ElDropdownItem>
+          )}
+        </ElDropdownMenu>
+      )
+    }
+
+    return () => {
+      const { actionLabel, currentUser, dataset } = props
+      const { role } = currentUser || {}
+      const { canEdit, canDelete, canDownload, id, name } = dataset || {}
+      const canReprocess = role === 'admin' || (dataset?.status === 'FAILED' && canEdit)
+
+      return (
+        <ElDropdown
+          class="dataset-actions-dropdown"
           style={{
-            visibility: (!canEdit && !canDelete && !canReprocess && !canDownload) ? 'hidden' : '',
-          }} trigger='click' type="primary" onCommand={handleCommand}>
-          <NewFeatureBadge featureKey="dataset-overview-actions">
-            <Button class="p-1" type="primary" onClick={() => {
-              hideFeatureBadge('dataset-overview-actions')
-            }}>
-              <span class="ml-2">{actionLabel}</span><i class="el-icon-arrow-down el-icon--right"/>
-            </Button>
-          </NewFeatureBadge>
-          <DropdownMenu class='dataset-overview-menu p-2'>
-            {
-              canDownload
-              && <DropdownItem command="download">{downloadActionLabel}</DropdownItem>
-            }
-            <DropdownItem command="compare">{compareActionLabel}</DropdownItem>
-            {
-              config.features.imzml_browser
-              && <DropdownItem command="browser" class='relative'>
-                <NewFeatureBadge featureKey="imzmlBrowser" class='actionBadge'>
-                  {browserActionLabel}
+            visibility: !canEdit && !canDelete && !canReprocess && !canDownload ? 'hidden' : '',
+          }}
+          trigger="click"
+          type="primary"
+          onCommand={handleCommand}
+          v-slots={{
+            default: () => (
+              <div class="ml-2">
+                <NewFeatureBadge featureKey="dataset-overview-actions">
+                  <ElButton
+                    class="p-1"
+                    type="primary"
+                    onClick={() => {
+                      hideFeatureBadge('dataset-overview-actions')
+                    }}
+                  >
+                    <span class="ml-2 mr-2">{actionLabel}</span>
+                    <ElIcon class="select-btn-icon">
+                      <ArrowDown />
+                    </ElIcon>
+                  </ElButton>
                 </NewFeatureBadge>
-              </DropdownItem>
-            }
-            {
-              config.features.enrichment
-              && (enrichmentRequested.value || canEdit)
-              && <DropdownItem command="enrichment">{enrichmentActionLabel}</DropdownItem>
-            }
-            {
-              canEdit
-              && <DropdownItem command="edit">{editActionLabel}</DropdownItem>
-            }
-            {
-              canDelete
-              && <DropdownItem class='text-red-500' command="delete">{deleteActionLabel}</DropdownItem>
-            }
-            {
-              canReprocess
-              && <DropdownItem class='text-red-500' command="reprocess">{reprocessActionLabel}</DropdownItem>
-            }
-          </DropdownMenu>
-          {
-            state.showDownloadDialog
-            && <DownloadDialog
-              datasetId={id}
-              datasetName={name}
-              onClose={closeDownloadDialog}
-            />
-          }
-          {
-            state.showCompareDialog
-            && <DatasetComparisonDialog
-              selectedDatasetIds={[id]}
-              onClose={closeCompareDialog}
-            />
-          }
-        </Dropdown>
+                {state.showDownloadDialog && (
+                  <DownloadDialog datasetId={id} datasetName={name} onClose={closeDownloadDialog} />
+                )}
+                {state.showCompareDialog && (
+                  <DatasetComparisonDialog selectedDatasetIds={[id]} onClose={closeCompareDialog} />
+                )}
+              </div>
+            ),
+            dropdown: renderDropdown,
+          }}
+        />
       )
     }
   },
