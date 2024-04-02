@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`DatasetTable > should be able to export a CSV 1`] = `
-"# URL: http://localhost:3000/?ds_owner=
+"# URL: http://localhost:3000/
 \\"datasetId\\",\\"datasetName\\",\\"group\\",\\"submitter\\",\\"PI\\",\\"organism\\",\\"organismPart\\",\\"condition\\",\\"growthConditions\\",\\"ionisationSource\\",\\"maldiMatrix\\",\\"analyzer\\",\\"resPower400\\",\\"polarity\\",\\"uploadDateTime\\",\\"FDR@10%\\",\\"database\\",\\"opticalImage\\"
 \\"FINISHED1\\",\\"\\",\\"\\",\\"\\",\\", \\",\\"\\",\\"\\",\\"\\",\\"\\",\\"\\",\\"\\",\\"\\",\\"0\\",\\"positive\\",\\"\\",\\"0,0\\",\\"\\",\\"No optical image\\"
 \\"FINISHED2\\",\\"\\",\\"\\",\\"\\",\\", \\",\\"\\",\\"\\",\\"\\",\\"\\",\\"\\",\\"\\",\\"\\",\\"0\\",\\"positive\\",\\"\\",\\"0,0\\",\\"\\",\\"No optical image\\"
@@ -28,20 +28,15 @@ exports[`DatasetTable > should match snapshot 1`] = `
       <div class=\\"mock-el-option\\" label=\\"Select ionisation source\\" value=\\"ionisationSource\\"></div>
       <div class=\\"mock-el-option\\" label=\\"Select MALDI matrix\\" value=\\"maldiMatrix\\"></div>
       <div class=\\"mock-el-option\\" label=\\"Search anything\\" value=\\"simpleQuery\\"></div>
+      <div class=\\"mock-el-option\\" label=\\"Select data type\\" value=\\"datasetOwner\\"></div>
       <div class=\\"mock-el-option\\" label=\\"Select data type\\" value=\\"metadataType\\"></div>
       <div class=\\"mock-el-option\\" label=\\"Show/hide datasets with optical images\\" value=\\"opticalImage\\"></div>
-    </div>
-    <div class=\\"mock-el-select filter-select\\" size=\\"large\\" data-test-key=\\"datasetOwner\\" filter-key=\\"datasetOwner\\" removable=\\"false\\">
-      <div class=\\"mock-el-option\\" label=\\"All datasets\\" value=\\"\\"></div>
-      <div class=\\"mock-el-option\\" label=\\"My datasets\\" value=\\"my-datasets\\"></div>
-      <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
-      <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
     </div>
   </div>
   <div>
     <form class=\\"el-form el-form--default el-form--label-right el-form--inline\\" id=\\"dataset-list-header\\">
       <div class=\\"el-radio-group p-2 flex flex-row items-center\\" role=\\"radiogroup\\" aria-label=\\"radio-group\\" id=\\"el-id-replaced\\"><label class=\\"el-radio-button is-active\\"><input class=\\"el-radio-button__original-radio\\" type=\\"radio\\" name=\\"el-id-replaced\\" value=\\"List\\"><span class=\\"el-radio-button__inner\\">List</span></label><label class=\\"el-radio-button\\"><input class=\\"el-radio-button__original-radio\\" type=\\"radio\\" name=\\"el-id-replaced\\" value=\\"Summary\\"><span class=\\"el-radio-button__inner\\">Summary</span></label></div>
-      <div class=\\"el-checkbox-group p-2 dataset-status-checkboxes\\" role=\\"group\\" aria-label=\\"checkbox-group\\" id=\\"el-id-replaced\\"><label class=\\"el-checkbox is-checked cb-annotating\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"ANNOTATING\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Processing (1)<!--v-if--></span></label><label class=\\"el-checkbox is-checked cb-queued\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"QUEUED\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Queued (2)<!--v-if--></span></label><label class=\\"el-checkbox is-checked\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"FINISHED\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Finished (20)<!--v-if--></span></label>
+      <div class=\\"el-checkbox-group p-2 dataset-status-checkboxes\\" role=\\"group\\" aria-label=\\"checkbox-group\\" id=\\"el-id-replaced\\"><label class=\\"el-checkbox is-checked cb-annotating\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"ANNOTATING\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Processing (0)<!--v-if--></span></label><label class=\\"el-checkbox is-checked cb-queued\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"QUEUED\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Queued (0)<!--v-if--></span></label><label class=\\"el-checkbox is-checked\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"FINISHED\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Finished (0)<!--v-if--></span></label>
         <!--v-if-->
       </div>
       <div style=\\"flex-grow: 1;\\"></div>
@@ -68,15 +63,16 @@ exports[`DatasetTable > should match snapshot 1`] = `
       </div>
     </form>
   </div>
-  <div data-v-6be3726b=\\"\\" class=\\"dataset-list allow-double-column el-loading-parent--relative\\" loading-number=\\"3\\">
+  <div data-v-6be3726b=\\"\\" class=\\"dataset-list allow-double-column\\">
     <div data-v-6be3726b=\\"\\" class=\\"dataset-item border border-solid border-gray-200 leading-5\\">
       <div class=\\"opt-image--container\\">
-        <div data-v-d41a051c=\\"\\" class=\\"thumb\\"><img data-v-d41a051c=\\"\\" class=\\"thumb--img\\" style=\\"transform: scaleY(1) translateY(0%); height: 100px;\\" src=\\"\\" alt=\\"Optical image\\"><img data-v-d41a051c=\\"\\" class=\\"thumb--img thumb--img__ion\\" style=\\"transform: scaleY(1) translateY(0%); height: 100px;\\" src=\\"\\" alt=\\"Ion image thumbnail\\">
+        <div data-v-d41a051c=\\"\\" class=\\"thumb thumb__empty\\">
           <!--v-if-->
+          <!--v-if--><img data-v-d41a051c=\\"\\" class=\\"thumb--img\\" src=\\"/src/assets/no_opt_image.png\\" alt=\\"No optical image\\">
         </div>
       </div>
       <div class=\\"ds-info\\">
-        <div class=\\"ds-item-line flex\\"><span title=\\"\\" class=\\"font-bold truncate\\"></span>
+        <div class=\\"ds-item-line flex\\"><span class=\\"font-bold truncate\\"><!----></span>
           <div class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\">
             <div class=\\"el-loading-parent--relative\\" loading-number=\\"1\\">
               <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
@@ -93,617 +89,481 @@ exports[`DatasetTable > should match snapshot 1`] = `
           </div>
         </div>
         <div class=\\"ds-item-line text-gray-700\\"><span class=\\"ds-add-filter\\" title=\\"Filter by species\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by organism part\\"></span> <span class=\\"ds-add-filter\\" title=\\"Filter by condition\\">()</span></div>
-        <div class=\\"ds-item-line\\"><span class=\\"ds-add-filter\\" title=\\"Filter by ionisation source\\"></span> + <span class=\\"ds-add-filter\\" title=\\"Filter by analyzer type\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by polarity\\">positive mode</span>, RP 123k @ 1234</div>
-        <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"></span><span>, <div class=\\"mock-el-dropdown\\" showtimeout=\\"50\\" placement=\\"bottom\\" disabled=\\"false\\" trigger=\\"hover\\"><span class=\\"text-base text-primary cursor-pointer\\"></span>
-          <div class=\\"mock-el-dropdown-menu\\">
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Filter by this group</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">View group</div>
-          </div>
-        </div></span>
-      </div>
-      <!---->
-    </div>
-    <div class=\\"ds-actions relative\\">
-      <div class=\\"mock-el-dialog dataset-item-dialog\\" title=\\"Provided metadata\\" lock-scroll=\\"false\\" modelvalue=\\"false\\">
-        <div data-v-7194f2e5=\\"\\" class=\\"el-row w-full\\">
-          <div data-v-7194f2e5=\\"\\" class=\\"el-tree w-full\\" role=\\"tree\\" id=\\"metadata-tree\\">
-            <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"0\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"MS analysis\\">
-              <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
-                <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                    <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                  </svg></div>
-                <!--v-if-->
-                <!--v-if--><span class=\\"el-tree-node__label\\">MS analysis</span>
-              </div>
-              <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
-                <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Detector resolving power\\">
-                  <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                    <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                        <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                      </svg></div>
-                    <!--v-if-->
-                    <!--v-if--><span class=\\"el-tree-node__label\\">Detector resolving power</span>
-                  </div>
-                  <div class=\\"el-tree-node__children\\" role=\\"group\\" aria-expanded=\\"true\\">
-                    <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"mz\\">
-                      <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
-                        <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                            <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                          </svg></div>
-                        <!--v-if-->
-                        <!--v-if--><span class=\\"el-tree-node__label\\">mz: 1234</span>
-                      </div>
-                      <!---->
-                    </div>
-                    <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Resolving power\\">
-                      <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
-                        <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                            <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                          </svg></div>
-                        <!--v-if-->
-                        <!--v-if--><span class=\\"el-tree-node__label\\">Resolving power: 123456</span>
-                      </div>
-                      <!---->
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Data Management\\">
-              <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
-                <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                    <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                  </svg></div>
-                <!--v-if-->
-                <!--v-if--><span class=\\"el-tree-node__label\\">Data Management</span>
-              </div>
-              <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
-                <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Submitter\\">
-                  <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                    <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                        <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                      </svg></div>
-                    <!--v-if-->
-                    <!--v-if--><span class=\\"el-tree-node__label\\">Submitter: </span>
-                  </div>
-                  <!---->
-                </div>
-                <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Principal Investigator\\">
-                  <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                    <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                        <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                      </svg></div>
-                    <!--v-if-->
-                    <!--v-if--><span class=\\"el-tree-node__label\\">Principal Investigator: </span>
-                  </div>
-                  <!---->
-                </div>
-                <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Group\\">
-                  <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                    <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                        <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                      </svg></div>
-                    <!--v-if-->
-                    <!--v-if--><span class=\\"el-tree-node__label\\">Group: </span>
-                  </div>
-                  <!---->
-                </div>
-                <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Projects\\">
-                  <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                    <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                        <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                      </svg></div>
-                    <!--v-if-->
-                    <!--v-if--><span class=\\"el-tree-node__label\\">Projects: , </span>
-                  </div>
-                  <!---->
-                </div>
-              </div>
-            </div>
-            <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Annotation settings\\">
-              <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
-                <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                    <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                  </svg></div>
-                <!--v-if-->
-                <!--v-if--><span class=\\"el-tree-node__label\\">Annotation settings</span>
-              </div>
-              <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
-                <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"PPM\\">
-                  <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                    <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                        <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                      </svg></div>
-                    <!--v-if-->
-                    <!--v-if--><span class=\\"el-tree-node__label\\">m/z tolerance (ppm): undefined</span>
-                  </div>
-                  <!---->
-                </div>
-                <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"engineV\\">
-                  <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                    <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                        <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                      </svg></div>
-                    <!--v-if-->
-                    <!--v-if--><span class=\\"el-tree-node__label\\">Analysis version: Original MSM</span>
-                  </div>
-                  <!---->
-                </div>
-              </div>
-            </div>
-            <!--v-if-->
-            <div class=\\"el-tree__drop-indicator\\" style=\\"display: none;\\"></div>
-          </div>
+        <div class=\\"ds-item-line\\"><span class=\\"ds-add-filter\\" title=\\"Filter by ionisation source\\"><!----></span> + <span class=\\"ds-add-filter\\" title=\\"Filter by analyzer type\\"><!----></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by polarity\\">positive mode</span>, RP 123k @ 1234</div>
+        <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"2020/01/03, 00:00\\">just now</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"><!----></span>
+          <!---->
         </div>
         <!---->
       </div>
-      <!---->
-      <!---->
-      <!---->
-      <div class=\\"flex items-center\\">
-        <div class=\\"striped-progressbar queued\\" title=\\"Waiting in the queue\\"></div>
-      </div>
-      <div class=\\"flex items-center\\">
-        <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-            <path fill=\\"currentColor\\" d=\\"M512 160c320 0 512 352 512 352S832 864 512 864 0 512 0 512s192-352 512-352zm0 64c-225.28 0-384.128 208.064-436.8 288 52.608 79.872 211.456 288 436.8 288 225.28 0 384.128-208.064 436.8-288-52.608-79.872-211.456-288-436.8-288zm0 64a224 224 0 1 1 0 448 224 224 0 0 1 0-448zm0 64a160.192 160.192 0 0 0-160 160c0 88.192 71.744 160 160 160s160-71.808 160-160-71.744-160-160-160z\\"></path>
-          </svg></div><a href=\\"#\\">Show full metadata</a>
-      </div>
-      <!---->
-      <!---->
-      <!---->
-      <!---->
-      <!---->
-      <div class=\\"featured-action items-center\\">
-        <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-            <path fill=\\"currentColor\\" d=\\"m665.216 768 110.848 192h-73.856L591.36 768H433.024L322.176 960H248.32l110.848-192H160a32 32 0 0 1-32-32V192H64a32 32 0 0 1 0-64h896a32 32 0 1 1 0 64h-64v544a32 32 0 0 1-32 32H665.216zM832 192H192v512h640V192zM352 448a32 32 0 0 1 32 32v64a32 32 0 0 1-64 0v-64a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v128a32 32 0 0 1-64 0V416a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V352a32 32 0 0 1 32-32z\\"></path>
-          </svg></div>
-        <div class=\\"el-badge sm-feature-badge\\">
-          <div class=\\"mr-2\\"><span>Dataset overview</span></div><sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup>
-        </div>
-      </div>
-      <!---->
-    </div>
-  </div>
-  <div data-v-6be3726b=\\"\\" class=\\"dataset-item border border-solid border-gray-200 leading-5\\">
-    <div class=\\"opt-image--container\\">
-      <div data-v-d41a051c=\\"\\" class=\\"thumb\\"><img data-v-d41a051c=\\"\\" class=\\"thumb--img\\" style=\\"transform: scaleY(1) translateY(0%); height: 100px;\\" src=\\"\\" alt=\\"Optical image\\"><img data-v-d41a051c=\\"\\" class=\\"thumb--img thumb--img__ion\\" style=\\"transform: scaleY(1) translateY(0%); height: 100px;\\" src=\\"\\" alt=\\"Ion image thumbnail\\">
-        <!--v-if-->
-      </div>
-    </div>
-    <div class=\\"ds-info\\">
-      <div class=\\"ds-item-line flex\\"><span title=\\"\\" class=\\"font-bold truncate\\"></span>
-        <div class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\">
-          <div class=\\"el-loading-parent--relative\\" loading-number=\\"1\\">
-            <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-              <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-                  <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-                </svg>
-                <!---->
-              </div>
-            </div>
-          </div>
-        </div>
-        <div data-v-0bc4b279=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
-          <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\">Copy dataset id to clipboard</p>
-        </div>
-      </div>
-      <div class=\\"ds-item-line text-gray-700\\"><span class=\\"ds-add-filter\\" title=\\"Filter by species\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by organism part\\"></span> <span class=\\"ds-add-filter\\" title=\\"Filter by condition\\">()</span></div>
-      <div class=\\"ds-item-line\\"><span class=\\"ds-add-filter\\" title=\\"Filter by ionisation source\\"></span> + <span class=\\"ds-add-filter\\" title=\\"Filter by analyzer type\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by polarity\\">positive mode</span>, RP 123k @ 1234</div>
-      <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"></span><span>, <div class=\\"mock-el-dropdown\\" showtimeout=\\"50\\" placement=\\"bottom\\" disabled=\\"false\\" trigger=\\"hover\\"><span class=\\"text-base text-primary cursor-pointer\\"></span>
-        <div class=\\"mock-el-dropdown-menu\\">
-          <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Filter by this group</div>
-          <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">View group</div>
-        </div>
-      </div></span>
-    </div>
-    <!---->
-  </div>
-  <div class=\\"ds-actions relative\\">
-    <div class=\\"mock-el-dialog dataset-item-dialog\\" title=\\"Provided metadata\\" lock-scroll=\\"false\\" modelvalue=\\"false\\">
-      <div data-v-7194f2e5=\\"\\" class=\\"el-row w-full\\">
-        <div data-v-7194f2e5=\\"\\" class=\\"el-tree w-full\\" role=\\"tree\\" id=\\"metadata-tree\\">
-          <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"0\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"MS analysis\\">
-            <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
-              <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                  <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                </svg></div>
-              <!--v-if-->
-              <!--v-if--><span class=\\"el-tree-node__label\\">MS analysis</span>
-            </div>
-            <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
-              <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Detector resolving power\\">
-                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+      <div class=\\"ds-actions relative\\">
+        <div class=\\"mock-el-dialog dataset-item-dialog\\" title=\\"Provided metadata\\" lock-scroll=\\"false\\" modelvalue=\\"false\\">
+          <div data-v-7194f2e5=\\"\\" class=\\"el-row w-full\\">
+            <div data-v-7194f2e5=\\"\\" class=\\"el-tree w-full\\" role=\\"tree\\" id=\\"metadata-tree\\">
+              <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"0\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"MS analysis\\">
+                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
                   <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                       <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
                     </svg></div>
                   <!--v-if-->
-                  <!--v-if--><span class=\\"el-tree-node__label\\">Detector resolving power</span>
+                  <!--v-if--><span class=\\"el-tree-node__label\\">MS analysis</span>
                 </div>
-                <div class=\\"el-tree-node__children\\" role=\\"group\\" aria-expanded=\\"true\\">
-                  <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"mz\\">
-                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
+                <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
+                  <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Detector resolving power\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                      <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                          <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                        </svg></div>
+                      <!--v-if-->
+                      <!--v-if--><span class=\\"el-tree-node__label\\">Detector resolving power</span>
+                    </div>
+                    <div class=\\"el-tree-node__children\\" role=\\"group\\" aria-expanded=\\"true\\">
+                      <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"mz\\">
+                        <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
+                          <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                              <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                            </svg></div>
+                          <!--v-if-->
+                          <!--v-if--><span class=\\"el-tree-node__label\\">mz: 1234</span>
+                        </div>
+                        <!---->
+                      </div>
+                      <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Resolving power\\">
+                        <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
+                          <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                              <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                            </svg></div>
+                          <!--v-if-->
+                          <!--v-if--><span class=\\"el-tree-node__label\\">Resolving power: 123456</span>
+                        </div>
+                        <!---->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Data Management\\">
+                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
+                  <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                    </svg></div>
+                  <!--v-if-->
+                  <!--v-if--><span class=\\"el-tree-node__label\\">Data Management</span>
+                </div>
+                <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
+                  <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Submitter\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
                       <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                           <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
                         </svg></div>
                       <!--v-if-->
-                      <!--v-if--><span class=\\"el-tree-node__label\\">mz: 1234</span>
+                      <!--v-if--><span class=\\"el-tree-node__label\\">Submitter: undefined</span>
                     </div>
                     <!---->
                   </div>
-                  <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Resolving power\\">
-                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
+                </div>
+              </div>
+              <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Annotation settings\\">
+                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
+                  <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                    </svg></div>
+                  <!--v-if-->
+                  <!--v-if--><span class=\\"el-tree-node__label\\">Annotation settings</span>
+                </div>
+                <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
+                  <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"PPM\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
                       <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                           <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
                         </svg></div>
                       <!--v-if-->
-                      <!--v-if--><span class=\\"el-tree-node__label\\">Resolving power: 123456</span>
+                      <!--v-if--><span class=\\"el-tree-node__label\\">m/z tolerance (ppm): undefined</span>
+                    </div>
+                    <!---->
+                  </div>
+                  <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"engineV\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                      <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                          <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                        </svg></div>
+                      <!--v-if-->
+                      <!--v-if--><span class=\\"el-tree-node__label\\">Analysis version: Original MSM</span>
                     </div>
                     <!---->
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-          <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Data Management\\">
-            <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
-              <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                  <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                </svg></div>
               <!--v-if-->
-              <!--v-if--><span class=\\"el-tree-node__label\\">Data Management</span>
-            </div>
-            <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
-              <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Submitter\\">
-                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                  <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                    </svg></div>
-                  <!--v-if-->
-                  <!--v-if--><span class=\\"el-tree-node__label\\">Submitter: </span>
-                </div>
-                <!---->
-              </div>
-              <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Principal Investigator\\">
-                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                  <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                    </svg></div>
-                  <!--v-if-->
-                  <!--v-if--><span class=\\"el-tree-node__label\\">Principal Investigator: </span>
-                </div>
-                <!---->
-              </div>
-              <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Group\\">
-                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                  <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                    </svg></div>
-                  <!--v-if-->
-                  <!--v-if--><span class=\\"el-tree-node__label\\">Group: </span>
-                </div>
-                <!---->
-              </div>
-              <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Projects\\">
-                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                  <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                    </svg></div>
-                  <!--v-if-->
-                  <!--v-if--><span class=\\"el-tree-node__label\\">Projects: , </span>
-                </div>
-                <!---->
-              </div>
+              <div class=\\"el-tree__drop-indicator\\" style=\\"display: none;\\"></div>
             </div>
           </div>
-          <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Annotation settings\\">
-            <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
-              <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                  <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                </svg></div>
-              <!--v-if-->
-              <!--v-if--><span class=\\"el-tree-node__label\\">Annotation settings</span>
-            </div>
-            <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
-              <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"PPM\\">
-                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                  <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                    </svg></div>
-                  <!--v-if-->
-                  <!--v-if--><span class=\\"el-tree-node__label\\">m/z tolerance (ppm): undefined</span>
-                </div>
-                <!---->
-              </div>
-              <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"engineV\\">
-                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                  <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                    </svg></div>
-                  <!--v-if-->
-                  <!--v-if--><span class=\\"el-tree-node__label\\">Analysis version: Original MSM</span>
-                </div>
-                <!---->
-              </div>
-            </div>
+          <!---->
+        </div>
+        <!---->
+        <!---->
+        <!---->
+        <div class=\\"flex items-center\\">
+          <div class=\\"striped-progressbar queued\\" title=\\"Waiting in the queue\\"></div>
+        </div>
+        <div class=\\"flex items-center\\">
+          <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+              <path fill=\\"currentColor\\" d=\\"M512 160c320 0 512 352 512 352S832 864 512 864 0 512 0 512s192-352 512-352zm0 64c-225.28 0-384.128 208.064-436.8 288 52.608 79.872 211.456 288 436.8 288 225.28 0 384.128-208.064 436.8-288-52.608-79.872-211.456-288-436.8-288zm0 64a224 224 0 1 1 0 448 224 224 0 0 1 0-448zm0 64a160.192 160.192 0 0 0-160 160c0 88.192 71.744 160 160 160s160-71.808 160-160-71.744-160-160-160z\\"></path>
+            </svg></div><a href=\\"#\\">Show full metadata</a>
+        </div>
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+        <div class=\\"featured-action items-center\\">
+          <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+              <path fill=\\"currentColor\\" d=\\"m665.216 768 110.848 192h-73.856L591.36 768H433.024L322.176 960H248.32l110.848-192H160a32 32 0 0 1-32-32V192H64a32 32 0 0 1 0-64h896a32 32 0 1 1 0 64h-64v544a32 32 0 0 1-32 32H665.216zM832 192H192v512h640V192zM352 448a32 32 0 0 1 32 32v64a32 32 0 0 1-64 0v-64a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v128a32 32 0 0 1-64 0V416a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V352a32 32 0 0 1 32-32z\\"></path>
+            </svg></div>
+          <div class=\\"el-badge sm-feature-badge\\">
+            <div class=\\"mr-2\\"><span>Dataset overview</span></div><sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup>
           </div>
+        </div>
+        <!---->
+      </div>
+    </div>
+    <div data-v-6be3726b=\\"\\" class=\\"dataset-item border border-solid border-gray-200 leading-5\\">
+      <div class=\\"opt-image--container\\">
+        <div data-v-d41a051c=\\"\\" class=\\"thumb thumb__empty\\">
           <!--v-if-->
-          <div class=\\"el-tree__drop-indicator\\" style=\\"display: none;\\"></div>
+          <!--v-if--><img data-v-d41a051c=\\"\\" class=\\"thumb--img\\" src=\\"/src/assets/no_opt_image.png\\" alt=\\"No optical image\\">
         </div>
       </div>
-      <!---->
-    </div>
-    <!---->
-    <!---->
-    <div class=\\"flex items-center\\">
-      <div class=\\"striped-progressbar processing\\" title=\\"Processing is under way\\"></div>
-    </div>
-    <!---->
-    <div class=\\"flex items-center\\">
-      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-          <path fill=\\"currentColor\\" d=\\"M512 160c320 0 512 352 512 352S832 864 512 864 0 512 0 512s192-352 512-352zm0 64c-225.28 0-384.128 208.064-436.8 288 52.608 79.872 211.456 288 436.8 288 225.28 0 384.128-208.064 436.8-288-52.608-79.872-211.456-288-436.8-288zm0 64a224 224 0 1 1 0 448 224 224 0 0 1 0-448zm0 64a160.192 160.192 0 0 0-160 160c0 88.192 71.744 160 160 160s160-71.808 160-160-71.744-160-160-160z\\"></path>
-        </svg></div><a href=\\"#\\">Show full metadata</a>
-    </div>
-    <!---->
-    <!---->
-    <!---->
-    <!---->
-    <div class=\\"items-center\\">
-      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-          <path fill=\\"currentColor\\" d=\\"m665.216 768 110.848 192h-73.856L591.36 768H433.024L322.176 960H248.32l110.848-192H160a32 32 0 0 1-32-32V192H64a32 32 0 0 1 0-64h896a32 32 0 1 1 0 64h-64v544a32 32 0 0 1-32 32H665.216zM832 192H192v512h640V192zM352 448a32 32 0 0 1 32 32v64a32 32 0 0 1-64 0v-64a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v128a32 32 0 0 1-64 0V416a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V352a32 32 0 0 1 32-32z\\"></path>
-        </svg></div>
-      <div class=\\"mr-2\\"><span>Dataset overview</span></div>
-    </div>
-    <!---->
-    <!---->
-  </div>
-</div>
-<div data-v-6be3726b=\\"\\" class=\\"dataset-item border border-solid border-gray-200 leading-5\\">
-  <div class=\\"opt-image--container\\">
-    <div data-v-d41a051c=\\"\\" class=\\"thumb\\"><img data-v-d41a051c=\\"\\" class=\\"thumb--img\\" style=\\"transform: scaleY(1) translateY(0%); height: 100px;\\" src=\\"\\" alt=\\"Optical image\\"><img data-v-d41a051c=\\"\\" class=\\"thumb--img thumb--img__ion\\" style=\\"transform: scaleY(1) translateY(0%); height: 100px;\\" src=\\"\\" alt=\\"Ion image thumbnail\\">
-      <!--v-if-->
-    </div>
-  </div>
-  <div class=\\"ds-info\\">
-    <div class=\\"ds-item-line flex\\"><span title=\\"\\" class=\\"font-bold truncate\\"></span>
-      <div class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\">
-        <div class=\\"el-loading-parent--relative\\" loading-number=\\"1\\">
-          <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
-            <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-                <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-              </svg>
-              <!---->
-            </div>
-          </div>
-        </div>
-      </div>
-      <div data-v-0bc4b279=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
-        <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\">Copy dataset id to clipboard</p>
-      </div>
-    </div>
-    <div class=\\"ds-item-line text-gray-700\\"><span class=\\"ds-add-filter\\" title=\\"Filter by species\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by organism part\\"></span> <span class=\\"ds-add-filter\\" title=\\"Filter by condition\\">()</span></div>
-    <div class=\\"ds-item-line\\"><span class=\\"ds-add-filter\\" title=\\"Filter by ionisation source\\"></span> + <span class=\\"ds-add-filter\\" title=\\"Filter by analyzer type\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by polarity\\">positive mode</span>, RP 123k @ 1234</div>
-    <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"Date unavailable\\">some time ago</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"></span><span>, <div class=\\"mock-el-dropdown\\" showtimeout=\\"50\\" placement=\\"bottom\\" disabled=\\"false\\" trigger=\\"hover\\"><span class=\\"text-base text-primary cursor-pointer\\"></span>
-      <div class=\\"mock-el-dropdown-menu\\">
-        <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Filter by this group</div>
-        <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">View group</div>
-      </div>
-    </div></span>
-  </div>
-  <div class=\\"ds-item-line\\"><span><div>0, 0 annotations</div> @ FDR 0, 0% ()</span></div>
-</div>
-<div class=\\"ds-actions relative\\">
-  <div class=\\"mock-el-dialog dataset-item-dialog\\" title=\\"Provided metadata\\" lock-scroll=\\"false\\" modelvalue=\\"false\\">
-    <div data-v-7194f2e5=\\"\\" class=\\"el-row w-full\\">
-      <div data-v-7194f2e5=\\"\\" class=\\"el-tree w-full\\" role=\\"tree\\" id=\\"metadata-tree\\">
-        <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"0\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"MS analysis\\">
-          <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
-            <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-              </svg></div>
-            <!--v-if-->
-            <!--v-if--><span class=\\"el-tree-node__label\\">MS analysis</span>
-          </div>
-          <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
-            <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Detector resolving power\\">
-              <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                    <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                  </svg></div>
-                <!--v-if-->
-                <!--v-if--><span class=\\"el-tree-node__label\\">Detector resolving power</span>
-              </div>
-              <div class=\\"el-tree-node__children\\" role=\\"group\\" aria-expanded=\\"true\\">
-                <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"mz\\">
-                  <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
-                    <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                        <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                      </svg></div>
-                    <!--v-if-->
-                    <!--v-if--><span class=\\"el-tree-node__label\\">mz: 1234</span>
-                  </div>
-                  <!---->
-                </div>
-                <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Resolving power\\">
-                  <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
-                    <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                        <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                      </svg></div>
-                    <!--v-if-->
-                    <!--v-if--><span class=\\"el-tree-node__label\\">Resolving power: 123456</span>
-                  </div>
+      <div class=\\"ds-info\\">
+        <div class=\\"ds-item-line flex\\"><span class=\\"font-bold truncate\\"><!----></span>
+          <div class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\">
+            <div class=\\"el-loading-parent--relative\\" loading-number=\\"1\\">
+              <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
+                <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
+                    <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
+                  </svg>
                   <!---->
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Data Management\\">
-          <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
-            <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-              </svg></div>
-            <!--v-if-->
-            <!--v-if--><span class=\\"el-tree-node__label\\">Data Management</span>
-          </div>
-          <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
-            <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Submitter\\">
-              <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                    <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                  </svg></div>
-                <!--v-if-->
-                <!--v-if--><span class=\\"el-tree-node__label\\">Submitter: </span>
-              </div>
-              <!---->
-            </div>
-            <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Principal Investigator\\">
-              <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                    <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                  </svg></div>
-                <!--v-if-->
-                <!--v-if--><span class=\\"el-tree-node__label\\">Principal Investigator: </span>
-              </div>
-              <!---->
-            </div>
-            <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Group\\">
-              <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                    <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                  </svg></div>
-                <!--v-if-->
-                <!--v-if--><span class=\\"el-tree-node__label\\">Group: </span>
-              </div>
-              <!---->
-            </div>
-            <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Projects\\">
-              <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                    <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                  </svg></div>
-                <!--v-if-->
-                <!--v-if--><span class=\\"el-tree-node__label\\">Projects: , </span>
-              </div>
-              <!---->
-            </div>
+          <div data-v-0bc4b279=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+            <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\">Copy dataset id to clipboard</p>
           </div>
         </div>
-        <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Annotation settings\\">
-          <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
-            <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-              </svg></div>
-            <!--v-if-->
-            <!--v-if--><span class=\\"el-tree-node__label\\">Annotation settings</span>
-          </div>
-          <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
-            <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"PPM\\">
-              <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                    <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                  </svg></div>
-                <!--v-if-->
-                <!--v-if--><span class=\\"el-tree-node__label\\">m/z tolerance (ppm): undefined</span>
-              </div>
-              <!---->
-            </div>
-            <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"engineV\\">
-              <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
-                <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-                    <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
-                  </svg></div>
-                <!--v-if-->
-                <!--v-if--><span class=\\"el-tree-node__label\\">Analysis version: Original MSM</span>
-              </div>
-              <!---->
-            </div>
-          </div>
+        <div class=\\"ds-item-line text-gray-700\\"><span class=\\"ds-add-filter\\" title=\\"Filter by species\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by organism part\\"></span> <span class=\\"ds-add-filter\\" title=\\"Filter by condition\\">()</span></div>
+        <div class=\\"ds-item-line\\"><span class=\\"ds-add-filter\\" title=\\"Filter by ionisation source\\"><!----></span> + <span class=\\"ds-add-filter\\" title=\\"Filter by analyzer type\\"><!----></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by polarity\\">positive mode</span>, RP 123k @ 1234</div>
+        <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"2020/01/03, 00:00\\">just now</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"><!----></span>
+          <!---->
         </div>
-        <!--v-if-->
-        <div class=\\"el-tree__drop-indicator\\" style=\\"display: none;\\"></div>
+        <!---->
+      </div>
+      <div class=\\"ds-actions relative\\">
+        <div class=\\"mock-el-dialog dataset-item-dialog\\" title=\\"Provided metadata\\" lock-scroll=\\"false\\" modelvalue=\\"false\\">
+          <div data-v-7194f2e5=\\"\\" class=\\"el-row w-full\\">
+            <div data-v-7194f2e5=\\"\\" class=\\"el-tree w-full\\" role=\\"tree\\" id=\\"metadata-tree\\">
+              <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"0\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"MS analysis\\">
+                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
+                  <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                    </svg></div>
+                  <!--v-if-->
+                  <!--v-if--><span class=\\"el-tree-node__label\\">MS analysis</span>
+                </div>
+                <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
+                  <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Detector resolving power\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                      <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                          <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                        </svg></div>
+                      <!--v-if-->
+                      <!--v-if--><span class=\\"el-tree-node__label\\">Detector resolving power</span>
+                    </div>
+                    <div class=\\"el-tree-node__children\\" role=\\"group\\" aria-expanded=\\"true\\">
+                      <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"mz\\">
+                        <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
+                          <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                              <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                            </svg></div>
+                          <!--v-if-->
+                          <!--v-if--><span class=\\"el-tree-node__label\\">mz: 1234</span>
+                        </div>
+                        <!---->
+                      </div>
+                      <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Resolving power\\">
+                        <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
+                          <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                              <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                            </svg></div>
+                          <!--v-if-->
+                          <!--v-if--><span class=\\"el-tree-node__label\\">Resolving power: 123456</span>
+                        </div>
+                        <!---->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Data Management\\">
+                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
+                  <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                    </svg></div>
+                  <!--v-if-->
+                  <!--v-if--><span class=\\"el-tree-node__label\\">Data Management</span>
+                </div>
+                <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
+                  <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Submitter\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                      <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                          <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                        </svg></div>
+                      <!--v-if-->
+                      <!--v-if--><span class=\\"el-tree-node__label\\">Submitter: undefined</span>
+                    </div>
+                    <!---->
+                  </div>
+                </div>
+              </div>
+              <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Annotation settings\\">
+                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
+                  <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                    </svg></div>
+                  <!--v-if-->
+                  <!--v-if--><span class=\\"el-tree-node__label\\">Annotation settings</span>
+                </div>
+                <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
+                  <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"PPM\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                      <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                          <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                        </svg></div>
+                      <!--v-if-->
+                      <!--v-if--><span class=\\"el-tree-node__label\\">m/z tolerance (ppm): undefined</span>
+                    </div>
+                    <!---->
+                  </div>
+                  <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"engineV\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                      <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                          <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                        </svg></div>
+                      <!--v-if-->
+                      <!--v-if--><span class=\\"el-tree-node__label\\">Analysis version: Original MSM</span>
+                    </div>
+                    <!---->
+                  </div>
+                </div>
+              </div>
+              <!--v-if-->
+              <div class=\\"el-tree__drop-indicator\\" style=\\"display: none;\\"></div>
+            </div>
+          </div>
+          <!---->
+        </div>
+        <!---->
+        <!---->
+        <div class=\\"flex items-center\\">
+          <div class=\\"striped-progressbar processing\\" title=\\"Processing is under way\\"></div>
+        </div>
+        <!---->
+        <div class=\\"flex items-center\\">
+          <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+              <path fill=\\"currentColor\\" d=\\"M512 160c320 0 512 352 512 352S832 864 512 864 0 512 0 512s192-352 512-352zm0 64c-225.28 0-384.128 208.064-436.8 288 52.608 79.872 211.456 288 436.8 288 225.28 0 384.128-208.064 436.8-288-52.608-79.872-211.456-288-436.8-288zm0 64a224 224 0 1 1 0 448 224 224 0 0 1 0-448zm0 64a160.192 160.192 0 0 0-160 160c0 88.192 71.744 160 160 160s160-71.808 160-160-71.744-160-160-160z\\"></path>
+            </svg></div><a href=\\"#\\">Show full metadata</a>
+        </div>
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+        <div class=\\"items-center\\">
+          <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+              <path fill=\\"currentColor\\" d=\\"m665.216 768 110.848 192h-73.856L591.36 768H433.024L322.176 960H248.32l110.848-192H160a32 32 0 0 1-32-32V192H64a32 32 0 0 1 0-64h896a32 32 0 1 1 0 64h-64v544a32 32 0 0 1-32 32H665.216zM832 192H192v512h640V192zM352 448a32 32 0 0 1 32 32v64a32 32 0 0 1-64 0v-64a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v128a32 32 0 0 1-64 0V416a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V352a32 32 0 0 1 32-32z\\"></path>
+            </svg></div>
+          <div class=\\"mr-2\\"><span>Dataset overview</span></div>
+        </div>
+        <!---->
+        <!---->
       </div>
     </div>
-    <!---->
-  </div>
-  <!---->
-  <div class=\\"flex items-center\\">
-    <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-        <path fill=\\"currentColor\\" d=\\"M96 896a32 32 0 0 1-32-32V160a32 32 0 0 1 32-32h832a32 32 0 0 1 32 32v704a32 32 0 0 1-32 32H96zm315.52-228.48-68.928-68.928a32 32 0 0 0-45.248 0L128 768.064h778.688l-242.112-290.56a32 32 0 0 0-49.216 0L458.752 665.408a32 32 0 0 1-47.232 2.112zM256 384a96 96 0 1 0 192.064-.064A96 96 0 0 0 256 384z\\"></path>
-      </svg></div>
-    <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\">
-      <div class=\\"db-link-list\\">Select a database:<div>
-          <div>CHEBI</div>
-        </div>
-        <div>
-          <div>HMDB - v2.5</div>
-        </div>
-        <div>
-          <div>HMDB - v4</div>
+    <div data-v-6be3726b=\\"\\" class=\\"dataset-item border border-solid border-gray-200 leading-5\\">
+      <div class=\\"opt-image--container\\">
+        <div data-v-d41a051c=\\"\\" class=\\"thumb thumb__empty\\">
+          <!--v-if-->
+          <!--v-if--><img data-v-d41a051c=\\"\\" class=\\"thumb--img\\" src=\\"/src/assets/no_opt_image.png\\" alt=\\"No optical image\\">
         </div>
       </div>
-    </div><br>
+      <div class=\\"ds-info\\">
+        <div class=\\"ds-item-line flex\\"><span class=\\"font-bold truncate\\"><!----></span>
+          <div class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\">
+            <div class=\\"el-loading-parent--relative\\" loading-number=\\"1\\">
+              <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
+                <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
+                    <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
+                  </svg>
+                  <!---->
+                </div>
+              </div>
+            </div>
+          </div>
+          <div data-v-0bc4b279=\\"\\" class=\\"mock-el-popover ml-1\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+            <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\">Copy dataset id to clipboard</p>
+          </div>
+        </div>
+        <div class=\\"ds-item-line text-gray-700\\"><span class=\\"ds-add-filter\\" title=\\"Filter by species\\"></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by organism part\\"></span> <span class=\\"ds-add-filter\\" title=\\"Filter by condition\\">()</span></div>
+        <div class=\\"ds-item-line\\"><span class=\\"ds-add-filter\\" title=\\"Filter by ionisation source\\"><!----></span> + <span class=\\"ds-add-filter\\" title=\\"Filter by analyzer type\\"><!----></span>, <span class=\\"ds-add-filter\\" title=\\"Filter by polarity\\">positive mode</span>, RP 123k @ 1234</div>
+        <div class=\\"ds-item-line\\">Submitted <span class=\\"sm-elapsed-time\\" title=\\"2020/01/03, 00:00\\">just now</span> by <span class=\\"ds-add-filter\\" title=\\"Filter by submitter\\"><!----></span>
+          <!---->
+        </div>
+        <div class=\\"ds-item-line\\"><span><div>20 annotations</div> @ FDR 10% (HMDB - v2.5)</span></div>
+      </div>
+      <div class=\\"ds-actions relative\\">
+        <div class=\\"mock-el-dialog dataset-item-dialog\\" title=\\"Provided metadata\\" lock-scroll=\\"false\\" modelvalue=\\"false\\">
+          <div data-v-7194f2e5=\\"\\" class=\\"el-row w-full\\">
+            <div data-v-7194f2e5=\\"\\" class=\\"el-tree w-full\\" role=\\"tree\\" id=\\"metadata-tree\\">
+              <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"0\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"MS analysis\\">
+                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
+                  <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                    </svg></div>
+                  <!--v-if-->
+                  <!--v-if--><span class=\\"el-tree-node__label\\">MS analysis</span>
+                </div>
+                <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
+                  <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Detector resolving power\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                      <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                          <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                        </svg></div>
+                      <!--v-if-->
+                      <!--v-if--><span class=\\"el-tree-node__label\\">Detector resolving power</span>
+                    </div>
+                    <div class=\\"el-tree-node__children\\" role=\\"group\\" aria-expanded=\\"true\\">
+                      <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"mz\\">
+                        <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
+                          <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                              <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                            </svg></div>
+                          <!--v-if-->
+                          <!--v-if--><span class=\\"el-tree-node__label\\">mz: 1234</span>
+                        </div>
+                        <!---->
+                      </div>
+                      <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Resolving power\\">
+                        <div class=\\"el-tree-node__content\\" style=\\"padding-left: 36px;\\">
+                          <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                              <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                            </svg></div>
+                          <!--v-if-->
+                          <!--v-if--><span class=\\"el-tree-node__label\\">Resolving power: 123456</span>
+                        </div>
+                        <!---->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Data Management\\">
+                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
+                  <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                    </svg></div>
+                  <!--v-if-->
+                  <!--v-if--><span class=\\"el-tree-node__label\\">Data Management</span>
+                </div>
+                <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
+                  <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Submitter\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                      <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                          <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                        </svg></div>
+                      <!--v-if-->
+                      <!--v-if--><span class=\\"el-tree-node__label\\">Submitter: undefined</span>
+                    </div>
+                    <!---->
+                  </div>
+                </div>
+              </div>
+              <div class=\\"el-tree-node is-expanded is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"true\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"Annotation settings\\">
+                <div class=\\"el-tree-node__content\\" style=\\"padding-left: 0px;\\">
+                  <div class=\\"mock-el-icon el-tree-node__expand-icon expanded\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                      <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                    </svg></div>
+                  <!--v-if-->
+                  <!--v-if--><span class=\\"el-tree-node__label\\">Annotation settings</span>
+                </div>
+                <div class=\\"el-tree-node__children el-collapse-transition-enter-from el-collapse-transition-enter-active\\" role=\\"group\\" aria-expanded=\\"true\\" style=\\"max-height: 0; padding-top: 0px; padding-bottom: 0px; max-height: 0; overflow: hidden; max-height: 0; max-height: 0;\\" data-old-padding-top=\\"0px\\" data-old-padding-bottom=\\"0px\\" data-old-overflow=\\"hidden\\">
+                  <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"PPM\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                      <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                          <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                        </svg></div>
+                      <!--v-if-->
+                      <!--v-if--><span class=\\"el-tree-node__label\\">m/z tolerance (ppm): undefined</span>
+                    </div>
+                    <!---->
+                  </div>
+                  <div class=\\"el-tree-node is-focusable\\" role=\\"treeitem\\" tabindex=\\"-1\\" aria-expanded=\\"false\\" aria-checked=\\"false\\" draggable=\\"false\\" data-key=\\"engineV\\">
+                    <div class=\\"el-tree-node__content\\" style=\\"padding-left: 18px;\\">
+                      <div class=\\"mock-el-icon el-tree-node__expand-icon is-leaf\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                          <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
+                        </svg></div>
+                      <!--v-if-->
+                      <!--v-if--><span class=\\"el-tree-node__label\\">Analysis version: Original MSM</span>
+                    </div>
+                    <!---->
+                  </div>
+                </div>
+              </div>
+              <!--v-if-->
+              <div class=\\"el-tree__drop-indicator\\" style=\\"display: none;\\"></div>
+            </div>
+          </div>
+          <!---->
+        </div>
+        <!---->
+        <div class=\\"flex items-center\\">
+          <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+              <path fill=\\"currentColor\\" d=\\"M96 896a32 32 0 0 1-32-32V160a32 32 0 0 1 32-32h832a32 32 0 0 1 32 32v704a32 32 0 0 1-32 32H96zm315.52-228.48-68.928-68.928a32 32 0 0 0-45.248 0L128 768.064h778.688l-242.112-290.56a32 32 0 0 0-49.216 0L458.752 665.408a32 32 0 0 1-47.232 2.112zM256 384a96 96 0 1 0 192.064-.064A96 96 0 0 0 256 384z\\"></path>
+            </svg></div>
+          <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\">
+            <div class=\\"db-link-list\\">Select a database:<div>
+                <div>CHEBI</div>
+              </div>
+              <div>
+                <div>HMDB - v2.5</div>
+              </div>
+              <div>
+                <div>HMDB - v4</div>
+              </div>
+            </div>
+          </div><br>
+        </div>
+        <!---->
+        <!---->
+        <div class=\\"flex items-center\\">
+          <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+              <path fill=\\"currentColor\\" d=\\"M512 160c320 0 512 352 512 352S832 864 512 864 0 512 0 512s192-352 512-352zm0 64c-225.28 0-384.128 208.064-436.8 288 52.608 79.872 211.456 288 436.8 288 225.28 0 384.128-208.064 436.8-288-52.608-79.872-211.456-288-436.8-288zm0 64a224 224 0 1 1 0 448 224 224 0 0 1 0-448zm0 64a160.192 160.192 0 0 0-160 160c0 88.192 71.744 160 160 160s160-71.808 160-160-71.744-160-160-160z\\"></path>
+            </svg></div><a href=\\"#\\">Show full metadata</a>
+        </div>
+        <!---->
+        <!---->
+        <!---->
+        <!---->
+        <div class=\\"items-center\\">
+          <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+              <path fill=\\"currentColor\\" d=\\"m665.216 768 110.848 192h-73.856L591.36 768H433.024L322.176 960H248.32l110.848-192H160a32 32 0 0 1-32-32V192H64a32 32 0 0 1 0-64h896a32 32 0 1 1 0 64h-64v544a32 32 0 0 1-32 32H665.216zM832 192H192v512h640V192zM352 448a32 32 0 0 1 32 32v64a32 32 0 0 1-64 0v-64a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v128a32 32 0 0 1-64 0V416a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V352a32 32 0 0 1 32-32z\\"></path>
+            </svg></div>
+          <div class=\\"mr-2\\"><span>Dataset overview</span></div>
+        </div>
+        <!---->
+        <!---->
+      </div>
+    </div>
+    <!--v-if-->
   </div>
-  <!---->
-  <!---->
-  <div class=\\"flex items-center\\">
-    <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-        <path fill=\\"currentColor\\" d=\\"M512 160c320 0 512 352 512 352S832 864 512 864 0 512 0 512s192-352 512-352zm0 64c-225.28 0-384.128 208.064-436.8 288 52.608 79.872 211.456 288 436.8 288 225.28 0 384.128-208.064 436.8-288-52.608-79.872-211.456-288-436.8-288zm0 64a224 224 0 1 1 0 448 224 224 0 0 1 0-448zm0 64a160.192 160.192 0 0 0-160 160c0 88.192 71.744 160 160 160s160-71.808 160-160-71.744-160-160-160z\\"></path>
-      </svg></div><a href=\\"#\\">Show full metadata</a>
+  <div class=\\"mb-8 p-2 flex flex-row justify-end\\">
+    <!--v-if-->
   </div>
-  <!---->
-  <!---->
-  <!---->
-  <!---->
-  <div class=\\"items-center\\">
-    <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-        <path fill=\\"currentColor\\" d=\\"m665.216 768 110.848 192h-73.856L591.36 768H433.024L322.176 960H248.32l110.848-192H160a32 32 0 0 1-32-32V192H64a32 32 0 0 1 0-64h896a32 32 0 1 1 0 64h-64v544a32 32 0 0 1-32 32H665.216zM832 192H192v512h640V192zM352 448a32 32 0 0 1 32 32v64a32 32 0 0 1-64 0v-64a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v128a32 32 0 0 1-64 0V416a32 32 0 0 1 32-32zm160-64a32 32 0 0 1 32 32v192a32 32 0 1 1-64 0V352a32 32 0 0 1 32-32z\\"></path>
-      </svg></div>
-    <div class=\\"mr-2\\"><span>Dataset overview</span></div>
-  </div>
-  <!---->
-  <!---->
-</div>
-</div>
-<!--v-if-->
-<div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-leave-from el-loading-fade-leave-active\\" style=\\"\\">
-  <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-      <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-    </svg>
-    <!---->
-  </div>
-</div>
-<div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-leave-from el-loading-fade-leave-active\\" style=\\"\\">
-  <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-      <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-    </svg>
-    <!---->
-  </div>
-</div>
-<div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-leave-from el-loading-fade-leave-active\\" style=\\"\\">
-  <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
-      <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
-    </svg>
-    <!---->
-  </div>
-</div>
-</div>
-<div class=\\"mb-8 p-2 flex flex-row justify-end\\">
-  <div class=\\"el-pagination flex\\"><button type=\\"button\\" class=\\"btn-prev is-first\\" disabled=\\"\\" aria-label=\\"Go to previous page\\" aria-disabled=\\"true\\">
-      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-          <path fill=\\"currentColor\\" d=\\"M609.408 149.376 277.76 489.6a32 32 0 0 0 0 44.672l331.648 340.352a29.12 29.12 0 0 0 41.728 0 30.592 30.592 0 0 0 0-42.752L339.264 511.936l311.872-319.872a30.592 30.592 0 0 0 0-42.688 29.12 29.12 0 0 0-41.728 0z\\"></path>
-        </svg></div>
-    </button>
-    <ul class=\\"el-pager\\">
-      <li class=\\"is-active number\\" aria-current=\\"true\\" aria-label=\\"page 1\\" tabindex=\\"0\\"> 1 </li>
-      <!--v-if-->
-      <!--v-if-->
-      <li class=\\"number\\" aria-current=\\"false\\" aria-label=\\"page 2\\" tabindex=\\"0\\">2</li>
-    </ul><button type=\\"button\\" class=\\"btn-next is-last\\" aria-label=\\"Go to next page\\" aria-disabled=\\"false\\">
-      <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-          <path fill=\\"currentColor\\" d=\\"M340.864 149.312a30.592 30.592 0 0 0 0 42.752L652.736 512 340.864 831.872a30.592 30.592 0 0 0 0 42.752 29.12 29.12 0 0 0 41.728 0L714.24 534.336a32 32 0 0 0 0-44.672L382.592 149.376a29.12 29.12 0 0 0-41.728 0z\\"></path>
-        </svg></div>
-    </button>
-  </div>
-</div>
 </div>"
 `;

@@ -530,6 +530,23 @@ export default defineComponent({
         }
       }
     }
+    const fetchDatasetData = async (retryCount = 0, maxRetries = 3) => {
+      // fail safe when query fails on compenent start
+      try {
+        return await apolloClient.query({
+          query: editDatasetQuery,
+          variables: { id: props.datasetId },
+          fetchPolicy: 'network-only',
+        })
+      } catch (error) {
+        if (retryCount < maxRetries) {
+          console.log(`Retrying... Attempt ${retryCount + 1} of ${maxRetries}`)
+          return await fetchDatasetData(retryCount + 1, maxRetries)
+        } else {
+          throw new Error(`Could not fetch user info`)
+        }
+      }
+    }
 
     const loadDataset = async () => {
       try {
@@ -551,10 +568,8 @@ export default defineComponent({
             databases: dataset ? dataset.databases : [],
           }
         } else {
-          const { data } = await apolloClient.query({
-            query: editDatasetQuery,
-            variables: { id: props.datasetId },
-          })
+          const result = await fetchDatasetData()
+          const data = result.data
           let submitter
           // If submitter is not the current user, we need to make a second request after finding the submitter's userId
           // to get the rest of the submitter data (groups, projects, etc.)

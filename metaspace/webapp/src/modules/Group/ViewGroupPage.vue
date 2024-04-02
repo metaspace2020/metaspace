@@ -35,7 +35,7 @@
           </div>
         </el-alert>
       </div>
-      <el-tabs :model-value="tab" class="with-badges" @update:model-value="setTab">
+      <el-tabs :model-value="tab as any" class="with-badges" @update:model-value="setTab">
         <el-tab-pane
           v-if="canEdit || group.groupDescriptionAsHtml !== ''"
           name="description"
@@ -69,7 +69,7 @@
           </template>
           <group-members-list
             :loading="groupLoading"
-            :current-user="currentUser"
+            :current-user="currentUser as any"
             :group="group"
             :members="members"
             :refresh-data="refetchGroup"
@@ -99,9 +99,9 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, ref, watch, computed, inject } from 'vue'
+import { defineComponent, ref, watch, computed, inject, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DefaultApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { datasetDeletedQuery, DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset'
 import DatasetList from '../Datasets/list/DatasetList.vue'
 import {
@@ -125,7 +125,6 @@ import reportError from '../../lib/reportError'
 import { currentUserRoleQuery } from '../../api/user'
 import isUuid from '../../lib/isUuid'
 import { optionalSuffixInParens, plural } from '../../lib/vueFilters'
-import { removeDatasetFromAllDatasetsQuery } from '../../lib/updateApolloCache'
 import GroupDescription from './GroupDescription.vue'
 import MolecularDatabases from '../MolecularDatabases'
 import config from '../../lib/config'
@@ -224,6 +223,7 @@ export default defineComponent({
       result: dataResult,
       onResult: onDataResult,
       refetch: refetchData,
+      subscribeToMore,
     } = useQuery(
       gql`
         query GroupProfileDatasets(
@@ -258,15 +258,6 @@ export default defineComponent({
       }, 300)
     })
     const data = computed(() => dataResult.value as ViewGroupProfileData | null)
-
-    const { onResult } = useSubscription(datasetDeletedQuery)
-
-    onResult(({ data }) => {
-      if (data && data.datasetDeleted) {
-        removeDatasetFromAllDatasetsQuery('data', data.datasetDeleted.id)
-      }
-    })
-
     const currentUserId = computed(() => currentUser.value?.id)
     const roleInGroup = computed(() => group.value?.currentUserRole)
     const groupDatasets = computed((): DatasetDetailItem[] =>
@@ -322,6 +313,15 @@ export default defineComponent({
         canonicalizeUrl()
       }
     )
+
+    onMounted(() => {
+      subscribeToMore({
+        document: datasetDeletedQuery,
+        updateQuery: () => {
+          refetch()
+        },
+      })
+    })
 
     const handleRequestAccess = async () => {
       showTransferDatasetsDialog.value = true

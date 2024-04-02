@@ -95,6 +95,7 @@ describe('ViewGroupPage', () => {
       result: ref(Object.keys(params).reduce((acc, key) => ({ ...acc, [key]: params[key]() }), {})),
       loading: ref(false),
       onResult: vi.fn(),
+      subscribeToMore: vi.fn(),
     })
   }
 
