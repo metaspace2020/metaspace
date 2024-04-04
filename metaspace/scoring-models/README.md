@@ -4,8 +4,8 @@ These can be installed with the following commands (assuming engine is already s
 ```bash
 source activate sm38
 cd ../engine
-# Usage: python -m scripts.import_scoring_model <name> <model path> <S3 bucket to upload to>
-python -m scripts.import_scoring_model v3_default "../scoring-models/v3_default/Animal_v3.2023-12-14.cbm" sm-engine-dev
+# Usage: python -m scripts.import_scoring_model <name> <version> <model path> <S3 bucket to upload to>
+python -m scripts.import_scoring_model "Animal" "v2.2023-12-14" "../scoring-models/models_default/v2.2023-12-14_(METASPACE-ML_Animal).cbm" sm-engine-dev
 ```
 
 ## List of datasets used for training and testing the model

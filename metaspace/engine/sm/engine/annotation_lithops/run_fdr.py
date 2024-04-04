@@ -42,7 +42,9 @@ def run_fdr(
         return db_data['id'], results_df
 
     logger.info('Estimating FDRs...')
-    scoring_model = load_scoring_model(ds_config['fdr'].get('scoring_model'))
+    scoring_model = load_scoring_model(
+        ds_config['fdr'].get('scoring_model'), ds_config['fdr'].get('scoring_model_version')
+    )
 
     args = [(db_data_cobj,) for db_data_cobj in db_data_cobjs]
     results = executor.map(_run_fdr_for_db, args, runtime_memory=2048)

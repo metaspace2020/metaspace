@@ -7,6 +7,8 @@ from sm.engine.config import SMConfig
 from sm.engine.ds_config import DSConfig
 from sm.engine.errors import UnknownDSID
 
+from sm.engine.annotation.scoring_model import find_default, find_by_name_version
+
 logger = logging.getLogger('engine')
 
 
@@ -243,13 +245,26 @@ def generate_ds_config(
     chem_mods=None,
     compute_unused_metrics=None,
     scoring_model=None,
+    scoring_model_version=None,
+    model_type=None,
 ) -> DSConfig:
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
+    # 1 - original, 2 - v2 (discontinued), 3 - ML (catboost or other != original)
+    # kept for compatibility with old datasets and client
     analysis_version = analysis_version or 1
+    analysis_version = 3 if model_type == 'catboost' else analysis_version
     iso_params = _get_isotope_generation_from_metadata(metadata)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
-    default_scoring_model = 'v3_default' if analysis_version >= 3 else None
+
+    print('model_type')
+    print(model_type, scoring_model, scoring_model_version)
+    if (analysis_version == 3 or model_type == 'catboost') and (
+        scoring_model is None or scoring_model_version is None
+    ):
+        scoring_model = find_default()
+    elif analysis_version == 3 or model_type == 'catboost':
+        scoring_model = find_by_name_version(name=scoring_model, version=scoring_model_version)
 
     return {
         'database_ids': moldb_ids,
@@ -265,7 +280,8 @@ def generate_ds_config(
         },
         'fdr': {
             'decoy_sample_size': decoy_sample_size or 20,
-            'scoring_model': scoring_model or default_scoring_model,
+            'scoring_model': scoring_model.name if scoring_model else None,
+            'scoring_model_version': scoring_model.version if scoring_model else None,
         },
         'image_generation': {
             'ppm': ppm or 3,
@@ -300,6 +316,7 @@ def update_ds_config(old_config, metadata, **kwargs):
         'min_px': image_generation.get('min_px'),
         'compute_unused_metrics': image_generation.get('compute_unused_metrics'),
         'scoring_model': fdr.get('scoring_model'),
+        'scoring_model_version': fdr.get('scoring_model_version'),
     }
 
     for k, v in old_vals.items():

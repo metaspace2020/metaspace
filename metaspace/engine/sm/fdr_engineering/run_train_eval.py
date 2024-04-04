@@ -231,6 +231,7 @@ export_df.to_csv('local/ml_scoring/prod_impl.csv', index=False)
 #%% Save model to S3
 
 MODEL_NAME = 'v3_default'
+MODEL_VERSION = 'v1'
 # Remove unwanted fields from metrics_df for saving training data
 train_data = metrics_df[[*features, 'target', 'group_name', 'formula', 'modifier', 'decoy_i']]
 params = upload_catboost_scoring_model(
@@ -244,4 +245,6 @@ print(params)
 
 # Update DB with model (if running a local METASPACE environment)
 GlobalInit()
-save_scoring_model_to_db(MODEL_NAME, 'catboost', params)
+save_scoring_model_to_db(
+    name=MODEL_NAME, type_='catboost', version=MODEL_VERSION, is_default=True, params=params
+)
