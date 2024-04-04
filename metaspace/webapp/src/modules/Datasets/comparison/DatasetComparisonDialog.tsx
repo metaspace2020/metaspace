@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive, watchEffect, watch, ref } from 'vue'
+import { computed, defineComponent, reactive, watchEffect, ref } from 'vue'
 import { Workflow, WorkflowStep } from '../../../components/Workflow'
 import { ElSelect, ElOption, ElInputNumber, ElButton, ElDialog } from '../../../lib/element-plus'
 import { ErrorLabelText } from '../../../components/Form'
@@ -79,7 +79,7 @@ export const DatasetComparisonDialog = defineComponent({
     const {
       result: datasetResult,
       loading: datasetLoading,
-      error,
+      onError,
       refetch,
     } = useQuery<{ allDatasets: DatasetDetailItem }>(datasetListItemsQuery, queryVars)
     const { result: receivedDatasetsResult, loading: receivedDatasetsResultLoading } = useQuery<{
@@ -102,7 +102,7 @@ export const DatasetComparisonDialog = defineComponent({
     )
     const { mutate: settingsMutation } = useMutation<any>(saveSettings)
 
-    watch(error, (errorValue) => {
+    onError((errorValue) => {
       // sometimes the query fails when dialog is
       // created, so we need to refetch
       if (errorValue && refetchCount.value < MAX_REFETCH_ATTEMPTS) {

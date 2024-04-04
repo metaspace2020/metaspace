@@ -89,10 +89,10 @@
                   type="select"
                   name="Analysis version"
                   :help="AnalysisVersionHelp"
-                  :value="value?.analysisVersion"
+                  :value="value?.scoringModel"
                   :error="error && error.analysisVersion"
                   :options="analysisVersionOptions"
-                  @input="(val) => onInput('analysisVersion', val)"
+                  @input="(val) => onScoringModelChange(val)"
                 />
               </popup-anchor>
             </el-col>
@@ -202,15 +202,17 @@ export default defineComponent({
     const chemModOptions = ref([])
 
     const analysisVersionOptions = computed(() => [
-      { value: 1, label: 'v1 (Original MSM)' },
-      { value: 3, label: 'v2.20230517 (METASPACE-ML)' },
+      ...(props.scoringModels ?? []).map((m: any) => ({
+        value: m.name,
+        version: m.version,
+        type: m.type,
+        id: m.id,
+        label: `${m.type === 'original' ? m.version : m.name + '_' + m.version} (${
+          m.type === 'original' ? 'Original MSM' : 'METASPACE-ML'
+        })`,
+      })),
     ])
 
-    const scoringModelOptions = computed(() => [
-      // FormField doesn't support nulls - using empty string instead, but it needs to be converted to/from null
-      { value: '', label: 'None' },
-      ...(props.scoringModels ?? []).map((m: any) => ({ value: m.name, label: m.name })),
-    ])
     const databaseOptions = computed(() => {
       return props.databasesByGroup.map(({ shortName, molecularDatabases }) => ({
         label: shortName,
@@ -228,6 +230,13 @@ export default defineComponent({
       emit('change', { field, val })
     }
 
+    const onScoringModelChange = (val: any) => {
+      const scoringModel: any = analysisVersionOptions.value.find((m) => m.value === val)
+      emit('change', { field: 'scoringModel', val: scoringModel.value })
+      emit('change', { field: 'scoringModelVersion', val: scoringModel.version })
+      emit('change', { field: 'modelType', val: scoringModel.type })
+    }
+
     const onDbRemoval = (val: any) => {
       if (props.defaultDb && val === props.defaultDb.id) {
         ElMessage({
@@ -243,9 +252,9 @@ export default defineComponent({
 
     return {
       analysisVersionOptions,
-      scoringModelOptions,
       databaseOptions,
       onInput,
+      onScoringModelChange,
       onDbRemoval,
       normalizeNeutralLoss,
       normalizeChemMod,

@@ -229,6 +229,8 @@ input DatasetCreateInput {
   analysisVersion: Int
   computeUnusedMetrics: Boolean
   scoringModel: String
+  scoringModelVersion: String
+  modelType: String
 
   submitterId: ID!  # Only for admins
   groupId: ID

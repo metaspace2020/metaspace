@@ -53,6 +53,8 @@ FLAT_DS_CONFIG_KEYS = frozenset(
         'chem_mods',
         'compute_unused_metrics',
         'scoring_model',
+        'scoring_model_version',
+        'model_type',
     }
 )
 
@@ -257,8 +259,6 @@ def generate_ds_config(
     iso_params = _get_isotope_generation_from_metadata(metadata)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
 
-    print('model_type')
-    print(model_type, scoring_model, scoring_model_version)
     if (analysis_version == 3 or model_type == 'catboost') and (
         scoring_model is None or scoring_model_version is None
     ):

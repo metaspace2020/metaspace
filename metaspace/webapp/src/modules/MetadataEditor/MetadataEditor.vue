@@ -293,6 +293,14 @@ export default defineComponent({
 
       const selectedDbs = dataset.databases || []
 
+      // backward compatibility
+      if (metaspaceOptions.modelType === 'original') {
+        metaspaceOptions.scoringModel = (scoringModels.find((m) => m.type === 'original') || {}).name
+      } else {
+        metaspaceOptions.scoringModel =
+          (scoringModels.find((m) => m.name === metaspaceOptions.scoringModel) || {}).name ?? 'v3_default'
+      }
+
       // enable default db normal edit if dataset already registered and does not have it
       state.defaultDb =
         !isNew.value && !selectedDbs.map((db) => db.id).includes(state.defaultDb.id) ? {} : state.defaultDb
@@ -386,9 +394,9 @@ export default defineComponent({
       state.localErrors = errors
     }
 
-    const getSuggestionsForField = (query, callback, ...args) => {
+    const getSuggestionsForField = async (query, callback, ...args) => {
       const path = args.join('.')
-      apolloClient
+      await apolloClient
         .query({
           query: fetchAutocompleteSuggestionsQuery,
           variables: { field: path, query: query || '' },
@@ -493,6 +501,7 @@ export default defineComponent({
       } = dataset
 
       const config = safeJsonParse(configJson)
+
       return {
         submitterId: submitter ? submitter.id : null,
         groupId: group ? group.id : null,
@@ -508,8 +517,8 @@ export default defineComponent({
         numPeaks: isNew ? null : get(config, 'isotope_generation.n_peaks') || null,
         decoySampleSize: isNew ? null : get(config, 'fdr.decoy_sample_size') || null,
         ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
-        analysisVersion: isNew ? 1 : get(config, 'analysis_version') || 1,
-        scoringModel: isNew ? null : get(config, 'fdr.scoring_model') || null,
+        scoringModel: get(config, 'fdr.scoring_model'),
+        modelType: get(config, 'analysis_version') === 1 ? 'original' : 'catboost', // backward compatibility
         performEnrichment: isEnriched,
       }
     }
@@ -523,7 +532,6 @@ export default defineComponent({
         })
       } catch (error) {
         if (retryCount < maxRetries) {
-          console.log(`Retrying... Attempt ${retryCount + 1} of ${maxRetries}`)
           return await fetchUserData(retryCount + 1, maxRetries)
         } else {
           throw new Error(`Could not fetch user info`)
@@ -540,7 +548,6 @@ export default defineComponent({
         })
       } catch (error) {
         if (retryCount < maxRetries) {
-          console.log(`Retrying... Attempt ${retryCount + 1} of ${maxRetries}`)
           return await fetchDatasetData(retryCount + 1, maxRetries)
         } else {
           throw new Error(`Could not fetch user info`)
@@ -673,22 +680,6 @@ export default defineComponent({
             variables: { userId: newSubmitterId },
           })
           state.submitter = result.data.user
-        }
-      }
-    )
-
-    watch(
-      () => state.metaspaceOptions.analysisVersion,
-      (newAnalysisVersion) => {
-        if (newAnalysisVersion === 1 && state.metaspaceOptions.scoringModel != null) {
-          state.metaspaceOptions.scoringModel = null
-        } else if (
-          newAnalysisVersion !== 1 &&
-          state.metaspaceOptions.scoringModel == null &&
-          (state.initialMetaspaceOptions.scoringModel != null ||
-            state.scoringModels.some((m) => m.name === 'v3_default'))
-        ) {
-          state.metaspaceOptions.scoringModel = state.initialMetaspaceOptions.scoringModel ?? 'v3_default'
         }
       }
     )
