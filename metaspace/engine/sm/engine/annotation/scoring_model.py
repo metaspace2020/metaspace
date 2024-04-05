@@ -127,7 +127,7 @@ def find_default() -> ScoringModel:
         'SELECT id, name, version, type FROM scoring_model WHERE is_default = TRUE',
     )
     if not data:
-        raise SMError(f'Default scoringModel not found')
+        raise SMError('Default scoringModel not found')
     return ScoringModel(**data)
 
 
