@@ -126,7 +126,7 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\">Create account</button>,<button class=\\"button-reset 
+  border border-solid border-transparent header-link\\">Create account</button><button class=\\"button-reset 
   mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
   hover:bg-blue-700 focus:outline-none focus:bg-blue-700

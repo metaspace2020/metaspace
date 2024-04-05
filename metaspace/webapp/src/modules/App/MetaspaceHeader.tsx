@@ -207,7 +207,6 @@ export default defineComponent({
           <HeaderButton class="header-link" onClick={showCreateAccount}>
             Create account
           </HeaderButton>
-          ,
           <HeaderButton class="header-link" onClick={showSignIn}>
             Sign in
           </HeaderButton>

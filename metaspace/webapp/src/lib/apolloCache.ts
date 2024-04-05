@@ -30,6 +30,20 @@ export const makeApolloCache = () =>
               return toReference({ __typename: 'Project', id: args?.projectId })
             },
           },
+          currentUser: {
+            merge(existing, incoming) {
+              return incoming
+            },
+          },
+        },
+      },
+      User: {
+        fields: {
+          primaryGroup: {
+            merge(existing, incoming) {
+              return incoming
+            },
+          },
         },
       },
     },
@@ -42,7 +56,7 @@ export const makeApolloCache = () =>
       // To protect against this, don't allow Users (and possibly other types in the future) to have a dataId,
       // so that InMemoryCache cannot share data between different queries.
       if (nonNormalizableTypes.includes(object.__typename)) {
-        return false
+        return undefined
       } else {
         return defaultDataIdFromObject(object)
       }
