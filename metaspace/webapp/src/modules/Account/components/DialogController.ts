@@ -45,8 +45,6 @@ export default defineComponent({
   },
   render() {
     const dialog = this.currentDialog.dialog
-    console.log('[Test] dialog', dialog)
-
     const DialogComponent = dialog ? dialogComponents[dialog] : null
     return DialogComponent ? h(DialogComponent) : null
   },

@@ -155,15 +155,7 @@ export default defineComponent({
 
     onResult((result) => {
       const { data } = result
-      console.log('Info', data, data?.currentUser)
-      if (data?.currentUser == null && store.state.currentTour == null) {
-        console.log(
-          'Here',
-          data?.currentUser,
-          store.state.currentTour == null,
-          data?.currentUser == null && store.state.currentTour == null
-        )
-
+      if (data && data.currentUser == null && store.state.currentTour == null) {
         store.commit('account/showDialog', {
           dialog: 'signIn',
           dialogCloseRedirect: '/',
