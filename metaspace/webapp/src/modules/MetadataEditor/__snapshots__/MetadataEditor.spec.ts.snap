@@ -324,8 +324,8 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                   </div>
                   <div class=\\"el-form-item__content\\">
                     <div class=\\"mock-el-select\\" model-value=\\"\\" required=\\"true\\">
-                      <div class=\\"mock-el-option\\" label=\\"Positive\\" value=\\"Positive\\"></div>
-                      <div class=\\"mock-el-option\\" label=\\"Negative\\" value=\\"Negative\\"></div>
+                      <div class=\\"mock-el-option\\" label=\\"Positive\\" disabled=\\"false\\" value=\\"Positive\\"></div>
+                      <div class=\\"mock-el-option\\" label=\\"Negative\\" disabled=\\"false\\" value=\\"Negative\\"></div>
                     </div>
                   </div>
                 </div>
@@ -614,10 +614,10 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     </div>
                     <div class=\\"el-form-item__content\\">
                       <div class=\\"mock-el-select\\" model-value=\\"\\" required=\\"true\\">
-                        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
-                        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
-                        <div class=\\"mock-el-option\\" label=\\"Find my group...\\" value=\\"FIND_GROUP\\"></div>
-                        <div class=\\"mock-el-option\\" label=\\"No group (Enter PI instead)\\" value=\\"NO_GROUP\\"></div>
+                        <div class=\\"mock-el-option\\" label=\\"\\" disabled=\\"false\\" value=\\"\\"></div>
+                        <div class=\\"mock-el-option\\" label=\\"\\" disabled=\\"false\\" value=\\"\\"></div>
+                        <div class=\\"mock-el-option\\" label=\\"Find my group...\\" disabled=\\"false\\" value=\\"FIND_GROUP\\"></div>
+                        <div class=\\"mock-el-option\\" label=\\"No group (Enter PI instead)\\" disabled=\\"false\\" value=\\"NO_GROUP\\"></div>
                       </div>
                     </div>
                   </div>
@@ -790,8 +790,8 @@ exports[`MetadataEditor > should match snapshot 1`] = `
             </div>
             <div class=\\"el-form-item__content\\">
               <div class=\\"mock-el-select\\" model-value=\\"v3_default\\" required=\\"false\\">
-                <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" value=\\"\\"></div>
-                <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" value=\\"\\"></div>
+                <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" disabled=\\"false\\" value=\\"\\"></div>
+                <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" disabled=\\"false\\" value=\\"\\"></div>
               </div>
             </div>
           </div></span>

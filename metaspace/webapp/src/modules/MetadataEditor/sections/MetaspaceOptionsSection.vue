@@ -201,17 +201,25 @@ export default defineComponent({
     const neutralLossOptions = ref([])
     const chemModOptions = ref([])
 
-    const analysisVersionOptions = computed(() => [
-      ...(props.scoringModels ?? []).map((m: any) => ({
+    const analysisVersionOptions = computed(() => {
+      let options = (props.scoringModels ?? []).map((m: any) => ({
         value: m.name,
         version: m.version,
+        disabled: m.isArchived,
         type: m.type,
         id: m.id,
-        label: `${m.type === 'original' ? m.version : m.name + '_' + m.version} (${
+        label: `${m.isArchived ? '(ARCHIVED) ' : ''}${m.type === 'original' ? m.version : m.name + '_' + m.version} (${
           m.type === 'original' ? 'Original MSM' : 'METASPACE-ML'
         })`,
-      })),
-    ])
+      }))
+      options = options.filter((o) =>
+        props.isNewDataset
+          ? !o.disabled
+          : !(!props.isNewDataset && !(!o.disabled || (o.disabled && o.value === props.value?.scoringModel)))
+      )
+
+      return options
+    })
 
     const databaseOptions = computed(() => {
       return props.databasesByGroup.map(({ shortName, molecularDatabases }) => ({

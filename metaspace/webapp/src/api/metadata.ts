@@ -198,6 +198,7 @@ export const metadataOptionsQuery = gql`
       name
       type
       version
+      isArchived
     }
   }
 `
