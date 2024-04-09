@@ -131,17 +131,44 @@ def find_default() -> ScoringModel:
     return ScoringModel(**data)
 
 
+def find_original() -> ScoringModel:
+    # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
+    # pylint: disable=import-outside-toplevel  # circular import
+    from sm.engine.db import DB
+
+    data = DB().select_one_with_fields(
+        "SELECT id, name, version, type FROM scoring_model WHERE type = 'original'",
+    )
+    if not data:
+        raise SMError('Original MSM scoringModel not found')
+    return ScoringModel(**data)
+
+
 def find_by_name_version(name: str, version: str) -> ScoringModel:
     # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
     # pylint: disable=import-outside-toplevel  # circular import
     from sm.engine.db import DB
 
     data = DB().select_one_with_fields(
-        'SELECT id, name, version, type FROM scoring_model ' 'WHERE name = %s AND version = %s',
+        'SELECT id, name, version, type FROM scoring_model WHERE name = %s AND version = %s',
         params=(name, version),
     )
     if not data:
         raise SMError(f'ScoringModel not found: {name}')
+    return ScoringModel(**data)
+
+
+def find_by_id(id_: int) -> ScoringModel:
+    """Find scoring model by id."""
+    # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
+    # pylint: disable=import-outside-toplevel  # circular import
+    from sm.engine.db import DB
+
+    data = DB().select_one_with_fields(
+        'SELECT id, name, version, type FROM scoring_model WHERE id = %s', params=(id_,)
+    )
+    if not data:
+        raise SMError(f'ScoringModel not found: {id_}')
     return ScoringModel(**data)
 
 
@@ -223,6 +250,8 @@ def load_scoring_model(name: Optional[str], version: Optional[str] = None) -> Sc
             model.load_model(str(model_file), 'cbm')
 
         return CatBoostScoringModel(name, model, params, id_, name, version)
+    elif type_ == 'original':
+        return MsmScoringModel()
     else:
         raise ValueError(f'Unsupported scoring model type: {type_}')
 
@@ -313,7 +342,13 @@ def save_scoring_model_to_db(name, type_, version, is_default, params, created_d
         created_dt = datetime.utcnow()
 
     db = DB()
-    if db.select_one('SELECT * FROM scoring_model WHERE name = %s', (name,)):
+    if db.select_one(
+        'SELECT * FROM scoring_model WHERE name = %s and version = %s',
+        (
+            name,
+            version,
+        ),
+    ):
         logger.info(f'Updating existing scoring model {name}')
         DB().alter(
             'UPDATE scoring_model SET type = %s, version = %s, '

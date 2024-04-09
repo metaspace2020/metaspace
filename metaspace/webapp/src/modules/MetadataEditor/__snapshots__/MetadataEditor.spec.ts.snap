@@ -44,7 +44,7 @@ exports[`MetadataEditor > should be able to load an existing dataset > metaspace
   ],
   "groupId": "",
   "isPublic": false,
-  "modelType": "catboost",
+  "modelType": undefined,
   "name": "",
   "neutralLosses": [],
   "performEnrichment": false,
@@ -57,7 +57,7 @@ exports[`MetadataEditor > should be able to load an existing dataset > metaspace
     "",
     "",
   ],
-  "scoringModel": "v3_default",
+  "scoringModelId": undefined,
   "submitterId": "",
 }
 `;
@@ -789,9 +789,9 @@ exports[`MetadataEditor > should match snapshot 1`] = `
               </div></span>
             </div>
             <div class=\\"el-form-item__content\\">
-              <div class=\\"mock-el-select\\" model-value=\\"v3_default\\" required=\\"false\\">
-                <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" disabled=\\"false\\" value=\\"\\"></div>
-                <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" disabled=\\"false\\" value=\\"\\"></div>
+              <div class=\\"mock-el-select\\" required=\\"false\\">
+                <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" disabled=\\"false\\" value=\\"0\\"></div>
+                <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" disabled=\\"false\\" value=\\"0\\"></div>
               </div>
             </div>
           </div></span>

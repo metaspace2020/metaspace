@@ -42,6 +42,9 @@ def run_fdr(
         return db_data['id'], results_df
 
     logger.info('Estimating FDRs...')
+    logger.info(ds_config['fdr'].get('scoring_model'))
+    logger.info(ds_config['fdr'].get('scoring_model_id'))
+    logger.info(ds_config['fdr'].get('scoring_model_version'))
     scoring_model = load_scoring_model(
         ds_config['fdr'].get('scoring_model'), ds_config['fdr'].get('scoring_model_version')
     )

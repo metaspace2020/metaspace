@@ -68,7 +68,8 @@ describe('DatasetOverviewPage', () => {
       },
       fdr: {
         decoy_sample_size: 20,
-        scoring_model: 'v3_default',
+        scoring_model_id: 1,
+        model_type: 'catboost',
       },
       image_generation: {
         ppm: 3,

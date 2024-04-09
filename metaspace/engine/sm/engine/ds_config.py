@@ -13,8 +13,10 @@ class DSConfigIsotopeGeneration(TypedDict):
 
 class DSConfigFDR(TypedDict):
     decoy_sample_size: int
+    scoring_model_id: Optional[int]
     scoring_model: Optional[str]
     scoring_model_version: Optional[str]
+    model_type: Optional[str]
 
 
 class DSConfigImageGeneration(TypedDict):

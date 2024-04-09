@@ -89,7 +89,7 @@
                   type="select"
                   name="Analysis version"
                   :help="AnalysisVersionHelp"
-                  :value="value?.scoringModel"
+                  :value="value?.scoringModelId"
                   :error="error && error.analysisVersion"
                   :options="analysisVersionOptions"
                   @input="(val) => onScoringModelChange(val)"
@@ -203,11 +203,9 @@ export default defineComponent({
 
     const analysisVersionOptions = computed(() => {
       let options = (props.scoringModels ?? []).map((m: any) => ({
-        value: m.name,
-        version: m.version,
+        value: m.id,
         disabled: m.isArchived,
         type: m.type,
-        id: m.id,
         label: `${m.isArchived ? '(ARCHIVED) ' : ''}${m.type === 'original' ? m.version : m.name + '_' + m.version} (${
           m.type === 'original' ? 'Original MSM' : 'METASPACE-ML'
         })`,
@@ -215,7 +213,7 @@ export default defineComponent({
       options = options.filter((o) =>
         props.isNewDataset
           ? !o.disabled
-          : !(!props.isNewDataset && !(!o.disabled || (o.disabled && o.value === props.value?.scoringModel)))
+          : !(!props.isNewDataset && !(!o.disabled || (o.disabled && o.value === props.value?.scoringModelId)))
       )
 
       return options
@@ -240,8 +238,7 @@ export default defineComponent({
 
     const onScoringModelChange = (val: any) => {
       const scoringModel: any = analysisVersionOptions.value.find((m) => m.value === val)
-      emit('change', { field: 'scoringModel', val: scoringModel.value })
-      emit('change', { field: 'scoringModelVersion', val: scoringModel.version })
+      emit('change', { field: 'scoringModelId', val: scoringModel.value })
       emit('change', { field: 'modelType', val: scoringModel.type })
     }
 

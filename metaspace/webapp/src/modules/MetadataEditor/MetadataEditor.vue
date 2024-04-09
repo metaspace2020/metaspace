@@ -295,10 +295,17 @@ export default defineComponent({
 
       // backward compatibility
       if (metaspaceOptions.modelType === 'original') {
-        metaspaceOptions.scoringModel = (scoringModels.find((m) => m.type === 'original') || {}).name
+        metaspaceOptions.scoringModelId = (scoringModels.find((m) => m.type === 'original') || {}).id
+        metaspaceOptions.modelType = 'original'
       } else {
-        metaspaceOptions.scoringModel =
-          (scoringModels.find((m) => m.name === metaspaceOptions.scoringModel) || {}).name ?? 'v3_default'
+        const currentModel =
+          scoringModels.find((m) => m.id === metaspaceOptions.scoringModelId) ||
+          {} ||
+          // keep for backward compatibility to scoring model (v3_default)
+          scoringModels.find((m) => m.name === metaspaceOptions.scoringModelId) ||
+          {}
+        metaspaceOptions.scoringModelId = currentModel.id
+        metaspaceOptions.modelType = currentModel.type
       }
 
       // enable default db normal edit if dataset already registered and does not have it
@@ -517,7 +524,7 @@ export default defineComponent({
         numPeaks: isNew ? null : get(config, 'isotope_generation.n_peaks') || null,
         decoySampleSize: isNew ? null : get(config, 'fdr.decoy_sample_size') || null,
         ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
-        scoringModel: get(config, 'fdr.scoring_model'),
+        scoringModelId: get(config, 'fdr.scoring_model_id') || get(config, 'fdr.scoring_model'), // backward compatibility
         modelType: get(config, 'analysis_version') === 1 ? 'original' : 'catboost', // backward compatibility
         performEnrichment: isEnriched,
       }

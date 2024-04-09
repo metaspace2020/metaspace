@@ -228,6 +228,7 @@ input DatasetCreateInput {
   decoySampleSize: Int
   analysisVersion: Int
   computeUnusedMetrics: Boolean
+  scoringModelId: Int
   scoringModel: String
   scoringModelVersion: String
   modelType: String
@@ -255,7 +256,10 @@ input DatasetUpdateInput {
   decoySampleSize: Int
   analysisVersion: Int
   computeUnusedMetrics: Boolean
+  scoringModelId: Int
   scoringModel: String
+  scoringModelVersion: String
+  modelType: String
 
 
   submitterId: ID

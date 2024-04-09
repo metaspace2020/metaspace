@@ -7,7 +7,7 @@ from sm.engine.config import SMConfig
 from sm.engine.ds_config import DSConfig
 from sm.engine.errors import UnknownDSID
 
-from sm.engine.annotation.scoring_model import find_default, find_by_name_version
+from sm.engine.annotation.scoring_model import find_default, find_by_id
 
 logger = logging.getLogger('engine')
 
@@ -52,6 +52,7 @@ FLAT_DS_CONFIG_KEYS = frozenset(
         'neutral_losses',
         'chem_mods',
         'compute_unused_metrics',
+        'scoring_model_id',
         'scoring_model',
         'scoring_model_version',
         'model_type',
@@ -246,25 +247,25 @@ def generate_ds_config(
     neutral_losses=None,
     chem_mods=None,
     compute_unused_metrics=None,
-    scoring_model=None,
-    scoring_model_version=None,
+    scoring_model_id=None,
     model_type=None,
 ) -> DSConfig:
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
     # 1 - original, 2 - v2 (discontinued), 3 - ML (catboost or other != original)
-    # kept for compatibility with old datasets and client
-    analysis_version = analysis_version or 1
-    analysis_version = 3 if model_type == 'catboost' else analysis_version
+    # analysis_version kept for compatibility with old datasets and client
+    if not model_type:
+        analysis_version = analysis_version or 1
+    else:
+        analysis_version = 1 if model_type == 'original' else 3
     iso_params = _get_isotope_generation_from_metadata(metadata)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
 
-    if (analysis_version == 3 or model_type == 'catboost') and (
-        scoring_model is None or scoring_model_version is None
-    ):
-        scoring_model = find_default()
+    scoring_model = None  # original MSM backwards compatibility
+    if scoring_model_id and model_type != 'original':
+        scoring_model = find_by_id(scoring_model_id)
     elif analysis_version == 3 or model_type == 'catboost':
-        scoring_model = find_by_name_version(name=scoring_model, version=scoring_model_version)
+        scoring_model = find_default()
 
     return {
         'database_ids': moldb_ids,
@@ -280,8 +281,10 @@ def generate_ds_config(
         },
         'fdr': {
             'decoy_sample_size': decoy_sample_size or 20,
+            'scoring_model_id': scoring_model_id,
             'scoring_model': scoring_model.name if scoring_model else None,
             'scoring_model_version': scoring_model.version if scoring_model else None,
+            'model_type': scoring_model.type if scoring_model and analysis_version != 1 else None,
         },
         'image_generation': {
             'ppm': ppm or 3,
@@ -315,8 +318,8 @@ def update_ds_config(old_config, metadata, **kwargs):
         'ppm': image_generation.get('ppm'),
         'min_px': image_generation.get('min_px'),
         'compute_unused_metrics': image_generation.get('compute_unused_metrics'),
-        'scoring_model': fdr.get('scoring_model'),
-        'scoring_model_version': fdr.get('scoring_model_version'),
+        'scoring_model_id': fdr.get('scoring_model_id'),
+        'model_type': fdr.get('model_type'),
     }
 
     for k, v in old_vals.items():
