@@ -30,7 +30,6 @@ type ScoringModel {
   name: String!
   type: String!
   version: String!
-  isDefault: Boolean
   isArchived: Boolean
 }
 

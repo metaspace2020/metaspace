@@ -44,9 +44,7 @@ def s3_catboost_scoring_model(test_db):
 
     # Upload the model to S3
     params = upload_catboost_scoring_model(model, BUCKET_NAME, name, False, dummy_X)
-    save_scoring_model_to_db(
-        name=name, type_='catboost', version=version, is_default=True, params=params
-    )
+    save_scoring_model_to_db(name=name, type_='catboost', version=version, params=params)
 
     return {'name': name, 'version': version}
 

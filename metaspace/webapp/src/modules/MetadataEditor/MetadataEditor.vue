@@ -300,7 +300,6 @@ export default defineComponent({
       } else {
         const currentModel =
           scoringModels.find((m) => m.id === metaspaceOptions.scoringModelId) ||
-          {} ||
           // keep for backward compatibility to scoring model (v3_default)
           scoringModels.find((m) => m.name === metaspaceOptions.scoringModelId) ||
           {}

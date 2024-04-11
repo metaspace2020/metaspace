@@ -7,7 +7,7 @@ from sm.engine.config import SMConfig
 from sm.engine.ds_config import DSConfig
 from sm.engine.errors import UnknownDSID
 
-from sm.engine.annotation.scoring_model import find_default, find_by_id
+from sm.engine.annotation.scoring_model import find_by_id
 
 logger = logging.getLogger('engine')
 
@@ -264,8 +264,6 @@ def generate_ds_config(
     scoring_model = None  # original MSM backwards compatibility
     if scoring_model_id and model_type != 'original':
         scoring_model = find_by_id(scoring_model_id)
-    elif analysis_version == 3 or model_type == 'catboost':
-        scoring_model = find_default()
 
     return {
         'database_ids': moldb_ids,

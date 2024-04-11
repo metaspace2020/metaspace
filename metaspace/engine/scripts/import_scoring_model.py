@@ -20,7 +20,6 @@ def import_model(
     overwrite: bool,
     version: str,
     model_type: str,
-    is_default: bool,
 ):
     params = None
     if model_type == 'catboost':
@@ -38,9 +37,7 @@ def import_model(
         )
 
     logger.info('Inserting model into DB')
-    save_scoring_model_to_db(
-        name=name, type_=model_type, version=version, is_default=is_default, params=params
-    )
+    save_scoring_model_to_db(name=name, type_=model_type, version=version, params=params)
     logger.info('Done')
 
 
@@ -86,7 +83,6 @@ def main():
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', help='SM config path'
     )
-    parser.add_argument('--is_default', action='store_true', help='Is default model')
 
     args = parser.parse_args(remaining_argv)  # Use the remaining arguments for the main parse
 
@@ -104,7 +100,6 @@ def main():
             overwrite=args.overwrite,
             version=args.version,
             model_type=pre_args.model_type,
-            is_default=args.is_default,
         )
 
 

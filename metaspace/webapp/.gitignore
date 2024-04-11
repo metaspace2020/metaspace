@@ -6,7 +6,7 @@ coverage*
 /src/lib/metadataSchemas
 
 # Copy of graphql schema for tests
-/tests/utils/graphql-schema.json
+tests/utils/graphql-schema.json
 
 # Compiled output
 stats.json

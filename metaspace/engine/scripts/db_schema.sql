@@ -339,7 +339,6 @@ CREATE TABLE "public"."scoring_model" (
   "version" text NOT NULL, 
   "created_dt" TIMESTAMP NOT NULL, 
   "is_archived" boolean NOT NULL DEFAULT false, 
-  "is_default" boolean NOT NULL DEFAULT false, 
   "type" text NOT NULL, 
   "params" json NOT NULL, 
   CONSTRAINT "scoring_model_uindex" UNIQUE ("name", 

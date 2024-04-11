@@ -245,6 +245,4 @@ print(params)
 
 # Update DB with model (if running a local METASPACE environment)
 GlobalInit()
-save_scoring_model_to_db(
-    name=MODEL_NAME, type_='catboost', version=MODEL_VERSION, is_default=True, params=params
-)
+save_scoring_model_to_db(name=MODEL_NAME, type_='catboost', version=MODEL_VERSION, params=params)

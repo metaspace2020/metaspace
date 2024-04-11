@@ -345,9 +345,6 @@ export class ScoringModel {
   @Column({ type: 'boolean', default: false })
   isArchived: boolean;
 
-  @Column({ type: 'boolean', default: false })
-  isDefault: boolean;
-
   /** `type` is hint for how to interpret `params`. sm-engine is responsible for managing the valid values. */
   @Column({ type: 'text' })
   type: string;

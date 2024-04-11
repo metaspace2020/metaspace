@@ -90,14 +90,12 @@ class ScoringModel:
         name: str = None,
         version: str = None,
         type: str = None,
-        is_default: bool = None,
         is_archived: bool = None,
     ):
         self.id = id
         self.name = name
         self.version = version
         self.type = type
-        self.is_default = is_default
         self.is_archived = is_archived
 
     def score(
@@ -113,22 +111,8 @@ class ScoringModel:
             'id': self.id,
             'name': self.name,
             'version': self.version,
-            'is_default': self.is_default,
             'is_archived': self.is_archived,
         }
-
-
-def find_default() -> ScoringModel:
-    # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
-    # pylint: disable=import-outside-toplevel  # circular import
-    from sm.engine.db import DB
-
-    data = DB().select_one_with_fields(
-        'SELECT id, name, version, type FROM scoring_model WHERE is_default = TRUE',
-    )
-    if not data:
-        raise SMError('Default scoringModel not found')
-    return ScoringModel(**data)
 
 
 def find_original() -> ScoringModel:
@@ -329,7 +313,7 @@ def upload_catboost_scoring_model(
     }
 
 
-def save_scoring_model_to_db(name, type_, version, is_default, params, created_dt=None):
+def save_scoring_model_to_db(name, type_, version, params, created_dt=None):
     """Adds/updates the scoring_model in the local database"""
     # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
     # pylint: disable=import-outside-toplevel  # circular import
@@ -351,14 +335,13 @@ def save_scoring_model_to_db(name, type_, version, is_default, params, created_d
     ):
         logger.info(f'Updating existing scoring model {name}')
         DB().alter(
-            'UPDATE scoring_model SET type = %s, version = %s, '
-            ' is_default = %s, params = %s WHERE name = %s',
-            (type_, version, is_default, params, name),
+            'UPDATE scoring_model SET type = %s, version = %s, ' ' params = %s WHERE name = %s',
+            (type_, version, params, name),
         )
     else:
         logger.info(f'Inserting new scoring model {name}')
         DB().alter(
-            'INSERT INTO scoring_model(name, type, version, is_default, params, created_dt) '
-            ' VALUES (%s, %s, %s, %s, %s, %s)',
-            (name, type_, version, is_default, params, created_dt),
+            'INSERT INTO scoring_model(name, type, version, params, created_dt) '
+            ' VALUES (%s, %s, %s, %s, %s)',
+            (name, type_, version, params, created_dt),
         )

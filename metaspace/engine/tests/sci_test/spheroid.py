@@ -338,7 +338,6 @@ def ensure_db_populated(sm_config, analysis_version, database):
                 name='Animal',
                 type_='catboost',
                 version='v2.2023-12-14',
-                is_default=True,
                 params=params,
             )
 
