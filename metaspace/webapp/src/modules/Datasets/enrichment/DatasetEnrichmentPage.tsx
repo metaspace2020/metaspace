@@ -78,16 +78,10 @@ export default defineComponent({
     handleDatasetLoad(async (result) => {
       const filter = Object.assign({}, store.getters.filter)
 
-      console.log('yo1', filter)
-      console.log('yo2', filter.ontology)
-      console.log('yo3', result)
-
       if (!filter.ontology) {
         const ontologyDatabases: any = result?.data?.dataset?.ontologyDatabases || []
-        console.log('dude', ontologyDatabases)
         if (ontologyDatabases.length > 0) {
           filter.ontology = ontologyDatabases[0].id
-          console.log('updat', filter.ontology)
           store.commit('updateFilter', filter)
         }
       }
@@ -223,11 +217,7 @@ export default defineComponent({
           )}
           {!enrichmentLoading.value && (
             <div class={'dataset-enrichment-wrapper text-center md:w-1/2 w-full'}>
-              {dataset.value?.name} -{' '}
-              <a target="_blank" href="http://www.lipidontology.com/">
-                LION
-              </a>{' '}
-              terms enrichment
+              {dataset.value?.name} - terms enrichment
               {!(!data || (data || []).length === 0) && (
                 <DatasetEnrichmentChart
                   data={pagedData}

@@ -228,6 +228,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     hideChildren: true,
     isMultiFilter: false,
     initialValue: undefined,
+    encoding: 'number',
+    convertValueForComponent: (v) => v?.toString(),
   },
 
   molClass: {

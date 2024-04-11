@@ -1,14 +1,13 @@
 <template>
-  <tag-filter name="Ontology" removable @destroy="destroy">
+  <tag-filter name="Ontology" :removable="false" :width="300" @destroy="destroy">
     <template v-slot:edit>
       <el-select
-        :model-value="modelValue"
+        :model-value="valueIfKnown"
         placeholder="Select ontology"
         filterable
-        clearable
         :teleported="false"
         remote
-        @change="(val) => onChange('ontology', val)"
+        @change="onInput"
       >
         <el-option v-for="item in fixedOptions || molClasses" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
@@ -34,7 +33,7 @@ export default defineComponent({
     TagFilter,
   },
   props: {
-    modelValue: Object as any,
+    value: String as any,
     fixedOptions: Array as any,
   },
   setup(props, { emit }) {
@@ -61,7 +60,7 @@ export default defineComponent({
     }
 
     const formatValue = () => {
-      const ontology = parseInt(props.modelValue, 10)
+      const ontology = parseInt(props.value, 10)
       const molClassesAux = props.fixedOptions || molClasses.value || []
       const classItem = molClassesAux.find((item: any) => item.id === ontology)
       if (classItem) {
@@ -71,12 +70,13 @@ export default defineComponent({
       }
     }
 
-    const onChange = (filterKey: 'ontology', val: any) => {
-      if (val) {
-        emit('change', val, filterKey)
-      } else {
-        emit('destroy', filterKey)
-      }
+    const valueIfKnown = computed(() => {
+      const option = props.fixedOptions?.find((item: any) => item.id === parseInt(props.value, 10))
+      return props.value && option ? option : undefined
+    })
+
+    function onInput(val: string, filterKey: string = 'ontology') {
+      emit('change', val, filterKey)
     }
 
     const destroy = () => {
@@ -86,8 +86,9 @@ export default defineComponent({
     return {
       molClasses,
       formatValue,
-      onChange,
+      onInput,
       destroy,
+      valueIfKnown,
     }
   },
 })
