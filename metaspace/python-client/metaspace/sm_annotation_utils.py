@@ -488,6 +488,8 @@ class GraphQLClient(object):
 
     MOLECULAR_DB_FIELDS = "id name version isPublic archived default"
 
+    SCORING_MODEL_FIELDS = "id name version type isArchived"
+
     def getDataset(self, datasetId):
         query = f"""
             query datasetInfo($id: String!) {{
@@ -639,6 +641,11 @@ class GraphQLClient(object):
         result = self.query(query)
         return result['allMolecularDBs']
 
+    def get_visible_scoring_models(self):
+        query = f"query scoringModels {{ scoringModels {{ {self.SCORING_MODEL_FIELDS} }} }}"
+        result = self.query(query)
+        return result['scoringModels']
+
     @staticmethod
     def map_database_name_to_name_version(name: str) -> Tuple[str, str]:
         # For backwards compatibility map old database names to (name, version) tuples
@@ -659,6 +666,17 @@ class GraphQLClient(object):
             'ECMDB-2018-12': ('ECMDB', '2018-12'),
         }
         return database_name_version_map.get(name, (None, None))
+
+    @staticmethod
+    def map_scoring_model_name_to_name_version(name: str) -> Tuple[str, str]:
+        # For backwards compatibility map old database names to (name, version) tuples
+        scoring_model_name_version_map = {
+            'MSM': ('MSM', 'v1'),
+            'Animal': ('Animal', 'v2.2023-12-14'),
+            'Plant': ('Plant', 'v2.2023-12-14'),
+            'v3_default': ('v3_default', 'v1'),
+        }
+        return scoring_model_name_version_map.get(name, (None, None))
 
     def map_database_to_id(self, database: Union[int, str, Tuple[str, str]]):
         # Forwards/backwards compatibility issue: the GraphQL Schema may soon change from Int ids
@@ -692,6 +710,34 @@ class GraphQLClient(object):
             raise Exception(f'Database name "{database}" is not unique. Use database id instead.')
 
         return database_ids[0]
+
+    def map_scoring_model_to_id(self, scoring_model: Union[int, str, Tuple[str, str]]):
+        if isinstance(scoring_model, int):
+            return scoring_model
+
+        if isinstance(scoring_model, str) and re.match(r'^\d+$', scoring_model):
+            return int(scoring_model)
+
+        scoring_model_docs = self.get_visible_scoring_models()
+        scoring_model_name_id_map = defaultdict(list)
+        for sm in scoring_model_docs:
+            scoring_model_name_id_map[(sm['name'], sm['version'])].append(sm['id'])
+
+        if isinstance(scoring_model, tuple):
+            db_name, db_version = scoring_model
+        else:
+            db_name, db_version = self.map_scoring_model_name_to_name_version(scoring_model)
+
+        scoring_model_ids = scoring_model_name_id_map.get((db_name, db_version), [])
+        if len(scoring_model_ids) == 0:
+            raise Exception(
+                f'Scoring model not found or you do not have access to it. Available databases: '
+                f'{list(scoring_model_name_id_map.keys())}'
+            )
+        if len(scoring_model_ids) > 1:
+            raise Exception(f'Scoring model name "{scoring_model}" is not unique. Use database id instead.')
+
+        return scoring_model_ids[0]
 
     def _get_dataset_upload_uuid(self):
         url = f'{self._config["dataset_upload_url"]}/s3/uuid'
@@ -1522,6 +1568,37 @@ class MolecularDB:
         return self._info[item]
 
 
+class ScoringModel:
+    def __init__(self, info):
+        self._info = info
+
+    @property
+    def id(self) -> int:
+        return self._info['id']
+
+    @property
+    def name(self) -> str:
+        return self._info['name']
+
+    @property
+    def version(self) -> str:
+        return self._info['version']
+
+    @property
+    def type(self) -> str:
+        return self._info['type']
+
+    @property
+    def is_archived(self) -> bool:
+        return self._info['isArchived']
+
+    def __repr__(self):
+        return f'<{self.id}:{self.name}:{self.version}:{self.type}>'
+
+    def __getitem__(self, item):
+        return self._info[item]
+
+
 class SMInstance(object):
     """Client class for communication with the Metaspace API."""
 
@@ -1784,6 +1861,7 @@ class SMInstance(object):
         num_isotopic_peaks: Optional[int] = None,
         decoy_sample_size: Optional[int] = None,
         analysis_version: Optional[int] = None,
+        scoring_model: Optional[int] = None,
         input_path: Optional[str] = None,
         description: Optional[str] = None,
         perform_enrichment: Optional[bool] = False,
@@ -1812,6 +1890,7 @@ class SMInstance(object):
         :param decoy_sample_size: Number of implausible adducts to use for generating the decoy
             search database (default 20)
         :param analysis_version:
+        :param scoring_model:
         :param input_path: To clone an existing dataset, specify input_path using the value of the
             existing dataset's "s3dir".
             When input_path is suppled, imzml_fn and ibd_fn can be set to None.
@@ -1827,6 +1906,7 @@ class SMInstance(object):
 
         primary_group_id = self._gqclient.get_primary_group_id()
         database_ids = [self._gqclient.map_database_to_id(db) for db in databases or []]
+        scoring_model_id = self._gqclient.map_scoring_model_to_id(scoring_model)
 
         if isinstance(metadata, str):
             metadata = json.loads(metadata)
@@ -1877,6 +1957,7 @@ class SMInstance(object):
                 'numPeaks': num_isotopic_peaks,
                 'decoySampleSize': decoy_sample_size,
                 'analysisVersion': analysis_version,
+                'scoringModelId': scoring_model_id,
                 'submitterId': current_user_id,
                 'groupId': primary_group_id,
                 'projectIds': project_ids,
@@ -1907,6 +1988,7 @@ class SMInstance(object):
         num_isotopic_peaks: Optional[int] = None,
         decoy_sample_size: Optional[int] = None,
         analysis_version: Optional[int] = None,
+        scoring_model: Optional[int] = None,
         reprocess: Optional[bool] = None,
         force: bool = False,
         perform_enrichment: Optional[bool] = False,
@@ -1938,6 +2020,7 @@ class SMInstance(object):
         :param decoy_sample_size: Number of implausible adducts to use for generating the decoy
             search database (default 20)
         :param analysis_version:
+        :param scoring_model:
         :param reprocess:
             None (default): Reprocess if needed
             True: Force reprocessing, even if not needed
@@ -1975,6 +2058,8 @@ class SMInstance(object):
             input_field['decoySampleSize'] = decoy_sample_size
         if analysis_version is not None:
             input_field['analysisVersion'] = analysis_version
+        if scoring_model is not None:
+            input_field['scoringModelId'] = self._gqclient.map_scoring_model_to_id(scoring_model)
 
         try:
             self._gqclient.update_dataset(
@@ -2013,6 +2098,10 @@ class SMInstance(object):
                     db_match = db
 
         return db_match and MolecularDB(db_match)
+
+    def scoring_models(self) -> List[ScoringModel]:
+        sms = sorted(self._gqclient.get_visible_scoring_models(), key=lambda sm: sm['id'])
+        return [ScoringModel(sm) for sm in sms]
 
     def databases(self) -> List[MolecularDB]:
         dbs = sorted(self._gqclient.get_visible_databases(), key=lambda db: db['id'])
@@ -2387,6 +2476,7 @@ __all__ = [
     'SMInstance',
     'SMDataset',
     'MolecularDB',
+    'ScoringModel',
     'IsotopeImages',
     'OpticalImage',
     'GraphQLClient',

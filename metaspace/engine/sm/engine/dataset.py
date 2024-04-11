@@ -254,16 +254,17 @@ def generate_ds_config(
 
     # 1 - original, 2 - v2 (discontinued), 3 - ML (catboost or other != original)
     # analysis_version kept for compatibility with old datasets and client
+    scoring_model = None  # original MSM backwards compatibility
+    if scoring_model_id and model_type != 'original':
+        scoring_model = find_by_id(scoring_model_id)
+        model_type = scoring_model.type
+
     if not model_type:
         analysis_version = analysis_version or 1
     else:
         analysis_version = 1 if model_type == 'original' else 3
     iso_params = _get_isotope_generation_from_metadata(metadata)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
-
-    scoring_model = None  # original MSM backwards compatibility
-    if scoring_model_id and model_type != 'original':
-        scoring_model = find_by_id(scoring_model_id)
 
     return {
         'database_ids': moldb_ids,
