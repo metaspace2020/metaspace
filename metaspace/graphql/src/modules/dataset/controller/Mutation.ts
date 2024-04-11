@@ -111,7 +111,7 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
     newDB = true
   }
 
-  if (update.updateEnrichment) {
+  if (update.updateEnrichment || update.ontologyDbIds) {
     enrichmentUpd = true
   }
 

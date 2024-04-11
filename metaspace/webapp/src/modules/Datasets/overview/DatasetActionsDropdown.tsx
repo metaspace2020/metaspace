@@ -55,7 +55,7 @@ export const DatasetActionsDropdown = defineComponent({
     editActionLabel: { type: String, default: 'Edit' },
     compareActionLabel: { type: String, default: 'Compare with other datasets...' },
     browserActionLabel: { type: String, default: 'Imzml Browser' },
-    enrichmentActionLabel: { type: String, default: 'LION enrichment' },
+    enrichmentActionLabel: { type: String, default: 'Ontology enrichment' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
@@ -86,12 +86,12 @@ export const DatasetActionsDropdown = defineComponent({
     const confirmReprocessEnrichment = async () => {
       try {
         await ElMessageBox.confirm(
-          'The changes to the analysis options require the dataset to be reprocessed. ' +
-            'This dataset will be unavailable until reprocessing has completed. Do you wish to continue?',
-          'Reprocessing required',
+          'To perform the ontology enrichment, please select the desired enrichment ontology ' +
+            'on the dataset edition page.',
+          'Enrichment not found',
           {
             type: 'warning',
-            confirmButtonText: 'Continue',
+            confirmButtonText: 'Edit dataset',
             cancelButtonText: 'Cancel',
           }
         )
@@ -164,7 +164,11 @@ export const DatasetActionsDropdown = defineComponent({
 
     const handleEnrichmentRequest = async () => {
       if (await confirmReprocessEnrichment()) {
-        handleReprocess(true)
+        router.push({
+          name: 'edit-metadata',
+          params: { dataset_id: props.dataset?.id },
+          query: { feat: 'enrichment' },
+        })
       }
     }
 

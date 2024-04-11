@@ -134,6 +134,7 @@ input AnnotationFilter {
   termId: Int
   msmScoreFilter: NumericRange
   compoundQuery: String
+  ontologyId: Int
   fdrLevel: Float
   pValue: Float
   sumFormula: String

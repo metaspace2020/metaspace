@@ -12,7 +12,7 @@ from sm.engine.errors import SMError
 logger = logging.getLogger('annotation-pipeline')
 
 
-def select_all_records(moldb_id: int, molecules: pd.DataFrame) -> List[Dict]:
+def select_all_records(moldb_id: int, ontdb_ids: List[int], molecules: pd.DataFrame) -> List[Dict]:
     """
     Select all records from the table `enrichment_db_molecule_mapping`
     for formulas present in molecules dataframe
@@ -20,7 +20,7 @@ def select_all_records(moldb_id: int, molecules: pd.DataFrame) -> List[Dict]:
     metabolites = []
     for _, row in molecules.iterrows():
         try:
-            terms = get_mappings_by_formula(row['formula'], moldb_id)
+            terms = get_mappings_by_formula(row['formula'], moldb_id, ontdb_ids)
             for term in terms:
                 modifier = row['modifier'] if row['modifier'] is not np.nan else ''
                 metabolites.append(
@@ -62,12 +62,14 @@ def calc_bootstrapping(
     return bootstrapping_sublist
 
 
-def run_enrichment(results_dfs: Dict[int, pd.DataFrame]) -> Dict[int, pd.DataFrame]:
+def run_enrichment(
+    results_dfs: Dict[int, pd.DataFrame], ontdb_ids: List[int]
+) -> Dict[int, pd.DataFrame]:
     bootstrap_hash = {}
     for moldb_id, molecules in results_dfs.items():
         start_time = time.time()
 
-        metabolites = select_all_records(moldb_id, molecules)
+        metabolites = select_all_records(moldb_id, ontdb_ids, molecules)
         mol_hash = calc_mol_hash(metabolites)
         bootstrapping_sublist = calc_bootstrapping(molecules, mol_hash)
 

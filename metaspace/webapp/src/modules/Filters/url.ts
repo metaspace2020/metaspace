@@ -45,6 +45,7 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   colocalizedWith: 'colo',
   colocalizationSamples: 'locs',
   offSample: 'offs',
+  ontology: 'ont',
   molClass: 'mol_class',
   term: 'term',
   opticalImage: 'opt_img',

@@ -141,12 +141,13 @@
             <el-col :span="8">
               <popup-anchor feature-key="v2" placement="top" :show-until="new Date('2022-09-01')" class="block">
                 <form-field
-                  type="switch"
-                  name="LION enrichment"
+                  type="selectMulti"
+                  name="Enrichment ontology"
                   :help="EnrichmentHelp"
-                  :value="value?.performEnrichment"
+                  :value="value?.ontologyDbIds"
                   :error="error && error.performEnrichment"
-                  @input="(val) => onInput('performEnrichment', val)"
+                  :options="ontologyDbs"
+                  @input="(val) => onInput('ontologyDbIds', val)"
                 />
               </popup-anchor>
             </el-col>
@@ -176,6 +177,7 @@ import NeutralLossesHelp from '../inputs/NeutralLossesHelp.vue'
 import PpmHelp from '../inputs/PpmHelp.vue'
 import ChemModsHelp from '../inputs/ChemModsHelp.vue'
 import { MAX_CHEM_MODS, MAX_NEUTRAL_LOSSES } from '../../../lib/constants'
+import { EnrichmentDB } from '../../../api/enrichmentdb'
 
 export default defineComponent({
   name: 'MetaspaceOptionsSection',
@@ -192,6 +194,7 @@ export default defineComponent({
     databasesByGroup: { type: Array as PropType<MolDBsByGroup[]>, required: true },
     defaultDb: { type: Object as PropType<MolecularDB | null>, required: true },
     adductOptions: { type: Array as PropType<{ value: string; label: string }[]>, required: true },
+    ontologyDbs: { type: Array as PropType<EnrichmentDB> | any },
     scoringModels: { type: Array as PropType<{ name: string }[]>, required: true },
     isNewDataset: { type: Boolean, required: true },
   },

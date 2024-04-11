@@ -58,6 +58,7 @@
           :value="state.metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :databases-by-group="state.molDBsByGroup"
+          :ontology-dbs="state.ontologyDbs"
           :default-db="state.defaultDb"
           :adduct-options="adductOptions"
           :is-new-dataset="isNew"
@@ -149,6 +150,7 @@ const factories = {
 const defaultMetaspaceOptions = {
   isPublic: true,
   databaseIds: [],
+  ontologyDbIds: [],
   adducts: [],
   name: '',
   submitterId: null,
@@ -190,6 +192,7 @@ export default defineComponent({
       localErrors: {},
       defaultDb: null,
       molDBsByGroup: [],
+      ontologyDbs: [],
       possibleAdducts: {},
       scoringModels: [],
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
@@ -275,7 +278,7 @@ export default defineComponent({
       const metadata = importMetadata(loadedMetadata, mdType)
 
       // Load options
-      const { adducts, molecularDatabases, scoringModels } = options
+      const { adducts, molecularDatabases, scoringModels, ontologyDbs } = options
       state.possibleAdducts = {
         Positive: adducts.filter((a) => a.charge > 0),
         Negative: adducts.filter((a) => a.charge < 0),
@@ -283,6 +286,7 @@ export default defineComponent({
       state.scoringModels = scoringModels
       state.defaultDb = molecularDatabases.find((db) => db.default) || {}
       state.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
+      state.ontologyDbs = ontologyDbs
       state.schema = deriveFullSchema(metadataSchemas[mdType])
 
       // TODO remove the additional information from the schema itself at some point
@@ -292,6 +296,7 @@ export default defineComponent({
       }
 
       const selectedDbs = dataset.databases || []
+      const selectedOntologyDbs = dataset.ontologyDatabases || []
 
       // enable default db normal edit if dataset already registered and does not have it
       state.defaultDb =
@@ -306,6 +311,7 @@ export default defineComponent({
         metaspaceOptions.databaseIds = uniq(
           selectedDbs.map((db) => db.id).concat(molecularDatabases.filter((d) => d.default).map((_) => _.id))
         )
+        metaspaceOptions.ontologyDbIds = uniq(selectedOntologyDbs.map((db) => db.id))
         if (selectedDbs.length > 0) {
           for (const db of selectedDbs) {
             if (molecularDatabases.find((_) => _.id === db.id) === undefined) {
@@ -510,6 +516,7 @@ export default defineComponent({
         ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
         analysisVersion: isNew ? 1 : get(config, 'analysis_version') || 1,
         scoringModel: isNew ? null : get(config, 'fdr.scoring_model') || null,
+        ontologyDbIds: isNew ? null : get(config, 'ontology_db_ids') || null,
         performEnrichment: isEnriched,
       }
     }
@@ -566,6 +573,7 @@ export default defineComponent({
             },
             submitter: data.currentUser,
             databases: dataset ? dataset.databases : [],
+            ontologyDatabases: dataset?.ontologyDatabases || [],
           }
         } else {
           const result = await fetchDatasetData()

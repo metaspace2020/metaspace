@@ -11,10 +11,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElIcon } from '../../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
-
-interface DatasetEnrichmentPageProps {
-  className: string
-}
+import gql from 'graphql-tag'
+import safeJsonParse from '../../../lib/safeJsonParse'
 
 interface DatasetEnrichmentPageState {
   offset: number
@@ -22,7 +20,7 @@ interface DatasetEnrichmentPageState {
   sortedData: any
 }
 
-export default defineComponent<DatasetEnrichmentPageProps>({
+export default defineComponent({
   name: 'DatasetEnrichmentPage',
   props: {
     className: {
@@ -39,16 +37,74 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       pageSize: 15,
       sortedData: undefined,
     })
+    const fetchImageViewerSnapshot = gql`
+      query fetchImageViewerSnapshot($id: String!, $datasetId: String!) {
+        imageViewerSnapshot(id: $id, datasetId: $datasetId) {
+          snapshot
+        }
+      }
+    `
+    const snapQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
+    const enrichmentQueryOptions = reactive({ enabled: false, fetchPolicy: 'cache-first' as const })
+
     const datasetId = computed(() => route.params.dataset_id)
 
-    const { result: datasetResult } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, { id: datasetId.value })
+    const snapshotId = computed(() => route.query.viewId)
+    const { result: settingsResult, onResult: handleSettingsLoad } = useQuery(
+      fetchImageViewerSnapshot,
+      {
+        id: snapshotId,
+        datasetId: datasetId,
+      },
+      snapQueryOptions
+    )
+
+    handleSettingsLoad(async (result) => {
+      const snapFilter = safeJsonParse(result?.data?.imageViewerSnapshot?.snapshot)
+
+      if (snapFilter) {
+        const filter = Object.assign(store.getters.filter, snapFilter)
+
+        await store.commit('updateFilter', filter)
+      }
+
+      enrichmentQueryOptions.enabled = true
+    })
+
+    const { result: datasetResult, onResult: handleDatasetLoad } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, {
+      id: datasetId.value,
+    })
+
+    handleDatasetLoad(async (result) => {
+      const filter = Object.assign({}, store.getters.filter)
+
+      console.log('yo1', filter)
+      console.log('yo2', filter.ontology)
+      console.log('yo3', result)
+
+      if (!filter.ontology) {
+        const ontologyDatabases: any = result?.data?.dataset?.ontologyDatabases || []
+        console.log('dude', ontologyDatabases)
+        if (ontologyDatabases.length > 0) {
+          filter.ontology = ontologyDatabases[0].id
+          console.log('updat', filter.ontology)
+          store.commit('updateFilter', filter)
+        }
+      }
+
+      if (route.query.viewId) {
+        snapQueryOptions.enabled = true
+      } else {
+        enrichmentQueryOptions.enabled = true
+      }
+    })
 
     const dataset = computed(() => (datasetResult.value != null ? datasetResult.value.dataset : null))
     const { result: databasesResult, onResult: handleMolDbLoad } = useQuery<any>(getEnrichedMolDatabasesQuery, {
       id: datasetId.value,
     })
 
-    handleMolDbLoad(async (result) => {
+    handleMolDbLoad(async (result: any) => {
       const filter = Object.assign({}, store.getters.filter)
 
       // set default db filter if not selected
@@ -65,6 +121,8 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       getDatasetEnrichmentQuery,
       computed(() => ({
         id: datasetId.value,
+        ontologyId: store.getters.gqlAnnotationFilter.ontologyId,
+        colocalizedWith: store.getters.gqlAnnotationFilter.colocalizedWith,
         dbId: store.getters.gqlAnnotationFilter.databaseId,
         fdr: store.getters.gqlAnnotationFilter.fdrLevel,
         pValue:
@@ -77,7 +135,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
             ? undefined
             : !!store.getters.gqlAnnotationFilter.offSample,
       })),
-      { fetchPolicy: 'cache-first' as const }
+      enrichmentQueryOptions
     )
 
     const enrichment = computed(() => {
@@ -109,7 +167,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
           term: item?.termId,
           ds: datasetId.value,
           db_id: dbId,
-          mol_class: '1',
+          mol_class: store.getters.gqlAnnotationFilter.ontologyId,
           fdr,
           feat: 'enrichment',
         },
@@ -127,6 +185,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
       const filename: string = `${dataset.value?.name}_${(databases.value || []).find(
         (database: any) => database.id === store.getters.gqlAnnotationFilter.databaseId
       )?.name}`.replace(/\./g, '_')
+      const ontologyDatabases: any = dataset.value?.ontologyDatabases || []
 
       return (
         <div class="dataset-enrichment-page">
@@ -136,6 +195,7 @@ export default defineComponent<DatasetEnrichmentPageProps>({
               level="enrichment"
               fixedOptions={{
                 database: uniqBy(databaseOptions, 'id'),
+                ontology: uniqBy(ontologyDatabases, 'id'),
               }}
             />
           )}
@@ -152,7 +212,9 @@ export default defineComponent<DatasetEnrichmentPageProps>({
               <DatasetEnrichmentTable
                 dsName={dataset.value?.name}
                 data={data}
-                filename={`${filename}_enrichment.csv`}
+                filename={`${dataset.value?.name}_${databases?.value?.find(
+                  (database: any) => database.id === store.getters.gqlAnnotationFilter.databaseId
+                )?.name}_enrichment.csv`}
                 onPageChange={handlePageChange}
                 onSizeChange={handleSizeChange}
                 onSortChange={handleSortChange}

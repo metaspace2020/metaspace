@@ -42,6 +42,7 @@ FLAT_DS_CONFIG_KEYS = frozenset(
     {
         'analysis_version',
         'moldb_ids',
+        'ontology_db_ids',
         'adducts',
         'ppm',
         'min_px',
@@ -234,6 +235,7 @@ def generate_ds_config(
     metadata,
     analysis_version=None,
     moldb_ids=None,
+    ontology_db_ids=None,
     adducts=None,
     ppm=None,
     min_px=None,
@@ -253,6 +255,7 @@ def generate_ds_config(
 
     return {
         'database_ids': moldb_ids,
+        'ontology_db_ids': ontology_db_ids or [],
         'analysis_version': analysis_version,
         'isotope_generation': {
             'adducts': adducts or default_adducts,
@@ -291,6 +294,7 @@ def update_ds_config(old_config, metadata, **kwargs):
     old_vals = {
         'analysis_version': old_config.get('analysis_version'),
         'moldb_ids': old_config.get('database_ids'),
+        'ontology_db_ids': old_config.get('ontology_db_ids'),
         'adducts': isotope_generation.get('adducts'),
         'n_peaks': isotope_generation.get('n_peaks'),
         'neutral_losses': isotope_generation.get('neutral_losses'),
