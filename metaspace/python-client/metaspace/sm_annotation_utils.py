@@ -735,7 +735,9 @@ class GraphQLClient(object):
                 f'{list(scoring_model_name_id_map.keys())}'
             )
         if len(scoring_model_ids) > 1:
-            raise Exception(f'Scoring model name "{scoring_model}" is not unique. Use database id instead.')
+            raise Exception(
+                f'Scoring model name "{scoring_model}" is not unique. Use database id instead.'
+            )
 
         return scoring_model_ids[0]
 
