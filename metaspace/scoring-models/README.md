@@ -10,8 +10,9 @@ These can be installed with the following commands (assuming engine is already s
 ```bash
 source activate sm38
 cd ../engine
-# Usage: python -m scripts.import_scoring_model <name> <version> <model path> <S3 bucket to upload to>
-python -m scripts.import_scoring_model "Animal" "v2.2023-12-14" "../scoring-models/models_default/v2.2023-12-14_(METASPACE-ML_Animal).cbm" sm-engine-dev
+# Usage: python -m scripts.import_scoring_model <name> <version> <model type> <model path> <S3 bucket to upload to>
+python -m scripts.import_scoring_model "Animal" "v2.2023-12-14" "catboost" --model="../scoring-models/models_default/v2.2023-12-14_(METASPACE-ML_Animal).cbm" --bucket="sm-engine-dev"
+
 ```
 
 ## List of datasets used for training and testing METASPACE-ML
