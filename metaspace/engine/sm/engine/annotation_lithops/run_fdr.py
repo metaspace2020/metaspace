@@ -6,7 +6,7 @@ from typing import List, Dict
 import pandas as pd
 from lithops.storage import Storage
 
-from sm.engine.annotation.scoring_model import load_scoring_model
+from sm.engine.annotation.scoring_model import load_scoring_model_by_id
 from sm.engine.annotation_lithops.build_moldb import DbFDRData
 from sm.engine.annotation_lithops.executor import Executor
 from sm.engine.annotation_lithops.io import load_cobj, CObj
@@ -42,12 +42,7 @@ def run_fdr(
         return db_data['id'], results_df
 
     logger.info('Estimating FDRs...')
-    logger.info(ds_config['fdr'].get('scoring_model'))
-    logger.info(ds_config['fdr'].get('scoring_model_id'))
-    logger.info(ds_config['fdr'].get('scoring_model_version'))
-    scoring_model = load_scoring_model(
-        ds_config['fdr'].get('scoring_model'), ds_config['fdr'].get('scoring_model_version')
-    )
+    scoring_model = load_scoring_model_by_id(ds_config['fdr'].get('scoring_model_id'))
 
     args = [(db_data_cobj,) for db_data_cobj in db_data_cobjs]
     results = executor.map(_run_fdr_for_db, args, runtime_memory=2048)

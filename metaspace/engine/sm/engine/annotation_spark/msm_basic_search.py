@@ -15,7 +15,7 @@ from sm.engine.annotation.fdr import FDR
 from sm.engine.annotation.formula_centroids import CentroidsGenerator
 from sm.engine.annotation.imzml_reader import FSImzMLReader
 from sm.engine.annotation.isocalc_wrapper import IsocalcWrapper
-from sm.engine.annotation.scoring_model import ScoringModel, load_scoring_model
+from sm.engine.annotation.scoring_model import ScoringModel, load_scoring_model_by_id
 from sm.engine.annotation_spark.formula_imager import create_process_segment
 from sm.engine.annotation_spark.segmenter import (
     calculate_centroids_segments_n,
@@ -300,7 +300,7 @@ class MSMSearch:
         """
         logger.info('Running molecule search')
 
-        scoring_model = load_scoring_model(self._ds_config['fdr'].get('scoring_model'))
+        scoring_model = load_scoring_model_by_id(self._ds_config['fdr'].get('scoring_model_id'))
         self._perf.record_entry('loaded scoring model')
 
         ds_segments = self.define_segments_and_segment_ds(ds_segm_size_mb=20)

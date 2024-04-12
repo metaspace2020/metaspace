@@ -44,7 +44,6 @@ exports[`MetadataEditor > should be able to load an existing dataset > metaspace
   ],
   "groupId": "",
   "isPublic": false,
-  "modelType": undefined,
   "name": "",
   "neutralLosses": [],
   "performEnrichment": false,

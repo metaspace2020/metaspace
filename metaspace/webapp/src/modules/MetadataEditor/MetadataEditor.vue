@@ -294,9 +294,9 @@ export default defineComponent({
       const selectedDbs = dataset.databases || []
 
       // backward compatibility
-      if (metaspaceOptions.modelType === 'original') {
+      console.log('metaspaceOptions.scoringModelId', metaspaceOptions.scoringModelId)
+      if (!metaspaceOptions.scoringModelId) {
         metaspaceOptions.scoringModelId = (scoringModels.find((m) => m.type === 'original') || {}).id
-        metaspaceOptions.modelType = 'original'
       } else {
         const currentModel =
           scoringModels.find((m) => m.id === metaspaceOptions.scoringModelId) ||
@@ -304,7 +304,6 @@ export default defineComponent({
           scoringModels.find((m) => m.name === metaspaceOptions.scoringModelId) ||
           {}
         metaspaceOptions.scoringModelId = currentModel.id
-        metaspaceOptions.modelType = currentModel.type
       }
 
       // enable default db normal edit if dataset already registered and does not have it
@@ -524,7 +523,6 @@ export default defineComponent({
         decoySampleSize: isNew ? null : get(config, 'fdr.decoy_sample_size') || null,
         ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
         scoringModelId: get(config, 'fdr.scoring_model_id') || get(config, 'fdr.scoring_model'), // backward compatibility
-        modelType: get(config, 'analysis_version') === 1 ? 'original' : 'catboost', // backward compatibility
         performEnrichment: isEnriched,
       }
     }

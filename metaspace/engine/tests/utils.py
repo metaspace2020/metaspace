@@ -36,10 +36,7 @@ TEST_DS_CONFIG = {
     },
     "fdr": {
         "decoy_sample_size": 20,
-        "scoring_model": None,
-        "model_type": None,
         "scoring_model_id": None,
-        "scoring_model_version": None,
     },
     "database_ids": [0],
 }

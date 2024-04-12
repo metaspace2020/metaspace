@@ -730,13 +730,22 @@ class GraphQLClient(object):
 
         scoring_model_ids = scoring_model_name_id_map.get((db_name, db_version), [])
         if len(scoring_model_ids) == 0:
-            raise Exception(
-                f'Scoring model not found or you do not have access to it. Available databases: '
-                f'{list(scoring_model_name_id_map.keys())}'
+            default_model = next(
+                (obj for obj in scoring_model_docs if obj['type'] == 'original'), None
             )
+            if default_model is not None:
+                print(
+                    f'Scoring model not found or you do not have access to it. Setting original MSM as default {default_model["id"]}'
+                )
+                return default_model['id']
+            else:
+                raise Exception(
+                    f'Scoring model not found or you do not have access to it. Available databases: '
+                    f'{list(scoring_model_name_id_map.keys())}'
+                )
         if len(scoring_model_ids) > 1:
             raise Exception(
-                f'Scoring model name "{scoring_model}" is not unique. Use database id instead.'
+                f'Scoring model name "{scoring_model}" is not unique. Use scoring model id instead.'
             )
 
         return scoring_model_ids[0]
@@ -1862,7 +1871,6 @@ class SMInstance(object):
         ppm: Optional[float] = None,
         num_isotopic_peaks: Optional[int] = None,
         decoy_sample_size: Optional[int] = None,
-        analysis_version: Optional[int] = None,
         scoring_model: Optional[int] = None,
         input_path: Optional[str] = None,
         description: Optional[str] = None,
@@ -1891,7 +1899,6 @@ class SMInstance(object):
         :param num_isotopic_peaks: Number of isotopic peaks to search for (default 4)
         :param decoy_sample_size: Number of implausible adducts to use for generating the decoy
             search database (default 20)
-        :param analysis_version:
         :param scoring_model:
         :param input_path: To clone an existing dataset, specify input_path using the value of the
             existing dataset's "s3dir".
@@ -1958,7 +1965,6 @@ class SMInstance(object):
                 'ppm': ppm,
                 'numPeaks': num_isotopic_peaks,
                 'decoySampleSize': decoy_sample_size,
-                'analysisVersion': analysis_version,
                 'scoringModelId': scoring_model_id,
                 'submitterId': current_user_id,
                 'groupId': primary_group_id,
@@ -1989,7 +1995,6 @@ class SMInstance(object):
         ppm: Optional[float] = None,
         num_isotopic_peaks: Optional[int] = None,
         decoy_sample_size: Optional[int] = None,
-        analysis_version: Optional[int] = None,
         scoring_model: Optional[int] = None,
         reprocess: Optional[bool] = None,
         force: bool = False,
@@ -2021,7 +2026,6 @@ class SMInstance(object):
         :param num_isotopic_peaks: Number of isotopic peaks to search for (default 4)
         :param decoy_sample_size: Number of implausible adducts to use for generating the decoy
             search database (default 20)
-        :param analysis_version:
         :param scoring_model:
         :param reprocess:
             None (default): Reprocess if needed
@@ -2058,8 +2062,6 @@ class SMInstance(object):
             input_field['numPeaks'] = num_isotopic_peaks
         if decoy_sample_size is not None:
             input_field['decoySampleSize'] = decoy_sample_size
-        if analysis_version is not None:
-            input_field['analysisVersion'] = analysis_version
         if scoring_model is not None:
             input_field['scoringModelId'] = self._gqclient.map_scoring_model_to_id(scoring_model)
 

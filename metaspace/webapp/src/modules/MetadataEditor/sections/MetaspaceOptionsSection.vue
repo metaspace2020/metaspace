@@ -239,7 +239,6 @@ export default defineComponent({
     const onScoringModelChange = (val: any) => {
       const scoringModel: any = analysisVersionOptions.value.find((m) => m.value === val)
       emit('change', { field: 'scoringModelId', val: scoringModel.value })
-      emit('change', { field: 'modelType', val: scoringModel.type })
     }
 
     const onDbRemoval = (val: any) => {

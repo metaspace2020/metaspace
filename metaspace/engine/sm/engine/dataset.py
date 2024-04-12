@@ -237,7 +237,6 @@ def _get_isotope_generation_from_metadata(metadata):
 # pylint: disable=too-many-arguments
 def generate_ds_config(
     metadata,
-    analysis_version=None,
     moldb_ids=None,
     adducts=None,
     ppm=None,
@@ -248,27 +247,20 @@ def generate_ds_config(
     chem_mods=None,
     compute_unused_metrics=None,
     scoring_model_id=None,
-    model_type=None,
 ) -> DSConfig:
     # The kwarg names should match FLAT_DS_CONFIG_KEYS
 
-    # 1 - original, 2 - v2 (discontinued), 3 - ML (catboost or other != original)
-    # analysis_version kept for compatibility with old datasets and client
-    scoring_model = None  # original MSM backwards compatibility
-    if scoring_model_id and model_type != 'original':
+    model_type = 'original'
+    if scoring_model_id:
         scoring_model = find_by_id(scoring_model_id)
         model_type = scoring_model.type
 
-    if not model_type:
-        analysis_version = analysis_version or 1
-    else:
-        analysis_version = 1 if model_type == 'original' else 3
     iso_params = _get_isotope_generation_from_metadata(metadata)
     default_adducts, charge, isocalc_sigma, instrument = iso_params
 
     return {
         'database_ids': moldb_ids,
-        'analysis_version': analysis_version,
+        'analysis_version': 3 if model_type != 'original' else 1,
         'isotope_generation': {
             'adducts': adducts or default_adducts,
             'charge': charge,
@@ -281,9 +273,6 @@ def generate_ds_config(
         'fdr': {
             'decoy_sample_size': decoy_sample_size or 20,
             'scoring_model_id': scoring_model_id,
-            'scoring_model': scoring_model.name if scoring_model else None,
-            'scoring_model_version': scoring_model.version if scoring_model else None,
-            'model_type': scoring_model.type if scoring_model and analysis_version != 1 else None,
         },
         'image_generation': {
             'ppm': ppm or 3,
@@ -307,7 +296,6 @@ def update_ds_config(old_config, metadata, **kwargs):
     fdr = old_config.get('fdr', {})
     image_generation = old_config.get('image_generation', {})
     old_vals = {
-        'analysis_version': old_config.get('analysis_version'),
         'moldb_ids': old_config.get('database_ids'),
         'adducts': isotope_generation.get('adducts'),
         'n_peaks': isotope_generation.get('n_peaks'),
@@ -318,7 +306,6 @@ def update_ds_config(old_config, metadata, **kwargs):
         'min_px': image_generation.get('min_px'),
         'compute_unused_metrics': image_generation.get('compute_unused_metrics'),
         'scoring_model_id': fdr.get('scoring_model_id'),
-        'model_type': fdr.get('model_type'),
     }
 
     for k, v in old_vals.items():

@@ -115,19 +115,6 @@ class ScoringModel:
         }
 
 
-def find_original() -> ScoringModel:
-    # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
-    # pylint: disable=import-outside-toplevel  # circular import
-    from sm.engine.db import DB
-
-    data = DB().select_one_with_fields(
-        "SELECT id, name, version, type FROM scoring_model WHERE type = 'original'",
-    )
-    if not data:
-        raise SMError('Original MSM scoringModel not found')
-    return ScoringModel(**data)
-
-
 def find_by_name_version(name: str, version: str) -> ScoringModel:
     # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
     # pylint: disable=import-outside-toplevel  # circular import
@@ -223,6 +210,37 @@ def load_scoring_model(name: Optional[str], version: Optional[str] = None) -> Sc
     )
     assert row, f'Scoring model {name} {version} not found'
     type_, params, id_ = row
+
+    if type_ == 'catboost':
+        bucket, key = split_s3_path(params['s3_path'])
+        with TemporaryDirectory() as tmpdir:
+            model_file = Path(tmpdir) / 'model.cbm'
+            with model_file.open('wb') as f:
+                f.write(get_s3_client().get_object(Bucket=bucket, Key=key)['Body'].read())
+            model = CatBoost()
+            model.load_model(str(model_file), 'cbm')
+
+        return CatBoostScoringModel(name, model, params, id_, name, version)
+    elif type_ == 'original':
+        return MsmScoringModel()
+    else:
+        raise ValueError(f'Unsupported scoring model type: {type_}')
+
+
+def load_scoring_model_by_id(id_: Optional[int] = None) -> ScoringModel:
+    # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
+    # pylint: disable=import-outside-toplevel  # circular import
+    from sm.engine.db import DB
+
+    if id_ is None:
+        return MsmScoringModel()
+
+    row = DB().select_one(
+        "SELECT name, version, type, params, id FROM scoring_model WHERE id = %s",
+        (id_,),
+    )
+    assert row, f'Scoring model {id_} not found'
+    name, version, type_, params, id_ = row
 
     if type_ == 'catboost':
         bucket, key = split_s3_path(params['s3_path'])

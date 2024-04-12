@@ -9,7 +9,8 @@ import pytest
 from catboost import CatBoost, Pool
 
 from sm.engine.annotation.scoring_model import (
-    load_scoring_model,
+    load_scoring_model_by_id,
+    find_by_name_version,
     upload_catboost_scoring_model,
     save_scoring_model_to_db,
 )
@@ -46,13 +47,11 @@ def s3_catboost_scoring_model(test_db):
     params = upload_catboost_scoring_model(model, BUCKET_NAME, name, False, dummy_X)
     save_scoring_model_to_db(name=name, type_='catboost', version=version, params=params)
 
-    return {'name': name, 'version': version}
+    return find_by_name_version(name, version)
 
 
 def test_catboost_scoring_model(s3_catboost_scoring_model):
-    scoring_model = load_scoring_model(
-        s3_catboost_scoring_model['name'], s3_catboost_scoring_model['version']
-    )
+    scoring_model = load_scoring_model_by_id(s3_catboost_scoring_model.id)
 
     metrics_df = pd.DataFrame(
         {

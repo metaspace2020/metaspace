@@ -42,38 +42,17 @@ def import_model(
 
 
 def main():
-    # First parse to check model_type
-    pre_parser = argparse.ArgumentParser(add_help=False)
-    pre_parser.add_argument(
-        '--model_type', default='catboost', help='Model type: catboost or original'
-    )
-    pre_args, remaining_argv = pre_parser.parse_known_args()
-
-    # Main parser
     parser = argparse.ArgumentParser(description='Upload and import a .cbm CatBoost scoring model')
     parser.add_argument('name', type=str, help='Name')
     parser.add_argument('version', type=str, help='Version')
-
-    # Make model and bucket optional if model_type is original
-    if pre_args.model_type == 'original':
-        parser.add_argument(
-            'model',
-            type=str,
-            nargs='?',
-            default=None,
-            help='Path to a CBM model file. Optional for original models.',
-        )
-        parser.add_argument(
-            'bucket',
-            type=str,
-            nargs='?',
-            default=None,
-            help='S3 or MinIO bucket to upload to. Optional for original models.',
-        )
-    else:
-        parser.add_argument('model', type=str, help='Path to a CBM model file.')
-        parser.add_argument('bucket', type=str, help='S3 or MinIO bucket to upload to')
-
+    parser.add_argument('model_type', type=str, help='Model type: catboost or original')
+    parser.add_argument('--model', type=str, default=None, help='Model type: catboost or original')
+    parser.add_argument(
+        '--bucket',
+        type=str,
+        default=None,
+        help='S3 or MinIO bucket to upload to. Optional for original models.',
+    )
     parser.add_argument(
         '--overwrite', action='store_true', help='Overwrite scoring model if it already exists'
     )
@@ -84,13 +63,12 @@ def main():
         '--config', dest='config_path', default='conf/config.json', help='SM config path'
     )
 
-    args = parser.parse_args(remaining_argv)  # Use the remaining arguments for the main parse
+    args = parser.parse_args()
 
     with GlobalInit(args.config_path):
-        print(f"Model Type1: {pre_args.model_type}")
-        print(f"Name: {args.name}, Version: {args.version}")
-        if pre_args.model_type == 'catboost':
+        if args.model_type == 'catboost':
             assert Path(args.model).exists(), f'File "{args.model}" not found'
+            assert args.bucket is not None, f'Bucket "{args.bucket}" not found'
 
         import_model(
             name=args.name,
@@ -99,7 +77,7 @@ def main():
             public=args.public,
             overwrite=args.overwrite,
             version=args.version,
-            model_type=pre_args.model_type,
+            model_type=args.model_type,
         )
 
 
