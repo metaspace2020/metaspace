@@ -87,6 +87,7 @@
               <popup-anchor feature-key="v2" placement="top" :show-until="new Date('2022-09-01')" class="block">
                 <form-field
                   type="select"
+                  required
                   name="Analysis version"
                   :help="AnalysisVersionHelp"
                   :value="value?.scoringModelId"

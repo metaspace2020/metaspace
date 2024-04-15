@@ -18,22 +18,24 @@
           <el-checkbox class="cb-annotating" label="ANNOTATING"> Processing {{ count('ANNOTATING') }} </el-checkbox>
           <el-checkbox class="cb-queued" label="QUEUED"> Queued {{ count('QUEUED') }} </el-checkbox>
           <el-checkbox label="FINISHED"> Finished {{ count('FINISHED') }} </el-checkbox>
-          <el-checkbox v-if="canSeeFailed" class="cb-failed" label="FAILED"> Failed {{ count('FAILED') }} </el-checkbox>
+          <el-checkbox v-show="canSeeFailed" class="cb-failed" label="FAILED">
+            Failed {{ count('FAILED') }}
+          </el-checkbox>
         </el-checkbox-group>
         <div style="flex-grow: 1" />
         <div class="flex flex-row items-center justify-between flex-1">
           <sort-dropdown class="p-2" size="default" @sort="handleSortChange" />
 
-          <el-button v-if="nonEmpty" :disabled="state.isExporting" @click="startExport"> Export to CSV </el-button>
+          <el-button v-show="nonEmpty" :disabled="state.isExporting" @click="startExport"> Export to CSV </el-button>
         </div>
       </el-form>
     </div>
 
-    <dataset-list v-loading="loading" :datasets="datasets" allow-double-column />
+    <dataset-list v-loading="loading" :datasets="datasets" :key="datasets.length" allow-double-column />
 
     <div class="mb-8 p-2 flex flex-row justify-end">
       <el-pagination
-        v-if="totalCount > 0"
+        v-show="totalCount > 0"
         class="flex"
         hide-on-single-page
         :total="totalCount"
@@ -131,7 +133,7 @@ export default defineComponent({
     })
 
     const { result: currentUserResult, loading: currentUserLoading } = useQuery(currentUserRoleWithGroupQuery, null, {
-      fetchPolicy: 'cache-first',
+      fetchPolicy: 'network-only',
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
 
@@ -357,7 +359,7 @@ export default defineComponent({
 
       while (state.isExporting && offset < totalCount) {
         const variables = { ...v, offset, limit: state.csvChunkSize }
-        const resp = await apolloClient.query({ query: metadataExportQuery, variables })
+        const resp = await apolloClient.query({ query: metadataExportQuery, variables, fetchPolicy: 'no-cache' })
 
         offset += state.csvChunkSize
         writeCsvChunk(resp.data.datasets)

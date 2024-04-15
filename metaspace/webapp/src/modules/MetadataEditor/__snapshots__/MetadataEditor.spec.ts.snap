@@ -767,8 +767,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                 </div>
               </div>
             </div>
-            <div class=\\"el-col el-col-8 is-guttered\\" style=\\"padding-right: 4px; padding-left: 4px;\\"><span class=\\"block\\"><div class=\\"el-form-item el-form-item--default asterisk-left md-form-field\\" role=\\"group\\" aria-labelledby=\\"el-id-replaced\\"><div id=\\"el-id-replaced\\" class=\\"el-form-item__label\\"><span class=\\"field-label flex items-center\\"><span>Analysis version</span>
-              <!--v-if-->
+            <div class=\\"el-col el-col-8 is-guttered\\" style=\\"padding-right: 4px; padding-left: 4px;\\"><span class=\\"block\\"><div class=\\"el-form-item el-form-item--default asterisk-left md-form-field\\" role=\\"group\\" aria-labelledby=\\"el-id-replaced\\"><div id=\\"el-id-replaced\\" class=\\"el-form-item__label\\"><span class=\\"field-label flex items-center\\"><span>Analysis version</span><span style=\\"color: red;\\">*</span>
               <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\">
                 <div data-v-85d866d8=\\"\\" class=\\"analysis-version-help\\"> When comparing data between multiple datasets, it is recommended to process all datasets with the same analysis version. Otherwise, select the latest version for best results. <h4 class=\\"my-1\\" data-v-85d866d8=\\"\\">Changes:</h4>
                   <h5 class=\\"ml-2 my-2\\" data-v-85d866d8=\\"\\">Animal_v2.2023-12-14:</h5>
@@ -788,7 +787,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
               </div></span>
             </div>
             <div class=\\"el-form-item__content\\">
-              <div class=\\"mock-el-select\\" required=\\"false\\">
+              <div class=\\"mock-el-select\\" required=\\"true\\">
                 <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" disabled=\\"false\\" value=\\"0\\"></div>
                 <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" disabled=\\"false\\" value=\\"0\\"></div>
               </div>

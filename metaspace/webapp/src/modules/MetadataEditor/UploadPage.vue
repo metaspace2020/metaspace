@@ -149,7 +149,7 @@ export default defineComponent({
     })
 
     const { result: currentUserResult, onResult } = useQuery(currentUserIdQuery, null, {
-      fetchPolicy: 'cache-first',
+      fetchPolicy: 'network-only',
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
 

@@ -294,7 +294,6 @@ export default defineComponent({
       const selectedDbs = dataset.databases || []
 
       // backward compatibility
-      console.log('metaspaceOptions.scoringModelId', metaspaceOptions.scoringModelId)
       if (!metaspaceOptions.scoringModelId) {
         metaspaceOptions.scoringModelId = (scoringModels.find((m) => m.type === 'original') || {}).id
       } else {

@@ -36,9 +36,7 @@ exports[`DatasetTable > should match snapshot 1`] = `
   <div>
     <form class=\\"el-form el-form--default el-form--label-right el-form--inline\\" id=\\"dataset-list-header\\">
       <div class=\\"el-radio-group p-2 flex flex-row items-center\\" role=\\"radiogroup\\" aria-label=\\"radio-group\\" id=\\"el-id-replaced\\"><label class=\\"el-radio-button is-active\\"><input class=\\"el-radio-button__original-radio\\" type=\\"radio\\" name=\\"el-id-replaced\\" value=\\"List\\"><span class=\\"el-radio-button__inner\\">List</span></label><label class=\\"el-radio-button\\"><input class=\\"el-radio-button__original-radio\\" type=\\"radio\\" name=\\"el-id-replaced\\" value=\\"Summary\\"><span class=\\"el-radio-button__inner\\">Summary</span></label></div>
-      <div class=\\"el-checkbox-group p-2 dataset-status-checkboxes\\" role=\\"group\\" aria-label=\\"checkbox-group\\" id=\\"el-id-replaced\\"><label class=\\"el-checkbox is-checked cb-annotating\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"ANNOTATING\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Processing (0)<!--v-if--></span></label><label class=\\"el-checkbox is-checked cb-queued\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"QUEUED\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Queued (0)<!--v-if--></span></label><label class=\\"el-checkbox is-checked\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"FINISHED\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Finished (0)<!--v-if--></span></label>
-        <!--v-if-->
-      </div>
+      <div class=\\"el-checkbox-group p-2 dataset-status-checkboxes\\" role=\\"group\\" aria-label=\\"checkbox-group\\" id=\\"el-id-replaced\\"><label class=\\"el-checkbox is-checked cb-annotating\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"ANNOTATING\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Processing (0)<!--v-if--></span></label><label class=\\"el-checkbox is-checked cb-queued\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"QUEUED\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Queued (0)<!--v-if--></span></label><label class=\\"el-checkbox is-checked\\"><span class=\\"el-checkbox__input is-checked\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"FINISHED\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Finished (0)<!--v-if--></span></label><label class=\\"el-checkbox cb-failed\\" style=\\"display: none;\\"><span class=\\"el-checkbox__input\\"><input class=\\"el-checkbox__original\\" type=\\"checkbox\\" value=\\"FAILED\\"><span class=\\"el-checkbox__inner\\"></span></span><span class=\\"el-checkbox__label\\"> Failed (0)<!--v-if--></span></label></div>
       <div style=\\"flex-grow: 1;\\"></div>
       <div class=\\"flex flex-row items-center justify-between flex-1\\">
         <div class=\\"flex flex-row sort-dp-container p-2\\">
@@ -563,7 +561,7 @@ exports[`DatasetTable > should match snapshot 1`] = `
     <!--v-if-->
   </div>
   <div class=\\"mb-8 p-2 flex flex-row justify-end\\">
-    <!--v-if-->
+    <!---->
   </div>
 </div>"
 `;

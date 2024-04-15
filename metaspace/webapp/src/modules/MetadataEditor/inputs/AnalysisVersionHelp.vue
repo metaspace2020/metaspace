@@ -35,7 +35,8 @@ export default {
 
 <style scoped>
 .analysis-version-help {
-  max-width: 400px;
+  max-width: 430px;
+  word-break: normal;
 }
 .model-input {
   background: #eeeeee;

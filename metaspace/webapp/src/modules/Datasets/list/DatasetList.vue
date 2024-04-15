@@ -10,7 +10,7 @@
       @filterUpdate="(filter) => $emit('filterUpdate', filter)"
       @datasetMutated="$emit('datasetMutated')"
     />
-    <div v-if="datasets == null || datasets.length === 0" class="datasets-list-empty">No datasets found</div>
+    <div v-if="datasets?.length === 0" class="datasets-list-empty">No datasets found</div>
   </div>
 </template>
 
