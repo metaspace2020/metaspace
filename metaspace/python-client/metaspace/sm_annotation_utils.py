@@ -724,11 +724,11 @@ class GraphQLClient(object):
             scoring_model_name_id_map[(sm['name'], sm['version'])].append(sm['id'])
 
         if isinstance(scoring_model, tuple):
-            db_name, db_version = scoring_model
+            model_name, model_version = scoring_model
         else:
-            db_name, db_version = self.map_scoring_model_name_to_name_version(scoring_model)
+            model_name, model_version = self.map_scoring_model_name_to_name_version(scoring_model)
 
-        scoring_model_ids = scoring_model_name_id_map.get((db_name, db_version), [])
+        scoring_model_ids = scoring_model_name_id_map.get((model_name, model_version), [])
         if len(scoring_model_ids) == 0:
             default_model = next(
                 (obj for obj in scoring_model_docs if obj['type'] == 'original'), None
