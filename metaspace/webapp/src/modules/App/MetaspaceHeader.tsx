@@ -1,25 +1,25 @@
-import { defineComponent, computed, defineAsyncComponent, onMounted, onBeforeUnmount, reactive } from 'vue'
+import { computed, defineAsyncComponent, defineComponent, onBeforeUnmount, onMounted, reactive, Transition } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import { RouterLink } from 'vue-router'
 import { useStore } from 'vuex'
 
 import NotificationIcon from '../../components/NotificationIcon.vue'
-import { HeaderLink, HeaderButton } from './HeaderLink'
+import { HeaderButton, HeaderLink } from './HeaderLink'
 
 import { UserGroupRoleOptions as UGRO } from '../../api/group'
 import { ProjectRoleOptions as UPRO } from '../../api/project'
 import { userProfileQuery } from '../../api/user'
 import { signOut } from '../../api/auth'
 import { refreshLoginStatus } from '../../api/graphqlClient'
-import { Transition } from 'vue'
 
-import { ElRow, ElAlert } from '../../lib/element-plus'
+import { ElAlert, ElRow } from '../../lib/element-plus'
 
 import './MetaspaceHeader.scss'
 
 // Image imports
 import MetaspaceLogo from '../../assets/images/logo.png'
+import { encodeParams } from '../Filters'
 
 // SVG imports
 const MenuOpen = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-menu.svg'))
@@ -104,14 +104,13 @@ export default defineComponent({
     }
 
     const href = (path: string) => {
-      // const lastParams = store.state.lastUsedFilters[path]
-      // let f = lastParams ? lastParams.filter : {}
-      // f = Object.assign({}, f, store.getters.filter)
-      const link = {
+      const lastParams = store.state.lastUsedFilters[path]
+      let f = lastParams ? lastParams.filter : {}
+      f = Object.assign({}, f, store.getters.filter)
+      return {
         path,
-        // query: encodeParams(f, path, store.state.filterLists),
+        query: encodeParams(f, path, store.state.filterLists),
       }
-      return link
     }
 
     const uploadHref = () => {
