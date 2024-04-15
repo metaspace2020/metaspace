@@ -170,7 +170,7 @@ exports[`DatasetOverviewPage > should match snapshot when dataset exist 1`] = `
           <h3 class=\\"m-0 my-2\\">Annotation settings</h3>
           <ul class=\\"list-none p-0 m-0 max-h-40 overflow-y-auto\\">
             <li><b>m/z tolerance (ppm):</b> 3</li>
-            <li><b>Analysis version:</b> Original MSM</li>
+            <li><b>Analysis version:</b> METASPACE-ML</li>
             <!---->
             <!---->
             <!---->

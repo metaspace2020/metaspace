@@ -260,7 +260,9 @@ export default defineComponent({
         const localDsOwner = store.getters.filter.datasetOwner
           ? store.getters.filter.datasetOwner
           : getLocalStorage('datasetOwner') || null
-        store.commit('updateFilter', { ...store.getters.filter, datasetOwner: localDsOwner })
+        if (localDsOwner) {
+          store.commit('updateFilter', { ...store.getters.filter, datasetOwner: localDsOwner })
+        }
       }
     }
 

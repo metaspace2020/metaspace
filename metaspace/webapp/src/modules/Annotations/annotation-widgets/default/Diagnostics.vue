@@ -3,7 +3,7 @@
     <el-alert
       v-if="hasIsobars"
       :closable="false"
-      :type="hasWarnIsobar ? 'warning' : 'info'"
+      :type="(hasWarnIsobar ? 'warning' : 'info') as any"
       show-icon
       class="isobar-alert"
     >
@@ -114,7 +114,7 @@ export default defineComponent({
     loading: ElLoading.directive,
   },
   props: {
-    annotation: Object,
+    annotation: Object as any,
     colormap: String,
     imageLoaderSettings: Object,
   },
@@ -122,7 +122,7 @@ export default defineComponent({
     const comparisonLoading = ref(0)
     const comparisonIonFormula = ref(null)
     const isobarAnnotationsIonFormula = ref(null)
-    const currentAnnotation = computed(() => props.annotation)
+    const currentAnnotation: any = computed(() => props.annotation)
     const peakChartData = computed(() => {
       return diagnosticsData.value != null ? safeJsonParse(diagnosticsData.value.peakChartData) : null
     })
@@ -178,8 +178,8 @@ export default defineComponent({
 
       const groups = ionFormulas.map((ionFormula) => {
         const isReference = ionFormula === currentAnnotation.value.ionFormula
-        const isobars = isobarsByIonFormula[ionFormula]
-        const annotations = annotationsByIonFormula[ionFormula]
+        const isobars: any = isobarsByIonFormula[ionFormula]
+        const annotations: any = annotationsByIonFormula[ionFormula]
         const massShiftText = isReference ? '' : renderMassShift(currentAnnotation.value.mz, annotations[0].mz) + ': '
         const isomersText = annotations.length < 2 ? '' : ' (isomers)'
         return {
@@ -188,8 +188,9 @@ export default defineComponent({
           annotations,
           peakNs: isReference ? [] : isobars[0].peakNs,
           peakChartData: isReference ? peakChartData.value : safeJsonParse(annotations[0].peakChartData),
-          label: massShiftText + annotations.map((ann) => renderMolFormula(ann.ion)).join(', ') + isomersText,
-          labelHtml: massShiftText + annotations.map((ann) => renderMolFormulaHtml(ann.ion)).join(', ') + isomersText,
+          label: massShiftText + annotations.map((ann: any) => renderMolFormula(ann.ion)).join(', ') + isomersText,
+          labelHtml:
+            massShiftText + annotations.map((ann: any) => renderMolFormulaHtml(ann.ion)).join(', ') + isomersText,
         }
       })
 
@@ -228,14 +229,14 @@ export default defineComponent({
     const comparisonDiagnosticsData = computed(() => comparisonDiagnosticsDataResult.value?.annotation)
 
     const nonReferenceGroups = computed(() => {
-      return annotationGroups.value.filter((g) => !g.isReference)
+      return annotationGroups.value.filter((g) => !g.isReference) as any
     })
 
     const hasWarnIsobar = computed(() => {
       return currentAnnotation.value.isobars.some((isobar: any) => isobar.shouldWarn)
     })
 
-    const comparisonPeakNs: any = computed(() => {
+    const comparisonPeakNs = computed(() => {
       return comparisonAnnotationGroup.value && comparisonAnnotationGroup.value.peakNs.map(([a, b]) => [b, a])
     })
 
