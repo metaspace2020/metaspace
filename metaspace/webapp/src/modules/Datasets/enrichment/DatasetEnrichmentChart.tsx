@@ -1,4 +1,4 @@
-import {computed, defineComponent, nextTick, onMounted, onUnmounted, reactive, ref, watch} from 'vue'
+import { computed, defineComponent, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 // @ts-ignore
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'

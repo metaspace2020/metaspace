@@ -47,6 +47,7 @@ exports[`MetadataEditor > should be able to load an existing dataset > metaspace
   "isPublic": false,
   "name": "",
   "neutralLosses": [],
+  "ontologyDbIds": [],
   "performEnrichment": false,
   "ppm": 3,
   "principalInvestigator": {
@@ -821,7 +822,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
       <!--v-if-->
     </div>
     <div class=\\"el-row\\" style=\\"margin-left: -4px; margin-right: -4px;\\">
-      <div class=\\"el-col el-col-8 is-guttered\\" style=\\"padding-right: 4px; padding-left: 4px;\\"><span class=\\"block\\"><div class=\\"el-form-item el-form-item--default asterisk-left md-form-field\\"><label id=\\"el-id-replaced\\" for=\\"el-id-replaced\\" class=\\"el-form-item__label\\"><span class=\\"field-label flex items-center\\"><span>LION enrichment</span>
+      <div class=\\"el-col el-col-8 is-guttered\\" style=\\"padding-right: 4px; padding-left: 4px;\\"><span class=\\"block\\"><div class=\\"el-form-item el-form-item--default asterisk-left md-form-field\\" role=\\"group\\" aria-labelledby=\\"el-id-replaced\\"><div id=\\"el-id-replaced\\" class=\\"el-form-item__label\\"><span class=\\"field-label flex items-center\\"><span>Enrichment ontology</span>
         <!--v-if-->
         <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\">
           <div data-v-6a8e2572=\\"\\" class=\\"analysis-version-help\\"> When performing <a data-v-6a8e2572=\\"\\" target=\\"_blank\\" href=\\"http://www.lipidontology.com/\\">LION</a> enrichment, a lipid enrichment analysis will be performed based on LION. <h5 data-v-6a8e2572=\\"\\">Available databases:</h5>
@@ -832,16 +833,17 @@ exports[`MetadataEditor > should match snapshot 1`] = `
               <li data-v-6a8e2572=\\"\\">SwissLipids - 2018-02-02.</li>
             </ul>
           </div>
-        </div></span></label>
-        <div class=\\"el-form-item__content\\">
-          <div class=\\"el-switch el-switch--default\\" required=\\"false\\"><input class=\\"el-switch__input\\" type=\\"checkbox\\" role=\\"switch\\" aria-checked=\\"false\\" aria-disabled=\\"false\\" name=\\"\\" true-value=\\"true\\" false-value=\\"false\\" id=\\"el-id-replaced\\">
-            <!--v-if--><span class=\\"el-switch__core\\"><!--v-if--><div class=\\"el-switch__action\\"><!--v-if--></div></span>
-            <!--v-if-->
-          </div>
+        </div></span>
+      </div>
+      <div class=\\"el-form-item__content\\">
+        <div class=\\"mock-el-select\\" model-value=\\"\\" required=\\"false\\" multiple=\\"\\">
+          <div class=\\"mock-el-option\\" label=\\"\\" value=\\"0\\"></div>
+          <div class=\\"mock-el-option\\" label=\\"\\" value=\\"0\\"></div>
         </div>
-      </div></span>
-    </div>
+      </div>
+    </div></span>
   </div>
+</div>
 </div>
 </div>
 </form>

@@ -21,11 +21,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import TagFilter from './TagFilter.vue'
-import { useStore } from 'vuex'
 
 export default defineComponent({
   name: 'OntologyFilter',
@@ -37,8 +36,6 @@ export default defineComponent({
     fixedOptions: Array as any,
   },
   setup(props, { emit }) {
-    const store = useStore()
-
     const ENRICHMENT_DATABASES_QUERY = gql`
       query EnrichmentDatabases {
         allEnrichmentDatabases {
@@ -50,14 +47,6 @@ export default defineComponent({
 
     const { result: molClassesResult } = useQuery(ENRICHMENT_DATABASES_QUERY)
     const molClasses: any = computed(() => molClassesResult.value?.allEnrichmentDatabases)
-
-    const filterLists = () => {
-      return (
-        store.state.filterLists || {
-          adducts: [],
-        }
-      )
-    }
 
     const formatValue = () => {
       const ontology = parseInt(props.value, 10)

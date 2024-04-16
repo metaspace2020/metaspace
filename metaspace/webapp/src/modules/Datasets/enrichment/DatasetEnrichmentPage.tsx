@@ -50,7 +50,7 @@ export default defineComponent({
     const datasetId = computed(() => route.params.dataset_id)
 
     const snapshotId = computed(() => route.query.viewId)
-    const { result: settingsResult, onResult: handleSettingsLoad } = useQuery(
+    const { onResult: handleSettingsLoad } = useQuery(
       fetchImageViewerSnapshot,
       {
         id: snapshotId,

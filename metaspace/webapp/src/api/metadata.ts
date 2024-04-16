@@ -190,7 +190,10 @@ export const metadataOptionsQuery = gql`
         shortName
       }
     }
-    ontologyDbs: allEnrichmentDatabases{value: id, label: name}
+    ontologyDbs: allEnrichmentDatabases {
+      value: id
+      label: name
+    }
     adducts: adductSuggestions {
       adduct
       name

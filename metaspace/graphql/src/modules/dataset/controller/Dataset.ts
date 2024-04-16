@@ -153,8 +153,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async ontologyDatabases(ds, _, ctx): Promise<EnrichmentDB[]> {
     return await ctx.entityManager.createQueryBuilder(EnrichmentDB, 'ontDb')
-        .where('ontDb.id = ANY(:ontDbIds)', { ontDbIds: ds._source.ds_config?.ontology_db_ids })
-        .getMany()
+      .where('ontDb.id = ANY(:ontDbIds)', { ontDbIds: ds._source.ds_config?.ontology_db_ids })
+      .getMany()
   },
 
   async databases(ds, _, ctx): Promise<MolecularDB[]> {
