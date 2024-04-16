@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from itertools import repeat
 from typing import List, Tuple, TypedDict, Optional, cast
 
@@ -72,21 +72,20 @@ def get_formulas_df(
     ion_formula = set()
     target_ion_formulas = set()
     targeted_ion_formulas = set()
-    with ThreadPoolExecutor() as executor:
-        for moldb, (fdr, formula_map_df) in zip(
-            moldbs, executor.map(_get_db_fdr_and_formulas, repeat(ds_config), dbs_iter)
-        ):
-            db_datas.append(
-                {
-                    **moldb,  # type: ignore # https://github.com/python/mypy/issues/4122
-                    'fdr': fdr,
-                    'formula_map_df': formula_map_df,
-                }
-            )
-            ion_formula.update(formula_map_df.ion_formula)
-            target_ion_formulas.update(formula_map_df.ion_formula[formula_map_df.target])
-            if moldb.get('targeted'):
-                targeted_ion_formulas.update(formula_map_df.ion_formula)
+
+    for moldb, db_iter in zip(moldbs, dbs_iter):
+        fdr, formula_map_df = _get_db_fdr_and_formulas(ds_config, db_iter)
+        db_datas.append(
+            {
+                **moldb,  # type: ignore # https://github.com/python/mypy/issues/4122
+                'fdr': fdr,
+                'formula_map_df': formula_map_df,
+            }
+        )
+        ion_formula.update(formula_map_df.ion_formula)
+        target_ion_formulas.update(formula_map_df.ion_formula[formula_map_df.target])
+        if moldb.get('targeted'):
+            targeted_ion_formulas.update(formula_map_df.ion_formula)
 
     formulas_df = pd.DataFrame({'ion_formula': sorted(ion_formula)}).rename_axis(index='formula_i')
     formulas_df['target'] = formulas_df.ion_formula.isin(target_ion_formulas)
