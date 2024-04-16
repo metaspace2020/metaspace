@@ -795,7 +795,7 @@ export default defineComponent({
     }
 
     const { result: currentUserResult } = useQuery(currentUserRoleWithGroupQuery, null, {
-      fetchPolicy: 'cache-first',
+      fetchPolicy: 'network-only',
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
 

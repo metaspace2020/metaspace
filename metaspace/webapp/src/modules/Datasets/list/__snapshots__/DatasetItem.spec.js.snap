@@ -131,7 +131,7 @@ exports[`DatasetItem > should match snapshot 1`] = `
                       <path fill=\\"currentColor\\" d=\\"M384 192v640l384-320.064z\\"></path>
                     </svg></div>
                   <!--v-if-->
-                  <!--v-if--><span class=\\"el-tree-node__label\\">Analysis version: Original MSM</span>
+                  <!--v-if--><span class=\\"el-tree-node__label\\">Analysis version: METASPACE-ML</span>
                 </div>
                 <!---->
               </div>

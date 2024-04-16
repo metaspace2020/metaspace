@@ -16,11 +16,11 @@ export const DatasetConfigViewer = defineComponent({
   },
   setup(props: DatasetConfigViewerProps) {
     return () => {
-      const { image_generation: imageGeneration, fdr: fdrSettings } = props.data || {}
+      const { image_generation: imageGeneration, analysis_version: analysisVersion } = props.data || {}
       const { pixel_count: pixelCount } = props.acqGeo || {}
       const { ibd_size: ibdSize, imzml_size: imzmlSize } = props.fileSize || {}
       // eslint-disable-next-line camelcase
-      const scoringModel = fdrSettings?.scoring_model ? 'METASPACE-ML' : 'Original MSM'
+      const scoringModel = analysisVersion !== 1 ? 'METASPACE-ML' : 'Original MSM'
 
       return (
         <div class="flex flex-wrap relative -m-3">

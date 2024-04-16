@@ -3,6 +3,7 @@ Step 3: Download the results, train and evaluate the model, and upload it to S3.
 
 The S3 part requires you to have AWS configured in your engine/conf/config.json file.
 It may also be necessary to call GlobalInit() before upload to ensure the config is loaded
+and to change MODEL_NAME and MODEL_VERSION to match the desired model name and version.
 """
 
 import logging
@@ -230,7 +231,9 @@ export_df.to_csv('local/ml_scoring/prod_impl.csv', index=False)
 
 #%% Save model to S3
 
-MODEL_NAME = 'v3_default'
+# set MODEL_NAME and MODEL_VERSION to match the desired model name and version
+MODEL_NAME = ''
+MODEL_VERSION = ''
 # Remove unwanted fields from metrics_df for saving training data
 train_data = metrics_df[[*features, 'target', 'group_name', 'formula', 'modifier', 'decoy_i']]
 params = upload_catboost_scoring_model(
@@ -244,4 +247,4 @@ print(params)
 
 # Update DB with model (if running a local METASPACE environment)
 GlobalInit()
-save_scoring_model_to_db(MODEL_NAME, 'catboost', params)
+save_scoring_model_to_db(name=MODEL_NAME, type_='catboost', version=MODEL_VERSION, params=params)

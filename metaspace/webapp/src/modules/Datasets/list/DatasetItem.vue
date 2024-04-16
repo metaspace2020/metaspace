@@ -96,6 +96,7 @@ export default defineComponent({
   padding: 10px 0 10px 10px;
   margin: 0px;
   flex: none;
+  @apply select-none;
 }
 
 .dataset-item {

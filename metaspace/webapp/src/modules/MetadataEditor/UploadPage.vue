@@ -149,13 +149,13 @@ export default defineComponent({
     })
 
     const { result: currentUserResult, onResult } = useQuery(currentUserIdQuery, null, {
-      fetchPolicy: 'cache-first',
+      fetchPolicy: 'network-only',
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
 
     onResult((result) => {
       const { data } = result
-      if (data?.currentUser == null && store.state.currentTour == null) {
+      if (data && data.currentUser == null && store.state.currentTour == null) {
         store.commit('account/showDialog', {
           dialog: 'signIn',
           dialogCloseRedirect: '/',

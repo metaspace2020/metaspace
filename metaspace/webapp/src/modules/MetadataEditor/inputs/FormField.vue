@@ -68,6 +68,7 @@
         :key="optionsAreStrings ? opt : opt.value"
         :value="optionsAreStrings ? opt : opt.value"
         :label="optionsAreStrings ? opt : opt.label"
+        :disabled="typeof opt.disabled === 'boolean' ? opt.disabled : false"
       />
     </el-select>
 

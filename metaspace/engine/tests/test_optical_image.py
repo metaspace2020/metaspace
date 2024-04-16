@@ -49,8 +49,6 @@ def test_add_optical_image(image_storage_mock, fill_db, metadata, ds_config):
     zoom_levels = [1, 2, 3]
     test_image_bytes = create_image_bytes()
     raw_img_id = image_storage.post_image(image_storage.RAW, ds.id, test_image_bytes)
-    print(raw_img_id)
-    print(ds.id)
 
     add_optical_image(
         db, ds.id, raw_img_id, [[1, 0, 0], [0, 1, 0], [0, 0, 1]], zoom_levels=zoom_levels

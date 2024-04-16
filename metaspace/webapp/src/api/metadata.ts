@@ -196,6 +196,9 @@ export const metadataOptionsQuery = gql`
     scoringModels {
       id
       name
+      type
+      version
+      isArchived
     }
   }
 `

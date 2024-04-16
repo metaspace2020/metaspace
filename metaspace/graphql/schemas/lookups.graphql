@@ -29,6 +29,8 @@ type ScoringModel {
   id: Int!
   name: String!
   type: String!
+  version: String!
+  isArchived: Boolean
 }
 
 type Query {

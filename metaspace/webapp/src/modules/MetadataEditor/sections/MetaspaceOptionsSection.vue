@@ -87,12 +87,13 @@
               <popup-anchor feature-key="v2" placement="top" :show-until="new Date('2022-09-01')" class="block">
                 <form-field
                   type="select"
+                  required
                   name="Analysis version"
                   :help="AnalysisVersionHelp"
-                  :value="value?.analysisVersion"
+                  :value="value?.scoringModelId"
                   :error="error && error.analysisVersion"
                   :options="analysisVersionOptions"
-                  @input="(val) => onInput('analysisVersion', val)"
+                  @input="(val) => onScoringModelChange(val)"
                 />
               </popup-anchor>
             </el-col>
@@ -201,16 +202,24 @@ export default defineComponent({
     const neutralLossOptions = ref([])
     const chemModOptions = ref([])
 
-    const analysisVersionOptions = computed(() => [
-      { value: 1, label: 'v1 (Original MSM)' },
-      { value: 3, label: 'v2.20230517 (METASPACE-ML)' },
-    ])
+    const analysisVersionOptions = computed(() => {
+      let options = (props.scoringModels ?? []).map((m: any) => ({
+        value: m.id,
+        disabled: m.isArchived,
+        type: m.type,
+        label: `${m.isArchived ? '(ARCHIVED) ' : ''}${m.type === 'original' ? m.version : m.name + '_' + m.version} (${
+          m.type === 'original' ? 'Original MSM' : 'METASPACE-ML'
+        })`,
+      }))
+      options = options.filter((o) =>
+        props.isNewDataset
+          ? !o.disabled
+          : !(!props.isNewDataset && !(!o.disabled || (o.disabled && o.value === props.value?.scoringModelId)))
+      )
 
-    const scoringModelOptions = computed(() => [
-      // FormField doesn't support nulls - using empty string instead, but it needs to be converted to/from null
-      { value: '', label: 'None' },
-      ...(props.scoringModels ?? []).map((m: any) => ({ value: m.name, label: m.name })),
-    ])
+      return options
+    })
+
     const databaseOptions = computed(() => {
       return props.databasesByGroup.map(({ shortName, molecularDatabases }) => ({
         label: shortName,
@@ -228,6 +237,11 @@ export default defineComponent({
       emit('change', { field, val })
     }
 
+    const onScoringModelChange = (val: any) => {
+      const scoringModel: any = analysisVersionOptions.value.find((m) => m.value === val)
+      emit('change', { field: 'scoringModelId', val: scoringModel.value })
+    }
+
     const onDbRemoval = (val: any) => {
       if (props.defaultDb && val === props.defaultDb.id) {
         ElMessage({
@@ -243,9 +257,9 @@ export default defineComponent({
 
     return {
       analysisVersionOptions,
-      scoringModelOptions,
       databaseOptions,
       onInput,
+      onScoringModelChange,
       onDbRemoval,
       normalizeNeutralLoss,
       normalizeChemMod,
