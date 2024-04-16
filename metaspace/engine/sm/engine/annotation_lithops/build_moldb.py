@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import logging
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from itertools import repeat
 from typing import List, Tuple, TypedDict, Optional, cast
 
 import numpy as np
