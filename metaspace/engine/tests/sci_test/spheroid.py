@@ -16,6 +16,7 @@ from sm.engine import image_storage, molecular_db
 from sm.engine.annotation.scoring_model import (
     upload_catboost_scoring_model,
     save_scoring_model_to_db,
+    find_by_name_version,
 )
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
@@ -219,7 +220,12 @@ class SciTester:
 
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
         ds.config['analysis_version'] = self.analysis_version
-        ds.config['fdr']['scoring_model'] = 'v3_default' if self.analysis_version > 1 else None
+
+        scoring_model_id = None
+        if self.analysis_version > 1:
+            scoring_model = find_by_name_version(name='Animal', version='v2.2023-12-14')
+            scoring_model_id = scoring_model.id
+        ds.config['fdr']['scoring_model_id'] = scoring_model_id
         ds.config['database_ids'] = [moldb_id]
 
         self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
