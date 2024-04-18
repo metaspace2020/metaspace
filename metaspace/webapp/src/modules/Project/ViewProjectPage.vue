@@ -109,7 +109,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch, onMounted, computed, inject } from 'vue'
+import { defineComponent, ref, watch, onMounted, computed, inject, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElButton, ElAlert, ElTabs, ElTabPane, ElLoading } from '../../lib/element-plus'
@@ -241,6 +241,8 @@ export default defineComponent({
       }
     })
 
+    const queryOptions = reactive({ enabled: false })
+
     const {
       result: dataResult,
       onResult: onDataResult,
@@ -261,13 +263,11 @@ export default defineComponent({
 
         ${datasetDetailItemFragment}
       `,
-      {
+      computed(() => ({
         maxVisibleDatasets: maxVisibleDatasets.value,
         projectId: projectId.value,
-      },
-      {
-        enabled: computed(() => projectId.value != null),
-      }
+      })),
+      queryOptions
     )
     onDataResult(() => {
       setTimeout(() => {
@@ -278,7 +278,7 @@ export default defineComponent({
 
     const { onResult } = useSubscription(datasetDeletedQuery)
 
-    onResult(({ data }) => {
+    onResult(({ data }: any) => {
       if (data && data.datasetDeleted) {
         removeDatasetFromAllDatasetsQuery('data', data.datasetDeleted.id)
       }
@@ -407,6 +407,7 @@ export default defineComponent({
 
     onMounted(() => {
       initializeTab()
+      queryOptions.enabled = true
     })
 
     const refetch = async () => {
