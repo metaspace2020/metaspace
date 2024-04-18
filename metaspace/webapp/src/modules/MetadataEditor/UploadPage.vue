@@ -247,7 +247,7 @@ export default defineComponent({
     const fetchStorageKey = async () => {
       state.status = 'LOADING'
       try {
-        const response = await fetch(`${uploadEndpoint.value}/s3/uuid`)
+        const response = await fetch(`${uploadEndpoint.value}/s3/uuid`, { cache: 'no-cache' })
         if (response.status < 200 || response.status >= 300) {
           const responseBody = await response.text()
           reportError(new Error(`Unexpected server response getting upload UUID: ${response.status} ${responseBody}`))
