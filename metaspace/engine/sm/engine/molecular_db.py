@@ -133,6 +133,7 @@ def _import_molecules(moldb, moldb_df, targeted_threshold):
     DB().alter('UPDATE molecular_db SET targeted = %s WHERE id = %s', params=(targeted, moldb.id))
 
 
+# pylint: disable=too-many-arguments
 def create(
     name: str = None,
     version: str = None,
@@ -140,6 +141,7 @@ def create(
     group_id: str = None,
     user_id: str = None,
     is_public: bool = True,
+    is_visible: bool = False,
     description: str = None,
     full_name: str = None,
     link: str = None,
@@ -148,9 +150,9 @@ def create(
     with transaction_context():
         moldb_insert = (
             'INSERT INTO molecular_db '
-            '   (name, version, created_dt, group_id, user_id, is_public, '
+            '   (name, version, created_dt, group_id, user_id, is_public, is_visible, '
             '   description, full_name, link, citation, input_path ) '
-            'values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'
+            'values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id'
         )
         # pylint: disable=unbalanced-tuple-unpacking
         (moldb_id,) = DB().insert_return(
@@ -163,6 +165,7 @@ def create(
                     group_id,
                     user_id,
                     is_public,
+                    is_visible,
                     description,
                     full_name,
                     link,
