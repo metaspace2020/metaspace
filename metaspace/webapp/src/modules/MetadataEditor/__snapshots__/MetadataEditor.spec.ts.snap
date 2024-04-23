@@ -836,10 +836,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
         </div></span>
       </div>
       <div class=\\"el-form-item__content\\">
-        <div class=\\"mock-el-select\\" model-value=\\"\\" required=\\"false\\" multiple=\\"\\">
-          <div class=\\"mock-el-option\\" label=\\"\\" value=\\"0\\"></div>
-          <div class=\\"mock-el-option\\" label=\\"\\" value=\\"0\\"></div>
-        </div>
+        <div class=\\"mock-el-tree-select select-none\\" model-value=\\"\\" node-key=\\"id\\" data=\\"[object Object]\\" show-checkbox=\\"\\" check-on-click-node=\\"false\\" expand-on-click-node=\\"false\\" multiple=\\"true\\"></div>
       </div>
     </div></span>
   </div>

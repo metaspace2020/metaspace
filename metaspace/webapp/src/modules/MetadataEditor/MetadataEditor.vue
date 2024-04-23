@@ -269,6 +269,58 @@ export default defineComponent({
       state.metaspaceOptions.adducts = newAdducts
     }
 
+    const groupEnrichmentOptions = (data) => {
+      // Helper function to capitalize the first letter of a string
+      const capitalize = (str) => {
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+      }
+
+      // Helper function to create a nested structure
+      const createNestedStructure = (entries, keys) => {
+        if (keys.length === 0) {
+          return entries.map((entry) => ({
+            id: entry.value,
+            label: capitalize(entry.label),
+            children: [],
+          }))
+        }
+
+        const key = keys[0]
+        const validEntries = entries.filter((entry) => entry[key] != null)
+        const invalidEntries = entries.filter((entry) => entry[key] == null) // Entries without the current key
+
+        let groups = validEntries.reduce((acc, item) => {
+          const keyValue = item[key]
+          const groupKey = (item.molType ? `${item.molType}-` : '') + key + '-' + keyValue.toLowerCase()
+          if (!acc[groupKey]) {
+            acc[groupKey] = {
+              id: groupKey,
+              label: capitalize(keyValue),
+              children: [],
+            }
+          }
+          acc[groupKey].children.push(item)
+          return acc
+        }, {})
+
+        // Directly include entries that cannot be grouped by the current key
+        invalidEntries.forEach((item) => {
+          groups[item.value] = {
+            id: item.value,
+            label: capitalize(item.label),
+            children: [], // No children as these are leaf nodes with no further categorization
+          }
+        })
+
+        return Object.values(groups).map((group) => ({
+          ...group,
+          children: createNestedStructure(group.children, keys.slice(1)),
+        }))
+      }
+
+      return createNestedStructure(data, ['molType', 'category', 'subCategory'])
+    }
+
     const loadForm = async (dataset, options, mdType) => {
       const loadedMetadata = dataset.metadata
       const metaspaceOptions = defaults({}, omitBy(dataset.metaspaceOptions, isNil), defaultMetaspaceOptions)
@@ -286,7 +338,9 @@ export default defineComponent({
       state.scoringModels = scoringModels
       state.defaultDb = molecularDatabases.find((db) => db.default) || {}
       state.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
-      state.ontologyDbs = ontologyDbs
+      state.ontologyDbs = groupEnrichmentOptions(ontologyDbs)
+      console.log('before ', ontologyDbs)
+      console.log('state.ontologyDbs ', state.ontologyDbs)
       state.schema = deriveFullSchema(metadataSchemas[mdType])
 
       // TODO remove the additional information from the schema itself at some point

@@ -1,6 +1,9 @@
 type EnrichmentDb {
     id: Int!
     name: String!
+    molType: String
+    category: String
+    subCategory: String
 }
 
 type EnrichmentTerm {

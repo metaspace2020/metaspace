@@ -116,6 +116,21 @@
       </slot>
     </el-select>
 
+    <el-tree-select
+      v-else-if="type === 'selectMultiTree'"
+      class="select-none"
+      :model-value="value"
+      node-key="id"
+      :data="options"
+      show-checkbox
+      :check-on-click-node="false"
+      :expand-on-click-node="false"
+      :multiple="true"
+      @node-click="onTreeSelect"
+      @check="onTreeSelect"
+      @remove-tag="onRemoveTreeTag"
+    />
+
     <table-input
       v-else-if="type === 'table'"
       :value="value"
@@ -175,13 +190,14 @@ import PersonInput from './PersonInput.vue'
 import DetectorResolvingPowerInput from './DetectorResolvingPowerInput.vue'
 import PixelSizeInput from './PixelSizeInput.vue'
 import CustomNumberInput from './CustomNumberInput.vue'
-import { uniq } from 'lodash-es'
+import { difference, intersection, uniq } from 'lodash-es'
 import { QuestionFilled } from '@element-plus/icons-vue'
 import {
   ElIcon,
   ElAutocomplete,
   ElPopover,
   ElSelect,
+  ElTreeSelect,
   ElFormItem,
   ElInput,
   ElOption,
@@ -205,6 +221,7 @@ export default defineComponent({
     ElFormItem,
     ElInput,
     ElOption,
+    ElTreeSelect,
   },
   props: {
     type: { type: String as PropType<string>, required: true },
@@ -252,6 +269,41 @@ export default defineComponent({
       }
     }
 
+    const collectDeepestValues = (node: any) => {
+      let values = []
+
+      // Helper function to recursively find the deepest values
+      const recurse = (currentNode: any) => {
+        // If the node has children, recurse further
+        if (currentNode.children && currentNode.children.length > 0) {
+          currentNode.children.forEach(recurse)
+        } else {
+          // No children, so this is a deepest node
+          values.push(currentNode.id)
+        }
+      }
+
+      // Start the recursion from the initial node
+      recurse(node)
+      return values
+    }
+
+    const onTreeSelect = (val: any) => {
+      const values = collectDeepestValues(val)
+      const currentSelection = values.length > 0 ? values : [val.id]
+      const isSelected = intersection(props.value.slice(0), currentSelection).length > 0
+
+      if (isSelected) {
+        emit('input', difference(props.value.slice(0), currentSelection))
+      } else {
+        emit('input', uniq(currentSelection.concat(props.value.slice(0))))
+      }
+    }
+
+    const onRemoveTreeTag = (val: any) => {
+      emit('input', difference(props.value.slice(0), [val]))
+    }
+
     const onRemoveTag = (val: any) => {
       emit('remove-tag', val)
     }
@@ -282,6 +334,8 @@ export default defineComponent({
       optionsAreStrings,
       createOptionsAreStrings,
       onSelect,
+      onTreeSelect,
+      onRemoveTreeTag,
       onInput,
       onRemoveTag,
       onCreateItemInput,

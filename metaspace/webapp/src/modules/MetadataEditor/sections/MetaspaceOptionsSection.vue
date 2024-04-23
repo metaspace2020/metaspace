@@ -141,7 +141,7 @@
             <el-col :span="8">
               <popup-anchor feature-key="v2" placement="top" :show-until="new Date('2022-09-01')" class="block">
                 <form-field
-                  type="selectMulti"
+                  type="selectMultiTree"
                   name="Enrichment ontology"
                   :help="EnrichmentHelp"
                   :value="value?.ontologyDbIds"
