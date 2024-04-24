@@ -10,7 +10,13 @@ import { useApolloClient } from '@vue/apollo-composable'
  *                   a copy.
  */
 const updateApolloCache = (queryName, update) => {
-  const vm: any = getCurrentInstance().proxy
+  const instance = getCurrentInstance()
+  if (!instance || !instance.proxy) {
+    console.error('Cache instance not called within the context.')
+    return
+  }
+
+  const vm: any = instance.proxy
   const apolloClient = useApolloClient().client
   const { query, variables } = vm.$apollo.queries[queryName].options
 

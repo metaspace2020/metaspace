@@ -260,7 +260,7 @@ export default defineComponent({
             type: 'TIC Image',
           },
         ]
-        return ticAnnotation.concat(annotation)
+        return ticAnnotation.concat(annotationsResult.value?.allAnnotations)
       }
       return annotationsResult.value?.allAnnotations
     })

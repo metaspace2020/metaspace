@@ -223,8 +223,8 @@ export default defineComponent({
       }))
     })
 
-    const metadataType = computed(() => store.getters.filter.metadataType)
-    const dataType = computed(() => state.value.Data_Type)
+    const metadataType = computed(() => store.getters.filter?.metadataType)
+    const dataType = computed(() => state.value?.Data_Type)
 
     const getDefaultMetadataValue = (metadataType) => {
       if (!metadataSchemas || !metadataSchemas[metadataType]) {
@@ -628,7 +628,8 @@ export default defineComponent({
         })
         state.templateOptions = resp.data.allDatasets
       } catch (e) {
-        reportError(e)
+        // pass
+        // reportError(e)
       } finally {
         state.loadingTemplates = false
       }
