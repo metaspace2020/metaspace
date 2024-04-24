@@ -76,8 +76,8 @@ def run_enrichment(results_dfs: Dict[int, pd.DataFrame]) -> Dict[int, pd.DataFra
 
         logger.info(
             (
-                f'Database ID: {moldb_id}, molecules = {len(molecules)}'
-                f'unique molecules = {len(mol_hash)}, metabolites = {len(metabolites)}'
+                f'Database ID: {moldb_id}, molecules = {len(molecules)}, '
+                f'unique molecules = {len(mol_hash)}, metabolites = {len(metabolites)}, '
                 f'time = {round(time.time() - start_time, 1)} s'
             )
         )
