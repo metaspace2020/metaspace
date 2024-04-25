@@ -75,6 +75,6 @@ export default defineComponent({
 }
 
 .sm-menu-items {
-  max-height: 480px;
+  max-height: 400px;
 }
 </style>

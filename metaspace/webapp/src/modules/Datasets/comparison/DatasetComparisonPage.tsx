@@ -207,7 +207,7 @@ export default defineComponent({
     const aggregateAnnotations = () => {
       const annotationsByIon = groupBy(state.rawAnnotations, 'ion')
       const processedAnnotations = Object.keys(annotationsByIon).map((ion: string) => {
-        const annotations: any = annotationsByIon[ion]
+        const annotations: any = uniqBy(annotationsByIon[ion], 'dataset.id')
         const dbId = annotations[0].databaseDetails.id
         const datasetIds = uniq(annotations.map((annotation: any) => annotation.dataset.id))
 
