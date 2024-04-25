@@ -34,13 +34,16 @@ class EnrichmentDB:
 
 def create(
     name: str = None,
+    mol_type: str = None,
+    category: str = None,
+    sub_category: str = None,
 ) -> EnrichmentDB:
     with transaction_context():
-        enrichment_db_insert = 'INSERT INTO enrichment_db (name) values (%s) RETURNING id'
+        enrichment_db_insert = 'INSERT INTO enrichment_db (name, mol_type, category, sub_category) values (%s,%s,%s,%s) RETURNING id'
         # pylint: disable=unbalanced-tuple-unpacking
         (enrichment_db_id,) = DB().insert_return(
             enrichment_db_insert,
-            rows=[(name,)],
+            rows=[(name,mol_type,category,sub_category,)],
         )
         enrichment_db = find_by_id(enrichment_db_id)
         return enrichment_db
@@ -92,14 +95,14 @@ def find_by_ids(ids: Iterable[int]) -> List[EnrichmentDB]:
     return [EnrichmentDB(**row) for row in data]
 
 
-def find_by_name(name: str) -> EnrichmentDB:
+def find_by_name_and_type(name: str, mol_type: str) -> EnrichmentDB:
     """Find enrichment database by name."""
 
     data = DB().select_one_with_fields(
-        'SELECT id, name FROM enrichment_db WHERE name = %s',
-        params=(name,),
+        'SELECT id, name, mol_type, category, sub_category FROM enrichment_db WHERE name = %s and mol_type = %s',
+        params=(name, mol_type,),
     )
 
     if not data:
-        raise SMError(f'EnrichmentDB not found: {name}')
+        raise SMError(f'EnrichmentDB not found: {name} {mol_type}')
     return EnrichmentDB(**data)

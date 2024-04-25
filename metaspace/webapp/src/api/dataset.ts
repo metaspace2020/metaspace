@@ -120,6 +120,9 @@ export const datasetDetailItemFragment = gql`
     ontologyDatabases {
       id
       name
+      molType
+      category
+      subCategory
     }
     databases {
       id

@@ -3,13 +3,13 @@
     <template v-slot:edit>
       <el-select
         :model-value="valueIfKnown"
-        placeholder="Select ontology"
+        placeholder="Select molecular type"
         filterable
         :teleported="false"
         remote
-        @change="onInput"
+        @change="onCategoInput"
       >
-        <el-option v-for="item in fixedOptions || molClasses" :key="item.id" :label="item.name" :value="item.id" />
+        <el-option v-for="item in molTypeOptions" :key="item" :label="item" :value="item" />
       </el-select>
     </template>
     <template v-slot:show>
@@ -25,6 +25,7 @@ import { defineComponent, computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import TagFilter from './TagFilter.vue'
+import {uniq} from "lodash-es";
 
 export default defineComponent({
   name: 'OntologyFilter',
@@ -46,11 +47,19 @@ export default defineComponent({
     `
 
     const { result: molClassesResult } = useQuery(ENRICHMENT_DATABASES_QUERY)
-    const molClasses: any = computed(() => molClassesResult.value?.allEnrichmentDatabases)
+    const rawOptions = computed(() => props.fixedOptions || molClassesResult.value?.allEnrichmentDatabases)
+
+    const molTypeOptions = computed(() => {
+      return uniq((rawOptions.value || []).map((item: any) => item.molType))
+    })
+
+    const categoryOptions = computed(() => {
+      return uniq((rawOptions.value || []).map((item: any) => item.category))
+    })
 
     const formatValue = () => {
       const ontology = parseInt(props.value, 10)
-      const molClassesAux = props.fixedOptions || molClasses.value || []
+      const molClassesAux = rawOptions.value || []
       const classItem = molClassesAux.find((item: any) => item.id === ontology)
       if (classItem) {
         return classItem.name
@@ -73,11 +82,12 @@ export default defineComponent({
     }
 
     return {
-      molClasses,
       formatValue,
       onInput,
       destroy,
       valueIfKnown,
+      rawOptions,
+      molTypeOptions,
     }
   },
 })

@@ -203,6 +203,7 @@ import {
   ElOption,
   ElSwitch,
 } from '../../../lib/element-plus'
+import {collectDeepestValues} from "../../../lib/util";
 
 export default defineComponent({
   name: 'FormField',
@@ -269,24 +270,6 @@ export default defineComponent({
       }
     }
 
-    const collectDeepestValues = (node: any) => {
-      let values = []
-
-      // Helper function to recursively find the deepest values
-      const recurse = (currentNode: any) => {
-        // If the node has children, recurse further
-        if (currentNode.children && currentNode.children.length > 0) {
-          currentNode.children.forEach(recurse)
-        } else {
-          // No children, so this is a deepest node
-          values.push(currentNode.id)
-        }
-      }
-
-      // Start the recursion from the initial node
-      recurse(node)
-      return values
-    }
 
     const onTreeSelect = (val: any) => {
       const values = collectDeepestValues(val)

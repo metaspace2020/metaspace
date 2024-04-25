@@ -191,8 +191,8 @@ export const metadataOptionsQuery = gql`
       }
     }
     ontologyDbs: allEnrichmentDatabases {
-      value: id
-      label: name
+      id
+      name
       molType
       category
       subCategory

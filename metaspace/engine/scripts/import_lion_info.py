@@ -38,6 +38,15 @@ def main():
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', help='SM config path'
     )
+    parser.add_argument(
+        '--mol-type', type=str, help='Enrichment database molecule type', default='lipid'
+    )
+    parser.add_argument(
+        '--category', type=str, help='Enrichment database category'
+    )
+    parser.add_argument(
+        '--sub-category', type=str, help='Enrichment database sub category'
+    )
     parser.set_defaults(sep=',', confirmed=False)
     args = parser.parse_args()
     with GlobalInit(args.config_path):
@@ -50,9 +59,9 @@ def main():
 
         # check if enrichment db exists, if so it uses it, otherwise a new one is created
         try:
-            db_df = enrichment_db.find_by_name(args.name)
+            db_df = enrichment_db.find_by_name_and_type(args.name, args.mol_type)
         except SMError:
-            db_df = enrichment_db.create(args.name)
+            db_df = enrichment_db.create(args.name, args.mol_type, args.category, args.sub_category)
 
         # populate enrichment terms
         try:
