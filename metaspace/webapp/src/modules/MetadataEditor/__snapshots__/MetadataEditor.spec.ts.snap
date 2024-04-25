@@ -87,7 +87,8 @@ exports[`MetadataEditor > should match snapshot 1`] = `
         })
         state.templateOptions = resp.data.allDatasets
       } catch (e) {
-        reportError(e)
+        // pass
+        // reportError(e)
       } finally {
         state.loadingTemplates = false
       }

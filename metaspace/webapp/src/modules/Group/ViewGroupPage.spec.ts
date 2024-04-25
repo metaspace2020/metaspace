@@ -152,7 +152,6 @@ describe('ViewGroupPage', () => {
           stubs: stubsWithMembersList,
         },
       })
-
       await flushPromises()
       await nextTick()
 
@@ -179,10 +178,7 @@ describe('ViewGroupPage', () => {
           stubs: stubsWithMembersList,
         },
       })
-
-      await flushPromises()
       await nextTick()
-
       expect(wrapper.html()).toMatchSnapshot()
     })
 

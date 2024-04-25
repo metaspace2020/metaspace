@@ -1434,7 +1434,7 @@ export default defineComponent({
                   handleDataSrcChange(text)
                 }}
               >
-                <ElRadioButton label="EMBL" size="default" />
+                <ElRadioButton label="EMBL" />
                 {(allowedSources.value?.includes('ALL') || allSources.value?.includes('ALLEMBL')) && (
                   <ElRadioButton label="ALL" />
                 )}

@@ -109,7 +109,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch, onMounted, computed, inject, reactive } from 'vue'
+import { defineComponent, ref, watch, onMounted, computed, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElButton, ElAlert, ElTabs, ElTabPane, ElLoading } from '../../lib/element-plus'
@@ -241,8 +241,6 @@ export default defineComponent({
       }
     })
 
-    const queryOptions = reactive({ enabled: false })
-
     const {
       result: dataResult,
       onResult: onDataResult,
@@ -267,7 +265,9 @@ export default defineComponent({
         maxVisibleDatasets: maxVisibleDatasets.value,
         projectId: projectId.value,
       })),
-      queryOptions
+      computed(() => ({
+        enabled: !!projectId.value,
+      }))
     )
     onDataResult(() => {
       setTimeout(() => {
@@ -407,7 +407,6 @@ export default defineComponent({
 
     onMounted(() => {
       initializeTab()
-      queryOptions.enabled = true
     })
 
     const refetch = async () => {

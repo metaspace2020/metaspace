@@ -73,4 +73,8 @@ export default defineComponent({
   outline: 1px solid theme('colors.primary');
   outline-offset: -1px;
 }
+
+.sm-menu-items {
+  max-height: 480px;
+}
 </style>

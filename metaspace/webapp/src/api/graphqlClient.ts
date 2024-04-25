@@ -100,6 +100,7 @@ const wsClient: any = new SubscriptionClient(wsGraphqlUrl, {
     return {}
   },
 })
+wsClient.maxListeners = 30
 wsClient.use([
   {
     // eslint-disable-next-line @typescript-eslint/ban-types

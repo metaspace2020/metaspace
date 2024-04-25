@@ -1120,7 +1120,7 @@ export default defineComponent({
       let targetElement = event?.target
       let pages = 1
       const regex = /.+(\d+) pages/
-      const match = regex.exec(targetElement.attributes['aria-label'].textContent)
+      const match = regex.exec(targetElement?.attributes['aria-label']?.textContent)
 
       if (match && match[1]) {
         pages = parseInt(match[1], 10)

@@ -233,7 +233,7 @@ export default defineComponent({
         mzLow: state.mzLow,
         mzHigh: state.mzHigh,
       }),
-      imageQueryOptions
+      imageQueryOptions as any
     )
 
     const spectrumQueryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
@@ -241,9 +241,9 @@ export default defineComponent({
     const { result: spectrumResult, onResult: onSpectrumResult } = useQuery<any>(
       getSpectrum,
       () => ({ datasetId: datasetId.value, x: state.x, y: state.y }),
-      spectrumQueryOptions
+      spectrumQueryOptions as any
     )
-    const pixelSpectrum = computed(() => spectrumResult.value.pixelSpectrum)
+    const pixelSpectrum = computed(() => spectrumResult.value?.pixelSpectrum)
 
     const buildChartData = (ints: any, mzs: any) => {
       let maxX: number = 0
@@ -291,7 +291,7 @@ export default defineComponent({
           const mz: number = annotation.mz
           const mzLow: number = mz - mz * state.mzmShiftFilter! * 1e-6 // ppm
           const mzHigh: number = mz + mz * state.mzmShiftFilter! * 1e-6 // ppm
-          const inRangeIdx: number = mzs.findIndex((value: number) => {
+          const inRangeIdx: number = (mzs || []).findIndex((value: number) => {
             return value >= mzLow && value <= mzHigh
           })
           if (inRangeIdx !== -1) {
@@ -486,7 +486,7 @@ export default defineComponent({
       return blob
     }
 
-    onImageResult(async (result) => {
+    onImageResult(async (result: any) => {
       if (result?.data?.browserImage?.image) {
         const blob = b64toBlob(result?.data?.browserImage?.image.replace('data:image/png;base64,', ''), 'image/png')
         state.ionImageUrl = URL.createObjectURL(blob)
@@ -544,7 +544,7 @@ export default defineComponent({
       result: annotationsResult,
       loading: annotationsLoading,
       onResult: onAnnotationsResult,
-    } = useQuery<any>(annotationListQuery, queryVars, queryOptions)
+    } = useQuery<any>(annotationListQuery, queryVars, queryOptions as any)
     const dataset = computed(() => (datasetResult.value != null ? datasetResult.value.dataset : null))
     const annotations = computed(() =>
       annotationsResult.value != null ? annotationsResult.value.allAnnotations : null
@@ -624,7 +624,7 @@ export default defineComponent({
 
     onAnnotationsResult(async (result) => {
       if (dataset.value && result) {
-        const mz = result.data.allAnnotations[0].mz
+        const mz = result.data?.allAnnotations[0]?.mz
         const config = safeJsonParse(dataset.value?.configJson)
         const ppm = get(config, 'image_generation.ppm') || 3
 

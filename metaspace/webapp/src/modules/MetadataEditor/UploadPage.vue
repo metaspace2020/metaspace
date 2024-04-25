@@ -295,7 +295,11 @@ export default defineComponent({
 
       if (state.uploads.imzml === true && state.uploads.ibd === true) {
         const [file] = result.successful
-        const { uploadURL } = file
+        const uploadURL = file?.uploadURL
+
+        if (!uploadURL) {
+          reportError(result) // TODO: Remove after read logs in production
+        }
 
         state.inputPath = createInputPath(uploadURL, uuid.value)
         state.status = 'UPLOADED'
