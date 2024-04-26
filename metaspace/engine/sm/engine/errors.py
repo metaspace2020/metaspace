@@ -23,8 +23,8 @@ class ImzMLError(SMError):
 
 
 class IbdError(SMError):
-    def __init__(self, spectra_idx):
-        super().__init__('Incomplete .ibd file')
+    def __init__(self):
+        super().__init__('Incomplete ibd file')
 
 
 class DSError(SMError):

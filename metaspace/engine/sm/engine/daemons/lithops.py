@@ -123,7 +123,9 @@ class LithopsDaemon:
 
             self._manager.set_ds_status(ds, DatasetStatus.FINISHED)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.FINISHED)
-        except ImzMLError or IbdError:
+        except ImzMLError:
+            raise
+        except IbdError:
             raise
         except LithopsStalledException:
             raise
