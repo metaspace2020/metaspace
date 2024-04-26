@@ -17,18 +17,27 @@ class EnrichmentDB:
         self,
         id: int,
         name: str,
+        mol_type: str,
+        category: str,
+        sub_category: str,
     ):
         self.id = id
         self.name = name
+        self.mol_type = mol_type
+        self.category = category
+        self.sub_category = sub_category
         self._sm_config = SMConfig.get_conf()
 
     def __repr__(self):
-        return '<{}>'.format(self.name)
+        return '<{}:{}>'.format(self.name, self.mol_type)
 
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
+            'mol_type': self.mol_type,
+            'category': self.category,
+            'sub_category': self.sub_category,
         }
 
 
@@ -39,11 +48,21 @@ def create(
     sub_category: str = None,
 ) -> EnrichmentDB:
     with transaction_context():
-        enrichment_db_insert = 'INSERT INTO enrichment_db (name, mol_type, category, sub_category) values (%s,%s,%s,%s) RETURNING id'
+        enrichment_db_insert = (
+            'INSERT INTO enrichment_db (name, mol_type, category, sub_category) values '
+            ' (%s,%s,%s,%s) RETURNING id'
+        )
         # pylint: disable=unbalanced-tuple-unpacking
         (enrichment_db_id,) = DB().insert_return(
             enrichment_db_insert,
-            rows=[(name,mol_type,category,sub_category,)],
+            rows=[
+                (
+                    name,
+                    mol_type,
+                    category,
+                    sub_category,
+                )
+            ],
         )
         enrichment_db = find_by_id(enrichment_db_id)
         return enrichment_db
@@ -99,8 +118,12 @@ def find_by_name_and_type(name: str, mol_type: str) -> EnrichmentDB:
     """Find enrichment database by name."""
 
     data = DB().select_one_with_fields(
-        'SELECT id, name, mol_type, category, sub_category FROM enrichment_db WHERE name = %s and mol_type = %s',
-        params=(name, mol_type,),
+        'SELECT id, name, mol_type, category, sub_category FROM enrichment_db WHERE '
+        ' name = %s and mol_type = %s',
+        params=(
+            name,
+            mol_type,
+        ),
     )
 
     if not data:

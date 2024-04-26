@@ -11,9 +11,13 @@ export class EnrichmentCategories1713791377884 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "public"."enrichment_db" DROP CONSTRAINT "enrichment_db_name_key"`);
         await queryRunner.query(`ALTER TABLE "public"."enrichment_db" ADD CONSTRAINT "enrichment_db_name_type_key" UNIQUE ("name", "mol_type")`);
 
+
+        await queryRunner.query(`CREATE INDEX "idx_enrichment_db_molecule_mapping_enrichment_term_id" ON "public"."enrichment_db_molecule_mapping" ("enrichment_term_id")`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`DROP INDEX "public"."idx_enrichment_db_molecule_mapping_enrichment_term_id"`);
+
         await queryRunner.query(`ALTER TABLE "public"."enrichment_db" DROP CONSTRAINT "enrichment_db_name_type_key"`);
         await queryRunner.query(`ALTER TABLE "public"."enrichment_db" ADD CONSTRAINT "enrichment_db_name_key" UNIQUE ("name")`);
 

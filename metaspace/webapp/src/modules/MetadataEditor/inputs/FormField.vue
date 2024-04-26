@@ -203,7 +203,7 @@ import {
   ElOption,
   ElSwitch,
 } from '../../../lib/element-plus'
-import {collectDeepestValues} from "../../../lib/util";
+import { collectDeepestValues } from '../../../lib/util'
 
 export default defineComponent({
   name: 'FormField',
@@ -269,7 +269,6 @@ export default defineComponent({
         emit('input', val)
       }
     }
-
 
     const onTreeSelect = (val: any) => {
       const values = collectDeepestValues(val)
