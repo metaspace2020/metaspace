@@ -8,7 +8,7 @@ from sm.engine.annotation_lithops.executor import LithopsStalledException
 from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
-from sm.engine.errors import AnnotationError, ImzMLError
+from sm.engine.errors import AnnotationError, ImzMLError, IbdError
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.rest.dataset_manager import DatasetActionPriority
 
@@ -52,6 +52,15 @@ class LithopsDaemon:
         if isinstance(e, ImzMLError):
             if 'email' in msg:
                 self._manager.send_failed_email(msg, e.traceback)
+
+            os.kill(os.getpid(), signal.SIGINT)
+            self._manager.ds_failure_handler(msg, e)
+            return
+
+        # Stop processing in case of problem with ibd file
+        if isinstance(e, IbdError):
+            if 'email' in msg:
+                self._manager.send_failed_email(msg)
 
             os.kill(os.getpid(), signal.SIGINT)
             self._manager.ds_failure_handler(msg, e)
@@ -114,7 +123,7 @@ class LithopsDaemon:
 
             self._manager.set_ds_status(ds, DatasetStatus.FINISHED)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.FINISHED)
-        except ImzMLError:
+        except ImzMLError or IbdError:
             raise
         except LithopsStalledException:
             raise

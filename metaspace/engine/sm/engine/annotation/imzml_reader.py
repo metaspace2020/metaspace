@@ -8,7 +8,7 @@ import numpy as np
 from pyimzml.ImzMLParser import ImzMLParser
 from scipy.sparse import coo_matrix
 
-from sm.engine.errors import ImzMLError
+from sm.engine.errors import ImzMLError, IbdError
 
 from sm.engine.util import find_file_by_ext
 
@@ -184,9 +184,12 @@ class LithopsImzMLReader(ImzMLReader):
             ints = np.frombuffer(int_data[i], dtype=self.imzml_reader.intensityPrecision).copy()
             mz_data[i] = None  # type: ignore # Avoid holding memory longer than necessary
             int_data[i] = None  # type: ignore
-            assert len(mzs) == self.imzml_reader.mzLengths[sp_idx], 'Incomplete .ibd file'
-            assert len(ints) == self.imzml_reader.intensityLengths[sp_idx], 'Incomplete .ibd file'
-            assert len(mzs) == len(ints), f"Spectrum {sp_idx} mz and intensity counts don't match"
+
+            if len(mzs) != len(ints):
+                raise IbdError(f"Spectrum {sp_idx} mz and intensity counts don't match")
+            if len(mzs) != self.imzml_reader.mzLengths[sp_idx] or \
+               len(ints) != self.imzml_reader.intensityLengths[sp_idx]:
+                raise IbdError('Incomplete .ibd file')
 
             # _process_spectrum isn't thread-safe, so only access it in a mutex
             with _process_spectrum_lock:

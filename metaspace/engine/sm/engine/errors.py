@@ -22,6 +22,11 @@ class ImzMLError(SMError):
         self.traceback = traceback
 
 
+class IbdError(SMError):
+    def __init__(self, spectra_idx):
+        super().__init__('Incomplete .ibd file')
+
+
 class DSError(SMError):
     def __init__(self, ds_id, message):
         super().__init__(message)
