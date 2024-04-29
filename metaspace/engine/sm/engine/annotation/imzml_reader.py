@@ -162,10 +162,11 @@ class LithopsImzMLReader(ImzMLReader):
             raise Exception(f"Spectrum {sp_idx} mz and intensity counts don't match")
 
         # Incomplete .ibd file
-        if len(mzs) != self.imzml_reader.mzLengths[sp_idx] or \
-                len(ints) != self.imzml_reader.intensityLengths[sp_idx]:
+        if (
+            len(mzs) != self.imzml_reader.mzLengths[sp_idx]
+            or len(ints) != self.imzml_reader.intensityLengths[sp_idx]
+        ):
             raise Exception('Incomplete .ibd file')
-
 
     def iter_spectra(self, storage: Storage, sp_inds: Sequence[int]):
         # pylint: disable=import-outside-toplevel # avoid pulling Lithops into Spark pipeline
