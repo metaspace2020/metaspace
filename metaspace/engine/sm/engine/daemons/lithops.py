@@ -49,7 +49,7 @@ class LithopsDaemon:
     def _on_failure(self, msg, e):
 
         # Stop processing in case of problem with imzML or ibd file
-        if isinstance(e, ImzMLError) or isinstance(e, IbdError):
+        if isinstance(e, (ImzMLError, IbdError)):
             if 'email' in msg:
                 self._manager.send_failed_email(msg, e.traceback)
 
