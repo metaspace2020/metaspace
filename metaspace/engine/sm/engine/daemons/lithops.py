@@ -8,7 +8,7 @@ from sm.engine.annotation_lithops.executor import LithopsStalledException
 from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
-from sm.engine.errors import AnnotationError, ImzMLError
+from sm.engine.errors import AnnotationError, ImzMLError, IbdError
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.rest.dataset_manager import DatasetActionPriority
 
@@ -48,8 +48,8 @@ class LithopsDaemon:
     # pylint: disable=unused-argument
     def _on_failure(self, msg, e):
 
-        # Stop processing in case of problem with imzML file
-        if isinstance(e, ImzMLError):
+        # Stop processing in case of problem with imzML or ibd file
+        if isinstance(e, (ImzMLError, IbdError)):
             if 'email' in msg:
                 self._manager.send_failed_email(msg, e.traceback)
 
@@ -115,6 +115,8 @@ class LithopsDaemon:
             self._manager.set_ds_status(ds, DatasetStatus.FINISHED)
             self._manager.notify_update(ds.id, msg['action'], DaemonActionStage.FINISHED)
         except ImzMLError:
+            raise
+        except IbdError:
             raise
         except LithopsStalledException:
             raise

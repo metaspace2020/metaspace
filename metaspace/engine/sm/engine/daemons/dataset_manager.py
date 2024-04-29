@@ -231,9 +231,9 @@ class DatasetManager:
         )
         if traceback:
             content += (
-                f'\n\nWe could not successfully read the dataset\'s imzML file. '
+                f'\n\nWe could not successfully read the dataset\'s imzML or ibd file. '
                 f'Please make sure you are using up-to-date software for '
-                f'exporting the dataset to imzML format.\nIf you are a developer, '
+                f'exporting the dataset to imzML/ibd format.\nIf you are a developer, '
                 f'the following stack trace may be useful:\n\n{traceback}'
             )
         content += (
