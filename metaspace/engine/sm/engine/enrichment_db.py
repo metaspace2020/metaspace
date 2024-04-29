@@ -17,9 +17,9 @@ class EnrichmentDB:
         self,
         id: int,
         name: str,
-        mol_type: str,
-        category: str,
-        sub_category: str,
+        mol_type: str = None,
+        category: str = None,
+        sub_category: str = None,
     ):
         self.id = id
         self.name = name

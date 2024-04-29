@@ -41,14 +41,12 @@ def main():
     parser.add_argument(
         '--mol-type', type=str, help='Enrichment database molecule type', default='lipid'
     )
-    parser.add_argument(
-        '--category', type=str, help='Enrichment database category'
-    )
-    parser.add_argument(
-        '--sub-category', type=str, help='Enrichment database sub category'
-    )
+    parser.add_argument('--category', type=str, help='Enrichment database category')
+    parser.add_argument('--sub-category', type=str, help='Enrichment database sub category')
     parser.set_defaults(sep=',', confirmed=False)
     args = parser.parse_args()
+    print('here')
+    print(args)
     with GlobalInit(args.config_path):
         # check if mol db exists
         try:
