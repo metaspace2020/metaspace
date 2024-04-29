@@ -48,19 +48,10 @@ class LithopsDaemon:
     # pylint: disable=unused-argument
     def _on_failure(self, msg, e):
 
-        # Stop processing in case of problem with imzML file
-        if isinstance(e, ImzMLError):
+        # Stop processing in case of problem with imzML or ibd file
+        if isinstance(e, ImzMLError) or isinstance(e, IbdError):
             if 'email' in msg:
                 self._manager.send_failed_email(msg, e.traceback)
-
-            os.kill(os.getpid(), signal.SIGINT)
-            self._manager.ds_failure_handler(msg, e)
-            return
-
-        # Stop processing in case of problem with ibd file
-        if isinstance(e, IbdError):
-            if 'email' in msg:
-                self._manager.send_failed_email(msg)
 
             os.kill(os.getpid(), signal.SIGINT)
             self._manager.ds_failure_handler(msg, e)

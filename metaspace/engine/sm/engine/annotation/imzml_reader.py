@@ -153,6 +153,20 @@ class LithopsImzMLReader(ImzMLReader):
 
         super().__init__(imzml_parser)
 
+    def _check_consistency(self, mzs, ints, sp_idx):
+        """
+        For each spectrum, we check the consistency of the sizes between the mzs and ints array,
+        as well as between the declared size in the imzML file and the actual one in ibd file.
+        """
+        if len(mzs) != len(ints):
+            raise Exception(f"Spectrum {sp_idx} mz and intensity counts don't match")
+
+        # Incomplete .ibd file
+        if len(mzs) != self.imzml_reader.mzLengths[sp_idx] or \
+                len(ints) != self.imzml_reader.intensityLengths[sp_idx]:
+            raise Exception('Incomplete .ibd file')
+
+
     def iter_spectra(self, storage: Storage, sp_inds: Sequence[int]):
         # pylint: disable=import-outside-toplevel # avoid pulling Lithops into Spark pipeline
         from sm.engine.annotation_lithops.io import get_ranges_from_cobject
@@ -185,11 +199,10 @@ class LithopsImzMLReader(ImzMLReader):
             mz_data[i] = None  # type: ignore # Avoid holding memory longer than necessary
             int_data[i] = None  # type: ignore
 
-            if len(mzs) != len(ints):
-                raise IbdError(f"Spectrum {sp_idx} mz and intensity counts don't match")
-            if len(mzs) != self.imzml_reader.mzLengths[sp_idx] or \
-               len(ints) != self.imzml_reader.intensityLengths[sp_idx]:
-                raise IbdError('Incomplete .ibd file')
+            try:
+                self._check_consistency(mzs, ints, sp_idx)
+            except Exception as e:
+                raise IbdError(format_exc()) from e
 
             # _process_spectrum isn't thread-safe, so only access it in a mutex
             with _process_spectrum_lock:

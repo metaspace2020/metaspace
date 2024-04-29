@@ -23,8 +23,9 @@ class ImzMLError(SMError):
 
 
 class IbdError(SMError):
-    def __init__(self):
+    def __init__(self, traceback):
         super().__init__('Incomplete ibd file')
+        self.traceback = traceback
 
 
 class DSError(SMError):
