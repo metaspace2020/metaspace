@@ -161,7 +161,6 @@ class LithopsImzMLReader(ImzMLReader):
         if len(mzs) != len(ints):
             raise Exception(f"Spectrum {sp_idx} mz and intensity counts don't match")
 
-        # Incomplete .ibd file
         if (
             len(mzs) != self.imzml_reader.mzLengths[sp_idx]
             or len(ints) != self.imzml_reader.intensityLengths[sp_idx]
