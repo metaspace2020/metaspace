@@ -13,19 +13,11 @@ import ChannelSelector from '../../modules/ImageViewer/ChannelSelector.vue'
 import ClippingNotice from '../../modules/ImageViewer/ClippingNotice.vue'
 import './MultiChannelController.scss'
 
-interface MultiChannelControllerProps {
-  menuItems: any[]
-  activeLayer: boolean
-  showClippingNotice: boolean
-  isNormalized: boolean
-  mode: string
-}
-
 interface MultiChannelControllerState {
   refsLoaded: boolean
 }
 
-export const MultiChannelController = defineComponent<MultiChannelControllerProps>({
+export const MultiChannelController = defineComponent({
   name: 'MultiChannelController',
   props: {
     menuItems: { type: Array, default: () => [] },

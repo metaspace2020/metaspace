@@ -168,7 +168,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (manager, including
           <!---->
           <div class=\\"el-tabs__nav-scroll\\">
             <div class=\\"el-tabs__nav is-top\\" style=\\"transform: translateX(-0px);\\" role=\\"tablist\\">
-              <div class=\\"el-tabs__active-bar is-top\\" style=\\"width: 0px; transform: translateX(NaNpx);\\"></div>
+              <div class=\\"el-tabs__active-bar is-top\\" style=\\"width: 0px; transform: translateX(0px);\\"></div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-description\\" aria-controls=\\"pane-description\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Description
                 <!---->
               </div>
@@ -231,7 +231,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (manager, including
       </div>
     </div>
   </div>
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
+  <div class=\\"el-loading-mask\\" style=\\"display: none;\\">
     <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
         <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
       </svg>
@@ -264,7 +264,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (member) 1`] = `
           <!---->
           <div class=\\"el-tabs__nav-scroll\\">
             <div class=\\"el-tabs__nav is-top\\" style=\\"transform: translateX(-0px);\\" role=\\"tablist\\">
-              <div class=\\"el-tabs__active-bar is-top\\" style=\\"width: 0px; transform: translateX(NaNpx);\\"></div>
+              <div class=\\"el-tabs__active-bar is-top\\" style=\\"width: 0px; transform: translateX(0px);\\"></div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-description\\" aria-controls=\\"pane-description\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Description
                 <!---->
               </div>
@@ -293,7 +293,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (member) 1`] = `
       </div>
     </div>
   </div>
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
+  <div class=\\"el-loading-mask\\" style=\\"display: none;\\">
     <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
         <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
       </svg>
@@ -327,7 +327,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (non-member) 1`] = 
           <!---->
           <div class=\\"el-tabs__nav-scroll\\">
             <div class=\\"el-tabs__nav is-top\\" style=\\"transform: translateX(-0px);\\" role=\\"tablist\\">
-              <div class=\\"el-tabs__active-bar is-top\\" style=\\"transform: translateX(NaNpx);\\"></div>
+              <div class=\\"el-tabs__active-bar is-top\\"></div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-description\\" aria-controls=\\"pane-description\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Description
                 <!---->
               </div>
@@ -353,7 +353,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (non-member) 1`] = 
       </div>
     </div>
   </div>
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
+  <div class=\\"el-loading-mask\\" style=\\"display: none;\\">
     <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
         <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
       </svg>
@@ -386,7 +386,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (published) 1`] 
           <!---->
           <div class=\\"el-tabs__nav-scroll\\">
             <div class=\\"el-tabs__nav is-top\\" style=\\"transform: translateX(-0px);\\" role=\\"tablist\\">
-              <div class=\\"el-tabs__active-bar is-top\\" style=\\"width: 0px; transform: translateX(NaNpx);\\"></div>
+              <div class=\\"el-tabs__active-bar is-top\\" style=\\"width: 0px; transform: translateX(0px);\\"></div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-description\\" aria-controls=\\"pane-description\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Description
                 <!---->
               </div>
@@ -420,7 +420,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (published) 1`] 
       </div>
     </div>
   </div>
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
+  <div class=\\"el-loading-mask\\" style=\\"display: none;\\">
     <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
         <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
       </svg>
@@ -453,7 +453,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (under review) 1
           <!---->
           <div class=\\"el-tabs__nav-scroll\\">
             <div class=\\"el-tabs__nav is-top\\" style=\\"transform: translateX(-0px);\\" role=\\"tablist\\">
-              <div class=\\"el-tabs__active-bar is-top\\" style=\\"width: 0px; transform: translateX(NaNpx);\\"></div>
+              <div class=\\"el-tabs__active-bar is-top\\" style=\\"width: 0px; transform: translateX(0px);\\"></div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-description\\" aria-controls=\\"pane-description\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Description
                 <!---->
               </div>
@@ -487,7 +487,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (under review) 1
       </div>
     </div>
   </div>
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
+  <div class=\\"el-loading-mask\\" style=\\"display: none;\\">
     <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
         <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
       </svg>
@@ -520,7 +520,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (unpublished) 1`
           <!---->
           <div class=\\"el-tabs__nav-scroll\\">
             <div class=\\"el-tabs__nav is-top\\" style=\\"transform: translateX(-0px);\\" role=\\"tablist\\">
-              <div class=\\"el-tabs__active-bar is-top\\" style=\\"width: 0px; transform: translateX(NaNpx);\\"></div>
+              <div class=\\"el-tabs__active-bar is-top\\" style=\\"width: 0px; transform: translateX(0px);\\"></div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-description\\" aria-controls=\\"pane-description\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Description
                 <!---->
               </div>
@@ -554,7 +554,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (unpublished) 1`
       </div>
     </div>
   </div>
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
+  <div class=\\"el-loading-mask\\" style=\\"display: none;\\">
     <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
         <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
       </svg>
@@ -610,7 +610,7 @@ exports[`ViewGroupPage > settings tab > should disable actions when under publis
       </div>
     </div>
   </div>
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
+  <div class=\\"el-loading-mask\\" style=\\"display: none;\\">
     <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
         <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
       </svg>
@@ -666,7 +666,7 @@ exports[`ViewGroupPage > settings tab > should disable actions when under review
       </div>
     </div>
   </div>
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
+  <div class=\\"el-loading-mask\\" style=\\"display: none;\\">
     <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
         <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
       </svg>
@@ -722,7 +722,7 @@ exports[`ViewGroupPage > settings tab > should match snapshot 1`] = `
       </div>
     </div>
   </div>
-  <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
+  <div class=\\"el-loading-mask\\" style=\\"display: none;\\">
     <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
         <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
       </svg>
