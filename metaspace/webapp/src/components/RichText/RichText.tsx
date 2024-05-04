@@ -1,4 +1,4 @@
-import { defineComponent, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { defineComponent, reactive, onMounted, onBeforeUnmount, watch } from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
 import { useEditor } from '@tiptap/vue-3'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -122,6 +122,14 @@ const RichText = defineComponent({
       editing: props.autoFocus,
       saveState: saveStates.UNSAVED,
     })
+
+    watch(
+      () => props.content,
+      (newContent) => {
+        if (!newContent) return
+        state.editor?.commands?.setContent(safeJsonParse(newContent))
+      }
+    )
 
     if (!props.readonly) {
       state.editor?.on('focus', () => {

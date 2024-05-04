@@ -158,9 +158,9 @@ function deriveSection(section: JsonSchemaProperty, sectionKey: string): FormSec
 
 export function deriveFullSchema(schema: JsonSchemaProperty): FormSchema {
   // TODO: Move all this information into custom attributes in the schema instead of inspecting the data/name/etc.
-  const clonedSchema = cloneDeep(schema)
+  const clonedSchema = cloneDeep(schema) || {}
 
-  if (!clonedSchema.properties) {
+  if (!clonedSchema?.properties) {
     console.error('Cloned schema properties undefined')
     return clonedSchema as FormSchema
   }
