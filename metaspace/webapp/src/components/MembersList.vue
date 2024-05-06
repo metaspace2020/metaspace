@@ -102,7 +102,12 @@
         v-if="members.length > pageSize || page !== 1"
         :total="members.length"
         :page-size="pageSize"
-        :current-page="page"
+        :v-model="page"
+        @current-change="
+          (val) => {
+            page = val
+          }
+        "
         layout="prev,pager,next"
       />
       <div class="flex-spacer" />
@@ -112,7 +117,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, computed, reactive, toRefs } from 'vue'
 import { UserGroupRole, UserGroupRoleOptions, getRoleName as getGroupRoleName } from '../api/group'
 import { ProjectRole, ProjectRoleOptions, getRoleName as getProjectRoleName } from '../api/project'
 import { encodeParams } from '../modules/Filters'
@@ -175,10 +180,12 @@ export default defineComponent({
     filter: Object,
   },
   setup(props, { emit }) {
-    const pageSize = ref(10)
-    const page = ref(1)
-    const editingRoleOfMember = ref(null)
-    const newRole = ref(null)
+    const state = reactive({
+      pageSize: 10,
+      page: 1,
+      editingRoleOfMember: null,
+      newRole: null,
+    })
 
     const getRoleName = computed(() => {
       return props.type === 'group' ? getGroupRoleName : getProjectRoleName
@@ -198,7 +205,7 @@ export default defineComponent({
     })
 
     const currentPageData = computed(() => {
-      return props.members.slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
+      return props.members.slice((state.page - 1) * state.pageSize, state.page * state.pageSize)
     })
 
     const shouldShowEmails = computed(() => {
@@ -235,26 +242,23 @@ export default defineComponent({
     const handleAcceptUser = (user: Member) => emit('acceptUser', user)
     const handleRejectUser = (user: Member) => emit('rejectUser', user)
     const handleAddMember = () => emit('addMember')
-    const handleEditRole = (user: Member) => {
-      editingRoleOfMember.value = user
-      newRole.value = user?.role
+    const handleEditRole = (user: Member | any) => {
+      state.editingRoleOfMember = user
+      state.newRole = user?.role
     }
     const handleCloseEditRole = () => {
-      editingRoleOfMember.value = null
-      newRole.value = null
+      state.editingRoleOfMember = null
+      state.newRole = null
     }
     const handleUpdateRole = () => {
-      if (editingRoleOfMember.value) {
-        emit('updateRole', editingRoleOfMember.value, newRole.value)
+      if (state.editingRoleOfMember) {
+        emit('updateRole', state.editingRoleOfMember, state.newRole)
         handleCloseEditRole()
       }
     }
 
     return {
-      pageSize,
-      page,
-      editingRoleOfMember,
-      newRole,
+      ...toRefs(state),
       getRoleName,
       roles,
       allowedRoles,

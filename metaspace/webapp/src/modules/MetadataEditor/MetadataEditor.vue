@@ -644,7 +644,7 @@ export default defineComponent({
         const dataset = {
           metadata: (data.dataset && safeJsonParse(data.dataset.metadataJson)) || {},
           metaspaceOptions: {
-            ...(data.dataset != null ? metaspaceOptionsFromDataset(data.dataset, true) : null),
+            ...(data.dataset != null ? metaspaceOptionsFromDataset(data.dataset, false) : null),
             submitterId: store.state.currentTour ? null : data.currentUser.id,
             groupId: store.state.currentTour
               ? null
@@ -655,6 +655,7 @@ export default defineComponent({
         }
         await loadForm(dataset, await loadOptions(), dataset.metadata.Data_Type || 'Imaging MS')
       } catch (e) {
+        state.metadataTemplate = null
         reportError(e)
       }
     }

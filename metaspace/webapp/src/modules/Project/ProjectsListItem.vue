@@ -139,12 +139,12 @@ export default defineComponent({
 
     const datasetsLink = computed(() => ({
       path: '/datasets',
-      query: { project: project.value.id },
+      query: { prj: project.value.id },
     }))
 
     const annotationsLink = computed(() => ({
       path: '/annotations',
-      query: { project: project.value.id, database: '' },
+      query: { prj: project.value.id, database: '' },
     }))
 
     const manageLink = computed(() => ({

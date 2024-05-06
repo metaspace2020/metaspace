@@ -219,7 +219,7 @@ export default defineComponent({
       filter: {
         ...queryVariables().filter,
         fdrLevel: state.fdrFilter,
-        databaseId: state.databaseFilter,
+        databaseId: state.databaseFilter === '' ? undefined : state.databaseFilter,
       },
       dFilter: { ...queryVariables().dFilter, ids: datasetId.value },
     }))
