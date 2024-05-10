@@ -320,9 +320,8 @@
           :page-size="state?.recordsPerPage"
           :page-sizes="state?.pageSizes"
           :layout="paginationLayout"
-          @current-change="() => {}"
+          @current-change="onPageChange"
           @size-change="onPageSizeChange"
-          @click="onPaginationClick"
         />
 
         <div id="annot-count" class="mt-2">
@@ -1116,26 +1115,7 @@ export default defineComponent({
       state.recordsPerPage = newSize
     }
 
-    const onPaginationClick = async (event) => {
-      let targetElement = event?.target
-      let pages = 1
-      const regex = /.+(\d+) pages/
-      const match = regex.exec(targetElement?.attributes['aria-label']?.textContent)
-
-      if (match && match[1]) {
-        pages = parseInt(match[1], 10)
-      }
-
-      let page = targetElement.attributes['aria-label'].textContent.toLowerCase().includes('next')
-        ? currentPage.value + pages
-        : targetElement.attributes['aria-label'].textContent.toLowerCase().includes('previous')
-        ? currentPage.value - pages
-        : parseInt(targetElement.innerText, 10)
-      // ignore the initial "sync"
-      if (page === currentPage.value || state.initialLoading) {
-        return
-      }
-
+    const onPageChange = async (page) => {
       setCurrentPage(page)
     }
 
@@ -1411,7 +1391,7 @@ export default defineComponent({
     })
 
     // Watch for changes in query variables or options and re-execute query
-    watch([queryVariables, () => queryOptions.enabled], executeQuery)
+    watch([queryVariables, () => queryOptions.enabled, currentPage], executeQuery)
 
     watch(
       () => route.query,
@@ -1460,7 +1440,7 @@ export default defineComponent({
       showColocCol,
       paginationLayout,
       onPageSizeChange,
-      onPaginationClick,
+      onPageChange,
       currentPage,
       handleColSelectorClick,
       exportPop,
