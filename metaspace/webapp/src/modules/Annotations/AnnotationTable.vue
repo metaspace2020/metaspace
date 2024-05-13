@@ -806,7 +806,7 @@ export default defineComponent({
     const initialize = async () => {
       const nCells = (window.innerHeight - 150) / 43
       const pageSizes = state.pageSizes.filter((n) => nCells >= n).slice(-1)
-      if (state.pageSizes.length > 0) {
+      if (pageSizes.length > 0) {
         state.recordsPerPage = pageSizes[0]
       }
       executeQuery()
