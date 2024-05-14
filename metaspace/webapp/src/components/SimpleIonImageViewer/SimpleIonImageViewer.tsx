@@ -173,7 +173,7 @@ export const SimpleIonImageViewer = defineComponent({
         Group: annotation.dataset?.group,
         Projects: annotation.dataset?.projects,
       }
-      return Object.assign(safeJsonParse(annotation?.dataset?.metadataJson), datasetMetadataExternals)
+      return Object.assign({}, safeJsonParse(annotation?.dataset?.metadataJson), datasetMetadataExternals)
     }
 
     const ionImage = (
