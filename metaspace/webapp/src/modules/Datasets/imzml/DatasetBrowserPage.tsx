@@ -372,7 +372,7 @@ export default defineComponent({
       }
 
       if (state.peakFilter !== PEAK_FILTER.FDR) {
-        mzs.forEach((mz: any, index: any) => {
+        ;(mzs || []).forEach((mz: any, index: any) => {
           if (!addedIndexes.includes(index)) {
             const int: number = ints[index]
             const kendrickMass = (mz * Math.round(exactMass)) / exactMass
