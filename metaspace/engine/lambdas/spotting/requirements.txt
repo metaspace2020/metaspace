@@ -1,4 +1,4 @@
-requests==2.26.0
+requests==2.32.0
 numpy==1.19.5
 scipy==1.6.0
 pandas==1.2.0
