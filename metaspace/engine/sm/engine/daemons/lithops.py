@@ -58,7 +58,7 @@ class LithopsDaemon:
             return
 
         # Stop processing in case of other exception (without sending an email)
-        if isinstance(e, (UnknownDSID, )):
+        if isinstance(e, (UnknownDSID,)):
             os.kill(os.getpid(), signal.SIGINT)
             self._manager.ds_failure_handler(msg, e)
             return
@@ -125,6 +125,8 @@ class LithopsDaemon:
         except IbdError:
             raise
         except LithopsStalledException:
+            raise
+        except UnknownDSID:
             raise
         except Exception as e:
             raise AnnotationError(ds_id=msg['ds_id'], traceback=format_exc(chain=False)) from e
