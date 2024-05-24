@@ -8,7 +8,7 @@ from sm.engine.annotation_lithops.executor import LithopsStalledException
 from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
-from sm.engine.errors import AnnotationError, ImzMLError, IbdError
+from sm.engine.errors import AnnotationError, ImzMLError, IbdError, UnknownDSID
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.rest.dataset_manager import DatasetActionPriority
 
@@ -53,6 +53,12 @@ class LithopsDaemon:
             if 'email' in msg:
                 self._manager.send_failed_email(msg, e.traceback)
 
+            os.kill(os.getpid(), signal.SIGINT)
+            self._manager.ds_failure_handler(msg, e)
+            return
+
+        # Stop processing in case of other exception (without sending an email)
+        if isinstance(e, (UnknownDSID, )):
             os.kill(os.getpid(), signal.SIGINT)
             self._manager.ds_failure_handler(msg, e)
             return
