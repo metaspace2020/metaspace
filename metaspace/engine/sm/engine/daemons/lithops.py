@@ -59,6 +59,10 @@ class LithopsDaemon:
 
         # Stop processing in case of other exception (without sending an email)
         if isinstance(e, (UnknownDSID,)):
+            self._manager.post_to_slack(
+                'bomb',
+                f' [x] Annotation failed, dataset was deleted early: {json.dumps(msg)}\n',
+            )
             os.kill(os.getpid(), signal.SIGINT)
             self._manager.ds_failure_handler(msg, e)
             return
