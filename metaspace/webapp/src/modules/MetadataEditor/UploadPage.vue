@@ -218,6 +218,16 @@ export default defineComponent({
             }
           }
 
+          if (newFile.data.size < 1) {
+            ElMessageBox.alert(`Files with .ibd extension must be greater than ${0}GB.`, 'File too small', {
+              dangerouslyUseHTMLString: true,
+              showConfirmButton: false,
+            }).catch(() => {
+              /* Ignore exception raised when alert is closed */
+            })
+            return false // Prevent the file from being added
+          }
+
           const currentFiles = Object.values(fileLookup)
           if (currentFiles.length === 0) return true
           if (currentFiles.length === 2) return false
