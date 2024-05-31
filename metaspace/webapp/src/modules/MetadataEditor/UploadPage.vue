@@ -305,7 +305,7 @@ export default defineComponent({
 
       if (state.uploads.imzml === true && state.uploads.ibd === true) {
         const [file] = result.successful
-        let uploadURL = file?.uploadURL
+        const uploadURL = file?.uploadURL
 
         try {
           state.inputPath = createInputPath(uploadURL, uuid.value)
