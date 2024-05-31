@@ -456,13 +456,16 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
 }
 
 const constructSimpleQueryFilter = (simpleQuery: string, fields = searchable_txt_dataset_fields) => {
+  // scape < to avoid ES injection
+  const regexpPattern = simpleQuery ? simpleQuery.replace(/</g, '\\<') : simpleQuery
+
   return {
     bool: {
       should: [
         {
           regexp: {
             ds_name: {
-              value: `.*${simpleQuery}.*`,
+              value: `.*${regexpPattern}.*`,
               flags: 'ALL',
               case_insensitive: true,
             },
