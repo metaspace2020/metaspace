@@ -218,6 +218,16 @@ export default defineComponent({
             }
           }
 
+          if (newFile.data.size <= 0) {
+            ElMessageBox.alert(`Files with .ibd extension must be greater than 0.`, 'File too small', {
+              dangerouslyUseHTMLString: true,
+              showConfirmButton: false,
+            }).catch(() => {
+              /* Ignore exception raised when alert is closed */
+            })
+            return false // Prevent the file from being added
+          }
+
           const currentFiles = Object.values(fileLookup)
           if (currentFiles.length === 0) return true
           if (currentFiles.length === 2) return false
@@ -297,11 +307,15 @@ export default defineComponent({
         const [file] = result.successful
         const uploadURL = file?.uploadURL
 
-        if (!uploadURL) {
-          reportError(result) // TODO: Remove after read logs in production
+        try {
+          state.inputPath = createInputPath(uploadURL, uuid.value)
+        } catch (e) {
+          // failed to create input path, reset the state so user can reupload and report error
+          onFileRemoved({ extension: 'imzml' })
+          onFileRemoved({ extension: 'ibd' })
+          reportError(JSON.stringify(result)) // TODO: Remove after read logs in production
+          return
         }
-
-        state.inputPath = createInputPath(uploadURL, uuid.value)
         state.status = 'UPLOADED'
       } else {
         if (result.failed.length) {
