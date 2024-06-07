@@ -297,11 +297,14 @@ export default defineComponent({
       if (!metaspaceOptions.scoringModelId) {
         metaspaceOptions.scoringModelId = (scoringModels.find((m) => m.type === 'original') || {}).id
       } else {
-        const currentModel =
+        let currentModel =
           scoringModels.find((m) => m.id === metaspaceOptions.scoringModelId) ||
           // keep for backward compatibility to scoring model (v3_default)
           scoringModels.find((m) => m.name === metaspaceOptions.scoringModelId) ||
           {}
+        if (isNew.value && currentModel.isArchived) {
+          currentModel = scoringModels.find((m) => m.type === 'original') || {}
+        }
         metaspaceOptions.scoringModelId = currentModel.id
       }
 
