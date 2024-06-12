@@ -183,8 +183,8 @@ export const nestEnrichmentDbs = (data: any) => {
     }
 
     const key = keys[0]
-    const validEntries = entries.filter((entry) => entry[key] != null)
-    const invalidEntries = entries.filter((entry) => entry[key] == null) // Entries without the current key
+    const validEntries = entries.filter((entry) => entry && entry[key] != null)
+    const invalidEntries = entries.filter((entry) => !entry || entry[key] == null) // Entries without the current key
 
     const groups = validEntries.reduce((acc, item) => {
       const keyValue = item[key]
@@ -202,10 +202,12 @@ export const nestEnrichmentDbs = (data: any) => {
 
     // Directly include entries that cannot be grouped by the current key
     invalidEntries.forEach((item) => {
-      groups[item.id] = {
-        id: item.id,
-        label: capitalize(item.name),
-        children: [], // No children as these are leaf nodes with no further categorization
+      if (item) {
+        groups[item.id] = {
+          id: item.id,
+          label: capitalize(item.name),
+          children: [], // No children as these are leaf nodes with no further categorization
+        }
       }
     })
 

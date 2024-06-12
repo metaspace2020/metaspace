@@ -18,6 +18,18 @@ export const checkIfEnrichmentRequested = gql`
   }
 `
 
+export const getEnrichmentDatabases = gql`
+  query allEnrichmentDatabases($databaseName: String) {
+    allEnrichmentDatabases(databaseName: $databaseName) {
+      id
+      name
+      molType
+      category
+      subCategory
+    }
+  }
+`
+
 export const getEnrichedMolDatabasesQuery = gql`
   query allEnrichedMolDatabases($id: String!) {
     allEnrichedMolDatabases(datasetId: $id) {

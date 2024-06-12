@@ -15,7 +15,7 @@ type EnrichmentTerm {
 
 
 type Query {
-    allEnrichmentDatabases: [EnrichmentDb]
+    allEnrichmentDatabases(databaseName: String): [EnrichmentDb]
     allEnrichmentTerms(databaseId: Int, enrichmentName: String,
         enrichmentId: String, id: Int, limit: Int = 10) : [EnrichmentTerm]
     allFormulasByEnrichmentTerm(termId: Int) : [String]

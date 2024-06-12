@@ -287,7 +287,9 @@ export default defineComponent({
       state.scoringModels = scoringModels
       state.defaultDb = molecularDatabases.find((db) => db.default) || {}
       state.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
-      state.ontologyDbs = nestEnrichmentDbs(ontologyDbs)
+      state.ontologyDbs = nestEnrichmentDbs(
+        config.features.metabo_enrich ? ontologyDbs : [ontologyDbs.find((eDb) => eDb.name === 'LION')]
+      )
       state.schema = deriveFullSchema(metadataSchemas[mdType])
 
       // TODO remove the additional information from the schema itself at some point
@@ -298,6 +300,10 @@ export default defineComponent({
 
       const selectedDbs = dataset.databases || []
       const selectedOntologyDbs = dataset.ontologyDatabases || []
+
+      if (!isNew.value && metaspaceOptions?.ontologyDbIds?.length === 0 && metaspaceOptions.performEnrichment) {
+        metaspaceOptions.ontologyDbIds = [ontologyDbs.find((eDb) => eDb.name === 'LION').id]
+      }
 
       // enable default db normal edit if dataset already registered and does not have it
       state.defaultDb =

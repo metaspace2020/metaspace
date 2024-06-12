@@ -152,8 +152,17 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   async ontologyDatabases(ds, _, ctx): Promise<EnrichmentDB[]> {
+    let ontDbIds = ds._source.ds_config?.ontology_db_ids
+
+    if (!ontDbIds) {
+      const result = await ctx.entityManager.createQueryBuilder(DatasetEnrichmentModel,
+        'dsEnrichment')
+        .where('dsEnrichment.datasetId = :datasetId', { datasetId: ds._source.ds_id }).getRawMany()
+      ontDbIds = result.map((item: any) => item.dsEnrichment_enrichment_db_id)
+    }
+
     return await ctx.entityManager.createQueryBuilder(EnrichmentDB, 'ontDb')
-      .where('ontDb.id = ANY(:ontDbIds)', { ontDbIds: ds._source.ds_config?.ontology_db_ids })
+      .where('ontDb.id = ANY(:ontDbIds)', { ontDbIds })
       .getMany()
   },
 

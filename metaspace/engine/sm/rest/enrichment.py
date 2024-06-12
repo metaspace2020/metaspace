@@ -39,6 +39,12 @@ def calculate_enrichment():  # pylint: disable=too-many-locals
                 items_sum = len(intersection)
                 enrichment_analysis_input[key]['sublist'].append(items_sum)
 
+        # Calculate overall background and sublist for 'all'
+        # enrichment_analysis_input['all'] = {
+        #     'background': sum(len(enrichment_sets[key]) for key in enrichment_sets.keys()),
+        #     'sublist': [sum(enrichment_analysis_input[key]['sublist'][i] for key in enrichment_sets.keys()) for i in range(len(bootstrapped_sublist))]
+        # }
+
         data = []
 
         for key in enrichment_analysis_input.keys():

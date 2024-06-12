@@ -10,8 +10,13 @@ import { FieldResolversFor } from '../../bindingTypes'
 import { IResolvers } from 'graphql-tools'
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
-  async allEnrichmentDatabases(_: any, args: any, ctx: Context): Promise<EnrichmentDb[] | null> {
+  async allEnrichmentDatabases(_: any, { databaseName }, ctx: Context): Promise<EnrichmentDb[] | null> {
     const enrichmentDBS = await ctx.entityManager.createQueryBuilder(EnrichmentDbModel, 'enrichmentdb')
+      .where((qb : any) => {
+        if (databaseName) {
+          qb.where('enrichmentdb.name = :databaseName', { databaseName: databaseName })
+        }
+      })
       .getMany()
     if (enrichmentDBS) {
       return enrichmentDBS

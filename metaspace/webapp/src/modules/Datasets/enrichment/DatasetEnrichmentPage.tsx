@@ -111,7 +111,7 @@ export default defineComponent({
     const databases = computed(() =>
       databasesResult.value != null ? databasesResult.value.allEnrichedMolDatabases : null
     )
-    const { result: enrichmentResult, loading: enrichmentLoading } = useQuery<any>(
+    const { result: enrichmentResult, loading: enrichmentLoading } = useQuery(
       getDatasetEnrichmentQuery,
       computed(() => ({
         id: datasetId.value,
