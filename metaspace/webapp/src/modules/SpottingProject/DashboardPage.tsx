@@ -828,6 +828,7 @@ const filterMap: any = {
   d: 'ds',
   nL: 'nl',
   pol: 'mode',
+  Polarity: 'mode',
   mS: 'MALDI matrix',
   'Matrix short': 'MALDI matrix',
   t: 'MALDI matrix',
@@ -1274,42 +1275,40 @@ export default defineComponent({
     }
 
     const handleMetaClick = () => {
-      // get info from clicked chart item and open on a metaspace url
       const baseUrl = 'https://metaspace2020.eu/annotations?db_id=304'
-      // const baseUrl = 'http://localhost:8999/annotations?db_id=304'
       let url = baseUrl
       let datasetIds = []
       let formulas = []
-      let matrixes = []
+      let polarities = []
       const yAxisFilter: any = filterMap[state.options.yAxis]
       const xAxisFilter: any = filterMap[state.options.xAxis]
-      const filterHash = {}
 
       state.data.forEach((item: any) => {
         formulas = formulas.concat(item?.label?.formulas)
         if ((item?.label?.datasetIds || []).length > 0) {
           datasetIds = datasetIds.concat(item?.label?.datasetIds)
         }
-        if ((yAxisFilter.includes('MALDI matrix') || xAxisFilter.includes('MALDI matrix')) && item?.label?.matrix) {
-          matrixes = matrixes.concat(item?.label?.matrix)
+
+        if (yAxisFilter === 'mode') {
+          polarities.push(item?.label?.y)
         }
-        if (!filterHash[yAxisFilter]) {
-          filterHash[yAxisFilter] = []
+        if (xAxisFilter === 'mode') {
+          polarities.push(item?.label?.x)
         }
-        if (!filterHash[xAxisFilter]) {
-          filterHash[xAxisFilter] = []
-        }
-        filterHash[yAxisFilter] = filterHash[yAxisFilter].concat(item?.label?.y)
-        filterHash[xAxisFilter] = filterHash[xAxisFilter].concat(item?.label?.x)
       })
       formulas = uniq(formulas)
       datasetIds = uniq(datasetIds)
+      polarities = uniq(polarities)
 
       if (datasetIds.length > 0) {
         url += `&ds=${datasetIds.join(',')}`
       }
       if (formulas.length > 0) {
         url += `&q=${formulas.join('|').slice(0, 950)}`
+      }
+      if (polarities.length == 1) {
+        const pol = polarities[0] === 'positive' ? 'Positive' : 'Negative'
+        url += `&mode=${pol}`
       }
 
       window.open(url, '_blank')
@@ -1718,14 +1717,15 @@ export default defineComponent({
             placement="bottom"
             popperClass="custom-tooltip"
             content="You will be forwarded to show the annotation of all public data on Metaspace
-            for the selected metabolites, polarities, adducts, and neutral losses.
+            for the selected metabolites and polarities.
             If you would like information for a specific molecule, please use the corresponding filters on the
-            annotations page."
+            annotations page. Please remember to press 'Generate chart' before clicking this button."
           >
             <ElButton
               size="small"
               class="gen-btn mr-2"
-              disabled={!(state.options.xAxis && state.options.yAxis && state.options.aggregation)}
+              loading={state.loading}
+              disabled={!showChart || !(state.options.xAxis && state.options.yAxis && state.options.aggregation)}
               onClick={handleMetaClick}
             >
               Go to public METASPACE data
