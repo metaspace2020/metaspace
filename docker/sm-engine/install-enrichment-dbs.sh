@@ -2,8 +2,8 @@
 
 cd /opt/dev/metaspace/metaspace/engine
 
-#pip install -qr requirements.txt
-#pip install -e .
+pip install -qr requirements.txt
+pip install -e .
 
 curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/LION-LUT.csv" -o /tmp/LION-LUT.csv
 curl "https://sm-lion-project.s3.eu-west-1.amazonaws.com/LION_METASPACE_list.csv" -o /tmp/LION_METASPACE_list.csv

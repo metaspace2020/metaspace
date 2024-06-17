@@ -16,7 +16,7 @@ services:
       - sm
 
   redis:
-    image: redis:4.0.9-alpine
+    image: redis:7.2.5-alpine
     ports:
       - "6379:6379"
     networks:
@@ -34,7 +34,7 @@ services:
       - sm
 
   postgres:
-    image: postgres:9.5-alpine
+    image: postgres:16.3-alpine
     volumes:
       - "/etc/timezone:/etc/timezone:ro" # Timezones are optional, may not work on non-Linux platforms
       - "/etc/localtime:/etc/localtime:ro"
