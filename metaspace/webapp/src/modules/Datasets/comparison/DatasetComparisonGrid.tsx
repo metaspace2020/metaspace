@@ -266,6 +266,14 @@ export const DatasetComparisonGrid = defineComponent({
 
     // set images and annotation related items when selected annotation changes
     watch(
+      () => props.annotations,
+      async () => {
+        await updateAnnotationData(settings.value.grid, props.selectedAnnotation)
+      }
+    )
+
+    // set images and annotation related items when selected annotation changes
+    watch(
       () => props.mode,
       async () => {
         await updateAnnotationData(settings.value.grid, props.selectedAnnotation)
