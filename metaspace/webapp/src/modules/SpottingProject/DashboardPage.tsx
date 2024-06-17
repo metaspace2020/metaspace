@@ -23,6 +23,8 @@ import { getDetectabilitySourcesQuery } from '../../api/group'
 import { currentUserWithGroupDetectabilityQuery } from '../../api/user'
 import { CirclePlusFilled, Grid, InfoFilled, Loading, QuestionFilled, RemoveFilled } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
+import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg'
+import StatefulIcon from '../../components/StatefulIcon.vue'
 
 interface Options {
   xAxis: any
@@ -827,6 +829,7 @@ const filterMap: any = {
   nL: 'nl',
   pol: 'mode',
   mS: 'MALDI matrix',
+  'Matrix short': 'MALDI matrix',
   t: 'MALDI matrix',
   name: 'mol',
 }
@@ -1249,7 +1252,7 @@ export default defineComponent({
           state.options.yAxis === 'fine_path' ||
           state.options.yAxis === 'name'
             ? formulas
-            : (yAxisFilter.includes('MALDI matrix') ? item.data.label.matrix.join('|') : item.data.label.y)
+            : yAxisFilter.includes('MALDI matrix')
             ? item.data.label.matrix.join('|')
             : item.data.label.y
         url += `&${yAxisFilter}=${encodeURIComponent(value)}`
@@ -1262,11 +1265,53 @@ export default defineComponent({
           state.options.xAxis === 'fine_path' ||
           state.options.xAxis === 'name'
             ? formulas
-            : (xAxisFilter.includes('MALDI matrix') ? item.data.label.matrix.join('|') : item.data.label.x)
+            : xAxisFilter.includes('MALDI matrix')
             ? item.data.label.matrix.join('|')
             : item.data.label.x
         url += `&${xAxisFilter}=${encodeURIComponent(value)}`
       }
+      window.open(url, '_blank')
+    }
+
+    const handleMetaClick = () => {
+      // get info from clicked chart item and open on a metaspace url
+      const baseUrl = 'https://metaspace2020.eu/annotations?db_id=304'
+      // const baseUrl = 'http://localhost:8999/annotations?db_id=304'
+      let url = baseUrl
+      let datasetIds = []
+      let formulas = []
+      let matrixes = []
+      const yAxisFilter: any = filterMap[state.options.yAxis]
+      const xAxisFilter: any = filterMap[state.options.xAxis]
+      const filterHash = {}
+
+      state.data.forEach((item: any) => {
+        formulas = formulas.concat(item?.label?.formulas)
+        if ((item?.label?.datasetIds || []).length > 0) {
+          datasetIds = datasetIds.concat(item?.label?.datasetIds)
+        }
+        if ((yAxisFilter.includes('MALDI matrix') || xAxisFilter.includes('MALDI matrix')) && item?.label?.matrix) {
+          matrixes = matrixes.concat(item?.label?.matrix)
+        }
+        if (!filterHash[yAxisFilter]) {
+          filterHash[yAxisFilter] = []
+        }
+        if (!filterHash[xAxisFilter]) {
+          filterHash[xAxisFilter] = []
+        }
+        filterHash[yAxisFilter] = filterHash[yAxisFilter].concat(item?.label?.y)
+        filterHash[xAxisFilter] = filterHash[xAxisFilter].concat(item?.label?.x)
+      })
+      formulas = uniq(formulas)
+      datasetIds = uniq(datasetIds)
+
+      if (datasetIds.length > 0) {
+        url += `&ds=${datasetIds.join(',')}`
+      }
+      if (formulas.length > 0) {
+        url += `&q=${formulas.join('|').slice(0, 950)}`
+      }
+
       window.open(url, '_blank')
     }
 
@@ -1668,6 +1713,27 @@ export default defineComponent({
       return (
         <div class="visualization-container">
           {showChart && renderHelp(xLabelItem, yLabelItem)}
+
+          <ElTooltip
+            placement="bottom"
+            popperClass="custom-tooltip"
+            content="You will be forwarded to show the annotation of all public data on Metaspace
+            for the selected metabolites, polarities, adducts, and neutral losses.
+            If you would like information for a specific molecule, please use the corresponding filters on the
+            annotations page."
+          >
+            <ElButton
+              size="small"
+              class="gen-btn mr-2"
+              disabled={!(state.options.xAxis && state.options.yAxis && state.options.aggregation)}
+              onClick={handleMetaClick}
+            >
+              Go to public METASPACE data
+              <StatefulIcon class="h-4 w-4 pointer-events-none ml-1 -mr-1">
+                <ExternalWindowSvg fill="white" stroke="white" />
+              </StatefulIcon>
+            </ElButton>
+          </ElTooltip>
 
           <div class="flex flex-col">
             <a
