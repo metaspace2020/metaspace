@@ -1,7 +1,26 @@
 from pathlib import Path
+from typing import Optional
+
 import pytest
 
 from metaspace.sm_annotation_utils import SMInstance
+
+
+@pytest.fixture()
+def config_path(tmp_path, request) -> Optional[str]:
+    if request.param == 'invalid-password':
+        config_path = tmp_path / '.metaspace'
+        config_path.write_text(f'email = nobody@example.com\npassword = 0123456789ab\n')
+    elif request.param == "invalid-api_key":
+        config_path = tmp_path / ".metaspace"
+        config_path.write_text(f'email = nobody@example.com\napi_key = 0123456789ab\n')
+    elif request.param == 'empty':
+        config_path = tmp_path / '.metaspace'
+        config_path.touch()
+    else:
+        # Valid .metaspace config file
+        config_path = str((Path(__file__).parent / '../../test_config').resolve())
+    return config_path
 
 
 @pytest.fixture()
