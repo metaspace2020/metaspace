@@ -32,3 +32,7 @@ docker-compose run --rm api /sm-engine/install-dbs.sh
 # set up ML Scoring Model
 echo "Installing scoring models"
 docker-compose run --rm api /sm-engine/install-scoring-model.sh
+
+# set up enrichment databases
+echo "Installing enrichment databases"
+docker-compose run --rm api /sm-engine/install-enrichment-dbs.sh
