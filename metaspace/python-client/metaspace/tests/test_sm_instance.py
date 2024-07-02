@@ -1,29 +1,33 @@
 import time
 from copy import deepcopy
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import pytest
 
 from metaspace import SMInstance
 from metaspace.tests.utils import config_path, sm, my_ds_id, metadata
+if TYPE_CHECKING:
+    from _pytest.capture import CaptureFixture
+
 
 TEST_DATA_PATH = str((Path(__file__).parent / '../../../engine/tests/data').resolve())
 
 
 @pytest.mark.parametrize(
-    ('config_path', 'expected_logged_in'),
+    ('config_path', 'expected_logged_in', 'expected_stdout'),
     [
-        ('valid', True),
-        ('empty', False),
-        ('invalid-password', False),
-        ('invalid-api_key', False),
+        ('valid', True, ''),
+        ('empty', False, ''),
+        ('invalid-password', False, 'Login failed. Only public datasets will be accessible.\n'),
+        ('invalid-api_key', False, 'Login failed. Only public datasets will be accessible.\n'),
     ],
     indirect=['config_path'],
 )
-def test_sm_instance(config_path: Optional[str], expected_logged_in: bool):
+def test_sm_instance(config_path: Optional[str], expected_logged_in: bool, expected_stdout: str, capsys: 'CaptureFixture'):
     sm = SMInstance(config_path=config_path)
     assert sm.logged_in() == expected_logged_in
+    assert expected_stdout == capsys.readouterr().out
 
 
 def test_add_dataset_external_link(sm, my_ds_id):
