@@ -1648,7 +1648,8 @@ class SMInstance(object):
         try:
             self.reconnect()
         except (AssertionError, BadRequestException) as ex:
-            if ('Invalid API key' in ex.message or 'Login failed' in ex.message) and (
+            message = ex.args[0] if ex.args else ''
+            if ('Invalid API key' in message or 'Login failed' in message) and (
                 api_key is None and email is None
             ):
                 print(
@@ -1656,7 +1657,7 @@ class SMInstance(object):
                     f'saved credentials.'
                 )
             else:
-                print(f'Failed to connect to {self._config["host"]}: {ex.message}')
+                print(f'Failed to connect to {self._config["host"]}: {message}')
 
     def __repr__(self):
         return "SMInstance({})".format(self._config['graphql_url'])
