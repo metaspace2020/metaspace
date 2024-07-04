@@ -36,7 +36,17 @@
         </div>
       </div>
       <div v-if="projectsCount > pageSize || page !== 1" style="text-align: center">
-        <el-pagination :total="projectsCount" :page-size="pageSize" :current-page="page" layout="prev,pager,next" />
+        <el-pagination
+          :total="projectsCount"
+          :page-size="pageSize"
+          :v-model="page"
+          @current-change="
+            (val) => {
+              page = val
+            }
+          "
+          layout="prev,pager,next"
+        />
       </div>
     </div>
   </div>
