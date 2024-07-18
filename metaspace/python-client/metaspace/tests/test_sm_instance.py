@@ -1,13 +1,74 @@
 import time
 from copy import deepcopy
+from functools import wraps
 from pathlib import Path
+from typing import Optional, TYPE_CHECKING
+from unittest.mock import patch
 
 import pytest
+import requests
 
 from metaspace import SMInstance
-from metaspace.tests.utils import sm, my_ds_id, metadata
+from metaspace.tests.utils import config_path, sm, my_ds_id, metadata
+
+if TYPE_CHECKING:
+    from _pytest.capture import CaptureFixture
+    from _pytest.fixtures import SubRequest
 
 TEST_DATA_PATH = str((Path(__file__).parent / '../../../engine/tests/data').resolve())
+
+
+@pytest.fixture()
+def online(request: 'SubRequest'):
+    """
+    A fixture simulating being offline
+
+    Blocks the requests package from accessing METASPACE.
+
+    :param request: A pytest request, parametrized with a boolean: True = online, False = blocked
+    """
+    is_online = request.param
+    host = "https://metaspace2020.eu"
+    if is_online:
+        yield
+    else:
+        original_session_request = requests.sessions.Session.request
+
+        @wraps(requests.sessions.Session.request)
+        def session_request_wrapper(self: requests.sessions.Session, method: str, url: str, **kwargs):
+            if host is not None and host in url:
+                raise requests.exceptions.ConnectionError(f"{host} connection was blocked")
+            return original_session_request(self, method, url, **kwargs)
+
+        with patch.object(
+            requests.sessions.Session, "request", new=session_request_wrapper
+        ):
+            yield
+
+
+@pytest.mark.parametrize(
+    ('config_path', 'online', 'expected_logged_in', 'expected_stdout'),
+    [
+        ('valid', True, True, ''),
+        ('empty', True, False, ''),
+        ('invalid-password', True, False, 'Login failed. Only public datasets will be accessible.\n'),
+        ('invalid-api_key', True, False, 'Login failed. Only public datasets will be accessible.\n'),
+        ('valid', False, False, 'No network connection.\n'),
+        ('empty', False, False, ''),
+        ('invalid-password', False, False, 'No network connection.\n'),
+        ('invalid-api_key', False, False, 'No network connection.\n'),
+    ],
+    indirect=['config_path', 'online'],
+)
+def test_sm_instance(
+    config_path: Optional[str],
+    online, expected_logged_in: bool,
+    expected_stdout: str,
+    capsys: 'CaptureFixture'
+):
+    sm = SMInstance(config_path=config_path)
+    assert sm.logged_in() == expected_logged_in
+    assert expected_stdout == capsys.readouterr().out
 
 
 def test_add_dataset_external_link(sm, my_ds_id):
