@@ -4,7 +4,7 @@ pyMSpec==0.1.2
 cpyMSpec==0.4.2  # Drop all isotopic patterns if updated!
 cpyMSpec_0_3_5==0.3.5
 pyimzML==1.5.3
-requests==2.29.0
+requests==2.32.2
 pytest
 boto3==1.28.64
 fabric3
