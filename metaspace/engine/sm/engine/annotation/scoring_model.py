@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from catboost import CatBoost
 
+from sm.engine.errors import SMError
 from sm.engine.storage import get_s3_client
 from sm.engine.util import split_s3_path
 
@@ -80,6 +81,23 @@ def remove_uninteresting_features(target_df: pd.DataFrame, decoy_df: pd.DataFram
 
 
 class ScoringModel:
+    """Represents a scoring model to use as annotation base."""
+
+    # pylint: disable=redefined-builtin
+    def __init__(
+        self,
+        id: int = None,
+        name: str = None,
+        version: str = None,
+        type: str = None,
+        is_archived: bool = None,
+    ):
+        self.id = id
+        self.name = name
+        self.version = version
+        self.type = type
+        self.is_archived = is_archived
+
     def score(
         self, target_df: pd.DataFrame, decoy_df: pd.DataFrame, decoy_ratio: float
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -88,9 +106,48 @@ class ScoringModel:
         would help explain the score."""
         raise NotImplementedError()
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'version': self.version,
+            'is_archived': self.is_archived,
+        }
+
+
+def find_by_name_version(name: str, version: str) -> ScoringModel:
+    # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
+    # pylint: disable=import-outside-toplevel  # circular import
+    from sm.engine.db import DB
+
+    data = DB().select_one_with_fields(
+        'SELECT id, name, version, type FROM scoring_model WHERE name = %s AND version = %s',
+        params=(name, version),
+    )
+    if not data:
+        raise SMError(f'ScoringModel not found: {name}')
+    return ScoringModel(**data)
+
+
+def find_by_id(id_: int) -> ScoringModel:
+    """Find scoring model by id."""
+    # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
+    # pylint: disable=import-outside-toplevel  # circular import
+    from sm.engine.db import DB
+
+    data = DB().select_one_with_fields(
+        'SELECT id, name, version, type FROM scoring_model WHERE id = %s', params=(id_,)
+    )
+    if not data:
+        raise SMError(f'ScoringModel not found: {id_}')
+    return ScoringModel(**data)
+
 
 class CatBoostScoringModel(ScoringModel):
-    def __init__(self, model_name: str, model: CatBoost, params: Dict):
+    def __init__(
+        self, model_name: str, model: CatBoost, params: Dict, id_: int, name: str, version: str
+    ):
+        super().__init__(id_, name, version)
         self.model_name = model_name
         self.model = model
         self.features = params['features']
@@ -136,17 +193,23 @@ class MsmScoringModel(ScoringModel):
         return target_df, decoy_df
 
 
-def load_scoring_model(name: Optional[str]) -> ScoringModel:
+def load_scoring_model(name: Optional[str], version: Optional[str] = None) -> ScoringModel:
     # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
     # pylint: disable=import-outside-toplevel  # circular import
     from sm.engine.db import DB
 
-    if name is None:
+    if name is None or version is None:
         return MsmScoringModel()
 
-    row = DB().select_one("SELECT type, params FROM scoring_model WHERE name = %s", (name,))
-    assert row, f'Scoring model {name} not found'
-    type_, params = row
+    row = DB().select_one(
+        "SELECT type, params, id FROM scoring_model WHERE name = %s and version=%s",
+        (
+            name,
+            version,
+        ),
+    )
+    assert row, f'Scoring model {name} {version} not found'
+    type_, params, id_ = row
 
     if type_ == 'catboost':
         bucket, key = split_s3_path(params['s3_path'])
@@ -157,7 +220,40 @@ def load_scoring_model(name: Optional[str]) -> ScoringModel:
             model = CatBoost()
             model.load_model(str(model_file), 'cbm')
 
-        return CatBoostScoringModel(name, model, params)
+        return CatBoostScoringModel(name, model, params, id_, name, version)
+    elif type_ == 'original':
+        return MsmScoringModel()
+    else:
+        raise ValueError(f'Unsupported scoring model type: {type_}')
+
+
+def load_scoring_model_by_id(id_: Optional[int] = None) -> ScoringModel:
+    # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
+    # pylint: disable=import-outside-toplevel  # circular import
+    from sm.engine.db import DB
+
+    if id_ is None:
+        return MsmScoringModel()
+
+    row = DB().select_one(
+        "SELECT name, version, type, params, id FROM scoring_model WHERE id = %s",
+        (id_,),
+    )
+    assert row, f'Scoring model {id_} not found'
+    name, version, type_, params, id_ = row
+
+    if type_ == 'catboost':
+        bucket, key = split_s3_path(params['s3_path'])
+        with TemporaryDirectory() as tmpdir:
+            model_file = Path(tmpdir) / 'model.cbm'
+            with model_file.open('wb') as f:
+                f.write(get_s3_client().get_object(Bucket=bucket, Key=key)['Body'].read())
+            model = CatBoost()
+            model.load_model(str(model_file), 'cbm')
+
+        return CatBoostScoringModel(name, model, params, id_, name, version)
+    elif type_ == 'original':
+        return MsmScoringModel()
     else:
         raise ValueError(f'Unsupported scoring model type: {type_}')
 
@@ -235,7 +331,7 @@ def upload_catboost_scoring_model(
     }
 
 
-def save_scoring_model_to_db(name, type_, params):
+def save_scoring_model_to_db(name, type_, version, params, created_dt=None):
     """Adds/updates the scoring_model in the local database"""
     # Import DB locally so that Lithops doesn't try to pickle it & fail due to psycopg2
     # pylint: disable=import-outside-toplevel  # circular import
@@ -244,16 +340,26 @@ def save_scoring_model_to_db(name, type_, params):
     if not isinstance(params, str):
         params = json.dumps(params)
 
+    if not created_dt:
+        created_dt = datetime.utcnow()
+
     db = DB()
-    if db.select_one('SELECT * FROM scoring_model WHERE name = %s', (name,)):
+    if db.select_one(
+        'SELECT * FROM scoring_model WHERE name = %s and version = %s',
+        (
+            name,
+            version,
+        ),
+    ):
         logger.info(f'Updating existing scoring model {name}')
         DB().alter(
-            'UPDATE scoring_model SET type = %s, params = %s WHERE name = %s',
-            (type_, params, name),
+            'UPDATE scoring_model SET type = %s, version = %s, ' ' params = %s WHERE name = %s',
+            (type_, version, params, name),
         )
     else:
         logger.info(f'Inserting new scoring model {name}')
         DB().alter(
-            'INSERT INTO scoring_model(name, type, params) VALUES (%s, %s, %s)',
-            (name, type_, params),
+            'INSERT INTO scoring_model(name, type, version, params, created_dt) '
+            ' VALUES (%s, %s, %s, %s, %s)',
+            (name, type_, version, params, created_dt),
         )

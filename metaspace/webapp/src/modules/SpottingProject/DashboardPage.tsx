@@ -23,6 +23,8 @@ import { getDetectabilitySourcesQuery } from '../../api/group'
 import { currentUserWithGroupDetectabilityQuery } from '../../api/user'
 import { CirclePlusFilled, Grid, InfoFilled, Loading, QuestionFilled, RemoveFilled } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
+import ExternalWindowSvg from '../../assets/inline/refactoring-ui/icon-external-window.svg'
+import StatefulIcon from '../../components/StatefulIcon.vue'
 
 interface Options {
   xAxis: any
@@ -826,7 +828,9 @@ const filterMap: any = {
   d: 'ds',
   nL: 'nl',
   pol: 'mode',
+  Polarity: 'mode',
   mS: 'MALDI matrix',
+  'Matrix short': 'MALDI matrix',
   t: 'MALDI matrix',
   name: 'mol',
 }
@@ -1249,7 +1253,7 @@ export default defineComponent({
           state.options.yAxis === 'fine_path' ||
           state.options.yAxis === 'name'
             ? formulas
-            : (yAxisFilter.includes('MALDI matrix') ? item.data.label.matrix.join('|') : item.data.label.y)
+            : yAxisFilter.includes('MALDI matrix')
             ? item.data.label.matrix.join('|')
             : item.data.label.y
         url += `&${yAxisFilter}=${encodeURIComponent(value)}`
@@ -1262,12 +1266,88 @@ export default defineComponent({
           state.options.xAxis === 'fine_path' ||
           state.options.xAxis === 'name'
             ? formulas
-            : (xAxisFilter.includes('MALDI matrix') ? item.data.label.matrix.join('|') : item.data.label.x)
+            : xAxisFilter.includes('MALDI matrix')
             ? item.data.label.matrix.join('|')
             : item.data.label.x
         url += `&${xAxisFilter}=${encodeURIComponent(value)}`
       }
       window.open(url, '_blank')
+    }
+
+    const chunkFormulas = (formulas, maxLength) => {
+      const chunks = []
+      let currentChunk = []
+      let currentLength = 0
+
+      formulas.forEach((formula) => {
+        const formulaLength = formula?.length + 1 // +1 for the '|' character
+        if (currentLength + formulaLength > maxLength) {
+          chunks.push(currentChunk.join('|'))
+          currentChunk = [formula]
+          currentLength = formulaLength
+        } else {
+          currentChunk.push(formula)
+          currentLength += formulaLength
+        }
+      })
+
+      // Add the last chunk if it exists
+      if (currentChunk.length > 0) {
+        chunks.push(currentChunk.join('|'))
+      }
+
+      return chunks
+    }
+
+    const handleMetaClick = () => {
+      const baseUrl = 'https://metaspace2020.eu/annotations?db_id=22'
+      let url = baseUrl
+      let datasetIds = []
+      let formulas = []
+      let polarities = []
+      const yAxisFilter: any = filterMap[state.options.yAxis]
+      const xAxisFilter: any = filterMap[state.options.xAxis]
+
+      state.filter
+        .filter((item: any) => item.src == 'Polarity')
+        .map((item: any) => {
+          if (Array.isArray(item.value) && yAxisFilter !== 'mode' && xAxisFilter !== 'mode') {
+            polarities = item.value
+          }
+        })
+
+      state.data.forEach((item: any) => {
+        formulas = formulas.concat(item?.label?.formulas)
+        if ((item?.label?.datasetIds || []).length > 0) {
+          datasetIds = datasetIds.concat(item?.label?.datasetIds)
+        }
+
+        if (yAxisFilter === 'mode') {
+          polarities.push(item?.label?.y)
+        }
+        if (xAxisFilter === 'mode') {
+          polarities.push(item?.label?.x)
+        }
+      })
+      formulas = uniq(formulas).filter((value) => value !== null && value !== undefined)
+      polarities = uniq(polarities)
+
+      if (polarities.length == 1) {
+        const pol = polarities[0] === 'positive' ? 'Positive' : 'Negative'
+        url += `&mode=${pol}`
+      }
+
+      if (formulas.length > 0) {
+        // as the filter max is 1000 characters, we need to split the formulas
+        const maxLength = 950
+        const chunks = chunkFormulas(formulas, maxLength)
+
+        chunks.forEach((chunk) => {
+          window.open(url + `&q=${chunk}`, '_blank')
+        })
+      } else {
+        window.open(url, '_blank')
+      }
     }
 
     const handleVisualizationChange = (value: number = VIEW.SCATTER) => {
@@ -1434,7 +1514,7 @@ export default defineComponent({
                   handleDataSrcChange(text)
                 }}
               >
-                <ElRadioButton label="EMBL" size="default" />
+                <ElRadioButton label="EMBL" />
                 {(allowedSources.value?.includes('ALL') || allSources.value?.includes('ALLEMBL')) && (
                   <ElRadioButton label="ALL" />
                 )}
@@ -1668,6 +1748,28 @@ export default defineComponent({
       return (
         <div class="visualization-container">
           {showChart && renderHelp(xLabelItem, yLabelItem)}
+
+          <ElTooltip
+            placement="bottom"
+            popperClass="custom-tooltip"
+            content="You will be forwarded to show the annotation of all public data on Metaspace
+            for the selected metabolites and polarities.
+            If you would like information for a specific molecule, please use the corresponding filters on the
+            annotations page. Please remember to press 'Generate chart' before clicking this button."
+          >
+            <ElButton
+              size="small"
+              class="gen-btn mr-2"
+              loading={state.loading}
+              disabled={!showChart || !(state.options.xAxis && state.options.yAxis && state.options.aggregation)}
+              onClick={handleMetaClick}
+            >
+              Go to public METASPACE data
+              <StatefulIcon class="h-4 w-4 pointer-events-none ml-1 -mr-1">
+                <ExternalWindowSvg fill="white" stroke="white" />
+              </StatefulIcon>
+            </ElButton>
+          </ElTooltip>
 
           <div class="flex flex-col">
             <a

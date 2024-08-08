@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM  --platform=linux/amd64  ubuntu:20.04
 
 MAINTAINER Vitaly Kovalev <kovalev@embl.de>
 WORKDIR /

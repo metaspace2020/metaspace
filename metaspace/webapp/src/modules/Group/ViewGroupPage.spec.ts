@@ -152,8 +152,6 @@ describe('ViewGroupPage', () => {
           stubs: stubsWithMembersList,
         },
       })
-
-      await flushPromises()
       await nextTick()
 
       expect(wrapper.html()).toMatchSnapshot()
@@ -179,10 +177,7 @@ describe('ViewGroupPage', () => {
           stubs: stubsWithMembersList,
         },
       })
-
-      await flushPromises()
       await nextTick()
-
       expect(wrapper.html()).toMatchSnapshot()
     })
 
@@ -207,7 +202,6 @@ describe('ViewGroupPage', () => {
         },
       })
 
-      await flushPromises()
       await nextTick()
 
       expect(wrapper.html()).toMatchSnapshot()
@@ -234,7 +228,6 @@ describe('ViewGroupPage', () => {
         },
       })
 
-      await flushPromises()
       await nextTick()
 
       expect(wrapper.html()).toMatchSnapshot()
@@ -267,7 +260,6 @@ describe('ViewGroupPage', () => {
         },
       })
 
-      await flushPromises()
       await nextTick()
 
       expect(wrapper.html()).toMatchSnapshot()
@@ -294,7 +286,6 @@ describe('ViewGroupPage', () => {
         },
       })
 
-      await flushPromises()
       await nextTick()
 
       expect(wrapper.html()).toMatchSnapshot()
@@ -321,7 +312,6 @@ describe('ViewGroupPage', () => {
         },
       })
 
-      await flushPromises()
       await nextTick()
 
       expect(wrapper.html()).toMatchSnapshot()
@@ -387,7 +377,6 @@ describe('ViewGroupPage', () => {
         },
       })
 
-      await flushPromises()
       await nextTick()
 
       expect(wrapper.html()).toMatchSnapshot()
@@ -414,7 +403,6 @@ describe('ViewGroupPage', () => {
         },
       })
 
-      await flushPromises()
       await nextTick()
 
       expect(wrapper.html()).toMatchSnapshot()
@@ -441,7 +429,6 @@ describe('ViewGroupPage', () => {
         },
       })
 
-      await flushPromises()
       await nextTick()
 
       expect(wrapper.html()).toMatchSnapshot()

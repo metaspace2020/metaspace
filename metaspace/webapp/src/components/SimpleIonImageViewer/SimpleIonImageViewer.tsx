@@ -14,29 +14,6 @@ import { cloneDeep, isEqual } from 'lodash'
 import { MultiChannelController } from '../MultiChannelController/MultiChannelController'
 import { useStore } from 'vuex'
 
-interface SimpleIonImageViewerProps {
-  isActive: boolean
-  resetViewPort: boolean
-  hideClipping: boolean
-  isNormalized: boolean
-  forceUpdate: boolean
-  keepPixelSelected: boolean
-  showOpticalImage: boolean
-  normalizationData: any
-  dataset: any
-  width: number
-  height: number
-  annotations: any[]
-  scaleType: string
-  scaleBarColor: string
-  colormap: string
-  lockedIntensityTemplate: string
-  globalLockedIntensities: [number | undefined, number | undefined]
-  channels: any[]
-  showChannels: boolean
-  imageTitle: string
-}
-
 interface ImageSettings {
   intensities: any
   ionImagePng: any
@@ -80,7 +57,7 @@ const channels: any = {
   white: 'rgb(255, 255, 255)',
 }
 
-export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
+export const SimpleIonImageViewer = defineComponent({
   name: 'SimpleIonImageViewer',
   props: {
     annotations: { type: Array, default: () => [] },
@@ -126,7 +103,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       default: false,
     },
     normalizationData: {
-      type: Object,
+      type: Object as any,
       default: null,
     },
     globalLockedIntensities: {
@@ -134,7 +111,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       default: () => [undefined, undefined],
     },
     dataset: {
-      type: Object,
+      type: Object as any,
       default: () => {},
     },
     lockedIntensityTemplate: {
@@ -196,7 +173,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
         Group: annotation.dataset?.group,
         Projects: annotation.dataset?.projects,
       }
-      return Object.assign(safeJsonParse(annotation.dataset.metadataJson), datasetMetadataExternals)
+      return Object.assign({}, safeJsonParse(annotation?.dataset?.metadataJson), datasetMetadataExternals)
     }
 
     const ionImage = (
@@ -813,6 +790,8 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
       const fileName = nonEmptyAnnotations[0]
         ? `${nonEmptyAnnotations[0]?.dataset?.id}_imzml_browser`.replace(/\./g, '_')
         : props.dataset.id
+      const hasOpticalImage = nonEmptyAnnotations[0]?.dataset?.opticalImages[0]?.url
+      const channelWrapperMaxHeight = height * (hasOpticalImage ? 0.7 : 0.9)
 
       if (!imageSettings || !imageSettings.ionImageLayers || !annotations) {
         return null
@@ -888,7 +867,7 @@ export const SimpleIonImageViewer = defineComponent<SimpleIonImageViewerProps>({
           <FadeTransition class="absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden">
             {imageSettings.userScaling && (
               <MultiChannelController
-                style={{ display: !props.showChannels ? 'none' : '' }}
+                style={{ display: !props.showChannels ? 'none' : '', maxHeight: `${channelWrapperMaxHeight}px` }}
                 showClippingNotice={!props.hideClipping && props.scaleType === 'linear'}
                 menuItems={mode.value === 'MULTI' ? state.menuItems : state.menuItems.slice(0, 1)}
                 mode={mode.value}

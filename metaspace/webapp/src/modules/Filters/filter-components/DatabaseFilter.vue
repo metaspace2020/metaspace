@@ -156,9 +156,7 @@ export default defineComponent({
           const { data } = await apolloClient.query({
             query: DATABASE_OPTIONS_FROM_DATASETS_QUERY,
             fetchPolicy: 'cache-first',
-            variables: () => ({
-              filter: { ids: datasetFilter.value.join('|') },
-            }),
+            variables: { filter: { ids: datasetFilter.value.join('|') } },
           })
           const dbs = {}
           for (const { databases } of data.allDatasets) {

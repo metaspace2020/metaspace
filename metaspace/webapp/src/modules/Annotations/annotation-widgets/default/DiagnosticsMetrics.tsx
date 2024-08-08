@@ -28,7 +28,7 @@ export default defineComponent({
       let metrics = props.annotation?.metricsJson != null ? safeJsonParse(props.annotation.metricsJson) : null
       if (metrics != null) {
         const sorted = sortBy(
-          Object.entries(metrics).filter(([k]) => order.includes(k)),
+          Object.entries(metrics).filter(([k]: any) => order.includes(k)),
           ([k]) => order.indexOf(k)
         )
         metrics = Object.fromEntries(sorted)
@@ -36,9 +36,10 @@ export default defineComponent({
       return metrics
     })
 
-    const scoringModel = computed(() =>
-      props.annotation != null ? safeJsonParse(props.annotation.dataset.configJson)?.fdr.scoring_model : null
-    )
+    const isML = computed(() => {
+      const config = safeJsonParse(props.annotation.dataset.configJson) || {}
+      return config?.analysis_version === 3
+    })
 
     const renderPopoverContent = () => {
       return (
@@ -65,13 +66,12 @@ export default defineComponent({
           </div>
         )
       } else if (metrics.value != null) {
-        const isV1 = scoringModel.value == null
-        const metricItems = [
+        const metricItems: any = [
           { name: ['ρ', <sub>spatial</sub>], formattedVal: metrics.value.spatial.toFixed(3) },
           { name: ['ρ', <sub>spectral</sub>], formattedVal: metrics.value.spectral.toFixed(3) },
           { name: ['ρ', <sub>chaos</sub>], formattedVal: metrics.value.chaos.toFixed(3) },
         ]
-        if (!isV1) {
+        if (isML.value) {
           metricItems.push(
             {
               name: ['m/z error', <sub>abs</sub>],
@@ -84,7 +84,7 @@ export default defineComponent({
           )
         }
 
-        if (isV1) {
+        if (!isML.value) {
           metricsFormula = (
             <div class="msm-score-calc">
               {'MSM score = '}

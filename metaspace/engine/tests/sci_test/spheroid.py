@@ -16,6 +16,7 @@ from sm.engine import image_storage, molecular_db
 from sm.engine.annotation.scoring_model import (
     upload_catboost_scoring_model,
     save_scoring_model_to_db,
+    find_by_name_version,
 )
 from sm.engine.annotation_lithops.annotation_job import ServerAnnotationJob
 from sm.engine.annotation_lithops.executor import Executor
@@ -219,7 +220,12 @@ class SciTester:
 
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
         ds.config['analysis_version'] = self.analysis_version
-        ds.config['fdr']['scoring_model'] = 'v3_default' if self.analysis_version > 1 else None
+
+        scoring_model_id = None
+        if self.analysis_version > 1:
+            scoring_model = find_by_name_version(name='Animal', version='v2.2023-12-14')
+            scoring_model_id = scoring_model.id
+        ds.config['fdr']['scoring_model_id'] = scoring_model_id
         ds.config['database_ids'] = [moldb_id]
 
         self.db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
@@ -325,16 +331,21 @@ def ensure_db_populated(sm_config, analysis_version, database):
             molecular_db.create(moldb['name'], moldb['version'], f'{tmp}/moldb.tsv')
 
     if analysis_version > 1:
-        if len(db.select("SELECT name FROM scoring_model WHERE name = 'v3_default'")) == 0:
-            print("Importing v3_default scoring model")
+        if len(db.select("SELECT name FROM scoring_model WHERE type = 'catboost'")) == 0:
+            print("Importing ML scoring model for testing")
             params = upload_catboost_scoring_model(
                 model=Path(proj_root())
-                / '../scoring-models/v3_default/v2.20230517_(METASPACE-ML).cbm',
+                / '../scoring-models/models_default/v2.2023-12-14_(METASPACE-ML_Animal).cbm',
                 bucket=sm_config['lithops']['lithops']['storage_bucket'],
                 prefix=f'test_scoring_models/v3_default',
                 is_public=False,
             )
-            save_scoring_model_to_db(name='v3_default', type_='catboost', params=params)
+            save_scoring_model_to_db(
+                name='Animal',
+                type_='catboost',
+                version='v2.2023-12-14',
+                params=params,
+            )
 
 
 if __name__ == '__main__':

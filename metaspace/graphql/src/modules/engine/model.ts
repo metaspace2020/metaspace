@@ -325,14 +325,25 @@ export class PerfProfileEntry {
 }
 
 @Entity({ schema: 'public' })
+@Unique('scoring_model_uindex', ['name', 'version'])
 export class ScoringModel {
   @PrimaryGeneratedColumn()
   id: number;
 
   /** `name` is for finding models based on a dataset's `scoring_model` DSConfig value */
-  @Index({ unique: true })
   @Column({ type: 'text' })
   name: string;
+
+  @Column({ type: 'text' })
+  version: string;
+
+  @Column({
+    type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
+  })
+  createdDT: Moment;
+
+  @Column({ type: 'boolean', default: false })
+  isArchived: boolean;
 
   /** `type` is hint for how to interpret `params`. sm-engine is responsible for managing the valid values. */
   @Column({ type: 'text' })

@@ -7,6 +7,7 @@ import { datasetFilters } from './datasetFilters'
 import { ContextUser } from './src/context'
 import { AnnotationFilter, AnnotationOrderBy, DatasetFilter, DatasetOrderBy, SortingOrder } from './src/binding'
 import * as _ from 'lodash'
+import { containsSpecialChars, escapeUnenclosedSpecialChars } from './src/utils/regexSanitizer'
 
 const ES_LIMIT_MAX = 50000
 
@@ -456,13 +457,17 @@ const constructAnnotationFilters = (filter: AnnotationFilter & ExtraAnnotationFi
 }
 
 const constructSimpleQueryFilter = (simpleQuery: string, fields = searchable_txt_dataset_fields) => {
+  let regexpPattern = simpleQuery
+  if (containsSpecialChars(simpleQuery)) {
+    regexpPattern = escapeUnenclosedSpecialChars(simpleQuery)
+  }
   return {
     bool: {
       should: [
         {
           regexp: {
             ds_name: {
-              value: `.*${simpleQuery}.*`,
+              value: `.*${regexpPattern}.*`,
               flags: 'ALL',
               case_insensitive: true,
             },

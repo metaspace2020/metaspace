@@ -117,7 +117,7 @@ export function processingSettingsChanged(ds: EngineDataset, update: DatasetUpda
 
   if (update.adducts || update.neutralLosses || update.chemMods
     || update.ppm || update.numPeaks || update.decoySampleSize
-    || update.analysisVersion || update.scoringModel || update.computeUnusedMetrics != null) {
+    || update.analysisVersion || update.scoringModel || update.scoringModelId || update.computeUnusedMetrics != null) {
     procSettingsUpd = true
   }
 

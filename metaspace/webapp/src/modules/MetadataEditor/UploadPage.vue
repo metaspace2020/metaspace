@@ -149,13 +149,13 @@ export default defineComponent({
     })
 
     const { result: currentUserResult, onResult } = useQuery(currentUserIdQuery, null, {
-      fetchPolicy: 'cache-first',
+      fetchPolicy: 'network-only',
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
 
     onResult((result) => {
       const { data } = result
-      if (data?.currentUser == null && store.state.currentTour == null) {
+      if (data && data.currentUser == null && store.state.currentTour == null) {
         store.commit('account/showDialog', {
           dialog: 'signIn',
           dialogCloseRedirect: '/',
@@ -218,6 +218,16 @@ export default defineComponent({
             }
           }
 
+          if (newFile.data.size <= 0) {
+            ElMessageBox.alert(`Files with .ibd extension must be greater than 0.`, 'File too small', {
+              dangerouslyUseHTMLString: true,
+              showConfirmButton: false,
+            }).catch(() => {
+              /* Ignore exception raised when alert is closed */
+            })
+            return false // Prevent the file from being added
+          }
+
           const currentFiles = Object.values(fileLookup)
           if (currentFiles.length === 0) return true
           if (currentFiles.length === 2) return false
@@ -247,7 +257,7 @@ export default defineComponent({
     const fetchStorageKey = async () => {
       state.status = 'LOADING'
       try {
-        const response = await fetch(`${uploadEndpoint.value}/s3/uuid`)
+        const response = await fetch(`${uploadEndpoint.value}/s3/uuid`, { cache: 'no-cache' })
         if (response.status < 200 || response.status >= 300) {
           const responseBody = await response.text()
           reportError(new Error(`Unexpected server response getting upload UUID: ${response.status} ${responseBody}`))
@@ -295,9 +305,17 @@ export default defineComponent({
 
       if (state.uploads.imzml === true && state.uploads.ibd === true) {
         const [file] = result.successful
-        const { uploadURL } = file
+        const uploadURL = file?.uploadURL
 
-        state.inputPath = createInputPath(uploadURL, uuid.value)
+        try {
+          state.inputPath = createInputPath(uploadURL, uuid.value)
+        } catch (e) {
+          // failed to create input path, reset the state so user can reupload and report error
+          onFileRemoved({ extension: 'imzml' })
+          onFileRemoved({ extension: 'ibd' })
+          reportError(JSON.stringify(result)) // TODO: Remove after read logs in production
+          return
+        }
         state.status = 'UPLOADED'
       } else {
         if (result.failed.length) {

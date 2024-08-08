@@ -339,14 +339,15 @@ CREATE TABLE "public"."perf_profile_entry" (
 CREATE TABLE "public"."scoring_model" (
   "id" SERIAL NOT NULL, 
   "name" text NOT NULL, 
+  "version" text NOT NULL, 
+  "created_dt" TIMESTAMP NOT NULL, 
+  "is_archived" boolean NOT NULL DEFAULT false, 
   "type" text NOT NULL, 
   "params" json NOT NULL, 
+  CONSTRAINT "scoring_model_uindex" UNIQUE ("name", 
+  "version"), 
   CONSTRAINT "PK_f4aafae7cbb3f34533cb9f932a6" PRIMARY KEY ("id")
 );
-
-CREATE UNIQUE INDEX "IDX_842e010e1dfd01fc0005c8ff8c" ON "public"."scoring_model" (
-  "name"
-) ;
 
 CREATE TABLE "graphql"."dataset" (
   "id" text NOT NULL, 

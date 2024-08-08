@@ -38,7 +38,6 @@ exports[`MetadataEditor > should be able to load an existing dataset > metadata 
 exports[`MetadataEditor > should be able to load an existing dataset > metaspaceOptions 1`] = `
 {
   "adducts": [],
-  "analysisVersion": 1,
   "chemMods": [],
   "databaseIds": [
     1,
@@ -58,6 +57,7 @@ exports[`MetadataEditor > should be able to load an existing dataset > metaspace
     "",
     "",
   ],
+  "scoringModelId": undefined,
   "submitterId": "",
 }
 `;
@@ -88,7 +88,8 @@ exports[`MetadataEditor > should match snapshot 1`] = `
         })
         state.templateOptions = resp.data.allDatasets
       } catch (e) {
-        reportError(e)
+        // pass
+        // reportError(e)
       } finally {
         state.loadingTemplates = false
       }
@@ -324,8 +325,8 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                   </div>
                   <div class=\\"el-form-item__content\\">
                     <div class=\\"mock-el-select\\" model-value=\\"\\" required=\\"true\\">
-                      <div class=\\"mock-el-option\\" label=\\"Positive\\" value=\\"Positive\\"></div>
-                      <div class=\\"mock-el-option\\" label=\\"Negative\\" value=\\"Negative\\"></div>
+                      <div class=\\"mock-el-option\\" label=\\"Positive\\" disabled=\\"false\\" value=\\"Positive\\"></div>
+                      <div class=\\"mock-el-option\\" label=\\"Negative\\" disabled=\\"false\\" value=\\"Negative\\"></div>
                     </div>
                   </div>
                 </div>
@@ -614,10 +615,10 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     </div>
                     <div class=\\"el-form-item__content\\">
                       <div class=\\"mock-el-select\\" model-value=\\"\\" required=\\"true\\">
-                        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
-                        <div class=\\"mock-el-option\\" label=\\"\\" value=\\"\\"></div>
-                        <div class=\\"mock-el-option\\" label=\\"Find my group...\\" value=\\"FIND_GROUP\\"></div>
-                        <div class=\\"mock-el-option\\" label=\\"No group (Enter PI instead)\\" value=\\"NO_GROUP\\"></div>
+                        <div class=\\"mock-el-option\\" label=\\"\\" disabled=\\"false\\" value=\\"\\"></div>
+                        <div class=\\"mock-el-option\\" label=\\"\\" disabled=\\"false\\" value=\\"\\"></div>
+                        <div class=\\"mock-el-option\\" label=\\"Find my group...\\" disabled=\\"false\\" value=\\"FIND_GROUP\\"></div>
+                        <div class=\\"mock-el-option\\" label=\\"No group (Enter PI instead)\\" disabled=\\"false\\" value=\\"NO_GROUP\\"></div>
                       </div>
                     </div>
                   </div>
@@ -768,23 +769,29 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                 </div>
               </div>
             </div>
-            <div class=\\"el-col el-col-8 is-guttered\\" style=\\"padding-right: 4px; padding-left: 4px;\\"><span class=\\"block\\"><div class=\\"el-form-item el-form-item--default asterisk-left md-form-field\\" role=\\"group\\" aria-labelledby=\\"el-id-replaced\\"><div id=\\"el-id-replaced\\" class=\\"el-form-item__label\\"><span class=\\"field-label flex items-center\\"><span>Analysis version</span>
-              <!--v-if-->
+            <div class=\\"el-col el-col-8 is-guttered\\" style=\\"padding-right: 4px; padding-left: 4px;\\"><span class=\\"block\\"><div class=\\"el-form-item el-form-item--default asterisk-left md-form-field\\" role=\\"group\\" aria-labelledby=\\"el-id-replaced\\"><div id=\\"el-id-replaced\\" class=\\"el-form-item__label\\"><span class=\\"field-label flex items-center\\"><span>Analysis version</span><span style=\\"color: red;\\">*</span>
               <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\">
-                <div data-v-85d866d8=\\"\\" class=\\"analysis-version-help\\"> When comparing data between multiple datasets, it is recommended to process all datasets with the same analysis version. Otherwise, select the latest version for best results. <h4 data-v-85d866d8=\\"\\">Changes:</h4>
-                  <h5 data-v-85d866d8=\\"\\">v2.20230517 (METASPACE-ML):</h5>
-                  <ul data-v-85d866d8=\\"\\">
-                    <li data-v-85d866d8=\\"\\">New metrics for evaluating annotations' mass accuracy.</li>
-                    <li data-v-85d866d8=\\"\\">New ML-powered model for annotation scoring.</li>
-                    <li data-v-85d866d8=\\"\\">Fine-grained reporting of FDR values.</li>
+                <div data-v-85d866d8=\\"\\" class=\\"analysis-version-help\\"> When comparing data between multiple datasets, it is recommended to process all datasets with the same analysis version. Otherwise, select the latest version for best results. <h4 class=\\"my-1\\" data-v-85d866d8=\\"\\">Changes:</h4>
+                  <h5 class=\\"ml-2 my-2\\" data-v-85d866d8=\\"\\">Animal_v2.2023-12-14:</h5>
+                  <ul class=\\"my-1\\" data-v-85d866d8=\\"\\">
+                    <li data-v-85d866d8=\\"\\">New ML models trained on animal datasets.</li>
+                    <li data-v-85d866d8=\\"\\">ML model trained and evaluated on n datasets.</li>
+                    <li data-v-85d866d8=\\"\\">Improved annotation coverage, quality and reliability.</li>
                   </ul>
+                  <h5 class=\\"ml-2 my-2\\" data-v-85d866d8=\\"\\">Plant_v2.2023-12-14:</h5>
+                  <ul class=\\"my-1\\" data-v-85d866d8=\\"\\">
+                    <li data-v-85d866d8=\\"\\">New ML models trained on plant datasets.</li>
+                    <li data-v-85d866d8=\\"\\">ML model trained and evaluated on n datasets.</li>
+                    <li data-v-85d866d8=\\"\\">Improved annotation coverage, quality and reliability.</li>
+                  </ul>
+                  <p class=\\"ml-2 text-xs\\" data-v-85d866d8=\\"\\"><i class=\\"el-icon-warning-outline\\" data-v-85d866d8=\\"\\"></i> Select <span class=\\"model-input\\" data-v-85d866d8=\\"\\">Animal_v2.2023-12-14</span> or <span class=\\"model-input\\" data-v-85d866d8=\\"\\">Plant_v2.2023-12-14</span> based on whether the submitted samples are obtained from species that are classified into animal or plant kingdom, respectively. If the samples are obtained from a different kingdom (e.g. Bacteria or Fungi), please use <span class=\\"model-input\\" data-v-85d866d8=\\"\\">Animal_v2.2023-12-14</span> as this model is trained on a broader range of datasets and is designed to be indifferent to sample-specific metadata, focusing solely on ions and their corresponding feature scores. For more information, check out our <a target=\\"_blank\\" href=\\"https://www.biorxiv.org/content/10.1101/2023.05.29.542736v2\\" data-v-85d866d8=\\"\\">bioArxiv paper</a></p>
                 </div>
               </div></span>
             </div>
             <div class=\\"el-form-item__content\\">
-              <div class=\\"mock-el-select\\" required=\\"false\\">
-                <div class=\\"mock-el-option\\" label=\\"v1 (Original MSM)\\" value=\\"1\\"></div>
-                <div class=\\"mock-el-option\\" label=\\"v2.20230517 (METASPACE-ML)\\" value=\\"3\\"></div>
+              <div class=\\"mock-el-select\\" required=\\"true\\">
+                <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" disabled=\\"false\\" value=\\"0\\"></div>
+                <div class=\\"mock-el-option\\" label=\\"_ (METASPACE-ML)\\" disabled=\\"false\\" value=\\"0\\"></div>
               </div>
             </div>
           </div></span>

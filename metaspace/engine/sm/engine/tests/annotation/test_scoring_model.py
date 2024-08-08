@@ -9,7 +9,8 @@ import pytest
 from catboost import CatBoost, Pool
 
 from sm.engine.annotation.scoring_model import (
-    load_scoring_model,
+    load_scoring_model_by_id,
+    find_by_name_version,
     upload_catboost_scoring_model,
     save_scoring_model_to_db,
 )
@@ -28,6 +29,7 @@ BUCKET_NAME = 'sm-engine-tests'
 @pytest.fixture()
 def s3_catboost_scoring_model(test_db):
     name = 'test_scoring_model'
+    version = 'v1'
     features = ['chaos', 'chaos_fdr', 'mz_err_abs_fdr']
     # Train a model that just predicts the chaos metric and ignores the other features
     dummy_X = pd.DataFrame(
@@ -43,13 +45,13 @@ def s3_catboost_scoring_model(test_db):
 
     # Upload the model to S3
     params = upload_catboost_scoring_model(model, BUCKET_NAME, name, False, dummy_X)
-    save_scoring_model_to_db(name, 'catboost', params)
+    save_scoring_model_to_db(name=name, type_='catboost', version=version, params=params)
 
-    return name
+    return find_by_name_version(name, version)
 
 
 def test_catboost_scoring_model(s3_catboost_scoring_model):
-    scoring_model = load_scoring_model(s3_catboost_scoring_model)
+    scoring_model = load_scoring_model_by_id(s3_catboost_scoring_model.id)
 
     metrics_df = pd.DataFrame(
         {
@@ -66,9 +68,6 @@ def test_catboost_scoring_model(s3_catboost_scoring_model):
     new_target_df, new_decoy_df = scoring_model.score(target_df, decoy_df, 2)
     new_merged_df = pd.concat([new_target_df, new_decoy_df]).sort_index()
 
-    print(new_target_df)
-    print(new_decoy_df)
-    print(new_merged_df)
     assert 'chaos' in new_target_df.columns
     assert 'chaos_fdr' in new_target_df.columns
     assert 'mz_err_abs_fdr' in new_target_df.columns

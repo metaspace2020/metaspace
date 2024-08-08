@@ -187,7 +187,7 @@ export const Resolvers = {
         }
       }
 
-      if (update.name != null || update.email != null) {
+      if (update.name != null) {
         const userDSs = await entityManager.getRepository(DatasetModel).find({ userId })
         if (userDSs) {
           logger.info(`Updating user '${userId}' datasets...`)

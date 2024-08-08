@@ -261,13 +261,13 @@ export default defineComponent({
 
         ${datasetDetailItemFragment}
       `,
-      {
+      computed(() => ({
         maxVisibleDatasets: maxVisibleDatasets.value,
         projectId: projectId.value,
-      },
-      {
-        enabled: computed(() => projectId.value != null),
-      }
+      })),
+      computed(() => ({
+        enabled: !!projectId.value,
+      }))
     )
     onDataResult(() => {
       setTimeout(() => {
@@ -278,7 +278,7 @@ export default defineComponent({
 
     const { onResult } = useSubscription(datasetDeletedQuery)
 
-    onResult(({ data }) => {
+    onResult(({ data }: any) => {
       if (data && data.datasetDeleted) {
         removeDatasetFromAllDatasetsQuery('data', data.datasetDeleted.id)
       }

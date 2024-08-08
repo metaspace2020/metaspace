@@ -180,7 +180,7 @@ const UploadDialog = defineComponent({
         append-to-body
         title="Upload database"
         onClose={handleClose}
-        class="sm-database-upload-dialog"
+        modalClass="sm-database-upload-dialog"
         onOpened={focusHandler}
         v-slots={{ footer: renderFooter }}
       >

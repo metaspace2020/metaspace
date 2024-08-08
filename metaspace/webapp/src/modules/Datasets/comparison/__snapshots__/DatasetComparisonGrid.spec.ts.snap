@@ -46,7 +46,7 @@ exports[`DatasetComparisonGrid > it should match snapshot 1`] = `
             </transition>
           </div>
           <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\" class=\\"absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden\\">
-            <div class=\\"multi-channel-ctrl-wrapper\\" style=\\"padding-bottom: 0px; padding-top: 0px;\\">
+            <div class=\\"multi-channel-ctrl-wrapper\\" style=\\"padding-bottom: 0px; padding-top: 0px; max-height: 270px;\\">
               <!---->
             </div>
           </transition>
@@ -96,7 +96,7 @@ exports[`DatasetComparisonGrid > it should match snapshot 1`] = `
             </transition>
           </div>
           <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\" class=\\"absolute top-0 right-0 mt-3 ml-3 dom-to-image-hidden\\">
-            <div class=\\"multi-channel-ctrl-wrapper\\" style=\\"padding-bottom: 0px; padding-top: 0px;\\">
+            <div class=\\"multi-channel-ctrl-wrapper\\" style=\\"padding-bottom: 0px; padding-top: 0px; max-height: 270px;\\">
               <!---->
             </div>
           </transition>

@@ -71,7 +71,7 @@ export interface MetaspaceOptions {
     email: string
   } | null
   analysisVersion: number
-  scoringModel: string
+  scoringModelId: number
   ppm: number
   numPeaks: number
   decoySampleSize: number
@@ -143,14 +143,14 @@ function deriveSection(section: JsonSchemaProperty, sectionKey: string): FormSec
       ...section,
       type: 'object',
       title: section.title || prettify(sectionKey),
-      properties: mapValues(section.properties, (field, fieldKey) => ({
+      properties: mapValues(section.properties, (field: any, fieldKey: string) => ({
         ...field,
         smEditorType: field.smEditorType || getFieldType(field, fieldKey),
         smEditorColWidth: field.smEditorColWidth || getWidth(fieldKey),
         title: field.title || prettify(fieldKey),
       })),
       help: section.help,
-    }
+    } as FormSectionProperty
     return derivedSection
   } else {
     throw new Error(`Could not derive type of section ${sectionKey}`)
@@ -159,9 +159,15 @@ function deriveSection(section: JsonSchemaProperty, sectionKey: string): FormSec
 
 export function deriveFullSchema(schema: JsonSchemaProperty): FormSchema {
   // TODO: Move all this information into custom attributes in the schema instead of inspecting the data/name/etc.
-  const clonedSchema = cloneDeep(schema)
+  const clonedSchema = cloneDeep(schema) || {}
+
+  if (!clonedSchema?.properties) {
+    console.error('Cloned schema properties undefined')
+    return clonedSchema as FormSchema
+  }
+
   return {
     ...clonedSchema,
     properties: mapValues(clonedSchema.properties, deriveSection),
-  }
+  } as FormSchema
 }

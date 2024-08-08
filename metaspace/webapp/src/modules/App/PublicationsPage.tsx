@@ -10,11 +10,7 @@ const ExternalWindowSvg = defineAsyncComponent(
   () => import('../../assets/inline/refactoring-ui/icon-external-window.svg')
 )
 
-interface Props {
-  className: string
-}
-
-const PublicationsPage = defineComponent<Props>({
+const PublicationsPage = defineComponent({
   name: 'PublicationsPage',
   props: {
     className: {

@@ -4,7 +4,9 @@ exports[`MolecularDatabases > details view > should match snapshot (archived) 1`
 "<transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
   <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
     <div class=\\"relative leading-6 h2-leading-12 database-details-container\\">
-      <div class=\\"absolute top-0 left-0 h-12 flex items-center\\"><a class=\\"font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6\\" href=\\"#\\"><span class=\\"flex items-center\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6 mr-1\\"><svg></svg></i><span class=\\"leading-none mt-1\\">All databases</span></span></a></div>
+      <div class=\\"absolute top-0 left-0 h-12 flex items-center\\">
+        <div class=\\"font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6\\"><span class=\\"flex items-center\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6 mr-1\\"><svg></svg></i><span class=\\"leading-none mt-1\\">All databases</span></span></div>
+      </div>
       <div class=\\"max-w-measure-3 mx-auto mt-6 mb-18\\">
         <div class=\\"flex justify-between items-center\\">
           <h2 title=\\"undefined - undefined\\" class=\\"truncate\\">
@@ -118,7 +120,9 @@ exports[`MolecularDatabases > details view > should match snapshot (manager) 1`]
 "<transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
   <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
     <div class=\\"relative leading-6 h2-leading-12 database-details-container\\">
-      <div class=\\"absolute top-0 left-0 h-12 flex items-center\\"><a class=\\"font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6\\" href=\\"#\\"><span class=\\"flex items-center\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6 mr-1\\"><svg></svg></i><span class=\\"leading-none mt-1\\">All databases</span></span></a></div>
+      <div class=\\"absolute top-0 left-0 h-12 flex items-center\\">
+        <div class=\\"font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6\\"><span class=\\"flex items-center\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6 mr-1\\"><svg></svg></i><span class=\\"leading-none mt-1\\">All databases</span></span></div>
+      </div>
       <div class=\\"max-w-measure-3 mx-auto mt-6 mb-18\\">
         <div class=\\"flex justify-between items-center\\">
           <h2 title=\\"undefined - undefined\\" class=\\"truncate\\">
@@ -237,7 +241,9 @@ exports[`MolecularDatabases > details view > should match snapshot 1`] = `
 "<transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
   <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
     <div class=\\"relative leading-6 h2-leading-12 database-details-container\\">
-      <div class=\\"absolute top-0 left-0 h-12 flex items-center\\"><a class=\\"font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6\\" href=\\"#\\"><span class=\\"flex items-center\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6 mr-1\\"><svg></svg></i><span class=\\"leading-none mt-1\\">All databases</span></span></a></div>
+      <div class=\\"absolute top-0 left-0 h-12 flex items-center\\">
+        <div class=\\"font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6\\"><span class=\\"flex items-center\\"><i data-v-658a289c=\\"\\" class=\\"flex w-6 h-6 mr-1\\"><svg></svg></i><span class=\\"leading-none mt-1\\">All databases</span></span></div>
+      </div>
       <div class=\\"max-w-measure-3 mx-auto mt-6 mb-18\\">
         <div class=\\"flex justify-between items-center\\">
           <h2 title=\\"undefined - undefined\\" class=\\"truncate\\">

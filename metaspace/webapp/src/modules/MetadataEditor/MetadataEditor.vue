@@ -227,8 +227,8 @@ export default defineComponent({
       }))
     })
 
-    const metadataType = computed(() => store.getters.filter.metadataType)
-    const dataType = computed(() => state.value.Data_Type)
+    const metadataType = computed(() => store.getters.filter?.metadataType)
+    const dataType = computed(() => state.value?.Data_Type)
 
     const getDefaultMetadataValue = (metadataType) => {
       if (!metadataSchemas || !metadataSchemas[metadataType]) {
@@ -303,6 +303,21 @@ export default defineComponent({
 
       if (!isNew.value && metaspaceOptions?.ontologyDbIds?.length === 0 && metaspaceOptions.performEnrichment) {
         metaspaceOptions.ontologyDbIds = [ontologyDbs.find((eDb) => eDb.name === 'LION').id]
+      }
+
+      // backward compatibility
+      if (!metaspaceOptions.scoringModelId) {
+        metaspaceOptions.scoringModelId = (scoringModels.find((m) => m.type === 'original') || {}).id
+      } else {
+        let currentModel =
+          scoringModels.find((m) => m.id === metaspaceOptions.scoringModelId) ||
+          // keep for backward compatibility to scoring model (v3_default)
+          scoringModels.find((m) => m.name === metaspaceOptions.scoringModelId) ||
+          {}
+        if (isNew.value && currentModel.isArchived) {
+          currentModel = scoringModels.find((m) => m.type === 'original') || {}
+        }
+        metaspaceOptions.scoringModelId = currentModel.id
       }
 
       // enable default db normal edit if dataset already registered and does not have it
@@ -399,9 +414,9 @@ export default defineComponent({
       state.localErrors = errors
     }
 
-    const getSuggestionsForField = (query, callback, ...args) => {
+    const getSuggestionsForField = async (query, callback, ...args) => {
       const path = args.join('.')
-      apolloClient
+      await apolloClient
         .query({
           query: fetchAutocompleteSuggestionsQuery,
           variables: { field: path, query: query || '' },
@@ -506,6 +521,7 @@ export default defineComponent({
       } = dataset
 
       const config = safeJsonParse(configJson)
+
       return {
         submitterId: submitter ? submitter.id : null,
         groupId: group ? group.id : null,
@@ -521,9 +537,8 @@ export default defineComponent({
         numPeaks: isNew ? null : get(config, 'isotope_generation.n_peaks') || null,
         decoySampleSize: isNew ? null : get(config, 'fdr.decoy_sample_size') || null,
         ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
-        analysisVersion: isNew ? 1 : get(config, 'analysis_version') || 1,
-        scoringModel: isNew ? null : get(config, 'fdr.scoring_model') || null,
         ontologyDbIds: isNew ? null : get(config, 'ontology_db_ids') || null,
+        scoringModelId: get(config, 'fdr.scoring_model_id') || get(config, 'fdr.scoring_model'), // backward compatibility
         performEnrichment: isEnriched,
       }
     }
@@ -537,7 +552,6 @@ export default defineComponent({
         })
       } catch (error) {
         if (retryCount < maxRetries) {
-          console.log(`Retrying... Attempt ${retryCount + 1} of ${maxRetries}`)
           return await fetchUserData(retryCount + 1, maxRetries)
         } else {
           throw new Error(`Could not fetch user info`)
@@ -554,7 +568,6 @@ export default defineComponent({
         })
       } catch (error) {
         if (retryCount < maxRetries) {
-          console.log(`Retrying... Attempt ${retryCount + 1} of ${maxRetries}`)
           return await fetchDatasetData(retryCount + 1, maxRetries)
         } else {
           throw new Error(`Could not fetch user info`)
@@ -633,7 +646,8 @@ export default defineComponent({
         })
         state.templateOptions = resp.data.allDatasets
       } catch (e) {
-        reportError(e)
+        // pass
+        // reportError(e)
       } finally {
         state.loadingTemplates = false
       }
@@ -648,7 +662,7 @@ export default defineComponent({
         const dataset = {
           metadata: (data.dataset && safeJsonParse(data.dataset.metadataJson)) || {},
           metaspaceOptions: {
-            ...(data.dataset != null ? metaspaceOptionsFromDataset(data.dataset, true) : null),
+            ...(data.dataset != null ? metaspaceOptionsFromDataset(data.dataset, false) : null),
             submitterId: store.state.currentTour ? null : data.currentUser.id,
             groupId: store.state.currentTour
               ? null
@@ -659,6 +673,7 @@ export default defineComponent({
         }
         await loadForm(dataset, await loadOptions(), dataset.metadata.Data_Type || 'Imaging MS')
       } catch (e) {
+        state.metadataTemplate = null
         reportError(e)
       }
     }
@@ -688,22 +703,6 @@ export default defineComponent({
             variables: { userId: newSubmitterId },
           })
           state.submitter = result.data.user
-        }
-      }
-    )
-
-    watch(
-      () => state.metaspaceOptions.analysisVersion,
-      (newAnalysisVersion) => {
-        if (newAnalysisVersion === 1 && state.metaspaceOptions.scoringModel != null) {
-          state.metaspaceOptions.scoringModel = null
-        } else if (
-          newAnalysisVersion !== 1 &&
-          state.metaspaceOptions.scoringModel == null &&
-          (state.initialMetaspaceOptions.scoringModel != null ||
-            state.scoringModels.some((m) => m.name === 'v3_default'))
-        ) {
-          state.metaspaceOptions.scoringModel = state.initialMetaspaceOptions.scoringModel ?? 'v3_default'
         }
       }
     )

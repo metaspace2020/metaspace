@@ -230,7 +230,10 @@ input DatasetCreateInput {
   decoySampleSize: Int
   analysisVersion: Int
   computeUnusedMetrics: Boolean
+  scoringModelId: Int
   scoringModel: String
+  scoringModelVersion: String
+  modelType: String
 
   submitterId: ID!  # Only for admins
   groupId: ID
@@ -256,7 +259,10 @@ input DatasetUpdateInput {
   decoySampleSize: Int
   analysisVersion: Int
   computeUnusedMetrics: Boolean
+  scoringModelId: Int
   scoringModel: String
+  scoringModelVersion: String
+  modelType: String
 
 
   submitterId: ID

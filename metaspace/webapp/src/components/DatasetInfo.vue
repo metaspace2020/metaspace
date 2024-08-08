@@ -110,9 +110,9 @@ export default defineComponent({
 
     const treeData = computed(() => {
       const metadata = props.metadata
-      const { image_generation: imageGeneration, fdr: fdrSettings } = props.additionalSettings || {}
+      const { image_generation: imageGeneration, analysis_version: analysisVersion } = props.additionalSettings || {}
       // eslint-disable-next-line camelcase
-      const scoringModel = fdrSettings?.scoring_model ? 'METASPACE-ML' : 'Original MSM'
+      const scoringModel = analysisVersion !== 1 ? 'METASPACE-ML' : 'Original MSM'
 
       delete metadata.Additional_Information
       const schemaBasedVals = objToTreeNode(null, metadata, schema.value)

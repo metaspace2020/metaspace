@@ -89,6 +89,7 @@ describe('DatasetComparisonDialog', () => {
       result: ref(Object.keys(qyeryParams).reduce((acc, key) => ({ ...acc, [key]: qyeryParams[key]() }), {})),
       loading: ref(false),
       onResult: vi.fn(),
+      onError: vi.fn(),
     })
     ;(useMutation as any).mockReturnValue({
       mutate: mockAnnotationAgg,

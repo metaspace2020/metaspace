@@ -1,4 +1,4 @@
-FROM node:16.20.0-alpine3.17
+FROM node:20.14.0-alpine3.20
 
 RUN apk add --no-cache git netcat-openbsd
 RUN yarn global add nodemon

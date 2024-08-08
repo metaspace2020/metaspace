@@ -1,6 +1,5 @@
 // src/setupTests.ts
 import { afterAll, beforeAll, vi, afterEach, expect } from 'vitest'
-import fetch from 'node-fetch'
 import svgMock from './mockSvg'
 import { customSerializer } from './customSerializer'
 import { config } from '@vue/test-utils'
@@ -127,12 +126,6 @@ export function setupGlobalStubs() {
   }
 }
 
-// Polyfill fetch if it's not already available in the global environment
-if (!global.fetch) {
-  // @ts-ignore
-  global.fetch = fetch
-}
-
 // mock new jwt token
 // @ts-ignore
 global.fetch = vi.fn(() =>
@@ -140,6 +133,13 @@ global.fetch = vi.fn(() =>
     json: () => Promise.resolve({ token: 'mock-token' }),
   })
 )
+
+// @ts-ignore
+global.WebSocket = vi.fn().mockImplementation(() => ({
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  close: vi.fn(),
+}))
 
 vi.mock('element-plus', async () => {
   const originalModule: any = await vi.importActual('element-plus')

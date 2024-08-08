@@ -136,10 +136,9 @@ const Details = defineComponent({
         content = (
           <div class="relative leading-6 h2-leading-12 database-details-container">
             <div class="absolute top-0 left-0 h-12 flex items-center">
-              <a
+              <div
                 class="font-medium text-gray-800 hover:text-primary button-reset text-sm no-underline h-6"
                 onClick={props.close}
-                href="#"
               >
                 <span class="flex items-center">
                   <SecondaryIcon class="mr-1">
@@ -147,7 +146,7 @@ const Details = defineComponent({
                   </SecondaryIcon>
                   <span class="leading-none mt-1">All databases</span>
                 </span>
-              </a>
+              </div>
             </div>
             <div class="max-w-measure-3 mx-auto mt-6 mb-18">
               <div class="flex justify-between items-center">

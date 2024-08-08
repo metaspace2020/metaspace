@@ -43,6 +43,9 @@ export default defineComponent({
 
     const removeSelected = () => {
       const { ...query } = router.currentRoute.value.query
+      if (query) {
+        delete query.db
+      }
       router.push({ query })
     }
 

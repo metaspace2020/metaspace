@@ -223,6 +223,7 @@ export const DatasetComparisonGrid = defineComponent({
       const settingPromises = Object.keys(auxGrid).map((key) => {
         const item = auxGrid[key]
         let dsIndex = selectedAnnotation ? selectedAnnotation.datasetIds.findIndex((dsId: string) => dsId === item) : -1
+
         const { annotations } = getChannels(item)
         state.singleAnnotationId[key] = dsIndex
         dsIndex = store.state.mode === 'MULTI' ? annotations.findIndex((item: any) => !item.isEmpty) : dsIndex
@@ -230,7 +231,6 @@ export const DatasetComparisonGrid = defineComponent({
         if (dsIndex !== -1) {
           const selectedIonAnnotation =
             store.state.mode === 'MULTI' ? annotations[dsIndex] : selectedAnnotation.annotations[dsIndex]
-
           state.annotationData[key] = selectedIonAnnotation
           return startImageSettings(key)
         } else {
@@ -261,6 +261,14 @@ export const DatasetComparisonGrid = defineComponent({
       () => props.selectedAnnotation,
       async (newValue) => {
         await updateAnnotationData(settings.value.grid, newValue)
+      }
+    )
+
+    // set images and annotation related items when selected annotation changes
+    watch(
+      () => props.annotations,
+      async () => {
+        await updateAnnotationData(settings.value.grid, props.selectedAnnotation)
       }
     )
 
