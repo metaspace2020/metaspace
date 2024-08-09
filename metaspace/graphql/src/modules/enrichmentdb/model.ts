@@ -20,6 +20,15 @@ export class EnrichmentDB {
   @Index({ unique: true })
   @Column({ type: 'text' })
   name: string;
+
+  @Column({ type: 'text' })
+  molType: string;
+
+  @Column({ type: 'text' })
+  category: string;
+
+  @Column({ type: 'text' })
+  subCategory: string;
 }
 
 @Entity({ schema: 'public' })

@@ -58,6 +58,7 @@
           :value="state.metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :databases-by-group="state.molDBsByGroup"
+          :ontology-dbs="state.ontologyDbs"
           :default-db="state.defaultDb"
           :adduct-options="adductOptions"
           :is-new-dataset="isNew"
@@ -137,6 +138,7 @@ import { datasetListItemsQuery } from '../../api/dataset'
 import emailRegex from '../../lib/emailRegex'
 import config from '../../lib/config'
 import { DocumentCopy } from '@element-plus/icons-vue'
+import { nestEnrichmentDbs } from '../../lib/util'
 
 const factories = {
   string: (schema) => schema.default || '',
@@ -149,6 +151,7 @@ const factories = {
 const defaultMetaspaceOptions = {
   isPublic: true,
   databaseIds: [],
+  ontologyDbIds: [],
   adducts: [],
   name: '',
   submitterId: null,
@@ -190,6 +193,7 @@ export default defineComponent({
       localErrors: {},
       defaultDb: null,
       molDBsByGroup: [],
+      ontologyDbs: [],
       possibleAdducts: {},
       scoringModels: [],
       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
@@ -275,7 +279,7 @@ export default defineComponent({
       const metadata = importMetadata(loadedMetadata, mdType)
 
       // Load options
-      const { adducts, molecularDatabases, scoringModels } = options
+      const { adducts, molecularDatabases, scoringModels, ontologyDbs } = options
       state.possibleAdducts = {
         Positive: adducts.filter((a) => a.charge > 0),
         Negative: adducts.filter((a) => a.charge < 0),
@@ -283,6 +287,9 @@ export default defineComponent({
       state.scoringModels = scoringModels
       state.defaultDb = molecularDatabases.find((db) => db.default) || {}
       state.molDBsByGroup = getDatabasesByGroup(molecularDatabases)
+      state.ontologyDbs = nestEnrichmentDbs(
+        config.features.metabo_enrich ? ontologyDbs : [ontologyDbs.find((eDb) => eDb.name === 'LION')]
+      )
       state.schema = deriveFullSchema(metadataSchemas[mdType])
 
       // TODO remove the additional information from the schema itself at some point
@@ -292,6 +299,11 @@ export default defineComponent({
       }
 
       const selectedDbs = dataset.databases || []
+      const selectedOntologyDbs = dataset.ontologyDatabases || []
+
+      if (!isNew.value && metaspaceOptions?.ontologyDbIds?.length === 0 && metaspaceOptions.performEnrichment) {
+        metaspaceOptions.ontologyDbIds = [ontologyDbs.find((eDb) => eDb.name === 'LION').id]
+      }
 
       // backward compatibility
       if (!metaspaceOptions.scoringModelId) {
@@ -321,6 +333,7 @@ export default defineComponent({
         metaspaceOptions.databaseIds = uniq(
           selectedDbs.map((db) => db.id).concat(molecularDatabases.filter((d) => d.default).map((_) => _.id))
         )
+        metaspaceOptions.ontologyDbIds = uniq(selectedOntologyDbs.map((db) => db.id))
         if (selectedDbs.length > 0) {
           for (const db of selectedDbs) {
             if (molecularDatabases.find((_) => _.id === db.id) === undefined) {
@@ -524,6 +537,7 @@ export default defineComponent({
         numPeaks: isNew ? null : get(config, 'isotope_generation.n_peaks') || null,
         decoySampleSize: isNew ? null : get(config, 'fdr.decoy_sample_size') || null,
         ppm: isNew ? null : get(config, 'image_generation.ppm') || null,
+        ontologyDbIds: isNew ? null : get(config, 'ontology_db_ids') || null,
         scoringModelId: get(config, 'fdr.scoring_model_id') || get(config, 'fdr.scoring_model'), // backward compatibility
         performEnrichment: isEnriched,
       }
@@ -579,6 +593,7 @@ export default defineComponent({
             },
             submitter: data.currentUser,
             databases: dataset ? dataset.databases : [],
+            ontologyDatabases: dataset?.ontologyDatabases || [],
           }
         } else {
           const result = await fetchDatasetData()

@@ -1,4 +1,4 @@
-import { computed, defineComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, defineComponent, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 // @ts-ignore
 import ECharts from 'vue-echarts'
 import { use } from 'echarts/core'
@@ -279,17 +279,15 @@ export const DatasetEnrichmentChart = defineComponent({
       return chartOptions
     })
 
-    watch(
-      () => chartOptions,
-      () => {
-        if (!chartOptions.value.yAxis.data) return
-        const newSize = chartOptions.value.yAxis.data.length * 30
-        state.size = newSize < 600 ? 600 : newSize
-        setTimeout(() => {
-          handleChartResize()
-        }, 100)
-      }
-    )
+    watch(chartData, async () => {
+      if (!chartData.value) return
+      const newSize = chartData.value.length * 40
+      state.size = newSize < 600 ? 600 : newSize
+      await nextTick()
+      setTimeout(() => {
+        handleChartResize()
+      }, 500)
+    })
 
     const handleChartResize = () => {
       const chartRef: any = spectrumChart.value

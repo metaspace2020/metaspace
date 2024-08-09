@@ -28,6 +28,7 @@ type Dataset {
   metadataJson: String!
   isPublic: Boolean!
   isEnriched: Boolean
+  ontologyDatabases: [EnrichmentDb]
   databases: [MolecularDB!]!
   molDBs: [String!]!  # @deprecated(reason: "Use \"databases\" instead")
   adducts: [String!]!
@@ -219,6 +220,7 @@ input DatasetCreateInput {
   sizeHashJson: String
   metadataJson: String!
   databaseIds: [Int!]
+  ontologyDbIds: [Int]
   molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
   adducts: [String!]!
   neutralLosses: [String!]
@@ -247,6 +249,7 @@ input DatasetUpdateInput {
   metadataJson: String
   description: String
   databaseIds: [Int!]
+  ontologyDbIds: [Int]
   molDBs: [String!]  # @deprecated(reason: "This field will be removed. Use \"databaseIds\" instead.")
   adducts: [String!]
   neutralLosses: [String!]
@@ -386,7 +389,8 @@ type Query {
 
   countDatasetsPerGroup(query: DatasetCountPerGroupInput!): DatasetCountPerGroup!
 
-  lipidEnrichment(datasetId: String!, molDbId: Int, fdr: Float, offSample: Boolean, pValue: Float): [Enrichment]
+  lipidEnrichment(datasetId: String!, molDbId: Int, ontologyId: Int, fdr: Float, offSample: Boolean,
+    colocalizedWith: String, pValue: Float): [Enrichment]
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 

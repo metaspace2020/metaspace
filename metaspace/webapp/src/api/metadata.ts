@@ -9,6 +9,10 @@ export const editDatasetFragment = gql`
     description
     isPublic
     isEnriched
+    ontologyDatabases {
+      id
+      name
+    }
     group {
       id
       name
@@ -185,6 +189,13 @@ export const metadataOptionsQuery = gql`
         id
         shortName
       }
+    }
+    ontologyDbs: allEnrichmentDatabases {
+      id
+      name
+      molType
+      category
+      subCategory
     }
     adducts: adductSuggestions {
       adduct

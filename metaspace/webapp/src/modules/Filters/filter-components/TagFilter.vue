@@ -13,6 +13,7 @@
       :width="width"
       class="tf-value-container pl-3"
       @after-enter="show"
+      @after-leave="$emit('after-leave')"
     >
       <!-- Use the slot content here -->
       <template v-slot:default>
@@ -58,7 +59,7 @@ export default defineComponent({
     removable: { type: Boolean, default: true },
     width: { type: Number, default: 300 },
   },
-  emits: ['destroy', 'show'],
+  emits: ['destroy', 'show', 'after-leave'],
   setup(props, { emit }) {
     const destroy = () => {
       emit('destroy', props.name)

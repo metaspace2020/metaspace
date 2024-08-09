@@ -10,6 +10,7 @@ interface Features {
   ignore_ibd_size: boolean
   enrichment: boolean
   show_dataset_overview: boolean
+  metabo_enrich: boolean
   imzml_browser: boolean
   detectability: boolean
   roi: boolean
@@ -67,6 +68,7 @@ const defaultConfig: ClientConfig = {
     ignore_ibd_size: false,
     enrichment: true,
     show_dataset_overview: true,
+    metabo_enrich: false,
     imzml_browser: true,
     detectability: true,
     roi: true,

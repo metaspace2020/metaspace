@@ -10,7 +10,12 @@
         remote
         @change="(val) => onChange('molClass', val)"
       >
-        <el-option v-for="item in molClasses" :key="item.id" :label="item.name" :value="item.id" />
+        <el-option
+          v-for="item in molClasses"
+          :key="item.id"
+          :label="`${item.name} - ${item.molType} - ${item.category}`"
+          :value="item.id"
+        />
       </el-select>
       <el-select
         :model-value="filterValues.term ? parseInt(filterValues.term, 10) : undefined"
@@ -39,7 +44,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, computed, reactive } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import TagFilter from './TagFilter.vue'
@@ -53,14 +58,19 @@ export default defineComponent({
     filterValues: Object as any,
   },
   setup(props, { emit }) {
-    const filterValues = ref(props.filterValues)
-    const termNameQuery = ref('')
+    const state = reactive({
+      termNameQuery: '',
+      ontoId: props.filterValues.molClass,
+      termId: props.filterValues.term,
+    })
 
     const ENRICHMENT_DATABASES_QUERY = gql`
       query EnrichmentDatabases {
         allEnrichmentDatabases {
           id
           name
+          molType
+          category
         }
       }
     `
@@ -74,11 +84,14 @@ export default defineComponent({
     `
 
     const { result: molClassesResult } = useQuery(ENRICHMENT_DATABASES_QUERY)
-    const { result: termOptionsResult, loading: termOptionsLoading } = useQuery(ENRICHMENT_TERMS_QUERY, () => ({
-      databaseId: parseInt(filterValues.value.molClass, 10),
-      id: filterValues.value.term ? parseInt(filterValues.value.term, 10) : undefined,
-      enrichmentName: termNameQuery.value,
-    }))
+    const { result: termOptionsResult, loading: termOptionsLoading } = useQuery(
+      ENRICHMENT_TERMS_QUERY,
+      computed(() => ({
+        databaseId: parseInt(state.ontoId, 10),
+        id: state.termId ? parseInt(state.termId, 10) : undefined,
+        enrichmentName: state.termNameQuery,
+      }))
+    )
     const molClasses: any = computed(() => molClassesResult.value?.allEnrichmentDatabases)
     const termOptions: any = computed(
       () => termOptionsResult.value?.allEnrichmentTerms || [{ id: -1, enrichmentName: 'No terms' }]
@@ -99,11 +112,16 @@ export default defineComponent({
     }
 
     const updateTermQuery = (query: string) => {
-      termNameQuery.value = query
+      state.termNameQuery = query
+      state.termId = undefined
     }
 
     const onChange = (filterKey: 'molClass' | 'term', val: any) => {
       if (val) {
+        if (filterKey === 'molClass') {
+          updateTermQuery('')
+          emit('change', null, 'term')
+        }
         emit('change', val, filterKey)
       } else {
         emit('destroy', filterKey)

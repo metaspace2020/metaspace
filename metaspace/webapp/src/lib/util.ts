@@ -165,3 +165,76 @@ export const convertUploadUrlToS3Path = (url: string) => {
   const { bucket, key } = parseS3Url(new URL(url))
   return `s3://${bucket}/${key}`
 }
+
+export const nestEnrichmentDbs = (data: any) => {
+  // Helper function to capitalize the first letter of a string
+  const capitalize = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+  }
+
+  // Helper function to create a nested structure
+  const createNestedStructure = (entries, keys) => {
+    if (keys.length === 0) {
+      return entries.map((entry) => ({
+        id: entry.id,
+        label: capitalize(entry.name),
+        children: [],
+      }))
+    }
+
+    const key = keys[0]
+    const validEntries = entries.filter((entry) => entry && entry[key] != null)
+    const invalidEntries = entries.filter((entry) => !entry || entry[key] == null) // Entries without the current key
+
+    const groups = validEntries.reduce((acc, item) => {
+      const keyValue = item[key]
+      const groupKey = (item.molType ? `${item.molType}-` : '') + key + '-' + keyValue.toLowerCase()
+      if (!acc[groupKey]) {
+        acc[groupKey] = {
+          id: groupKey,
+          label: capitalize(keyValue),
+          children: [],
+        }
+      }
+      acc[groupKey].children.push(item)
+      return acc
+    }, {})
+
+    // Directly include entries that cannot be grouped by the current key
+    invalidEntries.forEach((item) => {
+      if (item) {
+        groups[item.id] = {
+          id: item.id,
+          label: capitalize(item.name),
+          children: [], // No children as these are leaf nodes with no further categorization
+        }
+      }
+    })
+
+    return Object.values(groups).map((group) => ({
+      ...group,
+      children: createNestedStructure(group.children, keys.slice(1)),
+    }))
+  }
+
+  return createNestedStructure(data, ['molType', 'category', 'subCategory'])
+}
+
+export const collectDeepestValues = (node: any) => {
+  const values = []
+
+  // Helper function to recursively find the deepest values
+  const recurse = (currentNode: any) => {
+    // If the node has children, recurse further
+    if (currentNode.children && currentNode.children.length > 0) {
+      currentNode.children.forEach(recurse)
+    } else {
+      // No children, so this is a deepest node
+      values.push(currentNode.id)
+    }
+  }
+
+  // Start the recursion from the initial node
+  recurse(node)
+  return values
+}

@@ -118,23 +118,35 @@ def create(
     import_mappings(df)
 
 
-def get_mappings_by_mol_db_id(moldb_id: str) -> List[EnrichmentDBMoleculeMapping]:
+def get_mappings_by_mol_db_id(
+    moldb_id: str, ontdb_ids: List[int]
+) -> List[EnrichmentDBMoleculeMapping]:
     """Find enrichment database by id."""
 
     data = DB().select_with_fields(
-        'SELECT * FROM enrichment_db_molecule_mapping WHERE molecular_db_id = %s', params=(moldb_id)
+        'SELECT enrichment_db_molecule_mapping.* FROM enrichment_db_molecule_mapping '
+        'LEFT JOIN  enrichment_term et '
+        'ON et.id = enrichment_db_molecule_mapping.enrichment_term_id WHERE molecular_db_id = %s '
+        'AND et.enrichment_db_id = ANY (%s) ',
+        params=(moldb_id, list(ontdb_ids)),
     )
     if not data:
         raise SMError(f'EnrichmentDBMoleculeMapping not found: {moldb_id}')
     return [EnrichmentDBMoleculeMapping(**row) for row in data]
 
 
-def get_mappings_by_formula(formula: str, moldb_id: str) -> List[EnrichmentDBMoleculeMapping]:
+def get_mappings_by_formula(
+    formula: str, moldb_id: str, ontdb_ids: List[int]
+) -> List[EnrichmentDBMoleculeMapping]:
     """Find enrichment database by id."""
 
     data = DB().select_with_fields(
-        'SELECT * FROM enrichment_db_molecule_mapping WHERE molecular_db_id = %s and formula = %s',
-        params=(moldb_id, formula),
+        'SELECT enrichment_db_molecule_mapping.* FROM enrichment_db_molecule_mapping '
+        'LEFT JOIN  enrichment_term et '
+        'ON et.id = enrichment_db_molecule_mapping.enrichment_term_id  '
+        'WHERE molecular_db_id = %s AND formula = %s '
+        'AND et.enrichment_db_id = ANY (%s)',
+        params=(moldb_id, formula, list(ontdb_ids)),
     )
     if not data:
         raise SMError(f'EnrichmentDBMoleculeMapping not found: {moldb_id}')

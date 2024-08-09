@@ -25,7 +25,7 @@ import { getS3Client } from '../../../utils/awsClient'
 import { In, IsNull } from 'typeorm'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import canDeleteEsDataset from '../operation/canDeleteEsDataset'
-import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/model'
+import { DatasetEnrichment as DatasetEnrichmentModel, EnrichmentDB } from '../../enrichmentdb/model'
 
 interface DbDataset {
   id: string;
@@ -149,6 +149,21 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   async isEnriched(ds, args, ctx) {
     const result = await getEnrichment(ctx, ds._source.ds_id)
     return !!result
+  },
+
+  async ontologyDatabases(ds, _, ctx): Promise<EnrichmentDB[]> {
+    let ontDbIds = ds._source.ds_config?.ontology_db_ids
+
+    if (!ontDbIds) {
+      const result = await ctx.entityManager.createQueryBuilder(DatasetEnrichmentModel,
+        'dsEnrichment')
+        .where('dsEnrichment.datasetId = :datasetId', { datasetId: ds._source.ds_id }).getRawMany()
+      ontDbIds = result.map((item: any) => item.dsEnrichment_enrichment_db_id)
+    }
+
+    return await ctx.entityManager.createQueryBuilder(EnrichmentDB, 'ontDb')
+      .where('ontDb.id = ANY(:ontDbIds)', { ontDbIds })
+      .getMany()
   },
 
   async databases(ds, _, ctx): Promise<MolecularDB[]> {

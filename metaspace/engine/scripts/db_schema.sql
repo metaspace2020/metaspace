@@ -159,6 +159,9 @@ CREATE UNIQUE INDEX "IDX_f538e62b7f815edf1a79aa1ee5" ON "graphql"."ion" (
 CREATE TABLE "public"."enrichment_db" (
   "id" SERIAL NOT NULL, 
   "name" text NOT NULL, 
+  "mol_type" text NOT NULL, 
+  "category" text NOT NULL, 
+  "sub_category" text NOT NULL, 
   CONSTRAINT "PK_84f68c150f085f0bc866f19382e" PRIMARY KEY ("id")
 );
 

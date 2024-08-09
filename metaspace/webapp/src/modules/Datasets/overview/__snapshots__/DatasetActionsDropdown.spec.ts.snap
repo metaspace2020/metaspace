@@ -20,7 +20,7 @@ exports[`DatasetActionsDropdown > it should match snapshot 1`] = `
         <div class=\\"el-badge sm-feature-badge\\">Imzml Browser<sup class=\\"el-badge__content el-badge__content--danger is-fixed is-dot\\"></sup></div>
       </div>
     </div>
-    <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">LION enrichment</div>
+    <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Ontology enrichment</div>
     <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Edit</div>
     <div class=\\"mock-el-dropdown-item text-red-500\\" attrs=\\"[object Object]\\">Delete</div>
     <div class=\\"mock-el-dropdown-item text-red-500\\" attrs=\\"[object Object]\\">Reprocess data</div>

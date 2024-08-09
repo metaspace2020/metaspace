@@ -39,6 +39,7 @@ TEST_DS_CONFIG = {
         "scoring_model_id": None,
     },
     "database_ids": [0],
+    "ontology_db_ids": [],
 }
 
 

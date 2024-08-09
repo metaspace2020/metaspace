@@ -36,6 +36,7 @@ import { inject } from 'vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 
 const orderedFilterKeys = [
+  'ontology',
   'database',
   'fdrLevel',
   'group',

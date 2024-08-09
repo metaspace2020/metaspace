@@ -287,6 +287,7 @@ class ServerAnnotationJob:
         self.perf = perf
         self.store_images = store_images
         self.perform_enrichment = perform_enrichment
+        self.ont_db_ids = self.ds.config['ontology_db_ids'] or []
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = _return_imzml_ibd_cobj(
@@ -345,7 +346,7 @@ class ServerAnnotationJob:
         try:
             # Run annotation
             self.results_dfs, self.png_cobjs, self.enrichment_data = self.pipe.run_pipeline(
-                perform_enrichment=self.perform_enrichment, **kwargs
+                perform_enrichment=len(self.ont_db_ids) > 0, **kwargs
             )
 
             # Save acq_geometry
@@ -366,7 +367,7 @@ class ServerAnnotationJob:
             diagnostics = extract_dataset_diagnostics(self.ds.id, self.pipe.imzml_reader)
             add_diagnostics(diagnostics)
 
-            # delete pre calculated enrichments if already exists
+            # delete pre calculated enrichment if already exists
             delete_ds_enrichments(self.ds.id, self.db)
 
             for moldb_id, job_id in moldb_to_job_map.items():
@@ -385,8 +386,10 @@ class ServerAnnotationJob:
 
                 add_diagnostics(extract_job_diagnostics(self.ds.id, job_id, fdr_bundles[job_id]))
 
+                logger.debug(f'N of ontology dbs selected is {len(self.ont_db_ids)}')
+
                 if (
-                    self.perform_enrichment
+                    len(self.ont_db_ids) > 0
                     and self.enrichment_data
                     and moldb_id in self.enrichment_data.keys()
                     and not self.enrichment_data[moldb_id].empty
@@ -394,7 +397,10 @@ class ServerAnnotationJob:
                     # get annotations ids to be used later on to speed up enrichment routes
                     annot_ids = search_results.get_annotations_ids(self.db)
                     bootstrap_df = self.enrichment_data[moldb_id]
-                    add_enrichment(self.ds.id, moldb_id, bootstrap_df, annot_ids, self.db)
+                    # add enrichment for each selected ontology
+                    add_enrichment(
+                        self.ds.id, moldb_id, self.ont_db_ids, bootstrap_df, annot_ids, self.db
+                    )
 
                 update_finished_job(job_id, JobStatus.FINISHED)
 

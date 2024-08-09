@@ -36,6 +36,7 @@ export default {
 
     const f = {
       compoundQuery: filter.compoundName,
+      ontologyId: filter.ontology ? parseInt(filter.ontology, 10) : undefined,
       termId: filter.term ? parseInt(filter.term, 10) : undefined,
       chemMod: noneToEmptyString(filter.chemMod),
       neutralLoss: noneToEmptyString(filter.neutralLoss),

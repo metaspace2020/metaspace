@@ -204,7 +204,9 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
 
     @use_pipeline_cache
     def run_enrichment(self):
-        self.enrichment_data = run_enrichment(self.results_dfs)
+        self.enrichment_data = run_enrichment(
+            self.results_dfs, self.ds_config['ontology_db_ids'] or []
+        )
 
     def save_acq_geometry(self, ds):
         """Stores acquisition geometry to DB.

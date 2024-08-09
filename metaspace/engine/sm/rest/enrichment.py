@@ -27,6 +27,7 @@ def calculate_enrichment():  # pylint: disable=too-many-locals
         terms_hash = body['termsHash']
         enrichment_analysis_input = {}
         mols = []
+
         logger.info(f'Calculating from {len(enrichment_sets.keys())} terms.')
         for key in enrichment_sets.keys():
             db_items = set(enrichment_sets[key])
@@ -45,45 +46,54 @@ def calculate_enrichment():  # pylint: disable=too-many-locals
             if key == 'all':
                 continue
 
-            observed = np.median(enrichment_analysis_input[key]['sublist']) / np.median(
-                enrichment_analysis_input['all']['sublist']
-            )
-            expected = (
-                enrichment_analysis_input[key]['background']
-                / enrichment_analysis_input['all']['background']
-            )
-            fold_enrichment_median = observed / expected  ## median fold enrichment
-            fold_enrichment_sd = np.std(
-                (
-                    np.array(enrichment_analysis_input[key]['sublist'])
-                    / np.array(enrichment_analysis_input['all']['sublist'])
+            pvalue_list = []
+            observed_list = []
+            expected_list = []
+            fold_enrichment_median_list = []
+            for i in range(len(enrichment_analysis_input[key]['sublist'])):
+                true_positive = enrichment_analysis_input[key]['sublist'][i]
+                false_positive = enrichment_analysis_input['all']['sublist'][i] - true_positive
+                false_negative = enrichment_analysis_input[key]['background'] - true_positive
+                true_negative = enrichment_analysis_input['all']['background'] - (
+                    true_positive + false_positive + false_negative
                 )
-                / expected
-            )
-            _, pvalue = fisher_exact(
-                [
+
+                observed = true_positive / (true_positive + false_positive)
+                expected = (true_positive + false_negative) / (
+                    true_positive + false_positive + false_negative + true_negative
+                )
+
+                fold_enrichment_median = observed / expected  ## median fold enrichment
+
+                _, pvalue = fisher_exact(
                     [
-                        np.median(enrichment_analysis_input[key]['sublist']),
-                        np.median(enrichment_analysis_input['all']['sublist']),
+                        [
+                            true_positive,
+                            false_positive,
+                        ],
+                        [
+                            false_negative,
+                            true_negative,
+                        ],
                     ],
-                    [
-                        enrichment_analysis_input[key]['background'],
-                        enrichment_analysis_input['all']['background'],
-                    ],
-                ],
-                alternative="greater",
-            )
+                    alternative="greater",
+                )
+                pvalue_list.append(pvalue)
+                observed_list.append(observed)
+                expected_list.append(expected)
+                fold_enrichment_median_list.append(fold_enrichment_median)
+
             name = terms_hash[key]
             data.append(
                 [
                     name,
                     key,
                     np.median(enrichment_analysis_input[key]['sublist']),
-                    observed,
-                    expected,
-                    fold_enrichment_median,
-                    fold_enrichment_sd,
-                    pvalue,
+                    np.median(observed_list),
+                    np.median(expected_list),
+                    np.median(fold_enrichment_median_list),
+                    np.std(fold_enrichment_median_list),
+                    np.median(pvalue_list),
                 ]
             )
 

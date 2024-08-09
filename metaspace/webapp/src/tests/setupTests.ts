@@ -27,6 +27,11 @@ export function setupGlobalStubs() {
     template: '<div class="mock-el-select"><slot></slot></div>',
   }
 
+  const ElTreeSelectMock = {
+    name: 'ElTreeSelectMock',
+    template: '<div class="mock-el-tree-select"><slot></slot></div>',
+  }
+
   const ElOptionGroupMock = {
     name: 'ElOptionGroupMock',
     template: '<div class="mock-el-option-group"><slot></slot></div>',
@@ -112,6 +117,7 @@ export function setupGlobalStubs() {
     'el-dropdown-item': ElDropdownItemMock,
     'el-dialog': ElDialogMock,
     'el-select': ElSelectMock,
+    'el-tree-select': ElTreeSelectMock,
     'el-option-group': ElOptionGroupMock,
     'el-icon': ElIconMock,
     'el-popover': ElPopoverMock,

@@ -1,6 +1,7 @@
 import gql from 'graphql-tag'
 
 import { MolecularDB } from './moldb'
+import { EnrichmentDB } from './enrichmentdb'
 
 // Prefixing these with `Gql` because differently-cased variants are used elsewhere
 export type GqlPolarity = 'POSITIVE' | 'NEGATIVE'
@@ -57,6 +58,7 @@ export interface DatasetDetailItem {
   isPublic: boolean
   molDBs: string[]
   databases: MolecularDB[]
+  ontologyDatabases: EnrichmentDB[]
   status: GqlJobStatus | null
   metadataType: string
   annotationCounts: DatasetAnnotationCount[]
@@ -115,6 +117,13 @@ export const datasetDetailItemFragment = gql`
     sizeHash
     configJson
     isPublic
+    ontologyDatabases {
+      id
+      name
+      molType
+      category
+      subCategory
+    }
     databases {
       id
       name
@@ -488,11 +497,21 @@ export const getDatasetEnrichmentQuery = gql`
   query getDatasetEnrichmentQuery(
     $id: String!
     $dbId: Int = 3
+    $ontologyId: Int
     $fdr: Float = 0.5
     $offSample: Boolean
+    $colocalizedWith: String
     $pValue: Float
   ) {
-    lipidEnrichment(datasetId: $id, molDbId: $dbId, fdr: $fdr, offSample: $offSample, pValue: $pValue) {
+    lipidEnrichment(
+      datasetId: $id
+      molDbId: $dbId
+      ontologyId: $ontologyId
+      fdr: $fdr
+      offSample: $offSample
+      colocalizedWith: $colocalizedWith
+      pValue: $pValue
+    ) {
       id
       termId
       name
