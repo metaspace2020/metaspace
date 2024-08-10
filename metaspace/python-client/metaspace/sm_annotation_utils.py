@@ -828,8 +828,12 @@ class GraphQLClient(object):
         self.query(query, variables)
 
     def create_database(
-        self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False,
-            groupId: str = None
+        self,
+        local_path: Union[str, Path],
+        name: str,
+        version: str,
+        is_public: bool = False,
+        groupId: str = None,
     ) -> dict:
         # TODO: s3 -> s3a in GraphQL
         result = self.query("""query { currentUser { id } }""")
@@ -2113,8 +2117,12 @@ class SMInstance(object):
         return [MolecularDB(db) for db in dbs]
 
     def create_database(
-        self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False,
-            groupId: str = None
+        self,
+        local_path: Union[str, Path],
+        name: str,
+        version: str,
+        is_public: bool = False,
+        groupId: str = None,
     ) -> dict:
         return self._gqclient.create_database(local_path, name, version, is_public, groupId)
 
