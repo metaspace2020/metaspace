@@ -828,7 +828,12 @@ class GraphQLClient(object):
         self.query(query, variables)
 
     def create_database(
-        self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
+        self,
+        local_path: Union[str, Path],
+        name: str,
+        version: str,
+        is_public: bool = False,
+        groupId: str = None,
     ) -> dict:
         # TODO: s3 -> s3a in GraphQL
         result = self.query("""query { currentUser { id } }""")
@@ -855,7 +860,7 @@ class GraphQLClient(object):
                 "version": version,
                 "isPublic": is_public,
                 "filePath": s3_path,
-                "groupId": self.get_primary_group_id(),
+                "groupId": groupId if groupId else self.get_primary_group_id(),
             }
         }
         return self.query(query, variables)['createMolecularDB']
@@ -2112,9 +2117,14 @@ class SMInstance(object):
         return [MolecularDB(db) for db in dbs]
 
     def create_database(
-        self, local_path: Union[str, Path], name: str, version: str, is_public: bool = False
+        self,
+        local_path: Union[str, Path],
+        name: str,
+        version: str,
+        is_public: bool = False,
+        groupId: str = None,
     ) -> dict:
-        return self._gqclient.create_database(local_path, name, version, is_public)
+        return self._gqclient.create_database(local_path, name, version, is_public, groupId)
 
     def update_database(self, id: int, is_public: bool = None, archived: bool = None) -> dict:
         return self._gqclient.update_database(id, is_public, archived)
