@@ -258,30 +258,32 @@ const AboutPage = defineComponent({
                   <div class="svg-container">
                     <EUFlag viewBox="0 0 810 540" alt="EU" />
                   </div>
-                  <span>
+                  <div>
                     <b>European Union Horizon2020 and Horizon Europe Programs</b>
                     <br />
-                    under grant agreements
-                    <a class="mx-1" href="https://cordis.europa.eu/project/id/634402">
-                      634402
-                    </a>
-                    /
-                    <a class="mx-1" href="https://cordis.europa.eu/project/id/773089">
-                      773089
-                    </a>
-                    /
-                    <a class="mx-1" href="https://cordis.europa.eu/project/id/773089">
-                      825184
-                    </a>
-                    /
-                    <a class="mx-1" href="https://cordis.europa.eu/project/id/101092644">
-                      101092644
-                    </a>
-                    /
-                    <a class="ml-1" href="https://cordis.europa.eu/project/id/101092646">
-                      101092646
-                    </a>
-                  </span>
+                    <div class="flex flex-wrap">
+                      under grant agreements
+                      <a class="mx-1" href="https://cordis.europa.eu/project/id/634402">
+                        634402
+                      </a>
+                      /
+                      <a class="mx-1" href="https://cordis.europa.eu/project/id/773089">
+                        773089
+                      </a>
+                      /
+                      <a class="mx-1" href="https://cordis.europa.eu/project/id/773089">
+                        825184
+                      </a>
+                      /
+                      <a class="mx-1" href="https://cordis.europa.eu/project/id/101092644">
+                        101092644
+                      </a>
+                      /
+                      <a class="ml-1" href="https://cordis.europa.eu/project/id/101092646">
+                        101092646
+                      </a>
+                    </div>
+                  </div>
                 </li>
                 <li>
                   <div class="svg-container">

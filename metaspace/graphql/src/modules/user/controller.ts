@@ -166,6 +166,14 @@ export const Resolvers = {
         relations: ['credentials'],
       })
       if (update.email) {
+        // Check if the email is already in use
+        const existingUser = await entityManager.getRepository(UserModel).findOne({
+          where: { email: update.email },
+        })
+        if (existingUser && existingUser.id !== userId) { // email is already in use
+          throw new UserError('There was an error updating the user. Contact the administrator.')
+        }
+
         await sendEmailVerificationToken(userObj.credentials, update.email)
       }
       const { email: notVerifiedEmail, primaryGroupId, ...rest } = update
