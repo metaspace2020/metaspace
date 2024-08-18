@@ -10,7 +10,7 @@
         <a href="mailto:contact@metaspace2020.eu">Contact</a>
       </p>
       <p class="m-0 mt-8">
-        &copy; 2014&ndash;2023 <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov Team</a>
+        &copy; 2014&ndash;2024 <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov Team</a>
       </p>
     </div>
   </footer>

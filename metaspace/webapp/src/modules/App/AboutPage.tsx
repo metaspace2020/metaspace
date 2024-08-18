@@ -190,10 +190,20 @@ const AboutPage = defineComponent({
           </div>
           <div id="about-pt2" class="sm-about py-6 px-18 mx-auto box-border max-w-4xl">
             <section class="sm-about-details max-w-measure-4 mt-0">
+              <h3>Community Discussion</h3>
+              <p>
+                Join METASPACE{' '}
+                <a href="https://github.com/metaspace2020/metaspace/discussions/categories/q-a" target="_blank">
+                  community discussions
+                </a>{' '}
+                , where you can ask questions, share ideas, and get help from the METASPACE team and other users.
+              </p>
+              <h3>What is the METASPACE platform?</h3>
+            </section>
+            <section class="sm-about-details max-w-measure-4 mt-0">
               <h2 class="font-display text-primary leading-12 m-0 text-base uppercase tracking-wide">
                 Frequently asked questions
               </h2>
-              <h3>What is the METASPACE platform?</h3>
               <p>
                 The METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data as
                 well as a spatial metabolite knowledgebase of the metabolites from thousands of public datasets provided
