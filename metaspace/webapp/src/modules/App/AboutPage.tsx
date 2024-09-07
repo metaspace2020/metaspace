@@ -258,11 +258,11 @@ const AboutPage = defineComponent({
               <CiteMetaspace />
               <h3>How to stay in touch?</h3>
               <p>
-                First, please check our <a href="/help">Help</a> section and{' '}
+                First, please check our <a href="/help">Help section</a> and{' '}
                 <a href="https://github.com/metaspace2020/metaspace/discussions" target="_blank">
-                  Discussions
+                  Discussions forum
                 </a>{' '}
-                forum for any questions you might have. If you don’t find what you need, please{' '}
+                for any questions you might have. If you don’t find what you need, please{' '}
                 <a href="mailto:contact@metaspace2020.eu">contact us by email</a>.
               </p>
               <h3 id="please-appreciate-those-who-funded-it">Funding</h3>
