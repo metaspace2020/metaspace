@@ -7,7 +7,7 @@ jobs:
     docker:
       - image: metaspace2020/sm-webapp:0.11
 
-      - image: postgres:9.5-alpine
+      - image: postgres:16.3-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
@@ -60,7 +60,7 @@ jobs:
     docker:
       - image: metaspace2020/sm-webapp:0.11
 
-      - image: postgres:9.5-alpine
+      - image: postgres:16.3-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
@@ -171,20 +171,20 @@ jobs:
     docker:
       - image: metaspace2020/sm-webapp:0.11
 
-      - image: postgres:9.5-alpine
+      - image: postgres:16.3-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
 
-      - image: elasticsearch:8.7.1
+      - image: elasticsearch:8.15.1
         environment:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
           xpack.security.enabled: "false"
         command: [elasticsearch, -Etransport.host=127.0.0.1]
 
-      - image: redis:3.2-alpine
+      - image: redis:7.4.0-alpine
 
-      - image: rabbitmq:3.6-alpine
+      - image: rabbitmq:3.13.7-management
         environment:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
@@ -262,20 +262,20 @@ jobs:
     docker:
       - image: metaspace2020/sm-engine:2.0.0
 
-      - image: redis:5.0.3
+      - image: redis:7.4.0-alpine
 
-      - image: postgres:9.5-alpine
+      - image: postgres:16.3-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
 
-      - image: elasticsearch:8.7.1
+      - image: elasticsearch:8.15.1
         environment:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
           xpack.security.enabled: "false"
         command: [elasticsearch, -Etransport.host=127.0.0.1]
 
-      - image: rabbitmq:3.6-management
+      - image: rabbitmq:3.13.7-management
         environment:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
@@ -329,20 +329,20 @@ jobs:
     docker:
       - image: metaspace2020/sm-engine:2.0.0
 
-      - image: redis:5.0.3
+      - image: redis:7.4.0-alpine
 
-      - image: postgres:9.5-alpine
+      - image: postgres:16.3-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
 
-      - image: elasticsearch:8.7.1
+      - image: elasticsearch:8.15.1
         environment:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
           xpack.security.enabled: "false"
         command: [elasticsearch, -Etransport.host=127.0.0.1]
 
-      - image: rabbitmq:3.6-management
+      - image: rabbitmq:3.13.7-management
         environment:
           RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
