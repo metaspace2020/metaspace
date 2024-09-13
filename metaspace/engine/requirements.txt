@@ -10,7 +10,7 @@ boto3==1.28.64
 fabric3
 pypng==0.0.19    # 0.0.20 introduced incompatible API changes
 pyyaml>=5.1
-elasticsearch==8.7.0
+elasticsearch==8.15.1
 pika==0.13.1
 bottle
 Pillow==9.3.0
@@ -20,7 +20,7 @@ pandas==1.2.0
 cffi
 psycopg2-binary==2.8.6
 cherrypy<9
-redis
+redis==5.0.8
 scikit-learn==0.23.2
 pyspark[sql]==3.0.1
 pyarrow==1.0.1
