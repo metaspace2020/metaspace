@@ -102,8 +102,13 @@
       </li>
       <li>After the paper has been published, add the <b>DOI</b> and make the results available to all.</li>
     </ol>
-    <h2>Feedback</h2>
-    <p>Please send feedback to <a href="mailto:contact@metaspace2020.eu">our e-mail address</a>.</p>
+    <h2>Questions or Feedback</h2>
+    <p>
+      Please ask your questions or provide feedback at the
+      <a href="https://github.com/metaspace2020/metaspace/discussions/categories/q-a" target="_blank"
+        >GitHub Discussion page</a
+      >. For private requests, please <a href="mailto:contact@metaspace2020.eu">email us</a>.
+    </p>
   </content-page>
 </template>
 <script>

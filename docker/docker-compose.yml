@@ -16,14 +16,14 @@ services:
       - sm
 
   redis:
-    image: redis:7.2.5-alpine
+    image: redis:7.4.0-alpine
     ports:
       - "6379:6379"
     networks:
       - sm
 
   rabbitmq:
-    image: rabbitmq:3.13-management
+    image: rabbitmq:3.13.7-management
     environment:
       RABBITMQ_DEFAULT_USER: sm
       RABBITMQ_DEFAULT_PASS: password
