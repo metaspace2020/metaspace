@@ -35,14 +35,14 @@ def online(request: 'SubRequest'):
         original_session_request = requests.sessions.Session.request
 
         @wraps(requests.sessions.Session.request)
-        def session_request_wrapper(self: requests.sessions.Session, method: str, url: str, **kwargs):
+        def session_request_wrapper(
+            self: requests.sessions.Session, method: str, url: str, **kwargs
+        ):
             if host is not None and host in url:
                 raise requests.exceptions.ConnectionError(f"{host} connection was blocked")
             return original_session_request(self, method, url, **kwargs)
 
-        with patch.object(
-            requests.sessions.Session, "request", new=session_request_wrapper
-        ):
+        with patch.object(requests.sessions.Session, "request", new=session_request_wrapper):
             yield
 
 
@@ -51,8 +51,18 @@ def online(request: 'SubRequest'):
     [
         ('valid', True, True, ''),
         ('empty', True, False, ''),
-        ('invalid-password', True, False, 'Login failed. Only public datasets will be accessible.\n'),
-        ('invalid-api_key', True, False, 'Login failed. Only public datasets will be accessible.\n'),
+        (
+            'invalid-password',
+            True,
+            False,
+            'Login failed. Only public datasets will be accessible.\n',
+        ),
+        (
+            'invalid-api_key',
+            True,
+            False,
+            'Login failed. Only public datasets will be accessible.\n',
+        ),
         ('valid', False, False, 'No network connection.\n'),
         ('empty', False, False, ''),
         ('invalid-password', False, False, 'No network connection.\n'),
@@ -62,9 +72,10 @@ def online(request: 'SubRequest'):
 )
 def test_sm_instance(
     config_path: Optional[str],
-    online, expected_logged_in: bool,
+    online,
+    expected_logged_in: bool,
     expected_stdout: str,
-    capsys: 'CaptureFixture'
+    capsys: 'CaptureFixture',
 ):
     sm = SMInstance(config_path=config_path)
     assert sm.logged_in() == expected_logged_in

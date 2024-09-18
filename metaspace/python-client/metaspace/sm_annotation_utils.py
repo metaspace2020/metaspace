@@ -362,7 +362,10 @@ class GraphQLClient(object):
             try:
                 login_res = self.session.post(
                     self._config['signin_url'],
-                    params={'email': self._config['usr_email'], 'password': self._config['usr_pass']},
+                    params={
+                        'email': self._config['usr_email'],
+                        'password': self._config['usr_pass'],
+                    },
                 )
             except requests.exceptions.ConnectionError:
                 self.logged_in = False
