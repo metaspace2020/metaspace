@@ -1,17 +1,15 @@
-FROM python:3.8.18-slim
+FROM python:3.8.20-slim
 
 ENV FLASK_PROXY_PORT 8080
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir \
-        cloudpickle==1.6.0 \
+        cloudpickle==3.0.0 \
         flask==2.3.3 \
         gevent==21.8.0 \
-        ibm-cloud-sdk-core==3.16.6 \
-        ibm-cos-sdk==2.10.0 \
-        pika==1.2.0 \
-        ps-mem==3.12 \
-        redis==3.5.3 \
+        pika==1.3.2 \
+        ps-mem==3.14 \
+        redis==5.0.8 \
         requests==2.29.0 \
         tblib==1.7.0
 
