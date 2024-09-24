@@ -97,15 +97,16 @@ const convertLegacyUrls = () => {
 convertLegacyUrls()
 
 export const routes: any = [
-  { path: '/', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
-  { path: '/about', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
+  { path: '/', name: 'home', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
+  { path: '/about', name: 'about', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
   { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
   {
     path: '/datasets',
+    name: 'dataset-list',
     component: DatasetsPage,
     children: [
       { path: '', component: asyncPages.DatasetTable },
-      { path: 'summary', component: asyncPages.DatasetSummary },
+      { path: 'summary', name: 'summary', component: asyncPages.DatasetSummary },
     ],
   },
   {
@@ -123,20 +124,20 @@ export const routes: any = [
   { path: '/dataset/:dataset_id/annotations', name: 'dataset-annotations', component: asyncPages.AnnotationsPage },
   { path: '/dataset/:dataset_id/browser', name: 'dataset-browser', component: asyncPages.DatasetBrowserPage },
   { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetEnrichmentPage },
-  { path: '/upload', component: asyncPages.UploadPage },
-  { path: '/help', component: asyncPages.HelpPage, meta: { footer: true } },
-  { path: '/user/me', component: asyncPages.EditUserPage },
+  { path: '/upload', name: 'upload', component: asyncPages.UploadPage },
+  { path: '/help', name: 'help', component: asyncPages.HelpPage, meta: { footer: true } },
+  { path: '/user/me', name: 'profile', component: asyncPages.EditUserPage },
 
-  { path: '/admin/health', component: asyncPages.SystemHealthPage },
+  { path: '/admin/health', name: 'admin', component: asyncPages.SystemHealthPage },
 
-  { path: '/account/sign-in', component: DialogPage, props: { dialog: 'signIn' } },
-  { path: '/account/sign-in-success', redirect: redirectAfterSignIn },
-  { path: '/account/create-account', component: DialogPage, props: { dialog: 'createAccount' } },
+  { path: '/account/sign-in', name: 'sign-in', component: DialogPage, props: { dialog: 'signIn' } },
+  { path: '/account/sign-in-success', name: 'sign-in-success', redirect: redirectAfterSignIn },
+  { path: '/account/create-account', name: 'create-acc', component: DialogPage, props: { dialog: 'createAccount' } },
   { path: '/account/forgot-password', component: DialogPage, props: { dialog: 'forgotPassword' } },
   { path: '/account/reset-password', component: ResetPasswordPage },
 
-  { path: '/groups', component: asyncPages.GroupsListPage },
-  { path: '/group/create', component: asyncPages.CreateGroupPage },
+  { path: '/groups', name: 'group-list', component: asyncPages.GroupsListPage },
+  { path: '/group/create', name: 'group-create', component: asyncPages.CreateGroupPage },
   { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
 
   { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
@@ -145,13 +146,13 @@ export const routes: any = [
     path: '/project/:projectIdOrSlug/manage',
     redirect: { path: '/project/:projectIdOrSlug', query: { tab: 'members' } },
   },
-  { path: '/projects', component: asyncPages.ProjectsListPage },
+  { path: '/projects', name: 'project-list', component: asyncPages.ProjectsListPage },
 
-  { path: '/terms', component: asyncPages.TermsPage, meta: { footer: true } },
-  { path: '/privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
-  { path: '/publications', component: asyncPages.PublicationsPage, meta: { footer: true } },
+  { path: '/terms', name: 'terms', component: asyncPages.TermsPage, meta: { footer: true } },
+  { path: '/privacy', name: 'privacy', component: asyncPages.PrivacyPage, meta: { footer: true } },
+  { path: '/publications', name: 'publication-list', component: asyncPages.PublicationsPage, meta: { footer: true } },
 
-  { path: '/design', component: asyncPages.DesignTOC, meta: { footer: true, flex: true } },
+  { path: '/design', name: 'design', component: asyncPages.DesignTOC, meta: { footer: true, flex: true } },
   { path: '/design/styleguide', component: asyncPages.DesignStyleGuide, meta: { footer: true, flex: true } },
   { path: '/design/icons', component: asyncPages.DesignIcons, meta: { footer: true, flex: true } },
   { path: '/design/components', component: asyncPages.DesignComponents, meta: { footer: true, flex: true } },
@@ -159,7 +160,7 @@ export const routes: any = [
 
   { path: '/detectability', name: 'detectability', component: asyncPages.SpottingProjectPage },
 
-  { path: '/:pathMatch(.*)*', component: NotFound, meta: { footer: true, flex: true } },
+  { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound, meta: { footer: true, flex: true } },
 ]
 
 const router = createRouter({
