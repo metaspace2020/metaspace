@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
         ps-mem==3.14 \
         redis==5.0.8 \
         requests==2.29.0 \
-        tblib==1.7.0
+        tblib==3.0.0
 
 COPY requirements.txt /tmp/requirements.txt
 RUN grep -E "^(c?pyMSpec|c?pyImagingMSpec|numpy|scipy|pandas|msgpack|pyimzML|pyarrow|scikit-learn|Pillow|boto3)" /tmp/requirements.txt > /tmp/requirements-lithops.txt
