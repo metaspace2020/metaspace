@@ -2,21 +2,29 @@ import * as winston from 'winston'
 import * as moment from 'moment'
 import config from './config'
 
-const logger = new winston.Logger({
-  transports: [
-    new winston.transports.Console({
-      level: config.log.level,
-      timestamp: function() {
-        return moment().format('YYYY-MM-DD HH:mm:ss,SSS')
-      },
-      // formatter: function(options) {
-      //   // TODO Lachlan: This custom formatter logs an empty string when given an error
-      //   // Copy the default formatter's behavior for when options.message is empty
-      //   // Return string will be passed to logger.
-      //   return options.timestamp() +' - '+ options.level.toUpperCase() +' - '+ (options.message ? options.message : '') +
-      //     (options.meta && Object.keys(options.meta).length ? '\n\t'+ JSON.stringify(options.meta) : '' );
-      // }
+interface CustomInfo extends winston.Logform.TransformableInfo {
+  timestamp?: string;
+}
+
+const customFormat = winston.format.printf(({
+  level,
+  message, timestamp, ...meta
+}: CustomInfo) => {
+  return `${timestamp} - ${level.toUpperCase()} - ${message} ${Object.keys(meta).length
+? '\n\t' + JSON.stringify(meta)
+      : ''}`
+})
+
+const logger = winston.createLogger({
+  level: config.log.level, // Log level from config
+  format: winston.format.combine(
+    winston.format.timestamp({
+      format: () => moment().format('YYYY-MM-DD HH:mm:ss,SSS'), // custom timestamp format
     }),
+    customFormat
+  ),
+  transports: [
+    new winston.transports.Console(),
   ],
 })
 
