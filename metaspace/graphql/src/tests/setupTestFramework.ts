@@ -9,7 +9,15 @@
 // Mock out libraries/files that connect to external services
 jest.mock('amqplib', () => ({ connect: () => new Promise(() => null) }))
 jest.mock('aws-sdk')
-jest.mock('@elastic/elasticsearch')
+jest.mock('@elastic/elasticsearch', () => {
+  return {
+    Client: jest.fn(() => ({
+      index: jest.fn().mockResolvedValue({
+        body: { result: 'created' },
+      }),
+    })),
+  }
+})
 jest.mock('../utils/smApi/datasets')
 jest.mock('../utils/smApi/databases')
 jest.mock('../utils/smApi/smApiCall')
