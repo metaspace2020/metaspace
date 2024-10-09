@@ -9,6 +9,7 @@ import { Resolvers as AnnotationResolvers } from './src/modules/annotation/contr
 import { Resolvers as LookupsResolvers } from './src/modules/lookups/controller'
 import { Resolvers as MolDBResolvers } from './src/modules/moldb/controller'
 import { Resolvers as EnrichmentDBResolvers } from './src/modules/enrichmentdb/controller'
+import { Resolvers as TierResolvers } from './src/modules/tier/controller'
 import { Resolvers as ImageViewerSnapshotResolvers } from './src/modules/imageViewerSnapshot/controller'
 import { mergedSchemas } from './schema'
 import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInterceptorToSchema'
@@ -29,6 +30,7 @@ export const makeNewExecutableSchema = () => {
       LookupsResolvers,
       MolDBResolvers,
       EnrichmentDBResolvers,
+      TierResolvers,
       ImageViewerSnapshotResolvers,
     ],
   })

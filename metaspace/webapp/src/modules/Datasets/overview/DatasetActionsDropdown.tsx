@@ -339,7 +339,12 @@ export const DatasetActionsDropdown = defineComponent({
                   </ElButton>
                 </NewFeatureBadge>
                 {state.showDownloadDialog && (
-                  <DownloadDialog datasetId={id} datasetName={name} onClose={closeDownloadDialog} />
+                  <DownloadDialog
+                    datasetId={id}
+                    datasetName={name}
+                    onClose={closeDownloadDialog}
+                    isLogged={currentUser !== null}
+                  />
                 )}
                 {state.showCompareDialog && (
                   <DatasetComparisonDialog selectedDatasetIds={[id]} onClose={closeCompareDialog} />

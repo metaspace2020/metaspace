@@ -1,0 +1,79 @@
+import {MigrationInterface, QueryRunner} from "typeorm";
+
+export class ApiUsage1727982165857 implements MigrationInterface {
+    name = 'ApiUsage1727982165857'
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        // ENUM('DOWNLOAD', 'PROCESS', 'REPROCESS', 'DELETE', 'EDIT'),
+        // ENUM('PUBLIC', 'PRIVATE') NOT NULL,
+        // ENUM('WEBAPP', 'API') NOT NULL,
+        await queryRunner.query(`
+            CREATE TABLE "public"."api_usage" (
+                "id" SERIAL NOT NULL PRIMARY KEY,
+                "user_id" uuid REFERENCES "graphql"."user"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+                "dataset_id" text REFERENCES "public"."dataset"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+                "action_type" text NOT NULL,
+                "dataset_type" text NOT NULL,
+                "source" text NOT NULL,
+                "action_dt" TIMESTAMP
+            )
+        `);
+
+        await queryRunner.query(`
+            CREATE INDEX "idx_api_usage_user_id" ON "public"."api_usage" ("user_id")
+        `);
+        await queryRunner.query(`
+            CREATE INDEX "idx_api_usage_dataset_id" ON "public"."api_usage" ("dataset_id")
+        `);
+        await queryRunner.query(`
+            CREATE INDEX "idx_api_usage_action_dt" ON "public"."api_usage" ("action_dt")
+        `);
+        await queryRunner.query(`
+            CREATE INDEX "idx_api_usage_action_type_dataset_type_source" ON "public"."api_usage" ("action_type", "dataset_type", "source")
+        `);
+
+        await queryRunner.query(`
+            CREATE TABLE "public"."tier" (
+                "id" SERIAL NOT NULL PRIMARY KEY,
+                "name" text NOT NULL,
+                "created_at" TIMESTAMP DEFAULT NOW(),
+                "is_active" BOOLEAN DEFAULT TRUE
+            )
+        `);
+
+        //  ENUM('DOWNLOAD', 'PROCESS', 'REPROCESS', 'DELETE', 'EDIT') NOT NULL,
+        // ENUM('HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR') NOT NULL,
+        await queryRunner.query(`
+            CREATE TABLE "public"."tier_rules" (
+                "id" SERIAL NOT NULL PRIMARY KEY,
+                "tier_id" INT REFERENCES "tier"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+                "action_type" text NOT NULL,
+                "period" INT NOT NULL,
+                "period_type" text NOT NULL, 
+                "limit" INT NOT NULL,
+                "created_at" TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        await queryRunner.query(`
+            CREATE INDEX "idx_tier_rules_tier_id" ON "public"."tier_rules" ("tier_id")
+        `);
+        await queryRunner.query(`
+            CREATE INDEX "idx_tier_rules_action_type_period_type" ON "public"."tier_rules" ("action_type", "period_type")
+        `);
+
+        await queryRunner.query(`ALTER TABLE "graphql"."user" ADD "tier" text NOT NULL DEFAULT 'REGULAR'`);
+    }
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`DROP INDEX "public"."idx_api_usage_user_id"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_api_usage_dataset_id"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_api_usage_action_dt"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_api_usage_action_type_dataset_type_source"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_tier_rules_tier_id"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_tier_rules_action_type_period_type"`);
+
+        await queryRunner.query(`DROP TABLE "public"."api_usage"`);
+        await queryRunner.query(`DROP TABLE "public"."tier_rules"`);
+        await queryRunner.query(`DROP TABLE "public"."tier"`);
+        await queryRunner.query(`ALTER TABLE "graphql"."user" DROP COLUMN "tier"`);
+    }
+}

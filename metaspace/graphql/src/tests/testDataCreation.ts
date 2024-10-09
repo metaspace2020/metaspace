@@ -9,6 +9,7 @@ import { Dataset, DatasetProject } from '../modules/dataset/model'
 import { DatasetDiagnostic, EngineDataset, Job } from '../modules/engine/model'
 import { Group, UserGroup as UserGroupModel } from '../modules/group/model'
 import { MolecularDB } from '../modules/moldb/model'
+import { Tier, TierRule, ApiUsage } from '../modules/tier/model'
 import { isMemberOfGroup } from '../modules/dataset/operation/isMemberOfGroup'
 
 export const createTestUser = async(user?: Partial<User>): Promise<User> => {
@@ -200,4 +201,42 @@ export const createTestDatasetDiagnostic = async(
     ...diag,
   })
   return result as unknown as DatasetDiagnostic
+}
+
+export const createTestTier = async(tier?: Partial<Tier>): Promise<Tier> => {
+  const tierDefaultFields = {
+    id: 1,
+    name: 'regular',
+    isActive: true,
+    createdAt: moment.utc(moment.utc().toDate()),
+  }
+  return await testEntityManager.save(Tier, { ...tierDefaultFields, ...tier }) as Tier
+}
+
+export const createTestTierRule = async(tierRule?: Partial<TierRule>): Promise<TierRule> => {
+  const tier = await createTestTier()
+  const tierRuleDefaultFields = {
+    name: 'regular',
+    tierId: tier.id,
+    actionType: 'download',
+    period: 1,
+    periodType: 'day',
+    limit: 5,
+    createdAt: moment.utc(moment.utc().toDate()),
+  }
+  return await testEntityManager.save(Tier, { ...tierRuleDefaultFields, ...tierRule }) as TierRule
+}
+
+export const createTestApiUsage = async(apiUsage?: Partial<ApiUsage>): Promise<ApiUsage> => {
+  const user = await createTestUser({ name: 'user test' })
+  const dataset = await createTestDataset()
+  const apiUsageDefaultFields = {
+    userId: user.id,
+    datasetId: dataset.id,
+    actionType: 'download',
+    datasetType: (dataset as any).isPublic ? 'public' : 'private',
+    source: 'api',
+    actionDt: moment.utc(moment.utc().toDate()),
+  }
+  return await testEntityManager.save(ApiUsage, { ...apiUsageDefaultFields, ...apiUsage }) as ApiUsage
 }

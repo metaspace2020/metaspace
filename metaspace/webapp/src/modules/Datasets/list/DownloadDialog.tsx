@@ -3,6 +3,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { DownloadLinkJson, GetDatasetDownloadLink, getDatasetDownloadLink } from '../../../api/dataset'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { ElDialog, ElLoading } from '../../../lib/element-plus'
+import { useStore } from 'vuex'
 
 const getFilenameAndExt = (filename: string) => {
   const lastDot = filename.lastIndexOf('.')
@@ -78,6 +79,7 @@ export default defineComponent({
   props: {
     datasetName: { type: String, required: true },
     datasetId: { type: String, required: true },
+    isLogged: { type: Boolean, default: () => false },
     onClose: { type: Function },
   },
   directives: {
@@ -85,6 +87,8 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const { datasetId } = toRefs(props)
+    const store = useStore()
+
     const { result: downloadLinkResult, loading } = useQuery<GetDatasetDownloadLink>(
       getDatasetDownloadLink,
       { datasetId },
@@ -93,11 +97,27 @@ export default defineComponent({
     const downloadLinks = computed<DownloadLinkJson>(() =>
       downloadLinkResult.value != null ? safeJsonParse(downloadLinkResult.value.dataset.downloadLinkJson) : null
     )
+    const showSignIn = () => {
+      emit('close')
+      store.commit('account/showDialog', 'signIn')
+    }
 
     return () => {
       let content
       if (loading.value) {
         content = <div v-loading class="h-64" />
+      } else if (!props.isLogged) {
+        content = (
+          <div>
+            <p>
+              Please{' '}
+              <a class="cursor-pointer" onClick={showSignIn}>
+                Sign in
+              </a>{' '}
+              to continue.
+            </p>
+          </div>
+        )
       } else if (downloadLinks.value == null) {
         content = (
           <div>

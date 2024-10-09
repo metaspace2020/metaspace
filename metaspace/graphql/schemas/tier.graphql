@@ -1,0 +1,57 @@
+type Tier {
+    id: Int!
+    name: String!
+    isActive: Boolean
+    createdAt: String!
+}
+
+type TierRule {
+    id: Int!
+    tier: Tier
+    actionType: String!
+    period: Int!
+    periodType: String!
+    limit: Int!
+    createdAt: String!
+}
+
+input TierRuleInput {
+    actionType: String
+    period: Int
+    periodType: String
+    limit: Int
+}
+
+type ApiUsage {
+    id: Int!
+    userId: String!
+    datasetId: String!
+    actionType: String!
+    datasetType: String!
+    source: String!
+    actionDt: String!
+}
+
+input ApiUsageInput {
+    datasetId: String
+    actionType: String!
+    datasetType: String!
+    source: String
+}
+
+type Query {
+    allTiers: [Tier]
+    allTierRules(tierId: Int) : [TierRule]
+    allApiUsages(termId: Int) : [String]
+}
+
+type Mutation {
+    createTier(databaseDetails: CreateMolecularDBInput!): Tier!
+    updateTier(tierId: Int!, name: String!): Tier!
+
+    createTierRule(tierId: Int!, actionType: String!, period: Int!, periodType: String!, limit: Int!): TierRule!
+    updateTierRule(tierRuleId: Int!, tierRuleDetails: TierRuleInput): TierRule!
+    deleteTierRule(tierRuleId: Int!): Boolean!
+
+    createApiUsage(userId: String!, apiUsageDetails: ApiUsageInput): ApiUsage!
+}

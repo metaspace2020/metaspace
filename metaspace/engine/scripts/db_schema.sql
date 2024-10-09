@@ -375,9 +375,39 @@ CREATE TABLE "graphql"."user" (
   "email" text, 
   "not_verified_email" text, 
   "role" text NOT NULL DEFAULT 'user', 
+  "tier" text NOT NULL, 
   "credentials_id" uuid NOT NULL, 
   CONSTRAINT "REL_1b5eb1327a74d679537bdc1fa5" UNIQUE ("credentials_id"), 
   CONSTRAINT "PK_ea80e4e2bf12ab8b8b6fca858d7" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."tier" (
+  "id" SERIAL NOT NULL, 
+  "name" text NOT NULL, 
+  "created_at" TIMESTAMP NOT NULL, 
+  CONSTRAINT "PK_3e4a292dc74196abae8c9e25750" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."tier_rules" (
+  "id" SERIAL NOT NULL, 
+  "tier_id" integer NOT NULL, 
+  "action_type" text NOT NULL, 
+  "period" integer NOT NULL, 
+  "period_type" text NOT NULL, 
+  "limit" integer NOT NULL, 
+  "created_at" TIMESTAMP NOT NULL, 
+  CONSTRAINT "PK_02e1f1b63721544000e2258196a" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."api_usage" (
+  "id" SERIAL NOT NULL, 
+  "user_id" uuid NOT NULL, 
+  "dataset_id" text NOT NULL, 
+  "action_type" text NOT NULL, 
+  "dataset_type" text NOT NULL, 
+  "source" text NOT NULL, 
+  "action_dt" TIMESTAMP NOT NULL, 
+  CONSTRAINT "PK_bcaf2df186a22b1d135af4a5ac4" PRIMARY KEY ("id")
 );
 
 CREATE TABLE "graphql"."image_viewer_snapshot" (
@@ -516,6 +546,18 @@ ALTER TABLE "graphql"."dataset_project" ADD CONSTRAINT "FK_e192464449c2ac136fd4f
 
 ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOREIGN KEY (
   "credentials_id") REFERENCES "graphql"."credentials"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."tier_rules" ADD CONSTRAINT "FK_599f75b16a046f6a6c8b35a9746" FOREIGN KEY (
+  "tier_id") REFERENCES "public"."tier"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."api_usage" ADD CONSTRAINT "FK_264191db90317cbdc9a9362c9ab" FOREIGN KEY (
+  "user_id") REFERENCES "graphql"."user"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."api_usage" ADD CONSTRAINT "FK_1cdf7a537cd1e84520c2c4b1f47" FOREIGN KEY (
+  "dataset_id") REFERENCES "graphql"."dataset"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 

@@ -7,6 +7,7 @@ export const mergedSchemas = mergeTypes([
   fs.readFileSync('schemas/lookups.graphql', 'utf8'),
   fs.readFileSync('schemas/annotation.graphql', 'utf8'),
   fs.readFileSync('schemas/enrichmentdb.graphql', 'utf8'),
+  fs.readFileSync('schemas/tier.graphql', 'utf8'),
   fs.readFileSync('schemas/dataset.graphql', 'utf8'),
   fs.readFileSync('schemas/user.graphql', 'utf8'),
   fs.readFileSync('schemas/group.graphql', 'utf8'),
