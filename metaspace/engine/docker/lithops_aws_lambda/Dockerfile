@@ -18,7 +18,7 @@ RUN pip install --upgrade --ignore-installed pip wheel six setuptools \
         ps-mem==3.14 \
         redis==5.0.8 \
         requests==2.29.0 \
-        tblib==1.7.0
+        tblib==3.0.0
 
 ARG FUNCTION_DIR="/function"
 

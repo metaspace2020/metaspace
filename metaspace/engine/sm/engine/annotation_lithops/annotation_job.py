@@ -287,7 +287,7 @@ class ServerAnnotationJob:
         self.perf = perf
         self.store_images = store_images
         self.perform_enrichment = perform_enrichment
-        self.ont_db_ids = self.ds.config['ontology_db_ids'] or []
+        self.ont_db_ids = self.ds.config.get('ontology_db_ids', [])
         self.db = DB()
         self.es = ESExporter(self.db, sm_config)
         self.imzml_cobj, self.ibd_cobj = _return_imzml_ibd_cobj(
