@@ -5,7 +5,7 @@ jobs:
 
   test-graphql:
     docker:
-      - image: metaspace2020/sm-webapp:0.11
+      - image: metaspace2020/sm-webapp:0.12
 
       - image: postgres:16.3-alpine
         environment:

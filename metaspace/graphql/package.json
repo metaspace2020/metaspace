@@ -98,7 +98,7 @@
     "typeorm": "0.2.31",
     "typescript": "^3.9.2",
     "uuid": "^8.3.2",
-    "winston": "^2.4.5"
+    "winston": "3.15.0"
   },
   "devDependencies": {
     "@types/graphql": "^14.0.1",
