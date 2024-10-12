@@ -7,7 +7,7 @@ type Tier {
 
 type TierRule {
     id: Int!
-    tier: Tier
+    tierId: Int!
     actionType: String!
     period: Int!
     periodType: String!

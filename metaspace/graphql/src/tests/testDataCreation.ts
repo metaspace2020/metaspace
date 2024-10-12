@@ -210,13 +210,13 @@ export const createTestTier = async(tier?: Partial<Tier>): Promise<Tier> => {
     isActive: true,
     createdAt: moment.utc(moment.utc().toDate()),
   }
+
   return await testEntityManager.save(Tier, { ...tierDefaultFields, ...tier }) as Tier
 }
 
 export const createTestTierRule = async(tierRule?: Partial<TierRule>): Promise<TierRule> => {
   const tier = await createTestTier()
   const tierRuleDefaultFields = {
-    name: 'regular',
     tierId: tier.id,
     actionType: 'download',
     period: 1,
@@ -224,7 +224,7 @@ export const createTestTierRule = async(tierRule?: Partial<TierRule>): Promise<T
     limit: 5,
     createdAt: moment.utc(moment.utc().toDate()),
   }
-  return await testEntityManager.save(Tier, { ...tierRuleDefaultFields, ...tierRule }) as TierRule
+  return await testEntityManager.save(TierRule, { ...tierRuleDefaultFields, ...tierRule }) as TierRule
 }
 
 export const createTestApiUsage = async(apiUsage?: Partial<ApiUsage>): Promise<ApiUsage> => {

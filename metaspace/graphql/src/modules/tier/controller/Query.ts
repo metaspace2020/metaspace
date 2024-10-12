@@ -8,8 +8,13 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     return await ctx.entityManager.createQueryBuilder(Tier, 'tier')
       .getMany()
   },
-  async allTierRules(_: any, args, ctx: Context): Promise<TierRule[] | null> {
+  async allTierRules(_: any, { tierId }, ctx: Context): Promise<TierRule[] | null> {
     return await ctx.entityManager.createQueryBuilder(TierRule, 'tr')
+      .where((qb : any) => {
+        if (tierId) {
+          qb.where('tr.tier_id = :tierId', { tierId })
+        }
+      })
       .getMany()
   },
   async allApiUsages(_: any, args, ctx: Context): Promise<ApiUsage[] | null> {

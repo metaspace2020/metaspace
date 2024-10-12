@@ -384,11 +384,12 @@ CREATE TABLE "graphql"."user" (
 CREATE TABLE "public"."tier" (
   "id" SERIAL NOT NULL, 
   "name" text NOT NULL, 
+  "is_active" boolean NOT NULL DEFAULT true, 
   "created_at" TIMESTAMP NOT NULL, 
   CONSTRAINT "PK_3e4a292dc74196abae8c9e25750" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "public"."tier_rules" (
+CREATE TABLE "public"."tier_rule" (
   "id" SERIAL NOT NULL, 
   "tier_id" integer NOT NULL, 
   "action_type" text NOT NULL, 
@@ -396,7 +397,7 @@ CREATE TABLE "public"."tier_rules" (
   "period_type" text NOT NULL, 
   "limit" integer NOT NULL, 
   "created_at" TIMESTAMP NOT NULL, 
-  CONSTRAINT "PK_02e1f1b63721544000e2258196a" PRIMARY KEY ("id")
+  CONSTRAINT "PK_4f1df94d749be07863490e9a6ec" PRIMARY KEY ("id")
 );
 
 CREATE TABLE "public"."api_usage" (
@@ -548,7 +549,7 @@ ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOR
   "credentials_id") REFERENCES "graphql"."credentials"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-ALTER TABLE "public"."tier_rules" ADD CONSTRAINT "FK_599f75b16a046f6a6c8b35a9746" FOREIGN KEY (
+ALTER TABLE "public"."tier_rule" ADD CONSTRAINT "FK_b2d1b2bcef298cce781d4b666e5" FOREIGN KEY (
   "tier_id") REFERENCES "public"."tier"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
