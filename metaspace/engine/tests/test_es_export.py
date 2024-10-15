@@ -72,8 +72,8 @@ def test_index_ds_works(sm_config, test_db, es, sm_index, ds_config, metadata, a
     db = DB()
     db.insert(
         "INSERT INTO dataset(id, name, input_path, config, metadata, upload_dt, status, "
-        "status_update_dt, is_public, acq_geometry, ion_thumbnail, size_hash) "
-        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, true, '{}', %s, '{}')",
+        "status_update_dt, is_public, acq_geometry, ion_thumbnail, size_hash, tier) "
+        "VALUES (%s, 'ds_name', 'ds_input_path', %s, %s, %s, 'ds_status', %s, true, '{}', %s, '{}', 'REGULAR')",
         [[ds_id, json.dumps(ds_config), json.dumps(metadata), upload_dt, upload_dt, 'thumb-id']],
     )
     moldb = create_test_molecular_db()

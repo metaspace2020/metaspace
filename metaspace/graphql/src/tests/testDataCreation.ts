@@ -21,6 +21,7 @@ export const createTestUserWithCredentials = async(user?: Partial<User>): Promis
   const userModel = await testEntityManager.save(User, {
     name: 'tester',
     role: 'user',
+    tier: 'REGULAR',
     credentialsId: creds.id,
     email: `${Math.random()}@example.com`,
     ...user,
@@ -215,9 +216,8 @@ export const createTestTier = async(tier?: Partial<Tier>): Promise<Tier> => {
 }
 
 export const createTestTierRule = async(tierRule?: Partial<TierRule>): Promise<TierRule> => {
-  const tier = await createTestTier()
   const tierRuleDefaultFields = {
-    tierId: tier.id,
+    tierId: 1,
     actionType: 'download',
     period: 1,
     periodType: 'day',

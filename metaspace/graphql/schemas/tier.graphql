@@ -5,6 +5,12 @@ type Tier {
     createdAt: String!
 }
 
+input TierInput {
+    name: String
+    isActive: Boolean
+    createdAt: String
+}
+
 type TierRule {
     id: Int!
     tierId: Int!
@@ -46,10 +52,10 @@ type Query {
 }
 
 type Mutation {
-    createTier(databaseDetails: CreateMolecularDBInput!): Tier!
-    updateTier(tierId: Int!, name: String!): Tier!
+    createTier(name: String!, isActive: Boolean!): Tier!
+    updateTier(tierId: Int!, name: String!, isActive: Boolean!): Tier!
 
-    createTierRule(tierId: Int!, actionType: String!, period: Int!, periodType: String!, limit: Int!): TierRule!
+    createTierRule(tierRuleDetails: TierRuleInput): TierRule!
     updateTierRule(tierRuleId: Int!, tierRuleDetails: TierRuleInput): TierRule!
     deleteTierRule(tierRuleId: Int!): Boolean!
 
