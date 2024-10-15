@@ -61,7 +61,7 @@ export class ApiUsage1727982165857 implements MigrationInterface {
             CREATE INDEX "idx_tier_rule_action_type_period_type" ON "public"."tier_rule" ("action_type", "period_type")
         `);
 
-        await queryRunner.query(`ALTER TABLE "graphql"."user" ADD "tier" text NOT NULL DEFAULT 'REGULAR'`);
+        await queryRunner.query(`ALTER TABLE "graphql"."user" ADD "tier" text DEFAULT 'REGULAR'`);
     }
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`DROP INDEX "public"."idx_api_usage_user_id"`);

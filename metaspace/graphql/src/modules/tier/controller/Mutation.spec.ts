@@ -6,23 +6,19 @@ import {
   onBeforeAll,
   onBeforeEach,
   setupTestUsers,
-  testUser,
   userContext,
 } from '../../../tests/graphqlTestEnvironment'
 
 import * as moment from 'moment'
 import { getConnection } from 'typeorm'
-import { Project as ProjectType } from '../../../binding'
 
 describe('modules/tier/controller (mutations)', () => {
-  let userId: string
   beforeAll(onBeforeAll)
   afterAll(onAfterAll)
   beforeEach(async() => {
     jest.clearAllMocks()
     await onBeforeEach()
     await setupTestUsers()
-    userId = testUser.id
     const connection = getConnection()
     await connection.query('ALTER SEQUENCE tier_id_seq RESTART WITH 1') // Reset auto-increment to 1
     await connection.query('ALTER SEQUENCE tier_id_seq RESTART WITH 1') // Reset auto-increment to 1

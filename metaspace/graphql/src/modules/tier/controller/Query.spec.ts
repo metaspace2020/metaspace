@@ -8,14 +8,12 @@ import {
   onBeforeAll,
   onBeforeEach,
   setupTestUsers,
-  testUser,
 } from '../../../tests/graphqlTestEnvironment'
 
 import * as moment from 'moment'
 import { getConnection } from 'typeorm'
 
 describe('modules/tier/controller (queries)', () => {
-  let userId: string
   const TIERS =
       [
         {
@@ -73,7 +71,6 @@ describe('modules/tier/controller (queries)', () => {
     jest.clearAllMocks()
     await onBeforeEach()
     await setupTestUsers()
-    userId = testUser.id
     const connection = getConnection()
     await connection.query('ALTER SEQUENCE tier_id_seq RESTART WITH 1') // Reset auto-increment to 1
     await connection.query('ALTER SEQUENCE tier_id_seq RESTART WITH 1') // Reset auto-increment to 1
@@ -96,7 +93,7 @@ describe('modules/tier/controller (queries)', () => {
       const result = await doQuery(searchQuery)
 
       expect(result.length).toEqual(TIERS.length)
-      expect(result).toEqual(TIERS.map((tier, i) => {
+      expect(result).toEqual(TIERS.map((tier) => {
         return { ...tier, createdAt: moment(tier.createdAt).valueOf().toString() }
       }))
     })

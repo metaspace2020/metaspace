@@ -6,8 +6,6 @@ import {
 import { UserError } from 'graphql-errors'
 import { Repository } from 'typeorm'
 import * as moment from 'moment/moment'
-import { Project as ProjectModel } from '../../project/model'
-import { ProjectSourceRepository } from '../../project/ProjectSourceRepository'
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async createTier(source, args, ctx): Promise<Tier> {
