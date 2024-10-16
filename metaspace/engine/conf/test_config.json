@@ -1,6 +1,6 @@
 {
   "db": {
-    "host": "localhost",
+    "host": "postgres",
     "database": "sm_test",
     "user": "sm",
     "password": "password"
@@ -9,18 +9,18 @@
     "index": "sm_test",
     "dataset_index": "dataset_test",
     "annotation_index": "annotation_test",
-    "host": "localhost",
+    "host": "elasticsearch",
     "port": 9200
   },
   "rabbitmq": {
-    "host": "localhost",
+    "host": "rabbitmq",
     "user": "sm",
     "password": "password"
   },
   "services": {
     "web_app_url": "http://localhost:8082",
-    "img_service_url": "http://localhost:4201",
-    "off_sample": "http://localhost:9876/off-sample",
+    "img_service_url": "http://graphql:4201",
+    "off_sample": "http://off-sample:9876/off-sample",
     "send_email": false,
     "update_daemon_threads": 1,
     "colocalization": true,
@@ -46,7 +46,7 @@
       "workers": 2
     },
     "minio": {
-      "endpoint": "http://localhost:9000",
+      "endpoint": "http://storage:9000",
       "access_key_id": "minioadmin",
       "secret_access_key": "minioadmin",
       "storage_bucket": "sm-lithops-test"
@@ -112,7 +112,7 @@
     "adducts": {"+": ["+H", "+Na", "+K"], "-": ["-H", "+Cl"]}
   },
   "storage": {
-    "endpoint_url": "http://localhost:9000",
+    "endpoint_url": "http://storage:9000",
     "access_key_id": "minioadmin",
     "secret_access_key": "minioadmin"
   },
