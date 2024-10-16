@@ -83,7 +83,7 @@ def test_index_ds_works(sm_config, test_db, es, sm_index, ds_config, metadata, a
         rows=[(ds_id, moldb.id, last_finished, last_finished)],
     )
     (user_id,) = db.insert_return(
-        "INSERT INTO graphql.user (email, name, role, tier) "
+        "INSERT INTO graphql.user (email, name, role, plan) "
         "VALUES ('email', 'user_name', 'user', 'REGULAR') RETURNING id",
         [[]],
     )

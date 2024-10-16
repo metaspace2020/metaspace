@@ -375,29 +375,29 @@ CREATE TABLE "graphql"."user" (
   "email" text, 
   "not_verified_email" text, 
   "role" text NOT NULL DEFAULT 'user', 
-  "tier" text NOT NULL, 
+  "plan" text NOT NULL, 
   "credentials_id" uuid NOT NULL, 
   CONSTRAINT "REL_1b5eb1327a74d679537bdc1fa5" UNIQUE ("credentials_id"), 
   CONSTRAINT "PK_ea80e4e2bf12ab8b8b6fca858d7" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "public"."tier" (
+CREATE TABLE "public"."plan" (
   "id" SERIAL NOT NULL, 
   "name" text NOT NULL, 
   "is_active" boolean NOT NULL DEFAULT true, 
   "created_at" TIMESTAMP NOT NULL, 
-  CONSTRAINT "PK_3e4a292dc74196abae8c9e25750" PRIMARY KEY ("id")
+  CONSTRAINT "PK_d706f7043cd0274b86a2b005ab6" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "public"."tier_rule" (
+CREATE TABLE "public"."plan_rule" (
   "id" SERIAL NOT NULL, 
-  "tier_id" integer NOT NULL, 
+  "plan_id" integer NOT NULL, 
   "action_type" text NOT NULL, 
   "period" integer NOT NULL, 
   "period_type" text NOT NULL, 
   "limit" integer NOT NULL, 
   "created_at" TIMESTAMP NOT NULL, 
-  CONSTRAINT "PK_4f1df94d749be07863490e9a6ec" PRIMARY KEY ("id")
+  CONSTRAINT "PK_6485db5ce2f2fad09cc1707ccad" PRIMARY KEY ("id")
 );
 
 CREATE TABLE "public"."api_usage" (
@@ -549,8 +549,8 @@ ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOR
   "credentials_id") REFERENCES "graphql"."credentials"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-ALTER TABLE "public"."tier_rule" ADD CONSTRAINT "FK_b2d1b2bcef298cce781d4b666e5" FOREIGN KEY (
-  "tier_id") REFERENCES "public"."tier"("id"
+ALTER TABLE "public"."plan_rule" ADD CONSTRAINT "FK_4dfaded40a53f7a0c0d8ab8e512" FOREIGN KEY (
+  "plan_id") REFERENCES "public"."plan"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."api_usage" ADD CONSTRAINT "FK_264191db90317cbdc9a9362c9ab" FOREIGN KEY (

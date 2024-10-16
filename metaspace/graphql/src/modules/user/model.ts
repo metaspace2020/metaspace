@@ -22,7 +22,7 @@ export class User {
   role: 'admin' | 'user';
 
   @Column({ type: 'text' })
-  tier: string;
+  plan: string;
 
   @Column({ type: 'text' })
   credentialsId: string;

@@ -1,18 +1,18 @@
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Query } from '../../../binding'
 import { Context } from '../../../context'
-import { Tier, TierRule, ApiUsage } from '../../tier/model'
+import { Plan, PlanRule, ApiUsage } from '../../plan/model'
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
-  async allTiers(_: any, args, ctx: Context): Promise<Tier[] | null> {
-    return await ctx.entityManager.createQueryBuilder(Tier, 'tier')
+  async allPlans(_: any, args, ctx: Context): Promise<Plan[] | null> {
+    return await ctx.entityManager.createQueryBuilder(Plan, 'plan')
       .getMany()
   },
-  async allTierRules(_: any, { tierId }, ctx: Context): Promise<TierRule[] | null> {
-    return await ctx.entityManager.createQueryBuilder(TierRule, 'tr')
+  async allPlanRules(_: any, { planId }, ctx: Context): Promise<PlanRule[] | null> {
+    return await ctx.entityManager.createQueryBuilder(PlanRule, 'tr')
       .where((qb : any) => {
-        if (tierId) {
-          qb.where('tr.tier_id = :tierId', { tierId })
+        if (planId) {
+          qb.where('tr.plan_id = :planId', { planId })
         }
       })
       .getMany()

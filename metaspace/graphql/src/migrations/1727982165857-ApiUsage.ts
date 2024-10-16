@@ -32,7 +32,7 @@ export class ApiUsage1727982165857 implements MigrationInterface {
         `);
 
         await queryRunner.query(`
-            CREATE TABLE "public"."tier" (
+            CREATE TABLE "public"."plan" (
                 "id" SERIAL NOT NULL PRIMARY KEY,
                 "name" text NOT NULL,
                 "created_at" TIMESTAMP DEFAULT NOW(),
@@ -43,9 +43,9 @@ export class ApiUsage1727982165857 implements MigrationInterface {
         //  ENUM('DOWNLOAD', 'PROCESS', 'REPROCESS', 'DELETE', 'EDIT') NOT NULL,
         // ENUM('HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR') NOT NULL,
         await queryRunner.query(`
-            CREATE TABLE "public"."tier_rule" (
+            CREATE TABLE "public"."plan_rule" (
                 "id" SERIAL NOT NULL PRIMARY KEY,
-                "tier_id" INT REFERENCES "tier"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+                "plan_id" INT REFERENCES "plan"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 "action_type" text NOT NULL,
                 "period" INT NOT NULL,
                 "period_type" text NOT NULL, 
@@ -55,25 +55,25 @@ export class ApiUsage1727982165857 implements MigrationInterface {
         `);
 
         await queryRunner.query(`
-            CREATE INDEX "idx_tier_rule_tier_id" ON "public"."tier_rule" ("tier_id")
+            CREATE INDEX "idx_plan_rule_plan_id" ON "public"."plan_rule" ("plan_id")
         `);
         await queryRunner.query(`
-            CREATE INDEX "idx_tier_rule_action_type_period_type" ON "public"."tier_rule" ("action_type", "period_type")
+            CREATE INDEX "idx_plan_rule_action_type_period_type" ON "public"."plan_rule" ("action_type", "period_type")
         `);
 
-        await queryRunner.query(`ALTER TABLE "graphql"."user" ADD "tier" text DEFAULT 'REGULAR'`);
+        await queryRunner.query(`ALTER TABLE "graphql"."user" ADD "plan" text DEFAULT 'REGULAR'`);
     }
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`DROP INDEX "public"."idx_api_usage_user_id"`);
         await queryRunner.query(`DROP INDEX "public"."idx_api_usage_dataset_id"`);
         await queryRunner.query(`DROP INDEX "public"."idx_api_usage_action_dt"`);
         await queryRunner.query(`DROP INDEX "public"."idx_api_usage_action_type_dataset_type_source"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_tier_rule_tier_id"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_tier_rule_action_type_period_type"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_plan_rule_plan_id"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_plan_rule_action_type_period_type"`);
 
         await queryRunner.query(`DROP TABLE "public"."api_usage"`);
-        await queryRunner.query(`DROP TABLE "public"."tier_rule"`);
-        await queryRunner.query(`DROP TABLE "public"."tier"`);
-        await queryRunner.query(`ALTER TABLE "graphql"."user" DROP COLUMN "tier"`);
+        await queryRunner.query(`DROP TABLE "public"."plan_rule"`);
+        await queryRunner.query(`DROP TABLE "public"."plan"`);
+        await queryRunner.query(`ALTER TABLE "graphql"."user" DROP COLUMN "plan"`);
     }
 }

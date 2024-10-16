@@ -1,50 +1,50 @@
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Mutation } from '../../../binding'
 import {
-  Tier,
+  Plan,
 } from '../model'
 import { UserError } from 'graphql-errors'
 import { Repository } from 'typeorm'
 import * as moment from 'moment/moment'
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
-  async createTier(source, args, ctx): Promise<Tier> {
+  async createPlan(source, args, ctx): Promise<Plan> {
     if (!ctx.isAdmin) {
       throw new UserError('Unauthorized')
     }
 
     const { name, isActive } = args
-    const tierRepo: Repository<Tier> = ctx.entityManager.getRepository(Tier)
+    const planRepo: Repository<Plan> = ctx.entityManager.getRepository(Plan)
 
-    const newTier = tierRepo.create({
+    const newPlan = planRepo.create({
       name,
       isActive,
       createdAt: moment.utc(),
     })
 
-    await tierRepo.insert(newTier)
+    await planRepo.insert(newPlan)
     return await ctx.entityManager.findOneOrFail(
-      Tier, { name: newTier.name }
+      Plan, { name: newPlan.name }
     )
   },
-  async updateTier(source, args, ctx): Promise<Tier> {
+  async updatePlan(source, args, ctx): Promise<Plan> {
     if (!ctx.isAdmin) {
       throw new UserError('Unauthorized')
     }
 
-    const { tierId, name, isActive } = args
-    const tier = await ctx.entityManager.findOne(
-      Tier, { id: tierId }
+    const { planId, name, isActive } = args
+    const plan = await ctx.entityManager.findOne(
+      Plan, { id: planId }
     )
 
-    if (tier === null) {
+    if (plan === null) {
       throw new UserError('Not found')
     }
 
-    await ctx.entityManager.update(Tier, tierId, { name, isActive })
+    await ctx.entityManager.update(Plan, planId, { name, isActive })
 
     return await ctx.entityManager.findOneOrFail(
-      Tier, { id: tierId }
+      Plan, { id: planId }
     )
   },
 }

@@ -22,7 +22,7 @@ MOLDB_COUNT_SEL = 'SELECT COUNT(*) FROM molecular_db'
 def fill_db(test_db):
     db = DB()
     db.insert(
-        'INSERT INTO graphql.user (id, name, email, tier) VALUES (%s, %s, %s, %s)',
+        'INSERT INTO graphql.user (id, name, email, plan) VALUES (%s, %s, %s, %s)',
         [(USER_ID, 'name', 'name@embl.de', 'REGULAR')],
     )
     db.insert(

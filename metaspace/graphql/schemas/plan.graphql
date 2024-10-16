@@ -1,19 +1,19 @@
-type Tier {
+type Plan {
     id: Int!
     name: String!
     isActive: Boolean
     createdAt: String!
 }
 
-input TierInput {
+input PlanInput {
     name: String
     isActive: Boolean
     createdAt: String
 }
 
-type TierRule {
+type PlanRule {
     id: Int!
-    tierId: Int!
+    planId: Int!
     actionType: String!
     period: Int!
     periodType: String!
@@ -21,7 +21,7 @@ type TierRule {
     createdAt: String!
 }
 
-input TierRuleInput {
+input PlanRuleInput {
     actionType: String
     period: Int
     periodType: String
@@ -46,18 +46,18 @@ input ApiUsageInput {
 }
 
 type Query {
-    allTiers: [Tier]
-    allTierRules(tierId: Int) : [TierRule]
+    allPlans: [Plan]
+    allPlanRules(planId: Int) : [PlanRule]
     allApiUsages(termId: Int) : [String]
 }
 
 type Mutation {
-    createTier(name: String!, isActive: Boolean!): Tier!
-    updateTier(tierId: Int!, name: String!, isActive: Boolean!): Tier!
+    createPlan(name: String!, isActive: Boolean!): Plan!
+    updatePlan(planId: Int!, name: String!, isActive: Boolean!): Plan!
 
-    createTierRule(tierRuleDetails: TierRuleInput): TierRule!
-    updateTierRule(tierRuleId: Int!, tierRuleDetails: TierRuleInput): TierRule!
-    deleteTierRule(tierRuleId: Int!): Boolean!
+    createPlanRule(planRuleDetails: PlanRuleInput): PlanRule!
+    updatePlanRule(planRuleId: Int!, planRuleDetails: PlanRuleInput): PlanRule!
+    deletePlanRule(planRuleId: Int!): Boolean!
 
     createApiUsage(userId: String!, apiUsageDetails: ApiUsageInput): ApiUsage!
 }

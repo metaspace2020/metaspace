@@ -9,7 +9,7 @@ import { Dataset, DatasetProject } from '../modules/dataset/model'
 import { DatasetDiagnostic, EngineDataset, Job } from '../modules/engine/model'
 import { Group, UserGroup as UserGroupModel } from '../modules/group/model'
 import { MolecularDB } from '../modules/moldb/model'
-import { Tier, TierRule, ApiUsage } from '../modules/tier/model'
+import { Plan, PlanRule, ApiUsage } from '../modules/plan/model'
 import { isMemberOfGroup } from '../modules/dataset/operation/isMemberOfGroup'
 
 export const createTestUser = async(user?: Partial<User>): Promise<User> => {
@@ -21,7 +21,7 @@ export const createTestUserWithCredentials = async(user?: Partial<User>): Promis
   const userModel = await testEntityManager.save(User, {
     name: 'tester',
     role: 'user',
-    tier: 'REGULAR',
+    plan: 'REGULAR',
     credentialsId: creds.id,
     email: `${Math.random()}@example.com`,
     ...user,
@@ -204,27 +204,27 @@ export const createTestDatasetDiagnostic = async(
   return result as unknown as DatasetDiagnostic
 }
 
-export const createTestTier = async(tier?: Partial<Tier>): Promise<Tier> => {
-  const tierDefaultFields = {
+export const createTestPlan = async(plan?: Partial<Plan>): Promise<Plan> => {
+  const planDefaultFields = {
     id: 1,
     name: 'regular',
     isActive: true,
     createdAt: moment.utc(moment.utc().toDate()),
   }
 
-  return await testEntityManager.save(Tier, { ...tierDefaultFields, ...tier }) as Tier
+  return await testEntityManager.save(Plan, { ...planDefaultFields, ...plan }) as Plan
 }
 
-export const createTestTierRule = async(tierRule?: Partial<TierRule>): Promise<TierRule> => {
-  const tierRuleDefaultFields = {
-    tierId: 1,
+export const createTestPlanRule = async(planRule?: Partial<PlanRule>): Promise<PlanRule> => {
+  const planRuleDefaultFields = {
+    planId: 1,
     actionType: 'download',
     period: 1,
     periodType: 'day',
     limit: 5,
     createdAt: moment.utc(moment.utc().toDate()),
   }
-  return await testEntityManager.save(TierRule, { ...tierRuleDefaultFields, ...tierRule }) as TierRule
+  return await testEntityManager.save(PlanRule, { ...planRuleDefaultFields, ...planRule }) as PlanRule
 }
 
 export const createTestApiUsage = async(apiUsage?: Partial<ApiUsage>): Promise<ApiUsage> => {

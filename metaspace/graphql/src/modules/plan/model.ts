@@ -11,7 +11,7 @@ import { User } from '../user/model'
 import { Dataset } from '../dataset/model'
 
 @Entity({ schema: 'public' })
-export class Tier {
+export class Plan {
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -28,12 +28,12 @@ export class Tier {
 }
 
 @Entity({ schema: 'public' })
-export class TierRule {
+export class PlanRule {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ name: 'tier_id' })
-    tierId: number;
+    @Column({ name: 'plan_id' })
+    planId: number;
 
     @Column({ name: 'action_type', type: 'text' })
     actionType: string;
@@ -52,9 +52,9 @@ export class TierRule {
     })
     createdAt: Moment;
 
-    @ManyToOne(() => Tier)
-    @JoinColumn({ name: 'tier_id' })
-    tier: Tier;
+    @ManyToOne(() => Plan)
+    @JoinColumn({ name: 'plan_id' })
+    plan: Plan;
 }
 
 @Entity({ schema: 'public' })
@@ -91,7 +91,7 @@ export class ApiUsage {
     dataset: Dataset;
 }
 
-export const TIER_ENTITIES = [
-  Tier,
-  TierRule, ApiUsage,
+export const PLAN_ENTITIES = [
+  Plan,
+  PlanRule, ApiUsage,
 ]

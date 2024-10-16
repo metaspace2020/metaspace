@@ -176,7 +176,7 @@ def fill_db(test_db, metadata, ds_config):
     )
     user_id = str(uuid.uuid4())
     db.insert(
-        "INSERT INTO graphql.user (id, name, email, tier) VALUES (%s, %s, %s, %s)",
+        "INSERT INTO graphql.user (id, name, email, plan) VALUES (%s, %s, %s, %s)",
         rows=[(user_id, 'name', 'name@embl.de', 'REGULAR')],
     )
     group_id = str(uuid.uuid4())
