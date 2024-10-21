@@ -1,5 +1,4 @@
 import argparse
-import datetime
 import logging
 import time
 from typing import Any, Dict
@@ -166,12 +165,9 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
+    sql_where = args.sql_where if args.sql_where else None
+
     s3_client = boto3.client('s3')
-
-    sql_where = None
-    if args.sql_where:
-        sql_where = args.sql_where
-
     with GlobalInit(config_path=args.config) as sm_config:
         datasets = {}
         if args.datasets_file:
