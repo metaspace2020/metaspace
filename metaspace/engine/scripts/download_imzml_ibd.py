@@ -146,7 +146,7 @@ if __name__ == "__main__":
         '--output-path',
         dest='output_path',
         type=dir_path,
-        help='The path to the folder where the directories for the archived files will be created'
+        help='The path to the folder where the directories for the archived files will be created',
     )
 
     args = parser.parse_args()
@@ -160,9 +160,7 @@ if __name__ == "__main__":
     # check if two argument is initialized
     if bool(args.datasets_file) & bool(args.sql_where):
         parser.print_usage()
-        print(
-            'Error: must specify only one argument either --datasets-file, --sql-where'
-        )
+        print('Error: must specify only one argument either --datasets-file, --sql-where')
         sys.exit(1)
 
     sql_where = args.sql_where if args.sql_where else None
