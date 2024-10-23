@@ -28,7 +28,7 @@ pyspark[sql]==3.0.1
 pyarrow==1.0.1
 pysparkling==0.6.0
 s3fs
-lithops[aws]==3.5.0
+lithops[aws]==3.5.1
 # numba==0.54.0  # Only used by disabled v2 metrics
 catboost==1.0.3  # Warning - this installs optional dependencies plotly and matplotlib, which are large. Install it without dependencies in Lithops images.
 statsmodels==0.12.2
