@@ -21,13 +21,6 @@ type PlanRule {
     createdAt: String!
 }
 
-input PlanRuleInput {
-    actionType: String
-    period: Int
-    periodType: String
-    limit: Int
-}
-
 type ApiUsage {
     id: Int!
     userId: String!
@@ -38,12 +31,7 @@ type ApiUsage {
     actionDt: String!
 }
 
-input ApiUsageInput {
-    datasetId: String
-    actionType: String!
-    datasetType: String!
-    source: String
-}
+
 
 type Query {
     allPlans: [Plan]
@@ -55,9 +43,10 @@ type Mutation {
     createPlan(name: String!, isActive: Boolean!): Plan!
     updatePlan(planId: Int!, name: String!, isActive: Boolean!): Plan!
 
-    createPlanRule(planRuleDetails: PlanRuleInput): PlanRule!
-    updatePlanRule(planRuleId: Int!, planRuleDetails: PlanRuleInput): PlanRule!
+    createPlanRule(planId: Int!, actionType: String!, period: Int!, periodType: String!, limit: Int!): PlanRule!
+    updatePlanRule(planRuleId: Int!, actionType: String!, period: Int!, periodType: String!, limit: Int!): PlanRule!
     deletePlanRule(planRuleId: Int!): Boolean!
 
-    createApiUsage(userId: String!, apiUsageDetails: ApiUsageInput): ApiUsage!
+    createApiUsage(userId: String!, datasetId: String!, actionType: String!, datasetType: String!,
+        requestSource: String): ApiUsage!
 }

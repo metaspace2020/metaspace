@@ -1,7 +1,8 @@
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Mutation } from '../../../binding'
 import {
-  Plan,
+  ApiUsage,
+  Plan, PlanRule,
 } from '../model'
 import { UserError } from 'graphql-errors'
 import { Repository } from 'typeorm'
@@ -38,13 +39,91 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     )
 
     if (plan === null) {
-      throw new UserError('Not found')
+      throw new Error('Not found')
     }
 
     await ctx.entityManager.update(Plan, planId, { name, isActive })
 
     return await ctx.entityManager.findOneOrFail(
       Plan, { id: planId }
+    )
+  },
+  async createPlanRule(source, args, ctx): Promise<PlanRule> {
+    if (!ctx.isAdmin) {
+      throw new UserError('Unauthorized')
+    }
+
+    const { planId, actionType, period, periodType, limit } = args
+    const planRuleRepo: Repository<PlanRule> = ctx.entityManager.getRepository(PlanRule)
+
+    const newPlanRule = planRuleRepo.create({
+      planId,
+      actionType,
+      period,
+      periodType,
+      limit,
+      createdAt: moment.utc(),
+    })
+
+    await planRuleRepo.insert(newPlanRule)
+    return await ctx.entityManager.findOneOrFail(
+      PlanRule, { id: newPlanRule.id }
+    )
+  },
+  async updatePlanRule(source, args, ctx): Promise<PlanRule> {
+    if (!ctx.isAdmin) {
+      throw new UserError('Unauthorized')
+    }
+
+    const { planRuleId, actionType, period, periodType, limit } = args
+
+    const planRule = await ctx.entityManager.findOne(
+      PlanRule, { id: planRuleId }
+    )
+
+    if (planRule === null) {
+      throw new Error('Not found')
+    }
+
+    await ctx.entityManager.update(PlanRule, planRuleId, { actionType, period, periodType, limit })
+
+    return await ctx.entityManager.findOneOrFail(
+      PlanRule, { id: planRuleId }
+    )
+  },
+  async deletePlanRule(source, args, ctx): Promise<boolean> {
+    if (!ctx.isAdmin) {
+      throw new UserError('Unauthorized')
+    }
+
+    const { planRuleId } = args
+
+    try {
+      await ctx.entityManager.delete(
+        PlanRule, { id: planRuleId }
+      )
+    } catch (e) {
+      return false
+    }
+
+    return true
+  },
+  async createApiUsage(source, args, ctx): Promise<ApiUsage> {
+    const { userId, datasetId, actionType, datasetType, requestSource } = args
+    const apiUsageRepo: Repository<ApiUsage> = ctx.entityManager.getRepository(ApiUsage)
+
+    const newApiUsage = apiUsageRepo.create({
+      userId,
+      datasetId,
+      actionType,
+      datasetType,
+      source: requestSource,
+      actionDt: moment.utc(),
+    })
+
+    await apiUsageRepo.insert(newApiUsage)
+    return await ctx.entityManager.findOneOrFail(
+      ApiUsage, { id: newApiUsage.id }
     )
   },
 }
