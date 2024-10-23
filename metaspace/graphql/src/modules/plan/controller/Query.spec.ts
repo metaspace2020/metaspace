@@ -13,115 +13,97 @@ import {
 import * as moment from 'moment'
 import { getConnection } from 'typeorm'
 
+interface Plan {
+  id: number;
+  name: string;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+interface PlanRule {
+  id: number;
+  planId: number;
+  actionType: string;
+  period: number;
+  periodType: string;
+  limit: number;
+  createdAt: Date;
+}
+
 describe('modules/plan/controller (queries)', () => {
-  const TIERS =
-      [
-        {
-          id: 1,
-          name: 'regular',
-          isActive: true,
-          createdAt: moment.utc(moment.utc().toDate()),
-        },
-        {
-          id: 2,
-          name: 'lab',
-          isActive: false,
-          createdAt: moment.utc(moment.utc().toDate()),
-        },
-        {
-          id: 3,
-          name: 'lab',
-          isActive: true,
-          createdAt: moment.utc(moment.utc().toDate()),
-        },
-      ]
-  const TIER_RULES = [
-    {
-      id: 1,
-      planId: TIERS[0].id,
-      actionType: 'download',
-      period: 1,
-      periodType: 'day',
-      limit: 5,
-      createdAt: moment.utc(moment.utc().toDate()),
-    },
-    {
-      id: 2,
-      planId: TIERS[0].id,
-      actionType: 'download',
-      period: 1,
-      periodType: 'week',
-      limit: 50,
-      createdAt: moment.utc(moment.utc().toDate()),
-    },
-    {
-      id: 3,
-      planId: TIERS[2].id,
-      actionType: 'process',
-      period: 1,
-      periodType: 'day',
-      limit: 2,
-      createdAt: moment.utc(moment.utc().toDate()),
-    },
+  const currentTime: any = moment.utc(moment.utc().toDate())
+
+  const TIERS: Plan[] = [
+    { id: 1, name: 'regular', isActive: true, createdAt: currentTime },
+    { id: 2, name: 'lab', isActive: false, createdAt: currentTime },
+    { id: 3, name: 'lab', isActive: true, createdAt: currentTime },
+  ]
+
+  const TIER_RULES: PlanRule[] = [
+    { id: 1, planId: 1, actionType: 'download', period: 1, periodType: 'day', limit: 5, createdAt: currentTime },
+    { id: 2, planId: 1, actionType: 'download', period: 1, periodType: 'week', limit: 50, createdAt: currentTime },
+    { id: 3, planId: 3, actionType: 'process', period: 1, periodType: 'day', limit: 2, createdAt: currentTime },
   ]
 
   beforeAll(onBeforeAll)
   afterAll(onAfterAll)
+
   beforeEach(async() => {
     jest.clearAllMocks()
     await onBeforeEach()
     await setupTestUsers()
-    const connection = getConnection()
-    await connection.query('ALTER SEQUENCE plan_id_seq RESTART WITH 1') // Reset auto-increment to 1
-    await connection.query('ALTER SEQUENCE plan_id_seq RESTART WITH 1') // Reset auto-increment to 1
-    await connection.query('ALTER SEQUENCE plan_rule_id_seq RESTART WITH 1') // Reset auto-increment to 1
 
-    for (const plan of TIERS) {
-      await createTestPlan(plan)
-    }
-    for (const planRule of TIER_RULES) {
-      await createTestPlanRule(planRule)
-    }
+    const connection = getConnection()
+    await connection.query('ALTER SEQUENCE plan_id_seq RESTART WITH 1')
+    await connection.query('ALTER SEQUENCE plan_rule_id_seq RESTART WITH 1')
+
+    await Promise.all(TIERS.map(plan => createTestPlan(plan as any)))
+    await Promise.all(TIER_RULES.map(rule => createTestPlanRule(rule as any)))
   })
+
   afterEach(onAfterEach)
 
   describe('Query.plan', () => {
-    it('should return all plans', async() => {
-      const searchQuery = `query {
-        allPlans { id name isActive createdAt }
-      }`
-      const result = await doQuery(searchQuery)
+    const queryPlans = 'query { allPlans { id name isActive createdAt } }'
+    const queryPlanRules = 'query { allPlanRules { id planId actionType period periodType limit createdAt } }'
 
+    it('should return all plans', async() => {
+      const result = await doQuery(queryPlans)
       expect(result.length).toEqual(TIERS.length)
-      expect(result).toEqual(TIERS.map((plan) => {
-        return { ...plan, createdAt: moment(plan.createdAt).valueOf().toString() }
-      }))
+      expect(result).toEqual(
+        TIERS.map(({ createdAt, ...plan }: Plan) => ({
+          ...plan,
+          createdAt: moment(createdAt).valueOf().toString(),
+        }))
+      )
     })
 
     it('should return all planRules', async() => {
-      const searchQuery = `query {
-        allPlanRules { id planId actionType period periodType limit createdAt }
-      }`
-      const result = await doQuery(searchQuery)
+      const result = await doQuery(queryPlanRules)
 
       expect(result.length).toEqual(TIER_RULES.length)
-      expect(result).toEqual(TIER_RULES.map((planRULE: any) => {
-        return { ...planRULE, createdAt: moment(planRULE.createdAt).valueOf().toString() }
-      }))
+      expect(result).toEqual(
+        TIER_RULES.map(({ createdAt, ...rule }: PlanRule) => ({
+          ...rule,
+          createdAt: moment(createdAt).valueOf().toString(),
+        }))
+      )
     })
 
-    it('should return all planRules filtering by plan id', async() => {
+    it('should filter planRules by plan id', async() => {
       const query = `query ($planId: Int!) {
         allPlanRules (planId: $planId) { id planId actionType period periodType limit createdAt }
       }`
-      let result = await doQuery(query, { planId: TIERS[0].id })
-      expect(result.length).toEqual(2)
 
-      result = await doQuery(query, { planId: TIERS[2].id })
-      expect(result.length).toEqual(1)
+      const results = await Promise.all([
+        doQuery(query, { planId: 1 }),
+        doQuery(query, { planId: 3 }),
+        doQuery(query, { planId: 2 }),
+      ])
 
-      result = await doQuery(query, { planId: TIERS[1].id })
-      expect(result.length).toEqual(0)
+      expect(results[0].length).toEqual(2)
+      expect(results[1].length).toEqual(1)
+      expect(results[2].length).toEqual(0)
     })
   })
 })
