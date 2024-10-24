@@ -17,11 +17,12 @@ export const createTestUser = async(user?: Partial<User>): Promise<User> => {
 }
 
 export const createTestUserWithCredentials = async(user?: Partial<User>): Promise<[User, Credentials]> => {
+  const plan = await findOrCreateTestPlan()
   const creds = (await testEntityManager.save(Credentials, {}, {})) as Credentials
   const userModel = await testEntityManager.save(User, {
     name: 'tester',
     role: 'user',
-    planId: 1,
+    planId: plan.id,
     credentialsId: creds.id,
     email: `${Math.random()}@example.com`,
     ...user,
@@ -204,6 +205,17 @@ export const createTestDatasetDiagnostic = async(
   return result as unknown as DatasetDiagnostic
 }
 
+export const findOrCreateTestPlan = async(): Promise<Plan> => {
+  let plan = await testEntityManager.createQueryBuilder(Plan, 'plan')
+    .orderBy('plan.id', 'ASC')
+    .getOne()
+
+  if (!plan) {
+    plan = await createTestPlan()
+  }
+
+  return plan
+}
 export const createTestPlan = async(plan?: Partial<Plan>): Promise<Plan> => {
   const planDefaultFields = {
     id: 1,

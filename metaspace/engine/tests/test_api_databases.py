@@ -2,6 +2,7 @@ import contextlib
 import json
 from enum import Enum
 from unittest.mock import patch
+from datetime import datetime
 
 import pytest
 
@@ -22,8 +23,12 @@ MOLDB_COUNT_SEL = 'SELECT COUNT(*) FROM molecular_db'
 def fill_db(test_db):
     db = DB()
     db.insert(
-        'INSERT INTO graphql.user (id, name, email, plan) VALUES (%s, %s, %s, %s)',
-        [(USER_ID, 'name', 'name@embl.de', 'REGULAR')],
+        'INSERT INTO public.plan (id, name, created_at, is_active) VALUES (%s, %s, %s, %s)',
+        [(1, 'regular', datetime.now(), True)],
+    )
+    db.insert(
+        'INSERT INTO graphql.user (id, name, email, plan_id) VALUES (%s, %s, %s, %s)',
+        [(USER_ID, 'name', 'name@embl.de', 1)],
     )
     db.insert(
         'INSERT INTO graphql.group (id, name, short_name) VALUES (%s, %s, %s)',

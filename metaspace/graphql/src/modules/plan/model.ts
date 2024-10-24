@@ -1,9 +1,9 @@
 import {
-    Column,
-    Entity,
-    JoinColumn,
-    ManyToOne, OneToMany,
-    PrimaryGeneratedColumn,
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne, OneToMany,
+  PrimaryGeneratedColumn,
 } from 'typeorm'
 import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
 import { Moment } from 'moment'

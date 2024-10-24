@@ -3,7 +3,7 @@ import { Credentials } from '../auth/model'
 import { UserGroup } from '../group/model'
 import { Dataset } from '../dataset/model'
 import { UserProject } from '../project/model'
-import {Plan} from "../plan/model";
+import { Plan } from '../plan/model'
 
 @Entity()
 export class User {

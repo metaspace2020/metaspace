@@ -98,6 +98,7 @@ export const setupTestUsers = async(groupIds?: string[], skipPlan?: boolean) => 
 export const onAfterEach = async() => {
   await (testEntityManager as TransactionEntityManager).rollbackTransaction();
   // Prevent use-after-free
+  (testPlan as any) = undefined;
   (testEntityManager as any) = undefined;
   (testUser as any) = undefined;
   (userContext as any) = undefined;

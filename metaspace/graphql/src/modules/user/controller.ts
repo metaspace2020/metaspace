@@ -104,8 +104,7 @@ export const Resolvers = {
       return null
     },
 
-    async plan({ scopeRole, ...user }: UserSource, args: any, ctx: Context): Promise<Plan|undefined> {
-
+    async plan(user: UserSource, args: any, ctx: Context): Promise<Plan|undefined> {
       return await ctx.entityManager.createQueryBuilder(Plan, 'plan')
         .where('plan.id = :id', { id: user.planId })
         .getOne()
