@@ -51,7 +51,6 @@ describe('modules/plan/controller (queries)', () => {
   beforeEach(async() => {
     jest.clearAllMocks()
     await onBeforeEach()
-    await setupTestUsers()
 
     const connection = getConnection()
     await connection.query('ALTER SEQUENCE plan_id_seq RESTART WITH 1')
@@ -59,6 +58,8 @@ describe('modules/plan/controller (queries)', () => {
 
     await Promise.all(TIERS.map(plan => createTestPlan(plan as any)))
     await Promise.all(TIER_RULES.map(rule => createTestPlanRule(rule as any)))
+
+    await setupTestUsers(undefined, true)
   })
 
   afterEach(onAfterEach)

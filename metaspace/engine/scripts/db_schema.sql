@@ -369,18 +369,6 @@ CREATE TABLE "graphql"."dataset_project" (
   "project_id")
 );
 
-CREATE TABLE "graphql"."user" (
-  "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
-  "name" text, 
-  "email" text, 
-  "not_verified_email" text, 
-  "role" text NOT NULL DEFAULT 'user', 
-  "plan" text NOT NULL, 
-  "credentials_id" uuid NOT NULL, 
-  CONSTRAINT "REL_1b5eb1327a74d679537bdc1fa5" UNIQUE ("credentials_id"), 
-  CONSTRAINT "PK_ea80e4e2bf12ab8b8b6fca858d7" PRIMARY KEY ("id")
-);
-
 CREATE TABLE "public"."plan" (
   "id" SERIAL NOT NULL, 
   "name" text NOT NULL, 
@@ -409,6 +397,19 @@ CREATE TABLE "public"."api_usage" (
   "source" text NOT NULL, 
   "action_dt" TIMESTAMP NOT NULL, 
   CONSTRAINT "PK_bcaf2df186a22b1d135af4a5ac4" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "graphql"."user" (
+  "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
+  "name" text, 
+  "email" text, 
+  "not_verified_email" text, 
+  "role" text NOT NULL DEFAULT 'user', 
+  "plan_id" integer NOT NULL, 
+  "credentials_id" uuid NOT NULL, 
+  CONSTRAINT "REL_1b5eb1327a74d679537bdc1fa5" UNIQUE ("credentials_id"), 
+  CONSTRAINT "REL_8f0a7cc334c3ec47f077cd63ac" UNIQUE ("plan_id"), 
+  CONSTRAINT "PK_ea80e4e2bf12ab8b8b6fca858d7" PRIMARY KEY ("id")
 );
 
 CREATE TABLE "graphql"."image_viewer_snapshot" (
@@ -545,10 +546,6 @@ ALTER TABLE "graphql"."dataset_project" ADD CONSTRAINT "FK_e192464449c2ac136fd4f
   "project_id") REFERENCES "graphql"."project"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOREIGN KEY (
-  "credentials_id") REFERENCES "graphql"."credentials"("id"
-) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
 ALTER TABLE "public"."plan_rule" ADD CONSTRAINT "FK_4dfaded40a53f7a0c0d8ab8e512" FOREIGN KEY (
   "plan_id") REFERENCES "public"."plan"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
@@ -559,6 +556,14 @@ ALTER TABLE "public"."api_usage" ADD CONSTRAINT "FK_264191db90317cbdc9a9362c9ab"
 
 ALTER TABLE "public"."api_usage" ADD CONSTRAINT "FK_1cdf7a537cd1e84520c2c4b1f47" FOREIGN KEY (
   "dataset_id") REFERENCES "graphql"."dataset"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOREIGN KEY (
+  "credentials_id") REFERENCES "graphql"."credentials"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_8f0a7cc334c3ec47f077cd63ac1" FOREIGN KEY (
+  "plan_id") REFERENCES "public"."plan"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 

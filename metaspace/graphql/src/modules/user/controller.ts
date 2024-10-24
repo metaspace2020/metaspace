@@ -20,6 +20,7 @@ import { resolveGroupScopeRole } from '../group/util/resolveGroupScopeRole'
 import canSeeUserEmail from './util/canSeeUserEmail'
 import { ProjectSourceRepository } from '../project/ProjectSourceRepository'
 import { getUserSourceById, resolveUserScopeRole } from './util/getUserSourceById'
+import { Plan } from '../plan/model'
 
 const assertCanEditUser = (user: ContextUser, userId: string) => {
   if (!user.id) {
@@ -101,6 +102,13 @@ export const Resolvers = {
         return user.role || null
       }
       return null
+    },
+
+    async plan({ scopeRole, ...user }: UserSource, args: any, ctx: Context): Promise<Plan|undefined> {
+
+      return await ctx.entityManager.createQueryBuilder(Plan, 'plan')
+        .where('plan.id = :id', { id: user.planId })
+        .getOne()
     },
 
     async apiKey({ scopeRole, id: userId }: UserSource, args: any, ctx: Context): Promise<string|null> {

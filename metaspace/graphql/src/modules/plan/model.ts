@@ -1,9 +1,9 @@
 import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne, OneToMany,
+    PrimaryGeneratedColumn,
 } from 'typeorm'
 import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
 import { Moment } from 'moment'
@@ -25,6 +25,9 @@ export class Plan {
       name: 'created_at', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
     })
     createdAt: Moment;
+
+    @OneToMany(() => PlanRule, rule => rule.plan)
+    planRules: PlanRule[];
 }
 
 @Entity({ schema: 'public' })

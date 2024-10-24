@@ -21,7 +21,7 @@ export const createTestUserWithCredentials = async(user?: Partial<User>): Promis
   const userModel = await testEntityManager.save(User, {
     name: 'tester',
     role: 'user',
-    plan: 'REGULAR',
+    planId: 1,
     credentialsId: creds.id,
     email: `${Math.random()}@example.com`,
     ...user,

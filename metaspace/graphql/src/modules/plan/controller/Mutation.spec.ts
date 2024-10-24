@@ -21,12 +21,13 @@ describe('modules/plan/controller (mutations)', () => {
   beforeEach(async() => {
     jest.clearAllMocks()
     await onBeforeEach()
-    await setupTestUsers()
-    userId = testUser.id
 
     const connection = getConnection()
     await connection.query('ALTER SEQUENCE plan_id_seq RESTART WITH 1')
     await connection.query('ALTER SEQUENCE plan_rule_id_seq RESTART WITH 1')
+
+    await setupTestUsers()
+    userId = testUser.id
   })
   afterEach(onAfterEach)
 
@@ -76,7 +77,7 @@ describe('modules/plan/controller (mutations)', () => {
   })
 
   describe('Mutation.planRule', () => {
-    const createPlanRuleMutation = `mutation ($planId: Int!, $actionType: String!, 
+    const createPlanRuleMutation = `mutation ($planId: Int!, $actionType: String!,
     $period: Int!, $periodType: String!, $limit: Int!) {
       createPlanRule(planId: $planId, actionType: $actionType, period: $period, periodType: $periodType, limit: $limit)
        { id planId actionType period periodType limit createdAt }
@@ -99,7 +100,7 @@ describe('modules/plan/controller (mutations)', () => {
     })
 
     it('should update a plan rule', async() => {
-      const updatePlanRuleMutation = `mutation ($planRuleId: Int!, $actionType: String!, 
+      const updatePlanRuleMutation = `mutation ($planRuleId: Int!, $actionType: String!,
       $period: Int!, $periodType: String!, $limit: Int!) {
         updatePlanRule(planRuleId: $planRuleId, actionType: $actionType, period: $period,
          periodType: $periodType, limit: $limit)
@@ -155,7 +156,7 @@ describe('modules/plan/controller (mutations)', () => {
 
       const createApiUsageMutation = `mutation ($userId: String!, $datasetId: String!,
        $actionType: String!, $datasetType: String!, $requestSource: String) {
-        createApiUsage(userId: $userId, datasetId: $datasetId, actionType: $actionType, 
+        createApiUsage(userId: $userId, datasetId: $datasetId, actionType: $actionType,
         datasetType: $datasetType, requestSource: $requestSource)
          { id userId datasetId actionType datasetType source actionDt }
       }`

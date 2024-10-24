@@ -3,6 +3,7 @@ import { Credentials } from '../auth/model'
 import { UserGroup } from '../group/model'
 import { Dataset } from '../dataset/model'
 import { UserProject } from '../project/model'
+import {Plan} from "../plan/model";
 
 @Entity()
 export class User {
@@ -21,8 +22,8 @@ export class User {
   @Column({ type: 'text', default: 'user' })
   role: 'admin' | 'user';
 
-  @Column({ type: 'text' })
-  plan: string;
+  @Column({ name: 'plan_id' })
+  planId: number;
 
   @Column({ type: 'text' })
   credentialsId: string;
@@ -30,6 +31,10 @@ export class User {
   @OneToOne(() => Credentials)
   @JoinColumn({ name: 'credentials_id' })
   credentials: Credentials;
+
+  @OneToOne(() => Plan)
+  @JoinColumn({ name: 'plan_id' })
+  plan: Plan;
 
   @OneToMany(() => Dataset, ds => ds.user)
   datasets: Dataset[];

@@ -61,7 +61,7 @@ export class ApiUsage1727982165857 implements MigrationInterface {
             CREATE INDEX "idx_plan_rule_action_type_period_type" ON "public"."plan_rule" ("action_type", "period_type")
         `);
 
-        await queryRunner.query(`ALTER TABLE "graphql"."user" ADD "plan" text DEFAULT 'REGULAR'`);
+        await queryRunner.query(`ALTER TABLE "graphql"."user" ADD "plan_id" INT REFERENCES "plan"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
     }
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`DROP INDEX "public"."idx_api_usage_user_id"`);
@@ -71,9 +71,9 @@ export class ApiUsage1727982165857 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "public"."idx_plan_rule_plan_id"`);
         await queryRunner.query(`DROP INDEX "public"."idx_plan_rule_action_type_period_type"`);
 
+        await queryRunner.query(`ALTER TABLE "graphql"."user" DROP COLUMN "plan_id"`);
         await queryRunner.query(`DROP TABLE "public"."api_usage"`);
         await queryRunner.query(`DROP TABLE "public"."plan_rule"`);
         await queryRunner.query(`DROP TABLE "public"."plan"`);
-        await queryRunner.query(`ALTER TABLE "graphql"."user" DROP COLUMN "plan"`);
     }
 }
