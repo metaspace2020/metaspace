@@ -4,6 +4,7 @@ import copy
 import inspect
 import logging
 import resource
+import time
 from contextlib import ExitStack
 from datetime import datetime
 from itertools import chain
@@ -327,6 +328,10 @@ class Executor:
                     with ExitStack() as stack:
                         is_standalone = executor.config['lithops']['mode'] == 'standalone'
                         if is_standalone:
+                            # We don't use ElasticIP, so if the VM is already running,
+                            # another daemon's executor will cache the IP,
+                            # which will be invalid when EC2 is restarted
+                            executor.invoker.compute_handler.backend.master.public_ip = '0.0.0.0'
                             # With the VM in "consume" mode, Lithops shares the VM between parallel
                             # invocations, which can cause race conditions and OOMs.
                             # To avoid instability, this prevents parallel invocations with a mutex.
@@ -345,6 +350,7 @@ class Executor:
                             # to avoid a race condition, as there's still some instability if a
                             # second request tries to start the VM while it is still stopping.
                             executor.compute_handler.backend.master.stop()
+                            time.sleep(5)  # be sure that the EC2 shutdown process has started
                 except Exception as exc:
                     exception = exc
 
