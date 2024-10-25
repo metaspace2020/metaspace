@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Optional, Dict, List, Union
 
 import pandas as pd
-from ibm_boto3.s3.transfer import TransferConfig, MB
 from lithops.storage import Storage
 from lithops.storage.utils import StorageNoSuchKeyError, CloudObject
 
@@ -83,13 +82,7 @@ def _upload_if_needed(
 
                 obj = s3_client.get_object(Bucket=src_bucket, Key=src_key)
                 if hasattr(storage.get_client(), 'upload_fileobj'):
-                    # Try streaming upload to IBM COS
-                    transfer_config = TransferConfig(
-                        multipart_chunksize=20 * MB, max_concurrency=20, io_chunksize=1 * MB
-                    )
-                    storage.get_client().upload_fileobj(
-                        Fileobj=obj['Body'], Bucket=bucket, Key=key, Config=transfer_config
-                    )
+                    storage.get_client().upload_fileobj(Fileobj=obj['Body'], Bucket=bucket, Key=key)
                     cobject = CloudObject(storage.backend, bucket, key)
                 else:
                     # Fall back to buffering the entire object in memory for other backends
