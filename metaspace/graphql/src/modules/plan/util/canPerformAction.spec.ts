@@ -4,83 +4,72 @@ import {
   onAfterEach,
   onBeforeAll,
   onBeforeEach,
-  setupTestUsers, testPlan, userContext,
+  setupTestUsers,
+  testPlan,
+  userContext,
 } from '../../../tests/graphqlTestEnvironment'
 
 import canPerformAction from './canPerformAction'
 import { createTestApiUsage, createTestPlanRule } from '../../../tests/testDataCreation'
-import * as moment from 'moment/moment'
-import { Moment } from 'moment'
+import * as moment from 'moment'
+import { ApiUsage } from '../model'
 
-describe('modules/plan/controller (queries)', () => {
+describe('Plan Controller Queries', () => {
   beforeAll(onBeforeAll)
   afterAll(onAfterAll)
-
   beforeEach(async() => {
     jest.clearAllMocks()
     await onBeforeEach()
     await setupTestUsers()
-    await createTestPlanRule({
-      planId: testPlan.id,
-      actionType: 'download',
-      period: 1,
-      periodType: 'day',
-      limit: 1,
-    })
-    await createTestPlanRule({
-      planId: testPlan.id,
-      actionType: 'download',
-      period: 1,
-      periodType: 'month',
-      limit: 2,
-    })
+    await Promise.all([
+      createTestPlanRule({ planId: testPlan.id, actionType: 'download', period: 1, periodType: 'day', limit: 1 }),
+      createTestPlanRule({ planId: testPlan.id, actionType: 'download', period: 1, periodType: 'month', limit: 2 }),
+    ])
   })
-
   afterEach(onAfterEach)
 
-  describe('Plan.canPerformAction', () => {
-    it('should be able to download under the limit per day', async() => {
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id })
-      await createTestApiUsage({ actionType: 'upload', userId: userContext.user.id })
+  describe('canPerformAction', () => {
+    it('allows download within daily limit', async() => {
+      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id } as Partial<ApiUsage>)
       expect(await canPerformAction(userContext, 'download')).toBe(true)
     })
-    it('should not be able to download over the limit per day', async() => {
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id })
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id })
+
+    it('blocks download over daily limit', async() => {
+      await Promise.all([
+        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
+        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
+      ])
       expect(await canPerformAction(userContext, 'download')).toBe(false)
     })
-    it('should  be able to download over the limit per day if an admin', async() => {
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id })
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id })
+
+    it('allows admin to exceed daily limit', async() => {
+      await Promise.all([
+        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
+        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
+      ])
       expect(await canPerformAction(adminContext, 'download')).toBe(true)
     })
-    it('should  be able to download under the limit per month', async() => {
-      await createTestApiUsage({
-        actionType: 'download',
-        userId: userContext.user.id,
-        actionDt: moment.utc().subtract(2, 'day') as unknown as Moment,
-      })
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id })
+
+    it('allows download within MONTHly limit', async() => {
+      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id, actionDt: moment.utc().subtract(2, 'day') })
       expect(await canPerformAction(userContext, 'download')).toBe(true)
     })
-    it('should not be able to download over the limit per month', async() => {
-      await createTestApiUsage({
-        actionType: 'download',
-        userId: userContext.user.id,
-        actionDt: moment.utc().subtract(2, 'day') as unknown as Moment,
-      })
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id })
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id })
+
+    it('blocks download over MONTHly limit', async() => {
+      await Promise.all([
+        createTestApiUsage({ actionType: 'download', userId: userContext.user.id, actionDt: moment.utc().subtract(2, 'day') as moment.Moment }),
+        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
+        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
+      ])
       expect(await canPerformAction(userContext, 'download')).toBe(false)
     })
-    it('should be able to download over the limit per month as admin', async() => {
-      await createTestApiUsage({
-        actionType: 'download',
-        userId: userContext.user.id,
-        actionDt: moment.utc().subtract(2, 'day') as unknown as Moment,
-      })
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id })
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id })
+
+    it('allows admin to exceed MONTHly limit', async() => {
+      await Promise.all([
+        createTestApiUsage({ actionType: 'download', userId: userContext.user.id, actionDt: moment.utc().subtract(2, 'day') as moment.Moment }),
+        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
+        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
+      ])
       expect(await canPerformAction(adminContext, 'download')).toBe(true)
     })
   })

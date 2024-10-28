@@ -231,13 +231,13 @@ export const createTestPlan = async(plan?: Partial<Plan>): Promise<Plan> => {
 export const createTestPlanRule = async(planRule?: Partial<PlanRule>): Promise<PlanRule> => {
   const planRuleDefaultFields = {
     planId: 1,
-    actionType: 'DOWNLOAD',
+    actionType: 'download',
     period: 1,
-    periodType: 'DAY',
+    periodType: 'day',
     limit: 5,
-    type: 'DATASET',
-    visibility: 'PRIVATE',
-    source: 'API',
+    type: 'dataset',
+    visibility: 'private',
+    source: 'api',
     createdAt: moment.utc(moment.utc().toDate()),
   }
   return await testEntityManager.save(PlanRule, { ...planRuleDefaultFields, ...planRule } as DeepPartial<PlanRule>) as Promise<PlanRule>
@@ -249,10 +249,10 @@ export const createTestApiUsage = async(apiUsage?: Partial<ApiUsage>): Promise<A
   const apiUsageDefaultFields = {
     userId: user.id,
     datasetId: dataset.id,
-    type: 'DATASET',
-    actionType: 'DOWNLOAD',
-    visibility: (dataset as any).isPublic ? 'PUBLIC' : 'PRIVATE',
-    source: 'API',
+    type: 'dataset',
+    actionType: 'download',
+    visibility: (dataset as any).isPublic ? 'public' : 'private',
+    source: 'api',
     actionDt: moment.utc(moment.utc().toDate()),
   }
   return await testEntityManager.save(ApiUsage, { ...apiUsageDefaultFields, ...apiUsage } as DeepPartial<ApiUsage>) as Promise<ApiUsage>

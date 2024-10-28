@@ -143,16 +143,16 @@ describe('modules/plan/controller (mutations)', () => {
   })
 
   describe('Mutation.ApiUsage', () => {
-    it('should create an API usage record', async() => {
+    it('should create an api usage record', async() => {
       const bgData = await createBackgroundData(
         { users: true, datasets: true, projectsForUserIds: [userId], datasetsForUserIds: [userId] })
       const apiUsageDetails: any = {
         userId,
         datasetId: bgData.datasets[0].id,
-        actionType: 'DOWNLOAD',
-        type: 'DATASET',
-        visibility: 'PUBLIC',
-        requestSource: 'API',
+        actionType: 'download',
+        type: 'dataset',
+        visibility: 'public',
+        requestSource: 'api',
       }
 
       const createApiUsageMutation = `mutation ($userId: String!, $datasetId: String!,

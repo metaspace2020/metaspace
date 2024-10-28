@@ -23,9 +23,9 @@ describe('modules/plan/controller (queries)', () => {
   ]
 
   const TIER_RULES: any = [
-    { planId: 1, actionType: 'DOWNLOAD', period: 1, periodType: 'DAY', limit: 5, createdAt: currentTime },
-    { planId: 1, actionType: 'DOWNLOAD', period: 1, periodType: 'WEEK', limit: 50, createdAt: currentTime },
-    { planId: 3, actionType: 'PROCESS', period: 1, periodType: 'DAY', limit: 2, createdAt: currentTime },
+    { planId: 1, actionType: 'download', period: 1, periodType: 'day', limit: 5, createdAt: currentTime },
+    { planId: 1, actionType: 'download', period: 1, periodType: 'week', limit: 50, createdAt: currentTime },
+    { planId: 3, actionType: 'process', period: 1, periodType: 'day', limit: 2, createdAt: currentTime },
   ]
 
   let createdPlans: any = []

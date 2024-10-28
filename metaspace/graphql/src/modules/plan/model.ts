@@ -38,26 +38,26 @@ export class PlanRule {
     @Column({ name: 'plan_id' })
     planId: number;
 
-    @Column({ type: 'text', enum: ['DOWNLOAD', 'CREATE', 'UPDATE', 'PROCESS', 'DELETE'] })
-    actionType: 'DOWNLOAD' | 'CREATE' | 'UPDATE' | 'PROCESS' | 'DELETE';
+    @Column({ type: 'text', enum: ['download', 'create', 'update', 'process', 'delete'] })
+    actionType: 'download' | 'create' | 'update' | 'process' | 'delete';
 
     @Column({ type: 'int' })
     period: number;
 
-    @Column({ name: 'period_type', type: 'text', enum: ['SECOND', 'MINUTE', 'HOUR', 'DAY', 'MONTH', 'YEAR'] })
-    periodType: 'SECOND' | 'MINUTE' | 'HOUR' | 'DAY' | 'MONTH' | 'YEAR';
+    @Column({ name: 'period_type', type: 'text', enum: ['second', 'minute', 'hour', 'day', 'month', 'year'] })
+    periodType: 'second' | 'minute' | 'hour' | 'day' | 'month' | 'year';
 
     @Column({ type: 'int' })
     limit: number;
 
-    @Column({ type: 'text', enum: ['DATASET', 'GROUP', 'PROJECT', 'USER'] })
-    type: 'DATASET' | 'GROUP' | 'PROJECT' | 'USER';
+    @Column({ type: 'text', enum: ['dataset', 'group', 'project', 'user'] })
+    type: 'dataset' | 'group' | 'project' | 'user';
 
-    @Column({ name: 'visibility', type: 'text', enum: ['PUBLIC', 'PRIVATE'] })
-    visibility: 'PUBLIC' | 'PRIVATE';
+    @Column({ name: 'visibility', type: 'text', enum: ['public', 'private'] })
+    visibility: 'public' | 'private';
 
-    @Column({ name: 'source', type: 'text', enum: ['WEB', 'API'] })
-    source: 'WEB' | 'API';
+    @Column({ name: 'source', type: 'text', enum: ['web', 'api'] })
+    source: 'web' | 'api';
 
     @Column({
       name: 'created_at', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
@@ -86,17 +86,17 @@ export class ApiUsage {
     @Column({ type: 'text', name: 'group_id' })
     groupId: string;
 
-    @Column({ type: 'text', enum: ['DATASET', 'GROUP', 'PROJECT', 'USER'] })
-    type: 'DATASET' | 'GROUP' | 'PROJECT' | 'USER';
+    @Column({ type: 'text', enum: ['dataset', 'group', 'project', 'user'] })
+    type: 'dataset' | 'group' | 'project' | 'user';
 
-    @Column({ type: 'text', enum: ['DOWNLOAD', 'CREATE', 'UPDATE', 'PROCESS', 'DELETE'] })
-    actionType: 'DOWNLOAD' | 'CREATE' | 'UPDATE' | 'PROCESS' | 'DELETE';
+    @Column({ type: 'text', enum: ['download', 'create', 'update', 'process', ''] })
+    actionType: 'download' | 'create' | 'update' | 'process' | 'delete';
 
-    @Column({ name: 'visibility', type: 'text', enum: ['PUBLIC', 'PRIVATE'] })
-    visibility: 'PUBLIC' | 'PRIVATE';
+    @Column({ name: 'visibility', type: 'text', enum: ['public', 'private'] })
+    visibility: 'public' | 'private';
 
-    @Column({ name: 'source', type: 'text', enum: ['WEB', 'API'] })
-    source: 'WEB' | 'API';
+    @Column({ name: 'source', type: 'text', enum: ['web', 'api'] })
+    source: 'web' | 'api';
 
     @Column({
       name: 'action_dt', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
