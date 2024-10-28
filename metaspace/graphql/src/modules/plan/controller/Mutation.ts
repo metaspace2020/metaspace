@@ -53,7 +53,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Unauthorized')
     }
 
-    const { planId, actionType, period, periodType, limit } = args
+    const {
+      planId, actionType, period,
+      periodType, limit, type, visibility, requestSource,
+    } = args
     const planRuleRepo: Repository<PlanRule> = ctx.entityManager.getRepository(PlanRule)
 
     const newPlanRule = planRuleRepo.create({
@@ -62,6 +65,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       period,
       periodType,
       limit,
+      type,
+      visibility,
+      source: requestSource,
       createdAt: moment.utc(),
     })
 
@@ -75,7 +81,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Unauthorized')
     }
 
-    const { planRuleId, actionType, period, periodType, limit } = args
+    const {
+      planRuleId, actionType, period,
+      periodType, limit, type, visibility, requestSource,
+    } = args
 
     const planRule = await ctx.entityManager.findOne(
       PlanRule, { id: planRuleId }
@@ -85,7 +94,15 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new Error('Not found')
     }
 
-    await ctx.entityManager.update(PlanRule, planRuleId, { actionType, period, periodType, limit })
+    await ctx.entityManager.update(PlanRule, planRuleId, {
+      actionType,
+      period,
+      periodType,
+      limit,
+      type,
+      visibility,
+      source: requestSource,
+    })
 
     return await ctx.entityManager.findOneOrFail(
       PlanRule, { id: planRuleId }
@@ -109,14 +126,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return true
   },
   async createApiUsage(source, args, ctx): Promise<ApiUsage> {
-    const { userId, datasetId, actionType, datasetType, requestSource } = args
+    const {
+      userId, datasetId, actionType, type,
+      requestSource, projectId, groupId, visibility,
+    } = args
     const apiUsageRepo: Repository<ApiUsage> = ctx.entityManager.getRepository(ApiUsage)
 
     const newApiUsage = apiUsageRepo.create({
       userId,
       datasetId,
       actionType,
-      datasetType,
+      type,
+      projectId,
+      groupId,
+      visibility,
       source: requestSource,
       actionDt: moment.utc(),
     })

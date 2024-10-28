@@ -384,6 +384,9 @@ CREATE TABLE "public"."plan_rule" (
   "period" integer NOT NULL, 
   "period_type" text NOT NULL, 
   "limit" integer NOT NULL, 
+  "type" text NOT NULL, 
+  "visibility" text NOT NULL, 
+  "source" text NOT NULL, 
   "created_at" TIMESTAMP NOT NULL, 
   CONSTRAINT "PK_6485db5ce2f2fad09cc1707ccad" PRIMARY KEY ("id")
 );
@@ -392,8 +395,11 @@ CREATE TABLE "public"."api_usage" (
   "id" SERIAL NOT NULL, 
   "user_id" uuid NOT NULL, 
   "dataset_id" text NOT NULL, 
+  "project_id" text NOT NULL, 
+  "group_id" text NOT NULL, 
   "action_type" text NOT NULL, 
-  "dataset_type" text NOT NULL, 
+  "type" text NOT NULL, 
+  "visibility" text NOT NULL, 
   "source" text NOT NULL, 
   "action_dt" TIMESTAMP NOT NULL, 
   CONSTRAINT "PK_bcaf2df186a22b1d135af4a5ac4" PRIMARY KEY ("id")

@@ -150,15 +150,16 @@ describe('modules/plan/controller (mutations)', () => {
         userId,
         datasetId: bgData.datasets[0].id,
         actionType: 'download',
-        datasetType: 'public',
+        type: 'dataset',
+        visibility: 'public',
         requestSource: 'api',
       }
 
       const createApiUsageMutation = `mutation ($userId: String!, $datasetId: String!,
-       $actionType: String!, $datasetType: String!, $requestSource: String) {
+       $actionType: String!, $type: String!, $visibility: String, $requestSource: String) {
         createApiUsage(userId: $userId, datasetId: $datasetId, actionType: $actionType,
-        datasetType: $datasetType, requestSource: $requestSource)
-         { id userId datasetId actionType datasetType source actionDt }
+        type: $type, visibility: $visibility, requestSource: $requestSource)
+         { id userId datasetId actionType type source actionDt }
       }`
 
       const result = await doQuery(createApiUsageMutation, apiUsageDetails)

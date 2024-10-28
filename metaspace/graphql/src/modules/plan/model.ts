@@ -50,6 +50,15 @@ export class PlanRule {
     @Column({ type: 'int' })
     limit: number;
 
+    @Column({ name: 'type', type: 'text' })
+    type: string;
+
+    @Column({ name: 'visibility', type: 'text' })
+    visibility: string;
+
+    @Column({ name: 'source', type: 'text' })
+    source: string;
+
     @Column({
       name: 'created_at', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
     })
@@ -71,11 +80,20 @@ export class ApiUsage {
     @Column({ type: 'text', name: 'dataset_id' })
     datasetId: string;
 
+    @Column({ type: 'text', name: 'project_id' })
+    projectId: string;
+
+    @Column({ type: 'text', name: 'group_id' })
+    groupId: string;
+
     @Column({ type: 'text' })
     actionType: string;
 
     @Column({ type: 'text' })
-    datasetType: string;
+    type: string;
+
+    @Column({ name: 'visibility', type: 'text' })
+    visibility: string;
 
     @Column({ type: 'text' })
     source: string;
