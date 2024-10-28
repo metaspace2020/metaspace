@@ -11,6 +11,7 @@ import { Group, UserGroup as UserGroupModel } from '../modules/group/model'
 import { MolecularDB } from '../modules/moldb/model'
 import { Plan, PlanRule, ApiUsage } from '../modules/plan/model'
 import { isMemberOfGroup } from '../modules/dataset/operation/isMemberOfGroup'
+import { DeepPartial } from 'typeorm'
 
 export const createTestUser = async(user?: Partial<User>): Promise<User> => {
   return (await createTestUserWithCredentials(user))[0]
@@ -230,16 +231,16 @@ export const createTestPlan = async(plan?: Partial<Plan>): Promise<Plan> => {
 export const createTestPlanRule = async(planRule?: Partial<PlanRule>): Promise<PlanRule> => {
   const planRuleDefaultFields = {
     planId: 1,
-    actionType: 'download',
+    actionType: 'DOWNLOAD',
     period: 1,
-    periodType: 'day',
+    periodType: 'DAY',
     limit: 5,
-    type: 'dataset',
-    visibility: 'private',
-    source: 'api',
+    type: 'DATASET',
+    visibility: 'PRIVATE',
+    source: 'API',
     createdAt: moment.utc(moment.utc().toDate()),
   }
-  return await testEntityManager.save(PlanRule, { ...planRuleDefaultFields, ...planRule }) as PlanRule
+  return await testEntityManager.save(PlanRule, { ...planRuleDefaultFields, ...planRule } as DeepPartial<PlanRule>) as Promise<PlanRule>
 }
 
 export const createTestApiUsage = async(apiUsage?: Partial<ApiUsage>): Promise<ApiUsage> => {
@@ -248,11 +249,11 @@ export const createTestApiUsage = async(apiUsage?: Partial<ApiUsage>): Promise<A
   const apiUsageDefaultFields = {
     userId: user.id,
     datasetId: dataset.id,
-    type: 'dataset',
-    actionType: 'download',
-    visibility: (dataset as any).isPublic ? 'public' : 'private',
-    source: 'api',
+    type: 'DATASET',
+    actionType: 'DOWNLOAD',
+    visibility: (dataset as any).isPublic ? 'PUBLIC' : 'PRIVATE',
+    source: 'API',
     actionDt: moment.utc(moment.utc().toDate()),
   }
-  return await testEntityManager.save(ApiUsage, { ...apiUsageDefaultFields, ...apiUsage }) as ApiUsage
+  return await testEntityManager.save(ApiUsage, { ...apiUsageDefaultFields, ...apiUsage } as DeepPartial<ApiUsage>) as Promise<ApiUsage>
 }

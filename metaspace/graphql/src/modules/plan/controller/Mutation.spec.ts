@@ -31,7 +31,7 @@ describe('modules/plan/controller (mutations)', () => {
   })
   afterEach(onAfterEach)
 
-  const planDetails = { name: 'regular', isActive: true, createdAt: moment.utc().toISOString() }
+  const planDetails: any = { name: 'regular', isActive: true, createdAt: moment.utc().toISOString() }
   const createPlanMutation = `mutation ($name: String!, $isActive: Boolean!) {
     createPlan(name: $name, isActive: $isActive) { id name isActive createdAt }
   }`
@@ -85,7 +85,7 @@ describe('modules/plan/controller (mutations)', () => {
 
     it('should create a plan rule as admin', async() => {
       const planResult = await doQuery(createPlanMutation, planDetails, { context: adminContext })
-      const ruleDetails = { planId: planResult.id, actionType: 'download', period: 1, periodType: 'day', limit: 5 }
+      const ruleDetails: any = { planId: planResult.id, actionType: 'download', period: 1, periodType: 'day', limit: 5 }
 
       const result = await doQuery(createPlanRuleMutation, ruleDetails, { context: adminContext })
       expect(result.planId).toEqual(planResult.id)
@@ -93,7 +93,7 @@ describe('modules/plan/controller (mutations)', () => {
 
     it('should fail to create a plan rule as user', async() => {
       const planResult = await doQuery(createPlanMutation, planDetails, { context: adminContext })
-      const ruleDetails = { planId: planResult.id, actionType: 'download', period: 1, periodType: 'day', limit: 5 }
+      const ruleDetails: any = { planId: planResult.id, actionType: 'download', period: 1, periodType: 'day', limit: 5 }
 
       await expect(doQuery(createPlanRuleMutation, ruleDetails,
         { context: userContext })).rejects.toThrow('Unauthorized')
@@ -108,7 +108,7 @@ describe('modules/plan/controller (mutations)', () => {
       }`
 
       const planResult = await doQuery(createPlanMutation, planDetails, { context: adminContext })
-      const ruleDetails = { planId: planResult.id, actionType: 'download', period: 1, periodType: 'day', limit: 5 }
+      const ruleDetails: any = { planId: planResult.id, actionType: 'download', period: 1, periodType: 'day', limit: 5 }
 
       const result = await doQuery(createPlanRuleMutation, ruleDetails, { context: adminContext })
       const updated = await doQuery(updatePlanRuleMutation,
@@ -122,7 +122,7 @@ describe('modules/plan/controller (mutations)', () => {
     it('should delete a plan rule as admin', async() => {
       const deletePlanRuleMutation = 'mutation ($planRuleId: Int!) { deletePlanRule(planRuleId: $planRuleId) }'
       const planResult = await doQuery(createPlanMutation, planDetails, { context: adminContext })
-      const ruleDetails = { planId: planResult.id, actionType: 'download', period: 1, periodType: 'day', limit: 5 }
+      const ruleDetails: any = { planId: planResult.id, actionType: 'download', period: 1, periodType: 'day', limit: 5 }
 
       const result = await doQuery(createPlanRuleMutation, ruleDetails, { context: adminContext })
       const deleted = await doQuery(deletePlanRuleMutation, { planRuleId: result.id },
@@ -134,7 +134,7 @@ describe('modules/plan/controller (mutations)', () => {
     it('should fail to delete plan rule as user', async() => {
       const deletePlanRuleMutation = 'mutation ($planRuleId: Int!) { deletePlanRule(planRuleId: $planRuleId) }'
       const planResult = await doQuery(createPlanMutation, planDetails, { context: adminContext })
-      const ruleDetails = { planId: planResult.id, actionType: 'download', period: 1, periodType: 'day', limit: 5 }
+      const ruleDetails: any = { planId: planResult.id, actionType: 'download', period: 1, periodType: 'day', limit: 5 }
 
       const result = await doQuery(createPlanRuleMutation, ruleDetails, { context: adminContext })
       await expect(doQuery(deletePlanRuleMutation, { planRuleId: result.id },
@@ -146,13 +146,13 @@ describe('modules/plan/controller (mutations)', () => {
     it('should create an API usage record', async() => {
       const bgData = await createBackgroundData(
         { users: true, datasets: true, projectsForUserIds: [userId], datasetsForUserIds: [userId] })
-      const apiUsageDetails = {
+      const apiUsageDetails: any = {
         userId,
         datasetId: bgData.datasets[0].id,
-        actionType: 'download',
-        type: 'dataset',
-        visibility: 'public',
-        requestSource: 'api',
+        actionType: 'DOWNLOAD',
+        type: 'DATASET',
+        visibility: 'PUBLIC',
+        requestSource: 'API',
       }
 
       const createApiUsageMutation = `mutation ($userId: String!, $datasetId: String!,

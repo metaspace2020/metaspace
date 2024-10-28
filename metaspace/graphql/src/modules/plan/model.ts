@@ -38,26 +38,26 @@ export class PlanRule {
     @Column({ name: 'plan_id' })
     planId: number;
 
-    @Column({ name: 'action_type', type: 'text' })
-    actionType: string;
+    @Column({ type: 'text', enum: ['DOWNLOAD', 'CREATE', 'UPDATE', 'PROCESS', 'DELETE'] })
+    actionType: 'DOWNLOAD' | 'CREATE' | 'UPDATE' | 'PROCESS' | 'DELETE';
 
     @Column({ type: 'int' })
     period: number;
 
-    @Column({ name: 'period_type', type: 'text' })
-    periodType: string;
+    @Column({ name: 'period_type', type: 'text', enum: ['SECOND', 'MINUTE', 'HOUR', 'DAY', 'MONTH', 'YEAR'] })
+    periodType: 'SECOND' | 'MINUTE' | 'HOUR' | 'DAY' | 'MONTH' | 'YEAR';
 
     @Column({ type: 'int' })
     limit: number;
 
-    @Column({ name: 'type', type: 'text' })
-    type: string;
+    @Column({ type: 'text', enum: ['DATASET', 'GROUP', 'PROJECT', 'USER'] })
+    type: 'DATASET' | 'GROUP' | 'PROJECT' | 'USER';
 
-    @Column({ name: 'visibility', type: 'text' })
-    visibility: string;
+    @Column({ name: 'visibility', type: 'text', enum: ['PUBLIC', 'PRIVATE'] })
+    visibility: 'PUBLIC' | 'PRIVATE';
 
-    @Column({ name: 'source', type: 'text' })
-    source: string;
+    @Column({ name: 'source', type: 'text', enum: ['WEB', 'API'] })
+    source: 'WEB' | 'API';
 
     @Column({
       name: 'created_at', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
@@ -86,17 +86,17 @@ export class ApiUsage {
     @Column({ type: 'text', name: 'group_id' })
     groupId: string;
 
-    @Column({ type: 'text' })
-    actionType: string;
+    @Column({ type: 'text', enum: ['DATASET', 'GROUP', 'PROJECT', 'USER'] })
+    type: 'DATASET' | 'GROUP' | 'PROJECT' | 'USER';
 
-    @Column({ type: 'text' })
-    type: string;
+    @Column({ type: 'text', enum: ['DOWNLOAD', 'CREATE', 'UPDATE', 'PROCESS', 'DELETE'] })
+    actionType: 'DOWNLOAD' | 'CREATE' | 'UPDATE' | 'PROCESS' | 'DELETE';
 
-    @Column({ name: 'visibility', type: 'text' })
-    visibility: string;
+    @Column({ name: 'visibility', type: 'text', enum: ['PUBLIC', 'PRIVATE'] })
+    visibility: 'PUBLIC' | 'PRIVATE';
 
-    @Column({ type: 'text' })
-    source: string;
+    @Column({ name: 'source', type: 'text', enum: ['WEB', 'API'] })
+    source: 'WEB' | 'API';
 
     @Column({
       name: 'action_dt', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
@@ -114,5 +114,6 @@ export class ApiUsage {
 
 export const PLAN_ENTITIES = [
   Plan,
-  PlanRule, ApiUsage,
+  PlanRule,
+  ApiUsage,
 ]

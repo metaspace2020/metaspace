@@ -22,10 +22,10 @@ describe('modules/plan/controller (queries)', () => {
     { name: 'lab', isActive: true, createdAt: currentTime },
   ]
 
-  const TIER_RULES = [
-    { planId: 1, actionType: 'download', period: 1, periodType: 'day', limit: 5, createdAt: currentTime },
-    { planId: 1, actionType: 'download', period: 1, periodType: 'week', limit: 50, createdAt: currentTime },
-    { planId: 3, actionType: 'process', period: 1, periodType: 'day', limit: 2, createdAt: currentTime },
+  const TIER_RULES: any = [
+    { planId: 1, actionType: 'DOWNLOAD', period: 1, periodType: 'DAY', limit: 5, createdAt: currentTime },
+    { planId: 1, actionType: 'DOWNLOAD', period: 1, periodType: 'WEEK', limit: 50, createdAt: currentTime },
+    { planId: 3, actionType: 'PROCESS', period: 1, periodType: 'DAY', limit: 2, createdAt: currentTime },
   ]
 
   let createdPlans: any = []
@@ -44,7 +44,7 @@ describe('modules/plan/controller (queries)', () => {
 
     createdPlans = await Promise.all(TIERS.map(plan => createTestPlan(plan as any)))
 
-    createdPlanRules = await Promise.all(TIER_RULES.map((rule, index) => {
+    createdPlanRules = await Promise.all(TIER_RULES.map((rule: any, index: number) => {
       const planId = (createdPlans)[index < 2 ? 0 : 2]?.id
       return createTestPlanRule({ ...rule, planId })
     }))
@@ -62,7 +62,7 @@ describe('modules/plan/controller (queries)', () => {
       const result = await doQuery(queryPlans)
       expect(result.length).toEqual(TIERS.length)
       expect(result).toEqual(
-        TIERS.map(({ createdAt, ...plan }) => ({
+        TIERS.map(({ createdAt, ...plan }: any) => ({
           ...plan,
           createdAt: moment(createdAt).valueOf().toString(),
         }))
@@ -74,7 +74,7 @@ describe('modules/plan/controller (queries)', () => {
 
       expect(result.length).toEqual(TIER_RULES.length)
       expect(result).toEqual(
-        TIER_RULES.map(({ createdAt, ...rule }, index) => ({
+        TIER_RULES.map(({ createdAt, ...rule }: any, index: number) => ({
           ...rule,
           planId: createdPlanRules[index].planId,
           createdAt: moment(createdAt).valueOf().toString(),

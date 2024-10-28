@@ -5,7 +5,7 @@ import {
   Plan, PlanRule,
 } from '../model'
 import { UserError } from 'graphql-errors'
-import { Repository } from 'typeorm'
+import { DeepPartial, Repository } from 'typeorm'
 import * as moment from 'moment/moment'
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
@@ -21,7 +21,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       name,
       isActive,
       createdAt: moment.utc(),
-    })
+    } as DeepPartial<Plan>)
 
     await planRepo.insert(newPlan)
     return await ctx.entityManager.findOneOrFail(
@@ -69,7 +69,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       visibility,
       source: requestSource,
       createdAt: moment.utc(),
-    })
+    } as DeepPartial<PlanRule>)
 
     await planRuleRepo.insert(newPlanRule)
     return await ctx.entityManager.findOneOrFail(
@@ -102,7 +102,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       type,
       visibility,
       source: requestSource,
-    })
+    } as DeepPartial<PlanRule>)
 
     return await ctx.entityManager.findOneOrFail(
       PlanRule, { id: planRuleId }
@@ -131,7 +131,6 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       requestSource, projectId, groupId, visibility,
     } = args
     const apiUsageRepo: Repository<ApiUsage> = ctx.entityManager.getRepository(ApiUsage)
-
     const newApiUsage = apiUsageRepo.create({
       userId,
       datasetId,
@@ -142,7 +141,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       visibility,
       source: requestSource,
       actionDt: moment.utc(),
-    })
+    } as DeepPartial<ApiUsage>)
 
     await apiUsageRepo.insert(newApiUsage)
     return await ctx.entityManager.findOneOrFail(
