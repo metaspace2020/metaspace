@@ -240,7 +240,10 @@ export const createTestPlanRule = async(planRule?: Partial<PlanRule>): Promise<P
     source: 'api',
     createdAt: moment.utc(moment.utc().toDate()),
   }
-  return await testEntityManager.save(PlanRule, { ...planRuleDefaultFields, ...planRule } as DeepPartial<PlanRule>) as Promise<PlanRule>
+  return await testEntityManager.save(PlanRule, {
+    ...planRuleDefaultFields,
+    ...planRule,
+  } as DeepPartial<PlanRule>) as Promise<PlanRule>
 }
 
 export const createTestApiUsage = async(apiUsage?: Partial<ApiUsage>): Promise<ApiUsage> => {
@@ -255,5 +258,8 @@ export const createTestApiUsage = async(apiUsage?: Partial<ApiUsage>): Promise<A
     source: 'api',
     actionDt: moment.utc(moment.utc().toDate()),
   }
-  return await testEntityManager.save(ApiUsage, { ...apiUsageDefaultFields, ...apiUsage } as DeepPartial<ApiUsage>) as Promise<ApiUsage>
+  return await testEntityManager.save(ApiUsage, {
+    ...apiUsageDefaultFields,
+    ...apiUsage,
+  } as DeepPartial<ApiUsage>) as Promise<ApiUsage>
 }

@@ -15,62 +15,169 @@ import * as moment from 'moment'
 import { ApiUsage } from '../model'
 
 describe('Plan Controller Queries', () => {
-  beforeAll(onBeforeAll)
-  afterAll(onAfterAll)
+  let originalDateNow: any
+
+  beforeAll(async() => {
+    await onBeforeAll()
+    originalDateNow = Date.now
+
+    // Mock Date.now to return a specific timestamp
+    Date.now = jest.fn(() => new Date('2024-10-30T10:00:00Z').getTime())
+  })
+
+  afterAll(async() => {
+    await onAfterAll()
+    Date.now = originalDateNow
+  })
+
   beforeEach(async() => {
     jest.clearAllMocks()
+
     await onBeforeEach()
     await setupTestUsers()
-    await Promise.all([
-      createTestPlanRule({ planId: testPlan.id, actionType: 'download', period: 1, periodType: 'day', limit: 1 }),
-      createTestPlanRule({ planId: testPlan.id, actionType: 'download', period: 1, periodType: 'month', limit: 2 }),
-    ])
+
+    const actionTypes = ['download', 'process', 'delete'] as const
+    const periods = [
+      { periodType: 'minute', limit: 1 },
+      { periodType: 'day', limit: 2 },
+      { periodType: 'month', limit: 4 },
+      { periodType: 'year', limit: 10 },
+    ] as const
+    const visibilities = ['private', undefined] as const
+    const sources = ['api', 'web', undefined] as const
+
+    // Create rules for all combinations of actionType, period, visibility, and source
+    await Promise.all(
+      actionTypes.flatMap((actionType) =>
+        periods.flatMap(({ periodType, limit }) =>
+          visibilities.flatMap((visibility) =>
+            sources.map((source: any) =>
+              createTestPlanRule({
+                planId: testPlan.id,
+                actionType,
+                period: 1,
+                periodType,
+                limit,
+                visibility,
+                source,
+              })
+            )
+          )
+        )
+      )
+    )
   })
+
   afterEach(onAfterEach)
 
-  describe('canPerformAction', () => {
-    it('allows download within daily limit', async() => {
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id } as Partial<ApiUsage>)
-      expect(await canPerformAction(userContext, 'download')).toBe(true)
-    })
+  // const actionTypes = ['download', 'process', 'delete'] as const
+  const actionTypes = ['download'] as const
+  const testCases = [
+    // Testing different limit types with visibility and source
+    { visibility: 'public', source: 'api', isAdmin: false, limitType: 'minute', usageCount: 1, expected: true },
+    { visibility: 'public', source: 'web', isAdmin: false, limitType: 'minute', usageCount: 2, expected: false },
 
-    it('blocks download over daily limit', async() => {
-      await Promise.all([
-        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
-        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
-      ])
-      expect(await canPerformAction(userContext, 'download')).toBe(false)
-    })
+    // Day limit tests with visibility and source differences
+    { visibility: 'private', source: 'api', isAdmin: false, limitType: 'day', usageCount: 1, expected: true },
+    { visibility: 'private', source: 'api', isAdmin: false, limitType: 'day', usageCount: 3, expected: false },
+    { visibility: 'public', source: 'web', isAdmin: false, limitType: 'day', usageCount: 3, expected: false }, // Not blocked due to visibility mismatch
 
-    it('allows admin to exceed daily limit', async() => {
-      await Promise.all([
-        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
-        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
-      ])
-      expect(await canPerformAction(adminContext, 'download')).toBe(true)
-    })
+    // Month limit tests
+    { visibility: 'public', source: 'api', isAdmin: false, limitType: 'month', usageCount: 1, expected: true },
+    { visibility: 'private', source: 'api', isAdmin: false, limitType: 'month', usageCount: 4, expected: false },
 
-    it('allows download within MONTHly limit', async() => {
-      await createTestApiUsage({ actionType: 'download', userId: userContext.user.id, actionDt: moment.utc().subtract(2, 'day') })
-      expect(await canPerformAction(userContext, 'download')).toBe(true)
-    })
+    // // Year limit tests
+    { visibility: 'public', source: 'web', isAdmin: false, limitType: 'year', usageCount: 2, expected: true },
+    { visibility: 'public', source: 'api', isAdmin: false, limitType: 'year', usageCount: 11, expected: false },
+    //
+    // // Admin tests to bypass limits
+    { visibility: 'private', source: 'api', isAdmin: true, limitType: 'day', usageCount: 5, expected: true },
+    { visibility: 'public', source: 'web', isAdmin: true, limitType: 'month', usageCount: 14, expected: true },
+    { visibility: 'private', source: 'api', isAdmin: true, limitType: 'year', usageCount: 25, expected: true },
+  ]
 
-    it('blocks download over MONTHly limit', async() => {
-      await Promise.all([
-        createTestApiUsage({ actionType: 'download', userId: userContext.user.id, actionDt: moment.utc().subtract(2, 'day') as moment.Moment }),
-        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
-        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
-      ])
-      expect(await canPerformAction(userContext, 'download')).toBe(false)
-    })
+  actionTypes.forEach((actionType) => {
+    testCases.forEach(({ visibility, source, isAdmin, limitType, usageCount, expected }) => {
+      it(`should ${expected ? 'allow' : 'block'} ${actionType} 
+      with visibility=${visibility}, source=${source}, ${limitType} limit, usageCount=${usageCount} 
+      ${isAdmin ? 'for admin' : 'for user'}`, async() => {
+        const context = isAdmin ? adminContext : userContext
 
-    it('allows admin to exceed MONTHly limit', async() => {
-      await Promise.all([
-        createTestApiUsage({ actionType: 'download', userId: userContext.user.id, actionDt: moment.utc().subtract(2, 'day') as moment.Moment }),
-        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
-        createTestApiUsage({ actionType: 'download', userId: userContext.user.id }),
-      ])
-      expect(await canPerformAction(adminContext, 'download')).toBe(true)
+        // Set the action date based on the limit type
+        let usageDate: moment.Moment
+        switch (limitType) {
+          case 'minute':
+            usageDate = moment.utc()
+            break
+          case 'day':
+            usageDate = moment.utc().startOf('day')
+            break
+          case 'month':
+            usageDate = moment.utc().subtract(2, 'days')
+            break
+          case 'year':
+            usageDate = moment.utc().startOf('year')
+            break
+          default:
+            usageDate = moment.utc()
+        }
+
+        // Create usage entries to simulate reaching limits
+        for (let i = 0; i < usageCount; i++) {
+          await createTestApiUsage({
+            actionType,
+            userId: context.user.id,
+            visibility,
+            source,
+            actionDt: usageDate,
+          } as Partial<ApiUsage>)
+        }
+
+        // Add a usage with a different visibility or source to ensure it doesn't affect this test case
+        if (visibility === 'private') {
+          await createTestApiUsage({
+            actionType,
+            userId: context.user.id,
+            visibility: 'public',
+            source: source === 'api' ? 'web' : 'api', // use alternate source
+            actionDt: usageDate,
+          } as Partial<ApiUsage>)
+        }
+
+        expect(await canPerformAction(context, {
+          actionType,
+          visibility,
+          source,
+        } as Partial<ApiUsage>)).toBe(expected)
+      })
     })
+  })
+
+  it('should advance mocked time by 10 minutes', async() => {
+    const context = userContext
+    const actionType = 'download'
+    const visibility = 'public'
+    const source = 'api'
+    const n = 1
+
+    // Simulate n+1 downloads in the same minute
+    for (let i = 0; i < n + 1; i++) {
+      await createTestApiUsage({
+        actionType,
+        userId: context.user.id,
+        visibility,
+        source,
+      })
+    }
+
+    // Verify the action is blocked after n+1 downloads in a minute
+    const blocked = await canPerformAction(context, { actionType, visibility, source })
+    expect(blocked).toBe(false)
+
+    // Advance time by 10 minutes
+    Date.now = jest.fn(() => new Date('2024-10-30T10:10:00Z').getTime())
+
+    const allowed = await canPerformAction(context, { actionType, visibility, source })
+    expect(allowed).toBe(true)
   })
 })
