@@ -219,7 +219,6 @@ export const findOrCreateTestPlan = async(): Promise<Plan> => {
 }
 export const createTestPlan = async(plan?: Partial<Plan>): Promise<Plan> => {
   const planDefaultFields = {
-    id: 1,
     name: 'regular',
     isActive: true,
     createdAt: moment.utc(moment.utc().toDate()),
@@ -237,7 +236,6 @@ export const createTestPlanRule = async(planRule?: Partial<PlanRule>): Promise<P
     limit: 5,
     type: 'dataset',
     visibility: 'private',
-    source: 'api',
     createdAt: moment.utc(moment.utc().toDate()),
   }
   return await testEntityManager.save(PlanRule, {

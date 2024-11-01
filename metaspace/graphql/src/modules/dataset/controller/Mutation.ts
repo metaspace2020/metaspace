@@ -30,6 +30,7 @@ import { isMemberOfGroup } from '../operation/isMemberOfGroup'
 import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/model'
 import { getS3Client } from '../../../utils/awsClient'
 import config from '../../../utils/config'
+import canPerformAction, { performAction } from '../../plan/util/canPerformAction'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -281,6 +282,14 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     }
   } else {
     assertCanCreateDataset(ctx.user)
+    const action: any = {
+      actionType: 'create',
+      userId: ctx.user.id,
+      type: 'dataset',
+      visibility: input.isPublic ? 'public' : 'private',
+      actionDt: moment.utc(moment.utc().toDate()),
+    }
+    await performAction(ctx, action)
   }
 
   const metadata = JSON.parse(input.metadataJson)

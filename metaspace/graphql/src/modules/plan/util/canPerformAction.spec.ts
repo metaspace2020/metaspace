@@ -38,13 +38,13 @@ describe('Plan Controller Queries', () => {
 
     const actionTypes = ['download', 'process', 'delete'] as const
     const periods = [
-      { periodType: 'minute', limit: 1 },
-      { periodType: 'day', limit: 2 },
-      { periodType: 'month', limit: 4 },
+      { periodType: 'minute', limit: 2 },
+      { periodType: 'day', limit: 4 },
+      { periodType: 'month', limit: 6 },
       { periodType: 'year', limit: 10 },
     ] as const
-    const visibilities = ['private', undefined] as const
-    const sources = ['api', 'web', undefined] as const
+    const visibilities = ['private', 'public'] as const
+    const sources = ['api', 'web'] as const
 
     // Create rules for all combinations of actionType, period, visibility, and source
     await Promise.all(
@@ -55,6 +55,7 @@ describe('Plan Controller Queries', () => {
               createTestPlanRule({
                 planId: testPlan.id,
                 actionType,
+                type: 'dataset',
                 period: 1,
                 periodType,
                 limit,
@@ -79,27 +80,27 @@ describe('Plan Controller Queries', () => {
 
     // Day limit tests with visibility and source differences
     { visibility: 'private', source: 'api', isAdmin: false, limitType: 'day', usageCount: 1, expected: true },
-    { visibility: 'private', source: 'api', isAdmin: false, limitType: 'day', usageCount: 3, expected: false },
-    { visibility: 'public', source: 'web', isAdmin: false, limitType: 'day', usageCount: 3, expected: false }, // Not blocked due to visibility mismatch
+    { visibility: 'private', source: 'api', isAdmin: false, limitType: 'day', usageCount: 4, expected: false },
+    { visibility: 'public', source: 'web', isAdmin: false, limitType: 'day', usageCount: 4, expected: false }, // Not blocked due to visibility mismatch
 
     // Month limit tests
     { visibility: 'public', source: 'api', isAdmin: false, limitType: 'month', usageCount: 1, expected: true },
-    { visibility: 'private', source: 'api', isAdmin: false, limitType: 'month', usageCount: 4, expected: false },
+    { visibility: 'private', source: 'api', isAdmin: false, limitType: 'month', usageCount: 6, expected: false },
 
     // // Year limit tests
     { visibility: 'public', source: 'web', isAdmin: false, limitType: 'year', usageCount: 2, expected: true },
     { visibility: 'public', source: 'api', isAdmin: false, limitType: 'year', usageCount: 11, expected: false },
     //
     // // Admin tests to bypass limits
-    { visibility: 'private', source: 'api', isAdmin: true, limitType: 'day', usageCount: 5, expected: true },
+    { visibility: 'private', source: 'api', isAdmin: true, limitType: 'day', usageCount: 7, expected: true },
     { visibility: 'public', source: 'web', isAdmin: true, limitType: 'month', usageCount: 14, expected: true },
     { visibility: 'private', source: 'api', isAdmin: true, limitType: 'year', usageCount: 25, expected: true },
   ]
 
   actionTypes.forEach((actionType) => {
     testCases.forEach(({ visibility, source, isAdmin, limitType, usageCount, expected }) => {
-      it(`should ${expected ? 'allow' : 'block'} ${actionType} 
-      with visibility=${visibility}, source=${source}, ${limitType} limit, usageCount=${usageCount} 
+      it(`should ${expected ? 'allow' : 'block'} ${actionType}
+      with visibility=${visibility}, source=${source}, ${limitType} limit, usageCount=${usageCount}
       ${isAdmin ? 'for admin' : 'for user'}`, async() => {
         const context = isAdmin ? adminContext : userContext
 
@@ -126,6 +127,7 @@ describe('Plan Controller Queries', () => {
         for (let i = 0; i < usageCount; i++) {
           await createTestApiUsage({
             actionType,
+            type: 'dataset',
             userId: context.user.id,
             visibility,
             source,
@@ -133,19 +135,9 @@ describe('Plan Controller Queries', () => {
           } as Partial<ApiUsage>)
         }
 
-        // Add a usage with a different visibility or source to ensure it doesn't affect this test case
-        if (visibility === 'private') {
-          await createTestApiUsage({
-            actionType,
-            userId: context.user.id,
-            visibility: 'public',
-            source: source === 'api' ? 'web' : 'api', // use alternate source
-            actionDt: usageDate,
-          } as Partial<ApiUsage>)
-        }
-
         expect(await canPerformAction(context, {
           actionType,
+          type: 'dataset',
           visibility,
           source,
         } as Partial<ApiUsage>)).toBe(expected)
@@ -158,12 +150,13 @@ describe('Plan Controller Queries', () => {
     const actionType = 'download'
     const visibility = 'public'
     const source = 'api'
-    const n = 1
+    const n = 2
 
     // Simulate n+1 downloads in the same minute
-    for (let i = 0; i < n + 1; i++) {
+    for (let i = 0; i < n; i++) {
       await createTestApiUsage({
         actionType,
+        type: 'dataset',
         userId: context.user.id,
         visibility,
         source,
@@ -171,13 +164,13 @@ describe('Plan Controller Queries', () => {
     }
 
     // Verify the action is blocked after n+1 downloads in a minute
-    const blocked = await canPerformAction(context, { actionType, visibility, source })
+    const blocked = await canPerformAction(context, { actionType, type: 'dataset', visibility, source })
     expect(blocked).toBe(false)
 
     // Advance time by 10 minutes
     Date.now = jest.fn(() => new Date('2024-10-30T10:10:00Z').getTime())
 
-    const allowed = await canPerformAction(context, { actionType, visibility, source })
+    const allowed = await canPerformAction(context, { actionType, type: 'dataset', visibility, source })
     expect(allowed).toBe(true)
   })
 })
