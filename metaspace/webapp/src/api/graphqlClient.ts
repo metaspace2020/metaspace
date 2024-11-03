@@ -57,6 +57,7 @@ const authLink = setContext(async () => {
     return {
       headers: {
         authorization: `Bearer ${await tokenAutorefresh.getJwt()}`,
+        source: 'web',
       },
     }
   } catch (err) {

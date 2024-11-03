@@ -18,7 +18,11 @@ const canPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Pr
       .getOne()
   }
 
-  const planRules = user.plan.planRules.filter((rule: any) => rule.actionType === action.actionType
+  if (!user.plan?.planRules) {
+    return true
+  }
+
+  const planRules = user.plan?.planRules?.filter((rule: any) => rule.actionType === action.actionType
       && rule.type === action.type && (!rule.visibility || rule.visibility === action.visibility)
       && (!rule.source || rule.source === action.source))
 
@@ -57,6 +61,12 @@ export const performAction = async(ctx: Context, action: DeepPartial<ApiUsage>) 
 
   const usage = ctx.entityManager.create(ApiUsage, action)
   return await ctx.entityManager.save(usage)
+}
+export const assertCanPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Promise<void> => {
+  const canPerform = await canPerformAction(ctx, action)
+  if (!canPerform) {
+    throw new UserError('Limit reached')
+  }
 }
 
 export default canPerformAction

@@ -11,9 +11,9 @@ export class ApiUsage1727982165857 implements MigrationInterface {
             CREATE TABLE "public"."api_usage" (
                 "id" SERIAL NOT NULL PRIMARY KEY,
                 "user_id" uuid REFERENCES "graphql"."user"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
-                "dataset_id" text REFERENCES "public"."dataset"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
-                "project_id" text REFERENCES "public"."dataset"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
-                "group_id" text REFERENCES "public"."dataset"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+                "dataset_id" text REFERENCES "graphql"."dataset"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+                "project_id" uuid REFERENCES "graphql"."project"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+                "group_id" uuid REFERENCES "graphql"."group"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 "action_type" text NOT NULL,
                 "type" text,
                 "visibility" text, 
@@ -49,7 +49,7 @@ export class ApiUsage1727982165857 implements MigrationInterface {
         await queryRunner.query(`
             CREATE TABLE "public"."plan_rule" (
                 "id" SERIAL NOT NULL PRIMARY KEY,
-                "plan_id" INT REFERENCES "plan"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
+                "plan_id" INT REFERENCES "public"."plan"("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 "action_type" text NOT NULL,
                 "period" INT NOT NULL,
                 "period_type" text NOT NULL, 
@@ -68,7 +68,7 @@ export class ApiUsage1727982165857 implements MigrationInterface {
             CREATE INDEX "idx_plan_rule_action_type_period_type" ON "public"."plan_rule" ("action_type", "period_type")
         `);
 
-        await queryRunner.query(`ALTER TABLE "graphql"."user" ADD "plan_id" INT REFERENCES "plan"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "graphql"."user" ADD "plan_id" INT REFERENCES "public"."plan"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
     }
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`DROP INDEX "public"."idx_api_usage_user_id"`);

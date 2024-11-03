@@ -33,6 +33,7 @@ export interface BaseContext {
   user: ContextUser;
   isAdmin: boolean;
   getUserIdOrFail: () => string; // Throws "Unauthenticated" error if not logged in
+  getSource: () => string;
   /**
    * For deduplicating slow functions, DB queries, etc. between resolvers. `contextCacheGet` memoizes `func()`
    * based on `functionName` and `args` for the duration of the context.

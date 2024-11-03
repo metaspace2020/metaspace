@@ -108,6 +108,13 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
     return await dataloader.load(entityId)
   }
 
+  const getSource = () => {
+    if (req && req.headers && req.headers.source) {
+      return req.headers.source
+    }
+    return 'api'
+  }
+
   const contextUser: ContextUser = {
     role: 'guest',
     authMethod: req && req.authInfo || AuthMethodOptions.UNKNOWN,
@@ -138,6 +145,7 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
     contextCacheGet,
     contextCacheClear, // Only intended for use in tests
     cachedGetEntityById,
+    getSource,
   }
 }
 
@@ -147,7 +155,7 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
 }
 
 export const getContextForSubscription = (jwtUser: JwtUser | null, entityManager: EntityManager): BaseContext => {
-  return getBaseContext(jwtUser, entityManager)
+  return getBaseContext(jwtUser, entityManager) as BaseContext
 }
 
 export default getContext
