@@ -8,8 +8,6 @@ import {
   setupTestUsers, testUser,
   userContext,
 } from '../../../tests/graphqlTestEnvironment'
-
-import { getConnection } from 'typeorm'
 import { createBackgroundData } from '../../../tests/backgroundDataCreation'
 import * as moment from 'moment'
 
@@ -21,11 +19,6 @@ describe('modules/plan/controller (mutations)', () => {
   beforeEach(async() => {
     jest.clearAllMocks()
     await onBeforeEach()
-
-    const connection = getConnection()
-    await connection.query('ALTER SEQUENCE plan_id_seq RESTART WITH 1')
-    await connection.query('ALTER SEQUENCE plan_rule_id_seq RESTART WITH 1')
-
     await setupTestUsers()
     userId = testUser.id
   })

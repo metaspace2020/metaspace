@@ -3,6 +3,7 @@ type Plan {
     name: String!
     isActive: Boolean
     createdAt: String!
+    planRules: [PlanRule]
 }
 
 input PlanInput {

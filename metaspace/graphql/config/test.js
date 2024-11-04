@@ -74,6 +74,7 @@ config.uppy.uploadUrls = [/^http(s){0,1}:\/\/(.+\.)*metaspace2020\.eu\/.*/, /.+/
 
 config.features = {
   graphqlMocks: false,
+  imzmlDownload: true,
 }
 
 module.exports = config

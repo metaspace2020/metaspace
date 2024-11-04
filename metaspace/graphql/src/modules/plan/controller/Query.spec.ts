@@ -9,9 +9,7 @@ import {
   onBeforeEach,
   setupTestUsers,
 } from '../../../tests/graphqlTestEnvironment'
-
 import * as moment from 'moment'
-import { getConnection } from 'typeorm'
 
 describe('modules/plan/controller (queries)', () => {
   const currentTime: any = moment.utc(moment.utc().toDate())
@@ -37,11 +35,6 @@ describe('modules/plan/controller (queries)', () => {
   beforeEach(async() => {
     jest.clearAllMocks()
     await onBeforeEach()
-
-    const connection = getConnection()
-    await connection.query('ALTER SEQUENCE plan_id_seq RESTART WITH 1')
-    await connection.query('ALTER SEQUENCE plan_rule_id_seq RESTART WITH 1')
-
     createdPlans = await Promise.all(TIERS.map(plan => createTestPlan(plan as any)))
 
     createdPlanRules = await Promise.all(TIER_RULES.map((rule: any, index: number) => {

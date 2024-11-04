@@ -1,9 +1,18 @@
+// ElasticSearch must be mocked before importing any other graphql code. It uses doMock so that it can reference
+// MockElasticSearchClient without jest's "jest.mock hoisting" causing problems.
+class MockElasticSearchClient {
+  static search = jest.fn()
+  search = MockElasticSearchClient.search
+}
+jest.doMock('@elastic/elasticsearch', () => ({ Client: MockElasticSearchClient }))
+
 import {
+  adminContext,
   doQuery,
   onAfterAll,
   onAfterEach,
   onBeforeAll,
-  onBeforeEach,
+  onBeforeEach, setupTestUsers,
   testEntityManager,
 } from '../../../tests/graphqlTestEnvironment'
 
@@ -12,7 +21,6 @@ import {
   createTestPlan,
   createTestPlanRule, createTestUser,
 } from '../../../tests/testDataCreation'
-import { getConnection } from 'typeorm'
 import { getContextForTest } from '../../../getContext'
 
 describe('Dataset plan checks', () => {
@@ -85,10 +93,7 @@ describe('Dataset plan checks', () => {
     jest.clearAllMocks()
 
     await onBeforeEach()
-
-    const connection = getConnection()
-    await connection.query('ALTER SEQUENCE plan_id_seq RESTART WITH 1')
-    await connection.query('ALTER SEQUENCE plan_rule_id_seq RESTART WITH 1')
+    await setupTestUsers()
 
     regularPlan = await createTestPlan({
       name: 'regular',
@@ -107,6 +112,16 @@ describe('Dataset plan checks', () => {
       limit: 0,
       type: 'dataset',
       visibility: 'private',
+    })
+
+    await createTestPlanRule({
+      planId: regularPlan.id,
+      actionType: 'download',
+      period: 1,
+      periodType: 'day',
+      limit: 2,
+      type: 'dataset',
+      visibility: 'public',
     })
 
     await createTestPlanRule({
@@ -140,6 +155,12 @@ describe('Dataset plan checks', () => {
       )
     }`
 
+  const datasetDownloadLink = `query getDatasetDownloadLink($datasetId: String!) {
+      dataset(id: $datasetId) {
+        downloadLinkJson
+      }
+  }`
+
   it('should not be able to create private dataset as a regular', async() => {
     const context = getContextForTest({ ...testUserReg }, testEntityManager)
     await expect(doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: false }, { context })).rejects.toThrow('Limit reached')
@@ -157,5 +178,69 @@ describe('Dataset plan checks', () => {
     await expect(doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })).resolves.not.toThrow()
     Date.now = jest.fn(() => new Date('2024-10-30T10:02:00Z').getTime())
     await expect(doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: false }, { context })).rejects.toThrow('Limit reached')
+  })
+
+  it('should be able to download only 2 datasets per day as a regular', async() => {
+    const context = getContextForTest({ ...testUserReg }, testEntityManager)
+    Date.now = jest.fn(() => new Date('2024-10-30T10:03:00Z').getTime())
+    const ds1 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+    Date.now = jest.fn(() => new Date('2024-10-30T10:04:00Z').getTime())
+    const ds2 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+    Date.now = jest.fn(() => new Date('2024-10-30T10:05:00Z').getTime())
+    const ds3 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+
+    // Mock elasticsearch so that it returns the minimum fields needed to reach the resolvers inside Dataset
+    MockElasticSearchClient.search.mockImplementation(() =>
+      ({
+        hits: {
+          hits: [
+            { _source: { ds_id: JSON.parse(ds1).datasetId, ds_is_public: true } },
+            { _source: { ds_id: JSON.parse(ds2).datasetId, ds_is_public: true } },
+            { _source: { ds_id: JSON.parse(ds3).datasetId, ds_is_public: true } }],
+        },
+      })
+    )
+
+    const download1 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds1).datasetId }, { context })
+    const download2 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds2).datasetId }, { context })
+    let download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context })
+
+    expect(download1.downloadLinkJson).not.toBe(null)
+    expect(download2.downloadLinkJson).not.toBe(null)
+    expect(download3.downloadLinkJson).toBe(null)
+
+    // Should be able to download again after 24 hours
+    Date.now = jest.fn(() => new Date('2024-10-31T11:05:00Z').getTime())
+    download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context })
+    expect(download3.downloadLinkJson).not.toBe(null)
+  })
+  it('should be able to download n datasets per day as a admin', async() => {
+    const context = getContextForTest({ ...testUserReg }, testEntityManager)
+    Date.now = jest.fn(() => new Date('2024-10-30T10:03:00Z').getTime())
+    const ds1 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+    Date.now = jest.fn(() => new Date('2024-10-30T10:04:00Z').getTime())
+    const ds2 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+    Date.now = jest.fn(() => new Date('2024-10-30T10:05:00Z').getTime())
+    const ds3 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+
+    // Mock elasticsearch so that it returns the minimum fields needed to reach the resolvers inside Dataset
+    MockElasticSearchClient.search.mockImplementation(() =>
+      ({
+        hits: {
+          hits: [
+            { _source: { ds_id: JSON.parse(ds1).datasetId, ds_is_public: true } },
+            { _source: { ds_id: JSON.parse(ds2).datasetId, ds_is_public: true } },
+            { _source: { ds_id: JSON.parse(ds3).datasetId, ds_is_public: true } }],
+        },
+      })
+    )
+
+    const download1 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds1).datasetId }, { context: adminContext })
+    const download2 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds2).datasetId }, { context: adminContext })
+    const download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context: adminContext })
+    console.log('download1', download1)
+    expect(download1.downloadLinkJson).not.toBe(null)
+    expect(download2.downloadLinkJson).not.toBe(null)
+    expect(download3.downloadLinkJson).not.toBe(null)
   })
 })

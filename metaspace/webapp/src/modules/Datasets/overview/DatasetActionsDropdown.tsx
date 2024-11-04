@@ -274,12 +274,12 @@ export const DatasetActionsDropdown = defineComponent({
         browserActionLabel,
       } = props
       const { role } = currentUser || {}
-      const { canEdit, canDelete, canDownload } = dataset || {}
+      const { canEdit, canDelete } = dataset || {}
       const canReprocess = role === 'admin' || (dataset?.status === 'FAILED' && canEdit)
 
       return (
         <ElDropdownMenu class="dataset-overview-menu p-2">
-          {canDownload && <ElDropdownItem command="download">{downloadActionLabel}</ElDropdownItem>}
+          <ElDropdownItem command="download">{downloadActionLabel}</ElDropdownItem>
           <ElDropdownItem command="compare">{compareActionLabel}</ElDropdownItem>
           {config.features.imzml_browser && (
             <ElDropdownItem command="browser">
@@ -308,16 +308,11 @@ export const DatasetActionsDropdown = defineComponent({
 
     return () => {
       const { actionLabel, currentUser, dataset } = props
-      const { role } = currentUser || {}
-      const { canEdit, canDelete, canDownload, id, name } = dataset || {}
-      const canReprocess = role === 'admin' || (dataset?.status === 'FAILED' && canEdit)
+      const { id, name } = dataset || {}
 
       return (
         <ElDropdown
           class="dataset-actions-dropdown"
-          style={{
-            visibility: !canEdit && !canDelete && !canReprocess && !canDownload ? 'hidden' : '',
-          }}
           trigger="click"
           type="primary"
           onCommand={handleCommand}

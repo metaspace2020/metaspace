@@ -3,6 +3,7 @@ import { ApiUsage, Plan } from '../model'
 import * as moment from 'moment'
 import { DeepPartial } from 'typeorm'
 import { UserError } from 'graphql-errors'
+import { User } from '../../user/model'
 
 const canPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Promise<boolean> => {
   const user: any = ctx?.user
@@ -12,9 +13,12 @@ const canPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Pr
   }
 
   if (!user.plan) {
+    const planId = user.planId
+        || (await ctx.entityManager.findOneOrFail(User, user.id, { relations: ['plan'] })).planId
+
     user.plan = await ctx.entityManager.createQueryBuilder(Plan, 'plan')
       .leftJoinAndSelect('plan.planRules', 'planRules')
-      .where('plan.id = :planId', { planId: user.planId })
+      .where('plan.id = :planId', { planId })
       .getOne()
   }
 
@@ -27,8 +31,8 @@ const canPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Pr
       && (!rule.source || rule.source === action.source))
 
   for (const rule of planRules as any[]) {
-    const startDate = moment.utc().subtract(1, rule.periodType).startOf(rule.periodType)
-    const endDate = moment.utc().endOf(rule.periodType)
+    const startDate = moment.utc().subtract(1, rule.periodType)
+    const endDate = moment.utc().add(2, 'second') // add a slack of 2 seconds
 
     let qb = ctx.entityManager.createQueryBuilder(ApiUsage, 'usage')
       .where('usage.actionType = :actionType', { actionType: action.actionType })

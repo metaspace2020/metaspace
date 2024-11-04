@@ -382,7 +382,7 @@ class GraphQLClient(object):
         api_key = self._config.get('usr_api_key')
         headers = {
             'Authorization': f'Api-Key {api_key}' if api_key else 'Bearer ' + self.get_jwt(),
-            'Source': 'api'
+            'Source': 'api',
         }
 
         res = self.session.post(

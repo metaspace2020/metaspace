@@ -165,12 +165,14 @@ export interface CurrentUserRoleResult {
   id: string
   name: string
   role: UserRole
+  planId: string
 }
 
 export interface CurrentUserRoleWithGroupResult {
   id: string
   name: string
   role: UserRole
+  planId: string
   groups: any
 }
 
@@ -181,6 +183,10 @@ export const currentUserRoleQuery = gql`
       id
       name
       role
+      plan {
+        id
+        name
+      }
     }
   }
 `

@@ -11,7 +11,7 @@ import {
 } from 'graphql'
 
 import { createConnection } from '../utils/db'
-import { Connection, EntityManager } from 'typeorm'
+import { Connection, EntityManager, getConnection } from 'typeorm'
 import { User } from '../modules/user/model'
 import { Plan } from '../modules/plan/model'
 import { initOperation } from '../modules/auth/operation'
@@ -81,6 +81,9 @@ export const onBeforeEach = async() => {
   (adminContext as any) = undefined
 
   anonContext = getContextForTest({ role: 'anonymous' }, testEntityManager)
+  const connection = getConnection()
+  await connection.query('ALTER SEQUENCE plan_id_seq RESTART WITH 1')
+  await connection.query('ALTER SEQUENCE plan_rule_id_seq RESTART WITH 1')
 
   await initOperation(testEntityManager)
 }

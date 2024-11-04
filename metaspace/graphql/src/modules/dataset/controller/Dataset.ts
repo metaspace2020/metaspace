@@ -26,6 +26,8 @@ import { In, IsNull } from 'typeorm'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import canDeleteEsDataset from '../operation/canDeleteEsDataset'
 import { DatasetEnrichment as DatasetEnrichmentModel, EnrichmentDB } from '../../enrichmentdb/model'
+import * as moment from 'moment/moment'
+import canPerformAction, { performAction } from '../../plan/util/canPerformAction'
 
 interface DbDataset {
   id: string;
@@ -108,7 +110,20 @@ export const rawOpticalImage = async(datasetId: string, ctx: Context) => {
 }
 
 const canDownloadDataset = async(ds: DatasetSource, ctx: Context) => {
-  return ctx.isAdmin || (config.features.imzmlDownload && await canViewEsDataset(ds, ctx.user))
+  const action: any = {
+    actionType: 'download',
+    userId: ctx.user?.id,
+    datasetId: ds._source.ds_id,
+    type: 'dataset',
+    visibility: ds._source.ds_is_public ? 'public' : 'private',
+    actionDt: moment.utc(moment.utc().toDate()),
+    source: (ctx as any).getSource(),
+  }
+
+  console.log('test', ctx.isAdmin)
+
+  return ctx.isAdmin || (config.features.imzmlDownload && ctx.user?.id != null
+      && await canViewEsDataset(ds, ctx.user) && await canPerformAction(ctx, action))
 }
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
@@ -455,6 +470,18 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       } else {
         files = []
       }
+
+      const action: any = {
+        actionType: 'download',
+        userId: ctx.user.id,
+        datasetId: ds._source.ds_id,
+        type: 'dataset',
+        visibility: ds._source.ds_is_public ? 'public' : 'private',
+        actionDt: moment.utc(moment.utc().toDate()),
+        source: (ctx as any).getSource(),
+      }
+
+      await performAction(ctx, action)
 
       return JSON.stringify({
         contributors: [

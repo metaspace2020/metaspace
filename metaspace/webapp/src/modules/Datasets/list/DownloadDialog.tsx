@@ -92,7 +92,10 @@ export default defineComponent({
     const { result: downloadLinkResult, loading } = useQuery<GetDatasetDownloadLink>(
       getDatasetDownloadLink,
       { datasetId },
-      { fetchPolicy: 'no-cache' }
+      {
+        fetchPolicy: 'cache-first',
+        pollInterval: 1800 * 1000, // 30 minutes in milliseconds
+      }
     )
     const downloadLinks = computed<DownloadLinkJson>(() =>
       downloadLinkResult.value != null ? safeJsonParse(downloadLinkResult.value.dataset.downloadLinkJson) : null
@@ -110,11 +113,10 @@ export default defineComponent({
         content = (
           <div>
             <p>
-              Please{' '}
               <a class="cursor-pointer" onClick={showSignIn}>
                 Sign in
               </a>{' '}
-              to continue.
+              to download. Access is available for public datasets or those you have permissions for.
             </p>
           </div>
         )
