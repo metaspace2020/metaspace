@@ -187,7 +187,7 @@ export default defineComponent({
             <p class="py-2">
               <i>
                 Please be aware of daily download limits (2 downloads per day). Closing and reopening this dialog will
-                count as a new download if you don't have edit permissions.
+                count as a new download.
               </i>
             </p>
             <p>

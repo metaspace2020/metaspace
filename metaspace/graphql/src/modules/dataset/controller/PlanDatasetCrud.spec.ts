@@ -200,7 +200,7 @@ describe('Dataset plan checks', () => {
     await expect(doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: false }, { context })).rejects.toThrow('Limit reached')
   })
 
-  it('should be able to download only 2 datasets per day as a regular', async() => {
+  it('should be able to download only 2 datasets per day as a regular not owner', async() => {
     const context = getContextForTest({ ...testUserReg }, testEntityManager)
     const context2 = getContextForTest({ ...testUserReg2 }, testEntityManager)
 
@@ -227,9 +227,8 @@ describe('Dataset plan checks', () => {
     expect(JSON.parse(download4.downloadLinkJson)).not.toHaveProperty('message')
   })
 
-  it('should be able to download n datasets per day as a dataset owner', async() => {
+  it('should not be able to download 2 datasets per day as a dataset owner', async() => {
     const context = getContextForTest({ ...testUserReg }, testEntityManager)
-    const context2 = getContextForTest({ ...testUserReg2 }, testEntityManager)
 
     const ds1 = await createAndMockDataset('2024-10-30T10:03:00Z', context, testUserReg)
     const download1 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds1).datasetId }, { context: context })
@@ -242,26 +241,7 @@ describe('Dataset plan checks', () => {
 
     expect(JSON.parse(download1.downloadLinkJson)).not.toHaveProperty('message')
     expect(JSON.parse(download2.downloadLinkJson)).not.toHaveProperty('message')
-    expect(JSON.parse(download3.downloadLinkJson)).not.toHaveProperty('message')
-
-    // should respect the limit for dataset of other users
-    const ds4 = await createAndMockDataset('2024-10-30T10:06:00Z', context2, testUserReg2)
-    MockElasticSearchClient.search.mockImplementation(() =>
-      ({
-        hits: {
-          hits: [
-            { _source: { ds_id: JSON.parse(ds4).datasetId, ds_is_public: true, ds_submitter_id: testUserReg2.id } }],
-        },
-      })
-    )
-
-    const download4 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds4).datasetId }, { context })
-    const download5 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds4).datasetId }, { context })
-    const download6 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds4).datasetId }, { context })
-
-    expect(JSON.parse(download4.downloadLinkJson)).not.toHaveProperty('message')
-    expect(JSON.parse(download5.downloadLinkJson)).not.toHaveProperty('message')
-    expect(JSON.parse(download6.downloadLinkJson)).toEqual(expect.objectContaining({
+    expect(JSON.parse(download3.downloadLinkJson)).toEqual(expect.objectContaining({
       message: expect.any(String),
     }))
   })

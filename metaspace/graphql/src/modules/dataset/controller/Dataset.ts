@@ -453,7 +453,9 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       source: (ctx as any).getSource(),
     }
 
-    if (!canEdit && !await canPerformAction(ctx, action)) { // check if reached dowload limit if not dataset owner
+    if (!await canPerformAction(ctx, action)) { // check if reached download
+      await performAction(ctx, { ...action, actionType: 'download_attempt' })
+
       return JSON.stringify({
         message: 'Download limit reached (2 downloads per day). Contact us at contact@metaspace2020.eu to '
             + 'request an increase.',

@@ -373,6 +373,7 @@ CREATE TABLE "public"."plan" (
   "id" SERIAL NOT NULL, 
   "name" text NOT NULL, 
   "is_active" boolean NOT NULL DEFAULT true, 
+  "is_default" boolean NOT NULL DEFAULT false, 
   "created_at" TIMESTAMP NOT NULL, 
   CONSTRAINT "PK_d706f7043cd0274b86a2b005ab6" PRIMARY KEY ("id")
 );

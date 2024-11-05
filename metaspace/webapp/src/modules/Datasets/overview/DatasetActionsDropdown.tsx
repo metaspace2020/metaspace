@@ -268,7 +268,7 @@ export const DatasetActionsDropdown = defineComponent({
           openCompareDialog()
           break
         case 'download':
-          if (!props.currentUser?.id || props.dataset?.canEdit || (await confirmDownload())) {
+          if (!props.currentUser?.id || (await confirmDownload())) {
             openDownloadDialog()
           }
           break
