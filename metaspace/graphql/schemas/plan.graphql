@@ -2,6 +2,7 @@ type Plan {
     id: Int!
     name: String!
     isActive: Boolean
+    isDefault: Boolean
     createdAt: String!
     planRules: [PlanRule]
 }
@@ -47,8 +48,8 @@ type Query {
 }
 
 type Mutation {
-    createPlan(name: String!, isActive: Boolean!): Plan!
-    updatePlan(planId: Int!, name: String!, isActive: Boolean!): Plan!
+    createPlan(name: String!, isActive: Boolean!, isDefault: Boolean): Plan!
+    updatePlan(planId: Int!, name: String!, isActive: Boolean!, isDefault: Boolean): Plan!
 
     createPlanRule(planId: Int!, actionType: String!, period: Int!,
         periodType: String!, limit: Int!, type: String, visibility: String, requestSource: String): PlanRule!

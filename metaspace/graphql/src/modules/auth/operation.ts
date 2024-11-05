@@ -12,6 +12,7 @@ import { User as UserModel, User } from '../user/model'
 import { sendCreateAccountEmail } from './email'
 import { Request } from 'express'
 import generateRandomToken from '../../utils/generateRandomToken'
+import { Plan } from '../plan/model'
 
 export interface UserCredentialsInput {
   email: string;
@@ -25,11 +26,13 @@ const NUM_ROUNDS = 12
 let entityManager: EntityManager
 let credRepo: Repository<Credentials>
 let userRepo: Repository<User>
+let planRepo: Repository<Plan>
 
 export const initOperation = async(typeormConn?: EntityManager) => {
   entityManager = typeormConn || (await utils.createConnection()).manager
   credRepo = entityManager.getRepository(Credentials)
   userRepo = entityManager.getRepository(User)
+  planRepo = entityManager.getRepository(Plan)
 }
 
 // FIXME: some mechanism should be added so that a user's other sessions are revoked when they change their password, etc.
@@ -136,6 +139,8 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
     emailService.sendLoginEmail(existingUser.email!, link)
   } else {
     const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email')
+    const defaultPlan: any = await planRepo.findOne({ isDefault: true })
+
     if (existingUserNotVerified) {
       // existing not verified user
       if (userCred.googleId) {
@@ -149,12 +154,14 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
           email: userCred.email,
           notVerifiedEmail: null,
           name: userCred.name,
+          planId: defaultPlan?.id,
         })
       } else {
         existingUserNotVerified.credentials.hash = await hashPassword(userCred.password) || null
         await credRepo.save(existingUserNotVerified.credentials)
         await userRepo.update(existingUserNotVerified.id, {
           name: userCred.name,
+          planId: defaultPlan?.id,
         })
         logger.info(`${userCred.email} user credentials updated, password added`)
         await sendEmailVerificationToken(existingUserNotVerified.credentials,
@@ -168,6 +175,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
           email: userCred.email,
           name: userCred.name,
           credentials: newCred,
+          planId: defaultPlan?.id,
         })
         await userRepo.insert(newUser)
         logger.info(`New google user added: ${userCred.email}`)
@@ -177,6 +185,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
           notVerifiedEmail: userCred.email,
           name: userCred.name,
           credentials: newCred,
+          planId: defaultPlan?.id,
         })
         await userRepo.insert(newUser)
         logger.info(`New local user added: ${userCred.email}`)

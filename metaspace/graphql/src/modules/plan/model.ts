@@ -21,6 +21,9 @@ export class Plan {
     @Column({ type: 'boolean', default: true })
     isActive: boolean;
 
+    @Column({ type: 'boolean', default: false })
+    isDefault: boolean;
+
     @Column({
       name: 'created_at', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
     })
@@ -38,8 +41,8 @@ export class PlanRule {
     @Column({ name: 'plan_id' })
     planId: number;
 
-    @Column({ type: 'text', enum: ['download', 'create', 'update', 'process', 'delete'] })
-    actionType: 'download' | 'create' | 'update' | 'process' | 'delete';
+    @Column({ type: 'text', enum: ['download', 'create', 'update', 'process', 'delete', 'download_attempt'] })
+    actionType: 'download' | 'create' | 'update' | 'process' | 'delete' | 'download_attempt';
 
     @Column({ type: 'int' })
     period: number;
@@ -89,8 +92,8 @@ export class ApiUsage {
     @Column({ type: 'text', enum: ['dataset', 'group', 'project', 'user'] })
     type: 'dataset' | 'group' | 'project' | 'user';
 
-    @Column({ type: 'text', enum: ['download', 'create', 'update', 'process', ''] })
-    actionType: 'download' | 'create' | 'update' | 'process' | 'delete';
+    @Column({ type: 'text', enum: ['download', 'create', 'update', 'process', 'delete', 'download_attempt'] })
+    actionType: 'download' | 'create' | 'update' | 'process' | 'delete' | 'download_attempt';
 
     @Column({ name: 'visibility', type: 'text', enum: ['public', 'private'] })
     visibility: 'public' | 'private';

@@ -39,7 +39,6 @@ const canPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Pr
       .andWhere('usage.actionDt >= :startDate', { startDate: startDate.toDate() })
       .andWhere('usage.actionDt <= :endDate', { endDate: endDate.toDate() })
       .andWhere('usage.userId = :userId', { userId: user.id })
-      .andWhere('usage.canEdit IS NOT TRUE')
 
     if (rule.visibility) {
       qb = qb.andWhere('usage.visibility = :visibility', { visibility: rule.visibility })
