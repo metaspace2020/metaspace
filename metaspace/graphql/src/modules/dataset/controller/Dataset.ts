@@ -453,7 +453,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
     if (!canEdit && !await canPerformAction(ctx, action)) { // check if reached dowload limit if not dataset owner
       return JSON.stringify({
-        message: 'Download limit reached. Contact us at contact@metaspace2020.eu to request an increase.',
+        message: 'Download limit reached (2 downloads per day). Contact us at contact@metaspace2020.eu to '
+            + 'request an increase.',
         files: [{
           filename: 'Download_Limit_Reached.txt',
           link: 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/Download_Limit_Reached.txt',
