@@ -30,6 +30,7 @@ import { isMemberOfGroup } from '../operation/isMemberOfGroup'
 import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/model'
 import { getS3Client } from '../../../utils/awsClient'
 import config from '../../../utils/config'
+import { assertCanPerformAction, performAction } from '../../plan/util/canPerformAction'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -270,6 +271,15 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   const { input, priority, force, delFirst, skipValidation, useLithops, performEnrichment } = args
   const datasetId = args.id || newDatasetId()
   const datasetIdWasSpecified = args.id != null
+  const action: any = {
+    actionType: 'create',
+    userId: ctx.user.id,
+    datasetId,
+    type: 'dataset',
+    visibility: input.isPublic ? 'public' : 'private',
+    actionDt: moment.utc(moment.utc().toDate()),
+    source: (ctx as any).getSource(),
+  }
 
   logger.info(`Creating dataset '${datasetId}' by '${ctx.user.id}' user ...`)
   let dataset
@@ -296,6 +306,7 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     }
   }
 
+  await assertCanPerformAction(ctx, action)
   await setDatabaseIdsInInput(ctx.entityManager, input)
   await assertUserCanUseMolecularDBs(ctx, input.databaseIds as number[])
   await assertValidScoringModel(ctx, input.scoringModel)
@@ -322,6 +333,8 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     del_first: delFirst,
     email: ctx.user.email,
   })
+
+  await performAction(ctx, action)
 
   logger.info(`Dataset '${datasetId}' was created`)
   return JSON.stringify({ datasetId, status: 'success' })
@@ -397,6 +410,17 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId)
     let isEnriched : boolean | any = false
 
+    const action: any = {
+      actionType: 'update',
+      userId: ctx.user.id,
+      datasetId,
+      type: 'dataset',
+      visibility: engineDataset.isPublic ? 'public' : 'private',
+      actionDt: moment.utc(moment.utc().toDate()),
+      source: (ctx as any).getSource(),
+    }
+    await assertCanPerformAction(ctx, action)
+
     if (performEnrichment) {
       isEnriched = await ctx.entityManager.createQueryBuilder(DatasetEnrichmentModel,
         'dsEnrichment')
@@ -452,6 +476,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         })
       }
     }
+    await performAction(ctx, action)
 
     logger.info(`Dataset '${datasetId}' was updated`)
     return JSON.stringify({ datasetId, status: 'success' })

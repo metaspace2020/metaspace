@@ -1,8 +1,9 @@
-import { computed, defineComponent, toRefs } from 'vue'
+import { computed, defineComponent, toRefs, ref, onMounted, onUnmounted } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { DownloadLinkJson, GetDatasetDownloadLink, getDatasetDownloadLink } from '../../../api/dataset'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { ElDialog, ElLoading } from '../../../lib/element-plus'
+import { useStore } from 'vuex'
 
 const getFilenameAndExt = (filename: string) => {
   const lastDot = filename.lastIndexOf('.')
@@ -78,6 +79,7 @@ export default defineComponent({
   props: {
     datasetName: { type: String, required: true },
     datasetId: { type: String, required: true },
+    isLogged: { type: Boolean, default: () => false },
     onClose: { type: Function },
   },
   directives: {
@@ -85,6 +87,9 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const { datasetId } = toRefs(props)
+    const store = useStore()
+    const dialogRef = ref(null)
+
     const { result: downloadLinkResult, loading } = useQuery<GetDatasetDownloadLink>(
       getDatasetDownloadLink,
       { datasetId },
@@ -93,16 +98,51 @@ export default defineComponent({
     const downloadLinks = computed<DownloadLinkJson>(() =>
       downloadLinkResult.value != null ? safeJsonParse(downloadLinkResult.value.dataset.downloadLinkJson) : null
     )
+    const showSignIn = () => {
+      emit('close')
+      store.commit('account/showDialog', 'signIn')
+    }
+
+    const handleOutsideClick = (event) => {
+      if (dialogRef.value && !dialogRef.value.$el.contains(event.target)) {
+        event.stopPropagation()
+      }
+    }
+
+    onMounted(() => {
+      document.addEventListener('mousedown', handleOutsideClick)
+    })
+
+    onUnmounted(() => {
+      document.removeEventListener('mousedown', handleOutsideClick)
+    })
 
     return () => {
       let content
       if (loading.value) {
         content = <div v-loading class="h-64" />
+      } else if (!props.isLogged) {
+        content = (
+          <div>
+            <p>
+              <a class="cursor-pointer" onClick={showSignIn}>
+                Sign in
+              </a>{' '}
+              to download. Access is available for public datasets or those you have permissions for.
+            </p>
+          </div>
+        )
       } else if (downloadLinks.value == null) {
         content = (
           <div>
             <h1>Error</h1>
             <p>This dataset cannot be downloaded.</p>
+          </div>
+        )
+      } else if (((downloadLinks.value || {}) as any).message != null) {
+        content = (
+          <div>
+            <p>{((downloadLinks.value || {}) as any).message}</p>
           </div>
         )
       } else {
@@ -144,6 +184,12 @@ export default defineComponent({
             ) : (
               <div class="text-gray-600 text-center items-center my-6">No files were found for this dataset.</div>
             )}
+            <p class="py-2">
+              <i>
+                Please be aware of daily download limits (2 downloads per day). Closing and reopening this dialog will
+                count as a new download if you don't have edit permissions.
+              </i>
+            </p>
             <p>
               <i>These download links expire after 30 minutes.</i>
             </p>
@@ -153,8 +199,11 @@ export default defineComponent({
 
       return (
         <ElDialog
+          ref="dialogRef"
           model-value={true}
           lockScroll={false}
+          closeOnClickModal={false}
+          showClose={true}
           onClick={(e) => e.stopPropagation()}
           onClose={() => emit('close')}
           title={`Download ${props.datasetName}`}

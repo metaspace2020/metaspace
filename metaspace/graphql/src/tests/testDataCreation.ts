@@ -9,17 +9,21 @@ import { Dataset, DatasetProject } from '../modules/dataset/model'
 import { DatasetDiagnostic, EngineDataset, Job } from '../modules/engine/model'
 import { Group, UserGroup as UserGroupModel } from '../modules/group/model'
 import { MolecularDB } from '../modules/moldb/model'
+import { Plan, PlanRule, ApiUsage } from '../modules/plan/model'
 import { isMemberOfGroup } from '../modules/dataset/operation/isMemberOfGroup'
+import { DeepPartial } from 'typeorm'
 
 export const createTestUser = async(user?: Partial<User>): Promise<User> => {
   return (await createTestUserWithCredentials(user))[0]
 }
 
 export const createTestUserWithCredentials = async(user?: Partial<User>): Promise<[User, Credentials]> => {
+  const plan = await findOrCreateTestPlan()
   const creds = (await testEntityManager.save(Credentials, {}, {})) as Credentials
   const userModel = await testEntityManager.save(User, {
     name: 'tester',
     role: 'user',
+    planId: plan.id,
     credentialsId: creds.id,
     email: `${Math.random()}@example.com`,
     ...user,
@@ -200,4 +204,60 @@ export const createTestDatasetDiagnostic = async(
     ...diag,
   })
   return result as unknown as DatasetDiagnostic
+}
+
+export const findOrCreateTestPlan = async(): Promise<Plan> => {
+  let plan = await testEntityManager.createQueryBuilder(Plan, 'plan')
+    .orderBy('plan.id', 'ASC')
+    .getOne()
+
+  if (!plan) {
+    plan = await createTestPlan()
+  }
+
+  return plan
+}
+export const createTestPlan = async(plan?: Partial<Plan>): Promise<Plan> => {
+  const planDefaultFields = {
+    name: 'regular',
+    isActive: true,
+    createdAt: moment.utc(moment.utc().toDate()),
+  }
+
+  return await testEntityManager.save(Plan, { ...planDefaultFields, ...plan }) as Plan
+}
+
+export const createTestPlanRule = async(planRule?: Partial<PlanRule>): Promise<PlanRule> => {
+  const planRuleDefaultFields = {
+    planId: 1,
+    actionType: 'download',
+    period: 1,
+    periodType: 'day',
+    limit: 5,
+    type: 'dataset',
+    visibility: 'private',
+    createdAt: moment.utc(moment.utc().toDate()),
+  }
+  return await testEntityManager.save(PlanRule, {
+    ...planRuleDefaultFields,
+    ...planRule,
+  } as DeepPartial<PlanRule>) as Promise<PlanRule>
+}
+
+export const createTestApiUsage = async(apiUsage?: Partial<ApiUsage>): Promise<ApiUsage> => {
+  const user = await createTestUser({ name: 'user test' })
+  const dataset = await createTestDataset()
+  const apiUsageDefaultFields = {
+    userId: user.id,
+    datasetId: dataset.id,
+    type: 'dataset',
+    actionType: 'download',
+    visibility: (dataset as any).isPublic ? 'public' : 'private',
+    source: 'api',
+    actionDt: moment.utc(moment.utc().toDate()),
+  }
+  return await testEntityManager.save(ApiUsage, {
+    ...apiUsageDefaultFields,
+    ...apiUsage,
+  } as DeepPartial<ApiUsage>) as Promise<ApiUsage>
 }

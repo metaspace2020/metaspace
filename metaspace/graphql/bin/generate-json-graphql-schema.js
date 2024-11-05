@@ -20,6 +20,7 @@ const schemaFiles = [
   '../schemas/moldb.graphql',
   '../schemas/imageViewerSnapshot.graphql',
   '../schemas/enrichmentdb.graphql',
+  '../schemas/plan.graphql',
 ]
 
 const run = async(outputFile) => {

@@ -119,7 +119,7 @@ describe('modules/user/controller', () => {
       const result = await doQuery(query, { }, { context: userContext })
 
       // Assert
-      const maskedFields = ['id', 'userId', 'projectId', 'groupId', 'email', 'createdDT']
+      const maskedFields = ['id', 'userId', 'projectId', 'groupId', 'email', 'createdDT', 'planId']
       const cleanData = (value: any, key?: any): any => {
         if (_.isObject(value)) {
           return _.mapValues(value, cleanData)

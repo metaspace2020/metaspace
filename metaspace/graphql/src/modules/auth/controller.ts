@@ -74,6 +74,7 @@ const configurePassport = (router: IRouter<any>, app: Express) => {
 export interface JwtUser {
   id?: string,
   email?: string,
+  planId?: number,
   role: 'admin' | 'user' | 'anonymous',
 }
 

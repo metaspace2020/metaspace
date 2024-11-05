@@ -18,6 +18,7 @@ export const AuthMethodOptions: {[K in AuthMethod]: K} = {
 
 export interface ContextUser {
   role: ContextUserRole;
+  planId?: number;
   authMethod: AuthMethod;
   id?: string; // id is undefined when not logged in
   email?: string;
@@ -32,6 +33,7 @@ export interface BaseContext {
   user: ContextUser;
   isAdmin: boolean;
   getUserIdOrFail: () => string; // Throws "Unauthenticated" error if not logged in
+  getSource: () => string;
   /**
    * For deduplicating slow functions, DB queries, etc. between resolvers. `contextCacheGet` memoizes `func()`
    * based on `functionName` and `args` for the duration of the context.

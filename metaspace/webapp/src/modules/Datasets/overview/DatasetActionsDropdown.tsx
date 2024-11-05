@@ -211,6 +211,24 @@ export const DatasetActionsDropdown = defineComponent({
       }
     }
 
+    const confirmDownload = async () => {
+      try {
+        await ElMessageBox.confirm(
+          'Proceeding will reduce your daily download limit by one. Do you want to continue?',
+          'Please Note the download Limit',
+          {
+            type: 'warning',
+            confirmButtonText: 'Continue',
+            cancelButtonText: 'Cancel',
+          }
+        )
+        return true
+      } catch (e) {
+        // Ignore - user clicked cancel
+        return false
+      }
+    }
+
     const handleCommand = async (command: string) => {
       switch (command) {
         case 'edit':
@@ -250,7 +268,9 @@ export const DatasetActionsDropdown = defineComponent({
           openCompareDialog()
           break
         case 'download':
-          openDownloadDialog()
+          if (!props.currentUser?.id || props.dataset?.canEdit || (await confirmDownload())) {
+            openDownloadDialog()
+          }
           break
         case 'reprocess':
           handleReprocess()
@@ -279,7 +299,9 @@ export const DatasetActionsDropdown = defineComponent({
 
       return (
         <ElDropdownMenu class="dataset-overview-menu p-2">
-          {canDownload && <ElDropdownItem command="download">{downloadActionLabel}</ElDropdownItem>}
+          {(!currentUser?.id || canDownload) && (
+            <ElDropdownItem command="download">{downloadActionLabel}</ElDropdownItem>
+          )}
           <ElDropdownItem command="compare">{compareActionLabel}</ElDropdownItem>
           {config.features.imzml_browser && (
             <ElDropdownItem command="browser">
@@ -308,17 +330,12 @@ export const DatasetActionsDropdown = defineComponent({
 
     return () => {
       const { actionLabel, currentUser, dataset } = props
-      const { role } = currentUser || {}
-      const { canEdit, canDelete, canDownload, id, name } = dataset || {}
-      const canReprocess = role === 'admin' || (dataset?.status === 'FAILED' && canEdit)
+      const { id, name } = dataset || {}
 
       return (
         <ElDropdown
           class="dataset-actions-dropdown"
-          style={{
-            visibility: !canEdit && !canDelete && !canReprocess && !canDownload ? 'hidden' : '',
-          }}
-          trigger="click"
+          trigger={state.showDownloadDialog ? '' : 'click'}
           type="primary"
           onCommand={handleCommand}
           v-slots={{
@@ -339,7 +356,12 @@ export const DatasetActionsDropdown = defineComponent({
                   </ElButton>
                 </NewFeatureBadge>
                 {state.showDownloadDialog && (
-                  <DownloadDialog datasetId={id} datasetName={name} onClose={closeDownloadDialog} />
+                  <DownloadDialog
+                    datasetId={id}
+                    datasetName={name}
+                    onClose={closeDownloadDialog}
+                    isLogged={currentUser !== null}
+                  />
                 )}
                 {state.showCompareDialog && (
                   <DatasetComparisonDialog selectedDatasetIds={[id]} onClose={closeCompareDialog} />

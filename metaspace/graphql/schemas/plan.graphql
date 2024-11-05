@@ -1,0 +1,64 @@
+type Plan {
+    id: Int!
+    name: String!
+    isActive: Boolean
+    createdAt: String!
+    planRules: [PlanRule]
+}
+
+input PlanInput {
+    name: String
+    isActive: Boolean
+    createdAt: String
+}
+
+type PlanRule {
+    id: Int!
+    planId: Int!
+    actionType: String!
+    period: Int!
+    periodType: String!
+    limit: Int!
+    type: String
+    visibility: String
+    source: String
+    createdAt: String!
+}
+
+type ApiUsage {
+    id: Int!
+    userId: String!
+    datasetId: String
+    projectId: String
+    groupId: String
+    actionType: String!
+    type: String!
+    source: String!
+    canEdit: Boolean
+    actionDt: String!
+}
+
+
+
+type Query {
+    allPlans: [Plan]
+    allPlanRules(planId: Int) : [PlanRule]
+    allApiUsages(termId: Int) : [String]
+}
+
+type Mutation {
+    createPlan(name: String!, isActive: Boolean!): Plan!
+    updatePlan(planId: Int!, name: String!, isActive: Boolean!): Plan!
+
+    createPlanRule(planId: Int!, actionType: String!, period: Int!,
+        periodType: String!, limit: Int!, type: String, visibility: String, requestSource: String): PlanRule!
+    updatePlanRule(planRuleId: Int!, actionType: String!, period: Int!,
+        periodType: String!, limit: Int!, type: String, visibility: String, requestSource: String): PlanRule!
+    deletePlanRule(planRuleId: Int!): Boolean!
+
+    createApiUsage(userId: String!, datasetId: String, projectId: String,
+        groupId: String, actionType: String!, type: String!, visibility: String,
+        requestSource: String, canEdit: Boolean ): ApiUsage!
+}
+
+

@@ -7,6 +7,7 @@ from itertools import product
 from pathlib import Path
 import uuid
 from unittest.mock import patch, DEFAULT
+from datetime import datetime
 
 import numpy as np
 import pytest
@@ -176,8 +177,12 @@ def fill_db(test_db, metadata, ds_config):
     )
     user_id = str(uuid.uuid4())
     db.insert(
-        "INSERT INTO graphql.user (id, name, email) VALUES (%s, %s, %s)",
-        rows=[(user_id, 'name', 'name@embl.de')],
+        'INSERT INTO public.plan (id, name, created_at, is_active) VALUES (%s, %s, %s, %s)',
+        [(1, 'regular', datetime.now(), True)],
+    )
+    db.insert(
+        "INSERT INTO graphql.user (id, name, email, plan_id) VALUES (%s, %s, %s, %s)",
+        rows=[(user_id, 'name', 'name@embl.de', 1)],
     )
     group_id = str(uuid.uuid4())
     db.insert(

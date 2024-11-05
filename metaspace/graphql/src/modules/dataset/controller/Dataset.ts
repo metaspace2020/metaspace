@@ -26,6 +26,8 @@ import { In, IsNull } from 'typeorm'
 import canEditEsDataset from '../operation/canEditEsDataset'
 import canDeleteEsDataset from '../operation/canDeleteEsDataset'
 import { DatasetEnrichment as DatasetEnrichmentModel, EnrichmentDB } from '../../enrichmentdb/model'
+import * as moment from 'moment/moment'
+import canPerformAction, { performAction } from '../../plan/util/canPerformAction'
 
 interface DbDataset {
   id: string;
@@ -431,7 +433,36 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   async downloadLinkJson(ds, args, ctx) {
-    if (await canDownloadDataset(ds, ctx)) {
+    if (!ctx.user?.id) {
+      return JSON.stringify({
+        message: 'Pleas Sign in to download. Access is available for public '
+            + 'datasets or those you have permissions for.',
+      })
+    }
+
+    const canEdit = await canEditEsDataset(ds, ctx)
+
+    const action: any = {
+      actionType: 'download',
+      userId: ctx.user?.id,
+      datasetId: ds._source.ds_id,
+      type: 'dataset',
+      visibility: ds._source.ds_is_public ? 'public' : 'private',
+      actionDt: moment.utc(moment.utc().toDate()),
+      canEdit,
+      source: (ctx as any).getSource(),
+    }
+
+    if (!canEdit && !await canPerformAction(ctx, action)) { // check if reached dowload limit if not dataset owner
+      return JSON.stringify({
+        message: 'Download limit reached (2 downloads per day). Contact us at contact@metaspace2020.eu to '
+            + 'request an increase.',
+        files: [{
+          filename: 'Download_Limit_Reached.txt',
+          link: 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/Download_Limit_Reached.txt',
+        }],
+      })
+    } else if (await canDownloadDataset(ds, ctx)) {
       const parsedPath = /s3a:\/\/([^/]+)\/(.*)/.exec(ds._source.ds_input_path)
       let files: { filename: string, link: string }[]
       if (parsedPath != null) {
@@ -455,6 +486,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       } else {
         files = []
       }
+
+      await performAction(ctx, action)
 
       return JSON.stringify({
         contributors: [
