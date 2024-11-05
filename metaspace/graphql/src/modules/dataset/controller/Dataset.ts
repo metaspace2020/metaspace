@@ -461,7 +461,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
             + 'request an increase.',
         files: [{
           filename: 'Download_Limit_Reached.txt',
-          link: 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/Download_Limit_Reached.txt',
+          link: 'https://metaspace2020.eu/limit_reached',
         }],
       })
     } else if (await canDownloadDataset(ds, ctx)) {
