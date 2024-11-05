@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`Datasets/DownloadDialog > should match snapshot 1`] = `
-"<div class=\\"mock-el-dialog\\" model-value=\\"true\\" lockscroll=\\"false\\" title=\\"Download Mouse whole body DHB\\">
-  <p>Please <a class=\\"cursor-pointer\\">Sign in</a> to continue.</p>
+"<div class=\\"mock-el-dialog\\" model-value=\\"true\\" lockscroll=\\"false\\" closeonclickmodal=\\"false\\" showclose=\\"true\\" title=\\"Download Mouse whole body DHB\\">
+  <p><a class=\\"cursor-pointer\\">Sign in</a> to download. Access is available for public datasets or those you have permissions for.</p>
 </div>"
 `;

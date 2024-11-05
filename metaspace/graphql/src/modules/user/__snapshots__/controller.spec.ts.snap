@@ -38,7 +38,7 @@ Object {
   },
   "id": "MASKED",
   "name": "tester",
-  "planId": "3",
+  "planId": "MASKED",
   "primaryGroup": Object {
     "group": Object {
       "currentUserRole": "MEMBER",

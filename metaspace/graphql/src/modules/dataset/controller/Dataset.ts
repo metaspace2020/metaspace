@@ -110,20 +110,7 @@ export const rawOpticalImage = async(datasetId: string, ctx: Context) => {
 }
 
 const canDownloadDataset = async(ds: DatasetSource, ctx: Context) => {
-  const action: any = {
-    actionType: 'download',
-    userId: ctx.user?.id,
-    datasetId: ds._source.ds_id,
-    type: 'dataset',
-    visibility: ds._source.ds_is_public ? 'public' : 'private',
-    actionDt: moment.utc(moment.utc().toDate()),
-    source: (ctx as any).getSource(),
-  }
-
-  console.log('test', ctx.isAdmin)
-
-  return ctx.isAdmin || (config.features.imzmlDownload && ctx.user?.id != null
-      && await canViewEsDataset(ds, ctx.user) && await canPerformAction(ctx, action))
+  return ctx.isAdmin || (config.features.imzmlDownload && await canViewEsDataset(ds, ctx.user))
 }
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
@@ -446,7 +433,33 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   async downloadLinkJson(ds, args, ctx) {
-    if (await canDownloadDataset(ds, ctx)) {
+    if (!ctx.user?.id) {
+      return JSON.stringify({
+        message: 'Pleas Sign in to download. Access is available for public '
+            + 'datasets or those you have permissions for.',
+      })
+    }
+
+    const action: any = {
+      actionType: 'download',
+      userId: ctx.user?.id,
+      datasetId: ds._source.ds_id,
+      type: 'dataset',
+      visibility: ds._source.ds_is_public ? 'public' : 'private',
+      actionDt: moment.utc(moment.utc().toDate()),
+      source: (ctx as any).getSource(),
+    }
+    const canEdit = await canEditEsDataset(ds, ctx)
+
+    if (!canEdit && !await canPerformAction(ctx, action)) { // check if reached dowload limit if not dataset owner
+      return JSON.stringify({
+        message: 'Download limit reached. Contact us at contact@metaspace2020.eu to request an increase.',
+        files: [{
+          filename: 'Download_Limit_Reached.txt',
+          link: 'https://sm-spotting-project.s3.eu-west-1.amazonaws.com/Download_Limit_Reached.txt',
+        }],
+      })
+    } else if (await canDownloadDataset(ds, ctx)) {
       const parsedPath = /s3a:\/\/([^/]+)\/(.*)/.exec(ds._source.ds_input_path)
       let files: { filename: string, link: string }[]
       if (parsedPath != null) {

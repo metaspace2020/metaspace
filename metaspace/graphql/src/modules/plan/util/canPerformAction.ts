@@ -38,6 +38,7 @@ const canPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Pr
       .where('usage.actionType = :actionType', { actionType: action.actionType })
       .andWhere('usage.actionDt >= :startDate', { startDate: startDate.toDate() })
       .andWhere('usage.actionDt <= :endDate', { endDate: endDate.toDate() })
+      .andWhere('usage.userId = :userId', { userId: user.id })
 
     if (rule.visibility) {
       qb = qb.andWhere('usage.visibility = :visibility', { visibility: rule.visibility })
@@ -58,11 +59,6 @@ const canPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Pr
 }
 
 export const performAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Promise<ApiUsage> => {
-  const canPerform = await canPerformAction(ctx, action)
-  if (!canPerform) {
-    throw new UserError('Limit reached')
-  }
-
   const usage = ctx.entityManager.create(ApiUsage, action)
   return await ctx.entityManager.save(usage)
 }

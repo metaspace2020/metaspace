@@ -211,6 +211,24 @@ export const DatasetActionsDropdown = defineComponent({
       }
     }
 
+    const confirmDownload = async () => {
+      try {
+        await ElMessageBox.confirm(
+          'Proceeding will reduce your daily download limit by one. Do you want to continue?',
+          'Please Note the download Limit',
+          {
+            type: 'warning',
+            confirmButtonText: 'Continue',
+            cancelButtonText: 'Cancel',
+          }
+        )
+        return true
+      } catch (e) {
+        // Ignore - user clicked cancel
+        return false
+      }
+    }
+
     const handleCommand = async (command: string) => {
       switch (command) {
         case 'edit':
@@ -250,7 +268,9 @@ export const DatasetActionsDropdown = defineComponent({
           openCompareDialog()
           break
         case 'download':
-          openDownloadDialog()
+          if (!props.currentUser?.id || props.dataset?.canEdit || (await confirmDownload())) {
+            openDownloadDialog()
+          }
           break
         case 'reprocess':
           handleReprocess()
@@ -274,12 +294,14 @@ export const DatasetActionsDropdown = defineComponent({
         browserActionLabel,
       } = props
       const { role } = currentUser || {}
-      const { canEdit, canDelete } = dataset || {}
+      const { canEdit, canDelete, canDownload } = dataset || {}
       const canReprocess = role === 'admin' || (dataset?.status === 'FAILED' && canEdit)
 
       return (
         <ElDropdownMenu class="dataset-overview-menu p-2">
-          <ElDropdownItem command="download">{downloadActionLabel}</ElDropdownItem>
+          {(!currentUser?.id || canDownload) && (
+            <ElDropdownItem command="download">{downloadActionLabel}</ElDropdownItem>
+          )}
           <ElDropdownItem command="compare">{compareActionLabel}</ElDropdownItem>
           {config.features.imzml_browser && (
             <ElDropdownItem command="browser">
@@ -313,7 +335,7 @@ export const DatasetActionsDropdown = defineComponent({
       return (
         <ElDropdown
           class="dataset-actions-dropdown"
-          trigger="click"
+          trigger={state.showDownloadDialog ? '' : 'click'}
           type="primary"
           onCommand={handleCommand}
           v-slots={{

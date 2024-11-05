@@ -29,6 +29,7 @@ describe('Dataset plan checks', () => {
   let proPlan: any
   let regularPlan: any
   let testUserReg: any
+  let testUserReg2: any
   let testUserPro: any
 
   const sampleMetadata = {
@@ -136,6 +137,7 @@ describe('Dataset plan checks', () => {
 
     database = await createTestMolecularDB({ name: 'HMDB-v4', isPublic: true, groupId: null })
     testUserReg = await createTestUser({ planId: regularPlan.id })
+    testUserReg2 = await createTestUser({ planId: regularPlan.id })
     testUserPro = await createTestUser({ planId: proPlan.id })
   })
 
@@ -182,6 +184,8 @@ describe('Dataset plan checks', () => {
 
   it('should be able to download only 2 datasets per day as a regular', async() => {
     const context = getContextForTest({ ...testUserReg }, testEntityManager)
+    const context2 = getContextForTest({ ...testUserReg2 }, testEntityManager)
+
     Date.now = jest.fn(() => new Date('2024-10-30T10:03:00Z').getTime())
     const ds1 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
     Date.now = jest.fn(() => new Date('2024-10-30T10:04:00Z').getTime())
@@ -201,19 +205,52 @@ describe('Dataset plan checks', () => {
       })
     )
 
-    const download1 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds1).datasetId }, { context })
-    const download2 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds2).datasetId }, { context })
-    let download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context })
+    const download1 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds1).datasetId }, { context: context2 })
+    const download2 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds2).datasetId }, { context: context2 })
+    let download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context: context2 })
 
-    expect(download1.downloadLinkJson).not.toBe(null)
-    expect(download2.downloadLinkJson).not.toBe(null)
-    expect(download3.downloadLinkJson).toBe(null)
+    expect(JSON.parse(download1.downloadLinkJson)).not.toHaveProperty('message')
+    expect(JSON.parse(download2.downloadLinkJson)).not.toHaveProperty('message')
+    expect(JSON.parse(download3.downloadLinkJson)).toEqual(expect.objectContaining({
+      message: expect.any(String),
+    }))
 
     // Should be able to download again after 24 hours
     Date.now = jest.fn(() => new Date('2024-10-31T11:05:00Z').getTime())
-    download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context })
-    expect(download3.downloadLinkJson).not.toBe(null)
+    download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context: context2 })
+    expect(JSON.parse(download3.downloadLinkJson)).not.toHaveProperty('message')
   })
+
+  it('should be able to download n datasets per day as a dataset owner', async() => {
+    const context = getContextForTest({ ...testUserReg }, testEntityManager)
+    Date.now = jest.fn(() => new Date('2024-10-30T10:03:00Z').getTime())
+    const ds1 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+    Date.now = jest.fn(() => new Date('2024-10-30T10:04:00Z').getTime())
+    const ds2 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+    Date.now = jest.fn(() => new Date('2024-10-30T10:05:00Z').getTime())
+    const ds3 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+
+    // Mock elasticsearch so that it returns the minimum fields needed to reach the resolvers inside Dataset
+    MockElasticSearchClient.search.mockImplementation(() =>
+      ({
+        hits: {
+          hits: [
+            { _source: { ds_id: JSON.parse(ds1).datasetId, ds_is_public: true, ds_submitter_id: testUserReg.id } },
+            { _source: { ds_id: JSON.parse(ds2).datasetId, ds_is_public: true, ds_submitter_id: testUserReg.id } },
+            { _source: { ds_id: JSON.parse(ds3).datasetId, ds_is_public: true, ds_submitter_id: testUserReg.id } }],
+        },
+      })
+    )
+
+    const download1 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds1).datasetId }, { context })
+    const download2 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds2).datasetId }, { context })
+    const download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context })
+
+    expect(JSON.parse(download1.downloadLinkJson)).not.toHaveProperty('message')
+    expect(JSON.parse(download2.downloadLinkJson)).not.toHaveProperty('message')
+    expect(JSON.parse(download3.downloadLinkJson)).not.toHaveProperty('message')
+  })
+
   it('should be able to download n datasets per day as a admin', async() => {
     const context = getContextForTest({ ...testUserReg }, testEntityManager)
     Date.now = jest.fn(() => new Date('2024-10-30T10:03:00Z').getTime())
@@ -238,9 +275,9 @@ describe('Dataset plan checks', () => {
     const download1 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds1).datasetId }, { context: adminContext })
     const download2 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds2).datasetId }, { context: adminContext })
     const download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context: adminContext })
-    console.log('download1', download1)
-    expect(download1.downloadLinkJson).not.toBe(null)
-    expect(download2.downloadLinkJson).not.toBe(null)
-    expect(download3.downloadLinkJson).not.toBe(null)
+
+    expect(JSON.parse(download1.downloadLinkJson)).not.toHaveProperty('message')
+    expect(JSON.parse(download2.downloadLinkJson)).not.toHaveProperty('message')
+    expect(JSON.parse(download3.downloadLinkJson)).not.toHaveProperty('message')
   })
 })
