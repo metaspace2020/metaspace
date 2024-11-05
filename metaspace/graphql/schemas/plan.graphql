@@ -34,6 +34,7 @@ type ApiUsage {
     actionType: String!
     type: String!
     source: String!
+    canEdit: Boolean
     actionDt: String!
 }
 
@@ -57,7 +58,7 @@ type Mutation {
 
     createApiUsage(userId: String!, datasetId: String, projectId: String,
         groupId: String, actionType: String!, type: String!, visibility: String,
-        requestSource: String ): ApiUsage!
+        requestSource: String, canEdit: Boolean ): ApiUsage!
 }
 
 

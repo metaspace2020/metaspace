@@ -18,6 +18,7 @@ export class ApiUsage1727982165857 implements MigrationInterface {
                 "type" text,
                 "visibility" text, 
                 "source" text,
+                "can_edit" BOOLEAN DEFAULT FALSE,
                 "action_dt" TIMESTAMP
             )
         `);

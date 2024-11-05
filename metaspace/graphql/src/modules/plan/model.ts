@@ -98,6 +98,9 @@ export class ApiUsage {
     @Column({ name: 'source', type: 'text', enum: ['web', 'api'] })
     source: 'web' | 'api';
 
+    @Column({ type: 'boolean', default: false })
+    canEdit: boolean;
+
     @Column({
       name: 'action_dt', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
     })

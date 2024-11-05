@@ -145,7 +145,7 @@ describe('Plan Controller Queries', () => {
     })
   })
 
-  it('should advance mocked time by 10 minutes', async() => {
+  it('should be able to download after 10 min', async() => {
     const context = userContext
     const actionType = 'download'
     const visibility = 'public'

@@ -32,6 +32,19 @@ describe('Dataset plan checks', () => {
   let testUserReg2: any
   let testUserPro: any
 
+  // Helpers
+  const setMockDate = (dateString: string) => {
+    Date.now = jest.fn(() => new Date(dateString).getTime())
+  }
+
+  const mockElasticsearchResponse = (datasetId: string, userId: string) => {
+    MockElasticSearchClient.search.mockImplementationOnce(() => ({
+      hits: {
+        hits: [{ _source: { ds_id: datasetId, ds_is_public: true, ds_submitter_id: userId } }],
+      },
+    }))
+  }
+
   const sampleMetadata = {
     Data_Type: 'Imaging MS',
     MS_Analysis: {
@@ -80,9 +93,7 @@ describe('Dataset plan checks', () => {
   beforeAll(async() => {
     await onBeforeAll()
     originalDateNow = Date.now
-
-    // Mock Date.now to return a specific timestamp
-    Date.now = jest.fn(() => new Date('2024-10-30T10:00:00Z').getTime())
+    setMockDate('2024-10-30T10:00:00Z')
   })
 
   afterAll(async() => {
@@ -92,7 +103,6 @@ describe('Dataset plan checks', () => {
 
   beforeEach(async() => {
     jest.clearAllMocks()
-
     await onBeforeEach()
     await setupTestUsers()
 
@@ -163,6 +173,14 @@ describe('Dataset plan checks', () => {
       }
   }`
 
+  const createAndMockDataset = async(time: string, context: any, user: any) => {
+    setMockDate(time)
+    const dataset = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true },
+      { context })
+    mockElasticsearchResponse(JSON.parse(dataset).datasetId, user.id)
+    return dataset
+  }
+
   it('should not be able to create private dataset as a regular', async() => {
     const context = getContextForTest({ ...testUserReg }, testEntityManager)
     await expect(doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: false }, { context })).rejects.toThrow('Limit reached')
@@ -176,9 +194,9 @@ describe('Dataset plan checks', () => {
   it('should not be able to create private dataset, but can create as many public as a regular', async() => {
     const context = getContextForTest({ ...testUserReg }, testEntityManager)
     await expect(doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })).resolves.not.toThrow()
-    Date.now = jest.fn(() => new Date('2024-10-30T10:01:00Z').getTime())
+    setMockDate('2024-10-30T10:01:00Z')
     await expect(doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })).resolves.not.toThrow()
-    Date.now = jest.fn(() => new Date('2024-10-30T10:02:00Z').getTime())
+    setMockDate('2024-10-30T10:02:00Z')
     await expect(doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: false }, { context })).rejects.toThrow('Limit reached')
   })
 
@@ -186,29 +204,16 @@ describe('Dataset plan checks', () => {
     const context = getContextForTest({ ...testUserReg }, testEntityManager)
     const context2 = getContextForTest({ ...testUserReg2 }, testEntityManager)
 
-    Date.now = jest.fn(() => new Date('2024-10-30T10:03:00Z').getTime())
-    const ds1 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
-    Date.now = jest.fn(() => new Date('2024-10-30T10:04:00Z').getTime())
-    const ds2 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
-    Date.now = jest.fn(() => new Date('2024-10-30T10:05:00Z').getTime())
-    const ds3 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
-
-    // Mock elasticsearch so that it returns the minimum fields needed to reach the resolvers inside Dataset
-    MockElasticSearchClient.search.mockImplementation(() =>
-      ({
-        hits: {
-          hits: [
-            { _source: { ds_id: JSON.parse(ds1).datasetId, ds_is_public: true } },
-            { _source: { ds_id: JSON.parse(ds2).datasetId, ds_is_public: true } },
-            { _source: { ds_id: JSON.parse(ds3).datasetId, ds_is_public: true } }],
-        },
-      })
-    )
-
+    const ds1 = await createAndMockDataset('2024-10-30T10:03:00Z', context, testUserReg)
     const download1 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds1).datasetId }, { context: context2 })
-    const download2 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds2).datasetId }, { context: context2 })
-    let download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context: context2 })
 
+    const ds2 = await createAndMockDataset('2024-10-30T10:04:00Z', context, testUserReg)
+    const download2 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds2).datasetId }, { context: context2 })
+
+    const ds3 = await createAndMockDataset('2024-10-30T10:05:00Z', context, testUserReg)
+    const download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context: context2 })
+
+    // verify download limits
     expect(JSON.parse(download1.downloadLinkJson)).not.toHaveProperty('message')
     expect(JSON.parse(download2.downloadLinkJson)).not.toHaveProperty('message')
     expect(JSON.parse(download3.downloadLinkJson)).toEqual(expect.objectContaining({
@@ -216,61 +221,64 @@ describe('Dataset plan checks', () => {
     }))
 
     // Should be able to download again after 24 hours
+    const ds4 = await createAndMockDataset('2024-10-30T10:06:00Z', context, testUserReg)
     Date.now = jest.fn(() => new Date('2024-10-31T11:05:00Z').getTime())
-    download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context: context2 })
-    expect(JSON.parse(download3.downloadLinkJson)).not.toHaveProperty('message')
+    const download4 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds4).datasetId }, { context: context2 })
+    expect(JSON.parse(download4.downloadLinkJson)).not.toHaveProperty('message')
   })
 
   it('should be able to download n datasets per day as a dataset owner', async() => {
     const context = getContextForTest({ ...testUserReg }, testEntityManager)
-    Date.now = jest.fn(() => new Date('2024-10-30T10:03:00Z').getTime())
-    const ds1 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
-    Date.now = jest.fn(() => new Date('2024-10-30T10:04:00Z').getTime())
-    const ds2 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
-    Date.now = jest.fn(() => new Date('2024-10-30T10:05:00Z').getTime())
-    const ds3 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+    const context2 = getContextForTest({ ...testUserReg2 }, testEntityManager)
 
-    // Mock elasticsearch so that it returns the minimum fields needed to reach the resolvers inside Dataset
-    MockElasticSearchClient.search.mockImplementation(() =>
-      ({
-        hits: {
-          hits: [
-            { _source: { ds_id: JSON.parse(ds1).datasetId, ds_is_public: true, ds_submitter_id: testUserReg.id } },
-            { _source: { ds_id: JSON.parse(ds2).datasetId, ds_is_public: true, ds_submitter_id: testUserReg.id } },
-            { _source: { ds_id: JSON.parse(ds3).datasetId, ds_is_public: true, ds_submitter_id: testUserReg.id } }],
-        },
-      })
-    )
+    const ds1 = await createAndMockDataset('2024-10-30T10:03:00Z', context, testUserReg)
+    const download1 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds1).datasetId }, { context: context })
 
-    const download1 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds1).datasetId }, { context })
-    const download2 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds2).datasetId }, { context })
-    const download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context })
+    const ds2 = await createAndMockDataset('2024-10-30T10:04:00Z', context, testUserReg)
+    const download2 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds2).datasetId }, { context: context })
+
+    const ds3 = await createAndMockDataset('2024-10-30T10:05:00Z', context, testUserReg)
+    const download3 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds3).datasetId }, { context: context })
 
     expect(JSON.parse(download1.downloadLinkJson)).not.toHaveProperty('message')
     expect(JSON.parse(download2.downloadLinkJson)).not.toHaveProperty('message')
     expect(JSON.parse(download3.downloadLinkJson)).not.toHaveProperty('message')
-  })
 
-  it('should be able to download n datasets per day as a admin', async() => {
-    const context = getContextForTest({ ...testUserReg }, testEntityManager)
-    Date.now = jest.fn(() => new Date('2024-10-30T10:03:00Z').getTime())
-    const ds1 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
-    Date.now = jest.fn(() => new Date('2024-10-30T10:04:00Z').getTime())
-    const ds2 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
-    Date.now = jest.fn(() => new Date('2024-10-30T10:05:00Z').getTime())
-    const ds3 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
-
-    // Mock elasticsearch so that it returns the minimum fields needed to reach the resolvers inside Dataset
+    // should respect the limit for dataset of other users
+    const ds4 = await createAndMockDataset('2024-10-30T10:06:00Z', context2, testUserReg2)
     MockElasticSearchClient.search.mockImplementation(() =>
       ({
         hits: {
           hits: [
-            { _source: { ds_id: JSON.parse(ds1).datasetId, ds_is_public: true } },
-            { _source: { ds_id: JSON.parse(ds2).datasetId, ds_is_public: true } },
-            { _source: { ds_id: JSON.parse(ds3).datasetId, ds_is_public: true } }],
+            { _source: { ds_id: JSON.parse(ds4).datasetId, ds_is_public: true, ds_submitter_id: testUserReg2.id } }],
         },
       })
     )
+
+    const download4 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds4).datasetId }, { context })
+    const download5 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds4).datasetId }, { context })
+    const download6 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds4).datasetId }, { context })
+
+    expect(JSON.parse(download4.downloadLinkJson)).not.toHaveProperty('message')
+    expect(JSON.parse(download5.downloadLinkJson)).not.toHaveProperty('message')
+    expect(JSON.parse(download6.downloadLinkJson)).toEqual(expect.objectContaining({
+      message: expect.any(String),
+    }))
+  })
+
+  it('should allow admins unlimited downloads of all datasets', async() => {
+    const context = getContextForTest({ ...testUserReg }, testEntityManager)
+
+    const ds1 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+    setMockDate('2024-10-30T10:01:00Z')
+    const ds2 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+    setMockDate('2024-10-30T10:02:00Z')
+    const ds3 = await doQuery(createDatasetQuery, { databaseIds: [database.id], isPublic: true }, { context })
+
+    // Mock Elasticsearch response for each dataset
+    mockElasticsearchResponse(JSON.parse(ds1).datasetId, testUserReg.id)
+    mockElasticsearchResponse(JSON.parse(ds2).datasetId, testUserReg.id)
+    mockElasticsearchResponse(JSON.parse(ds3).datasetId, testUserReg.id)
 
     const download1 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds1).datasetId }, { context: adminContext })
     const download2 = await doQuery(datasetDownloadLink, { datasetId: JSON.parse(ds2).datasetId }, { context: adminContext })

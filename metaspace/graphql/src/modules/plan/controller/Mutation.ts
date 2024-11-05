@@ -129,6 +129,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const {
       userId, datasetId, actionType, type,
       requestSource, projectId, groupId, visibility,
+      canEdit,
     } = args
     const apiUsageRepo: Repository<ApiUsage> = ctx.entityManager.getRepository(ApiUsage)
     const newApiUsage = apiUsageRepo.create({
@@ -139,6 +140,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       projectId,
       groupId,
       visibility,
+      canEdit,
       source: requestSource,
       actionDt: moment.utc(),
     } as DeepPartial<ApiUsage>)

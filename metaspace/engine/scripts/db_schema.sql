@@ -401,6 +401,7 @@ CREATE TABLE "public"."api_usage" (
   "action_type" text NOT NULL, 
   "visibility" text NOT NULL, 
   "source" text NOT NULL, 
+  "can_edit" boolean NOT NULL DEFAULT false, 
   "action_dt" TIMESTAMP NOT NULL, 
   CONSTRAINT "PK_bcaf2df186a22b1d135af4a5ac4" PRIMARY KEY ("id")
 );
