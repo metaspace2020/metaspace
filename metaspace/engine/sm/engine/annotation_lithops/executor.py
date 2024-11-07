@@ -281,7 +281,7 @@ class Executor:
             if (
                 isinstance(exc, (MemoryError, TimeoutError, OSError))
                 and runtime_memory <= max(MEM_LIMITS.values())
-                and (max_memory is None or runtime_memory < max_memory)
+                and (max_memory is None or runtime_memory <= max_memory)
             ):
                 attempt += 1
                 old_memory = runtime_memory
