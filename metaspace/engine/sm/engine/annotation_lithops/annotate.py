@@ -240,7 +240,6 @@ def process_centr_segments(
     imzml_reader: LithopsImzMLReader,
     ds_config: DSConfig,
     ds_segm_size_mb: float,
-    is_intensive_dataset: bool,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # pylint: disable=too-many-locals
     # Copy needed fields out of imzml_reader so that the other unneeded fields aren't pulled into

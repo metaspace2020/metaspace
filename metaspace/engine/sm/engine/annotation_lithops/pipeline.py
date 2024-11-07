@@ -181,7 +181,6 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.imzml_reader,
             self.ds_config,
             self.ds_segm_size_mb,
-            self.is_intensive_dataset,
         )
         logger.info(f'Metrics calculated: {self.formula_metrics_df.shape[0]}')
 
