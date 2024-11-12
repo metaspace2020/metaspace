@@ -211,7 +211,7 @@ const AboutPage = defineComponent({
               </p>
               <p>
                 The METASPACE platform is developed by software engineers, data scientists and mass spectrometrists from
-                the <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov team at EMBL</a>.
+                the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>.
               </p>
               <p>
                 For more information on methods, see{' '}

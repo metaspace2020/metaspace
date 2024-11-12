@@ -8,7 +8,7 @@
  public datasets provided by the community.
 
 The METASPACE platform is developed by software engineers, data scientists and
- mass spectrometrists from the [Alexandrov team at EMBL](http://www.embl.de/research/units/scb/alexandrov/).
+ mass spectrometrists from the [Alexandrov team at UCSD](https://ateam.ucsd.edu/).
  This work is a part of the [European project METASPACE](https://cordis.europa.eu/project/id/634402).
 
 ## Projects
