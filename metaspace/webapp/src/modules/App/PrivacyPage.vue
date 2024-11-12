@@ -84,14 +84,13 @@
       protect your Personal Information, we cannot guarantee its absolute security.
     </p>
     <p>
-      METASPACE is operated by European Molecular Biology Laboratory (EMBL) and is subject to
+      METASPACE is operated by the
       <a
-        href="https://www.embl.de/aboutus/administration/legal-services/data-protection/index.html"
+        href="https://ateam.ucsd.edu/"
         rel="noopener noreferrer nofollow"
       >
-        EMBL’s Data Protection Framework<!-- --> </a
-      >. Any questions regarding matters of data protection at EMBL should please be addressed to EMBL’s Data Protection
-      Officer via email at: <a href="mailto:dpo@embl.org" rel="noopener noreferrer nofollow"> dpo@embl.org<!-- --> </a>.
+        Alexandrov team<!-- --> </a
+      > at the University of California San Diego.
     </p>
     <h2 id="cookies">Cookies</h2>
     <p>
