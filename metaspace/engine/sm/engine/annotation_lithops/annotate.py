@@ -240,7 +240,6 @@ def process_centr_segments(
     imzml_reader: LithopsImzMLReader,
     ds_config: DSConfig,
     ds_segm_size_mb: float,
-    is_intensive_dataset: bool,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # pylint: disable=too-many-locals
     # Copy needed fields out of imzml_reader so that the other unneeded fields aren't pulled into
@@ -253,7 +252,7 @@ def process_centr_segments(
     compute_metrics = make_compute_image_metrics(imzml_reader, ds_config)
     min_px = image_gen_config['min_px']
     # TODO: Get available memory from Lithops somehow so it updates if memory is increased on retry
-    pw_mem_mb = 4096 if is_intensive_dataset else 2048
+    pw_mem_mb = 2048
 
     def process_centr_segment(
         db_segm_cobject: CObj[pd.DataFrame], *, storage: Storage, perf: Profiler
@@ -311,7 +310,7 @@ def process_centr_segments(
         process_centr_segment,
         [(co,) for co in db_segms_cobjs],
         runtime_memory=pw_mem_mb,
-        max_memory=8196,
+        max_memory=4096,
         # debug_run_locally=True,
     )
     formula_metrics_df = pd.concat(formula_metrics_list)
