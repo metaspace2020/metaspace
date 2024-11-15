@@ -32,6 +32,7 @@ import { validateTiptapJson } from '../../../utils/tiptap'
 import { getDatasetForEditing } from '../../dataset/operation/getDatasetForEditing'
 import { EngineDataset } from '../../engine/model'
 import logger from '../../../utils/logger'
+import { assertCanPerformAction, performAction } from '../../plan/util/canPerformAction'
 import moment = require('moment')
 
 const asyncAssertCanEditProject = async(ctx: Context, projectId: string) => {
@@ -47,6 +48,17 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async createProject(source, { projectDetails }, ctx): Promise<ProjectSource> {
     const userId = ctx.getUserIdOrFail() // Exit early if not logged in
     const { name, isPublic, urlSlug } = projectDetails
+    const action: any = {
+      actionType: 'create',
+      userId: ctx.user.id,
+      type: 'project',
+      visibility: isPublic ? 'public' : 'private',
+      actionDt: moment.utc(moment.utc().toDate()),
+      source: (ctx as any).getSource(),
+    }
+
+    await assertCanPerformAction(ctx, action)
+
     if (urlSlug != null) {
       await validateUrlSlugChange(ctx.entityManager, ProjectModel as any, null, urlSlug)
     }
@@ -62,6 +74,12 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     // @ts-ignore
     const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, newProject.id)
+
+    action.projectId = newProject.id
+    action.canEdit = true
+
+    await performAction(ctx, action)
+
     if (project != null) {
       return project
     } else {
@@ -79,6 +97,18 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (project == null) {
       throw new UserError(`Not found project ${projectId}`)
     }
+
+    const action: any = {
+      actionType: 'update',
+      userId: ctx.user.id,
+      projectId: project.id,
+      type: 'project',
+      canEdit: true,
+      visibility: project.isPublic ? 'public' : 'private',
+      actionDt: moment.utc(moment.utc().toDate()),
+      source: (ctx as any).getSource(),
+    }
+    await assertCanPerformAction(ctx, action)
 
     validatePublishingRules(ctx, project, projectDetails)
 
@@ -104,6 +134,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     // @ts-ignore
     const updatedProject = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId)
+
+    await performAction(ctx, action)
+
     if (updatedProject != null) {
       return updatedProject
     } else {
