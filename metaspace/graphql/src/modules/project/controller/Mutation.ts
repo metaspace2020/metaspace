@@ -48,17 +48,18 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const userId = ctx.getUserIdOrFail() // Exit early if not logged in
     const { name, isPublic, urlSlug } = projectDetails
     if (urlSlug != null) {
-      await validateUrlSlugChange(ctx.entityManager, ProjectModel, null, urlSlug)
+      await validateUrlSlugChange(ctx.entityManager, ProjectModel as any, null, urlSlug)
     }
 
     const projectRepository = ctx.entityManager.getRepository(ProjectModel)
     const newProject = projectRepository.create({ name, isPublic, urlSlug, createdDT: moment.utc() })
-    await projectRepository.insert(newProject)
+    await projectRepository.insert(newProject as any)
     await ctx.entityManager.insert(UserProjectModel, {
       projectId: newProject.id,
       userId,
       role: UPRO.MANAGER,
-    })
+    } as any)
+    // @ts-ignore
     const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, newProject.id)
     if (project != null) {
@@ -71,6 +72,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async updateProject(source, { projectId, projectDetails }, ctx): Promise<ProjectSource> {
     await asyncAssertCanEditProject(ctx, projectId)
 
+    // @ts-ignore
     const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId)
 
@@ -81,7 +83,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     validatePublishingRules(ctx, project, projectDetails)
 
     if (projectDetails.urlSlug != null) {
-      await validateUrlSlugChange(ctx.entityManager, ProjectModel, projectId, projectDetails.urlSlug)
+      await validateUrlSlugChange(ctx.entityManager, ProjectModel as any, projectId, projectDetails.urlSlug)
     }
     if (projectDetails.projectDescription != null) {
       validateTiptapJson(projectDetails.projectDescription, 'projectDescription')
@@ -90,15 +92,16 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await ctx.entityManager.update(ProjectModel, projectId, projectDetails)
 
     if (projectDetails.name || projectDetails.isPublic) {
-      const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel,
+      const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel as any,
         { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] })
       await Promise.all(affectedDatasets.map(async dp => {
-        await smApiUpdateDataset(dp.datasetId, {
-          projectIds: dp.dataset.datasetProjects.map(p => p.projectId),
+        await smApiUpdateDataset((dp as any).datasetId, {
+          projectIds: (dp as any).dataset.datasetProjects.map((p: any) => p.projectId),
         }, { asyncEsUpdate: true })
       }))
     }
 
+    // @ts-ignore
     const updatedProject = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId)
     if (updatedProject != null) {
@@ -116,14 +119,14 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     if (project) {
       if (project.publicationStatus === PSO.UNPUBLISHED || ctx.isAdmin) {
-        const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel,
+        const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel as any,
           { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] })
         await ctx.entityManager.delete(DatasetProjectModel, { projectId })
         await Promise.all(affectedDatasets.map(async dp => {
-          await smApiUpdateDataset(dp.datasetId, {
-            projectIds: dp.dataset.datasetProjects
-              .filter(p => p.projectId !== projectId)
-              .map(p => p.projectId),
+          await smApiUpdateDataset((dp as any).datasetId, {
+            projectIds: (dp as any).dataset.datasetProjects
+              .filter((p: any) => p.projectId !== projectId)
+              .map((p: any) => p.projectId),
           }, { asyncEsUpdate: true })
         }))
 
@@ -179,7 +182,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return { ...userProject, user: convertUserToUserSource(userProject.user, SRO.OTHER) }
   },
 
-  async inviteUserToProject(source, { projectId, email }, ctx: Context): Promise<UserProjectSource> {
+  async inviteUserToProject(source, { projectId, email } : { projectId: string; email: string },
+    ctx: Context): Promise<UserProjectSource> {
     email = email.trim() // Trim spaces at the ends, because copy+pasting email addresses often adds unwanted spaces
     let user = await findUserByEmail(ctx.entityManager, email)
       || await findUserByEmail(ctx.entityManager, email, 'not_verified_email')
@@ -267,8 +271,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       reviewToken: generateRandomToken(),
       reviewTokenCreatedDT: utc(),
       publicationStatus: project.publicationStatus === PSO.PUBLISHED ? PSO.PUBLISHED : PSO.UNDER_REVIEW,
-    })
+    } as any)
 
+    // @ts-ignore
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId) as ProjectSource
   },
@@ -281,7 +286,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       reviewToken: null,
       reviewTokenCreatedDT: null,
       publicationStatus: project.publicationStatus === PSO.PUBLISHED ? PSO.PUBLISHED : PSO.UNPUBLISHED,
-    })
+    } as any)
     return true
   },
 
@@ -292,13 +297,14 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       publicationStatus: PSO.PUBLISHED,
       publishedDT: utc(),
       isPublic: true,
-    })
+    } as any)
 
-    const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel, { where: { projectId } })
+    const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel as any, { where: { projectId } })
     await Promise.all(affectedDatasets.map(async dp => {
-      await smApiUpdateDataset(dp.datasetId, { isPublic: true }, { asyncEsUpdate: true })
+      await smApiUpdateDataset((dp as any).datasetId, { isPublic: true }, { asyncEsUpdate: true })
     }))
 
+    // @ts-ignore
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId) as ProjectSource
   },
@@ -309,18 +315,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     const project = await ctx.entityManager.findOneOrFail(ProjectModel, projectId)
-    await ctx.entityManager.update(ProjectModel, projectId, {
+    await ctx.entityManager.update(ProjectModel as any, projectId, {
       publicationStatus: project.reviewToken ? PSO.UNDER_REVIEW : PSO.UNPUBLISHED,
       isPublic,
-    })
+    } as any)
 
     if (isPublic != null) {
-      const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel, { where: { projectId } })
+      const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel as any,
+        { where: { projectId } })
       await Promise.all(affectedDatasets.map(async dp => {
-        await smApiUpdateDataset(dp.datasetId, { isPublic }, { asyncEsUpdate: true })
+        await smApiUpdateDataset((dp as any).datasetId, { isPublic }, { asyncEsUpdate: true })
       }))
     }
 
+    // @ts-ignore
     return await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId) as ProjectSource
   },
@@ -343,6 +351,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       })
     })
 
+    // @ts-ignore
     return (await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId))!
   },
@@ -360,6 +369,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       })
     })
 
+    // @ts-ignore
     return (await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId))!
   },

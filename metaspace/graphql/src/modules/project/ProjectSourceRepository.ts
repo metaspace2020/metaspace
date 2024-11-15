@@ -35,6 +35,7 @@ export class ProjectSourceRepository {
       .createQueryBuilder(ProjectModel, 'project')
       .select(columnMap)
 
+    // @ts-ignore
     const memberOfProjectIds = Object.entries(await user.getProjectRoles())
       .filter(([, role]) => role !== UPRO.PENDING)
       .map(([id]) => id)
