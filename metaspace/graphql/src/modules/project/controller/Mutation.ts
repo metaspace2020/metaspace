@@ -33,7 +33,7 @@ import { getDatasetForEditing } from '../../dataset/operation/getDatasetForEditi
 import { EngineDataset } from '../../engine/model'
 import logger from '../../../utils/logger'
 import { assertCanPerformAction, performAction } from '../../plan/util/canPerformAction'
-import moment = require('moment')
+import * as moment from 'moment'
 
 const asyncAssertCanEditProject = async(ctx: Context, projectId: string) => {
   const userProject = await ctx.entityManager.findOne(UserProjectModel, {

@@ -6,7 +6,7 @@ import * as _ from 'lodash'
 import * as DataLoader from 'dataloader'
 import { urlSlugMatchesClause } from '../groupOrProject/urlSlug'
 import { ProjectOrderBy, SortingOrder } from '../../binding'
-import moment = require('moment')
+import * as moment from 'moment'
 
 type SortBy = 'name' | 'popularity' | ProjectOrderBy;
 
