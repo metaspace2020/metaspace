@@ -201,9 +201,6 @@ const AboutPage = defineComponent({
               <h3>What is the METASPACE platform?</h3>
             </section>
             <section class="sm-about-details max-w-measure-4 mt-0">
-              <h2 class="font-display text-primary leading-12 m-0 text-base uppercase tracking-wide">
-                Frequently asked questions
-              </h2>
               <p>
                 The METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data as
                 well as a spatial metabolite knowledgebase of the metabolites from thousands of public datasets provided
