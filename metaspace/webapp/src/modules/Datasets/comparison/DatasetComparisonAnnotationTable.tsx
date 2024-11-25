@@ -478,6 +478,7 @@ export const DatasetComparisonAnnotationTable = defineComponent({
       if (state.currentRowIndex !== currentIndex && state.currentRowIndex !== -1) {
         setTimeout(() => {
           if (
+            document &&
             document.querySelectorAll('.el-table__row') &&
             document.querySelectorAll('.el-table__row').length > state.currentRowIndex &&
             document.querySelectorAll('.el-table__row')[state.currentRowIndex]

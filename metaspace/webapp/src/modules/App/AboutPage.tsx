@@ -201,9 +201,6 @@ const AboutPage = defineComponent({
               <h3>What is the METASPACE platform?</h3>
             </section>
             <section class="sm-about-details max-w-measure-4 mt-0">
-              <h2 class="font-display text-primary leading-12 m-0 text-base uppercase tracking-wide">
-                Frequently asked questions
-              </h2>
               <p>
                 The METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data as
                 well as a spatial metabolite knowledgebase of the metabolites from thousands of public datasets provided
@@ -211,50 +208,37 @@ const AboutPage = defineComponent({
               </p>
               <p>
                 The METASPACE platform is developed by software engineers, data scientists and mass spectrometrists from
-                the <a href="https://www.embl.de/research/units/scb/alexandrov/">Alexandrov team at EMBL</a>.
+                the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>.
               </p>
               <p>
-                For more information on methods, see{' '}
+                For more information, check out{' '}
                 <span
                   class="about-link mx-1"
                   onClick={() => {
                     router.push('/publications#ours')
                   }}
                 >
-                  our publications
+                  our methods and related publications
                 </span>
                 .
               </p>
-              <h3>How can I contribute?</h3>
-              <p>
-                Read{' '}
-                <a href="https://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html">
-                  our publication in Nature Methods
-                </a>
-                , follow us on <a href="https://twitter.com/metaspace2020">Twitter</a>, spread the word, and think of us
-                while doing good deeds :)
-              </p>
+              <h3>How can you contribute?</h3>
               <ul class="mb-6">
                 <li>
-                  <strong>Have high-resolution imaging mass spectrometry data?</strong> Consider uploading it.
+                  <strong>Share Ideas and Connect</strong> Join our community to provide feedback,
+                  <a href="https://github.com/metaspace2020/metaspace/discussions/categories/ideas" target="_blank">
+                    suggest features
+                  </a>
+                  , and brainstorm solutions.
                 </li>
                 <li>
-                  <strong>Are you a data scientist?</strong> Feel free to the export the metabolite annotations and mine
-                  hundreds of thousands of metabolites found in community-provided datasets.
+                  <strong>Promote and Share the Platform</strong> Share it with colleagues, collaborators, and on{' '}
+                  <a href="https://twitter.com/metaspace2020" target="_blank">
+                    social media
+                  </a>
+                  .
                 </li>
               </ul>
-              <p>
-                For examples of applications, see{' '}
-                <span
-                  class="about-link ml-1"
-                  onClick={() => {
-                    router.push('/publications#community')
-                  }}
-                >
-                  publications from other users
-                </span>
-                .
-              </p>
               <CiteMetaspace />
               <h3>How to stay in touch?</h3>
               <p>
