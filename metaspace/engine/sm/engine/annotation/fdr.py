@@ -137,7 +137,7 @@ class FDR:
 
     def __init__(self, fdr_config, chem_mods, neutral_losses, target_adducts, analysis_version):
         self.decoy_adduct_cand = [
-            ad for ad in DECOY_ADDUCTS 
+            ad for ad in DECOY_ADDUCTS
             if ad not in target_adducts + chem_mods + neutral_losses
         ]
         self.decoy_sample_size = min(fdr_config['decoy_sample_size'], len(self.decoy_adduct_cand))
