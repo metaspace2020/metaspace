@@ -33,10 +33,11 @@ const PublicationsPage = defineComponent({
         <div class="sm-publications-page">
           <div class="sm-content-page sm-main-content">
             <h1>Relevant Publications</h1>
-            <h2 id="ours">Our publications presenting METASPACE or its methods (5)</h2>
+            <h2 id="ours">Our publications presenting METASPACE or its methods (6)</h2>
             <ul>
               <PublicationItem
-                title="METASPACE-ML: Context-specific metabolite annotation for imaging mass spectrometry using machine learning"
+                title="METASPACE-ML: Context-specific metabolite annotation for imaging mass spectrometry
+                 using machine learning"
                 authors="Wadie B, Stuart L, Rath C.M., Drotleff B, Mamedov S, Alexandrov T"
                 publisher="Nat. Commun"
                 year="2024"

@@ -85,12 +85,8 @@
     </p>
     <p>
       METASPACE is operated by the
-      <a
-        href="https://ateam.ucsd.edu/"
-        rel="noopener noreferrer nofollow"
-      >
-        Alexandrov team<!-- --> </a
-      > at the University of California San Diego.
+      <a target="_blank" href="https://ateam.ucsd.edu/" rel="noopener noreferrer nofollow"> Alexandrov team<!-- --> </a>
+      at the University of California San Diego.
     </p>
     <h2 id="cookies">Cookies</h2>
     <p>

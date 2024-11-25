@@ -4,8 +4,14 @@ exports[`PublicationsPage > should match snapshot 1`] = `
 "<div class=\\"sm-publications-page\\">
   <div class=\\"sm-content-page sm-main-content\\">
     <h1>Relevant Publications</h1>
-    <h2 id=\\"ours\\">Our publications presenting METASPACE or its methods (5)</h2>
+    <h2 id=\\"ours\\">Our publications presenting METASPACE or its methods (6)</h2>
     <ul>
+      <li>
+        <h3 class=\\"text-blue-800 text-base font-medium m-0\\">METASPACE-ML: Context-specific metabolite annotation for imaging mass spectrometry using machine learning</h3>
+        <p>Wadie B, Stuart L, Rath C.M., Drotleff B, Mamedov S, Alexandrov T</p>
+        <p class=\\"text-sm font-medium\\"><span class=\\"text-green-800\\">Nat. Commun</span>, <time>2024</time></p>
+        <p class=\\"text-sm truncate text-primary\\"><a href=\\"https://doi.org/10.1038/s41467-024-52213-9\\">https://doi.org/10.1038/s41467-024-52213-9</a></p>
+      </li>
       <li>
         <h3 class=\\"text-blue-800 text-base font-medium m-0\\">Spatial Metabolomics and Imaging Mass Spectrometry in the Age of Artificial Intelligence</h3>
         <p>Alexandrov T</p>

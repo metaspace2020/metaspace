@@ -218,7 +218,7 @@ const AboutPage = defineComponent({
                     router.push('/publications#ours')
                   }}
                 >
-                  our methods and related publications 
+                  our methods and related publications
                 </span>
                 .
               </p>
@@ -226,11 +226,17 @@ const AboutPage = defineComponent({
               <ul class="mb-6">
                 <li>
                   <strong>Share Ideas and Connect</strong> Join our community to provide feedback,
-                  <a href="https://github.com/metaspace2020/metaspace/discussions/categories/ideas" target="_blank">suggest features</a>, and brainstorm solutions.
+                  <a href="https://github.com/metaspace2020/metaspace/discussions/categories/ideas" target="_blank">
+                    suggest features
+                  </a>
+                  , and brainstorm solutions.
                 </li>
                 <li>
-                  <strong>Promote and Share the Platform</strong> Share it with colleagues, collaborators, and on 
-                  <a href="https://twitter.com/metaspace2020" target="_blank">social media</a>.
+                  <strong>Promote and Share the Platform</strong> Share it with colleagues, collaborators, and on{' '}
+                  <a href="https://twitter.com/metaspace2020" target="_blank">
+                    social media
+                  </a>
+                  .
                 </li>
               </ul>
               <CiteMetaspace />
