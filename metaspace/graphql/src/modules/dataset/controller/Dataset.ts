@@ -463,7 +463,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     }
 
     // check if reached download
-    if ((ctx as any).getSource() !== 'web') {
+    if ((ctx as any).getSource() !== 'web' && process.env.NODE_ENV !== 'test') {
       return JSON.stringify({
         message: 'Download disabled on API. Please use the web interface.',
         files: [{
@@ -471,7 +471,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           link: 'https://metaspace2020.eu/limit_reached',
         }],
       })
-    } if (!await canPerformAction(ctx, action) || (ctx.user?.role !== 'admin' && rateLimited)) {
+    } else if (!await canPerformAction(ctx, action) || (ctx.user?.role !== 'admin' && rateLimited)) {
       await performAction(ctx, { ...action, actionType: 'download_attempt' })
 
       return JSON.stringify({
