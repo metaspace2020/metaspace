@@ -149,6 +149,17 @@ vi.mock('element-plus', async () => {
   }
 })
 
+vi.mock('vue3-recaptcha-v2', () => ({
+  install: () => {}, // Mock installation
+  RecaptchaV2: {
+    name: 'RecaptchaV2',
+    template: `
+      <div class="mock-recaptcha-v2" @mounted="$emit('load-callback', 'fake-recaptcha-token')"></div>
+    `,
+    props: ['sitekey', 'theme', 'size', 'callback', 'expired-callback'], // Include relevant props
+  },
+}))
+
 vi.mock('vue', async () => {
   const actualVue: any = await vi.importActual('vue')
 

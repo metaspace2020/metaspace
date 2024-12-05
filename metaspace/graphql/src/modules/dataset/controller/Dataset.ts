@@ -463,7 +463,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     }
 
     // check if reached download
-    if ((ctx as any).getSource() !== 'web' && process.env.NODE_ENV !== 'test') {
+    if ((ctx as any).getSource() !== 'web' && process.env.NODE_ENV !== 'test' && ctx.user?.role !== 'admin') {
       return JSON.stringify({
         message: 'Download disabled on API. Please use the web interface.',
         files: [{

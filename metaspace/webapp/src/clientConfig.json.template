@@ -4,6 +4,7 @@
   "companionUrl": null,
 
   "google_client_id": "{{ sm_webapp_google_client_id }}",
+  "recaptcha_site_key": "{{ sm_webapp_google_recaptcha_site_key }}",
 
   "sentry": {
     "dsn": "{{ sentry_dsn }}",

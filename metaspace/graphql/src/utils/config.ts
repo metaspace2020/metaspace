@@ -71,6 +71,7 @@ export interface Config {
     client_secret: string;
     callback_url: string;
     serpapi_key: string;
+    recaptcha_secret: string;
   };
   web_public_url: string;
   slack: {

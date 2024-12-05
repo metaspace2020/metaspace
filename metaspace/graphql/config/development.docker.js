@@ -72,6 +72,7 @@ config.google = {}
 config.google.client_id = ''
 config.google.client_secret = ''
 config.google.callback_url = ''
+config.google.recaptcha_secret = ''
 
 config.web_public_url = 'http://0.0.0.0:8999'
 

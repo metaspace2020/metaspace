@@ -31,6 +31,8 @@ import { AuthMethodOptions } from '../../context'
 import { UserError } from 'graphql-errors'
 import NoisyJwtStrategy from './NoisyJwtStrategy'
 
+import fetch from 'node-fetch'
+
 const Uuid = superstruct.define<string>('Uuid', value => typeof value === 'string' && uuid.validate(value))
 
 const preventCache = (req: Request, res: Response, next: NextFunction) => {
@@ -341,15 +343,41 @@ const configureImpersonation = (router: IRouter<any>) => {
   }
 }
 
+const verifyCaptcha = async(recaptchaToken: string) => {
+  const body = `secret=${encodeURIComponent(config.google.recaptcha_secret)}&response=${
+    encodeURIComponent(recaptchaToken)}`
+  const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body,
+  })
+
+  const data = await response.json()
+  if (!data.success) {
+    throw new UserError(JSON.stringify({
+      type: 'suspicious_activity',
+      message: 'Recaptcha checking failed. Please try again.',
+    }))
+  }
+}
+
 const configureCreateAccount = (router: IRouter<any>) => {
   const CreateAccountBody = superstruct.type({
     name: superstruct.string(),
     email: superstruct.string(),
     password: superstruct.string(),
+    recaptchaToken: superstruct.string(),
   })
   router.post('/createaccount', async(req, res, next) => {
     try {
-      const { name, email, password } = CreateAccountBody.mask(req.body)
+      const { name, email, password, recaptchaToken } = CreateAccountBody.mask(req.body)
+
+      if (process.env.NODE_ENV !== 'test') {
+        await verifyCaptcha(recaptchaToken)
+      }
+
       await createUserCredentials({ name, email, password })
       res.send(true)
     } catch (err) {

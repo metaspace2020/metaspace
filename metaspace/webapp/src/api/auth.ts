@@ -18,10 +18,23 @@ export const signInByEmail = async (email: string, password: string): Promise<bo
   return response.status >= 200 && response.status < 300
 }
 
-export const createAccountByEmail = async (email: string, password: string, name: string) => {
-  const response = await fetchPostJson('/api_auth/createaccount', { email, password, name })
+export const createAccountByEmail = async (email: string, password: string, name: string, recaptchaToken?: string) => {
+  const response = await fetchPostJson('/api_auth/createaccount', {
+    email,
+    password,
+    name,
+    recaptchaToken,
+  })
   if (response.status !== 200) {
-    throw new Error(`Unexpected response from server: ${response.status} ${response.statusText}`)
+    let error = `Unexpected response from server: ${response.status} ${response.statusText}`
+    try {
+      const data = await response.json()
+      error = JSON.parse(data.message).message
+    } catch (error) {
+      // ignore
+    }
+
+    throw new Error(error)
   }
 }
 
