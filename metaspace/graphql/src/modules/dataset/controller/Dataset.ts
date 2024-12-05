@@ -463,7 +463,15 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     }
 
     // check if reached download
-    if (!await canPerformAction(ctx, action) || (ctx.user?.role !== 'admin' && rateLimited)) {
+    if ((ctx as any).getSource() !== 'web') {
+      return JSON.stringify({
+        message: 'Download disabled on API. Please use the web interface.',
+        files: [{
+          filename: 'Download_Limit_Reached.txt',
+          link: 'https://metaspace2020.eu/limit_reached',
+        }],
+      })
+    } if (!await canPerformAction(ctx, action) || (ctx.user?.role !== 'admin' && rateLimited)) {
       await performAction(ctx, { ...action, actionType: 'download_attempt' })
 
       return JSON.stringify({
