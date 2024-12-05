@@ -140,7 +140,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
   } else {
     const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email')
     const defaultPlan: any = await planRepo.findOne({ isDefault: true })
-
+    const planId = defaultPlan?.id
     if (existingUserNotVerified) {
       // existing not verified user
       if (userCred.googleId) {
@@ -154,14 +154,14 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
           email: userCred.email,
           notVerifiedEmail: null,
           name: userCred.name,
-          planId: defaultPlan?.id,
+          planId: planId,
         })
       } else {
         existingUserNotVerified.credentials.hash = await hashPassword(userCred.password) || null
         await credRepo.save(existingUserNotVerified.credentials)
         await userRepo.update(existingUserNotVerified.id, {
           name: userCred.name,
-          planId: defaultPlan?.id,
+          planId: planId,
         })
         logger.info(`${userCred.email} user credentials updated, password added`)
         await sendEmailVerificationToken(existingUserNotVerified.credentials,
@@ -175,7 +175,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
           email: userCred.email,
           name: userCred.name,
           credentials: newCred,
-          planId: defaultPlan?.id,
+          planId: planId,
         })
         await userRepo.insert(newUser)
         logger.info(`New google user added: ${userCred.email}`)
@@ -185,7 +185,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
           notVerifiedEmail: userCred.email,
           name: userCred.name,
           credentials: newCred,
-          planId: defaultPlan?.id,
+          planId: planId,
         })
         await userRepo.insert(newUser)
         logger.info(`New local user added: ${userCred.email}`)

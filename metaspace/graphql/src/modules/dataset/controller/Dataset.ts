@@ -28,6 +28,7 @@ import canDeleteEsDataset from '../operation/canDeleteEsDataset'
 import { DatasetEnrichment as DatasetEnrichmentModel, EnrichmentDB } from '../../enrichmentdb/model'
 import * as moment from 'moment/moment'
 import canPerformAction, { performAction } from '../../plan/util/canPerformAction'
+import isRateLimited from '../../../utils/redis'
 
 interface DbDataset {
   id: string;
@@ -433,6 +434,14 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   async downloadLinkJson(ds, args, ctx) {
+    const ip: any = ctx.req?.ip
+    // @ts-ignore
+    const { sessionStore }: any = ctx.req
+    const redisClient = sessionStore?.client
+
+    // Check if the IP is rate-limited
+    const rateLimited = redisClient ? await isRateLimited(redisClient, ip) : false
+
     if (!ctx.user?.id) {
       return JSON.stringify({
         message: 'Pleas Sign in to download. Access is available for public '
@@ -453,12 +462,13 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       source: (ctx as any).getSource(),
     }
 
-    if (!await canPerformAction(ctx, action)) { // check if reached download
+    // check if reached download
+    if (!await canPerformAction(ctx, action) || (ctx.user?.role !== 'admin' && rateLimited)) {
       await performAction(ctx, { ...action, actionType: 'download_attempt' })
 
       return JSON.stringify({
-        message: 'Download limit reached (2 downloads per day). Contact us at contact@metaspace2020.eu to '
-            + 'request an increase.',
+        message: `Download limit reached (2 downloads per day )${rateLimited ? '.' : ''}. Contact us at `
+            + 'contact@metaspace2020.eu to request an increase.',
         files: [{
           filename: 'Download_Limit_Reached.txt',
           link: 'https://metaspace2020.eu/limit_reached',
