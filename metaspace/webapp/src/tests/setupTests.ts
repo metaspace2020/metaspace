@@ -151,6 +151,9 @@ vi.mock('element-plus', async () => {
 
 vi.mock('vue3-recaptcha-v2', () => ({
   install: () => {}, // Mock installation
+  useRecaptcha: () => {
+    return { handleExecute: () => {} }
+  }, // Mock installation
   RecaptchaV2: {
     name: 'RecaptchaV2',
     template: `

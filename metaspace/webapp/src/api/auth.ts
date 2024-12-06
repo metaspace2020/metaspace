@@ -18,6 +18,11 @@ export const signInByEmail = async (email: string, password: string): Promise<bo
   return response.status >= 200 && response.status < 300
 }
 
+export const verifyRecaptcha = async (recaptchaToken: string): Promise<boolean> => {
+  const response = await fetchPostJson('/api_auth/verify_captcha', { recaptchaToken })
+  return response.status >= 200 && response.status < 300
+}
+
 export const createAccountByEmail = async (email: string, password: string, name: string, recaptchaToken?: string) => {
   const response = await fetchPostJson('/api_auth/createaccount', {
     email,

@@ -7,6 +7,7 @@ exports[`DatasetOverviewPage > should match snapshot when dataset exist 1`] = `
   <div class=\\"dataset-overview-wrapper max-w-4xl w-full\\">
     <div class=\\"dataset-overview-header\\">
       <h1 class=\\"text-center truncate\\">JD_Sampe<span class=\\"text-base align-middle\\"><!----></span></h1>
+      <div class=\\"mock-recaptcha-v2 flex justify-center justify-items-center p-2\\"></div>
       <!---->
     </div>
     <div class=\\"dataset-overview-holder\\">

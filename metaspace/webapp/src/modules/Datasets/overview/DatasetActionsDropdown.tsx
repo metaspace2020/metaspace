@@ -25,6 +25,7 @@ import './DatasetActionsDropdown.scss'
 import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import { verifyRecaptcha } from '../../../api/auth'
 
 interface DatasetActionsDropdownProps {
   actionLabel: string
@@ -58,6 +59,7 @@ export const DatasetActionsDropdown = defineComponent({
     enrichmentActionLabel: { type: String, default: 'Ontology enrichment' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
+    recaptchaToken: { type: String, default: '' },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     currentUser: { type: Object as () => CurrentUserRoleResult },
   },
@@ -269,7 +271,12 @@ export const DatasetActionsDropdown = defineComponent({
           break
         case 'download':
           if (!props.currentUser?.id || (await confirmDownload())) {
-            openDownloadDialog()
+            const verified = await verifyRecaptcha(props.recaptchaToken)
+            if (verified) {
+              openDownloadDialog()
+            } else {
+              ElNotification.warning('Problem validating identity. Please try again later.')
+            }
           }
           break
         case 'reprocess':

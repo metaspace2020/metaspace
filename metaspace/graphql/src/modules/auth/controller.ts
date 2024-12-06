@@ -363,6 +363,23 @@ const verifyCaptcha = async(recaptchaToken: string) => {
   }
 }
 
+export const configureCaptcha = (router: IRouter<any>): void => {
+  const VerifyCaptchaBody = superstruct.type({
+    recaptchaToken: superstruct.string(),
+  })
+  router.post('/verify_captcha', async(req, res, next) => {
+    try {
+      const { recaptchaToken } = VerifyCaptchaBody.mask(req.body)
+
+      await verifyCaptcha(recaptchaToken)
+
+      res.status(200).json({ success: true, message: 'Captcha validated successfully.' })
+    } catch (err) {
+      next(err)
+    }
+  })
+}
+
 const configureCreateAccount = (router: IRouter<any>) => {
   const CreateAccountBody = superstruct.type({
     name: superstruct.string(),
@@ -481,6 +498,7 @@ export const configureAuth = async(app: Express, entityManager: EntityManager) =
   // TODO: find a parameter validation middleware
   configureCreateAccount(router)
   configureResetPassword(router)
+  configureCaptcha(router)
   configureReviewerAuth(router, entityManager)
   app.use('/api_auth', router)
 }
