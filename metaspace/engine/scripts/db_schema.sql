@@ -402,6 +402,8 @@ CREATE TABLE "public"."api_usage" (
   "action_type" text NOT NULL, 
   "visibility" text NOT NULL, 
   "source" text NOT NULL, 
+  "ip_hash" text NOT NULL, 
+  "device_info" text NOT NULL, 
   "can_edit" boolean NOT NULL DEFAULT false, 
   "action_dt" TIMESTAMP NOT NULL, 
   CONSTRAINT "PK_bcaf2df186a22b1d135af4a5ac4" PRIMARY KEY ("id")
@@ -415,6 +417,8 @@ CREATE TABLE "graphql"."user" (
   "role" text NOT NULL DEFAULT 'user', 
   "plan_id" integer NOT NULL, 
   "credentials_id" uuid NOT NULL, 
+  "created_at" TIMESTAMP NOT NULL, 
+  "updated_at" TIMESTAMP NOT NULL, 
   CONSTRAINT "REL_1b5eb1327a74d679537bdc1fa5" UNIQUE ("credentials_id"), 
   CONSTRAINT "REL_8f0a7cc334c3ec47f077cd63ac" UNIQUE ("plan_id"), 
   CONSTRAINT "PK_ea80e4e2bf12ab8b8b6fca858d7" PRIMARY KEY ("id")

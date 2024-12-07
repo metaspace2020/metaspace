@@ -32,6 +32,8 @@ import { UserError } from 'graphql-errors'
 import NoisyJwtStrategy from './NoisyJwtStrategy'
 
 import fetch from 'node-fetch'
+import * as moment from 'moment'
+import { getDeviceInfo, hashIp } from '../plan/util/canPerformAction'
 
 const Uuid = superstruct.define<string>('Uuid', value => typeof value === 'string' && uuid.validate(value))
 
@@ -388,6 +390,14 @@ const configureCreateAccount = (router: IRouter<any>) => {
     recaptchaToken: superstruct.string(),
   })
   router.post('/createaccount', async(req, res, next) => {
+    const action: any = {
+      actionType: 'create',
+      type: 'user',
+      actionDt: moment.utc(moment.utc().toDate()),
+      deviceInfo: getDeviceInfo(req.headers?.['user-agent']),
+      ipHash: await hashIp(req.ip),
+    }
+
     try {
       const { name, email, password, recaptchaToken } = CreateAccountBody.mask(req.body)
 
@@ -398,6 +408,7 @@ const configureCreateAccount = (router: IRouter<any>) => {
       await createUserCredentials({ name, email, password })
       res.send(true)
     } catch (err) {
+      action.actionType = 'create_attempt'
       next(err)
     }
   })

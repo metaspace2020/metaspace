@@ -27,7 +27,7 @@ import canEditEsDataset from '../operation/canEditEsDataset'
 import canDeleteEsDataset from '../operation/canDeleteEsDataset'
 import { DatasetEnrichment as DatasetEnrichmentModel, EnrichmentDB } from '../../enrichmentdb/model'
 import * as moment from 'moment/moment'
-import canPerformAction, { performAction } from '../../plan/util/canPerformAction'
+import canPerformAction, { getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
 import isRateLimited from '../../../utils/redis'
 
 interface DbDataset {
@@ -460,6 +460,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       actionDt: moment.utc(moment.utc().toDate()),
       canEdit,
       source: (ctx as any).getSource(),
+      deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
+      ipHash: await hashIp(ip),
     }
 
     // check if reached download

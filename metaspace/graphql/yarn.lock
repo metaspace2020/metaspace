@@ -3045,6 +3045,11 @@ destroy@~1.0.4:
   resolved "https://registry.yarnpkg.com/destroy/-/destroy-1.0.4.tgz#978857442c44749e4206613e37946205826abd80"
   integrity sha1-l4hXRCxEdJ5CBmE+N5RiBYJqvYA=
 
+detect-europe-js@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/detect-europe-js/-/detect-europe-js-0.1.2.tgz#aa76642e05dae786efc2e01a23d4792cd24c7b88"
+  integrity sha512-lgdERlL3u0aUdHocoouzT10d9I89VVhk0qNRmll7mXdGfJT1/wqZ2ZLA4oJAjeACPY5fT1wsbq2AT+GkuInsow==
+
 detect-file@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/detect-file/-/detect-file-1.0.0.tgz#f0d66d03672a825cb1b73bdb3fe62310c8e552b7"
@@ -4848,6 +4853,11 @@ is-relative@^1.0.0:
   integrity sha512-Kw/ReK0iqwKeu0MITLFuj0jbPAmEiOsIwyIXvvbfa6QfmN9pkD1M+8pdk7Rl/dTKbH34/XBFMbgD4iMJhLQbGA==
   dependencies:
     is-unc-path "^1.0.0"
+
+is-standalone-pwa@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/is-standalone-pwa/-/is-standalone-pwa-0.1.1.tgz#7a1b0459471a95378aa0764d5dc0a9cec95f2871"
+  integrity sha512-9Cbovsa52vNQCjdXOzeQq5CnCbAcRk05aU62K20WO372NrTv0NxibLFCK6lQ4/iZEFdEA3p3t2VNOn8AJ53F5g==
 
 is-stream@^1.1.0:
   version "1.1.0"
@@ -8721,6 +8731,20 @@ typescript@^3.9.2:
   version "3.9.2"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.9.2.tgz#64e9c8e9be6ea583c54607677dd4680a1cf35db9"
   integrity sha512-q2ktq4n/uLuNNShyayit+DTobV2ApPEo/6so68JaD5ojvc/6GClBipedB9zNWYxRSAlZXAe405Rlijzl6qDiSw==
+
+ua-is-frozen@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/ua-is-frozen/-/ua-is-frozen-0.1.2.tgz#bfbc5f06336e379590e36beca444188c7dc3a7f3"
+  integrity sha512-RwKDW2p3iyWn4UbaxpP2+VxwqXh0jpvdxsYpZ5j/MLLiQOfbsV5shpgQiw93+KMYQPcteeMQ289MaAFzs3G9pw==
+
+ua-parser-js@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-2.0.0.tgz#fae88e352510198bd29a6dd41624c7cd0d2c7ade"
+  integrity sha512-SASgD4RlB7+SCMmlVNqrhPw0f/2pGawWBzJ2+LwGTD0GgNnrKGzPJDiraGHJDwW9Zm5DH2lTmUpqDpbZjJY4+Q==
+  dependencies:
+    detect-europe-js "^0.1.2"
+    is-standalone-pwa "^0.1.1"
+    ua-is-frozen "^0.1.2"
 
 uid-safe@~2.1.5:
   version "2.1.5"

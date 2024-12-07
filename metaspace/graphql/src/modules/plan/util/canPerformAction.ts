@@ -4,6 +4,9 @@ import * as moment from 'moment'
 import { DeepPartial } from 'typeorm'
 import { UserError } from 'graphql-errors'
 import { User } from '../../user/model'
+import canEditEsDataset from '../../dataset/operation/canEditEsDataset'
+import { UAParser } from 'ua-parser-js'
+import * as bcrypt from "bcrypt";
 
 const canPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Promise<boolean> => {
   const user: any = ctx?.user
@@ -67,6 +70,23 @@ export const assertCanPerformAction = async(ctx: Context, action: DeepPartial<Ap
   if (!canPerform) {
     throw new UserError('Limit reached')
   }
+}
+
+export const getDeviceInfo = (userAgent: string | undefined) => {
+  try {
+    const { browser, os, device } = UAParser(userAgent)
+    return JSON.stringify({
+      device,
+      os,
+      browser,
+    })
+  } catch (error) {
+    return JSON.stringify({})
+  }
+}
+export const hashIp = async(ip: string|undefined): Promise<string|undefined> => {
+  const NUM_ROUNDS = 12
+  return (ip) ? await bcrypt.hash(ip, NUM_ROUNDS) : undefined
 }
 
 export default canPerformAction
