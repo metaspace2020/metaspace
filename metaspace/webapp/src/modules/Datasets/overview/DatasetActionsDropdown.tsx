@@ -59,7 +59,7 @@ export const DatasetActionsDropdown = defineComponent({
     enrichmentActionLabel: { type: String, default: 'Ontology enrichment' },
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
-    recaptchaToken: { type: String, default: '' },
+    recaptchaToken: { type: String, default: () => '' },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     currentUser: { type: Object as () => CurrentUserRoleResult },
   },
@@ -67,6 +67,7 @@ export const DatasetActionsDropdown = defineComponent({
     const { emit } = ctx
     const router = useRouter()
     const apolloClient = inject(DefaultApolloClient)
+    const token = computed(() => props.recaptchaToken)
 
     const state = reactive<DatasetActionsDropdownState>({
       disabled: false,
@@ -271,7 +272,8 @@ export const DatasetActionsDropdown = defineComponent({
           break
         case 'download':
           if (!props.currentUser?.id || (await confirmDownload())) {
-            const verified = await verifyRecaptcha(props.recaptchaToken)
+            console.log('token.value', token.value)
+            const verified = await verifyRecaptcha(token.value)
             if (verified) {
               openDownloadDialog()
             } else {

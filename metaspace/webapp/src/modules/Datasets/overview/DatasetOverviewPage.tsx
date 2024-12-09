@@ -114,10 +114,12 @@ const DatasetOverviewPage = defineComponent({
       const canViewPublicationStatus =
         dataset.value?.status === 'FINISHED' && canEdit && publicationStatus?.value != null
       const handleWidgetId = (widgetId: number) => {
+        console.log('handleWidgetId', widgetId)
         handleExecute(widgetId)
       }
 
       const handleLoadCallback = (response: any) => {
+        console.log('handleLoadCallback', response)
         recaptchaToken.value = response
       }
 
@@ -147,7 +149,7 @@ const DatasetOverviewPage = defineComponent({
                 <DatasetActionsDropdown
                   dataset={dataset?.value}
                   currentUser={currentUser?.value}
-                  recaptchaToken={recaptchaToken.value}
+                  recaptchaToken={recaptchaToken?.value}
                 />
               </NewFeatureBadge>
             </div>
