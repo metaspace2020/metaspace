@@ -272,7 +272,6 @@ export const DatasetActionsDropdown = defineComponent({
           break
         case 'download':
           if (!props.currentUser?.id || (await confirmDownload())) {
-            console.log('token.value', token.value)
             const verified = await verifyRecaptcha(token.value)
             if (verified) {
               openDownloadDialog()
