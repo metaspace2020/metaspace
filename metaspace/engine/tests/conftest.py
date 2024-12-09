@@ -181,8 +181,8 @@ def fill_db(test_db, metadata, ds_config):
         [(1, 'regular', datetime.now(), True)],
     )
     db.insert(
-        "INSERT INTO graphql.user (id, name, email, plan_id) VALUES (%s, %s, %s, %s)",
-        rows=[(user_id, 'name', 'name@embl.de', 1)],
+        "INSERT INTO graphql.user (id, name, email, plan_id, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s)",
+        rows=[(user_id, 'name', 'name@embl.de', 1, datetime.now(), datetime.now())],
     )
     group_id = str(uuid.uuid4())
     db.insert(

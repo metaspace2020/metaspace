@@ -27,8 +27,8 @@ def fill_db(test_db):
         [(1, 'regular', datetime.now(), True)],
     )
     db.insert(
-        'INSERT INTO graphql.user (id, name, email, plan_id) VALUES (%s, %s, %s, %s)',
-        [(USER_ID, 'name', 'name@embl.de', 1)],
+        'INSERT INTO graphql.user (id, name, email, plan_id, created_at, updated_at) VALUES (%s, %s, %s, %s, %s, %s)',
+        [(USER_ID, 'name', 'name@embl.de', 1, datetime.now(), datetime.now())],
     )
     db.insert(
         'INSERT INTO graphql.group (id, name, short_name) VALUES (%s, %s, %s)',
