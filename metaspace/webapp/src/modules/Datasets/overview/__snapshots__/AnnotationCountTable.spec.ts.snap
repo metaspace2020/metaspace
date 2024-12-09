@@ -70,31 +70,31 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
                     <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;}}\\">HMDB-v4</div>
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;}}\\">HMDB-v4</div>
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.05&quot;}}\\">55</div>
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.05&quot;}}\\">55</div>
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.1&quot;}}\\">104</div>
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.1&quot;}}\\">104</div>
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_4 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.2&quot;}}\\">196</div>
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.2&quot;}}\\">196</div>
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_5 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">224</div>
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;1&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">224</div>
                       </div>
                     </td>
                   </tr>
@@ -102,31 +102,31 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
                     <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;}}\\">ChEBI-2018-01</div>
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;}}\\">ChEBI-2018-01</div>
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.05&quot;}}\\">65</div>
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.05&quot;}}\\">65</div>
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.1&quot;}}\\">90</div>
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.1&quot;}}\\">90</div>
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_4 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.2&quot;}}\\">177</div>
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.2&quot;}}\\">177</div>
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_5 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
-                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">190</div>
+                        <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;db_id&quot;:&quot;6&quot;,&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">190</div>
                       </div>
                     </td>
                   </tr>
@@ -161,22 +161,22 @@ exports[`AnnotationCountTable > it should match snapshot 1`] = `
               </td>
               <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_2 is-leaf\\">
                 <div class=\\"cell\\">
-                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.05&quot;}}\\">120</div>
+                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.05&quot;}}\\" from=\\"dataset-overview\\">120</div>
                 </div>
               </td>
               <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_3 is-leaf\\">
                 <div class=\\"cell\\">
-                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.1&quot;}}\\">194</div>
+                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.1&quot;}}\\" from=\\"dataset-overview\\">194</div>
                 </div>
               </td>
               <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_4 is-leaf\\">
                 <div class=\\"cell\\">
-                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.2&quot;}}\\">373</div>
+                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.2&quot;}}\\" from=\\"dataset-overview\\">373</div>
                 </div>
               </td>
               <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_5 is-leaf\\">
                 <div class=\\"cell\\">
-                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\">414</div>
+                  <div class=\\"mock-router-link\\" to=\\"{&quot;name&quot;:&quot;dataset-annotations&quot;,&quot;params&quot;:{&quot;dataset_id&quot;:&quot;xxxx&quot;},&quot;state&quot;:{&quot;from&quot;:&quot;dataset-overview&quot;},&quot;query&quot;:{&quot;ds&quot;:&quot;xxxx&quot;,&quot;fdr&quot;:&quot;0.5&quot;}}\\" from=\\"dataset-overview\\">414</div>
                 </div>
               </td>
             </tr>
