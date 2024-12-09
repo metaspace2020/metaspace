@@ -25,7 +25,7 @@ import './DatasetActionsDropdown.scss'
 import { checkIfEnrichmentRequested } from '../../../api/enrichmentdb'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
-import { verifyRecaptcha } from '../../../api/auth'
+// import { verifyRecaptcha } from '../../../api/auth'
 
 interface DatasetActionsDropdownProps {
   actionLabel: string
@@ -67,7 +67,7 @@ export const DatasetActionsDropdown = defineComponent({
     const { emit } = ctx
     const router = useRouter()
     const apolloClient = inject(DefaultApolloClient)
-    const token = computed(() => props.recaptchaToken)
+    // const token = computed(() => props.recaptchaToken)
 
     const state = reactive<DatasetActionsDropdownState>({
       disabled: false,
@@ -272,12 +272,12 @@ export const DatasetActionsDropdown = defineComponent({
           break
         case 'download':
           if (!props.currentUser?.id || (await confirmDownload())) {
-            const verified = await verifyRecaptcha(token.value)
-            if (verified) {
-              openDownloadDialog()
-            } else {
-              ElNotification.warning('Problem validating identity. Please try again later.')
-            }
+            // const verified = await verifyRecaptcha(token.value)
+            // if (verified) {
+            openDownloadDialog()
+            // } else {
+            //   ElNotification.warning('Problem validating identity. Please try again later.')
+            // }
           }
           break
         case 'reprocess':
