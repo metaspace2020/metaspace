@@ -122,6 +122,13 @@ const DatasetOverviewPage = defineComponent({
         console.log('handleLoadCallback', response)
         recaptchaToken.value = response
       }
+      const handleErrorCallback = (response: any) => {
+        console.log('handleErrorCallback', response)
+      }
+
+      const handleExpiredCallback = (response: any) => {
+        console.log('handleExpiredCallback', response)
+      }
 
       if ((datasetLoading.value && dataset.value === null) || userLoading.value) {
         return <div class="text-center">Loading...</div>
@@ -143,6 +150,8 @@ const DatasetOverviewPage = defineComponent({
                 class="flex justify-center justify-items-center p-2"
                 onWidgetId={handleWidgetId}
                 onLoadCallback={handleLoadCallback}
+                onErrorCallback={handleErrorCallback}
+                onExpiredCallback={handleExpiredCallback}
                 size="invisible"
               />
               <NewFeatureBadge featureKey="imzmlBrowser">
