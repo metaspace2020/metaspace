@@ -38,7 +38,7 @@ config.cookie.secret = "{{ sm_graphql_cookie_secret }}";
 
 config.api = {}
 config.api.usage = {}
-config.api.usage.salt = "{{ sm_api_usage_salt }}";
+config.api.usage.salt = "{{ sm_graphql_usage_salt }}";
 
 config.google = {};
 config.google.client_id = "{{ sm_graphql_google_client_id }}";
