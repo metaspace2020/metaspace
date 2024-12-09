@@ -68,6 +68,10 @@ config.redis.port = '6379'
 config.cookie = {}
 config.cookie.secret = 'secret'
 
+config.api = {}
+config.api.usage = {}
+config.api.usage.salt = ''
+
 config.google = {}
 config.google.client_id = ''
 config.google.client_secret = ''

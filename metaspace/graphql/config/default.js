@@ -91,7 +91,11 @@ module.exports = {
     dsn: null,
     environment: 'default',
   },
-
+  api: {
+    usage: {
+      salt: '',
+    },
+  },
   google: {
     client_id: '',
     client_secret: '',

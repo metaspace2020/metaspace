@@ -461,7 +461,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       canEdit,
       source: (ctx as any).getSource(),
       deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
-      ipHash: await hashIp(ip),
+      ipHash: hashIp(ip),
     }
 
     // check if reached download

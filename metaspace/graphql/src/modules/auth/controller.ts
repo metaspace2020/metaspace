@@ -33,7 +33,7 @@ import NoisyJwtStrategy from './NoisyJwtStrategy'
 
 import fetch from 'node-fetch'
 import * as moment from 'moment'
-import { getDeviceInfo, hashIp } from '../plan/util/canPerformAction'
+import { getDeviceInfo, hashIp, performAction } from '../plan/util/canPerformAction'
 
 const Uuid = superstruct.define<string>('Uuid', value => typeof value === 'string' && uuid.validate(value))
 
@@ -183,7 +183,7 @@ const configureApiKey = () => {
   ))
 }
 
-const configureLocalAuth = (router: IRouter<any>) => {
+const configureLocalAuth = (router: IRouter<any>, entityManager: EntityManager) => {
   Passport.use(new LocalStrategy(
     {
       usernameField: 'email',
@@ -205,18 +205,35 @@ const configureLocalAuth = (router: IRouter<any>) => {
   ))
 
   router.post('/signin', function(req, res, next) {
-    Passport.authenticate('local', function(err, user) {
+    Passport.authenticate('local', async function(err, user) {
+      const action: any = {
+        actionType: 'login',
+        userId: user?.id,
+        type: 'user',
+        actionDt: moment.utc(moment.utc().toDate()),
+        deviceInfo: getDeviceInfo(req.headers?.['user-agent'], req.body?.user?.email),
+        canEdit: true,
+        ipHash: hashIp(req?.ip),
+      }
+
       if (err) {
+        performAction({ entityManager } as any, action)
+          .finally(() => next(err))
         next(err)
       } else if (user) {
         req.login(user, err => {
           if (err) {
-            next()
+            action.actionType = 'login_attempt'
+            performAction({ entityManager } as any, action)
+              .finally(() => next(err))
           } else {
-            res.status(200).send()
+            performAction({ entityManager } as any, action)
+              .finally(() => res.status(200).send())
           }
         })
       } else {
+        action.actionType = 'login_attempt'
+        await performAction({ entityManager } as any, action)
         res.status(401).send()
       }
     })(req, res, next)
@@ -395,7 +412,7 @@ const configureCreateAccount = (router: IRouter<any>) => {
       type: 'user',
       actionDt: moment.utc(moment.utc().toDate()),
       deviceInfo: getDeviceInfo(req.headers?.['user-agent']),
-      ipHash: await hashIp(req.ip),
+      ipHash: hashIp(req.ip),
     }
 
     try {
@@ -503,7 +520,7 @@ export const configureAuth = async(app: Express, entityManager: EntityManager) =
   configurePassport(router, app)
   configureJwt(router)
   configureApiKey()
-  configureLocalAuth(router)
+  configureLocalAuth(router, entityManager)
   configureGoogleAuth(router)
   configureImpersonation(router)
   // TODO: find a parameter validation middleware

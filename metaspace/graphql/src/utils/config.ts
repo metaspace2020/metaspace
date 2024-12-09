@@ -20,6 +20,10 @@ export interface Adduct {
   default: boolean;
 }
 
+export interface ApiUsageConfig {
+  salt: string;
+}
+
 export interface Config {
   port: number;
   ws_port: number;
@@ -65,6 +69,9 @@ export interface Config {
   };
   cookie: {
     secret: string;
+  };
+  api: {
+    usage: ApiUsageConfig;
   };
   google: {
     client_id: string;

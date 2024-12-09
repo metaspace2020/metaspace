@@ -36,6 +36,10 @@ config.redis.port = "{{ sm_graphql_redis_port }}";
 config.cookie = {};
 config.cookie.secret = "{{ sm_graphql_cookie_secret }}";
 
+config.api = {}
+config.api.usage = {}
+config.api.usage.salt = "{{ sm_api_usage_salt }}";
+
 config.google = {};
 config.google.client_id = "{{ sm_graphql_google_client_id }}";
 config.google.client_secret = "{{ sm_graphql_google_client_secret }}";

@@ -13,6 +13,7 @@ import { sendCreateAccountEmail } from './email'
 import { Request } from 'express'
 import generateRandomToken from '../../utils/generateRandomToken'
 import { Plan } from '../plan/model'
+import * as moment from 'moment'
 
 export interface UserCredentialsInput {
   email: string;
@@ -133,6 +134,8 @@ const createCredentials = async(userCred: UserCredentialsInput): Promise<Credent
 
 export const createUserCredentials = async(userCred: UserCredentialsInput): Promise<void> => {
   const existingUser = await findUserByEmail(userCred.email, 'email')
+  const updatedAt = moment.utc(moment.utc().toDate())
+
   if (existingUser) {
     // existing verified user
     const link = `${config.web_public_url}/account/sign-in`
@@ -155,6 +158,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
           notVerifiedEmail: null,
           name: userCred.name,
           planId: planId,
+          updatedAt,
         })
       } else {
         existingUserNotVerified.credentials.hash = await hashPassword(userCred.password) || null
@@ -162,6 +166,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
         await userRepo.update(existingUserNotVerified.id, {
           name: userCred.name,
           planId: planId,
+          updatedAt,
         })
         logger.info(`${userCred.email} user credentials updated, password added`)
         await sendEmailVerificationToken(existingUserNotVerified.credentials,
