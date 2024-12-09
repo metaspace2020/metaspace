@@ -28,6 +28,9 @@ describe('modules/plan/controller (mutations)', () => {
   const createPlanMutation = `mutation ($name: String!, $isActive: Boolean!) {
     createPlan(name: $name, isActive: $isActive) { id name isActive createdAt }
   }`
+  const deletePlanMutation = `mutation ($planId: Int!) {
+    deletePlan(planId: $planId)
+  }`
 
   describe('Mutation.plan', () => {
     it('should create one plan as admin', async() => {
@@ -66,6 +69,44 @@ describe('modules/plan/controller (mutations)', () => {
       const allPlans = await doQuery('query { allPlans { id name isActive createdAt } }')
       expect(allPlans[0].name).toEqual(planDetails.name)
       expect(allPlans[0].isActive).toEqual(planDetails.isActive)
+    })
+  })
+
+  describe('Mutation.deletePlan', () => {
+    it('should change isActive status on plan deletion as admin', async() => {
+      // Create a plan as admin
+      const result = await doQuery(createPlanMutation, planDetails, { context: adminContext })
+
+      // Delete the plan
+      const deletionResult = await doQuery(deletePlanMutation, { planId: result.id }, { context: adminContext })
+      expect(deletionResult).toEqual(true)
+
+      // Fetch the specific plan and verify the isActive status
+      const plan = await doQuery('query ($id: Int!) { plan(id: $id) { id name isActive createdAt } }', { id: result.id })
+      expect(plan.id).toEqual(result.id)
+      expect(plan.isActive).toEqual(false)
+    })
+
+    it('should fail to delete a plan as a user', async() => {
+      // Create a plan as admin
+      const result = await doQuery(createPlanMutation, planDetails, { context: adminContext })
+
+      // Try to delete the plan as a user
+      await expect(
+        doQuery(deletePlanMutation, { planId: result.id }, { context: userContext })
+      ).rejects.toThrow('Unauthorized')
+
+      // Verify the plan is still active
+      const plan = await doQuery('query ($id: Int!) { plan(id: $id) { id name isActive createdAt } }', { id: result.id })
+      expect(plan.id).toEqual(result.id)
+      expect(plan.isActive).toEqual(true)
+    })
+
+    it('should throw an error when trying to delete a non-existing plan', async() => {
+      // Assuming 999 is a non-existent ID
+      await expect(
+        doQuery(deletePlanMutation, { planId: 999 }, { context: adminContext })
+      ).rejects.toThrow('Plan not found')
     })
   })
 

@@ -48,6 +48,27 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       Plan, { id: planId }
     )
   },
+  async deletePlan(source, args, ctx): Promise<boolean> {
+    if (!ctx.isAdmin) {
+      throw new UserError('Unauthorized')
+    }
+
+    const { planId } = args
+    const plan = await ctx.entityManager.findOne(Plan, { id: planId })
+
+    if (!plan) {
+      throw new Error('Plan not found')
+    }
+
+    try {
+      // Update isActive to false
+      await ctx.entityManager.update(Plan, planId, { isActive: false })
+    } catch (error) {
+      throw new Error('Failed to delete the plan')
+    }
+
+    return true
+  },
   async createPlanRule(source, args, ctx): Promise<PlanRule> {
     if (!ctx.isAdmin) {
       throw new UserError('Unauthorized')

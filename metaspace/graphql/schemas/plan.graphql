@@ -7,6 +7,20 @@ type Plan {
     planRules: [PlanRule]
 }
 
+input PlanFilter {
+    name: String
+    isActive: Boolean
+    isDefault: Boolean
+    createdAt: String
+}
+
+enum PlanOrderBy {
+    ORDER_BY_DATE
+    ORDER_BY_NAME
+    ORDER_BY_ACTIVE
+    ORDER_BY_DEFAULT
+}
+
 input PlanInput {
     name: String
     isActive: Boolean
@@ -42,7 +56,12 @@ type ApiUsage {
 
 
 type Query {
-    allPlans: [Plan]
+    plan(id: Int!): Plan
+
+    allPlans(orderBy: PlanOrderBy = ORDER_BY_DATE,
+        sortingOrder: SortingOrder = DESCENDING,
+        filter: PlanFilter = {}, simpleQuery: String,
+        offset: Int = 0, limit: Int = 10): [Plan]
     allPlanRules(planId: Int) : [PlanRule]
     allApiUsages(termId: Int) : [String]
 }
@@ -50,6 +69,7 @@ type Query {
 type Mutation {
     createPlan(name: String!, isActive: Boolean!, isDefault: Boolean): Plan!
     updatePlan(planId: Int!, name: String!, isActive: Boolean!, isDefault: Boolean): Plan!
+    deletePlan(planId: Int!): Boolean!
 
     createPlanRule(planId: Int!, actionType: String!, period: Int!,
         periodType: String!, limit: Int!, type: String, visibility: String, requestSource: String): PlanRule!

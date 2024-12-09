@@ -51,15 +51,20 @@ describe('modules/plan/controller (queries)', () => {
     const queryPlans = 'query { allPlans { name isActive createdAt } }'
     const queryPlanRules = 'query { allPlanRules { planId actionType period periodType limit createdAt } }'
 
-    it('should return all plans', async() => {
-      const result = await doQuery(queryPlans)
-      expect(result.length).toEqual(TIERS.length)
-      expect(result).toEqual(
-        TIERS.map(({ createdAt, ...plan }: any) => ({
-          ...plan,
-          createdAt: moment(createdAt).valueOf().toString(),
-        }))
-      )
+    it('should return all active plans by default', async() => {
+      const query = `query {
+        allPlans { name isActive createdAt }
+      }`
+
+      const result = await doQuery(query)
+
+      const expectedPlans = TIERS.filter(plan => plan.isActive).map(({ createdAt, ...plan }: any) => ({
+        ...plan,
+        createdAt: moment(createdAt).valueOf().toString(),
+      }))
+
+      expect(result.length).toEqual(expectedPlans.length) // Only active plans are returned
+      expect(result).toEqual(expectedPlans)
     })
 
     it('should return all planRules', async() => {
@@ -70,6 +75,94 @@ describe('modules/plan/controller (queries)', () => {
         TIER_RULES.map(({ createdAt, ...rule }: any, index: number) => ({
           ...rule,
           planId: createdPlanRules[index].planId,
+          createdAt: moment(createdAt).valueOf().toString(),
+        }))
+      )
+    })
+
+    it('should filter allPlans by isActive', async() => {
+      const query = `query ($filter: PlanFilter!) {
+        allPlans(filter: $filter) { name isActive createdAt }
+      }`
+
+      const result = await doQuery(query, { filter: { isActive: true } })
+
+      expect(result.length).toEqual(2)
+      expect(result).toEqual(
+        TIERS.filter(plan => plan.isActive).map(({ createdAt, ...plan }: any) => ({
+          ...plan,
+          createdAt: moment(createdAt).valueOf().toString(),
+        }))
+      )
+    })
+
+    it('should filter allPlans by name', async() => {
+      const query = `query ($filter: PlanFilter!) {
+        allPlans(filter: $filter) { name isActive createdAt }
+      }`
+
+      const result = await doQuery(query, { filter: { name: 'lab' } })
+
+      // Only one plan with name "lab" and isActive = true
+      const expectedPlans = TIERS.filter(plan => plan.name === 'lab' && plan.isActive).map(({ createdAt, ...plan }: any) => ({
+        ...plan,
+        createdAt: moment(createdAt).valueOf().toString(),
+      }))
+
+      expect(result.length).toEqual(expectedPlans.length) // Only active "lab" plans are returned
+      expect(result).toEqual(expectedPlans)
+    })
+
+    it('should return a single plan by ID', async() => {
+      const query = `query ($id: Int!) {
+        plan(id: $id) { name isActive createdAt }
+      }`
+
+      const result = await doQuery(query, { id: createdPlans[0].id })
+
+      expect(result).toEqual({
+        name: createdPlans[0].name,
+        isActive: createdPlans[0].isActive,
+        createdAt: moment(createdPlans[0].createdAt).valueOf().toString(),
+      })
+    })
+
+    it('should return null for a non-existing plan ID', async() => {
+      const query = `query ($id: Int!) {
+        plan(id: $id) { name isActive createdAt }
+      }`
+
+      const result = await doQuery(query, { id: 999 }) // Assuming 999 is not a valid ID
+      expect(result).toBeNull()
+    })
+
+    it('should return only active plans by default', async() => {
+      const query = `query {
+    allPlans { name isActive createdAt }
+  }`
+
+      const result = await doQuery(query)
+
+      expect(result.length).toEqual(2) // Only two plans with isActive = true
+      expect(result).toEqual(
+        TIERS.filter(plan => plan.isActive).map(({ createdAt, ...plan }: any) => ({
+          ...plan,
+          createdAt: moment(createdAt).valueOf().toString(),
+        }))
+      )
+    })
+
+    it('should return inactive plans when explicitly filtered', async() => {
+      const query = `query ($filter: PlanFilter!) {
+    allPlans(filter: $filter) { name isActive createdAt }
+  }`
+
+      const result = await doQuery(query, { filter: { isActive: false } })
+
+      expect(result.length).toEqual(1) // Only one plan with isActive = false
+      expect(result).toEqual(
+        TIERS.filter(plan => !plan.isActive).map(({ createdAt, ...plan }: any) => ({
+          ...plan,
           createdAt: moment(createdAt).valueOf().toString(),
         }))
       )
