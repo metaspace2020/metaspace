@@ -48,7 +48,6 @@ describe('modules/plan/controller (queries)', () => {
   afterEach(onAfterEach)
 
   describe('Query.plan', () => {
-    const queryPlans = 'query { allPlans { name isActive createdAt } }'
     const queryPlanRules = 'query { allPlanRules { planId actionType period periodType limit createdAt } }'
 
     it('should return all active plans by default', async() => {
