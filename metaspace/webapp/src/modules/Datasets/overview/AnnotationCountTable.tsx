@@ -50,6 +50,7 @@ export const AnnotationCountTable = defineComponent({
       return {
         name: 'dataset-annotations',
         params: { dataset_id: datasetId },
+        state: { from: 'dataset-overview' },
         query: encodeParams(query),
       }
     }
@@ -110,6 +111,7 @@ export const AnnotationCountTable = defineComponent({
         return (
           <RouterLink
             key={colIndex}
+            from="dataset-overview"
             to={annotationsLink(props.id?.toString(), undefined, parseInt(currentFDR, 10) / 100)}
           >
             {data.reduce(reducer, 0)}

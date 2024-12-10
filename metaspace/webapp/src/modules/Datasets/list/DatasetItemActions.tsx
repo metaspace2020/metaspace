@@ -208,7 +208,10 @@ export default defineComponent({
                       Select a database:
                       {(dataset.databases || []).map((db) => (
                         <div key={db.id}>
-                          <FilterLink filter={{ database: db.id, datasetIds: [dataset.id] }}>
+                          <FilterLink
+                            path={`/dataset/${dataset.id}/annotations`}
+                            filter={{ database: db.id, datasetIds: [dataset.id] }}
+                          >
                             {formatDatabaseLabel(db)}
                           </FilterLink>
                         </div>

@@ -251,6 +251,7 @@ describe('AnnotationCountTable', () => {
       name: 'dataset-annotations',
       params: { dataset_id: id },
       query: { ds: id },
+      state: { from: 'dataset-overview' },
     })
   })
 })

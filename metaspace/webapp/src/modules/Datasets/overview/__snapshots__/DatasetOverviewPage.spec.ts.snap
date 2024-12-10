@@ -120,22 +120,22 @@ exports[`DatasetOverviewPage > should match snapshot when dataset exist 1`] = `
                     </td>
                     <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_2 is-leaf\\">
                       <div class=\\"cell\\">
-                        <div>0</div>
+                        <div from=\\"dataset-overview\\">0</div>
                       </div>
                     </td>
                     <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_3 is-leaf\\">
                       <div class=\\"cell\\">
-                        <div>0</div>
+                        <div from=\\"dataset-overview\\">0</div>
                       </div>
                     </td>
                     <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_4 is-leaf\\">
                       <div class=\\"cell\\">
-                        <div>0</div>
+                        <div from=\\"dataset-overview\\">0</div>
                       </div>
                     </td>
                     <td colspan=\\"1\\" rowspan=\\"1\\" class=\\"el-table__cell el-table_1_column_5 is-leaf\\">
                       <div class=\\"cell\\">
-                        <div>0</div>
+                        <div from=\\"dataset-overview\\">0</div>
                       </div>
                     </td>
                   </tr>
