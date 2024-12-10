@@ -21,6 +21,8 @@ import canSeeUserEmail from './util/canSeeUserEmail'
 import { ProjectSourceRepository } from '../project/ProjectSourceRepository'
 import { getUserSourceById, resolveUserScopeRole } from './util/getUserSourceById'
 import { Plan } from '../plan/model'
+import * as moment from 'moment'
+import { getDeviceInfo, hashIp, performAction } from '../plan/util/canPerformAction'
 
 const assertCanEditUser = (user: ContextUser, userId: string) => {
   if (!user.id) {
@@ -211,6 +213,19 @@ export const Resolvers = {
           }))
         }
       }
+
+      console.log('ctx?.req?.ip', ctx?.req?.ip)
+      const action: any = {
+        actionType: 'update',
+        userId,
+        type: 'user',
+        actionDt: moment.utc(moment.utc().toDate()),
+        source: (ctx as any).getSource(),
+        deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
+        canEdit: true,
+        ipHash: hashIp(ctx?.req?.ip),
+      }
+      await performAction(ctx, action)
 
       logger.info(`User '${userId}' was updated`)
       return (await getUserSourceById(ctx, userObj.id))!

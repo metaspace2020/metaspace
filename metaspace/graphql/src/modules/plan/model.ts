@@ -41,8 +41,13 @@ export class PlanRule {
     @Column({ name: 'plan_id' })
     planId: number;
 
-    @Column({ type: 'text', enum: ['download', 'create', 'update', 'process', 'delete', 'download_attempt'] })
-    actionType: 'download' | 'create' | 'update' | 'process' | 'delete' | 'download_attempt';
+    @Column({
+      type: 'text',
+      enum: ['download', 'create', 'update', 'process', 'delete',
+        'download_attempt', 'create_attempt', 'login', 'login_attempt'],
+    })
+    actionType: 'download' | 'create' | 'update' | 'process' | 'delete' | 'download_attempt' |
+        'create_attempt' | 'login' | 'login_attempt';
 
     @Column({ type: 'int' })
     period: number;
@@ -92,14 +97,25 @@ export class ApiUsage {
     @Column({ type: 'text', enum: ['dataset', 'group', 'project', 'user'] })
     type: 'dataset' | 'group' | 'project' | 'user';
 
-    @Column({ type: 'text', enum: ['download', 'create', 'update', 'process', 'delete', 'download_attempt'] })
-    actionType: 'download' | 'create' | 'update' | 'process' | 'delete' | 'download_attempt';
+    @Column({
+      type: 'text',
+      enum: ['download', 'create', 'update', 'process', 'delete',
+        'download_attempt', 'create_attempt', 'login', 'login_attempt'],
+    })
+    actionType: 'download' | 'create' | 'update' | 'process' | 'delete' | 'download_attempt' |
+        'create_attempt' | 'login' | 'login_attempt';
 
     @Column({ name: 'visibility', type: 'text', enum: ['public', 'private'] })
     visibility: 'public' | 'private';
 
     @Column({ name: 'source', type: 'text', enum: ['web', 'api'] })
     source: 'web' | 'api';
+
+    @Column({ type: 'text', name: 'ip_hash' })
+    ipHash: string
+
+    @Column({ type: 'text', name: 'device_info' })
+    deviceInfo: string
 
     @Column({ type: 'boolean', default: false })
     canEdit: boolean;

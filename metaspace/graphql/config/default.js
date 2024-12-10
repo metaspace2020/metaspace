@@ -91,10 +91,15 @@ module.exports = {
     dsn: null,
     environment: 'default',
   },
-
+  api: {
+    usage: {
+      salt: '',
+    },
+  },
   google: {
     client_id: '',
     client_secret: '',
+    recaptcha_secret: '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe',
     callback_url: 'http://localhost:8888/api_auth/google/callback',
   },
 

@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    class="max-w-2xl"
+    class="max-w-2xl min-w-min"
     :title="hasSucceeded ? 'Welcome to METASPACE!' : 'Create an account'"
     v-model="model.dialogVisible"
     :lock-scroll="false"
@@ -39,6 +39,8 @@
                 @keypress.enter="onSubmit"
               />
             </el-form-item>
+            <!-- Add the Checkbox reCAPTCHA -->
+            <RecaptchaV2 class="flex justify-center justify-items-center p-2" @load-callback="handleLoadCallback" />
             <el-button data-testid="submit-btn" type="primary" :loading="isSubmitting" @click="onSubmit">
               Create account
             </el-button>
@@ -68,7 +70,7 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue'
-import { FormInstance } from 'element-plus'
+import { FormInstance, ElNotification } from 'element-plus'
 import GoogleButton from './GoogleButton.vue'
 import InterDialogLink from './InterDialogLink'
 import { createAccountByEmail } from '../../../api/auth'
@@ -77,11 +79,13 @@ import emailRegex from '../../../lib/emailRegex'
 import { setSignInReturnUrl } from '../signInReturnUrl'
 import { useStore } from 'vuex'
 import { useRoute } from 'vue-router'
+import { RecaptchaV2 } from 'vue3-recaptcha-v2'
 
 export default defineComponent({
   components: {
     GoogleButton,
     InterDialogLink,
+    RecaptchaV2,
   },
   setup() {
     const store = useStore()
@@ -95,6 +99,8 @@ export default defineComponent({
       password: '',
       dialogVisible: true,
     })
+    // @ts-ignore
+    const recaptchaToken = ref(process.env.NODE_ENV === 'test' ? 'fake-recaptcha-token' : '')
 
     const rules = {
       firstName: [{ required: true, min: 2, max: 50, message: 'First name is required' }],
@@ -114,12 +120,20 @@ export default defineComponent({
       } catch (err) {
         return
       }
+
+      if (!recaptchaToken.value) {
+        ElNotification.error('Please complete the reCAPTCHA.')
+        return
+      }
+
       const { email, password, firstName, lastName } = model.value
       isSubmitting.value = true
+
       try {
-        await createAccountByEmail(email, password, `${firstName} ${lastName}`)
+        await createAccountByEmail(email, password, `${firstName} ${lastName}`, recaptchaToken.value)
         hasSucceeded.value = true
       } catch (err) {
+        console.log(err)
         reportError(err)
       } finally {
         isSubmitting.value = false
@@ -134,7 +148,11 @@ export default defineComponent({
       store.commit('account/hideDialog', 'createAccount')
     }
 
-    return { isSubmitting, hasSucceeded, model, rules, onSubmit, setReturnUrl, onClose, form }
+    const handleLoadCallback = (response: any) => {
+      recaptchaToken.value = response
+    }
+
+    return { isSubmitting, hasSucceeded, model, rules, onSubmit, setReturnUrl, onClose, form, handleLoadCallback }
   },
 })
 </script>
@@ -204,5 +222,11 @@ export default defineComponent({
 
 .google-button {
   text-decoration: none;
+}
+
+.g-recaptcha {
+  height: 100px;
+  width: 304px; /* Default reCAPTCHA width */
+  display: block; /* Ensure it's visible */
 }
 </style>

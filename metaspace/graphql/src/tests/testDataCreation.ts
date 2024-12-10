@@ -26,6 +26,8 @@ export const createTestUserWithCredentials = async(user?: Partial<User>): Promis
     planId: plan.id,
     credentialsId: creds.id,
     email: `${Math.random()}@example.com`,
+    createdAt: moment.utc(moment.utc().toDate()),
+    updatedAt: moment.utc(moment.utc().toDate()),
     ...user,
   }) as User
   return [userModel, creds]

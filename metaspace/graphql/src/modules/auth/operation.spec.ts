@@ -16,6 +16,7 @@ import {
   onAfterAll, onAfterEach,
   onBeforeAll, onBeforeEach, testEntityManager,
 } from '../../tests/graphqlTestEnvironment'
+import { createTestPlan } from '../../tests/testDataCreation'
 const mockEmail = _mockEmail as jest.Mocked<typeof _mockEmail>
 
 async function createUserCredentialsEntities(user?: Partial<User>, cred?: Partial<Credentials>):
@@ -52,7 +53,14 @@ async function createUserCredentialsEntities(user?: Partial<User>, cred?: Partia
 describe('Database operations with user', () => {
   beforeAll(onBeforeAll)
   afterAll(onAfterAll)
-  beforeEach(onBeforeEach)
+  beforeEach(async() => {
+    await onBeforeEach()
+    await createTestPlan({
+      name: 'regular',
+      isActive: true,
+      isDefault: true,
+    })
+  })
   afterEach(onAfterEach)
 
   describe('createUserCredentials', () => {
@@ -65,7 +73,7 @@ describe('Database operations with user', () => {
 
       const cred = await testEntityManager.findOneOrFail(Credentials, {
         select: ['id', 'hash', 'emailVerified'],
-      })
+      } as any)
       expect(cred.id).toEqual(expect.anything())
       expect(cred.hash).toEqual(expect.anything())
       expect(cred.emailVerified).toEqual(false)

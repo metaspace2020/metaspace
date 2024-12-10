@@ -22,6 +22,8 @@ import VueGtag from 'vue-gtag'
 import { setErrorNotifier } from './lib/reportError'
 import { migrateLocalStorage } from './lib/localStorage'
 
+import { install } from 'vue3-recaptcha-v2'
+
 import { Route } from '@sentry/vue/types/router'
 
 const isProd = process.env.NODE_ENV === 'production'
@@ -86,6 +88,10 @@ app.use(
   },
   router
 )
+
+app.use(install, {
+  sitekey: config.recaptcha_site_key,
+})
 
 const head = createHead()
 app.use(head)

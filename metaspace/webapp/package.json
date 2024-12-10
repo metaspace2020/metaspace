@@ -82,6 +82,7 @@
     "vue-gtag": "^2.0.1",
     "vue-router": "^4.2.5",
     "vue3-cookies": "^1.0.6",
+    "vue3-recaptcha-v2": "^2.1.0",
     "vue3-resize-directive": "^2.0.3",
     "vue3-slide-up-down": "^2.0.1",
     "vuex": "^4.0.2",

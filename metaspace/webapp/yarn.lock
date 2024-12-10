@@ -8198,6 +8198,11 @@ vue3-cookies@^1.0.6:
   dependencies:
     vue "^3.0.0"
 
+vue3-recaptcha-v2@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/vue3-recaptcha-v2/-/vue3-recaptcha-v2-2.1.0.tgz#02298ae88d47ec4edc535dad9080f96ff5dc528c"
+  integrity sha512-dy1qieyWkRHR0yfuHaiI4aPKAsDJ/9Gwl58bl7gU9UtDMOfFAAmimMbyuYTRdxNU90dapJ5LLf2u+2h+gfOiSg==
+
 vue3-resize-directive@^2.0.3:
   version "2.0.3"
   resolved "https://registry.npmjs.org/vue3-resize-directive/-/vue3-resize-directive-2.0.3.tgz"
