@@ -21,6 +21,8 @@ import { urlSlugMatchesClause, validateUrlSlugChange } from '../groupOrProject/u
 import { MolecularDbRepository } from '../moldb/MolecularDbRepository'
 import fetch from 'node-fetch'
 import { URLSearchParams } from 'url'
+import { assertCanPerformAction, performAction } from '../plan/util/canPerformAction'
+import * as moment from 'moment'
 
 const assertUserAuthenticated = (user: ContextUser) => {
   if (!user.id) {
@@ -170,11 +172,13 @@ export const Resolvers = {
     },
 
     async molecularDatabases(group: GroupModel, args: any, ctx: Context): Promise<MolecularDbModel[]> {
+      // @ts-ignore
       return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
         .findDatabases(ctx.user, undefined, group.id)
     },
 
     async numDatabases(group: GroupModel & Scope, args: any, ctx: Context): Promise<number> {
+      // @ts-ignore
       return await ctx.entityManager.getCustomRepository(MolecularDbRepository)
         .countDatabases(ctx.user, undefined, group.id)
     },
@@ -351,16 +355,28 @@ export const Resolvers = {
 
   Mutation: {
     async createGroup(
-      _: any, { groupDetails }: any, { user, entityManager }: Context
+      _: any, { groupDetails }: any, ctx: Context
     ): Promise<LooselyCompatible<Group & Scope>> {
+      const { user, entityManager } = ctx
       const { groupAdminEmail, ...groupInput } = groupDetails
-      assertUserAuthenticated(user)
+      const action: any = {
+        actionType: 'create',
+        userId: user.id,
+        type: 'group',
+        visibility: 'private',
+        actionDt: moment.utc(moment.utc().toDate()),
+        source: (ctx as any).getSource(),
+      }
+
+      await assertCanPerformAction(ctx, action)
+
+      assertUserAuthenticated(user) // @ts-ignore
       logger.info(`Creating ${groupInput.name} group by '${user.id}' user...`)
 
       if (groupDetails.urlSlug != null) {
-        await validateUrlSlugChange(entityManager, GroupModel, null, groupDetails.urlSlug)
+        await validateUrlSlugChange(entityManager, GroupModel as any, null, groupDetails.urlSlug)
       }
-
+      // @ts-ignore
       const group = await entityManager.getRepository(GroupModel).save(groupInput) as GroupModel
 
       const adminUser = await findUserByEmail(entityManager, groupAdminEmail)
@@ -373,14 +389,34 @@ export const Resolvers = {
         role: UserGroupRoleOptions.GROUP_ADMIN,
       })
 
+      action.groupId = group.id
+      action.canEdit = true
+
+      await performAction(ctx, action)
+
+      // @ts-ignore
       logger.info(`${groupInput.name} group created`)
       return group
     },
 
-    async updateGroup(_: any, { groupId, groupDetails }: any, { user, entityManager }: Context): Promise<Group> {
+    async updateGroup(_: any, { groupId, groupDetails }: any, ctx: Context): Promise<Group> {
+      const { user, entityManager } = ctx
       await assertCanEditGroup(entityManager, user, groupId)
+
+      const action: any = {
+        actionType: 'update',
+        userId: user.id,
+        groupId,
+        type: 'project',
+        canEdit: true,
+        visibility: 'private',
+        actionDt: moment.utc(moment.utc().toDate()),
+        source: (ctx as any).getSource(),
+      }
+      await assertCanPerformAction(ctx, action)
+
       if (groupDetails.urlSlug != null) {
-        await validateUrlSlugChange(entityManager, GroupModel, groupId, groupDetails.urlSlug)
+        await validateUrlSlugChange(entityManager, GroupModel as any, groupId, groupDetails.urlSlug)
       }
       logger.info(`Updating '${groupId}' group by '${user.id}' user...`)
       const groupRepo = entityManager.getRepository(GroupModel)
@@ -393,6 +429,7 @@ export const Resolvers = {
           await smApiUpdateDataset(ds.id, { groupId }, { asyncEsUpdate: true })
         }))
       }
+      await performAction(ctx, action)
       logger.info(`'${groupId}' group updated`)
       return group
     },
