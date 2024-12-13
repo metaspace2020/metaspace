@@ -596,19 +596,22 @@ export default defineComponent({
           id: 13,
           label: 'Isomers',
           src: 'isomers',
-          selected: false,
+          selected: true,
+          default: true,
         },
         {
           id: 14,
           label: 'Isobars',
           src: 'isobars',
-          selected: false,
+          selected: true,
+          default: true,
         },
         {
           id: 15,
           label: 'Max Intensity',
           src: 'maxIntensity',
-          selected: false,
+          selected: true,
+          default: true,
         },
         {
           id: 16,
@@ -809,7 +812,7 @@ export default defineComponent({
       if (pageSizes.length > 0) {
         state.recordsPerPage = pageSizes[0]
       }
-      executeQuery()
+      await executeQuery()
       updateColumns()
       updateDatasetColumns()
       updateColocSort()
@@ -824,7 +827,7 @@ export default defineComponent({
       try {
         const result = await apolloClient.query({
           query: annotationListQuery,
-          variables: queryVariables.value,
+          variables: queryVariables?.value,
           fetchPolicy: 'cache-first',
           throttle: 200,
         })
@@ -859,14 +862,14 @@ export default defineComponent({
           state.nextCurrentRowIndex = null
         } else if (state.nextCurrentRowIndex !== -1) {
           const curRow = getCurrentRow()
-          if (!curRow.value) {
-            setCurrentRow(currentRowIndex.value)
+          if (!curRow?.value) {
+            setCurrentRow(currentRowIndex?.value)
           }
         }
         // Move focus to the table so that keyboard navigation works, except when focus is on an input element
         const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
-        if (table.value && shouldMoveFocus) {
-          table.value?.$el.focus()
+        if (table?.value && shouldMoveFocus) {
+          table?.value?.$el.focus()
         }
 
         // load ROIs from db
@@ -881,7 +884,7 @@ export default defineComponent({
     }
 
     const hidden = (columnLabel) => {
-      return state.columns.findIndex((col) => col.src === columnLabel) === -1 || !showCustomCols.value
+      return state.columns.findIndex((col) => col.src === columnLabel) === -1 || !showCustomCols?.value
         ? props.hideColumns.indexOf(columnLabel) >= 0 || !state.columns.find((col) => col.src === columnLabel)?.selected
         : !state.columns.find((col) => col.src === columnLabel)?.selected
     }

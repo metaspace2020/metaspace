@@ -27,9 +27,9 @@ exports[`AnnotationTable > should match snapshot 1`] = `
         <div></div>
         <!--v-if-->
         <!--v-if-->
-        <!--v-if-->
-        <!--v-if-->
-        <!--v-if-->
+        <div></div>
+        <div></div>
+        <div></div>
         <!--v-if-->
         <div></div>
         <!--v-if-->
@@ -42,7 +42,10 @@ exports[`AnnotationTable > should match snapshot 1`] = `
             <col name=\\"el-table_1_column_3\\" width=\\"120\\">
             <col name=\\"el-table_1_column_4\\" width=\\"65\\">
             <col name=\\"el-table_1_column_5\\" width=\\"70\\">
-            <col name=\\"el-table_1_column_6\\" width=\\"60\\">
+            <col name=\\"el-table_1_column_6\\" width=\\"90\\">
+            <col name=\\"el-table_1_column_7\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_8\\" width=\\"120\\">
+            <col name=\\"el-table_1_column_9\\" width=\\"60\\">
           </colgroup>
           <thead class=\\"\\">
             <tr class=\\"\\">
@@ -71,7 +74,22 @@ exports[`AnnotationTable > should match snapshot 1`] = `
                   <!---->
                 </div>
               </th>
-              <th class=\\"el-table_1_column_6 fdr-cell is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+              <th class=\\"el-table_1_column_6 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">Isomers<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_1_column_7 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">Isobars<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_1_column_8 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">Max Intensity<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_1_column_9 fdr-cell is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
                 <div class=\\"cell\\">FDR<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
@@ -91,7 +109,10 @@ exports[`AnnotationTable > should match snapshot 1`] = `
                   <col name=\\"el-table_1_column_3\\" width=\\"120\\">
                   <col name=\\"el-table_1_column_4\\" width=\\"65\\">
                   <col name=\\"el-table_1_column_5\\" width=\\"70\\">
-                  <col name=\\"el-table_1_column_6\\" width=\\"60\\">
+                  <col name=\\"el-table_1_column_6\\" width=\\"90\\">
+                  <col name=\\"el-table_1_column_7\\" width=\\"80\\">
+                  <col name=\\"el-table_1_column_8\\" width=\\"120\\">
+                  <col name=\\"el-table_1_column_9\\" width=\\"60\\">
                 </colgroup>
                 <!--v-if-->
                 <tbody tabindex=\\"-1\\">
@@ -145,7 +166,22 @@ exports[`AnnotationTable > should match snapshot 1`] = `
                         <!----><span>0.657</span>
                       </div>
                     </td>
-                    <td class=\\"el-table_1_column_6 fdr-cell el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                    <td class=\\"el-table_1_column_6 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->1
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_7 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->2
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_8 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->0.0
+                      </div>
+                    </td>
+                    <td class=\\"el-table_1_column_9 fdr-cell el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!----><span>10%</span>
                       </div>
@@ -269,17 +305,17 @@ exports[`AnnotationTable > should match snapshot 1`] = `
               </svg></div><span>Molecules</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
-            <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+            <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
               </svg></div><span>Isomers</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
-            <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+            <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
               </svg></div><span>Isobars</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
-            <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+            <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
               </svg></div><span>Max Intensity</span>
           </div>
@@ -327,9 +363,9 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
         <div></div>
         <!--v-if-->
         <!--v-if-->
-        <!--v-if-->
-        <!--v-if-->
-        <!--v-if-->
+        <div></div>
+        <div></div>
+        <div></div>
         <!--v-if-->
         <div></div>
         <!--v-if-->
@@ -337,41 +373,59 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
       <div class=\\"el-table__header-wrapper\\">
         <table class=\\"el-table__header\\" border=\\"0\\" cellpadding=\\"0\\" cellspacing=\\"0\\">
           <colgroup>
-            <col name=\\"el-table_2_column_7\\" width=\\"95\\">
-            <col name=\\"el-table_2_column_8\\" width=\\"140\\">
-            <col name=\\"el-table_2_column_9\\" width=\\"120\\">
-            <col name=\\"el-table_2_column_10\\" width=\\"65\\">
-            <col name=\\"el-table_2_column_11\\" width=\\"70\\">
-            <col name=\\"el-table_2_column_12\\" width=\\"60\\">
+            <col name=\\"el-table_2_column_10\\" width=\\"95\\">
+            <col name=\\"el-table_2_column_11\\" width=\\"140\\">
+            <col name=\\"el-table_2_column_12\\" width=\\"120\\">
+            <col name=\\"el-table_2_column_13\\" width=\\"65\\">
+            <col name=\\"el-table_2_column_14\\" width=\\"70\\">
+            <col name=\\"el-table_2_column_15\\" width=\\"90\\">
+            <col name=\\"el-table_2_column_16\\" width=\\"80\\">
+            <col name=\\"el-table_2_column_17\\" width=\\"120\\">
+            <col name=\\"el-table_2_column_18\\" width=\\"60\\">
           </colgroup>
           <thead class=\\"\\">
             <tr class=\\"\\">
-              <th class=\\"el-table_2_column_7 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+              <th class=\\"el-table_2_column_10 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
                 <div class=\\"cell\\">Lab<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
               </th>
-              <th class=\\"el-table_2_column_8 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+              <th class=\\"el-table_2_column_11 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
                 <div class=\\"cell\\">Dataset<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
               </th>
-              <th class=\\"el-table_2_column_9 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+              <th class=\\"el-table_2_column_12 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
                 <div class=\\"cell\\">Annotation<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
               </th>
-              <th class=\\"el-table_2_column_10 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+              <th class=\\"el-table_2_column_13 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
                 <div class=\\"cell\\">m/z<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
               </th>
-              <th class=\\"el-table_2_column_11 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+              <th class=\\"el-table_2_column_14 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
                 <div class=\\"cell\\">MSM<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
               </th>
-              <th class=\\"el-table_2_column_12 fdr-cell is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+              <th class=\\"el-table_2_column_15 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">Isomers<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_2_column_16 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">Isobars<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_2_column_17 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                <div class=\\"cell\\">Max Intensity<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                  <!---->
+                </div>
+              </th>
+              <th class=\\"el-table_2_column_18 fdr-cell is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
                 <div class=\\"cell\\">FDR<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
@@ -386,29 +440,32 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
             <div class=\\"el-scrollbar__view\\" style=\\"display: inline-block; vertical-align: middle;\\">
               <table class=\\"el-table__body\\" cellspacing=\\"0\\" cellpadding=\\"0\\" border=\\"0\\" style=\\"table-layout: fixed;\\">
                 <colgroup>
-                  <col name=\\"el-table_2_column_7\\" width=\\"95\\">
-                  <col name=\\"el-table_2_column_8\\" width=\\"140\\">
-                  <col name=\\"el-table_2_column_9\\" width=\\"120\\">
-                  <col name=\\"el-table_2_column_10\\" width=\\"65\\">
-                  <col name=\\"el-table_2_column_11\\" width=\\"70\\">
-                  <col name=\\"el-table_2_column_12\\" width=\\"60\\">
+                  <col name=\\"el-table_2_column_10\\" width=\\"95\\">
+                  <col name=\\"el-table_2_column_11\\" width=\\"140\\">
+                  <col name=\\"el-table_2_column_12\\" width=\\"120\\">
+                  <col name=\\"el-table_2_column_13\\" width=\\"65\\">
+                  <col name=\\"el-table_2_column_14\\" width=\\"70\\">
+                  <col name=\\"el-table_2_column_15\\" width=\\"90\\">
+                  <col name=\\"el-table_2_column_16\\" width=\\"80\\">
+                  <col name=\\"el-table_2_column_17\\" width=\\"120\\">
+                  <col name=\\"el-table_2_column_18\\" width=\\"60\\">
                 </colgroup>
                 <!--v-if-->
                 <tbody tabindex=\\"-1\\">
                   <tr class=\\"el-table__row fdr-10 coloc-50\\">
-                    <td class=\\"el-table_2_column_7 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                    <td class=\\"el-table_2_column_10 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
                         <div class=\\"cell-wrapper\\"><span class=\\"cell-span\\"><span>Laboratory of European Molecular Biology</span></span><svg class=\\"cell-filter-button\\"></svg></div>
                       </div>
                     </td>
-                    <td class=\\"el-table_2_column_8 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                    <td class=\\"el-table_2_column_11 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
                         <div class=\\"cell-wrapper\\"><span class=\\"cell-span\\">Untreated_3_434</span><svg class=\\"cell-filter-button\\"></svg></div>
                       </div>
                     </td>
-                    <td class=\\"el-table_2_column_9 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                    <td class=\\"el-table_2_column_12 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
                         <div class=\\"cell-wrapper\\">
@@ -434,18 +491,33 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
                         </div>
                       </div>
                     </td>
-                    <td class=\\"el-table_2_column_10 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                    <td class=\\"el-table_2_column_13 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!---->
                         <div class=\\"cell-wrapper\\"><span class=\\"cell-span\\">449.0482</span><svg class=\\"cell-filter-button\\"></svg></div>
                       </div>
                     </td>
-                    <td class=\\"el-table_2_column_11 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                    <td class=\\"el-table_2_column_14 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!----><span>0.657</span>
                       </div>
                     </td>
-                    <td class=\\"el-table_2_column_12 fdr-cell el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                    <td class=\\"el-table_2_column_15 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->1
+                      </div>
+                    </td>
+                    <td class=\\"el-table_2_column_16 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->2
+                      </div>
+                    </td>
+                    <td class=\\"el-table_2_column_17 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                      <div class=\\"cell\\">
+                        <!---->0.0
+                      </div>
+                    </td>
+                    <td class=\\"el-table_2_column_18 fdr-cell el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
                         <!----><span>10%</span>
                       </div>
@@ -569,17 +641,17 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
               </svg></div><span>Molecules</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
-            <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+            <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
               </svg></div><span>Isomers</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
-            <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+            <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
               </svg></div><span>Isobars</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
-            <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+            <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
               </svg></div><span>Max Intensity</span>
           </div>

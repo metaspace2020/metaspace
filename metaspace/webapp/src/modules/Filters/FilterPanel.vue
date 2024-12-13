@@ -65,7 +65,7 @@ const orderedFilterKeys = [
   'pValue',
 ]
 
-const dsAnnotationHiddenFilters = ['datasetIds']
+const dsAnnotationHiddenFilters = [] // ['datasetIds']
 
 const filterComponents = {}
 Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {

@@ -2,11 +2,14 @@
   <div id="annot-page">
     <filter-panel :level="currentLevel" />
     <div class="my-2 w-full">
-      <router-link v-if="isFromDatasetOverview" :to="datasetOverviewLink">
-        <div class="flex items-center">
-          <el-icon><ArrowLeft /></el-icon>Dataset Overview
-        </div>
-      </router-link>
+      <div
+        v-if="isFromDatasetOverview"
+        @click="goBack"
+        class="flex items-center text-blue-600 hover:text-blue-800 underline cursor-pointer"
+      >
+        <el-icon><ArrowLeft /></el-icon>
+        {{ backLabel }}
+      </div>
     </div>
     <el-row>
       <el-col id="annot-table-container" :xs="24" :sm="24" :md="24" :lg="hideImageViewer ? 24 : tableWidth">
@@ -125,6 +128,10 @@ export default defineComponent({
       return route.name === 'dataset-annotations'
     })
 
+    const backLabel = computed(() => {
+      return router?.options?.history?.state?.from === 'dataset-overview' ? 'Dataset Overview' : 'Back'
+    })
+
     const datasetOverviewLink = computed(() => {
       return {
         name: 'dataset-overview',
@@ -142,6 +149,14 @@ export default defineComponent({
 
     function toggleHideImageViewer() {
       hideImageViewer.value = !hideImageViewer.value
+    }
+
+    const goBack = () => {
+      if (window.history.length > 1) {
+        router.back()
+      } else {
+        router.push('/')
+      }
     }
 
     onMounted(() => {
@@ -175,6 +190,8 @@ export default defineComponent({
       selectedNormalizationMatrix,
       toggleHideImageViewer,
       filter,
+      backLabel,
+      goBack,
     }
   },
 })

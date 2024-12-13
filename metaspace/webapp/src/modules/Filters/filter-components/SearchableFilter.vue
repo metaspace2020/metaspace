@@ -43,6 +43,7 @@ import searchableFilterQueries, { Option } from './searchableFilterQueries'
 import { inject, InjectionKey } from 'vue'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import { ApolloClient } from '@apollo/client/core'
+import { useRoute, useRouter } from 'vue-router'
 
 export default defineComponent({
   name: 'SearchableFilter',
@@ -69,6 +70,12 @@ export default defineComponent({
     const cachedOptions = ref<Option[]>([])
     const currentLabel = ref('')
     const select = ref<any>(null)
+    const route = useRoute()
+    const router = useRouter()
+
+    const isFromDataset = computed(() => {
+      return route.name === 'dataset-annotations' && props.name == 'Dataset'
+    })
 
     const valueAsArray = computed(() => {
       return props.multiple ? ((props.value || []) as string[]) : props.value ? [props.value] : []
@@ -158,6 +165,14 @@ export default defineComponent({
 
     function destroy() {
       emit('destroy')
+
+      if (isFromDataset.value) {
+        // if ds filter, redirect to annotations to display all filters
+        router.push({
+          name: 'annotations',
+          query: { ...route.query, ds: undefined },
+        })
+      }
     }
 
     onMounted(() => {
@@ -176,6 +191,7 @@ export default defineComponent({
       joinedOptions,
       currentLabel,
       select,
+      isFromDataset,
     }
   },
 })
