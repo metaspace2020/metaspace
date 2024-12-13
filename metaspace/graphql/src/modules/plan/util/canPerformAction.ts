@@ -4,6 +4,9 @@ import * as moment from 'moment'
 import { DeepPartial } from 'typeorm'
 import { UserError } from 'graphql-errors'
 import { User } from '../../user/model'
+import { UAParser } from 'ua-parser-js'
+import * as CryptoJS from 'crypto-js'
+import config from '../../../utils/config'
 
 const canPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Promise<boolean> => {
   const user: any = ctx?.user
@@ -67,6 +70,25 @@ export const assertCanPerformAction = async(ctx: Context, action: DeepPartial<Ap
   if (!canPerform) {
     throw new UserError('Limit reached')
   }
+}
+
+export const getDeviceInfo = (userAgent: string | undefined, email: string | null = null) => {
+  try {
+    const { browser, os, device } = UAParser(userAgent)
+    return JSON.stringify({
+      device,
+      os,
+      browser,
+      email,
+    })
+  } catch (error) {
+    return JSON.stringify({})
+  }
+}
+export const hashIp = (ip: string|undefined): string|undefined => {
+  if (!ip) return undefined
+  const saltedIP = config.api.usage.salt + ip
+  return CryptoJS.SHA256(saltedIP).toString(CryptoJS.enc.Hex)
 }
 
 export default canPerformAction

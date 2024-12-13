@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`CreateAccountDialog > should match snapshot 1`] = `
-"<div data-v-b2005c23=\\"\\" class=\\"mock-el-dialog max-w-2xl\\" title=\\"Create an account\\" modelvalue=\\"true\\" lock-scroll=\\"false\\" close-on-click-modal=\\"true\\">
+"<div data-v-b2005c23=\\"\\" class=\\"mock-el-dialog max-w-2xl min-w-min\\" title=\\"Create an account\\" modelvalue=\\"true\\" lock-scroll=\\"false\\" close-on-click-modal=\\"true\\">
   <div data-v-b2005c23=\\"\\">
     <div data-v-b2005c23=\\"\\" class=\\"container\\">
       <div data-v-b2005c23=\\"\\" class=\\"left-side\\">
@@ -78,7 +78,8 @@ exports[`CreateAccountDialog > should match snapshot 1`] = `
                 <!--v-if-->
               </div>
             </div>
-          </div><button data-v-b2005c23=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\" data-testid=\\"submit-btn\\">
+          </div><!-- Add the Checkbox reCAPTCHA -->
+          <div data-v-b2005c23=\\"\\" class=\\"mock-recaptcha-v2 flex justify-center justify-items-center p-2\\"></div><button data-v-b2005c23=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary\\" data-testid=\\"submit-btn\\">
             <!--v-if--><span class=\\"\\"> Create account </span>
           </button>
         </form>

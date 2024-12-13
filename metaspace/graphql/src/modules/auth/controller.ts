@@ -31,6 +31,10 @@ import { AuthMethodOptions } from '../../context'
 import { UserError } from 'graphql-errors'
 import NoisyJwtStrategy from './NoisyJwtStrategy'
 
+import fetch from 'node-fetch'
+import * as moment from 'moment'
+import { getDeviceInfo, hashIp, performAction } from '../plan/util/canPerformAction'
+
 const Uuid = superstruct.define<string>('Uuid', value => typeof value === 'string' && uuid.validate(value))
 
 const preventCache = (req: Request, res: Response, next: NextFunction) => {
@@ -179,7 +183,7 @@ const configureApiKey = () => {
   ))
 }
 
-const configureLocalAuth = (router: IRouter<any>) => {
+const configureLocalAuth = (router: IRouter<any>, entityManager: EntityManager) => {
   Passport.use(new LocalStrategy(
     {
       usernameField: 'email',
@@ -201,18 +205,35 @@ const configureLocalAuth = (router: IRouter<any>) => {
   ))
 
   router.post('/signin', function(req, res, next) {
-    Passport.authenticate('local', function(err, user) {
+    Passport.authenticate('local', async function(err, user) {
+      const action: any = {
+        actionType: 'login',
+        userId: user?.id,
+        type: 'user',
+        actionDt: moment.utc(moment.utc().toDate()),
+        deviceInfo: getDeviceInfo(req.headers?.['user-agent'], req.body?.user?.email),
+        canEdit: true,
+        ipHash: hashIp(req?.ip),
+      }
+
       if (err) {
+        performAction({ entityManager } as any, action)
+          .finally(() => next(err))
         next(err)
       } else if (user) {
         req.login(user, err => {
           if (err) {
-            next()
+            action.actionType = 'login_attempt'
+            performAction({ entityManager } as any, action)
+              .finally(() => next(err))
           } else {
-            res.status(200).send()
+            performAction({ entityManager } as any, action)
+              .finally(() => res.status(200).send())
           }
         })
       } else {
+        action.actionType = 'login_attempt'
+        await performAction({ entityManager } as any, action)
         res.status(401).send()
       }
     })(req, res, next)
@@ -341,18 +362,70 @@ const configureImpersonation = (router: IRouter<any>) => {
   }
 }
 
+const verifyCaptcha = async(recaptchaToken: string) => {
+  const body = `secret=${encodeURIComponent(config.google.recaptcha_secret)}&response=${
+    encodeURIComponent(recaptchaToken)}`
+  const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body,
+  })
+
+  const data = await response.json()
+  if (!data.success) {
+    throw new UserError(JSON.stringify({
+      type: 'suspicious_activity',
+      message: 'Recaptcha checking failed. Please try again.',
+    }))
+  }
+}
+
+export const configureCaptcha = (router: IRouter<any>): void => {
+  const VerifyCaptchaBody = superstruct.type({
+    recaptchaToken: superstruct.string(),
+  })
+  router.post('/verify_captcha', async(req, res, next) => {
+    try {
+      const { recaptchaToken } = VerifyCaptchaBody.mask(req.body)
+
+      await verifyCaptcha(recaptchaToken)
+
+      res.status(200).json({ success: true, message: 'Captcha validated successfully.' })
+    } catch (err) {
+      next(err)
+    }
+  })
+}
+
 const configureCreateAccount = (router: IRouter<any>) => {
   const CreateAccountBody = superstruct.type({
     name: superstruct.string(),
     email: superstruct.string(),
     password: superstruct.string(),
+    recaptchaToken: superstruct.string(),
   })
   router.post('/createaccount', async(req, res, next) => {
+    const action: any = {
+      actionType: 'create',
+      type: 'user',
+      actionDt: moment.utc(moment.utc().toDate()),
+      deviceInfo: getDeviceInfo(req.headers?.['user-agent']),
+      ipHash: hashIp(req.ip),
+    }
+
     try {
-      const { name, email, password } = CreateAccountBody.mask(req.body)
+      const { name, email, password, recaptchaToken } = CreateAccountBody.mask(req.body)
+
+      if (process.env.NODE_ENV !== 'test') {
+        await verifyCaptcha(recaptchaToken)
+      }
+
       await createUserCredentials({ name, email, password })
       res.send(true)
     } catch (err) {
+      action.actionType = 'create_attempt'
       next(err)
     }
   })
@@ -447,12 +520,13 @@ export const configureAuth = async(app: Express, entityManager: EntityManager) =
   configurePassport(router, app)
   configureJwt(router)
   configureApiKey()
-  configureLocalAuth(router)
+  configureLocalAuth(router, entityManager)
   configureGoogleAuth(router)
   configureImpersonation(router)
   // TODO: find a parameter validation middleware
   configureCreateAccount(router)
   configureResetPassword(router)
+  configureCaptcha(router)
   configureReviewerAuth(router, entityManager)
   app.use('/api_auth', router)
 }

@@ -30,7 +30,7 @@ import { isMemberOfGroup } from '../operation/isMemberOfGroup'
 import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/model'
 import { getS3Client } from '../../../utils/awsClient'
 import config from '../../../utils/config'
-import { assertCanPerformAction, performAction } from '../../plan/util/canPerformAction'
+import { assertCanPerformAction, getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -279,6 +279,8 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     visibility: input.isPublic ? 'public' : 'private',
     actionDt: moment.utc(moment.utc().toDate()),
     source: (ctx as any).getSource(),
+    deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
+    ipHash: hashIp(ctx.req?.ip),
   }
 
   logger.info(`Creating dataset '${datasetId}' by '${ctx.user.id}' user ...`)
@@ -418,6 +420,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       visibility: engineDataset.isPublic ? 'public' : 'private',
       actionDt: moment.utc(moment.utc().toDate()),
       source: (ctx as any).getSource(),
+      deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
+      ipHash: hashIp(ctx.req?.ip),
     }
     await assertCanPerformAction(ctx, action)
 

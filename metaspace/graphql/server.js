@@ -173,6 +173,9 @@ async function createHttpServerAsync(config, connection) {
 
   configureSentryRequestHandler(app)
 
+  // enable trust proxy for capturing client IP address
+  app.set('trust proxy', true)
+
   app.use(cors())
   app.use(compression())
 

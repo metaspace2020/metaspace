@@ -9,6 +9,12 @@ declare module '*.vue' {
   export default component
 }
 
+declare global {
+  interface Window {
+    grecaptcha: any
+  }
+}
+
 declare module '*.md' {
   const component: DefineComponent<{}, {}, any>
   export default component

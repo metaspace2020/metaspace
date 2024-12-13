@@ -127,7 +127,7 @@ const getBaseContext = (userFromRequest: JwtUser | UserModel | null, entityManag
     contextUser.id = user.id
     contextUser.role = user.role as ContextUserRole
     contextUser.email = user.email || undefined
-    contextUser.planId = user.planId || undefined
+    contextUser.planId = user.planId || 1 // force limit to basic plan if not set
   }
 
   return {

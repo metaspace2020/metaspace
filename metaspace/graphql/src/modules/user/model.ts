@@ -4,6 +4,8 @@ import { UserGroup } from '../group/model'
 import { Dataset } from '../dataset/model'
 import { UserProject } from '../project/model'
 import { Plan } from '../plan/model'
+import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
+import { Moment } from 'moment/moment'
 
 @Entity()
 export class User {
@@ -27,6 +29,16 @@ export class User {
 
   @Column({ type: 'text' })
   credentialsId: string;
+
+  @Column({
+    name: 'created_at', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
+  })
+  createdAt: Moment;
+
+  @Column({
+    name: 'updated_at', type: 'timestamp without time zone', transformer: new MomentValueTransformer(),
+  })
+  updatedAt: Moment;
 
   @OneToOne(() => Credentials)
   @JoinColumn({ name: 'credentials_id' })

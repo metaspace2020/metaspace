@@ -46,6 +46,7 @@ interface ClientConfig {
   imageStorage?: string | null
 
   google_client_id: string
+  recaptcha_site_key: string
 
   sentry: null | {
     dsn: string
@@ -61,6 +62,7 @@ const defaultConfig: ClientConfig = {
   wsGraphqlUrl: null,
   companionUrl: null,
   google_client_id: '',
+  recaptcha_site_key: '',
   sentry: null,
   metadataTypes: ['ims'],
   features: {

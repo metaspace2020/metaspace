@@ -1,4 +1,4 @@
-import { computed, defineComponent } from 'vue'
+import { computed, defineComponent, ref } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { GetDatasetByIdQuery, getDatasetByIdQuery } from '../../../api/dataset'
 import { AnnotationCountTable } from './AnnotationCountTable'
@@ -15,6 +15,7 @@ import isValidTiptapJson from '../../../lib/isValidTiptapJson'
 import NewFeatureBadge from '../../../components/NewFeatureBadge'
 import './DatasetOverviewPage.scss'
 import { useRoute, useRouter } from 'vue-router'
+// import { RecaptchaV2, useRecaptcha } from 'vue3-recaptcha-v2'
 
 const DatasetOverviewPage = defineComponent({
   name: 'DatasetOverviewPage',
@@ -44,6 +45,10 @@ const DatasetOverviewPage = defineComponent({
   setup(props) {
     const router = useRouter()
     const route = useRoute()
+    // const { handleExecute } = useRecaptcha()
+    // @ts-ignore
+    const recaptchaToken = ref(process.env.NODE_ENV === 'test' ? 'fake-recaptcha-token' : '')
+
     const datasetId = computed(() => route.params.dataset_id)
     const { result: datasetResult, loading: datasetLoading } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, {
       id: datasetId,
@@ -108,6 +113,13 @@ const DatasetOverviewPage = defineComponent({
       const dsDescription = isValidTiptapJson(safeJsonParse(description)) ? safeJsonParse(description) : null
       const canViewPublicationStatus =
         dataset.value?.status === 'FINISHED' && canEdit && publicationStatus?.value != null
+      // const handleWidgetId = (widgetId: number) => {
+      //   handleExecute(widgetId)
+      // }
+      //
+      // const handleLoadCallback = (response: any) => {
+      //   recaptchaToken.value = response
+      // }
 
       if ((datasetLoading.value && dataset.value === null) || userLoading.value) {
         return <div class="text-center">Loading...</div>
@@ -125,8 +137,18 @@ const DatasetOverviewPage = defineComponent({
                   {!isPublic && <VisibilityBadge datasetId={id ? id.toString() : ''} />}
                 </span>
               </h1>
+              {/*<RecaptchaV2*/}
+              {/*  class="flex justify-center justify-items-center p-2"*/}
+              {/*  onWidgetId={handleWidgetId}*/}
+              {/*  onLoadCallback={handleLoadCallback}*/}
+              {/*  size="invisible"*/}
+              {/*/>*/}
               <NewFeatureBadge featureKey="imzmlBrowser">
-                <DatasetActionsDropdown dataset={dataset?.value} currentUser={currentUser?.value} />
+                <DatasetActionsDropdown
+                  dataset={dataset?.value}
+                  currentUser={currentUser?.value}
+                  recaptchaToken={recaptchaToken?.value}
+                />
               </NewFeatureBadge>
             </div>
             <div class="dataset-overview-holder">
