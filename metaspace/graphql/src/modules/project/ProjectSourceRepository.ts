@@ -6,7 +6,7 @@ import * as _ from 'lodash'
 import * as DataLoader from 'dataloader'
 import { urlSlugMatchesClause } from '../groupOrProject/urlSlug'
 import { ProjectOrderBy, SortingOrder } from '../../binding'
-import moment = require('moment')
+import * as moment from 'moment'
 
 type SortBy = 'name' | 'popularity' | ProjectOrderBy;
 
@@ -35,6 +35,7 @@ export class ProjectSourceRepository {
       .createQueryBuilder(ProjectModel, 'project')
       .select(columnMap)
 
+    // @ts-ignore
     const memberOfProjectIds = Object.entries(await user.getProjectRoles())
       .filter(([, role]) => role !== UPRO.PENDING)
       .map(([id]) => id)

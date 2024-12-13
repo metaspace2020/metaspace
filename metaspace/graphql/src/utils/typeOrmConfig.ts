@@ -16,7 +16,7 @@ import { SnakeCaseNamingStrategy } from './SnakeCaseNamingStrategy'
 export const DbSchemaName = 'graphql'
 
 const typeOrmConfig: ConnectionOptions = {
-  type: 'postgres',
+  type: 'postgres' as any,
   host: config.db.host,
   database: config.db.database,
   username: config.db.user,
@@ -44,6 +44,6 @@ const typeOrmConfig: ConnectionOptions = {
   cli: {
     migrationsDir: 'src/migrations',
   },
-}
+} as ConnectionOptions
 
 export default typeOrmConfig
