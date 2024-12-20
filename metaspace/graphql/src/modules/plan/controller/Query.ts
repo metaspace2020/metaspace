@@ -2,6 +2,7 @@ import { FieldResolversFor } from '../../../bindingTypes'
 import { Query } from '../../../binding'
 import { Context } from '../../../context'
 import { Plan, PlanRule, ApiUsage } from '../../plan/model'
+import { UserError } from 'graphql-errors'
 
 interface AllPlansArgs {
   filter?: {
@@ -27,6 +28,24 @@ interface AllPlanRulesArgs {
   };
   orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_ACTION_TYPE' | 'ORDER_BY_TYPE' | 'ORDER_BY_VISIBILITY' |
    'ORDER_BY_SOURCE' | 'ORDER_BY_PLAN';
+  sortingOrder?: 'ASCENDING' | 'DESCENDING';
+  offset?: number;
+  limit?: number;
+}
+
+interface AllApiUsagesArgs {
+  filter?: {
+    userId?: string;
+    datasetId?: string;
+    projectId?: string;
+    groupId?: string;
+    actionType?: string;
+    type?: string;
+    source?: string;
+    canEdit?: boolean;
+    actionDt?: string;
+  };
+  orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_USER' | 'ORDER_BY_ACTION_TYPE' | 'ORDER_BY_TYPE' | 'ORDER_BY_SOURCE';
   sortingOrder?: 'ASCENDING' | 'DESCENDING';
   offset?: number;
   limit?: number;
@@ -213,9 +232,132 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
     return await queryBuilder.getCount()
   },
-  async allApiUsages(_: any, args, ctx: Context): Promise<ApiUsage[] | null> {
-    return await ctx.entityManager.createQueryBuilder(ApiUsage, 'usage')
-      .getMany()
+  async allApiUsages(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<ApiUsage[] | null> {
+    if (ctx.user.role !== 'admin') {
+      throw new UserError('Access denied')
+    }
+
+    const {
+      filter = {},
+      orderBy = 'ORDER_BY_DATE',
+      sortingOrder = 'DESCENDING',
+      offset = 0,
+      limit = 10,
+    }: AllApiUsagesArgs = args
+
+    const queryBuilder = ctx.entityManager.createQueryBuilder(ApiUsage, 'usage')
+    const sortOrder = sortingOrder === 'ASCENDING' ? 'ASC' : 'DESC'
+
+    // Apply filters
+    if (filter?.userId) {
+      queryBuilder.andWhere('usage.user_id = :userId', { userId: filter.userId })
+    }
+
+    if (filter?.datasetId) {
+      queryBuilder.andWhere('usage.dataset_id = :datasetId', { datasetId: filter.datasetId })
+    }
+
+    if (filter?.projectId) {
+      queryBuilder.andWhere('usage.project_id = :projectId', { projectId: filter.projectId })
+    }
+
+    if (filter?.groupId) {
+      queryBuilder.andWhere('usage.group_id = :groupId', { groupId: filter.groupId })
+    }
+
+    if (filter?.actionType) {
+      queryBuilder.andWhere('usage.action_type = :actionType', { actionType: filter.actionType })
+    }
+
+    if (filter?.type) {
+      queryBuilder.andWhere('usage.type = :type', { type: filter.type })
+    }
+
+    if (filter?.source) {
+      queryBuilder.andWhere('LOWER(usage.source) LIKE LOWER(:source)', { source: `%${filter.source}%` })
+    }
+
+    if (filter?.canEdit !== undefined) {
+      queryBuilder.andWhere('usage.can_edit = :canEdit', { canEdit: filter.canEdit })
+    }
+
+    if (filter?.actionDt) {
+      queryBuilder.andWhere('usage.action_dt = :actionDt', { actionDt: filter.actionDt })
+    }
+
+    // Apply sorting
+    switch (orderBy) {
+      case 'ORDER_BY_DATE':
+        queryBuilder.orderBy('usage.action_dt', sortOrder)
+        break
+      case 'ORDER_BY_USER':
+        queryBuilder.orderBy('usage.user_id', sortOrder)
+        break
+      case 'ORDER_BY_ACTION_TYPE':
+        queryBuilder.orderBy('usage.action_type', sortOrder)
+        break
+      case 'ORDER_BY_TYPE':
+        queryBuilder.orderBy('usage.type', sortOrder)
+        break
+      case 'ORDER_BY_SOURCE':
+        queryBuilder.orderBy('usage.source', sortOrder)
+        break
+      default:
+        queryBuilder.orderBy('usage.action_dt', sortOrder)
+    }
+
+    // Apply pagination
+    queryBuilder.skip(offset).take(limit)
+
+    return await queryBuilder.getMany()
+  },
+  async apiUsagesCount(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<number> {
+    if (ctx.user.role !== 'admin') {
+      throw new UserError('Access denied')
+    }
+
+    const {
+      filter = {},
+    }: AllApiUsagesArgs = args
+    const queryBuilder = ctx.entityManager.createQueryBuilder(ApiUsage, 'usage')
+
+    if (filter?.userId) {
+      queryBuilder.andWhere('usage.user_id = :userId', { userId: filter.userId })
+    }
+
+    if (filter?.datasetId) {
+      queryBuilder.andWhere('usage.dataset_id = :datasetId', { datasetId: filter.datasetId })
+    }
+
+    if (filter?.projectId) {
+      queryBuilder.andWhere('usage.project_id = :projectId', { projectId: filter.projectId })
+    }
+
+    if (filter?.groupId) {
+      queryBuilder.andWhere('usage.group_id = :groupId', { groupId: filter.groupId })
+    }
+
+    if (filter?.actionType) {
+      queryBuilder.andWhere('usage.action_type = :actionType', { actionType: filter.actionType })
+    }
+
+    if (filter?.type) {
+      queryBuilder.andWhere('usage.type = :type', { type: filter.type })
+    }
+
+    if (filter?.source) {
+      queryBuilder.andWhere('LOWER(usage.source) LIKE LOWER(:source)', { source: `%${filter.source}%` })
+    }
+
+    if (filter?.canEdit !== undefined) {
+      queryBuilder.andWhere('usage.can_edit = :canEdit', { canEdit: filter.canEdit })
+    }
+
+    if (filter?.actionDt) {
+      queryBuilder.andWhere('usage.action_dt = :actionDt', { actionDt: filter.actionDt })
+    }
+
+    return await queryBuilder.getCount()
   },
 }
 export default QueryResolvers

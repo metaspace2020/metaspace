@@ -247,14 +247,10 @@ export const createTestPlanRule = async(planRule?: Partial<PlanRule>): Promise<P
 }
 
 export const createTestApiUsage = async(apiUsage?: Partial<ApiUsage>): Promise<ApiUsage> => {
-  const user = await createTestUser({ name: 'user test' })
-  const dataset = await createTestDataset()
   const apiUsageDefaultFields = {
-    userId: user.id,
-    datasetId: dataset.id,
     type: 'dataset',
     actionType: 'download',
-    visibility: (dataset as any).isPublic ? 'public' : 'private',
+    visibility: 'public',
     source: 'api',
     actionDt: moment.utc(moment.utc().toDate()),
   }

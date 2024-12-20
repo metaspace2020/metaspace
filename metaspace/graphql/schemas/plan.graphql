@@ -60,18 +60,36 @@ type PlanRule {
 
 type ApiUsage {
     id: Int!
-    userId: String!
+    userId: String
     datasetId: String
     projectId: String
     groupId: String
     actionType: String!
     type: String!
-    source: String!
+    source: String
     canEdit: Boolean
     actionDt: String!
 }
 
+input ApiUsageFilter {
+    userId: String
+    datasetId: String
+    projectId: String
+    groupId: String
+    actionType: String
+    type: String
+    source: String
+    canEdit: Boolean
+    actionDt: String
+}
 
+enum ApiUsageOrderBy {
+    ORDER_BY_DATE
+    ORDER_BY_USER
+    ORDER_BY_ACTION_TYPE
+    ORDER_BY_TYPE
+    ORDER_BY_SOURCE
+}
 
 type Query {
     plan(id: Int!): Plan
@@ -90,7 +108,14 @@ type Query {
         limit: Int = 10): [PlanRule]
     planRulesCount(planId: Int, filter: PlanRuleFilter = {}): Int!
 
-    allApiUsages(termId: Int) : [String]
+    allApiUsages(
+        orderBy: ApiUsageOrderBy = ORDER_BY_DATE,
+        sortingOrder: SortingOrder = DESCENDING,
+        filter: ApiUsageFilter = {},
+        offset: Int = 0,
+        limit: Int = 10
+    ): [ApiUsage]
+    apiUsagesCount(filter: ApiUsageFilter = {}): Int!
 }
 
 type Mutation {
