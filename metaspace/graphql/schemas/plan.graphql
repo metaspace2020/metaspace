@@ -14,11 +14,27 @@ input PlanFilter {
     createdAt: String
 }
 
+input PlanRuleFilter {
+    actionType: String
+    type: String
+    visibility: String
+    source: String
+    createdAt: String
+}
+
 enum PlanOrderBy {
     ORDER_BY_DATE
     ORDER_BY_NAME
     ORDER_BY_ACTIVE
     ORDER_BY_DEFAULT
+}
+
+enum PlanRuleOrderBy {
+    ORDER_BY_DATE
+    ORDER_BY_ACTION_TYPE
+    ORDER_BY_TYPE
+    ORDER_BY_VISIBILITY
+    ORDER_BY_SOURCE
 }
 
 input PlanInput {
@@ -57,12 +73,21 @@ type ApiUsage {
 
 type Query {
     plan(id: Int!): Plan
-
     allPlans(orderBy: PlanOrderBy = ORDER_BY_DATE,
         sortingOrder: SortingOrder = DESCENDING,
         filter: PlanFilter = {}, simpleQuery: String,
         offset: Int = 0, limit: Int = 10): [Plan]
-    allPlanRules(planId: Int) : [PlanRule]
+    plansCount(filter: PlanFilter = {}): Int!
+
+    planRule(id: Int!): PlanRule
+    allPlanRules(planId: Int,
+        filter: PlanRuleFilter = {},
+        orderBy: PlanRuleOrderBy = ORDER_BY_DATE,
+        sortingOrder: SortingOrder = DESCENDING,
+        offset: Int = 0,
+        limit: Int = 10): [PlanRule]
+    planRulesCount(planId: Int, filter: PlanRuleFilter = {}): Int!
+
     allApiUsages(termId: Int) : [String]
 }
 
@@ -73,7 +98,7 @@ type Mutation {
 
     createPlanRule(planId: Int!, actionType: String!, period: Int!,
         periodType: String!, limit: Int!, type: String, visibility: String, requestSource: String): PlanRule!
-    updatePlanRule(planRuleId: Int!, actionType: String!, period: Int!,
+    updatePlanRule(planRuleId: Int!, planId: Int!, actionType: String!, period: Int!,
         periodType: String!, limit: Int!, type: String, visibility: String, requestSource: String): PlanRule!
     deletePlanRule(planRuleId: Int!): Boolean!
 

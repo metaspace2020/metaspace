@@ -1,12 +1,10 @@
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Mutation } from '../../../binding'
-import {
-  ApiUsage,
-  Plan, PlanRule,
-} from '../model'
+import { ApiUsage, Plan, PlanRule } from '../model'
 import { UserError } from 'graphql-errors'
 import { DeepPartial, Repository } from 'typeorm'
 import * as moment from 'moment/moment'
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async createPlan(source, args, ctx): Promise<Plan> {
@@ -24,9 +22,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     } as DeepPartial<Plan>)
 
     await planRepo.insert(newPlan)
-    return await ctx.entityManager.findOneOrFail(
-      Plan, { name: newPlan.name }
-    )
+    return await ctx.entityManager.findOneOrFail(Plan, { name: newPlan.name })
   },
   async updatePlan(source, args, ctx): Promise<Plan> {
     if (!ctx.isAdmin) {
@@ -34,9 +30,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     const { planId, name, isActive } = args
-    const plan = await ctx.entityManager.findOne(
-      Plan, { id: planId }
-    )
+    const plan = await ctx.entityManager.findOne(Plan, { id: planId })
 
     if (plan === null) {
       throw new Error('Not found')
@@ -44,9 +38,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     await ctx.entityManager.update(Plan, planId, { name, isActive })
 
-    return await ctx.entityManager.findOneOrFail(
-      Plan, { id: planId }
-    )
+    return await ctx.entityManager.findOneOrFail(Plan, { id: planId })
   },
   async deletePlan(source, args, ctx): Promise<boolean> {
     if (!ctx.isAdmin) {
@@ -75,10 +67,17 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     const {
-      planId, actionType, period,
-      periodType, limit, type, visibility, requestSource,
+      planId,
+      actionType,
+      period,
+      periodType,
+      limit,
+      type,
+      visibility,
+      requestSource,
     } = args
-    const planRuleRepo: Repository<PlanRule> = ctx.entityManager.getRepository(PlanRule)
+    const planRuleRepo: Repository<PlanRule> =
+      ctx.entityManager.getRepository(PlanRule)
 
     const newPlanRule = planRuleRepo.create({
       planId,
@@ -93,9 +92,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     } as DeepPartial<PlanRule>)
 
     await planRuleRepo.insert(newPlanRule)
-    return await ctx.entityManager.findOneOrFail(
-      PlanRule, { id: newPlanRule.id }
-    )
+    return await ctx.entityManager.findOneOrFail(PlanRule, {
+      id: newPlanRule.id,
+    })
   },
   async updatePlanRule(source, args, ctx): Promise<PlanRule> {
     if (!ctx.isAdmin) {
@@ -103,13 +102,19 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
 
     const {
-      planRuleId, actionType, period,
-      periodType, limit, type, visibility, requestSource,
+      planRuleId,
+      actionType,
+      period,
+      periodType,
+      limit,
+      type,
+      visibility,
+      requestSource,
     } = args
 
-    const planRule = await ctx.entityManager.findOne(
-      PlanRule, { id: planRuleId }
-    )
+    const planRule = await ctx.entityManager.findOne(PlanRule, {
+      id: planRuleId,
+    })
 
     if (planRule === null) {
       throw new Error('Not found')
@@ -123,11 +128,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       type,
       visibility,
       source: requestSource,
-    } as DeepPartial<PlanRule>)
+    } as QueryDeepPartialEntity<PlanRule>)
 
-    return await ctx.entityManager.findOneOrFail(
-      PlanRule, { id: planRuleId }
-    )
+    return await ctx.entityManager.findOneOrFail(PlanRule, { id: planRuleId })
   },
   async deletePlanRule(source, args, ctx): Promise<boolean> {
     if (!ctx.isAdmin) {
@@ -137,9 +140,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const { planRuleId } = args
 
     try {
-      await ctx.entityManager.delete(
-        PlanRule, { id: planRuleId }
-      )
+      await ctx.entityManager.delete(PlanRule, { id: planRuleId })
     } catch (e) {
       return false
     }
@@ -148,11 +149,18 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   },
   async createApiUsage(source, args, ctx): Promise<ApiUsage> {
     const {
-      userId, datasetId, actionType, type,
-      requestSource, projectId, groupId, visibility,
+      userId,
+      datasetId,
+      actionType,
+      type,
+      requestSource,
+      projectId,
+      groupId,
+      visibility,
       canEdit,
     } = args
-    const apiUsageRepo: Repository<ApiUsage> = ctx.entityManager.getRepository(ApiUsage)
+    const apiUsageRepo: Repository<ApiUsage> =
+      ctx.entityManager.getRepository(ApiUsage)
     const newApiUsage = apiUsageRepo.create({
       userId,
       datasetId,
@@ -167,9 +175,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     } as DeepPartial<ApiUsage>)
 
     await apiUsageRepo.insert(newApiUsage)
-    return await ctx.entityManager.findOneOrFail(
-      ApiUsage, { id: newApiUsage.id }
-    )
+    return await ctx.entityManager.findOneOrFail(ApiUsage, {
+      id: newApiUsage.id,
+    })
   },
 }
 export default MutationResolvers

@@ -134,9 +134,9 @@ describe('modules/plan/controller (mutations)', () => {
     })
 
     it('should update a plan rule', async() => {
-      const updatePlanRuleMutation = `mutation ($planRuleId: Int!, $actionType: String!,
+      const updatePlanRuleMutation = `mutation ($planRuleId: Int!, $planId: Int!, $actionType: String!,
       $period: Int!, $periodType: String!, $limit: Int!) {
-        updatePlanRule(planRuleId: $planRuleId, actionType: $actionType, period: $period,
+        updatePlanRule(planRuleId: $planRuleId, planId: $planId, actionType: $actionType, period: $period,
          periodType: $periodType, limit: $limit)
          { id planId actionType period periodType limit createdAt }
       }`
