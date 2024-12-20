@@ -35,6 +35,7 @@ enum PlanRuleOrderBy {
     ORDER_BY_TYPE
     ORDER_BY_VISIBILITY
     ORDER_BY_SOURCE
+    ORDER_BY_PLAN
 }
 
 input PlanInput {
@@ -46,6 +47,7 @@ input PlanInput {
 type PlanRule {
     id: Int!
     planId: Int!
+    plan: Plan
     actionType: String!
     period: Int!
     periodType: String!

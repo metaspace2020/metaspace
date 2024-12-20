@@ -25,7 +25,8 @@ interface AllPlanRulesArgs {
     source?: string;
     createdAt?: string;
   };
-  orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_ACTION_TYPE' | 'ORDER_BY_TYPE' | 'ORDER_BY_VISIBILITY' | 'ORDER_BY_SOURCE';
+  orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_ACTION_TYPE' | 'ORDER_BY_TYPE' | 'ORDER_BY_VISIBILITY' |
+   'ORDER_BY_SOURCE' | 'ORDER_BY_PLAN';
   sortingOrder?: 'ASCENDING' | 'DESCENDING';
   offset?: number;
   limit?: number;
@@ -167,6 +168,9 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         break
       case 'ORDER_BY_SOURCE':
         queryBuilder.orderBy('planRule.source', sortOrder)
+        break
+      case 'ORDER_BY_PLAN':
+        queryBuilder.orderBy('plan.name', sortOrder)
         break
       default:
         queryBuilder.orderBy('planRule.created_at', sortOrder)
