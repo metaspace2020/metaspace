@@ -136,21 +136,93 @@ export const Resolvers = {
       return null
     },
 
-    async countUsers(_: any, args: any, ctx: Context): Promise<number|null> {
-      return await ctx.entityManager.getRepository(UserModel)
+    async countUsers(_: any, { query, filter }: any, ctx: Context): Promise<number> {
+      const qb = ctx.entityManager.getRepository(UserModel)
         .createQueryBuilder('user')
-        .getCount()
-    },
 
-    async allUsers(_: any, { query }: any, ctx: Context): Promise<UserSource[]|null> {
-      if (ctx.isAdmin) {
-        const users = await ctx.entityManager.getRepository(UserModel)
-          .createQueryBuilder('user')
-          .where('user.name ILIKE \'%\' || :query || \'%\'', { query })
+      // Apply query filter
+      if (query) {
+        qb.where('user.name ILIKE \'%\' || :query || \'%\'', { query })
           .orWhere('user.email ILIKE :query || \'%\'', { query })
           .orWhere('user.notVerifiedEmail ILIKE :query || \'%\'', { query })
-          .orderBy('user.name')
-          .getMany()
+      }
+
+      // Apply filters
+      if (filter?.name) {
+        qb.andWhere('user.name ILIKE \'%\' || :name || \'%\'', { name: filter.name })
+      }
+      if (filter?.email) {
+        qb.andWhere('(user.email ILIKE :email || \'%\' OR user.notVerifiedEmail ILIKE :email || \'%\')',
+          { email: filter.email })
+      }
+      if (filter?.role) {
+        qb.andWhere('user.role = :role', { role: filter.role })
+      }
+      if (filter?.planId) {
+        qb.andWhere('user.planId = :planId', { planId: filter.planId })
+      }
+
+      return await qb.getCount()
+    },
+
+    async allUsers(_: any, { query, orderBy, sortingOrder, filter, offset, limit }: any,
+      ctx: Context): Promise<UserSource[]|null> {
+      if (ctx.isAdmin) {
+        const qb = ctx.entityManager.getRepository(UserModel)
+          .createQueryBuilder('user')
+
+        // Keep original query filtering
+        if (query) {
+          qb.where('user.name ILIKE \'%\' || :query || \'%\'', { query })
+            .orWhere('user.email ILIKE :query || \'%\'', { query })
+            .orWhere('user.notVerifiedEmail ILIKE :query || \'%\'', { query })
+        }
+
+        // Additional filters
+        if (filter.name) {
+          qb.andWhere('user.name ILIKE \'%\' || :name || \'%\'', { name: filter.name })
+        }
+        if (filter.email) {
+          qb.andWhere('(user.email ILIKE :email || \'%\' OR user.notVerifiedEmail ILIKE :email || \'%\')',
+            { email: filter.email })
+        }
+        if (filter.role) {
+          qb.andWhere('user.role = :role', { role: filter.role })
+        }
+        if (filter.planId) {
+          qb.andWhere('user.planId = :planId', { planId: filter.planId })
+        }
+
+        // Apply ordering
+        const direction = sortingOrder === 'DESCENDING' ? 'DESC' : 'ASC'
+        switch (orderBy) {
+          case 'ORDER_BY_NAME':
+            qb.orderBy('user.name', direction)
+            break
+          case 'ORDER_BY_EMAIL':
+            qb.orderBy('user.email', direction)
+            break
+          case 'ORDER_BY_ROLE':
+            qb.orderBy('user.role', direction)
+            break
+          case 'ORDER_BY_DATE':
+            qb.orderBy('user.createdAt', direction)
+            break
+          case 'ORDER_BY_UPDATED_AT':
+            qb.orderBy('user.updatedAt', direction)
+            break
+          case 'ORDER_BY_PLAN_ID':
+            qb.orderBy('user.planId', direction)
+            break
+          default:
+            qb.orderBy('user.name', direction)
+        }
+
+        // Apply pagination
+        qb.skip(offset)
+        qb.take(limit)
+
+        const users = await qb.getMany()
         const promises = users.map(user =>
           convertUserToUserSource(user, resolveUserScopeRole(ctx, user.id)))
         return Promise.all(promises)
@@ -170,6 +242,10 @@ export const Resolvers = {
         throw new UserError('Only admin can update role')
       }
 
+      if (update.planId && !isAdmin) {
+        throw new UserError('Only admin can update plan')
+      }
+
       let userObj = await entityManager.getRepository(UserModel).findOneOrFail({
         where: { id: userId },
         relations: ['credentials'],
@@ -185,6 +261,7 @@ export const Resolvers = {
 
         await sendEmailVerificationToken(userObj.credentials, update.email)
       }
+      update.updatedAt = moment.utc()
       const { email: notVerifiedEmail, primaryGroupId, ...rest } = update
       userObj = await entityManager.getRepository(UserModel).save({
         ...userObj,
@@ -214,7 +291,6 @@ export const Resolvers = {
         }
       }
 
-      console.log('ctx?.req?.ip', ctx?.req?.ip)
       const action: any = {
         actionType: 'update',
         userId,

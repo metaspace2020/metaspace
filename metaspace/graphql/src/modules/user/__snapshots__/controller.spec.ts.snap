@@ -3,6 +3,7 @@
 exports[`modules/user/controller Query.currentUser should match snapshot 1`] = `
 Object {
   "apiKey": null,
+  "createdAt": "MASKED",
   "email": "MASKED",
   "groups": Object {
     "0": Object {
@@ -77,5 +78,6 @@ Object {
     },
   },
   "role": "user",
+  "updatedAt": "MASKED",
 }
 `;
