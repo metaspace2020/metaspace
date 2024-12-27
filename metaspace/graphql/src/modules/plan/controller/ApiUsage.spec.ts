@@ -116,6 +116,38 @@ describe('modules/plan/controller (api usage)', () => {
       expect(result.length).toEqual(2)
     })
 
+    it('should filter by date range', async() => {
+      const beforeDate = moment.utc(currentTime).subtract(1, 'day')
+      const afterDate = moment.utc(currentTime).add(1, 'day')
+
+      // Should return all records when date range includes current time
+      const resultWithin = await doQuery(queryAllApiUsages, {
+        filter: {
+          startDate: beforeDate.toISOString(),
+          endDate: afterDate.toISOString(),
+        },
+      }, { context: adminContext })
+      expect(resultWithin.length).toEqual(3)
+
+      // Should return no records when date range is before current time
+      const resultBefore = await doQuery(queryAllApiUsages, {
+        filter: {
+          startDate: beforeDate.subtract(2, 'days').toISOString(),
+          endDate: beforeDate.toISOString(),
+        },
+      }, { context: adminContext })
+      expect(resultBefore.length).toEqual(0)
+
+      // Should return no records when date range is after current time
+      const resultAfter = await doQuery(queryAllApiUsages, {
+        filter: {
+          startDate: afterDate.toISOString(),
+          endDate: afterDate.add(2, 'days').toISOString(),
+        },
+      }, { context: adminContext })
+      expect(resultAfter.length).toEqual(0)
+    })
+
     it('should sort by date', async() => {
       const result = await doQuery(queryAllApiUsages, {
         orderBy: 'ORDER_BY_DATE',
@@ -153,6 +185,29 @@ describe('modules/plan/controller (api usage)', () => {
         filter: { actionType: 'download' },
       }, { context: adminContext })
       expect(result).toEqual(2)
+    })
+
+    it('should return filtered count with date range', async() => {
+      const beforeDate = moment.utc(currentTime).subtract(1, 'day')
+      const afterDate = moment.utc(currentTime).add(1, 'day')
+
+      // Should count all records when date range includes current time
+      const countWithin = await doQuery(queryApiUsagesCount, {
+        filter: {
+          startDate: beforeDate.toISOString(),
+          endDate: afterDate.toISOString(),
+        },
+      }, { context: adminContext })
+      expect(countWithin).toEqual(3)
+
+      // Should count no records when date range is before current time
+      const countBefore = await doQuery(queryApiUsagesCount, {
+        filter: {
+          startDate: beforeDate.subtract(2, 'days').toISOString(),
+          endDate: beforeDate.toISOString(),
+        },
+      }, { context: adminContext })
+      expect(countBefore).toEqual(0)
     })
   })
 })

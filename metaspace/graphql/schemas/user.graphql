@@ -26,6 +26,7 @@ input UserFilter {
   email: String
   role: String
   planId: String
+  userId: ID
 }
 
 enum UserOrderBy {

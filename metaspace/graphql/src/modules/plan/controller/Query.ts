@@ -43,7 +43,8 @@ interface AllApiUsagesArgs {
     type?: string;
     source?: string;
     canEdit?: boolean;
-    actionDt?: string;
+    startDate?: string;
+    endDate?: string;
   };
   orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_USER' | 'ORDER_BY_ACTION_TYPE' | 'ORDER_BY_TYPE' | 'ORDER_BY_SOURCE';
   sortingOrder?: 'ASCENDING' | 'DESCENDING';
@@ -281,8 +282,12 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       queryBuilder.andWhere('usage.can_edit = :canEdit', { canEdit: filter.canEdit })
     }
 
-    if (filter?.actionDt) {
-      queryBuilder.andWhere('usage.action_dt = :actionDt', { actionDt: filter.actionDt })
+    if (filter?.startDate) {
+      queryBuilder.andWhere('usage.action_dt >= :startDate', { startDate: filter.startDate })
+    }
+
+    if (filter?.endDate) {
+      queryBuilder.andWhere('usage.action_dt <= :endDate', { endDate: filter.endDate })
     }
 
     // Apply sorting
@@ -353,8 +358,12 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       queryBuilder.andWhere('usage.can_edit = :canEdit', { canEdit: filter.canEdit })
     }
 
-    if (filter?.actionDt) {
-      queryBuilder.andWhere('usage.action_dt = :actionDt', { actionDt: filter.actionDt })
+    if (filter?.startDate) {
+      queryBuilder.andWhere('usage.action_dt >= :startDate', { startDate: filter.startDate })
+    }
+
+    if (filter?.endDate) {
+      queryBuilder.andWhere('usage.action_dt <= :endDate', { endDate: filter.endDate })
     }
 
     return await queryBuilder.getCount()

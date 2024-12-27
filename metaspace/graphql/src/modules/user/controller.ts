@@ -161,6 +161,9 @@ export const Resolvers = {
       if (filter?.planId) {
         qb.andWhere('user.planId = :planId', { planId: filter.planId })
       }
+      if (filter?.userId) {
+        qb.andWhere('user.id = :userId', { userId: filter.userId })
+      }
 
       return await qb.getCount()
     },
@@ -191,6 +194,9 @@ export const Resolvers = {
         }
         if (filter.planId) {
           qb.andWhere('user.planId = :planId', { planId: filter.planId })
+        }
+        if (filter.userId) {
+          qb.andWhere('user.id = :userId', { userId: filter.userId })
         }
 
         // Apply ordering

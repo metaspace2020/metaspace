@@ -80,7 +80,8 @@ input ApiUsageFilter {
     type: String
     source: String
     canEdit: Boolean
-    actionDt: String
+    startDate: String
+    endDate: String
 }
 
 enum ApiUsageOrderBy {
