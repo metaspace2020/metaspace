@@ -9,6 +9,8 @@ type User {
   apiKey: String           # null if current user is not allowed to see
   planId: String
   plan: Plan
+  createdAt: String
+  updatedAt: String
 }
 
 input UpdateUserInput {
@@ -16,14 +18,39 @@ input UpdateUserInput {
   role: String
   email: String
   primaryGroupId: ID
+  planId: Int
+}
+
+input UserFilter {
+  name: String
+  email: String
+  role: String
+  planId: String
+  userId: ID
+}
+
+enum UserOrderBy {
+  ORDER_BY_NAME
+  ORDER_BY_EMAIL
+  ORDER_BY_ROLE
+  ORDER_BY_DATE
+  ORDER_BY_UPDATED_AT
+  ORDER_BY_PLAN_ID
 }
 
 type Query {
   currentUser: User
   user(userId: ID!): User
-  allUsers(query: String=""): [User!]  # For admins
-  countUsers: Int!
-
+  allUsers(
+    query: String,
+    orderBy: UserOrderBy = ORDER_BY_NAME,
+    sortingOrder: SortingOrder = ASCENDING,
+    filter: UserFilter = {},
+    offset: Int = 0,
+    limit: Int = 10
+  ): [User!]  # For admins
+  countUsers(
+    query: String,filter: UserFilter = {}): Int!
 }
 
 type Mutation {
