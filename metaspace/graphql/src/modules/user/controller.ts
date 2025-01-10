@@ -312,7 +312,20 @@ export const Resolvers = {
       logger.info(`User '${userId}' was updated`)
       return (await getUserSourceById(ctx, userObj.id))!
     },
+    async updateUserPlan(_: any, { userId, planId }: any, ctx: Context): Promise<UserSource> {
+      if (!ctx.isAdmin) {
+        throw new UserError('Only admin can update plan')
+      }
+      logger.info(`User '${userId}' plan is being updated by '${ctx.user.id}'.`)
+      const userObj = await ctx.entityManager.getRepository(UserModel).findOneOrFail({
+        where: { id: userId },
+      })
 
+      userObj.planId = planId
+      await ctx.entityManager.getRepository(UserModel).save(userObj)
+
+      return (await getUserSourceById(ctx, userObj.id))!
+    },
     async deleteUser(
       _: any,
       { userId, deleteDatasets }: any,

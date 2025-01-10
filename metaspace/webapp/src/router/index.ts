@@ -47,6 +47,8 @@ const asyncPagesFreelyTyped = {
     import(
       /* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/SpottingProject/DashboardPage'
     ),
+  PaymentPage: () =>
+    import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Orders/PaymentPage'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () =>
@@ -159,6 +161,8 @@ export const routes: any = [
   { path: '/design/forms', component: asyncPages.DesignForms, meta: { footer: true, flex: true } },
 
   { path: '/detectability', name: 'detectability', component: asyncPages.SpottingProjectPage },
+
+  { path: '/payment', name: 'payment', component: asyncPages.PaymentPage },
 
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound, meta: { footer: true, flex: true } },
 ]

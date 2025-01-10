@@ -55,6 +55,7 @@ type Query {
 
 type Mutation {
   updateUser(userId: ID!, update: UpdateUserInput!): User!
+  updateUserPlan(userId: ID!, planId: Int!): User!
   deleteUser(userId: ID!, deleteDatasets: Boolean!): Boolean
   resetUserApiKey(userId: ID!, removeKey: Boolean! = False): User!
 }

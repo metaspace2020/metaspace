@@ -27,6 +27,7 @@ const ALLOWED_MUTATIONS = new Set([
   'createMolecularDB',
   'updateMolecularDB',
   'deleteMolecularDB',
+  'updateUserPlan',
 ])
 
 const wrapMutation = <TSource, TContext extends Context, TArgs>(
