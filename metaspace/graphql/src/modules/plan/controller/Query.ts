@@ -10,8 +10,11 @@ interface AllPlansArgs {
     isActive?: boolean
     isDefault?: boolean
     createdAt?: string
+    price?: number
+    order?: number
   };
-  orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_NAME' | 'ORDER_BY_ACTIVE' | 'ORDER_BY_DEFAULT';
+  orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_NAME' | 'ORDER_BY_ACTIVE' |
+  'ORDER_BY_DEFAULT' | 'ORDER_BY_PRICE' | 'ORDER_BY_ORDER' | 'ORDER_BY_SORT';
   sortingOrder?: 'ASCENDING' | 'DESCENDING';
   offset?: number
   limit?: number
@@ -85,6 +88,14 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       queryBuilder.andWhere('plan.created_at = :createdAt', { createdAt: filter.createdAt })
     }
 
+    if (filter?.price !== undefined) {
+      queryBuilder.andWhere('plan.price = :price', { price: filter.price })
+    }
+
+    if (filter?.order !== undefined) {
+      queryBuilder.andWhere('plan.order = :order', { order: filter.order })
+    }
+
     switch (orderBy) {
       case 'ORDER_BY_DATE':
         queryBuilder.orderBy('plan.created_at', sortOrder)
@@ -97,6 +108,15 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         break
       case 'ORDER_BY_DEFAULT':
         queryBuilder.orderBy('plan.is_default', sortOrder)
+        break
+      case 'ORDER_BY_PRICE':
+        queryBuilder.orderBy('plan.price', sortOrder)
+        break
+      case 'ORDER_BY_ORDER':
+        queryBuilder.orderBy('plan.order', sortOrder)
+        break
+      case 'ORDER_BY_SORT':
+        queryBuilder.orderBy('plan.sort', sortOrder)
         break
       default:
         queryBuilder.orderBy('plan.created_at', sortOrder)

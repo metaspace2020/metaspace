@@ -9,7 +9,6 @@ import {
   userContext,
 } from '../../../tests/graphqlTestEnvironment'
 import { createBackgroundData } from '../../../tests/backgroundDataCreation'
-import * as moment from 'moment'
 
 describe('modules/plan/controller (mutations)', () => {
   let userId: string
@@ -24,9 +23,39 @@ describe('modules/plan/controller (mutations)', () => {
   })
   afterEach(onAfterEach)
 
-  const planDetails: any = { name: 'regular', isActive: true, createdAt: moment.utc().toISOString() }
-  const createPlanMutation = `mutation ($name: String!, $isActive: Boolean!) {
-    createPlan(name: $name, isActive: $isActive) { id name isActive createdAt }
+  const planDetails: any = {
+    name: 'regular',
+    isActive: true,
+    isDefault: false,
+    price: 0,
+    order: 0,
+    description: 'Regular plan',
+  }
+  const createPlanMutation = `mutation (
+    $name: String!, 
+    $isActive: Boolean!, 
+    $isDefault: Boolean,
+    $price: Int!, 
+    $order: Int!, 
+    $description: String
+  ) {
+    createPlan(
+      name: $name, 
+      isActive: $isActive,
+      isDefault: $isDefault,
+      price: $price, 
+      order: $order, 
+      description: $description
+    ) { 
+      id 
+      name 
+      isActive 
+      isDefault
+      createdAt 
+      price 
+      order 
+      description 
+    }
   }`
   const deletePlanMutation = `mutation ($planId: Int!) {
     deletePlan(planId: $planId)
@@ -37,6 +66,9 @@ describe('modules/plan/controller (mutations)', () => {
       const result = await doQuery(createPlanMutation, planDetails, { context: adminContext })
       expect(result.name).toEqual(planDetails.name)
       expect(result.isActive).toEqual(planDetails.isActive)
+      expect(result.isDefault).toEqual(planDetails.isDefault)
+      expect(result.price).toEqual(planDetails.price)
+      expect(result.order).toEqual(planDetails.order)
     })
 
     it('should fail to create one plan as user', async() => {
@@ -45,30 +77,103 @@ describe('modules/plan/controller (mutations)', () => {
     })
 
     it('should update a plan as admin', async() => {
-      const updatePlanMutation = `mutation ($planId: Int!, $name: String!, $isActive: Boolean!) {
-        updatePlan(planId: $planId, name: $name, isActive: $isActive) { id name isActive createdAt }
+      const updatePlanMutation = `mutation (
+        $planId: Int!, 
+        $name: String!, 
+        $isActive: Boolean!, 
+        $isDefault: Boolean,
+        $price: Int!, 
+        $order: Int!, 
+        $description: String
+      ) {
+        updatePlan(
+          planId: $planId, 
+          name: $name, 
+          isActive: $isActive,
+          isDefault: $isDefault,
+          price: $price, 
+          order: $order, 
+          description: $description
+        ) { 
+          id 
+          name 
+          isActive 
+          isDefault
+          createdAt 
+          price 
+          order 
+          description 
+        }
       }`
       const result = await doQuery(createPlanMutation, planDetails, { context: adminContext })
       const updated = await doQuery(updatePlanMutation,
-        { planId: result.id, name: 'updated', isActive: false }, { context: adminContext })
+        {
+          planId: result.id,
+          name: 'updated',
+          isActive: false,
+          isDefault: true,
+          price: 100,
+          order: 1,
+          description: 'Updated plan',
+        },
+        { context: adminContext })
 
       expect(updated.name).toEqual('updated')
       expect(updated.isActive).toEqual(false)
+      expect(updated.isDefault).toEqual(true)
+      expect(updated.price).toEqual(100)
+      expect(updated.order).toEqual(1)
     })
 
     it('should fail to update plan as user', async() => {
-      const updatePlanMutation = `mutation ($planId: Int!, $name: String!, $isActive: Boolean!) {
-        updatePlan(planId: $planId, name: $name, isActive: $isActive) { id name isActive createdAt }
+      const updatePlanMutation = `mutation (
+        $planId: Int!, 
+        $name: String!, 
+        $isActive: Boolean!, 
+        $isDefault: Boolean,
+        $price: Int!, 
+        $order: Int!, 
+        $description: String
+      ) {
+        updatePlan(
+          planId: $planId, 
+          name: $name, 
+          isActive: $isActive,
+          isDefault: $isDefault,
+          price: $price, 
+          order: $order, 
+          description: $description
+        ) { 
+          id 
+          name 
+          isActive 
+          isDefault
+          createdAt 
+          price 
+          order 
+          description 
+        }
       }`
       const result = await doQuery(createPlanMutation, planDetails, { context: adminContext })
 
       await expect(doQuery(updatePlanMutation,
-        { planId: result.id, name: 'updated', isActive: false },
+        {
+          planId: result.id,
+          name: 'updated',
+          isActive: false,
+          isDefault: true,
+          price: 100,
+          order: 1,
+          description: 'Updated plan',
+        },
         { context: userContext })).rejects.toThrow('Unauthorized')
 
-      const allPlans = await doQuery('query { allPlans { id name isActive createdAt } }')
+      const allPlans = await doQuery('query { allPlans { id name isActive isDefault createdAt price order description } }')
       expect(allPlans[0].name).toEqual(planDetails.name)
       expect(allPlans[0].isActive).toEqual(planDetails.isActive)
+      expect(allPlans[0].isDefault).toEqual(planDetails.isDefault)
+      expect(allPlans[0].price).toEqual(planDetails.price)
+      expect(allPlans[0].order).toEqual(planDetails.order)
     })
   })
 
@@ -82,9 +187,12 @@ describe('modules/plan/controller (mutations)', () => {
       expect(deletionResult).toEqual(true)
 
       // Fetch the specific plan and verify the isActive status
-      const plan = await doQuery('query ($id: Int!) { plan(id: $id) { id name isActive createdAt } }', { id: result.id })
+      const plan = await doQuery('query ($id: Int!) { plan(id: $id) { id name isActive isDefault createdAt price order description } }', { id: result.id })
       expect(plan.id).toEqual(result.id)
       expect(plan.isActive).toEqual(false)
+      expect(plan.isDefault).toEqual(planDetails.isDefault)
+      expect(plan.price).toEqual(planDetails.price)
+      expect(plan.order).toEqual(planDetails.order)
     })
 
     it('should fail to delete a plan as a user', async() => {
@@ -97,9 +205,12 @@ describe('modules/plan/controller (mutations)', () => {
       ).rejects.toThrow('Unauthorized')
 
       // Verify the plan is still active
-      const plan = await doQuery('query ($id: Int!) { plan(id: $id) { id name isActive createdAt } }', { id: result.id })
+      const plan = await doQuery('query ($id: Int!) { plan(id: $id) { id name isActive isDefault createdAt price order description } }', { id: result.id })
       expect(plan.id).toEqual(result.id)
       expect(plan.isActive).toEqual(true)
+      expect(plan.isDefault).toEqual(planDetails.isDefault)
+      expect(plan.price).toEqual(planDetails.price)
+      expect(plan.order).toEqual(planDetails.order)
     })
 
     it('should throw an error when trying to delete a non-existing plan', async() => {

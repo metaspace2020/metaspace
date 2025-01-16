@@ -1,0 +1,114 @@
+.page-wrapper {
+  min-height: calc(100vh - 144px);
+  background: #0F87EF;
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.plans-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  min-height: 550px;
+  min-width: 90%;
+}
+
+.plans-title {
+  text-align: center;
+  font-size: 36px;
+  font-weight: bolder;
+  margin-bottom: 40px;
+  color: #0F87EF;
+}
+
+.plans-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  min-height: 350px;
+}
+
+.plan-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease;
+  border: 1px solid #eee;
+  position: relative;
+  width: 200px;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 20px rgba(66, 133, 244, 0.15);
+  }
+}
+
+.plan-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px;
+  text-transform: uppercase;
+}
+
+.plan-price {
+  margin-bottom: 24px;
+  
+  .price-currency {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    vertical-align: top;
+  }
+  
+  .price-amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1;
+  }
+  
+  .price-period {
+    font-size: 14px;
+    color: #666;
+    margin-left: 4px;
+  }
+}
+
+.plan-features {
+  text-align: left;
+  margin-bottom: 24px;
+  min-height: 120px;
+}
+
+.start-button {
+  width: 100%;
+  margin-top: 16px;
+  height: 40px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.vat-notice {
+  text-align: center;
+  color: #666;
+  font-size: 12px;
+  margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .plan-card {
+    width: 100%;
+  }
+}
+

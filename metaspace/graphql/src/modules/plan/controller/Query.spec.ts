@@ -15,9 +15,33 @@ describe('modules/plan/controller (queries)', () => {
   const currentTime: any = moment.utc(moment.utc().toDate())
 
   const TIERS = [
-    { name: 'regular', isActive: true, isDefault: false, createdAt: currentTime },
-    { name: 'lab', isActive: false, isDefault: false, createdAt: currentTime }, // This plan has isDefault: true
-    { name: 'lab', isActive: true, isDefault: true, createdAt: currentTime },
+    {
+      name: 'regular',
+      isActive: true,
+      isDefault: false,
+      createdAt: currentTime,
+      price: 0,
+      order: 0,
+      description: 'Regular plan',
+    },
+    {
+      name: 'lab',
+      isActive: false,
+      isDefault: false,
+      createdAt: currentTime,
+      price: 50,
+      order: 1,
+      description: 'Lab plan',
+    },
+    {
+      name: 'lab',
+      isActive: true,
+      isDefault: true,
+      createdAt: currentTime,
+      price: 100,
+      order: 2,
+      description: 'Pro lab plan',
+    },
   ]
 
   const TIER_RULES: any = [
@@ -52,19 +76,25 @@ describe('modules/plan/controller (queries)', () => {
       allPlans(filter: $filter, offset: $offset, limit: $limit) {
         name
         isActive
-        isDefault    # Add isDefault here
+        isDefault
         createdAt
+        price
+        order
+        description
       }
     }`
 
     it('should return active plans by default', async() => {
-      const result = await doQuery('query { allPlans { name isActive isDefault createdAt } }')
+      const result = await doQuery(queryAllPlans)
 
       const expected = TIERS.filter((plan) => plan.isActive).map((plan) => ({
         name: plan.name,
         isActive: plan.isActive,
-        isDefault: plan.isDefault, // Ensure this is included
+        isDefault: plan.isDefault,
         createdAt: moment(plan.createdAt).valueOf().toString(),
+        price: plan.price,
+        order: plan.order,
+        description: plan.description,
       }))
 
       expect(result.length).toEqual(expected.length)

@@ -6,37 +6,63 @@ import { DeepPartial, Repository } from 'typeorm'
 import * as moment from 'moment/moment'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 
+interface CreatePlanArgs {
+  name: string;
+  isActive: boolean;
+  isDefault?: boolean;
+  price: number;
+  order: number;
+  description?: string;
+}
+
+interface UpdatePlanArgs extends CreatePlanArgs {
+  planId: number;
+}
+
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
-  async createPlan(source, args, ctx): Promise<Plan> {
+  async createPlan(source, args: CreatePlanArgs, ctx): Promise<Plan> {
     if (!ctx.isAdmin) {
       throw new UserError('Unauthorized')
     }
 
-    const { name, isActive } = args
+    const { name, isActive, isDefault, price, order, description } = args
     const planRepo: Repository<Plan> = ctx.entityManager.getRepository(Plan)
 
     const newPlan = planRepo.create({
       name,
       isActive,
+      isDefault,
+      price,
+      order,
+      description,
       createdAt: moment.utc(),
     } as DeepPartial<Plan>)
 
     await planRepo.insert(newPlan)
     return await ctx.entityManager.findOneOrFail(Plan, { name: newPlan.name })
   },
-  async updatePlan(source, args, ctx): Promise<Plan> {
+  async updatePlan(source, args: UpdatePlanArgs, ctx): Promise<Plan> {
     if (!ctx.isAdmin) {
       throw new UserError('Unauthorized')
     }
 
-    const { planId, name, isActive } = args
+    const { planId, name, isActive, isDefault, price, order, description } = args
     const plan = await ctx.entityManager.findOne(Plan, { id: planId })
 
     if (plan === null) {
       throw new Error('Not found')
     }
 
-    await ctx.entityManager.update(Plan, planId, { name, isActive })
+    const updateData: QueryDeepPartialEntity<Plan> = {
+      name,
+      isActive,
+      isDefault,
+      price,
+      order,
+      description,
+    }
+
+    await ctx.entityManager.update(Plan, planId, updateData)
 
     return await ctx.entityManager.findOneOrFail(Plan, { id: planId })
   },

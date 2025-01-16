@@ -29,6 +29,15 @@ export class Plan {
     })
     createdAt: Moment;
 
+    @Column({ type: 'integer', default: 0 })
+    price: number;
+
+    @Column({ type: 'integer', default: 0 })
+    order: number;
+
+    @Column({ type: 'text', nullable: true })
+    description: string;
+
     @OneToMany(() => PlanRule, rule => rule.plan)
     planRules: PlanRule[];
 }

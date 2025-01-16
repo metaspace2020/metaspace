@@ -1,0 +1,74 @@
+.payment-page {
+  @apply flex justify-center p-8;
+
+  .payment-form {
+    @apply w-full max-w-[500px] p-8 bg-white rounded-lg shadow-md;
+
+    h2 {
+      @apply mb-8 text-2xl text-gray-800;
+    }
+
+    .form-group {
+      @apply mb-6;
+
+      label {
+        @apply block mb-2 text-gray-600 font-medium;
+      }
+
+      .stripe-element {
+        @apply p-3 border border-solid border-gray-300 rounded bg-white transition-colors;
+
+        &:hover {
+          @apply border-gray-400;
+        }
+
+        &:focus-within {
+          @apply border-blue-500;
+        }
+      }
+
+      .country-select,
+      .state-select {
+        @apply w-full mb-4;
+      }
+
+      .el-input {
+        @apply mb-4;
+
+        &:last-child {
+          @apply mb-0;
+        }
+      }
+
+      .field-error {
+        @apply text-red-500 text-xs;
+        margin-top: -12px;
+        margin-bottom: 16px;
+      }
+
+      .phone-input-group {
+        @apply flex gap-4;
+
+        .phone-code-select {
+          @apply w-20;
+        }
+
+        .el-input {
+          @apply flex-1 mb-0;
+        }
+      }
+    }
+
+    .submit-button {
+      @apply w-full mt-4;
+    }
+
+    .trial-info {
+      @apply mt-4 text-sm text-gray-500 text-center;
+    }
+
+    .error-message {
+      @apply mt-4 p-3 text-red-500 bg-red-50 rounded;
+    }
+  }
+} 

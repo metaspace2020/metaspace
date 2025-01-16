@@ -5,6 +5,9 @@ type Plan {
     isDefault: Boolean
     createdAt: String!
     planRules: [PlanRule]
+    price: Int!
+    order: Int!
+    description: String
 }
 
 input PlanFilter {
@@ -12,6 +15,8 @@ input PlanFilter {
     isActive: Boolean
     isDefault: Boolean
     createdAt: String
+    price: Int
+    order: Int
 }
 
 input PlanRuleFilter {
@@ -27,6 +32,8 @@ enum PlanOrderBy {
     ORDER_BY_NAME
     ORDER_BY_ACTIVE
     ORDER_BY_DEFAULT
+    ORDER_BY_PRICE
+    ORDER_BY_ORDER
 }
 
 enum PlanRuleOrderBy {
@@ -42,6 +49,9 @@ input PlanInput {
     name: String
     isActive: Boolean
     createdAt: String
+    price: Int
+    order: Int
+    description: String
 }
 
 type PlanRule {
@@ -120,8 +130,8 @@ type Query {
 }
 
 type Mutation {
-    createPlan(name: String!, isActive: Boolean!, isDefault: Boolean): Plan!
-    updatePlan(planId: Int!, name: String!, isActive: Boolean!, isDefault: Boolean): Plan!
+    createPlan(name: String!, isActive: Boolean!, isDefault: Boolean, price: Int!, order: Int!, description: String): Plan!
+    updatePlan(planId: Int!, name: String!, isActive: Boolean!, isDefault: Boolean, price: Int!, order: Int!, description: String): Plan!
     deletePlan(planId: Int!): Boolean!
 
     createPlanRule(planId: Int!, actionType: String!, period: Int!,

@@ -48,6 +48,7 @@ interface ClientConfig {
   google_client_id: string
   recaptcha_site_key: string
   stripe_pub: string
+  order_service_url: string
 
   sentry: null | {
     dsn: string
@@ -65,6 +66,7 @@ const defaultConfig: ClientConfig = {
   google_client_id: '',
   recaptcha_site_key: '',
   stripe_pub: '',
+  order_service_url: 'http://localhost:3003/',
   sentry: null,
   metadataTypes: ['ims'],
   features: {
