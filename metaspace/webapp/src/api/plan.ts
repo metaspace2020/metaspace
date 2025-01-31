@@ -1,7 +1,6 @@
 import gql from 'graphql-tag'
 
 export interface Plan {
-  __typename: 'Plan'
   id: number
   name: string
   price: number
@@ -14,15 +13,30 @@ export interface AllPlansData {
   allPlans: Plan[]
 }
 
+export const planFragment = gql`
+  fragment Plan on Plan {
+    id
+    name
+    price
+    isActive
+    description
+    order
+  }
+`
+
 export const getPlansQuery = gql`
-  query AllPlans {
+  query {
     allPlans {
-      id
-      name
-      price
-      isActive
-      description
-      order
+      ...Plan
     }
   }
+  ${planFragment}
+`
+export const getPlanQuery = gql`
+  query ($planId: Int!) {
+    plan(id: $planId) {
+      ...Plan
+    }
+  }
+  ${planFragment}
 `

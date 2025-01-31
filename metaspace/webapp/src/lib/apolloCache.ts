@@ -30,6 +30,12 @@ export const makeApolloCache = () =>
               return toReference({ __typename: 'Project', id: args?.projectId })
             },
           },
+          plan: {
+            keyArgs: false,
+            read(_, { args, toReference }) {
+              return toReference({ __typename: 'Plan', id: args?.id })
+            },
+          },
           currentUser: {
             merge(existing, incoming) {
               return incoming

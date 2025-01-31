@@ -1,74 +1,262 @@
 .payment-page {
-  @apply flex justify-center p-8;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 65px);
+  padding: 0;
+
+  @media (max-width: 1024px) {
+    min-height: auto;
+  }
+
+  .error-border {
+    --el-input-border-color: #f56c6c !important;
+  }
+
+  .payment-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    min-height: calc(100vh - 65px);
+    
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+  }
 
   .payment-form {
-    @apply w-full max-w-[500px] p-8 bg-white rounded-lg shadow-md;
+    background: #fff;
+    padding: 0.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+
+    @media (max-width: 1024px) {
+      order: 2;
+      padding: 2rem;
+    }
+
+    > h2 {
+      margin-bottom: 2rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+  }
+
+  .order-summary {
+    background: #ecf5ff;
+    padding: 0.5rem 2rem;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    height: 100%;
+    padding-bottom: 0;
+    padding-top: 0;
+
+    @media (max-width: 1024px) {
+      order: 1;
+      position: relative;
+      height: auto;
+      overflow: visible;
+    }
 
     h2 {
-      @apply mb-8 text-2xl text-gray-800;
+      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2c3e50;
     }
 
-    .form-group {
-      @apply mb-6;
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(64, 158, 255, 0.2);
 
-      label {
-        @apply block mb-2 text-gray-600 font-medium;
+      .item-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2c3e50;
       }
 
-      .stripe-element {
-        @apply p-3 border border-solid border-gray-300 rounded bg-white transition-colors;
+      .item-price {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #409eff;
 
-        &:hover {
-          @apply border-gray-400;
+        .currency {
+          font-size: 1rem;
         }
 
-        &:focus-within {
-          @apply border-blue-500;
+        .amount {
+          font-size: 1.5rem;
+        }
+
+        .period {
+          font-size: 0.875rem;
+          color: #606266;
+        }
+      }
+    }
+
+    .summary-details {
+      margin: 1.5rem 0;
+      
+      .plan-description {
+        color: #606266;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+
+        :deep(p) {
+          margin: 0;
         }
       }
 
-      .country-select,
-      .state-select {
-        @apply w-full mb-4;
+      .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+          margin-bottom: 0.75rem;
+          color: #606266;
+          display: flex;
+          align-items: flex-start;
+          font-size: 0.95rem;
+          line-height: 1.4;
+
+          &:before {
+            content: "✓";
+            color: #4CAF50;
+            margin-right: 0.75rem;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+          }
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          :deep(p) {
+            margin: 0;
+          }
+        }
       }
+    }
 
-      .el-input {
-        @apply mb-4;
-
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 2px solid rgba(64, 158, 255, 0.2);
+      font-size: 1.25rem;
+      
+      span {
+        &:first-child {
+          color: #2c3e50;
+          font-weight: 500;
+        }
+        
         &:last-child {
-          @apply mb-0;
-        }
-      }
+          color: #409eff;
+          font-weight: 600;
 
-      .field-error {
-        @apply text-red-500 text-xs;
-        margin-top: -12px;
-        margin-bottom: 16px;
-      }
+          .currency {
+            font-size: 1rem;
+          }
 
-      .phone-input-group {
-        @apply flex gap-4;
+          .amount {
+            font-size: 1.5rem;
+          }
 
-        .phone-code-select {
-          @apply w-20;
-        }
-
-        .el-input {
-          @apply flex-1 mb-0;
+          .period {
+            font-size: 0.875rem;
+            color: #606266;
+          }
         }
       }
     }
 
-    .submit-button {
-      @apply w-full mt-4;
+    .vat-notice {
+      margin-top: 1rem;
+      color: #909399;
+      font-size: 0.85rem;
+      text-align: center;
+      padding-bottom: 2rem;
+    }
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+
+    &.phone-section {
+      margin-top: 0.5rem;
     }
 
-    .trial-info {
-      @apply mt-4 text-sm text-gray-500 text-center;
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #2c3e50;
+
+      .required {
+        color: #f56c6c;
+        margin-left: 0.25rem;
+      }
+    }
+  }
+
+  .stripe-element {
+    padding: 0.75rem;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+    transition: border-color 0.2s;
+
+    &:hover {
+      border-color: #c0c4cc;
     }
 
-    .error-message {
-      @apply mt-4 p-3 text-red-500 bg-red-50 rounded;
+    &:focus-within {
+      border-color: #409eff;
     }
+  }
+
+  .phone-input-group {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .field-error {
+    display: none;
+    color: #f56c6c;
+    font-size: 0.875rem;
+    line-height: 1;
+    margin-top: 0.25rem;
+
+    &.zip-error.visible {
+      display: block;
+    }
+  }
+
+  .submit-button {
+    width: 100%;
+    margin-top: 2rem;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .country-select,
+  .state-select {
+    margin-bottom: 1rem;
+    width: 100%;
   }
 } 

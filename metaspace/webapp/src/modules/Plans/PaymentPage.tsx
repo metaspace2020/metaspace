@@ -8,6 +8,7 @@ import { currentUserRoleQuery } from '../../api/user'
 import { useStore } from 'vuex'
 import { useRoute } from 'vue-router'
 import { uniqBy } from 'lodash-es'
+import { getPlanQuery, Plan } from '../../api/plan'
 import './PaymentPage.scss'
 
 interface CurrentUser {
@@ -58,6 +59,17 @@ export default defineComponent({
         selectedPhoneCode: '',
         phoneNumber: '',
       },
+      formErrors: {
+        email: false,
+        nameOnCard: false,
+        city: false,
+        address: false,
+        zipCode: false,
+        selectedCountry: false,
+        selectedState: false,
+        selectedPhoneCode: false,
+        phoneNumber: false,
+      },
       loading: false,
       error: null as string | null,
       zipCodeError: null as string | null,
@@ -91,6 +103,17 @@ export default defineComponent({
       fetchPolicy: 'network-only',
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
+
+    const { result: planResult } = useQuery<{ plan: Plan }>(
+      getPlanQuery,
+      {
+        planId: parseInt(route.query?.planId as string, 10),
+      },
+      {
+        fetchPolicy: 'network-only',
+      }
+    )
+    const plan = computed(() => planResult.value?.plan)
 
     onResult((result) => {
       const { data } = result
@@ -243,9 +266,71 @@ export default defineComponent({
       }
     })
 
+    const validateForm = () => {
+      let isValid = true
+      const errors = state.formErrors
+
+      // Reset all errors
+      Object.keys(errors).forEach((key) => {
+        errors[key as keyof typeof errors] = false
+      })
+
+      if (!state.form.email) {
+        errors.email = true
+        isValid = false
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.form.email)) {
+        errors.email = true
+        isValid = false
+      }
+
+      if (!state.form.nameOnCard) {
+        errors.nameOnCard = true
+        isValid = false
+      }
+
+      if (!state.form.selectedCountry) {
+        errors.selectedCountry = true
+        isValid = false
+      }
+
+      if (!state.form.city) {
+        errors.city = true
+        isValid = false
+      }
+
+      if (!state.form.address) {
+        errors.address = true
+        isValid = false
+      }
+
+      if (!state.form.zipCode) {
+        errors.zipCode = true
+        isValid = false
+      } else if (!validateUSZipCode()) {
+        isValid = false
+      }
+
+      if (!state.form.selectedPhoneCode) {
+        errors.selectedPhoneCode = true
+        isValid = false
+      }
+
+      if (!state.form.phoneNumber) {
+        errors.phoneNumber = true
+        isValid = false
+      }
+
+      return isValid
+    }
+
     const handleSubmit = async () => {
       state.loading = true
       state.error = null
+
+      if (!validateForm()) {
+        state.loading = false
+        return
+      }
 
       try {
         if (!validateUSZipCode()) {
@@ -345,145 +430,220 @@ export default defineComponent({
       }
     }
 
+    const formatPrice = (price: number) => {
+      return (price / 100).toFixed(2)
+    }
+
     return () => {
       if (!currentUser.value) return null
 
       return (
         <div class="payment-page">
-          <div class="payment-form">
-            <h2>Enter payment details</h2>
+          <div class="payment-container">
+            <div class="payment-form">
+              <h2>Enter payment details</h2>
 
-            <div class="form-group">
-              <label>Email</label>
-              <ElInput
-                modelValue={state.form.email}
-                onUpdate:modelValue={(val: string) => (state.form.email = val)}
-                type="email"
-                placeholder="Enter your email"
-                size="default"
-              />
-            </div>
-
-            <div class="form-group">
-              <label>Card information</label>
-              <div class="stripe-element" ref={cardElementRef}></div>
-            </div>
-
-            <div class="form-group">
-              <label>Name on card</label>
-              <ElInput
-                modelValue={state.form.nameOnCard}
-                onUpdate:modelValue={(val: string) => (state.form.nameOnCard = val)}
-                placeholder="Enter name on card"
-                size="default"
-              />
-            </div>
-
-            <div class="form-group !m-0">
-              <label>Billing Address</label>
-              <ElSelect
-                modelValue={state.form.selectedCountry}
-                onUpdate:modelValue={(val: string) => (state.form.selectedCountry = val)}
-                class="country-select"
-                size="default"
-                placeholder="Select your country"
-                filterable
-                allowCreate
-                clearable
-              >
-                {!state.isFetchFailed &&
-                  state.lists.countries.map((country) => (
-                    <ElOption key={country.id} value={country.id} label={country.name} />
-                  ))}
-              </ElSelect>
-
-              <ElSelect
-                modelValue={state.form.selectedState}
-                onUpdate:modelValue={(val: string) => (state.form.selectedState = val)}
-                class="state-select"
-                size="default"
-                placeholder="Select your state"
-                filterable
-                allowCreate
-                clearable
-                disabled={!state.form.selectedCountry}
-              >
-                {state.lists.states.map((state) => (
-                  <ElOption key={state.id} value={state.id} label={state.name} />
-                ))}
-              </ElSelect>
-
-              <ElInput
-                modelValue={state.form.city}
-                onUpdate:modelValue={(val: string) => (state.form.city = val)}
-                placeholder="City"
-                size="default"
-              />
-
-              <ElInput
-                modelValue={state.form.address}
-                onUpdate:modelValue={(val: string) => (state.form.address = val)}
-                placeholder="Street Address"
-                size="default"
-              />
-
-              <ElInput
-                modelValue={state.form.zipCode}
-                onUpdate:modelValue={(val: string) => (state.form.zipCode = val)}
-                placeholder="ZIP Code"
-                size="default"
-                class="mb-0"
-              />
-              <div class="field-error" style={{ visibility: state.zipCodeError ? 'visible' : 'hidden' }}>
-                {'Please enter a valid ZIP code'}
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>Phone</label>
-              <div class="phone-input-group">
-                <ElSelect
-                  modelValue={state.form.selectedPhoneCode}
-                  onUpdate:modelValue={(val: string) => (state.form.selectedPhoneCode = val)}
-                  class="phone-code-select"
+              <div class="form-group">
+                <label>
+                  Email<span class="required">*</span>
+                </label>
+                <ElInput
+                  modelValue={state.form.email}
+                  onUpdate:modelValue={(val: string) => {
+                    state.form.email = val
+                    state.formErrors.email = false
+                  }}
+                  type="email"
+                  placeholder="Enter your email"
                   size="default"
-                  placeholder="+1"
+                  class={state.formErrors.address ? 'error-border' : ''}
+                />
+              </div>
+
+              <div class="form-group">
+                <label>
+                  Card information<span class="required">*</span>
+                </label>
+                <div class="stripe-element" ref={cardElementRef}></div>
+              </div>
+
+              <div class="form-group">
+                <label>
+                  Name on card<span class="required">*</span>
+                </label>
+                <ElInput
+                  modelValue={state.form.nameOnCard}
+                  onUpdate:modelValue={(val: string) => {
+                    state.form.nameOnCard = val
+                    state.formErrors.nameOnCard = false
+                  }}
+                  placeholder="Enter name on card"
+                  size="default"
+                  class={state.formErrors.address ? 'error-border' : ''}
+                />
+              </div>
+
+              <div class="form-group">
+                <label>
+                  Billing Address<span class="required">*</span>
+                </label>
+                <ElSelect
+                  modelValue={state.form.selectedCountry}
+                  onUpdate:modelValue={(val: string) => {
+                    state.form.selectedCountry = val
+                    state.formErrors.selectedCountry = false
+                  }}
+                  class={['country-select ', state.formErrors.address ? 'error-border' : '']}
+                  size="default"
+                  placeholder="Select your country *"
                   filterable
                   allowCreate
                   clearable
                 >
-                  {uniqBy(state.lists.countries, 'phonecode').map((country) => (
-                    <ElOption key={country.id} value={country.phonecode} label={`+${country.phonecode}`} />
+                  {!state.isFetchFailed &&
+                    state.lists.countries.map((country) => (
+                      <ElOption key={country.id} value={country.id} label={country.name} />
+                    ))}
+                </ElSelect>
+
+                <ElSelect
+                  modelValue={state.form.selectedState}
+                  onUpdate:modelValue={(val: string) => {
+                    state.form.selectedState = val
+                    state.formErrors.selectedState = false
+                  }}
+                  class="state-select"
+                  size="default"
+                  placeholder="Select your state"
+                  filterable
+                  allowCreate
+                  clearable
+                  disabled={!state.form.selectedCountry}
+                >
+                  {state.lists.states.map((state) => (
+                    <ElOption key={state.id} value={state.id} label={state.name} />
                   ))}
                 </ElSelect>
+
                 <ElInput
-                  modelValue={state.form.phoneNumber}
+                  modelValue={state.form.city}
                   onUpdate:modelValue={(val: string) => {
-                    state.form.phoneNumber = val.replace(/[^0-9]/g, '')
+                    state.form.city = val
+                    state.formErrors.city = false
                   }}
-                  placeholder="Phone number"
-                  type="tel"
+                  placeholder="City *"
                   size="default"
+                  class={['mb-1', state.formErrors.address ? 'error-border' : '']}
                 />
+
+                <ElInput
+                  modelValue={state.form.address}
+                  onUpdate:modelValue={(val: string) => {
+                    state.form.address = val
+                    state.formErrors.address = false
+                  }}
+                  placeholder="Street Address *"
+                  size="default"
+                  class={['mb-1', state.formErrors.address ? 'error-border' : '']}
+                />
+
+                <ElInput
+                  modelValue={state.form.zipCode}
+                  onUpdate:modelValue={(val: string) => {
+                    state.form.zipCode = val
+                    state.formErrors.zipCode = false
+                    state.zipCodeError = null
+                  }}
+                  placeholder="ZIP Code *"
+                  size="default"
+                  class={state.formErrors.address ? 'error-border' : ''}
+                />
+                <div class={['field-error', 'zip-error', state.zipCodeError && 'visible']}>{state.zipCodeError}</div>
               </div>
+
+              <div class="form-group phone-section">
+                <label>
+                  Phone<span class="required">*</span>
+                </label>
+                <div class="phone-input-group">
+                  <ElSelect
+                    modelValue={state.form.selectedPhoneCode}
+                    onUpdate:modelValue={(val: string) => {
+                      state.form.selectedPhoneCode = val
+                      state.formErrors.selectedPhoneCode = false
+                    }}
+                    class={['phone-code-select', state.formErrors.address ? 'error-border' : '']}
+                    size="default"
+                    placeholder="+1"
+                    filterable
+                    allowCreate
+                    clearable
+                    style={{
+                      '--el-select-input-focus-border-color': state.formErrors.selectedPhoneCode
+                        ? '#f56c6c !important'
+                        : '',
+                    }}
+                  >
+                    {uniqBy(state.lists.countries, 'phonecode').map((country) => (
+                      <ElOption key={country.id} value={country.phonecode} label={`+${country.phonecode}`} />
+                    ))}
+                  </ElSelect>
+                  <ElInput
+                    modelValue={state.form.phoneNumber}
+                    onUpdate:modelValue={(val: string) => {
+                      state.form.phoneNumber = val.replace(/[^0-9]/g, '')
+                      state.formErrors.phoneNumber = false
+                    }}
+                    placeholder="Phone number"
+                    type="tel"
+                    size="default"
+                    class={state.formErrors.address ? 'error-border' : ''}
+                  />
+                </div>
+              </div>
+
+              <ElButton
+                type="primary"
+                class="submit-button"
+                loading={state.loading}
+                onClick={handleSubmit}
+                size="default"
+              >
+                Pay
+              </ElButton>
             </div>
 
-            <ElButton
-              type="primary"
-              class="submit-button"
-              loading={state.loading}
-              onClick={handleSubmit}
-              size="default"
-            >
-              Pay
-            </ElButton>
-
-            <p class="trial-info">
-              After your trial ends, you will be charged $50.00 per month starting June 28, 2024. You can always cancel
-              before then.
-            </p>
-
-            {state.error && <div class="error-message">{state.error}</div>}
+            <div class="order-summary">
+              <h2>Order Summary</h2>
+              {plan.value && (
+                <>
+                  <div class="summary-item">
+                    <span class="item-name">{plan.value.name} Plan</span>
+                    <span class="item-price">
+                      <span class="currency">$</span>
+                      <span class="amount">{formatPrice(plan.value.price)}</span>
+                      <span class="period">/year</span>
+                    </span>
+                  </div>
+                  <div class="summary-details">
+                    {plan.value.description && (
+                      <>
+                        <div class="plan-description" v-html={plan.value.description} />
+                      </>
+                    )}
+                  </div>
+                  <div class="summary-total">
+                    <span>Total</span>
+                    <span>
+                      <span class="currency">$</span>
+                      <span class="amount">{formatPrice(plan.value.price)}</span>
+                      <span class="period">/year</span>
+                    </span>
+                  </div>
+                  <p class="vat-notice">*VAT included where applicable</p>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )
