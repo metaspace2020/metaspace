@@ -109,7 +109,7 @@
                 :help="PpmHelp"
                 :min="0.1"
                 :step="1"
-                :max="50"
+                :max="15"
                 @input="(val) => onInput('ppm', val)"
               />
             </el-col>

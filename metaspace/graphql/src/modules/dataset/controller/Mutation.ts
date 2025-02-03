@@ -326,6 +326,12 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   await saveDataset(ctx.entityManager, saveDsArgs, !datasetIdWasSpecified)
 
   const url = `/v1/datasets/${datasetId}/add`
+
+  // set limit to ppm
+  if (input?.ppm && input.ppm > 15) {
+    input.ppm = 15
+  }
+
   await smApiDatasetRequest(url, {
     doc: { ...input, metadata, size_hash: input.sizeHashJson ? JSON.parse(input.sizeHashJson) : undefined },
     priority: priority,
