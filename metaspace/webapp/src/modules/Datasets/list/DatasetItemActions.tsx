@@ -74,7 +74,7 @@ export default defineComponent({
         emit('datasetMutated')
       } catch (err) {
         state.disabled = false
-        reportError(err, 'Deletion failed :( Please contact us at contact@metaspace2020.eu')
+        reportError(err, 'Deletion failed :( Please contact us at contact@metaspace2020.org')
       }
     }
 

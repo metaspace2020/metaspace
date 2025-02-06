@@ -199,7 +199,7 @@ class DatasetManager:
 
         try:
             resp = self.ses.send_email(
-                Source='contact@metaspace2020.eu',
+                Source='contact@metaspace2020.org',
                 Destination={'ToAddresses': [email]},
                 Message={'Subject': {'Data': subj}, 'Body': {'Text': {'Data': body}}},
             )
@@ -238,7 +238,7 @@ class DatasetManager:
             )
         content += (
             '\n\nIf this is unexpected, please do not hesitate to contact us for support '
-            'at contact@metaspace2020.eu'
+            'at contact@metaspace2020.org'
         )
         email_body = 'Dear METASPACE user,\n\n' f'{content}\n\n' 'Best regards,\n' 'METASPACE Team'
         self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)

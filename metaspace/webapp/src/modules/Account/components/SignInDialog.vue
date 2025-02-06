@@ -42,7 +42,7 @@
         datasets to METASPACE previously, please
         <inter-dialog-link dialog="createAccount"> create an account </inter-dialog-link> using the same email address
         that you used when submitting the datasets, and you will be reunited with them.
-        <a href="mailto:contact@metaspace2020.eu">Contact us</a> if you have lost access to any datasets that you
+        <a href="mailto:contact@metaspace2020.org">Contact us</a> if you have lost access to any datasets that you
         submitted.
       </p>
     </vue3-slide-up-down>

@@ -28,7 +28,7 @@ def online(request: 'SubRequest'):
     :param request: A pytest request, parametrized with a boolean: True = online, False = blocked
     """
     is_online = request.param
-    host = "https://metaspace2020.eu"
+    host = "https://metaspace2020.org"
     if is_online:
         yield
     else:

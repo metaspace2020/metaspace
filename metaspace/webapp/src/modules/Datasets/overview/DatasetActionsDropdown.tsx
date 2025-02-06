@@ -145,7 +145,7 @@ export const DatasetActionsDropdown = defineComponent({
         router.replace('/datasets')
       } catch (err) {
         state.disabled = false
-        reportError(err, 'Deletion failed :( Please contact us at contact@metaspace2020.eu')
+        reportError(err, 'Deletion failed :( Please contact us at contact@metaspace2020.org')
       }
     }
 

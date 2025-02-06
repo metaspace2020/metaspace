@@ -511,7 +511,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
               <!--v-if--><span class=\\"\\"> Request access </span>
             </button></div>
           <div class=\\"el-row\\">
-            <p><b>Can't find your group?</b> <a href=\\"mailto:contact@metaspace2020.eu\\">Contact us</a> to get your team started, or <a href=\\"#\\" style=\\"cursor: pointer;\\">fill in your Principal Investigator</a> instead. </p>
+            <p><b>Can't find your group?</b> <a href=\\"mailto:contact@metaspace2020.org\\">Contact us</a> to get your team started, or <a href=\\"#\\" style=\\"cursor: pointer;\\">fill in your Principal Investigator</a> instead. </p>
           </div>
         </div>
         <div data-v-21d0472c=\\"\\" class=\\"mock-el-dialog dialog\\" model-value=\\"false\\" append-to-body=\\"\\" title=\\"Create project\\" lock-scroll=\\"false\\">

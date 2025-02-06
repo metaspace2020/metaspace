@@ -34,7 +34,7 @@
             {{ groupUrlPrefix }}<span class="urlSlug">{{ group.id }}</span>
           </router-link>
         </p>
-        <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
+        <p><a href="mailto:contact@metaspace2020.org">Contact us</a> to set up a custom URL to showcase your group.</p>
       </div>
     </div>
     <div v-if="canDelete && group">

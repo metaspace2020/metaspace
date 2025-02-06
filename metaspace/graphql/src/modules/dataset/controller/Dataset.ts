@@ -470,7 +470,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
         message: 'Download disabled on API. Please use the web interface.',
         files: [{
           filename: 'Download_Limit_Reached.txt',
-          link: 'https://metaspace2020.eu/limit_reached',
+          link: 'https://metaspace2020.org/limit_reached',
         }],
       })
     } else if (!await canPerformAction(ctx, action) || (ctx.user?.role !== 'admin' && rateLimited)) {
@@ -478,10 +478,10 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
       return JSON.stringify({
         message: `Download limit reached (2 downloads per day )${rateLimited ? '.' : ''}. Contact us at `
-            + 'contact@metaspace2020.eu to request an increase.',
+            + 'contact@metaspace2020.org to request an increase.',
         files: [{
           filename: 'Download_Limit_Reached.txt',
-          link: 'https://metaspace2020.eu/limit_reached',
+          link: 'https://metaspace2020.org/limit_reached',
         }],
       })
     } else if (await canDownloadDataset(ds, ctx)) {

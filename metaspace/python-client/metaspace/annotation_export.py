@@ -116,7 +116,7 @@ def fetch_graphql_res(filter_args):
     else:
         coloc_filter = None
 
-    config = get_config('https://metaspace2020.eu')
+    config = get_config('https://metaspace2020.org')
     client = GraphQLClient(config)
     resp = client.countAnnotations(annotationFilter=ann_filter, datasetFilter=ds_filter)
     logger.info(f"{resp['countAnnotations']} annotations matched the filters. Downloading...")

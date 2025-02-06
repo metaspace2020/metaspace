@@ -1233,7 +1233,7 @@ export default defineComponent({
 
     const handleItemClick = (item: any) => {
       // get info from clicked chart item and open on a metaspace url
-      const baseUrl = 'https://metaspace2020.eu/annotations?db_id=304'
+      const baseUrl = 'https://metaspace2020.org/annotations?db_id=304'
       // const baseUrl = 'http://localhost:8999/annotations?db_id=304'
       let url = baseUrl
       const formulas: string = item?.data?.label?.formulas?.join('|')
@@ -1300,7 +1300,7 @@ export default defineComponent({
     }
 
     const handleMetaClick = () => {
-      const baseUrl = 'https://metaspace2020.eu/annotations?db_id=22'
+      const baseUrl = 'https://metaspace2020.org/annotations?db_id=22'
       let url = baseUrl
       let datasetIds = []
       let formulas = []

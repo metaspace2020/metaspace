@@ -67,7 +67,7 @@ export default {
           await this.$alert(
             'This email verification link is invalid or has expired. ' +
               'Try signing in or resetting your password. ' +
-              'If this keeps happening, please <a href="mailto:contact@metaspace2020.eu">let us know</a>.',
+              'If this keeps happening, please <a href="mailto:contact@metaspace2020.org">let us know</a>.',
             'Something went wrong!',
             { type: 'warning', dangerouslyUseHTMLString: true }
           )

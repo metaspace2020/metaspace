@@ -19,7 +19,7 @@
     <p>
       If you have any further questions, please check out our main
       <a href="/help" target="_blank" class="external" title="The page will open in a new window">help</a>
-      page or email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>.
+      page or email us at <a href="mailto:contact@metaspace2020.org">contact@metaspace2020.org</a>.
     </p>
     <p>Have fun using METASPACE!</p>
   </el-dialog>

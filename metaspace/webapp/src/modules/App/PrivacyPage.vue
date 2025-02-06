@@ -10,9 +10,9 @@
     <p>
       It is our policy to respect your privacy regarding any information we may collect while operating our website.
       This Privacy Policy applies to
-      <a href="https://metaspace2020.eu" rel="noopener noreferrer nofollow"> https://metaspace2020.eu<!-- --> </a>
-      (hereinafter, "us", "we", “METASPACE”, or "<a href="https://metaspace2020.eu" rel="noopener noreferrer nofollow">
-        <!-- -->https://metaspace2020.eu<!-- --> </a
+      <a href="https://metaspace2020.org" rel="noopener noreferrer nofollow"> https://metaspace2020.org<!-- --> </a>
+      (hereinafter, "us", "we", “METASPACE”, or "<a href="https://metaspace2020.org" rel="noopener noreferrer nofollow">
+        <!-- -->https://metaspace2020.org<!-- --> </a
       >"). We respect your privacy and are committed to protecting personally identifiable information you may provide
       us through the Website. We have adopted this privacy policy ("Privacy Policy") to explain what information may be
       collected on our Website, how we use this information, and under what circumstances we may disclose the
@@ -45,7 +45,7 @@
     <p>
       METASPACE also collects potentially personally-identifying information like Internet Protocol (IP) addresses for
       users accessing
-      <a href="https://metaspace2020.eu" rel="noopener noreferrer nofollow"> https://metaspace2020.eu<!-- --> </a>.
+      <a href="https://metaspace2020.org" rel="noopener noreferrer nofollow"> https://metaspace2020.org<!-- --> </a>.
       METASPACE only discloses logged in user IP addresses under the same circumstances that it uses and discloses
       personally-identifying information as described below.
     </p>
@@ -97,8 +97,8 @@
       A cookie is a string of information that a website stores on a visitor's computer, and that the visitor's browser
       provides to the website each time the visitor returns. METASPACE uses cookies to help METASPACE identify and track
       visitors, their usage of
-      <a href="https://metaspace2020.eu" rel="noopener noreferrer nofollow"> https://metaspace2020.eu<!-- --> </a>, and
-      their website access preferences. METASPACE visitors who do not wish to have cookies placed on their computers
+      <a href="https://metaspace2020.org" rel="noopener noreferrer nofollow"> https://metaspace2020.org<!-- --> </a>,
+      and their website access preferences. METASPACE visitors who do not wish to have cookies placed on their computers
       should set their browsers to refuse cookies before using METASPACE's websites, with the drawback that certain
       features of METASPACE's websites may not function properly without the aid of cookies.
     </p>
@@ -114,7 +114,7 @@
     </p>
     <p>
       The following cookies are used by
-      <a href="https://metaspace2020.eu" rel="noopener noreferrer nofollow"> https://metaspace2020.eu<!-- --> </a
+      <a href="https://metaspace2020.org" rel="noopener noreferrer nofollow"> https://metaspace2020.org<!-- --> </a
       >:&nbsp;
     </p>
     <table>
@@ -177,7 +177,8 @@
     </p>
     <p>
       If you have any questions about this Privacy Policy, please contact us at
-      <a href="mailto:contact@metaspace2020.eu" rel="noopener noreferrer nofollow"> contact@metaspace2020.eu<!-- --> </a
+      <a href="mailto:contact@metaspace2020.org" rel="noopener noreferrer nofollow">
+        contact@metaspace2020.org<!-- --> </a
       >.
     </p>
   </content-page>

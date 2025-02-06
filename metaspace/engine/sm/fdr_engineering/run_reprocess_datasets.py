@@ -5,7 +5,7 @@ The source server comes from the ~/.metaspace config file
 The destination server comes from the ~/.metaspace.local config file
 Example config file contents (remove indentation):
 
-    host=https://staging.metaspace2020.eu
+    host=https://staging.metaspace2020.org
     api_key=0000  # Get an API key from your user profile on the server
 
 The dataset IDs should be listed in local/ml_scoring/dataset_ids.txt (one ID per line)
