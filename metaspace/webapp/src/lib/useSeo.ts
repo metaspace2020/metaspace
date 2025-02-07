@@ -48,10 +48,7 @@ export function useSeoMeta(route) {
         description = `Upload, share and manage data from your group in a simple, effective and safe way.`
       }
 
-      console.log('currentHost', currentHost)
-
       if (disabledDomains.includes(currentHost)) {
-        console.warn(`SEO metadata disabled for staging environment: ${currentHost}`)
         robots = 'noindex, nofollow'
       }
 

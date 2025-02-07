@@ -4,7 +4,6 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="index, follow" id="robots-meta">
     <meta name="Description" content="Platform for metabolite annotation of imaging mass spectrometry data">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,400i,500,700&display=swap&subset=latin-ext"
           rel="stylesheet" />
@@ -20,16 +19,6 @@
         try { document.addEventListener("DOMContentLoaded", $buo_f, false) }
         catch (e) { window.attachEvent("onload", $buo_f) }
     </script>
-      <script>
-        (function () {
-          var disabledDomains = ["staging.metaspace2020.org", "staging.metaspace2020.eu"];
-          var currentHost = window.location.hostname;
-    
-          if (disabledDomains.includes(currentHost)) { // disable index for staging environment
-            document.getElementById("robots-meta").setAttribute("content", "noindex, nofollow");
-          }
-        })();
-      </script>
     <title>METASPACE annotation platform</title>
 </head>
 
