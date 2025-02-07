@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { useHead } from '@unhead/vue'
 
-const allowedDomains = ['metaspace2020.eu', 'metaspace2020.org']
+const disabledDomains = ['staging.metaspace2020.org', 'staging.metaspace2020.eu']
 const currentHost = window?.location?.hostname
 
 export function useSeoMeta(route) {
@@ -50,11 +50,9 @@ export function useSeoMeta(route) {
 
       console.log('currentHost', currentHost)
 
-      if (process.env.NODE_ENV === 'production') {
-        if (!allowedDomains.includes(currentHost)) {
-          console.warn(`SEO metadata disabled for staging environment: ${currentHost}`)
-          robots = 'noindex, nofollow'
-        }
+      if (disabledDomains.includes(currentHost)) {
+        console.warn(`SEO metadata disabled for staging environment: ${currentHost}`)
+        robots = 'noindex, nofollow'
       }
 
       return {
