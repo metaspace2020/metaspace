@@ -35,6 +35,7 @@ import TourStep from './TourStep.vue'
 import MetaspaceHeader from './MetaspaceHeader'
 import MetaspaceFooter from './MetaspaceFooter.vue'
 import { DialogController } from '../Account'
+import { useSeoMeta } from '../../lib/useSeo'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 export default {
@@ -87,9 +88,12 @@ export default {
     const store = useStore()
     const route = useRoute()
 
+    useSeoMeta(route)
+
     watch(
       route,
       (newRoute) => {
+        useSeoMeta(route)
         store.commit('updateRoute', {
           path: newRoute.path,
           params: newRoute.params,

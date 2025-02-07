@@ -105,7 +105,7 @@ export const routes: any = [
     name: 'dataset-list',
     component: DatasetsPage,
     children: [
-      { path: '', name: 'main', component: asyncPages.DatasetTable },
+      { path: '', name: 'datasets', component: asyncPages.DatasetTable },
       { path: 'summary', name: 'summary', component: asyncPages.DatasetSummary },
     ],
   },
