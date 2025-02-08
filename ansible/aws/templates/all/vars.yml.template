@@ -314,10 +314,59 @@ nginx_servers:
       - server_name {{ sm_webapp_alt_hostname }};
       - ssl_certificate ssl/{{ ssl_alt.cert }};
       - ssl_certificate_key ssl/{{ ssl_alt.key }};
+      - proxy_read_timeout 300;
+      - send_timeout 300;
+      - gzip_types text/html text/css application/javascript application/json font/woff font/ttf image/svg+xml;
     locations:
+      - path: /mol-images/
+        params:
+          - root /var/www;
       - path: /
         params:
           - return 301 https://{{ sm_webapp_hostname }}$request_uri;
+      - path: /db/iso_images/
+        params:
+          - proxy_pass http://isotope_image_server/db/iso_images/;
+          - limit_except GET {deny all;}
+      - path: /fs/optical_images/
+        params:
+          - proxy_pass http://isotope_image_server/fs/optical_images/;
+          - limit_except GET {deny all;}
+      - path: /fs/raw_optical_images/
+        params:
+          - proxy_pass http://isotope_image_server/fs/raw_optical_images/;
+          - client_max_body_size 50M;
+      - path: /fs/ion_thumbnails/
+        params:
+          - proxy_pass http://isotope_image_server/fs/ion_thumbnails/;
+          - limit_except GET {deny all;}
+      - path: /dataset_upload
+        params:
+          - proxy_pass http://isotope_image_server/dataset_upload;
+          - client_max_body_size 5M;
+      - path: /database_upload
+        params:
+          - proxy_pass http://isotope_image_server/database_upload;
+          - client_max_body_size 5M;
+      - path: /raw_opt_upload
+        params:
+          - proxy_pass http://isotope_image_server/raw_opt_upload;
+          - client_max_body_size 50M;
+      - path: /graphql
+        params:
+          - proxy_pass http://graphql_server/graphql;
+          - include proxy-params.conf;
+      - path: /api_auth
+        params:
+          - proxy_pass http://graphql_server/api_auth;
+          - include proxy-params.conf;
+      - path: /ws
+        params:
+          - proxy_pass http://graphql_ws_server/graphql;
+          - proxy_http_version 1.1;
+          - proxy_set_header Upgrade $http_upgrade;
+          - proxy_set_header Connection "upgrade";
+          - include proxy-params.conf;
 
   - desc: Endpoint for Web App, GraphQL, GraphQL WebSocket, ion images, and mol images
     params:
