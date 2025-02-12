@@ -1,6 +1,6 @@
 # METASPACE Python client
 
-Python package that provides programmatic access to [METASPACE](https://metaspace2020.eu).
+Python package that provides programmatic access to [METASPACE](https://metaspace2020.org).
 
 ## Applications
 

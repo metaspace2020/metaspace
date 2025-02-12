@@ -141,7 +141,7 @@ def get_config(
             print('Error processing ~/.metaspace config file')
             raise
 
-    host = host or 'https://metaspace2020.eu'
+    host = host or 'https://metaspace2020.org'
     return {
         'host': host,
         'graphql_url': '{}/graphql'.format(host),
@@ -337,7 +337,7 @@ class GraphQLClient(object):
     supported by :py:class:`metaspace.sm_annotation_utils.SMInstance`.
 
     Use :py:attr:`query` for calling GraphQL directly.
-    An editor for composing GraphQL API queries can be found at https://metaspace2020.eu/graphql
+    An editor for composing GraphQL API queries can be found at https://metaspace2020.org/graphql
     """
 
     def __init__(self, config):
@@ -1646,7 +1646,7 @@ class SMInstance(object):
     ):
         """
         Args:
-            host: Full host name, e.g. 'https://metaspace2020.eu'
+            host: Full host name, e.g. 'https://metaspace2020.org'
             verify_certificate: Ignore certificate validation.
             email: User email.
             password: User password.
@@ -1686,7 +1686,7 @@ class SMInstance(object):
             return
 
         api_key = getpass(
-            f'Please generate an API key at https://metaspace2020.eu/user/me and enter it here '
+            f'Please generate an API key at https://metaspace2020.org/user/me and enter it here '
             f'(or leave blank to cancel):'
         )
         api_key = api_key.strip()
@@ -1752,7 +1752,7 @@ class SMInstance(object):
         """Retrieve a dataset by id (preferred) or name.
 
         You can get a dataset's ID by viewing its annotations online and looking at the URL, e.g.
-        in this URL: :samp:`metaspace2020.eu/annotations?ds={2016-09-22_11h16m17s}`
+        in this URL: :samp:`metaspace2020.org/annotations?ds={2016-09-22_11h16m17s}`
         the dataset ID is ``2016-09-22_11h16m17s``
         """
         if id:

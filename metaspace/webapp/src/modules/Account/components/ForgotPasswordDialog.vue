@@ -15,7 +15,7 @@
         <el-button type="primary" :loading="isSubmitting" @click="onSubmit"> Reset password </el-button>
       </el-form>
       <h1 />
-      <p>Has your email address changed? <a href="mailto:contact@metaspace2020.eu">Contact us</a></p>
+      <p>Has your email address changed? <a href="mailto:contact@metaspace2020.org">Contact us</a></p>
     </div>
   </el-dialog>
 </template>

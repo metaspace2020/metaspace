@@ -107,7 +107,7 @@
       Please ask your questions or provide feedback at the
       <a href="https://github.com/metaspace2020/metaspace/discussions/categories/q-a" target="_blank"
         >GitHub Discussion page</a
-      >. For private requests, please <a href="mailto:contact@metaspace2020.eu">email us</a>.
+      >. For private requests, please <a href="mailto:contact@metaspace2020.org">email us</a>.
     </p>
   </content-page>
 </template>

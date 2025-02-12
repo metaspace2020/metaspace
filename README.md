@@ -2,7 +2,7 @@
 
 [![Build Status](https://circleci.com/gh/metaspace2020/metaspace.svg?style=svg)](https://circleci.com/gh/metaspace2020/metaspace) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/metaspace2020/metaspace/branch/master/graph/badge.svg)](https://codecov.io/gh/metaspace2020/metaspace)
 
-[The METASPACE platform](http://metaspace2020.eu/) hosts an engine for
+[The METASPACE platform](http://metaspace2020.org/) hosts an engine for
  metabolite annotation of imaging mass spectrometry data as well as a
  spatial metabolite knowledgebase of the metabolites from thousands of
  public datasets provided by the community.
@@ -33,7 +33,7 @@ documentation for development installations with Docker.
 ## Uploading Dataset and Browsing Results
 Please visit the help page of our web application running on AWS:
 
-[https://metaspace2020.eu/help](https://metaspace2020.eu/help)
+[https://metaspace2020.org/help](https://metaspace2020.org/help)
 
 ## Acknowledgements
 [<img src="https://user-images.githubusercontent.com/26366936/42039120-f008e4c6-7aec-11e8-97ea-87e48bf7bc1c.png" alt="BrowserStack" width="200">](https://www.browserstack.com)
@@ -50,9 +50,9 @@ We acknowledge funding from the following sources:
 
 | | Funder / project(s) |
 | :--- | :--- |
-| <img src="https://metaspace2020.eu/img/Flag_of_Europe.80a3ee9f.svg" alt="EU" height="48" width="72"> | **European Union Horizon 2020 Programme** <br/> under grant agreements [634402](https://cordis.europa.eu/project/id/634402) / [773089](https://cordis.europa.eu/project/id/773089) / [825184](https://cordis.europa.eu/project/id/825184) |
-| <img src="https://metaspace2020.eu/img/NIDDK.581b923e.svg" alt="EU" height="48" width="72"> | **National Institutes of Health NIDDK** <br/> Kidney Precision Medicine Project ([kpmp.org](https://kpmp.org/)) |
-| <img src="https://metaspace2020.eu/img/NHLBI.6dbcd9a0.svg" alt="EU" height="48" width="72"> | **National Institutes of Health NHLBI** <br/> LungMAP Phase 2 ([lungmap.net](https://www.lungmap.net/)) |
+| <img src="https://metaspace2020.org/img/Flag_of_Europe.80a3ee9f.svg" alt="EU" height="48" width="72"> | **European Union Horizon 2020 Programme** <br/> under grant agreements [634402](https://cordis.europa.eu/project/id/634402) / [773089](https://cordis.europa.eu/project/id/773089) / [825184](https://cordis.europa.eu/project/id/825184) |
+| <img src="https://metaspace2020.org/img/NIDDK.581b923e.svg" alt="EU" height="48" width="72"> | **National Institutes of Health NIDDK** <br/> Kidney Precision Medicine Project ([kpmp.org](https://kpmp.org/)) |
+| <img src="https://metaspace2020.org/img/NHLBI.6dbcd9a0.svg" alt="EU" height="48" width="72"> | **National Institutes of Health NHLBI** <br/> LungMAP Phase 2 ([lungmap.net](https://www.lungmap.net/)) |
 
 and internal funds from the [European Molecular Biology Laboratory](https://www.embl.org/).
 

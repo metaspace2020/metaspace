@@ -35,8 +35,8 @@
     </el-row>
     <el-row>
       <p>
-        <b>Can't find your group?</b> <a href="mailto:contact@metaspace2020.eu">Contact us</a> to get your team started,
-        or
+        <b>Can't find your group?</b> <a href="mailto:contact@metaspace2020.org">Contact us</a> to get your team
+        started, or
         <a href="#" style="cursor: pointer" @click.prevent="handleSelectNoGroup">fill in your Principal Investigator</a>
         instead.
       </p>

@@ -7,6 +7,8 @@ import svgLoader from 'vite-svg-loader'
 import CompressionPlugin from 'vite-plugin-compression'
 import Markdown from 'unplugin-vue-markdown/vite'
 
+import sitemap from 'vite-plugin-sitemap'
+
 // const isCypressRun = process.env.CYPRESS_RUN === 'true';
 
 // https://vitejs.dev/config/
@@ -41,6 +43,20 @@ export default defineConfig({
     CompressionPlugin({
       algorithm: 'brotliCompress',
       ext: '.br',
+    }),
+    sitemap({
+      hostname: 'https://metaspace2020.org',
+      exclude: ['/admin'],
+      dynamicRoutes: [
+        '/',
+        '/about',
+        '/annotations',
+        '/datasets',
+        '/projects',
+        '/groups',
+        '/publications',
+        '/detectability',
+      ],
     }),
     Markdown({
       headEnabled: true,

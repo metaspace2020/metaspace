@@ -8,7 +8,7 @@ export default (recipient: string, subject: string, text: string) => {
     console.log(`Email not set up. Logging to console.\nTo: ${recipient}\nSubject: ${subject}\n${text}`)
   } else {
     ses.sendEmail({
-      Source: 'contact@metaspace2020.eu',
+      Source: 'contact@metaspace2020.org',
       Destination: { ToAddresses: [recipient] },
       Message: {
         Subject: { Data: subject },

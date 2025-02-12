@@ -247,7 +247,7 @@ const AboutPage = defineComponent({
                   Discussions forum
                 </a>{' '}
                 for any questions you might have. If you don’t find what you need, please{' '}
-                <a href="mailto:contact@metaspace2020.eu">contact us by email</a>.
+                <a href="mailto:contact@metaspace2020.org">contact us by email</a>.
               </p>
               <h3 id="please-appreciate-those-who-funded-it">Funding</h3>
               <p>We acknowledge funding from the following sources:</p>

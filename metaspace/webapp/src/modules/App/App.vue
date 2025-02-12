@@ -35,6 +35,7 @@ import TourStep from './TourStep.vue'
 import MetaspaceHeader from './MetaspaceHeader'
 import MetaspaceFooter from './MetaspaceFooter.vue'
 import { DialogController } from '../Account'
+import { useSeoMeta } from '../../lib/useSeo'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 export default {
@@ -67,7 +68,7 @@ export default {
           await this.$alert(
             'This email verification link is invalid or has expired. ' +
               'Try signing in or resetting your password. ' +
-              'If this keeps happening, please <a href="mailto:contact@metaspace2020.eu">let us know</a>.',
+              'If this keeps happening, please <a href="mailto:contact@metaspace2020.org">let us know</a>.',
             'Something went wrong!',
             { type: 'warning', dangerouslyUseHTMLString: true }
           )
@@ -87,9 +88,12 @@ export default {
     const store = useStore()
     const route = useRoute()
 
+    useSeoMeta(route)
+
     watch(
       route,
       (newRoute) => {
+        useSeoMeta(route)
         store.commit('updateRoute', {
           path: newRoute.path,
           params: newRoute.params,

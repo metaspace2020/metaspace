@@ -7,7 +7,7 @@
         <router-link to="/publications"> Publications </router-link>
         <a href="https://github.com/metaspace2020/metaspace">GitHub</a>
         <a href="https://twitter.com/metaspace2020">Twitter</a>
-        <a href="mailto:contact@metaspace2020.eu">Contact</a>
+        <a href="mailto:contact@metaspace2020.org">Contact</a>
       </p>
       <p class="m-0 mt-8">
         &copy; 2014&ndash;2024 <a target="_blank" href="https://ateam.ucsd.edu/">Alexandrov Team</a>

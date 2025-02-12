@@ -138,7 +138,7 @@ class ClusterDaemon:
 
     def _send_email(self, email, subj, body):
         resp = self.ses.send_email(
-            Source='contact@metaspace2020.eu',
+            Source='contact@metaspace2020.org',
             Destination={'ToAddresses': [email]},
             Message={'Subject': {'Data': subj}, 'Body': {'Text': {'Data': body}}},
         )
