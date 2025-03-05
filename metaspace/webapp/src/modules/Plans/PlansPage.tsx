@@ -1,17 +1,22 @@
-import { defineComponent, reactive } from 'vue'
+import { defineComponent, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElButton } from '../../lib/element-plus'
-import { useQuery } from '@vue/apollo-composable'
-import { AllPlansData, getPlansQuery } from '../../api/plan'
+import config from '../../lib/config'
 import './PlansPage.scss'
 
 export default defineComponent({
   name: 'PlansPage',
   setup() {
     const router = useRouter()
-    const { result } = useQuery<AllPlansData>(getPlansQuery)
     const state = reactive({
       hoveredPlan: 2,
+      plans: [],
+    })
+
+    onMounted(async () => {
+      const response = await fetch(`${config.order_service_url}api/plans`)
+      const plans = await response.json()
+      state.plans = plans.data
     })
 
     const handleStartTrial = (planId: number) => {
@@ -23,7 +28,7 @@ export default defineComponent({
     }
 
     return () => {
-      const plans = result.value?.allPlans || []
+      const plans = state.plans || []
       const sortedPlans = [...plans].sort((a, b) => a.order - b.order)
 
       return (
@@ -52,15 +57,18 @@ export default defineComponent({
                     <div class="plan-features">
                       <div class="safe-html" innerHTML={plan.description} />
                     </div>
-                    <ElButton
-                      class="start-button"
-                      type={state.hoveredPlan === index ? 'primary' : 'default'}
-                      onClick={() => handleStartTrial(plan.id)}
-                      size="default"
-                      icon=""
-                    >
-                      Subscribe
-                    </ElButton>
+                    {plan.price === 0 ? (
+                      <div class="start-button">Already enjoying the benefits!</div>
+                    ) : (
+                      <ElButton
+                        class="start-button"
+                        type={state.hoveredPlan === index ? 'primary' : 'default'}
+                        onClick={() => handleStartTrial(plan.id)}
+                        size="default"
+                      >
+                        Subscribe
+                      </ElButton>
+                    )}
                   </div>
                 ))}
             </div>

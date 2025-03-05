@@ -28,9 +28,8 @@
 
 .plans-grid {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  gap: 16px;
+  gap: 24px;
   flex-wrap: wrap;
   min-height: 350px;
 }
@@ -44,7 +43,9 @@
   transition: transform 0.3s ease;
   border: 1px solid #eee;
   position: relative;
-  width: 200px;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 
   &:hover {
@@ -88,12 +89,13 @@
 .plan-features {
   text-align: left;
   margin-bottom: 24px;
-  min-height: 120px;
+  flex-grow: 1;
+  min-height: 150px;
 }
 
 .start-button {
   width: 100%;
-  margin-top: 16px;
+  margin-top: auto;
   height: 40px;
   border-radius: 6px;
   font-weight: 500;

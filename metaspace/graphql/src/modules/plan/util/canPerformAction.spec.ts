@@ -10,16 +10,25 @@ import {
 } from '../../../tests/graphqlTestEnvironment'
 
 import canPerformAction from './canPerformAction'
-import { createTestApiUsage, createTestPlanRule } from '../../../tests/testDataCreation'
-import * as moment from 'moment'
+import { createTestPlanRule } from '../../../tests/testDataCreation'
 import { ApiUsage } from '../model'
+import config from '../../../utils/config'
+
+// Import fetch from node-fetch (which is already mocked globally)
+import fetch from 'node-fetch'
 
 describe('Plan Controller Queries', () => {
   let originalDateNow: any
+  let originalManagerApiUrl: string | undefined
+  const mockFetch = fetch as jest.Mock
 
   beforeAll(async() => {
     await onBeforeAll()
     originalDateNow = Date.now
+    originalManagerApiUrl = config.manager_api_url
+
+    // Mock the config API URL
+    config.manager_api_url = 'https://test-api.metaspace.example'
 
     // Mock Date.now to return a specific timestamp
     Date.now = jest.fn(() => new Date('2024-10-30T10:00:00Z').getTime())
@@ -28,10 +37,21 @@ describe('Plan Controller Queries', () => {
   afterAll(async() => {
     await onAfterAll()
     Date.now = originalDateNow
+    // Restore original config value if it was defined
+    if (originalManagerApiUrl !== undefined) {
+      config.manager_api_url = originalManagerApiUrl
+    } else {
+      // If it was undefined, we need to use delete to remove the property
+      delete (config as any).manager_api_url
+    }
+
+    // No need to restore the original mock implementation
+    // The global jest.resetAllMocks() in the test framework will handle this
   })
 
   beforeEach(async() => {
     jest.clearAllMocks()
+    mockFetch.mockClear()
 
     await onBeforeEach()
     await setupTestUsers()
@@ -104,43 +124,51 @@ describe('Plan Controller Queries', () => {
       ${isAdmin ? 'for admin' : 'for user'}`, async() => {
         const context = isAdmin ? adminContext : userContext
 
-        // Set the action date based on the limit type
-        let usageDate: moment.Moment
-        switch (limitType) {
-          case 'minute':
-            usageDate = moment.utc()
-            break
-          case 'day':
-            usageDate = moment.utc().startOf('day')
-            break
-          case 'month':
-            usageDate = moment.utc().subtract(2, 'days')
-            break
-          case 'year':
-            usageDate = moment.utc().startOf('year')
-            break
-          default:
-            usageDate = moment.utc()
+        // Setup the mock response for fetch, but only if not admin
+        if (!isAdmin) {
+          mockFetch.mockImplementationOnce(() =>
+            Promise.resolve({
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve({ allowed: expected }),
+              text: () => Promise.resolve(''),
+              headers: new Map(),
+            })
+          )
         }
 
-        // Create usage entries to simulate reaching limits
-        for (let i = 0; i < usageCount; i++) {
-          await createTestApiUsage({
-            actionType,
-            type: 'dataset',
-            userId: context.user.id,
-            visibility,
-            source,
-            actionDt: usageDate,
-          } as Partial<ApiUsage>)
-        }
-
-        expect(await canPerformAction(context, {
+        const result = await canPerformAction(context, {
           actionType,
           type: 'dataset',
           visibility,
           source,
-        } as Partial<ApiUsage>)).toBe(expected)
+        } as Partial<ApiUsage>)
+
+        expect(result).toBe(expected)
+
+        // For admin users, fetch is not called because it returns early
+        if (!isAdmin) {
+          // Verify that fetch was called with the correct parameters
+          expect(mockFetch).toHaveBeenCalledWith(
+            expect.stringContaining('/api/api-usages/is-allowed'),
+            expect.objectContaining({
+              method: 'POST',
+              headers: expect.objectContaining({
+                'Content-Type': 'application/json',
+              }),
+              body: expect.any(String),
+            })
+          )
+
+          // Verify the request body
+          const requestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string)
+          expect(requestBody).toMatchObject({
+            actionType,
+            type: 'dataset',
+            visibility,
+            source,
+          })
+        }
       })
     })
   })
@@ -150,25 +178,35 @@ describe('Plan Controller Queries', () => {
     const actionType = 'download'
     const visibility = 'public'
     const source = 'api'
-    const n = 2
 
-    // Simulate n+1 downloads in the same minute
-    for (let i = 0; i < n; i++) {
-      await createTestApiUsage({
-        actionType,
-        type: 'dataset',
-        userId: context.user.id,
-        visibility,
-        source,
+    // Mock the first fetch call to return not allowed
+    mockFetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ allowed: false }),
+        text: () => Promise.resolve(''),
+        headers: new Map(),
       })
-    }
+    )
 
-    // Verify the action is blocked after n+1 downloads in a minute
+    // Verify the action is blocked initially
     const blocked = await canPerformAction(context, { actionType, type: 'dataset', visibility, source })
     expect(blocked).toBe(false)
 
     // Advance time by 10 minutes
     Date.now = jest.fn(() => new Date('2024-10-30T10:10:00Z').getTime())
+
+    // Mock the second fetch call to return allowed
+    mockFetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ allowed: true }),
+        text: () => Promise.resolve(''),
+        headers: new Map(),
+      })
+    )
 
     const allowed = await canPerformAction(context, { actionType, type: 'dataset', visibility, source })
     expect(allowed).toBe(true)

@@ -1,70 +1,81 @@
 import { Context } from '../../../context'
-import { ApiUsage, Plan } from '../model'
-import * as moment from 'moment'
+import { ApiUsage } from '../model'
 import { DeepPartial } from 'typeorm'
 import { UserError } from 'graphql-errors'
-import { User } from '../../user/model'
 import { UAParser } from 'ua-parser-js'
 import * as CryptoJS from 'crypto-js'
 import config from '../../../utils/config'
+import fetch from 'node-fetch'
 
 const canPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Promise<boolean> => {
-  const user: any = ctx?.user
+  try {
+    const user: any = ctx?.user
+    const apiUrl = config.manager_api_url
+    const token = ctx.req?.headers?.authorization || ''
 
-  if (user?.role === 'admin') {
-    return true
-  }
-
-  if (!user.plan) {
-    const planId = user.planId
-        || (await ctx.entityManager.findOneOrFail(User, user.id, { relations: ['plan'] })).planId
-
-    user.plan = await ctx.entityManager.createQueryBuilder(Plan, 'plan')
-      .leftJoinAndSelect('plan.planRules', 'planRules')
-      .where('plan.id = :planId', { planId })
-      .getOne()
-  }
-
-  if (!user.plan?.planRules) {
-    return true
-  }
-
-  const planRules = user.plan?.planRules?.filter((rule: any) => rule.actionType === action.actionType
-      && rule.type === action.type && (!rule.visibility || rule.visibility === action.visibility)
-      && (!rule.source || rule.source === action.source))
-
-  for (const rule of planRules as any[]) {
-    const startDate = moment.utc().subtract(1, rule.periodType)
-    const endDate = moment.utc().add(2, 'second') // add a slack of 2 seconds
-
-    let qb = ctx.entityManager.createQueryBuilder(ApiUsage, 'usage')
-      .where('usage.actionType = :actionType', { actionType: action.actionType })
-      .andWhere('usage.actionDt >= :startDate', { startDate: startDate.toDate() })
-      .andWhere('usage.actionDt <= :endDate', { endDate: endDate.toDate() })
-      .andWhere('usage.userId = :userId', { userId: user.id })
-
-    if (rule.visibility) {
-      qb = qb.andWhere('usage.visibility = :visibility', { visibility: rule.visibility })
+    if (user?.role === 'admin') {
+      return true
     }
 
-    if (rule.source) {
-      qb = qb.andWhere('usage.source = :source', { source: rule.source })
+    if (!apiUrl) {
+      console.log('Manager API URL is not configured')
+      return true
     }
 
-    const usages = await qb.getMany()
+    const response = await fetch(`${apiUrl}/api/api-usages/is-allowed`, {
+      method: 'POST',
+      headers: {
+        Authorization: token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(action),
+    })
 
-    if (usages.length >= rule.limit) {
+    if (!response.ok) {
       return false
     }
-  }
 
-  return true
+    const data = await response.json()
+    // If the response is successful, return the 'allowed' value
+    return data.allowed === true
+  } catch (error) {
+    // If there's an error or the response indicates not allowed, return false
+    console.error('Error checking action permission:', error)
+    return false
+  }
 }
 
 export const performAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Promise<ApiUsage> => {
-  const usage = ctx.entityManager.create(ApiUsage, action)
-  return await ctx.entityManager.save(usage)
+  try {
+    const token = ctx.req?.headers?.authorization || ''
+    const apiUrl = config.manager_api_url
+
+    if (!apiUrl) {
+      console.log('Manager API URL is not configured')
+      return {} as ApiUsage
+    }
+
+    const response = await fetch(`${apiUrl}/api/api-usages/`, {
+      method: 'POST',
+      headers: {
+        Authorization: token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(action),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to perform action: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error performing action:', error)
+    throw error
+  }
 }
+
 export const assertCanPerformAction = async(ctx: Context, action: DeepPartial<ApiUsage>) : Promise<void> => {
   const canPerform = await canPerformAction(ctx, action)
   if (!canPerform) {
@@ -85,6 +96,7 @@ export const getDeviceInfo = (userAgent: string | undefined, email: string | nul
     return JSON.stringify({})
   }
 }
+
 export const hashIp = (ip: string|undefined): string|undefined => {
   if (!ip) return undefined
   const saltedIP = config.api.usage.salt + ip

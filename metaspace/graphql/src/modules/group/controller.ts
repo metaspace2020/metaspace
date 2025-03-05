@@ -389,7 +389,7 @@ export const Resolvers = {
         role: UserGroupRoleOptions.GROUP_ADMIN,
       })
 
-      action.groupId = group.id
+      action.externalId = group.id
       action.canEdit = true
 
       await performAction(ctx, action)
@@ -406,7 +406,7 @@ export const Resolvers = {
       const action: any = {
         actionType: 'update',
         userId: user.id,
-        groupId,
+        externalId: groupId,
         type: 'project',
         canEdit: true,
         visibility: 'private',
