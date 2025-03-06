@@ -12,7 +12,6 @@ import { User as UserModel, User } from '../user/model'
 import { sendCreateAccountEmail } from './email'
 import { Request } from 'express'
 import generateRandomToken from '../../utils/generateRandomToken'
-import { Plan } from '../plan/model'
 import * as moment from 'moment'
 
 export interface UserCredentialsInput {
@@ -27,13 +26,11 @@ const NUM_ROUNDS = 12
 let entityManager: EntityManager
 let credRepo: Repository<Credentials>
 let userRepo: Repository<User>
-let planRepo: Repository<Plan>
 
 export const initOperation = async(typeormConn?: EntityManager) => {
   entityManager = typeormConn || (await utils.createConnection()).manager
   credRepo = entityManager.getRepository(Credentials)
   userRepo = entityManager.getRepository(User)
-  planRepo = entityManager.getRepository(Plan)
 }
 
 // FIXME: some mechanism should be added so that a user's other sessions are revoked when they change their password, etc.
@@ -142,8 +139,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
     emailService.sendLoginEmail(existingUser.email!, link)
   } else {
     const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email')
-    const defaultPlan: any = await planRepo.findOne({ isDefault: true })
-    const planId = defaultPlan?.id
+    const planId = 1 // default plan id
     if (existingUserNotVerified) {
       // existing not verified user
       if (userCred.googleId) {

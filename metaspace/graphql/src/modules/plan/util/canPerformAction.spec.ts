@@ -5,13 +5,10 @@ import {
   onBeforeAll,
   onBeforeEach,
   setupTestUsers,
-  testPlan,
   userContext,
 } from '../../../tests/graphqlTestEnvironment'
 
 import canPerformAction from './canPerformAction'
-import { createTestPlanRule } from '../../../tests/testDataCreation'
-import { ApiUsage } from '../model'
 import config from '../../../utils/config'
 
 // Import fetch from node-fetch (which is already mocked globally)
@@ -55,38 +52,6 @@ describe('Plan Controller Queries', () => {
 
     await onBeforeEach()
     await setupTestUsers()
-
-    const actionTypes = ['download', 'process', 'delete'] as const
-    const periods = [
-      { periodType: 'minute', limit: 2 },
-      { periodType: 'day', limit: 4 },
-      { periodType: 'month', limit: 6 },
-      { periodType: 'year', limit: 10 },
-    ] as const
-    const visibilities = ['private', 'public'] as const
-    const sources = ['api', 'web'] as const
-
-    // Create rules for all combinations of actionType, period, visibility, and source
-    await Promise.all(
-      actionTypes.flatMap((actionType) =>
-        periods.flatMap(({ periodType, limit }) =>
-          visibilities.flatMap((visibility) =>
-            sources.map((source: any) =>
-              createTestPlanRule({
-                planId: testPlan.id,
-                actionType,
-                type: 'dataset',
-                period: 1,
-                periodType,
-                limit,
-                visibility,
-                source,
-              })
-            )
-          )
-        )
-      )
-    )
   })
 
   afterEach(onAfterEach)
@@ -142,7 +107,7 @@ describe('Plan Controller Queries', () => {
           type: 'dataset',
           visibility,
           source,
-        } as Partial<ApiUsage>)
+        } as Partial<any>)
 
         expect(result).toBe(expected)
 

@@ -129,20 +129,3 @@ type Query {
     apiUsagesCount(filter: ApiUsageFilter = {}): Int!
 }
 
-type Mutation {
-    createPlan(name: String!, isActive: Boolean!, isDefault: Boolean, price: Int!, order: Int!, description: String): Plan!
-    updatePlan(planId: Int!, name: String!, isActive: Boolean!, isDefault: Boolean, price: Int!, order: Int!, description: String): Plan!
-    deletePlan(planId: Int!): Boolean!
-
-    createPlanRule(planId: Int!, actionType: String!, period: Int!,
-        periodType: String!, limit: Int!, type: String, visibility: String, requestSource: String): PlanRule!
-    updatePlanRule(planRuleId: Int!, planId: Int!, actionType: String!, period: Int!,
-        periodType: String!, limit: Int!, type: String, visibility: String, requestSource: String): PlanRule!
-    deletePlanRule(planRuleId: Int!): Boolean!
-
-    createApiUsage(userId: String!, datasetId: String, projectId: String,
-        groupId: String, actionType: String!, type: String!, visibility: String,
-        requestSource: String, canEdit: Boolean ): ApiUsage!
-}
-
-

@@ -16,7 +16,6 @@ import {
   onAfterAll, onAfterEach,
   onBeforeAll, onBeforeEach, testEntityManager,
 } from '../../tests/graphqlTestEnvironment'
-import { createTestPlan } from '../../tests/testDataCreation'
 const mockEmail = _mockEmail as jest.Mocked<typeof _mockEmail>
 
 async function createUserCredentialsEntities(user?: Partial<User>, cred?: Partial<Credentials>):
@@ -55,11 +54,6 @@ describe('Database operations with user', () => {
   afterAll(onAfterAll)
   beforeEach(async() => {
     await onBeforeEach()
-    await createTestPlan({
-      name: 'regular',
-      isActive: true,
-      isDefault: true,
-    })
   })
   afterEach(onAfterEach)
 

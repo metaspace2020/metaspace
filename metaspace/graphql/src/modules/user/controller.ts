@@ -1,6 +1,7 @@
 import { UserError } from 'graphql-errors'
 import { In } from 'typeorm'
 import * as uuid from 'uuid'
+import fetch from 'node-fetch'
 
 import { UserGroup } from '../../binding'
 import { User as UserModel } from './model'
@@ -13,6 +14,7 @@ import { ScopeRoleOptions as SRO, UserProjectSource, UserSource } from '../../bi
 import { findUserById, resetUserApiKey, sendEmailVerificationToken, signout } from '../auth/operation'
 import { LooselyCompatible } from '../../utils'
 import logger from '../../utils/logger'
+import config from '../../utils/config'
 import { convertUserToUserSource } from './util/convertUserToUserSource'
 import { smApiUpdateDataset } from '../../utils/smApi/datasets'
 import { deleteDataset } from '../dataset/operation/deleteDataset'
@@ -20,7 +22,6 @@ import { resolveGroupScopeRole } from '../group/util/resolveGroupScopeRole'
 import canSeeUserEmail from './util/canSeeUserEmail'
 import { ProjectSourceRepository } from '../project/ProjectSourceRepository'
 import { getUserSourceById, resolveUserScopeRole } from './util/getUserSourceById'
-import { Plan } from '../plan/model'
 import * as moment from 'moment'
 import { getDeviceInfo, hashIp, performAction } from '../plan/util/canPerformAction'
 
@@ -106,10 +107,27 @@ export const Resolvers = {
       return null
     },
 
-    async plan(user: UserSource, args: any, ctx: Context): Promise<Plan|undefined> {
-      return await ctx.entityManager.createQueryBuilder(Plan, 'plan')
-        .where('plan.id = :id', { id: user.planId })
-        .getOne()
+    async plan(user: UserSource, args: any, ctx: Context): Promise<any> {
+      if (!user.planId) {
+        return null
+      }
+
+      try {
+        const apiUrl = config.manager_api_url
+        const token = ctx.req?.headers?.authorization || ''
+
+        const response = await fetch(`${apiUrl}/api/plans/${user.planId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: token } : {}),
+          },
+        })
+
+        return await response.json()
+      } catch (error) {
+        return null
+      }
     },
 
     async apiKey({ scopeRole, id: userId }: UserSource, args: any, ctx: Context): Promise<string|null> {
