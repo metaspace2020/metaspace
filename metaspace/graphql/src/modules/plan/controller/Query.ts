@@ -93,6 +93,7 @@ const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', bod
 
     return await response.json()
   } catch (error) {
+    logger.error(`Error making API request to ${endpoint}:`, error)
     throw error
   }
 }

@@ -21,6 +21,7 @@ const schemaFiles = [
   '../schemas/imageViewerSnapshot.graphql',
   '../schemas/enrichmentdb.graphql',
   '../schemas/plan.graphql',
+  '../schemas/order.graphql',
 ]
 
 const run = async(outputFile) => {
