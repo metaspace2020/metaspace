@@ -36,14 +36,7 @@ export interface StateData {
   state: State
 }
 
-export enum CountryOrderBy {
-  NAME = 'NAME',
-  CODE = 'CODE',
-  CREATED_AT = 'CREATED_AT',
-  UPDATED_AT = 'UPDATED_AT',
-}
-
-export enum StateOrderBy {
+export enum LocationOrderBy {
   NAME = 'NAME',
   CODE = 'CODE',
   CREATED_AT = 'CREATED_AT',
@@ -81,8 +74,9 @@ export interface Payment {
   currency: string
   paymentMethod: PaymentMethod
   status: PaymentStatus
-  transactionId: string
-  gatewayReference?: string
+  type: string
+  stripeChargeId: string
+  externalReference?: string
   metadata?: any
   createdAt: string
   updatedAt: string
@@ -179,7 +173,7 @@ export interface PaymentFilter {
   userId?: string
   orderId?: number
   status?: PaymentStatus
-  transactionId?: string
+  stripeChargeId?: string
   paymentMethod?: PaymentMethod
   startDate?: string
   endDate?: string
@@ -221,8 +215,9 @@ export interface CreatePaymentInput {
   currency: string
   paymentMethod: PaymentMethod
   status: PaymentStatus
-  transactionId: string
-  gatewayReference?: string
+  type: string
+  stripeChargeId: string
+  externalReference?: string
   metadata?: any
 }
 
@@ -254,8 +249,9 @@ export const paymentFragment = gql`
     currency
     paymentMethod
     status
-    transactionId
-    gatewayReference
+    type
+    stripeChargeId
+    externalReference
     metadata
     createdAt
     updatedAt
@@ -455,7 +451,7 @@ export const getCountryQuery = gql`
 `
 
 export const getAllCountriesQuery = gql`
-  query ($filter: CountryFilter, $orderBy: CountryOrderBy, $sortingOrder: SortingOrder, $page: Int, $limit: Int) {
+  query ($filter: CountryFilter, $orderBy: LocationOrderBy, $sortingOrder: SortingOrder, $page: Int, $limit: Int) {
     allCountries(filter: $filter, orderBy: $orderBy, sortingOrder: $sortingOrder, page: $page, limit: $limit) {
       ...Country
     }
@@ -474,7 +470,7 @@ export const getStateQuery = gql`
 `
 
 export const getAllStatesQuery = gql`
-  query ($filter: StateFilter, $orderBy: StateOrderBy, $sortingOrder: SortingOrder, $page: Int, $limit: Int) {
+  query ($filter: StateFilter, $orderBy: LocationOrderBy, $sortingOrder: SortingOrder, $page: Int, $limit: Int) {
     allStates(filter: $filter, orderBy: $orderBy, sortingOrder: $sortingOrder, page: $page, limit: $limit) {
       ...State
     }

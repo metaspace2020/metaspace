@@ -40,8 +40,9 @@ interface CreatePaymentInput {
   currency: string;
   paymentMethod: 'credit_card' | 'paypal' | 'bank_transfer' | 'crypto' | 'other';
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
-  transactionId: string;
-  gatewayReference?: string;
+  type: string;
+  stripeChargeId: string;
+  externalReference?: string;
   metadata?: Record<string, any>;
 }
 
@@ -81,10 +82,13 @@ const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', bod
 
     if (body && (method === 'POST' || method === 'PUT')) {
       options.body = JSON.stringify(body)
+      logger.info(`Request to ${endpoint}:`, { method, body })
     }
 
     const response = await fetch(`${apiUrl}${endpoint}`, options)
     if (!response.ok) {
+      const errorText = await response.text()
+      logger.error(`API request failed with status ${response.status}: ${errorText}`)
       throw new Error(`API request failed: ${response.statusText}`)
     }
 
@@ -92,7 +96,9 @@ const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', bod
       return { success: true }
     }
 
-    return await response.json()
+    const responseData = await response.json()
+    logger.info(`Response from ${endpoint}:`, responseData)
+    return responseData
   } catch (error) {
     logger.error(`Error making API request to ${endpoint}:`, error)
     throw error
@@ -143,7 +149,19 @@ const MutationResolvers: MutationResolvers = {
   // Payment mutation resolvers
   async createPayment(_: any, { input }: { input: CreatePaymentInput }, ctx: Context): Promise<any> {
     try {
-      return await makeApiRequest(ctx, '/api/payments', 'POST', input)
+      const apiResponse = await makeApiRequest(ctx, '/api/payments', 'POST', input)
+
+      // Map the API response to match our GraphQL schema
+      // This ensures all required fields from our GraphQL schema are present
+      const graphqlResponse = {
+        ...apiResponse,
+        // Add fields that are required in our GraphQL schema but not returned by the API
+        userId: input.userId, // Use the userId from the input since the API doesn't return it
+      }
+
+      logger.info('Mapped payment response:', graphqlResponse)
+
+      return graphqlResponse
     } catch (error) {
       logger.error('Error creating payment:', error)
       throw new UserError('Failed to create payment')

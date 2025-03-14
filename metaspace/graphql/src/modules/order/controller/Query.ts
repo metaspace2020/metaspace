@@ -28,7 +28,7 @@ interface AllPaymentsArgs {
     userId?: string;
     orderId?: number;
     status?: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
-    transactionId?: string;
+    stripeChargeId?: string;
     paymentMethod?: 'credit_card' | 'paypal' | 'bank_transfer' | 'crypto' | 'other';
     startDate?: string;
     endDate?: string;

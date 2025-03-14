@@ -297,8 +297,9 @@ describe('modules/order/controller (mutations)', () => {
         currency
         paymentMethod
         status
-        transactionId
-        gatewayReference
+        type
+        stripeChargeId
+        externalReference
         createdAt
         updatedAt
       }
@@ -312,8 +313,9 @@ describe('modules/order/controller (mutations)', () => {
         currency: 'USD',
         paymentMethod: 'credit_card',
         status: 'completed',
-        transactionId: 'txn-001',
-        gatewayReference: 'ref-001',
+        type: 'subscription',
+        stripeChargeId: 'txn-001',
+        externalReference: 'ref-001',
       }
 
       const createdPayment = {
@@ -353,7 +355,8 @@ describe('modules/order/controller (mutations)', () => {
         currency: 'USD',
         paymentMethod: 'credit_card',
         status: 'completed',
-        transactionId: 'txn-001',
+        type: 'subscription',
+        stripeChargeId: 'txn-001',
       }
 
       // Mock the fetch response to simulate an error
@@ -400,7 +403,8 @@ describe('modules/order/controller (mutations)', () => {
         amount: 10000,
         currency: 'USD',
         paymentMethod: 'credit_card',
-        transactionId: 'txn-001',
+        type: 'subscription',
+        stripeChargeId: 'txn-001',
         createdAt: currentTime.valueOf().toString(),
         updatedAt: currentTime.valueOf().toString(),
       }
@@ -533,7 +537,8 @@ describe('modules/order/controller (mutations)', () => {
         currency: 'USD',
         paymentMethod: 'credit_card',
         status: 'refunded',
-        transactionId: 'txn-001',
+        type: 'subscription',
+        stripeChargeId: 'txn-001',
         createdAt: currentTime.valueOf().toString(),
         updatedAt: currentTime.valueOf().toString(),
       }

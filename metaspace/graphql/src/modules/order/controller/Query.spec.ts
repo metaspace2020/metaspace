@@ -90,8 +90,9 @@ describe('modules/order/controller (queries)', () => {
       currency: 'USD',
       paymentMethod: 'credit_card',
       status: 'completed',
-      transactionId: 'txn-001',
-      gatewayReference: 'ref-001',
+      type: 'subscription',
+      stripeChargeId: 'txn-001',
+      externalReference: 'ref-001',
       createdAt: currentTime,
       updatedAt: currentTime,
     },
@@ -103,8 +104,9 @@ describe('modules/order/controller (queries)', () => {
       currency: 'EUR',
       paymentMethod: 'paypal',
       status: 'pending',
-      transactionId: 'txn-002',
-      gatewayReference: 'ref-002',
+      type: 'one-time',
+      stripeChargeId: 'txn-002',
+      externalReference: 'ref-002',
       createdAt: currentTime,
       updatedAt: currentTime,
     },
@@ -116,8 +118,9 @@ describe('modules/order/controller (queries)', () => {
       currency: 'USD',
       paymentMethod: 'bank_transfer',
       status: 'processing',
-      transactionId: 'txn-003',
-      gatewayReference: 'ref-003',
+      type: 'subscription',
+      stripeChargeId: 'txn-003',
+      externalReference: 'ref-003',
       createdAt: currentTime,
       updatedAt: currentTime,
     },
@@ -485,8 +488,9 @@ describe('modules/order/controller (queries)', () => {
         currency
         paymentMethod
         status
-        transactionId
-        gatewayReference
+        type
+        stripeChargeId
+        externalReference
         createdAt
         updatedAt
       }
@@ -526,8 +530,9 @@ describe('modules/order/controller (queries)', () => {
         currency: expectedPayment!.currency,
         paymentMethod: expectedPayment!.paymentMethod,
         status: expectedPayment!.status,
-        transactionId: expectedPayment!.transactionId,
-        gatewayReference: expectedPayment!.gatewayReference,
+        type: expectedPayment!.type,
+        stripeChargeId: expectedPayment!.stripeChargeId,
+        externalReference: expectedPayment!.externalReference,
         createdAt: moment(expectedPayment!.createdAt).valueOf().toString(),
         updatedAt: moment(expectedPayment!.updatedAt).valueOf().toString(),
       })
@@ -567,8 +572,9 @@ describe('modules/order/controller (queries)', () => {
         currency
         paymentMethod
         status
-        transactionId
-        gatewayReference
+        type
+        stripeChargeId
+        externalReference
         createdAt
         updatedAt
       }

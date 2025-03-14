@@ -34,8 +34,9 @@ type Payment {
   currency: String!
   paymentMethod: PaymentMethod!
   status: PaymentStatus!
-  transactionId: String!
-  gatewayReference: String
+  type: String!
+  stripeChargeId: String!
+  externalReference: String
   metadata: JSON
   createdAt: String!
   updatedAt: String!
@@ -117,7 +118,7 @@ input PaymentFilter {
   userId: String
   orderId: Int
   status: PaymentStatus
-  transactionId: String
+  stripeChargeId: String
   paymentMethod: PaymentMethod
   startDate: String
   endDate: String
@@ -170,8 +171,9 @@ input CreatePaymentInput {
   currency: String!
   paymentMethod: PaymentMethod!
   status: PaymentStatus!
-  transactionId: String!
-  gatewayReference: String
+  type: String!
+  stripeChargeId: String!
+  externalReference: String
   metadata: JSON
 }
 

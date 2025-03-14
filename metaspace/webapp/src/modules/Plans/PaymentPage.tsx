@@ -1,15 +1,32 @@
-import { defineComponent, ref, computed, onMounted, watch, reactive } from 'vue'
+import { defineComponent, ref, computed, onMounted, watch, reactive, inject } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
-import type { Stripe, StripeElements, StripeCardElement } from '@stripe/stripe-js'
+import type { Stripe, StripeElements, StripeCardElement, Token } from '@stripe/stripe-js'
 import config from '../../lib/config'
 import { ElButton, ElInput, ElSelect, ElOption } from '../../lib/element-plus'
-import { useQuery } from '@vue/apollo-composable'
+import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import { currentUserRoleQuery } from '../../api/user'
 import { useStore } from 'vuex'
 import { useRoute } from 'vue-router'
-import { uniqBy } from 'lodash-es'
 import { getPlanQuery, Plan } from '../../api/plan'
 import './PaymentPage.scss'
+import {
+  AllCountriesData,
+  getAllCountriesQuery,
+  getAllStatesQuery,
+  AllStatesData,
+  StateFilter,
+  Country as GraphQLCountry,
+  State as GraphQLState,
+  createOrderMutation,
+  createPaymentMutation,
+  OrderStatus,
+  PaymentStatus,
+  PaymentMethod,
+  CreateOrderInput,
+  CreatePaymentInput,
+  OrderItemInput,
+} from '../../api/order'
+import { Fragment } from 'vue'
 
 interface CurrentUser {
   id: string
@@ -33,19 +50,14 @@ interface State {
   iso2: string
 }
 
-interface PhoneCode {
-  id: string
-  country: string
-  iso2: string
-  flag: string
-}
-
 export default defineComponent({
   name: 'PaymentPage',
   setup() {
     const store = useStore()
     const route = useRoute()
     const cardElementRef = ref<HTMLElement | null>(null)
+    // Inject Apollo client
+    const apolloClient = inject(DefaultApolloClient)
 
     const state = reactive({
       form: {
@@ -56,7 +68,7 @@ export default defineComponent({
         zipCode: '',
         selectedCountry: '',
         selectedState: '',
-        selectedPhoneCode: '',
+        selectedPhoneCode: '+1', // Default to +1 (US)
         phoneNumber: '',
       },
       formErrors: {
@@ -73,17 +85,18 @@ export default defineComponent({
       loading: false,
       error: null as string | null,
       zipCodeError: null as string | null,
+      phoneCodeError: null as string | null, // Add error for phone code validation
       cardElement: null as StripeCardElement | null,
       stripe: null as Stripe | null,
       elements: null as StripeElements | null,
       lists: {
         countries: [] as Country[],
         states: [] as State[],
-        phoneCodes: [] as PhoneCode[],
       },
       isFetchFailed: false,
     })
     const US_ZIP_REGEX = /^\d{5}(-\d{4})?$/
+    const PHONE_CODE_REGEX = /^\+?\d{1,4}$/ // Regex for phone codes: optional + followed by 1-4 digits
 
     const validateUSZipCode = () => {
       if (
@@ -96,6 +109,18 @@ export default defineComponent({
         }
       }
       state.zipCodeError = null
+      return true
+    }
+
+    // Add validation for phone code
+    const validatePhoneCode = () => {
+      if (!PHONE_CODE_REGEX.test(state.form.selectedPhoneCode)) {
+        state.phoneCodeError = 'Please enter a valid country code (e.g. +1)'
+        state.formErrors.selectedPhoneCode = true
+        return false
+      }
+      state.phoneCodeError = null
+      state.formErrors.selectedPhoneCode = false
       return true
     }
 
@@ -115,6 +140,28 @@ export default defineComponent({
     )
     const plan = computed(() => planResult.value?.plan)
 
+    const { result: countriesResult } = useQuery<AllCountriesData>(getAllCountriesQuery)
+    const countries = computed(() => {
+      return (countriesResult.value?.allCountries || []).map((country: GraphQLCountry) => ({
+        id: country.id,
+        name: country.name,
+        iso2: country.code || '',
+        phonecode: '1',
+      }))
+    })
+
+    const stateFilter = ref<StateFilter>({})
+    const { result: statesResult } = useQuery<AllStatesData>(getAllStatesQuery, () => ({
+      filter: stateFilter.value,
+    }))
+    const states = computed(() => {
+      return (statesResult.value?.allStates || []).map((state: GraphQLState) => ({
+        id: state.id,
+        name: state.name,
+        iso2: state.code || '',
+      }))
+    })
+
     onResult((result) => {
       const { data } = result
       if (data && data.currentUser == null) {
@@ -128,56 +175,44 @@ export default defineComponent({
 
     const fetchCountries = async () => {
       try {
-        const response = await fetch(`${config.order_service_url}api/geo/countries`)
-        const data = await response.json()
+        if (countries.value.length > 0) {
+          const sortedCountries = countries.value
+            .filter((country) => country.name !== 'United States')
+            .sort((a, b) => a.name?.localeCompare(b?.name))
 
-        // Sort countries and ensure United States is first
-        const sortedCountries = data
-          .filter((country: Country) => country.name !== 'United States')
-          .sort((a: Country, b: Country) => a.name?.localeCompare(b?.name))
+          const usCountry = countries.value.find((country) => country.name === 'United States')
+          state.lists.countries = usCountry ? [usCountry, ...sortedCountries] : sortedCountries
 
-        const usCountry = data.find((country: Country) => country.name === 'United States')
-        state.lists.countries = usCountry ? [usCountry, ...sortedCountries] : sortedCountries
-
-        if (usCountry) {
-          state.form.selectedPhoneCode = usCountry.phonecode
+          // Don't set phone code based on country anymore
+          // if (usCountry) {
+          //   state.form.selectedPhoneCode = usCountry.phonecode || '1'
+          // }
         }
-
         state.isFetchFailed = false
       } catch (error) {
-        console.error('Error fetching countries:', error)
+        console.error('Error processing countries:', error)
         state.isFetchFailed = true
       }
     }
 
     const fetchStates = async (countryId: string) => {
       try {
-        const response = await fetch(`${config.order_service_url}api/geo/countries/${countryId}/states`)
-        const data = await response.json()
-        state.lists.states = data.sort((a: State, b: State) => a.name.localeCompare(b.name))
+        stateFilter.value = { countryId }
       } catch (error) {
-        console.error('Error fetching states:', error)
+        console.error('Error processing states:', error)
         state.lists.states = []
       }
     }
 
-    const fetchPhoneCodes = async () => {
-      try {
-        const response = await fetch(`${config.order_service_url}api/geo/phonecodes`)
-        const data = await response.json()
-
-        // Sort phone codes and ensure US is first
-        const sortedPhoneCodes = data
-          .filter((code: PhoneCode) => code.country !== 'United States')
-          .sort((a: PhoneCode, b: PhoneCode) => a?.country?.localeCompare(b?.country))
-
-        const usPhoneCode = data.find((code: PhoneCode) => code.country === 'United States')
-        state.lists.phoneCodes = usPhoneCode ? [usPhoneCode, ...sortedPhoneCodes] : sortedPhoneCodes
-      } catch (error) {
-        console.error('Error fetching phone codes:', error)
-        state.lists.phoneCodes = []
-      }
-    }
+    watch(
+      countries,
+      (newCountries) => {
+        if (newCountries && newCountries.length > 0) {
+          fetchCountries()
+        }
+      },
+      { immediate: true }
+    )
 
     watch(
       () => state.form.selectedCountry,
@@ -185,10 +220,6 @@ export default defineComponent({
         if (newCountryId) {
           fetchStates(newCountryId)
           state.form.selectedState = ''
-          const country = state.lists.countries.find((c) => c.id === newCountryId)
-          if (country) {
-            state.form.selectedPhoneCode = country.phonecode
-          }
           state.zipCodeError = null
         } else {
           state.lists.states = []
@@ -196,6 +227,12 @@ export default defineComponent({
         }
       }
     )
+
+    watch(states, (newStates) => {
+      if (newStates && newStates.length > 0 && state.form.selectedCountry) {
+        state.lists.states = [...newStates].sort((a, b) => a.name.localeCompare(b.name))
+      }
+    })
 
     watch(
       () => state.form.zipCode,
@@ -206,9 +243,28 @@ export default defineComponent({
       }
     )
 
+    // Add watcher for phone code validation
+    watch(
+      () => state.form.selectedPhoneCode,
+      () => {
+        validatePhoneCode()
+      }
+    )
+
+    // Console log to verify the GraphQL data is being used
+    watch(countriesResult, (newResult) => {
+      if (newResult?.allCountries) {
+        console.log('Countries data loaded from GraphQL:', newResult.allCountries.length)
+      }
+    })
+
+    watch(statesResult, (newResult) => {
+      if (newResult?.allStates) {
+        console.log('States data loaded from GraphQL:', newResult.allStates.length)
+      }
+    })
+
     onMounted(async () => {
-      await fetchCountries()
-      await fetchPhoneCodes()
       try {
         const stripeInstance = await loadStripe(config.stripe_pub)
         if (!stripeInstance) {
@@ -219,7 +275,6 @@ export default defineComponent({
         const elementsInstance = stripeInstance.elements()
         state.elements = elementsInstance
 
-        // wait for the cardElementRef to be available
         let attempts = 0
         const maxAttempts = 10
         while (!cardElementRef.value && attempts < maxAttempts) {
@@ -270,7 +325,6 @@ export default defineComponent({
       let isValid = true
       const errors = state.formErrors
 
-      // Reset all errors
       Object.keys(errors).forEach((key) => {
         errors[key as keyof typeof errors] = false
       })
@@ -313,6 +367,8 @@ export default defineComponent({
       if (!state.form.selectedPhoneCode) {
         errors.selectedPhoneCode = true
         isValid = false
+      } else if (!validatePhoneCode()) {
+        isValid = false
       }
 
       if (!state.form.phoneNumber) {
@@ -342,42 +398,48 @@ export default defineComponent({
           throw new Error('Payment system not initialized')
         }
 
-        // Create order first
-        const orderResponse = await fetch(`${config.order_service_url}api/orders`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            order_id: Math.random().toString(36).substring(2, 15),
-            user_id: currentUser.value?.id,
-            type: 'standard',
-            total_amount: 1,
-            currency: 'usd',
-            items: [
-              {
-                product_id: 'prod_123',
-                quantity: 1,
-                unit_price: 100,
-                name: 'Product Name',
-                metadata: {
-                  start_date: new Date().toISOString(),
-                  end_date: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 30).toISOString(),
-                },
-              },
-            ],
-            custom_metadata: {},
-          }),
+        // Generate a unique order ID
+        const orderId = Math.random().toString(36).substring(2, 15)
+
+        // Prepare order input data according to GraphQL schema
+        const orderInput: CreateOrderInput = {
+          userId: currentUser.value?.id || '',
+          orderId: orderId,
+          status: OrderStatus.PENDING,
+          type: 'standard',
+          totalAmount: plan.value?.price || 100, // Use actual plan price
+          currency: 'usd',
+          items: [
+            {
+              name: plan.value?.name || 'Product Name',
+              productId: 'prod_123',
+              quantity: 1,
+              unitPrice: plan.value?.price || 100,
+            } as OrderItemInput,
+          ],
+          metadata: {
+            start_date: new Date().toISOString(),
+            end_date: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 365).toISOString(), // 1 year
+          },
+        }
+
+        // Create order using Apollo client directly
+        const orderResult = await apolloClient.mutate({
+          mutation: createOrderMutation,
+          variables: {
+            input: orderInput,
+          },
         })
 
-        if (!orderResponse.ok) {
+        if (!orderResult.data || !orderResult.data.createOrder) {
           throw new Error('Failed to create order')
         }
 
-        const order = await orderResponse.json()
+        const order = orderResult.data.createOrder
 
         const selectedState = state.lists.states.find((s) => s.id === state.form.selectedState)
         const selectedCountry = state.lists.countries.find((c) => c.id === state.form.selectedCountry)
 
-        // Create token with additional address info
         const { token, error: tokenError } = await state.stripe.createToken(state.cardElement, {
           name: state.form.nameOnCard,
           address_line1: state.form.address,
@@ -391,40 +453,54 @@ export default defineComponent({
           throw new Error('Payment verification failed.')
         }
 
-        // Make payment
-        const response = await fetch(`${config.order_service_url}api/payments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: order.total_amount,
-            order_id: order.id,
-            stripe_token: token.id,
-            currency: order.currency,
-            description: 'Payment for order',
-            custom_metadata: {
-              email: state.form.email,
-              name: state.form.nameOnCard,
-              billing_address: {
-                street: state.form.address,
-                city: state.form.city,
-                state: selectedState?.name || '',
-                zip: state.form.zipCode,
-                country: selectedCountry?.name || '',
-              },
-              phone: {
-                code: state.form.selectedPhoneCode,
-                number: state.form.phoneNumber,
-              },
+        // Type assertion for token
+        const stripeToken = token as Token
+
+        // Replace fetch with GraphQL mutation for payment processing
+        const paymentInput: CreatePaymentInput = {
+          orderId: order.id,
+          userId: currentUser.value?.id ? String(currentUser.value.id) : '', // Ensure userId is a string and not null
+          amount: order.totalAmount,
+          currency: (order.currency || 'usd').toUpperCase().substring(0, 3), // Ensure currency is uppercase and exactly 3 chars
+          paymentMethod: PaymentMethod.CREDIT_CARD,
+          status: PaymentStatus.PROCESSING,
+          type: 'subscription', // Include the type field directly
+          stripeChargeId: stripeToken.id, // Using the Stripe token as transaction ID
+          externalReference: stripeToken.card?.last4 ? `Card ending in ${stripeToken.card.last4}` : undefined,
+          metadata: {
+            email: state.form.email,
+            name: state.form.nameOnCard,
+            billing_address: {
+              street: state.form.address,
+              city: state.form.city,
+              state: selectedState?.name || '',
+              zip: state.form.zipCode,
+              country: selectedCountry?.name || '',
             },
-          }),
+            phone: {
+              code: state.form.selectedPhoneCode,
+              number: state.form.phoneNumber,
+            },
+          },
+        }
+
+        // Create payment using Apollo client directly
+        const paymentResult = await apolloClient.mutate({
+          mutation: createPaymentMutation,
+          variables: {
+            input: paymentInput,
+          },
         })
 
-        if (!response.ok) {
+        if (!paymentResult.data || !paymentResult.data.createPayment) {
           throw new Error('Payment processing failed. Please try again.')
         }
+
+        // Payment was successful
+        console.log('Payment processed successfully:', paymentResult.data.createPayment)
       } catch (err: any) {
         console.error('Error processing payment:', err)
-        state.error = 'Payment processing failed. Please try again.'
+        state.error = err.message || 'Payment processing failed. Please try again.'
       } finally {
         state.loading = false
       }
@@ -497,7 +573,6 @@ export default defineComponent({
                   size="default"
                   placeholder="Select your country *"
                   filterable
-                  allowCreate
                   clearable
                 >
                   {!state.isFetchFailed &&
@@ -566,28 +641,18 @@ export default defineComponent({
                   Phone<span class="required">*</span>
                 </label>
                 <div class="phone-input-group">
-                  <ElSelect
+                  <ElInput
                     modelValue={state.form.selectedPhoneCode}
                     onUpdate:modelValue={(val: string) => {
                       state.form.selectedPhoneCode = val
                       state.formErrors.selectedPhoneCode = false
+                      state.phoneCodeError = null
                     }}
-                    class={['phone-code-select', state.formErrors.address ? 'error-border' : '']}
-                    size="default"
                     placeholder="+1"
-                    filterable
-                    allowCreate
-                    clearable
-                    style={{
-                      '--el-select-input-focus-border-color': state.formErrors.selectedPhoneCode
-                        ? '#f56c6c !important'
-                        : '',
-                    }}
-                  >
-                    {uniqBy(state.lists.countries, 'phonecode').map((country) => (
-                      <ElOption key={country.id} value={country.phonecode} label={`+${country.phonecode}`} />
-                    ))}
-                  </ElSelect>
+                    class={['phone-code-input', state.formErrors.selectedPhoneCode ? 'error-border' : '']}
+                    size="default"
+                    maxLength={5} // Limit to 5 characters (+ and up to 4 digits)
+                  />
                   <ElInput
                     modelValue={state.form.phoneNumber}
                     onUpdate:modelValue={(val: string) => {
@@ -597,8 +662,11 @@ export default defineComponent({
                     placeholder="Phone number"
                     type="tel"
                     size="default"
-                    class={state.formErrors.address ? 'error-border' : ''}
+                    class={state.formErrors.phoneNumber ? 'error-border' : ''}
                   />
+                </div>
+                <div class={['field-error', 'phone-code-error', state.phoneCodeError && 'visible']}>
+                  {state.phoneCodeError}
                 </div>
               </div>
 
@@ -616,7 +684,7 @@ export default defineComponent({
             <div class="order-summary">
               <h2>Order Summary</h2>
               {plan.value && (
-                <>
+                <Fragment>
                   <div class="summary-item">
                     <span class="item-name">{plan.value.name} Plan</span>
                     <span class="item-price">
@@ -627,9 +695,9 @@ export default defineComponent({
                   </div>
                   <div class="summary-details">
                     {plan.value.description && (
-                      <>
+                      <Fragment>
                         <div class="plan-description" v-html={plan.value.description} />
-                      </>
+                      </Fragment>
                     )}
                   </div>
                   <div class="summary-total">
@@ -641,7 +709,7 @@ export default defineComponent({
                     </span>
                   </div>
                   <p class="vat-notice">*VAT included where applicable</p>
-                </>
+                </Fragment>
               )}
             </div>
           </div>
