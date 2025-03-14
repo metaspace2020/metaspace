@@ -1,5 +1,4 @@
 import { Context } from '../../../context'
-import { UserError } from 'graphql-errors'
 import config from '../../../utils/config'
 import fetch, { RequestInit } from 'node-fetch'
 import logger from '../../../utils/logger'
@@ -40,9 +39,29 @@ interface AllPaymentsArgs {
   limit?: number;
 }
 
-interface RefundPaymentArgs {
-  amount?: number;
-  reason?: string;
+// Country interfaces
+interface AllCountriesArgs {
+  filter?: {
+    name?: string;
+    code?: string;
+  };
+  orderBy?: 'NAME' | 'CODE' | 'CREATED_AT' | 'UPDATED_AT';
+  sortingOrder?: 'ASCENDING' | 'DESCENDING';
+  page?: number;
+  limit?: number;
+}
+
+// State interfaces
+interface AllStatesArgs {
+  filter?: {
+    name?: string;
+    code?: string;
+    countryId?: string;
+  };
+  orderBy?: 'NAME' | 'CODE' | 'CREATED_AT' | 'UPDATED_AT';
+  sortingOrder?: 'ASCENDING' | 'DESCENDING';
+  page?: number;
+  limit?: number;
 }
 
 // Helper function to make API requests
@@ -85,6 +104,24 @@ export const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GE
   }
 }
 
+// Convert GraphQL params to API params for location endpoints
+const mapLocationOrderByToApi = (orderBy: string | undefined): string => {
+  if (!orderBy) return 'name'
+
+  const mapping: Record<string, string> = {
+    NAME: 'name',
+    CODE: 'code',
+    CREATED_AT: 'createdAt',
+    UPDATED_AT: 'updatedAt',
+  }
+
+  return mapping[orderBy] || 'name'
+}
+
+const mapSortingOrderToApi = (sortingOrder: string | undefined): string => {
+  return sortingOrder === 'DESCENDING' ? 'DESC' : 'ASC'
+}
+
 // Convert query parameters to URL search params
 const buildQueryString = (params: Record<string, any>): string => {
   const urlParams = new URLSearchParams()
@@ -95,6 +132,16 @@ const buildQueryString = (params: Record<string, any>): string => {
     const limit = Number(params.limit) || 10
     params.offset = (page - 1) * limit
     delete params.page
+  }
+
+  // Handle location orderBy conversion
+  if (params.orderBy && ['NAME', 'CODE', 'CREATED_AT', 'UPDATED_AT'].includes(params.orderBy)) {
+    params.orderBy = mapLocationOrderByToApi(params.orderBy)
+  }
+
+  // Handle sorting order conversion
+  if (params.sortingOrder) {
+    params.sortingOrder = mapSortingOrderToApi(params.sortingOrder)
   }
 
   // Process filter parameters separately to apply them at the root level
@@ -135,6 +182,12 @@ interface QueryResolvers {
   payment: (_: any, args: { id: number }, ctx: Context) => Promise<any>;
   allPayments: (_: any, args: AllPaymentsArgs, ctx: Context) => Promise<any[]>;
   paymentsCount: (_: any, args: { filter?: any }, ctx: Context) => Promise<number>;
+  country: (_: any, args: { id: string }, ctx: Context) => Promise<any>;
+  allCountries: (_: any, args: AllCountriesArgs, ctx: Context) => Promise<any[]>;
+  countriesCount: (_: any, args: { filter?: any }, ctx: Context) => Promise<number>;
+  state: (_: any, args: { id: string }, ctx: Context) => Promise<any>;
+  allStates: (_: any, args: AllStatesArgs, ctx: Context) => Promise<any[]>;
+  statesCount: (_: any, args: { filter?: any }, ctx: Context) => Promise<number>;
 }
 
 const QueryResolvers: QueryResolvers = {
@@ -205,6 +258,69 @@ const QueryResolvers: QueryResolvers = {
     }
   },
 
+  // Country query resolvers
+  async country(_: any, { id }: { id: string }, ctx: Context): Promise<any> {
+    try {
+      return await makeApiRequest(ctx, `/api/location/countries/${id}`)
+    } catch (error) {
+      logger.error(`Error fetching country with ID ${id}:`, error)
+      return null
+    }
+  },
+
+  async allCountries(_: any, args: AllCountriesArgs, ctx: Context): Promise<any[]> {
+    try {
+      const queryString = buildQueryString(args)
+      const response = await makeApiRequest(ctx, `/api/location/countries${queryString}`)
+      return response.data || []
+    } catch (error) {
+      logger.error('Error fetching all countries:', error)
+      return []
+    }
+  },
+
+  async countriesCount(_: any, { filter = {} }: { filter?: any }, ctx: Context): Promise<number> {
+    try {
+      const queryString = buildQueryString({ filter })
+      const result = await makeApiRequest(ctx, `/api/location/countries${queryString}`)
+      return result.total || 0
+    } catch (error) {
+      logger.error('Error fetching countries count:', error)
+      return 0
+    }
+  },
+
+  // State query resolvers
+  async state(_: any, { id }: { id: string }, ctx: Context): Promise<any> {
+    try {
+      return await makeApiRequest(ctx, `/api/location/states/${id}`)
+    } catch (error) {
+      logger.error(`Error fetching state with ID ${id}:`, error)
+      return null
+    }
+  },
+
+  async allStates(_: any, args: AllStatesArgs, ctx: Context): Promise<any[]> {
+    try {
+      const queryString = buildQueryString(args)
+      const response = await makeApiRequest(ctx, `/api/location/states${queryString}`)
+      return response.data || []
+    } catch (error) {
+      logger.error('Error fetching all states:', error)
+      return []
+    }
+  },
+
+  async statesCount(_: any, { filter = {} }: { filter?: any }, ctx: Context): Promise<number> {
+    try {
+      const queryString = buildQueryString({ filter })
+      const result = await makeApiRequest(ctx, `/api/location/states${queryString}`)
+      return result.total || 0
+    } catch (error) {
+      logger.error('Error fetching states count:', error)
+      return 0
+    }
+  },
 }
 
 export default QueryResolvers

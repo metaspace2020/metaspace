@@ -5,7 +5,6 @@ import {
   onBeforeAll,
   onBeforeEach,
   setupTestUsers,
-  adminContext,
 } from '../../../tests/graphqlTestEnvironment'
 import * as moment from 'moment'
 import fetch from 'node-fetch'

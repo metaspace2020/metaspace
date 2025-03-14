@@ -245,7 +245,11 @@ describe('modules/plan/controller (queries)', () => {
       )
 
       // Only include fields that are in the GraphQL query
-      const expected = inactivePlans.map(({ id, createdAt, ...rest }) => ({
+      const expected = inactivePlans.map(({
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        id,
+        createdAt, ...rest
+      }) => ({
         ...rest,
         createdAt: moment(createdAt).valueOf().toString(),
       }))
@@ -276,6 +280,7 @@ describe('modules/plan/controller (queries)', () => {
       )
 
       // Only include fields that are in the GraphQL query
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const expected = filteredPlans.map(({ id, createdAt, ...rest }) => ({
         ...rest,
         createdAt: moment(createdAt).valueOf().toString(),
@@ -542,6 +547,7 @@ describe('modules/plan/controller (queries)', () => {
 
     it('should return all API usages for admin', async() => {
       // Strip actionDt from API_USAGES for the expected result
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const expectedApiUsages = API_USAGES.map(({ actionDt, ...rest }) => rest)
 
       // Mock the fetch response with the expected data format from the API
@@ -565,7 +571,7 @@ describe('modules/plan/controller (queries)', () => {
     it('should filter API usages by userId', async() => {
       const userId = 'user1'
       const filteredUsages = API_USAGES
-        .filter(usage => usage.userId === userId)
+        .filter(usage => usage.userId === userId) // eslint-disable-next-line @typescript-eslint/no-unused-vars
         .map(({ actionDt, ...rest }) => rest) // Strip actionDt for comparison
 
       // Mock the fetch response

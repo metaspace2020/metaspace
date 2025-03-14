@@ -41,6 +41,23 @@ type Payment {
   updatedAt: String!
 }
 
+type Country {
+  id: String!
+  name: String!
+  code: String!
+  createdAt: String
+  updatedAt: String
+}
+
+type State {
+  id: String!
+  name: String!
+  code: String!
+  countryId: String!
+  createdAt: String
+  updatedAt: String
+}
+
 enum OrderStatus {
   pending
   processing
@@ -79,6 +96,13 @@ enum PaymentOrderBy {
   ORDER_BY_AMOUNT
 }
 
+enum LocationOrderBy {
+  NAME
+  CODE
+  CREATED_AT
+  UPDATED_AT
+}
+
 input OrderFilter {
   userId: String
   planId: Int
@@ -97,6 +121,17 @@ input PaymentFilter {
   paymentMethod: PaymentMethod
   startDate: String
   endDate: String
+}
+
+input CountryFilter {
+  name: String
+  code: String
+}
+
+input StateFilter {
+  name: String
+  code: String
+  countryId: String
 }
 
 input CreateOrderInput {
@@ -172,6 +207,27 @@ extend type Query {
     limit: Int = 10
   ): [Payment]
   paymentsCount(filter: PaymentFilter = {}): Int!
+  
+  # Location queries
+  country(id: String!): Country
+  allCountries(
+    filter: CountryFilter = {},
+    orderBy: LocationOrderBy = NAME,
+    sortingOrder: SortingOrder = ASCENDING,
+    page: Int = 1,
+    limit: Int = 10
+  ): [Country]
+  countriesCount(filter: CountryFilter = {}): Int!
+  
+  state(id: String!): State
+  allStates(
+    filter: StateFilter = {},
+    orderBy: LocationOrderBy = NAME,
+    sortingOrder: SortingOrder = ASCENDING,
+    page: Int = 1,
+    limit: Int = 10
+  ): [State]
+  statesCount(filter: StateFilter = {}): Int!
 }
 
 # Add these to the existing Mutation type

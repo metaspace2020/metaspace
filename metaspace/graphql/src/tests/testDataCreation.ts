@@ -10,7 +10,6 @@ import { DatasetDiagnostic, EngineDataset, Job } from '../modules/engine/model'
 import { Group, UserGroup as UserGroupModel } from '../modules/group/model'
 import { MolecularDB } from '../modules/moldb/model'
 import { isMemberOfGroup } from '../modules/dataset/operation/isMemberOfGroup'
-import { DeepPartial } from 'typeorm'
 
 export const createTestUser = async(user?: Partial<User>): Promise<User> => {
   return (await createTestUserWithCredentials(user))[0]

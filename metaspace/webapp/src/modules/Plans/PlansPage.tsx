@@ -1,8 +1,9 @@
-import { defineComponent, onMounted, reactive } from 'vue'
+import { defineComponent, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElButton } from '../../lib/element-plus'
-import config from '../../lib/config'
 import './PlansPage.scss'
+import { useQuery } from '@vue/apollo-composable'
+import { AllPlansData, getPlansQuery } from '../../api/plan'
 
 export default defineComponent({
   name: 'PlansPage',
@@ -10,14 +11,10 @@ export default defineComponent({
     const router = useRouter()
     const state = reactive({
       hoveredPlan: 2,
-      plans: [],
     })
 
-    onMounted(async () => {
-      const response = await fetch(`${config.order_service_url}api/plans`)
-      const plans = await response.json()
-      state.plans = plans.data
-    })
+    const { result: plansResult } = useQuery<AllPlansData>(getPlansQuery)
+    const plans = computed(() => plansResult.value?.allPlans || [])
 
     const handleStartTrial = (planId: number) => {
       router.push(`/payment?planId=${planId}`)
@@ -28,8 +25,7 @@ export default defineComponent({
     }
 
     return () => {
-      const plans = state.plans || []
-      const sortedPlans = [...plans].sort((a, b) => a.order - b.order)
+      const sortedPlans = [...plans.value].sort((a, b) => a.order - b.order)
 
       return (
         <div class="page-wrapper">
