@@ -120,7 +120,13 @@ def _upload_imzml_browser_files(
     """Save imzML browser files on the object storage"""
 
     def upload_file(data: np.array, key: str) -> CloudObject:
-        return multipart_upload_cobj(browser_storage, data.astype('f').tobytes(), key=key)
+        bytes_data = data.astype('f').tobytes()
+        size_bytes = len(bytes_data)
+
+        if size_bytes < 5 * 1024 ** 3:
+            return browser_storage.put_cloudobject(bytes_data, key=key)
+        
+        return multipart_upload_cobj(browser_storage, bytes_data, key=key)
 
     # Convert large precision types to float32 if needed
     if mzs.itemsize > 4:
@@ -167,16 +173,17 @@ def _load_ds(
     logger.info('Sorting spectra')
     mzs, ints, sp_idxs = _sort_spectra(imzml_reader, perf, mzs, ints, sp_lens)
 
+    logger.info('Uploading imzml browser files')
+    browser_storage, uuid = _prepare_storage_imzml_browser_files(imzml_cobject, conf)
+    _upload_imzml_browser_files(mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid)
+    perf.record_entry('uploaded imzml browser files')
+
     logger.info('Uploading segments')
     ds_segms_cobjs, ds_segments_bounds, ds_segm_lens = _upload_segments(
         storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs
     )
     perf.record_entry('uploaded segments', n_segms=len(ds_segms_cobjs))
 
-    logger.info('Uploading imzml browser files')
-    browser_storage, uuid = _prepare_storage_imzml_browser_files(imzml_cobject, conf)
-    _upload_imzml_browser_files(mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid)
-    perf.record_entry('uploaded imzml browser files')
 
     return (
         imzml_reader,

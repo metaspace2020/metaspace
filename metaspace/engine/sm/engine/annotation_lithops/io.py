@@ -10,6 +10,9 @@ import pyarrow as pa
 from lithops.storage import Storage
 from lithops.storage.utils import CloudObject
 
+import uuid
+import os
+
 logger = logging.getLogger('annotation-pipeline')
 TItem = TypeVar('TItem')
 TArg = TypeVar('TArg')
@@ -75,8 +78,12 @@ def multipart_upload_cobj(
     """
     # Validate key parameter - must be provided for multipart upload
     if key is None:
-        # Fall back to regular upload if key is None
-        return storage.put_cloudobject(data, bucket)
+        TEMP_PREFIX = "lithops.jobs/tmp"
+        # Generate a unique ID (lithops uses a counter, we'll use uuid for simplicity)
+        coid = uuid.uuid4().hex
+        name = f'cloudobject_{coid}'
+        key = '/'.join([TEMP_PREFIX, name])
+        logger.debug(f"No key provided, generated key following lithops pattern: {key}")
         
     data_size = len(data)
     bucket = bucket or storage.bucket
@@ -89,7 +96,9 @@ def multipart_upload_cobj(
     
     # Log start of multipart upload
     logger.info(f"Using multipart upload for large file: {key} ({data_size/(1024**3):.2f} GB)")
-    
+    logger.info(f"Using multipart upload for large file bucket: {bucket}")
+    logger.info(f"Using multipart upload for large file s3_client: {s3_client}")
+
     # Initialize multipart upload
     mpu = s3_client.create_multipart_upload(Bucket=bucket, Key=key)
     upload_id = mpu['UploadId']
@@ -147,7 +156,7 @@ def save_cobj(storage: Storage, obj: TItem, bucket: str = None, key: str = None)
     data = serialize(obj)
     data_size = len(data)
     
-    # # Use regular upload for files under 5GB
+    # # # Use regular upload for files under 5GB
     if data_size < 5 * 1024 ** 3:
         return storage.put_cloudobject(data, bucket, key)
     

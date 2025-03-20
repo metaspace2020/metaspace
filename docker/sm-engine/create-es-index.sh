@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 cd /opt/dev/metaspace/metaspace/engine
 
 pip install -qr requirements.txt
