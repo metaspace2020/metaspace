@@ -53,8 +53,106 @@ def deserialize(data):
         return pickle.loads(data)
 
 
+def multipart_upload_cobj(
+    storage: Storage, 
+    data: bytes, 
+    bucket: str = None, 
+    key: str = None, 
+    part_size_mb: int = 100
+) -> Union[CObj, CloudObject]:
+    """
+    Upload large data to S3 using multipart upload.
+    
+    Args:
+        storage: The Storage instance to use
+        data: The binary data to upload
+        bucket: The S3 bucket name (defaults to storage.bucket)
+        key: The S3 key (path) to upload to
+        part_size_mb: Size of each part in MB (default 100MB)
+        
+    Returns:
+        A CloudObject or CObj pointing to the uploaded data
+    """
+    # Validate key parameter - must be provided for multipart upload
+    if key is None:
+        # Fall back to regular upload if key is None
+        return storage.put_cloudobject(data, bucket)
+        
+    data_size = len(data)
+    bucket = bucket or storage.bucket
+    
+    # Get the underlying boto3 client
+    s3_client = storage.get_client()
+    
+    # Calculate part size in bytes
+    part_size = part_size_mb * 1024 * 1024
+    
+    # Log start of multipart upload
+    logger.info(f"Using multipart upload for large file: {key} ({data_size/(1024**3):.2f} GB)")
+    
+    # Initialize multipart upload
+    mpu = s3_client.create_multipart_upload(Bucket=bucket, Key=key)
+    upload_id = mpu['UploadId']
+    
+    # Calculate number of parts
+    parts_count = (data_size + part_size - 1) // part_size  # ceiling division
+    parts = []
+    
+    try:
+        # Upload each part
+        for i in range(parts_count):
+            part_number = i + 1
+            start = i * part_size
+            end = min(start + part_size, data_size)
+            
+            logger.info(f"Uploading part {part_number}/{parts_count} for {key}")
+            response = s3_client.upload_part(
+                Bucket=bucket,
+                Key=key,
+                PartNumber=part_number,
+                UploadId=upload_id,
+                Body=data[start:end]
+            )
+            
+            # Add part info to list
+            parts.append({
+                'PartNumber': part_number,
+                'ETag': response['ETag']
+            })
+            
+        # Complete the multipart upload
+        s3_client.complete_multipart_upload(
+            Bucket=bucket,
+            Key=key,
+            UploadId=upload_id,
+            MultipartUpload={'Parts': parts}
+        )
+        
+        # Return appropriate object type
+        return CObj(storage.backend, bucket, key)
+        
+    except Exception as e:
+        # Abort multipart upload if something goes wrong
+        logger.error(f"Error in multipart upload: {str(e)}")
+        s3_client.abort_multipart_upload(
+            Bucket=bucket,
+            Key=key,
+            UploadId=upload_id
+        )
+        raise
+
+
 def save_cobj(storage: Storage, obj: TItem, bucket: str = None, key: str = None) -> CObj[TItem]:
-    return storage.put_cloudobject(serialize(obj), bucket, key)
+    """Save obj to cloud storage, handling large files with multipart upload"""
+    data = serialize(obj)
+    data_size = len(data)
+    
+    # # Use regular upload for files under 5GB
+    if data_size < 5 * 1024 ** 3:
+        return storage.put_cloudobject(data, bucket, key)
+    
+    # For files >= 5GB, use multipart upload
+    return multipart_upload_cobj(storage, data, bucket, key)
 
 
 @overload

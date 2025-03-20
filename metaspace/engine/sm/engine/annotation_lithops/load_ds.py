@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Tuple, Union, Any
+import io
 
 import numpy as np
 import pandas as pd
@@ -12,7 +13,7 @@ from lithops.storage.utils import CloudObject
 
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.executor import Executor, MEM_LIMITS
-from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj
+from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj, multipart_upload_cobj
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
@@ -119,18 +120,13 @@ def _upload_imzml_browser_files(
     """Save imzML browser files on the object storage"""
 
     def upload_file(data: np.array, key: str) -> CloudObject:
-        return browser_storage.put_cloudobject(data.astype('f').tobytes(), key=key)
+        return multipart_upload_cobj(browser_storage, data.astype('f').tobytes(), key=key)
 
-    # TODO: need reimplement save_cobj for file > 5 GB
-    # https://github.com/metaspace2020/metaspace/issues/1469
+    # Convert large precision types to float32 if needed
     if mzs.itemsize > 4:
         mzs = mzs.astype('f')
     if ints.itemsize > 4:
         ints = ints.astype('f')
-
-    if any(o.nbytes >= 5 * 1024 ** 3 for o in (mzs, ints, sp_idxs)):
-        print('At least one object has a size of more than 5 GB')
-        return
 
     # there was no point in saving `sp_idxs` like float, it was a mistake
     # due to the thousands of files stored on S3, we cannot now store this array as np.int32 now
