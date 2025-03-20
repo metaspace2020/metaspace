@@ -27,7 +27,7 @@ import canEditEsDataset from '../operation/canEditEsDataset'
 import canDeleteEsDataset from '../operation/canDeleteEsDataset'
 import { DatasetEnrichment as DatasetEnrichmentModel, EnrichmentDB } from '../../enrichmentdb/model'
 import * as moment from 'moment/moment'
-import canPerformAction, { getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
+import { getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
 import isRateLimited from '../../../utils/redis'
 
 interface DbDataset {
@@ -440,7 +440,15 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     const redisClient = sessionStore?.client
 
     // Check if the IP is rate-limited
-    const rateLimited = redisClient ? await isRateLimited(redisClient, ip) : false
+    // const rateLimited = redisClient ? await isRateLimited(redisClient, ip) : false
+    const higherLimitUserIds: string[] = []
+    const HIGHER_LIMIT = 6
+    const rateLimited = redisClient
+      ? await isRateLimited(redisClient, ip,
+          higherLimitUserIds.length > 0 && higherLimitUserIds.includes(ctx.user?.id as string)
+            ? HIGHER_LIMIT
+            : 2)
+      : false
 
     if (!ctx.user?.id) {
       return JSON.stringify({
@@ -473,7 +481,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           link: 'https://metaspace2020.org/limit_reached',
         }],
       })
-    } else if (!await canPerformAction(ctx, action) || (ctx.user?.role !== 'admin' && rateLimited)) {
+    } else if (ctx.user?.role !== 'admin' && rateLimited) {
       await performAction(ctx, { ...action, actionType: 'download_attempt' })
 
       return JSON.stringify({
