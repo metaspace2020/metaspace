@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Tuple, Union, Any
-import io
 
 import numpy as np
 import pandas as pd
@@ -125,7 +124,7 @@ def _upload_imzml_browser_files(
 
         if size_bytes < 5 * 1024 ** 3:
             return browser_storage.put_cloudobject(bytes_data, key=key)
-        
+
         return multipart_upload_cobj(browser_storage, bytes_data, key=key)
 
     # Convert large precision types to float32 if needed
@@ -183,7 +182,6 @@ def _load_ds(
         storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs
     )
     perf.record_entry('uploaded segments', n_segms=len(ds_segms_cobjs))
-
 
     return (
         imzml_reader,
