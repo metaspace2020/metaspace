@@ -130,10 +130,10 @@ export enum OrderStatus {
 }
 
 export enum PaymentStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
+  SUCCEEDED = 'succeeded',
+  AUTHORIZED = 'authorized',
   FAILED = 'failed',
+  PENDING = 'pending',
   REFUNDED = 'refunded',
 }
 
@@ -141,7 +141,6 @@ export enum PaymentMethod {
   CREDIT_CARD = 'credit_card',
   PAYPAL = 'paypal',
   BANK_TRANSFER = 'bank_transfer',
-  CRYPTO = 'crypto',
   OTHER = 'other',
 }
 

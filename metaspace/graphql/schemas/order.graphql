@@ -69,8 +69,8 @@ enum OrderStatus {
 
 enum PaymentStatus {
   pending
-  processing
-  completed
+  succeeded
+  authorized
   failed
   refunded
 }
@@ -79,7 +79,6 @@ enum PaymentMethod {
   credit_card
   paypal
   bank_transfer
-  crypto
   other
 }
 

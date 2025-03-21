@@ -38,8 +38,8 @@ interface CreatePaymentInput {
   userId: string;
   amount: number;
   currency: string;
-  paymentMethod: 'credit_card' | 'paypal' | 'bank_transfer' | 'crypto' | 'other';
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+  paymentMethod: 'credit_card' | 'paypal' | 'bank_transfer' | 'other';
+  status: 'succeeded' | 'authorized' | 'failed' | 'pending' | 'refunded';
   type: string;
   stripeChargeId: string;
   externalReference?: string;
@@ -47,7 +47,7 @@ interface CreatePaymentInput {
 }
 
 interface UpdatePaymentInput {
-  status?: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+  status?: 'succeeded' | 'authorized' | 'failed' | 'pending' | 'refunded';
   metadata?: Record<string, any>;
 }
 

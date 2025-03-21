@@ -463,7 +463,7 @@ export default defineComponent({
           amount: order.totalAmount,
           currency: (order.currency || 'usd').toUpperCase().substring(0, 3), // Ensure currency is uppercase and exactly 3 chars
           paymentMethod: PaymentMethod.CREDIT_CARD,
-          status: PaymentStatus.PROCESSING,
+          status: PaymentStatus.PENDING,
           type: 'subscription', // Include the type field directly
           stripeChargeId: stripeToken.id, // Using the Stripe token as transaction ID
           externalReference: stripeToken.card?.last4 ? `Card ending in ${stripeToken.card.last4}` : undefined,
