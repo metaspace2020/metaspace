@@ -221,9 +221,15 @@ export const DatasetBrowserKendrickPlot = defineComponent({
               return val[2] * 2 || 20
             },
             label: {
-              show: true,
+              show: false,
               position: 'top',
               formatter: '{b}',
+            },
+            tooltip: {
+              show: true,
+              formatter: function (params: any) {
+                return params?.data?.tooltip || `m/z: ${params?.value?.[0]}<br>`
+              },
             },
             labelLayout: {
               hideOverlap: true,
@@ -236,6 +242,9 @@ export const DatasetBrowserKendrickPlot = defineComponent({
             name: 'Annotated',
             type: 'scatter',
             data: [],
+            labelLayout: {
+              hideOverlap: true,
+            },
             itemStyle: {
               color: '#005AB5',
             },

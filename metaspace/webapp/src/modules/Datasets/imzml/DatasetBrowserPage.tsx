@@ -357,7 +357,7 @@ export default defineComponent({
             })
 
             const dbs: any = tooltip.split('Candidate molecules ')
-            let finalTooltip: any = ''
+            let finalTooltip: any = `m/z: ${mz.toFixed(4)}<br>`
             dbs.forEach((db: any, dbIdx: number) => {
               const mols: any = uniq(db.split('<br>'))
               if (mols[0]) {
@@ -918,10 +918,18 @@ export default defineComponent({
 
     const renderTitle = () => {
       return (
-        <div class="flex items-center w-full">
-          <span class="text-xl w-full text-center px-4 py-2 break-all whitespace-normal overflow-hidden">
-            {state.selectedDataset?.name}
-          </span>
+        <div
+          class="flex items-center w-full justify-center py-2"
+          style={{ height: '40px', maxWidth: 'calc(100% - 40px)' }}
+        >
+          <div class="flex flex-row justify-center items-start">
+            <span class="text-xl w-full text-center py-2 break-all whitespace-normal overflow-hidden">
+              {state.selectedDataset?.name}
+            </span>
+            <CopyButton class="self-start" text={state.selectedDataset?.name}>
+              Copy name to clipboard
+            </CopyButton>
+          </div>
         </div>
       )
     }
@@ -964,7 +972,6 @@ export default defineComponent({
       return (
         <div class="info">
           {renderTitle()}
-
           {candidateMolecules()}
           <CopyButton
             class="ml-1"

@@ -3,8 +3,8 @@ $header-height: 64px;
 
 .dataset-browser-container{
   @apply flex flex-row flex-wrap p-0;
-  min-height: calc(100vh - #{$header-height});
-
+  // min-height: calc(100vh - #{$header-height});
+  min-height: auto !important;
 
   .ds-intensities-wrapper{
     @apply flex justify-between items-start h-6 leading-6 tracking-wide relative z-10;
