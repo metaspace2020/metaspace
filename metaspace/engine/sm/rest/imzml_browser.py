@@ -23,14 +23,14 @@ def create_mz_image(mz_peaks, coordinates):
 
     # calculate the total intensity of all peaks for each pixel
     mz_image = np.zeros(width * height, dtype='f')
-    np.add.at(mz_image, mz_peaks[:, 2].astype(np.int), mz_peaks[:, 1])
+    np.add.at(mz_image, mz_peaks[:, 2].astype(np.int64), mz_peaks[:, 1])
 
     if mz_image.max() > 0:
         mz_image /= mz_image.max()
 
     alpha = np.ones(shape=(height, width))
 
-    return mz_image.reshape(height, width), alpha, np.max(mz_peaks)
+    return mz_image.reshape(height, width), alpha, np.max(mz_peaks[:, 1])
 
 
 def create_rgba_image(mz_image, alpha):
@@ -96,7 +96,7 @@ def get_intensity_by_mz_ppm():
         logger.info(f'Creating an image in {round(time.time() - start, 2)} sec')
 
         headers = {'Content-Type': 'application/json'}
-        body = {'image': body, 'max_intensity': str(max_int)}
+        body = {'image': body, 'max_intensity': float(max_int)}
         return bottle.HTTPResponse(body, **headers)
     except Exception as e:
         logger.exception(f'{bottle.request} - {e}')

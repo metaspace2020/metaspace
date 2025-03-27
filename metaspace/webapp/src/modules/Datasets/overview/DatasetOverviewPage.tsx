@@ -15,6 +15,7 @@ import isValidTiptapJson from '../../../lib/isValidTiptapJson'
 import NewFeatureBadge from '../../../components/NewFeatureBadge'
 import './DatasetOverviewPage.scss'
 import { useRoute, useRouter } from 'vue-router'
+import CopyButton from '../../../components/CopyButton.vue'
 // import { RecaptchaV2, useRecaptcha } from 'vue3-recaptcha-v2'
 
 const DatasetOverviewPage = defineComponent({
@@ -129,20 +130,18 @@ const DatasetOverviewPage = defineComponent({
 
       return (
         <div class={'dataset-overview-container justify-center'}>
-          <div class={'dataset-overview-wrapper max-w-4xl w-full'}>
+          <div class={'dataset-overview-wrapper w-full'}>
             <div class="dataset-overview-header">
-              <h1 class="text-center truncate">
-                {name}
+              <div class="flex flex-row items-center justify-between">
+                <h1 class={`truncate ${name.length > 40 ? '!text-2xl' : ''}`}>
+                  <span class="break-all whitespace-normal overflow-hidden">{name}</span>
+                </h1>
+                <CopyButton text={name}>Copy datasetname to clipboard</CopyButton>
                 <span class="text-base align-middle">
                   {!isPublic && <VisibilityBadge datasetId={id ? id.toString() : ''} />}
                 </span>
-              </h1>
-              {/*<RecaptchaV2*/}
-              {/*  class="flex justify-center justify-items-center p-2"*/}
-              {/*  onWidgetId={handleWidgetId}*/}
-              {/*  onLoadCallback={handleLoadCallback}*/}
-              {/*  size="invisible"*/}
-              {/*/>*/}
+              </div>
+
               <NewFeatureBadge featureKey="imzmlBrowser">
                 <DatasetActionsDropdown
                   dataset={dataset?.value}

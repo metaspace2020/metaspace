@@ -12,7 +12,7 @@ from lithops.storage.utils import CloudObject
 
 from sm.engine.annotation.imzml_reader import LithopsImzMLReader
 from sm.engine.annotation_lithops.executor import Executor, MEM_LIMITS
-from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj
+from sm.engine.annotation_lithops.io import CObj, load_cobj, save_cobj, multipart_upload_cobj
 from sm.engine.config import SMConfig
 from sm.engine.utils.perf_profile import SubtaskProfiler
 
@@ -119,18 +119,19 @@ def _upload_imzml_browser_files(
     """Save imzML browser files on the object storage"""
 
     def upload_file(data: np.array, key: str) -> CloudObject:
-        return browser_storage.put_cloudobject(data.astype('f').tobytes(), key=key)
+        bytes_data = data.astype('f').tobytes()
+        size_bytes = len(bytes_data)
 
-    # TODO: need reimplement save_cobj for file > 5 GB
-    # https://github.com/metaspace2020/metaspace/issues/1469
+        if size_bytes < 5 * 1024 ** 3:
+            return browser_storage.put_cloudobject(bytes_data, key=key)
+
+        return multipart_upload_cobj(browser_storage, bytes_data, key=key)
+
+    # Convert large precision types to float32 if needed
     if mzs.itemsize > 4:
         mzs = mzs.astype('f')
     if ints.itemsize > 4:
         ints = ints.astype('f')
-
-    if any(o.nbytes >= 5 * 1024 ** 3 for o in (mzs, ints, sp_idxs)):
-        print('At least one object has a size of more than 5 GB')
-        return
 
     # there was no point in saving `sp_idxs` like float, it was a mistake
     # due to the thousands of files stored on S3, we cannot now store this array as np.int32 now
@@ -171,16 +172,16 @@ def _load_ds(
     logger.info('Sorting spectra')
     mzs, ints, sp_idxs = _sort_spectra(imzml_reader, perf, mzs, ints, sp_lens)
 
+    logger.info('Uploading imzml browser files')
+    browser_storage, uuid = _prepare_storage_imzml_browser_files(imzml_cobject, conf)
+    _upload_imzml_browser_files(mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid)
+    perf.record_entry('uploaded imzml browser files')
+
     logger.info('Uploading segments')
     ds_segms_cobjs, ds_segments_bounds, ds_segm_lens = _upload_segments(
         storage, ds_segm_size_mb, imzml_reader, mzs, ints, sp_idxs
     )
     perf.record_entry('uploaded segments', n_segms=len(ds_segms_cobjs))
-
-    logger.info('Uploading imzml browser files')
-    browser_storage, uuid = _prepare_storage_imzml_browser_files(imzml_cobject, conf)
-    _upload_imzml_browser_files(mzs, ints, sp_idxs, imzml_reader, browser_storage, uuid)
-    perf.record_entry('uploaded imzml browser files')
 
     return (
         imzml_reader,

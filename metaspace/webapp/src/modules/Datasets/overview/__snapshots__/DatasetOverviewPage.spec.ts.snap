@@ -4,9 +4,14 @@ exports[`DatasetOverviewPage > should match snapshot when dataset does not exist
 
 exports[`DatasetOverviewPage > should match snapshot when dataset exist 1`] = `
 "<div class=\\"dataset-overview-container justify-center\\">
-  <div class=\\"dataset-overview-wrapper max-w-4xl w-full\\">
+  <div class=\\"dataset-overview-wrapper w-full\\">
     <div class=\\"dataset-overview-header\\">
-      <h1 class=\\"text-center truncate\\">JD_Sampe<span class=\\"text-base align-middle\\"><!----></span></h1>
+      <div class=\\"flex flex-row items-center justify-between\\">
+        <h1 class=\\"truncate \\"><span class=\\"break-all whitespace-normal overflow-hidden\\">JD_Sampe</span></h1>
+        <div data-v-0bc4b279=\\"\\" class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\" popper-class=\\"min-w-0\\">
+          <p data-v-0bc4b279=\\"\\" class=\\"leading-none m-0\\">Copy datasetname to clipboard</p>
+        </div><span class=\\"text-base align-middle\\"><!----></span>
+      </div>
       <!---->
     </div>
     <div class=\\"dataset-overview-holder\\">

@@ -440,7 +440,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   colocalizedWith: {
     type: InputFilter,
     name: 'Colocalized with',
-    levels: ['annotation', 'enrichment'],
+    levels: ['annotation', 'enrichment', 'dataset-annotation'],
     initialValue: undefined,
     dependsOnFilters: ['fdrLevel', 'database', 'datasetIds'],
     conflictsWithFilters: ['colocalizationSamples'],

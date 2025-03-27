@@ -10,7 +10,14 @@ import {
   ElIcon,
 } from '../../../lib/element-plus'
 import { useQuery } from '@vue/apollo-composable'
-import { getBrowserImage, GetDatasetByIdQuery, getDatasetByIdWithPathQuery, getSpectrum } from '../../../api/dataset'
+import {
+  datasetListItemsQuery,
+  DatasetDetailItem,
+  getBrowserImage,
+  GetDatasetByIdQuery,
+  getDatasetByIdWithPathQuery,
+  getSpectrum,
+} from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
 import safeJsonParse from '../../../lib/safeJsonParse'
@@ -27,8 +34,8 @@ import MolecularFormula from '../../../components/MolecularFormula'
 import CopyButton from '../../../components/CopyButton.vue'
 import * as FileSaver from 'file-saver'
 import MainImageHeader from '../../Annotations/annotation-widgets/default/MainImageHeader.vue'
-import { get, uniq } from 'lodash-es'
-import { useRoute } from 'vue-router'
+import { get, uniq, uniqBy } from 'lodash-es'
+import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { InfoFilled, Loading } from '@element-plus/icons-vue'
 
@@ -44,6 +51,8 @@ interface GlobalImageSettings {
 }
 
 interface DatasetBrowserState {
+  datasetName: string | undefined
+  selectedDataset: any
   dataRange: any
   peakFilter: number
   fdrFilter: number | undefined
@@ -100,8 +109,11 @@ export default defineComponent({
   },
   setup: function () {
     const route = useRoute()
+    const router = useRouter()
     const store = useStore()
     const state = reactive<DatasetBrowserState>({
+      datasetName: undefined,
+      selectedDataset: undefined,
       dataRange: { maxX: 0, maxY: 0, minX: 0, minY: 0 },
       peakFilter: PEAK_FILTER.ALL,
       fdrFilter: 0.05,
@@ -175,9 +187,28 @@ export default defineComponent({
       })
     )
 
+    const dsQueryVars = computed(() => ({
+      dFilter: {
+        ids: null,
+        polarity: null,
+        metadataType: 'Imaging MS',
+        status: 'FINISHED',
+        name: state.datasetName,
+      },
+      query: '',
+      limit: 100,
+    }))
+    const { result: datasetsResult, loading: datasetLoading } = useQuery<{ allDatasets: DatasetDetailItem[] }>(
+      datasetListItemsQuery,
+      dsQueryVars
+    )
+    const datasetOptions = computed(() => datasetsResult.value?.allDatasets || [])
+
     onDatasetsResult(async (result) => {
       try {
         const dataset = result!.data.dataset
+
+        state.selectedDataset = dataset
 
         if (dataset && state.databaseFilter === undefined) {
           state.databaseFilter = dataset.databases[0].id
@@ -326,7 +357,7 @@ export default defineComponent({
             })
 
             const dbs: any = tooltip.split('Candidate molecules ')
-            let finalTooltip: any = ''
+            let finalTooltip: any = `m/z: ${mz.toFixed(4)}<br>`
             dbs.forEach((db: any, dbIdx: number) => {
               const mols: any = uniq(db.split('<br>'))
               if (mols[0]) {
@@ -519,14 +550,6 @@ export default defineComponent({
         } else {
           state.annotation = {
             ...annotations.value[currentAnnotationIdx],
-            isotopeImages: [
-              {
-                mz: state.mz,
-                url: state.ionImageUrl,
-                minIntensity: 0,
-                maxIntensity: browserResult?.value?.browserImage?.maxIntensity,
-              },
-            ],
           }
         }
 
@@ -713,6 +736,44 @@ export default defineComponent({
       state.globalImageSettings.isNormalized = !state.showFullTIC && isNormalized
     }
 
+    const fetchDatasets = async (query: string) => {
+      state.datasetName = query
+    }
+
+    const renderDatasetFilters = () => {
+      const dsOptions = uniqBy(datasetOptions.value?.concat([state.selectedDataset]), 'id')
+      return (
+        <div class="dataset-browser-holder-filter-box py-0">
+          <p class="font-semibold">Dataset filters</p>
+          {state.selectedDataset && (
+            <ElSelect
+              class="w-full"
+              modelValue={state.selectedDataset?.id}
+              remoteMethod={fetchDatasets}
+              filterable
+              remote
+              fitInputWidth
+              loading={datasetLoading.value}
+              size="small"
+              placeholder="Start typing dataset name"
+              loadingText="Loading matching entries..."
+              noMatchText="No matches"
+              onChange={(datasetId: string) => {
+                router.push({
+                  name: 'dataset-browser',
+                  params: { dataset_id: datasetId },
+                })
+              }}
+            >
+              {dsOptions.map((ds: any) => (
+                <ElOption label={ds?.name} value={ds?.id} />
+              ))}
+            </ElSelect>
+          )}
+        </div>
+      )
+    }
+
     const renderBrowsingFilters = () => {
       return (
         <div class="dataset-browser-holder-filter-box">
@@ -793,7 +854,7 @@ export default defineComponent({
           </div>
           <FadeTransition>
             <div
-              class="flex flex-row w-full items-start mt-4 flex-wrap"
+              class="flex flex-row w-full items-start mt-1 flex-wrap"
               style={{
                 visibility: state.currentView === VIEWS.KENDRICK ? 'visible' : 'hidden',
               }}
@@ -855,6 +916,24 @@ export default defineComponent({
       )
     }
 
+    const renderTitle = () => {
+      return (
+        <div
+          class="flex items-center w-full justify-center py-2"
+          style={{ height: '40px', maxWidth: 'calc(100% - 40px)' }}
+        >
+          <div class="flex flex-row justify-center items-start">
+            <span class="text-xl w-full text-center py-2 break-all whitespace-normal overflow-hidden">
+              {state.selectedDataset?.name}
+            </span>
+            <CopyButton class="self-start" text={state.selectedDataset?.name}>
+              Copy name to clipboard
+            </CopyButton>
+          </div>
+        </div>
+      )
+    }
+
     const renderInfo = () => {
       const { annotation } = state
 
@@ -864,7 +943,8 @@ export default defineComponent({
 
       if (state.showFullTIC) {
         return (
-          <div class="info">
+          <div class="info flex flex-col items-center">
+            {renderTitle()}
             <span class="text-2xl flex items-baseline ml-4">TIC image</span>
             <div
               class="flex items-baseline ml-4 w-full justify-center items-center text-xl"
@@ -891,6 +971,7 @@ export default defineComponent({
 
       return (
         <div class="info">
+          {renderTitle()}
           {candidateMolecules()}
           <CopyButton
             class="ml-1"
@@ -1100,11 +1181,13 @@ export default defineComponent({
 
     return () => {
       const isEmpty = state.x === undefined && state.y === undefined
+
       return (
         <div class={'dataset-browser-container'}>
           <div class={'dataset-browser-wrapper w-full lg:w-1/2'}>
             <div class="dataset-browser-holder">
               <div class="dataset-browser-holder-header">Spectrum browser</div>
+              {renderDatasetFilters()}
               {renderBrowsingFilters()}
               {!state.noData && renderChartOptions()}
               {isEmpty && !state.chartLoading && renderEmptySpectrum()}

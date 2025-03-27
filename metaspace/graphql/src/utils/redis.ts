@@ -3,7 +3,8 @@ import * as moment from 'moment'
 const RATE_LIMIT_WINDOW = 24 * 60 * 60 // 24 hours in seconds
 const RATE_LIMIT_COUNT = 2
 
-export default async function isRateLimited(redisClient: any, ip: string): Promise<boolean> {
+export default async function isRateLimited(redisClient: any, ip: string,
+  rateLimitCount: number = RATE_LIMIT_COUNT): Promise<boolean> {
   const key = `rate_limit:downloadLinkJson:${ip}`
 
   // Get the current value from Redis
@@ -55,7 +56,7 @@ export default async function isRateLimited(redisClient: any, ip: string): Promi
   // Increment the counter
   const currentCount = parseInt(storedValue, 10) + 1
 
-  if (currentCount > RATE_LIMIT_COUNT) {
+  if (currentCount > rateLimitCount) {
     // Store the timestamp when the rate limit is reached
     await new Promise<void>((resolve, reject) => {
       redisClient.set(key, currentTime.toISOString(), 'EX', RATE_LIMIT_WINDOW, (err: any) => {

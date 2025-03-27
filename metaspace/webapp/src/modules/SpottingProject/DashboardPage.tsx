@@ -1232,46 +1232,7 @@ export default defineComponent({
     }
 
     const handleItemClick = (item: any) => {
-      // get info from clicked chart item and open on a metaspace url
-      const baseUrl = 'https://metaspace2020.org/annotations?db_id=304'
-      // const baseUrl = 'http://localhost:8999/annotations?db_id=304'
-      let url = baseUrl
-      const formulas: string = item?.data?.label?.formulas?.join('|')
-      const yAxisFilter: any = filterMap[state.options.yAxis]
-      const xAxisFilter: any = filterMap[state.options.xAxis]
-
-      // set dataset ids filter
-      if ((item?.data?.label?.datasetIds || []).length > 0) {
-        url += `&ds=${(item?.data?.label?.datasetIds || []).join(',')}`
-      }
-
-      if (yAxisFilter) {
-        const value =
-          state.options.yAxis === 'fine_class' ||
-          state.options.yAxis === 'main_coarse_class' ||
-          state.options.yAxis === 'main_coarse_path' ||
-          state.options.yAxis === 'fine_path' ||
-          state.options.yAxis === 'name'
-            ? formulas
-            : yAxisFilter.includes('MALDI matrix')
-            ? item.data.label.matrix.join('|')
-            : item.data.label.y
-        url += `&${yAxisFilter}=${encodeURIComponent(value)}`
-      }
-      if (xAxisFilter) {
-        const value =
-          state.options.xAxis === 'fine_class' ||
-          state.options.xAxis === 'main_coarse_class' ||
-          state.options.xAxis === 'main_coarse_path' ||
-          state.options.xAxis === 'fine_path' ||
-          state.options.xAxis === 'name'
-            ? formulas
-            : xAxisFilter.includes('MALDI matrix')
-            ? item.data.label.matrix.join('|')
-            : item.data.label.x
-        url += `&${xAxisFilter}=${encodeURIComponent(value)}`
-      }
-      window.open(url, '_blank')
+      handleMetaClick('304', [item.data]) // pass spotting db and clicked item
     }
 
     const chunkFormulas = (formulas, maxLength) => {
@@ -1299,12 +1260,13 @@ export default defineComponent({
       return chunks
     }
 
-    const handleMetaClick = () => {
-      const baseUrl = 'https://metaspace2020.org/annotations?db_id=22'
+    const handleMetaClick = (dbId: string = '22', items: any = []) => {
+      const baseUrl = `https://metaspace2020.org/annotations?db_id=${dbId}`
       let url = baseUrl
       let datasetIds = []
       let formulas = []
       let polarities = []
+      const itemsData = items.length > 0 ? items : state.data
       const yAxisFilter: any = filterMap[state.options.yAxis]
       const xAxisFilter: any = filterMap[state.options.xAxis]
 
@@ -1316,7 +1278,7 @@ export default defineComponent({
           }
         })
 
-      state.data.forEach((item: any) => {
+      itemsData.forEach((item: any) => {
         formulas = formulas.concat(item?.label?.formulas)
         if ((item?.label?.datasetIds || []).length > 0) {
           datasetIds = datasetIds.concat(item?.label?.datasetIds)
@@ -1331,6 +1293,11 @@ export default defineComponent({
       })
       formulas = uniq(formulas).filter((value) => value !== null && value !== undefined)
       polarities = uniq(polarities)
+
+      // set dataset ids filter if item passed
+      if (items.length > 0 && datasetIds.length > 0) {
+        url += `&ds=${datasetIds.join(',')}`
+      }
 
       if (polarities.length == 1) {
         const pol = polarities[0] === 'positive' ? 'Positive' : 'Negative'
