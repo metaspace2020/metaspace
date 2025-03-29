@@ -4,11 +4,44 @@ import { Router, Request, Response } from 'express'
 import * as companion from '@uppy/companion'
 import * as genUuid from 'uuid'
 import * as bodyParser from 'body-parser'
+import * as moment from 'moment'
 
 import getCompanionOptions from './getCompanionOptions'
 
 import { getS3Credentials } from '../../utils/awsClient'
 import logger from '../../utils/logger'
+
+import * as cache from 'memory-cache'
+
+const UPLOAD_KEY_PREFIX = 'upload_uuid:'
+const UPLOAD_TIMEOUT = 30 * 60 // 30 minutes in seconds
+
+function isUuidActive(uuid: string): Promise<boolean> {
+  return Promise.resolve(cache.get(`${UPLOAD_KEY_PREFIX}${uuid}`) !== null)
+}
+
+async function generateUniqueUuid(): Promise<string> {
+  const uuid = genUuid.v4()
+
+  try {
+    const isActive = await isUuidActive(uuid)
+    if (!isActive) {
+      // Store UUID with automatic expiration (UPLOAD_TIMEOUT in milliseconds)
+      cache.put(
+        `${UPLOAD_KEY_PREFIX}${uuid}`,
+        moment().utc().toISOString(),
+        UPLOAD_TIMEOUT * 1000
+      )
+    } else {
+      // In the unlikely case of a collision, generate a new UUID
+      return generateUniqueUuid()
+    }
+  } catch (err) {
+    logger.warn('Cache operation failed, falling back to simple UUID generation:', err)
+  }
+
+  return uuid
+}
 
 function signUuid(uuid: string) {
   const credentials = getS3Credentials()
@@ -24,10 +57,15 @@ function signUuid(uuid: string) {
  * @param res
  * @param next
  */
-function generateUuidForUpload(req: Request, res: Response) {
-  const uuid = genUuid.v4()
-  const uuidSignature = signUuid(uuid)
-  res.json({ uuid, uuidSignature })
+async function generateUuidForUpload(req: Request, res: Response) {
+  try {
+    const uuid = await generateUniqueUuid()
+    const uuidSignature = signUuid(uuid)
+    res.json({ uuid, uuidSignature })
+  } catch (err) {
+    logger.error('Error generating UUID:', err)
+    res.status(500).json({ error: 'Failed to generate UUID' })
+  }
 }
 
 export default function(httpServer?: http.Server) {
@@ -43,6 +81,13 @@ export default function(httpServer?: http.Server) {
       const signedUuid = signUuid(uuid)
       if (signedUuid !== uuidSignature) {
         throw new Error('uuid is not valid')
+      }
+
+      // Try to clean up the UUID when upload completes, but don't block if it fails
+      try {
+        cache.del(`${UPLOAD_KEY_PREFIX}${uuid}`)
+      } catch (err) {
+        logger.warn('Failed to clean up UUID from cache:', err)
       }
 
       const source = req.body?.metadata?.source

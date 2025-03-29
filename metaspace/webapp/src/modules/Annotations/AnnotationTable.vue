@@ -666,6 +666,7 @@ export default defineComponent({
     const isNormalized = computed(() => store.getters.settings?.annotationView?.normalization)
     const filter = computed(() => store.getters.filter)
     const numberOfPages = computed(() => Math.ceil(state.totalCount / state.recordsPerPage))
+    const annotationIds = computed(() => store.getters.filter?.annotationId)
 
     const currentPage = computed(() => {
       if (store.getters.settings?.table?.currentPage > numberOfPages.value && numberOfPages.value !== 0) {
@@ -835,6 +836,7 @@ export default defineComponent({
         if (!data) {
           return
         }
+
         state.annotations = data?.allAnnotations || []
         state.totalCount = data?.countAnnotations || 0
 
@@ -842,6 +844,11 @@ export default defineComponent({
 
         if (isSnapshot() && !state.loadedSnapshotAnnotations) {
           state.nextCurrentRowIndex = -1
+
+          state.nextCurrentRowIndex = data?.allAnnotations?.findIndex((annotation) =>
+            store.state.snapshotAnnotationIds.includes(annotation.id)
+          )
+
           if (Array.isArray(store.state.snapshotAnnotationIds)) {
             if (store.state.snapshotAnnotationIds.length > 1) {
               // adds annotationFilter if multi mol
@@ -850,10 +857,8 @@ export default defineComponent({
               // dont display filter if less than one annotation
               setTimeout(() => store.commit('removeFilter', 'annotationIds'), 500)
             }
-            state.nextCurrentRowIndex = state.annotations?.findIndex((annotation) =>
-              store.state.snapshotAnnotationIds.includes(annotation.id)
-            )
-            state.loadedSnapshotAnnotations = true
+
+            state.loadedSnapshotAnnotations = state.nextCurrentRowIndex !== -1 || data?.allAnnotations.length == 0
           }
         }
 
@@ -1091,7 +1096,7 @@ export default defineComponent({
     const onCurrentRowChange = (row) => {
       // do not set initial row if loading from a snapshot (permalink)
       if (isSnapshot() && !state.loadedSnapshotAnnotations) {
-        return null
+        // return null
       }
 
       store.commit('setAnnotation', row)
@@ -1394,7 +1399,7 @@ export default defineComponent({
     })
 
     // Watch for changes in query variables or options and re-execute query
-    watch([queryVariables, () => queryOptions.enabled, currentPage], executeQuery)
+    watch([queryVariables, () => queryOptions.enabled, currentPage, annotationIds], executeQuery)
 
     watch(
       () => route.query,
