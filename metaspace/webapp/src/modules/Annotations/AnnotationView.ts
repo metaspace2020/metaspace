@@ -168,7 +168,7 @@ export default defineComponent({
         path,
         query: {
           ...encodeParams(filter, path, store.state.filterLists),
-          ...pick(route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale', 'norm', 'feat', 'cols', 'page'),
+          ...pick(route.query, 'sections', 'sort', 'hideopt', 'cmap', 'scale', 'norm', 'feat', 'cols', 'fdr'),
         },
       }
     })
