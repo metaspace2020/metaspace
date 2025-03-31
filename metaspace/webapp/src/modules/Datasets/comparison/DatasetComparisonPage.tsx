@@ -39,6 +39,7 @@ interface GlobalImageSettings {
   selectedLockTemplate: string | null
   globalLockedIntensities: [number | undefined, number | undefined]
   showOpticalImage: boolean
+  intensity: any
 }
 
 interface DatasetComparisonPageState {
@@ -132,6 +133,7 @@ export default defineComponent({
         showOpticalImage: false,
         selectedLockTemplate: null,
         globalLockedIntensities: [undefined, undefined],
+        intensity: {},
       },
       annotations: undefined,
       datasets: [],
@@ -441,6 +443,13 @@ export default defineComponent({
       state.globalImageSettings.globalLockedIntensities = intensities
     }
 
+    const handleScaleChange = (datasetId: string, index: number, key: string, intensity: any) => {
+      state.globalImageSettings.intensity = {
+        ...state.globalImageSettings.intensity,
+        [datasetId]: { ...state.globalImageSettings.intensity[datasetId], [key]: intensity },
+      }
+    }
+
     const handleRowChange = (idx: number) => {
       if (idx !== -1) {
         state.isLoading = true
@@ -704,6 +713,7 @@ export default defineComponent({
             nRows={nRows}
             lockedIntensityTemplate={globalImageSettings.selectedLockTemplate}
             globalLockedIntensities={globalImageSettings.globalLockedIntensities}
+            intensity={globalImageSettings.intensity}
             scaleBarColor={globalImageSettings.scaleBarColor}
             scaleType={globalImageSettings.scaleType}
             colormap={globalImageSettings.colormap}
@@ -790,6 +800,7 @@ export default defineComponent({
                     onResetViewPort={resetViewPort}
                     onLockAllIntensities={handleTemplateChange}
                     onIntensitiesChange={handleIntensitiesChange}
+                    onScaleChange={handleScaleChange}
                     lockedIntensityTemplate={globalImageSettings.selectedLockTemplate}
                     globalLockedIntensities={globalImageSettings.globalLockedIntensities}
                     scaleBarColor={globalImageSettings.scaleBarColor}

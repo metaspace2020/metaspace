@@ -700,7 +700,7 @@ export const SimpleIonImageViewer = defineComponent({
           ? maxScaleDisplay
           : maxIntensity * userScaling[1]
 
-      // emit('change', userScaling, index)
+      emit('scaleChange', index, key, intensity)
       state.imageSettings.intensities[key] = intensity
     }
 

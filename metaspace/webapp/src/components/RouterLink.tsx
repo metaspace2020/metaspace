@@ -15,14 +15,24 @@ export default defineComponent({
       await router.push(params)
     }
 
-    return () => (
-      <div
-        class={['text-blue-600 hover:text-blue-700 underline cursor-pointer', props.class]}
-        data-test-key={props.id}
-        onClick={() => handleNavigation(props.to)}
-      >
-        {slots.default ? slots.default() : ''}
-      </div>
-    )
+    return () => {
+      const route = router.resolve(props.to)
+      return (
+        <a
+          href={route.href}
+          class={['text-blue-600 hover:text-blue-700 underline cursor-pointer', props.class]}
+          data-test-key={props.id}
+          onClick={(e) => {
+            if (!props.newTab) {
+              e.preventDefault()
+              handleNavigation(props.to)
+            }
+          }}
+          target={props.newTab ? '_blank' : undefined}
+        >
+          {slots.default ? slots.default() : ''}
+        </a>
+      )
+    }
   },
 })
