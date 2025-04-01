@@ -39,6 +39,7 @@ interface GlobalImageSettings {
   selectedLockTemplate: string | null
   globalLockedIntensities: [number | undefined, number | undefined]
   showOpticalImage: boolean
+  intensity: any
 }
 
 interface DatasetComparisonPageState {
@@ -132,6 +133,7 @@ export default defineComponent({
         showOpticalImage: false,
         selectedLockTemplate: null,
         globalLockedIntensities: [undefined, undefined],
+        intensity: {},
       },
       annotations: undefined,
       datasets: [],
@@ -160,7 +162,7 @@ export default defineComponent({
       settingsResult.value != null ? settingsResult.value.imageViewerSnapshot : null
     )
 
-    const queryVariables = () => {
+    const queryVariables = computed(() => {
       const filter = store.getters.gqlAnnotationFilter
       const dFilter = store.getters.gqlDatasetFilter
       const colocalizationCoeffFilter = state.coloc
@@ -180,20 +182,27 @@ export default defineComponent({
         colocalizationCoeffFilter,
         countIsomerCompounds: config.features.isomers,
       }
-    }
+    })
 
     const annotationQueryOptions: any = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const colocAnnotationQueryOptions: any = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const dsQueryOptions: any = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
-    const annotationQueryVars = computed(() => ({
-      ...queryVariables(),
-      dFilter: { ...queryVariables().dFilter, ids: Object.values(state.grid || {}).join('|') },
-      limit: CHUNK_SIZE,
-      offset: state.offset,
-    }))
+    const annotationQueryVars = computed(() => {
+      const filter = store.getters.gqlAnnotationFilter
+      const dFilter = store.getters.gqlDatasetFilter
+
+      return {
+        ...queryVariables.value,
+        filter,
+        dFilter: { ...dFilter, ids: Object.values(state.grid || {}).join('|') },
+        limit: CHUNK_SIZE,
+        offset: state.offset,
+      }
+    })
     const colocAnnotationQueryVars = computed(() => ({
-      ...queryVariables(),
-      dFilter: { ...queryVariables().dFilter, ids: state.colocDsId },
+      ...queryVariables.value,
+      filter: { ...queryVariables.value.filter },
+      dFilter: { ...queryVariables.value.dFilter, ids: state.colocDsId },
       limit: CHUNK_SIZE,
       offset: state.offset,
     }))
@@ -284,7 +293,7 @@ export default defineComponent({
       datasetListItemsWithDiagnosticsQuery,
       () => ({
         dFilter: {
-          ...queryVariables().dFilter,
+          ...queryVariables.value.dFilter,
           ids: gridSettings.value
             ? Object.values((safeJsonParse(gridSettings.value.snapshot) || {}).grid || {}).join('|')
             : '',
@@ -390,6 +399,8 @@ export default defineComponent({
               colocAnnotationQueryOptions.enabled = false
               annotationQueryOptions.enabled = true
             }
+          } else if (filter[0].databaseId && filter[0].databaseId !== previousFilter[0].databaseId) {
+            annotationQueryOptions.enabled = true
           }
         }
       )
@@ -439,6 +450,13 @@ export default defineComponent({
 
     const handleIntensitiesChange = (intensities: [number | undefined, number | undefined]) => {
       state.globalImageSettings.globalLockedIntensities = intensities
+    }
+
+    const handleScaleChange = (datasetId: string, index: number, key: string, intensity: any) => {
+      state.globalImageSettings.intensity = {
+        ...state.globalImageSettings.intensity,
+        [datasetId]: { ...state.globalImageSettings.intensity[datasetId], [key]: intensity },
+      }
     }
 
     const handleRowChange = (idx: number) => {
@@ -704,6 +722,7 @@ export default defineComponent({
             nRows={nRows}
             lockedIntensityTemplate={globalImageSettings.selectedLockTemplate}
             globalLockedIntensities={globalImageSettings.globalLockedIntensities}
+            intensity={globalImageSettings.intensity}
             scaleBarColor={globalImageSettings.scaleBarColor}
             scaleType={globalImageSettings.scaleType}
             colormap={globalImageSettings.colormap}
@@ -790,6 +809,7 @@ export default defineComponent({
                     onResetViewPort={resetViewPort}
                     onLockAllIntensities={handleTemplateChange}
                     onIntensitiesChange={handleIntensitiesChange}
+                    onScaleChange={handleScaleChange}
                     lockedIntensityTemplate={globalImageSettings.selectedLockTemplate}
                     globalLockedIntensities={globalImageSettings.globalLockedIntensities}
                     scaleBarColor={globalImageSettings.scaleBarColor}

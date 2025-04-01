@@ -37,6 +37,7 @@ export const DatasetComparisonShareLink = defineComponent({
     selectedAnnotation: { type: Number },
     lockedIntensityTemplate: { type: String },
     globalLockedIntensities: { type: Array },
+    intensity: { type: Object },
   },
   setup(props) {
     const store = useStore()
@@ -59,12 +60,12 @@ export const DatasetComparisonShareLink = defineComponent({
 
     const handleClick = async () => {
       state.status = 'SAVING'
-
       try {
         const filter = store.getters.filter
         const settings = safeJsonParse(props.settings)
         const grid = settings.grid
         const datasetIds = Object.values(grid)
+
         const variables: any = {
           input: {
             version: 1,
@@ -80,6 +81,7 @@ export const DatasetComparisonShareLink = defineComponent({
               scaleType: props.scaleType,
               lockedIntensityTemplate: props.lockedIntensityTemplate,
               globalLockedIntensities: props.globalLockedIntensities,
+              intensity: props.intensity,
               grid,
               filter,
               mode: store.state.mode,
@@ -97,7 +99,7 @@ export const DatasetComparisonShareLink = defineComponent({
         state.viewId = result.data.saveImageViewerSnapshot
         state.status = 'HAS_LINK'
         useOutClick(() => {
-          state.status = 'SAVING'
+          state.status = 'HAS_LINK'
         })
         await nextTick()
       } catch (e) {
@@ -113,9 +115,12 @@ export const DatasetComparisonShareLink = defineComponent({
           hideAfter={0}
           trigger="click"
           placement="bottom"
+          popperStyle=""
+          popperClass=""
+          onUpdate:visible={() => {}}
           v-slots={{
             reference: () => (
-              <ElButton class="button-reset h-6 w-6 block ml-2" onClick={handleClick}>
+              <ElButton class="button-reset h-6 w-6 block ml-2" onClick={handleClick} size="default" icon="">
                 <StatefulIcon class="h-6 w-6 pointer-events-none">
                   <ExternalWindowSvg class="fill-current" />
                 </StatefulIcon>
@@ -128,7 +133,7 @@ export const DatasetComparisonShareLink = defineComponent({
                   {status === 'SAVING' && <p>Saving</p>}
                   {status === 'HAS_LINK' && (
                     <div>
-                      <RouterLink newTab to={getUrl()} target="_blank">
+                      <RouterLink newTab to={getUrl()}>
                         Share this link
                       </RouterLink>
                       <span class="block text-xs tracking-wide">opens in a new window</span>

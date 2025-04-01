@@ -542,7 +542,7 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
       <div class=\\"el-table__border-left-patch\\"></div>
     </div>
     <div class=\\"el-table__column-resize-proxy\\" style=\\"display: none;\\"></div>
-    <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-leave-from el-loading-fade-leave-active\\" style=\\"\\">
+    <div class=\\"el-loading-mask el-loading-fade-enter-from el-loading-fade-enter-active\\" style=\\"\\">
       <div class=\\"el-loading-spinner\\"><svg class=\\"circular\\" viewBox=\\"0 0 50 50\\">
           <circle class=\\"path\\" cx=\\"25\\" cy=\\"25\\" r=\\"20\\" fill=\\"none\\"></circle>
         </svg>
@@ -552,22 +552,7 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
   </div>
   <div class=\\"flex justify-between items-start mt-2 w-full\\">
     <div class=\\"mt-1\\">
-      <div class=\\"el-pagination\\"><button type=\\"button\\" class=\\"btn-prev is-first\\" disabled=\\"\\" aria-label=\\"Go to previous page\\" aria-disabled=\\"true\\">
-          <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-              <path fill=\\"currentColor\\" d=\\"M609.408 149.376 277.76 489.6a32 32 0 0 0 0 44.672l331.648 340.352a29.12 29.12 0 0 0 41.728 0 30.592 30.592 0 0 0 0-42.752L339.264 511.936l311.872-319.872a30.592 30.592 0 0 0 0-42.688 29.12 29.12 0 0 0-41.728 0z\\"></path>
-            </svg></div>
-        </button>
-        <ul class=\\"el-pager\\">
-          <li class=\\"is-active number\\" aria-current=\\"true\\" aria-label=\\"page 1\\" tabindex=\\"0\\"> 1 </li>
-          <!--v-if-->
-          <!--v-if-->
-          <!--v-if-->
-        </ul><button type=\\"button\\" class=\\"btn-next\\" disabled=\\"\\" aria-label=\\"Go to next page\\" aria-disabled=\\"true\\">
-          <div class=\\"mock-el-icon\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
-              <path fill=\\"currentColor\\" d=\\"M340.864 149.312a30.592 30.592 0 0 0 0 42.752L652.736 512 340.864 831.872a30.592 30.592 0 0 0 0 42.752 29.12 29.12 0 0 0 41.728 0L714.24 534.336a32 32 0 0 0 0-44.672L382.592 149.376a29.12 29.12 0 0 0-41.728 0z\\"></path>
-            </svg></div>
-        </button><span class=\\"el-pagination__sizes is-last\\"><div class=\\"mock-el-select\\" model-value=\\"15\\" disabled=\\"false\\" popper-class=\\"\\" size=\\"default\\" teleported=\\"true\\" validate-event=\\"false\\"><div class=\\"mock-el-option\\" label=\\"15/page\\" value=\\"15\\"></div><div class=\\"mock-el-option\\" label=\\"20/page\\" value=\\"20\\"></div><div class=\\"mock-el-option\\" label=\\"25/page\\" value=\\"25\\"></div><div class=\\"mock-el-option\\" label=\\"30/page\\" value=\\"30\\"></div></div></span>
-      </div>
+      <!--v-if-->
       <div id=\\"annot-count\\" class=\\"mt-2\\"><b>1</b> matching record</div>
       <div class=\\"mt-2\\">
         <div class=\\"fdr-legend-header\\">FDR levels:</div>
