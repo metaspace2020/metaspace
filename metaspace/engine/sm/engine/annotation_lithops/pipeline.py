@@ -106,7 +106,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         # Check if n_spectra exceeds the limit
         if self.imzml_reader.n_spectra > 100000:
             raise Exception(
-                f'Dataset has {self.imzml_reader.n_spectra} spectra, exceeding the limit of 100,000.'
+                f'Dataset has {self.imzml_reader.n_spectra} spectra, the limit is 100,000.'
             )
 
         self.segment_centroids(use_cache=use_cache)

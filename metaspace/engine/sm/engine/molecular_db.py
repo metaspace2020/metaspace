@@ -111,7 +111,7 @@ def read_moldb_file(file_path):
         raise MalformedCSV('No data rows found')
 
     if len(moldb_df) > 100000:
-        raise MaxRowsExceeded(f'CSV file exceeds the maximum allowed.')
+        raise MaxRowsExceeded('CSV file exceeds the maximum allowed')
 
     required_columns = {'id', 'name', 'formula'}
     if not required_columns.issubset(set(moldb_df.columns)):
