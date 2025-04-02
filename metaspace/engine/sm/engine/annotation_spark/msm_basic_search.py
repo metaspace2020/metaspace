@@ -229,6 +229,13 @@ class MSMSearch:
     def define_segments_and_segment_ds(self, sample_ratio=0.05, ds_segm_size_mb=5):
         logger.info('Reading spectra sample')
         spectra_n = self._imzml_reader.n_spectra
+
+        # Check if n_spectra exceeds the limit
+        if spectra_n > 100000:
+            raise Exception(
+                f'Dataset has {self.imzml_reader.n_spectra} spectra, exceeding the limit of 100,000.'
+            )
+
         sample_size = int(spectra_n * sample_ratio)
         sample_size = np.clip(sample_size, min(spectra_n, 20), 1000)
         spectra_sample = list(spectra_sample_gen(self._imzml_reader, sample_size))
