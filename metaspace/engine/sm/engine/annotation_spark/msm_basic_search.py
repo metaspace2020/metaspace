@@ -233,7 +233,7 @@ class MSMSearch:
         # Check if n_spectra exceeds the limit
         if spectra_n > 100000:
             raise Exception(
-                f'Dataset has {self.imzml_reader.n_spectra} spectra, exceeding the limit of 100,000.'
+                f'Dataset has {self.imzml_reader.n_spectra} spectra, the limit is 100,000.'
             )
 
         sample_size = int(spectra_n * sample_ratio)
