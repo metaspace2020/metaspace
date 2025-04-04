@@ -104,7 +104,7 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.validate_load_ds()
 
         # Check if n_spectra exceeds the limit
-        if self.imzml_reader.n_spectra > 100000:
+        if self.imzml_reader.n_spectra > 300000:
             raise Exception(
                 f'Dataset has {self.imzml_reader.n_spectra} spectra, the limit is 100,000.'
             )

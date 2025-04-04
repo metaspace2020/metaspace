@@ -474,11 +474,13 @@ class QueueConsumer(Thread):
         )
         self.logger.info(' [*] Waiting for messages...')
 
+        self._failed_attempts = 0
+
         while True:
             if self.stopped():
                 raise StopThread()
             self.get_message()
-            self._failed_attempts = 0
+
             sleep(self._poll_interval)
 
     def stop(self):
