@@ -4,7 +4,7 @@ import logger from '../logger'
 import { snakeCase } from 'typeorm/util/StringUtils'
 import { smApiJsonPost } from './smApiCall'
 
-const valid_error_statuses = ['wrong_parameters', 'already_exists', 'malformed_csv', 'bad_data']
+const valid_error_statuses = ['wrong_parameters', 'already_exists', 'malformed_csv', 'bad_data', 'max_rows_exceeded']
 
 export const smApiDatabaseRequest = async(uri: string, args?: any) => {
   let reqDoc = args || {}

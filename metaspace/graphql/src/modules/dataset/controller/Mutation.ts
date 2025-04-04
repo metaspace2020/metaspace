@@ -327,7 +327,6 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
 
   const url = `/v1/datasets/${datasetId}/add`
 
-  // set limit to ppm
   if (input?.ppm && input.ppm > 15) {
     input.ppm = 15
   }
@@ -393,6 +392,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       if (!skipValidation || !ctx.isAdmin) {
         validateMetadata(metadata)
       }
+    }
+
+    if (update?.ppm && update.ppm > 15) {
+      update.ppm = 15
     }
 
     let description : string | null | undefined = update.description === null ? null : undefined

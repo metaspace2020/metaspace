@@ -47,6 +47,11 @@ const formatErrorMsg = (e: any): ErrorMessage => {
           ' and contains three columns: id, name, and formula.',
       }
     }
+    if (message?.type === 'max_rows_exceeded') {
+      return {
+        message: 'The file exceeds the maximum allowed number of rows (100,000).',
+      }
+    }
     if (message?.type === 'bad_data') {
       return {
         message: 'Some rows contain bad data, please check these rows and re-upload the file.',

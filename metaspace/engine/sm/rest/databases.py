@@ -14,12 +14,13 @@ from sm.rest.utils import (
 )
 
 MALFORMED_CSV = {'status_code': 400, 'status': 'malformed_csv'}
+MAX_ROWS_EXCEEDED = {'status_code': 400, 'status': 'max_rows_exceeded'}
 BAD_DATA = {'status_code': 400, 'status': 'bad_data'}
 
 logger = logging.getLogger('api')
 app = bottle.Bottle()
 
-
+# pylint: disable=too-many-return-statements
 @app.post('/create')
 def create():
     """Create a molecular database and import molecules.
@@ -65,6 +66,9 @@ def create():
     except molecular_db.MalformedCSV as e:
         logger.exception(f'Malformed CSV file. Params: {params}')
         return make_response(MALFORMED_CSV, error=e.message)
+    except molecular_db.MaxRowsExceeded as e:
+        logger.exception(f'Max rows exceeded. Params: {params}')
+        return make_response(MAX_ROWS_EXCEEDED, error=e.message)
     except molecular_db.BadData as e:
         logger.exception(f'Bad data in CSV file: {e.message}, {e.errors} Params: {params}')
         return make_response(BAD_DATA, error='Bad data in CSV file', details=e.errors)
