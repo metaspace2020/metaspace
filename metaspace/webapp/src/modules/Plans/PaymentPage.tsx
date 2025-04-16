@@ -2,7 +2,7 @@ import { defineComponent, ref, computed, onMounted, watch, reactive, inject } fr
 import { loadStripe } from '@stripe/stripe-js'
 import type { Stripe, StripeElements, StripeCardElement, Token } from '@stripe/stripe-js'
 import config from '../../lib/config'
-import { ElButton, ElInput, ElSelect, ElOption } from '../../lib/element-plus'
+import { ElButton, ElInput, ElSelect, ElOption, ElNotification } from '../../lib/element-plus'
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import { currentUserRoleQuery } from '../../api/user'
 import { useStore } from 'vuex'
@@ -94,6 +94,7 @@ export default defineComponent({
         states: [] as State[],
       },
       isFetchFailed: false,
+      orderId: null as string | null,
     })
     const US_ZIP_REGEX = /^\d{5}(-\d{4})?$/
     const PHONE_CODE_REGEX = /^\+?\d{1,4}$/ // Regex for phone codes: optional + followed by 1-4 digits
@@ -182,15 +183,9 @@ export default defineComponent({
 
           const usCountry = countries.value.find((country) => country.name === 'United States')
           state.lists.countries = usCountry ? [usCountry, ...sortedCountries] : sortedCountries
-
-          // Don't set phone code based on country anymore
-          // if (usCountry) {
-          //   state.form.selectedPhoneCode = usCountry.phonecode || '1'
-          // }
         }
         state.isFetchFailed = false
       } catch (error) {
-        console.error('Error processing countries:', error)
         state.isFetchFailed = true
       }
     }
@@ -199,7 +194,6 @@ export default defineComponent({
       try {
         stateFilter.value = { countryId }
       } catch (error) {
-        console.error('Error processing states:', error)
         state.lists.states = []
       }
     }
@@ -243,26 +237,12 @@ export default defineComponent({
       }
     )
 
-    // Add watcher for phone code validation
     watch(
       () => state.form.selectedPhoneCode,
       () => {
         validatePhoneCode()
       }
     )
-
-    // Console log to verify the GraphQL data is being used
-    watch(countriesResult, (newResult) => {
-      if (newResult?.allCountries) {
-        console.log('Countries data loaded from GraphQL:', newResult.allCountries.length)
-      }
-    })
-
-    watch(statesResult, (newResult) => {
-      if (newResult?.allStates) {
-        console.log('States data loaded from GraphQL:', newResult.allStates.length)
-      }
-    })
 
     onMounted(async () => {
       try {
@@ -382,6 +362,7 @@ export default defineComponent({
     const handleSubmit = async () => {
       state.loading = true
       state.error = null
+      let order = null
 
       if (!validateForm()) {
         state.loading = false
@@ -399,43 +380,45 @@ export default defineComponent({
         }
 
         // Generate a unique order ID
-        const orderId = Math.random().toString(36).substring(2, 15)
+        console.log('orderId', state.orderId)
+        if (!state.orderId) {
+          // Prepare order input data according to GraphQL schema
+          const orderInput: CreateOrderInput = {
+            userId: currentUser.value?.id || '',
+            status: OrderStatus.PENDING,
+            type: 'standard',
+            totalAmount: plan.value?.price || 100, // Use actual plan price
+            currency: 'usd',
+            items: [
+              {
+                name: plan.value?.name || 'Product Name',
+                productId: 'prod_123',
+                quantity: 1,
+                unitPrice: plan.value?.price || 100,
+              } as OrderItemInput,
+            ],
+            metadata: {
+              start_date: new Date().toISOString(),
+              end_date: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 365).toISOString(), // 1 year
+            },
+          }
 
-        // Prepare order input data according to GraphQL schema
-        const orderInput: CreateOrderInput = {
-          userId: currentUser.value?.id || '',
-          orderId: orderId,
-          status: OrderStatus.PENDING,
-          type: 'standard',
-          totalAmount: plan.value?.price || 100, // Use actual plan price
-          currency: 'usd',
-          items: [
-            {
-              name: plan.value?.name || 'Product Name',
-              productId: 'prod_123',
-              quantity: 1,
-              unitPrice: plan.value?.price || 100,
-            } as OrderItemInput,
-          ],
-          metadata: {
-            start_date: new Date().toISOString(),
-            end_date: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 365).toISOString(), // 1 year
-          },
+          // Create order using Apollo client directly
+          const orderResult = await apolloClient.mutate({
+            mutation: createOrderMutation,
+            variables: {
+              input: orderInput,
+            },
+          })
+
+          if (!orderResult.data || !orderResult.data.createOrder) {
+            throw new Error('Failed to create order')
+          }
+
+          order = orderResult.data.createOrder
+          state.orderId = order.id
         }
-
-        // Create order using Apollo client directly
-        const orderResult = await apolloClient.mutate({
-          mutation: createOrderMutation,
-          variables: {
-            input: orderInput,
-          },
-        })
-
-        if (!orderResult.data || !orderResult.data.createOrder) {
-          throw new Error('Failed to create order')
-        }
-
-        const order = orderResult.data.createOrder
+        console.log('order after mutation', order)
 
         const selectedState = state.lists.states.find((s) => s.id === state.form.selectedState)
         const selectedCountry = state.lists.countries.find((c) => c.id === state.form.selectedCountry)
@@ -500,7 +483,9 @@ export default defineComponent({
         console.log('Payment processed successfully:', paymentResult.data.createPayment)
       } catch (err: any) {
         console.error('Error processing payment:', err)
-        state.error = err.message || 'Payment processing failed. Please try again.'
+        const errorMessage = JSON.parse(err.message)
+        state.error = errorMessage.message || 'Payment processing failed. Please try again.'
+        ElNotification.error(state.error)
       } finally {
         state.loading = false
       }

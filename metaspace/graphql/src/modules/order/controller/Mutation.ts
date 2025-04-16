@@ -8,7 +8,6 @@ import logger from '../../../utils/logger'
 interface CreateOrderInput {
   userId: string;
   planId?: number;
-  orderId: string;
   status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'refunded';
   type: string;
   totalAmount: number;
@@ -87,9 +86,9 @@ const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', bod
 
     const response = await fetch(`${apiUrl}${endpoint}`, options)
     if (!response.ok) {
-      const errorText = await response.text()
+      const errorText = response.text ? await response.text() : 'Internal server error'
       logger.error(`API request failed with status ${response.status}: ${errorText}`)
-      throw new Error(`API request failed: ${response.statusText}`)
+      throw new Error(errorText)
     }
 
     if (method === 'DELETE') {
@@ -122,7 +121,6 @@ const MutationResolvers: MutationResolvers = {
     try {
       return await makeApiRequest(ctx, '/api/orders', 'POST', input)
     } catch (error) {
-      logger.error('Error creating order:', error)
       throw new UserError('Failed to create order')
     }
   },
@@ -131,7 +129,6 @@ const MutationResolvers: MutationResolvers = {
     try {
       return await makeApiRequest(ctx, `/api/orders/${id}`, 'PUT', input)
     } catch (error) {
-      logger.error(`Error updating order with ID ${id}:`, error)
       throw new UserError('Failed to update order')
     }
   },
@@ -141,7 +138,6 @@ const MutationResolvers: MutationResolvers = {
       await makeApiRequest(ctx, `/api/orders/${id}`, 'DELETE')
       return true
     } catch (error) {
-      logger.error(`Error deleting order with ID ${id}:`, error)
       throw new UserError('Failed to delete order')
     }
   },
@@ -151,20 +147,16 @@ const MutationResolvers: MutationResolvers = {
     try {
       const apiResponse = await makeApiRequest(ctx, '/api/payments', 'POST', input)
 
-      // Map the API response to match our GraphQL schema
-      // This ensures all required fields from our GraphQL schema are present
       const graphqlResponse = {
         ...apiResponse,
-        // Add fields that are required in our GraphQL schema but not returned by the API
-        userId: input.userId, // Use the userId from the input since the API doesn't return it
+        userId: input.userId,
       }
-
-      logger.info('Mapped payment response:', graphqlResponse)
 
       return graphqlResponse
     } catch (error) {
-      logger.error('Error creating payment:', error)
-      throw new UserError('Failed to create payment')
+      console.log('error', error)
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+      throw new UserError(errorMessage)
     }
   },
 

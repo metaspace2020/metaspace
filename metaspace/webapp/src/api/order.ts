@@ -188,7 +188,6 @@ export interface OrderItemInput {
 export interface CreateOrderInput {
   userId: string
   planId?: number
-  orderId: string
   status: OrderStatus
   type: string
   totalAmount: number

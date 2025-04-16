@@ -23,7 +23,6 @@ describe('modules/order/controller (queries)', () => {
       id: 1,
       userId: 'user1',
       planId: 1,
-      orderId: 'ord-001',
       status: 'completed',
       type: 'subscription',
       totalAmount: 10000,
@@ -43,8 +42,7 @@ describe('modules/order/controller (queries)', () => {
       id: 2,
       userId: 'user1',
       planId: 2,
-      orderId: 'ord-002',
-      status: 'pending',
+      status: 'completed',
       type: 'one-time',
       totalAmount: 5000,
       currency: 'EUR',
@@ -63,7 +61,6 @@ describe('modules/order/controller (queries)', () => {
       id: 3,
       userId: 'user2',
       planId: 1,
-      orderId: 'ord-003',
       status: 'processing',
       type: 'subscription',
       totalAmount: 15000,
@@ -89,7 +86,7 @@ describe('modules/order/controller (queries)', () => {
       amount: 10000,
       currency: 'USD',
       paymentMethod: 'credit_card',
-      status: 'completed',
+      status: 'succeeded',
       type: 'subscription',
       stripeChargeId: 'txn-001',
       externalReference: 'ref-001',
@@ -117,7 +114,7 @@ describe('modules/order/controller (queries)', () => {
       amount: 15000,
       currency: 'USD',
       paymentMethod: 'bank_transfer',
-      status: 'processing',
+      status: 'pending',
       type: 'subscription',
       stripeChargeId: 'txn-003',
       externalReference: 'ref-003',
@@ -218,7 +215,6 @@ describe('modules/order/controller (queries)', () => {
         id
         userId
         planId
-        orderId
         status
         type
         totalAmount
@@ -264,7 +260,6 @@ describe('modules/order/controller (queries)', () => {
         id: expectedOrder!.id,
         userId: expectedOrder!.userId,
         planId: expectedOrder!.planId,
-        orderId: expectedOrder!.orderId,
         status: expectedOrder!.status,
         type: expectedOrder!.type,
         totalAmount: expectedOrder!.totalAmount,
@@ -305,7 +300,6 @@ describe('modules/order/controller (queries)', () => {
         id
         userId
         planId
-        orderId
         status
         type
         totalAmount
@@ -704,7 +698,6 @@ describe('modules/order/controller (queries)', () => {
     const queryOrderWithPayments = `query ($id: Int!) {
       order(id: $id) {
         id
-        orderId
         payments {
           id
           orderId
@@ -757,7 +750,6 @@ describe('modules/order/controller (queries)', () => {
       // Check the result includes the order and its payments
       expect(result).toEqual({
         id: orderId,
-        orderId: order!.orderId,
         payments: orderPayments.map(payment => ({
           id: payment.id,
           orderId: payment.orderId,

@@ -2,7 +2,6 @@ type Order {
   id: Int!
   userId: String!
   planId: Int
-  orderId: String!
   status: OrderStatus!
   type: String!
   totalAmount: Int!
@@ -106,7 +105,7 @@ enum LocationOrderBy {
 input OrderFilter {
   userId: String
   planId: Int
-  orderId: String
+  id: String
   status: OrderStatus
   type: String
   startDate: String
@@ -137,7 +136,6 @@ input StateFilter {
 input CreateOrderInput {
   userId: String!
   planId: Int
-  orderId: String!
   status: OrderStatus!
   type: String!
   totalAmount: Int!

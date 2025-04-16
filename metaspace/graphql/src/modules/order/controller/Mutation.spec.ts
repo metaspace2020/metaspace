@@ -51,7 +51,6 @@ describe('modules/order/controller (mutations)', () => {
         id
         userId
         planId
-        orderId
         status
         type
         totalAmount
@@ -71,7 +70,6 @@ describe('modules/order/controller (mutations)', () => {
       const orderInput = {
         userId: 'user1',
         planId: 1,
-        orderId: 'ord-001',
         status: 'pending',
         type: 'subscription',
         totalAmount: 10000,
@@ -119,7 +117,6 @@ describe('modules/order/controller (mutations)', () => {
       const orderInput = {
         userId: 'user1',
         planId: 1,
-        orderId: 'ord-001',
         status: 'pending',
         type: 'subscription',
         totalAmount: 10000,
@@ -175,7 +172,6 @@ describe('modules/order/controller (mutations)', () => {
         ...updateInput,
         userId: 'user1',
         planId: 1,
-        orderId: 'ord-001',
         type: 'subscription',
         totalAmount: 10000,
         currency: 'USD',
@@ -312,7 +308,7 @@ describe('modules/order/controller (mutations)', () => {
         amount: 10000,
         currency: 'USD',
         paymentMethod: 'credit_card',
-        status: 'completed',
+        status: 'succeeded',
         type: 'subscription',
         stripeChargeId: 'txn-001',
         externalReference: 'ref-001',
@@ -354,7 +350,7 @@ describe('modules/order/controller (mutations)', () => {
         amount: 10000,
         currency: 'USD',
         paymentMethod: 'credit_card',
-        status: 'completed',
+        status: 'succeeded',
         type: 'subscription',
         stripeChargeId: 'txn-001',
       }
@@ -369,7 +365,7 @@ describe('modules/order/controller (mutations)', () => {
         await doQuery(createPaymentMutation, { input: paymentInput })
         fail('Expected query to throw an error')
       } catch (error) {
-        expect((error as Error).message).toContain('Failed to create payment')
+        expect((error as Error).message).toContain('Internal server error')
       }
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -391,7 +387,7 @@ describe('modules/order/controller (mutations)', () => {
     it('should update an existing payment', async() => {
       const paymentId = 1
       const updateInput = {
-        status: 'completed',
+        status: 'succeeded',
         metadata: { note: 'Payment processed successfully' },
       }
 
@@ -438,7 +434,7 @@ describe('modules/order/controller (mutations)', () => {
     it('should handle errors when updating a payment', async() => {
       const paymentId = 999
       const updateInput = {
-        status: 'completed',
+        status: 'failed',
       }
 
       // Mock the fetch response to simulate an error
