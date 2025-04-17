@@ -35,6 +35,17 @@ const assertCanEditUser = (user: ContextUser, userId: string) => {
   }
 }
 
+export const updateUserPlan = async(ctx: Context, userId: string, planId: number) => {
+  const { user } = ctx
+
+  assertCanEditUser(user, userId)
+  const userObj = await ctx.entityManager.getRepository(UserModel).findOneOrFail({
+    where: { id: userId },
+  })
+  userObj.planId = planId
+  await ctx.entityManager.getRepository(UserModel).save(userObj)
+}
+
 export const Resolvers = {
   User: {
     async primaryGroup({ scopeRole, ...user }: UserSource, _: any,
@@ -335,14 +346,9 @@ export const Resolvers = {
         throw new UserError('Only admin can update plan')
       }
       logger.info(`User '${userId}' plan is being updated by '${ctx.user.id}'.`)
-      const userObj = await ctx.entityManager.getRepository(UserModel).findOneOrFail({
-        where: { id: userId },
-      })
+      await updateUserPlan(ctx, userId, planId)
 
-      userObj.planId = planId
-      await ctx.entityManager.getRepository(UserModel).save(userObj)
-
-      return (await getUserSourceById(ctx, userObj.id))!
+      return (await getUserSourceById(ctx, userId))!
     },
     async deleteUser(
       _: any,

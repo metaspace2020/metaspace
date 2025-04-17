@@ -6,7 +6,7 @@ import { ElButton, ElInput, ElSelect, ElOption, ElNotification } from '../../lib
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import { currentUserRoleQuery } from '../../api/user'
 import { useStore } from 'vuex'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getPlanQuery, Plan } from '../../api/plan'
 import './PaymentPage.scss'
 import {
@@ -55,6 +55,7 @@ export default defineComponent({
   setup() {
     const store = useStore()
     const route = useRoute()
+    const router = useRouter()
     const cardElementRef = ref<HTMLElement | null>(null)
     // Inject Apollo client
     const apolloClient = inject(DefaultApolloClient)
@@ -379,13 +380,12 @@ export default defineComponent({
           throw new Error('Payment system not initialized')
         }
 
-        // Generate a unique order ID
-        console.log('orderId', state.orderId)
         if (!state.orderId) {
           // Prepare order input data according to GraphQL schema
           const orderInput: CreateOrderInput = {
             userId: currentUser.value?.id || '',
             status: OrderStatus.PENDING,
+            planId: plan.value?.id || 1,
             type: 'standard',
             totalAmount: plan.value?.price || 100, // Use actual plan price
             currency: 'usd',
@@ -403,7 +403,6 @@ export default defineComponent({
             },
           }
 
-          // Create order using Apollo client directly
           const orderResult = await apolloClient.mutate({
             mutation: createOrderMutation,
             variables: {
@@ -418,7 +417,6 @@ export default defineComponent({
           order = orderResult.data.createOrder
           state.orderId = order.id
         }
-        console.log('order after mutation', order)
 
         const selectedState = state.lists.states.find((s) => s.id === state.form.selectedState)
         const selectedCountry = state.lists.countries.find((c) => c.id === state.form.selectedCountry)
@@ -467,7 +465,6 @@ export default defineComponent({
           },
         }
 
-        // Create payment using Apollo client directly
         const paymentResult = await apolloClient.mutate({
           mutation: createPaymentMutation,
           variables: {
@@ -479,8 +476,7 @@ export default defineComponent({
           throw new Error('Payment processing failed. Please try again.')
         }
 
-        // Payment was successful
-        console.log('Payment processed successfully:', paymentResult.data.createPayment)
+        router.push('/user/me')
       } catch (err: any) {
         console.error('Error processing payment:', err)
         const errorMessage = JSON.parse(err.message)

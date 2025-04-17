@@ -261,7 +261,6 @@ export const orderFragment = gql`
     id
     userId
     planId
-    orderId
     status
     type
     totalAmount

@@ -3,66 +3,8 @@ import config from '../../../utils/config'
 import fetch, { RequestInit } from 'node-fetch'
 import logger from '../../../utils/logger'
 import { URLSearchParams } from 'url'
-
-// Order interfaces
-interface AllOrdersArgs {
-  filter?: {
-    userId?: string;
-    planId?: number;
-    orderId?: string;
-    status?: 'pending' | 'processing' | 'completed' | 'cancelled' | 'refunded';
-    type?: string;
-    startDate?: string;
-    endDate?: string;
-  };
-  includePayments?: boolean;
-  orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_STATUS' | 'ORDER_BY_USER' | 'ORDER_BY_AMOUNT';
-  sortingOrder?: 'ASCENDING' | 'DESCENDING';
-  page?: number;
-  limit?: number;
-}
-
-// Payment interfaces
-interface AllPaymentsArgs {
-  filter?: {
-    userId?: string;
-    orderId?: number;
-    status?: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
-    stripeChargeId?: string;
-    paymentMethod?: 'credit_card' | 'paypal' | 'bank_transfer' | 'crypto' | 'other';
-    startDate?: string;
-    endDate?: string;
-  };
-  orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_STATUS' | 'ORDER_BY_USER' | 'ORDER_BY_AMOUNT';
-  sortingOrder?: 'ASCENDING' | 'DESCENDING';
-  page?: number;
-  limit?: number;
-}
-
-// Country interfaces
-interface AllCountriesArgs {
-  filter?: {
-    name?: string;
-    code?: string;
-  };
-  orderBy?: 'NAME' | 'CODE' | 'CREATED_AT' | 'UPDATED_AT';
-  sortingOrder?: 'ASCENDING' | 'DESCENDING';
-  page?: number;
-  limit?: number;
-}
-
-// State interfaces
-interface AllStatesArgs {
-  filter?: {
-    name?: string;
-    code?: string;
-    countryId?: string;
-  };
-  orderBy?: 'NAME' | 'CODE' | 'CREATED_AT' | 'UPDATED_AT';
-  sortingOrder?: 'ASCENDING' | 'DESCENDING';
-  page?: number;
-  limit?: number;
-}
+import { FieldResolversFor } from '../../../bindingTypes'
+import { Query } from '../../../binding'
 
 // Helper function to make API requests
 export const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', body?: any) => {
@@ -174,23 +116,7 @@ const buildQueryString = (params: Record<string, any>): string => {
   return queryString ? `?${queryString}` : ''
 }
 
-// Define the QueryResolvers type with the specific methods we're implementing
-interface QueryResolvers {
-  order: (_: any, args: { id: number }, ctx: Context) => Promise<any>;
-  allOrders: (_: any, args: AllOrdersArgs, ctx: Context) => Promise<any[]>;
-  ordersCount: (_: any, args: { filter?: any }, ctx: Context) => Promise<number>;
-  payment: (_: any, args: { id: number }, ctx: Context) => Promise<any>;
-  allPayments: (_: any, args: AllPaymentsArgs, ctx: Context) => Promise<any[]>;
-  paymentsCount: (_: any, args: { filter?: any }, ctx: Context) => Promise<number>;
-  country: (_: any, args: { id: string }, ctx: Context) => Promise<any>;
-  allCountries: (_: any, args: AllCountriesArgs, ctx: Context) => Promise<any[]>;
-  countriesCount: (_: any, args: { filter?: any }, ctx: Context) => Promise<number>;
-  state: (_: any, args: { id: string }, ctx: Context) => Promise<any>;
-  allStates: (_: any, args: AllStatesArgs, ctx: Context) => Promise<any[]>;
-  statesCount: (_: any, args: { filter?: any }, ctx: Context) => Promise<number>;
-}
-
-const QueryResolvers: QueryResolvers = {
+const QueryResolvers: FieldResolversFor<Query, void> = {
   // Order query resolvers
   async order(_: any, { id }: { id: number }, ctx: Context): Promise<any> {
     try {
@@ -203,7 +129,7 @@ const QueryResolvers: QueryResolvers = {
     }
   },
 
-  async allOrders(_: any, args: AllOrdersArgs, ctx: Context): Promise<any[]> {
+  async allOrders(_: any, args, ctx: Context): Promise<any[]> {
     try {
       const { filter, orderBy, sortingOrder, page, limit } = args
       const queryString = buildQueryString({ ...filter, orderBy, sortingOrder, page, limit })
@@ -236,7 +162,7 @@ const QueryResolvers: QueryResolvers = {
     }
   },
 
-  async allPayments(_: any, args: AllPaymentsArgs, ctx: Context): Promise<any[]> {
+  async allPayments(_: any, args, ctx: Context): Promise<any[]> {
     try {
       const queryString = buildQueryString(args)
       const response = await makeApiRequest(ctx, `/api/payments${queryString}`)
@@ -268,7 +194,7 @@ const QueryResolvers: QueryResolvers = {
     }
   },
 
-  async allCountries(_: any, args: AllCountriesArgs, ctx: Context): Promise<any[]> {
+  async allCountries(_: any, args, ctx: Context): Promise<any[]> {
     try {
       const queryString = buildQueryString(args)
       const response = await makeApiRequest(ctx, `/api/location/countries${queryString}`)
@@ -300,7 +226,7 @@ const QueryResolvers: QueryResolvers = {
     }
   },
 
-  async allStates(_: any, args: AllStatesArgs, ctx: Context): Promise<any[]> {
+  async allStates(_: any, args, ctx: Context): Promise<any[]> {
     try {
       const queryString = buildQueryString(args)
       const response = await makeApiRequest(ctx, `/api/location/states${queryString}`)

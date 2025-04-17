@@ -5,6 +5,7 @@ import {
   onBeforeAll,
   onBeforeEach,
   setupTestUsers,
+  testUser,
 } from '../../../tests/graphqlTestEnvironment'
 import * as moment from 'moment'
 import fetch from 'node-fetch'
@@ -68,7 +69,7 @@ describe('modules/order/controller (mutations)', () => {
 
     it('should create a new order', async() => {
       const orderInput = {
-        userId: 'user1',
+        userId: testUser.id,
         planId: 1,
         status: 'pending',
         type: 'subscription',
@@ -115,7 +116,7 @@ describe('modules/order/controller (mutations)', () => {
 
     it('should handle errors when creating an order', async() => {
       const orderInput = {
-        userId: 'user1',
+        userId: testUser.id,
         planId: 1,
         status: 'pending',
         type: 'subscription',
@@ -170,7 +171,7 @@ describe('modules/order/controller (mutations)', () => {
       const updatedOrder = {
         id: orderId,
         ...updateInput,
-        userId: 'user1',
+        userId: testUser.id,
         planId: 1,
         type: 'subscription',
         totalAmount: 10000,
@@ -304,7 +305,7 @@ describe('modules/order/controller (mutations)', () => {
     it('should create a new payment', async() => {
       const paymentInput = {
         orderId: 1,
-        userId: 'user1',
+        userId: testUser.id,
         amount: 10000,
         currency: 'USD',
         paymentMethod: 'credit_card',
@@ -317,6 +318,9 @@ describe('modules/order/controller (mutations)', () => {
       const createdPayment = {
         id: 1,
         ...paymentInput,
+        metadata: {
+          planId: 2,
+        },
         createdAt: currentTime.valueOf().toString(),
         updatedAt: currentTime.valueOf().toString(),
       }
@@ -340,13 +344,15 @@ describe('modules/order/controller (mutations)', () => {
         })
       )
 
-      expect(result).toEqual(createdPayment)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { metadata, ...expectedResult } = createdPayment
+      expect(result).toEqual(expectedResult)
     })
 
     it('should handle errors when creating a payment', async() => {
       const paymentInput = {
         orderId: 999,
-        userId: 'user1',
+        userId: testUser.id,
         amount: 10000,
         currency: 'USD',
         paymentMethod: 'credit_card',
@@ -395,7 +401,7 @@ describe('modules/order/controller (mutations)', () => {
         id: paymentId,
         ...updateInput,
         orderId: 1,
-        userId: 'user1',
+        userId: testUser.id,
         amount: 10000,
         currency: 'USD',
         paymentMethod: 'credit_card',
@@ -528,7 +534,7 @@ describe('modules/order/controller (mutations)', () => {
       const refundedPayment = {
         id: paymentId,
         orderId: 1,
-        userId: 'user1',
+        userId: testUser.id,
         amount: 5000, // Reduced amount after partial refund
         currency: 'USD',
         paymentMethod: 'credit_card',
