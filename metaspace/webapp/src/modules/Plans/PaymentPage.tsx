@@ -1,4 +1,4 @@
-import { defineComponent, ref, computed, onMounted, watch, reactive, inject } from 'vue'
+import { defineComponent, ref, computed, watch, reactive, inject } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import type { Stripe, StripeElements, StripeCardElement, Token } from '@stripe/stripe-js'
 import config from '../../lib/config'
@@ -164,9 +164,24 @@ export default defineComponent({
       }))
     })
 
+    watch(
+      () => currentUserResult.value?.currentUser,
+      (newUser) => {
+        if (newUser) {
+          // Only initialize Stripe when user is authenticated
+          initializeStripe()
+        }
+      },
+      { immediate: true }
+    )
+
     onResult((result) => {
       const { data } = result
       if (data && data.currentUser == null) {
+        state.stripe = null
+        state.elements = null
+        state.cardElement = null
+
         store.commit('account/showDialog', {
           dialog: 'signIn',
           dialogCloseRedirect: '/plans',
@@ -245,7 +260,7 @@ export default defineComponent({
       }
     )
 
-    onMounted(async () => {
+    const initializeStripe = async () => {
       try {
         const stripeInstance = await loadStripe(config.stripe_pub)
         if (!stripeInstance) {
@@ -300,7 +315,7 @@ export default defineComponent({
         console.error('Error initializing Stripe:', err)
         state.error = err.message || 'Failed to initialize payment system'
       }
-    })
+    }
 
     const validateForm = () => {
       let isValid = true
@@ -380,43 +395,41 @@ export default defineComponent({
           throw new Error('Payment system not initialized')
         }
 
-        if (!state.orderId) {
-          // Prepare order input data according to GraphQL schema
-          const orderInput: CreateOrderInput = {
-            userId: currentUser.value?.id || '',
-            status: OrderStatus.PENDING,
-            planId: plan.value?.id || 1,
-            type: 'standard',
-            totalAmount: plan.value?.price || 100, // Use actual plan price
-            currency: 'usd',
-            items: [
-              {
-                name: plan.value?.name || 'Product Name',
-                productId: 'prod_123',
-                quantity: 1,
-                unitPrice: plan.value?.price || 100,
-              } as OrderItemInput,
-            ],
-            metadata: {
-              start_date: new Date().toISOString(),
-              end_date: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 365).toISOString(), // 1 year
-            },
-          }
-
-          const orderResult = await apolloClient.mutate({
-            mutation: createOrderMutation,
-            variables: {
-              input: orderInput,
-            },
-          })
-
-          if (!orderResult.data || !orderResult.data.createOrder) {
-            throw new Error('Failed to create order')
-          }
-
-          order = orderResult.data.createOrder
-          state.orderId = order.id
+        // Prepare order input data according to GraphQL schema
+        const orderInput: CreateOrderInput = {
+          userId: currentUser.value?.id || '',
+          status: OrderStatus.PENDING,
+          planId: plan.value?.id || 1,
+          type: 'standard',
+          totalAmount: plan.value?.price || 100, // Use actual plan price
+          currency: 'usd',
+          items: [
+            {
+              name: plan.value?.name || 'Product Name',
+              productId: 'prod_123',
+              quantity: 1,
+              unitPrice: plan.value?.price || 100,
+            } as OrderItemInput,
+          ],
+          metadata: {
+            start_date: new Date().toISOString(),
+            end_date: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 365).toISOString(), // 1 year
+          },
         }
+
+        const orderResult = await apolloClient.mutate({
+          mutation: createOrderMutation,
+          variables: {
+            input: orderInput,
+          },
+        })
+
+        if (!orderResult.data || !orderResult.data.createOrder) {
+          throw new Error('Failed to create order')
+        }
+
+        order = orderResult.data.createOrder
+        state.orderId = order.id
 
         const selectedState = state.lists.states.find((s) => s.id === state.form.selectedState)
         const selectedCountry = state.lists.countries.find((c) => c.id === state.form.selectedCountry)
@@ -476,7 +489,7 @@ export default defineComponent({
           throw new Error('Payment processing failed. Please try again.')
         }
 
-        router.push('/user/me')
+        router.push('/success')
       } catch (err: any) {
         console.error('Error processing payment:', err)
         const errorMessage = JSON.parse(err.message)
