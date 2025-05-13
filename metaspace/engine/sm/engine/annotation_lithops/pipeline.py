@@ -32,6 +32,7 @@ from sm.engine.annotation_lithops.store_images import store_images_to_s3
 from sm.engine.config import SMConfig
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
+from sm.engine.errors import LimitError
 
 
 logger = logging.getLogger('annotation-pipeline')
@@ -104,10 +105,9 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.validate_load_ds()
 
         # Check if n_spectra exceeds the limit
-        if self.imzml_reader.n_spectra > 300000:
-            raise Exception(
-                f'Dataset has {self.imzml_reader.n_spectra} spectra, the limit is 100,000.'
-            )
+        max_spectra = 300000
+        if self.imzml_reader.n_spectra > max_spectra:
+            raise LimitError('Pixel limit (300,000) exceeded. Contact contact@metaspace2020.org.')
 
         self.segment_centroids(use_cache=use_cache)
         if debug_validate:
