@@ -8,7 +8,7 @@ from sm.engine.annotation_lithops.executor import LithopsStalledException
 from sm.engine.config import SMConfig
 from sm.engine.daemons.actions import DaemonActionStage, DaemonAction
 from sm.engine.dataset import DatasetStatus
-from sm.engine.errors import AnnotationError, ImzMLError, IbdError, UnknownDSID
+from sm.engine.errors import AnnotationError, ImzMLError, IbdError, LimitError, UnknownDSID
 from sm.engine.queue import QueueConsumer, QueuePublisher
 from sm.rest.dataset_manager import DatasetActionPriority
 
@@ -63,6 +63,15 @@ class LithopsDaemon:
                 'bomb',
                 f' [x] Annotation failed, dataset was deleted early: {json.dumps(msg)}\n',
             )
+            os.kill(os.getpid(), signal.SIGINT)
+            self._manager.ds_failure_handler(msg, e)
+            return
+
+        # Stop processing in case of limit error
+        if isinstance(e, (LimitError,)):
+            if 'email' in msg:
+                self._manager.send_failed_email(msg, e.traceback)
+
             os.kill(os.getpid(), signal.SIGINT)
             self._manager.ds_failure_handler(msg, e)
             return
@@ -131,6 +140,8 @@ class LithopsDaemon:
         except LithopsStalledException:
             raise
         except UnknownDSID:
+            raise
+        except LimitError:
             raise
         except Exception as e:
             raise AnnotationError(ds_id=msg['ds_id'], traceback=format_exc(chain=False)) from e

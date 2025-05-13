@@ -28,6 +28,12 @@ class IbdError(SMError):
         self.traceback = traceback
 
 
+class LimitError(SMError):
+    def __init__(self, traceback):
+        super().__init__('Limit exceeded')
+        self.traceback = traceback
+
+
 class DSError(SMError):
     def __init__(self, ds_id, message):
         super().__init__(message)
