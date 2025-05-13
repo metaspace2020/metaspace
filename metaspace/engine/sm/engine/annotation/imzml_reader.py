@@ -122,6 +122,10 @@ class FSImzMLReader(ImzMLReader):
                 parse_lib='ElementTree',
                 include_spectra_metadata=METADATA_FIELDS,
             )
+            if imzml_util.check_if_waters(self._imzml_parser):
+                raise ImzMLError("Waters instrument detected - this format is not supported")
+        except ImzMLError:
+            raise
         except Exception as e:
             raise ImzMLError(format_exc()) from e
 
