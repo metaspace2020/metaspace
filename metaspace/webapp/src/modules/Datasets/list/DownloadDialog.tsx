@@ -80,6 +80,7 @@ export default defineComponent({
     datasetName: { type: String, required: true },
     datasetId: { type: String, required: true },
     isLogged: { type: Boolean, default: () => false },
+    isPublishedOrUnderReview: { type: Boolean, default: () => false },
     onClose: { type: Function },
   },
   directives: {
@@ -119,9 +120,10 @@ export default defineComponent({
 
     return () => {
       let content
+
       if (loading.value) {
         content = <div v-loading class="h-64" />
-      } else if (!props.isLogged) {
+      } else if (!props.isLogged && !props.isPublishedOrUnderReview) {
         content = (
           <div>
             <p>

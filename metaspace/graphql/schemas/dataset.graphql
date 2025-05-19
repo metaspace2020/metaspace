@@ -27,6 +27,7 @@ type Dataset {
   roiJson: String
   metadataJson: String!
   isPublic: Boolean!
+  isPublishedOrUnderReview: Boolean
   isEnriched: Boolean
   ontologyDatabases: [EnrichmentDb]
   databases: [MolecularDB!]!
