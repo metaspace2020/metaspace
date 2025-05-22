@@ -150,7 +150,7 @@ const DatasetOverviewPage = defineComponent({
                 <DatasetActionsDropdown
                   dataset={dataset?.value}
                   currentUser={currentUser?.value}
-                  isPublishedOrUnderReview={isPublishedOrUnderReview?.value}
+                  isPublishedOrUnderReview={!!isPublishedOrUnderReview.value}
                   recaptchaToken={recaptchaToken?.value}
                 />
               </NewFeatureBadge>

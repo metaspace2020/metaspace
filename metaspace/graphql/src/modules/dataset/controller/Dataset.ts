@@ -73,7 +73,7 @@ export const thumbnailOpticalImageUrl = async(ctx: Context, datasetId: string) =
 }
 
 export const checkIfPublishedOrUnderReview = async(dsId: string, ctx: Context) => {
-  const projects = await ctx.entityManager
+  const count = await ctx.entityManager
     .createQueryBuilder(DatasetProjectModel, 'dp')
     .innerJoin(ProjectModel, 'p', 'p.id = dp.projectId')
     .select(['dp.datasetId', 'p.publicationStatus'])
@@ -81,8 +81,8 @@ export const checkIfPublishedOrUnderReview = async(dsId: string, ctx: Context) =
     .andWhere('p.publicationStatus IN (:...publicationStatuses)', {
       publicationStatuses: ['PUBLISHED', 'UNDER_REVIEW'],
     })
-    .getMany()
-  return projects.length > 0
+    .getCount()
+  return count > 0
 }
 
 const getOpticalImagesByDsId = async(ctx: Context, id: string): Promise<OpticalImage[]> => {
