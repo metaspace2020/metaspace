@@ -464,11 +464,12 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     // const rateLimited = redisClient ? await isRateLimited(redisClient, ip) : false
     const higherLimitUserIds: string[] = []
     const HIGHER_LIMIT = 6
+    const rateLimitCount = isPublishedOrUnderReview ? 10 : 2
     const rateLimited = redisClient
       ? await isRateLimited(redisClient, ip,
           higherLimitUserIds.length > 0 && higherLimitUserIds.includes(ctx.user?.id as string)
             ? HIGHER_LIMIT
-            : 2)
+            : rateLimitCount)
       : false
 
     if (!ctx.user?.id && !isPublishedOrUnderReview) {
@@ -502,7 +503,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           link: 'https://metaspace2020.org/limit_reached',
         }],
       })
-    } else if (ctx.user?.role !== 'admin' && rateLimited && !isPublishedOrUnderReview) {
+    } else if (ctx.user?.role !== 'admin' && rateLimited) {
       await performAction(ctx, { ...action, actionType: 'download_attempt' })
 
       return JSON.stringify({

@@ -17,7 +17,6 @@
           <sort-dropdown class="pb-2" size="large" :options="sortingOptions" @sort="handleSortChange" />
         </div>
       </div>
-
       <div class="clearfix" />
       <div v-loading="loading" style="min-height: 100px">
         <projects-list-item
@@ -129,25 +128,22 @@ export default defineComponent({
       return simpleFilter === 'my-projects' && currentUser.value != null ? 'my' : 'all'
     })
     const query = computed(() => store.getters.filter.simpleQuery || '')
+    const queryVars = computed(() => ({
+      query: query.value,
+      offset: (page.value - 1) * pageSize.value,
+      limit: pageSize.value,
+      orderBy: orderBy.value,
+      sortingOrder: sortingOrder.value,
+    }))
 
-    const { result: allProjectsResult, refetch: refetchAllProjects } = useQuery(
-      projectsListQuery,
-      () => ({
-        query: query.value,
-        offset: (page.value - 1) * pageSize.value,
-        limit: pageSize.value,
-        orderBy: orderBy.value,
-        sortingOrder: sortingOrder.value,
-      }),
-      { fetchPolicy: 'cache-first' }
-    )
+    const { result: allProjectsResult, refetch: refetchAllProjects } = useQuery(projectsListQuery, queryVars, {
+      fetchPolicy: 'cache-first',
+    })
 
     const allProjects = computed(() => allProjectsResult.value?.allProjects as ProjectsListProject[] | null)
     const { result: allProjectsCountResult, refetch: refetchAllProjectsCount } = useQuery(
       projectsCountQuery,
-      () => ({
-        query: query.value,
-      }),
+      queryVars,
       { fetchPolicy: 'cache-first' }
     )
     const allProjectsCount = computed(() => allProjectsCountResult.value?.projectsCount || 0)
