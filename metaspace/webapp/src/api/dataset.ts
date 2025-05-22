@@ -20,6 +20,7 @@ export interface DatasetAnnotationCount {
 }
 
 export interface DatasetDetailItem {
+  isPublishedOrUnderReview: boolean
   acquisitionGeometry: string | null
   id: string
   name: string
@@ -117,6 +118,7 @@ export const datasetDetailItemFragment = gql`
     sizeHash
     configJson
     isPublic
+    isPublishedOrUnderReview
     ontologyDatabases {
       id
       name

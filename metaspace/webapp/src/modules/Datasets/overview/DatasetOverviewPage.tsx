@@ -68,6 +68,10 @@ const DatasetOverviewPage = defineComponent({
       }
     }
 
+    const isPublishedOrUnderReview = computed(() => {
+      return dataset.value?.isPublishedOrUnderReview
+    })
+
     return () => {
       const {
         name,
@@ -146,6 +150,7 @@ const DatasetOverviewPage = defineComponent({
                 <DatasetActionsDropdown
                   dataset={dataset?.value}
                   currentUser={currentUser?.value}
+                  isPublishedOrUnderReview={!!isPublishedOrUnderReview.value}
                   recaptchaToken={recaptchaToken?.value}
                 />
               </NewFeatureBadge>

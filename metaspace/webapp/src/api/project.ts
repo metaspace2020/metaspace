@@ -252,8 +252,12 @@ export const myProjectsListQuery = gql`
 `
 
 export const projectsCountQuery = gql`
-  query ProjectsCountQuery($query: String!) {
-    projectsCount(query: $query)
+  query ProjectsCountQuery(
+    $query: String!
+    $orderBy: ProjectOrderBy = ORDER_BY_POPULARITY
+    $sortingOrder: SortingOrder = DESCENDING
+  ) {
+    projectsCount(orderBy: $orderBy, sortingOrder: $sortingOrder, query: $query)
   }
 `
 

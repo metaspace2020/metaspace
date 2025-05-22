@@ -2,7 +2,8 @@ import * as _ from 'lodash'
 import { dsField } from '../../../../datasetFilters'
 import { DatasetSource, FieldResolversFor } from '../../../bindingTypes'
 import { ProjectSourceRepository } from '../../project/ProjectSourceRepository'
-import { Dataset as DatasetModel } from '../model'
+import { Dataset as DatasetModel, DatasetProject as DatasetProjectModel } from '../model'
+import { Project as ProjectModel } from '../../project/model'
 import {
   DatasetDiagnostic as DatasetDiagnosticModel,
   EngineDataset,
@@ -69,6 +70,19 @@ const getEnrichment = async(ctx: Context, datasetId: string): Promise<any> => {
 export const thumbnailOpticalImageUrl = async(ctx: Context, datasetId: string) => {
   const result = await getDbDatasetById(ctx, datasetId)
   return result?.thumbnail_url ?? null
+}
+
+export const checkIfPublishedOrUnderReview = async(dsId: string, ctx: Context) => {
+  const count = await ctx.entityManager
+    .createQueryBuilder(DatasetProjectModel, 'dp')
+    .innerJoin(ProjectModel, 'p', 'p.id = dp.projectId')
+    .select(['dp.datasetId', 'p.publicationStatus'])
+    .where('dp.datasetId = :datasetId', { datasetId: dsId })
+    .andWhere('p.publicationStatus IN (:...publicationStatuses)', {
+      publicationStatuses: ['PUBLISHED', 'UNDER_REVIEW'],
+    })
+    .getCount()
+  return count > 0
 }
 
 const getOpticalImagesByDsId = async(ctx: Context, id: string): Promise<OpticalImage[]> => {
@@ -255,6 +269,10 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return ds._source.ds_group_approved === true
   },
 
+  async isPublishedOrUnderReview(ds, args, ctx) {
+    return await checkIfPublishedOrUnderReview(ds._source.ds_id, ctx)
+  },
+
   async projects(ds, args, ctx) {
     // If viewing someone else's DS, only approved projects are visible, so exit early if there are no projects in elasticsearch
     const projectIds = _.castArray(ds._source.ds_project_ids).filter(id => id != null)
@@ -435,6 +453,9 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async downloadLinkJson(ds, args, ctx) {
     const ip: any = ctx.req?.ip
+
+    const isPublishedOrUnderReview = await checkIfPublishedOrUnderReview(ds._source.ds_id, ctx)
+
     // @ts-ignore
     const { sessionStore }: any = ctx.req
     const redisClient = sessionStore?.client
@@ -443,16 +464,17 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     // const rateLimited = redisClient ? await isRateLimited(redisClient, ip) : false
     const higherLimitUserIds: string[] = []
     const HIGHER_LIMIT = 6
+    const rateLimitCount = isPublishedOrUnderReview ? 10 : 2
     const rateLimited = redisClient
       ? await isRateLimited(redisClient, ip,
           higherLimitUserIds.length > 0 && higherLimitUserIds.includes(ctx.user?.id as string)
             ? HIGHER_LIMIT
-            : 2)
+            : rateLimitCount)
       : false
 
-    if (!ctx.user?.id) {
+    if (!ctx.user?.id && !isPublishedOrUnderReview) {
       return JSON.stringify({
-        message: 'Pleas Sign in to download. Access is available for public '
+        message: 'Please Sign in to download. Access is available for public '
             + 'datasets or those you have permissions for.',
       })
     }
