@@ -83,7 +83,7 @@
     "merge-graphql-schemas": "^1.5.3",
     "mkdirp": "^0.5.1",
     "moment": "^2.29.4",
-    "multer": "^1.4.2",
+    "multer": "^2.0.0",
     "node-fetch": "^2.6.7",
     "passport": "^0.4.0",
     "passport-anonymous": "^1.0.1",
