@@ -98,7 +98,34 @@ def download_files(
         logger.info(f'{ds_id}\t{prefix}\t{extension:>5}\t{f["Size"]/1024/1024:8.1f} MB')
 
         Path(output_path, prefix).mkdir(parents=True, exist_ok=True)
-        client.download_file(info['bucket'], f['Key'], path)
+        try:
+            client.download_file(info['bucket'], f['Key'], path)
+        except IsADirectoryError:  # duplicate files case (imzml/ibd uploaded by hand inside folder)
+            # Remove the empty extension entry from metadata since it's a directory
+            if extension == '':
+                del metadata[extension]
+
+            # List files in the subdirectory and download them
+            bucket = info['bucket']
+            prefix_key = f['Key']
+            subdir_files = client.list_objects_v2(Bucket=bucket, Prefix=prefix_key)['Contents']
+            for subdir_file in subdir_files:
+                subdir_filename = subdir_file['Key'].split('/')[-1]
+                subdir_extension = subdir_filename.split('.')[-1].lower()
+
+                # Only process files with valid extensions (imzml or ibd)
+                if subdir_extension in ['imzml', 'ibd']:
+                    subdir_path = Path(output_path, prefix, subdir_filename)
+                    metadata[subdir_extension] = {
+                        'size': subdir_file['Size'],
+                        'name': subdir_filename,
+                        'prefix': prefix,
+                        'path': str(subdir_path),
+                    }
+                    size_mb = subdir_file["Size"] / 1024 / 1024
+                    log_msg = f'{ds_id}\t{prefix}\t{subdir_extension:>5}\t{size_mb:8.1f} MB'
+                    logger.info(log_msg)
+                    client.download_file(info['bucket'], subdir_file['Key'], subdir_path)
 
     return metadata
 
