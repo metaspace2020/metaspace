@@ -18,7 +18,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_matrix, issparse, csr_matrix
 
 from sm.engine.annotation.imzml_reader import ImzMLReader
 from sm.engine.annotation.metrics import spatial_metric, chaos_metric, spectral_metric, mass_metrics
@@ -123,8 +123,12 @@ def make_compute_image_metrics(
 
     sample_area_mask = imzml_reader.mask
     n_spectra = np.count_nonzero(sample_area_mask)
-    empty_matrix = np.zeros(sample_area_mask.shape, dtype=np.float32)
-    sample_area_mask_flat = sample_area_mask.flatten()
+
+    #empty_matrix = np.zeros(sample_area_mask.shape, dtype=np.float32)
+    #sample_area_mask_flat = sample_area_mask.flatten()
+
+    empty_matrix = csr_matrix(sample_area_mask.shape)
+    sample_area_mask_flat = np.flatnonzero(sample_area_mask)
 
     def compute_metrics(image_set: FormulaImageSet):
         # pylint: disable=unused-variable  # benchmark is used in commented-out dev code
@@ -136,8 +140,13 @@ def make_compute_image_metrics(
 
         # with benchmark('overall'):
 
-        iso_imgs = [img.toarray() if img is not None else empty_matrix for img in image_set.images]
-        iso_imgs_flat = np.array([img.flatten()[sample_area_mask_flat] for img in iso_imgs])
+        #iso_imgs = [img.toarray() if img is not None else empty_matrix for img in image_set.images]
+        #iso_imgs_flat = np.array([img.flatten()[sample_area_mask_flat] for img in iso_imgs])
+
+        iso_imgs = [img.tocsr() if img is not None else empty_matrix for img in image_set.images]
+        iso_imgs_flat = np.array([
+            img[sample_area_mask_flat // img.shape[1], sample_area_mask_flat % img.shape[1]].A1
+            for img in iso_imgs])
 
         doc = Metrics(formula_i=image_set.formula_i)
 
@@ -178,7 +187,10 @@ def make_compute_image_metrics(
                 )
                 if (doc.spatial or 0.0) > 0.0 or calc_all:
                     # with benchmark('chaos'):
-                    doc.chaos = chaos_metric(iso_imgs[0], n_levels)
+                    if issparse(iso_imgs[0]):
+                        doc.chaos = 0.99 # Sparse images are not supported in using cpyImagingMSpec.measure_of_chaos so we set chaos to a high value till it's reimplemented
+                    else:
+                        doc.chaos = chaos_metric(iso_imgs[0], n_levels)
 
         doc.msm = (doc.chaos or 0.0) * (doc.spatial or 0.0) * (doc.spectral or 0.0)
 
