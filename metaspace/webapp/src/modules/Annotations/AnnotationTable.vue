@@ -1197,8 +1197,9 @@ export default defineComponent({
         const { isotopeImages, ionFormula: molFormula, possibleCompounds, adduct, mz, dataset } = annotation
         const isotopeImage = isotopeImages[0]
         const ionImagePng = await loadPngFromUrl(isotopeImage.url)
-        const molName = possibleCompounds.map((m) => m.name).join(',')
-        const molIds = possibleCompounds.map((m) => m.information[0].databaseId).join(',')
+
+        const molName = formatCsvTextArray(possibleCompounds.map((m) => m?.name || ''))
+        const molIds = formatCsvTextArray(possibleCompounds.map((m) => m.information[0].databaseId))
         const finalImage = getIonImage(ionImagePng, isotopeImages[0], undefined, undefined, normalizationData)
         const row = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
         const { width, height, intensityValues } = finalImage
@@ -1325,88 +1326,121 @@ export default defineComponent({
       csv += formatCsvRow(columns)
 
       function databaseId(compound) {
-        return compound.information[0].databaseId
+        return compound?.information?.[0]?.databaseId || ''
       }
 
       function formatRow(row) {
-        const {
-          dataset,
-          sumFormula,
-          adduct,
-          chemMod,
-          neutralLoss,
-          ion,
-          mz,
-          msmScore,
-          fdrLevel,
-          rhoSpatial,
-          rhoSpectral,
-          rhoChaos,
-          possibleCompounds,
-          isotopeImages,
-          isobars,
-          offSample,
-          offSampleProb,
-          colocalizationCoeff,
-        } = row
-        const cells = [
-          dataset.group ? dataset.group.name : '',
-          dataset.name,
-          dataset.id,
-          sumFormula,
-          'M' + adduct,
-          ...(includeChemMods ? [chemMod] : []),
-          ...(includeNeutralLosses ? [neutralLoss] : []),
-          ion,
-          mz,
-          msmScore,
-          fdrLevel,
-          rhoSpatial,
-          rhoSpectral,
-          rhoChaos,
-          formatCsvTextArray(possibleCompounds.map((m) => m.name)),
-          formatCsvTextArray(possibleCompounds.map(databaseId)),
-          isotopeImages[0] && isotopeImages[0].minIntensity,
-          isotopeImages[0] && isotopeImages[0].maxIntensity,
-          isotopeImages[0] && isotopeImages[0].totalIntensity,
-          possibleCompounds.length,
-          isobars.length,
-        ]
-        if (includeColoc) {
-          cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff)
-        }
-        if (includeOffSample) {
-          cells.push(offSample, offSampleProb)
-        }
-        if (includeIsobars) {
-          cells.push(formatCsvTextArray(isobars.map((isobar) => isobar.ion)))
-        }
+        try {
+          // Create a plain object to avoid GraphQL proxy issues
+          const plainRow = JSON.parse(JSON.stringify(row))
 
-        return formatCsvRow(cells)
+          const {
+            dataset = {},
+            sumFormula = '',
+            adduct = '',
+            chemMod = '',
+            neutralLoss = '',
+            ion = '',
+            mz = '',
+            msmScore = '',
+            fdrLevel = '',
+            rhoSpatial = '',
+            rhoSpectral = '',
+            rhoChaos = '',
+            possibleCompounds = [],
+            isotopeImages = [],
+            isobars = [],
+            offSample = false,
+            offSampleProb = '',
+            colocalizationCoeff = null,
+          } = plainRow
+
+          const cells = [
+            dataset.group?.name || '',
+            dataset.name || '',
+            dataset.id || '',
+            sumFormula,
+            'M' + adduct,
+            ...(includeChemMods ? [chemMod] : []),
+            ...(includeNeutralLosses ? [neutralLoss] : []),
+            ion,
+            mz,
+            msmScore,
+            fdrLevel,
+            rhoSpatial,
+            rhoSpectral,
+            rhoChaos,
+            formatCsvTextArray(possibleCompounds.map((m) => m?.name || '')),
+            formatCsvTextArray(possibleCompounds.map(databaseId)),
+            isotopeImages[0]?.minIntensity ?? '',
+            isotopeImages[0]?.maxIntensity ?? '',
+            isotopeImages[0]?.totalIntensity ?? '',
+            possibleCompounds.length,
+            isobars.length,
+          ]
+
+          if (includeColoc) {
+            // Safe string comparison
+            const colocalizedWithStr = String(colocalizedWith || '')
+            const ionStr = String(ion)
+            cells.push(colocalizedWithStr === ionStr ? 'Reference annotation' : colocalizationCoeff ?? '')
+          }
+
+          if (includeOffSample) {
+            cells.push(offSample, offSampleProb)
+          }
+
+          if (includeIsobars) {
+            cells.push(formatCsvTextArray(isobars.map((isobar) => isobar?.ion || '')))
+          }
+
+          return formatCsvRow(cells)
+        } catch (err) {
+          console.warn('Error formatting row:', err)
+          return formatCsvRow(['Error formatting row'])
+        }
       }
 
       const queryVariablesAux = { ...queryVariables.value }
       let offset = 0
       state.isExporting = true
 
-      // For exports, we'll keep using apolloClient.query directly since this is a one-time operation
-      while (state.isExporting && offset < state.totalCount) {
-        const resp = await apolloClient.query({
-          query: tableExportQuery,
-          variables: { ...queryVariablesAux, limit: chunkSize, offset },
-          fetchPolicy: 'network-only',
-        })
-        state.exportProgress = offset / state.totalCount
-        offset += chunkSize
-        csv += resp.data.annotations.map(formatRow).join('')
-      }
+      try {
+        // For exports, we'll keep using apolloClient.query directly since this is a one-time operation
+        while (state.isExporting && offset < state.totalCount) {
+          const resp = await apolloClient.query({
+            query: tableExportQuery,
+            variables: { ...queryVariablesAux, limit: chunkSize, offset },
+            fetchPolicy: 'no-cache',
+            errorPolicy: 'all', // Continue even if there are GraphQL errors
+          })
 
-      if (state.isExporting) {
+          state.exportProgress = offset / state.totalCount
+          offset += chunkSize
+
+          if (resp.data?.annotations) {
+            // Process annotations in smaller batches to avoid memory issues
+            const annotations = resp.data.annotations
+            for (let i = 0; i < annotations.length; i += 100) {
+              if (!state.isExporting) break
+
+              const batch = annotations.slice(i, i + 100)
+              csv += batch.map(formatRow).join('')
+            }
+          }
+        }
+
+        if (state.isExporting) {
+          state.isExporting = false
+          state.exportProgress = 0
+
+          const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+          FileSaver.saveAs(blob, 'metaspace_annotations.csv')
+        }
+      } catch (error) {
+        console.error('Error during export:', error)
         state.isExporting = false
         state.exportProgress = 0
-
-        const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
-        FileSaver.saveAs(blob, 'metaspace_annotations.csv')
       }
     }
 

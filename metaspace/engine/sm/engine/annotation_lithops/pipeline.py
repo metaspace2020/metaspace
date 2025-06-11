@@ -104,10 +104,21 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         if debug_validate:
             self.validate_load_ds()
 
-        # Check if n_spectra exceeds the limit
-        max_spectra = 300000
-        if self.imzml_reader.n_spectra > max_spectra:
-            raise LimitError('Pixel limit (300,000) exceeded. Contact contact@metaspace2020.org.')
+        # Check pixel limits
+        nz_pixel_limit = 500000
+        pixel_limit = 1000000
+        nz_pixels = self.imzml_reader.n_spectra
+        n_pixels = self.imzml_reader.h * self.imzml_reader.w
+
+        if nz_pixels > nz_pixel_limit:
+            raise LimitError(
+                f'Pixel limit ({nz_pixel_limit}) exceeded. Contact contact@metaspace2020.org.'
+            )
+
+        if n_pixels > pixel_limit:
+            raise LimitError(
+                f'Pixel limit ({pixel_limit}) exceeded. Contact contact@metaspace2020.org.'
+            )
 
         self.segment_centroids(use_cache=use_cache)
         if debug_validate:
