@@ -29,9 +29,15 @@ class IbdError(SMError):
 
 
 class LimitError(SMError):
-    def __init__(self, traceback):
-        super().__init__('Limit exceeded')
-        self.traceback = traceback
+    def __init__(self, message_or_traceback=None):
+        if isinstance(message_or_traceback, str) and not message_or_traceback.startswith(
+            'Traceback'
+        ):
+            super().__init__(message_or_traceback)
+            self.traceback = None
+        else:
+            super().__init__('Limit exceeded')
+            self.traceback = message_or_traceback
 
 
 class DSError(SMError):
