@@ -105,19 +105,19 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             self.validate_load_ds()
 
         # Check pixel limits
-        nz_pixel_limit = 500000
+        nz_pixel_limit = 700000
         pixel_limit = 1000000
         nz_pixels = self.imzml_reader.n_spectra
         n_pixels = self.imzml_reader.h * self.imzml_reader.w
 
-        if nz_pixels > nz_pixel_limit:
-            raise LimitError(
-                f'Pixel limit ({nz_pixel_limit}) exceeded. Contact contact@metaspace2020.org.'
-            )
-
         if n_pixels > pixel_limit:
             raise LimitError(
-                f'Pixel limit ({pixel_limit}) exceeded. Contact contact@metaspace2020.org.'
+                f'Pixel limit exceeded: {n_pixels} pixels (limit is {pixel_limit}). Please contact contact@metaspace2020.org for support.'  # pylint: disable=line-too-long
+            )
+
+        if nz_pixels > nz_pixel_limit:
+            raise LimitError(
+                f'Non-zero pixel limit exceeded: {nz_pixels} pixels (limit is {nz_pixel_limit}). Please contact contact@metaspace2020.org for assistance.'  # pylint: disable=line-too-long
             )
 
         self.segment_centroids(use_cache=use_cache)
