@@ -75,6 +75,15 @@
       padding-bottom: 1rem;
       border-bottom: 1px solid rgba(64, 158, 255, 0.2);
 
+      &.discount {
+        .item-name {
+          color: #67c23a;
+        }
+        .discount-amount {
+          color: #67c23a;
+        }
+      }
+
       .item-name {
         font-size: 1.25rem;
         font-weight: 600;
@@ -190,6 +199,164 @@
       text-align: center;
       padding-bottom: 2rem;
     }
+
+    .billing-notice {
+      margin: 0.75rem 0;
+      padding: 0.75rem;
+      background: rgba(255, 243, 205, 0.7);
+      border: 1px solid #e6a23c;
+      border-radius: 4px;
+
+      .notice-text {
+        color: #e6a23c;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+    }
+
+    .coupon-section {
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 6px;
+      border: 1px solid rgba(64, 158, 255, 0.2);
+
+      .coupon-input {
+        display: flex;
+        gap: 0.5rem;
+        
+        .coupon-field {
+          flex: 1;
+        }
+
+        .apply-coupon-btn {
+          white-space: nowrap;
+        }
+      }
+
+      .coupon-applied {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+
+        .coupon-code {
+          font-weight: 600;
+          color: #67c23a;
+        }
+
+        .discount {
+          color: #67c23a;
+          font-weight: 600;
+        }
+
+        .remove-coupon {
+          color: #f56c6c;
+          padding: 0;
+        }
+      }
+
+      .coupon-error {
+        color: #f56c6c;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+      }
+    }
+  }
+
+  .form-section {
+    margin-bottom: 1rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #ebeef5;
+
+    &:last-child {
+      border-bottom: none;
+      margin-bottom: 1rem;
+    }
+
+    > h3 {
+      margin: 0 0 1.5rem 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+  }
+
+  .billing-frequency {
+    .frequency-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+
+      @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .frequency-option {
+      .frequency-radio {
+        width: 100%;
+        margin: 0;
+
+        .option-content {
+          display: flex;
+          flex-direction: column;
+          padding: 1rem;
+          border: 2px solid #dcdfe6;
+          border-radius: 8px;
+          background: #fff;
+          transition: all 0.2s;
+          cursor: pointer;
+
+          .option-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 0.25rem;
+          }
+
+          .option-price {
+            color: #606266;
+            font-size: 0.9rem;
+
+            .savings {
+              display: inline-block;
+              background: #67c23a;
+              color: white;
+              padding: 0.1rem 0.5rem;
+              border-radius: 12px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              margin-left: 0.5rem;
+            }
+          }
+        }
+
+        &.is-checked .option-content {
+          border-color: #409eff;
+          background: #ecf5ff;
+        }
+
+        .el-radio__input {
+          display: none;
+        }
+
+        .el-radio__label {
+          padding: 0;
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
   }
 
   .form-group {
@@ -197,6 +364,12 @@
 
     &.phone-section {
       margin-top: 0.5rem;
+    }
+
+    &.has-error {
+      .el-input__wrapper {
+        border-color: #f56c6c !important;
+      }
     }
 
     label {
@@ -208,6 +381,36 @@
       .required {
         color: #f56c6c;
         margin-left: 0.25rem;
+      }
+    }
+  }
+
+  .payment-method-selector {
+    margin-bottom: 1.5rem;
+
+    .method-option {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      border: 2px solid #dcdfe6;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &.selected {
+        border-color: #409eff;
+        background: #ecf5ff;
+      }
+
+      .method-icon {
+        font-size: 1.25rem;
+        margin-right: 0.75rem;
+      }
+
+      .method-text {
+        font-weight: 600;
+        color: #2c3e50;
       }
     }
   }
@@ -226,6 +429,64 @@
     &:focus-within {
       border-color: #409eff;
     }
+
+    &.error {
+      border-color: #f56c6c !important;
+    }
+  }
+
+  .card-input-container {
+    position: relative;
+
+    .stripe-element.card-number {
+      padding: 0.75rem;
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+      background: #fff;
+      transition: border-color 0.2s;
+
+      &:hover {
+        border-color: #c0c4cc;
+      }
+
+      &:focus-within {
+        border-color: #409eff;
+      }
+    }
+
+    .card-logos {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      gap: 0.25rem;
+
+      .card-logo {
+        display: inline-block;
+        padding: 0.15rem 0.25rem;
+        border-radius: 2px;
+        font-size: 0.6rem;
+        font-weight: bold;
+        color: white;
+
+        &.visa {
+          background: #1a1f71;
+        }
+
+        &.mc {
+          background: #eb001b;
+        }
+
+        &.amex {
+          background: #006fcf;
+        }
+
+        &.disc {
+          background: #ff6000;
+        }
+      }
+    }
   }
 
   .phone-input-group {
@@ -236,22 +497,44 @@
   }
 
   .field-error {
-    display: none;
     color: #f56c6c;
     font-size: 0.875rem;
     line-height: 1;
     margin-top: 0.25rem;
+    min-height: 1rem;
+    visibility: hidden;
 
-    &.zip-error.visible {
-      display: block;
+    &.visible {
+      visibility: visible;
+    }
+
+    &.hidden {
+      visibility: hidden;
+    }
+
+    &.zip-error,
+    &.phone-code-error {
+      // Additional specific styles if needed
     }
   }
 
   .submit-button {
     width: 100%;
     margin-top: 2rem;
-    height: 40px;
-    font-size: 1rem;
+    height: 48px;
+    font-size: 1.1rem;
+    font-weight: 600;
+
+    &.is-disabled {
+      background-color: #c0c4cc !important;
+      border-color: #c0c4cc !important;
+      cursor: not-allowed;
+      
+      &:hover {
+        background-color: #c0c4cc !important;
+        border-color: #c0c4cc !important;
+      }
+    }
   }
 
   .country-select,

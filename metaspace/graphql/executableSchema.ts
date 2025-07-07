@@ -10,7 +10,7 @@ import { Resolvers as LookupsResolvers } from './src/modules/lookups/controller'
 import { Resolvers as MolDBResolvers } from './src/modules/moldb/controller'
 import { Resolvers as EnrichmentDBResolvers } from './src/modules/enrichmentdb/controller'
 import { Resolvers as PlanResolvers } from './src/modules/plan/controller'
-import { Resolvers as OrderResolvers } from './src/modules/order/controller'
+import { Resolvers as SubscriptionResolvers } from './src/modules/subscription/controller'
 import { Resolvers as ImageViewerSnapshotResolvers } from './src/modules/imageViewerSnapshot/controller'
 import { mergedSchemas } from './schema'
 import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInterceptorToSchema'
@@ -33,7 +33,7 @@ export const makeNewExecutableSchema = () => {
       EnrichmentDBResolvers,
       PlanResolvers,
       ImageViewerSnapshotResolvers,
-      OrderResolvers,
+      SubscriptionResolvers,
     ],
   })
 }

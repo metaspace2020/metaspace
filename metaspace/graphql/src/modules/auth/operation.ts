@@ -139,7 +139,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
     emailService.sendLoginEmail(existingUser.email!, link)
   } else {
     const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email')
-    const planId = 1 // default plan id
+    // planId is now managed via subscriptions on the external manager API
     if (existingUserNotVerified) {
       // existing not verified user
       if (userCred.googleId) {
@@ -153,7 +153,6 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
           email: userCred.email,
           notVerifiedEmail: null,
           name: userCred.name,
-          planId: planId,
           updatedAt,
         })
       } else {
@@ -161,7 +160,6 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
         await credRepo.save(existingUserNotVerified.credentials)
         await userRepo.update(existingUserNotVerified.id, {
           name: userCred.name,
-          planId: planId,
           updatedAt,
         })
         logger.info(`${userCred.email} user credentials updated, password added`)
@@ -176,7 +174,6 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
           email: userCred.email,
           name: userCred.name,
           credentials: newCred,
-          planId: planId,
         })
         await userRepo.insert(newUser)
         logger.info(`New google user added: ${userCred.email}`)
@@ -186,7 +183,6 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
           notVerifiedEmail: userCred.email,
           name: userCred.name,
           credentials: newCred,
-          planId: planId,
         })
         await userRepo.insert(newUser)
         logger.info(`New local user added: ${userCred.email}`)

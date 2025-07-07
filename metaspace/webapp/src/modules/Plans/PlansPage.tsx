@@ -16,16 +16,17 @@ export default defineComponent({
     const { result: plansResult } = useQuery<AllPlansData>(getPlansQuery)
     const plans = computed(() => plansResult.value?.allPlans || [])
 
-    const handleStartTrial = (planId: number) => {
+    const handleStartTrial = (planId: string) => {
       router.push(`/payment?planId=${planId}`)
     }
 
-    const formatPrice = (price: number) => {
-      return (price / 100).toFixed(2)
+    const formatPrice = (priceCents: number | undefined) => {
+      if (priceCents === undefined) return '0.00'
+      return (priceCents / 100).toFixed(2)
     }
 
     return () => {
-      const sortedPlans = [...plans.value].sort((a, b) => a.order - b.order)
+      const sortedPlans = [...plans.value].sort((a, b) => a.displayOrder - b.displayOrder)
 
       return (
         <div class="page-wrapper">
@@ -47,13 +48,13 @@ export default defineComponent({
                     <h2 class="plan-name">{plan.name}</h2>
                     <div class="plan-price">
                       <span class="price-currency">$</span>
-                      <span class="price-amount">{formatPrice(plan.price)}</span>
+                      <span class="price-amount">{formatPrice(plan.yearlyPriceCents)}</span>
                       <span class="price-period">/annually</span>
                     </div>
                     <div class="plan-features">
                       <div class="safe-html" innerHTML={plan.description} />
                     </div>
-                    {plan.price === 0 ? (
+                    {(plan.yearlyPriceCents || 0) === 0 ? (
                       <div class="start-button">Already enjoying the benefits!</div>
                     ) : (
                       <ElButton

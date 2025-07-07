@@ -21,41 +21,44 @@ describe('modules/plan/controller (queries)', () => {
 
   const TIERS = [
     {
-      id: 1,
+      id: '550e8400-e29b-41d4-a716-446655440001',
       name: 'regular',
       isActive: true,
       isDefault: false,
       createdAt: currentTime,
-      price: 0,
-      order: 0,
+      monthlyPriceCents: 0,
+      yearlyPriceCents: 0,
+      displayOrder: 0,
       description: 'Regular plan',
     },
     {
-      id: 2,
+      id: '550e8400-e29b-41d4-a716-446655440002',
       name: 'lab',
       isActive: false,
       isDefault: false,
       createdAt: currentTime,
-      price: 50,
-      order: 1,
+      monthlyPriceCents: 5000,
+      yearlyPriceCents: 50000,
+      displayOrder: 1,
       description: 'Lab plan',
     },
     {
-      id: 3,
+      id: '550e8400-e29b-41d4-a716-446655440003',
       name: 'lab',
       isActive: true,
       isDefault: true,
       createdAt: currentTime,
-      price: 100,
-      order: 2,
+      monthlyPriceCents: 10000,
+      yearlyPriceCents: 100000,
+      displayOrder: 2,
       description: 'Pro lab plan',
     },
   ]
 
   const TIER_RULES = [
-    { id: 1, planId: 1, actionType: 'download', type: 'dataset', period: 1, periodType: 'day', limit: 5, createdAt: currentTime },
-    { id: 2, planId: 1, actionType: 'download', type: 'dataset', period: 1, periodType: 'week', limit: 50, createdAt: currentTime },
-    { id: 3, planId: 3, actionType: 'process', type: 'dataset', period: 1, periodType: 'day', limit: 2, createdAt: currentTime },
+    { id: 1, planId: '550e8400-e29b-41d4-a716-446655440001', actionType: 'download', type: 'dataset', period: 1, periodType: 'day', limit: 5, createdAt: currentTime },
+    { id: 2, planId: '550e8400-e29b-41d4-a716-446655440001', actionType: 'download', type: 'dataset', period: 1, periodType: 'week', limit: 50, createdAt: currentTime },
+    { id: 3, planId: '550e8400-e29b-41d4-a716-446655440003', actionType: 'process', type: 'dataset', period: 1, periodType: 'day', limit: 2, createdAt: currentTime },
   ]
 
   const API_USAGES = [
@@ -116,21 +119,22 @@ describe('modules/plan/controller (queries)', () => {
   afterEach(onAfterEach)
 
   describe('Query.plan', () => {
-    const queryPlan = `query ($id: Int!) {
+    const queryPlan = `query ($id: String!) {
       plan(id: $id) {
         id
         name
         isActive
         isDefault
         createdAt
-        price
-        order
+        monthlyPriceCents
+        yearlyPriceCents
+        displayOrder
         description
       }
     }`
 
     it('should return a plan by id', async() => {
-      const planId = 1
+      const planId = '550e8400-e29b-41d4-a716-446655440001'
       const expectedPlan = TIERS.find(plan => plan.id === planId)
 
       // Mock the fetch response
@@ -145,7 +149,7 @@ describe('modules/plan/controller (queries)', () => {
       const result = await doQuery(queryPlan, { id: planId })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://test-api.metaspace.example/api/plans/1',
+        'https://test-api.metaspace.example/api/plans/550e8400-e29b-41d4-a716-446655440001',
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({
@@ -168,7 +172,7 @@ describe('modules/plan/controller (queries)', () => {
         statusText: 'Not Found',
       })
 
-      const result = await doQuery(queryPlan, { id: 999 })
+      const result = await doQuery(queryPlan, { id: '550e8400-e29b-41d4-a716-999999999999' })
 
       expect(result).toBeNull()
     })
@@ -181,8 +185,9 @@ describe('modules/plan/controller (queries)', () => {
         isActive
         isDefault
         createdAt
-        price
-        order
+        monthlyPriceCents
+        yearlyPriceCents
+        displayOrder
         description
       }
     }`
@@ -214,8 +219,9 @@ describe('modules/plan/controller (queries)', () => {
         isActive: plan.isActive,
         isDefault: plan.isDefault,
         createdAt: moment(plan.createdAt).valueOf().toString(),
-        price: plan.price,
-        order: plan.order,
+        monthlyPriceCents: plan.monthlyPriceCents,
+        yearlyPriceCents: plan.yearlyPriceCents,
+        displayOrder: plan.displayOrder,
         description: plan.description,
       }))
 
@@ -385,7 +391,7 @@ describe('modules/plan/controller (queries)', () => {
 
   describe('Query.allPlanRules', () => {
     const queryAllPlanRules = `
-      query ($planId: Int, $filter: PlanRuleFilter, $offset: Int, $limit: Int) {
+      query ($planId: String, $filter: PlanRuleFilter, $offset: Int, $limit: Int) {
         allPlanRules(planId: $planId, filter: $filter, offset: $offset, limit: $limit) { 
           id
           planId 
@@ -457,7 +463,7 @@ describe('modules/plan/controller (queries)', () => {
     })
 
     it('should filter plan rules by planId', async() => {
-      const planId = 1
+      const planId = '550e8400-e29b-41d4-a716-446655440001'
       const filteredRules = TIER_RULES.filter(rule => rule.planId === planId)
 
       // Mock the fetch response with proper data structure
@@ -475,7 +481,7 @@ describe('modules/plan/controller (queries)', () => {
       const result = await doQuery(queryAllPlanRules, { planId })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringMatching(/.*planId=1.*/),
+        expect.stringMatching(/.*planId=550e8400-e29b-41d4-a716-446655440001.*/),
         expect.any(Object)
       )
 
@@ -489,7 +495,7 @@ describe('modules/plan/controller (queries)', () => {
   })
 
   describe('Query.planRulesCount', () => {
-    const queryPlanRulesCount = `query ($planId: Int, $filter: PlanRuleFilter) {
+    const queryPlanRulesCount = `query ($planId: String, $filter: PlanRuleFilter) {
       planRulesCount(planId: $planId, filter: $filter)
     }`
 

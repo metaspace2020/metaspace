@@ -1,12 +1,13 @@
 type Plan {
-    id: Int!
+    id: String!
     name: String!
     isActive: Boolean
     isDefault: Boolean
     createdAt: String!
     planRules: [PlanRule]
-    price: Int!
-    order: Int!
+    monthlyPriceCents: Int
+    yearlyPriceCents: Int
+    displayOrder: Int
     description: String
 }
 
@@ -15,8 +16,9 @@ input PlanFilter {
     isActive: Boolean
     isDefault: Boolean
     createdAt: String
-    price: Int
-    order: Int
+    monthlyPriceCents: Int
+    yearlyPriceCents: Int
+    displayOrder: Int
 }
 
 input PlanRuleFilter {
@@ -32,8 +34,9 @@ enum PlanOrderBy {
     ORDER_BY_NAME
     ORDER_BY_ACTIVE
     ORDER_BY_DEFAULT
-    ORDER_BY_PRICE
-    ORDER_BY_ORDER
+    ORDER_BY_MONTHLY_PRICE
+    ORDER_BY_YEARLY_PRICE
+    ORDER_BY_DISPLAY_ORDER
 }
 
 enum PlanRuleOrderBy {
@@ -49,14 +52,15 @@ input PlanInput {
     name: String
     isActive: Boolean
     createdAt: String
-    price: Int
-    order: Int
+    monthlyPriceCents: Int
+    yearlyPriceCents: Int
+    displayOrder: Int
     description: String
 }
 
 type PlanRule {
     id: Int!
-    planId: Int!
+    planId: String!
     plan: Plan
     actionType: String!
     period: Int!
@@ -103,7 +107,7 @@ enum ApiUsageOrderBy {
 }
 
 type Query {
-    plan(id: Int!): Plan
+    plan(id: String!): Plan
     allPlans(orderBy: PlanOrderBy = ORDER_BY_DATE,
         sortingOrder: SortingOrder = DESCENDING,
         filter: PlanFilter = {}, simpleQuery: String,
@@ -111,13 +115,13 @@ type Query {
     plansCount(filter: PlanFilter = {}): Int!
 
     planRule(id: Int!): PlanRule
-    allPlanRules(planId: Int,
+    allPlanRules(planId: String,
         filter: PlanRuleFilter = {},
         orderBy: PlanRuleOrderBy = ORDER_BY_DATE,
         sortingOrder: SortingOrder = DESCENDING,
         offset: Int = 0,
         limit: Int = 10): [PlanRule]
-    planRulesCount(planId: Int, filter: PlanRuleFilter = {}): Int!
+    planRulesCount(planId: String, filter: PlanRuleFilter = {}): Int!
 
     allApiUsages(
         orderBy: ApiUsageOrderBy = ORDER_BY_DATE,

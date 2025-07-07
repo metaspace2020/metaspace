@@ -31,7 +31,9 @@ export class PlanRevert1741213105322 implements MigrationInterface {
         }
         
         // Make sure plan_id is nullable
-        await queryRunner.query(`ALTER TABLE "graphql"."user" ALTER COLUMN "plan_id" DROP NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "graphql"."user" DROP COLUMN IF EXISTS "plan_id"`);
+
+
         
         // Drop tables
         await queryRunner.query(`DROP TABLE IF EXISTS "public"."api_usage"`);
@@ -40,6 +42,8 @@ export class PlanRevert1741213105322 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "graphql"."user" ADD COLUMN "plan_id" INT`);
+
         // Recreate plan table
         await queryRunner.query(`
             CREATE TABLE "public"."plan" (

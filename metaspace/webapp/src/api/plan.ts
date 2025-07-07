@@ -1,12 +1,13 @@
 import gql from 'graphql-tag'
 
 export interface Plan {
-  id: number
+  id: string
   name: string
-  price: number
+  monthlyPriceCents?: number
+  yearlyPriceCents?: number
   isActive: boolean
   description: string
-  order: number
+  displayOrder: number
 }
 
 export interface AllPlansData {
@@ -19,7 +20,7 @@ export interface PlanData {
 
 export interface PlanRule {
   id: number
-  planId: number
+  planId: string
   plan: Plan
   actionType: string
   period: number
@@ -61,8 +62,9 @@ export enum PlanOrderBy {
   ORDER_BY_NAME = 'ORDER_BY_NAME',
   ORDER_BY_ACTIVE = 'ORDER_BY_ACTIVE',
   ORDER_BY_DEFAULT = 'ORDER_BY_DEFAULT',
-  ORDER_BY_PRICE = 'ORDER_BY_PRICE',
-  ORDER_BY_ORDER = 'ORDER_BY_ORDER',
+  ORDER_BY_MONTHLY_PRICE = 'ORDER_BY_MONTHLY_PRICE',
+  ORDER_BY_YEARLY_PRICE = 'ORDER_BY_YEARLY_PRICE',
+  ORDER_BY_DISPLAY_ORDER = 'ORDER_BY_DISPLAY_ORDER',
 }
 
 export enum PlanRuleOrderBy {
@@ -92,8 +94,9 @@ export interface PlanFilter {
   isActive?: boolean
   isDefault?: boolean
   createdAt?: string
-  price?: number
-  order?: number
+  monthlyPriceCents?: number
+  yearlyPriceCents?: number
+  displayOrder?: number
 }
 
 export interface PlanRuleFilter {
@@ -121,10 +124,11 @@ export const planFragment = gql`
   fragment Plan on Plan {
     id
     name
-    price
+    monthlyPriceCents
+    yearlyPriceCents
     isActive
     description
-    order
+    displayOrder
   }
 `
 
@@ -167,7 +171,7 @@ export const getPlansQuery = gql`
   ${planFragment}
 `
 export const getPlanQuery = gql`
-  query ($planId: Int!) {
+  query ($planId: String!) {
     plan(id: $planId) {
       ...Plan
     }
@@ -210,7 +214,7 @@ export const getPlanRuleQuery = gql`
 
 export const getPlanRulesQuery = gql`
   query (
-    $planId: Int
+    $planId: String
     $filter: PlanRuleFilter
     $orderBy: PlanRuleOrderBy
     $sortingOrder: SortingOrder

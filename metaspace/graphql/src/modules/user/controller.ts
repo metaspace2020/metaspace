@@ -1,7 +1,7 @@
 import { UserError } from 'graphql-errors'
 import { In } from 'typeorm'
 import * as uuid from 'uuid'
-import fetch from 'node-fetch'
+import fetch, { RequestInit } from 'node-fetch'
 
 import { UserGroup } from '../../binding'
 import { User as UserModel } from './model'
@@ -33,17 +33,6 @@ const assertCanEditUser = (user: ContextUser, userId: string) => {
   if (user.role !== 'admin' && user.id !== userId) {
     throw new UserError('Access denied')
   }
-}
-
-export const updateUserPlan = async(ctx: Context, userId: string, planId: number) => {
-  const { user } = ctx
-
-  assertCanEditUser(user, userId)
-  const userObj = await ctx.entityManager.getRepository(UserModel).findOneOrFail({
-    where: { id: userId },
-  })
-  userObj.planId = planId
-  await ctx.entityManager.getRepository(UserModel).save(userObj)
 }
 
 export const Resolvers = {
@@ -118,29 +107,6 @@ export const Resolvers = {
       return null
     },
 
-    async plan(user: UserSource, args: any, ctx: Context): Promise<any> {
-      if (!user.planId) {
-        return null
-      }
-
-      try {
-        const apiUrl = config.manager_api_url
-        const token = ctx.req?.headers?.authorization || ''
-
-        const response = await fetch(`${apiUrl}/api/plans/${user.planId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: token } : {}),
-          },
-        })
-
-        return await response.json()
-      } catch (error) {
-        return null
-      }
-    },
-
     async apiKey({ scopeRole, id: userId }: UserSource, args: any, ctx: Context): Promise<string|null> {
       const allowedAuthMethods: AuthMethod[] = [AuthMethodOptions.JWT, AuthMethodOptions.SESSION]
       if ((scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin)
@@ -187,9 +153,6 @@ export const Resolvers = {
       if (filter?.role) {
         qb.andWhere('user.role = :role', { role: filter.role })
       }
-      if (filter?.planId) {
-        qb.andWhere('user.planId = :planId', { planId: filter.planId })
-      }
       if (filter?.userId) {
         qb.andWhere('user.id = :userId', { userId: filter.userId })
       }
@@ -221,9 +184,6 @@ export const Resolvers = {
         if (filter.role) {
           qb.andWhere('user.role = :role', { role: filter.role })
         }
-        if (filter.planId) {
-          qb.andWhere('user.planId = :planId', { planId: filter.planId })
-        }
         if (filter.userId) {
           qb.andWhere('user.id = :userId', { userId: filter.userId })
         }
@@ -245,9 +205,6 @@ export const Resolvers = {
             break
           case 'ORDER_BY_UPDATED_AT':
             qb.orderBy('user.updatedAt', direction)
-            break
-          case 'ORDER_BY_PLAN_ID':
-            qb.orderBy('user.planId', direction)
             break
           default:
             qb.orderBy('user.name', direction)
@@ -275,10 +232,6 @@ export const Resolvers = {
 
       if (update.role && !isAdmin) {
         throw new UserError('Only admin can update role')
-      }
-
-      if (update.planId && !isAdmin) {
-        throw new UserError('Only admin can update plan')
       }
 
       let userObj = await entityManager.getRepository(UserModel).findOneOrFail({
@@ -341,15 +294,7 @@ export const Resolvers = {
       logger.info(`User '${userId}' was updated`)
       return (await getUserSourceById(ctx, userObj.id))!
     },
-    async updateUserPlan(_: any, { userId, planId }: any, ctx: Context): Promise<UserSource> {
-      if (!ctx.isAdmin) {
-        throw new UserError('Only admin can update plan')
-      }
-      logger.info(`User '${userId}' plan is being updated by '${ctx.user.id}'.`)
-      await updateUserPlan(ctx, userId, planId)
 
-      return (await getUserSourceById(ctx, userId))!
-    },
     async deleteUser(
       _: any,
       { userId, deleteDatasets }: any,

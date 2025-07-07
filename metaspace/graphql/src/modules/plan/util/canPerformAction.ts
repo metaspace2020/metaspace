@@ -77,7 +77,6 @@ export const performAction = async(ctx: Context, action: any) : Promise<any|null
       },
       body: JSON.stringify(action),
     })
-
     if (!response.ok) {
       throw new Error(`Failed to perform action: ${response.statusText}`)
     }

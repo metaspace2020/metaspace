@@ -23,9 +23,6 @@ export class User {
   @Column({ type: 'text', default: 'user' })
   role: 'admin' | 'user';
 
-  @Column({ name: 'plan_id' })
-  planId: number;
-
   @Column({ type: 'text' })
   credentialsId: string;
 

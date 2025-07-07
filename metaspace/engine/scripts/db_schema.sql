@@ -369,14 +369,12 @@ CREATE TABLE "graphql"."dataset_project" (
   "project_id")
 );
 
-
 CREATE TABLE "graphql"."user" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
   "name" text, 
   "email" text, 
   "not_verified_email" text, 
   "role" text NOT NULL DEFAULT 'user', 
-  "plan_id" integer NOT NULL, 
   "credentials_id" uuid NOT NULL, 
   "created_at" TIMESTAMP NOT NULL, 
   "updated_at" TIMESTAMP NOT NULL, 

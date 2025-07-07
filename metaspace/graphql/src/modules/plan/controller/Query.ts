@@ -13,18 +13,19 @@ interface AllPlansArgs {
     isActive?: boolean
     isDefault?: boolean
     createdAt?: string
-    price?: number
-    order?: number
+    monthlyPriceCents?: number
+    yearlyPriceCents?: number
+    displayOrder?: number
   };
   orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_NAME' | 'ORDER_BY_ACTIVE' |
-  'ORDER_BY_DEFAULT' | 'ORDER_BY_PRICE' | 'ORDER_BY_ORDER' | 'ORDER_BY_SORT';
+  'ORDER_BY_DEFAULT' | 'ORDER_BY_MONTHLY_PRICE' | 'ORDER_BY_YEARLY_PRICE' | 'ORDER_BY_DISPLAY_ORDER' | 'ORDER_BY_SORT';
   sortingOrder?: 'ASCENDING' | 'DESCENDING';
   offset?: number
   limit?: number
 }
 
 interface AllPlanRulesArgs {
-  planId?: number;
+  planId?: string;
   filter?: {
     actionType?: string;
     type?: string;
@@ -120,7 +121,7 @@ const buildQueryString = (params: Record<string, any>): string => {
 }
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
-  async plan(_: any, { id }: { id: number }, ctx: Context): Promise<any> {
+  async plan(_: any, { id }: { id: string }, ctx: Context): Promise<any> {
     try {
       return await makeApiRequest(ctx, `/api/plans/${id}`)
     } catch (error) {
