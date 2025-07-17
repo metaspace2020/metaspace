@@ -62,19 +62,27 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       const apiInput: any = {
         userId: input.userId,
         planId: input.planId,
+        priceId: input.priceId,
         email: input.email,
-        name: `${input.firstName} ${input.lastName}`.trim(),
+        name: input.name,
         billingInterval: input.billingInterval,
         paymentMethodId: input.paymentMethodId,
+      }
+
+      // Include optional group fields if provided
+      if (input.groupId) {
+        apiInput.groupId = input.groupId
+      }
+      if (input.groupName) {
+        apiInput.groupName = input.groupName
       }
 
       // Only include couponCode if it's not null/empty
       if (input.couponCode && input.couponCode.trim()) {
         apiInput.couponCode = input.couponCode.trim()
       }
-      console.log('apiInput', apiInput)
+
       const result = await makeApiRequest(ctx, '/api/subscriptions', 'POST', apiInput)
-      console.log('result', result)
       return result.subscription // Return just the subscription object
     } catch (error) {
       throw new UserError('Failed to create subscription')

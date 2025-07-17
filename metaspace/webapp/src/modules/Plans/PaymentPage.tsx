@@ -10,7 +10,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getPlanQuery, Plan } from '../../api/plan'
 import './PaymentPage.scss'
 import { Fragment } from 'vue'
-import { createSubscriptionMutation } from '../../api/subscription'
+import { createSubscriptionMutation, validateCouponQuery } from '../../api/subscription'
 
 interface CurrentUser {
   id: string
@@ -64,6 +64,8 @@ export default defineComponent({
         applied: false,
         discount: 0,
         error: null as string | null,
+        validationResult: null as any,
+        isValidating: false,
       },
       formErrors: {
         email: false,
@@ -101,6 +103,8 @@ export default defineComponent({
       },
       isFetchFailed: false,
       orderId: null as string | null,
+      selectedPricingOption: null as any,
+      planError: null as string | null,
     })
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -201,34 +205,57 @@ export default defineComponent({
     )
     const plan = computed(() => planResult.value?.plan)
 
-    // Computed properties for pricing based on billing frequency
-    const currentPrice = computed(() => {
-      if (!plan.value) return 0
-      return state.billingFrequency === 'monthly' ? plan.value.monthlyPriceCents : plan.value.yearlyPriceCents
-    })
-
     const displayPrice = computed(() => {
-      if (!plan.value) return { monthly: 0, yearly: 0 }
+      if (!plan.value?.pricingOptions?.length) return { monthly: 0, yearly: 0 }
+
+      const monthlyOption = plan.value.pricingOptions.find((po) => po.periodMonths === 1)
+      const yearlyOption = plan.value.pricingOptions.find((po) => po.periodMonths === 12)
+
       return {
-        monthly: plan.value.monthlyPriceCents,
-        yearly: plan.value.yearlyPriceCents / 12, // Show monthly equivalent for yearly
+        monthly: monthlyOption?.priceCents || 0,
+        yearly: yearlyOption ? yearlyOption.priceCents / 12 : 0,
       }
     })
 
     const savings = computed(() => {
-      if (!plan.value) return 0
-      const yearlyTotal = plan.value.monthlyPriceCents * 12
-      const savings = ((yearlyTotal - plan.value.yearlyPriceCents) / yearlyTotal) * 100
+      if (!plan.value?.pricingOptions?.length) return 0
+
+      const monthlyOption = plan.value.pricingOptions.find((po) => po.periodMonths === 1)
+      const yearlyOption = plan.value.pricingOptions.find((po) => po.periodMonths === 12)
+
+      if (!monthlyOption?.priceCents || !yearlyOption?.priceCents) return 0
+
+      const yearlyTotal = monthlyOption.priceCents * 12
+      const savings = ((yearlyTotal - yearlyOption.priceCents) / yearlyTotal) * 100
       return Math.round(savings)
     })
 
+    const displayPeriod = computed(() => {
+      if (!state.selectedPricingOption) return 'month'
+      return state.selectedPricingOption.periodMonths === 1 ? 'month' : 'year'
+    })
+
     const finalPrice = computed(() => {
-      const basePrice = currentPrice.value
-      if (state.coupon.applied && state.coupon.discount > 0) {
-        return basePrice - (basePrice * state.coupon.discount) / 100
+      const basePrice = state.selectedPricingOption?.priceCents || 0
+      if (state.coupon.applied && state.coupon.validationResult?.isValid) {
+        return state.coupon.validationResult.discountedPriceCents || basePrice
       }
       return basePrice
     })
+
+    // Update billing frequency when priceId changes
+    watch(
+      () => route.query.priceId,
+      (newPriceId) => {
+        if (newPriceId && plan.value?.pricingOptions) {
+          const option = plan.value.pricingOptions.find((po) => po.id === newPriceId)
+          if (option) {
+            state.billingFrequency = option.periodMonths === 1 ? 'monthly' : 'yearly'
+          }
+        }
+      },
+      { immediate: true }
+    )
 
     const applyCoupon = async () => {
       if (!state.coupon.code.trim()) {
@@ -236,27 +263,42 @@ export default defineComponent({
         return
       }
 
-      // TODO: Implement actual coupon validation logic
-      // For now, we'll simulate validation
-      try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 500))
+      if (!apolloClient) {
+        state.coupon.error = 'Unable to validate coupon. Please try again.'
+        return
+      }
 
-        // Mock validation - you would replace this with actual API call
-        if (state.coupon.code.toUpperCase() === 'SAVE10') {
-          state.coupon.applied = true
-          state.coupon.discount = 10
-          state.coupon.error = null
-          ElNotification({
-            title: 'Coupon Applied',
-            message: '10% discount applied successfully!',
-            type: 'success',
-          })
-        } else {
-          state.coupon.error = 'Invalid coupon code'
+      if (!plan.value?.id || !state.selectedPricingOption?.id) {
+        state.coupon.error = 'Plan information not available'
+        return
+      }
+
+      state.coupon.isValidating = true
+      state.coupon.error = null
+
+      try {
+        const { data } = await apolloClient.query({
+          query: validateCouponQuery,
+          variables: {
+            input: {
+              couponCode: state.coupon.code,
+              planId: plan.value.id,
+              priceId: state.selectedPricingOption.id,
+            },
+          },
+        })
+
+        state.coupon.validationResult = data.validateCoupon
+        state.coupon.applied = data.validateCoupon.isValid
+
+        if (!data.validateCoupon.isValid) {
+          state.coupon.error = data.validateCoupon.message || 'Invalid coupon code'
         }
       } catch (error) {
-        state.coupon.error = 'Failed to validate coupon'
+        state.coupon.error = 'Failed to validate coupon. Please try again.'
+        state.coupon.applied = false
+      } finally {
+        state.coupon.isValidating = false
       }
     }
 
@@ -265,6 +307,7 @@ export default defineComponent({
       state.coupon.discount = 0
       state.coupon.code = ''
       state.coupon.error = null
+      state.coupon.validationResult = null
     }
 
     watch(
@@ -299,6 +342,9 @@ export default defineComponent({
           loginSuccessRedirect: `/payment?planId=${route.query.planId}`,
         })
       }
+      state.selectedPricingOption = plan.value?.pricingOptions.find(
+        (po) => po.periodMonths === (state.billingFrequency === 'monthly' ? 1 : 12)
+      )
     })
 
     const initializeStripe = async () => {
@@ -414,11 +460,11 @@ export default defineComponent({
         return
       }
 
-      if (!isFormValid.value) {
+      if (!isFormValid.value || !state.selectedPricingOption) {
         ElNotification({
-          title: 'Form Validation Error',
-          message: 'Please fill in all required fields correctly.',
-          type: 'warning',
+          title: 'Error',
+          message: 'Please fill in all required fields correctly',
+          type: 'error',
         })
         return
       }
@@ -440,57 +486,48 @@ export default defineComponent({
           throw new Error('Plan ID is required')
         }
 
-        // Create token with Stripe
-        const { token, error: tokenError } = await state.stripe.createToken(state.cardNumberElement, {
-          name: `${state.form.firstName} ${state.form.lastName}`,
-          address_line1: state.form.address,
-          address_state: state.form.selectedState,
-          address_zip: state.form.zipCode,
-          address_country: state.form.selectedCountry,
-        })
-
-        if (tokenError) {
-          throw new Error(tokenError.message || 'Failed to process payment method')
-        }
-
-        if (!token) {
-          throw new Error('Failed to create payment token')
-        }
-
-        // Create subscription with the token
-        const result = await apolloClient!.mutate({
-          mutation: createSubscriptionMutation,
-          variables: {
-            input: {
-              userId: currentUser.value?.id,
-              planId: route.query.planId as string,
-              email: state.form.email,
-              firstName: state.form.firstName,
-              lastName: state.form.lastName,
-              billingInterval: state.billingFrequency,
-              paymentMethodId: token.id,
-              couponCode: state.coupon.applied ? state.coupon.code : null,
+        const { paymentMethod, error: paymentMethodError } = await state.stripe!.createPaymentMethod({
+          type: 'card',
+          card: state.cardNumberElement,
+          billing_details: {
+            name: `${state.form.firstName} ${state.form.lastName}`,
+            email: state.form.email,
+            address: {
+              ...(state.form.address && { line1: state.form.address }),
+              ...(state.form.zipCode && { postal_code: state.form.zipCode }),
+              ...(state.form.selectedCountry && { country: state.form.selectedCountry }),
             },
           },
         })
 
-        if (result.data && result.data.createSubscription) {
-          ElNotification({
-            title: 'Payment Successful',
-            message: 'Your subscription has been created successfully!',
-            type: 'success',
-            duration: 5000,
-          })
+        if (paymentMethodError) {
+          throw new Error(paymentMethodError.message)
+        }
 
-          // Navigate to success page or dashboard
-          router.push({
-            path: '/success',
-            query: {
-              subscriptionId: result.data.createSubscription.id,
-              planName: plan.value?.name,
-              from: 'payment',
+        if (!paymentMethod) {
+          throw new Error('Failed to create payment method')
+        }
+
+        // Create subscription with the token
+        const { data } = await apolloClient!.mutate({
+          mutation: createSubscriptionMutation,
+          variables: {
+            input: {
+              userId: currentUser.value?.id,
+              planId: plan.value!.id,
+              priceId: state.selectedPricingOption.id,
+              email: state.form.email,
+              name: `${state.form.firstName} ${state.form.lastName}`.trim(),
+              billingInterval: state.billingFrequency === 'monthly' ? 'monthly' : 'yearly',
+              paymentMethodId: paymentMethod!.id,
+              couponCode: state.coupon.applied ? state.coupon.code : undefined,
             },
-          })
+          },
+        })
+
+        if (data?.createSubscription) {
+          state.orderId = data.createSubscription
+          router.push('/success')
         } else {
           throw new Error('Failed to create subscription')
         }
@@ -541,6 +578,9 @@ export default defineComponent({
                     modelValue={state.billingFrequency}
                     onUpdate:modelValue={(val: string) => {
                       state.billingFrequency = val
+                      state.selectedPricingOption = plan.value?.pricingOptions.find(
+                        (po) => po.periodMonths === (val === 'monthly' ? 1 : 12)
+                      )
                     }}
                     class="frequency-options"
                   >
@@ -776,11 +816,11 @@ export default defineComponent({
                     <span class="item-name">{plan.value.name} Plan</span>
                     <span class="item-price">
                       <span class="currency">$</span>
-                      <span class="amount">{formatPrice(currentPrice.value)}</span>
-                      <span class="period">/{state.billingFrequency === 'monthly' ? 'month' : 'year'}</span>
+                      <span class="amount">{formatPrice(state.selectedPricingOption?.priceCents || 0)}</span>
+                      <span class="period">/{displayPeriod.value}</span>
                     </span>
                   </div>
-                  <div class={`billing-notice ${state.billingFrequency !== 'yearly' ? 'invisible' : ''}`}>
+                  <div class={`billing-notice ${displayPeriod.value !== 'year' ? 'invisible' : ''}`}>
                     <span class="notice-text">Billed annually. You'll be charged the full amount today.</span>
                   </div>
                   <div class="summary-details">
@@ -805,14 +845,25 @@ export default defineComponent({
                           size="default"
                           class="coupon-field"
                         />
-                        <ElButton type="primary" size="default" onClick={applyCoupon} class="apply-coupon-btn">
-                          Apply
+                        <ElButton
+                          type="primary"
+                          size="default"
+                          onClick={applyCoupon}
+                          class="apply-coupon-btn"
+                          loading={state.coupon.isValidating}
+                          disabled={state.coupon.isValidating}
+                        >
+                          {state.coupon.isValidating ? 'Validating...' : 'Apply'}
                         </ElButton>
                       </div>
                     ) : (
                       <div class="coupon-applied">
                         <span class="coupon-code">{state.coupon.code}</span>
-                        <span class="discount">-{state.coupon.discount}%</span>
+                        <span class="discount">
+                          {state.coupon.validationResult?.discountPercentage
+                            ? `-${state.coupon.validationResult.discountPercentage}%`
+                            : 'Applied'}
+                        </span>
                         <ElButton type="text" size="small" onClick={removeCoupon} class="remove-coupon">
                           Remove
                         </ElButton>
@@ -821,11 +872,21 @@ export default defineComponent({
                     {state.coupon.error && <div class="coupon-error">{state.coupon.error}</div>}
                   </div>
 
-                  {state.coupon.applied && state.coupon.discount > 0 && (
+                  {state.coupon.applied && state.coupon.validationResult?.isValid && (
                     <div class="summary-item discount">
-                      <span class="item-name">Discount ({state.coupon.discount}%)</span>
+                      <span class="item-name">
+                        {state.coupon.validationResult.couponName ||
+                          `Discount${
+                            state.coupon.validationResult.discountPercentage
+                              ? ` (${state.coupon.validationResult.discountPercentage}%)`
+                              : ''
+                          }`}
+                      </span>
                       <span class="item-price discount-amount">
-                        -$<span class="amount">{formatPrice((currentPrice.value * state.coupon.discount) / 100)}</span>
+                        -$
+                        <span class="amount">
+                          {formatPrice(state.coupon.validationResult.discountAmountCents || 0)}
+                        </span>
                       </span>
                     </div>
                   )}
@@ -835,7 +896,7 @@ export default defineComponent({
                     <span>
                       <span class="currency">$</span>
                       <span class="amount">{formatPrice(finalPrice.value)}</span>
-                      <span class="period">/{state.billingFrequency === 'monthly' ? 'month' : 'year'}</span>
+                      <span class="period">/{displayPeriod.value}</span>
                     </span>
                   </div>
                   <p class="vat-notice">*VAT included where applicable</p>

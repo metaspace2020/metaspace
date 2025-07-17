@@ -1,7 +1,6 @@
 import { UserError } from 'graphql-errors'
 import { In } from 'typeorm'
 import * as uuid from 'uuid'
-import fetch, { RequestInit } from 'node-fetch'
 
 import { UserGroup } from '../../binding'
 import { User as UserModel } from './model'
@@ -14,7 +13,6 @@ import { ScopeRoleOptions as SRO, UserProjectSource, UserSource } from '../../bi
 import { findUserById, resetUserApiKey, sendEmailVerificationToken, signout } from '../auth/operation'
 import { LooselyCompatible } from '../../utils'
 import logger from '../../utils/logger'
-import config from '../../utils/config'
 import { convertUserToUserSource } from './util/convertUserToUserSource'
 import { smApiUpdateDataset } from '../../utils/smApi/datasets'
 import { deleteDataset } from '../dataset/operation/deleteDataset'

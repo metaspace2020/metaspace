@@ -1,13 +1,23 @@
 import gql from 'graphql-tag'
 
+export interface PricingOption {
+  id: string
+  periodMonths: number
+  priceCents: number
+  displayName: string
+  isActive: boolean
+  displayOrder: number
+}
+
 export interface Plan {
   id: string
+  tier: string
   name: string
-  monthlyPriceCents?: number
-  yearlyPriceCents?: number
-  isActive: boolean
   description: string
+  isActive: boolean
+  isDefault: boolean
   displayOrder: number
+  pricingOptions: PricingOption[]
 }
 
 export interface AllPlansData {
@@ -90,12 +100,11 @@ export enum SortingOrder {
 }
 
 export interface PlanFilter {
+  tier?: string
   name?: string
   isActive?: boolean
   isDefault?: boolean
   createdAt?: string
-  monthlyPriceCents?: number
-  yearlyPriceCents?: number
   displayOrder?: number
 }
 
@@ -123,12 +132,20 @@ export interface ApiUsageFilter {
 export const planFragment = gql`
   fragment Plan on Plan {
     id
+    tier
     name
-    monthlyPriceCents
-    yearlyPriceCents
-    isActive
     description
+    isActive
+    isDefault
     displayOrder
+    pricingOptions {
+      id
+      periodMonths
+      priceCents
+      displayName
+      isActive
+      displayOrder
+    }
   }
 `
 

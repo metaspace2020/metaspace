@@ -132,9 +132,11 @@ input TransactionFilter {
 input CreateSubscriptionInput {
   userId: String!
   planId: String!
+  priceId: String!
+  groupId: String
+  groupName: String
   email: String!
-  firstName: String!
-  lastName: String!
+  name: String!
   billingInterval: BillingInterval
   paymentMethodId: String
   couponCode: String
@@ -147,6 +149,23 @@ input UpdateSubscriptionInput {
 
 input CancelSubscriptionInput {
   reason: String
+}
+
+input ValidateCouponInput {
+  couponCode: String!
+  planId: String!
+  priceId: String!
+}
+
+type CouponValidationResult {
+  isValid: Boolean!
+  couponCode: String!
+  message: String!
+  originalPriceCents: Int
+  discountedPriceCents: Int
+  discountAmountCents: Int
+  discountPercentage: Float
+  couponName: String
 }
 
 type Query {
@@ -180,6 +199,9 @@ type Query {
   transactionsByType(type: TransactionType!): [Transaction]
   pendingTransactions: [Transaction]
   transactionsByDateRange(startDate: String!, endDate: String!): [Transaction]
+  
+  # Coupon validation
+  validateCoupon(input: ValidateCouponInput!): CouponValidationResult
 }
 
 type Mutation {

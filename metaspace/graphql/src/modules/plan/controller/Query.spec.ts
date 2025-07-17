@@ -22,36 +22,87 @@ describe('modules/plan/controller (queries)', () => {
   const TIERS = [
     {
       id: '550e8400-e29b-41d4-a716-446655440001',
+      tier: 'free',
       name: 'regular',
       isActive: true,
       isDefault: false,
       createdAt: currentTime,
-      monthlyPriceCents: 0,
-      yearlyPriceCents: 0,
       displayOrder: 0,
       description: 'Regular plan',
+      pricingOptions: [
+        {
+          id: 'price_free_monthly',
+          periodMonths: 1,
+          priceCents: 0,
+          displayName: 'Monthly',
+          isActive: true,
+          displayOrder: 0,
+        },
+        {
+          id: 'price_free_yearly',
+          periodMonths: 12,
+          priceCents: 0,
+          displayName: 'Yearly',
+          isActive: true,
+          displayOrder: 1,
+        },
+      ],
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440002',
+      tier: 'lab',
       name: 'lab',
       isActive: false,
       isDefault: false,
       createdAt: currentTime,
-      monthlyPriceCents: 5000,
-      yearlyPriceCents: 50000,
       displayOrder: 1,
       description: 'Lab plan',
+      pricingOptions: [
+        {
+          id: 'price_lab_monthly',
+          periodMonths: 1,
+          priceCents: 5000,
+          displayName: 'Monthly',
+          isActive: true,
+          displayOrder: 0,
+        },
+        {
+          id: 'price_lab_yearly',
+          periodMonths: 12,
+          priceCents: 50000,
+          displayName: 'Yearly',
+          isActive: true,
+          displayOrder: 1,
+        },
+      ],
     },
     {
       id: '550e8400-e29b-41d4-a716-446655440003',
+      tier: 'pro',
       name: 'lab',
       isActive: true,
       isDefault: true,
       createdAt: currentTime,
-      monthlyPriceCents: 10000,
-      yearlyPriceCents: 100000,
       displayOrder: 2,
       description: 'Pro lab plan',
+      pricingOptions: [
+        {
+          id: 'price_pro_monthly',
+          periodMonths: 1,
+          priceCents: 10000,
+          displayName: 'Monthly',
+          isActive: true,
+          displayOrder: 0,
+        },
+        {
+          id: 'price_pro_yearly',
+          periodMonths: 12,
+          priceCents: 100000,
+          displayName: 'Yearly',
+          isActive: true,
+          displayOrder: 1,
+        },
+      ],
     },
   ]
 
@@ -122,14 +173,21 @@ describe('modules/plan/controller (queries)', () => {
     const queryPlan = `query ($id: String!) {
       plan(id: $id) {
         id
+        tier
         name
         isActive
         isDefault
         createdAt
-        monthlyPriceCents
-        yearlyPriceCents
         displayOrder
         description
+        pricingOptions {
+          id
+          periodMonths
+          priceCents
+          displayName
+          isActive
+          displayOrder
+        }
       }
     }`
 
@@ -181,14 +239,21 @@ describe('modules/plan/controller (queries)', () => {
   describe('Query.allPlans', () => {
     const queryAllPlans = `query ($filter: PlanFilter, $offset: Int, $limit: Int) {
       allPlans(filter: $filter, offset: $offset, limit: $limit) {
+        tier
         name
         isActive
         isDefault
         createdAt
-        monthlyPriceCents
-        yearlyPriceCents
         displayOrder
         description
+        pricingOptions {
+          id
+          periodMonths
+          priceCents
+          displayName
+          isActive
+          displayOrder
+        }
       }
     }`
 
@@ -215,14 +280,14 @@ describe('modules/plan/controller (queries)', () => {
       )
 
       const expected = activePlans.map(plan => ({
+        tier: plan.tier,
         name: plan.name,
         isActive: plan.isActive,
         isDefault: plan.isDefault,
         createdAt: moment(plan.createdAt).valueOf().toString(),
-        monthlyPriceCents: plan.monthlyPriceCents,
-        yearlyPriceCents: plan.yearlyPriceCents,
         displayOrder: plan.displayOrder,
         description: plan.description,
+        pricingOptions: plan.pricingOptions,
       }))
 
       expect(result).toEqual(expected)

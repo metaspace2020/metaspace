@@ -1,23 +1,31 @@
+type PricingOption {
+    id: String!
+    periodMonths: Int!
+    priceCents: Int!
+    displayName: String!
+    isActive: Boolean!
+    displayOrder: Int!
+}
+
 type Plan {
     id: String!
+    tier: String!
     name: String!
+    description: String
     isActive: Boolean
     isDefault: Boolean
+    displayOrder: Int
     createdAt: String!
     planRules: [PlanRule]
-    monthlyPriceCents: Int
-    yearlyPriceCents: Int
-    displayOrder: Int
-    description: String
+    pricingOptions: [PricingOption]
 }
 
 input PlanFilter {
+    tier: String
     name: String
     isActive: Boolean
     isDefault: Boolean
     createdAt: String
-    monthlyPriceCents: Int
-    yearlyPriceCents: Int
     displayOrder: Int
 }
 

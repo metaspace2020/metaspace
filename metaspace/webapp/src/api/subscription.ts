@@ -164,9 +164,11 @@ export interface TransactionFilter {
 export interface CreateSubscriptionInput {
   userId: string
   planId: string
+  priceId: string
+  groupId?: string
+  groupName?: string
   email: string
-  firstName: string
-  lastName: string
+  name: string
   billingInterval?: BillingInterval
   paymentMethodId?: string
   couponCode?: string
@@ -179,6 +181,27 @@ export interface UpdateSubscriptionInput {
 
 export interface CancelSubscriptionInput {
   reason?: string
+}
+
+export interface ValidateCouponInput {
+  couponCode: string
+  planId: string
+  billingInterval: BillingInterval
+}
+
+export interface CouponValidationResult {
+  isValid: boolean
+  couponCode: string
+  message: string
+  originalPriceCents?: number
+  discountedPriceCents?: number
+  discountAmountCents?: number
+  discountPercentage?: number
+  couponName?: string
+}
+
+export interface ValidateCouponData {
+  validateCoupon: CouponValidationResult
 }
 
 // GraphQL Fragments
@@ -403,5 +426,21 @@ export const cancelSubscriptionMutation = gql`
 export const processStripeWebhookMutation = gql`
   mutation ($payload: String!) {
     processStripeWebhook(payload: $payload)
+  }
+`
+
+// Coupon validation query
+export const validateCouponQuery = gql`
+  query ($input: ValidateCouponInput!) {
+    validateCoupon(input: $input) {
+      isValid
+      couponCode
+      message
+      originalPriceCents
+      discountedPriceCents
+      discountAmountCents
+      discountPercentage
+      couponName
+    }
   }
 `

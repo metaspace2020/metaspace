@@ -66,9 +66,11 @@ describe('modules/subscription/controller (mutations)', () => {
       const subscriptionInput = {
         userId: '550e8400-e29b-41d4-a716-446655440001',
         planId: '550e8400-e29b-41d4-a716-446655440002',
+        priceId: 'price_H5UZwgyGXPe2oN',
         email: 'user@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
+        name: 'John Doe',
+        groupId: 'group123',
+        groupName: 'Test Group',
         billingInterval: 'monthly',
         paymentMethodId: 'pm_1234567890',
         couponCode: 'SAVE20',
@@ -121,17 +123,24 @@ describe('modules/subscription/controller (mutations)', () => {
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
           }),
-          body: JSON.stringify({
-            userId: subscriptionInput.userId,
-            planId: subscriptionInput.planId,
-            email: subscriptionInput.email,
-            name: 'John Doe',
-            billingInterval: subscriptionInput.billingInterval,
-            paymentMethodId: subscriptionInput.paymentMethodId,
-            couponCode: subscriptionInput.couponCode,
-          }),
+          body: expect.any(String),
         })
       )
+
+      // Parse and compare the actual request body
+      const actualBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+      expect(actualBody).toEqual({
+        userId: subscriptionInput.userId,
+        planId: subscriptionInput.planId,
+        priceId: subscriptionInput.priceId,
+        email: subscriptionInput.email,
+        name: subscriptionInput.name,
+        groupId: subscriptionInput.groupId,
+        groupName: subscriptionInput.groupName,
+        billingInterval: subscriptionInput.billingInterval,
+        paymentMethodId: subscriptionInput.paymentMethodId,
+        couponCode: subscriptionInput.couponCode,
+      })
 
       expect(result).toEqual(createdSubscription)
     })
@@ -140,9 +149,9 @@ describe('modules/subscription/controller (mutations)', () => {
       const subscriptionInput = {
         userId: '550e8400-e29b-41d4-a716-446655440001',
         planId: '550e8400-e29b-41d4-a716-446655440002',
+        priceId: 'price_H5UZwgyGXPe2oN',
         email: 'user@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
+        name: 'John Doe',
         billingInterval: 'monthly',
       }
 
@@ -170,9 +179,9 @@ describe('modules/subscription/controller (mutations)', () => {
       const subscriptionInput = {
         userId: '550e8400-e29b-41d4-a716-446655440001',
         planId: '550e8400-e29b-41d4-a716-446655440002',
+        priceId: 'price_H5UZwgyGXPe2oN',
         email: 'user@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
+        name: 'John Doe',
         billingInterval: 'monthly',
         paymentMethodId: 'pm_1234567890',
         couponCode: null,
@@ -228,8 +237,9 @@ describe('modules/subscription/controller (mutations)', () => {
           body: JSON.stringify({
             userId: subscriptionInput.userId,
             planId: subscriptionInput.planId,
+            priceId: subscriptionInput.priceId,
             email: subscriptionInput.email,
-            name: 'John Doe',
+            name: subscriptionInput.name,
             billingInterval: subscriptionInput.billingInterval,
             paymentMethodId: subscriptionInput.paymentMethodId,
             // couponCode should be omitted entirely

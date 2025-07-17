@@ -18,7 +18,11 @@ interface AllSubscriptionsArgs {
     startDate?: string;
     endDate?: string;
   };
-  orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_USER' | 'ORDER_BY_PLAN' | 'ORDER_BY_STATUS' | 'ORDER_BY_BILLING_INTERVAL';
+  orderBy?: 'ORDER_BY_DATE'
+   | 'ORDER_BY_USER'
+    | 'ORDER_BY_PLAN'
+     | 'ORDER_BY_STATUS'
+      | 'ORDER_BY_BILLING_INTERVAL';
   sortingOrder?: 'ASCENDING' | 'DESCENDING';
   offset?: number;
   limit?: number;
@@ -38,7 +42,12 @@ interface AllTransactionsArgs {
     startDate?: string;
     endDate?: string;
   };
-  orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_USER' | 'ORDER_BY_AMOUNT' | 'ORDER_BY_SUBSCRIPTION' | 'ORDER_BY_STATUS' | 'ORDER_BY_TYPE';
+  orderBy?: 'ORDER_BY_DATE'
+   | 'ORDER_BY_USER'
+    | 'ORDER_BY_AMOUNT'
+     | 'ORDER_BY_SUBSCRIPTION'
+      | 'ORDER_BY_STATUS'
+       | 'ORDER_BY_TYPE';
   sortingOrder?: 'ASCENDING' | 'DESCENDING';
   offset?: number;
   limit?: number;
@@ -307,7 +316,12 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
   },
 
-  async transactionsByDateRange(_: any, { startDate, endDate }: { startDate: string; endDate: string }, ctx: Context): Promise<any[]> {
+  async transactionsByDateRange(_: any,
+    {
+      startDate,
+      endDate,
+    }:
+        { startDate: string; endDate: string }, ctx: Context): Promise<any[]> {
     if (ctx.user.role !== 'admin') {
       throw new UserError('Access denied')
     }
@@ -318,6 +332,18 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     } catch (error) {
       logger.error(`Error fetching transactions by date range ${startDate} to ${endDate}:`, error)
       return []
+    }
+  },
+
+  async validateCoupon(_: any,
+    { input }: { input: { couponCode: string; planId: string; priceId: string } },
+    ctx: Context): Promise<any> {
+    try {
+      const response = await makeApiRequest(ctx, '/api/subscriptions/validate-coupon', 'POST', input)
+      return response
+    } catch (error) {
+      logger.error('Error validating coupon:', error)
+      return null
     }
   },
 }
