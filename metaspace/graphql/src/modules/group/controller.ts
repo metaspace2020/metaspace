@@ -390,6 +390,7 @@ export const Resolvers = {
       })
 
       action.externalId = group.id
+      action.groupId = group.id
       action.canEdit = true
 
       await performAction(ctx, action)
@@ -407,6 +408,7 @@ export const Resolvers = {
         actionType: 'update',
         userId: user.id,
         externalId: groupId,
+        groupId,
         type: 'project',
         canEdit: true,
         visibility: 'private',

@@ -423,8 +423,8 @@ describe('modules/subscription/controller (queries)', () => {
   })
 
   describe('Query.userSubscriptions', () => {
-    const queryUserSubscriptions = `query($userId: ID!) {
-      userSubscriptions(userId: $userId) {
+    const queryUserSubscriptions = `query {
+      userSubscriptions {
         id
         userId
         planId
@@ -455,10 +455,10 @@ describe('modules/subscription/controller (queries)', () => {
         }))),
       })
 
-      const result = await doQuery(queryUserSubscriptions, { userId }, { context: userContext })
+      const result = await doQuery(queryUserSubscriptions, null, { context: userContext })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        `https://test-api.metaspace.example/api/subscriptions/user/${userId}`,
+        `https://test-api.metaspace.example/api/subscriptions/user/${testUser.id}`,
         expect.any(Object)
       )
 
@@ -476,8 +476,8 @@ describe('modules/subscription/controller (queries)', () => {
   })
 
   describe('Query.activeUserSubscription', () => {
-    const queryActiveUserSubscription = `query($userId: ID!) {
-      activeUserSubscription(userId: $userId) {
+    const queryActiveUserSubscription = `query {
+      activeUserSubscription {
         id
         userId
         planId
@@ -506,7 +506,7 @@ describe('modules/subscription/controller (queries)', () => {
         }),
       })
 
-      const result = await doQuery(queryActiveUserSubscription, { userId }, { context: userContext })
+      const result = await doQuery(queryActiveUserSubscription, null, { context: userContext })
 
       expect(mockFetch).toHaveBeenCalledWith(
         `https://test-api.metaspace.example/api/subscriptions/user/${userId}/active`,

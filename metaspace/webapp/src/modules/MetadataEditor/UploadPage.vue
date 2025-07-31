@@ -391,6 +391,14 @@ export default defineComponent({
               'please select the databases again and resubmit the form.',
             type: 'error',
           })
+        } else if (err?.message?.includes('limit')) {
+          ElMessage({
+            message: 'You have reached the limit of private datasets you can submit. Please upgrade your plan.',
+            dangerouslyUseHTMLString: true,
+            type: 'info',
+            duration: 0,
+            showClose: true,
+          })
         } else {
           ElMessage({
             message:

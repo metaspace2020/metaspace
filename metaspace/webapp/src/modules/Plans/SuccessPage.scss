@@ -1,86 +1,286 @@
 .success-page {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: calc(100vh - 130px);
-  padding: 2rem;
-  background-color: #f9f9f9;
-  
+  flex-direction: column;
+  min-height: calc(100vh - 65px);
+  background: #f8f9fa;
+  padding: 2rem 0;
+
   .success-container {
-    max-width: 600px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    width: 100%;
+
+    @media (max-width: 768px) {
+      padding: 0 1rem;
+    }
+  }
+
+  .loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    font-size: 1.2rem;
+    color: #606266;
+  }
+
+  .success-header {
     text-align: center;
-    padding: 3rem 2rem;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    
+    margin-bottom: 3rem;
+
     .success-icon {
-      display: inline-flex;
+      display: flex;
       justify-content: center;
-      align-items: center;
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
       margin-bottom: 1.5rem;
-      
+
       svg {
-        width: 60%;
-        height: 60%;
+        width: 80px;
+        height: 80px;
+        color: #67c23a;
+      }
+    }
+
+    .success-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 1rem;
+
+      @media (max-width: 768px) {
+        font-size: 2rem;
+      }
+    }
+
+    .success-message {
+      font-size: 1.1rem;
+      color: #606266;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+  }
+
+  .subscription-details {
+    display: grid;
+    gap: 2rem;
+    margin-bottom: 3rem;
+
+    @media (min-width: 1024px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .subscription-card,
+  .transaction-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      border-bottom: 1px solid #e4e7ed;
+      background: #409eff;
+      color: white;
+
+      h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      .el-tag {
+        font-weight: 600;
+        border: none;
+      }
+    }
+
+    .details-grid {
+      padding: 1.5rem;
+      display: grid;
+      gap: 1rem;
+
+      @media (min-width: 768px) {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        label {
+          font-weight: 600;
+          color: #606266;
+          font-size: 0.9rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .value {
+          font-size: 1rem;
+          color: #2c3e50;
+          font-weight: 500;
+          word-break: break-all;
+
+          .el-tag {
+            font-weight: 500;
+          }
+        }
+      }
+    }
+
+    .plan-description {
+      padding: 0 1.5rem 1.5rem;
+
+      h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .safe-html {
+        color: #606266;
+        line-height: 1.6;
+
+        ul {
+          margin: 0.5rem 0;
+          padding-left: 1.5rem;
+        }
+
+        li {
+          margin-bottom: 0.5rem;
+        }
+      }
+    }
+
+    .invoice-actions {
+      padding: 1.5rem;
+
+      h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+
+        .el-button {
+          flex: 1;
+          min-width: 140px;
+        }
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .primary-button,
+    .secondary-button {
+      min-width: 180px;
+      height: 48px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+    }
+
+    .primary-button {
+      background: #409eff;
+      border: none;
+      color: white;
+
+      &:hover {
+        background: #337ecc;
+      }
+    }
+
+    .secondary-button {
+      background: white;
+      border: 2px solid #409eff;
+      color: #409eff;
+
+      &:hover {
+        background: #409eff;
         color: white;
       }
     }
-    
-    .success-title {
+  }
+
+  // Legacy styles for basic success page
+  .success-icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+
+    svg {
+      width: 80px;
+      height: 80px;
+      color: #67c23a;
+    }
+  }
+
+  .success-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 1rem;
+
+    @media (max-width: 768px) {
       font-size: 2rem;
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 1.5rem;
-    }
-    
-    .success-message {
-      font-size: 1.1rem;
-      line-height: 1.6;
-      color: #606266;
-      margin-bottom: 2rem;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
-      
-      .highlight {
-        color: #409eff;
-        font-weight: 500;
-      }
-    }
-    
-    .actions {
-      margin-top: 1rem;
-      
-      .api-docs-button {
-        padding: 12px 30px;
-        font-size: 1rem;
-        font-weight: 500;
-      }
     }
   }
-  
-  @media (max-width: 768px) {
-    padding: 1rem;
-    
-    .success-container {
-      padding: 2rem 1.5rem;
-      
-      .success-icon {
-        width: 70px;
-        height: 70px;
-      }
-      
-      .success-title {
-        font-size: 1.7rem;
-      }
-      
-      .success-message {
-        font-size: 1rem;
-      }
+
+  .success-message {
+    font-size: 1.1rem;
+    color: #606266;
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+  }
+
+  .api-docs-button {
+    background: #409eff;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      background: #337ecc;
     }
   }
-} 
+}
+
+ 

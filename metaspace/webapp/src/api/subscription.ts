@@ -281,6 +281,21 @@ export const getSubscriptionWithTransactionsQuery = gql`
   ${subscriptionWithTransactionsFragment}
 `
 
+export const getSubscriptionWithPlanQuery = gql`
+  query ($id: ID!) {
+    subscription(id: $id) {
+      ...SubscriptionWithTransactions
+      plan {
+        id
+        name
+        description
+        tier
+      }
+    }
+  }
+  ${subscriptionWithTransactionsFragment}
+`
+
 export const getAllSubscriptionsQuery = gql`
   query (
     $filter: SubscriptionFilter
@@ -298,8 +313,8 @@ export const getAllSubscriptionsQuery = gql`
 `
 
 export const getUserSubscriptionsQuery = gql`
-  query ($userId: ID!) {
-    userSubscriptions(userId: $userId) {
+  query {
+    userSubscriptions {
       ...SubscriptionWithTransactions
     }
   }
@@ -307,8 +322,8 @@ export const getUserSubscriptionsQuery = gql`
 `
 
 export const getActiveUserSubscriptionQuery = gql`
-  query ($userId: ID!) {
-    activeUserSubscription(userId: $userId) {
+  query {
+    activeUserSubscription {
       ...SubscriptionWithTransactions
     }
   }

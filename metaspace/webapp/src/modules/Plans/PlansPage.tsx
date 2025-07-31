@@ -1,9 +1,17 @@
 import { defineComponent, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElButton, ElSelect, ElOption } from '../../lib/element-plus'
+import { ElButton, ElRadioGroup, ElRadioButton } from '../../lib/element-plus'
 import './PlansPage.scss'
 import { useQuery } from '@vue/apollo-composable'
-import { AllPlansData, getPlansQuery } from '../../api/plan'
+import { AllPlansData, getPlansQuery, PricingOption } from '../../api/plan'
+import {
+  formatPrice,
+  getPriceForPeriod,
+  getMonthlyPrice,
+  getPeriodDisplayName,
+  getAvailablePeriods,
+} from '../../lib/pricing'
+import { getActiveUserSubscriptionQuery } from '../../api/subscription'
 
 export default defineComponent({
   name: 'PlansPage',
@@ -11,108 +19,124 @@ export default defineComponent({
     const router = useRouter()
     const state = reactive({
       hoveredPlan: 2,
-      selectedPeriods: {} as Record<string, string>,
+      selectedPeriod: null as PricingOption | null, // Will be set after availablePeriods is computed
+      radioValue: 'Yearly', // Separate state for radio group, using display name
     })
 
     const { result: plansResult } = useQuery<AllPlansData>(getPlansQuery)
     const plans = computed(() => plansResult.value?.allPlans || [])
 
-    const handleSubscribe = (planId: string) => {
-      router.push(`/payment?planId=${planId}`)
-    }
+    const { result: subscriptionsResult } = useQuery<any>(getActiveUserSubscriptionQuery)
+    const activeSubscription = computed(() => subscriptionsResult.value?.activeUserSubscription)
 
-    const formatPrice = (priceCents: number | undefined) => {
-      if (priceCents === undefined) return '0.00'
-      return (priceCents / 100).toFixed(2)
-    }
+    // Get all unique periods from all plans as objects
+    const availablePeriods = computed(() => getAvailablePeriods(plans.value))
 
-    const getDefaultPricingOption = (planId: string) => {
-      const plan = plans.value.find((p) => p.id === planId)
-      if (!plan?.pricingOptions?.length) return null
-      const yearlyOption = plan.pricingOptions.find((po) => po.periodMonths === 12)
-      return yearlyOption || plan.pricingOptions[0]
-    }
-
-    // Initialize selected periods with default values
-    const initializeSelectedPeriods = () => {
-      plans.value.forEach((plan) => {
-        const defaultOption = getDefaultPricingOption(plan.id)
-        if (defaultOption) {
-          state.selectedPeriods[plan.id] = defaultOption.id
-        }
-      })
-    }
-
-    // Watch for plans data and initialize selected periods
+    // Set default selected period when availablePeriods changes
     watch(
-      () => plans.value,
-      (newPlans) => {
-        if (newPlans.length > 0) {
-          initializeSelectedPeriods()
+      availablePeriods,
+      (periods) => {
+        if (!state.selectedPeriod && periods.length > 0) {
+          // Default to yearly if available, otherwise first available
+          const yearly = periods.find((p) => p.displayName.toLowerCase() === 'yearly')
+          state.selectedPeriod = yearly || periods[0]
+          state.radioValue = state.selectedPeriod.displayName
         }
       },
       { immediate: true }
     )
 
+    // Update selectedPeriod when radio value changes
+    watch(
+      () => state.radioValue,
+      (newValue) => {
+        const period = availablePeriods.value.find((p) => p.displayName === newValue)
+        if (period) {
+          state.selectedPeriod = period
+        }
+      }
+    )
+
+    const handleSubscribe = (planId: string) => {
+      router.push(`/payment?planId=${planId}`)
+    }
+
     return () => {
-      const sortedPlans = [...plans.value].sort((a, b) => a.displayOrder - b.displayOrder)
+      const sortedPlans = [...plans.value].filter((p) => !p.isDefault).sort((a, b) => a.displayOrder - b.displayOrder)
 
       return (
         <div class="page-wrapper">
           <div class="plans-container">
             <h1 class="plans-title">Pricing</h1>
 
+            {/* Pricing Period Toggle */}
+            <div class="pricing-toggle">
+              <ElRadioGroup
+                modelValue={state.radioValue}
+                onChange={(value: string) => {
+                  state.radioValue = value
+                }}
+                size="large"
+              >
+                {availablePeriods.value.map((period) => (
+                  <ElRadioButton key={period.id} label={period.displayName} class="toggle-option" />
+                ))}
+              </ElRadioGroup>
+            </div>
+
             <div class="plans-grid">
               {sortedPlans
                 .filter((plan) => plan.isActive)
                 .map((plan, index) => {
-                  const selectedPricingOption = plan.pricingOptions?.find(
-                    (po) => po.id === state.selectedPeriods[plan.id]
-                  )
+                  if (!state.selectedPeriod) return null
+                  const isActiveSubscription = activeSubscription.value?.planId === plan.id
+
+                  const monthlyPrice = getMonthlyPrice(plan, state.selectedPeriod)
+                  const totalPrice = getPriceForPeriod(plan, state.selectedPeriod)
+                  const pricingOptions = plan?.pricingOptions || []
+                  let savingsPercentage: number = 100 - (monthlyPrice * 100) / getMonthlyPrice(plan, pricingOptions[0])
+                  const isRecommended = index === 2 // HIGH plan (index 2) is highlighted in the image
+                  savingsPercentage = savingsPercentage > 0 ? Number(savingsPercentage.toFixed(0)) : 0
 
                   return (
                     <div
                       key={plan.id}
                       onMouseover={() => (state.hoveredPlan = index)}
+                      onMouseout={() => (state.hoveredPlan = -1)}
                       class="plan-card"
                       style={{
-                        border: state.hoveredPlan === index ? '1px solid #4285f4' : '1px solid #eee',
+                        border: state.hoveredPlan === index ? '2px solid #0F87EF' : '1px solid #eee',
                       }}
                     >
                       <h2 class="plan-name">{plan.name}</h2>
-                      {plan.pricingOptions?.length > 0 ? (
-                        <div class="plan-pricing">
-                          <div class="plan-price">
-                            <span class="price-currency">$</span>
-                            <span class="price-amount">{formatPrice(selectedPricingOption?.priceCents)}</span>
-                            <span class="price-period">/{selectedPricingOption?.displayName.toLowerCase()}</span>
-                          </div>
-                          <ElSelect v-model={state.selectedPeriods[plan.id]} class="period-selector" size="small">
-                            {plan.pricingOptions
-                              .filter((po) => po.isActive)
-                              .sort((a, b) => a.displayOrder - b.displayOrder)
-                              .map((option) => (
-                                <ElOption key={option.id} value={option.id} label={option.displayName} />
-                              ))}
-                          </ElSelect>
-                        </div>
-                      ) : (
-                        <div class="plan-price">
-                          <span class="price-currency">$</span>
-                          <span class="price-amount">0.00</span>
-                          <span class="price-period">/month</span>
-                        </div>
-                      )}
+
+                      <div class="plan-price">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{formatPrice(totalPrice)}</span>
+                        <span class="price-period">/{getPeriodDisplayName(state.selectedPeriod).toLowerCase()}</span>
+                      </div>
+
+                      <div class="savings-badge" style={{ visibility: savingsPercentage > 0 ? 'visible' : 'hidden' }}>
+                        Save {savingsPercentage}%
+                      </div>
+
+                      <div class="billing-info">
+                        Billed {getPeriodDisplayName(state.selectedPeriod)} • ${formatPrice(totalPrice)} total
+                      </div>
+
                       <div class="plan-features">
                         <div class="safe-html" innerHTML={plan.description} />
                       </div>
-                      {plan.pricingOptions?.length === 0 ? (
-                        <div class="start-button">Already enjoying the benefits!</div>
+
+                      {isActiveSubscription ? (
+                        <div class="start-button text-center flex items-center justify-center">
+                          Already enjoying the benefits!
+                        </div>
                       ) : (
                         <ElButton
-                          class="start-button"
-                          type={state.hoveredPlan === index ? 'primary' : 'default'}
-                          onClick={() => handleSubscribe(plan.id, selectedPricingOption)}
+                          class={`start-button ${isRecommended ? 'primary' : 'outline'}`}
+                          type={isRecommended ? 'primary' : 'default'}
+                          onClick={() => handleSubscribe(plan.id)}
                           size="default"
                         >
                           Subscribe
@@ -122,7 +146,6 @@ export default defineComponent({
                   )
                 })}
             </div>
-            <div class="vat-notice">*VAT included on all prices shown.</div>
           </div>
         </div>
       )

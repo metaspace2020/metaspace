@@ -186,30 +186,28 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
   },
 
-  async userSubscriptions(_: any, { userId }: { userId: string }, ctx: Context): Promise<any[]> {
-    // Users can only access their own subscriptions unless they're admin
-    if (ctx.user.id !== userId && ctx.user.role !== 'admin') {
+  async userSubscriptions(_: any, args: any, ctx: Context): Promise<any[]> {
+    if (!ctx.user.id && ctx.user.role !== 'admin') {
       throw new UserError('Access denied')
     }
 
     try {
-      return await makeApiRequest(ctx, `/api/subscriptions/user/${userId}`)
+      return await makeApiRequest(ctx, `/api/subscriptions/user/${ctx.user.id}`)
     } catch (error) {
-      logger.error(`Error fetching subscriptions for user ${userId}:`, error)
+      logger.error(`Error fetching subscriptions for user ${ctx.user.id}:`, error)
       return []
     }
   },
 
-  async activeUserSubscription(_: any, { userId }: { userId: string }, ctx: Context): Promise<any> {
-    // Users can only access their own subscription unless they're admin
-    if (ctx.user.id !== userId && ctx.user.role !== 'admin') {
+  async activeUserSubscription(_: any, args: any, ctx: Context): Promise<any> {
+    if (!ctx.user.id && ctx.user.role !== 'admin') {
       throw new UserError('Access denied')
     }
 
     try {
-      return await makeApiRequest(ctx, `/api/subscriptions/user/${userId}/active`)
+      return await makeApiRequest(ctx, `/api/subscriptions/user/${ctx.user.id}/active`)
     } catch (error) {
-      logger.error(`Error fetching active subscription for user ${userId}:`, error)
+      logger.error(`Error fetching active subscription for user ${ctx.user.id}:`, error)
       return null
     }
   },

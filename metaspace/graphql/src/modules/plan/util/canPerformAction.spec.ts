@@ -109,7 +109,7 @@ describe('Plan Controller Queries', () => {
           source,
         } as Partial<any>)
 
-        expect(result).toBe(expected)
+        expect(result.allowed).toBe(expected)
 
         // For admin users, fetch is not called because it returns early
         if (!isAdmin) {
@@ -157,7 +157,7 @@ describe('Plan Controller Queries', () => {
 
     // Verify the action is blocked initially
     const blocked = await canPerformAction(context, { actionType, type: 'dataset', visibility, source })
-    expect(blocked).toBe(false)
+    expect(blocked.allowed).toBe(false)
 
     // Advance time by 10 minutes
     Date.now = jest.fn(() => new Date('2024-10-30T10:10:00Z').getTime())
@@ -174,6 +174,6 @@ describe('Plan Controller Queries', () => {
     )
 
     const allowed = await canPerformAction(context, { actionType, type: 'dataset', visibility, source })
-    expect(allowed).toBe(true)
+    expect(allowed.allowed).toBe(true)
   })
 })

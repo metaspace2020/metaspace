@@ -459,6 +459,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       visibility: ds._source.ds_is_public ? 'public' : 'private',
       actionDt: moment.utc(moment.utc().toDate()),
       canEdit,
+      groupId: ds._source.ds_group_id,
+      groupName: ds._source.ds_group_name,
       source: (ctx as any).getSource(),
       deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
       ipHash: hashIp(ip),
@@ -473,7 +475,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
           link: 'https://metaspace2020.eu/limit_reached',
         }],
       })
-    } else if (!await canPerformAction(ctx, action) || (ctx.user?.role !== 'admin' && rateLimited)) {
+    } else if (!(await canPerformAction(ctx, action)).allowed || (ctx.user?.role !== 'admin' && rateLimited)) {
       await performAction(ctx, { ...action, actionType: 'download_attempt' })
 
       return JSON.stringify({

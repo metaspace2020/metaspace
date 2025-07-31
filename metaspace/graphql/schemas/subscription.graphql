@@ -179,8 +179,8 @@ type Query {
   ): [Subscription]
   subscriptionsCount(filter: SubscriptionFilter = {}): Int!
   
-  userSubscriptions(userId: ID!): [Subscription]
-  activeUserSubscription(userId: ID!): Subscription
+  userSubscriptions: [Subscription]
+  activeUserSubscription: Subscription
   
   allTransactions(
     orderBy: TransactionOrderBy = ORDER_BY_DATE,

@@ -2,15 +2,21 @@ import { defineComponent, ref, computed, watch, reactive, inject } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import type { Stripe, StripeElements } from '@stripe/stripe-js'
 import config from '../../lib/config'
-import { ElButton, ElInput, ElNotification, ElRadioGroup, ElRadio } from '../../lib/element-plus'
+import { ElButton, ElInput, ElNotification, ElRadioGroup, ElRadio, ElSelect, ElOption } from '../../lib/element-plus'
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
-import { currentUserRoleQuery } from '../../api/user'
+import { currentUserRoleWithGroupQuery } from '../../api/user'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
 import { getPlanQuery, Plan } from '../../api/plan'
 import './PaymentPage.scss'
 import { Fragment } from 'vue'
 import { createSubscriptionMutation, validateCouponQuery } from '../../api/subscription'
+import {
+  formatPrice,
+  getMonthlyPriceFromCents,
+  getBillingInterval,
+  getSavingsPercentageFromPrices,
+} from '../../lib/pricing'
 
 interface CurrentUser {
   id: string
@@ -47,8 +53,9 @@ export default defineComponent({
     const apolloClient = inject(DefaultApolloClient)
 
     const state = reactive({
-      billingFrequency: 'yearly', // 'monthly' or 'yearly'
+      selectedPeriod: null as any,
       form: {
+        groupId: '',
         email: '',
         firstName: '',
         lastName: '',
@@ -189,10 +196,20 @@ export default defineComponent({
       )
     })
 
-    const { result: currentUserResult, onResult } = useQuery<CurrentUserRoleResult>(currentUserRoleQuery, null, {
-      fetchPolicy: 'network-only',
-    })
+    const { result: currentUserResult, onResult } = useQuery<CurrentUserRoleResult>(
+      currentUserRoleWithGroupQuery,
+      null,
+      {
+        fetchPolicy: 'network-only',
+      }
+    )
     const currentUser = computed(() => currentUserResult.value?.currentUser)
+    const groups = computed(
+      () =>
+        (currentUser.value as any)?.groups.map((group: any) => ({
+          ...group.group,
+        }))
+    )
 
     const { result: planResult } = useQuery<{ plan: Plan }>(
       getPlanQuery,
@@ -205,53 +222,62 @@ export default defineComponent({
     )
     const plan = computed(() => planResult.value?.plan)
 
-    const displayPrice = computed(() => {
-      if (!plan.value?.pricingOptions?.length) return { monthly: 0, yearly: 0 }
+    // Get all unique periods from the plan
+    const availablePeriods = computed(() => {
+      if (!plan.value?.pricingOptions?.length) return []
 
-      const monthlyOption = plan.value.pricingOptions.find((po) => po.periodMonths === 1)
-      const yearlyOption = plan.value.pricingOptions.find((po) => po.periodMonths === 12)
+      const periods = plan.value.pricingOptions
+        .filter((option) => option.isActive)
+        .sort((a, b) => {
+          return a.displayOrder - b.displayOrder
+        })
 
-      return {
-        monthly: monthlyOption?.priceCents || 0,
-        yearly: yearlyOption ? yearlyOption.priceCents / 12 : 0,
-      }
+      return periods
     })
 
-    const savings = computed(() => {
-      if (!plan.value?.pricingOptions?.length) return 0
-
-      const monthlyOption = plan.value.pricingOptions.find((po) => po.periodMonths === 1)
-      const yearlyOption = plan.value.pricingOptions.find((po) => po.periodMonths === 12)
-
-      if (!monthlyOption?.priceCents || !yearlyOption?.priceCents) return 0
-
-      const yearlyTotal = monthlyOption.priceCents * 12
-      const savings = ((yearlyTotal - yearlyOption.priceCents) / yearlyTotal) * 100
-      return Math.round(savings)
-    })
-
-    const displayPeriod = computed(() => {
-      if (!state.selectedPricingOption) return 'month'
-      return state.selectedPricingOption.periodMonths === 1 ? 'month' : 'year'
-    })
+    const getTotalPrice = (pricingOption: any) => {
+      return pricingOption ? pricingOption.priceCents : 0
+    }
 
     const finalPrice = computed(() => {
-      const basePrice = state.selectedPricingOption?.priceCents || 0
+      const basePrice = getTotalPrice(state.selectedPeriod)
       if (state.coupon.applied && state.coupon.validationResult?.isValid) {
         return state.coupon.validationResult.discountedPriceCents || basePrice
       }
       return basePrice
     })
 
-    // Update billing frequency when priceId changes
+    // Update selected pricing option when period changes
+    watch(
+      () => state.selectedPeriod,
+      (newPeriod) => {
+        // selectedPeriod is now the pricing option object itself
+        state.selectedPricingOption = newPeriod
+      },
+      { immediate: true }
+    )
+
+    // Update period when priceId changes from URL
     watch(
       () => route.query.priceId,
       (newPriceId) => {
         if (newPriceId && plan.value?.pricingOptions) {
           const option = plan.value.pricingOptions.find((po) => po.id === newPriceId)
           if (option) {
-            state.billingFrequency = option.periodMonths === 1 ? 'monthly' : 'yearly'
+            state.selectedPeriod = option
           }
+        }
+      },
+      { immediate: true }
+    )
+
+    // Set default selected period when plan loads
+    watch(
+      () => availablePeriods.value,
+      (newPeriods) => {
+        if (newPeriods.length > 0 && !state.selectedPeriod) {
+          // Default to the first available period (usually monthly)
+          state.selectedPeriod = newPeriods[0]
         }
       },
       { immediate: true }
@@ -342,9 +368,6 @@ export default defineComponent({
           loginSuccessRedirect: `/payment?planId=${route.query.planId}`,
         })
       }
-      state.selectedPricingOption = plan.value?.pricingOptions.find(
-        (po) => po.periodMonths === (state.billingFrequency === 'monthly' ? 1 : 12)
-      )
     })
 
     const initializeStripe = async () => {
@@ -515,10 +538,11 @@ export default defineComponent({
             input: {
               userId: currentUser.value?.id,
               planId: plan.value!.id,
+              groupId: state.form.groupId,
               priceId: state.selectedPricingOption.id,
               email: state.form.email,
               name: `${state.form.firstName} ${state.form.lastName}`.trim(),
-              billingInterval: state.billingFrequency === 'monthly' ? 'monthly' : 'yearly',
+              billingInterval: getBillingInterval(state.selectedPeriod),
               paymentMethodId: paymentMethod!.id,
               couponCode: state.coupon.applied ? state.coupon.code : undefined,
             },
@@ -527,7 +551,7 @@ export default defineComponent({
 
         if (data?.createSubscription) {
           state.orderId = data.createSubscription
-          router.push('/success')
+          router.push(`/success?subscriptionId=${data.createSubscription.id}`)
         } else {
           throw new Error('Failed to create subscription')
         }
@@ -556,11 +580,6 @@ export default defineComponent({
       }
     }
 
-    const formatPrice = (priceCents: number | undefined) => {
-      if (priceCents === undefined) return '0.00'
-      return (priceCents / 100).toFixed(2)
-    }
-
     return () => {
       if (!currentUser.value) return null
 
@@ -575,36 +594,63 @@ export default defineComponent({
                 <h3>Billing Frequency</h3>
                 <div class="billing-frequency">
                   <ElRadioGroup
-                    modelValue={state.billingFrequency}
-                    onUpdate:modelValue={(val: string) => {
-                      state.billingFrequency = val
-                      state.selectedPricingOption = plan.value?.pricingOptions.find(
-                        (po) => po.periodMonths === (val === 'monthly' ? 1 : 12)
-                      )
+                    modelValue={availablePeriods.value.findIndex((option) => option.id === state.selectedPeriod?.id)}
+                    onUpdate:modelValue={(index: number) => {
+                      state.selectedPeriod = availablePeriods.value[index]
                     }}
                     class="frequency-options"
                   >
-                    <div class="frequency-option">
-                      <ElRadio label="monthly" class="frequency-radio">
-                        <div class="option-content">
-                          <div class="option-title">Monthly</div>
-                          <div class="option-price">${formatPrice(displayPrice.value.monthly)}/month</div>
+                    {availablePeriods.value.map((period, index) => {
+                      const totalPrice = period.priceCents
+                      const monthlyPrice = getMonthlyPriceFromCents(period.priceCents, period.periodMonths)
+                      const savingsPercentage = getSavingsPercentageFromPrices(
+                        monthlyPrice,
+                        getMonthlyPriceFromCents(
+                          availablePeriods.value[0].priceCents,
+                          availablePeriods.value[0].periodMonths
+                        )
+                      )
+                      return (
+                        <div class="frequency-option" key={period.id}>
+                          <ElRadio label={index} class="frequency-radio">
+                            <div class="option-content">
+                              <div class="option-title">{period.displayName}</div>
+                              <div class="option-price">
+                                ${formatPrice(totalPrice)}/{period.displayName.toLowerCase()}
+                                {savingsPercentage > 0 && (
+                                  <span class="savings">Save {savingsPercentage.toFixed(1)}%</span>
+                                )}
+                              </div>
+                            </div>
+                          </ElRadio>
                         </div>
-                      </ElRadio>
-                    </div>
-                    <div class="frequency-option">
-                      <ElRadio label="yearly" class="frequency-radio">
-                        <div class="option-content">
-                          <div class="option-title">Yearly</div>
-                          <div class="option-price">
-                            ${formatPrice(displayPrice.value.yearly)}/month
-                            {savings.value > 0 && <span class="savings">Save {savings.value}%</span>}
-                          </div>
-                        </div>
-                      </ElRadio>
-                    </div>
+                      )
+                    })}
                   </ElRadioGroup>
                 </div>
+              </div>
+
+              {/* Group Section */}
+              <div class="form-section">
+                <h3>Group</h3>
+                <p>
+                  Select a group to associate with this subscription. If you dont have a group, please{' '}
+                  <span
+                    onClick={() => router.push('/group/create')}
+                    class="link text-blue-500 cursor-pointer underline"
+                  >
+                    create one first
+                  </span>
+                  .
+                </p>
+                <ElSelect
+                  modelValue={state.form.groupId}
+                  onUpdate:modelValue={(val: string) => {
+                    state.form.groupId = val
+                  }}
+                >
+                  {groups.value?.map((group) => <ElOption label={group.label} value={group.id} />)}
+                </ElSelect>
               </div>
 
               {/* Customer Information Section */}
@@ -816,12 +862,14 @@ export default defineComponent({
                     <span class="item-name">{plan.value.name} Plan</span>
                     <span class="item-price">
                       <span class="currency">$</span>
-                      <span class="amount">{formatPrice(state.selectedPricingOption?.priceCents || 0)}</span>
-                      <span class="period">/{displayPeriod.value}</span>
+                      <span class="amount">{formatPrice(getTotalPrice(state.selectedPeriod))}</span>
+                      <span class="period">/{state.selectedPeriod?.displayName.toLowerCase()}</span>
                     </span>
                   </div>
-                  <div class={`billing-notice ${displayPeriod.value !== 'year' ? 'invisible' : ''}`}>
-                    <span class="notice-text">Billed annually. You'll be charged the full amount today.</span>
+                  <div class={`billing-notice ${state.selectedPeriod?.periodMonths === 1 ? 'invisible' : ''}`}>
+                    <span class="notice-text">
+                      Billed {state.selectedPeriod?.displayName.toLowerCase()}. You'll be charged the full amount today.
+                    </span>
                   </div>
                   <div class="summary-details">
                     {plan.value.description && (
@@ -896,7 +944,7 @@ export default defineComponent({
                     <span>
                       <span class="currency">$</span>
                       <span class="amount">{formatPrice(finalPrice.value)}</span>
-                      <span class="period">/{displayPeriod.value}</span>
+                      <span class="period">/{state.selectedPeriod?.displayName.toLowerCase()}</span>
                     </span>
                   </div>
                   <p class="vat-notice">*VAT included where applicable</p>
