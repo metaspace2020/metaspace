@@ -54,7 +54,7 @@ const assertUserRoles = async(
   }
 }
 
-const assertCanEditGroup = async(entityManager: EntityManager, user: ContextUser, groupId: string) => {
+export const assertCanEditGroup = async(entityManager: EntityManager, user: ContextUser, groupId: string) => {
   assertUserAuthenticated(user)
   await assertUserRoles(entityManager, user, groupId,
     [UserGroupRoleOptions.GROUP_ADMIN])

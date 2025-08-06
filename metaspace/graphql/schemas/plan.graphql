@@ -80,6 +80,13 @@ type PlanRule {
     createdAt: String!
 }
 
+type RemainingApiUsage {
+    remaining: Int!
+    limit: Int!
+    periodType: String!
+    period: Int!
+}
+
 type ApiUsage {
     id: Int!
     userId: String
@@ -91,6 +98,7 @@ type ApiUsage {
     source: String
     canEdit: Boolean
     actionDt: String!
+    user: User
 }
 
 input ApiUsageFilter {
@@ -139,5 +147,7 @@ type Query {
         limit: Int = 10
     ): [ApiUsage]
     apiUsagesCount(filter: ApiUsageFilter = {}): Int!
+
+    remainingApiUsages(groupId: String!): [RemainingApiUsage]
 }
 

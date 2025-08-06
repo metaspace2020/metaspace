@@ -49,6 +49,7 @@ import {
   ElCollapseTransition,
   ElCard,
   ElTag,
+  ElEmpty,
 } from 'element-plus'
 
 // Importing Element Plus styles
@@ -103,6 +104,7 @@ const components = {
   ElCollapseTransition,
   ElCard,
   ElTag,
+  ElEmpty,
   // Additional components as needed
 }
 
@@ -156,6 +158,7 @@ export {
   ElCollapseTransition,
   ElCard,
   ElTag,
+  ElEmpty,
   // Additional components as needed
 }
 

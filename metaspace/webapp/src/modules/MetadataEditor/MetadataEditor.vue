@@ -480,6 +480,12 @@ export default defineComponent({
     const resetAfterSubmit = () => {
       state.metaspaceOptions.name = ''
       state.localErrors = {}
+
+      const tempGroup = state.metaspaceOptions.groupId
+      state.metaspaceOptions.groupId = null
+      setTimeout(() => {
+        state.metaspaceOptions.groupId = tempGroup
+      }, 500)
     }
 
     const resetMetaboliteDatabase = () => {

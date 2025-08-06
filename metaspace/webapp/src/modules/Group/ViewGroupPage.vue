@@ -91,6 +91,9 @@
             <molecular-databases :group-id="groupId" :can-delete="canEdit" />
           </div>
         </el-tab-pane>
+        <el-tab-pane v-if="canEdit && groupId != null" name="subscription" label="Subscription" lazy>
+          <group-usage :group-id="groupId" />
+        </el-tab-pane>
         <el-tab-pane v-if="canEdit && groupId != null" name="settings" label="Settings" lazy>
           <group-settings :group-id="groupId" />
         </el-tab-pane>
@@ -118,6 +121,7 @@ import gql from 'graphql-tag'
 import TransferDatasetsDialog from './TransferDatasetsDialog.vue'
 import GroupMembersList from './GroupMembersList.vue'
 import GroupSettings from './GroupSettings.vue'
+import GroupUsage from './GroupUsage.tsx'
 import { encodeParams } from '../Filters'
 import { useConfirmAsync } from '../../components/ConfirmAsync'
 import NotificationIcon from '../../components/NotificationIcon.vue'
@@ -149,6 +153,7 @@ export default defineComponent({
     MolecularDatabases,
     PopupAnchor,
     RequestedAccessDialog,
+    GroupUsage,
     ElTabs,
     ElButton,
     ElAlert,

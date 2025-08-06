@@ -181,6 +181,7 @@ type Query {
   
   userSubscriptions: [Subscription]
   activeUserSubscription: Subscription
+  activeGroupSubscription(groupId: ID!): Subscription
   
   allTransactions(
     orderBy: TransactionOrderBy = ORDER_BY_DATE,

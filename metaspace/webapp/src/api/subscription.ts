@@ -1,4 +1,5 @@
 import gql from 'graphql-tag'
+import { Plan } from './plan'
 
 // Enums
 export enum BillingInterval {
@@ -61,6 +62,7 @@ export interface Subscription {
   transactions?: Transaction[]
   createdAt: string
   updatedAt: string
+  plan: Plan
 }
 
 export interface Transaction {
@@ -458,4 +460,25 @@ export const validateCouponQuery = gql`
       couponName
     }
   }
+`
+export const getActiveGroupSubscriptionQuery = gql`
+  query ($groupId: ID!) {
+    activeGroupSubscription(groupId: $groupId) {
+      ...Subscription
+      plan {
+        id
+        name
+        description
+        tier
+        planRules {
+          id
+          actionType
+          period
+          periodType
+          limit
+        }
+      }
+    }
+  }
+  ${subscriptionFragment}
 `

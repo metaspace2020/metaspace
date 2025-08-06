@@ -1,11 +1,13 @@
 import { FieldResolversFor } from '../../../bindingTypes'
-import { Query } from '../../../binding'
+import { Query, ApiUsage } from '../../../binding'
 import { Context } from '../../../context'
 import { UserError } from 'graphql-errors'
 import config from '../../../utils/config'
 import fetch, { RequestInit } from 'node-fetch'
 import logger from '../../../utils/logger'
 import { URLSearchParams } from 'url'
+import { assertCanEditGroup } from '../../../modules/group/controller'
+import { User } from '../../user/model'
 
 interface AllPlansArgs {
   filter?: {
@@ -107,9 +109,18 @@ const buildQueryString = (params: Record<string, any>): string => {
     if (value === undefined || value === null) continue
 
     if (typeof value === 'object') {
-      for (const [subKey, subValue] of Object.entries(value)) {
-        if (subValue === undefined || subValue === null) continue
-        urlParams.append(`${key}[${subKey}]`, String(subValue))
+      // If this is a filter object, flatten it by adding properties directly
+      if (key === 'filter') {
+        for (const [subKey, subValue] of Object.entries(value)) {
+          if (subValue === undefined || subValue === null) continue
+          urlParams.append(subKey, String(subValue))
+        }
+      } else {
+        // For other nested objects, keep the original behavior
+        for (const [subKey, subValue] of Object.entries(value)) {
+          if (subValue === undefined || subValue === null) continue
+          urlParams.append(`${key}[${subKey}]`, String(subValue))
+        }
       }
     } else {
       urlParams.append(key, String(value))
@@ -185,7 +196,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
   },
 
-  async allApiUsages(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<any[]> {
+  async allApiUsages(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<ApiUsage[]> {
+    const { entityManager } = ctx
     if (ctx.user.role !== 'admin') {
       throw new UserError('Access denied')
     }
@@ -194,9 +206,33 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       const queryString = buildQueryString(args)
       const response = await makeApiRequest(ctx, `/api/api-usages${queryString}`)
       const apiUsages = response.data
+      const userHash: Record<string, User | null> = {}
+
+      for (let i = 0; i < apiUsages.length; i++) {
+        const usage = apiUsages[i]
+        if (!userHash[usage.userId]) {
+          const user = await entityManager.findOne(User, { id: usage.userId })
+          userHash[usage.userId] = user || null
+        }
+        apiUsages[i].user = userHash[usage.userId]
+      }
+
       return apiUsages
     } catch (error) {
       logger.error('Error fetching all API usages:', error)
+      return []
+    }
+  },
+
+  async remainingApiUsages(_: any, { groupId }: { groupId: string }, ctx: Context): Promise<any> {
+    const { user, entityManager } = ctx
+    await assertCanEditGroup(entityManager, user, groupId)
+
+    try {
+      const response = await makeApiRequest(ctx, `/api/api-usages/group/${groupId}/remaining-usages?actionType=create`)
+      return response.remainingUsages || []
+    } catch (error) {
+      logger.error(`Error fetching remaining api usages for group ${groupId}:`, error)
       return []
     }
   },

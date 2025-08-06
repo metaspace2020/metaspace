@@ -18,6 +18,7 @@ export interface Plan {
   isDefault: boolean
   displayOrder: number
   pricingOptions: PricingOption[]
+  planRules: PlanRule[]
 }
 
 export interface AllPlansData {
@@ -50,6 +51,13 @@ export interface PlanRuleData {
   planRule: PlanRule
 }
 
+export interface RemainingApiUsage {
+  remaining: number
+  limit: number
+  periodType: string
+  period: number
+}
+
 export interface ApiUsage {
   id: number
   userId: string
@@ -61,6 +69,11 @@ export interface ApiUsage {
   source: string
   canEdit: boolean
   actionDt: string
+  user: {
+    id: string
+    name: string
+    email: string
+  }
 }
 
 export interface AllApiUsagesData {
@@ -257,8 +270,23 @@ export const getApiUsagesQuery = gql`
   query ($orderBy: ApiUsageOrderBy, $sortingOrder: SortingOrder, $filter: ApiUsageFilter, $offset: Int, $limit: Int) {
     allApiUsages(orderBy: $orderBy, sortingOrder: $sortingOrder, filter: $filter, offset: $offset, limit: $limit) {
       ...ApiUsage
+      user {
+        id
+        name
+        email
+      }
     }
     apiUsagesCount(filter: $filter)
   }
   ${apiUsageFragment}
+`
+export const getRemainingApiUsagesQuery = gql`
+  query ($groupId: String!) {
+    remainingApiUsages(groupId: $groupId) {
+      limit
+      periodType
+      period
+      remaining
+    }
+  }
 `

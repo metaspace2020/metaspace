@@ -1,0 +1,341 @@
+import { computed, defineComponent } from 'vue'
+import { useQuery } from '@vue/apollo-composable'
+import { getActiveGroupSubscriptionQuery } from '../../api/subscription'
+import { ApiUsage, getApiUsagesQuery } from '../../api/plan'
+import GroupQuota from './GroupQuota'
+import { format } from 'date-fns'
+import { Subscription } from '../../api/subscription'
+import { PlanRule } from '../../api/plan'
+import './GroupUsage.scss'
+
+export default defineComponent({
+  name: 'GroupsListPage',
+  props: {
+    groupId: {
+      type: String,
+      default: '',
+    },
+  },
+  setup: function (props) {
+    const { result: activeGroupSubscriptionResult } = useQuery<any>(
+      getActiveGroupSubscriptionQuery,
+      { groupId: props.groupId },
+      { fetchPolicy: 'network-only' }
+    )
+    const activeGroupSubscription = computed(() =>
+      activeGroupSubscriptionResult.value != null ? activeGroupSubscriptionResult.value.activeGroupSubscription : null
+    )
+
+    const { result: allApiUsagesResult } = useQuery<any>(
+      getApiUsagesQuery,
+      {
+        filter: { groupId: props.groupId, actionType: 'create' },
+        orderBy: 'ORDER_BY_DATE',
+        sortingOrder: 'DESCENDING',
+        limit: 50,
+      },
+      { fetchPolicy: 'network-only' }
+    )
+    const allApiUsages = computed(() => (allApiUsagesResult.value != null ? allApiUsagesResult.value.allApiUsages : []))
+
+    const formatDate = (dateString: string) => {
+      try {
+        return format(new Date(dateString), 'PPP')
+      } catch {
+        return dateString
+      }
+    }
+
+    const getStatusColor = (subscription: Subscription) => {
+      if (!subscription.isActive) return 'danger'
+      if (subscription.cancelledAt) return 'warning'
+      return 'success'
+    }
+
+    const getStatusText = (subscription: Subscription) => {
+      if (!subscription.isActive) return 'Inactive'
+      if (subscription.cancelledAt) return 'Cancelled'
+      return 'Active'
+    }
+
+    const getTierColor = (tier: string) => {
+      switch (tier.toLowerCase()) {
+        case 'premium':
+          return 'warning'
+        case 'standard':
+          return 'info'
+        case 'basic':
+          return 'info'
+        default:
+          return ''
+      }
+    }
+
+    const getActionTypeIcon = (actionType: string) => {
+      switch (actionType.toLowerCase()) {
+        case 'create':
+          return 'Plus'
+        case 'read':
+          return 'View'
+        case 'update':
+          return 'Edit'
+        case 'delete':
+          return 'Delete'
+        default:
+          return 'Setting'
+      }
+    }
+
+    return () => {
+      const subscription = activeGroupSubscription.value as Subscription
+
+      if (!subscription) {
+        return (
+          <div class="subscription-container">
+            <el-card class="subscription-card">
+              {{
+                header: () => (
+                  <div class="card-header">
+                    <span>Group Subscription</span>
+                  </div>
+                ),
+                default: () => <el-empty description="No active subscription found for this group" />,
+              }}
+            </el-card>
+          </div>
+        )
+      }
+
+      return (
+        <div class="subscription-container">
+          <el-card class="subscription-card">
+            {{
+              header: () => (
+                <div class="card-header">
+                  <span>Group Subscription</span>
+                  <el-tag type={getStatusColor(subscription)} size="small">
+                    {getStatusText(subscription)}
+                  </el-tag>
+                </div>
+              ),
+              default: () => (
+                <div class="subscription-content">
+                  {/* Plan Information */}
+                  <div class="section">
+                    <h3 class="section-title">Plan Information</h3>
+                    <el-row gutter={20}>
+                      <el-col span={12}>
+                        <div class="info-item">
+                          <label>Plan Name:</label>
+                          <div class="value">
+                            <el-tag type={getTierColor(subscription.plan.tier)}>{subscription.plan.name}</el-tag>
+                          </div>
+                        </div>
+                      </el-col>
+                    </el-row>
+                    <div class="info-item">
+                      <label>Description:</label>
+                      <div class="value description">{subscription.plan.description}</div>
+                    </div>
+                  </div>
+
+                  {/* Subscription Details */}
+                  <div class="section">
+                    <h3 class="section-title">Subscription Details</h3>
+                    <el-row gutter={20}>
+                      <el-col span={12}>
+                        <div class="info-item">
+                          <label>Subscription ID:</label>
+                          <div class="value code">{subscription.id}</div>
+                        </div>
+                      </el-col>
+                      <el-col span={12}>
+                        <div class="info-item">
+                          <label>Billing Interval:</label>
+                          <div class="value">
+                            <el-tag type="info" size="small">
+                              {subscription.billingInterval}
+                            </el-tag>
+                          </div>
+                        </div>
+                      </el-col>
+                    </el-row>
+                    <el-row gutter={20}>
+                      <el-col span={12}>
+                        <div class="info-item">
+                          <label>Started:</label>
+                          <div class="value">{formatDate(subscription.startedAt)}</div>
+                        </div>
+                      </el-col>
+                      <el-col span={12}>
+                        <div class="info-item">
+                          <label>Expires:</label>
+                          <div class="value">{formatDate(subscription.expiresAt)}</div>
+                        </div>
+                      </el-col>
+                    </el-row>
+                    <el-row gutter={20}>
+                      <el-col span={12}>
+                        <div class="info-item">
+                          <label>Auto Renew:</label>
+                          <div class="value">
+                            <el-tag type={subscription.autoRenew ? 'success' : 'warning'} size="small">
+                              {subscription.autoRenew ? 'Yes' : 'No'}
+                            </el-tag>
+                          </div>
+                        </div>
+                      </el-col>
+                      {subscription.cancelledAt && (
+                        <el-col span={12}>
+                          <div class="info-item">
+                            <label>Cancelled:</label>
+                            <div class="value">{formatDate(subscription.cancelledAt)}</div>
+                          </div>
+                        </el-col>
+                      )}
+                    </el-row>
+                  </div>
+
+                  {/* Plan Rules */}
+                  <div class="section">
+                    <h3 class="section-title">Plan Rules</h3>
+                    {subscription.plan.planRules && subscription.plan.planRules.length > 0 ? (
+                      <el-table data={subscription.plan.planRules} style={{ width: '100%' }}>
+                        <el-table-column prop="actionType" label="Action" width="120">
+                          {{
+                            default: ({ row }: { row: PlanRule }) => (
+                              <el-tag type="info" size="small">
+                                <el-icon>
+                                  <i class={`el-icon-${getActionTypeIcon(row.actionType)}`} />
+                                </el-icon>
+                                {row.actionType}
+                              </el-tag>
+                            ),
+                          }}
+                        </el-table-column>
+                        <el-table-column prop="limit" label="Limit" width="100">
+                          {{
+                            default: ({ row }: { row: PlanRule }) => <span class="limit-value">{row.limit}</span>,
+                          }}
+                        </el-table-column>
+                        <el-table-column prop="period" label="Period" width="150">
+                          {{
+                            default: ({ row }: { row: PlanRule }) => (
+                              <span>
+                                {row.period} {row.periodType}
+                                {row.period > 1 ? 's' : ''}
+                              </span>
+                            ),
+                          }}
+                        </el-table-column>
+                        <el-table-column label="Description">
+                          {{
+                            default: ({ row }: { row: PlanRule }) => (
+                              <span>
+                                {row.limit} {row.actionType} action{row.limit > 1 ? 's' : ''} per {row.period}{' '}
+                                {row.periodType}
+                                {row.period > 1 ? 's' : ''}
+                              </span>
+                            ),
+                          }}
+                        </el-table-column>
+                      </el-table>
+                    ) : (
+                      <el-empty description="No plan rules defined" />
+                    )}
+                  </div>
+
+                  {/* Remaining Quota */}
+                  <div class="section">
+                    <h3 class="section-title">Remaining Quota</h3>
+                    <GroupQuota groupId={props.groupId} />
+                  </div>
+
+                  {/* All API Usages */}
+                  <div class="section">
+                    <h3 class="section-title">API Usage History</h3>
+                    {allApiUsages.value && allApiUsages.value.filter((usage: ApiUsage) => usage.source).length > 0 ? (
+                      <el-table
+                        data={allApiUsages.value.filter((usage: ApiUsage) => usage.source)}
+                        style={{ width: '100%' }}
+                      >
+                        <el-table-column prop="actionType" label="Action" width="120">
+                          {{
+                            default: ({ row }: { row: ApiUsage }) => (
+                              <el-tag type="info" size="small">
+                                <el-icon>
+                                  <i class={`el-icon-${getActionTypeIcon(row.actionType)}`} />
+                                </el-icon>
+                                {row.actionType}
+                              </el-tag>
+                            ),
+                          }}
+                        </el-table-column>
+                        <el-table-column prop="type" label="Type" width="120">
+                          {{
+                            default: ({ row }: { row: ApiUsage }) => (
+                              <el-tag type="info" size="small">
+                                {row.type}
+                              </el-tag>
+                            ),
+                          }}
+                        </el-table-column>
+                        <el-table-column prop="source" label="Source" width="120">
+                          {{
+                            default: ({ row }: { row: ApiUsage }) => (
+                              <el-tag type="warning" size="small">
+                                {row.source}
+                              </el-tag>
+                            ),
+                          }}
+                        </el-table-column>
+                        <el-table-column prop="userId" label="User" width="200">
+                          {{
+                            default: ({ row }: { row: ApiUsage }) => <span class="user-email">{row.user?.email}</span>,
+                          }}
+                        </el-table-column>
+                        <el-table-column prop="actionDt" label="Date" width="180">
+                          {{
+                            default: ({ row }: { row: ApiUsage }) => <span>{formatDate(row.actionDt)}</span>,
+                          }}
+                        </el-table-column>
+                        <el-table-column prop="datasetId" label="Dataset" width="150">
+                          {{
+                            default: ({ row }: { row: ApiUsage }) => (
+                              <span class="dataset-id">{row.datasetId || '-'}</span>
+                            ),
+                          }}
+                        </el-table-column>
+                      </el-table>
+                    ) : (
+                      <el-empty description="No API usage history with source available" />
+                    )}
+                  </div>
+
+                  {/* Stripe Information */}
+                  <div class="section">
+                    <h3 class="section-title">Payment Information</h3>
+                    <el-row gutter={20}>
+                      <el-col span={12}>
+                        <div class="info-item">
+                          <label>Stripe Subscription ID:</label>
+                          <div class="value code">{subscription.stripeSubscriptionId}</div>
+                        </div>
+                      </el-col>
+                      <el-col span={12}>
+                        <div class="info-item">
+                          <label>Stripe Customer ID:</label>
+                          <div class="value code">{subscription.stripeCustomerId}</div>
+                        </div>
+                      </el-col>
+                    </el-row>
+                  </div>
+                </div>
+              ),
+            }}
+          </el-card>
+        </div>
+      )
+    }
+  },
+})

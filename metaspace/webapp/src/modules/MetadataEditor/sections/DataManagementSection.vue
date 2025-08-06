@@ -60,7 +60,7 @@
         </el-row>
       </el-col>
     </el-row>
-    <el-collapse-transition>
+    <el-collapse-transition class="mt-8">
       <el-row v-if="showPI">
         <el-col :span="6">
           <div class="metadata-section__title">Principal Investigator</div>
@@ -92,6 +92,14 @@
           </el-row>
         </el-col>
       </el-row>
+      <el-row v-else-if="groupId != null">
+        <el-col :span="6">
+          <span class="metadata-section__title">Group's submission usage</span>
+        </el-col>
+        <el-col :span="18">
+          <group-quota :groupId="groupId" />
+        </el-col>
+      </el-row>
     </el-collapse-transition>
   </div>
 </template>
@@ -108,6 +116,7 @@ import './FormSection.scss'
 import gql from 'graphql-tag' // imported directly so that the Project pages aren't pulled into the bundle
 import { MetaspaceOptions } from '../formStructure'
 import { ElRow, ElCol, ElForm, ElCollapseTransition } from '../../../lib/element-plus'
+import GroupQuota from '../../Group/GroupQuota'
 
 const FIND_GROUP = 'FIND_GROUP'
 const NO_GROUP = 'NO_GROUP'
@@ -128,6 +137,7 @@ export default defineComponent({
     ElForm,
     ElCollapseTransition,
     CreateProjectDialog,
+    GroupQuota,
   },
   props: {
     value: { type: Object as () => MetaspaceOptions, required: true },

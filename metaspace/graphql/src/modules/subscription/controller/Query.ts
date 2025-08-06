@@ -6,6 +6,7 @@ import { URLSearchParams } from 'url'
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Query } from '../../../binding'
 import { UserError } from 'graphql-errors'
+import { assertCanEditGroup } from '../../../modules/group/controller'
 
 interface AllSubscriptionsArgs {
   filter?: {
@@ -208,6 +209,19 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return await makeApiRequest(ctx, `/api/subscriptions/user/${ctx.user.id}/active`)
     } catch (error) {
       logger.error(`Error fetching active subscription for user ${ctx.user.id}:`, error)
+      return null
+    }
+  },
+
+  async activeGroupSubscription(_: any, { groupId }: { groupId: string }, ctx: Context): Promise<any> {
+    const { user, entityManager } = ctx
+    await assertCanEditGroup(entityManager, user, groupId)
+
+    try {
+      const response = await makeApiRequest(ctx, `/api/subscriptions/group/${groupId}/active`)
+      return response.data || response || null
+    } catch (error) {
+      logger.error(`Error fetching active subscription for group ${groupId}:`, error)
       return null
     }
   },

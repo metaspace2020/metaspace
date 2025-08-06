@@ -115,7 +115,7 @@ describe('modules/plan/controller (queries)', () => {
   const API_USAGES = [
     {
       id: 1,
-      userId: 'user1',
+      userId: '550e8400-e29b-41d4-a716-446655440001',
       datasetId: 'dataset1',
       actionType: 'download',
       type: 'dataset',
@@ -124,7 +124,7 @@ describe('modules/plan/controller (queries)', () => {
     },
     {
       id: 2,
-      userId: 'user1',
+      userId: '550e8400-e29b-41d4-a716-446655440001',
       datasetId: 'dataset2',
       actionType: 'process',
       type: 'dataset',
@@ -133,7 +133,7 @@ describe('modules/plan/controller (queries)', () => {
     },
     {
       id: 3,
-      userId: 'user2',
+      userId: '550e8400-e29b-41d4-a716-446655440002',
       datasetId: 'dataset1',
       actionType: 'download',
       type: 'dataset',
@@ -311,7 +311,7 @@ describe('modules/plan/controller (queries)', () => {
       const result = await doQuery(queryAllPlans, { filter: { isActive: false } })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringMatching(/.*filter%5BisActive%5D=false.*/),
+        expect.stringMatching(/.*isActive=false.*/),
         expect.any(Object)
       )
 
@@ -346,7 +346,7 @@ describe('modules/plan/controller (queries)', () => {
       const result = await doQuery(queryAllPlans, { filter: { name: 'lab' } })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringMatching(/.*filter%5Bname%5D=lab.*/),
+        expect.stringMatching(/.*name=lab.*/),
         expect.any(Object)
       )
 
@@ -400,7 +400,7 @@ describe('modules/plan/controller (queries)', () => {
       const result = await doQuery(queryPlansCount, { filter: { isActive: true } })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringMatching(/.*filter%5BisActive%5D=true.*/),
+        expect.stringMatching(/.*isActive=true.*/),
         expect.any(Object)
       )
 
@@ -515,7 +515,7 @@ describe('modules/plan/controller (queries)', () => {
       const result = await doQuery(queryAllPlanRules, { filter: { actionType: 'download' } })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringMatching(/.*filter%5BactionType%5D=download.*/),
+        expect.stringMatching(/.*actionType=download.*/),
         expect.any(Object)
       )
 
@@ -595,7 +595,7 @@ describe('modules/plan/controller (queries)', () => {
       const result = await doQuery(queryPlanRulesCount, { filter: { actionType: 'download' } })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringMatching(/.*filter%5BactionType%5D=download.*/),
+        expect.stringMatching(/.*actionType=download.*/),
         expect.any(Object)
       )
 
@@ -613,19 +613,28 @@ describe('modules/plan/controller (queries)', () => {
           actionType
           type
           source
+          user {
+            id
+            name
+            email
+            role
+          }
         }
       }`
 
     it('should return all API usages for admin', async() => {
       // Strip actionDt from API_USAGES for the expected result
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const expectedApiUsages = API_USAGES.map(({ actionDt, ...rest }) => rest)
+      const expectedApiUsages = API_USAGES.map(({ actionDt, ...rest }) => ({
+        ...rest,
+        user: null, // The controller adds user property but it's null in this test
+      }))
 
       // Mock the fetch response with the expected data format from the API
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({
-          data: expectedApiUsages,
+          data: API_USAGES.map(({ actionDt, ...rest }) => rest), // eslint-disable-line @typescript-eslint/no-unused-vars
         }),
       })
 
@@ -640,23 +649,26 @@ describe('modules/plan/controller (queries)', () => {
     })
 
     it('should filter API usages by userId', async() => {
-      const userId = 'user1'
+      const userId = '550e8400-e29b-41d4-a716-446655440001'
       const filteredUsages = API_USAGES
         .filter(usage => usage.userId === userId) // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        .map(({ actionDt, ...rest }) => rest) // Strip actionDt for comparison
+        .map(({ actionDt, ...rest }) => ({
+          ...rest,
+          user: null, // The controller adds user property but it's null in this test
+        })) // Strip actionDt for comparison
 
       // Mock the fetch response
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({
-          data: filteredUsages,
+          data: filteredUsages.map(({ user, ...rest }) => rest), // eslint-disable-line @typescript-eslint/no-unused-vars
         }),
       })
 
       const result = await doQuery(queryAllApiUsages, { filter: { userId } }, { context: adminContext })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringMatching(/.*filter%5BuserId%5D=user1.*/),
+        expect.stringMatching(/.*userId=550e8400-e29b-41d4-a716-446655440001.*/),
         expect.any(Object)
       )
 

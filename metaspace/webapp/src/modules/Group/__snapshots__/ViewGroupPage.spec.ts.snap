@@ -55,6 +55,7 @@ exports[`ViewGroupPage > datasets tab > should match snapshot (non-member) 1`] =
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
+        <!--v-if-->
       </div>
     </div>
   </div>
@@ -132,6 +133,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (invited) 1`] = `
         </div>
         <!--v-if-->
         <!--v-if-->
+        <!--v-if-->
       </div>
     </div>
   </div>
@@ -181,6 +183,9 @@ exports[`ViewGroupPage > members tab > should match snapshot (manager, including
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-databases\\" aria-controls=\\"pane-databases\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\"><span data-v-89404ae2=\\"\\"><span data-v-89404ae2=\\"\\">Databases (2)</span></span>
                 <!---->
               </div>
+              <div class=\\"el-tabs__item is-top\\" id=\\"tab-subscription\\" aria-controls=\\"pane-subscription\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Subscription
+                <!---->
+              </div>
               <div class=\\"el-tabs__item is-top\\" id=\\"tab-settings\\" aria-controls=\\"pane-settings\\" role=\\"tab\\" aria-selected=\\"false\\" tabindex=\\"-1\\">Settings
                 <!---->
               </div>
@@ -226,6 +231,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (manager, including
           </div>
           <!--v-if-->
         </div>
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
       </div>
@@ -290,6 +296,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (member) 1`] = `
         </div>
         <!--v-if-->
         <!--v-if-->
+        <!--v-if-->
       </div>
     </div>
   </div>
@@ -348,6 +355,7 @@ exports[`ViewGroupPage > members tab > should match snapshot (non-member) 1`] = 
           <div data-v-89404ae2=\\"\\" class=\\"mock-prj-members-item\\" loading=\\"false\\" current-user=\\"[object Object]\\" group=\\"[object Object]\\" members=\\"[object Object]\\"></div>
           <p data-v-89404ae2=\\"\\" class=\\"hidden-members-text\\"> + 1 hidden member. </p>
         </div>
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
       </div>
@@ -414,6 +422,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (published) 1`] 
             <!--v-if-->
           </div>
         </div>
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
@@ -484,6 +493,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (under review) 1
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
+        <!--v-if-->
       </div>
     </div>
   </div>
@@ -551,6 +561,7 @@ exports[`ViewGroupPage > publishing tab > should match snapshot (unpublished) 1`
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
+        <!--v-if-->
       </div>
     </div>
   </div>
@@ -602,6 +613,7 @@ exports[`ViewGroupPage > settings tab > should disable actions when under publis
         </div>
       </div>
       <div class=\\"el-tabs__content\\">
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
@@ -663,6 +675,7 @@ exports[`ViewGroupPage > settings tab > should disable actions when under review
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
+        <!--v-if-->
       </div>
     </div>
   </div>
@@ -714,6 +727,7 @@ exports[`ViewGroupPage > settings tab > should match snapshot 1`] = `
         </div>
       </div>
       <div class=\\"el-tabs__content\\">
+        <!--v-if-->
         <!--v-if-->
         <!--v-if-->
         <!--v-if-->
