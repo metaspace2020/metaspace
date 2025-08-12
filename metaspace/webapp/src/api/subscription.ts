@@ -27,6 +27,8 @@ export enum TransactionType {
   ONE_TIME = 'one_time',
   REFUND = 'refund',
   ADJUSTMENT = 'adjustment',
+  UPGRADE = 'upgrade',
+  DOWNGRADE = 'downgrade',
 }
 
 export enum SubscriptionOrderBy {
@@ -174,6 +176,7 @@ export interface CreateSubscriptionInput {
   billingInterval?: BillingInterval
   paymentMethodId?: string
   couponCode?: string
+  autoRenew?: boolean
 }
 
 export interface UpdateSubscriptionInput {

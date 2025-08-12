@@ -1,12 +1,13 @@
-import { computed, defineComponent } from 'vue'
-import { useQuery } from '@vue/apollo-composable'
+import { computed, defineComponent, inject, ref, watch } from 'vue'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { getActiveGroupSubscriptionQuery } from '../../api/subscription'
 import { ApiUsage, getApiUsagesQuery } from '../../api/plan'
 import GroupQuota from './GroupQuota'
 import { format } from 'date-fns'
-import { Subscription } from '../../api/subscription'
+import { Subscription, updateSubscriptionMutation } from '../../api/subscription'
 import { PlanRule } from '../../api/plan'
 import './GroupUsage.scss'
+import { ElSwitch } from '../../lib/element-plus'
 
 export default defineComponent({
   name: 'GroupsListPage',
@@ -17,6 +18,7 @@ export default defineComponent({
     },
   },
   setup: function (props) {
+    const apolloClient = inject(DefaultApolloClient)
     const { result: activeGroupSubscriptionResult } = useQuery<any>(
       getActiveGroupSubscriptionQuery,
       { groupId: props.groupId },
@@ -25,6 +27,34 @@ export default defineComponent({
     const activeGroupSubscription = computed(() =>
       activeGroupSubscriptionResult.value != null ? activeGroupSubscriptionResult.value.activeGroupSubscription : null
     )
+
+    const isAutoRenew = ref<boolean>(false)
+    const updatingAutoRenew = ref<boolean>(false)
+
+    watch(
+      () => activeGroupSubscription.value,
+      (sub) => {
+        if (sub) {
+          isAutoRenew.value = !!sub.autoRenew
+        }
+      },
+      { immediate: true }
+    )
+
+    const onToggleAutoRenew = async (val: boolean) => {
+      const subscription = activeGroupSubscription.value as Subscription | null
+      if (!subscription || !apolloClient) return
+      try {
+        updatingAutoRenew.value = true
+        await apolloClient.mutate({
+          mutation: updateSubscriptionMutation,
+          variables: { id: subscription.id, input: { autoRenew: val } },
+        })
+        isAutoRenew.value = val
+      } finally {
+        updatingAutoRenew.value = false
+      }
+    }
 
     const { result: allApiUsagesResult } = useQuery<any>(
       getApiUsagesQuery,
@@ -177,11 +207,16 @@ export default defineComponent({
                     <el-row gutter={20}>
                       <el-col span={12}>
                         <div class="info-item">
-                          <label>Auto Renew:</label>
+                          <label>Auto-renew:</label>
                           <div class="value">
-                            <el-tag type={subscription.autoRenew ? 'success' : 'warning'} size="small">
-                              {subscription.autoRenew ? 'Yes' : 'No'}
-                            </el-tag>
+                            <ElSwitch
+                              modelValue={isAutoRenew.value}
+                              onUpdate:modelValue={(val: boolean) => onToggleAutoRenew(val)}
+                              activeText="On"
+                              inactiveText="Off"
+                              loading={updatingAutoRenew.value}
+                              disabled={updatingAutoRenew.value}
+                            />
                           </div>
                         </div>
                       </el-col>

@@ -82,6 +82,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         apiInput.couponCode = input.couponCode.trim()
       }
 
+      // Forward autoRenew if provided
+      if (input.autoRenew !== undefined) {
+        apiInput.autoRenew = input.autoRenew
+      }
+
       const result = await makeApiRequest(ctx, '/api/subscriptions', 'POST', apiInput)
       return result.subscription // Return just the subscription object
     } catch (error) {

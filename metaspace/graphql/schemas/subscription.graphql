@@ -85,6 +85,8 @@ enum TransactionType {
   one_time
   refund
   adjustment
+  upgrade
+  downgrade
 }
 
 enum SubscriptionOrderBy {
@@ -140,6 +142,7 @@ input CreateSubscriptionInput {
   billingInterval: BillingInterval
   paymentMethodId: String
   couponCode: String
+  autoRenew: Boolean
 }
 
 input UpdateSubscriptionInput {

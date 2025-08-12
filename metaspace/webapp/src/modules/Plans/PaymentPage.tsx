@@ -2,7 +2,16 @@ import { defineComponent, ref, computed, watch, reactive, inject } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import type { Stripe, StripeElements } from '@stripe/stripe-js'
 import config from '../../lib/config'
-import { ElButton, ElInput, ElNotification, ElRadioGroup, ElRadio, ElSelect, ElOption } from '../../lib/element-plus'
+import {
+  ElButton,
+  ElInput,
+  ElNotification,
+  ElRadioGroup,
+  ElRadio,
+  ElSelect,
+  ElOption,
+  ElSwitch,
+} from '../../lib/element-plus'
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import { currentUserRoleWithGroupQuery } from '../../api/user'
 import { useStore } from 'vuex'
@@ -54,6 +63,7 @@ export default defineComponent({
 
     const state = reactive({
       selectedPeriod: null as any,
+      autoRenew: true,
       form: {
         groupId: '',
         email: '',
@@ -545,6 +555,7 @@ export default defineComponent({
               billingInterval: getBillingInterval(state.selectedPeriod),
               paymentMethodId: paymentMethod!.id,
               couponCode: state.coupon.applied ? state.coupon.code : undefined,
+              autoRenew: state.autoRenew,
             },
           },
         })
@@ -627,6 +638,15 @@ export default defineComponent({
                       )
                     })}
                   </ElRadioGroup>
+                  <div class="autorenew-toggle flex items-center gap-2 mt-10">
+                    <label style="font-weight: 500;">Auto-renew</label>
+                    <ElSwitch
+                      modelValue={state.autoRenew}
+                      onUpdate:modelValue={(val: boolean) => (state.autoRenew = val)}
+                      activeText="On"
+                      inactiveText="Off"
+                    />
+                  </div>
                 </div>
               </div>
 
