@@ -17,9 +17,17 @@ type Subscription {
   autoRenew: Boolean!
   
   transactions: [Transaction!]
+
+  paymentMethod: PaymentMethod
   
   createdAt: String!
   updatedAt: String!
+}
+
+type PaymentMethod {
+  id: ID!
+  type: String!
+  last4: String!
 }
 
 type Transaction {
@@ -87,6 +95,8 @@ enum TransactionType {
   adjustment
   upgrade
   downgrade
+  renewal
+  cancellation
 }
 
 enum SubscriptionOrderBy {

@@ -23,10 +23,11 @@ interface ComparisonFeature {
 const comparisonFeatures: ComparisonFeature[] = [
   { name: 'Price', key: 'price', type: 'price' },
   { name: 'Ideal For', key: 'ideal', type: 'ideal' },
-  { name: 'Maximum datasets', key: 'maxDatasets', type: 'limit' },
+  { name: 'Maximum Submissions per year', key: 'maxDatasets', type: 'limit' },
+  { name: 'Maximum Reprocessing per year', key: 'maxReprocessing', type: 'limit' },
   { name: 'Support', key: 'support', type: 'support' },
   { name: 'Processing Priority', key: 'priority', type: 'priority' },
-  { name: 'Team members', key: 'teamMembers', type: 'text' },
+  { name: 'Group members', key: 'teamMembers', type: 'text' },
   { name: 'Billing', key: 'billing', type: 'billing' },
 ]
 
@@ -54,19 +55,27 @@ const getFeatureValue = (plan: Plan, featureKey: string, selectedPeriod?: Pricin
       return 'For groups handling a few projects per year'
 
     case 'maxDatasets':
-      if (planName.includes('free')) return '5'
-      if (planName.includes('low')) return '30'
-      if (planName.includes('medium')) return '100'
-      if (planName.includes('high')) return '300'
-      if (planName.includes('ultra')) return '1,000'
-      return '30'
+      if (planName.includes('free')) return '3 datasets / year'
+      if (planName.includes('low')) return '30 datasets / year'
+      if (planName.includes('medium')) return '100 datasets / year'
+      if (planName.includes('high')) return '300 datasets / year'
+      if (planName.includes('ultra')) return '1,000 datasets / year'
+      return '30 datasets / year'
+
+    case 'maxReprocessing':
+      if (planName.includes('free')) return '6 reprocessing / year'
+      if (planName.includes('low')) return '60 reprocessing / year'
+      if (planName.includes('medium')) return '200 reprocessing / year'
+      if (planName.includes('high')) return '600 reprocessing / year'
+      if (planName.includes('ultra')) return '2,000 reprocessing / year'
+      return '30 reprocessing / year'
 
     case 'support':
-      if (planName.includes('free')) return 'Community and email support'
-      if (planName.includes('low')) return 'Community and email support'
-      if (planName.includes('medium')) return 'Priority email support'
-      if (planName.includes('high')) return 'Dedicated support'
-      if (planName.includes('ultra')) return 'Dedicated support'
+      if (planName.includes('free')) return 'Email replies within 72 hours'
+      if (planName.includes('low')) return 'Email replies within 72 hours'
+      if (planName.includes('medium')) return 'Email replies within 24 hours'
+      if (planName.includes('high')) return 'Email replies within 12 hours'
+      if (planName.includes('ultra')) return 'Email replies within 12 hours'
       return 'Community and email support'
 
     case 'priority':
@@ -182,9 +191,9 @@ export default defineComponent({
                       border: state.hoveredPlan === index ? '1px solid #0F87EF' : '1px solid #eee',
                     }}
                   >
-                    <h2 class="plan-name">{plan.name}</h2>
+                    {isRecommended && <div class="recommended-badge">Recommended for most users</div>}
 
-                    {isRecommended && <div class="recommended-badge">Most Popular</div>}
+                    <h2 class="plan-name">{plan.name}</h2>
 
                     <div class="plan-price">
                       <span class="price-currency">$</span>

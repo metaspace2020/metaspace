@@ -127,12 +127,13 @@ $border-light: #e9ecef;
 
 .recommended-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 0px;
+  left: 0px;
+  right: 0px;
   background: $primary-color;
   color: white;
   padding: 4px 12px;
-  border-radius: 12px;
+  border-radius: 12px 12px 0px 0px;
   font-size: 12px;
   font-weight: 600;
   z-index: 1;

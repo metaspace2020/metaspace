@@ -29,6 +29,8 @@ export enum TransactionType {
   ADJUSTMENT = 'adjustment',
   UPGRADE = 'upgrade',
   DOWNGRADE = 'downgrade',
+  RENEWAL = 'renewal',
+  CANCELLATION = 'cancellation',
 }
 
 export enum SubscriptionOrderBy {
@@ -49,6 +51,12 @@ export enum TransactionOrderBy {
 }
 
 // Interfaces
+export interface PaymentMethod {
+  id: string
+  type: string
+  last4: string
+}
+
 export interface Subscription {
   id: string
   userId: string
@@ -65,6 +73,7 @@ export interface Subscription {
   createdAt: string
   updatedAt: string
   plan: Plan
+  paymentMethod?: PaymentMethod
 }
 
 export interface Transaction {
@@ -468,6 +477,11 @@ export const getActiveGroupSubscriptionQuery = gql`
   query ($groupId: ID!) {
     activeGroupSubscription(groupId: $groupId) {
       ...Subscription
+      paymentMethod {
+        id
+        type
+        last4
+      }
       plan {
         id
         name

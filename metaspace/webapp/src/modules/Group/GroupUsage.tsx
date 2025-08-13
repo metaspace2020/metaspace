@@ -118,7 +118,6 @@ export default defineComponent({
 
     return () => {
       const subscription = activeGroupSubscription.value as Subscription
-
       if (!subscription) {
         return (
           <div class="subscription-container">
@@ -347,22 +346,37 @@ export default defineComponent({
                     )}
                   </div>
 
-                  {/* Stripe Information */}
+                  {/* Payment Information */}
                   <div class="section">
                     <h3 class="section-title">Payment Information</h3>
                     <el-row gutter={20}>
-                      <el-col span={12}>
-                        <div class="info-item">
-                          <label>Stripe Subscription ID:</label>
-                          <div class="value code">{subscription.stripeSubscriptionId}</div>
-                        </div>
-                      </el-col>
-                      <el-col span={12}>
-                        <div class="info-item">
-                          <label>Stripe Customer ID:</label>
-                          <div class="value code">{subscription.stripeCustomerId}</div>
-                        </div>
-                      </el-col>
+                      {subscription.paymentMethod ? (
+                        <>
+                          <el-col span={12}>
+                            <div class="info-item">
+                              <label>Payment Method:</label>
+                              <div class="value">
+                                <el-tag type="info" size="small">
+                                  {subscription.paymentMethod.type}
+                                </el-tag>
+                              </div>
+                            </div>
+                          </el-col>
+                          <el-col span={12}>
+                            <div class="info-item">
+                              <label>Card ending:</label>
+                              <div class="value">•••• {subscription.paymentMethod.last4}</div>
+                            </div>
+                          </el-col>
+                        </>
+                      ) : (
+                        <el-col span={24}>
+                          <div class="info-item">
+                            <label>Payment Method:</label>
+                            <div class="value">Not available</div>
+                          </div>
+                        </el-col>
+                      )}
                     </el-row>
                   </div>
                 </div>

@@ -643,7 +643,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
           </div>
         </div>
         <div class=\\"el-row mt-8\\">
-          <div class=\\"el-col el-col-6\\"><span class=\\"metadata-section__title\\">Group's submission usage</span></div>
+          <div class=\\"el-col el-col-6\\"><span class=\\"metadata-section__title\\">Subscription limits</span></div>
           <div class=\\"el-col el-col-18\\">
             <div class=\\"section\\">
               <div class=\\"el-table--fit el-table--enable-row-hover el-table--enable-row-transition el-table el-table--layout-fixed\\" data-prefix=\\"el\\">

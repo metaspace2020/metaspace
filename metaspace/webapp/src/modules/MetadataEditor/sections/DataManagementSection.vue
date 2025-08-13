@@ -94,7 +94,7 @@
       </el-row>
       <el-row v-else-if="groupId != null">
         <el-col :span="6">
-          <span class="metadata-section__title">Group's submission usage</span>
+          <span class="metadata-section__title">Subscription limits</span>
         </el-col>
         <el-col :span="18">
           <group-quota :groupId="groupId" />
