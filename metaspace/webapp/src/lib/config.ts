@@ -44,6 +44,7 @@ interface ClientConfig {
   wsGraphqlUrl: string | null
   companionUrl: string | null
   imageStorage?: string | null
+  appointment_url?: string | null
 
   google_client_id: string
   recaptcha_site_key: string
@@ -65,6 +66,7 @@ const defaultConfig: ClientConfig = {
   recaptcha_site_key: '',
   sentry: null,
   metadataTypes: ['ims'],
+  appointment_url: '',
   features: {
     coloc: true,
     ignore_ibd_size: false,

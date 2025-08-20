@@ -1,5 +1,6 @@
+import config from '../../utils/config'
 import logger from '../../utils/logger'
-import sendEmail from '../../utils/sendEmail'
+import sendEmail, { sendRecipientsEmail } from '../../utils/sendEmail'
 
 export const sendVerificationEmail = (email: string, link: string) => {
   const subject = 'METASPACE email verification'
@@ -64,4 +65,27 @@ Best wishes,
 METASPACE Team`
   sendEmail(email, subject, text)
   logger.info(`Invitation email sent to ${email} by ${invitedBy}`)
+}
+
+export const sendContactEmail = (email: string, name: string, category: string, message: string) => {
+  const subject = `METASPACE contact [${category}]`
+  let text = ''
+  let recipients = [config.contact.email]
+  let ccs = [config.contact.email]
+  if (category === 'scientific') {
+    text =
+`The user ${name} with email ${email} has sent a scientific support message with message ${message}.`
+    recipients = [config.contact.sci_email]
+  } else if (category === 'software' || category === 'bug' || category === 'feature') {
+    text =
+`The user ${name} with email ${email} has sent a software support message with message ${message}.`
+    recipients = [config.contact.tech_email]
+  } else {
+    text =
+`The user ${name} with email ${email} has sent a contact message with message ${message}.`
+    ccs = []
+  }
+
+  sendRecipientsEmail(recipients, ccs.concat([email]), subject, text)
+  logger.info(`Sent contact email to ${recipients.join(', ')}`)
 }
