@@ -196,7 +196,6 @@ Environment: <browser/version>, <OS>.`,
     }
 
     return () => {
-      console.log(config.appointment_url)
       return (
         <div class="contact-page min-h-screen -mt-2">
           <div class="header">
@@ -337,6 +336,8 @@ Environment: <browser/version>, <OS>.`,
                               title="Schedule an appointment"
                               class="w-full"
                               style="min-height: 600px;"
+                              sandbox="allow-scripts allow-forms allow-popups allow-top-navigation-by-user-activation"
+                              referrerpolicy="strict-origin-when-cross-origin"
                             />
                           </div>
                           <p class="text-sm text-gray-500 mt-2">
