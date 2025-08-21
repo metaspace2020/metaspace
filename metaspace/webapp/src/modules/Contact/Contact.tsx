@@ -1,4 +1,4 @@
-import { defineAsyncComponent, defineComponent, inject, reactive, ref, onMounted, onUnmounted } from 'vue'
+import { defineAsyncComponent, defineComponent, inject, reactive, ref } from 'vue'
 import {
   ElForm,
   ElFormItem,
@@ -47,77 +47,12 @@ export default defineComponent({
       message: '',
     })
     const apolloClient = inject(DefaultApolloClient)
-    const calendarLoaded = ref(false)
-    const calendarLoadError = ref(false)
-    const loadTimeout = ref<number | null>(null)
 
     const { onResult } = useQuery<any>(userProfileQuery)
 
     onResult((result) => {
       form.fullName = result.data?.currentUser?.name || ''
       form.email = result.data?.currentUser?.email || ''
-    })
-
-    // Google Calendar scheduling setup with iframe fallback
-    onMounted(() => {
-      // Set a timeout to show iframe fallback if script doesn't load
-      loadTimeout.value = window.setTimeout(() => {
-        if (!calendarLoaded.value) {
-          calendarLoadError.value = true
-        }
-      }, 5000) // 5 second timeout
-
-      // Add CSS for Google Calendar scheduling
-      const link = document.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = 'https://calendar.google.com/calendar/scheduling-button-script.css'
-      document.head.appendChild(link)
-
-      // Add and load the Google Calendar script
-      const script = document.createElement('script')
-      script.src = 'https://calendar.google.com/calendar/scheduling-button-script.js'
-      script.async = true
-      script.onload = () => {
-        // Clear the timeout since script loaded
-        if (loadTimeout.value) {
-          clearTimeout(loadTimeout.value)
-          loadTimeout.value = null
-        }
-
-        // Initialize the scheduling button
-        const target = document.getElementById('google-calendar-target')
-        if (target && (window as any).calendar) {
-          try {
-            ;(window as any).calendar.schedulingButton.load({
-              url: config.appointment_url,
-              color: '#0F87EF',
-              label: 'Book an appointment',
-              target,
-            })
-            calendarLoaded.value = true
-          } catch (error) {
-            console.error('Failed to load Google Calendar button:', error)
-            calendarLoadError.value = true
-          }
-        } else {
-          calendarLoadError.value = true
-        }
-      }
-      script.onerror = () => {
-        console.error('Failed to load Google Calendar script')
-        if (loadTimeout.value) {
-          clearTimeout(loadTimeout.value)
-          loadTimeout.value = null
-        }
-        calendarLoadError.value = true
-      }
-      document.head.appendChild(script)
-    })
-
-    onUnmounted(() => {
-      if (loadTimeout.value) {
-        clearTimeout(loadTimeout.value)
-      }
     })
 
     const categoryOptions = [
@@ -320,47 +255,14 @@ Environment: <browser/version>, <OS>.`,
                         explore collaboration opportunities.
                       </p>
 
-                      {/* Google Calendar button (primary method) */}
-                      {!calendarLoadError.value && <div id="google-calendar-target" class="mb-4"></div>}
-
-                      {/* Iframe fallback when script fails to load */}
-                      {calendarLoadError.value && config.appointment_url && (
-                        <div class="mb-4">
-                          <div class="border border-gray-300 rounded-lg overflow-hidden">
-                            <iframe
-                              src={config.appointment_url}
-                              width="100%"
-                              height="600"
-                              frameborder="0"
-                              scrolling="yes"
-                              title="Schedule an appointment"
-                              class="w-full"
-                              style="min-height: 600px;"
-                              sandbox="allow-scripts allow-forms allow-popups allow-top-navigation-by-user-activation"
-                              referrerpolicy="strict-origin-when-cross-origin"
-                            />
-                          </div>
-                          <p class="text-sm text-gray-500 mt-2">
-                            If the calendar doesn't load, you can{' '}
-                            <a
-                              href={config.appointment_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              class="text-blue-600 hover:text-blue-700 underline"
-                            >
-                              open it in a new tab
-                            </a>
-                            .
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Loading state */}
-                      {!calendarLoaded.value && !calendarLoadError.value && (
-                        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
-                          <p class="text-gray-600 text-center">Loading calendar...</p>
-                        </div>
-                      )}
+                      <a
+                        href={config.appointment_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-center no-underline bg-[#0F87EF] text-white font-semibold py-2 px-4 rounded-md"
+                      >
+                        Book an Appointment
+                      </a>
                     </div>
                   </div>
                   <div class="space-y-6">
