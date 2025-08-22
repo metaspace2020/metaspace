@@ -86,6 +86,6 @@ export const sendContactEmail = (email: string, name: string, category: string, 
     ccs = []
   }
 
-  sendRecipientsEmail(recipients, ccs.concat([email]), subject, text)
+  sendRecipientsEmail(recipients, ccs, subject, text, email)
   logger.info(`Sent contact email to ${recipients.join(', ')}`)
 }
