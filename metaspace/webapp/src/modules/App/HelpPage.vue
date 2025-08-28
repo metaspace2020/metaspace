@@ -1,6 +1,13 @@
 <template>
   <content-page>
     <h1>Help</h1>
+    <h2>Questions or Feedback</h2>
+    <p>
+      Please ask your questions or provide feedback at the
+      <a href="https://github.com/metaspace2020/metaspace/discussions/categories/q-a" target="_blank"
+        >GitHub Discussion page</a
+      >. For private requests, please <a href="/contact">contact us</a>.
+    </p>
     <h2>Interactive tours</h2>
     <p>Learn to use features that may be hard to discover:</p>
     <div class="tours column-layout">
@@ -102,13 +109,6 @@
       </li>
       <li>After the paper has been published, add the <b>DOI</b> and make the results available to all.</li>
     </ol>
-    <h2>Questions or Feedback</h2>
-    <p>
-      Please ask your questions or provide feedback at the
-      <a href="https://github.com/metaspace2020/metaspace/discussions/categories/q-a" target="_blank"
-        >GitHub Discussion page</a
-      >. For private requests, please <a href="/contact">contact us</a>.
-    </p>
   </content-page>
 </template>
 <script>

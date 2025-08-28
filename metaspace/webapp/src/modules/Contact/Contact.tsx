@@ -11,13 +11,13 @@ import {
   ElIcon,
   ElMessage,
 } from '../../lib/element-plus'
-import { VideoPlay } from '@element-plus/icons-vue'
-import './Contact.scss'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { userProfileQuery } from '../../api/user'
 import { sendContactMessageMutation } from '../../api/user'
 import BlueskyIcon from '../../assets/inline/bluesky.png'
+import YoutubeIcon from '../../assets/inline/youtube-icon.png'
 import config from '../../lib/config'
+import './Contact.scss'
 
 const GithubIcon = defineAsyncComponent(() => import('../../assets/inline/github.svg'))
 const LinkedinIcon = defineAsyncComponent(() => import('../../assets/inline/linkedin.svg'))
@@ -135,9 +135,9 @@ Environment: <browser/version>, <OS>.`,
         <div class="contact-page min-h-screen -mt-2">
           <div class="header">
             <div class="max-w-4xl mx-auto text-center">
-              <h1 class="text-4xl md:text-5xl font-bold mb-4">Contact Us</h1>
+              <h1 class="text-4xl md:text-5xl font-bold mb-4">Contact us</h1>
               <p class="text-xl md:text-2xl opacity-90">
-                We're here to help – reach out with any questions or feedback.
+                We're here to help – reach out with any questions or feedback
               </p>
             </div>
           </div>
@@ -146,9 +146,9 @@ Environment: <browser/version>, <OS>.`,
             <ElRow gutter={48} align="top">
               <ElCol lg={14} md={24}>
                 <div>
-                  <h2 class="text-2xl font-bold text-gray-900 mb-2">Send us a message</h2>
+                  <h2 class="text-2xl font-bold text-gray-900 mb-2">Have a question?</h2>
                   <p class="text-gray-600 mb-4 text-justify">
-                    Search existing topics or ask your questions in{' '}
+                    Please, search existing topics or ask your questions in{' '}
                     <a
                       href="https://github.com/metaspace2020/metaspace/discussions"
                       target="_blank"
@@ -158,8 +158,8 @@ Environment: <browser/version>, <OS>.`,
                       GitHub Discussions
                     </a>{' '}
                     first — our main communication channel — so others can benefit from the answers. For common issues,
-                    check our FAQ section for quick responses on topics like download limits. If your matter is private
-                    and not covered in the discussions, feel free to contact us using the form below.
+                    check our FAQ section for quick responses on topics like download limits. If your matter is private,
+                    feel free to contact us using the form below.
                   </p>
                 </div>
 
@@ -246,9 +246,8 @@ Environment: <browser/version>, <OS>.`,
 
               <ElCol lg={10} md={24}>
                 <div class="lg:mt-0 mt-12">
-                  <h2 class="text-2xl font-bold text-gray-900 mb-8">Prefet to talk live?</h2>
+                  <h2 class="text-2xl font-bold text-gray-900 mb-0">Prefet to talk live?</h2>
                   <div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Schedule a Meeting</h3>
                     <div class="mb-6">
                       <p class="text-gray-600 mb-4 text-justify">
                         Book a one-on-one meeting with our team to discuss your questions, get personalized support, or
@@ -261,13 +260,13 @@ Environment: <browser/version>, <OS>.`,
                         rel="noopener noreferrer"
                         class="text-center no-underline bg-[#0F87EF] text-white font-semibold py-2 px-4 rounded-md"
                       >
-                        Book an Appointment
+                        Book an appointment
                       </a>
                     </div>
                   </div>
                   <div class="space-y-6">
                     <div>
-                      <h3 class="text-lg font-semibold text-gray-900 mb-4">Follow Us</h3>
+                      <h3 class="text-lg font-semibold text-gray-900 mb-4">Interested to engage?</h3>
                       <div class="flex space-x-4">
                         <a
                           href="https://www.linkedin.com/company/metaspace-imaging-ms"
@@ -300,9 +299,7 @@ Environment: <browser/version>, <OS>.`,
                           class="inline-flex items-center justify-center w-12 h-12 bg-red-600 text-white 
                           rounded-full hover:bg-red-700 transition-colors"
                         >
-                          <ElIcon size={30} color="#fff" {...({} as any)}>
-                            <VideoPlay />
-                          </ElIcon>
+                          <img src={YoutubeIcon} alt="Youtube" style={{ width: '60px', height: '50px' }} />
                         </a>
 
                         <a
