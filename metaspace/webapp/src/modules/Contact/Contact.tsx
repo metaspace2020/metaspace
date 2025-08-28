@@ -17,6 +17,7 @@ import { sendContactMessageMutation } from '../../api/user'
 import BlueskyIcon from '../../assets/inline/bluesky.png'
 import YoutubeIcon from '../../assets/inline/youtube-icon.png'
 import config from '../../lib/config'
+import { RouterLink } from 'vue-router'
 import './Contact.scss'
 
 const GithubIcon = defineAsyncComponent(() => import('../../assets/inline/github.svg'))
@@ -158,8 +159,8 @@ Environment: <browser/version>, <OS>.`,
                       GitHub Discussions
                     </a>{' '}
                     first — our main communication channel — so others can benefit from the answers. For common issues,
-                    check our FAQ section for quick responses on topics like download limits. If your matter is private,
-                    feel free to contact us using the form below.
+                    check our <RouterLink to="/faq">FAQ section</RouterLink> for quick responses on topics like download
+                    limits. If your matter is private, feel free to contact us using the form below.
                   </p>
                 </div>
 
