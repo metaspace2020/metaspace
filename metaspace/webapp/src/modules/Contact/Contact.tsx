@@ -16,7 +16,7 @@ import { userProfileQuery } from '../../api/user'
 import { sendContactMessageMutation } from '../../api/user'
 import BlueskyIcon from '../../assets/inline/bluesky.png'
 import YoutubeIcon from '../../assets/inline/youtube-icon.png'
-import config from '../../lib/config'
+// import config from '../../lib/config'
 import { RouterLink } from 'vue-router'
 import './Contact.scss'
 
@@ -124,7 +124,7 @@ Environment: <browser/version>, <OS>.`,
           // Also reset the form validation
           formRef.value?.resetFields()
 
-          ElMessage.success('Message sent successfully! We usually reply within 1-2 business days.')
+          ElMessage.success('Thanks for reaching out! We’ll get back to you within 1–2 business days')
         } else {
           ElMessage.error('Please fill in all required fields correctly.')
         }
@@ -137,9 +137,7 @@ Environment: <browser/version>, <OS>.`,
           <div class="header">
             <div class="max-w-4xl mx-auto text-center">
               <h1 class="text-4xl md:text-5xl font-bold mb-4">Contact us</h1>
-              <p class="text-xl md:text-2xl opacity-90">
-                We're here to help – reach out with any questions or feedback
-              </p>
+              <p class="text-xl md:text-2xl opacity-90">We're here to help</p>
             </div>
           </div>
 
@@ -147,9 +145,9 @@ Environment: <browser/version>, <OS>.`,
             <ElRow gutter={48} align="top">
               <ElCol lg={14} md={24}>
                 <div>
-                  <h2 class="text-2xl font-bold text-gray-900 mb-2">Have a question?</h2>
+                  <h2 class="text-2xl font-bold text-gray-900 mb-2">Looking for answers?</h2>
                   <p class="text-gray-600 mb-4 text-justify">
-                    Please, search existing topics or ask your questions in{' '}
+                    We encourage you to search existing topics or post your questions in{' '}
                     <a
                       href="https://github.com/metaspace2020/metaspace/discussions"
                       target="_blank"
@@ -158,9 +156,9 @@ Environment: <browser/version>, <OS>.`,
                     >
                       GitHub Discussions
                     </a>{' '}
-                    first — our main communication channel — so others can benefit from the answers. For common issues,
+                    first, our main communication channel, so others can benefit from the answers. For common issues,
                     check our <RouterLink to="/faq">FAQ section</RouterLink> for quick responses on topics like download
-                    limits. If your matter is private, feel free to contact us using the form below.
+                    limits. If your request is private, feel free to contact us directly using the form below.
                   </p>
                 </div>
 
@@ -247,9 +245,9 @@ Environment: <browser/version>, <OS>.`,
 
               <ElCol lg={10} md={24}>
                 <div class="lg:mt-0 mt-12">
-                  <h2 class="text-2xl font-bold text-gray-900 mb-0">Prefet to talk live?</h2>
+                  {/* <h2 class="text-2xl font-bold text-gray-900 mb-0">Prefet to talk live?</h2> */}
                   <div>
-                    <div class="mb-6">
+                    {/* <div class="mb-6">
                       <p class="text-gray-600 mb-4 text-justify">
                         Book a one-on-one meeting with our team to discuss your questions, get personalized support, or
                         explore collaboration opportunities.
@@ -263,7 +261,7 @@ Environment: <browser/version>, <OS>.`,
                       >
                         Book an appointment
                       </a>
-                    </div>
+                    </div> */}
                   </div>
                   <div class="space-y-6">
                     <div>

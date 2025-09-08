@@ -3,10 +3,10 @@
     <h1>Help</h1>
     <h2>Questions or Feedback</h2>
     <p>
-      Please ask your questions or provide feedback at the
+      You can submit questions or feedback through our
       <a href="https://github.com/metaspace2020/metaspace/discussions/categories/q-a" target="_blank"
         >GitHub Discussion page</a
-      >. For private requests, please <a href="/contact">contact us</a>.
+      >. For private inquiries, please <a href="/contact">contact us</a> directly.
     </p>
     <h2>Interactive tours</h2>
     <p>Learn to use features that may be hard to discover:</p>
