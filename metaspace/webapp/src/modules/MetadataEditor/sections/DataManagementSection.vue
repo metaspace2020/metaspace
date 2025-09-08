@@ -61,7 +61,7 @@
       </el-col>
     </el-row>
     <el-collapse-transition class="mt-8">
-      <el-row v-if="showPI">
+      <el-row v-if="showPI && groupId == 'NO_GROUP'">
         <el-col :span="6">
           <div class="metadata-section__title">Principal Investigator</div>
         </el-col>
@@ -92,7 +92,7 @@
           </el-row>
         </el-col>
       </el-row>
-      <el-row v-else-if="groupId != null">
+      <el-row v-else>
         <el-col :span="6">
           <span class="metadata-section__title">Subscription limits</span>
         </el-col>
