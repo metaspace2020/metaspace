@@ -57,7 +57,6 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   createSubscription: async(_, args, ctx: Context) => {
     try {
       const { input } = args
-
       // Transform the input to match external API expectations
       const apiInput: any = {
         userId: input.userId,
@@ -65,6 +64,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         priceId: input.priceId,
         email: input.email,
         name: input.name,
+        customerAddress: input.address,
         billingInterval: input.billingInterval,
         paymentMethodId: input.paymentMethodId,
       }

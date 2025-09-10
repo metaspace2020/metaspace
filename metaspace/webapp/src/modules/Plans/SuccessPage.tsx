@@ -125,6 +125,8 @@ export default defineComponent({
     return () => {
       if (!currentUser.value) return null
 
+      console.log('latestTransaction', latestTransaction.value)
+
       // Show loading state
       if (subscriptionLoading.value) {
         return (
@@ -247,7 +249,7 @@ export default defineComponent({
                     <div class="detail-item">
                       <label>Amount:</label>
                       <span class="value">
-                        {formatPrice(latestTransaction.value.finalAmountCents / 100)} {latestTransaction.value.currency}
+                        {formatPrice(latestTransaction.value.finalAmountCents)} {latestTransaction.value.currency}
                       </span>
                     </div>
 
@@ -256,7 +258,7 @@ export default defineComponent({
                         <label>Discount Applied:</label>
                         <span class="value">
                           {latestTransaction.value.discountAmountCents
-                            ? `${formatPrice(latestTransaction.value.discountAmountCents / 100)} ${
+                            ? `${formatPrice(latestTransaction.value.discountAmountCents)} ${
                                 latestTransaction.value.currency
                               }`
                             : `${latestTransaction.value.discountPercentage}%`}

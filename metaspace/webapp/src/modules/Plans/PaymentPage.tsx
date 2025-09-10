@@ -26,6 +26,7 @@ import {
   getBillingInterval,
   getSavingsPercentageFromPrices,
 } from '../../lib/pricing'
+import { STRIPE_SUPPORTED_COUNTRIES, countryRequiresPostalCode } from '../../lib/countries'
 
 interface CurrentUser {
   id: string
@@ -71,7 +72,7 @@ export default defineComponent({
         lastName: '',
         address: '',
         zipCode: '',
-        selectedCountry: '',
+        selectedCountry: 'US', // Default to US
         selectedState: '',
         selectedPhoneCode: '+1', // Default to +1 (US)
         phoneNumber: '',
@@ -179,27 +180,35 @@ export default defineComponent({
     }
 
     const validateZipCode = (zipCode: string) => {
-      if (!zipCode.trim()) {
-        state.validation.zipCode = { isValid: false, message: 'ZIP code is required' }
+      const isRequired = countryRequiresPostalCode(state.form.selectedCountry)
+
+      if (isRequired && !zipCode.trim()) {
+        state.validation.zipCode = { isValid: false, message: 'Postal code is required for this country' }
         return false
       }
-      // For now, basic validation - can be enhanced based on country
-      if (zipCode.trim().length < 3) {
-        state.validation.zipCode = { isValid: false, message: 'Please enter a valid ZIP code' }
+
+      if (zipCode.trim() && zipCode.trim().length < 3) {
+        state.validation.zipCode = { isValid: false, message: 'Please enter a valid postal code' }
         return false
       }
+
       state.validation.zipCode = { isValid: true, message: '' }
       return true
     }
 
     // Computed property to check if form is valid
     const isFormValid = computed(() => {
+      const postalCodeValid = countryRequiresPostalCode(state.form.selectedCountry)
+        ? state.validation.zipCode.isValid
+        : true
+
       return (
         state.validation.email.isValid &&
         state.validation.firstName.isValid &&
         state.validation.lastName.isValid &&
         state.validation.address.isValid &&
-        state.validation.zipCode.isValid &&
+        postalCodeValid &&
+        state.form.selectedCountry && // Country is required
         state.validation.cardNumber.isValid &&
         state.validation.cardExpiry.isValid &&
         state.validation.cardCvc.isValid
@@ -221,16 +230,20 @@ export default defineComponent({
         }))
     )
 
-    const { result: planResult } = useQuery<{ plan: Plan }>(
-      getPlanQuery,
-      {
-        planId: route.query?.planId as string,
-      },
-      {
-        fetchPolicy: 'network-only',
-      }
-    )
-    const plan = computed(() => planResult.value?.plan)
+    const planQueryVariables = computed(() => ({
+      planId: route.query?.planId as string,
+      includeVat: true,
+      customerCountry: state.form.selectedCountry,
+      customerPostalCode: state.form.zipCode,
+    }))
+
+    const { result: planResult, refetch: refetchPlan } = useQuery<{ plan: Plan }>(getPlanQuery, planQueryVariables, {
+      fetchPolicy: 'network-only',
+    })
+    const plan = computed(() => {
+      const planData = planResult.value?.plan
+      return planData
+    })
 
     // Get all unique periods from the plan
     const availablePeriods = computed(() => {
@@ -246,14 +259,59 @@ export default defineComponent({
     })
 
     const getTotalPrice = (pricingOption: any) => {
-      return pricingOption ? pricingOption.priceCents : 0
+      if (!pricingOption) return 0
+
+      // If VAT calculation is available, use the inclusive VAT price
+      if (pricingOption.vatCalculation) {
+        return pricingOption.vatCalculation.priceInclusiveVAT
+      }
+
+      // Fallback to original price
+      return pricingOption.priceCents
+    }
+
+    const getBasePrice = (pricingOption: any) => {
+      if (!pricingOption) return 0
+
+      // If VAT calculation is available, use the exclusive VAT price
+      if (pricingOption.vatCalculation) {
+        return pricingOption.vatCalculation.priceExclusiveVAT
+      }
+
+      // Fallback to original price
+      return pricingOption.priceCents
+    }
+
+    const getVatAmount = (pricingOption: any) => {
+      if (!pricingOption?.vatCalculation) return 0
+      return pricingOption.vatCalculation.vatAmount
+    }
+
+    const getTotalDiscountAmount = () => {
+      if (!state.coupon.applied || !state.coupon.validationResult?.isValid) {
+        return 0
+      }
+
+      // Return just the base discount amount (VAT is shown separately)
+      return state.coupon.validationResult.discountAmountCents || 0
     }
 
     const finalPrice = computed(() => {
       const basePrice = getTotalPrice(state.selectedPeriod)
+
       if (state.coupon.applied && state.coupon.validationResult?.isValid) {
-        return state.coupon.validationResult.discountedPriceCents || basePrice
+        // If we have VAT calculation: Base - Discount + VAT (on original base)
+        if (state.selectedPeriod?.vatCalculation) {
+          const originalBasePrice = getBasePrice(state.selectedPeriod)
+          const discountAmount = state.coupon.validationResult.discountAmountCents || 0
+          const originalVatAmount = getVatAmount(state.selectedPeriod)
+          return originalBasePrice - discountAmount + originalVatAmount
+        } else {
+          // No VAT calculation, use discounted price directly
+          return state.coupon.validationResult.discountedPriceCents || basePrice
+        }
       }
+
       return basePrice
     })
 
@@ -288,9 +346,38 @@ export default defineComponent({
         if (newPeriods.length > 0 && !state.selectedPeriod) {
           // Default to the first available period (usually monthly)
           state.selectedPeriod = newPeriods[0]
+        } else if (newPeriods.length > 0 && state.selectedPeriod) {
+          // Update the selected period with fresh data (important for VAT updates)
+          const currentSelectedId = state.selectedPeriod.id
+          const updatedPeriod = newPeriods.find((period) => period.id === currentSelectedId)
+          if (updatedPeriod) {
+            state.selectedPeriod = updatedPeriod
+          }
         }
       },
       { immediate: true }
+    )
+
+    // Debounced refetch function
+    let refetchTimeout: NodeJS.Timeout | null = null
+    const debouncedRefetch = () => {
+      if (refetchTimeout) {
+        clearTimeout(refetchTimeout)
+      }
+      refetchTimeout = setTimeout(() => {
+        if (route.query?.planId && state.form.selectedCountry) {
+          refetchPlan()
+        }
+      }, 500)
+    }
+
+    // Refetch plan when country or postal code changes (for VAT calculation)
+    watch(
+      () => [state.form.selectedCountry, state.form.zipCode],
+      () => {
+        //
+        debouncedRefetch()
+      }
     )
 
     const applyCoupon = async () => {
@@ -550,6 +637,11 @@ export default defineComponent({
               planId: plan.value!.id,
               groupId: state.form.groupId,
               priceId: state.selectedPricingOption.id,
+              address: {
+                line1: state.form.address,
+                postalCode: state.form.zipCode,
+                country: state.form.selectedCountry,
+              },
               email: state.form.email,
               name: `${state.form.firstName} ${state.form.lastName}`.trim(),
               billingInterval: getBillingInterval(state.selectedPeriod),
@@ -676,34 +768,49 @@ export default defineComponent({
               {/* Customer Information Section */}
               <div class="form-section">
                 <h3>Customer Information</h3>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>
+                      Email<span class="required">*</span>
+                    </label>
+                    <ElInput
+                      modelValue={state.form.email}
+                      onUpdate:modelValue={(val: string) => {
+                        state.form.email = val
+                        validateEmail(val)
+                        state.formErrors.email = !state.validation.email.isValid
+                      }}
+                      type="email"
+                      placeholder="Enter your email"
+                      size="default"
+                      class={!state.validation.email.isValid && state.form.email ? 'error-border' : ''}
+                    />
+                    <div
+                      class={`field-error ${
+                        !state.validation.email.isValid && state.validation.email.message && state.form.email
+                          ? 'visible'
+                          : 'invisible'
+                      }`}
+                    >
+                      {state.validation.email.message}
+                    </div>
+                  </div>
 
-                <div class="form-group">
-                  <label>
-                    Email<span class="required">*</span>
-                  </label>
-                  <ElInput
-                    modelValue={state.form.email}
-                    onUpdate:modelValue={(val: string) => {
-                      state.form.email = val
-                      validateEmail(val)
-                      state.formErrors.email = !state.validation.email.isValid
-                    }}
-                    type="email"
-                    placeholder="Enter your email"
-                    size="default"
-                    class={!state.validation.email.isValid && state.form.email ? 'error-border' : ''}
-                  />
-                  <div
-                    class={`field-error ${
-                      !state.validation.email.isValid && state.validation.email.message && state.form.email
-                        ? 'visible'
-                        : 'invisible'
-                    }`}
-                  >
-                    {state.validation.email.message}
+                  <div class="form-group">
+                    <label>Phone (optional)</label>
+                    <ElInput
+                      modelValue={state.form.phoneNumber}
+                      onUpdate:modelValue={(val: string) => {
+                        state.form.phoneNumber = val.replace(/[^0-9]/g, '')
+                        state.formErrors.phoneNumber = false
+                      }}
+                      placeholder="8143008846"
+                      type="tel"
+                      size="default"
+                      class={state.formErrors.phoneNumber ? 'error-border' : ''}
+                    />
                   </div>
                 </div>
-
                 <div class="form-row">
                   <div class="form-group">
                     <label>
@@ -758,6 +865,72 @@ export default defineComponent({
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div class="form-section">
+                <h3>Billing Address</h3>
+
+                <div class="form-row h-[80px]">
+                  <div class="form-group">
+                    <label>
+                      Country<span class="required">*</span>
+                    </label>
+                    <ElSelect
+                      class="w-full"
+                      modelValue={state.form.selectedCountry}
+                      onUpdate:modelValue={(val: string) => {
+                        state.form.selectedCountry = val
+                        state.formErrors.selectedCountry = false
+                      }}
+                      placeholder="Select your country"
+                      size="default"
+                      filterable
+                    >
+                      {STRIPE_SUPPORTED_COUNTRIES.map((country) => (
+                        <ElOption key={country.code} label={country.name} value={country.code} />
+                      ))}
+                    </ElSelect>
+                  </div>
+
+                  <div class="form-group">
+                    <label>
+                      {countryRequiresPostalCode(state.form.selectedCountry) ? 'Postal code' : 'Postal code (optional)'}
+                      {countryRequiresPostalCode(state.form.selectedCountry) && <span class="required">*</span>}
+                    </label>
+                    <ElInput
+                      modelValue={state.form.zipCode}
+                      onUpdate:modelValue={(val: string) => {
+                        state.form.zipCode = val
+                        validateZipCode(val)
+                        state.formErrors.zipCode = !state.validation.zipCode.isValid
+                        state.zipCodeError = null
+                      }}
+                      placeholder={
+                        state.form.selectedCountry === 'US'
+                          ? '12345'
+                          : state.form.selectedCountry === 'GB'
+                          ? 'SW1A 1AA'
+                          : state.form.selectedCountry === 'CA'
+                          ? 'K1A 0A9'
+                          : 'Enter postal code'
+                      }
+                      size="default"
+                      class={!state.validation.zipCode.isValid && state.form.zipCode ? 'error-border' : ''}
+                    />
+                    <div
+                      class={`field-error ${
+                        !state.validation.zipCode.isValid && state.validation.zipCode.message && state.form.zipCode
+                          ? 'visible'
+                          : 'invisible'
+                      }`}
+                    >
+                      {state.validation.zipCode.message}
+                    </div>
+                    <div class={`field-error zip-error ${state.zipCodeError ? 'visible' : 'invisible'}`}>
+                      {state.zipCodeError}
+                    </div>
+                  </div>
+                </div>
 
                 <div class="form-group">
                   <label>
@@ -782,52 +955,6 @@ export default defineComponent({
                     }`}
                   >
                     {state.validation.address.message}
-                  </div>
-                </div>
-
-                <div class="form-row">
-                  <div class="form-group">
-                    <label>
-                      Zip code<span class="required">*</span>
-                    </label>
-                    <ElInput
-                      modelValue={state.form.zipCode}
-                      onUpdate:modelValue={(val: string) => {
-                        state.form.zipCode = val
-                        validateZipCode(val)
-                        state.formErrors.zipCode = !state.validation.zipCode.isValid
-                        state.zipCodeError = null
-                      }}
-                      placeholder="12345"
-                      size="default"
-                      class={!state.validation.zipCode.isValid && state.form.zipCode ? 'error-border' : ''}
-                    />
-                    <div
-                      class={`field-error ${
-                        !state.validation.zipCode.isValid && state.validation.zipCode.message && state.form.zipCode
-                          ? 'visible'
-                          : 'invisible'
-                      }`}
-                    >
-                      {state.validation.zipCode.message}
-                    </div>
-                    <div class={`field-error zip-error ${state.zipCodeError ? 'visible' : 'invisible'}`}>
-                      {state.zipCodeError}
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label>Phone (optional)</label>
-                    <ElInput
-                      modelValue={state.form.phoneNumber}
-                      onUpdate:modelValue={(val: string) => {
-                        state.form.phoneNumber = val.replace(/[^0-9]/g, '')
-                        state.formErrors.phoneNumber = false
-                      }}
-                      placeholder="8143008846"
-                      type="tel"
-                      size="default"
-                      class={state.formErrors.phoneNumber ? 'error-border' : ''}
-                    />
                   </div>
                 </div>
               </div>
@@ -882,15 +1009,22 @@ export default defineComponent({
                     <span class="item-name">{plan.value.name} Plan</span>
                     <span class="item-price">
                       <span class="currency">$</span>
-                      <span class="amount">{formatPrice(getTotalPrice(state.selectedPeriod))}</span>
+                      <span class="amount">{formatPrice(getBasePrice(state.selectedPeriod))}</span>
                       <span class="period">/{state.selectedPeriod?.displayName.toLowerCase()}</span>
                     </span>
                   </div>
-                  <div class={`billing-notice ${state.selectedPeriod?.periodMonths === 1 ? 'invisible' : ''}`}>
-                    <span class="notice-text">
-                      Billed {state.selectedPeriod?.displayName.toLowerCase()}. You'll be charged the full amount today.
-                    </span>
-                  </div>
+
+                  {/* VAT/Tax breakdown */}
+                  {state.selectedPeriod?.vatCalculation && (
+                    <div class="summary-item vat-item">
+                      <span class="item-name">VAT</span>
+                      <span class="item-price">
+                        <span class="currency">$</span>
+                        <span class="amount">{formatPrice(getVatAmount(state.selectedPeriod))}</span>
+                      </span>
+                    </div>
+                  )}
+
                   <div class="summary-details">
                     {plan.value.description && (
                       <Fragment>
@@ -952,9 +1086,7 @@ export default defineComponent({
                       </span>
                       <span class="item-price discount-amount">
                         -$
-                        <span class="amount">
-                          {formatPrice(state.coupon.validationResult.discountAmountCents || 0)}
-                        </span>
+                        <span class="amount">{formatPrice(getTotalDiscountAmount())}</span>
                       </span>
                     </div>
                   )}
@@ -967,7 +1099,11 @@ export default defineComponent({
                       <span class="period">/{state.selectedPeriod?.displayName.toLowerCase()}</span>
                     </span>
                   </div>
-                  <p class="vat-notice">*VAT included where applicable</p>
+                  <p class="vat-notice">
+                    {state.selectedPeriod?.vatCalculation && getVatAmount(state.selectedPeriod) > 0
+                      ? '*VAT included'
+                      : '*VAT included where applicable'}
+                  </p>
                 </Fragment>
               )}
             </div>

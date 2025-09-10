@@ -88,6 +88,7 @@ enum TransactionStatus {
   refunded
 }
 
+
 enum TransactionType {
   subscription
   one_time
@@ -149,6 +150,7 @@ input CreateSubscriptionInput {
   groupName: String
   email: String!
   name: String!
+  address: JSON
   billingInterval: BillingInterval
   paymentMethodId: String
   couponCode: String

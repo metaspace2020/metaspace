@@ -1,5 +1,14 @@
 import gql from 'graphql-tag'
 
+export interface VatCalculation {
+  priceExclusiveVAT: number
+  vatAmount: number
+  priceInclusiveVAT: number
+  taxRate: number
+  taxBreakdown: any[]
+  calculationMethod: string
+}
+
 export interface PricingOption {
   id: string
   periodMonths: number
@@ -7,6 +16,7 @@ export interface PricingOption {
   displayName: string
   isActive: boolean
   displayOrder: number
+  vatCalculation?: VatCalculation
 }
 
 export interface Plan {
@@ -158,6 +168,14 @@ export const planFragment = gql`
       displayName
       isActive
       displayOrder
+      vatCalculation {
+        priceExclusiveVAT
+        vatAmount
+        priceInclusiveVAT
+        taxRate
+        taxBreakdown
+        calculationMethod
+      }
     }
   }
 `
@@ -201,8 +219,13 @@ export const getPlansQuery = gql`
   ${planFragment}
 `
 export const getPlanQuery = gql`
-  query ($planId: String!) {
-    plan(id: $planId) {
+  query ($planId: String!, $includeVat: Boolean, $customerCountry: String, $customerPostalCode: String) {
+    plan(
+      id: $planId
+      includeVat: $includeVat
+      customerCountry: $customerCountry
+      customerPostalCode: $customerPostalCode
+    ) {
       ...Plan
     }
   }

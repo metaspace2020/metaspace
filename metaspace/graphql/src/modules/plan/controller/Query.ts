@@ -132,9 +132,27 @@ const buildQueryString = (params: Record<string, any>): string => {
 }
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
-  async plan(_: any, { id }: { id: string }, ctx: Context): Promise<any> {
+  async plan(_: any, { id, includeVat, customerCountry, customerPostalCode }: {
+    id: string,
+    includeVat?: boolean,
+    customerCountry?: string,
+    customerPostalCode?: string
+  }, ctx: Context): Promise<any> {
     try {
-      return await makeApiRequest(ctx, `/api/plans/${id}`)
+      const queryParams: Record<string, any> = {}
+
+      if (includeVat) {
+        queryParams.includeVat = 'true'
+      }
+      if (customerCountry) {
+        queryParams.customerCountry = customerCountry
+      }
+      if (customerPostalCode) {
+        queryParams.customerPostalCode = customerPostalCode
+      }
+
+      const queryString = buildQueryString(queryParams)
+      return await makeApiRequest(ctx, `/api/plans/${id}${queryString}`)
     } catch (error) {
       logger.error(`Error fetching plan with ID ${id}:`, error)
       return null
