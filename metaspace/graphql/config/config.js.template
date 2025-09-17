@@ -48,6 +48,8 @@ config.google.serpapi_key = "{{ sm_graphql_google_serpapi_key }}";
 config.google.recaptcha_secret = "{{ sm_graphql_google_recaptcha_secret }}";
 
 config.web_public_url = "{{ web_public_url }}";
+config.manager_api_url = "{{ api_external_url }}";
+config.external_api_url = "{{ api_external_url }}";
 
 config.slack = {};
 config.slack.webhook_url = "{{ sm_graphql_slack_webhook_url }}";

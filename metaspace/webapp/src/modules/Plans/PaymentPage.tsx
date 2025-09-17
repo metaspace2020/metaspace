@@ -1077,7 +1077,7 @@ export default defineComponent({
                   </div>
 
                   {/* VAT/Tax breakdown */}
-                  {state.selectedPeriod?.vatCalculation &&  getVatAmount(state.selectedPeriod) > 0 && (
+                  {state.selectedPeriod?.vatCalculation && getVatAmount(state.selectedPeriod) > 0 && (
                     <div class="summary-item vat-item">
                       <span class="item-name">VAT</span>
                       <span class="item-price">
@@ -1183,11 +1183,7 @@ export default defineComponent({
           >
             <div class="modal-content">
               <div class="iframe-container">
-                <iframe 
-                  src={state.modalContent.url}
-                  class="terms-iframe"
-                  style={{ border: 'none' }}
-                />
+                <iframe src={state.modalContent.url} class="terms-iframe" style={{ border: 'none' }} />
               </div>
             </div>
             {{
