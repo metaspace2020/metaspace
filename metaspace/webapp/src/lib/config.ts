@@ -57,6 +57,11 @@ interface ClientConfig {
   }
   metadataTypes: string[]
   features: Features
+  urls: {
+    terms: string
+    privacy: string
+    dpa: string
+  }
 }
 
 const defaultConfig: ClientConfig = {
@@ -69,6 +74,11 @@ const defaultConfig: ClientConfig = {
   order_service_url: 'http://localhost:3003/',
   sentry: null,
   metadataTypes: ['ims'],
+  urls: {
+    terms: 'https://metaspace2020.eu/terms',
+    privacy: 'https://metaspace2020.eu/privacy',
+    dpa: 'https://metaspace2020.eu/dpa',
+  },
   features: {
     coloc: true,
     ignore_ibd_size: false,

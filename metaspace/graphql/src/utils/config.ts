@@ -27,6 +27,7 @@ export interface ApiUsageConfig {
 export interface Config {
   port: number;
   ws_port: number;
+  external_api_url: string;
   manager_api_url: string;
   img_storage_host: string;
   img_storage_port: number;

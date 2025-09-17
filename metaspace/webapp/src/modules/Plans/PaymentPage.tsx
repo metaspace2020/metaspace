@@ -11,6 +11,8 @@ import {
   ElSelect,
   ElOption,
   ElSwitch,
+  ElCheckbox,
+  ElDialog,
 } from '../../lib/element-plus'
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import { currentUserRoleWithGroupQuery } from '../../api/user'
@@ -123,6 +125,13 @@ export default defineComponent({
       orderId: null as string | null,
       selectedPricingOption: null as any,
       planError: null as string | null,
+      termsAccepted: false,
+      privacyDpaAccepted: false,
+      showModal: false,
+      modalContent: {
+        title: '',
+        url: '',
+      },
     })
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -211,7 +220,9 @@ export default defineComponent({
         state.form.selectedCountry && // Country is required
         state.validation.cardNumber.isValid &&
         state.validation.cardExpiry.isValid &&
-        state.validation.cardCvc.isValid
+        state.validation.cardCvc.isValid &&
+        state.termsAccepted &&
+        state.privacyDpaAccepted
       )
     })
 
@@ -433,6 +444,18 @@ export default defineComponent({
       state.coupon.validationResult = null
     }
 
+    const openModal = (title: string, url: string) => {
+      state.modalContent.title = title
+      state.modalContent.url = url
+      state.showModal = true
+    }
+
+    const closeModal = () => {
+      state.showModal = false
+      state.modalContent.title = ''
+      state.modalContent.url = ''
+    }
+
     watch(
       () => currentUserResult.value?.currentUser,
       (newUser) => {
@@ -651,9 +674,8 @@ export default defineComponent({
             },
           },
         })
-
         if (data?.createSubscription) {
-          state.orderId = data.createSubscription
+          state.orderId = data?.createSubscription
           router.push(`/success?subscriptionId=${data.createSubscription.id}`)
         } else {
           throw new Error('Failed to create subscription')
@@ -971,7 +993,6 @@ export default defineComponent({
                       <span class="card-logo visa">VISA</span>
                       <span class="card-logo mc">MC</span>
                       <span class="card-logo amex">AMEX</span>
-                      <span class="card-logo disc">DISC</span>
                     </div>
                   </div>
                   <div class={`field-error ${state.error ? 'visible' : 'invisible'}`}>{state.error}</div>
@@ -985,6 +1006,47 @@ export default defineComponent({
                   <div class="form-group">
                     <label>Security code</label>
                     <div class="stripe-element" ref={cardCvcRef}></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms and Privacy Section */}
+              <div class="form-section terms-section">
+                <div class="terms-checkboxes">
+                  <div class="checkbox-item">
+                    <ElCheckbox
+                      modelValue={state.termsAccepted}
+                      onUpdate:modelValue={(val: boolean) => (state.termsAccepted = val)}
+                    >
+                      I have read and agree to the{' '}
+                      <span
+                        class="link text-blue-500 cursor-pointer underline"
+                        onClick={() => openModal('Terms of Service', config.urls.terms)}
+                      >
+                        Terms of Service
+                      </span>
+                    </ElCheckbox>
+                  </div>
+                  <div class="checkbox-item">
+                    <ElCheckbox
+                      modelValue={state.privacyDpaAccepted}
+                      onUpdate:modelValue={(val: boolean) => (state.privacyDpaAccepted = val)}
+                    >
+                      I have read and agree to the{' '}
+                      <span
+                        class="link text-blue-500 cursor-pointer underline"
+                        onClick={() => openModal('Privacy Policy', config.urls.privacy)}
+                      >
+                        Privacy Policy
+                      </span>{' '}
+                      and{' '}
+                      <span
+                        class="link text-blue-500 cursor-pointer underline"
+                        onClick={() => openModal('Data Processing Agreement', config.urls.dpa)}
+                      >
+                        Data Processing Agreement
+                      </span>
+                    </ElCheckbox>
                   </div>
                 </div>
               </div>
@@ -1015,7 +1077,7 @@ export default defineComponent({
                   </div>
 
                   {/* VAT/Tax breakdown */}
-                  {state.selectedPeriod?.vatCalculation && (
+                  {state.selectedPeriod?.vatCalculation &&  getVatAmount(state.selectedPeriod) > 0 && (
                     <div class="summary-item vat-item">
                       <span class="item-name">VAT</span>
                       <span class="item-price">
@@ -1108,6 +1170,34 @@ export default defineComponent({
               )}
             </div>
           </div>
+
+          {/* Modal for Terms, Privacy, and DPA */}
+          <ElDialog
+            modelValue={state.showModal}
+            onUpdate:modelValue={(val: boolean) => (state.showModal = val)}
+            title={state.modalContent.title}
+            width="90%"
+            top="5vh"
+            onClose={closeModal}
+            class="terms-modal"
+          >
+            <div class="modal-content">
+              <div class="iframe-container">
+                <iframe 
+                  src={state.modalContent.url}
+                  class="terms-iframe"
+                  style={{ border: 'none' }}
+                />
+              </div>
+            </div>
+            {{
+              footer: () => (
+                <span class="dialog-footer">
+                  <ElButton onClick={closeModal}>Close</ElButton>
+                </span>
+              ),
+            }}
+          </ElDialog>
         </div>
       )
     }

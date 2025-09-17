@@ -125,8 +125,6 @@ export default defineComponent({
     return () => {
       if (!currentUser.value) return null
 
-      console.log('latestTransaction', latestTransaction.value)
-
       // Show loading state
       if (subscriptionLoading.value) {
         return (

@@ -393,7 +393,8 @@ export default defineComponent({
           })
         } else if (err?.message?.includes('limit')) {
           ElMessage({
-            message: 'You have reached the limit of private datasets you can submit. Please upgrade your plan.',
+            message:
+              'You have reached the limit of private datasets you can submit. Please <a href="/plans">upgrade your plan</a>.',
             dangerouslyUseHTMLString: true,
             type: 'info',
             duration: 0,

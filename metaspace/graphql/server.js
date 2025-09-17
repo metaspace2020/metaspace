@@ -175,8 +175,10 @@ async function createHttpServerAsync(config, connection) {
 
   // enable trust proxy for capturing client IP address
   app.set('trust proxy', true)
-
-  app.use(cors())
+  app.use(cors({
+    origin: [config.external_api_url, config.manager_api_url],
+    credentials: true,
+  }))
   app.use(compression())
 
   configureCronSchedule(connection.manager)
@@ -197,7 +199,13 @@ async function createHttpServerAsync(config, connection) {
     formatError: formatGraphQLError,
     introspection: true,
   })
-  apollo.applyMiddleware({ app })
+  apollo.applyMiddleware({
+    app,
+    cors: {
+      origin: [config.external_api_url, config.manager_api_url],
+      credentials: true,
+    },
+  })
 
   configureSentryErrorHandler(app)
 
