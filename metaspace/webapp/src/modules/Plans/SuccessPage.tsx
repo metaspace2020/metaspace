@@ -5,19 +5,11 @@ import { currentUserRoleQuery } from '../../api/user'
 import { getSubscriptionWithPlanQuery, Subscription } from '../../api/subscription'
 import { useQuery } from '@vue/apollo-composable'
 import { formatPrice } from '../../lib/pricing'
-
+import SuccessCheckIcon from '../../assets/success-check.svg'
 import './SuccessPage.scss'
 
-const SuccessCheckIcon = defineAsyncComponent(() => import('../../assets/success-check.svg'))
 
-interface SubscriptionWithPlan extends Subscription {
-  plan?: {
-    id: string
-    name: string
-    description: string
-    tier: string
-  }
-}
+
 
 export default defineComponent({
   name: 'SuccessPage',
@@ -36,7 +28,7 @@ export default defineComponent({
     )
 
     const { result: subscriptionResult, loading: subscriptionLoading } = useQuery<{
-      subscription: SubscriptionWithPlan
+      subscription: any
     }>(
       getSubscriptionWithPlanQuery,
       () => ({ id: subscriptionId.value }),

@@ -681,10 +681,19 @@ export default defineComponent({
             },
           },
         })
+        console.log('debug', data.createSubscription)
         if (data?.createSubscription) {
           state.orderId = data?.createSubscription
-          router.push(`/success?subscriptionId=${data.createSubscription.id}`)
+         
+          router.push({
+            name: 'success',
+            query: {
+              subscriptionId: data.createSubscription.id,
+            },
+            params: { subscriptionId: data.createSubscription.id },
+          })
         } else {
+          console.log('debug error')
           throw new Error('Failed to create subscription')
         }
       } catch (error: any) {
