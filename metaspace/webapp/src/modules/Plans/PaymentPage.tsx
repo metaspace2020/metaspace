@@ -684,14 +684,19 @@ export default defineComponent({
         console.log('debug', data.createSubscription)
         if (data?.createSubscription) {
           state.orderId = data?.createSubscription
-         
-          router.push({
-            name: 'success',
-            query: {
-              subscriptionId: data.createSubscription.id,
-            },
-            params: { subscriptionId: data.createSubscription.id },
-          })
+          
+          try {
+            router.push({
+              name: 'success',
+              query: {
+                subscriptionId: data.createSubscription.id,
+              },
+            })
+          } catch (routerError) {
+            console.warn('Router navigation failed, falling back to window navigation:', routerError)
+            window.location.href = `/success?subscriptionId=${data.createSubscription.id}`
+            window.location.reload()
+          }
         } else {
           console.log('debug error')
           throw new Error('Failed to create subscription')
