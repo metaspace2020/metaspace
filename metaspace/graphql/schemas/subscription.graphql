@@ -145,7 +145,7 @@ input TransactionFilter {
 input CreateSubscriptionInput {
   userId: String!
   planId: String!
-  priceId: String!
+  pricingId: String!
   groupId: String
   groupName: String
   email: String!
@@ -169,7 +169,7 @@ input CancelSubscriptionInput {
 input ValidateCouponInput {
   couponCode: String!
   planId: String!
-  priceId: String!
+  pricingId: String!
 }
 
 type CouponValidationResult {

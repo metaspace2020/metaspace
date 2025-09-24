@@ -66,7 +66,7 @@ describe('modules/subscription/controller (mutations)', () => {
       const subscriptionInput = {
         userId: '550e8400-e29b-41d4-a716-446655440001',
         planId: '550e8400-e29b-41d4-a716-446655440002',
-        priceId: 'price_H5UZwgyGXPe2oN',
+        pricingId: 'price_H5UZwgyGXPe2oN',
         email: 'user@example.com',
         name: 'John Doe',
         groupId: 'group123',
@@ -132,7 +132,7 @@ describe('modules/subscription/controller (mutations)', () => {
       expect(actualBody).toEqual({
         userId: subscriptionInput.userId,
         planId: subscriptionInput.planId,
-        priceId: subscriptionInput.priceId,
+        pricingId: subscriptionInput.pricingId,
         email: subscriptionInput.email,
         name: subscriptionInput.name,
         groupId: subscriptionInput.groupId,
@@ -149,7 +149,7 @@ describe('modules/subscription/controller (mutations)', () => {
       const subscriptionInput = {
         userId: '550e8400-e29b-41d4-a716-446655440001',
         planId: '550e8400-e29b-41d4-a716-446655440002',
-        priceId: 'price_H5UZwgyGXPe2oN',
+        pricingId: 'price_H5UZwgyGXPe2oN',
         email: 'user@example.com',
         name: 'John Doe',
         billingInterval: 'monthly',
@@ -179,7 +179,7 @@ describe('modules/subscription/controller (mutations)', () => {
       const subscriptionInput = {
         userId: '550e8400-e29b-41d4-a716-446655440001',
         planId: '550e8400-e29b-41d4-a716-446655440002',
-        priceId: 'price_H5UZwgyGXPe2oN',
+        pricingId: 'price_H5UZwgyGXPe2oN',
         email: 'user@example.com',
         name: 'John Doe',
         billingInterval: 'monthly',
@@ -237,7 +237,7 @@ describe('modules/subscription/controller (mutations)', () => {
           body: JSON.stringify({
             userId: subscriptionInput.userId,
             planId: subscriptionInput.planId,
-            priceId: subscriptionInput.priceId,
+            pricingId: subscriptionInput.pricingId,
             email: subscriptionInput.email,
             name: subscriptionInput.name,
             billingInterval: subscriptionInput.billingInterval,

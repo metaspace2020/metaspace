@@ -50,6 +50,8 @@ import {
   ElCard,
   ElTag,
   ElEmpty,
+  ElSkeleton,
+  ElSkeletonItem,
 } from 'element-plus'
 
 // Importing Element Plus styles
@@ -105,6 +107,8 @@ const components = {
   ElCard,
   ElTag,
   ElEmpty,
+  ElSkeleton,
+  ElSkeletonItem,
   // Additional components as needed
 }
 
@@ -159,6 +163,8 @@ export {
   ElCard,
   ElTag,
   ElEmpty,
+  ElSkeleton,
+  ElSkeletonItem,
   // Additional components as needed
 }
 

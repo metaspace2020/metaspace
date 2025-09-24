@@ -1,5 +1,6 @@
 import { computed, defineComponent, inject, ref, watch } from 'vue'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
+import { useRouter } from 'vue-router'
 import { getActiveGroupSubscriptionQuery } from '../../api/subscription'
 import { ApiUsage, getApiUsagesQuery } from '../../api/plan'
 import GroupQuota from './GroupQuota'
@@ -19,7 +20,8 @@ export default defineComponent({
   },
   setup: function (props) {
     const apolloClient = inject(DefaultApolloClient)
-    const { result: activeGroupSubscriptionResult } = useQuery<any>(
+    const router = useRouter()
+    const { result: activeGroupSubscriptionResult, loading: subscriptionLoading } = useQuery<any>(
       getActiveGroupSubscriptionQuery,
       { groupId: props.groupId },
       { fetchPolicy: 'network-only' }
@@ -56,7 +58,7 @@ export default defineComponent({
       }
     }
 
-    const { result: allApiUsagesResult } = useQuery<any>(
+    const { result: allApiUsagesResult, loading: apiUsagesLoading } = useQuery<any>(
       getApiUsagesQuery,
       {
         filter: { groupId: props.groupId, actionType: 'create' },
@@ -118,6 +120,34 @@ export default defineComponent({
 
     return () => {
       const subscription = activeGroupSubscription.value as Subscription
+
+      // Show loading state while subscription data is loading
+      if (subscriptionLoading.value) {
+        return (
+          <div class="subscription-container">
+            <el-card class="subscription-card">
+              {{
+                header: () => (
+                  <div class="card-header">
+                    <span>Group Subscription</span>
+                  </div>
+                ),
+                default: () => (
+                  <div class="loading-container">
+                    <el-skeleton animated>
+                      <el-skeleton-item variant="h3" style={{ width: '40%' }} />
+                      <el-skeleton-item variant="text" style={{ width: '100%' }} />
+                      <el-skeleton-item variant="text" style={{ width: '80%' }} />
+                      <el-skeleton-item variant="text" style={{ width: '60%' }} />
+                    </el-skeleton>
+                  </div>
+                ),
+              }}
+            </el-card>
+          </div>
+        )
+      }
+
       if (!subscription) {
         return (
           <div class="subscription-container">
@@ -128,7 +158,14 @@ export default defineComponent({
                     <span>Group Subscription</span>
                   </div>
                 ),
-                default: () => <el-empty description="No active subscription found for this group" />,
+                default: () => (
+                  <div class="empty-actions">
+                    <p class="w-full">This group doesn't have an active subscription. Choose a plan to get started.</p>
+                    <el-button type="primary" size="large" onClick={() => router.push('/plans')}>
+                      View Plans
+                    </el-button>
+                  </div>
+                ),
               }}
             </el-card>
           </div>
@@ -275,7 +312,9 @@ export default defineComponent({
                         </el-table-column>
                       </el-table>
                     ) : (
-                      <el-empty description="No plan rules defined" />
+                      <div class="empty-container">
+                        <p>No plan rules defined</p>
+                      </div>
                     )}
                   </div>
 
@@ -288,7 +327,18 @@ export default defineComponent({
                   {/* All API Usages */}
                   <div class="section">
                     <h3 class="section-title">API Usage History</h3>
-                    {allApiUsages.value && allApiUsages.value.filter((usage: ApiUsage) => usage.source).length > 0 ? (
+                    {apiUsagesLoading.value ? (
+                      <div class="loading-container">
+                        <el-skeleton animated>
+                          <el-skeleton-item variant="h3" style={{ width: '30%' }} />
+                          <el-skeleton-item variant="text" style={{ width: '100%' }} />
+                          <el-skeleton-item variant="text" style={{ width: '90%' }} />
+                          <el-skeleton-item variant="text" style={{ width: '95%' }} />
+                          <el-skeleton-item variant="text" style={{ width: '85%' }} />
+                        </el-skeleton>
+                      </div>
+                    ) : allApiUsages.value &&
+                      allApiUsages.value.filter((usage: ApiUsage) => usage.source).length > 0 ? (
                       <el-table
                         data={allApiUsages.value.filter((usage: ApiUsage) => usage.source)}
                         style={{ width: '100%' }}
@@ -342,7 +392,9 @@ export default defineComponent({
                         </el-table-column>
                       </el-table>
                     ) : (
-                      <el-empty description="No API usage history with source available" />
+                      <div class="empty-container">
+                        <p>No API usage history with source available</p>
+                      </div>
                     )}
                   </div>
 

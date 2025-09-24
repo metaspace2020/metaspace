@@ -177,7 +177,7 @@ export interface TransactionFilter {
 export interface CreateSubscriptionInput {
   userId: string
   planId: string
-  priceId: string
+  pricingId: string
   groupId?: string
   groupName?: string
   email: string

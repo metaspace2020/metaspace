@@ -158,6 +158,6 @@ type Query {
     ): [ApiUsage]
     apiUsagesCount(filter: ApiUsageFilter = {}): Int!
 
-    remainingApiUsages(groupId: String!): [RemainingApiUsage]
+    remainingApiUsages(groupId: String): [RemainingApiUsage]
 }
 

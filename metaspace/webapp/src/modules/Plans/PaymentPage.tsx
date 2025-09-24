@@ -132,6 +132,7 @@ export default defineComponent({
         title: '',
         url: '',
       },
+      savedScrollPosition: 0,
     })
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -336,9 +337,9 @@ export default defineComponent({
       { immediate: true }
     )
 
-    // Update period when priceId changes from URL
+    // Update period when pricingId changes from URL
     watch(
-      () => route.query.priceId,
+      () => route.query.pricingId,
       (newPriceId) => {
         if (newPriceId && plan.value?.pricingOptions) {
           const option = plan.value.pricingOptions.find((po) => po.id === newPriceId)
@@ -417,7 +418,7 @@ export default defineComponent({
             input: {
               couponCode: state.coupon.code,
               planId: plan.value.id,
-              priceId: state.selectedPricingOption.id,
+              pricingId: state.selectedPricingOption.id,
             },
           },
         })
@@ -445,6 +446,8 @@ export default defineComponent({
     }
 
     const openModal = (title: string, url: string) => {
+      // Save current scroll position
+      state.savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop
       state.modalContent.title = title
       state.modalContent.url = url
       state.showModal = true
@@ -454,6 +457,10 @@ export default defineComponent({
       state.showModal = false
       state.modalContent.title = ''
       state.modalContent.url = ''
+      // Restore scroll position after modal closes
+      setTimeout(() => {
+        window.scrollTo(0, state.savedScrollPosition)
+      }, 0)
     }
 
     watch(
@@ -659,7 +666,7 @@ export default defineComponent({
               userId: currentUser.value?.id,
               planId: plan.value!.id,
               groupId: state.form.groupId,
-              priceId: state.selectedPricingOption.id,
+              pricingId: state.selectedPricingOption.id,
               address: {
                 line1: state.form.address,
                 postalCode: state.form.zipCode,
@@ -1021,7 +1028,10 @@ export default defineComponent({
                       I have read and agree to the{' '}
                       <span
                         class="link text-blue-500 cursor-pointer underline"
-                        onClick={() => openModal('Terms of Service', config.urls.terms)}
+                        onClick={(e: MouseEvent) => {
+                          e.preventDefault()
+                          openModal('Terms of Service', config.urls.terms)
+                        }}
                       >
                         Terms of Service
                       </span>
@@ -1035,14 +1045,20 @@ export default defineComponent({
                       I have read and agree to the{' '}
                       <span
                         class="link text-blue-500 cursor-pointer underline"
-                        onClick={() => openModal('Privacy Policy', config.urls.privacy)}
+                        onClick={(e: MouseEvent) => {
+                          e.preventDefault()
+                          openModal('Privacy Policy', config.urls.privacy)
+                        }}
                       >
                         Privacy Policy
                       </span>{' '}
                       and{' '}
                       <span
                         class="link text-blue-500 cursor-pointer underline"
-                        onClick={() => openModal('Data Processing Agreement', config.urls.dpa)}
+                        onClick={(e: MouseEvent) => {
+                          e.preventDefault()
+                          openModal('Data Processing Agreement', config.urls.dpa)
+                        }}
                       >
                         Data Processing Agreement
                       </span>
@@ -1178,6 +1194,7 @@ export default defineComponent({
             title={state.modalContent.title}
             width="90%"
             top="5vh"
+            lockScroll={false}
             onClose={closeModal}
             class="terms-modal"
           >

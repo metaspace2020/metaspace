@@ -13,6 +13,12 @@
     "release": "{{ metaspace_repo_revision }}"
   },
 
+  "urls": {
+    "terms": "{{ terms_url }}",
+    "privacy": "{{ privacy_url }}",
+    "dpa": "{{ dpa_url }}"
+  },
+
   "metadataTypes": {{ sm_webapp_metadata_types | to_json }},
 
   "features": {{ sm_webapp_features | to_json }}

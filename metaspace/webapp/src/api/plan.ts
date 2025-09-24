@@ -304,7 +304,7 @@ export const getApiUsagesQuery = gql`
   ${apiUsageFragment}
 `
 export const getRemainingApiUsagesQuery = gql`
-  query ($groupId: String!) {
+  query ($groupId: String) {
     remainingApiUsages(groupId: $groupId) {
       limit
       periodType

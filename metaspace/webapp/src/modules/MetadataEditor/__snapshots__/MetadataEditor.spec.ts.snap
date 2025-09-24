@@ -642,7 +642,8 @@ exports[`MetadataEditor > should match snapshot 1`] = `
             </div>
           </div>
         </div>
-        <div class=\\"el-row mt-8\\">
+        <!---->
+        <div class=\\"el-row\\">
           <div class=\\"el-col el-col-6\\"><span class=\\"metadata-section__title\\">Subscription limits</span></div>
           <div class=\\"el-col el-col-18\\">
             <div class=\\"section\\">

@@ -61,7 +61,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       const apiInput: any = {
         userId: input.userId,
         planId: input.planId,
-        priceId: input.priceId,
+        pricingId: input.pricingId,
         email: input.email,
         name: input.name,
         customerAddress: input.address,

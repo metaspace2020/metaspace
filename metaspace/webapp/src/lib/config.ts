@@ -75,9 +75,9 @@ const defaultConfig: ClientConfig = {
   sentry: null,
   metadataTypes: ['ims'],
   urls: {
-    terms: 'https://metaspace2020.eu/terms',
-    privacy: 'https://metaspace2020.eu/privacy',
-    dpa: 'https://metaspace2020.eu/dpa',
+    terms: '',
+    privacy: '',
+    dpa: '',
   },
   features: {
     coloc: true,

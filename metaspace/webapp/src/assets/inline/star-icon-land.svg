@@ -1,0 +1,14 @@
+  <svg
+    class="star-icon"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    width="20"
+    height="20"
+    fill="#FC4525"
+    stroke="#FC4525"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M12 3l2.9 5.88 6.5.94-4.7 4.58 1.1 6.6L12 17.8l-5.8 3.1 1.1-6.6-4.7-4.58 6.5-.94L12 3z"/>
+  </svg>

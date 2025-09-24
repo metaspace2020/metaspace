@@ -348,7 +348,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   },
 
   async validateCoupon(_: any,
-    { input }: { input: { couponCode: string; planId: string; priceId: string } },
+    { input }: { input: { couponCode: string; planId: string; pricingId: string } },
     ctx: Context): Promise<any> {
     try {
       const response = await makeApiRequest(ctx, '/api/subscriptions/validate-coupon', 'POST', input)

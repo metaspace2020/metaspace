@@ -1,6 +1,6 @@
 import { defineComponent, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElButton, ElRadioGroup, ElRadioButton, ElTable, ElTableColumn } from '../../lib/element-plus'
+import { ElButton, ElRadioGroup, ElRadioButton, ElTable, ElTableColumn, ElSkeleton, ElSkeletonItem } from '../../lib/element-plus'
 import { useQuery } from '@vue/apollo-composable'
 import { AllPlansData, getPlansQuery, PricingOption, Plan } from '../../api/plan'
 import {
@@ -108,11 +108,13 @@ export default defineComponent({
       radioValue: 'Yearly', // Separate state for radio group, using display name
     })
 
-    const { result: plansResult } = useQuery<AllPlansData>(getPlansQuery)
+    const { result: plansResult, loading: plansLoading } = useQuery<AllPlansData>(getPlansQuery)
     const plans = computed(() => plansResult.value?.allPlans || [])
 
-    const { result: subscriptionsResult } = useQuery<any>(getActiveUserSubscriptionQuery)
+    const { result: subscriptionsResult, loading: subscriptionLoading } = useQuery<any>(getActiveUserSubscriptionQuery)
     const activeSubscription = computed(() => subscriptionsResult.value?.activeUserSubscription)
+
+    const isLoading = computed(() => plansLoading.value || subscriptionLoading.value)
 
     // Get all unique periods from all plans as objects
     const availablePeriods = computed(() => getAvailablePeriods(plans.value))
@@ -159,106 +161,142 @@ export default defineComponent({
 
             {/* Pricing Period Toggle */}
             <div class="pricing-toggle">
-              <ElRadioGroup
-                modelValue={state.radioValue}
-                onChange={(value: string) => {
-                  state.radioValue = value
-                }}
-                text-color="#0F87EF"
-                fill="white"
-                size="large"
-              >
-                {availablePeriods.value.map((period) => (
-                  <ElRadioButton key={period.id} label={period.displayName} />
-                ))}
-              </ElRadioGroup>
+              {isLoading.value ? (
+                <ElSkeleton animated>
+                  <ElSkeletonItem style={{ width: '200px', height: '40px' }} />
+                </ElSkeleton>
+              ) : (
+                <ElRadioGroup
+                  modelValue={state.radioValue}
+                  onChange={(value: string) => {
+                    state.radioValue = value
+                  }}
+                  text-color="#0F87EF"
+                  fill="white"
+                  size="large"
+                >
+                  {availablePeriods.value.map((period) => (
+                    <ElRadioButton key={period.id} label={period.displayName} />
+                  ))}
+                </ElRadioGroup>
+              )}
             </div>
 
             <div class="plans-grid">
-              {paidPlans.map((plan, index) => {
-                if (!state.selectedPeriod) return null
-                const isActiveSubscription = activeSubscription.value?.planId === plan.id
-                const totalPrice = getPriceForPeriod(plan, state.selectedPeriod)
-                const isRecommended = index === 2 // MEDIUM plan (index 1) is highlighted in the image
-
-                return (
-                  <div
-                    key={plan.id}
-                    onMouseover={() => (state.hoveredPlan = index)}
-                    onMouseout={() => (state.hoveredPlan = -1)}
-                    class="plan-card"
-                    style={{
-                      border: state.hoveredPlan === index ? '1px solid #0F87EF' : '1px solid #eee',
-                    }}
-                  >
-                    {isRecommended && <div class="recommended-badge">Recommended for most users</div>}
-
-                    <h2 class="plan-name">{plan.name}</h2>
-
-                    <div class="plan-price">
-                      <span class="price-currency">$</span>
-                      <span class="price-amount">{formatPrice(totalPrice)}</span>
-                      <span class="price-period">/{getPeriodDisplayName(state.selectedPeriod).toLowerCase()}</span>
-                    </div>
-
-                    <div class="billing-info">
-                      Billed {getPeriodDisplayName(state.selectedPeriod)} • ${formatPrice(totalPrice)} total
-                    </div>
-
-                    <div class="plan-features">
-                      <div class="safe-html" innerHTML={plan.description} />
-                    </div>
-
-                    {isActiveSubscription ? (
-                      <div class="start-button text-center flex items-center justify-center">
-                        Already enjoying the benefits!
-                      </div>
-                    ) : (
-                      <ElButton
-                        class={`start-button ${isRecommended ? 'primary' : 'outline'}`}
-                        type={isRecommended ? 'primary' : 'default'}
-                        onClick={() => handleSubscribe(plan.id)}
-                        size="default"
-                      >
-                        Subscribe
-                      </ElButton>
-                    )}
+              {isLoading.value ? (
+                // Show skeleton loading for 3 plan cards
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={`skeleton-${index}`} class="plan-card">
+                    <ElSkeleton animated>
+                      <ElSkeletonItem style={{ width: '60%', height: '20px', marginBottom: '16px' }} />
+                      <ElSkeletonItem style={{ width: '80%', height: '48px', marginBottom: '8px' }} />
+                      <ElSkeletonItem style={{ width: '70%', height: '16px', marginBottom: '24px' }} />
+                      <ElSkeletonItem style={{ width: '100%', height: '120px', marginBottom: '24px' }} />
+                      <ElSkeletonItem style={{ width: '100%', height: '40px' }} />
+                    </ElSkeleton>
                   </div>
-                )
-              })}
+                ))
+              ) : (
+                paidPlans.map((plan, index) => {
+                  if (!state.selectedPeriod) return null
+                  const isActiveSubscription = activeSubscription.value?.planId === plan.id
+                  const totalPrice = getPriceForPeriod(plan, state.selectedPeriod)
+                  const isRecommended = index === 2 // MEDIUM plan (index 1) is highlighted in the image
+
+                  return (
+                    <div
+                      key={plan.id}
+                      onMouseover={() => (state.hoveredPlan = index)}
+                      onMouseout={() => (state.hoveredPlan = -1)}
+                      class="plan-card"
+                      style={{
+                        border: state.hoveredPlan === index ? '1px solid #0F87EF' : '1px solid #eee',
+                      }}
+                    >
+                      {isRecommended && <div class="recommended-badge">Recommended for most users</div>}
+
+                      <h2 class="plan-name">{plan.name}</h2>
+
+                      <div class="plan-price">
+                        <span class="price-currency">$</span>
+                        <span class="price-amount">{formatPrice(totalPrice)}</span>
+                        <span class="price-period">/{getPeriodDisplayName(state.selectedPeriod).toLowerCase()}</span>
+                      </div>
+
+                      <div class="billing-info">
+                        Billed {getPeriodDisplayName(state.selectedPeriod)} • ${formatPrice(totalPrice)} total
+                      </div>
+
+                      <div class="plan-features">
+                        <div class="safe-html" innerHTML={plan.description} />
+                      </div>
+
+                      {isActiveSubscription ? (
+                        <div class="start-button text-center flex items-center justify-center">
+                          Already enjoying the benefits!
+                        </div>
+                      ) : (
+                        <ElButton
+                          class={`start-button ${isRecommended ? 'primary' : 'outline'}`}
+                          type={isRecommended ? 'primary' : 'default'}
+                          onClick={() => handleSubscribe(plan.id)}
+                          size="default"
+                        >
+                          Subscribe
+                        </ElButton>
+                      )}
+                    </div>
+                  )
+                })
+              )}
             </div>
 
             {/* Comparison Table */}
             <div class="comparison-section">
-              <ElTable data={comparisonFeatures} class="comparison-table">
-                <ElTableColumn prop="name" label="Features" />
-                {activePlans.map((plan) => (
-                  <ElTableColumn key={plan.id} label={plan.name}>
-                    {{
-                      default: ({ row }: { row: ComparisonFeature }) => {
-                        const value = getFeatureValue(plan, row.key, state.selectedPeriod)
-                        if (typeof value === 'boolean') {
-                          return value ? <span class="feature-check">✓</span> : <span class="feature-x">✗</span>
-                        }
-                        // Handle multi-line text (like price with line breaks)
-                        if (typeof value === 'string' && value.includes('\n')) {
-                          const lines = value.split('\n')
-                          return (
-                            <div class="feature-multiline">
-                              {lines.map((line, index) => (
-                                <div key={index} class="feature-line">
-                                  {line}
-                                </div>
-                              ))}
-                            </div>
-                          )
-                        }
-                        return <span class="feature-text">{value}</span>
-                      },
-                    }}
-                  </ElTableColumn>
-                ))}
-              </ElTable>
+              {isLoading.value ? (
+                <ElSkeleton animated>
+                  <ElSkeletonItem style={{ width: '100%', height: '40px', marginBottom: '16px' }} />
+                  {Array.from({ length: 8 }).map((_, index) => (
+                    <div key={`table-row-${index}`} style={{ display: 'flex', marginBottom: '12px' }}>
+                      <ElSkeletonItem style={{ width: '25%', height: '24px', marginRight: '16px' }} />
+                      <ElSkeletonItem style={{ width: '20%', height: '24px', marginRight: '16px' }} />
+                      <ElSkeletonItem style={{ width: '20%', height: '24px', marginRight: '16px' }} />
+                      <ElSkeletonItem style={{ width: '20%', height: '24px', marginRight: '16px' }} />
+                      <ElSkeletonItem style={{ width: '15%', height: '24px' }} />
+                    </div>
+                  ))}
+                </ElSkeleton>
+              ) : (
+                <ElTable data={comparisonFeatures} class="comparison-table">
+                  <ElTableColumn prop="name" label="Features" />
+                  {activePlans.map((plan) => (
+                    <ElTableColumn key={plan.id} label={plan.name}>
+                      {{
+                        default: ({ row }: { row: ComparisonFeature }) => {
+                          const value = getFeatureValue(plan, row.key, state.selectedPeriod)
+                          if (typeof value === 'boolean') {
+                            return value ? <span class="feature-check">✓</span> : <span class="feature-x">✗</span>
+                          }
+                          // Handle multi-line text (like price with line breaks)
+                          if (typeof value === 'string' && value.includes('\n')) {
+                            const lines = value.split('\n')
+                            return (
+                              <div class="feature-multiline">
+                                {lines.map((line, index) => (
+                                  <div key={index} class="feature-line">
+                                    {line}
+                                  </div>
+                                ))}
+                              </div>
+                            )
+                          }
+                          return <span class="feature-text">{value}</span>
+                        },
+                      }}
+                    </ElTableColumn>
+                  ))}
+                </ElTable>
+              )}
             </div>
           </div>
         </div>

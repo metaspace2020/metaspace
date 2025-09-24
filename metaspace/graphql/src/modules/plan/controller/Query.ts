@@ -216,7 +216,13 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
   async allApiUsages(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<ApiUsage[]> {
     const { entityManager } = ctx
-    if (ctx.user.role !== 'admin') {
+    const { filter } = args || {}
+
+    if (filter?.groupId) {
+      await assertCanEditGroup(ctx.entityManager, ctx.user, filter?.groupId)
+    }
+
+    if (!filter?.groupId && ctx.user.role !== 'admin') {
       throw new UserError('Access denied')
     }
 
@@ -242,12 +248,19 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
   },
 
-  async remainingApiUsages(_: any, { groupId }: { groupId: string }, ctx: Context): Promise<any> {
+  async remainingApiUsages(_: any, args: { groupId?: string }, ctx: Context): Promise<any> {
     const { user, entityManager } = ctx
-    await assertCanEditGroup(entityManager, user, groupId)
+    const { groupId } = args
+
+    if (groupId) {
+      await assertCanEditGroup(entityManager, user, groupId)
+    }
 
     try {
-      const response = await makeApiRequest(ctx, `/api/api-usages/group/${groupId}/remaining-usages?actionType=create`)
+      const url = groupId
+        ? `/api/api-usages/group/${groupId}/remaining-usages?actionType=create`
+        : '/api/api-usages/remaining-usages?actionType=create'
+      const response = await makeApiRequest(ctx, url)
       return response.remainingUsages || []
     } catch (error) {
       logger.error(`Error fetching remaining api usages for group ${groupId}:`, error)
@@ -256,7 +269,13 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   },
 
   async apiUsagesCount(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<number> {
-    if (ctx.user.role !== 'admin') {
+    const { filter } = args || {}
+
+    if (filter?.groupId) {
+      await assertCanEditGroup(ctx.entityManager, ctx.user, filter?.groupId)
+    }
+
+    if (!filter?.groupId && ctx.user.role !== 'admin') {
       throw new UserError('Access denied')
     }
 

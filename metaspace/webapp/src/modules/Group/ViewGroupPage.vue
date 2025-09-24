@@ -121,7 +121,7 @@ import gql from 'graphql-tag'
 import TransferDatasetsDialog from './TransferDatasetsDialog.vue'
 import GroupMembersList from './GroupMembersList.vue'
 import GroupSettings from './GroupSettings.vue'
-import GroupUsage from './GroupUsage.tsx'
+import GroupUsage from './GroupUsage'
 import { encodeParams } from '../Filters'
 import { useConfirmAsync } from '../../components/ConfirmAsync'
 import NotificationIcon from '../../components/NotificationIcon.vue'
@@ -274,7 +274,11 @@ export default defineComponent({
     const countDatabases = computed(() => group.value?.numDatabases || 0)
     const isGroupMember = computed(() => roleInGroup.value === 'MEMBER' || roleInGroup.value === 'GROUP_ADMIN')
     const tab = computed(() => {
-      if (['description', 'datasets', 'members', 'databases', 'settings'].includes(route.query.tab as string)) {
+      if (
+        ['description', 'datasets', 'members', 'databases', 'settings', 'subscription'].includes(
+          route.query.tab as string
+        )
+      ) {
         return route.query.tab
       } else {
         return 'datasets'

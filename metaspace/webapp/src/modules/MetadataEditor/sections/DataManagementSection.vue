@@ -92,15 +92,15 @@
           </el-row>
         </el-col>
       </el-row>
-      <el-row v-else>
-        <el-col :span="6">
-          <span class="metadata-section__title">Subscription limits</span>
-        </el-col>
-        <el-col :span="18">
-          <group-quota :groupId="groupId" />
-        </el-col>
-      </el-row>
     </el-collapse-transition>
+    <el-row>
+      <el-col :span="6">
+        <span class="metadata-section__title">Subscription limits</span>
+      </el-col>
+      <el-col :span="18">
+        <group-quota :groupId="groupId" />
+      </el-col>
+    </el-row>
   </div>
 </template>
 

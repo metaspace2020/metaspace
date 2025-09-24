@@ -12,8 +12,8 @@ import METALogo from '../../assets/METASPACE_logomark.png'
 import Metaspace from '../../assets/inline/METASPACE.svg'
 import MonitorSvg from '../../assets/inline/refactoring-ui/icon-monitor.svg'
 import BookSvg from '../../assets/inline/refactoring-ui/icon-book-open.svg'
-import BoltSvg from '../../assets/inline/refactoring-ui/icon-bolt.svg'
 import UnlockSvg from '../../assets/inline/refactoring-ui/icon-lock-open.svg'
+import StarSvg from '../../assets/inline/star-icon-land.svg'
 
 const NIDDKLogo = defineAsyncComponent(() => import('../../assets/NIDDK.svg'))
 const NHLBILogo = defineAsyncComponent(() => import('../../assets/NHLBI.svg'))
@@ -119,33 +119,6 @@ const AboutPage = defineComponent({
                 </p>
               </div>
               <div>
-                <PrimaryIcon class="mb-2" inverse small>
-                  <BoltSvg />
-                </PrimaryIcon>
-                <h3>Get going fast</h3>
-                <p>
-                  Head to the
-                  <span
-                    class="about-link mx-1"
-                    onClick={() => {
-                      router.push('/upload')
-                    }}
-                  >
-                    upload
-                  </span>{' '}
-                  page to submit a dataset, or try our
-                  <span
-                    class="about-link mx-1"
-                    onClick={() => {
-                      router.push('/help')
-                    }}
-                  >
-                    interactive tutorials
-                  </span>{' '}
-                  if it is your first visit and you would like to get up to speed.
-                </p>
-              </div>
-              <div>
                 <PrimaryIcon class="mb-2" small>
                   <UnlockSvg />
                 </PrimaryIcon>
@@ -154,6 +127,24 @@ const AboutPage = defineComponent({
                   The <a href="http://imzml.org/">imzML input format</a> is an open standard supported by all major mass
                   spectrometer vendors, and all code is{' '}
                   <a href="https://github.com/metaspace2020/metaspace">open-source</a>.
+                </p>
+              </div>
+              <div>
+                <div class="star-icon-container mb-2">
+                  <StarSvg class="star-icon" />
+                </div>
+                <h3>Go Pro</h3>
+                <p>
+                  Unlock private uploads, higher quotas, and pro support. Learn more about
+                  <span
+                    class="about-link ml-1"
+                    onClick={() => {
+                      router.push('/plans')
+                    }}
+                  >
+                    Pro
+                  </span>
+                  .
                 </p>
               </div>
             </section>

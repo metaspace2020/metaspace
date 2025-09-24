@@ -3,6 +3,19 @@
 .sm-about-page.sm-main-content {
   padding-top: 0 !important;
 
+
+
+  .star-icon-container {
+    height: 32px;
+    width: 32px;
+    background-color: rgba(252, 69, 37, 0.3);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 24px;
+  }
+
   .svg-container {
     width: 72px;
     height: 48px;
@@ -12,6 +25,7 @@
     overflow: hidden;
     margin-right: 24px;
   }
+  
 
   .svg-container svg {
     width: 100%;

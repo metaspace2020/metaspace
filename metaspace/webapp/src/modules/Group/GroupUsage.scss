@@ -4,10 +4,32 @@
   padding: 20px;
 }
 
+.empty-actions {
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+}
+
+.empty-container {
+  font-size: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+  color: #606266;
+}
+
 .subscription-card {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+
+  .el-card__header{
+    border-bottom: none !important;
+  }
+
   .card-header {
     display: flex;
     justify-content: space-between;

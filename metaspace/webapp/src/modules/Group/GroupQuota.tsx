@@ -15,21 +15,35 @@ export default defineComponent({
     const groupId = computed(() => props.groupId)
 
     const queryVars = computed(() => ({
-      groupId: groupId.value,
+      groupId: groupId.value === 'NO_GROUP' ? null : groupId.value,
     }))
 
-    const { result: remainingApiUsagesResult } = useQuery<any>(getRemainingApiUsagesQuery, queryVars, {
-      fetchPolicy: 'network-only',
-    })
+    const { result: remainingApiUsagesResult, loading: quotaLoading } = useQuery<any>(
+      getRemainingApiUsagesQuery,
+      queryVars,
+      {
+        fetchPolicy: 'network-only',
+      }
+    )
     const remainingApiUsages = computed(() =>
       remainingApiUsagesResult.value != null ? remainingApiUsagesResult.value.remainingApiUsages : []
     )
 
     return () => {
       const remainingUsages = remainingApiUsages.value as RemainingApiUsage[]
+
       return (
         <div class="section">
-          {remainingUsages && remainingUsages.length > 0 ? (
+          {quotaLoading.value ? (
+            <div class="loading-container">
+              <el-skeleton animated>
+                <el-skeleton-item variant="h3" style={{ width: '25%' }} />
+                <el-skeleton-item variant="text" style={{ width: '100%' }} />
+                <el-skeleton-item variant="text" style={{ width: '80%' }} />
+                <el-skeleton-item variant="text" style={{ width: '90%' }} />
+              </el-skeleton>
+            </div>
+          ) : remainingUsages && remainingUsages.length > 0 ? (
             <ElTable data={remainingUsages}>
               <ElTableColumn prop="limit" label="Limit" width="100">
                 {{
