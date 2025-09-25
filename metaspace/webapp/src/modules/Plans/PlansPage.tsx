@@ -1,6 +1,14 @@
 import { defineComponent, reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElButton, ElRadioGroup, ElRadioButton, ElTable, ElTableColumn, ElSkeleton, ElSkeletonItem } from '../../lib/element-plus'
+import {
+  ElButton,
+  ElRadioGroup,
+  ElRadioButton,
+  ElTable,
+  ElTableColumn,
+  ElSkeleton,
+  ElSkeletonItem,
+} from '../../lib/element-plus'
 import { useQuery } from '@vue/apollo-composable'
 import { AllPlansData, getPlansQuery, PricingOption, Plan } from '../../api/plan'
 import {
@@ -111,7 +119,13 @@ export default defineComponent({
     const { result: plansResult, loading: plansLoading } = useQuery<AllPlansData>(getPlansQuery)
     const plans = computed(() => plansResult.value?.allPlans || [])
 
-    const { result: subscriptionsResult, loading: subscriptionLoading } = useQuery<any>(getActiveUserSubscriptionQuery)
+    const { result: subscriptionsResult, loading: subscriptionLoading } = useQuery<any>(
+      getActiveUserSubscriptionQuery,
+      null,
+      {
+        fetchPolicy: 'network-only',
+      }
+    )
     const activeSubscription = computed(() => subscriptionsResult.value?.activeUserSubscription)
 
     const isLoading = computed(() => plansLoading.value || subscriptionLoading.value)
@@ -183,72 +197,70 @@ export default defineComponent({
             </div>
 
             <div class="plans-grid">
-              {isLoading.value ? (
-                // Show skeleton loading for 3 plan cards
-                Array.from({ length: 3 }).map((_, index) => (
-                  <div key={`skeleton-${index}`} class="plan-card">
-                    <ElSkeleton animated>
-                      <ElSkeletonItem style={{ width: '60%', height: '20px', marginBottom: '16px' }} />
-                      <ElSkeletonItem style={{ width: '80%', height: '48px', marginBottom: '8px' }} />
-                      <ElSkeletonItem style={{ width: '70%', height: '16px', marginBottom: '24px' }} />
-                      <ElSkeletonItem style={{ width: '100%', height: '120px', marginBottom: '24px' }} />
-                      <ElSkeletonItem style={{ width: '100%', height: '40px' }} />
-                    </ElSkeleton>
-                  </div>
-                ))
-              ) : (
-                paidPlans.map((plan, index) => {
-                  if (!state.selectedPeriod) return null
-                  const isActiveSubscription = activeSubscription.value?.planId === plan.id
-                  const totalPrice = getPriceForPeriod(plan, state.selectedPeriod)
-                  const isRecommended = index === 2 // MEDIUM plan (index 1) is highlighted in the image
-
-                  return (
-                    <div
-                      key={plan.id}
-                      onMouseover={() => (state.hoveredPlan = index)}
-                      onMouseout={() => (state.hoveredPlan = -1)}
-                      class="plan-card"
-                      style={{
-                        border: state.hoveredPlan === index ? '1px solid #0F87EF' : '1px solid #eee',
-                      }}
-                    >
-                      {isRecommended && <div class="recommended-badge">Recommended for most users</div>}
-
-                      <h2 class="plan-name">{plan.name}</h2>
-
-                      <div class="plan-price">
-                        <span class="price-currency">$</span>
-                        <span class="price-amount">{formatPrice(totalPrice)}</span>
-                        <span class="price-period">/{getPeriodDisplayName(state.selectedPeriod).toLowerCase()}</span>
-                      </div>
-
-                      <div class="billing-info">
-                        Billed {getPeriodDisplayName(state.selectedPeriod)} • ${formatPrice(totalPrice)} total
-                      </div>
-
-                      <div class="plan-features">
-                        <div class="safe-html" innerHTML={plan.description} />
-                      </div>
-
-                      {isActiveSubscription ? (
-                        <div class="start-button text-center flex items-center justify-center">
-                          Already enjoying the benefits!
-                        </div>
-                      ) : (
-                        <ElButton
-                          class={`start-button ${isRecommended ? 'primary' : 'outline'}`}
-                          type={isRecommended ? 'primary' : 'default'}
-                          onClick={() => handleSubscribe(plan.id)}
-                          size="default"
-                        >
-                          Subscribe
-                        </ElButton>
-                      )}
+              {isLoading.value
+                ? // Show skeleton loading for 3 plan cards
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={`skeleton-${index}`} class="plan-card">
+                      <ElSkeleton animated>
+                        <ElSkeletonItem style={{ width: '60%', height: '20px', marginBottom: '16px' }} />
+                        <ElSkeletonItem style={{ width: '80%', height: '48px', marginBottom: '8px' }} />
+                        <ElSkeletonItem style={{ width: '70%', height: '16px', marginBottom: '24px' }} />
+                        <ElSkeletonItem style={{ width: '100%', height: '120px', marginBottom: '24px' }} />
+                        <ElSkeletonItem style={{ width: '100%', height: '40px' }} />
+                      </ElSkeleton>
                     </div>
-                  )
-                })
-              )}
+                  ))
+                : paidPlans.map((plan, index) => {
+                    if (!state.selectedPeriod) return null
+                    const isActiveSubscription = activeSubscription.value?.planId === plan.id
+                    const totalPrice = getPriceForPeriod(plan, state.selectedPeriod)
+                    const isRecommended = index === 2 // MEDIUM plan (index 1) is highlighted in the image
+
+                    return (
+                      <div
+                        key={plan.id}
+                        onMouseover={() => (state.hoveredPlan = index)}
+                        onMouseout={() => (state.hoveredPlan = -1)}
+                        class="plan-card"
+                        style={{
+                          border: state.hoveredPlan === index ? '1px solid #0F87EF' : '1px solid #eee',
+                        }}
+                      >
+                        {isRecommended && <div class="recommended-badge">Recommended for most users</div>}
+
+                        <h2 class="plan-name">{plan.name}</h2>
+
+                        <div class="plan-price">
+                          <span class="price-currency">$</span>
+                          <span class="price-amount">{formatPrice(totalPrice)}</span>
+                          <span class="price-period">/{getPeriodDisplayName(state.selectedPeriod).toLowerCase()}</span>
+                        </div>
+
+                        <div class="billing-info">
+                          Billed {getPeriodDisplayName(state.selectedPeriod)} • ${formatPrice(totalPrice)} total
+                        </div>
+
+                        <div class="plan-features">
+                          <div class="safe-html" innerHTML={plan.description} />
+                        </div>
+
+                        {isActiveSubscription ? (
+                          <div class="start-button text-center flex items-center justify-center">
+                            Already enjoying the benefits!
+                          </div>
+                        ) : (
+                          <ElButton
+                            class={`start-button ${isRecommended ? 'primary' : 'outline'}`}
+                            type={isRecommended ? 'primary' : 'default'}
+                            onClick={() => handleSubscribe(plan.id)}
+                            size="default"
+                          >
+                            Subscribe
+                          </ElButton>
+                        )}
+                      </div>
+                    )
+                  })}
             </div>
 
             {/* Comparison Table */}

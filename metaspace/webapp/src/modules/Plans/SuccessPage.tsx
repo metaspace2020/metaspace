@@ -1,15 +1,12 @@
-import { defineComponent, defineAsyncComponent, computed, onMounted } from 'vue'
+import { defineComponent, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElButton, ElCard, ElDivider, ElTag, ElNotification } from '../../lib/element-plus'
 import { currentUserRoleQuery } from '../../api/user'
-import { getSubscriptionWithPlanQuery, Subscription } from '../../api/subscription'
+import { getSubscriptionWithPlanQuery } from '../../api/subscription'
 import { useQuery } from '@vue/apollo-composable'
 import { formatPrice } from '../../lib/pricing'
 import SuccessCheckIcon from '../../assets/success-check.svg'
 import './SuccessPage.scss'
-
-
-
 
 export default defineComponent({
   name: 'SuccessPage',

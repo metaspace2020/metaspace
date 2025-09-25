@@ -1,4 +1,4 @@
-import { defineComponent, ref, computed, watch, reactive, inject } from 'vue'
+import { defineComponent, ref, computed, watch, reactive, inject, onUnmounted } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import type { Stripe, StripeElements } from '@stripe/stripe-js'
 import config from '../../lib/config'
@@ -392,6 +392,40 @@ export default defineComponent({
       }
     )
 
+    // Cleanup on component unmount
+    onUnmounted(() => {
+      // Clear any pending timeouts
+      if (refetchTimeout) {
+        clearTimeout(refetchTimeout)
+        refetchTimeout = null
+      }
+
+      // Cleanup Stripe elements and event listeners
+      try {
+        if (state.cardNumberElement) {
+          state.cardNumberElement.unmount()
+          state.cardNumberElement = null
+        }
+        if (state.cardExpiryElement) {
+          state.cardExpiryElement.unmount()
+          state.cardExpiryElement = null
+        }
+        if (state.cardCvcElement) {
+          state.cardCvcElement.unmount()
+          state.cardCvcElement = null
+        }
+        if (state.elements) {
+          state.elements = null
+        }
+        if (state.stripe) {
+          state.stripe = null
+        }
+      } catch (error) {
+        // Silently handle cleanup errors to prevent console spam
+        console.debug('Stripe cleanup error:', error)
+      }
+    })
+
     const applyCoupon = async () => {
       if (!state.coupon.code.trim()) {
         state.coupon.error = 'Please enter a coupon code'
@@ -681,22 +715,44 @@ export default defineComponent({
             },
           },
         })
-        console.log('debug', data.createSubscription)
         if (data?.createSubscription) {
           state.orderId = data?.createSubscription
-          
-          try {
-            router.push({
-              name: 'success',
-              query: {
-                subscriptionId: data.createSubscription.id,
-              },
-            })
-          } catch (routerError) {
-            console.warn('Router navigation failed, falling back to window navigation:', routerError)
-            window.location.href = `/success?subscriptionId=${data.createSubscription.id}`
-            window.location.reload()
-          }
+
+          // Show success notification immediately
+          ElNotification({
+            title: 'Payment Successful!',
+            message: 'Your subscription has been created successfully. Redirecting you to the confirmation page...',
+            type: 'success',
+            duration: 5000,
+          })
+
+          // Add a small delay to ensure notification is shown and component state is stable
+          setTimeout(() => {
+            try {
+              router.push({
+                name: 'success',
+                query: {
+                  subscriptionId: data.createSubscription.id,
+                },
+              })
+            } catch (routerError) {
+              console.warn('Router navigation failed, falling back to window navigation:', routerError)
+              // Try direct URL navigation as fallback
+              try {
+                window.location.href = `/success?subscriptionId=${data.createSubscription.id}`
+              } catch (windowError) {
+                console.error('Window navigation also failed:', windowError)
+                // Final fallback - show success message with manual instructions
+                ElNotification({
+                  title: 'Payment Complete',
+                  message:
+                    'Your payment was successful! Please navigate to your account to view your new subscription.',
+                  type: 'success',
+                  duration: 0, // Don't auto-dismiss
+                })
+              }
+            }
+          }, 100)
         } else {
           console.log('debug error')
           throw new Error('Failed to create subscription')
