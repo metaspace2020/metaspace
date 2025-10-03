@@ -454,7 +454,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     const action: any = {
       actionType: 'download',
       userId: ctx.user?.id,
-      externalId: ds._source.ds_id,
+      datasetId: ds._source.ds_id,
       type: 'dataset',
       visibility: ds._source.ds_is_public ? 'public' : 'private',
       actionDt: moment.utc(moment.utc().toDate()),

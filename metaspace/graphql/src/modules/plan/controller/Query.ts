@@ -132,11 +132,12 @@ const buildQueryString = (params: Record<string, any>): string => {
 }
 
 const QueryResolvers: FieldResolversFor<Query, void> = {
-  async plan(_: any, { id, includeVat, customerCountry, customerPostalCode }: {
+  async plan(_: any, { id, includeVat, customerCountry, customerPostalCode, customerState }: {
     id: string,
     includeVat?: boolean,
     customerCountry?: string,
-    customerPostalCode?: string
+    customerPostalCode?: string,
+    customerState?: string
   }, ctx: Context): Promise<any> {
     try {
       const queryParams: Record<string, any> = {}
@@ -149,6 +150,9 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       }
       if (customerPostalCode) {
         queryParams.customerPostalCode = customerPostalCode
+      }
+      if (customerState) {
+        queryParams.customerState = customerState
       }
 
       const queryString = buildQueryString(queryParams)

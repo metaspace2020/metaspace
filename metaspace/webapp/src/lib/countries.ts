@@ -7,6 +7,11 @@ export interface Country {
   requiresPostalCode: boolean
 }
 
+export interface State {
+  code: string
+  name: string
+}
+
 export const STRIPE_SUPPORTED_COUNTRIES: Country[] = [
   // Major markets - USA, UK, EU, China
   { code: 'US', name: 'United States', requiresPostalCode: true },
@@ -48,7 +53,7 @@ export const STRIPE_SUPPORTED_COUNTRIES: Country[] = [
   { code: 'IS', name: 'Iceland', requiresPostalCode: true },
 
   // Commented out - all other countries for future use
-  /*
+
   { code: 'AD', name: 'Andorra', requiresPostalCode: true },
   { code: 'AE', name: 'United Arab Emirates', requiresPostalCode: false },
   { code: 'AG', name: 'Antigua and Barbuda', requiresPostalCode: false },
@@ -86,7 +91,7 @@ export const STRIPE_SUPPORTED_COUNTRIES: Country[] = [
   { code: 'CD', name: 'Congo, Democratic Republic of the', requiresPostalCode: false },
   { code: 'CF', name: 'Central African Republic', requiresPostalCode: false },
   { code: 'CG', name: 'Congo', requiresPostalCode: false },
-  { code: 'CI', name: 'Côte d\'Ivoire', requiresPostalCode: false },
+  { code: 'CI', name: "Côte d'Ivoire", requiresPostalCode: false },
   { code: 'CK', name: 'Cook Islands', requiresPostalCode: false },
   { code: 'CL', name: 'Chile', requiresPostalCode: true },
   { code: 'CM', name: 'Cameroon', requiresPostalCode: false },
@@ -147,12 +152,12 @@ export const STRIPE_SUPPORTED_COUNTRIES: Country[] = [
   { code: 'KI', name: 'Kiribati', requiresPostalCode: false },
   { code: 'KM', name: 'Comoros', requiresPostalCode: false },
   { code: 'KN', name: 'Saint Kitts and Nevis', requiresPostalCode: false },
-  { code: 'KP', name: 'Korea, Democratic People\'s Republic of', requiresPostalCode: false },
+  { code: 'KP', name: "Korea, Democratic People's Republic of", requiresPostalCode: false },
   { code: 'KR', name: 'Korea, Republic of', requiresPostalCode: true },
   { code: 'KW', name: 'Kuwait', requiresPostalCode: true },
   { code: 'KY', name: 'Cayman Islands', requiresPostalCode: true },
   { code: 'KZ', name: 'Kazakhstan', requiresPostalCode: true },
-  { code: 'LA', name: 'Lao People\'s Democratic Republic', requiresPostalCode: true },
+  { code: 'LA', name: "Lao People's Democratic Republic", requiresPostalCode: true },
   { code: 'LB', name: 'Lebanon', requiresPostalCode: true },
   { code: 'LC', name: 'Saint Lucia', requiresPostalCode: true },
   { code: 'LI', name: 'Liechtenstein', requiresPostalCode: true },
@@ -263,7 +268,61 @@ export const STRIPE_SUPPORTED_COUNTRIES: Country[] = [
   { code: 'ZA', name: 'South Africa', requiresPostalCode: true },
   { code: 'ZM', name: 'Zambia', requiresPostalCode: true },
   { code: 'ZW', name: 'Zimbabwe', requiresPostalCode: false },
-  */
+]
+
+// US States data
+export const US_STATES: State[] = [
+  { code: 'AL', name: 'Alabama' },
+  { code: 'AK', name: 'Alaska' },
+  { code: 'AZ', name: 'Arizona' },
+  { code: 'AR', name: 'Arkansas' },
+  { code: 'CA', name: 'California' },
+  { code: 'CO', name: 'Colorado' },
+  { code: 'CT', name: 'Connecticut' },
+  { code: 'DE', name: 'Delaware' },
+  { code: 'FL', name: 'Florida' },
+  { code: 'GA', name: 'Georgia' },
+  { code: 'HI', name: 'Hawaii' },
+  { code: 'ID', name: 'Idaho' },
+  { code: 'IL', name: 'Illinois' },
+  { code: 'IN', name: 'Indiana' },
+  { code: 'IA', name: 'Iowa' },
+  { code: 'KS', name: 'Kansas' },
+  { code: 'KY', name: 'Kentucky' },
+  { code: 'LA', name: 'Louisiana' },
+  { code: 'ME', name: 'Maine' },
+  { code: 'MD', name: 'Maryland' },
+  { code: 'MA', name: 'Massachusetts' },
+  { code: 'MI', name: 'Michigan' },
+  { code: 'MN', name: 'Minnesota' },
+  { code: 'MS', name: 'Mississippi' },
+  { code: 'MO', name: 'Missouri' },
+  { code: 'MT', name: 'Montana' },
+  { code: 'NE', name: 'Nebraska' },
+  { code: 'NV', name: 'Nevada' },
+  { code: 'NH', name: 'New Hampshire' },
+  { code: 'NJ', name: 'New Jersey' },
+  { code: 'NM', name: 'New Mexico' },
+  { code: 'NY', name: 'New York' },
+  { code: 'NC', name: 'North Carolina' },
+  { code: 'ND', name: 'North Dakota' },
+  { code: 'OH', name: 'Ohio' },
+  { code: 'OK', name: 'Oklahoma' },
+  { code: 'OR', name: 'Oregon' },
+  { code: 'PA', name: 'Pennsylvania' },
+  { code: 'RI', name: 'Rhode Island' },
+  { code: 'SC', name: 'South Carolina' },
+  { code: 'SD', name: 'South Dakota' },
+  { code: 'TN', name: 'Tennessee' },
+  { code: 'TX', name: 'Texas' },
+  { code: 'UT', name: 'Utah' },
+  { code: 'VT', name: 'Vermont' },
+  { code: 'VA', name: 'Virginia' },
+  { code: 'WA', name: 'Washington' },
+  { code: 'WV', name: 'West Virginia' },
+  { code: 'WI', name: 'Wisconsin' },
+  { code: 'WY', name: 'Wyoming' },
+  { code: 'DC', name: 'District of Columbia' },
 ]
 
 // Helper function to get country by code
@@ -275,4 +334,9 @@ export const getCountryByCode = (code: string): Country | undefined => {
 export const countryRequiresPostalCode = (countryCode: string): boolean => {
   const country = getCountryByCode(countryCode)
   return country?.requiresPostalCode ?? false
+}
+
+// Helper function to check if a country requires state selection
+export const countryRequiresState = (countryCode: string): boolean => {
+  return countryCode === 'US'
 }

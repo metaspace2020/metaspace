@@ -26,6 +26,8 @@ import { install } from 'vue3-recaptcha-v2'
 
 import { Route } from '@sentry/vue/types/router'
 
+import './assets/scss/_variables.scss'
+
 const isProd = process.env.NODE_ENV === 'production'
 
 const app = createApp({

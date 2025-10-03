@@ -575,6 +575,8 @@
   }
 
   .terms-modal {
+    z-index: 3000 !important;
+    
     .modal-content {
       padding: 0;
       height: 70vh;
@@ -607,6 +609,11 @@
     // Adjust dialog body padding to accommodate iframe
     :deep(.el-dialog__body) {
       padding: 1rem;
+    }
+    
+    // Ensure modal overlay doesn't interfere with cookie banner
+    :deep(.el-overlay) {
+      z-index: 3000 !important;
     }
   }
 } 

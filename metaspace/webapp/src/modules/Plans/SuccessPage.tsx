@@ -1,6 +1,6 @@
 import { defineComponent, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElButton, ElCard, ElDivider, ElTag, ElNotification } from '../../lib/element-plus'
+import { ElButton, ElCard, ElTag, ElNotification } from '../../lib/element-plus'
 import { currentUserRoleQuery } from '../../api/user'
 import { getSubscriptionWithPlanQuery } from '../../api/subscription'
 import { useQuery } from '@vue/apollo-composable'
@@ -20,6 +20,8 @@ export default defineComponent({
     const currentUser = computed(() => currentUserResult.value?.currentUser)
 
     const subscriptionId = computed(() => route.query.subscriptionId as string)
+    const groupId = computed(() => route.query.groupId as string)
+
     const fromPayment = computed(
       () => route.query.from === 'payment' || !!route.query.session_id || !!subscriptionId.value
     )
@@ -41,34 +43,17 @@ export default defineComponent({
       return subscription.value.transactions[0] // Assuming transactions are ordered by date desc
     })
 
-    const goToUpload = () => {
-      router.push('/upload')
-    }
-
     const goToDashboard = () => {
-      router.push('/')
+      router.push({
+        name: 'group',
+        params: { groupIdOrSlug: groupId.value },
+        query: { tab: 'subscription' },
+      })
     }
 
     const printInvoice = () => {
       if (latestTransaction.value?.metadata?.stripeInvoiceUrl) {
         window.open(latestTransaction.value.metadata.stripeInvoiceUrl, '_blank')
-      } else {
-        ElNotification({
-          title: 'Invoice Not Available',
-          message: 'Invoice URL is not available for this transaction.',
-          type: 'warning',
-        })
-      }
-    }
-
-    const downloadInvoice = () => {
-      if (latestTransaction.value?.metadata?.stripeInvoiceUrl) {
-        const link = document.createElement('a')
-        link.href = latestTransaction.value.metadata.stripeInvoiceUrl
-        link.download = `invoice-${subscription.value?.id}.pdf`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
       } else {
         ElNotification({
           title: 'Invoice Not Available',
@@ -135,14 +120,9 @@ export default defineComponent({
               </div>
               <h1 class="success-title">Subscription successful!</h1>
               <p class="success-message">
-                Thank you for joining the community! You can immediately start exploring your benefits. You will also
-                receive an email confirmation with details.
+                Thank you for subscribing to METASPACE Pro. Your subscription is now active. You can see the status in
+                the Subscription tab of your Group.
               </p>
-              <div class="actions">
-                <ElButton type="primary" class="api-docs-button" onClick={goToUpload}>
-                  Upload your data
-                </ElButton>
-              </div>
             </div>
           </div>
         )
@@ -158,8 +138,8 @@ export default defineComponent({
               </div>
               <h1 class="success-title">Subscription successful!</h1>
               <p class="success-message">
-                Thank you for joining the community! Your subscription is now active and you can immediately start
-                exploring your benefits.
+                Thank you for subscribing to METASPACE Pro. Your subscription is now active. You can see the status in
+                the Subscription tab of your Group.
               </p>
             </div>
 
@@ -219,7 +199,7 @@ export default defineComponent({
               </ElCard>
 
               {latestTransaction.value && (
-                <ElCard class="transaction-card">
+                <ElCard class="transaction-card" bodyClass="relative h-full mb-5">
                   <div class="card-header">
                     <h2>Payment Details</h2>
                     <ElTag type={getStatusColor(latestTransaction.value.status)} size="large">
@@ -266,15 +246,11 @@ export default defineComponent({
                     )}
                   </div>
 
-                  <ElDivider />
-
-                  <div class="invoice-actions">
-                    <h3>Invoice</h3>
+                  <div class="invoice-actions absolute bottom-10 left-0 right-0">
                     <div class="action-buttons">
                       <ElButton type="primary" onClick={printInvoice}>
-                        Print Invoice
+                        View Invoice
                       </ElButton>
-                      <ElButton onClick={downloadInvoice}>Download Invoice</ElButton>
                     </div>
                   </div>
                 </ElCard>
@@ -282,11 +258,8 @@ export default defineComponent({
             </div>
 
             <div class="actions">
-              <ElButton type="primary" class="primary-button" onClick={goToUpload}>
-                Upload your data
-              </ElButton>
               <ElButton class="secondary-button" onClick={goToDashboard}>
-                Go to Home page
+                Go to home page
               </ElButton>
             </div>
           </div>

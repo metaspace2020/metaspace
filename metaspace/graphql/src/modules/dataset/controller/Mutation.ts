@@ -274,7 +274,7 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   const action: any = {
     actionType: 'create',
     userId: ctx.user.id,
-    externalId: datasetId,
+    datasetId: datasetId,
     groupId: input.groupId,
     type: 'dataset',
     visibility: input.isPublic ? 'public' : 'private',
@@ -416,7 +416,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const action: any = {
       actionType: 'update',
       userId: ctx.user.id,
-      externalId: datasetId,
+      datasetId: datasetId,
       type: 'dataset',
       groupId: update.groupId,
       visibility: engineDataset.isPublic ? 'public' : 'private',

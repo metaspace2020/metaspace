@@ -1,6 +1,6 @@
-import { defineAsyncComponent, defineComponent, reactive } from 'vue'
+import { defineComponent, reactive } from 'vue'
 import Cookies from 'js-cookie'
-const CloseIcon = defineAsyncComponent(() => import('../../assets/inline/refactoring-ui/icon-close.svg'))
+import CloseIcon from '../../assets/inline/refactoring-ui/icon-close.svg'
 const cookieKey = 'cookiebanner-accepted'
 const cookieValue = '1'
 
@@ -15,6 +15,11 @@ export default defineComponent({
       state.agreed = true
     }
 
+    const goToPrivacy = () => {
+      // Use window.location instead of router to avoid Vue lifecycle issues
+      window.location.href = '/privacy#cookies'
+    }
+
     return () =>
       state.agreed ? null : (
         <div class="fixed bottom-0 left-0 right-0 bg-body text-white leading-6 py-1 text-sm" style="z-index: 2999">
@@ -24,9 +29,13 @@ export default defineComponent({
           <p class="m-0 text-center px-2">
             {/* eslint-disable-next-line vue/max-len */}
             We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies.{' '}
-            <router-link to="/privacy#cookies" class="text-blue-300">
+            <button
+              onClick={goToPrivacy}
+              class="text-blue-300 underline cursor-pointer bg-transparent border-none p-0 font-inherit"
+              style="pointer-events: auto;"
+            >
               Learn more
-            </router-link>
+            </button>
           </p>
         </div>
       )

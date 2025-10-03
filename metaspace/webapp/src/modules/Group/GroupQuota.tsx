@@ -45,12 +45,12 @@ export default defineComponent({
             </div>
           ) : remainingUsages && remainingUsages.length > 0 ? (
             <ElTable data={remainingUsages}>
-              <ElTableColumn prop="limit" label="Limit" width="100">
+              <ElTableColumn prop="limit" label="Limit" width="60">
                 {{
                   default: ({ row }: { row: RemainingApiUsage }) => <span class="limit-value">{row.limit}</span>,
                 }}
               </ElTableColumn>
-              <ElTableColumn prop="remaining" label="Remaining" width="120">
+              <ElTableColumn prop="remaining" label="Remaining" width="100">
                 {{
                   default: ({ row }: { row: RemainingApiUsage }) => (
                     <ElTag type={row.remaining > 0 ? 'success' : 'danger'} size="small">
@@ -59,7 +59,7 @@ export default defineComponent({
                   ),
                 }}
               </ElTableColumn>
-              <ElTableColumn prop="period" label="Period" width="100">
+              <ElTableColumn prop="period" label="Period" width="70">
                 {{
                   default: ({ row }: { row: RemainingApiUsage }) => (
                     <span>
@@ -69,7 +69,7 @@ export default defineComponent({
                   ),
                 }}
               </ElTableColumn>
-              <ElTableColumn label="Usage Status" width="120">
+              <ElTableColumn label="Usage status" width="120">
                 {{
                   default: ({ row }: { row: RemainingApiUsage }) => (
                     <el-tag type={row.remaining > 0 ? 'success' : 'danger'} size="small">
@@ -82,7 +82,7 @@ export default defineComponent({
                 {{
                   default: ({ row }: { row: RemainingApiUsage }) => (
                     <span>
-                      {row.remaining} of {row.limit} remaining for {row.period} {row.periodType}
+                      {row.remaining} of {row.limit} private submissions remaining for {row.period} {row.periodType}
                       {row.period > 1 ? 's' : ''}
                     </span>
                   ),

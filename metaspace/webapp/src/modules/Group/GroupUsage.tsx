@@ -7,6 +7,7 @@ import GroupQuota from './GroupQuota'
 import { format } from 'date-fns'
 import { Subscription, updateSubscriptionMutation } from '../../api/subscription'
 import { PlanRule } from '../../api/plan'
+import RouterLink from '../../components/RouterLink'
 import './GroupUsage.scss'
 import { ElSwitch } from '../../lib/element-plus'
 
@@ -103,18 +104,12 @@ export default defineComponent({
       }
     }
 
-    const getActionTypeIcon = (actionType: string) => {
+    const getActionTypeText = (actionType: string) => {
       switch (actionType.toLowerCase()) {
         case 'create':
-          return 'Plus'
-        case 'read':
-          return 'View'
-        case 'update':
-          return 'Edit'
-        case 'delete':
-          return 'Delete'
+          return 'private submissions'
         default:
-          return 'Setting'
+          return actionType
       }
     }
 
@@ -129,7 +124,7 @@ export default defineComponent({
               {{
                 header: () => (
                   <div class="card-header">
-                    <span>Group Subscription</span>
+                    <span>Group subscription</span>
                   </div>
                 ),
                 default: () => (
@@ -155,14 +150,14 @@ export default defineComponent({
               {{
                 header: () => (
                   <div class="card-header">
-                    <span>Group Subscription</span>
+                    <span>Group subscription</span>
                   </div>
                 ),
                 default: () => (
                   <div class="empty-actions">
                     <p class="w-full">This group doesn't have an active subscription. Choose a plan to get started.</p>
                     <el-button type="primary" size="large" onClick={() => router.push('/plans')}>
-                      View Plans
+                      View plans
                     </el-button>
                   </div>
                 ),
@@ -178,7 +173,7 @@ export default defineComponent({
             {{
               header: () => (
                 <div class="card-header">
-                  <span>Group Subscription</span>
+                  <span>Group subscription</span>
                   <el-tag type={getStatusColor(subscription)} size="small">
                     {getStatusText(subscription)}
                   </el-tag>
@@ -188,11 +183,11 @@ export default defineComponent({
                 <div class="subscription-content">
                   {/* Plan Information */}
                   <div class="section">
-                    <h3 class="section-title">Plan Information</h3>
+                    <h3 class="section-title">Plan information</h3>
                     <el-row gutter={20}>
                       <el-col span={12}>
                         <div class="info-item">
-                          <label>Plan Name:</label>
+                          <label>Plan name:</label>
                           <div class="value">
                             <el-tag type={getTierColor(subscription.plan.tier)}>{subscription.plan.name}</el-tag>
                           </div>
@@ -207,7 +202,7 @@ export default defineComponent({
 
                   {/* Subscription Details */}
                   <div class="section">
-                    <h3 class="section-title">Subscription Details</h3>
+                    <h3 class="section-title">Subscription details</h3>
                     <el-row gutter={20}>
                       <el-col span={12}>
                         <div class="info-item">
@@ -217,7 +212,7 @@ export default defineComponent({
                       </el-col>
                       <el-col span={12}>
                         <div class="info-item">
-                          <label>Billing Interval:</label>
+                          <label>Billing interval:</label>
                           <div class="value">
                             <el-tag type="info" size="small">
                               {subscription.billingInterval}
@@ -267,19 +262,99 @@ export default defineComponent({
                     </el-row>
                   </div>
 
+                  <div class="section">
+                    <h3 class="section-title">Payment history</h3>
+                    {subscription.transactions && subscription.transactions.length > 0 ? (
+                      <el-table data={subscription.transactions} style={{ width: '100%' }}>
+                        <el-table-column prop="transactionDate" label="Date" width="150">
+                          {{
+                            default: ({ row }: { row: any }) => (
+                              <span>{formatDate(row.transactionDate || row.createdAt)}</span>
+                            ),
+                          }}
+                        </el-table-column>
+
+                        <el-table-column prop="originalAmountCents" label="Amount paid" width="140">
+                          {{
+                            default: ({ row }: { row: any }) => (
+                              <span
+                                class={`original-amount ${
+                                  row.couponApplied && row.originalAmountCents !== row.finalAmountCents
+                                    ? 'discounted'
+                                    : ''
+                                }`}
+                              >
+                                {row.currency?.toUpperCase()} ${(row.finalAmountCents / 100).toFixed(2)}
+                              </span>
+                            ),
+                          }}
+                        </el-table-column>
+                        <el-table-column prop="couponApplied" label="Discount" width="100">
+                          {{
+                            default: ({ row }: { row: any }) =>
+                              row.couponApplied ? (
+                                <el-tag type="success" size="small">
+                                  {row.couponName || 'Applied'}
+                                </el-tag>
+                              ) : (
+                                <span>-</span>
+                              ),
+                          }}
+                        </el-table-column>
+                        <el-table-column prop="status" label="Status" width="100">
+                          {{
+                            default: ({ row }: { row: any }) => (
+                              <el-tag
+                                type={
+                                  row.status === 'completed'
+                                    ? 'success'
+                                    : row.status === 'failed'
+                                    ? 'danger'
+                                    : 'warning'
+                                }
+                                size="small"
+                              >
+                                {row.status || 'completed'}
+                              </el-tag>
+                            ),
+                          }}
+                        </el-table-column>
+                        <el-table-column align="right">
+                          {{
+                            default: ({ row }: { row: any }) =>
+                              row.metadata?.stripeInvoiceUrl ? (
+                                <div class="flex items-center justify-end w-full">
+                                  <el-button
+                                    type="primary"
+                                    size="small"
+                                    link
+                                    onClick={() => window.open(row.metadata.stripeInvoiceUrl, '_blank')}
+                                  >
+                                    View Invoice
+                                  </el-button>
+                                </div>
+                              ) : (
+                                <span>-</span>
+                              ),
+                          }}
+                        </el-table-column>
+                      </el-table>
+                    ) : (
+                      <div class="empty-container">
+                        <p>No payment history available</p>
+                      </div>
+                    )}
+                  </div>
                   {/* Plan Rules */}
                   <div class="section">
-                    <h3 class="section-title">Plan Rules</h3>
+                    <h3 class="section-title">Plan rules</h3>
                     {subscription.plan.planRules && subscription.plan.planRules.length > 0 ? (
                       <el-table data={subscription.plan.planRules} style={{ width: '100%' }}>
-                        <el-table-column prop="actionType" label="Action" width="120">
+                        <el-table-column prop="actionType" label="Action" width="150">
                           {{
                             default: ({ row }: { row: PlanRule }) => (
                               <el-tag type="info" size="small">
-                                <el-icon>
-                                  <i class={`el-icon-${getActionTypeIcon(row.actionType)}`} />
-                                </el-icon>
-                                {row.actionType}
+                                {getActionTypeText(row.actionType)}
                               </el-tag>
                             ),
                           }}
@@ -303,8 +378,7 @@ export default defineComponent({
                           {{
                             default: ({ row }: { row: PlanRule }) => (
                               <span>
-                                {row.limit} {row.actionType} action{row.limit > 1 ? 's' : ''} per {row.period}{' '}
-                                {row.periodType}
+                                {row.limit} {getActionTypeText(row.actionType)} per {row.period} {row.periodType}
                                 {row.period > 1 ? 's' : ''}
                               </span>
                             ),
@@ -320,13 +394,13 @@ export default defineComponent({
 
                   {/* Remaining Quota */}
                   <div class="section">
-                    <h3 class="section-title">Remaining Quota</h3>
+                    <h3 class="section-title">Remaining quota</h3>
                     <GroupQuota groupId={props.groupId} />
                   </div>
 
                   {/* All API Usages */}
                   <div class="section">
-                    <h3 class="section-title">API Usage History</h3>
+                    <h3 class="section-title">API usage history</h3>
                     {apiUsagesLoading.value ? (
                       <div class="loading-container">
                         <el-skeleton animated>
@@ -343,19 +417,16 @@ export default defineComponent({
                         data={allApiUsages.value.filter((usage: ApiUsage) => usage.source)}
                         style={{ width: '100%' }}
                       >
-                        <el-table-column prop="actionType" label="Action" width="120">
+                        <el-table-column prop="actionType" label="Action" width="150">
                           {{
                             default: ({ row }: { row: ApiUsage }) => (
                               <el-tag type="info" size="small">
-                                <el-icon>
-                                  <i class={`el-icon-${getActionTypeIcon(row.actionType)}`} />
-                                </el-icon>
-                                {row.actionType}
+                                {getActionTypeText(row.actionType)}
                               </el-tag>
                             ),
                           }}
                         </el-table-column>
-                        <el-table-column prop="type" label="Type" width="120">
+                        <el-table-column prop="type" label="Type" width="100">
                           {{
                             default: ({ row }: { row: ApiUsage }) => (
                               <el-tag type="info" size="small">
@@ -364,7 +435,7 @@ export default defineComponent({
                             ),
                           }}
                         </el-table-column>
-                        <el-table-column prop="source" label="Source" width="120">
+                        <el-table-column prop="source" label="Source" width="80">
                           {{
                             default: ({ row }: { row: ApiUsage }) => (
                               <el-tag type="warning" size="small">
@@ -373,7 +444,7 @@ export default defineComponent({
                             ),
                           }}
                         </el-table-column>
-                        <el-table-column prop="userId" label="User" width="200">
+                        <el-table-column prop="userId" label="User" width="140">
                           {{
                             default: ({ row }: { row: ApiUsage }) => <span class="user-email">{row.user?.email}</span>,
                           }}
@@ -383,10 +454,12 @@ export default defineComponent({
                             default: ({ row }: { row: ApiUsage }) => <span>{formatDate(row.actionDt)}</span>,
                           }}
                         </el-table-column>
-                        <el-table-column prop="datasetId" label="Dataset" width="150">
+                        <el-table-column prop="datasetId" label="Dataset">
                           {{
                             default: ({ row }: { row: ApiUsage }) => (
-                              <span class="dataset-id">{row.datasetId || '-'}</span>
+                              <RouterLink to={`/dataset/${row.datasetId}`} newTab>
+                                {row.datasetId || '-'}
+                              </RouterLink>
                             ),
                           }}
                         </el-table-column>
@@ -400,13 +473,13 @@ export default defineComponent({
 
                   {/* Payment Information */}
                   <div class="section">
-                    <h3 class="section-title">Payment Information</h3>
+                    <h3 class="section-title">Payment information</h3>
                     <el-row gutter={20}>
                       {subscription.paymentMethod ? (
                         <>
                           <el-col span={12}>
                             <div class="info-item">
-                              <label>Payment Method:</label>
+                              <label>Payment method:</label>
                               <div class="value">
                                 <el-tag type="info" size="small">
                                   {subscription.paymentMethod.type}
@@ -424,7 +497,7 @@ export default defineComponent({
                       ) : (
                         <el-col span={24}>
                           <div class="info-item">
-                            <label>Payment Method:</label>
+                            <label>Payment method:</label>
                             <div class="value">Not available</div>
                           </div>
                         </el-col>

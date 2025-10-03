@@ -75,7 +75,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, newProject.id)
 
-    action.externalId = newProject.id
+    action.projectId = newProject.id
     action.canEdit = true
 
     await performAction(ctx, action)
@@ -101,7 +101,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const action: any = {
       actionType: 'update',
       userId: ctx.user.id,
-      externalId: project.id,
+      projectId: project.id,
       type: 'project',
       canEdit: true,
       visibility: project.isPublic ? 'public' : 'private',

@@ -113,7 +113,7 @@ export default defineComponent({
     const state = reactive({
       hoveredPlan: 2,
       selectedPeriod: null as PricingOption | null, // Will be set after availablePeriods is computed
-      radioValue: 'Yearly', // Separate state for radio group, using display name
+      radioValue: '1 year', // Separate state for radio group, using display name
     })
 
     const { result: plansResult, loading: plansLoading } = useQuery<AllPlansData>(getPlansQuery)
@@ -236,9 +236,7 @@ export default defineComponent({
                           <span class="price-period">/{getPeriodDisplayName(state.selectedPeriod).toLowerCase()}</span>
                         </div>
 
-                        <div class="billing-info">
-                          Billed {getPeriodDisplayName(state.selectedPeriod)} • ${formatPrice(totalPrice)} total
-                        </div>
+                        <div class="billing-info">Billed each {getPeriodDisplayName(state.selectedPeriod)}</div>
 
                         <div class="plan-features">
                           <div class="safe-html" innerHTML={plan.description} />

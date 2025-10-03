@@ -15,7 +15,7 @@ import {
   ElDialog,
 } from '../../lib/element-plus'
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
-import { currentUserRoleWithGroupQuery } from '../../api/user'
+import { userProfileQuery } from '../../api/user'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
 import { getPlanQuery, Plan } from '../../api/plan'
@@ -28,7 +28,12 @@ import {
   getBillingInterval,
   getSavingsPercentageFromPrices,
 } from '../../lib/pricing'
-import { STRIPE_SUPPORTED_COUNTRIES, countryRequiresPostalCode } from '../../lib/countries'
+import {
+  STRIPE_SUPPORTED_COUNTRIES,
+  countryRequiresPostalCode,
+  countryRequiresState,
+  US_STATES,
+} from '../../lib/countries'
 
 interface CurrentUser {
   id: string
@@ -104,6 +109,7 @@ export default defineComponent({
         lastName: { isValid: false, message: '' },
         address: { isValid: false, message: '' },
         zipCode: { isValid: false, message: '' },
+        selectedState: { isValid: false, message: '' },
         cardNumber: { isValid: false, message: '' },
         cardExpiry: { isValid: false, message: '' },
         cardCvc: { isValid: false, message: '' },
@@ -206,10 +212,31 @@ export default defineComponent({
       return true
     }
 
+    const validateState = (stateCode: string) => {
+      const isRequired = countryRequiresState(state.form.selectedCountry)
+
+      if (isRequired && !stateCode.trim()) {
+        state.validation.selectedState = { isValid: false, message: 'State is required for US addresses' }
+        return false
+      }
+
+      if (stateCode.trim() && !US_STATES.find((s) => s.code === stateCode)) {
+        state.validation.selectedState = { isValid: false, message: 'Please select a valid state' }
+        return false
+      }
+
+      state.validation.selectedState = { isValid: true, message: '' }
+      return true
+    }
+
     // Computed property to check if form is valid
     const isFormValid = computed(() => {
       const postalCodeValid = countryRequiresPostalCode(state.form.selectedCountry)
         ? state.validation.zipCode.isValid
+        : true
+
+      const stateValid = countryRequiresState(state.form.selectedCountry)
+        ? state.validation.selectedState.isValid
         : true
 
       return (
@@ -218,6 +245,7 @@ export default defineComponent({
         state.validation.lastName.isValid &&
         state.validation.address.isValid &&
         postalCodeValid &&
+        stateValid &&
         state.form.selectedCountry && // Country is required
         state.validation.cardNumber.isValid &&
         state.validation.cardExpiry.isValid &&
@@ -227,13 +255,9 @@ export default defineComponent({
       )
     })
 
-    const { result: currentUserResult, onResult } = useQuery<CurrentUserRoleResult>(
-      currentUserRoleWithGroupQuery,
-      null,
-      {
-        fetchPolicy: 'network-only',
-      }
-    )
+    const { result: currentUserResult, onResult } = useQuery<CurrentUserRoleResult>(userProfileQuery, null, {
+      fetchPolicy: 'network-only',
+    })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
     const groups = computed(
       () =>
@@ -247,6 +271,7 @@ export default defineComponent({
       includeVat: true,
       customerCountry: state.form.selectedCountry,
       customerPostalCode: state.form.zipCode,
+      ...(state.form.selectedState && { customerState: state.form.selectedState }),
     }))
 
     const { result: planResult, refetch: refetchPlan } = useQuery<{ plan: Plan }>(getPlanQuery, planQueryVariables, {
@@ -377,18 +402,59 @@ export default defineComponent({
         clearTimeout(refetchTimeout)
       }
       refetchTimeout = setTimeout(() => {
-        if (route.query?.planId && state.form.selectedCountry) {
+        // Check if we have all required fields before refetching
+        const hasCountry = !!state.form.selectedCountry
+
+        // For postal code validation
+        let hasPostalCode = true
+        if (countryRequiresPostalCode(state.form.selectedCountry)) {
+          if (state.form.selectedCountry === 'US') {
+            // For US, require at least 5 digits
+            hasPostalCode = !!state.form.zipCode && /^\d{5,}/.test(state.form.zipCode)
+          } else {
+            // For other countries, just check if it exists
+            hasPostalCode = !!state.form.zipCode
+          }
+        }
+
+        const hasState = !countryRequiresState(state.form.selectedCountry) || !!state.form.selectedState
+
+        if (route.query?.planId && hasCountry && hasPostalCode && hasState) {
           refetchPlan()
         }
       }, 500)
     }
 
-    // Refetch plan when country or postal code changes (for VAT calculation)
+    // Refetch plan when country, postal code, or state changes (for VAT calculation)
     watch(
-      () => [state.form.selectedCountry, state.form.zipCode],
+      () => [state.form.selectedCountry, state.form.zipCode, state.form.selectedState],
       () => {
         //
         debouncedRefetch()
+      }
+    )
+
+    // Reset state when country changes
+    watch(
+      () => state.form.selectedCountry,
+      (newCountry, oldCountry) => {
+        if (oldCountry && newCountry !== oldCountry) {
+          // Reset state when switching countries
+          state.form.selectedState = ''
+          // Re-validate state field (will be valid for non-US countries)
+          validateState('')
+        }
+      }
+    )
+
+    // Re-validate coupon when selected period changes
+    watch(
+      () => state.selectedPeriod?.id,
+      async (newPricingId, oldPricingId) => {
+        // Only re-validate if coupon is applied and pricing ID actually changed
+        if (state.coupon.applied && state.coupon.code && newPricingId && newPricingId !== oldPricingId) {
+          await applyCoupon()
+        }
       }
     )
 
@@ -499,15 +565,24 @@ export default defineComponent({
 
     watch(
       () => currentUserResult.value?.currentUser,
-      (newUser) => {
+      (newUser: any) => {
         if (newUser) {
           // Only initialize Stripe when user is authenticated
           initializeStripe()
           // Pre-fill email if available
-          const email = newUser.email || ''
+          const email = newUser?.email || ''
+          const name = newUser?.name || ''
+          const firstName = name?.split(' ')[0] || ''
+          const lastName = name?.split(' ')[1] || ''
           state.form.email = email
+          state.form.firstName = firstName
+          state.form.lastName = lastName
           if (email) {
             validateEmail(email)
+          }
+          if (name) {
+            validateFirstName(firstName)
+            validateLastName(lastName)
           }
         }
       },
@@ -680,6 +755,7 @@ export default defineComponent({
               ...(state.form.address && { line1: state.form.address }),
               ...(state.form.zipCode && { postal_code: state.form.zipCode }),
               ...(state.form.selectedCountry && { country: state.form.selectedCountry }),
+              ...(state.form.selectedState && { state: state.form.selectedState }),
             },
           },
         })
@@ -705,6 +781,7 @@ export default defineComponent({
                 line1: state.form.address,
                 postalCode: state.form.zipCode,
                 country: state.form.selectedCountry,
+                ...(state.form.selectedState && { state: state.form.selectedState }),
               },
               email: state.form.email,
               name: `${state.form.firstName} ${state.form.lastName}`.trim(),
@@ -733,6 +810,7 @@ export default defineComponent({
                 name: 'success',
                 query: {
                   subscriptionId: data.createSubscription.id,
+                  groupId: state.form.groupId,
                 },
               })
             } catch (routerError) {
@@ -754,7 +832,6 @@ export default defineComponent({
             }
           }, 100)
         } else {
-          console.log('debug error')
           throw new Error('Failed to create subscription')
         }
       } catch (error: any) {
@@ -860,7 +937,7 @@ export default defineComponent({
                     state.form.groupId = val
                   }}
                 >
-                  {groups.value?.map((group) => <ElOption label={group.label} value={group.id} />)}
+                  {groups.value?.map((group) => <ElOption label={group.name} value={group.id} />)}
                 </ElSelect>
               </div>
 
@@ -993,8 +1070,7 @@ export default defineComponent({
 
                   <div class="form-group">
                     <label>
-                      {countryRequiresPostalCode(state.form.selectedCountry) ? 'Postal code' : 'Postal code (optional)'}
-                      {countryRequiresPostalCode(state.form.selectedCountry) && <span class="required">*</span>}
+                      Postal code <span class="required">*</span>
                     </label>
                     <ElInput
                       modelValue={state.form.zipCode}
@@ -1004,15 +1080,7 @@ export default defineComponent({
                         state.formErrors.zipCode = !state.validation.zipCode.isValid
                         state.zipCodeError = null
                       }}
-                      placeholder={
-                        state.form.selectedCountry === 'US'
-                          ? '12345'
-                          : state.form.selectedCountry === 'GB'
-                          ? 'SW1A 1AA'
-                          : state.form.selectedCountry === 'CA'
-                          ? 'K1A 0A9'
-                          : 'Enter postal code'
-                      }
+                      placeholder={'Enter postal code'}
                       size="default"
                       class={!state.validation.zipCode.isValid && state.form.zipCode ? 'error-border' : ''}
                     />
@@ -1031,7 +1099,7 @@ export default defineComponent({
                   </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group h-[60px]">
                   <label>
                     Address<span class="required">*</span>
                   </label>
@@ -1056,6 +1124,41 @@ export default defineComponent({
                     {state.validation.address.message}
                   </div>
                 </div>
+
+                {countryRequiresState(state.form.selectedCountry) && (
+                  <div class="form-group w-full">
+                    <label>
+                      State<span class="required">*</span>
+                    </label>
+                    <ElSelect
+                      class="w-full"
+                      modelValue={state.form.selectedState}
+                      onUpdate:modelValue={(val: string) => {
+                        state.form.selectedState = val
+                        validateState(val)
+                        state.formErrors.selectedState = !state.validation.selectedState.isValid
+                      }}
+                      placeholder="Select your state"
+                      size="default"
+                      filterable
+                    >
+                      {US_STATES.map((usState) => (
+                        <ElOption key={usState.code} label={usState.name} value={usState.code} />
+                      ))}
+                    </ElSelect>
+                    <div
+                      class={`field-error ${
+                        !state.validation.selectedState.isValid &&
+                        state.validation.selectedState.message &&
+                        state.form.selectedState
+                          ? 'visible'
+                          : 'invisible'
+                      }`}
+                    >
+                      {state.validation.selectedState.message}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Payment Method Section */}
@@ -1267,6 +1370,7 @@ export default defineComponent({
             lockScroll={false}
             onClose={closeModal}
             class="terms-modal"
+            zIndex={3000}
           >
             <div class="modal-content">
               <div class="iframe-container">

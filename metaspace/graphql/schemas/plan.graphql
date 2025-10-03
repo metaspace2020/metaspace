@@ -133,7 +133,7 @@ enum ApiUsageOrderBy {
 }
 
 type Query {
-    plan(id: String!, includeVat: Boolean = false, customerCountry: String, customerPostalCode: String): Plan
+    plan(id: String!, includeVat: Boolean = false, customerCountry: String, customerPostalCode: String, customerState: String): Plan
     allPlans(orderBy: PlanOrderBy = ORDER_BY_DATE,
         sortingOrder: SortingOrder = DESCENDING,
         filter: PlanFilter = {}, simpleQuery: String,

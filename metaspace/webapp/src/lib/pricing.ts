@@ -5,7 +5,7 @@ import { PricingOption } from '../api/plan'
  */
 export const formatPrice = (priceCents: number | undefined): string => {
   if (priceCents === undefined) return '0.00'
-  return (priceCents / 100).toFixed(2)
+  return (priceCents / 100).toFixed(0)
 }
 
 /**
@@ -86,7 +86,7 @@ export const getBillingInterval = (pricingOption: any): string => {
  * Get period display name
  */
 export const getPeriodDisplayName = (period: PricingOption): string => {
-  return period.displayName
+  return period.displayName === '1 year' ? 'year' : period.displayName
 }
 
 /**

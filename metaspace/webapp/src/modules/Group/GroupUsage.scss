@@ -110,6 +110,34 @@
     }
   }
   
+  // Payment history specific styles
+  .amount-value {
+    font-weight: 600;
+    color: #67c23a;
+    font-size: 14px;
+  }
+  
+  .original-amount {
+    color: #909399;
+    font-size: 13px;
+    
+    // Show strikethrough if different from final amount
+    &.discounted {
+      text-decoration: line-through;
+    }
+  }
+  
+  .user-email {
+    color: #606266;
+    font-size: 13px;
+  }
+  
+  .dataset-id {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    color: #909399;
+  }
+  
   .el-tag {
     &.el-tag--primary {
       background-color: #ecf5ff;

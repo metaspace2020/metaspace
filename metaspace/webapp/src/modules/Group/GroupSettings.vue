@@ -1,7 +1,7 @@
 <template>
   <div class="group-settings">
     <div class="header-row">
-      <h2>Group Details</h2>
+      <h2>Group details</h2>
       <div class="flex-spacer" />
 
       <div class="header-row-buttons">

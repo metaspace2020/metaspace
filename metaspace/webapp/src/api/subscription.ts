@@ -495,6 +495,17 @@ export const getActiveGroupSubscriptionQuery = gql`
           limit
         }
       }
+      transactions {
+        metadata
+        originalAmountCents
+        finalAmountCents
+        currency
+        couponApplied
+        stripeCouponId
+        couponName
+        transactionDate
+        status
+      }
     }
   }
   ${subscriptionFragment}

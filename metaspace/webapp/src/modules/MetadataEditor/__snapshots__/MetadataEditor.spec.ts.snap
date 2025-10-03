@@ -686,7 +686,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                             </div>
                           </th>
                           <th class=\\"el-table_1_column_4 is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
-                            <div class=\\"cell\\">Usage Status
+                            <div class=\\"cell\\">Usage status
                               <!---->
                               <!---->
                             </div>

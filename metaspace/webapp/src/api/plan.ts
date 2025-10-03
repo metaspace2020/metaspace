@@ -219,12 +219,19 @@ export const getPlansQuery = gql`
   ${planFragment}
 `
 export const getPlanQuery = gql`
-  query ($planId: String!, $includeVat: Boolean, $customerCountry: String, $customerPostalCode: String) {
+  query (
+    $planId: String!
+    $includeVat: Boolean
+    $customerCountry: String
+    $customerPostalCode: String
+    $customerState: String
+  ) {
     plan(
       id: $planId
       includeVat: $includeVat
       customerCountry: $customerCountry
       customerPostalCode: $customerPostalCode
+      customerState: $customerState
     ) {
       ...Plan
     }

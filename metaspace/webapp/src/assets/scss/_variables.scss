@@ -1,3 +1,9 @@
 $color-primary: #0074d9;
 $color-secondary: #7fdbff;
 $color-tertiary: #39cccc;
+
+$pro-color: #FC4525;
+
+.text-pro {
+  color: $pro-color !important;
+}

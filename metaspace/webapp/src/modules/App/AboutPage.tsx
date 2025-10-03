@@ -133,16 +133,16 @@ const AboutPage = defineComponent({
                 <div class="star-icon-container mb-2">
                   <StarSvg class="star-icon" />
                 </div>
-                <h3>Go Pro</h3>
+                <h3 class="text-pro">Go Pro</h3>
                 <p>
-                  Unlock private uploads, higher quotas, and pro support. Learn more about
+                  Unlock private uploads and dedicated support by upgrading to
                   <span
-                    class="about-link ml-1"
+                    class="about-link ml-1 text-pro"
                     onClick={() => {
                       router.push('/plans')
                     }}
                   >
-                    Pro
+                    METASPACE Pro
                   </span>
                   .
                 </p>
