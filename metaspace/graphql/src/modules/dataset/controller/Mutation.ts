@@ -433,7 +433,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       datasetId: datasetId,
       type: 'dataset',
       groupId: update.groupId || dataset.groupId,
-      visibility: engineDataset.isPublic ? 'public' : 'private',
+      visibility: (update.isPublic === undefined ? engineDataset.isPublic : update.isPublic) ? 'public' : 'private',
       actionDt: moment.utc(moment.utc().toDate()),
       source: (ctx as any).getSource(),
       deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
