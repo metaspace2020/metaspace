@@ -5,6 +5,7 @@ import fetch, { RequestInit } from 'node-fetch'
 import logger from '../../../utils/logger'
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Mutation } from '../../../binding'
+import { assertCanEditGroup } from '../../group/controller'
 
 const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', body?: any) => {
   try {
@@ -72,7 +73,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       // Include optional group fields if provided
       if (input.groupId) {
         apiInput.groupId = input.groupId
+        try {
+          await assertCanEditGroup(ctx.entityManager, ctx.user, input.groupId)
+        } catch (error) {
+          throw new UserError('Access denied')
+        }
       }
+
       if (input.groupName) {
         apiInput.groupName = input.groupName
       }

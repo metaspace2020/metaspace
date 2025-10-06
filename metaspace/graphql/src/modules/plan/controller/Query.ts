@@ -6,7 +6,7 @@ import config from '../../../utils/config'
 import fetch, { RequestInit } from 'node-fetch'
 import logger from '../../../utils/logger'
 import { URLSearchParams } from 'url'
-import { assertCanEditGroup } from '../../../modules/group/controller'
+import { assertCanEditGroup, assertCanAddDataset } from '../../../modules/group/controller'
 import { User } from '../../user/model'
 
 interface AllPlansArgs {
@@ -252,18 +252,18 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
   },
 
-  async remainingApiUsages(_: any, args: { groupId?: string }, ctx: Context): Promise<any> {
+  async remainingApiUsages(_: any, { groupId, types = ['create'] }: { groupId?: string,
+    types?: string[]}, ctx: Context): Promise<any> {
     const { user, entityManager } = ctx
-    const { groupId } = args
-
-    if (groupId) {
-      await assertCanEditGroup(entityManager, user, groupId)
-    }
 
     try {
+      if (groupId) {
+        await assertCanAddDataset(entityManager, user, groupId)
+      }
+
       const url = groupId
-        ? `/api/api-usages/group/${groupId}/remaining-usages?actionType=create`
-        : '/api/api-usages/remaining-usages?actionType=create'
+        ? `/api/api-usages/group/${groupId}/remaining-usages?actionType=${types.join(',')}`
+        : `/api/api-usages/remaining-usages?actionType=${types.join(',')}`
       const response = await makeApiRequest(ctx, url)
       return response.remainingUsages || []
     } catch (error) {

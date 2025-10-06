@@ -62,7 +62,7 @@ export default defineComponent({
     const { result: allApiUsagesResult, loading: apiUsagesLoading } = useQuery<any>(
       getApiUsagesQuery,
       {
-        filter: { groupId: props.groupId, actionType: 'create' },
+        filter: { groupId: props.groupId, actionType: 'create,update,reprocess', visibility: 'private' },
         orderBy: 'ORDER_BY_DATE',
         sortingOrder: 'DESCENDING',
         limit: 50,
@@ -108,6 +108,10 @@ export default defineComponent({
       switch (actionType.toLowerCase()) {
         case 'create':
           return 'private submissions'
+        case 'update':
+          return 'updated metadata'
+        case 'reprocess':
+          return 'private resubmissions'
         default:
           return actionType
       }
@@ -395,7 +399,7 @@ export default defineComponent({
                   {/* Remaining Quota */}
                   <div class="section">
                     <h3 class="section-title">Remaining quota</h3>
-                    <GroupQuota groupId={props.groupId} />
+                    <GroupQuota groupId={props.groupId} types={['create', 'update', 'reprocess']} />
                   </div>
 
                   {/* All API Usages */}
@@ -446,7 +450,7 @@ export default defineComponent({
                         </el-table-column>
                         <el-table-column prop="userId" label="User" width="140">
                           {{
-                            default: ({ row }: { row: ApiUsage }) => <span class="user-email">{row.user?.email}</span>,
+                            default: ({ row }: { row: ApiUsage }) => <span class="user-email">{row.user?.name}</span>,
                           }}
                         </el-table-column>
                         <el-table-column prop="actionDt" label="Date" width="180">

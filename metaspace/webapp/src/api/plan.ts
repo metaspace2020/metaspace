@@ -66,6 +66,7 @@ export interface RemainingApiUsage {
   limit: number
   periodType: string
   period: number
+  actionType: string
 }
 
 export interface ApiUsage {
@@ -311,12 +312,13 @@ export const getApiUsagesQuery = gql`
   ${apiUsageFragment}
 `
 export const getRemainingApiUsagesQuery = gql`
-  query ($groupId: String) {
-    remainingApiUsages(groupId: $groupId) {
+  query ($groupId: String, $types: [String]) {
+    remainingApiUsages(groupId: $groupId, types: $types) {
       limit
       periodType
       period
       remaining
+      actionType
     }
   }
 `

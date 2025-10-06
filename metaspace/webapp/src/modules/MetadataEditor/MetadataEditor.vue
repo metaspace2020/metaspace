@@ -51,6 +51,7 @@
           :value="state.metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :submitter="state.submitter"
+          :is-new-dataset="isNew"
           @change="onOptionChange"
         />
         <visibility-option-section :is-public="state.metaspaceOptions.isPublic" @change="handleVisibilityChange" />

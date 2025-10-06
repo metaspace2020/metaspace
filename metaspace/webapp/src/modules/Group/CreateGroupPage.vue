@@ -78,7 +78,10 @@ export default defineComponent({
           await router.push({
             path: '/groups',
           })
-        } catch (err) {
+        } catch (err: any) {
+          if (err?.graphQLErrors?.[0]?.message) {
+            ElMessage({ message: err.graphQLErrors[0].message, type: 'error', offset: 80 })
+          }
           reportError(err)
         }
       } catch {

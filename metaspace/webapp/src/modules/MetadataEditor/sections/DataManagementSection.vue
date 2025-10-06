@@ -95,10 +95,10 @@
     </el-collapse-transition>
     <el-row>
       <el-col :span="6">
-        <span class="metadata-section__title">Subscription limits</span>
+        <span class="metadata-section__title">Group quota</span>
       </el-col>
       <el-col :span="18">
-        <group-quota :groupId="groupId" />
+        <group-quota :groupId="groupId" :types="getTypes" />
       </el-col>
     </el-row>
   </div>
@@ -143,6 +143,7 @@ export default defineComponent({
     value: { type: Object as () => MetaspaceOptions, required: true },
     submitter: { type: Object as () => DatasetSubmitterFragment | null, default: null },
     error: { type: Object as () => any, default: () => ({}) },
+    isNewDataset: { type: Boolean, required: true },
   },
   setup(props, { emit }) {
     const apolloClient = inject(DefaultApolloClient)
@@ -159,6 +160,10 @@ export default defineComponent({
       fetchPolicy: 'cache-first',
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
+
+    const getTypes = computed(() => {
+      return props.isNewDataset ? ['create'] : ['reprocess']
+    })
 
     const fetchGroupIfUnknown = async () => {
       // If the dataset is saved with a groupId for a group that the user isn't a member of, or the group
@@ -399,6 +404,7 @@ export default defineComponent({
       onInput,
       setGroupId,
       setProjectIds,
+      getTypes,
     }
   },
 })

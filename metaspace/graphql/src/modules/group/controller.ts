@@ -48,7 +48,8 @@ const assertUserRoles = async(
           },
         }))
       : null
-    if (!userGroup) {
+
+    if (!userGroup || (Array.isArray(userGroup) && userGroup.length === 0)) {
       throw new UserError('Access denied')
     }
   }
@@ -60,7 +61,7 @@ export const assertCanEditGroup = async(entityManager: EntityManager, user: Cont
     [UserGroupRoleOptions.GROUP_ADMIN])
 }
 
-const assertCanAddDataset = async(entityManager: EntityManager, user: ContextUser, groupId: string) => {
+export const assertCanAddDataset = async(entityManager: EntityManager, user: ContextUser, groupId: string) => {
   assertUserAuthenticated(user)
   await assertUserRoles(entityManager, user, groupId,
     [UserGroupRoleOptions.GROUP_ADMIN, UserGroupRoleOptions.MEMBER])
@@ -372,6 +373,19 @@ export const Resolvers = {
 
       assertUserAuthenticated(user) // @ts-ignore
       logger.info(`Creating ${groupInput.name} group by '${user.id}' user...`)
+
+      // Check if user has reached the maximum of 3 groups as GROUP_ADMIN
+      const userGroupAdminCount = await entityManager.getRepository(UserGroupModel).count({
+        where: {
+          userId: user.id,
+          role: UserGroupRoleOptions.GROUP_ADMIN,
+        },
+      })
+
+      if (userGroupAdminCount >= 3 && user.role !== 'admin') {
+        throw new UserError('You can be an admin for up to three groups. Please contact us if you need '
+           + 'to manage additional groups.')
+      }
 
       if (groupDetails.urlSlug != null) {
         await validateUrlSlugChange(entityManager, GroupModel as any, null, groupDetails.urlSlug)

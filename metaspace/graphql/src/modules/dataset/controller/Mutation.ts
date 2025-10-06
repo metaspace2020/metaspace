@@ -413,20 +413,6 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const engineDataset = await ctx.entityManager.findOneOrFail(EngineDataset, datasetId)
     let isEnriched : boolean | any = false
 
-    const action: any = {
-      actionType: 'update',
-      userId: ctx.user.id,
-      datasetId: datasetId,
-      type: 'dataset',
-      groupId: update.groupId,
-      visibility: engineDataset.isPublic ? 'public' : 'private',
-      actionDt: moment.utc(moment.utc().toDate()),
-      source: (ctx as any).getSource(),
-      deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
-      ipHash: hashIp(ctx.req?.ip),
-    }
-    await assertCanPerformAction(ctx, action)
-
     if (performEnrichment) {
       isEnriched = await ctx.entityManager.createQueryBuilder(DatasetEnrichmentModel,
         'dsEnrichment')
@@ -440,6 +426,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       updateEnrichment: performEnrichment && !isEnriched,
     })
     const reprocessingNeeded = newDB || procSettingsUpd || enrichmentUpd
+
+    const action: any = {
+      actionType: reprocessingNeeded ? 'reprocess' : 'update',
+      userId: ctx.user.id,
+      datasetId: datasetId,
+      type: 'dataset',
+      groupId: update.groupId || dataset.groupId,
+      visibility: engineDataset.isPublic ? 'public' : 'private',
+      actionDt: moment.utc(moment.utc().toDate()),
+      source: (ctx as any).getSource(),
+      deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
+      ipHash: hashIp(ctx.req?.ip),
+    }
+    await assertCanPerformAction(ctx, action)
 
     const submitterId = (ctx.isAdmin && update.submitterId) || dataset.userId
     const saveDatasetArgs = {

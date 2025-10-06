@@ -644,7 +644,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
         </div>
         <!---->
         <div class=\\"el-row\\">
-          <div class=\\"el-col el-col-6\\"><span class=\\"metadata-section__title\\">Subscription limits</span></div>
+          <div class=\\"el-col el-col-6\\"><span class=\\"metadata-section__title\\">Group quota</span></div>
           <div class=\\"el-col el-col-18\\">
             <div class=\\"section\\">
               <div class=\\"el-table--fit el-table--enable-row-hover el-table--enable-row-transition el-table el-table--layout-fixed\\" data-prefix=\\"el\\">
@@ -655,15 +655,17 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                     <div></div>
                     <div></div>
                     <div></div>
+                    <div></div>
                   </div>
                   <div class=\\"el-table__header-wrapper\\">
                     <table class=\\"el-table__header\\" border=\\"0\\" cellpadding=\\"0\\" cellspacing=\\"0\\">
                       <colgroup>
-                        <col name=\\"el-table_1_column_1\\" width=\\"100\\">
-                        <col name=\\"el-table_1_column_2\\" width=\\"120\\">
-                        <col name=\\"el-table_1_column_3\\" width=\\"100\\">
-                        <col name=\\"el-table_1_column_4\\" width=\\"120\\">
-                        <col name=\\"el-table_1_column_5\\" width=\\"80\\">
+                        <col name=\\"el-table_1_column_1\\" width=\\"60\\">
+                        <col name=\\"el-table_1_column_2\\" width=\\"100\\">
+                        <col name=\\"el-table_1_column_3\\" width=\\"160\\">
+                        <col name=\\"el-table_1_column_4\\" width=\\"70\\">
+                        <col name=\\"el-table_1_column_5\\" width=\\"120\\">
+                        <col name=\\"el-table_1_column_6\\" width=\\"80\\">
                       </colgroup>
                       <thead class=\\"\\">
                         <tr class=\\"\\">
@@ -680,18 +682,24 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                             </div>
                           </th>
                           <th class=\\"el-table_1_column_3 is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
-                            <div class=\\"cell\\">Period
+                            <div class=\\"cell\\">Action
                               <!---->
                               <!---->
                             </div>
                           </th>
                           <th class=\\"el-table_1_column_4 is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
-                            <div class=\\"cell\\">Usage status
+                            <div class=\\"cell\\">Period
                               <!---->
                               <!---->
                             </div>
                           </th>
                           <th class=\\"el-table_1_column_5 is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                            <div class=\\"cell\\">Usage status
+                              <!---->
+                              <!---->
+                            </div>
+                          </th>
+                          <th class=\\"el-table_1_column_6 is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
                             <div class=\\"cell\\">Description
                               <!---->
                               <!---->
@@ -707,11 +715,12 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                         <div class=\\"el-scrollbar__view\\" style=\\"display: inline-block; vertical-align: middle;\\">
                           <table class=\\"el-table__body\\" cellspacing=\\"0\\" cellpadding=\\"0\\" border=\\"0\\" style=\\"table-layout: fixed;\\">
                             <colgroup>
-                              <col name=\\"el-table_1_column_1\\" width=\\"100\\">
-                              <col name=\\"el-table_1_column_2\\" width=\\"120\\">
-                              <col name=\\"el-table_1_column_3\\" width=\\"100\\">
-                              <col name=\\"el-table_1_column_4\\" width=\\"120\\">
-                              <col name=\\"el-table_1_column_5\\" width=\\"80\\">
+                              <col name=\\"el-table_1_column_1\\" width=\\"60\\">
+                              <col name=\\"el-table_1_column_2\\" width=\\"100\\">
+                              <col name=\\"el-table_1_column_3\\" width=\\"160\\">
+                              <col name=\\"el-table_1_column_4\\" width=\\"70\\">
+                              <col name=\\"el-table_1_column_5\\" width=\\"120\\">
+                              <col name=\\"el-table_1_column_6\\" width=\\"80\\">
                             </colgroup>
                             <!--v-if-->
                             <tbody tabindex=\\"-1\\">
@@ -729,18 +738,24 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                                 </td>
                                 <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                                   <div class=\\"cell\\">
-                                    <!----><span>0 </span>
+                                    <!----><span class=\\"el-tag el-tag--info el-tag--small el-tag--light el-zoom-in-center-enter-from el-zoom-in-center-enter-active\\"><span class=\\"el-tag__content\\"></span>
+                                    <!--v-if--></span>
                                   </div>
                                 </td>
                                 <td class=\\"el-table_1_column_4 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span>0 </span>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_5 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                                   <div class=\\"cell\\">
                                     <!---->
                                     <el-tag type=\\"danger\\" size=\\"small\\">Exhausted</el-tag>
                                   </div>
                                 </td>
-                                <td class=\\"el-table_1_column_5 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                <td class=\\"el-table_1_column_6 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                                   <div class=\\"cell\\">
-                                    <!----><span>0 of 0 remaining for 0 </span>
+                                    <!----><span>0 of 0  remaining for 0 </span>
                                   </div>
                                 </td>
                               </tr>
@@ -758,18 +773,24 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                                 </td>
                                 <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                                   <div class=\\"cell\\">
-                                    <!----><span>0 </span>
+                                    <!----><span class=\\"el-tag el-tag--info el-tag--small el-tag--light el-zoom-in-center-enter-from el-zoom-in-center-enter-active\\"><span class=\\"el-tag__content\\"></span>
+                                    <!--v-if--></span>
                                   </div>
                                 </td>
                                 <td class=\\"el-table_1_column_4 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span>0 </span>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_5 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                                   <div class=\\"cell\\">
                                     <!---->
                                     <el-tag type=\\"danger\\" size=\\"small\\">Exhausted</el-tag>
                                   </div>
                                 </td>
-                                <td class=\\"el-table_1_column_5 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                <td class=\\"el-table_1_column_6 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                                   <div class=\\"cell\\">
-                                    <!----><span>0 of 0 remaining for 0 </span>
+                                    <!----><span>0 of 0  remaining for 0 </span>
                                   </div>
                                 </td>
                               </tr>
