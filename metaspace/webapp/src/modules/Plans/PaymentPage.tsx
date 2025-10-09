@@ -22,6 +22,7 @@ import { getPlanQuery, Plan } from '../../api/plan'
 import './PaymentPage.scss'
 import { Fragment } from 'vue'
 import { createSubscriptionMutation, validateCouponQuery } from '../../api/subscription'
+import CreateGroupPage from '../Group/CreateGroupPage.vue'
 import {
   formatPrice,
   getMonthlyPriceFromCents,
@@ -139,6 +140,8 @@ export default defineComponent({
         url: '',
       },
       savedScrollPosition: 0,
+      showCreateGroupModal: false,
+      isUpdatingGroups: false,
     })
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -255,15 +258,26 @@ export default defineComponent({
       )
     })
 
-    const { result: currentUserResult, onResult } = useQuery<CurrentUserRoleResult>(userProfileQuery, null, {
+    const {
+      result: currentUserResult,
+      onResult,
+      refetch: refetchUser,
+    } = useQuery<CurrentUserRoleResult>(userProfileQuery, null, {
       fetchPolicy: 'network-only',
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
     const groups = computed(
       () =>
-        (currentUser.value as any)?.groups.map((group: any) => ({
-          ...group.group,
-        }))
+        (currentUser.value as any)?.groups
+          .map((group: any) => ({
+            ...group.group,
+          }))
+          .concat([
+            {
+              id: 'custom',
+              name: 'Create a new group..',
+            },
+          ])
     )
 
     const planQueryVariables = computed(() => ({
@@ -561,6 +575,44 @@ export default defineComponent({
       setTimeout(() => {
         window.scrollTo(0, state.savedScrollPosition)
       }, 0)
+    }
+
+    const openCreateGroupModal = () => {
+      state.showCreateGroupModal = true
+    }
+
+    const closeCreateGroupModal = () => {
+      state.showCreateGroupModal = false
+    }
+
+    const handleGroupCreated = async (newGroup: any) => {
+      try {
+        // Close the modal first
+        closeCreateGroupModal()
+
+        // Show loading state
+        state.isUpdatingGroups = true
+
+        // Refetch user data to update the groups list
+        await refetchUser()
+
+        // Set the newly created group as selected after refetch
+        if (newGroup?.id) {
+          state.form.groupId = newGroup.id
+        }
+
+        // Show success notification
+        ElNotification({
+          title: 'Success',
+          message: 'Group created successfully and selected!',
+          type: 'success',
+          duration: 3000,
+        })
+      } catch (error) {
+        console.error('Error updating groups list:', error)
+      } finally {
+        state.isUpdatingGroups = false
+      }
     }
 
     watch(
@@ -934,8 +986,14 @@ export default defineComponent({
                 <ElSelect
                   modelValue={state.form.groupId}
                   onUpdate:modelValue={(val: string) => {
-                    state.form.groupId = val
+                    if (val === 'custom') {
+                      openCreateGroupModal()
+                    } else {
+                      state.form.groupId = val
+                    }
                   }}
+                  loading={state.isUpdatingGroups}
+                  placeholder={state.isUpdatingGroups ? 'Updating groups...' : 'Select a group'}
                 >
                   {groups.value?.map((group) => <ElOption label={group.name} value={group.id} />)}
                 </ElSelect>
@@ -1384,6 +1442,20 @@ export default defineComponent({
                 </span>
               ),
             }}
+          </ElDialog>
+
+          {/* Modal for Create Group */}
+          <ElDialog
+            modelValue={state.showCreateGroupModal}
+            onUpdate:modelValue={(val: boolean) => (state.showCreateGroupModal = val)}
+            width="80%"
+            top="5vh"
+            lockScroll={false}
+            onClose={closeCreateGroupModal}
+            class="create-group-modal"
+            zIndex={3000}
+          >
+            <CreateGroupPage isModal={true} onGroupCreated={handleGroupCreated} />
           </ElDialog>
         </div>
       )

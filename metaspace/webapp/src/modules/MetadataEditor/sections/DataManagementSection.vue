@@ -252,6 +252,8 @@ export default defineComponent({
         groupId = value
       }
 
+      console.log(groupId, showFindGroupDialog.value)
+
       emit('change', { field: 'groupId', val: groupId })
       emit('change', { field: 'principalInvestigator', val: principalInvestigator })
     }

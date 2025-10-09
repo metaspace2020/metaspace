@@ -1,5 +1,12 @@
 <template>
-  <el-dialog :visible="visible" class="find-group-dialog" :lock-scroll="false" @close="handleClose">
+  <el-dialog
+    class="find-group-dialog"
+    :model-value="visible"
+    append-to-body
+    title="Create project"
+    :lock-scroll="false"
+    @close="handleClose"
+  >
     <h2>Find a group</h2>
     <p>
       If you are not member of a group, you can request access here and your dataset will be automatically added to the
@@ -87,6 +94,7 @@ export default defineComponent({
     watch(
       () => props.visible,
       () => {
+        console.log(props.visible)
         if (props.visible) {
           // Refresh the data when the dialog becomes visible
           refetch()

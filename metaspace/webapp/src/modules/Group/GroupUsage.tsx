@@ -1,7 +1,7 @@
 import { computed, defineComponent, inject, ref, watch } from 'vue'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { useRouter } from 'vue-router'
-import { getActiveGroupSubscriptionQuery } from '../../api/subscription'
+import { cancelSubscriptionMutation, getActiveGroupSubscriptionQuery } from '../../api/subscription'
 import { ApiUsage, getApiUsagesQuery } from '../../api/plan'
 import GroupQuota from './GroupQuota'
 import { format } from 'date-fns'
@@ -9,7 +9,8 @@ import { Subscription, updateSubscriptionMutation } from '../../api/subscription
 import { PlanRule } from '../../api/plan'
 import RouterLink from '../../components/RouterLink'
 import './GroupUsage.scss'
-import { ElSwitch } from '../../lib/element-plus'
+import { ElMessage, ElSwitch } from '../../lib/element-plus'
+import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 
 export default defineComponent({
   name: 'GroupsListPage',
@@ -22,14 +23,16 @@ export default defineComponent({
   setup: function (props) {
     const apolloClient = inject(DefaultApolloClient)
     const router = useRouter()
-    const { result: activeGroupSubscriptionResult, loading: subscriptionLoading } = useQuery<any>(
-      getActiveGroupSubscriptionQuery,
-      { groupId: props.groupId },
-      { fetchPolicy: 'network-only' }
-    )
+    const {
+      result: activeGroupSubscriptionResult,
+      loading: subscriptionLoading,
+      refetch: refetchActiveGroupSubscription,
+    } = useQuery<any>(getActiveGroupSubscriptionQuery, { groupId: props.groupId }, { fetchPolicy: 'network-only' })
     const activeGroupSubscription = computed(() =>
       activeGroupSubscriptionResult.value != null ? activeGroupSubscriptionResult.value.activeGroupSubscription : null
     )
+    const { result: currentUserResult } = useQuery<CurrentUserRoleResult | any>(currentUserRoleQuery)
+    const currentUser = computed(() => (currentUserResult.value != null ? currentUserResult.value.currentUser : null))
 
     const isAutoRenew = ref<boolean>(false)
     const updatingAutoRenew = ref<boolean>(false)
@@ -70,6 +73,26 @@ export default defineComponent({
       { fetchPolicy: 'network-only' }
     )
     const allApiUsages = computed(() => (allApiUsagesResult.value != null ? allApiUsagesResult.value.allApiUsages : []))
+
+    const handleCancelSubscription = async () => {
+      const subscription = activeGroupSubscription.value as Subscription | null
+      if (!subscription || !apolloClient) return
+
+      try {
+        await apolloClient.mutate({
+          mutation: cancelSubscriptionMutation,
+          variables: { id: subscription.id },
+        })
+        if (currentUser.value?.role === 'admin') {
+          ElMessage.success('Subscription cancelled successfully!')
+        } else {
+          ElMessage.success('Subscription request sent to admin for cancellation!')
+        }
+        await refetchActiveGroupSubscription()
+      } catch (error: any) {
+        ElMessage.error(error?.message)
+      }
+    }
 
     const formatDate = (dateString: string) => {
       try {
@@ -507,6 +530,14 @@ export default defineComponent({
                         </el-col>
                       )}
                     </el-row>
+                  </div>
+
+                  {/* Cancel Subscription */}
+                  <div class="section">
+                    <h3 class="section-title">Cancel subscription</h3>
+                    <el-button type="danger" size="large" onClick={handleCancelSubscription}>
+                      Cancel subscription
+                    </el-button>
                   </div>
                 </div>
               ),
