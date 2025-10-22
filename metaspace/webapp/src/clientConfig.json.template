@@ -13,6 +13,6 @@
   },
 
   "metadataTypes": {{ sm_webapp_metadata_types | to_json }},
-
+  "appointment_url": "{{ sm_webapp_appointment_url }}",
   "features": {{ sm_webapp_features | to_json }}
 }

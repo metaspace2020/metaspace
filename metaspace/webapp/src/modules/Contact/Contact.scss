@@ -1,0 +1,12 @@
+.contact-page {
+  padding-top: 0px !important;
+  
+  .header {
+    @apply  text-white;
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0F87EF;
+  }
+}

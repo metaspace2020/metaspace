@@ -232,3 +232,9 @@ export const countUsersQuery = gql`
     countUsers
   }
 `
+
+export const sendContactMessageMutation = gql`
+  mutation ($email: String!, $name: String!, $category: String!, $message: String!) {
+    sendContactMessage(email: $email, name: $name, category: $category, message: $message)
+  }
+`

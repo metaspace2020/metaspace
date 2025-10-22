@@ -75,6 +75,10 @@ config.aws = {
 };
 
 config.features = {{ sm_graphql_features | to_json }};
+config.contact = {};
+config.contact.sci_email = "{{ sm_graphql_contact_sci_email }}";
+config.contact.tech_email = "{{ sm_graphql_contact_tech_email }}";
+config.contact.email = "{{ sm_graphql_contact_email }}";
 
 config.metadataLookups = {{ sm_graphql_metadata_lookups | default({}) | to_json }};
 
