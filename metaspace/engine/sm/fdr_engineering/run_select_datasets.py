@@ -265,7 +265,7 @@ random_sample['include_in_recal'] = random_sample.index.isin(random_subsample.in
 random_sample['include_in_pilot'] = random_sample.index.isin(random_subsubsample.index)
 random_sample.to_csv('ml_scoring/datasets.csv', index=False)
 #%%  Make a link to view the datasets online
-print('https://metaspace2020.eu/datasets?ds=' + ','.join(random_subsubsample.ds_id))
+print('https://metaspace2020.org/datasets?ds=' + ','.join(random_subsubsample.ds_id))
 #%% Plot distributions of datasets before/after sampling
 cols = [
     ('group', 8),

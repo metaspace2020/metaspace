@@ -511,7 +511,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
               <!--v-if--><span class=\\"\\"> Request access </span>
             </button></div>
           <div class=\\"el-row\\">
-            <p><b>Can't find your group?</b> <a href=\\"mailto:contact@metaspace2020.eu\\">Contact us</a> to get your team started, or <a href=\\"#\\" style=\\"cursor: pointer;\\">fill in your Principal Investigator</a> instead. </p>
+            <p><b>Can't find your group?</b> <a href=\\"mailto:contact@metaspace2020.org\\">Contact us</a> to get your team started, or <a href=\\"#\\" style=\\"cursor: pointer;\\">fill in your Principal Investigator</a> instead. </p>
           </div>
         </div>
         <div data-v-21d0472c=\\"\\" class=\\"mock-el-dialog dialog\\" model-value=\\"false\\" append-to-body=\\"\\" title=\\"Create project\\" lock-scroll=\\"false\\">
@@ -973,7 +973,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
     </div>
     <div class=\\"el-row\\" style=\\"margin-left: -4px; margin-right: -4px;\\">
       <div class=\\"el-col el-col-8 is-guttered\\" style=\\"padding-right: 4px; padding-left: 4px;\\">
-        <div class=\\"el-form-item el-form-item--default asterisk-left md-form-field\\" min=\\"0.1\\" step=\\"1\\" max=\\"50\\"><label id=\\"el-id-replaced\\" for=\\"el-id-replaced\\" class=\\"el-form-item__label\\"><span class=\\"field-label flex items-center\\"><span>m/z tolerance (ppm)</span><span style=\\"color: red;\\">*</span>
+        <div class=\\"el-form-item el-form-item--default asterisk-left md-form-field\\" min=\\"0.1\\" step=\\"1\\" max=\\"15\\"><label id=\\"el-id-replaced\\" for=\\"el-id-replaced\\" class=\\"el-form-item__label\\"><span class=\\"field-label flex items-center\\"><span>m/z tolerance (ppm)</span><span style=\\"color: red;\\">*</span>
             <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\">
               <div style=\\"max-width: 500px;\\">
                 <p> For mass resolving power below 70K, we recommend using higher m/z tolerance of 5-10 ppm. Please keep in mind that increasing tolerance leads to increased ambiguity, often lower numbers of annotations at fixed FDR, and increased numbers of isobaric annotations. </p>
@@ -990,7 +990,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                 <!--v-if-->
                 <div class=\\"el-input__wrapper\\" tabindex=\\"-1\\">
                   <!-- prefix slot -->
-                  <!--v-if--><input class=\\"el-input__inner\\" step=\\"1\\" max=\\"50\\" min=\\"0.1\\" type=\\"number\\" autocomplete=\\"off\\" tabindex=\\"0\\" role=\\"spinbutton\\" aria-valuemax=\\"50\\" aria-valuemin=\\"0.1\\" aria-valuenow=\\"3\\" aria-disabled=\\"false\\" id=\\"el-id-replaced\\"><!-- suffix slot -->
+                  <!--v-if--><input class=\\"el-input__inner\\" step=\\"1\\" max=\\"15\\" min=\\"0.1\\" type=\\"number\\" autocomplete=\\"off\\" tabindex=\\"0\\" role=\\"spinbutton\\" aria-valuemax=\\"15\\" aria-valuemin=\\"0.1\\" aria-valuenow=\\"3\\" aria-disabled=\\"false\\" id=\\"el-id-replaced\\"><!-- suffix slot -->
                   <!--v-if-->
                 </div><!-- append slot -->
                 <!--v-if-->

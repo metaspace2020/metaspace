@@ -205,7 +205,7 @@ export default defineComponent({
             if (newFile.data.size > maxSize * GB) {
               ElMessageBox.alert(
                 `Files with .ibd extension must be smaller than ${maxSize}GB.
-<a target="_blank" href="mailto:contact@metaspace2020.eu">Contact us</a> if you need to upload larger files.`,
+<a target="_blank" href="mailto:contact@metaspace2020.org">Contact us</a> if you need to upload larger files.`,
                 'File too large',
                 {
                   dangerouslyUseHTMLString: true,
@@ -406,7 +406,7 @@ export default defineComponent({
             message:
               'There was an unexpected problem submitting the dataset. Please refresh the page and try again. ' +
               'If this problem persists, please contact us at ' +
-              '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
+              '<a href="mailto:contact@metaspace2020.org">contact@metaspace2020.org</a>',
             dangerouslyUseHTMLString: true,
             type: 'error',
             duration: 0,

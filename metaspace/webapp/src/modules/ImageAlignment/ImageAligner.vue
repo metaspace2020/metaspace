@@ -49,7 +49,7 @@
       :ion-image-transform="ionImageTransform"
       :normalization-data="normalizationData"
       opacity-mode="linear"
-      @dblclick="onDoubleClick"
+      @dblclick.prevent="throttledDoubleClick"
       @mousedown="onImageMouseDown"
       @contextmenu="onImageRightMouseDown"
       @wheel="onWheel"
@@ -62,6 +62,7 @@
 import { defineComponent, ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick, toRefs } from 'vue'
 import ImageLoader from '../../components/ImageLoader.vue'
 import { scrollDistance } from '../../lib/util'
+import { throttle } from 'lodash'
 
 export default defineComponent({
   name: 'ImageAligner',
@@ -493,6 +494,7 @@ export default defineComponent({
       onImageMouseDown,
       onImageRightMouseDown,
       onDoubleClick,
+      throttledDoubleClick: throttle(onDoubleClick, 500, { trailing: false }),
       reset,
       rotationMatrix,
     }

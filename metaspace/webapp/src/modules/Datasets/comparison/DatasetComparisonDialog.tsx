@@ -1,6 +1,6 @@
 import { computed, defineComponent, reactive, watchEffect, ref } from 'vue'
 import { Workflow, WorkflowStep } from '../../../components/Workflow'
-import { ElSelect, ElOption, ElInputNumber, ElButton, ElDialog } from '../../../lib/element-plus'
+import { ElSelect, ElOption, ElInputNumber, ElButton, ElDialog, ElTooltip } from '../../../lib/element-plus'
 import { ErrorLabelText } from '../../../components/Form'
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import { DatasetDetailItem, datasetListItemsQuery } from '../../../api/dataset'
@@ -262,7 +262,11 @@ export const DatasetComparisonDialog = defineComponent({
                   onChange={handleDatasetSelection}
                 >
                   {datasets.map((ds) => {
-                    return <ElOption class="w-full ds-comparison-option" key={ds.id} label={ds.name} value={ds.id} />
+                    return (
+                      <ElTooltip key={ds.id} content={ds.name} placement="top-start" showAfter={500}>
+                        <ElOption class="w-full ds-comparison-option" label={ds.name} value={ds.id} />
+                      </ElTooltip>
+                    )
                   })}
                 </ElSelect>
                 <ErrorLabelText
@@ -395,13 +399,14 @@ export const DatasetComparisonDialog = defineComponent({
                                     .filter((ds) => state.selectedDatasetIds.includes(ds.id))
                                     .map((ds) => {
                                       return (
-                                        <ElOption
-                                          class="dataset-cell-option"
-                                          disabled={Object.values(state.arrangement).includes(ds.id)}
-                                          key={ds.id}
-                                          label={ds.name}
-                                          value={ds.id}
-                                        />
+                                        <ElTooltip key={ds.id} content={ds.name} placement="top-start" showAfter={500}>
+                                          <ElOption
+                                            class="dataset-cell-option"
+                                            disabled={Object.values(state.arrangement).includes(ds.id)}
+                                            label={ds.name}
+                                            value={ds.id}
+                                          />
+                                        </ElTooltip>
                                       )
                                     })}
                               </ElSelect>

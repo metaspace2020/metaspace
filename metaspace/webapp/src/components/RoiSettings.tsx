@@ -14,6 +14,7 @@ import StatefulIcon from '../components/StatefulIcon.vue'
 import reportError from '../lib/reportError'
 import { defineAsyncComponent } from 'vue'
 import { Loading } from '@element-plus/icons-vue'
+import { formatCsvTextArray } from '../lib/formatCsvRow'
 
 const VisibleIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-view-visible.svg'))
 
@@ -169,8 +170,8 @@ export default defineComponent({
       const [isotopeImage] = annotation.isotopeImages
       const ionImagePng = await loadPngFromUrl(isotopeImage.url)
       const molFormula: any = annotation.ionFormula
-      const molName: any = annotation.possibleCompounds.map((m: any) => m.name).join(',')
-      const molIds: any = annotation.possibleCompounds.map((m: any) => m.information[0].databaseId).join(',')
+      const molName: any = formatCsvTextArray(annotation.possibleCompounds.map((m: any) => m.name))
+      const molIds: any = formatCsvTextArray(annotation.possibleCompounds.map((m: any) => m.information[0].databaseId))
       const adduct: any = annotation.adduct
       const mz: any = annotation.mz
       const finalImage: any = ionImage(

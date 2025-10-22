@@ -32,6 +32,7 @@ from sm.engine.annotation_lithops.store_images import store_images_to_s3
 from sm.engine.config import SMConfig
 from sm.engine.db import DB
 from sm.engine.ds_config import DSConfig
+from sm.engine.errors import LimitError
 
 
 logger = logging.getLogger('annotation-pipeline')
@@ -102,6 +103,22 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
         self.load_ds(use_cache=use_cache)
         if debug_validate:
             self.validate_load_ds()
+
+        # Check pixel limits
+        nz_pixel_limit = 500000
+        pixel_limit = 1000000
+        nz_pixels = self.imzml_reader.n_spectra
+        n_pixels = self.imzml_reader.h * self.imzml_reader.w
+
+        if nz_pixels > nz_pixel_limit:
+            raise LimitError(
+                f'Pixel limit ({nz_pixel_limit}) exceeded. Contact contact@metaspace2020.org.'
+            )
+
+        if n_pixels > pixel_limit:
+            raise LimitError(
+                f'Pixel limit ({pixel_limit}) exceeded. Contact contact@metaspace2020.org.'
+            )
 
         self.segment_centroids(use_cache=use_cache)
         if debug_validate:

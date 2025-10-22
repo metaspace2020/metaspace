@@ -12,6 +12,8 @@ from sm.engine.errors import ImzMLError, IbdError
 
 from sm.engine.util import find_file_by_ext
 
+# from sm.engine.utils import imzml_util
+
 if TYPE_CHECKING:
     from lithops import Storage
     from lithops.storage.utils import CloudObject
@@ -121,6 +123,10 @@ class FSImzMLReader(ImzMLReader):
                 parse_lib='ElementTree',
                 include_spectra_metadata=METADATA_FIELDS,
             )
+            # if imzml_util.check_if_waters(self._imzml_parser):
+            #    raise ImzMLError("Waters instrument detected - this format is not supported")
+        except ImzMLError:
+            raise
         except Exception as e:
             raise ImzMLError(format_exc()) from e
 
@@ -145,6 +151,10 @@ class LithopsImzMLReader(ImzMLReader):
                 parse_lib='ElementTree',
                 include_spectra_metadata=METADATA_FIELDS,
             )
+            # if imzml_util.check_if_waters(imzml_parser):
+            #    raise ImzMLError("Waters instrument detected - this format is not supported")
+        except ImzMLError:
+            raise
         except Exception as e:
             raise ImzMLError(format_exc()) from e
 

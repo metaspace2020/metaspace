@@ -24,7 +24,7 @@
       </div>
       <p>
         <b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them deleted later by
-        emailing the <a target="_blank" href="mailto:contact@metaspace2020.eu">METASPACE administrators</a>.
+        emailing the <a target="_blank" href="mailto:contact@metaspace2020.org">METASPACE administrators</a>.
       </p>
     </el-dialog>
     <div v-loading="!isLoaded" class="user-edit-page">

@@ -34,7 +34,7 @@ nginx_servers:
     params:
       - server_name annotate.metasp.eu annotate.metaspace2020.eu;
       - listen 80;
-      - rewrite ^/(.*)$ http://metaspace2020.eu/$1 permanent;
+      - rewrite ^/(.*)$ http://metaspace2020.org/$1 permanent;
 
   - desc: Endpoint for Web app, GraphQL, GraphQL WebSocket, ion images, mol images, and MolDB
     params:

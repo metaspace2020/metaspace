@@ -5,19 +5,17 @@ distinguished_name = req_distinguished_name
 req_extensions = req_ext
 
 [req_distinguished_name]
-C = DE
-ST = Baden-Wuerttemberg
-L = Heidelberg
-O = European Molecular Biology Laboratory
-CN = metaspace2020.eu
+C  = US
+ST = CA
+L  = San Diego
+O  = UCSD
+OU = Alexandrov Team
+CN = metaspace2020.org
 
 [ req_ext ]
 subjectAltName = @alt_names
 
 [ alt_names ]
-DNS.1 = dev.metaspace2020.eu
-DNS.2 = www.metaspace2020.eu
-DNS.3 = demo.metaspace2020.eu
-DNS.4 = beta.metaspace2020.eu
-DNS.5 = staging.metaspace2020.eu
-DNS.6 = elk.metaspace2020.eu
+DNS.1  = metaspace2020.org
+DNS.2  = www.metaspace2020.org
+DNS.3  = staging.metaspace2020.org

@@ -6,7 +6,8 @@
       <li>
         <p>
           METASPACE is an open cloud software platform for imaging mass spectrometry data hosted at
-          <a href="https://metaspace2020.eu" rel="noopener noreferrer nofollow"> https://metaspace2020.eu<!-- --> </a>.
+          <a href="https://metaspace2020.org" rel="noopener noreferrer nofollow"> https://metaspace2020.org<!-- --> </a
+          >.
         </p>
       </li>
       <li>
@@ -56,8 +57,8 @@
         <p>
           The submitter can request the deletion of their dataset or results at any point in time either by using
           capacities provided by the METASPACE team or by contacting us at
-          <a href="mailto:contact@metaspace2020.eu" rel="noopener noreferrer nofollow">
-            contact@metaspace2020.eu<!-- --> </a
+          <a href="mailto:contact@metaspace2020.org" rel="noopener noreferrer nofollow">
+            contact@metaspace2020.org<!-- --> </a
           >, unless there is a special agreement overriding it.
         </p>
       </li>

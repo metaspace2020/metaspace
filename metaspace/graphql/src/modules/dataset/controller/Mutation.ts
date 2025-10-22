@@ -327,6 +327,11 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
   await saveDataset(ctx.entityManager, saveDsArgs, !datasetIdWasSpecified)
 
   const url = `/v1/datasets/${datasetId}/add`
+
+  if (input?.ppm && input.ppm > 15) {
+    input.ppm = 15
+  }
+
   await smApiDatasetRequest(url, {
     doc: { ...input, metadata, size_hash: input.sizeHashJson ? JSON.parse(input.sizeHashJson) : undefined },
     priority: priority,
@@ -388,6 +393,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       if (!skipValidation || !ctx.isAdmin) {
         validateMetadata(metadata)
       }
+    }
+
+    if (update?.ppm && update.ppm > 15) {
+      update.ppm = 15
     }
 
     let description : string | null | undefined = update.description === null ? null : undefined

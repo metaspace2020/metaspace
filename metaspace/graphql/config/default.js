@@ -122,4 +122,10 @@ module.exports = {
     ],
     defaultColocalizationAlgo: 'median_thresholded_cosine',
   },
+
+  contact: {
+    sci_email: 'contact@metaspace2020.org',
+    tech_email: 'contact@metaspace2020.org',
+    email: 'contact@metaspace2020.org',
+  },
 }

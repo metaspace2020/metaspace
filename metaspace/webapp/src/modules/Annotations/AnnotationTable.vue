@@ -662,7 +662,19 @@ export default defineComponent({
     }
 
     const tableLoading = computed(() => state.loading)
-    const isLoading = computed(() => store.state.tableIsLoading)
+    const isLoading = computed(() => {
+      // If this is the initial load and we have no data yet, show loading
+      if (state.initialLoading) {
+        return true
+      }
+
+      // If annotations are already loaded but no queries are running, don't show loading
+      if (state.annotations.length > 0 && !annotationsLoading.value) {
+        return false
+      }
+
+      return store.state.tableIsLoading || annotationsLoading.value || state.loading
+    })
     const isNormalized = computed(() => store.getters.settings?.annotationView?.normalization)
     const filter = computed(() => store.getters.filter)
     const numberOfPages = computed(() => Math.ceil(state.totalCount / state.recordsPerPage))
@@ -738,7 +750,92 @@ export default defineComponent({
       }
     })
 
-    const queryOptions = reactive({ enabled: !store.state.filterListsLoading })
+    const queryOptions = reactive({
+      enabled: !store.state.filterListsLoading,
+      fetchPolicy: 'cache-first',
+    })
+
+    const { loading: annotationsLoading, onResult: onAnnotationsResult } = useQuery(
+      annotationListQuery,
+      queryVariables,
+      queryOptions
+    )
+
+    const processAnnotationsResult = async (result) => {
+      state.loading = true // Ensure loading is set while processing
+      try {
+        if (!result?.data) {
+          state.loading = false
+          return
+        }
+
+        state.annotations = result.data.allAnnotations || []
+        state.totalCount = result.data.countAnnotations || 0
+
+        await nextTick()
+
+        // Apply the stored sort order programmatically after data is loaded
+        applySortToTable()
+
+        if (isSnapshot() && !state.loadedSnapshotAnnotations) {
+          state.nextCurrentRowIndex = -1
+
+          state.nextCurrentRowIndex = result.data.allAnnotations?.findIndex((annotation) =>
+            store.state.snapshotAnnotationIds.includes(annotation.id)
+          )
+
+          if (Array.isArray(store.state.snapshotAnnotationIds)) {
+            if (store.state.snapshotAnnotationIds.length > 1) {
+              // adds annotationFilter if multi mol
+              updateFilter({ annotationIds: store.state.snapshotAnnotationIds })
+            } else {
+              // dont display filter if less than one annotation
+              setTimeout(() => store.commit('removeFilter', 'annotationIds'), 500)
+            }
+
+            // if selected annotation is over page limit, set search to next page
+            if (
+              state.nextCurrentRowIndex === -1 &&
+              result.data.allAnnotations.length > 0 &&
+              store.state.snapshotAnnotationIds.length < 2
+            ) {
+              setCurrentPage(currentPage.value + 1)
+              state.loading = false
+              return
+            }
+
+            state.loadedSnapshotAnnotations = state.nextCurrentRowIndex !== -1 || result.data.allAnnotations.length == 0
+          }
+        }
+
+        if (state.nextCurrentRowIndex !== null && state.nextCurrentRowIndex !== -1) {
+          setCurrentRow(state.nextCurrentRowIndex)
+          state.nextCurrentRowIndex = null
+        } else if (state.nextCurrentRowIndex !== -1) {
+          const curRow = getCurrentRow()
+          if (!curRow?.value) {
+            setCurrentRow(currentRowIndex?.value)
+          }
+        }
+
+        // Move focus to the table so that keyboard navigation works, except when focus is on an input element
+        const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
+        if (table?.value && shouldMoveFocus) {
+          table?.value?.$el.focus()
+        }
+
+        // load ROIs from db
+        loadRois(uniqBy(result.data.allAnnotations, 'dataset.id').map((annotation) => annotation?.dataset.id))
+
+        state.initialLoading = false
+      } catch (e) {
+        console.error('Error processing annotations result:', e)
+      } finally {
+        state.loading = false
+      }
+    }
+
+    onAnnotationsResult(processAnnotationsResult)
 
     const updateColocSort = () => {
       // sort table to update selected sort ui when coloc filter applied from annotation view
@@ -812,7 +909,24 @@ export default defineComponent({
       if (pageSizes.length > 0) {
         state.recordsPerPage = pageSizes[0]
       }
-      await executeQuery()
+
+      // Set loading initially, then enable query execution
+      state.loading = true
+      queryOptions.enabled = true
+
+      // In case no query is triggered, ensure loading is set back to false
+      setTimeout(() => {
+        if (state.loading && !annotationsLoading.value) {
+          state.loading = false
+        }
+      }, 1000)
+
+      // Safety timeout to clear loading after a longer period
+      setTimeout(() => {
+        state.loading = false
+        state.initialLoading = false
+      }, 5000)
+
       updateColumns()
       updateDatasetColumns()
       updateColocSort()
@@ -822,72 +936,19 @@ export default defineComponent({
       initialize()
     })
 
-    const executeQuery = async () => {
-      state.loading = true
-      try {
-        const result = await apolloClient.query({
-          query: annotationListQuery,
-          variables: queryVariables?.value,
-          fetchPolicy: 'cache-first',
-          throttle: 200,
-        })
-        const { data } = result
-        if (!data) {
-          return
-        }
-        state.annotations = data?.allAnnotations || []
-        state.totalCount = data?.countAnnotations || 0
-
-        await nextTick()
-
-        if (isSnapshot() && !state.loadedSnapshotAnnotations) {
-          state.nextCurrentRowIndex = -1
-          if (Array.isArray(store.state.snapshotAnnotationIds)) {
-            if (store.state.snapshotAnnotationIds.length > 1) {
-              // adds annotationFilter if multi mol
-              updateFilter({ annotationIds: store.state.snapshotAnnotationIds })
-            } else {
-              // dont display filter if less than one annotation
-              setTimeout(() => store.commit('removeFilter', 'annotationIds'), 500)
-            }
-            state.nextCurrentRowIndex = state.annotations?.findIndex((annotation) =>
-              store.state.snapshotAnnotationIds.includes(annotation.id)
-            )
-            state.loadedSnapshotAnnotations = true
-          }
-        }
-
-        if (state.nextCurrentRowIndex !== null && state.nextCurrentRowIndex !== -1) {
-          setCurrentRow(state.nextCurrentRowIndex)
-          state.nextCurrentRowIndex = null
-        } else if (state.nextCurrentRowIndex !== -1) {
-          const curRow = getCurrentRow()
-          if (!curRow?.value) {
-            setCurrentRow(currentRowIndex?.value)
-          }
-        }
-        // Move focus to the table so that keyboard navigation works, except when focus is on an input element
-        const shouldMoveFocus = document.activeElement?.closest('input,select,textarea') == null
-        if (table?.value && shouldMoveFocus) {
-          table?.value?.$el.focus()
-        }
-
-        // load ROIs from db
-        loadRois(uniqBy(data.allAnnotations, 'dataset.id').map((annotation) => annotation?.dataset.id))
-
-        state.initialLoading = false
-      } catch (e) {
-        console.error(e)
-      } finally {
-        state.loading = false
+    // Set up table sorting after the component is mounted and data is loaded
+    const applySortToTable = () => {
+      if (table.value && typeof table.value.sort === 'function' && orderBy.value) {
+        const sortProp = SORT_ORDER_TO_COLUMN[orderBy.value] || 'msmScore'
+        const sortOrder = sortingOrder.value?.toLowerCase() || 'descending'
+        table.value.sort(sortProp, sortOrder)
       }
     }
 
-    const hidden = (columnLabel) => {
-      return state.columns.findIndex((col) => col.src === columnLabel) === -1 || !showCustomCols?.value
-        ? props.hideColumns.indexOf(columnLabel) >= 0 || !state.columns.find((col) => col.src === columnLabel)?.selected
-        : !state.columns.find((col) => col.src === columnLabel)?.selected
-    }
+    // Watch for changes to orderBy or sortingOrder and update table sorting
+    watch([orderBy, sortingOrder], () => {
+      nextTick(() => applySortToTable())
+    })
 
     const loadRois = (datasetIdsRoi) => {
       datasetIdsRoi.map(async (datasetId) => {
@@ -1091,7 +1152,7 @@ export default defineComponent({
     const onCurrentRowChange = (row) => {
       // do not set initial row if loading from a snapshot (permalink)
       if (isSnapshot() && !state.loadedSnapshotAnnotations) {
-        return null
+        // return null
       }
 
       store.commit('setAnnotation', row)
@@ -1136,8 +1197,9 @@ export default defineComponent({
         const { isotopeImages, ionFormula: molFormula, possibleCompounds, adduct, mz, dataset } = annotation
         const isotopeImage = isotopeImages[0]
         const ionImagePng = await loadPngFromUrl(isotopeImage.url)
-        const molName = possibleCompounds.map((m) => m.name).join(',')
-        const molIds = possibleCompounds.map((m) => m.information[0].databaseId).join(',')
+
+        const molName = formatCsvTextArray(possibleCompounds.map((m) => m?.name || ''))
+        const molIds = formatCsvTextArray(possibleCompounds.map((m) => m.information[0].databaseId))
         const finalImage = getIonImage(ionImagePng, isotopeImages[0], undefined, undefined, normalizationData)
         const row = [molFormula, adduct, mz, `"${molName}"`, `"${molIds}"`]
         const { width, height, intensityValues } = finalImage
@@ -1169,10 +1231,12 @@ export default defineComponent({
       let fileName
       let rows = ''
 
+      // For exports, we'll keep using apolloClient.query directly since this is a one-time operation
       while (state.isExporting && offset < totalCount) {
         const resp = await apolloClient.query({
           query: annotationListQuery,
           variables: { ...queryVariablesAux, limit: chunkSize, offset },
+          fetchPolicy: 'network-only',
         })
         totalCount = resp.data.countAnnotations
         for (let i = 0; i < resp.data.allAnnotations.length; i++) {
@@ -1262,86 +1326,121 @@ export default defineComponent({
       csv += formatCsvRow(columns)
 
       function databaseId(compound) {
-        return compound.information[0].databaseId
+        return compound?.information?.[0]?.databaseId || ''
       }
 
       function formatRow(row) {
-        const {
-          dataset,
-          sumFormula,
-          adduct,
-          chemMod,
-          neutralLoss,
-          ion,
-          mz,
-          msmScore,
-          fdrLevel,
-          rhoSpatial,
-          rhoSpectral,
-          rhoChaos,
-          possibleCompounds,
-          isotopeImages,
-          isobars,
-          offSample,
-          offSampleProb,
-          colocalizationCoeff,
-        } = row
-        const cells = [
-          dataset.group ? dataset.group.name : '',
-          dataset.name,
-          dataset.id,
-          sumFormula,
-          'M' + adduct,
-          ...(includeChemMods ? [chemMod] : []),
-          ...(includeNeutralLosses ? [neutralLoss] : []),
-          ion,
-          mz,
-          msmScore,
-          fdrLevel,
-          rhoSpatial,
-          rhoSpectral,
-          rhoChaos,
-          formatCsvTextArray(possibleCompounds.map((m) => m.name)),
-          formatCsvTextArray(possibleCompounds.map(databaseId)),
-          isotopeImages[0] && isotopeImages[0].minIntensity,
-          isotopeImages[0] && isotopeImages[0].maxIntensity,
-          isotopeImages[0] && isotopeImages[0].totalIntensity,
-          possibleCompounds.length,
-          isobars.length,
-        ]
-        if (includeColoc) {
-          cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff)
-        }
-        if (includeOffSample) {
-          cells.push(offSample, offSampleProb)
-        }
-        if (includeIsobars) {
-          cells.push(formatCsvTextArray(isobars.map((isobar) => isobar.ion)))
-        }
+        try {
+          // Create a plain object to avoid GraphQL proxy issues
+          const plainRow = JSON.parse(JSON.stringify(row))
 
-        return formatCsvRow(cells)
+          const {
+            dataset = {},
+            sumFormula = '',
+            adduct = '',
+            chemMod = '',
+            neutralLoss = '',
+            ion = '',
+            mz = '',
+            msmScore = '',
+            fdrLevel = '',
+            rhoSpatial = '',
+            rhoSpectral = '',
+            rhoChaos = '',
+            possibleCompounds = [],
+            isotopeImages = [],
+            isobars = [],
+            offSample = false,
+            offSampleProb = '',
+            colocalizationCoeff = null,
+          } = plainRow
+
+          const cells = [
+            dataset.group?.name || '',
+            dataset.name || '',
+            dataset.id || '',
+            sumFormula,
+            'M' + adduct,
+            ...(includeChemMods ? [chemMod] : []),
+            ...(includeNeutralLosses ? [neutralLoss] : []),
+            ion,
+            mz,
+            msmScore,
+            fdrLevel,
+            rhoSpatial,
+            rhoSpectral,
+            rhoChaos,
+            formatCsvTextArray(possibleCompounds.map((m) => m?.name || '')),
+            formatCsvTextArray(possibleCompounds.map(databaseId)),
+            isotopeImages[0]?.minIntensity ?? '',
+            isotopeImages[0]?.maxIntensity ?? '',
+            isotopeImages[0]?.totalIntensity ?? '',
+            possibleCompounds.length,
+            isobars.length,
+          ]
+
+          if (includeColoc) {
+            // Safe string comparison
+            const colocalizedWithStr = String(colocalizedWith || '')
+            const ionStr = String(ion)
+            cells.push(colocalizedWithStr === ionStr ? 'Reference annotation' : colocalizationCoeff ?? '')
+          }
+
+          if (includeOffSample) {
+            cells.push(offSample, offSampleProb)
+          }
+
+          if (includeIsobars) {
+            cells.push(formatCsvTextArray(isobars.map((isobar) => isobar?.ion || '')))
+          }
+
+          return formatCsvRow(cells)
+        } catch (err) {
+          console.warn('Error formatting row:', err)
+          return formatCsvRow(['Error formatting row'])
+        }
       }
 
       const queryVariablesAux = { ...queryVariables.value }
       let offset = 0
       state.isExporting = true
 
-      while (state.isExporting && offset < state.totalCount) {
-        const resp = await apolloClient.query({
-          query: tableExportQuery,
-          variables: { ...queryVariablesAux, limit: chunkSize, offset },
-        })
-        state.exportProgress = offset / state.totalCount
-        offset += chunkSize
-        csv += resp.data.annotations.map(formatRow).join('')
-      }
+      try {
+        // For exports, we'll keep using apolloClient.query directly since this is a one-time operation
+        while (state.isExporting && offset < state.totalCount) {
+          const resp = await apolloClient.query({
+            query: tableExportQuery,
+            variables: { ...queryVariablesAux, limit: chunkSize, offset },
+            fetchPolicy: 'no-cache',
+            errorPolicy: 'all', // Continue even if there are GraphQL errors
+          })
 
-      if (state.isExporting) {
+          state.exportProgress = offset / state.totalCount
+          offset += chunkSize
+
+          if (resp.data?.annotations) {
+            // Process annotations in smaller batches to avoid memory issues
+            const annotations = resp.data.annotations
+            for (let i = 0; i < annotations.length; i += 100) {
+              if (!state.isExporting) break
+
+              const batch = annotations.slice(i, i + 100)
+              csv += batch.map(formatRow).join('')
+            }
+          }
+        }
+
+        if (state.isExporting) {
+          state.isExporting = false
+          state.exportProgress = 0
+
+          const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
+          FileSaver.saveAs(blob, 'metaspace_annotations.csv')
+        }
+      } catch (error) {
+        console.error('Error during export:', error)
         state.isExporting = false
         state.exportProgress = 0
-
-        const blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' })
-        FileSaver.saveAs(blob, 'metaspace_annotations.csv')
       }
     }
 
@@ -1350,6 +1449,11 @@ export default defineComponent({
         state.nextCurrentRowIndex = 0
       }
       await store.commit('setCurrentPage', page)
+      // When page changes in snapshot mode, we need to ensure queryOptions is enabled
+      // to trigger a new query with the updated offset
+      if (isSnapshot() && !state.loadedSnapshotAnnotations) {
+        queryOptions.enabled = true
+      }
     }
 
     const handleColSelectorClick = (e) => {
@@ -1389,12 +1493,36 @@ export default defineComponent({
       }
     }
 
-    watch(tableLoading, (isLoading) => {
-      store.commit('updateAnnotationTableStatus', isLoading)
-    })
+    const hidden = (columnLabel) => {
+      return state.columns.findIndex((col) => col.src === columnLabel) === -1 || !showCustomCols?.value
+        ? props.hideColumns.indexOf(columnLabel) >= 0 || !state.columns.find((col) => col.src === columnLabel)?.selected
+        : !state.columns.find((col) => col.src === columnLabel)?.selected
+    }
 
-    // Watch for changes in query variables or options and re-execute query
-    watch([queryVariables, () => queryOptions.enabled, currentPage], executeQuery)
+    // Update queryOptions.enabled when relevant dependencies change
+    watch(
+      [() => store.state.filterListsLoading, () => queryVariables.value],
+      ([filterListsLoading]) => {
+        if (!filterListsLoading) {
+          // Enable query and start loading if we're not already loading data
+          if (!queryOptions.enabled) {
+            state.loading = true
+            queryOptions.enabled = true
+          }
+        } else {
+          queryOptions.enabled = false
+        }
+      },
+      { deep: true }
+    )
+
+    // Add a watch for annotationsLoading to handle the case when the query completes with no data
+    watch(annotationsLoading, (isLoading) => {
+      if (!isLoading && state.annotations.length === 0 && !state.initialLoading) {
+        // If loading finished but no annotations were found, ensure loading state is cleared
+        state.loading = false
+      }
+    })
 
     watch(
       () => route.query,
@@ -1414,6 +1542,10 @@ export default defineComponent({
         updateColumns()
       }
     )
+
+    watch(tableLoading, (isLoading) => {
+      store.commit('updateAnnotationTableStatus', isLoading)
+    })
 
     // Return the reactive properties and methods
     return {

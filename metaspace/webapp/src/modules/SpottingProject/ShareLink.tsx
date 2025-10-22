@@ -4,23 +4,6 @@ import FadeTransition from '../../components/FadeTransition'
 import RouterLink from '../../components/RouterLink'
 import { Share } from '@element-plus/icons-vue'
 
-interface ShareLinkProps {
-  name: string
-  params: any
-  query: any
-  viewId: string
-  nCols: number
-  nRows: number
-  settings: string
-  colormap: string
-  scaleType: string
-  scaleBarColor: string
-  sourceDsId: string
-  selectedAnnotation: number
-  lockedIntensityTemplate: string
-  globalLockedIntensities: [number | undefined, number | undefined]
-}
-
 export const ShareLink = defineComponent({
   name: 'ShareLink',
   props: {
@@ -39,7 +22,7 @@ export const ShareLink = defineComponent({
     lockedIntensityTemplate: { type: String },
     globalLockedIntensities: { type: Array },
   },
-  setup(props: ShareLinkProps) {
+  setup(props) {
     const getUrl = () => {
       return {
         name: props.name,
@@ -55,10 +38,13 @@ export const ShareLink = defineComponent({
         <ElPopover
           trigger="hover"
           placement="bottom"
+          popperStyle=""
+          popperClass=""
+          onUpdate:visible={() => {}}
           v-slots={{
             reference: () => (
               <div style={{ color: 'gray' }} class="h-6 w-6 flex items-center">
-                <ElIcon>
+                <ElIcon size={16} color="gray">
                   <Share />
                 </ElIcon>
               </div>
@@ -66,7 +52,7 @@ export const ShareLink = defineComponent({
             default: () => (
               <FadeTransition class="m-0 leading-5 text-center">
                 <div>
-                  <RouterLink newTab to={getUrl()} target="_blank">
+                  <RouterLink newTab to={getUrl()}>
                     Share this link
                   </RouterLink>
                   <span class="block text-xs tracking-wide">opens in a new window</span>

@@ -9,8 +9,8 @@
             </p>
             <p class="text-sm m-0">
               If this is a problem please contact us at
-              <a class="text-inherit font-medium" target="_blank" rel="noopener" href="mailto:contact@metaspace2020.eu"
-                >contact@metaspace2020.eu</a
+              <a class="text-inherit font-medium" target="_blank" rel="noopener" href="mailto:contact@metaspace2020.org"
+                >contact@metaspace2020.org</a
               >.
             </p>
             <p class="mb-0 mt-2">
@@ -228,7 +228,7 @@ export default defineComponent({
             message:
               'There was an unexpected problem submitting the dataset. Please refresh the page and try again.' +
               'If this problem persists, please contact us at ' +
-              '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
+              '<a href="mailto:contact@metaspace2020.org">contact@metaspace2020.org</a>',
             dangerouslyUseHTMLString: true,
             type: 'error',
             duration: 0,

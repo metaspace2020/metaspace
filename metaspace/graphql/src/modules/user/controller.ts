@@ -22,6 +22,7 @@ import { ProjectSourceRepository } from '../project/ProjectSourceRepository'
 import { getUserSourceById, resolveUserScopeRole } from './util/getUserSourceById'
 import * as moment from 'moment'
 import { getDeviceInfo, hashIp, performAction } from '../plan/util/canPerformAction'
+import { sendContactEmail } from '../auth/email'
 
 const assertCanEditUser = (user: ContextUser, userId: string) => {
   if (!user.id) {
@@ -342,6 +343,12 @@ export const Resolvers = {
       await resetUserApiKey(userId, removeKey)
 
       return await getUserSourceById(ctx, userId)
+    },
+
+    sendContactMessage(_: any, { email, name, category, message }: any, ctx: Context): boolean { // eslint-disable-line @typescript-eslint/no-unused-vars
+      logger.info(`Sending contact message from '${email}'...`)
+      sendContactEmail(email, name, category, message)
+      return true
     },
   },
 }

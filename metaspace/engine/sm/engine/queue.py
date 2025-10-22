@@ -40,7 +40,7 @@ class QueueConsumerAsync:
         self._qdesc = qdesc
         self._qname = self._qdesc['name']
         self._no_ack = False  # messages get redelivered with no_ack=False
-        self._heartbeat = 3 * 60 * 60  # 3h
+        self._heartbeat = 5 * 60 * 60  # 3h
         self._reopen_timeout = 2
 
         self._callback = callback
@@ -385,7 +385,7 @@ class QueueConsumer(Thread):
         """Create a new instance of the blocking consumer class"""
         super().__init__()
         self._config = config
-        self._heartbeat = 3 * 60 * 60  # 3h
+        self._heartbeat = 5 * 60 * 60  # 5h
         self._qdesc = qdesc
         self._qname = config.get('prefix', '') + self._qdesc['name']
         self._connection = None
@@ -474,11 +474,13 @@ class QueueConsumer(Thread):
         )
         self.logger.info(' [*] Waiting for messages...')
 
+        self._failed_attempts = 0
+
         while True:
             if self.stopped():
                 raise StopThread()
             self.get_message()
-            self._failed_attempts = 0
+
             sleep(self._poll_interval)
 
     def stop(self):

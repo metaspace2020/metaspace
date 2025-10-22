@@ -105,6 +105,11 @@ export interface Config {
     impersonation: boolean;
     imzmlDownload: boolean;
   };
+  contact: {
+    sci_email: string;
+    tech_email: string;
+    email: string;
+  };
   aws?: AWSConfig;
   s3?: S3.ClientConfiguration; // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property
   metadataLookups: {

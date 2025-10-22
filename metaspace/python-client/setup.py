@@ -17,7 +17,7 @@ setup(
     long_description_content_type="text/markdown",
     url='https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client',
     author='Alexandrov Team, EMBL',
-    author_email='contact@metaspace2020.eu',
+    author_email='contact@metaspace2020.org',
     packages=find_packages(exclude=['*tests*']),
     install_requires=[
         'matplotlib',

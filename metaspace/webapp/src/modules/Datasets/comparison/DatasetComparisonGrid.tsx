@@ -512,6 +512,9 @@ export const DatasetComparisonGrid = defineComponent({
                 onLockAllIntensities={() => {
                   emit('lockAllIntensities')
                 }}
+                onScaleChange={(index: number, key: string, intensity: any) => {
+                  emit('scaleChange', (dataset as any)?.id, index, key, intensity)
+                }}
                 colormap={props.colormap}
                 isNormalized={props.isNormalized}
                 normalizationData={props.normalizationData ? props.normalizationData[annData?.dataset?.id] : null}

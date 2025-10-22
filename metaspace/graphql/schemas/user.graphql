@@ -52,4 +52,5 @@ type Mutation {
   updateUser(userId: ID!, update: UpdateUserInput!): User!
   deleteUser(userId: ID!, deleteDatasets: Boolean!): Boolean
   resetUserApiKey(userId: ID!, removeKey: Boolean! = False): User!
+  sendContactMessage(email: String!, name: String!, category: String!, message: String!): Boolean!
 }

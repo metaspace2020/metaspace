@@ -202,7 +202,9 @@ export class ProjectSourceRepository {
     return (await queryBuilder.getRawMany()).map(fixDateFields)
   }
 
-  async countProjectsByQuery(user: ContextUser, query?: string): Promise<number> {
-    return await (await this.queryProjectsByTextSearch(user, query)).getCount()
+  async countProjectsByQuery(user: ContextUser, query?: string,
+    orderBy?: ProjectOrderBy, sortingOrder?: SortingOrder): Promise<number> {
+    const queryBuilder = await this.queryProjectsByTextSearch(user, query, orderBy, sortingOrder)
+    return await queryBuilder.getCount()
   }
 }

@@ -38,6 +38,7 @@ interface DatasetActionsDropdownProps {
   enrichmentActionLabel: string
   dataset: DatasetDetailItem
   currentUser: CurrentUserRoleResult
+  isPublishedOrUnderReview: boolean
 }
 
 interface DatasetActionsDropdownState {
@@ -60,6 +61,7 @@ export const DatasetActionsDropdown = defineComponent({
     reprocessActionLabel: { type: String, default: 'Reprocess data' },
     downloadActionLabel: { type: String, default: 'Download' },
     recaptchaToken: { type: String, default: () => '' },
+    isPublishedOrUnderReview: { type: Boolean, default: () => false },
     dataset: { type: Object as () => DatasetDetailItem, required: true },
     currentUser: { type: Object as () => CurrentUserRoleResult },
   },
@@ -145,7 +147,7 @@ export const DatasetActionsDropdown = defineComponent({
         router.replace('/datasets')
       } catch (err) {
         state.disabled = false
-        reportError(err, 'Deletion failed :( Please contact us at contact@metaspace2020.eu')
+        reportError(err, 'Deletion failed :( Please contact us at contact@metaspace2020.org')
       }
     }
 
@@ -368,6 +370,7 @@ export const DatasetActionsDropdown = defineComponent({
                     datasetId={id}
                     datasetName={name}
                     onClose={closeDownloadDialog}
+                    isPublishedOrUnderReview={props.isPublishedOrUnderReview}
                     isLogged={currentUser !== null}
                   />
                 )}

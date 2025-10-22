@@ -13,7 +13,7 @@ exports[`EditUserPage > should match snapshot 1`] = `
       </button><button data-v-608ec0a2=\\"\\" ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--danger\\" title=\\"Delete account\\">
         <!--v-if--><span class=\\"\\"> Delete account </span>
       </button></div>
-    <p data-v-608ec0a2=\\"\\"><b data-v-608ec0a2=\\"\\">Note:</b> if you choose not to delete the datasets now, you will still be able to have them deleted later by emailing the <a data-v-608ec0a2=\\"\\" target=\\"_blank\\" href=\\"mailto:contact@metaspace2020.eu\\">METASPACE administrators</a>. </p>
+    <p data-v-608ec0a2=\\"\\"><b data-v-608ec0a2=\\"\\">Note:</b> if you choose not to delete the datasets now, you will still be able to have them deleted later by emailing the <a data-v-608ec0a2=\\"\\" target=\\"_blank\\" href=\\"mailto:contact@metaspace2020.org\\">METASPACE administrators</a>. </p>
   </div>
   <div data-v-608ec0a2=\\"\\" class=\\"user-edit-page el-loading-parent--relative\\" loading-number=\\"1\\">
     <div data-v-608ec0a2=\\"\\" class=\\"el-row\\">

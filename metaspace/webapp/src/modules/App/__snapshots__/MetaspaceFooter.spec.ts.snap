@@ -6,8 +6,11 @@ exports[`MetaspaceFooter > should match snapshot 1`] = `
     <p data-v-d74f8df0=\\"\\" class=\\"flex justify-center m-0 font-medium flex-wrap\\">
     <div data-v-d74f8df0=\\"\\"> Privacy </div>
     <div data-v-d74f8df0=\\"\\"> Terms </div>
-    <div data-v-d74f8df0=\\"\\"> Publications </div><a data-v-d74f8df0=\\"\\" href=\\"https://github.com/metaspace2020/metaspace\\">GitHub</a><a data-v-d74f8df0=\\"\\" href=\\"https://twitter.com/metaspace2020\\">Twitter</a><a data-v-d74f8df0=\\"\\" href=\\"mailto:contact@metaspace2020.eu\\">Contact</a></p>
-    <p data-v-d74f8df0=\\"\\" class=\\"m-0 mt-8\\"> © 2014–2024 <a data-v-d74f8df0=\\"\\" target=\\"_blank\\" href=\\"https://ateam.ucsd.edu/\\">Alexandrov Team</a></p>
+    <div data-v-d74f8df0=\\"\\"> Publications </div><a data-v-d74f8df0=\\"\\" href=\\"https://github.com/metaspace2020/metaspace\\">GitHub</a><a data-v-d74f8df0=\\"\\" href=\\"https://twitter.com/metaspace2020\\">Twitter</a>
+    <div data-v-d74f8df0=\\"\\">FAQ</div>
+    <div data-v-d74f8df0=\\"\\">Contact</div>
+    </p>
+    <p data-v-d74f8df0=\\"\\" class=\\"m-0 mt-8\\"> © 2014–2025 <a data-v-d74f8df0=\\"\\" target=\\"_blank\\" href=\\"https://ateam.ucsd.edu/\\">Alexandrov Team</a></p>
   </div>
 </footer>"
 `;

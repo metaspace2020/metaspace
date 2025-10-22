@@ -85,7 +85,10 @@ const asyncPagesFreelyTyped = {
   DesignIcons: () => import(/* webpackChunkName: "DesignBundle" */ '../design/IconsPage.vue'),
   DesignComponents: () => import(/* webpackChunkName: "DesignBundle" */ '../design/ComponentsPage.vue'),
   DesignForms: () => import(/* webpackChunkName: "DesignBundle" */ '../design/FormsPage.vue'),
+  ContactPage: () => import(/* webpackPrefetch: true, webpackChunkName: "ContactPage" */ '../modules/Contact/Contact'),
+  FAQPage: () => import(/* webpackPrefetch: true, webpackChunkName: "FAQPage" */ '../modules/Faq/Faq'),
 }
+
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, Component>
 
 const convertLegacyUrls = () => {
@@ -106,12 +109,14 @@ export const routes: any = [
   { path: '/', name: 'home', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
   { path: '/about', name: 'about', component: AboutPage, meta: { footer: true, headerClass: 'bg-primary' } },
   { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
+  { path: '/contact', name: 'contact', component: asyncPages.ContactPage, meta: { footer: true } },
+  { path: '/faq', name: 'faq', component: asyncPages.FAQPage, meta: { footer: true } },
   {
     path: '/datasets',
     name: 'dataset-list',
     component: DatasetsPage,
     children: [
-      { path: '', name: 'main', component: asyncPages.DatasetTable },
+      { path: '', name: 'datasets', component: asyncPages.DatasetTable },
       { path: 'summary', name: 'summary', component: asyncPages.DatasetSummary },
     ],
   },
