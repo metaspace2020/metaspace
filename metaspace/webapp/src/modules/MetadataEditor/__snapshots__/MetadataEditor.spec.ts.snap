@@ -490,7 +490,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
         </form>
       </div>
       <div class=\\"metadata-section\\">
-        <div class=\\"mock-el-dialog find-group-dialog\\" visible=\\"false\\" lock-scroll=\\"false\\">
+        <div class=\\"mock-el-dialog find-group-dialog\\" model-value=\\"false\\" append-to-body=\\"\\" title=\\"Create project\\" lock-scroll=\\"false\\">
           <h2>Find a group</h2>
           <p> If you are not member of a group, you can request access here and your dataset will be automatically added to the group once your access has been approved. </p>
           <form class=\\"el-form el-form--default el-form--label-right\\">

@@ -130,8 +130,8 @@ const AboutPage = defineComponent({
                 </p>
               </div>
               <div>
-                <div class="star-icon-container mb-2">
-                  <StarSvg class="star-icon" />
+                <div class="star-icon-container bg-pro mb-2">
+                  <StarSvg class="star-icon svg-pro" />
                 </div>
                 <h3 class="text-pro">Go Pro</h3>
                 <p>

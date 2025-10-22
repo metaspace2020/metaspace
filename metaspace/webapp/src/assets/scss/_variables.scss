@@ -2,8 +2,17 @@ $color-primary: #0074d9;
 $color-secondary: #7fdbff;
 $color-tertiary: #39cccc;
 
-$pro-color: #FC4525;
+$pro-color: #FFAB3F;
 
 .text-pro {
   color: $pro-color !important;
+}
+
+.bg-pro {
+  background-color: rgba($pro-color, 0.3) !important;
+}
+
+.svg-pro {
+  fill: $pro-color !important;
+  stroke: $pro-color !important;
 }
