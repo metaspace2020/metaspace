@@ -90,7 +90,7 @@
       align-items: center;
       padding: 1.5rem;
       border-bottom: 1px solid #e4e7ed;
-      background: #409eff;
+      background: var(--primary-color, #409eff);
       color: white;
 
       h2 {
@@ -210,22 +210,22 @@
     }
 
     .primary-button {
-      background: #409eff;
+      background: var(--primary-color, #409eff);
       border: none;
       color: white;
 
       &:hover {
-        background: #337ecc;
+        background: var(--primary-color-dark, #337ecc);
       }
     }
 
     .secondary-button {
       background: white;
-      border: 2px solid #409eff;
-      color: #409eff;
+      border: 2px solid var(--primary-color, #409eff);
+      color: var(--primary-color, #409eff);
 
       &:hover {
-        background: #409eff;
+        background: var(--primary-color, #409eff);
         color: white;
       }
     }
@@ -266,7 +266,7 @@
   }
 
   .api-docs-button {
-    background: #409eff;
+    background: var(--primary-color, #409eff);
     border: none;
     color: white;
     font-size: 1rem;
@@ -278,7 +278,7 @@
     &:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      background: #337ecc;
+      background: var(--primary-color-dark, #337ecc);
     }
   }
 }

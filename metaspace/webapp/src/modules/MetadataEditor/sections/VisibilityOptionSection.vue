@@ -4,6 +4,15 @@
       <el-col :span="6">
         <div class="metadata-section__title">
           Visibility
+          <el-popover trigger="hover" placement="right">
+            <div class="max-w-xs">
+              To understand the difference between public and private datasets, as well as how quota usage works, please
+              refer to <a href="/plans" target="_blank">METASPACE Pro</a>.
+            </div>
+            <template #reference>
+              <el-icon class="cursor-pointer" color="var(--el-color-warning)" size="16"><WarnTriangleFilled /></el-icon>
+            </template>
+          </el-popover>
           <el-popover trigger="hover" placement="top">
             <div class="max-w-sm">
               <p>

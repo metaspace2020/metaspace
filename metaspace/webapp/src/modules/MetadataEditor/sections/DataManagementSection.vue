@@ -117,6 +117,8 @@ import gql from 'graphql-tag' // imported directly so that the Project pages are
 import { MetaspaceOptions } from '../formStructure'
 import { ElRow, ElCol, ElForm, ElCollapseTransition } from '../../../lib/element-plus'
 import GroupQuota from '../../Group/GroupQuota'
+import { getActiveGroupSubscriptionQuery } from '../../../api/subscription'
+import { useStore } from 'vuex'
 
 const FIND_GROUP = 'FIND_GROUP'
 const NO_GROUP = 'NO_GROUP'
@@ -147,7 +149,7 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const apolloClient = inject(DefaultApolloClient)
-
+    const store = useStore()
     const unknownGroup = ref<GroupListItem | null>(null)
     const unknownProjects = ref<{ id: string; name: string }[]>([])
     const showFindGroupDialog = ref(false)
@@ -161,6 +163,22 @@ export default defineComponent({
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
 
+    const { onResult: onActiveGroupSubscriptionResult } = useQuery(
+      getActiveGroupSubscriptionQuery,
+      () => ({ groupId: props.value.groupId }),
+      () => {
+        return {
+          enabled: !!props.value.groupId,
+        }
+      }
+    )
+    onActiveGroupSubscriptionResult(({ data }: any) => {
+      if (data && data.activeGroupSubscription) {
+        store.commit('setThemeVariant', 'pro')
+      } else {
+        store.commit('setThemeVariant', 'default')
+      }
+    })
     const getTypes = computed(() => {
       return props.isNewDataset ? ['create'] : ['reprocess']
     })
@@ -251,8 +269,6 @@ export default defineComponent({
       } else {
         groupId = value
       }
-
-      console.log(groupId, showFindGroupDialog.value)
 
       emit('change', { field: 'groupId', val: groupId })
       emit('change', { field: 'principalInvestigator', val: principalInvestigator })

@@ -4,12 +4,12 @@ import { defineComponent } from 'vue'
 const classes = `
   mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
   border border-solid border-transparent
 `
 
-export const activeClass = 'bg-blue-700'
+export const activeClass = 'header-link-active'
 
 export const HeaderLink = defineComponent({
   props: {

@@ -19,6 +19,7 @@ export default {
       colors: {
         // brand
         primary: 'hsl(208, 87%, 50%)',
+        pro: '#FFAB3F',
         // states
         success: '#2CBA8F',
         warning: '#E6A23C',

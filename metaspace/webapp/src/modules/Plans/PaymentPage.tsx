@@ -1,4 +1,4 @@
-import { defineComponent, ref, computed, watch, reactive, inject, onUnmounted } from 'vue'
+import { defineComponent, ref, computed, watch, reactive, inject, onUnmounted, onMounted, onBeforeUnmount } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import type { Stripe, StripeElements } from '@stripe/stripe-js'
 import config from '../../lib/config'
@@ -144,6 +144,16 @@ export default defineComponent({
       isUpdatingGroups: false,
     })
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+    // Set pro theme on mount
+    onMounted(() => {
+      store.commit('setThemeVariant', 'pro')
+    })
+
+    // Reset to default theme on unmount
+    onBeforeUnmount(() => {
+      store.commit('setThemeVariant', 'default')
+    })
 
     // Validation functions
     const validateEmail = (email: string) => {
@@ -975,10 +985,7 @@ export default defineComponent({
                 <h3>Group</h3>
                 <p>
                   Select a group to associate with this subscription. If you dont have a group, please{' '}
-                  <span
-                    onClick={() => router.push('/group/create')}
-                    class="link text-blue-500 cursor-pointer underline"
-                  >
+                  <span onClick={() => openCreateGroupModal()} class="link text-blue-500 cursor-pointer underline">
                     create one first
                   </span>
                   .

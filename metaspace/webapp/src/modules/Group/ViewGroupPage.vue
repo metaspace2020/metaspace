@@ -102,7 +102,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, ref, watch, computed, inject, onMounted } from 'vue'
+import { defineComponent, ref, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { datasetDeletedQuery, DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset'
@@ -136,6 +136,7 @@ import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
 import { RequestedAccessDialog } from './RequestedAccessDialog'
 import { ElTabs, ElButton, ElTabPane, ElLoading, ElAlert } from '../../lib/element-plus'
 import { useStore } from 'vuex'
+import { getActiveGroupSubscriptionQuery } from '../../api/subscription'
 
 interface ViewGroupProfileData {
   allDatasets: DatasetDetailItem[]
@@ -262,6 +263,23 @@ export default defineComponent({
         loaded.value = true
       }, 300)
     })
+
+    const { onResult: onActiveGroupSubscriptionResult } = useQuery<any>(
+      getActiveGroupSubscriptionQuery,
+      { groupId: groupId.value },
+      { fetchPolicy: 'network-only' }
+    )
+
+    onActiveGroupSubscriptionResult(({ data }: any) => {
+      if (data && data.activeGroupSubscription) {
+        store.commit('setThemeVariant', 'pro')
+      }
+    })
+
+    onBeforeUnmount(() => {
+      store.commit('setThemeVariant', 'default')
+    })
+
     const data = computed(() => dataResult.value as ViewGroupProfileData | null)
     const currentUserId = computed(() => currentUser.value?.id)
     const roleInGroup = computed(() => group.value?.currentUserRole)

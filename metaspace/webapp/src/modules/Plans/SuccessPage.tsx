@@ -1,4 +1,4 @@
-import { defineComponent, computed, onMounted } from 'vue'
+import { defineComponent, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElButton, ElCard, ElTag, ElNotification } from '../../lib/element-plus'
 import { currentUserRoleQuery } from '../../api/user'
@@ -7,12 +7,14 @@ import { useQuery } from '@vue/apollo-composable'
 import { formatPrice } from '../../lib/pricing'
 import SuccessCheckIcon from '../../assets/success-check.svg'
 import './SuccessPage.scss'
+import { useStore } from 'vuex'
 
 export default defineComponent({
   name: 'SuccessPage',
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const store = useStore()
 
     const { result: currentUserResult } = useQuery<any>(currentUserRoleQuery, null, {
       fetchPolicy: 'network-only',
@@ -89,6 +91,16 @@ export default defineComponent({
           return 'info'
       }
     }
+
+    // Set pro theme on mount
+    onMounted(() => {
+      store.commit('setThemeVariant', 'pro')
+    })
+
+    // Reset to default theme on unmount
+    onBeforeUnmount(() => {
+      store.commit('setThemeVariant', 'default')
+    })
 
     onMounted(() => {
       if (!currentUser.value || !fromPayment.value) {

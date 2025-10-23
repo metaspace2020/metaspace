@@ -821,7 +821,10 @@ exports[`MetadataEditor > should match snapshot 1`] = `
       <div class=\\"metadata-section\\">
         <div class=\\"el-row\\">
           <div class=\\"el-col el-col-6\\">
-            <div class=\\"metadata-section__title\\"> Visibility <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\">
+            <div class=\\"metadata-section__title\\"> Visibility <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\">
+                <div class=\\"max-w-xs\\"> To understand the difference between public and private datasets, as well as how quota usage works, please refer to <a href=\\"/plans\\" target=\\"_blank\\">METASPACE Pro</a>. </div>
+              </div>
+              <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\">
                 <div class=\\"max-w-sm\\">
                   <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The imzML files will be made available to download under the <a href=\\"https://creativecommons.org/licenses/by/4.0/\\" rel=\\"noopener noreferrer nofollow\\" target=\\"_blank\\">
                       <!-- -->Creative Commons Attribution 4.0 License

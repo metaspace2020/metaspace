@@ -59,6 +59,7 @@ export default defineComponent({
     const categoryOptions = [
       { value: 'bug', label: 'Bug report' },
       { value: 'feature', label: 'Feature request' },
+      { value: 'pro', label: 'METASPACE Pro' },
       { value: 'software', label: 'Other software support' },
       { value: 'scientific', label: 'Scientific support' },
       { value: 'other', label: 'Other' },

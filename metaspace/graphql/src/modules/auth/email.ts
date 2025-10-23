@@ -76,9 +76,9 @@ export const sendContactEmail = (email: string, name: string, category: string, 
     text =
 `The user ${name} with email ${email} has sent a scientific support message with message ${message}.`
     recipients = [config.contact.sci_email]
-  } else if (category === 'software' || category === 'bug' || category === 'feature') {
+  } else if (category === 'software' || category === 'bug' || category === 'feature' || category === 'pro') {
     text =
-`The user ${name} with email ${email} has sent a software support message with message ${message}.`
+`The user ${name} with email ${email} has sent a ${category} support message with message ${message}.`
     recipients = [config.contact.tech_email]
   } else {
     text =

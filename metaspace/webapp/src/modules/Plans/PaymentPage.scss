@@ -43,7 +43,7 @@
   }
 
   .order-summary {
-    background: #ecf5ff;
+    background: var(--primary-bg-light, #ecf5ff);
     padding: 0.5rem 2rem;
     position: sticky;
     top: 0;
@@ -73,7 +73,7 @@
       align-items: center;
       margin-bottom: 1rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(64, 158, 255, 0.2);
+      border-bottom: 1px solid var(--primary-border-light, rgba(64, 158, 255, 0.2));
 
       &.discount {
         .item-name {
@@ -93,7 +93,7 @@
       .item-price {
         font-size: 1.25rem;
         font-weight: 600;
-        color: #409eff;
+        color: var(--primary-color, #409eff);
 
         .currency {
           font-size: 1rem;
@@ -163,7 +163,7 @@
       align-items: center;
       margin-top: 1.5rem;
       padding-top: 1.5rem;
-      border-top: 2px solid rgba(64, 158, 255, 0.2);
+      border-top: 2px solid var(--primary-border-light, rgba(64, 158, 255, 0.2));
       font-size: 1.25rem;
       
       span {
@@ -173,7 +173,7 @@
         }
         
         &:last-child {
-          color: #409eff;
+          color: var(--primary-color, #409eff);
           font-weight: 600;
 
           .currency {
@@ -219,7 +219,7 @@
       padding: 1rem;
       background: rgba(255, 255, 255, 0.7);
       border-radius: 6px;
-      border: 1px solid rgba(64, 158, 255, 0.2);
+      border: 1px solid var(--primary-border-light, rgba(64, 158, 255, 0.2));
 
       .coupon-input {
         display: flex;
@@ -333,8 +333,8 @@
         }
 
         &.is-checked .option-content {
-          border-color: #409eff;
-          background: #ecf5ff;
+          border-color: var(--primary-color, #409eff);
+          background: var(--primary-bg-light, #ecf5ff);
         }
 
         .el-radio__input {
@@ -399,8 +399,8 @@
       transition: all 0.2s;
 
       &.selected {
-        border-color: #409eff;
-        background: #ecf5ff;
+        border-color: var(--primary-color, #409eff);
+        background: var(--primary-bg-light, #ecf5ff);
       }
 
       .method-icon {
@@ -427,7 +427,7 @@
     }
 
     &:focus-within {
-      border-color: #409eff;
+      border-color: var(--primary-color, #409eff);
     }
 
     &.error {
@@ -450,7 +450,7 @@
       }
 
       &:focus-within {
-        border-color: #409eff;
+        border-color: var(--primary-color, #409eff);
       }
     }
 
@@ -560,13 +560,13 @@
           }
           
           .link {
-            color: #409eff;
+            color: var(--primary-color, #409eff);
             text-decoration: underline;
             cursor: pointer;
             transition: color 0.2s;
             
             &:hover {
-              color: #337ecc;
+              color: var(--primary-color-dark, #337ecc);
             }
           }
         }

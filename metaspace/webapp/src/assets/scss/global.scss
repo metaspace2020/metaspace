@@ -1,3 +1,36 @@
-// src/assets/scss/global.scss
+@import "./_variables.scss";
 
-@forward "variables";
+.text-pro {
+  color: $pro-color !important;
+}
+
+.bg-pro {
+  background-color: var(--primary-color, $pro-color) !important;
+}
+
+.bg-pro-alpha {
+  background-color: var(--primary-color-alpha, rgba($pro-color, 0.87)) !important;
+}
+
+.bg-pro-op {
+  background-color: rgba($pro-color, 0.3) !important;
+}
+
+.svg-pro {
+  fill: $pro-color !important;
+  stroke: $pro-color !important;
+}
+
+.border-pro {
+    border: 1px solid var(--primary-color, $pro-color) !important;
+  }
+
+/* Override header link hover and active states to use dynamic color */
+.header-link:hover,
+.header-link:focus,
+.header-link.bg-blue-700,
+.header-link.header-link-active,
+.header-link.router-link-active,
+.header-link.router-link-exact-active {
+  background-color: var(--primary-color-dark, #337ecc) !important;
+}

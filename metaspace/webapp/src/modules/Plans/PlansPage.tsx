@@ -1,5 +1,6 @@
-import { defineComponent, reactive, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { defineComponent, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 import {
   ElButton,
   ElRadioGroup,
@@ -110,10 +111,21 @@ export default defineComponent({
   name: 'PlansPage',
   setup() {
     const router = useRouter()
+    const store = useStore()
     const state = reactive({
       hoveredPlan: 2,
       selectedPeriod: null as PricingOption | null, // Will be set after availablePeriods is computed
       radioValue: '1 year', // Separate state for radio group, using display name
+    })
+
+    // Set pro theme on mount
+    onMounted(() => {
+      store.commit('setThemeVariant', 'pro')
+    })
+
+    // Reset to default theme on unmount
+    onBeforeUnmount(() => {
+      store.commit('setThemeVariant', 'default')
     })
 
     const { result: plansResult, loading: plansLoading } = useQuery<AllPlansData>(getPlansQuery)
@@ -171,8 +183,15 @@ export default defineComponent({
         <div class="page-wrapper">
           <div class="plans-container">
             <h1 class="plans-title">Choose a plan that works for you</h1>
-            <p class="plans-subtitle">Each plan is tailored to your specific needs</p>
-
+            <p class="plans-subtitle">
+              Each plan is tailored to your specific needs <br />
+              <span class="text-sm">
+                To understand the differences between the METASPACE Academic and METASPACE Pro,{' '}
+                <RouterLink to="/split" class="text-blue-600 hover:text-blue-800 underline">
+                  click here
+                </RouterLink>{' '}
+              </span>
+            </p>
             {/* Pricing Period Toggle */}
             <div class="pricing-toggle">
               {isLoading.value ? (
@@ -185,7 +204,7 @@ export default defineComponent({
                   onChange={(value: string) => {
                     state.radioValue = value
                   }}
-                  text-color="#0F87EF"
+                  text-color="var(--primary-color)"
                   fill="white"
                   size="large"
                 >
@@ -221,10 +240,7 @@ export default defineComponent({
                         key={plan.id}
                         onMouseover={() => (state.hoveredPlan = index)}
                         onMouseout={() => (state.hoveredPlan = -1)}
-                        class="plan-card"
-                        style={{
-                          border: state.hoveredPlan === index ? '1px solid #0F87EF' : '1px solid #eee',
-                        }}
+                        class={`plan-card ${state.hoveredPlan === index ? 'border-pro' : ''}`}
                       >
                         {isRecommended && <div class="recommended-badge">Recommended for most users</div>}
 

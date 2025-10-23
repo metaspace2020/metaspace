@@ -1,10 +1,12 @@
-$primary-color: #0F87EF;
-$secondary-color: #0F87EF;
+@import "../../assets/scss/_variables.scss";
+
 $text-light: #ffffff;
 $text-dark: #333333;
 $text-gray: #666666;
 $background-light: #f8f9fa;
 $border-light: #e9ecef;
+
+
 
 .page-wrapper {
   min-height: calc(100vh - 144px);
@@ -13,6 +15,7 @@ $border-light: #e9ecef;
   flex-direction: column;
   align-items: center;
 }
+
 
 .plans-container {
   max-width: 1400px;
@@ -131,7 +134,7 @@ $border-light: #e9ecef;
   top: 0px;
   left: 0px;
   right: 0px;
-  background: $primary-color;
+  background: var(--primary-color, #FFAB3F);
   color: white;
   padding: 4px 12px;
   border-radius: 12px 12px 0px 0px;
@@ -203,23 +206,23 @@ $border-light: #e9ecef;
   transition: all 0.3s ease;
   
   &.primary {
-    background: $primary-color;
-    border: 1px solid $primary-color;
+    background: var(--primary-color, #FFAB3F);
+    border: 1px solid var(--primary-color, #FFAB3F);
     color: $text-light;
     
     &:hover {
-      background: darken($primary-color, 10%);
-      border-color: darken($primary-color, 10%);
+      background: var(--primary-color-dark, #E89A33);
+      border-color: var(--primary-color-dark, #E89A33);
     }
   }
   
   &.outline {
     background: transparent;
-    border: 1px solid $primary-color;
-    color: $primary-color;
+    border: 1px solid var(--primary-color, #FFAB3F);
+    color: var(--primary-color, #FFAB3F);
     
     &:hover {
-      background: $primary-color;
+      background: var(--primary-color, #FFAB3F);
       color: $text-light;
     }
   }
@@ -313,13 +316,13 @@ $border-light: #e9ecef;
       font-size: 16px;
       font-weight: 600;
       border-radius: 8px;
-      border: 1px solid $primary-color;
-      color: $primary-color;
+      border: 1px solid var(--primary-color, #FFAB3F);
+      color: var(--primary-color, #FFAB3F);
       background: transparent;
       transition: all 0.3s ease;
       
       &:hover {
-        background: $primary-color;
+        background: var(--primary-color, #FFAB3F);
         color: white;
       }
     }

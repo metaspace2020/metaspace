@@ -130,7 +130,7 @@ const AboutPage = defineComponent({
                 </p>
               </div>
               <div>
-                <div class="star-icon-container bg-pro mb-2">
+                <div class="star-icon-container bg-pro-op mb-2">
                   <StarSvg class="star-icon svg-pro" />
                 </div>
                 <h3 class="text-pro">Go Pro</h3>
@@ -196,6 +196,13 @@ const AboutPage = defineComponent({
                 The METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data as
                 well as a spatial metabolite knowledgebase of the metabolites from thousands of public datasets provided
                 by the community.
+              </p>
+              <p>
+                The METASPACE platform is split into METASPACE Academic and METASPACE Pro. Understanding the{' '}
+                <a href="/split" class="text-blue-600 hover:text-blue-800 underline">
+                  differences between the two
+                </a>{' '}
+                is important to choose the right one for your needs.
               </p>
               <p>
                 The METASPACE platform is developed by software engineers, data scientists and mass spectrometrists from
