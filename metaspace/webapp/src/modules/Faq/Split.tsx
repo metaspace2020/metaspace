@@ -18,7 +18,7 @@ export default defineComponent({
             <div class="max-w-4xl mx-auto text-center">
               <h1 class="text-4xl md:text-5xl font-bold mb-4">METASPACE split into Academic & Pro</h1>
               <p class="text-xl md:text-2xl opacity-90">
-                We are excited to share with you our new plan to improve METASPACE.
+                We are excited to share with you our new plan to improve METASPACE
               </p>
             </div>
           </div>

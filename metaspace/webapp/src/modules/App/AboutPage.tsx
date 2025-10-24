@@ -8,6 +8,7 @@ import { countGroupsQuery, countPublicationsQuery } from '../../api/group'
 import './AboutPage.scss'
 import { defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 import METALogo from '../../assets/METASPACE_logomark.png'
 import Metaspace from '../../assets/inline/METASPACE.svg'
 import MonitorSvg from '../../assets/inline/refactoring-ui/icon-monitor.svg'
@@ -24,6 +25,7 @@ const AboutPage = defineComponent({
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const store = useStore()
 
     const queryVars = computed(() => ({
       dFilter: {
@@ -47,6 +49,11 @@ const AboutPage = defineComponent({
       publicationCountResult.value != null ? publicationCountResult.value?.countPublications : null
     )
 
+    const themeVariant = computed(() => store.getters.themeVariant)
+    const isPrimaryColor = computed(() => {
+      return themeVariant.value === 'default' ? 'bg-primary' : 'bg-pro'
+    })
+
     onMounted(() => {
       if (route?.hash?.includes('funding')) {
         window.scrollTo({
@@ -60,13 +67,16 @@ const AboutPage = defineComponent({
     return () => {
       return (
         <div class="sm-about-page text-base leading-6 pt-0">
-          <div class="bg-primary overflow-hidden w-full">
+          <div class={`${isPrimaryColor.value} overflow-hidden w-full`}>
             <div class="box-border font-display pt-0 pb-10 mx-auto md:max-w-4xl max-w-sm flex items-center">
-              <img
-                alt="METASPACE logo"
-                src={METALogo}
-                class="hidden md:block w-66 h-66 -ml-3 lg:-ml-6 p-3 box-border"
-              />
+              <div class="hidden md:block relative w-66 h-66 -ml-3 lg:-ml-6 p-3 box-border">
+                <img alt="METASPACE logo" src={METALogo} class="w-full h-full" />
+                {themeVariant.value === 'pro' && (
+                  <div class="absolute bottom-[70px] right-[45px]">
+                    <span class="text-5xl text-pro font-bold">Pro</span>
+                  </div>
+                )}
+              </div>
               <div class="text-white box-border ml-0 md:ml-4 h-66">
                 <h1 class="m-0 md:mt-24 flex flex-col items-start">
                   <Metaspace class="w-auto md:h-18 box-border py-1" />
@@ -149,7 +159,9 @@ const AboutPage = defineComponent({
               </div>
             </section>
           </div>
-          <div class="bg-primary overflow-hidden w-full py-6 px-18 mx-auto box-border flex justify-center">
+          <div
+            class={`${isPrimaryColor.value} overflow-hidden w-full py-6 px-18 mx-auto box-border flex justify-center`}
+          >
             <section class="sm-about-stats w-full max-w-3xl">
               <h2 class="sr-only">Stats</h2>
               <div class="flex items-center text-white justify-between">

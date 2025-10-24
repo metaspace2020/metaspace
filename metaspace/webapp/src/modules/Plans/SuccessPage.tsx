@@ -1,4 +1,4 @@
-import { defineComponent, computed, onMounted, onBeforeUnmount } from 'vue'
+import { defineComponent, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElButton, ElCard, ElTag, ElNotification } from '../../lib/element-plus'
 import { currentUserRoleQuery } from '../../api/user'
@@ -98,9 +98,9 @@ export default defineComponent({
     })
 
     // Reset to default theme on unmount
-    onBeforeUnmount(() => {
-      store.commit('setThemeVariant', 'default')
-    })
+    // onBeforeUnmount(() => {
+    //   store.commit('setThemeVariant', 'default')
+    // })
 
     onMounted(() => {
       if (!currentUser.value || !fromPayment.value) {

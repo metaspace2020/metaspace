@@ -162,6 +162,7 @@ export default defineComponent({
 
     const logout = async () => {
       await signOut()
+      store.commit('setThemeVariant', 'default')
       await refreshLoginStatus()
     }
 

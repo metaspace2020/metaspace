@@ -125,7 +125,11 @@ export default defineComponent({
 
     // Reset to default theme on unmount
     onBeforeUnmount(() => {
-      store.commit('setThemeVariant', 'default')
+      if (activeSubscription.value) {
+        store.commit('setThemeVariant', 'pro')
+      } else {
+        store.commit('setThemeVariant', 'default')
+      }
     })
 
     const { result: plansResult, loading: plansLoading } = useQuery<AllPlansData>(getPlansQuery)

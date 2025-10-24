@@ -97,6 +97,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       const result = await makeApiRequest(ctx, '/api/subscriptions', 'POST', apiInput)
       return result.subscription // Return just the subscription object
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Access denied')) {
+        throw new UserError('You must be a group admin to create a subscription.')
+      }
       throw new UserError('Failed to create subscription')
     }
   },

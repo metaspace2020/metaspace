@@ -44,7 +44,7 @@ export default defineComponent({
         case 'reprocess':
           return 'private resubmissions'
         default:
-          return actionType
+          return 'private submissions'
       }
     }
 

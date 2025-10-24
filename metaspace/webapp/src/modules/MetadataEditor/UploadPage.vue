@@ -94,7 +94,7 @@ import { ViewGroupFragment } from '../../api/group'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import { get } from 'lodash-es'
 import { ElMessageBox } from '../../lib/element-plus'
-import { onBeforeUnmount } from 'vue'
+// import { onBeforeUnmount } from 'vue'
 
 const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
@@ -149,9 +149,9 @@ export default defineComponent({
       inputPath: null,
     })
 
-    onBeforeUnmount(() => {
-      store.commit('setThemeVariant', 'default')
-    })
+    // onBeforeUnmount(() => {
+    //   store.commit('setThemeVariant', 'default')
+    // })
 
     const { result: currentUserResult, onResult } = useQuery(currentUserIdQuery, null, {
       fetchPolicy: 'network-only',

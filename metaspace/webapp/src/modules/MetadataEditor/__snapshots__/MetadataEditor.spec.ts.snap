@@ -738,7 +738,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                                 </td>
                                 <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                                   <div class=\\"cell\\">
-                                    <!----><span class=\\"el-tag el-tag--info el-tag--small el-tag--light el-zoom-in-center-enter-from el-zoom-in-center-enter-active\\"><span class=\\"el-tag__content\\"></span>
+                                    <!----><span class=\\"el-tag el-tag--info el-tag--small el-tag--light el-zoom-in-center-enter-from el-zoom-in-center-enter-active\\"><span class=\\"el-tag__content\\">private submissions</span>
                                     <!--v-if--></span>
                                   </div>
                                 </td>
@@ -755,7 +755,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                                 </td>
                                 <td class=\\"el-table_1_column_6 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                                   <div class=\\"cell\\">
-                                    <!----><span>0 of 0  remaining for 0 </span>
+                                    <!----><span>0 of 0 private submissions remaining for 0 </span>
                                   </div>
                                 </td>
                               </tr>
@@ -773,7 +773,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                                 </td>
                                 <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                                   <div class=\\"cell\\">
-                                    <!----><span class=\\"el-tag el-tag--info el-tag--small el-tag--light el-zoom-in-center-enter-from el-zoom-in-center-enter-active\\"><span class=\\"el-tag__content\\"></span>
+                                    <!----><span class=\\"el-tag el-tag--info el-tag--small el-tag--light el-zoom-in-center-enter-from el-zoom-in-center-enter-active\\"><span class=\\"el-tag__content\\">private submissions</span>
                                     <!--v-if--></span>
                                   </div>
                                 </td>
@@ -790,7 +790,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
                                 </td>
                                 <td class=\\"el-table_1_column_6 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                                   <div class=\\"cell\\">
-                                    <!----><span>0 of 0  remaining for 0 </span>
+                                    <!----><span>0 of 0 private submissions remaining for 0 </span>
                                   </div>
                                 </td>
                               </tr>

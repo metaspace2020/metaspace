@@ -102,7 +102,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, ref, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue'
+import { defineComponent, ref, watch, computed, inject, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { datasetDeletedQuery, DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset'
@@ -276,9 +276,9 @@ export default defineComponent({
       }
     })
 
-    onBeforeUnmount(() => {
-      store.commit('setThemeVariant', 'default')
-    })
+    // onBeforeUnmount(() => {
+    //   store.commit('setThemeVariant', 'default')
+    // })
 
     const data = computed(() => dataResult.value as ViewGroupProfileData | null)
     const currentUserId = computed(() => currentUser.value?.id)
@@ -342,6 +342,7 @@ export default defineComponent({
     )
 
     onMounted(() => {
+      store.commit('setThemeVariant', 'default')
       subscribeToMore({
         document: datasetDeletedQuery,
         updateQuery: () => {
