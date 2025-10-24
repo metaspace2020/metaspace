@@ -103,6 +103,7 @@ export default defineComponent({
         selectedState: false,
         selectedPhoneCode: false,
         phoneNumber: false,
+        groupId: false,
       },
       validation: {
         email: { isValid: false, message: '' },
@@ -111,6 +112,7 @@ export default defineComponent({
         address: { isValid: false, message: '' },
         zipCode: { isValid: false, message: '' },
         selectedState: { isValid: false, message: '' },
+        groupId: { isValid: false, message: '' },
         cardNumber: { isValid: false, message: '' },
         cardExpiry: { isValid: false, message: '' },
         cardCvc: { isValid: false, message: '' },
@@ -242,6 +244,16 @@ export default defineComponent({
       return true
     }
 
+    const validateGroupId = (groupId: string) => {
+      if (!groupId.trim()) {
+        state.validation.groupId = { isValid: false, message: 'Group selection is required' }
+        return false
+      }
+
+      state.validation.groupId = { isValid: true, message: '' }
+      return true
+    }
+
     // Computed property to check if form is valid
     const isFormValid = computed(() => {
       const postalCodeValid = countryRequiresPostalCode(state.form.selectedCountry)
@@ -260,6 +272,7 @@ export default defineComponent({
         postalCodeValid &&
         stateValid &&
         state.form.selectedCountry && // Country is required
+        state.validation.groupId.isValid && // Group is required
         state.validation.cardNumber.isValid &&
         state.validation.cardExpiry.isValid &&
         state.validation.cardCvc.isValid &&
@@ -609,6 +622,8 @@ export default defineComponent({
         // Set the newly created group as selected after refetch
         if (newGroup?.id) {
           state.form.groupId = newGroup.id
+          validateGroupId(newGroup.id)
+          state.formErrors.groupId = !state.validation.groupId.isValid
         }
 
         // Show success notification
@@ -776,6 +791,17 @@ export default defineComponent({
         ElNotification({
           title: 'Error',
           message: 'Payment system not initialized. Please refresh the page.',
+          type: 'error',
+        })
+        return
+      }
+
+      // Validate group selection specifically
+      if (!state.form.groupId) {
+        validateGroupId('')
+        ElNotification({
+          title: 'Error',
+          message: 'Please select a group to proceed with the payment.',
           type: 'error',
         })
         return
@@ -990,20 +1016,35 @@ export default defineComponent({
                   </span>
                   .
                 </p>
-                <ElSelect
-                  modelValue={state.form.groupId}
-                  onUpdate:modelValue={(val: string) => {
-                    if (val === 'custom') {
-                      openCreateGroupModal()
-                    } else {
-                      state.form.groupId = val
-                    }
-                  }}
-                  loading={state.isUpdatingGroups}
-                  placeholder={state.isUpdatingGroups ? 'Updating groups...' : 'Select a group'}
-                >
-                  {groups.value?.map((group) => <ElOption label={group.name} value={group.id} />)}
-                </ElSelect>
+                <div class="form-group">
+                  <label>
+                    Group<span class="required">*</span>
+                  </label>
+                  <ElSelect
+                    modelValue={state.form.groupId}
+                    onUpdate:modelValue={(val: string) => {
+                      if (val === 'custom') {
+                        openCreateGroupModal()
+                      } else {
+                        state.form.groupId = val
+                        validateGroupId(val)
+                        state.formErrors.groupId = !state.validation.groupId.isValid
+                      }
+                    }}
+                    loading={state.isUpdatingGroups}
+                    placeholder={state.isUpdatingGroups ? 'Updating groups...' : 'Select a group'}
+                    class={!state.validation.groupId.isValid && state.form.groupId ? 'error-border' : ''}
+                  >
+                    {groups.value?.map((group) => <ElOption label={group.name} value={group.id} />)}
+                  </ElSelect>
+                  <div
+                    class={`field-error ${
+                      !state.validation.groupId.isValid && state.validation.groupId.message ? 'visible' : 'invisible'
+                    }`}
+                  >
+                    {state.validation.groupId.message}
+                  </div>
+                </div>
               </div>
 
               {/* Customer Information Section */}
