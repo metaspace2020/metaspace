@@ -5,7 +5,9 @@ import {
   onBeforeAll,
   onBeforeEach,
   setupTestUsers,
+  userContext,
 } from '../../../tests/graphqlTestEnvironment'
+import { createTestGroup, createTestUserGroup } from '../../../tests/testDataCreation'
 import * as moment from 'moment'
 import fetch from 'node-fetch'
 import config from '../../../utils/config'
@@ -17,6 +19,7 @@ const mockFetch = fetch as jest.Mock
 describe('modules/subscription/controller (mutations)', () => {
   const currentTime: any = moment.utc(moment.utc().toDate())
   let originalManagerApiUrl: string | undefined
+  let testGroupId: string
 
   beforeAll(async() => {
     await onBeforeAll()
@@ -36,6 +39,12 @@ describe('modules/subscription/controller (mutations)', () => {
   beforeEach(async() => {
     await onBeforeEach()
     await setupTestUsers()
+
+    // Create a test group and make the user an admin of it
+    const testGroup = await createTestGroup({ name: 'Test Group' })
+    testGroupId = testGroup.id
+    await createTestUserGroup(userContext.getUserIdOrFail(), testGroupId, 'GROUP_ADMIN', true)
+
     mockFetch.mockClear()
   })
 
@@ -64,12 +73,12 @@ describe('modules/subscription/controller (mutations)', () => {
 
     it('should create a new subscription', async() => {
       const subscriptionInput = {
-        userId: '550e8400-e29b-41d4-a716-446655440001',
+        userId: userContext.getUserIdOrFail(),
         planId: '550e8400-e29b-41d4-a716-446655440002',
         pricingId: 'price_H5UZwgyGXPe2oN',
         email: 'user@example.com',
         name: 'John Doe',
-        groupId: 'group123',
+        groupId: testGroupId,
         groupName: 'Test Group',
         billingInterval: 'monthly',
         paymentMethodId: 'pm_1234567890',
@@ -147,7 +156,7 @@ describe('modules/subscription/controller (mutations)', () => {
 
     it('should handle errors when creating a subscription', async() => {
       const subscriptionInput = {
-        userId: '550e8400-e29b-41d4-a716-446655440001',
+        userId: userContext.getUserIdOrFail(),
         planId: '550e8400-e29b-41d4-a716-446655440002',
         pricingId: 'price_H5UZwgyGXPe2oN',
         email: 'user@example.com',
@@ -158,16 +167,14 @@ describe('modules/subscription/controller (mutations)', () => {
       // Mock the fetch response to simulate an error
       mockFetch.mockResolvedValueOnce({
         ok: false,
+        status: 400,
         statusText: 'Bad Request',
         text: () => Promise.resolve('Invalid payment method'),
       })
 
-      try {
-        await doQuery(createSubscriptionMutation, { input: subscriptionInput })
-        fail('Expected mutation to throw an error')
-      } catch (error) {
-        expect((error as Error).message).toContain('Failed to create subscription')
-      }
+      await expect(
+        doQuery(createSubscriptionMutation, { input: subscriptionInput })
+      ).rejects.toThrow('Failed to create subscription')
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://test-api.metaspace.example/api/subscriptions',
@@ -177,7 +184,7 @@ describe('modules/subscription/controller (mutations)', () => {
 
     it('should omit couponCode when null or empty', async() => {
       const subscriptionInput = {
-        userId: '550e8400-e29b-41d4-a716-446655440001',
+        userId: userContext.getUserIdOrFail(),
         planId: '550e8400-e29b-41d4-a716-446655440002',
         pricingId: 'price_H5UZwgyGXPe2oN',
         email: 'user@example.com',
@@ -268,7 +275,7 @@ describe('modules/subscription/controller (mutations)', () => {
 
       const updatedSubscription = {
         id: subscriptionId,
-        userId: '550e8400-e29b-41d4-a716-446655440001',
+        userId: userContext.getUserIdOrFail(),
         planId: '550e8400-e29b-41d4-a716-446655440002',
         autoRenew: false,
         updatedAt: currentTime.valueOf().toString(),
@@ -309,16 +316,14 @@ describe('modules/subscription/controller (mutations)', () => {
       // Mock the fetch response to simulate an error
       mockFetch.mockResolvedValueOnce({
         ok: false,
+        status: 404,
         statusText: 'Not Found',
         text: () => Promise.resolve('Subscription not found'),
       })
 
-      try {
-        await doQuery(updateSubscriptionMutation, { id: subscriptionId, input: updateInput })
-        fail('Expected mutation to throw an error')
-      } catch (error) {
-        expect((error as Error).message).toContain('Failed to update subscription')
-      }
+      await expect(
+        doQuery(updateSubscriptionMutation, { id: subscriptionId, input: updateInput })
+      ).rejects.toThrow('Failed to update subscription')
 
       expect(mockFetch).toHaveBeenCalledWith(
         `https://test-api.metaspace.example/api/subscriptions/${subscriptionId}`,
@@ -347,7 +352,7 @@ describe('modules/subscription/controller (mutations)', () => {
 
       const cancelledSubscription = {
         id: subscriptionId,
-        userId: '550e8400-e29b-41d4-a716-446655440001',
+        userId: userContext.getUserIdOrFail(),
         planId: '550e8400-e29b-41d4-a716-446655440002',
         cancelledAt: currentTime.valueOf().toString(),
         isActive: false,
@@ -389,16 +394,14 @@ describe('modules/subscription/controller (mutations)', () => {
       // Mock the fetch response to simulate an error
       mockFetch.mockResolvedValueOnce({
         ok: false,
+        status: 404,
         statusText: 'Not Found',
         text: () => Promise.resolve('Subscription not found'),
       })
 
-      try {
-        await doQuery(cancelSubscriptionMutation, { id: subscriptionId, input: cancelInput })
-        fail('Expected mutation to throw an error')
-      } catch (error) {
-        expect((error as Error).message).toContain('Failed to cancel subscription')
-      }
+      await expect(
+        doQuery(cancelSubscriptionMutation, { id: subscriptionId, input: cancelInput })
+      ).rejects.toThrow('Failed to cancel subscription')
 
       expect(mockFetch).toHaveBeenCalledWith(
         `https://test-api.metaspace.example/api/subscriptions/${subscriptionId}/cancel`,
