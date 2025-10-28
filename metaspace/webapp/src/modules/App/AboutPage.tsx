@@ -15,6 +15,9 @@ import MonitorSvg from '../../assets/inline/refactoring-ui/icon-monitor.svg'
 import BookSvg from '../../assets/inline/refactoring-ui/icon-book-open.svg'
 import UnlockSvg from '../../assets/inline/refactoring-ui/icon-lock-open.svg'
 import StarSvg from '../../assets/inline/star-icon-land.svg'
+import UserSvg from '../../assets/inline/refactoring-ui/icon-user.svg'
+import GroupSvg from '../../assets/inline/refactoring-ui/icon-user-group.svg'
+import WorkSvg from '../../assets/inline/refactoring-ui/icon-work.svg'
 
 const NIDDKLogo = defineAsyncComponent(() => import('../../assets/NIDDK.svg'))
 const NHLBILogo = defineAsyncComponent(() => import('../../assets/NHLBI.svg'))
@@ -192,76 +195,173 @@ const AboutPage = defineComponent({
             </section>
           </div>
           <div id="about-pt2" class="sm-about py-6 px-18 mx-auto box-border max-w-4xl">
-            <section class="sm-about-details max-w-measure-4 mt-0">
-              <h3>Community Discussion</h3>
+            <section id="platforms" class="sm-about-details max-w-measure-4 mt-0">
+              <h3>METASPACE platforms</h3>
+              <p>
+                As of November 3rd 2025, the METASPACE platform splitted into two different platforms,{' '}
+                <b>METASPACE Academic</b> and <b>METASPACE Pro</b>. METASPACE Academic supports public dataset
+                submissions only, while METASPACE Pro handles private dataset submissions only. Both platforms host the
+                same engine for metabolite annotation of imaging mass spectrometry data.
+              </p>
+              <p>
+                METASPACE Academic is ideal for open-science projects where the data can be shared publicly with the
+                community, while METASPACE Pro is ideal for users who need to keep their datasets private and need
+                additional dedicated support.
+              </p>
+              <p>
+                The METASPACE Academic platform is developed by software engineers, data scientists and mass
+                spectrometrists from the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>. While METASPACE
+                Pro is offered as a subscription-based service from{' '}
+                <a href="https://metacloud.bio/" target="_blank">
+                  Metacloud Inc.
+                </a>
+                .
+              </p>
+              <p>
+                To learn more about the reasoning behind splitting METASPACE into separate platforms, and to understand
+                their similarities and differences, check out more information{' '}
+                <a href="/split" target="_blank">
+                  here
+                </a>
+                .
+              </p>
+              <p>
+                If you still have questions about both platforms, check out our{' '}
+                <a href="/faq" target="_blank">
+                  FAQ page
+                </a>{' '}
+                to understand more about how it works.
+              </p>
+            </section>
+            <section id="get-started" class="sm-about-details max-w-measure-4 mt-0">
+              <h2>Getting started</h2>
+              <p>
+                Both METASPACE platforms organize datasets and define ownership based on the following 3 elements:
+                <b> Users</b>, <b>Groups</b>, and <b>Projects</b>, which together define how data is managed, shared,
+                and published.
+                <p></p>
+                Each <b>User</b> owns their data and controls how it is shared. Users can join one or more Groups, which
+                usually represent their lab or research team. Within a group, members can collaborate, access the same
+                datasets, and work together on various projects.
+              </p>
+              <p>
+                Each <b>Group</b> works on one or more <b>Projects</b>, which provide a structured space to organize
+                datasets, manage collaboration, and link results to publications. It is strongly recommended to
+                associate all datasets with a project, even if the user is not part of a group. This helps keep data
+                organized, visible, and easier to maintain over time.
+              </p>
+              <p>
+                For METASPACE Pro, each user should create or join a <b>Group</b> to manage subscriptions for this
+                group. For more information about the subscription plans, check out the{' '}
+                <a href="/plans" target="_blank">
+                  plans
+                </a>{' '}
+                page.
+              </p>
+              <div class="collaboration column-layout">
+                <div>
+                  <PrimaryIcon small class="mb-2">
+                    <UserSvg />
+                  </PrimaryIcon>
+                  <h3>User</h3>
+                  <ul>
+                    <li>owner of their data</li>
+                    <li>can make their data public</li>
+                    <li>can edit dataset</li>
+                    <li>can delete their data</li>
+                  </ul>
+                </div>
+                <div>
+                  <PrimaryIcon small class="mb-2">
+                    <GroupSvg />
+                  </PrimaryIcon>
+                  <h3>Group</h3>
+                  <ul>
+                    <li>users from same lab</li>
+                    <li>PI invites group members</li>
+                    <li>members trust each other</li>
+                    <li>members share private data</li>
+                  </ul>
+                </div>
+                <div>
+                  <PrimaryIcon small class="mb-2" inverse>
+                    <WorkSvg />
+                  </PrimaryIcon>
+                  <h3>Project</h3>
+                  <ul>
+                    <li>organise and share data</li>
+                    <li>manager invites members</li>
+                    <li>members share private data</li>
+                    <li>can be linked to a publication</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+            <section id="community-engagement" class="sm-about-details max-w-measure-4 mt-0">
+              <h2>Community engagement</h2>
               <p>
                 Join METASPACE{' '}
                 <a href="https://github.com/metaspace2020/metaspace/discussions/categories/q-a" target="_blank">
                   community discussions
                 </a>{' '}
-                , where you can ask questions, share ideas, and get help from the METASPACE team and other users.
-              </p>
-              <h3>What is the METASPACE platform?</h3>
-            </section>
-            <section class="sm-about-details max-w-measure-4 mt-0">
-              <p>
-                The METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data as
-                well as a spatial metabolite knowledgebase of the metabolites from thousands of public datasets provided
-                by the community.
+                , where you can ask questions,{' '}
+                <a href="https://github.com/metaspace2020/metaspace/discussions/categories/ideas" target="_blank">
+                  suggest features
+                </a>
+                , share ideas, and get help from the METASPACE team and other users.
               </p>
               <p>
-                The METASPACE platform is split into METASPACE Academic and METASPACE Pro. Understanding the{' '}
-                <a href="/split" class="text-blue-600 hover:text-blue-800 underline">
-                  differences between the two
-                </a>{' '}
-                is important to choose the right one for your needs.
+                If you’re finding METASPACE platforms useful, help us grow the community by sharing it with your
+                colleagues and collaborators.
               </p>
-              <p>
-                The METASPACE platform is developed by software engineers, data scientists and mass spectrometrists from
-                the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>.
-              </p>
-              <p>
-                For more information, check out{' '}
-                <span
-                  class="about-link mx-1"
-                  onClick={() => {
-                    router.push('/publications#ours')
-                  }}
-                >
-                  our methods and related publications
-                </span>
-                .
-              </p>
-              <h3>How can you contribute?</h3>
-              <ul class="mb-6">
-                <li>
-                  <strong>Share Ideas and Connect</strong> Join our community to provide feedback,
-                  <a href="https://github.com/metaspace2020/metaspace/discussions/categories/ideas" target="_blank">
-                    suggest features
-                  </a>
-                  , and brainstorm solutions.
-                </li>
-                <li>
-                  <strong>Promote and Share the Platform</strong> Share it with colleagues, collaborators, and on{' '}
-                  <a href="https://twitter.com/metaspace2020" target="_blank">
-                    social media
-                  </a>
-                  .
-                </li>
-              </ul>
               <CiteMetaspace />
-              <h3>How to stay in touch?</h3>
+              <h3>Learn more and get in touch</h3>
               <p>
-                First, please check our <a href="/help">Help section</a> and{' '}
-                <a href="https://github.com/metaspace2020/metaspace/discussions" target="_blank">
-                  Discussions forum
-                </a>{' '}
-                for any questions you might have. If you don’t find what you need, please{' '}
-                <a href="/contact">contact us</a>.
+                Whether you&apos;re continuing with METASPACE Academic or exploring METASPACE Pro service, you can find
+                more information below.
               </p>
-              <h3 id="please-appreciate-those-who-funded-it">Funding</h3>
+              <p>
+                Continue using{' '}
+                <a href="/" target="_blank">
+                  METASPACE Academic
+                </a>{' '}
+                Explore{' '}
+                <a href="/plans" target="_blank">
+                  METASPACE Pro plans
+                </a>{' '}
+                Check out our{' '}
+                <a href="/faq" target="_blank">
+                  FAQ page
+                </a>{' '}
+                for more information
+                <p></p>
+                If you still have questions or would like to share feedback, please start by visiting our Help section
+                and Discussions forum where you might find the answers you need. If you&apos;d like to provide feedback
+                or reach out directly, visit our{' '}
+                <a href="/contact" target="_blank">
+                  contact page
+                </a>{' '}
+                for more options.
+              </p>
+              <h2 id="please-appreciate-those-who-funded-it">Funding</h2>
               <p>We acknowledge funding from the following sources:</p>
               <ul class="sm-about-funding">
+                <li>
+                  <div class="svg-container">
+                    <NHLBILogo viewBox="0 0 107 67" alt="NHLBI" />
+                  </div>
+                  <span>
+                    <b>
+                      National Institutes of Health
+                      <abbr class="ml-1" title="National Heart, Lung, and Blood Institute">
+                        NIH
+                      </abbr>
+                    </b>
+                    <br />
+                    Advancing METASPACE and Spatial Metabolomics for Cancer Research (
+                    <a href="https://reporter.nih.gov/project-details/11113690">nih.gov</a>)
+                  </span>
+                </li>
                 <li>
                   <div class="svg-container">
                     <EUFlag viewBox="0 0 810 540" alt="EU" />
@@ -324,22 +424,6 @@ const AboutPage = defineComponent({
                   </span>
                 </li>
               </ul>
-              <h3>Other acknowledgements</h3>
-              <p>
-                Icons by <a href="http://www.freepik.com/">Freepik</a> from
-                <a href="http://www.flaticon.com" class="ml-1">
-                  www.flaticon.com
-                </a>
-                ,
-                <a href="https://refactoringui.com/book/" class="ml-1">
-                  Refactoring UI
-                </a>{' '}
-                and
-                <a href="https://material.io/icons" class="ml-1">
-                  Material Icons
-                </a>
-                .
-              </p>
             </section>
           </div>
         </div>

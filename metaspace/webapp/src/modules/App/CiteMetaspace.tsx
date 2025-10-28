@@ -12,7 +12,12 @@ export const CiteMetaspace = defineComponent({
           <a href="http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html">
             Palmer et al., 2017, Nature Methods
           </a>
-          ) and refer to <a href="https://metaspace2020.org">https://metaspace2020.org</a>.
+          ) and refer to <a href="https://metaspace2020.org">https://metaspace2020.org</a>. For more information, check
+          out{' '}
+          <RouterLink to="/publications#ours" class="ml-1">
+            our methods and related publications
+          </RouterLink>
+          .
         </p>
         <p>
           If you are preparing a scientific publication based on METASPACE annotations, create a

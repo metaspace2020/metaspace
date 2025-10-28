@@ -65,6 +65,33 @@
     }
   }
 
+  .sm-about-details  {
+    text-align: justify;
+    h3 {
+      @apply text-lg leading-9 font-medium my-0;
+    }
+    
+    .column-layout {
+      @apply flex flex-wrap justify-center -mx-3;
+    }
+    
+    .column-layout > * {
+      @apply mx-3;
+      width: calc(33.333% - theme('spacing.6'));
+    }
+    
+    .column-layout li + li {
+      margin-top: 0;
+    }
+    
+    .tours button {
+      @apply mt-3;
+    }
+    
+    .collaboration li:first-child {
+      @apply font-medium;
+    }
+  }
   .sm-about-details h3:not(:first-of-type) {
     @apply mt-12;
   }

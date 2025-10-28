@@ -7,6 +7,26 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #0F87EF;
+    background: var(--primary-color, #0F87EF);
+  }
+
+  // Style the submit button to use dynamic theme colors
+  .el-button--primary {
+    background-color: var(--primary-color, #0F87EF) !important;
+    border-color: var(--primary-color, #0F87EF) !important;
+    
+    &:hover {
+      background-color: var(--primary-color-dark, #0D7BD6) !important;
+      border-color: var(--primary-color-dark, #0D7BD6) !important;
+    }
+  }
+
+  // Style links to use dynamic theme colors
+  a {
+    color: var(--primary-color, #0F87EF) !important;
+    
+    &:hover {
+      color: var(--primary-color-dark, #0D7BD6) !important;
+    }
   }
 }
