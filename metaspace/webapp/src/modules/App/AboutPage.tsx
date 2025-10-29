@@ -195,8 +195,8 @@ const AboutPage = defineComponent({
             </section>
           </div>
           <div id="about-pt2" class="sm-about py-6 px-18 mx-auto box-border max-w-4xl">
-            <section id="platforms" class="sm-about-details max-w-measure-4 mt-0">
-              <h3>METASPACE platforms</h3>
+            <section id="platforms" class="sm-about-details max-w-3xl mt-0">
+              <h2>METASPACE platforms</h2>
               <p>
                 As of November 3rd 2025, the METASPACE platform splitted into two different platforms,{' '}
                 <b>METASPACE Academic</b> and <b>METASPACE Pro</b>. METASPACE Academic supports public dataset
@@ -211,11 +211,7 @@ const AboutPage = defineComponent({
               <p>
                 The METASPACE Academic platform is developed by software engineers, data scientists and mass
                 spectrometrists from the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>. While METASPACE
-                Pro is offered as a subscription-based service from{' '}
-                <a href="https://metacloud.bio/" target="_blank">
-                  Metacloud Inc.
-                </a>
-                .
+                Pro is offered as a subscription-based service from Metacloud Inc.
               </p>
               <p>
                 To learn more about the reasoning behind splitting METASPACE into separate platforms, and to understand
@@ -233,7 +229,7 @@ const AboutPage = defineComponent({
                 to understand more about how it works.
               </p>
             </section>
-            <section id="get-started" class="sm-about-details max-w-measure-4 mt-0">
+            <section id="get-started" class="sm-about-details max-w-3xl mt-0">
               <h2>Getting started</h2>
               <p>
                 Both METASPACE platforms organize datasets and define ownership based on the following 3 elements:
@@ -297,7 +293,7 @@ const AboutPage = defineComponent({
                 </div>
               </div>
             </section>
-            <section id="community-engagement" class="sm-about-details max-w-measure-4 mt-0">
+            <section id="community-engagement" class="sm-about-details max-w-3xl mt-0">
               <h2>Community engagement</h2>
               <p>
                 Join METASPACE{' '}
@@ -348,12 +344,12 @@ const AboutPage = defineComponent({
               <ul class="sm-about-funding">
                 <li>
                   <div class="svg-container">
-                    <NHLBILogo viewBox="0 0 107 67" alt="NHLBI" />
+                    <NHLBILogo viewBox="0 0 107 67" alt="NCI" />
                   </div>
                   <span>
                     <b>
                       National Institutes of Health
-                      <abbr class="ml-1" title="National Heart, Lung, and Blood Institute">
+                      <abbr class="ml-1" title="National Cancer Institute">
                         NIH
                       </abbr>
                     </b>

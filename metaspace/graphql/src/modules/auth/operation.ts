@@ -98,6 +98,11 @@ export const sendEmailVerificationToken = async(cred: Credentials, email: string
   logger.debug(`Sent email verification to ${email}: ${link}`)
 }
 
+export const sendWelcomeEmail = (email: string, name?: string) => {
+  emailService.sendWelcomeEmail(email, name || '')
+  logger.info(`Sent welcome email to ${email}`)
+}
+
 const hashPassword = async(password: string|undefined): Promise<string|undefined> => {
   return (password) ? await bcrypt.hash(password, NUM_ROUNDS) : undefined
 }
@@ -188,6 +193,7 @@ export const createUserCredentials = async(userCred: UserCredentialsInput): Prom
         logger.info(`New local user added: ${userCred.email}`)
         await sendEmailVerificationToken(newUser.credentials, newUser.notVerifiedEmail!)
       }
+      sendWelcomeEmail(userCred.email, userCred.name)
     }
   }
 }
