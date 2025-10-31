@@ -86,7 +86,7 @@ const getDiscountInfo = (planName: string, selectedPeriod: PricingOption | null)
 
   return {
     discount,
-    couponCode: `EARLYBIRD${planCode}`,
+    couponCode: `EARLYBIRD${planCode}${parseFloat(Math.floor(periodMonths / 12).toString()).toFixed(0)}`,
     period: periodText,
   }
 }
