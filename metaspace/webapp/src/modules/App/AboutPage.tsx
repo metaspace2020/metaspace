@@ -19,7 +19,6 @@ import UserSvg from '../../assets/inline/refactoring-ui/icon-user.svg'
 import GroupSvg from '../../assets/inline/refactoring-ui/icon-user-group.svg'
 import WorkSvg from '../../assets/inline/refactoring-ui/icon-work.svg'
 
-const NIDDKLogo = defineAsyncComponent(() => import('../../assets/NIDDK.svg'))
 const NHLBILogo = defineAsyncComponent(() => import('../../assets/NHLBI.svg'))
 const EUFlag = defineAsyncComponent(() => import('../../assets/Flag_of_Europe.svg'))
 
@@ -254,8 +253,8 @@ const AboutPage = defineComponent({
                 </a>{' '}
                 page.
               </p>
-              <div class="collaboration column-layout">
-                <div>
+              <div class="collaboration column-layout !ml-4 md:!justify-around">
+                <div class="!w-full md:!w-auto">
                   <PrimaryIcon small class="mb-2">
                     <UserSvg />
                   </PrimaryIcon>
@@ -267,7 +266,7 @@ const AboutPage = defineComponent({
                     <li>can delete their data</li>
                   </ul>
                 </div>
-                <div>
+                <div class="!w-full md:!w-auto">
                   <PrimaryIcon small class="mb-2">
                     <GroupSvg />
                   </PrimaryIcon>
@@ -279,7 +278,7 @@ const AboutPage = defineComponent({
                     <li>members share private data</li>
                   </ul>
                 </div>
-                <div>
+                <div class="!w-full md:!w-auto">
                   <PrimaryIcon small class="mb-2" inverse>
                     <WorkSvg />
                   </PrimaryIcon>
@@ -342,21 +341,38 @@ const AboutPage = defineComponent({
               <h2 id="please-appreciate-those-who-funded-it">Funding</h2>
               <p>We acknowledge funding from the following sources:</p>
               <ul class="sm-about-funding">
-                <li>
+                <li class="!mb-10">
                   <div class="svg-container">
-                    <NHLBILogo viewBox="0 0 107 67" alt="NCI" />
+                    <NHLBILogo viewBox="0 0 107 67" alt="NIH" />
                   </div>
-                  <span>
+                  <div class="max-w-xl">
                     <b>
-                      National Institutes of Health
-                      <abbr class="ml-1" title="National Cancer Institute">
-                        NIH
+                      National Cancer Institute
+                      <abbr class="ml-1" title="NCI">
+                        NCI
+                      </abbr>{' '}
+                      and National Institute of Diabetes and Digestive and Kidney
+                      <abbr class="ml-1" title="NIDDK">
+                        NIDDK
                       </abbr>
                     </b>
                     <br />
-                    Advancing METASPACE and Spatial Metabolomics for Cancer Research (
-                    <a href="https://reporter.nih.gov/project-details/11113690">nih.gov</a>)
-                  </span>
+
+                    <div class="flex flex-wrap">
+                      under grant agreements
+                      <a class="mx-1" target="_blank" href="https://reporter.nih.gov/project-details/11113690">
+                        U24CA299590
+                      </a>
+                      /
+                      <a
+                        class="mx-1"
+                        target="_blank"
+                        href="https://reporter.nih.gov/search/autOmWkuI0SYLQaPpCTUzg/project-details/11174318"
+                      >
+                        U01DK114920
+                      </a>
+                    </div>
+                  </div>
                 </li>
                 <li>
                   <div class="svg-container">
@@ -388,36 +404,6 @@ const AboutPage = defineComponent({
                       </a>
                     </div>
                   </div>
-                </li>
-                <li>
-                  <div class="svg-container">
-                    <NIDDKLogo viewBox="0 0 208 130" alt="NIDDK" />
-                  </div>
-                  <span>
-                    <b>
-                      National Institutes of Health
-                      <abbr class="ml-1" title="National Institute of Diabetes and Digestive and Kidney Diseases">
-                        NIDDK
-                      </abbr>
-                    </b>
-                    <br />
-                    Kidney Precision Medicine Project (<a href="https://kpmp.org/">kpmp.org</a>)
-                  </span>
-                </li>
-                <li>
-                  <div class="svg-container">
-                    <NHLBILogo viewBox="0 0 107 67" alt="NHLBI" />
-                  </div>
-                  <span>
-                    <b>
-                      National Institutes of Health
-                      <abbr class="ml-1" title="National Heart, Lung, and Blood Institute">
-                        NHLBI
-                      </abbr>
-                    </b>
-                    <br />
-                    LungMAP Phase 2 (<a href="https://www.lungmap.net/">lungmap.net</a>)
-                  </span>
                 </li>
               </ul>
             </section>

@@ -32,13 +32,66 @@ interface ComparisonFeature {
 const comparisonFeatures: ComparisonFeature[] = [
   { name: 'Price', key: 'price', type: 'price' },
   { name: 'Ideal For', key: 'ideal', type: 'ideal' },
-  { name: 'Maximum Submissions per year', key: 'maxDatasets', type: 'limit' },
-  { name: 'Maximum Reprocessing per year', key: 'maxReprocessing', type: 'limit' },
-  { name: 'Support', key: 'support', type: 'support' },
-  { name: 'Processing Priority', key: 'priority', type: 'priority' },
-  { name: 'Group members', key: 'teamMembers', type: 'text' },
+  { name: 'Maximum Private Submissions per Year', key: 'maxDatasets', type: 'limit' },
+  { name: 'Maximum Private Reprocessings per Year', key: 'maxReprocessing', type: 'limit' },
+  { name: 'Support Response Time', key: 'support', type: 'support' },
+  { name: 'Dedicated Training', key: 'training', type: 'text' },
+  { name: 'Early Feature Access', key: 'earlyFeatureAccess', type: 'text' },
+  { name: 'Maximum Groups Allowed', key: 'maxGroups', type: 'text' },
+  { name: 'Group Members', key: 'groupMembers', type: 'text' },
+  { name: 'Projects', key: 'projects', type: 'text' },
   { name: 'Billing', key: 'billing', type: 'billing' },
 ]
+
+// Helper function to get discount information for early bird promotion
+const getDiscountInfo = (planName: string, selectedPeriod: PricingOption | null) => {
+  if (!selectedPeriod) return null
+
+  const planLower = planName.toLowerCase()
+  const periodMonths = selectedPeriod.periodMonths || 12
+
+  // Only show discount for subscriptions before end of 2025
+  const currentDate = new Date()
+  const endOf2025 = new Date('2025-12-31')
+  if (currentDate > endOf2025) return null
+
+  let discount = 0
+  let planCode = ''
+
+  // Determine plan code and discount based on plan name and period
+  if (planLower.includes('low')) {
+    planCode = 'LOW'
+    discount = periodMonths === 12 ? 50 : periodMonths === 24 ? 40 : 0
+  } else if (planLower.includes('medium')) {
+    planCode = 'MEDIUM'
+    discount = periodMonths === 12 ? 40 : periodMonths === 24 ? 30 : 0
+  } else if (planLower.includes('high')) {
+    planCode = 'HIGH'
+    discount = periodMonths === 12 ? 35 : periodMonths === 24 ? 25 : 0
+  } else if (planLower.includes('ultra')) {
+    planCode = 'ULTRA'
+    if (periodMonths === 12) discount = 30
+    else if (periodMonths === 24) discount = 20
+    else if (periodMonths === 36) discount = 10
+  }
+
+  if (discount === 0) return null
+
+  const periodText =
+    periodMonths === 12
+      ? '1 year'
+      : periodMonths === 24
+      ? '2 years'
+      : periodMonths === 36
+      ? '3 years'
+      : `${periodMonths} months`
+
+  return {
+    discount,
+    couponCode: `EARLYBIRD${planCode}`,
+    period: periodText,
+  }
+}
 
 // Helper function to get feature value for a plan
 const getFeatureValue = (plan: Plan, featureKey: string, selectedPeriod?: PricingOption): string | boolean => {
@@ -51,24 +104,29 @@ const getFeatureValue = (plan: Plan, featureKey: string, selectedPeriod?: Pricin
       if (selectedPeriod) {
         const totalPrice = getPriceForPeriod(plan, selectedPeriod)
         const monthlyPrice = getMonthlyPrice(plan, selectedPeriod)
-        return `$${formatPrice(totalPrice)} / year\nEquivalent to $${formatPrice(monthlyPrice)} / month`
+        return `$${formatPrice(totalPrice)} / ${selectedPeriod.displayName}\nEquivalent to $${formatPrice(
+          monthlyPrice
+        )} / month`
       }
       return '$X / year\nEquivalent to $X / month'
 
     case 'ideal':
-      if (planName.includes('free')) return 'Best for early-stage projects and trial use'
-      if (planName.includes('low')) return 'For groups handling a few projects per year'
-      if (planName.includes('medium')) return 'Built for groups running large or parallel projects'
-      if (planName.includes('high')) return 'Ideal for groups producing high volumes of datasets year-round'
-      if (planName.includes('ultra')) return 'Ideal for large groups, core facilities, and enterprise organizations'
-      return 'For groups handling a few projects per year'
+      if (planName.includes('free')) return 'Trial use'
+      if (planName.includes('low'))
+        return 'Small groups with one mass spectrometer, or for extended trial before upgrading'
+      if (planName.includes('medium')) return 'Medium-size groups with one mass spectrometer'
+      if (planName.includes('high'))
+        return 'Large groups with multiple mass spectrometers, core facilities, service providers'
+      if (planName.includes('ultra')) return 'Powerhouses of the field '
+      return 'Trial use'
 
     case 'maxDatasets':
       if (planName.includes('free')) return '3 datasets / year'
       if (planName.includes('low')) return '30 datasets / year'
       if (planName.includes('medium')) return '100 datasets / year'
       if (planName.includes('high')) return '300 datasets / year'
-      if (planName.includes('ultra')) return '1,000 datasets / year'
+      if (planName.includes('ultra'))
+        return '1,000 datasets / year*  <br><span class="text-xs text-gray-500">Contact us if more is required</span>'
       return '30 datasets / year'
 
     case 'maxReprocessing':
@@ -76,7 +134,11 @@ const getFeatureValue = (plan: Plan, featureKey: string, selectedPeriod?: Pricin
       if (planName.includes('low')) return '60 reprocessing / year'
       if (planName.includes('medium')) return '200 reprocessing / year'
       if (planName.includes('high')) return '600 reprocessing / year'
-      if (planName.includes('ultra')) return '2,000 reprocessing / year'
+      if (planName.includes('ultra'))
+        return (
+          '2,000 reprocessing / year*  <br><span class="text-xs text-gray-500">' +
+          'Contact us if more is required</span>'
+        )
       return '30 reprocessing / year'
 
     case 'support':
@@ -101,6 +163,31 @@ const getFeatureValue = (plan: Plan, featureKey: string, selectedPeriod?: Pricin
     case 'billing':
       if (planName.includes('free')) return 'No payment required'
       return 'Annual payment required'
+
+    case 'training':
+      if (planName.includes('free')) return 'Not included'
+      if (planName.includes('low')) return 'Not included'
+      if (planName.includes('medium')) return 'For basic functionality'
+      if (planName.includes('high')) return 'For advanced functionality'
+      if (planName.includes('ultra')) return 'End-to-end personalized training'
+      return 'Not included'
+
+    case 'earlyFeatureAccess':
+      if (planName.includes('free')) return 'Not included'
+      if (planName.includes('low')) return 'Not included'
+      if (planName.includes('medium')) return 'Limited early access'
+      if (planName.includes('high')) return 'Full early access'
+      if (planName.includes('ultra')) return 'Full early access + influence on roadmap'
+      return 'Not included'
+
+    case 'maxGroups':
+      return '3'
+
+    case 'projects':
+      return 'Unlimited'
+
+    case 'groupMembers':
+      return 'Unlimited'
 
     default:
       return false
@@ -185,6 +272,13 @@ export default defineComponent({
 
       return (
         <div class="page-wrapper">
+          {/* Temporary Limits Banner */}
+          <div class="limits-banner">
+            <div class="limits-banner-content">
+              <b>NOTICE:</b> Medium Plan limits will remain in effect by default until <b>February 3, 2026</b>, after
+              which the Free Plan limits shall apply automatically.
+            </div>
+          </div>
           <div class="plans-container">
             <h1 class="plans-title">Choose a plan that works for you</h1>
             <p class="plans-subtitle">
@@ -257,10 +351,27 @@ export default defineComponent({
                         </div>
 
                         <div class="billing-info">Billed each {getPeriodDisplayName(state.selectedPeriod)}</div>
-
                         <div class="plan-features">
                           <div class="safe-html" innerHTML={plan.description} />
                         </div>
+                        {/* Early Bird Discount Notice */}
+                        {(() => {
+                          const discountInfo = getDiscountInfo(plan.name, state.selectedPeriod)
+                          if (!discountInfo) return null
+
+                          return (
+                            <div class="discount-notice">
+                              <div class="discount-badge">
+                                <span class="discount-text">Early Bird Special!</span>
+                              </div>
+                              <div class="discount-details">
+                                Apply coupon <strong>{discountInfo.couponCode}</strong> at checkout to get{' '}
+                                <strong>{discountInfo.discount}% discount</strong> for {discountInfo.period}
+                              </div>
+                              <div class="discount-expiry">Valid until December 31st, 2025</div>
+                            </div>
+                          )
+                        })()}
 
                         {isActiveSubscription ? (
                           <div class="start-button text-center flex items-center justify-center">
@@ -320,7 +431,11 @@ export default defineComponent({
                               </div>
                             )
                           }
-                          return <span class="feature-text">{value}</span>
+                          return (
+                            <span class="feature-text">
+                              <div class="safe-html break-keep" innerHTML={value} />
+                            </span>
+                          )
                         },
                       }}
                     </ElTableColumn>

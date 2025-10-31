@@ -118,7 +118,7 @@
   /* sm */
   @media screen and (max-width: 640px) {
     .sm-about-funding li{
-      @apply h-64;
+      @apply h-64 flex flex-wrap;
 
       span {
         max-width: 24rem;

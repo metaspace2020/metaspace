@@ -5,6 +5,7 @@ $text-dark: #333333;
 $text-gray: #666666;
 $background-light: #f8f9fa;
 $border-light: #e9ecef;
+$banner-blue: #0F87EF;
 
 
 
@@ -14,6 +15,30 @@ $border-light: #e9ecef;
   display: flex;
   flex-direction: column;
   align-items: center;
+  
+  .cell {
+    @apply break-keep;
+  }
+}
+
+.limits-banner {
+  width: 100%;
+  background-color: $banner-blue;
+  padding: 12px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: -10px;
+  
+  .limits-banner-content {
+    color: $text-light;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    max-width: 1200px;
+    padding: 0 20px;
+    line-height: 1.4;
+  }
 }
 
 
@@ -124,7 +149,7 @@ $border-light: #e9ecef;
   font-size: 18px;
   font-weight: 700;
   color: $text-dark;
-  margin: 0 0 20px;
+  margin: 0 0 8px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -144,7 +169,6 @@ $border-light: #e9ecef;
 }
 
 .plan-price {
-  margin-bottom: 16px;
   
   .price-currency {
     font-size: 24px;
@@ -182,13 +206,69 @@ $border-light: #e9ecef;
 .billing-info {
   color: $text-gray;
   font-size: 14px;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
   line-height: 1.4;
 }
 
+.discount-notice {
+  background: #f8f9fa;
+  border: 2px solid #e3f2fd;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  text-align: center;
+  position: relative;
+  height: 80px;
+  display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+
+  
+  .discount-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    
+    .discount-icon {
+      font-size: 14px;
+      color: $pro-color;
+    }
+    
+    .discount-text {
+      color: #1976d2;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+  
+  .discount-details {
+    color: #424242;
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    
+    strong {
+      color: #1976d2;
+      font-weight: 600;
+    }
+  }
+  
+  .discount-expiry {
+    color: #757575;
+    font-size: 10px;
+    font-style: italic;
+  }
+}
+
+
 .plan-features {
   text-align: left;
-  margin-bottom: 32px;
+  margin-bottom: 0px;
   flex-grow: 1;
   min-height: 80px;
   color: $text-dark;

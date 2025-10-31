@@ -12,7 +12,7 @@ export default (recipient: string, subject: string, text: string) => {
       Destination: { ToAddresses: [recipient] },
       Message: {
         Subject: { Data: subject },
-        Body: { Text: { Data: text } },
+        Body: { Html: { Data: text } },
       },
     }, (err) => {
       if (err) logger.error(`Failed to sent email to ${recipient}: ${err}`)
@@ -31,7 +31,7 @@ export const sendRecipientsEmail = (recipients: string[], ccs: string[],
       Destination: { ToAddresses: recipients, CcAddresses: ccs },
       Message: {
         Subject: { Data: subject },
-        Body: { Text: { Data: text } },
+        Body: { Html: { Data: text } },
       },
     }, (err) => {
       if (err) logger.error(`Failed to sent email to ${recipients}: ${err}`)
