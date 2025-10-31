@@ -66,7 +66,7 @@ export const sendVerificationEmail = (email: string, link: string) => {
   const text =
 `Dear METASPACE user,
 
-Please verify this email by following the link ${link}
+Please verify this email by following the link <a href="${link}">${link}</a>
 
 Best wishes,
 METASPACE Team`
@@ -79,7 +79,7 @@ export const sendLoginEmail = (email: string, link: string) => {
   const text =
 `Dear METASPACE user,
 
-You are already signed up with our service. Please log in using this link ${link}.
+You are already signed up with our service. Please log in using this link <a href="${link}">${link}</a>.
 
 Best wishes,
 METASPACE Team`
@@ -92,7 +92,7 @@ export const sendCreateAccountEmail = (email: string, link: string) => {
   const text =
       `Dear METASPACE user,
 
-You do not have an account with this email address. Please create an account here: ${link}.
+You do not have an account with this email address. Please create an account here: <a href="${link}">${link}</a>.
 
 Best wishes,
 METASPACE Team`
@@ -105,7 +105,7 @@ export const sendResetPasswordEmail = (email: string, link: string) => {
   const text =
 `Dear METASPACE user,
 
-You requested password reset. To do so, please follow the link ${link}
+You requested password reset. To do so, please follow the link <a href="${link}">${link}</a>
 
 Best wishes,
 METASPACE Team`
@@ -118,7 +118,8 @@ export const sendInvitationEmail = (email: string, invitedBy: string, link: stri
   const text =
       `Dear future METASPACE user,
 
-You have been invited to METASPACE by ${invitedBy}. Please sign up using this email by following the link ${link}.
+You have been invited to METASPACE by ${invitedBy}. Please sign up 
+using this email by following the link <a href="${link}">${link}</a>.
 
 Best wishes,
 METASPACE Team`
