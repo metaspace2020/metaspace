@@ -97,7 +97,7 @@
     "subscriptions-transport-ws": "^0.9.16",
     "superstruct": "^0.15.2",
     "ts-node": "^10.0.0",
-    "typeorm": "0.2.31",
+    "typeorm": "0.3.26",
     "typescript": "^3.9.2",
     "ua-parser-js": "^2.0.0",
     "uuid": "^8.3.2",
