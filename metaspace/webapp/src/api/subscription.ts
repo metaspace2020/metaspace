@@ -510,3 +510,16 @@ export const getActiveGroupSubscriptionQuery = gql`
   }
   ${subscriptionFragment}
 `
+
+export const getActiveGroupSubscriptionSimpleQuery = gql`
+  query ($groupId: ID!) {
+    activeGroupSubscription(groupId: $groupId) {
+      id
+      userId
+      planId
+      billingInterval
+      startedAt
+      expiresAt
+    }
+  }
+`

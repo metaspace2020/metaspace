@@ -18,7 +18,7 @@ export default defineComponent({
             <div class="max-w-4xl mx-auto text-center">
               <h1 class="text-4xl md:text-5xl font-bold mb-4">METASPACE split into Academic & Pro</h1>
               <p class="text-xl md:text-2xl opacity-90">
-                We are excited to share with you our new plan to improve METASPACE
+                We are excited to share with you our new plan to improve METASPACE.
               </p>
             </div>
           </div>
@@ -38,8 +38,8 @@ export default defineComponent({
                 <p class="text-lg leading-relaxed mb-6">
                   Yet, it came with challenges of growing cloud costs as well as increased support efforts for the
                   METASPACE team. At the same time, we see that most datasets are submitted as private and remain
-                  private, thus not benefitting the broader scientific community. While we've been fortunate to receive
-                  generous grant support, grants cannot fully cover these increasing costs.
+                  private, thus not benefitting the broader scientific community. While we&apos;ve been fortunate to
+                  receive generous grant support, grants cannot fully cover these increasing costs.
                 </p>
 
                 <p class="text-lg leading-relaxed mb-6">
@@ -64,9 +64,8 @@ export default defineComponent({
 
                 <p class="text-lg leading-relaxed mb-6">
                   <strong>METASPACE Pro</strong> is a subscription-based cloud software for spatial metabolomics based
-                  on METASPACE. From the beginning, METASPACE Pro will support private submissions, enhanced support,
-                  dedicated compute capacity thus avoiding queue time happening due to big academic projects, and with
-                  new functionality to be added.
+                  on METASPACE. From the beginning, METASPACE Pro will support private submissions and enhanced support,
+                  and with new functionality and dedicated compute capacity to be added.
                 </p>
 
                 <p class="text-lg leading-relaxed mb-8">
@@ -82,20 +81,28 @@ export default defineComponent({
               <h2 class="text-3xl font-bold mb-8">What's staying the same</h2>
               <div class="numbered-list">
                 <div class="numbered-item">
-                  <span class="number">1.</span>
-                  <p class="text">METASPACE Academic stays free and open-source</p>
+                  <p class="text">
+                    <span class="number">1.</span>
+                    METASPACE Academic stays free and open-source
+                  </p>
                 </div>
                 <div class="numbered-item">
-                  <span class="number">2.</span>
-                  <p class="text">Public datasets remain accessible to the scientific community</p>
+                  <p class="text">
+                    <span class="number">2.</span>
+                    Public datasets remain accessible to the scientific community
+                  </p>
                 </div>
                 <div class="numbered-item">
-                  <span class="number">3.</span>
-                  <p class="text">Existing private datasets prior to the split remain accessible</p>
+                  <p class="text">
+                    <span class="number">3.</span>
+                    Existing private datasets submitted before the split remain accessible
+                  </p>
                 </div>
                 <div class="numbered-item">
-                  <span class="number">4.</span>
-                  <p class="text">Research collaboration is still one of the core values</p>
+                  <p class="text">
+                    <span class="number">4.</span>
+                    Supporting the community, enabling collaborations, and ensuring transparency remain our core values
+                  </p>
                 </div>
               </div>
             </div>
@@ -117,11 +124,11 @@ export default defineComponent({
                   <tbody>
                     <tr>
                       <td class="border border-gray-300 px-6 py-4 font-semibold bg-gray-50">Access</td>
-                      <td class="border border-gray-300 px-6 py-4 text-center">Open source, community driven</td>
+                      <td class="border border-gray-300 px-6 py-4 text-center">Public, community-focused</td>
                       <td class="border border-gray-300 px-6 py-4 text-center">Private, group managed</td>
                     </tr>
                     <tr>
-                      <td class="border border-gray-300 px-6 py-4 font-semibold bg-gray-50">Data hosted</td>
+                      <td class="border border-gray-300 px-6 py-4 font-semibold bg-gray-50">Submissions type</td>
                       <td class="border border-gray-300 px-6 py-4 text-center">Public submissions only</td>
                       <td class="border border-gray-300 px-6 py-4 text-center">Private submissions only</td>
                     </tr>
@@ -134,9 +141,7 @@ export default defineComponent({
                     </tr>
                     <tr>
                       <td class="border border-gray-300 px-6 py-4 font-semibold bg-gray-50">Support</td>
-                      <td class="border border-gray-300 px-6 py-4 text-center">
-                        Prioritizing community forums and documentation
-                      </td>
+                      <td class="border border-gray-300 px-6 py-4 text-center">GitHub discussions, email</td>
                       <td class="border border-gray-300 px-6 py-4 text-center">Dedicated support</td>
                     </tr>
                     {/* <tr>
@@ -174,11 +179,11 @@ export default defineComponent({
                   <h3 class="text-xl font-semibold mb-4">Use METASPACE Pro if you:</h3>
                   <ul class="space-y-3">
                     <li class="flex items-start">
-                      <span class="w-2 h-2 bg-pro rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      <span class="w-2 h-2 bg-[#FFAB3F] rounded-full mt-2 mr-3 flex-shrink-0"></span>
                       <span>Need private submissions</span>
                     </li>
                     <li class="flex items-start">
-                      <span class="w-2 h-2 bg-pro rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                      <span class="w-2 h-2 bg-[#FFAB3F] rounded-full mt-2 mr-3 flex-shrink-0"></span>
                       <span>Need dedicated support and prioritized computing capacity with rush options</span>
                     </li>
                   </ul>
@@ -217,20 +222,20 @@ export default defineComponent({
               </p>
               <div class="learn-more-list">
                 <div class="learn-more-item">
-                  <span class="number">1.</span>
                   <p class="text">
+                    <span class="number">1.</span>
                     Continue using <RouterLink to="/"> METASPACE Academic </RouterLink>
                   </p>
                 </div>
                 <div class="learn-more-item">
-                  <span class="number">2.</span>
                   <p class="text">
+                    <span class="number">2.</span>
                     Explore <RouterLink to="/plans"> METASPACE Pro plans </RouterLink>
                   </p>
                 </div>
                 <div class="learn-more-item">
-                  <span class="number">3.</span>
                   <p class="text">
+                    <span class="number">3.</span>
                     Check out our <RouterLink to="/faq"> FAQ </RouterLink> page for more information
                   </p>
                 </div>

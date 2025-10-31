@@ -136,7 +136,7 @@ import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
 import { RequestedAccessDialog } from './RequestedAccessDialog'
 import { ElTabs, ElButton, ElTabPane, ElLoading, ElAlert } from '../../lib/element-plus'
 import { useStore } from 'vuex'
-import { getActiveGroupSubscriptionQuery } from '../../api/subscription'
+import { getActiveGroupSubscriptionSimpleQuery } from '../../api/subscription'
 
 interface ViewGroupProfileData {
   allDatasets: DatasetDetailItem[]
@@ -265,7 +265,7 @@ export default defineComponent({
     })
 
     const { onResult: onActiveGroupSubscriptionResult } = useQuery<any>(
-      getActiveGroupSubscriptionQuery,
+      getActiveGroupSubscriptionSimpleQuery,
       { groupId: groupId.value },
       { fetchPolicy: 'network-only' }
     )

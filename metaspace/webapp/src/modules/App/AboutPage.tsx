@@ -15,9 +15,6 @@ import MonitorSvg from '../../assets/inline/refactoring-ui/icon-monitor.svg'
 import BookSvg from '../../assets/inline/refactoring-ui/icon-book-open.svg'
 import UnlockSvg from '../../assets/inline/refactoring-ui/icon-lock-open.svg'
 import StarSvg from '../../assets/inline/star-icon-land.svg'
-import UserSvg from '../../assets/inline/refactoring-ui/icon-user.svg'
-import GroupSvg from '../../assets/inline/refactoring-ui/icon-user-group.svg'
-import WorkSvg from '../../assets/inline/refactoring-ui/icon-work.svg'
 
 const NHLBILogo = defineAsyncComponent(() => import('../../assets/NHLBI.svg'))
 const EUFlag = defineAsyncComponent(() => import('../../assets/Flag_of_Europe.svg'))
@@ -197,10 +194,10 @@ const AboutPage = defineComponent({
             <section id="platforms" class="sm-about-details max-w-3xl mt-0">
               <h2>METASPACE platforms</h2>
               <p>
-                As of November 3rd 2025, the METASPACE platform splitted into two different platforms,{' '}
-                <b>METASPACE Academic</b> and <b>METASPACE Pro</b>. METASPACE Academic supports public dataset
-                submissions only, while METASPACE Pro handles private dataset submissions only. Both platforms host the
-                same engine for metabolite annotation of imaging mass spectrometry data.
+                As of November 3rd 2025, the METASPACE platform splitted into two different platforms,
+                <b>METASPACE Academic and METASPACE Pro</b>. METASPACE Academic supports public dataset submissions
+                only, while METASPACE Pro handles private dataset submissions only. Both platforms host the same engine
+                for metabolite annotation of imaging mass spectrometry data.
               </p>
               <p>
                 METASPACE Academic is ideal for open-science projects where the data can be shared publicly with the
@@ -230,66 +227,57 @@ const AboutPage = defineComponent({
             </section>
             <section id="get-started" class="sm-about-details max-w-3xl mt-0">
               <h2>Getting started</h2>
-              <p>
-                Both METASPACE platforms organize datasets and define ownership based on the following 3 elements:
-                <b> Users</b>, <b>Groups</b>, and <b>Projects</b>, which together define how data is managed, shared,
-                and published.
-                <p></p>
-                Each <b>User</b> owns their data and controls how it is shared. Users can join one or more Groups, which
-                usually represent their lab or research team. Within a group, members can collaborate, access the same
-                datasets, and work together on various projects.
-              </p>
-              <p>
-                Each <b>Group</b> works on one or more <b>Projects</b>, which provide a structured space to organize
-                datasets, manage collaboration, and link results to publications. It is strongly recommended to
-                associate all datasets with a project, even if the user is not part of a group. This helps keep data
-                organized, visible, and easier to maintain over time.
-              </p>
-              <p>
-                For METASPACE Pro, each user should create or join a <b>Group</b> to manage subscriptions for this
-                group. For more information about the subscription plans, check out the{' '}
-                <a href="/plans" target="_blank">
-                  plans
-                </a>{' '}
-                page.
-              </p>
-              <div class="collaboration column-layout !ml-4 md:!justify-around">
-                <div class="!w-full md:!w-auto">
-                  <PrimaryIcon small class="mb-2">
-                    <UserSvg />
-                  </PrimaryIcon>
-                  <h3>User</h3>
-                  <ul>
-                    <li>owner of their data</li>
-                    <li>can make their data public</li>
-                    <li>can edit dataset</li>
-                    <li>can delete their data</li>
-                  </ul>
-                </div>
-                <div class="!w-full md:!w-auto">
-                  <PrimaryIcon small class="mb-2">
-                    <GroupSvg />
-                  </PrimaryIcon>
-                  <h3>Group</h3>
-                  <ul>
-                    <li>users from same lab</li>
-                    <li>PI invites group members</li>
-                    <li>members trust each other</li>
-                    <li>members share private data</li>
-                  </ul>
-                </div>
-                <div class="!w-full md:!w-auto">
-                  <PrimaryIcon small class="mb-2" inverse>
-                    <WorkSvg />
-                  </PrimaryIcon>
-                  <h3>Project</h3>
-                  <ul>
-                    <li>organise and share data</li>
-                    <li>manager invites members</li>
-                    <li>members share private data</li>
-                    <li>can be linked to a publication</li>
-                  </ul>
-                </div>
+              <div class="flex flex-col">
+                <span class="mb-1">
+                  1.{' '}
+                  <span class="about-link" onClick={() => store.commit('account/showDialog', 'createAccount')}>
+                    Sign up
+                  </span>{' '}
+                  to create your account if you haven&apos;t already.
+                </span>
+                <span class="mb-1">
+                  2.{' '}
+                  <a href="/help" target="_blank">
+                    Take our interactive introductory tours
+                  </a>{' '}
+                  to get familiar with browsing datasets and annotations.
+                </span>
+                <span class="mb-1">
+                  3.{' '}
+                  <a href="/datasets" target="_blank">
+                    Explore public datasets
+                  </a>{' '}
+                  in our public knowledgebase.
+                </span>
+                <span class="mb-1">
+                  4. When you are ready to{' '}
+                  <a href="/upload" target="_blank">
+                    upload your own dataset
+                  </a>
+                  ,{' '}
+                  <a href="/projects" target="_blank">
+                    create a project
+                  </a>{' '}
+                  first (recommended) to keep your work organized.
+                </span>
+                <span class="mb-1">
+                  5.{' '}
+                  <a href="/upload" target="_blank">
+                    Upload your dataset
+                  </a>{' '}
+                  and link it to your project.
+                </span>
+                <span class="mb-1">
+                  6. Working in a team?{' '}
+                  <a href="/groups" target="_blank">
+                    Create a group
+                  </a>{' '}
+                  to manage and share your projects and datasets.
+                </span>
+                <span class="mb-1">
+                  7. If you plan to submit multiple datasets that need to remain private, explore our{' '}
+                  <a href="/plans">METASPACE Pro plans</a>.
+                </span>
               </div>
             </section>
             <section id="community-engagement" class="sm-about-details max-w-3xl mt-0">
@@ -310,29 +298,40 @@ const AboutPage = defineComponent({
                 colleagues and collaborators.
               </p>
               <CiteMetaspace />
-              <h3>Learn more and get in touch</h3>
+              <h2 class="!mt-0">Learn more and get in touch</h2>
               <p>
                 Whether you&apos;re continuing with METASPACE Academic or exploring METASPACE Pro service, you can find
                 more information below.
               </p>
-              <p>
+              <p class="!mb-1">
                 Continue using{' '}
                 <a href="/" target="_blank">
                   METASPACE Academic
                 </a>{' '}
+              </p>
+              <p class="!mb-1">
                 Explore{' '}
                 <a href="/plans" target="_blank">
                   METASPACE Pro plans
                 </a>{' '}
+              </p>
+              <p class="!mb-1">
                 Check out our{' '}
                 <a href="/faq" target="_blank">
                   FAQ page
                 </a>{' '}
                 for more information
                 <p></p>
-                If you still have questions or would like to share feedback, please start by visiting our Help section
-                and Discussions forum where you might find the answers you need. If you&apos;d like to provide feedback
-                or reach out directly, visit our{' '}
+                If you still have questions or would like to share feedback, please start by visiting our{' '}
+                <a href="/help" target="_blank">
+                  Help section
+                </a>{' '}
+                and{' '}
+                <a href="https://github.com/metaspace2020/metaspace/discussions" target="_blank">
+                  Discussions forum
+                </a>{' '}
+                where you might find the answers you need. If you&apos;d like to provide feedback or reach out directly,
+                visit our{' '}
                 <a href="/contact" target="_blank">
                   contact page
                 </a>{' '}

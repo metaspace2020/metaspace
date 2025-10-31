@@ -31,16 +31,14 @@ interface ComparisonFeature {
 
 const comparisonFeatures: ComparisonFeature[] = [
   { name: 'Price', key: 'price', type: 'price' },
-  { name: 'Ideal For', key: 'ideal', type: 'ideal' },
   { name: 'Maximum Private Submissions per Year', key: 'maxDatasets', type: 'limit' },
   { name: 'Maximum Private Reprocessings per Year', key: 'maxReprocessing', type: 'limit' },
+  { name: 'Support Channels', key: 'supportChannels', type: 'text' },
   { name: 'Support Response Time', key: 'support', type: 'support' },
   { name: 'Dedicated Training', key: 'training', type: 'text' },
   { name: 'Early Feature Access', key: 'earlyFeatureAccess', type: 'text' },
-  { name: 'Maximum Groups Allowed', key: 'maxGroups', type: 'text' },
   { name: 'Group Members', key: 'groupMembers', type: 'text' },
   { name: 'Projects', key: 'projects', type: 'text' },
-  { name: 'Billing', key: 'billing', type: 'billing' },
 ]
 
 // Helper function to get discount information for early bird promotion
@@ -142,11 +140,11 @@ const getFeatureValue = (plan: Plan, featureKey: string, selectedPeriod?: Pricin
       return '30 reprocessing / year'
 
     case 'support':
-      if (planName.includes('free')) return 'Email replies within 72 hours'
-      if (planName.includes('low')) return 'Email replies within 72 hours'
-      if (planName.includes('medium')) return 'Email replies within 24 hours'
-      if (planName.includes('high')) return 'Email replies within 12 hours'
-      if (planName.includes('ultra')) return 'Email replies within 12 hours'
+      if (planName.includes('free')) return '3 working days'
+      if (planName.includes('low')) return '2 working days'
+      if (planName.includes('medium')) return '24 hours'
+      if (planName.includes('high')) return 'Email replies within 24h; chat sessions bookable within 24h (Mon–Fri)'
+      if (planName.includes('ultra')) return 'Email replies within 12h; chat sessions bookable same day (5 days)'
       return 'Community and email support'
 
     case 'priority':
@@ -188,6 +186,14 @@ const getFeatureValue = (plan: Plan, featureKey: string, selectedPeriod?: Pricin
 
     case 'groupMembers':
       return 'Unlimited'
+
+    case 'supportChannels':
+      if (planName.includes('free')) return 'Email'
+      if (planName.includes('low')) return 'Email'
+      if (planName.includes('medium')) return 'Email'
+      if (planName.includes('high')) return 'Email + 1:1 live chat'
+      if (planName.includes('ultra')) return 'Email + 1:1 live chat'
+      return 'Email'
 
     default:
       return false
@@ -350,9 +356,9 @@ export default defineComponent({
                           <span class="price-period">/{getPeriodDisplayName(state.selectedPeriod).toLowerCase()}</span>
                         </div>
 
-                        <div class="billing-info">Billed each {getPeriodDisplayName(state.selectedPeriod)}</div>
+                        <div class="billing-info">Billed every {getPeriodDisplayName(state.selectedPeriod)}</div>
                         <div class="plan-features">
-                          <div class="safe-html" innerHTML={plan.description} />
+                          <div class="safe-html text-center" innerHTML={plan.description} />
                         </div>
                         {/* Early Bird Discount Notice */}
                         {(() => {

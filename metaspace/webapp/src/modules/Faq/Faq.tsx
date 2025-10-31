@@ -42,155 +42,6 @@ export default defineComponent({
           </div>
 
           <div class="max-w-4xl mx-auto py-16 px-4">
-            {/* METASPACE Pro and METASPACE Academic Section */}
-            <div class="mb-12">
-              <h2 class="text-xl font-bold text-gray-900 mb-6">METASPACE Pro and METASPACE Academic</h2>
-              <div class="space-y-4">
-                <ElCollapse
-                  modelValue={activeNames.value}
-                  onUpdate:modelValue={(value: string[]) => (activeNames.value = value)}
-                  class="faq-collapse"
-                  {...({} as any)}
-                >
-                  <ElCollapseItem name="1" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
-                    {{
-                      title: () => (
-                        <div class="flex items-center justify-between w-full py-4 px-6">
-                          <span class="text-lg font-medium text-gray-900 text-left">
-                            What's the difference between METASPACE Academic and METASPACE Pro?
-                          </span>
-                          <ElIcon
-                            class={`transition-transform duration-200 ${
-                              activeNames.value.includes('1') ? 'rotate-45' : ''
-                            }`}
-                            size={24}
-                            {...({} as any)}
-                          >
-                            <Plus />
-                          </ElIcon>
-                        </div>
-                      ),
-                      default: () => (
-                        <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl mb-4">
-                            METASPACE Academic and METASPACE Pro are two distinct software platforms for spatial
-                            metabolomics, created in 2025 based on the software METASPACE founded in 2014.
-                          </p>
-                          <p class="text-gray-700 leading-relaxed text-xl mb-4">
-                            <b>METASPACE Academic</b> offers a free engine for metabolite annotation for public datasets
-                            and hosts an open knowledgebase of spatial metabolomes. It is ideal for open-science
-                            projects where the data can be shared publicly with the community.
-                          </p>
-                          <p class="text-gray-700 leading-relaxed text-xl">
-                            <b>METASPACE Pro</b> is a subscription-based cloud software for spatial metabolomics. From
-                            the beginning, METASPACE Pro supports private submissions, ensures enhanced support, offers
-                            a dedicated compute capacity thus avoiding queue time happening due to big academic
-                            projects, and with new functionality to be added.
-                          </p>
-                        </div>
-                      ),
-                    }}
-                  </ElCollapseItem>
-
-                  <ElCollapseItem name="2" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
-                    {{
-                      title: () => (
-                        <div class="flex items-center justify-between w-full py-4 px-6">
-                          <span class="text-lg font-medium text-gray-900 text-left">
-                            Why did you split METASPACE into Academic and Pro?
-                          </span>
-                          <ElIcon
-                            class={`transition-transform duration-200 ${
-                              activeNames.value.includes('2') ? 'rotate-45' : ''
-                            }`}
-                            size={24}
-                            {...({} as any)}
-                          >
-                            <Plus />
-                          </ElIcon>
-                        </div>
-                      ),
-                      default: () => (
-                        <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl mb-4">
-                            As METASPACE has grown, so have the technical demands and operational costs of running,
-                            maintaining and supporting a high-quality cloud platform. In particular, processing and
-                            supporting private submissions not contributing to the METASPACE public knowledgebase became
-                            increasingly costly. While we've been fortunate to receive generous grant support, grants
-                            cannot fully cover these increasing costs that required us to develop a new organizational
-                            structure.
-                          </p>
-                          <p class="text-gray-700 leading-relaxed text-xl">
-                            This approach increases the sustainability of METASPACE, secures free use of METASPACE
-                            Academic for the open-science community, and offers dedicated support and compute capacity
-                            to METASPACE Pro users, with additional features to be added.
-                          </p>
-                        </div>
-                      ),
-                    }}
-                  </ElCollapseItem>
-
-                  <ElCollapseItem name="3" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
-                    {{
-                      title: () => (
-                        <div class="flex items-center justify-between w-full py-4 px-6">
-                          <span class="text-lg font-medium text-gray-900 text-left">
-                            Would I be able to submit private datasets on METASPACE Academic?
-                          </span>
-                          <ElIcon
-                            class={`transition-transform duration-200 ${
-                              activeNames.value.includes('3') ? 'rotate-45' : ''
-                            }`}
-                            size={24}
-                            {...({} as any)}
-                          >
-                            <Plus />
-                          </ElIcon>
-                        </div>
-                      ),
-                      default: () => (
-                        <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
-                            No, METASPACE Academic only supports public dataset submissions, which are openly accessible
-                            to the entire community.
-                          </p>
-                        </div>
-                      ),
-                    }}
-                  </ElCollapseItem>
-
-                  <ElCollapseItem name="4" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
-                    {{
-                      title: () => (
-                        <div class="flex items-center justify-between w-full py-4 px-6">
-                          <span class="text-lg font-medium text-gray-900 text-left">
-                            Can I still access my existing private datasets if I'm using METASPACE Academic?
-                          </span>
-                          <ElIcon
-                            class={`transition-transform duration-200 ${
-                              activeNames.value.includes('4') ? 'rotate-45' : ''
-                            }`}
-                            size={24}
-                            {...({} as any)}
-                          >
-                            <Plus />
-                          </ElIcon>
-                        </div>
-                      ),
-                      default: () => (
-                        <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
-                            Yes, all of your existing private datasets will remain accessible to you. However, you won't
-                            be able to submit any new private datasets while using METASPACE Academic.
-                          </p>
-                        </div>
-                      ),
-                    }}
-                  </ElCollapseItem>
-                </ElCollapse>
-              </div>
-            </div>
-
             {/* METASPACE Pro - Plans Section */}
             <div class="mb-12">
               <h2 class="text-xl font-bold text-gray-900 mb-6">METASPACE Pro - Plans</h2>
@@ -201,7 +52,7 @@ export default defineComponent({
                   class="faq-collapse"
                   {...({} as any)}
                 >
-                  <ElCollapseItem name="5" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="1plans" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -221,7 +72,7 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             We have several plans tailored to the number of private submissions your group needs each
                             year. Please see our{' '}
                             <a href="/plans" target="_blank" rel="noopener noreferrer">
@@ -234,7 +85,7 @@ export default defineComponent({
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="6" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="2plans" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -254,7 +105,7 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             You can subscribe to the Free plan that allows up to 3 private submissions and can be
                             upgraded to any other plan.
                           </p>
@@ -263,7 +114,7 @@ export default defineComponent({
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="7" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="3plans" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -284,22 +135,22 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
-                            From the beginning, METASPACE Pro supports private submissions as well as provides enhanced
-                            support and dedicated compute capacity thus avoiding queue time happening due to big
-                            academic projects. We are planning to add other features available only in METASPACE Pro.
+                          <p class="text-gray-700 leading-relaxed text-lg">
+                            Initially, METASPACE Pro supports private submissions and includes dedicated support to help
+                            research groups manage large or complex academic projects efficiently. We are also planning
+                            to introduce additional features that will be available exclusively in METASPACE Pro.
                           </p>
                         </div>
                       ),
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="8" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="4plans" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
                           <span class="text-lg font-medium text-gray-900 text-left">
-                            Is subscription valid for a user or for a METASPACE group?
+                            Is the subscription valid for a user or for a METASPACE group?
                           </span>
                           <ElIcon
                             class={`transition-transform duration-200 ${
@@ -314,7 +165,7 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             All METASPACE Pro plans are designed for groups, so every member within a group enjoys the
                             full benefits of the chosen plan.
                           </p>
@@ -323,7 +174,7 @@ export default defineComponent({
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="9" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="5plans" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -343,7 +194,7 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             No, collaborators you share private datasets with do not need their own METASPACE Pro
                             subscription. The subscription is required for submitting or reprocessing private datasets
                             only. You can invite collaborators to a project where datasets are generated under the
@@ -355,7 +206,7 @@ export default defineComponent({
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="10" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="6plans" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -376,7 +227,7 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             The subscription plan limits the number of private submissions, not the total number of
                             private datasets currently stored in the group. Converting private datasets to public does
                             not increase your available private submission quota, but you can change the visibility
@@ -387,7 +238,7 @@ export default defineComponent({
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="11" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="7plans" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -407,7 +258,7 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             If your METASPACE Pro subscription ends, your existing private datasets will remain
                             accessible to you and your group; nothing will be lost. You will no longer be able to submit
                             new private datasets or reprocess existing private datasets. However, you will still be able
@@ -418,7 +269,7 @@ export default defineComponent({
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="12" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="8plans" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -438,17 +289,52 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             No, reprocessing a private dataset is not counted as a new private submission. However,
                             there's a reprocessing quota for each plan separate from the main quota for private
-                            submission. Check out the plans table for more information.
+                            submission. Check out the{' '}
+                            <a href="/plans" target="_blank" rel="noopener noreferrer">
+                              plans table
+                            </a>{' '}
+                            for more information.
                           </p>
                         </div>
                       ),
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="13" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="9plans" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                    {{
+                      title: () => (
+                        <div class="flex items-center justify-between w-full py-4 px-6">
+                          <span class="text-lg font-medium text-gray-900 text-left">
+                            How can I monitor my private usage quota?
+                          </span>
+                          <ElIcon
+                            class={`transition-transform duration-200 ${
+                              activeNames.value.includes('13') ? 'rotate-45' : ''
+                            }`}
+                            size={24}
+                            {...({} as any)}
+                          >
+                            <Plus />
+                          </ElIcon>
+                        </div>
+                      ),
+                      default: () => (
+                        <div class="px-6 pb-6 pt-2">
+                          <p class="text-gray-700 leading-relaxed text-lg mb-4">
+                            On your Groups page, you will find a tab labeled <b>“Subscription”</b> that provides details
+                            about your paid plan, including your submission and reprocessing quotas. This section shows
+                            the number of private submissions and how many remain. The same bar displaying these
+                            counters is also visible on the <b>Upload</b> page during dataset submission.
+                          </p>
+                        </div>
+                      ),
+                    }}
+                  </ElCollapseItem>
+
+                  <ElCollapseItem name="10plans" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -468,17 +354,69 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl mb-4">
-                            Yes, you can upgrade or downgrade your METASPACE Pro plan at any time.
+                          <p class="text-gray-700 leading-relaxed text-lg mb-4">
+                            <b>Upgrading:</b>
                           </p>
-                          <p class="text-gray-700 leading-relaxed text-xl mb-4">
-                            An upgrade takes effect immediately, giving you instant access to the higher plan's
-                            benefits. Downgrades are scheduled for the start of your next billing cycle, allowing you to
-                            continue enjoying your current Pro features until the cycle ends.
+                          <p class="text-gray-700 leading-relaxed text-lg mb-4">
+                            You can upgrade your subscription at any time. When you upgrade, you&apos;ll receive a
+                            refund for any unused submissions from your current plan, and the new plan and its quota
+                            will become available immediately.
                           </p>
-                          <p class="text-gray-700 leading-relaxed text-xl">
-                            <b>Please note:</b> no refunds are issued for the remaining period of the current plan in
-                            case of downgrades.
+                          <p class="text-gray-700 leading-relaxed text-lg mb-4">
+                            <b>Downgrading and Refunds:</b>
+                          </p>
+                          <p class="text-gray-700 leading-relaxed text-lg mb-4">
+                            If you wish to downgrade or cancel your plan within the first 30 days of your subscription,
+                            refunds are calculated based on your quota usage. For example, if you have used 80% of your
+                            quota and request a downgrade within 30 days, you are entitled to a refund corresponding to
+                            the unused 20% of your plan.
+                          </p>
+                          <p class="text-gray-700 leading-relaxed text-lg mb-4">
+                            If more than 30 days have passed since the start of your subscription and you still believe
+                            a refund is warranted, please contact us through our{' '}
+                            <a href="/contact" target="_blank" rel="noopener noreferrer">
+                              Contact page
+                            </a>{' '}
+                            so we can review your case.
+                          </p>
+                        </div>
+                      ),
+                    }}
+                  </ElCollapseItem>
+
+                  <ElCollapseItem name="11plans" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                    {{
+                      title: () => (
+                        <div class="flex items-center justify-between w-full py-4 px-6">
+                          <span class="text-lg font-medium text-gray-900 text-left">How do coupon codes work?</span>
+                          <ElIcon
+                            class={`transition-transform duration-200 ${
+                              activeNames.value.includes('13') ? 'rotate-45' : ''
+                            }`}
+                            size={24}
+                            {...({} as any)}
+                          >
+                            <Plus />
+                          </ElIcon>
+                        </div>
+                      ),
+                      default: () => (
+                        <div class="px-6 pb-6 pt-2">
+                          <p class="text-gray-700 leading-relaxed text-lg mb-4">
+                            Coupon codes can be applied during checkout to receive a discount on your subscription. If
+                            you have a code, simply enter it in the “Enter coupon code” field before completing your
+                            payment. The discount will be automatically applied, and you&apos;ll see the updated total
+                            before confirming your purchase.
+                          </p>
+                          <p class="text-gray-700 leading-relaxed text-lg mb-4">
+                            Most coupon codes can be used once within a specified time period.
+                          </p>
+                          <p class="text-gray-700 leading-relaxed text-lg mb-4">
+                            If you encounter any issues applying your code, please visit our{' '}
+                            <a href="/contact" target="_blank" rel="noopener noreferrer">
+                              Contact page
+                            </a>{' '}
+                            for assistance.
                           </p>
                         </div>
                       ),
@@ -498,7 +436,7 @@ export default defineComponent({
                   class="faq-collapse"
                   {...({} as any)}
                 >
-                  <ElCollapseItem name="14" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="1tech" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -518,7 +456,7 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             Only data in the{' '}
                             <a href="https://www.ms-imaging.org/imzml/" target="_blank" rel="noopener noreferrer">
                               imzML
@@ -543,7 +481,7 @@ export default defineComponent({
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="15" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="2tech" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -563,7 +501,7 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             METASPACE Academic hosts a detectability tool that helps assess the likelihood of observing
                             specific metabolites in imaging mass spectrometry data. Check out this feature in our{' '}
                             <a href="/detectability" target="_blank" rel="noopener noreferrer">
@@ -584,7 +522,7 @@ export default defineComponent({
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="16" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="3tech" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -604,7 +542,7 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             Multiple molecular databases are supported for annotation, such as HMDB and LipidMaps, to
                             ensure comprehensive small molecule and lipid identification. There are more core annotation
                             databases available as core databases, check out our{' '}
@@ -618,7 +556,7 @@ export default defineComponent({
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="17" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="4tech" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -638,7 +576,7 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             Yes, you can access both METASPACE Academic and METASPACE Pro programmatically via API. A
                             python client is provided that allows users to interact with the system, enabling tasks such
                             as dataset uploads, annotation results retrieval, creating custom databases, and many more.
@@ -657,7 +595,7 @@ export default defineComponent({
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="18" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="5tech" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -677,7 +615,7 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
+                          <p class="text-gray-700 leading-relaxed text-lg">
                             Please create a new{' '}
                             <a href="/projects" target="_blank" rel="noopener noreferrer">
                               project
@@ -692,7 +630,7 @@ export default defineComponent({
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="19" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="6tech" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -712,20 +650,41 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
-                            You can explore interactive tours covering main features in METASPACE Academic on our{' '}
-                            <a href="/help" target="_blank" rel="noopener noreferrer">
-                              help
+                          <p class="text-gray-700 leading-relaxed text-lg">
+                            Our main{' '}
+                            <a
+                              href="https://docs.google.com/presentation/d/10h6Kle2hdW_Ma9SdkuFIUiUOT5lBXexZs1jFDb7X08Q"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              tutorial slide deck
                             </a>{' '}
-                            page, which also includes a step-by-step guide to using those features both in METASPACE
-                            Academic and METASPACE Pro.
+                            provides the latest step-by-step guide. You can also explore interactive tours that walk you
+                            through the basic features, including detailed instructions for using them in both METASPACE
+                            Academic and METASPACE Pro. For additional details, visit our{' '}
+                            <a href="/help" target="_blank" rel="noopener noreferrer">
+                              Help page
+                            </a>
+                            .
+                          </p>
+                          <p class="text-gray-700 leading-relaxed text-lg">
+                            For common questions or troubleshooting, we also encourage you to visit our{' '}
+                            <a
+                              href="https://github.com/metaspace2020/metaspace/discussions"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              GitHub Discussions page
+                            </a>
+                            , where you can browse existing Q&A, check whether your question has already been answered,
+                            or post a new discussion to connect directly with the team and other users.
                           </p>
                         </div>
                       ),
                     }}
                   </ElCollapseItem>
 
-                  <ElCollapseItem name="20" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
+                  <ElCollapseItem name="7tech" class="faq-collapse-item border-b border-gray-200" {...({} as any)}>
                     {{
                       title: () => (
                         <div class="flex items-center justify-between w-full py-4 px-6">
@@ -745,13 +704,14 @@ export default defineComponent({
                       ),
                       default: () => (
                         <div class="px-6 pb-6 pt-2">
-                          <p class="text-gray-700 leading-relaxed text-xl">
-                            If you encounter issues when submitting a dataset or if processing takes longer than
-                            expected, please contact the support team via{' '}
+                          <p class="text-gray-700 leading-relaxed text-lg">
+                            If you encounter any issues when submitting a dataset or notice that processing is taking
+                            longer than expected, please visit our{' '}
                             <a href="/contact" target="_blank" rel="noopener noreferrer">
-                              contact
+                              Contact page
                             </a>{' '}
-                            form. They can help troubleshoot the issue and provide guidance.
+                            for assistance. There, you can find different types of support options tailored to your
+                            needs, including help with troubleshooting and submission guidance.
                           </p>
                         </div>
                       ),

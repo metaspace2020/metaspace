@@ -140,6 +140,87 @@ export default defineComponent({
       }
     }
 
+    const renderRemainingQuota = () => {
+      return (
+        <>
+          {/* Remaining Quota */}
+          <div class="section">
+            <h3 class="section-title">Remaining quota</h3>
+            <GroupQuota groupId={props.groupId} types={['create', 'update', 'reprocess']} />
+          </div>
+
+          {/* All API Usages */}
+          <div class="section">
+            <h3 class="section-title">API usage history</h3>
+            {apiUsagesLoading.value ? (
+              <div class="loading-container">
+                <el-skeleton animated>
+                  <el-skeleton-item variant="h3" style={{ width: '30%' }} />
+                  <el-skeleton-item variant="text" style={{ width: '100%' }} />
+                  <el-skeleton-item variant="text" style={{ width: '90%' }} />
+                  <el-skeleton-item variant="text" style={{ width: '95%' }} />
+                  <el-skeleton-item variant="text" style={{ width: '85%' }} />
+                </el-skeleton>
+              </div>
+            ) : allApiUsages.value && allApiUsages.value.filter((usage: ApiUsage) => usage.source).length > 0 ? (
+              <el-table data={allApiUsages.value.filter((usage: ApiUsage) => usage.source)} style={{ width: '100%' }}>
+                <el-table-column prop="actionType" label="Action" width="150">
+                  {{
+                    default: ({ row }: { row: ApiUsage }) => (
+                      <el-tag type="info" size="small">
+                        {getActionTypeText(row.actionType)}
+                      </el-tag>
+                    ),
+                  }}
+                </el-table-column>
+                <el-table-column prop="type" label="Type" width="100">
+                  {{
+                    default: ({ row }: { row: ApiUsage }) => (
+                      <el-tag type="info" size="small">
+                        {row.type}
+                      </el-tag>
+                    ),
+                  }}
+                </el-table-column>
+                <el-table-column prop="source" label="Source" width="80">
+                  {{
+                    default: ({ row }: { row: ApiUsage }) => (
+                      <el-tag type="warning" size="small">
+                        {row.source}
+                      </el-tag>
+                    ),
+                  }}
+                </el-table-column>
+                <el-table-column prop="userId" label="User" width="140">
+                  {{
+                    default: ({ row }: { row: ApiUsage }) => <span class="user-email">{row.user?.name}</span>,
+                  }}
+                </el-table-column>
+                <el-table-column prop="actionDt" label="Date" width="180">
+                  {{
+                    default: ({ row }: { row: ApiUsage }) => <span>{formatDate(row.actionDt)}</span>,
+                  }}
+                </el-table-column>
+                <el-table-column prop="datasetId" label="Dataset">
+                  {{
+                    default: ({ row }: { row: ApiUsage }) => (
+                      <RouterLink to={`/dataset/${row.datasetId}`} newTab>
+                        {row.datasetId || '-'}
+                      </RouterLink>
+                    ),
+                  }}
+                </el-table-column>
+              </el-table>
+            ) : (
+              <div class="empty-container">
+                <p>No API usage history with source available</p>
+              </div>
+            )}
+          </div>
+        </>
+      )
+    }
+
     return () => {
       const subscription = activeGroupSubscription.value as Subscription
 
@@ -176,11 +257,6 @@ export default defineComponent({
             <el-card class="subscription-card">
               {{
                 header: () => (
-                  <div class="card-header">
-                    <span>Group subscription</span>
-                  </div>
-                ),
-                default: () => (
                   <div class="empty-actions">
                     <p class="w-full">This group doesn't have an active subscription. Choose a plan to get started.</p>
                     <el-button type="primary" size="large" onClick={() => router.push('/plans')}>
@@ -188,6 +264,7 @@ export default defineComponent({
                     </el-button>
                   </div>
                 ),
+                default: () => <>{renderRemainingQuota(true)}</>,
               }}
             </el-card>
           </div>
@@ -419,84 +496,7 @@ export default defineComponent({
                     )}
                   </div>
 
-                  {/* Remaining Quota */}
-                  <div class="section">
-                    <h3 class="section-title">Remaining quota</h3>
-                    <GroupQuota groupId={props.groupId} types={['create', 'update', 'reprocess']} />
-                  </div>
-
-                  {/* All API Usages */}
-                  <div class="section">
-                    <h3 class="section-title">API usage history</h3>
-                    {apiUsagesLoading.value ? (
-                      <div class="loading-container">
-                        <el-skeleton animated>
-                          <el-skeleton-item variant="h3" style={{ width: '30%' }} />
-                          <el-skeleton-item variant="text" style={{ width: '100%' }} />
-                          <el-skeleton-item variant="text" style={{ width: '90%' }} />
-                          <el-skeleton-item variant="text" style={{ width: '95%' }} />
-                          <el-skeleton-item variant="text" style={{ width: '85%' }} />
-                        </el-skeleton>
-                      </div>
-                    ) : allApiUsages.value &&
-                      allApiUsages.value.filter((usage: ApiUsage) => usage.source).length > 0 ? (
-                      <el-table
-                        data={allApiUsages.value.filter((usage: ApiUsage) => usage.source)}
-                        style={{ width: '100%' }}
-                      >
-                        <el-table-column prop="actionType" label="Action" width="150">
-                          {{
-                            default: ({ row }: { row: ApiUsage }) => (
-                              <el-tag type="info" size="small">
-                                {getActionTypeText(row.actionType)}
-                              </el-tag>
-                            ),
-                          }}
-                        </el-table-column>
-                        <el-table-column prop="type" label="Type" width="100">
-                          {{
-                            default: ({ row }: { row: ApiUsage }) => (
-                              <el-tag type="info" size="small">
-                                {row.type}
-                              </el-tag>
-                            ),
-                          }}
-                        </el-table-column>
-                        <el-table-column prop="source" label="Source" width="80">
-                          {{
-                            default: ({ row }: { row: ApiUsage }) => (
-                              <el-tag type="warning" size="small">
-                                {row.source}
-                              </el-tag>
-                            ),
-                          }}
-                        </el-table-column>
-                        <el-table-column prop="userId" label="User" width="140">
-                          {{
-                            default: ({ row }: { row: ApiUsage }) => <span class="user-email">{row.user?.name}</span>,
-                          }}
-                        </el-table-column>
-                        <el-table-column prop="actionDt" label="Date" width="180">
-                          {{
-                            default: ({ row }: { row: ApiUsage }) => <span>{formatDate(row.actionDt)}</span>,
-                          }}
-                        </el-table-column>
-                        <el-table-column prop="datasetId" label="Dataset">
-                          {{
-                            default: ({ row }: { row: ApiUsage }) => (
-                              <RouterLink to={`/dataset/${row.datasetId}`} newTab>
-                                {row.datasetId || '-'}
-                              </RouterLink>
-                            ),
-                          }}
-                        </el-table-column>
-                      </el-table>
-                    ) : (
-                      <div class="empty-container">
-                        <p>No API usage history with source available</p>
-                      </div>
-                    )}
-                  </div>
+                  {renderRemainingQuota()}
 
                   {/* Payment Information */}
                   <div class="section">

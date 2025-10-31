@@ -6,7 +6,7 @@ import { URLSearchParams } from 'url'
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Query } from '../../../binding'
 import { UserError } from 'graphql-errors'
-import { assertCanEditGroup } from '../../../modules/group/controller'
+import { assertCanAddDataset } from '../../../modules/group/controller'
 
 interface AllSubscriptionsArgs {
   filter?: {
@@ -215,7 +215,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
   async activeGroupSubscription(_: any, { groupId }: { groupId: string }, ctx: Context): Promise<any> {
     const { user, entityManager } = ctx
-    await assertCanEditGroup(entityManager, user, groupId)
+    await assertCanAddDataset(entityManager, user, groupId)
 
     try {
       const response = await makeApiRequest(ctx, `/api/subscriptions/group/${groupId}/active`)

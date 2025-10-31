@@ -1479,6 +1479,7 @@ export default defineComponent({
             zIndex={3000}
           >
             <div class="modal-content">
+              <div class="banner-blackout" />
               <div class="iframe-container">
                 <iframe src={state.modalContent.url} class="terms-iframe" style={{ border: 'none' }} />
               </div>

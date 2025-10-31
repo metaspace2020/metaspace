@@ -578,6 +578,7 @@
     z-index: 3000 !important;
     
     .modal-content {
+      position: relative;
       padding: 0;
       height: 70vh;
       
@@ -617,3 +618,10 @@
     }
   }
 } 
+
+.banner-blackout {
+  background: white;
+    height: 62px;
+    position: absolute;
+    width: 100%;
+}
