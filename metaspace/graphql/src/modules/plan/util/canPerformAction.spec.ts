@@ -176,4 +176,39 @@ describe('Plan Controller Queries', () => {
     const allowed = await canPerformAction(context, { actionType, type: 'dataset', visibility, source })
     expect(allowed.allowed).toBe(true)
   })
+
+  it('should handle connection errors gracefully', async() => {
+    const context = userContext
+    const error: any = new Error('Failed to fetch')
+    error.code = 'ECONNREFUSED'
+
+    mockFetch.mockRejectedValueOnce(error)
+
+    const result = await canPerformAction(context, { actionType: 'download', type: 'dataset' })
+    expect(result.allowed).toBe(true) // Should allow when service is down
+  })
+
+  it('should handle API response errors', async() => {
+    const context = userContext
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.resolve({ message: 'Rate limit exceeded' }),
+    })
+
+    const result = await canPerformAction(context, { actionType: 'download', type: 'dataset' })
+    expect(result.allowed).toBe(false)
+    expect(result.message).toBe('Rate limit exceeded')
+  })
+
+  it('should handle missing API URL', async() => {
+    const context = userContext
+    const originalApiUrl = config.manager_api_url
+    delete (config as any).manager_api_url
+
+    const result = await canPerformAction(context, { actionType: 'download', type: 'dataset' })
+    expect(result.allowed).toBe(true) // Should allow when API URL not configured
+
+    config.manager_api_url = originalApiUrl
+  })
 })

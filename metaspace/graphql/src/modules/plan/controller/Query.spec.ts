@@ -708,4 +708,97 @@ describe('modules/plan/controller (queries)', () => {
       await expect(doQuery(queryApiUsagesCount)).rejects.toThrow('Access denied')
     })
   })
+
+  describe('Query.remainingApiUsages', () => {
+    const queryRemainingApiUsages = `query ($groupId: String, $types: [String!]) {
+      remainingApiUsages(groupId: $groupId, types: $types) {
+        actionType
+        remaining
+        limit
+      }
+    }`
+
+    it('should return remaining API usages for user without group', async() => {
+      const types = ['create']
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          remainingUsages: [{ actionType: 'create', remaining: 3, limit: 5 }],
+        }),
+      })
+
+      const result = await doQuery(queryRemainingApiUsages, { types })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/api-usages/remaining-usages'),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual([{ actionType: 'create', remaining: 3, limit: 5 }])
+    })
+
+    it('should handle errors gracefully', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Internal Server Error',
+      })
+
+      const result = await doQuery(queryRemainingApiUsages, { types: ['create'] })
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('Query.plan with additional parameters', () => {
+    const queryPlanWithParams = `query ($id: String!, $includeVat: Boolean, $customerCountry: String) {
+      plan(id: $id, includeVat: $includeVat, customerCountry: $customerCountry) {
+        id
+        tier
+        name
+        pricingOptions {
+          id
+          priceCents
+        }
+      }
+    }`
+
+    it('should handle plan query with VAT and country parameters', async() => {
+      const planId = '550e8400-e29b-41d4-a716-446655440001'
+      const expectedPlan = TIERS.find(plan => plan.id === planId)
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          ...expectedPlan,
+          createdAt: moment(expectedPlan!.createdAt).valueOf().toString(),
+        }),
+      })
+
+      const result = await doQuery(queryPlanWithParams, {
+        id: planId,
+        includeVat: true,
+        customerCountry: 'US',
+      })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('includeVat=true'),
+        expect.any(Object)
+      )
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('customerCountry=US'),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual({
+        id: expectedPlan!.id,
+        tier: expectedPlan!.tier,
+        name: expectedPlan!.name,
+        pricingOptions: expectedPlan!.pricingOptions.map(option => ({
+          id: option.id,
+          priceCents: option.priceCents,
+        })),
+      })
+    })
+  })
 })

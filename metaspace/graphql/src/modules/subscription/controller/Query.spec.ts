@@ -523,5 +523,73 @@ describe('modules/subscription/controller (queries)', () => {
         updatedAt: moment(activeSubscription!.updatedAt).valueOf().toString(),
       })
     })
+
+    it('should handle errors when fetching active user subscription', async() => {
+      // Mock the fetch response to simulate an error
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Not Found',
+      })
+
+      const result = await doQuery(queryActiveUserSubscription, null, { context: userContext })
+
+      expect(result).toBeNull()
+    })
+  })
+
+  describe('Query.subscriptionsCount', () => {
+    const querySubscriptionsCount = `query ($filter: SubscriptionFilter) {
+      subscriptionsCount(filter: $filter)
+    }`
+
+    it('should return total count of subscriptions for admin', async() => {
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          meta: { total: 3 },
+        }),
+      })
+
+      const result = await doQuery(querySubscriptionsCount, {}, { context: adminContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('https://test-api.metaspace.example/api/subscriptions'),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(3)
+    })
+
+    it('should throw an error for non-admin users', async() => {
+      await expect(doQuery(querySubscriptionsCount)).rejects.toThrow('Access denied')
+    })
+  })
+
+  describe('Query.transaction error handling', () => {
+    const queryTransaction = `query ($id: ID!) {
+      transaction(id: $id) {
+        id
+        userId
+        subscriptionId
+        originalAmountCents
+        finalAmountCents
+        currency
+        status
+        type
+      }
+    }`
+
+    it('should handle errors when fetching transaction', async() => {
+      // Mock the fetch response to simulate an error
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Not Found',
+      })
+
+      const result = await doQuery(queryTransaction, { id: '999' })
+
+      expect(result).toBeNull()
+    })
   })
 })
