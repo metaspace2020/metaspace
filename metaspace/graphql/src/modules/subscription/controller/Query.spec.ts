@@ -592,4 +592,552 @@ describe('modules/subscription/controller (queries)', () => {
       expect(result).toBeNull()
     })
   })
+
+  describe('Query.allTransactions', () => {
+    const queryAllTransactions = `query($filter: TransactionFilter, $orderBy: TransactionOrderBy, $sortingOrder: SortingOrder, $offset: Int, $limit: Int) {
+      allTransactions(
+        filter: $filter,
+        orderBy: $orderBy,
+        sortingOrder: $sortingOrder,
+        offset: $offset,
+        limit: $limit
+      ) {
+        id
+        userId
+        subscriptionId
+        originalAmountCents
+        finalAmountCents
+        currency
+        status
+        type
+      }
+    }`
+
+    it('should return all transactions for admin', async() => {
+      const expectedTransactions = TRANSACTIONS.map(tx => ({
+        id: tx.id,
+        userId: tx.userId,
+        subscriptionId: tx.subscriptionId,
+        originalAmountCents: tx.originalAmountCents,
+        finalAmountCents: tx.finalAmountCents,
+        currency: tx.currency,
+        status: tx.status,
+        type: tx.type,
+      }))
+
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: expectedTransactions,
+        }),
+      })
+
+      const result = await doQuery(queryAllTransactions, {}, { context: adminContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('https://test-api.metaspace.example/api/transactions'),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(expectedTransactions)
+    })
+
+    it('should handle filtering and sorting', async() => {
+      const filter = { status: 'completed', userId: testUser.id }
+      const orderBy = 'ORDER_BY_DATE'
+      const sortingOrder = 'DESCENDING'
+
+      const expectedTransaction = {
+        id: TRANSACTIONS[0].id,
+        userId: TRANSACTIONS[0].userId,
+        subscriptionId: TRANSACTIONS[0].subscriptionId,
+        originalAmountCents: TRANSACTIONS[0].originalAmountCents,
+        finalAmountCents: TRANSACTIONS[0].finalAmountCents,
+        currency: TRANSACTIONS[0].currency,
+        status: TRANSACTIONS[0].status,
+        type: TRANSACTIONS[0].type,
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: [expectedTransaction],
+        }),
+      })
+
+      const result = await doQuery(queryAllTransactions, {
+        filter,
+        orderBy,
+        sortingOrder,
+        offset: 0,
+        limit: 10,
+      }, { context: adminContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('status=completed'),
+        expect.any(Object)
+      )
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('userId=' + testUser.id),
+        expect.any(Object)
+      )
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('orderBy=ORDER_BY_DATE'),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual([expectedTransaction])
+    })
+
+    it('should throw an error for non-admin users', async() => {
+      await expect(doQuery(queryAllTransactions)).rejects.toThrow('Access denied')
+    })
+  })
+
+  describe('Query.transactionsCount', () => {
+    const queryTransactionsCount = `query ($filter: TransactionFilter) {
+      transactionsCount(filter: $filter)
+    }`
+
+    it('should return total count of transactions for admin', async() => {
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          meta: { total: 2 },
+        }),
+      })
+
+      const result = await doQuery(queryTransactionsCount, {}, { context: adminContext })
+
+      expect(result).toEqual(2)
+    })
+
+    it('should handle filter parameters', async() => {
+      const filter = { status: 'pending' }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          meta: { total: 1 },
+        }),
+      })
+
+      const result = await doQuery(queryTransactionsCount, { filter }, { context: adminContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('status=pending'),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(1)
+    })
+
+    it('should throw an error for non-admin users', async() => {
+      await expect(doQuery(queryTransactionsCount)).rejects.toThrow('Access denied')
+    })
+  })
+
+  describe('Query.userTransactions', () => {
+    const queryUserTransactions = `query ($userId: ID!) {
+      userTransactions(userId: $userId) {
+        id
+        userId
+        subscriptionId
+        originalAmountCents
+        finalAmountCents
+        currency
+        status
+        type
+      }
+    }`
+
+    it('should return transactions for own user', async() => {
+      const userId = testUser.id
+      const userTransactions = TRANSACTIONS.filter(tx => tx.userId === userId).map(tx => ({
+        id: tx.id,
+        userId: tx.userId,
+        subscriptionId: tx.subscriptionId,
+        originalAmountCents: tx.originalAmountCents,
+        finalAmountCents: tx.finalAmountCents,
+        currency: tx.currency,
+        status: tx.status,
+        type: tx.type,
+      }))
+
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(userTransactions),
+      })
+
+      const result = await doQuery(queryUserTransactions, { userId }, { context: userContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+          `https://test-api.metaspace.example/api/transactions/user/${userId}`,
+          expect.any(Object)
+      )
+
+      expect(result).toEqual(userTransactions)
+    })
+
+    it('should allow admin to access any user transactions', async() => {
+      const userId = testUser.id
+      const userTransactions = TRANSACTIONS.filter(tx => tx.userId === userId).map(tx => ({
+        id: tx.id,
+        userId: tx.userId,
+        subscriptionId: tx.subscriptionId,
+        originalAmountCents: tx.originalAmountCents,
+        finalAmountCents: tx.finalAmountCents,
+        currency: tx.currency,
+        status: tx.status,
+        type: tx.type,
+      }))
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(userTransactions),
+      })
+
+      const result = await doQuery(queryUserTransactions, { userId }, { context: adminContext })
+
+      expect(result).toEqual(userTransactions)
+    })
+
+    it('should throw access denied for different user', async() => {
+      const userId = 'different-user-id'
+
+      await expect(
+        doQuery(queryUserTransactions, { userId }, { context: userContext })
+      ).rejects.toThrow('Access denied')
+    })
+
+    it('should handle errors gracefully', async() => {
+      const userId = testUser.id
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Internal Server Error',
+      })
+
+      const result = await doQuery(queryUserTransactions, { userId }, { context: userContext })
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('Query.subscriptionTransactions', () => {
+    const querySubscriptionTransactions = `query ($subscriptionId: ID!) {
+      subscriptionTransactions(subscriptionId: $subscriptionId) {
+        id
+        subscriptionId
+        status
+        originalAmountCents
+        finalAmountCents
+      }
+    }`
+
+    it('should return transactions for a subscription', async() => {
+      const subscriptionId = '550e8400-e29b-41d4-a716-446655440001'
+      const subscriptionTransactions = TRANSACTIONS.filter(tx => tx.subscriptionId === subscriptionId).map(tx => ({
+        id: tx.id,
+        subscriptionId: tx.subscriptionId,
+        status: tx.status,
+        originalAmountCents: tx.originalAmountCents,
+        finalAmountCents: tx.finalAmountCents,
+      }))
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(subscriptionTransactions),
+      })
+
+      const result = await doQuery(querySubscriptionTransactions, { subscriptionId })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+          `https://test-api.metaspace.example/api/transactions/subscription/${subscriptionId}`,
+          expect.any(Object)
+      )
+
+      expect(result).toEqual(subscriptionTransactions)
+    })
+
+    it('should handle errors gracefully', async() => {
+      const subscriptionId = '999'
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Not Found',
+      })
+
+      const result = await doQuery(querySubscriptionTransactions, { subscriptionId })
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('Query.transactionsByStatus', () => {
+    const queryTransactionsByStatus = `query ($status: TransactionStatus!) {
+        transactionsByStatus(status: $status) {
+          id
+          status
+          originalAmountCents
+          finalAmountCents
+        }
+      }`
+
+    it('should return transactions by status for admin', async() => {
+      const status = 'completed'
+      const completedTransactions = TRANSACTIONS.filter(tx => tx.status === 'completed').map(tx => ({
+        id: tx.id,
+        status: tx.status,
+        originalAmountCents: tx.originalAmountCents,
+        finalAmountCents: tx.finalAmountCents,
+      }))
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(completedTransactions),
+      })
+
+      const result = await doQuery(queryTransactionsByStatus, { status }, { context: adminContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+          `https://test-api.metaspace.example/api/transactions/status/${status}`,
+          expect.any(Object)
+      )
+
+      expect(result).toEqual(completedTransactions)
+    })
+
+    it('should throw error for non-admin', async() => {
+      await expect(doQuery(queryTransactionsByStatus, { status: 'completed' })).rejects.toThrow('Access denied')
+    })
+
+    it('should handle errors gracefully', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Internal Server Error',
+      })
+
+      const result = await doQuery(queryTransactionsByStatus, { status: 'completed' }, { context: adminContext })
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('Query.transactionsByType', () => {
+    const queryTransactionsByType = `query ($type: TransactionType!) {
+      transactionsByType(type: $type) {
+        id
+        type
+        originalAmountCents
+        finalAmountCents
+      }
+    }`
+
+    it('should return transactions by type for admin', async() => {
+      const type = 'subscription'
+      const subscriptionTransactions = TRANSACTIONS.filter(tx => tx.type === type).map(tx => ({
+        id: tx.id,
+        type: tx.type,
+        originalAmountCents: tx.originalAmountCents,
+        finalAmountCents: tx.finalAmountCents,
+      }))
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(subscriptionTransactions),
+      })
+
+      const result = await doQuery(queryTransactionsByType, { type }, { context: adminContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        `https://test-api.metaspace.example/api/transactions/type/${type}`,
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(subscriptionTransactions)
+    })
+
+    it('should throw error for non-admin', async() => {
+      await expect(doQuery(queryTransactionsByType, { type: 'subscription' })).rejects.toThrow('Access denied')
+    })
+  })
+
+  describe('Query.pendingTransactions', () => {
+    const queryPendingTransactions = `query {
+      pendingTransactions {
+        id
+        status
+        originalAmountCents
+        finalAmountCents
+      }
+    }`
+
+    it('should return pending transactions for admin', async() => {
+      const pendingTransactions = [{
+        id: '650e8400-e29b-41d4-a716-446655440003',
+        status: 'pending',
+        originalAmountCents: 1000,
+        finalAmountCents: 1000,
+      }]
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(pendingTransactions),
+      })
+
+      const result = await doQuery(queryPendingTransactions, {}, { context: adminContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test-api.metaspace.example/api/transactions/pending',
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(pendingTransactions)
+    })
+
+    it('should throw error for non-admin', async() => {
+      await expect(doQuery(queryPendingTransactions)).rejects.toThrow('Access denied')
+    })
+  })
+
+  describe('Query.transactionsByDateRange', () => {
+    const queryTransactionsByDateRange = `query ($startDate: String!, $endDate: String!) {
+      transactionsByDateRange(startDate: $startDate, endDate: $endDate) {
+        id
+        transactionDate
+        originalAmountCents
+        finalAmountCents
+      }
+    }`
+
+    it('should return transactions by date range for admin', async() => {
+      const startDate = '2024-01-01'
+      const endDate = '2024-12-31'
+      const dateRangeTransactions = TRANSACTIONS.map(tx => ({
+        id: tx.id,
+        transactionDate: moment(tx.transactionDate).valueOf().toString(),
+        originalAmountCents: tx.originalAmountCents,
+        finalAmountCents: tx.finalAmountCents,
+      }))
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(dateRangeTransactions),
+      })
+
+      const result = await doQuery(queryTransactionsByDateRange, { startDate, endDate }, { context: adminContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/transactions/date-range'),
+        expect.any(Object)
+      )
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('startDate=2024-01-01'),
+        expect.any(Object)
+      )
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('endDate=2024-12-31'),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(dateRangeTransactions)
+    })
+
+    it('should throw error for non-admin', async() => {
+      await expect(doQuery(queryTransactionsByDateRange, { startDate: '2024-01-01', endDate: '2024-12-31' })).rejects.toThrow('Access denied')
+    })
+  })
+
+  describe('Query.validateCoupon', () => {
+    const queryValidateCoupon = `query ($input: ValidateCouponInput!) {
+      validateCoupon(input: $input) {
+        isValid
+        discountPercentage
+        discountAmountCents
+        message
+      }
+    }`
+
+    it('should validate a coupon', async() => {
+      const input = {
+        couponCode: 'SAVE20',
+        planId: '550e8400-e29b-41d4-a716-446655440002',
+        pricingId: 'price_H5UZwgyGXPe2oN',
+      }
+
+      const validationResult = {
+        isValid: true,
+        discountPercentage: 20,
+        discountAmountCents: 400,
+        message: 'Coupon applied successfully',
+      }
+
+      // Mock makeApiRequest to return the validation result directly
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(validationResult),
+      })
+
+      const result = await doQuery(queryValidateCoupon, { input })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test-api.metaspace.example/api/subscriptions/validate-coupon',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+          }),
+          body: JSON.stringify(input),
+        })
+      )
+
+      expect(result).toEqual(validationResult)
+    })
+
+    it('should handle invalid coupon', async() => {
+      const input = {
+        couponCode: 'INVALID',
+        planId: '550e8400-e29b-41d4-a716-446655440002',
+        pricingId: 'price_H5UZwgyGXPe2oN',
+      }
+
+      const validationResult = {
+        isValid: false,
+        discountPercentage: 0,
+        discountAmountCents: 0,
+        message: 'Invalid coupon code',
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(validationResult),
+      })
+
+      const result = await doQuery(queryValidateCoupon, { input })
+
+      expect(result).toEqual(validationResult)
+    })
+
+    it('should handle errors when validating coupon', async() => {
+      const input = {
+        couponCode: 'ERROR',
+        planId: '550e8400-e29b-41d4-a716-446655440002',
+        pricingId: 'price_H5UZwgyGXPe2oN',
+      }
+
+      // Mock the fetch response to simulate an error
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Bad Request',
+      })
+
+      // The resolver returns null on error, which is handled gracefully
+      const result = await doQuery(queryValidateCoupon, { input })
+      expect(result).toBeNull()
+    })
+  })
 })

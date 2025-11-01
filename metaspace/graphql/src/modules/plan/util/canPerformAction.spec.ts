@@ -212,3 +212,227 @@ describe('Plan Controller Queries', () => {
     config.manager_api_url = originalApiUrl
   })
 })
+
+describe('Plan Utility Functions - performAction', () => {
+  let originalManagerApiUrl: string | undefined
+  const mockFetch = fetch as jest.Mock
+
+  beforeAll(async() => {
+    await onBeforeAll()
+    originalManagerApiUrl = config.manager_api_url
+    config.manager_api_url = 'https://test-api.metaspace.example'
+  })
+
+  afterAll(async() => {
+    await onAfterAll()
+    if (originalManagerApiUrl !== undefined) {
+      config.manager_api_url = originalManagerApiUrl
+    } else {
+      delete (config as any).manager_api_url
+    }
+  })
+
+  beforeEach(async() => {
+    jest.clearAllMocks()
+    mockFetch.mockClear()
+    await onBeforeEach()
+    await setupTestUsers()
+  })
+
+  afterEach(onAfterEach)
+
+  it('should perform action successfully', async() => {
+    const { performAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset', datasetId: 'test-123' }
+    const expectedResponse = { success: true, usageId: 'usage-123' }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(expectedResponse),
+    })
+
+    const result = await performAction(context, action)
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://test-api.metaspace.example/api/api-usages/',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify(action),
+      })
+    )
+
+    expect(result).toEqual(expectedResponse)
+  })
+
+  it('should handle missing API URL', async() => {
+    const { performAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    const originalApiUrl = config.manager_api_url
+    delete (config as any).manager_api_url
+
+    const result = await performAction(context, action)
+
+    expect(result).toEqual({})
+
+    config.manager_api_url = originalApiUrl
+  })
+
+  it('should handle API errors', async() => {
+    const { performAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      statusText: 'Bad Request',
+    })
+
+    await expect(performAction(context, action)).rejects.toThrow('Failed to perform action: Bad Request')
+  })
+
+  it('should handle connection errors gracefully', async() => {
+    const { performAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    const error: any = new Error('Failed to fetch')
+    error.code = 'ECONNREFUSED'
+    mockFetch.mockRejectedValueOnce(error)
+
+    const result = await performAction(context, action)
+
+    expect(result).toEqual({})
+  })
+})
+
+describe('Plan Utility Functions - assertCanPerformAction', () => {
+  let originalManagerApiUrl: string | undefined
+  const mockFetch = fetch as jest.Mock
+
+  beforeAll(async() => {
+    await onBeforeAll()
+    originalManagerApiUrl = config.manager_api_url
+    config.manager_api_url = 'https://test-api.metaspace.example'
+  })
+
+  afterAll(async() => {
+    await onAfterAll()
+    if (originalManagerApiUrl !== undefined) {
+      config.manager_api_url = originalManagerApiUrl
+    } else {
+      delete (config as any).manager_api_url
+    }
+  })
+
+  beforeEach(async() => {
+    jest.clearAllMocks()
+    mockFetch.mockClear()
+    await onBeforeEach()
+    await setupTestUsers()
+  })
+
+  afterEach(onAfterEach)
+
+  it('should not throw when action is allowed', async() => {
+    const { assertCanPerformAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ allowed: true }),
+    })
+
+    await expect(assertCanPerformAction(context, action)).resolves.not.toThrow()
+  })
+
+  it('should throw UserError when action is not allowed', async() => {
+    const { assertCanPerformAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ allowed: false, message: 'Rate limit exceeded' }),
+    })
+
+    await expect(assertCanPerformAction(context, action)).rejects.toThrow('Rate limit exceeded')
+  })
+
+  it('should throw default message when no message provided', async() => {
+    const { assertCanPerformAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ allowed: false }),
+    })
+
+    await expect(assertCanPerformAction(context, action)).rejects.toThrow('Limit reached')
+  })
+})
+
+describe('Plan Utility Functions - getDeviceInfo', () => {
+  it('should parse user agent successfully', async() => {
+    const { getDeviceInfo } = await import('./canPerformAction')
+    const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+    const email = 'test@example.com'
+
+    const result = getDeviceInfo(userAgent, email)
+    const parsed = JSON.parse(result)
+
+    expect(parsed).toHaveProperty('device')
+    expect(parsed).toHaveProperty('os')
+    expect(parsed).toHaveProperty('browser')
+    expect(parsed.email).toBe(email)
+  })
+
+  it('should handle undefined user agent', async() => {
+    const { getDeviceInfo } = await import('./canPerformAction')
+
+    const result = getDeviceInfo(undefined)
+    const parsed = JSON.parse(result)
+
+    expect(parsed).toHaveProperty('device')
+    expect(parsed).toHaveProperty('os')
+    expect(parsed).toHaveProperty('browser')
+    expect(parsed.email).toBeNull()
+  })
+})
+
+describe('Plan Utility Functions - hashIp', () => {
+  it('should hash IP address with salt', async() => {
+    const { hashIp } = await import('./canPerformAction')
+    const ip = '192.168.1.1'
+
+    const result = hashIp(ip)
+
+    expect(result).toBeDefined()
+    expect(typeof result).toBe('string')
+    expect(result).toHaveLength(64) // SHA256 hex string length
+  })
+
+  it('should return undefined for undefined IP', async() => {
+    const { hashIp } = await import('./canPerformAction')
+
+    const result = hashIp(undefined)
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should produce different hashes for different IPs', async() => {
+    const { hashIp } = await import('./canPerformAction')
+
+    const hash1 = hashIp('192.168.1.1')
+    const hash2 = hashIp('192.168.1.2')
+
+    expect(hash1).not.toBe(hash2)
+  })
+})
