@@ -83,12 +83,9 @@ export default function(httpServer?: http.Server) {
         throw new Error('uuid is not valid')
       }
 
-      // Try to clean up the UUID when upload completes, but don't block if it fails
-      try {
-        cache.del(`${UPLOAD_KEY_PREFIX}${uuid}`)
-      } catch (err) {
-        logger.warn('Failed to clean up UUID from cache:', err)
-      }
+      // Don't clean up the UUID immediately - let it expire naturally via UPLOAD_TIMEOUT
+      // This prevents issues when multiple files are uploaded to the same UUID
+      // The cache will automatically clean up after 30 minutes
 
       const source = req.body?.metadata?.source
       const user = req.body?.metadata?.user
