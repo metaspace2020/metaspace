@@ -22,3 +22,15 @@ jest.mock('../utils/smApi/datasets')
 jest.mock('../utils/smApi/databases')
 jest.mock('../utils/smApi/smApiCall')
 jest.mock('../utils/sendEmail')
+// ... existing code ...
+jest.mock('node-fetch', () => ({
+  default: jest.fn().mockImplementation(() =>
+    Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ allowed: true }),
+      text: () => Promise.resolve(''),
+      headers: new Map(),
+    })
+  ),
+}))

@@ -1,0 +1,474 @@
+@import "../../assets/scss/_variables.scss";
+
+$text-light: #ffffff;
+$text-dark: #333333;
+$text-gray: #666666;
+$background-light: #f8f9fa;
+$border-light: #e9ecef;
+$banner-blue: #0F87EF;
+
+
+
+.page-wrapper {
+  min-height: calc(100vh - 144px);
+  background: $background-light;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  .cell {
+    @apply break-keep;
+  }
+}
+
+.limits-banner {
+  width: 100%;
+  background-color: $banner-blue;
+  padding: 12px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: -10px;
+  
+  .limits-banner-content {
+    color: $text-light;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    max-width: 1200px;
+    padding: 0 20px;
+    line-height: 1.4;
+  }
+}
+
+
+.plans-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.plans-title {
+  text-align: center;
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: $text-dark;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.plans-subtitle {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 400;
+  margin-bottom: 32px;
+  color: $text-gray;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.pricing-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 16px;
+  
+  .toggle-header {
+    text-align: center;
+    
+    h3 {
+      color: $text-dark;
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 12px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+  }
+  
+  .best-savings-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    animation: pulse 2s infinite;
+    
+    .savings-icon {
+      font-size: 16px;
+    }
+    
+    .savings-text {
+      white-space: nowrap;
+    }
+  }
+  
+
+
+
+}
+
+.plans-grid {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+  width: 100%;
+  min-height: 446px;
+}
+
+.plan-card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid $border-light;
+  position: relative;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  height: 380px;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.plan-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: $text-dark;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.recommended-badge {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  background: var(--primary-color, #FFAB3F);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px 12px 0px 0px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 1;
+}
+
+.plan-price {
+  
+  .price-currency {
+    font-size: 24px;
+    font-weight: 600;
+    color: $text-dark;
+    vertical-align: top;
+  }
+  
+  .price-amount {
+    font-size: 48px;
+    font-weight: 700;
+    color: $text-dark;
+    line-height: 1;
+  }
+  
+  .price-period {
+    font-size: 16px;
+    color: $text-gray;
+    margin-left: 4px;
+  }
+}
+
+.savings-badge {
+  background: #10B981;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: inline-block;
+  align-self: center;
+}
+
+.billing-info {
+  color: $text-gray;
+  font-size: 14px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.discount-notice {
+  background: #f8f9fa;
+  border: 2px solid #e3f2fd;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  text-align: center;
+  position: relative;
+  height: 80px;
+  display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+
+  
+  .discount-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    
+    .discount-icon {
+      font-size: 14px;
+      color: $pro-color;
+    }
+    
+    .discount-text {
+      color: #1976d2;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+  
+  .discount-details {
+    color: #424242;
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    
+    strong {
+      color: #1976d2;
+      font-weight: 600;
+    }
+  }
+  
+  .discount-expiry {
+    color: #757575;
+    font-size: 10px;
+    font-style: italic;
+  }
+}
+
+
+.plan-features {
+  text-align: left;
+  margin-bottom: 0px;
+  flex-grow: 1;
+  min-height: 80px;
+  color: $text-dark;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.start-button {
+  width: 100%;
+  margin-top: auto;
+  height: 48px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  
+  &.primary {
+    background: var(--primary-color, #FFAB3F);
+    border: 1px solid var(--primary-color, #FFAB3F);
+    color: $text-light;
+    
+    &:hover {
+      background: var(--primary-color-dark, #E89A33);
+      border-color: var(--primary-color-dark, #E89A33);
+    }
+  }
+  
+  &.outline {
+    background: transparent;
+    border: 1px solid var(--primary-color, #FFAB3F);
+    color: var(--primary-color, #FFAB3F);
+    
+    &:hover {
+      background: var(--primary-color, #FFAB3F);
+      color: $text-light;
+    }
+  }
+}
+
+// Comparison Table Styles
+.comparison-section {
+  width: 100%;
+  margin-top: 32px;
+  
+  .comparison-table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border: 1px solid $border-light;
+    width: 100%;
+    
+    :deep(.el-table__header) {
+      background: $background-light;
+      
+      th {
+        background: $background-light;
+        color: $text-dark;
+        font-weight: 600;
+        border-bottom: 1px solid $border-light;
+        padding: 16px 12px;
+      }
+    }
+    
+    :deep(.el-table__body) {
+      td {
+        padding: 16px 12px;
+        border-bottom: 1px solid $border-light;
+        color: $text-dark;
+      }
+    }
+    
+    :deep(.el-table__row:last-child) {
+      td {
+        border-bottom: none;
+      }
+    }
+  }
+  
+  .feature-check {
+    color: #10B981;
+    font-weight: bold;
+    font-size: 18px;
+  }
+  
+  .feature-x {
+    color: #EF4444;
+    font-weight: bold;
+    font-size: 18px;
+  }
+  
+  .feature-text {
+    color: $text-dark;
+    font-weight: 500;
+  }
+  
+  .feature-multiline {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    
+    .feature-line {
+      color: $text-dark;
+      font-weight: 500;
+      line-height: 1.3;
+      
+      &:first-child {
+        font-weight: 600;
+      }
+      
+      &:not(:first-child) {
+        font-size: 0.9em;
+        color: $text-gray;
+      }
+    }
+  }
+  
+  .compare-plans-button {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+    
+    .el-button {
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid var(--primary-color, #FFAB3F);
+      color: var(--primary-color, #FFAB3F);
+      background: transparent;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background: var(--primary-color, #FFAB3F);
+        color: white;
+      }
+    }
+  }
+}
+
+.vat-notice {
+  text-align: center;
+  color: $text-gray;
+  font-size: 14px;
+  margin-top: 24px;
+  opacity: 0.9;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+}
+
+@media (max-width: 768px) {
+  .plans-container {
+    padding: 20px;
+  }
+  
+  .plans-title {
+    font-size: 28px;
+  }
+  
+  .plans-subtitle {
+    font-size: 16px;
+  }
+  
+  .plan-card {
+    width: 100%;
+    max-width: 320px;
+  }
+  
+
+  
+  .comparison-section {
+    .comparison-table {
+      :deep(.el-table__header),
+      :deep(.el-table__body) {
+        th, td {
+          padding: 12px 8px;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+
+.pricing-toggle {
+  .el-radio-button__inner {
+    background-color: rgba(0, 0, 0, 0.01);
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+}

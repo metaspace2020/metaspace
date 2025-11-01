@@ -1,8 +1,13 @@
 import { FieldResolversFor } from '../../../bindingTypes'
-import { Query } from '../../../binding'
+import { Query, ApiUsage } from '../../../binding'
 import { Context } from '../../../context'
-import { Plan, PlanRule, ApiUsage } from '../../plan/model'
 import { UserError } from 'graphql-errors'
+import config from '../../../utils/config'
+import fetch, { RequestInit } from 'node-fetch'
+import logger from '../../../utils/logger'
+import { URLSearchParams } from 'url'
+import { assertCanEditGroup, assertCanAddDataset } from '../../../modules/group/controller'
+import { User } from '../../user/model'
 
 interface AllPlansArgs {
   filter?: {
@@ -10,15 +15,19 @@ interface AllPlansArgs {
     isActive?: boolean
     isDefault?: boolean
     createdAt?: string
+    monthlyPriceCents?: number
+    yearlyPriceCents?: number
+    displayOrder?: number
   };
-  orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_NAME' | 'ORDER_BY_ACTIVE' | 'ORDER_BY_DEFAULT';
+  orderBy?: 'ORDER_BY_DATE' | 'ORDER_BY_NAME' | 'ORDER_BY_ACTIVE' |
+  'ORDER_BY_DEFAULT' | 'ORDER_BY_MONTHLY_PRICE' | 'ORDER_BY_YEARLY_PRICE' | 'ORDER_BY_DISPLAY_ORDER' | 'ORDER_BY_SORT';
   sortingOrder?: 'ASCENDING' | 'DESCENDING';
   offset?: number
   limit?: number
 }
 
 interface AllPlanRulesArgs {
-  planId?: number;
+  planId?: string;
   filter?: {
     actionType?: string;
     type?: string;
@@ -52,321 +61,237 @@ interface AllApiUsagesArgs {
   limit?: number;
 }
 
+// Helper function to make API requests
+const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', body?: any) => {
+  try {
+    const apiUrl = config.manager_api_url
+    const token = ctx.req?.headers?.authorization || ''
+
+    if (!apiUrl) {
+      logger.error('Manager API URL is not configured')
+      throw new Error('Manager API URL is not configured')
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (token) {
+      headers.Authorization = token
+    }
+
+    const options: RequestInit = {
+      method,
+      headers,
+    }
+
+    if (body && (method === 'POST' || method === 'PUT')) {
+      options.body = JSON.stringify(body)
+    }
+
+    const response = await fetch(`${apiUrl}${endpoint}`, options)
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.statusText}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    logger.error(`Error making API request to ${endpoint}:`, error)
+    throw error
+  }
+}
+
+// Convert query parameters to URL search params
+const buildQueryString = (params: Record<string, any>): string => {
+  const urlParams = new URLSearchParams()
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue
+
+    if (typeof value === 'object') {
+      // If this is a filter object, flatten it by adding properties directly
+      if (key === 'filter') {
+        for (const [subKey, subValue] of Object.entries(value)) {
+          if (subValue === undefined || subValue === null) continue
+          urlParams.append(subKey, String(subValue))
+        }
+      } else {
+        // For other nested objects, keep the original behavior
+        for (const [subKey, subValue] of Object.entries(value)) {
+          if (subValue === undefined || subValue === null) continue
+          urlParams.append(`${key}[${subKey}]`, String(subValue))
+        }
+      }
+    } else {
+      urlParams.append(key, String(value))
+    }
+  }
+
+  const queryString = urlParams.toString()
+  return queryString ? `?${queryString}` : ''
+}
+
 const QueryResolvers: FieldResolversFor<Query, void> = {
-  async plan(_: any, { id }: { id: number }, ctx: Context): Promise<Plan | null> {
-    const result = await ctx.entityManager.findOne(Plan, id)
-    return result ?? null
+  async plan(_: any, { id, includeVat, customerCountry, customerPostalCode, customerState }: {
+    id: string,
+    includeVat?: boolean,
+    customerCountry?: string,
+    customerPostalCode?: string,
+    customerState?: string
+  }, ctx: Context): Promise<any> {
+    try {
+      const queryParams: Record<string, any> = {}
+
+      if (includeVat) {
+        queryParams.includeVat = 'true'
+      }
+      if (customerCountry) {
+        queryParams.customerCountry = customerCountry
+      }
+      if (customerPostalCode) {
+        queryParams.customerPostalCode = customerPostalCode
+      }
+      if (customerState) {
+        queryParams.customerState = customerState
+      }
+
+      const queryString = buildQueryString(queryParams)
+      return await makeApiRequest(ctx, `/api/plans/${id}${queryString}`)
+    } catch (error) {
+      logger.error(`Error fetching plan with ID ${id}:`, error)
+      return null
+    }
   },
-  async allPlans(_: any, args: AllPlansArgs, ctx: Context): Promise<Plan[] | null> {
-    const {
-      filter = {}, orderBy = 'ORDER_BY_DATE', sortingOrder = 'DESCENDING', offset = 0,
-      limit = 10,
-    } : AllPlansArgs = args
 
-    const queryBuilder = ctx.entityManager.createQueryBuilder(Plan, 'plan')
-    const sortOrder = sortingOrder === 'ASCENDING' ? 'ASC' : 'DESC'
-
-    // dont return isActive false by default
-    if (filter?.isActive === undefined) {
-      queryBuilder.andWhere('plan.is_active = :isActive', { isActive: true })
-    } else {
-      queryBuilder.andWhere('plan.is_active = :isActive', { isActive: filter.isActive })
+  async allPlans(_: any, args: AllPlansArgs, ctx: Context): Promise<any[]> {
+    try {
+      const queryString = buildQueryString(args)
+      const response = await makeApiRequest(ctx, `/api/plans${queryString}`)
+      const plans = response.data
+      return plans
+    } catch (error) {
+      logger.error('Error fetching all plans:', error)
+      return []
     }
-
-    if (filter?.name) {
-      queryBuilder.andWhere('LOWER(plan.name) LIKE LOWER(:name)', { name: `%${filter.name}%` })
-    }
-
-    if (filter?.isDefault !== undefined) {
-      queryBuilder.andWhere('plan.is_default = :isDefault', { isDefault: filter.isDefault })
-    }
-
-    if (filter?.createdAt) {
-      queryBuilder.andWhere('plan.created_at = :createdAt', { createdAt: filter.createdAt })
-    }
-
-    switch (orderBy) {
-      case 'ORDER_BY_DATE':
-        queryBuilder.orderBy('plan.created_at', sortOrder)
-        break
-      case 'ORDER_BY_NAME':
-        queryBuilder.orderBy('plan.name', sortOrder)
-        break
-      case 'ORDER_BY_ACTIVE':
-        queryBuilder.orderBy('plan.is_active', sortOrder)
-        break
-      case 'ORDER_BY_DEFAULT':
-        queryBuilder.orderBy('plan.is_default', sortOrder)
-        break
-      default:
-        queryBuilder.orderBy('plan.created_at', sortOrder)
-    }
-
-    queryBuilder.skip(offset).take(limit)
-
-    return await queryBuilder.getMany()
   },
+
   async plansCount(_: any, { filter = {} }: { filter?: any }, ctx: Context): Promise<number> {
-    const queryBuilder = ctx.entityManager.createQueryBuilder(Plan, 'plan')
-
-    // Apply filters
-    if (filter?.name) {
-      queryBuilder.andWhere('LOWER(plan.name) LIKE LOWER(:name)', { name: `%${filter.name}%` })
+    try {
+      const queryString = buildQueryString({ filter })
+      const result = await makeApiRequest(ctx, `/api/plans${queryString}`)
+      return result.meta?.total || 0
+    } catch (error) {
+      logger.error('Error fetching plans count:', error)
+      return 0
     }
-
-    if (filter?.isActive === undefined) {
-      queryBuilder.andWhere('plan.is_active = :isActive', { isActive: true })
-    } else {
-      queryBuilder.andWhere('plan.is_active = :isActive', { isActive: filter.isActive })
-    }
-
-    if (filter?.isDefault !== undefined) {
-      queryBuilder.andWhere('plan.is_default = :isDefault', { isDefault: filter.isDefault })
-    }
-
-    if (filter?.createdAt) {
-      queryBuilder.andWhere('plan.created_at = :createdAt', { createdAt: filter.createdAt })
-    }
-
-    return await queryBuilder.getCount()
   },
-  async planRule(_: any, { id }: { id: number }, ctx: Context): Promise<PlanRule | null> {
-    const result = await ctx.entityManager.findOne(PlanRule, id)
-    return result ?? null
+
+  async planRule(_: any, { id }: { id: number }, ctx: Context): Promise<any> {
+    try {
+      return await makeApiRequest(ctx, `/api/plan-rules/${id}`)
+    } catch (error) {
+      logger.error(`Error fetching plan rule with ID ${id}:`, error)
+      return null
+    }
   },
-  async allPlanRules(_: any, args: AllPlanRulesArgs, ctx: Context): Promise<PlanRule[] | null> {
-    const {
-      planId,
-      filter = {},
-      orderBy = 'ORDER_BY_DATE',
-      sortingOrder = 'DESCENDING',
-      offset = 0,
-      limit = 10,
-    }: AllPlanRulesArgs = args
 
-    const queryBuilder = ctx.entityManager.createQueryBuilder(PlanRule, 'planRule')
-    const sortOrder = sortingOrder === 'ASCENDING' ? 'ASC' : 'DESC'
-
-    if (planId) {
-      queryBuilder.andWhere('planRule.plan_id = :planId', { planId })
+  async allPlanRules(_: any, args: AllPlanRulesArgs, ctx: Context): Promise<any[]> {
+    try {
+      const queryString = buildQueryString(args)
+      const response = await makeApiRequest(ctx, `/api/plan-rules${queryString}`)
+      const planRules = response.data
+      return planRules
+    } catch (error) {
+      logger.error('Error fetching all plan rules:', error)
+      return []
     }
-
-    if (filter?.actionType) {
-      queryBuilder.andWhere('planRule.action_type = :actionType', { actionType: filter.actionType })
-    }
-
-    if (filter?.type) {
-      queryBuilder.andWhere('planRule.type = :type', { type: filter.type })
-    }
-
-    if (filter?.visibility) {
-      queryBuilder.andWhere('LOWER(planRule.visibility) LIKE LOWER(:visibility)',
-        { visibility: `%${filter.visibility}%` })
-    }
-
-    if (filter?.source) {
-      queryBuilder.andWhere('LOWER(planRule.source) LIKE LOWER(:source)',
-        { source: `%${filter.source}%` })
-    }
-
-    if (filter?.createdAt) {
-      queryBuilder.andWhere('planRule.created_at = :createdAt', { createdAt: filter.createdAt })
-    }
-
-    switch (orderBy) {
-      case 'ORDER_BY_DATE':
-        queryBuilder.orderBy('planRule.created_at', sortOrder)
-        break
-      case 'ORDER_BY_ACTION_TYPE':
-        queryBuilder.orderBy('planRule.action_type', sortOrder)
-        break
-      case 'ORDER_BY_TYPE':
-        queryBuilder.orderBy('planRule.type', sortOrder)
-        break
-      case 'ORDER_BY_VISIBILITY':
-        queryBuilder.orderBy('planRule.visibility', sortOrder)
-        break
-      case 'ORDER_BY_SOURCE':
-        queryBuilder.orderBy('planRule.source', sortOrder)
-        break
-      case 'ORDER_BY_PLAN':
-        queryBuilder.orderBy('plan.name', sortOrder)
-        break
-      default:
-        queryBuilder.orderBy('planRule.created_at', sortOrder)
-    }
-
-    queryBuilder.skip(offset).take(limit)
-
-    return await queryBuilder.getMany()
   },
+
   async planRulesCount(_: any, args: AllPlanRulesArgs, ctx: Context): Promise<number> {
-    const { planId, filter = {} }: AllPlanRulesArgs = args
-
-    const queryBuilder = ctx.entityManager.createQueryBuilder(PlanRule, 'planRule')
-
-    if (planId) {
-      queryBuilder.andWhere('planRule.plan_id = :planId', { planId })
+    try {
+      const queryString = buildQueryString(args)
+      const result = await makeApiRequest(ctx, `/api/plan-rules${queryString}`)
+      return result.meta?.total || 0
+    } catch (error) {
+      logger.error('Error fetching plan rules count:', error)
+      return 0
     }
-
-    if (filter?.actionType) {
-      queryBuilder.andWhere('planRule.action_type = :actionType', { actionType: filter.actionType })
-    }
-
-    if (filter?.type) {
-      queryBuilder.andWhere('planRule.type = :type', { type: filter.type })
-    }
-
-    if (filter?.visibility) {
-      queryBuilder.andWhere('LOWER(planRule.visibility) LIKE LOWER(:visibility)', {
-        visibility: `%${filter.visibility}%`,
-      })
-    }
-
-    if (filter?.source) {
-      queryBuilder.andWhere('LOWER(planRule.source) LIKE LOWER(:source)', { source: `%${filter.source}%` })
-    }
-
-    if (filter?.createdAt) {
-      queryBuilder.andWhere('planRule.created_at = :createdAt', { createdAt: filter.createdAt })
-    }
-
-    return await queryBuilder.getCount()
   },
-  async allApiUsages(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<ApiUsage[] | null> {
-    if (ctx.user.role !== 'admin') {
+
+  async allApiUsages(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<ApiUsage[]> {
+    const { entityManager } = ctx
+    const { filter } = args || {}
+
+    if (filter?.groupId) {
+      await assertCanEditGroup(ctx.entityManager, ctx.user, filter?.groupId)
+    }
+
+    if (!filter?.groupId && ctx.user.role !== 'admin') {
       throw new UserError('Access denied')
     }
 
-    const {
-      filter = {},
-      orderBy = 'ORDER_BY_DATE',
-      sortingOrder = 'DESCENDING',
-      offset = 0,
-      limit = 10,
-    }: AllApiUsagesArgs = args
+    try {
+      const queryString = buildQueryString(args)
+      const response = await makeApiRequest(ctx, `/api/api-usages${queryString}`)
+      const apiUsages = response.data
+      const userHash: Record<string, User | null> = {}
 
-    const queryBuilder = ctx.entityManager.createQueryBuilder(ApiUsage, 'usage')
-    const sortOrder = sortingOrder === 'ASCENDING' ? 'ASC' : 'DESC'
+      for (let i = 0; i < apiUsages.length; i++) {
+        const usage = apiUsages[i]
+        if (!userHash[usage.userId]) {
+          const user = await entityManager.findOne(User, { id: usage.userId })
+          userHash[usage.userId] = user || null
+        }
+        apiUsages[i].user = userHash[usage.userId]
+      }
 
-    // Apply filters
-    if (filter?.userId) {
-      queryBuilder.andWhere('usage.user_id = :userId', { userId: filter.userId })
+      return apiUsages
+    } catch (error) {
+      logger.error('Error fetching all API usages:', error)
+      return []
     }
-
-    if (filter?.datasetId) {
-      queryBuilder.andWhere('usage.dataset_id = :datasetId', { datasetId: filter.datasetId })
-    }
-
-    if (filter?.projectId) {
-      queryBuilder.andWhere('usage.project_id = :projectId', { projectId: filter.projectId })
-    }
-
-    if (filter?.groupId) {
-      queryBuilder.andWhere('usage.group_id = :groupId', { groupId: filter.groupId })
-    }
-
-    if (filter?.actionType) {
-      queryBuilder.andWhere('usage.action_type = :actionType', { actionType: filter.actionType })
-    }
-
-    if (filter?.type) {
-      queryBuilder.andWhere('usage.type = :type', { type: filter.type })
-    }
-
-    if (filter?.source) {
-      queryBuilder.andWhere('LOWER(usage.source) LIKE LOWER(:source)', { source: `%${filter.source}%` })
-    }
-
-    if (filter?.canEdit !== undefined) {
-      queryBuilder.andWhere('usage.can_edit = :canEdit', { canEdit: filter.canEdit })
-    }
-
-    if (filter?.startDate) {
-      queryBuilder.andWhere('usage.action_dt >= :startDate', { startDate: filter.startDate })
-    }
-
-    if (filter?.endDate) {
-      queryBuilder.andWhere('usage.action_dt <= :endDate', { endDate: filter.endDate })
-    }
-
-    // Apply sorting
-    switch (orderBy) {
-      case 'ORDER_BY_DATE':
-        queryBuilder.orderBy('usage.action_dt', sortOrder)
-        break
-      case 'ORDER_BY_USER':
-        queryBuilder.orderBy('usage.user_id', sortOrder)
-        break
-      case 'ORDER_BY_ACTION_TYPE':
-        queryBuilder.orderBy('usage.action_type', sortOrder)
-        break
-      case 'ORDER_BY_TYPE':
-        queryBuilder.orderBy('usage.type', sortOrder)
-        break
-      case 'ORDER_BY_SOURCE':
-        queryBuilder.orderBy('usage.source', sortOrder)
-        break
-      default:
-        queryBuilder.orderBy('usage.action_dt', sortOrder)
-    }
-
-    // Apply pagination
-    queryBuilder.skip(offset).take(limit)
-
-    return await queryBuilder.getMany()
   },
+
+  async remainingApiUsages(_: any, { groupId, types = ['create'] }: { groupId?: string,
+    types?: string[]}, ctx: Context): Promise<any> {
+    const { user, entityManager } = ctx
+
+    try {
+      if (groupId) {
+        await assertCanAddDataset(entityManager, user, groupId)
+      }
+
+      const url = groupId
+        ? `/api/api-usages/group/${groupId}/remaining-usages?actionType=${types.join(',')}`
+        : `/api/api-usages/remaining-usages?actionType=${types.join(',')}`
+      const response = await makeApiRequest(ctx, url)
+      return response.remainingUsages || []
+    } catch (error) {
+      logger.error(`Error fetching remaining api usages for group ${groupId}:`, error)
+      return []
+    }
+  },
+
   async apiUsagesCount(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<number> {
-    if (ctx.user.role !== 'admin') {
+    const { filter } = args || {}
+
+    if (filter?.groupId) {
+      await assertCanEditGroup(ctx.entityManager, ctx.user, filter?.groupId)
+    }
+
+    if (!filter?.groupId && ctx.user.role !== 'admin') {
       throw new UserError('Access denied')
     }
 
-    const {
-      filter = {},
-    }: AllApiUsagesArgs = args
-    const queryBuilder = ctx.entityManager.createQueryBuilder(ApiUsage, 'usage')
-
-    if (filter?.userId) {
-      queryBuilder.andWhere('usage.user_id = :userId', { userId: filter.userId })
+    try {
+      const queryString = buildQueryString(args)
+      const result = await makeApiRequest(ctx, `/api/api-usages${queryString}`)
+      return result.meta?.total || 0
+    } catch (error) {
+      logger.error('Error fetching API usages count:', error)
+      return 0
     }
-
-    if (filter?.datasetId) {
-      queryBuilder.andWhere('usage.dataset_id = :datasetId', { datasetId: filter.datasetId })
-    }
-
-    if (filter?.projectId) {
-      queryBuilder.andWhere('usage.project_id = :projectId', { projectId: filter.projectId })
-    }
-
-    if (filter?.groupId) {
-      queryBuilder.andWhere('usage.group_id = :groupId', { groupId: filter.groupId })
-    }
-
-    if (filter?.actionType) {
-      queryBuilder.andWhere('usage.action_type = :actionType', { actionType: filter.actionType })
-    }
-
-    if (filter?.type) {
-      queryBuilder.andWhere('usage.type = :type', { type: filter.type })
-    }
-
-    if (filter?.source) {
-      queryBuilder.andWhere('LOWER(usage.source) LIKE LOWER(:source)', { source: `%${filter.source}%` })
-    }
-
-    if (filter?.canEdit !== undefined) {
-      queryBuilder.andWhere('usage.can_edit = :canEdit', { canEdit: filter.canEdit })
-    }
-
-    if (filter?.startDate) {
-      queryBuilder.andWhere('usage.action_dt >= :startDate', { startDate: filter.startDate })
-    }
-
-    if (filter?.endDate) {
-      queryBuilder.andWhere('usage.action_dt <= :endDate', { endDate: filter.endDate })
-    }
-
-    return await queryBuilder.getCount()
   },
 }
+
 export default QueryResolvers

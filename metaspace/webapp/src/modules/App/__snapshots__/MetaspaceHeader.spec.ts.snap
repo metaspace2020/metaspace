@@ -9,61 +9,70 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
               flex items-center justify-between
               bg-primary\\">
       <div class=\\"header-items\\">
-        <div class=\\"flex pl-3 pr-4\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\"></div>
+        <div class=\\"flex pl-3 pr-4\\">
+          <div class=\\"relative\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\">
+            <!---->
+          </div>
+        </div>
         <div id=\\"upload-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Upload</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Upload</div>
         <div id=\\"annotations-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Annotations</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Annotations</div>
         <div id=\\"datasets-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Datasets</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Datasets</div>
         <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Projects</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Projects</div>
         <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Groups</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Groups</div>
       </div>
       <div class=\\"header-items\\">
         <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Detectability</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Detectability</div>
         <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Help</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Help</div>
         <!---->
         <div class=\\"header-items mr-1 lg:mr-2\\">
           <div class=\\"relative flex py-2\\">
             <div id=\\"user-menu\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent\\" activeclass=\\"bg-blue-700\\">Test UserX<div data-v-6bf8fbbe=\\"\\" class=\\"mock-el-tooltip\\" content=\\"undefined has a pending membership request.\\" placement=\\"bottom\\"><span data-v-6bf8fbbe=\\"\\" class=\\"notification\\"></span></div>
+  border border-solid border-transparent\\" activeclass=\\"header-link-active\\">Test UserX<div data-v-6bf8fbbe=\\"\\" class=\\"mock-el-tooltip\\" content=\\"undefined has a pending membership request.\\" placement=\\"bottom\\"><span data-v-6bf8fbbe=\\"\\" class=\\"notification\\"></span></div>
             </div>
             <!---->
           </div>
         </div>
       </div>
     </div>
-    <div class=\\"responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-start justify-center bg-primary flex-wrap h-full\\">
+    <div class=\\"responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-start justify-center
+              bg-primary flex-wrap h-full\\">
       <div class=\\"header-items flex-row w-full justify-between\\" style=\\"height: 64px;\\">
-        <div class=\\"flex pl-3 pr-4\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\"></div><button class=\\" button-reset flex h-12 w-12 mr-3\\"><svg class=\\"h-full w-full sm-menu-icon\\"></svg>
+        <div class=\\"flex pl-3 pr-4\\">
+          <div class=\\"relative\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\">
+            <!---->
+          </div>
+        </div><button class=\\" button-reset flex h-12 w-12 mr-3\\"><svg class=\\"h-full w-full sm-menu-icon\\"></svg>
           <!---->
         </button>
       </div>
@@ -83,61 +92,70 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
               flex items-center justify-between
               bg-primary\\">
       <div class=\\"header-items\\">
-        <div class=\\"flex pl-3 pr-4\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\"></div>
+        <div class=\\"flex pl-3 pr-4\\">
+          <div class=\\"relative\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\">
+            <!---->
+          </div>
+        </div>
         <div id=\\"upload-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Upload</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Upload</div>
         <div id=\\"annotations-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Annotations</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Annotations</div>
         <div id=\\"datasets-link\\" class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Datasets</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Datasets</div>
         <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Projects</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Projects</div>
         <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Groups</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Groups</div>
       </div>
       <div class=\\"header-items\\">
         <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Detectability</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Detectability</div>
         <div class=\\"mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
-  border border-solid border-transparent header-link\\" activeclass=\\"bg-blue-700\\">Help</div>
+  border border-solid border-transparent header-link\\" activeclass=\\"header-link-active\\">Help</div>
         <div class=\\"header-items mr-1 lg:mr-2\\"><button class=\\"button-reset 
   mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
   border border-solid border-transparent header-link\\">Create account</button><button class=\\"button-reset 
   mx-1 px-3 py-2 rounded-md no-underline
   text-sm font-medium text-white lg:tracking-wide
-  hover:bg-blue-700 focus:outline-none focus:bg-blue-700
+  focus:outline-none
   transition-colors duration-150 ease-in-out
   border border-solid border-transparent header-link\\">Sign in</button></div>
         <!---->
       </div>
     </div>
-    <div class=\\"responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-start justify-center bg-primary flex-wrap h-full\\">
+    <div class=\\"responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-start justify-center
+              bg-primary flex-wrap h-full\\">
       <div class=\\"header-items flex-row w-full justify-between\\" style=\\"height: 64px;\\">
-        <div class=\\"flex pl-3 pr-4\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\"></div><button class=\\" button-reset flex h-12 w-12 mr-3\\"><svg class=\\"h-full w-full sm-menu-icon\\"></svg>
+        <div class=\\"flex pl-3 pr-4\\">
+          <div class=\\"relative\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\">
+            <!---->
+          </div>
+        </div><button class=\\" button-reset flex h-12 w-12 mr-3\\"><svg class=\\"h-full w-full sm-menu-icon\\"></svg>
           <!---->
         </button>
       </div>

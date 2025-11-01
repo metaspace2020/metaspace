@@ -3,7 +3,8 @@ module.exports = {
   ws_port: 5666,
   img_storage_host: 'localhost',
   img_storage_port: 4201,
-
+  manager_api_url: '', // 'http://localhost:3003',
+  external_api_url: '', // 'http://nginx:3003',
   web_public_url: 'http://localhost:8888',
 
   log: {

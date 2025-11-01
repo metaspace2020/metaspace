@@ -36,6 +36,8 @@ import MetaspaceHeader from './MetaspaceHeader'
 import MetaspaceFooter from './MetaspaceFooter.vue'
 import { DialogController } from '../Account'
 import { useSeoMeta } from '../../lib/useSeo'
+import { useQuery } from '@vue/apollo-composable'
+import { getActiveUserSubscriptionQuery } from '../../api/subscription'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 export default {
@@ -87,13 +89,11 @@ export default {
   setup() {
     const store = useStore()
     const route = useRoute()
-
     useSeoMeta(route)
 
     watch(
       route,
       (newRoute) => {
-        useSeoMeta(route)
         store.commit('updateRoute', {
           path: newRoute.path,
           params: newRoute.params,
@@ -102,6 +102,16 @@ export default {
       },
       { immediate: true }
     )
+
+    const { onResult: onActiveGroupSubscriptionResult } = useQuery(getActiveUserSubscriptionQuery, null, {
+      fetchPolicy: 'network-only',
+    })
+
+    onActiveGroupSubscriptionResult(({ data }) => {
+      if (data && data.activeUserSubscription) {
+        store.commit('setThemeVariant', 'pro')
+      }
+    })
 
     return {
       store,

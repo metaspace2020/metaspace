@@ -1,0 +1,191 @@
+.subscription-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.empty-actions {
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+}
+
+.empty-container {
+  font-size: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+  color: #606266;
+}
+
+.subscription-card {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+
+  .el-card__header{
+    border-bottom: none !important;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 18px;
+  }
+}
+
+.subscription-content {
+  .section {
+    margin-bottom: 32px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+  
+  .info-item {
+    margin-bottom: 16px;
+    
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #606266;
+      margin-bottom: 4px;
+    }
+    
+    .value {
+      font-size: 14px;
+      color: #303133;
+      
+      &.code {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        background-color: #f5f7fa;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        word-break: break-all;
+      }
+      
+      &.description {
+        line-height: 1.5;
+        color: #606266;
+      }
+    }
+  }
+  
+  .limit-value {
+    font-weight: 600;
+    color: #409eff;
+    font-size: 16px;
+  }
+  
+  .el-table {
+    .el-table__header {
+      th {
+        background-color: #fafafa;
+        color: #606266;
+        font-weight: 600;
+      }
+    }
+    
+    .el-table__body {
+      td {
+        padding: 12px 0;
+      }
+    }
+  }
+  
+  // Payment history specific styles
+  .amount-value {
+    font-weight: 600;
+    color: #67c23a;
+    font-size: 14px;
+  }
+  
+  .original-amount {
+    color: #909399;
+    font-size: 13px;
+    
+    // Show strikethrough if different from final amount
+    &.discounted {
+      text-decoration: line-through;
+    }
+  }
+  
+  .user-email {
+    color: #606266;
+    font-size: 13px;
+  }
+  
+  .dataset-id {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    color: #909399;
+  }
+  
+  .el-tag {
+    &.el-tag--primary {
+      background-color: #ecf5ff;
+      border-color: #d9ecff;
+      color: #409eff;
+    }
+    
+    &.el-tag--success {
+      background-color: #f0f9ff;
+      border-color: #d1ecf1;
+      color: #67c23a;
+    }
+    
+    &.el-tag--warning {
+      background-color: #fdf6ec;
+      border-color: #f5dab1;
+      color: #e6a23c;
+    }
+    
+    &.el-tag--danger {
+      background-color: #fef0f0;
+      border-color: #fbc4c4;
+      color: #f56c6c;
+    }
+    
+    &.el-tag--info {
+      background-color: #f4f4f5;
+      border-color: #e9e9eb;
+      color: #909399;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .subscription-container {
+    padding: 10px;
+  }
+  
+  .subscription-content {
+    .el-row {
+      .el-col {
+        margin-bottom: 16px;
+      }
+    }
+    
+    .info-item {
+      margin-bottom: 12px;
+    }
+  }
+} 

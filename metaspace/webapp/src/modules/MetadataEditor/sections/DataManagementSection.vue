@@ -60,8 +60,8 @@
         </el-row>
       </el-col>
     </el-row>
-    <el-collapse-transition>
-      <el-row v-if="showPI">
+    <el-collapse-transition class="mt-8">
+      <el-row v-if="showPI && groupId == 'NO_GROUP'">
         <el-col :span="6">
           <div class="metadata-section__title">Principal Investigator</div>
         </el-col>
@@ -93,6 +93,14 @@
         </el-col>
       </el-row>
     </el-collapse-transition>
+    <el-row>
+      <el-col :span="6">
+        <span class="metadata-section__title">Group quota</span>
+      </el-col>
+      <el-col :span="18">
+        <group-quota :groupId="groupId" :types="getTypes" />
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -108,6 +116,9 @@ import './FormSection.scss'
 import gql from 'graphql-tag' // imported directly so that the Project pages aren't pulled into the bundle
 import { MetaspaceOptions } from '../formStructure'
 import { ElRow, ElCol, ElForm, ElCollapseTransition } from '../../../lib/element-plus'
+import GroupQuota from '../../Group/GroupQuota'
+import { getActiveGroupSubscriptionQuery } from '../../../api/subscription'
+import { useStore } from 'vuex'
 
 const FIND_GROUP = 'FIND_GROUP'
 const NO_GROUP = 'NO_GROUP'
@@ -128,15 +139,17 @@ export default defineComponent({
     ElForm,
     ElCollapseTransition,
     CreateProjectDialog,
+    GroupQuota,
   },
   props: {
     value: { type: Object as () => MetaspaceOptions, required: true },
     submitter: { type: Object as () => DatasetSubmitterFragment | null, default: null },
     error: { type: Object as () => any, default: () => ({}) },
+    isNewDataset: { type: Boolean, required: true },
   },
   setup(props, { emit }) {
     const apolloClient = inject(DefaultApolloClient)
-
+    const store = useStore()
     const unknownGroup = ref<GroupListItem | null>(null)
     const unknownProjects = ref<{ id: string; name: string }[]>([])
     const showFindGroupDialog = ref(false)
@@ -149,6 +162,26 @@ export default defineComponent({
       fetchPolicy: 'cache-first',
     })
     const currentUser = computed(() => currentUserResult.value?.currentUser)
+
+    const { onResult: onActiveGroupSubscriptionResult } = useQuery(
+      getActiveGroupSubscriptionQuery,
+      () => ({ groupId: props.value.groupId }),
+      () => {
+        return {
+          enabled: !!props.value.groupId,
+        }
+      }
+    )
+    onActiveGroupSubscriptionResult(({ data }: any) => {
+      if (data && data.activeGroupSubscription) {
+        store.commit('setThemeVariant', 'pro')
+      } else {
+        store.commit('setThemeVariant', 'default')
+      }
+    })
+    const getTypes = computed(() => {
+      return props.isNewDataset ? ['create'] : ['reprocess']
+    })
 
     const fetchGroupIfUnknown = async () => {
       // If the dataset is saved with a groupId for a group that the user isn't a member of, or the group
@@ -389,6 +422,7 @@ export default defineComponent({
       onInput,
       setGroupId,
       setProjectIds,
+      getTypes,
     }
   },
 })

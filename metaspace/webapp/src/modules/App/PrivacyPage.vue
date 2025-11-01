@@ -1,6 +1,6 @@
 <template>
   <content-page>
-    <h1>Privacy and Personal Data</h1>
+    <h1>METASPACE Academic - Privacy and Personal Data</h1>
     <h2>Privacy policy</h2>
     <p>
       We do our best to balance the interests of individual users with delivering a useful resource for the wider

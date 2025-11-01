@@ -7,8 +7,6 @@ type User {
   primaryGroup: UserGroup  # null if current user is not allowed to see
   projects: [UserProject!] # null if current user is not allowed to see
   apiKey: String           # null if current user is not allowed to see
-  planId: String
-  plan: Plan
   createdAt: String
   updatedAt: String
 }
@@ -18,14 +16,12 @@ input UpdateUserInput {
   role: String
   email: String
   primaryGroupId: ID
-  planId: Int
 }
 
 input UserFilter {
   name: String
   email: String
   role: String
-  planId: String
   userId: ID
 }
 
@@ -35,7 +31,6 @@ enum UserOrderBy {
   ORDER_BY_ROLE
   ORDER_BY_DATE
   ORDER_BY_UPDATED_AT
-  ORDER_BY_PLAN_ID
 }
 
 type Query {

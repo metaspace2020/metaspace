@@ -490,7 +490,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
         </form>
       </div>
       <div class=\\"metadata-section\\">
-        <div class=\\"mock-el-dialog find-group-dialog\\" visible=\\"false\\" lock-scroll=\\"false\\">
+        <div class=\\"mock-el-dialog find-group-dialog\\" model-value=\\"false\\" append-to-body=\\"\\" title=\\"Create project\\" lock-scroll=\\"false\\">
           <h2>Find a group</h2>
           <p> If you are not member of a group, you can request access here and your dataset will be automatically added to the group once your access has been approved. </p>
           <form class=\\"el-form el-form--default el-form--label-right\\">
@@ -643,11 +643,188 @@ exports[`MetadataEditor > should match snapshot 1`] = `
           </div>
         </div>
         <!---->
+        <div class=\\"el-row\\">
+          <div class=\\"el-col el-col-6\\"><span class=\\"metadata-section__title\\">Group quota</span></div>
+          <div class=\\"el-col el-col-18\\">
+            <div class=\\"section\\">
+              <div class=\\"el-table--fit el-table--enable-row-hover el-table--enable-row-transition el-table el-table--layout-fixed\\" data-prefix=\\"el\\">
+                <div class=\\"el-table__inner-wrapper\\">
+                  <div class=\\"hidden-columns\\">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                  </div>
+                  <div class=\\"el-table__header-wrapper\\">
+                    <table class=\\"el-table__header\\" border=\\"0\\" cellpadding=\\"0\\" cellspacing=\\"0\\">
+                      <colgroup>
+                        <col name=\\"el-table_1_column_1\\" width=\\"60\\">
+                        <col name=\\"el-table_1_column_2\\" width=\\"100\\">
+                        <col name=\\"el-table_1_column_3\\" width=\\"160\\">
+                        <col name=\\"el-table_1_column_4\\" width=\\"70\\">
+                        <col name=\\"el-table_1_column_5\\" width=\\"120\\">
+                        <col name=\\"el-table_1_column_6\\" width=\\"80\\">
+                      </colgroup>
+                      <thead class=\\"\\">
+                        <tr class=\\"\\">
+                          <th class=\\"el-table_1_column_1 is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                            <div class=\\"cell\\">Limit
+                              <!---->
+                              <!---->
+                            </div>
+                          </th>
+                          <th class=\\"el-table_1_column_2 is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                            <div class=\\"cell\\">Remaining
+                              <!---->
+                              <!---->
+                            </div>
+                          </th>
+                          <th class=\\"el-table_1_column_3 is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                            <div class=\\"cell\\">Action
+                              <!---->
+                              <!---->
+                            </div>
+                          </th>
+                          <th class=\\"el-table_1_column_4 is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                            <div class=\\"cell\\">Period
+                              <!---->
+                              <!---->
+                            </div>
+                          </th>
+                          <th class=\\"el-table_1_column_5 is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                            <div class=\\"cell\\">Usage status
+                              <!---->
+                              <!---->
+                            </div>
+                          </th>
+                          <th class=\\"el-table_1_column_6 is-leaf el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
+                            <div class=\\"cell\\">Description
+                              <!---->
+                              <!---->
+                            </div>
+                          </th>
+                        </tr>
+                      </thead>
+                    </table>
+                  </div>
+                  <div class=\\"el-table__body-wrapper\\">
+                    <div class=\\"el-scrollbar\\">
+                      <div class=\\"el-scrollbar__wrap el-scrollbar__wrap--hidden-default\\">
+                        <div class=\\"el-scrollbar__view\\" style=\\"display: inline-block; vertical-align: middle;\\">
+                          <table class=\\"el-table__body\\" cellspacing=\\"0\\" cellpadding=\\"0\\" border=\\"0\\" style=\\"table-layout: fixed;\\">
+                            <colgroup>
+                              <col name=\\"el-table_1_column_1\\" width=\\"60\\">
+                              <col name=\\"el-table_1_column_2\\" width=\\"100\\">
+                              <col name=\\"el-table_1_column_3\\" width=\\"160\\">
+                              <col name=\\"el-table_1_column_4\\" width=\\"70\\">
+                              <col name=\\"el-table_1_column_5\\" width=\\"120\\">
+                              <col name=\\"el-table_1_column_6\\" width=\\"80\\">
+                            </colgroup>
+                            <!--v-if-->
+                            <tbody tabindex=\\"-1\\">
+                              <tr class=\\"el-table__row\\">
+                                <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span class=\\"limit-value\\">0</span>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span class=\\"el-tag el-tag--danger el-tag--small el-tag--light el-zoom-in-center-enter-from el-zoom-in-center-enter-active\\"><span class=\\"el-tag__content\\">0</span>
+                                    <!--v-if--></span>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span class=\\"el-tag el-tag--info el-tag--small el-tag--light el-zoom-in-center-enter-from el-zoom-in-center-enter-active\\"><span class=\\"el-tag__content\\">private submissions</span>
+                                    <!--v-if--></span>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_4 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span>0 </span>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_5 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!---->
+                                    <el-tag type=\\"danger\\" size=\\"small\\">Exhausted</el-tag>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_6 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span>0 of 0 private submissions remaining for 0 </span>
+                                  </div>
+                                </td>
+                              </tr>
+                              <tr class=\\"el-table__row\\">
+                                <td class=\\"el-table_1_column_1 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span class=\\"limit-value\\">0</span>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_2 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span class=\\"el-tag el-tag--danger el-tag--small el-tag--light el-zoom-in-center-enter-from el-zoom-in-center-enter-active\\"><span class=\\"el-tag__content\\">0</span>
+                                    <!--v-if--></span>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_3 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span class=\\"el-tag el-tag--info el-tag--small el-tag--light el-zoom-in-center-enter-from el-zoom-in-center-enter-active\\"><span class=\\"el-tag__content\\">private submissions</span>
+                                    <!--v-if--></span>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_4 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span>0 </span>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_5 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!---->
+                                    <el-tag type=\\"danger\\" size=\\"small\\">Exhausted</el-tag>
+                                  </div>
+                                </td>
+                                <td class=\\"el-table_1_column_6 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
+                                  <div class=\\"cell\\">
+                                    <!----><span>0 of 0 private submissions remaining for 0 </span>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tbody>
+                            <!--v-if-->
+                          </table>
+                          <!--v-if-->
+                          <!--v-if-->
+                        </div>
+                      </div>
+                      <div class=\\"el-scrollbar__bar is-horizontal\\" style=\\"display: none;\\">
+                        <div class=\\"el-scrollbar__thumb\\" style=\\"transform: translateX(0%);\\"></div>
+                      </div>
+                      <div class=\\"el-scrollbar__bar is-vertical\\" style=\\"display: none;\\">
+                        <div class=\\"el-scrollbar__thumb\\" style=\\"transform: translateY(0%);\\"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <!--v-if-->
+                  <!--v-if-->
+                </div>
+                <div class=\\"el-table__column-resize-proxy\\" style=\\"display: none;\\"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class=\\"metadata-section\\">
         <div class=\\"el-row\\">
           <div class=\\"el-col el-col-6\\">
-            <div class=\\"metadata-section__title\\"> Visibility <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\">
+            <div class=\\"metadata-section__title\\"> Visibility <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\">
+                <div class=\\"max-w-xs\\"> To understand the difference between public and private datasets, as well as how quota usage works, please refer to <a href=\\"/plans\\" target=\\"_blank\\">METASPACE Pro</a>. </div>
+              </div>
+              <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"top\\">
                 <div class=\\"max-w-sm\\">
                   <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The imzML files will be made available to download under the <a href=\\"https://creativecommons.org/licenses/by/4.0/\\" rel=\\"noopener noreferrer nofollow\\" target=\\"_blank\\">
                       <!-- -->Creative Commons Attribution 4.0 License

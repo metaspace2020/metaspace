@@ -1,0 +1,230 @@
+type Subscription {
+  id: ID!
+  userId: ID!
+  user: User
+  planId: ID!
+  plan: Plan
+
+  billingInterval: BillingInterval
+  stripeSubscriptionId: String
+  stripeCustomerId: String
+  
+  startedAt: String!
+  expiresAt: String
+  cancelledAt: String
+  
+  isActive: Boolean!
+  autoRenew: Boolean!
+  
+  transactions: [Transaction!]
+
+  paymentMethod: PaymentMethod
+  
+  createdAt: String!
+  updatedAt: String!
+}
+
+type PaymentMethod {
+  id: ID!
+  type: String!
+  last4: String!
+}
+
+type Transaction {
+  id: ID!
+  userId: String!
+  subscriptionId: String!
+  subscription: Subscription
+  
+  # Stripe transaction information
+  stripePaymentIntentId: String
+  stripeInvoiceId: String
+  stripeSubscriptionId: String
+  
+  # Transaction details (amounts in cents)
+  originalAmountCents: Int!
+  finalAmountCents: Int!
+  currency: String!
+  
+  # Coupon information
+  couponApplied: Boolean!
+  stripeCouponId: String
+  couponName: String
+  discountAmountCents: Int
+  discountPercentage: Float
+  
+  # Transaction status and metadata
+  status: TransactionStatus!
+  type: TransactionType!
+  transactionDate: String!
+  description: String
+  metadata: JSON
+  
+  # Billing period covered by this transaction
+  billingPeriodStart: String
+  billingPeriodEnd: String
+  
+  createdAt: String!
+  updatedAt: String!
+}
+
+enum BillingInterval {
+  monthly
+  yearly
+}
+
+enum SubscriptionStatus {
+  active
+  cancelled
+  expired
+  pending
+}
+
+enum TransactionStatus {
+  pending
+  completed
+  failed
+  cancelled
+  refunded
+}
+
+
+enum TransactionType {
+  subscription
+  one_time
+  refund
+  adjustment
+  upgrade
+  downgrade
+  renewal
+  cancellation
+}
+
+enum SubscriptionOrderBy {
+  ORDER_BY_DATE
+  ORDER_BY_USER
+  ORDER_BY_PLAN
+  ORDER_BY_STATUS
+  ORDER_BY_BILLING_INTERVAL
+}
+
+enum TransactionOrderBy {
+  ORDER_BY_DATE
+  ORDER_BY_USER
+  ORDER_BY_AMOUNT
+  ORDER_BY_SUBSCRIPTION
+  ORDER_BY_STATUS
+  ORDER_BY_TYPE
+}
+
+input SubscriptionFilter {
+  userId: String
+  planId: String
+  isActive: Boolean
+  billingInterval: BillingInterval
+  stripeSubscriptionId: String
+  stripeCustomerId: String
+  startDate: String
+  endDate: String
+}
+
+input TransactionFilter {
+  userId: String
+  subscriptionId: String
+  stripePaymentIntentId: String
+  stripeInvoiceId: String
+  stripeSubscriptionId: String
+  currency: String
+  status: TransactionStatus
+  type: TransactionType
+  couponApplied: Boolean
+  startDate: String
+  endDate: String
+}
+
+input CreateSubscriptionInput {
+  userId: String!
+  planId: String!
+  pricingId: String!
+  groupId: String
+  groupName: String
+  email: String!
+  name: String!
+  address: JSON
+  billingInterval: BillingInterval
+  paymentMethodId: String
+  couponCode: String
+  autoRenew: Boolean
+}
+
+input UpdateSubscriptionInput {
+  autoRenew: Boolean
+  metadata: JSON
+}
+
+input CancelSubscriptionInput {
+  reason: String
+}
+
+input ValidateCouponInput {
+  couponCode: String!
+  planId: String!
+  pricingId: String!
+}
+
+type CouponValidationResult {
+  isValid: Boolean!
+  couponCode: String!
+  message: String!
+  originalPriceCents: Int
+  discountedPriceCents: Int
+  discountAmountCents: Int
+  discountPercentage: Float
+  couponName: String
+}
+
+type Query {
+  subscription(id: ID!): Subscription
+  allSubscriptions(
+    orderBy: SubscriptionOrderBy = ORDER_BY_DATE,
+    sortingOrder: SortingOrder = DESCENDING,
+    filter: SubscriptionFilter = {},
+    offset: Int = 0,
+    limit: Int = 10
+  ): [Subscription]
+  subscriptionsCount(filter: SubscriptionFilter = {}): Int!
+  
+  userSubscriptions: [Subscription]
+  activeUserSubscription: Subscription
+  activeGroupSubscription(groupId: ID!): Subscription
+  
+  allTransactions(
+    orderBy: TransactionOrderBy = ORDER_BY_DATE,
+    sortingOrder: SortingOrder = DESCENDING,
+    filter: TransactionFilter = {},
+    offset: Int = 0,
+    limit: Int = 10
+  ): [Transaction]
+  transactionsCount(filter: TransactionFilter = {}): Int!
+  
+  # Transaction queries based on the API routes shown
+  transaction(id: ID!): Transaction
+  userTransactions(userId: ID!): [Transaction]
+  subscriptionTransactions(subscriptionId: ID!): [Transaction]
+  transactionsByStatus(status: TransactionStatus!): [Transaction]
+  transactionsByType(type: TransactionType!): [Transaction]
+  pendingTransactions: [Transaction]
+  transactionsByDateRange(startDate: String!, endDate: String!): [Transaction]
+  
+  # Coupon validation
+  validateCoupon(input: ValidateCouponInput!): CouponValidationResult
+}
+
+type Mutation {
+  createSubscription(input: CreateSubscriptionInput!): Subscription
+  updateSubscription(id: ID!, input: UpdateSubscriptionInput!): Subscription
+  cancelSubscription(id: ID!, input: CancelSubscriptionInput): Subscription
+}
+
+# If JSON scalar is not already defined elsewhere
+scalar JSON 

@@ -8,14 +8,14 @@ import { countGroupsQuery, countPublicationsQuery } from '../../api/group'
 import './AboutPage.scss'
 import { defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 import METALogo from '../../assets/METASPACE_logomark.png'
 import Metaspace from '../../assets/inline/METASPACE.svg'
 import MonitorSvg from '../../assets/inline/refactoring-ui/icon-monitor.svg'
 import BookSvg from '../../assets/inline/refactoring-ui/icon-book-open.svg'
-import BoltSvg from '../../assets/inline/refactoring-ui/icon-bolt.svg'
 import UnlockSvg from '../../assets/inline/refactoring-ui/icon-lock-open.svg'
+import StarSvg from '../../assets/inline/star-icon-land.svg'
 
-const NIDDKLogo = defineAsyncComponent(() => import('../../assets/NIDDK.svg'))
 const NHLBILogo = defineAsyncComponent(() => import('../../assets/NHLBI.svg'))
 const EUFlag = defineAsyncComponent(() => import('../../assets/Flag_of_Europe.svg'))
 
@@ -24,6 +24,7 @@ const AboutPage = defineComponent({
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const store = useStore()
 
     const queryVars = computed(() => ({
       dFilter: {
@@ -47,6 +48,11 @@ const AboutPage = defineComponent({
       publicationCountResult.value != null ? publicationCountResult.value?.countPublications : null
     )
 
+    const themeVariant = computed(() => store.getters.themeVariant)
+    const isPrimaryColor = computed(() => {
+      return themeVariant.value === 'default' ? 'bg-primary' : 'bg-pro'
+    })
+
     onMounted(() => {
       if (route?.hash?.includes('funding')) {
         window.scrollTo({
@@ -60,13 +66,16 @@ const AboutPage = defineComponent({
     return () => {
       return (
         <div class="sm-about-page text-base leading-6 pt-0">
-          <div class="bg-primary overflow-hidden w-full">
+          <div class={`${isPrimaryColor.value} overflow-hidden w-full`}>
             <div class="box-border font-display pt-0 pb-10 mx-auto md:max-w-4xl max-w-sm flex items-center">
-              <img
-                alt="METASPACE logo"
-                src={METALogo}
-                class="hidden md:block w-66 h-66 -ml-3 lg:-ml-6 p-3 box-border"
-              />
+              <div class="hidden md:block relative w-66 h-66 -ml-3 lg:-ml-6 p-3 box-border">
+                <img alt="METASPACE logo" src={METALogo} class="w-full h-full" />
+                {themeVariant.value === 'pro' && (
+                  <div class="absolute bottom-[70px] right-[45px]">
+                    <span class="text-5xl text-pro font-bold">Pro</span>
+                  </div>
+                )}
+              </div>
               <div class="text-white box-border ml-0 md:ml-4 h-66">
                 <h1 class="m-0 md:mt-24 flex flex-col items-start">
                   <Metaspace class="w-auto md:h-18 box-border py-1" />
@@ -119,33 +128,6 @@ const AboutPage = defineComponent({
                 </p>
               </div>
               <div>
-                <PrimaryIcon class="mb-2" inverse small>
-                  <BoltSvg />
-                </PrimaryIcon>
-                <h3>Get going fast</h3>
-                <p>
-                  Head to the
-                  <span
-                    class="about-link mx-1"
-                    onClick={() => {
-                      router.push('/upload')
-                    }}
-                  >
-                    upload
-                  </span>{' '}
-                  page to submit a dataset, or try our
-                  <span
-                    class="about-link mx-1"
-                    onClick={() => {
-                      router.push('/help')
-                    }}
-                  >
-                    interactive tutorials
-                  </span>{' '}
-                  if it is your first visit and you would like to get up to speed.
-                </p>
-              </div>
-              <div>
                 <PrimaryIcon class="mb-2" small>
                   <UnlockSvg />
                 </PrimaryIcon>
@@ -156,9 +138,29 @@ const AboutPage = defineComponent({
                   <a href="https://github.com/metaspace2020/metaspace">open-source</a>.
                 </p>
               </div>
+              <div>
+                <div class="star-icon-container bg-pro-op mb-2">
+                  <StarSvg class="star-icon svg-pro" />
+                </div>
+                <h3 class="text-pro">Go Pro</h3>
+                <p>
+                  Unlock private uploads and dedicated support by upgrading to
+                  <span
+                    class="about-link ml-1 text-pro"
+                    onClick={() => {
+                      router.push('/plans')
+                    }}
+                  >
+                    METASPACE Pro
+                  </span>
+                  .
+                </p>
+              </div>
             </section>
           </div>
-          <div class="bg-primary overflow-hidden w-full py-6 px-18 mx-auto box-border flex justify-center">
+          <div
+            class={`${isPrimaryColor.value} overflow-hidden w-full py-6 px-18 mx-auto box-border flex justify-center`}
+          >
             <section class="sm-about-stats w-full max-w-3xl">
               <h2 class="sr-only">Stats</h2>
               <div class="flex items-center text-white justify-between">
@@ -189,69 +191,188 @@ const AboutPage = defineComponent({
             </section>
           </div>
           <div id="about-pt2" class="sm-about py-6 px-18 mx-auto box-border max-w-4xl">
-            <section class="sm-about-details max-w-measure-4 mt-0">
-              <h3>Community Discussion</h3>
+            <section id="platforms" class="sm-about-details max-w-3xl mt-0">
+              <h2>METASPACE platforms</h2>
+              <p>
+                As of November 3rd 2025, the METASPACE platform splitted into two different platforms,
+                <b>METASPACE Academic and METASPACE Pro</b>. METASPACE Academic supports public dataset submissions
+                only, while METASPACE Pro handles private dataset submissions only. Both platforms host the same engine
+                for metabolite annotation of imaging mass spectrometry data.
+              </p>
+              <p>
+                METASPACE Academic is ideal for open-science projects where the data can be shared publicly with the
+                community, while METASPACE Pro is ideal for users who need to keep their datasets private and need
+                additional dedicated support.
+              </p>
+              <p>
+                The METASPACE Academic platform is developed by software engineers, data scientists and mass
+                spectrometrists from the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>. While METASPACE
+                Pro is offered as a subscription-based service from Metacloud Inc.
+              </p>
+              <p>
+                To learn more about the reasoning behind splitting METASPACE into separate platforms, and to understand
+                their similarities and differences, check out more information{' '}
+                <a href="/split" target="_blank">
+                  here
+                </a>
+                .
+              </p>
+              <p>
+                If you still have questions about both platforms, check out our{' '}
+                <a href="/faq" target="_blank">
+                  FAQ page
+                </a>{' '}
+                to understand more about how it works.
+              </p>
+            </section>
+            <section id="get-started" class="sm-about-details max-w-3xl mt-0">
+              <h2>Getting started</h2>
+              <div class="flex flex-col">
+                <span class="mb-1">
+                  1.{' '}
+                  <span class="about-link" onClick={() => store.commit('account/showDialog', 'createAccount')}>
+                    Sign up
+                  </span>{' '}
+                  to create your account if you haven&apos;t already.
+                </span>
+                <span class="mb-1">
+                  2.{' '}
+                  <a href="/help" target="_blank">
+                    Take our interactive introductory tours
+                  </a>{' '}
+                  to get familiar with browsing datasets and annotations.
+                </span>
+                <span class="mb-1">
+                  3.{' '}
+                  <a href="/datasets" target="_blank">
+                    Explore public datasets
+                  </a>{' '}
+                  in our public knowledgebase.
+                </span>
+                <span class="mb-1">
+                  4. When you are ready to{' '}
+                  <a href="/upload" target="_blank">
+                    upload your own dataset
+                  </a>
+                  ,{' '}
+                  <a href="/projects" target="_blank">
+                    create a project
+                  </a>{' '}
+                  first (recommended) to keep your work organized.
+                </span>
+                <span class="mb-1">
+                  5.{' '}
+                  <a href="/upload" target="_blank">
+                    Upload your dataset
+                  </a>{' '}
+                  and link it to your project.
+                </span>
+                <span class="mb-1">
+                  6. Working in a team?{' '}
+                  <a href="/groups" target="_blank">
+                    Create a group
+                  </a>{' '}
+                  to manage and share your projects and datasets.
+                </span>
+                <span class="mb-1">
+                  7. If you plan to submit multiple datasets that need to remain private, explore our{' '}
+                  <a href="/plans">METASPACE Pro plans</a>.
+                </span>
+              </div>
+            </section>
+            <section id="community-engagement" class="sm-about-details max-w-3xl mt-0">
+              <h2>Community engagement</h2>
               <p>
                 Join METASPACE{' '}
                 <a href="https://github.com/metaspace2020/metaspace/discussions/categories/q-a" target="_blank">
                   community discussions
                 </a>{' '}
-                , where you can ask questions, share ideas, and get help from the METASPACE team and other users.
-              </p>
-              <h3>What is the METASPACE platform?</h3>
-            </section>
-            <section class="sm-about-details max-w-measure-4 mt-0">
-              <p>
-                The METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data as
-                well as a spatial metabolite knowledgebase of the metabolites from thousands of public datasets provided
-                by the community.
+                , where you can ask questions,{' '}
+                <a href="https://github.com/metaspace2020/metaspace/discussions/categories/ideas" target="_blank">
+                  suggest features
+                </a>
+                , share ideas, and get help from the METASPACE team and other users.
               </p>
               <p>
-                The METASPACE platform is developed by software engineers, data scientists and mass spectrometrists from
-                the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>.
+                If you’re finding METASPACE platforms useful, help us grow the community by sharing it with your
+                colleagues and collaborators.
               </p>
-              <p>
-                For more information, check out{' '}
-                <span
-                  class="about-link mx-1"
-                  onClick={() => {
-                    router.push('/publications#ours')
-                  }}
-                >
-                  our methods and related publications
-                </span>
-                .
-              </p>
-              <h3>How can you contribute?</h3>
-              <ul class="mb-6">
-                <li>
-                  <strong>Share Ideas and Connect</strong> Join our community to provide feedback,
-                  <a href="https://github.com/metaspace2020/metaspace/discussions/categories/ideas" target="_blank">
-                    suggest features
-                  </a>
-                  , and brainstorm solutions.
-                </li>
-                <li>
-                  <strong>Promote and Share the Platform</strong> Share it with colleagues, collaborators, and on{' '}
-                  <a href="https://twitter.com/metaspace2020" target="_blank">
-                    social media
-                  </a>
-                  .
-                </li>
-              </ul>
               <CiteMetaspace />
-              <h3>How to stay in touch?</h3>
+              <h2 class="!mt-0">Learn more and get in touch</h2>
               <p>
-                First, please check our <a href="/help">Help section</a> and{' '}
+                Whether you&apos;re continuing with METASPACE Academic or exploring METASPACE Pro service, you can find
+                more information below.
+              </p>
+              <p class="!mb-1">
+                Continue using{' '}
+                <a href="/" target="_blank">
+                  METASPACE Academic
+                </a>{' '}
+              </p>
+              <p class="!mb-1">
+                Explore{' '}
+                <a href="/plans" target="_blank">
+                  METASPACE Pro plans
+                </a>{' '}
+              </p>
+              <p class="!mb-1">
+                Check out our{' '}
+                <a href="/faq" target="_blank">
+                  FAQ page
+                </a>{' '}
+                for more information
+                <p></p>
+                If you still have questions or would like to share feedback, please start by visiting our{' '}
+                <a href="/help" target="_blank">
+                  Help section
+                </a>{' '}
+                and{' '}
                 <a href="https://github.com/metaspace2020/metaspace/discussions" target="_blank">
                   Discussions forum
                 </a>{' '}
-                for any questions you might have. If you don’t find what you need, please{' '}
-                <a href="/contact">contact us</a>.
+                where you might find the answers you need. If you&apos;d like to provide feedback or reach out directly,
+                visit our{' '}
+                <a href="/contact" target="_blank">
+                  contact page
+                </a>{' '}
+                for more options.
               </p>
-              <h3 id="please-appreciate-those-who-funded-it">Funding</h3>
+              <h2 id="please-appreciate-those-who-funded-it">Funding</h2>
               <p>We acknowledge funding from the following sources:</p>
               <ul class="sm-about-funding">
+                <li class="!mb-10">
+                  <div class="svg-container">
+                    <NHLBILogo viewBox="0 0 107 67" alt="NIH" />
+                  </div>
+                  <div class="max-w-xl">
+                    <b>
+                      National Cancer Institute
+                      <abbr class="ml-1" title="NCI">
+                        NCI
+                      </abbr>{' '}
+                      and National Institute of Diabetes and Digestive and Kidney
+                      <abbr class="ml-1" title="NIDDK">
+                        NIDDK
+                      </abbr>
+                    </b>
+                    <br />
+
+                    <div class="flex flex-wrap">
+                      under grant agreements
+                      <a class="mx-1" target="_blank" href="https://reporter.nih.gov/project-details/11113690">
+                        U24CA299590
+                      </a>
+                      /
+                      <a
+                        class="mx-1"
+                        target="_blank"
+                        href="https://reporter.nih.gov/search/autOmWkuI0SYLQaPpCTUzg/project-details/11174318"
+                      >
+                        U01DK114920
+                      </a>
+                    </div>
+                  </div>
+                </li>
                 <li>
                   <div class="svg-container">
                     <EUFlag viewBox="0 0 810 540" alt="EU" />
@@ -283,53 +404,7 @@ const AboutPage = defineComponent({
                     </div>
                   </div>
                 </li>
-                <li>
-                  <div class="svg-container">
-                    <NIDDKLogo viewBox="0 0 208 130" alt="NIDDK" />
-                  </div>
-                  <span>
-                    <b>
-                      National Institutes of Health
-                      <abbr class="ml-1" title="National Institute of Diabetes and Digestive and Kidney Diseases">
-                        NIDDK
-                      </abbr>
-                    </b>
-                    <br />
-                    Kidney Precision Medicine Project (<a href="https://kpmp.org/">kpmp.org</a>)
-                  </span>
-                </li>
-                <li>
-                  <div class="svg-container">
-                    <NHLBILogo viewBox="0 0 107 67" alt="NHLBI" />
-                  </div>
-                  <span>
-                    <b>
-                      National Institutes of Health
-                      <abbr class="ml-1" title="National Heart, Lung, and Blood Institute">
-                        NHLBI
-                      </abbr>
-                    </b>
-                    <br />
-                    LungMAP Phase 2 (<a href="https://www.lungmap.net/">lungmap.net</a>)
-                  </span>
-                </li>
               </ul>
-              <h3>Other acknowledgements</h3>
-              <p>
-                Icons by <a href="http://www.freepik.com/">Freepik</a> from
-                <a href="http://www.flaticon.com" class="ml-1">
-                  www.flaticon.com
-                </a>
-                ,
-                <a href="https://refactoringui.com/book/" class="ml-1">
-                  Refactoring UI
-                </a>{' '}
-                and
-                <a href="https://material.io/icons" class="ml-1">
-                  Material Icons
-                </a>
-                .
-              </p>
             </section>
           </div>
         </div>

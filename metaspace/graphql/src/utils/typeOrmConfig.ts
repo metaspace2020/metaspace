@@ -9,7 +9,6 @@ import { ANNOTATION_ENTITIES } from '../modules/annotation/model'
 import { ENGINE_ENTITIES } from '../modules/engine/model'
 import { MOLECULAR_DB_ENTITIES } from '../modules/moldb/model'
 import { ENRICHMENT_DB_ENTITIES } from '../modules/enrichmentdb/model'
-import { PLAN_ENTITIES } from '../modules/plan/model'
 import { IMAGE_VIEWER_SNAPSHOT_ENTITIES } from '../modules/imageViewerSnapshot/model'
 import { SnakeCaseNamingStrategy } from './SnakeCaseNamingStrategy'
 
@@ -33,7 +32,6 @@ const typeOrmConfig: ConnectionOptions = {
     ...MOLECULAR_DB_ENTITIES,
     ...ENRICHMENT_DB_ENTITIES,
     ...IMAGE_VIEWER_SNAPSHOT_ENTITIES,
-    ...PLAN_ENTITIES,
   ],
   namingStrategy: new SnakeCaseNamingStrategy(),
   synchronize: false,

@@ -1,0 +1,212 @@
+@import "../../assets/scss/_variables.scss";
+
+.split-page {
+    padding-top: 0px !important;
+    
+    .header {
+      @apply text-white;
+      min-height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(90deg, #409eff 0%, $pro-color 100%) !important;
+      position: relative;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1));
+      }
+    }
+
+    // Enhanced styling for content sections
+    .main-content {
+      .prose {
+        color: #374151;
+        
+        p {
+          margin-bottom: 1.5rem;
+          line-height: 1.7;
+        }
+        
+        ul {
+          margin-left: 1.5rem;
+          
+          li {
+            margin-bottom: 0.5rem;
+            
+            strong {
+              color: #1f2937;
+            }
+          }
+        }
+      }
+    }
+
+    // Staying same section styling
+    .staying-same {
+      .numbered-list {
+        .numbered-item {
+          display: flex;
+          align-items: flex-start;
+          margin-bottom: 1.5rem;
+          padding: 1rem;
+          background: #f8fafc;
+          border-radius: 8px;
+          border-left: 4px solid #0F87EF;
+          
+          .number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0F87EF;
+            min-width: 3rem;
+            margin-right: 1rem;
+            flex-shrink: 0;
+          }
+          
+          .text {
+            font-size: 1.125rem;
+            color: #374151;
+            line-height: 1.6;
+            flex: 1;
+          }
+        }
+      }
+    }
+
+    // Table styling
+    .platform-comparison {
+      table {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        
+        th {
+          background-color: #f8fafc;
+          font-weight: 600;
+          color: #1f2937;
+        }
+        
+        td {
+          padding: 1rem 1.5rem;
+          
+          &.font-semibold {
+            background-color: #f1f5f9;
+            color: #1e293b;
+          }
+        }
+        
+        tr:nth-child(even) {
+          background-color: #fafafa;
+        }
+      }
+    }
+
+    // When to use sections
+    .when-to-use {
+      .academic-section, .pro-section {
+        background: #f8fafc;
+        padding: 2rem;
+        border-radius: 12px;
+        border-left: 4px solid #0F87EF;
+        
+        h3 {
+          color: #1f2937;
+          margin-bottom: 1rem;
+        }
+        
+        ul li {
+          padding: 0.5rem 0;
+          color: #4b5563;
+        }
+      }
+      
+      .pro-section {
+        border-left-color: $pro-color;
+      }
+    }
+
+    // Community section styling
+    .community-section {
+      background: rgba($pro-color, 0.2);
+      padding: 2rem;
+      border-radius: 12px;
+      border: 1px solid #e9d5ff;
+      
+      .prose p {
+        color: #374151;
+      }
+    }
+
+    // Learn more section
+    .learn-more {
+      background: #f0f9ff;
+      padding: 2rem;
+      border-radius: 12px;
+      border: 1px solid #bae6fd;
+      
+      h2 {
+        color: #0c4a6e;
+      }
+      
+      p {
+        color: #374151;
+      }
+      
+      .learn-more-list {
+        .learn-more-item {
+          display: flex;
+          align-items: flex-start;
+          margin-bottom: 1.5rem;
+          
+          .number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0c4a6e;
+            min-width: 3rem;
+            margin-right: 1rem;
+            flex-shrink: 0;
+          }
+          
+          .text {
+            font-size: 1.125rem;
+            color: #374151;
+            line-height: 1.6;
+            flex: 1;
+            
+            a {
+              color: #0c4a6e;
+              text-decoration: underline;
+              
+              &:hover {
+                color: #075985;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Responsive improvements
+    @media (max-width: 768px) {
+      .platform-comparison {
+        table {
+          font-size: 0.875rem;
+          
+          th, td {
+            padding: 0.75rem;
+          }
+        }
+      }
+      
+      .when-to-use {
+        .academic-section, .pro-section {
+          padding: 1.5rem;
+        }
+      }
+    }
+  }

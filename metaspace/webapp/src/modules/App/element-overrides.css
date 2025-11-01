@@ -56,7 +56,7 @@
 .el-table th.is-sortable.ascending,
 .el-table th.is-sortable.descending,
 .el-button--text {
-  @apply text-primary;
+  color: var(--primary-color, #409eff);
 }
 
 .el-table .sort-caret.ascending {
@@ -66,10 +66,10 @@
   border-top-color: theme('colors.gray.300')
 }
 .el-table .ascending .sort-caret.ascending {
-  border-bottom-color: theme('colors.primary')
+  border-bottom-color: var(--primary-color, #409eff);
 }
 .el-table .descending .sort-caret.descending {
-  border-top-color: theme('colors.primary')
+  border-top-color: var(--primary-color, #409eff);
 }
 
 .v-modal {
@@ -105,7 +105,7 @@
 
 .el-dropdown-menu__item:focus,
 .el-dropdown-menu__item:not(.is-disabled):hover {
-  @apply text-primary;
+  color: var(--primary-color, #409eff);
 }
 
 /* Use `<el-dialog customClass="el-dialog-lean">` to remove excessive padding above/below body */
@@ -133,7 +133,7 @@
 }
 
 .el-switch.is-checked {
-  outline-color: theme('colors.primary');
+  outline-color: var(--primary-color, #409eff);
 }
 
 .el-collapse-item--no-padding .el-collapse-item__content {

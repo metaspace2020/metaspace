@@ -1,6 +1,6 @@
 <template>
   <content-page>
-    <h1>Terms of Service</h1>
+    <h1>METASPACE Academic - Terms of Service</h1>
     <h2>Service definition</h2>
     <ul>
       <li>

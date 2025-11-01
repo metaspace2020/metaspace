@@ -41,6 +41,11 @@ const store = createStore({
       params: {},
       query: {},
     },
+
+    // theme settings
+    theme: {
+      variant: 'default', // 'default' or 'pro'
+    },
   },
 
   getters,

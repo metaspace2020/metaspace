@@ -1,97 +1,362 @@
 import {
-  createTestPlan, createTestPlanRule,
-} from '../../../tests/testDataCreation'
-import {
   doQuery,
   onAfterAll,
   onAfterEach,
   onBeforeAll,
   onBeforeEach,
   setupTestUsers,
+  adminContext,
 } from '../../../tests/graphqlTestEnvironment'
 import * as moment from 'moment'
+import fetch from 'node-fetch'
+import config from '../../../utils/config'
+
+// Mock node-fetch
+jest.mock('node-fetch')
+const mockFetch = fetch as jest.Mock
 
 describe('modules/plan/controller (queries)', () => {
   const currentTime: any = moment.utc(moment.utc().toDate())
+  let originalManagerApiUrl: string | undefined
 
   const TIERS = [
-    { name: 'regular', isActive: true, isDefault: false, createdAt: currentTime },
-    { name: 'lab', isActive: false, isDefault: false, createdAt: currentTime }, // This plan has isDefault: true
-    { name: 'lab', isActive: true, isDefault: true, createdAt: currentTime },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440001',
+      tier: 'free',
+      name: 'regular',
+      isActive: true,
+      isDefault: false,
+      createdAt: currentTime,
+      displayOrder: 0,
+      description: 'Regular plan',
+      pricingOptions: [
+        {
+          id: 'price_free_monthly',
+          periodMonths: 1,
+          priceCents: 0,
+          displayName: 'Monthly',
+          isActive: true,
+          displayOrder: 0,
+        },
+        {
+          id: 'price_free_yearly',
+          periodMonths: 12,
+          priceCents: 0,
+          displayName: 'Yearly',
+          isActive: true,
+          displayOrder: 1,
+        },
+      ],
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440002',
+      tier: 'lab',
+      name: 'lab',
+      isActive: false,
+      isDefault: false,
+      createdAt: currentTime,
+      displayOrder: 1,
+      description: 'Lab plan',
+      pricingOptions: [
+        {
+          id: 'price_lab_monthly',
+          periodMonths: 1,
+          priceCents: 5000,
+          displayName: 'Monthly',
+          isActive: true,
+          displayOrder: 0,
+        },
+        {
+          id: 'price_lab_yearly',
+          periodMonths: 12,
+          priceCents: 50000,
+          displayName: 'Yearly',
+          isActive: true,
+          displayOrder: 1,
+        },
+      ],
+    },
+    {
+      id: '550e8400-e29b-41d4-a716-446655440003',
+      tier: 'pro',
+      name: 'lab',
+      isActive: true,
+      isDefault: true,
+      createdAt: currentTime,
+      displayOrder: 2,
+      description: 'Pro lab plan',
+      pricingOptions: [
+        {
+          id: 'price_pro_monthly',
+          periodMonths: 1,
+          priceCents: 10000,
+          displayName: 'Monthly',
+          isActive: true,
+          displayOrder: 0,
+        },
+        {
+          id: 'price_pro_yearly',
+          periodMonths: 12,
+          priceCents: 100000,
+          displayName: 'Yearly',
+          isActive: true,
+          displayOrder: 1,
+        },
+      ],
+    },
   ]
 
-  const TIER_RULES: any = [
-    { planId: 1, actionType: 'download', type: 'dataset', period: 1, periodType: 'day', limit: 5, createdAt: currentTime },
-    { planId: 1, actionType: 'download', type: 'dataset', period: 1, periodType: 'week', limit: 50, createdAt: currentTime },
-    { planId: 3, actionType: 'process', type: 'dataset', period: 1, periodType: 'day', limit: 2, createdAt: currentTime },
+  const TIER_RULES = [
+    { id: 1, planId: '550e8400-e29b-41d4-a716-446655440001', actionType: 'download', type: 'dataset', period: 1, periodType: 'day', limit: 5, createdAt: currentTime },
+    { id: 2, planId: '550e8400-e29b-41d4-a716-446655440001', actionType: 'download', type: 'dataset', period: 1, periodType: 'week', limit: 50, createdAt: currentTime },
+    { id: 3, planId: '550e8400-e29b-41d4-a716-446655440003', actionType: 'process', type: 'dataset', period: 1, periodType: 'day', limit: 2, createdAt: currentTime },
   ]
 
-  let createdPlans: any = []
-  let createdPlanRules: any = []
+  const API_USAGES = [
+    {
+      id: 1,
+      userId: '550e8400-e29b-41d4-a716-446655440001',
+      datasetId: 'dataset1',
+      actionType: 'download',
+      type: 'dataset',
+      source: 'web',
+      actionDt: currentTime,
+    },
+    {
+      id: 2,
+      userId: '550e8400-e29b-41d4-a716-446655440001',
+      datasetId: 'dataset2',
+      actionType: 'process',
+      type: 'dataset',
+      source: 'api',
+      actionDt: currentTime,
+    },
+    {
+      id: 3,
+      userId: '550e8400-e29b-41d4-a716-446655440002',
+      datasetId: 'dataset1',
+      actionType: 'download',
+      type: 'dataset',
+      source: 'web',
+      actionDt: currentTime,
+    },
+  ]
 
-  beforeAll(onBeforeAll)
-  afterAll(onAfterAll)
+  beforeAll(async() => {
+    await onBeforeAll()
+    originalManagerApiUrl = config.manager_api_url
+    // Set the manager API URL
+    config.manager_api_url = 'https://test-api.metaspace.example'
+  })
+
+  afterAll(async() => {
+    await onAfterAll()
+    // Restore original config value if it was defined
+    if (originalManagerApiUrl !== undefined) {
+      config.manager_api_url = originalManagerApiUrl
+    } else {
+      // If it was undefined, we need to use delete to remove the property
+      delete (config as any).manager_api_url
+    }
+  })
 
   beforeEach(async() => {
     jest.clearAllMocks()
+    mockFetch.mockClear()
     await onBeforeEach()
-    createdPlans = await Promise.all(TIERS.map(plan => createTestPlan(plan as any)))
-
-    createdPlanRules = await Promise.all(TIER_RULES.map((rule: any, index: number) => {
-      const planId = (createdPlans)[index < 2 ? 0 : 2]?.id
-      return createTestPlanRule({ ...rule, planId })
-    }))
-
-    await setupTestUsers(undefined, true)
+    await setupTestUsers()
   })
 
   afterEach(onAfterEach)
 
+  describe('Query.plan', () => {
+    const queryPlan = `query ($id: String!) {
+      plan(id: $id) {
+        id
+        tier
+        name
+        isActive
+        isDefault
+        createdAt
+        displayOrder
+        description
+        pricingOptions {
+          id
+          periodMonths
+          priceCents
+          displayName
+          isActive
+          displayOrder
+        }
+      }
+    }`
+
+    it('should return a plan by id', async() => {
+      const planId = '550e8400-e29b-41d4-a716-446655440001'
+      const expectedPlan = TIERS.find(plan => plan.id === planId)
+
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          ...expectedPlan,
+          createdAt: moment(expectedPlan!.createdAt).valueOf().toString(),
+        }),
+      })
+
+      const result = await doQuery(queryPlan, { id: planId })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test-api.metaspace.example/api/plans/550e8400-e29b-41d4-a716-446655440001',
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+          }),
+        })
+      )
+
+      expect(result).toEqual({
+        ...expectedPlan,
+        createdAt: moment(expectedPlan!.createdAt).valueOf().toString(),
+      })
+    })
+
+    it('should return null if plan not found', async() => {
+      // Mock fetch to return null for a non-existent plan
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+      })
+
+      const result = await doQuery(queryPlan, { id: '550e8400-e29b-41d4-a716-999999999999' })
+
+      expect(result).toBeNull()
+    })
+  })
+
   describe('Query.allPlans', () => {
     const queryAllPlans = `query ($filter: PlanFilter, $offset: Int, $limit: Int) {
       allPlans(filter: $filter, offset: $offset, limit: $limit) {
+        tier
         name
         isActive
-        isDefault    # Add isDefault here
+        isDefault
         createdAt
+        displayOrder
+        description
+        pricingOptions {
+          id
+          periodMonths
+          priceCents
+          displayName
+          isActive
+          displayOrder
+        }
       }
     }`
 
     it('should return active plans by default', async() => {
-      const result = await doQuery('query { allPlans { name isActive isDefault createdAt } }')
+      const activePlans = TIERS.filter(plan => plan.isActive)
 
-      const expected = TIERS.filter((plan) => plan.isActive).map((plan) => ({
+      // Mock the fetch response with proper data structure
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: activePlans.map(plan => ({
+            ...plan,
+            createdAt: moment(plan.createdAt).valueOf().toString(),
+          })),
+          meta: { total: activePlans.length },
+        }),
+      })
+
+      const result = await doQuery(queryAllPlans)
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/^https:\/\/test-api\.metaspace\.example\/api\/plans/),
+        expect.any(Object)
+      )
+
+      const expected = activePlans.map(plan => ({
+        tier: plan.tier,
         name: plan.name,
         isActive: plan.isActive,
-        isDefault: plan.isDefault, // Ensure this is included
+        isDefault: plan.isDefault,
         createdAt: moment(plan.createdAt).valueOf().toString(),
+        displayOrder: plan.displayOrder,
+        description: plan.description,
+        pricingOptions: plan.pricingOptions,
       }))
 
-      expect(result.length).toEqual(expected.length)
       expect(result).toEqual(expected)
     })
 
     it('should filter plans by isActive', async() => {
+      const inactivePlans = TIERS.filter(plan => !plan.isActive)
+
+      // Mock the fetch response with proper data structure
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: inactivePlans.map(plan => ({
+            ...plan,
+            createdAt: moment(plan.createdAt).valueOf().toString(),
+          })),
+          meta: { total: inactivePlans.length },
+        }),
+      })
+
       const result = await doQuery(queryAllPlans, { filter: { isActive: false } })
 
-      const expected = TIERS.filter((plan) => !plan.isActive).map(({ createdAt, ...rest }) => ({
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/.*isActive=false.*/),
+        expect.any(Object)
+      )
+
+      // Only include fields that are in the GraphQL query
+      const expected = inactivePlans.map(({
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        id,
+        createdAt, ...rest
+      }) => ({
         ...rest,
         createdAt: moment(createdAt).valueOf().toString(),
       }))
 
-      expect(result.length).toEqual(1)
       expect(result).toEqual(expected)
     })
 
     it('should filter plans by name', async() => {
+      const filteredPlans = TIERS.filter(plan => plan.name === 'lab' && plan.isActive)
+
+      // Mock the fetch response with proper data structure
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: filteredPlans.map(plan => ({
+            ...plan,
+            createdAt: moment(plan.createdAt).valueOf().toString(),
+          })),
+          meta: { total: filteredPlans.length },
+        }),
+      })
+
       const result = await doQuery(queryAllPlans, { filter: { name: 'lab' } })
 
-      const expected = TIERS.filter((plan) => plan.name === 'lab' && plan.isActive).map(({ createdAt, ...rest }) => ({
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/.*name=lab.*/),
+        expect.any(Object)
+      )
+
+      // Only include fields that are in the GraphQL query
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const expected = filteredPlans.map(({ id, createdAt, ...rest }) => ({
         ...rest,
         createdAt: moment(createdAt).valueOf().toString(),
       }))
 
-      expect(result.length).toEqual(expected.length)
       expect(result).toEqual(expected)
     })
   })
@@ -102,124 +367,44 @@ describe('modules/plan/controller (queries)', () => {
     }`
 
     it('should return total count of plans', async() => {
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          count: 2,
+          meta: { total: 2 },
+        }),
+      })
+
       const result = await doQuery(queryPlansCount)
 
-      expect(result).toEqual(2) // Total number of plans (active by default)
+      // The actual endpoint might be /api/plans with meta.total instead of /plans/count
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/^https:\/\/test-api\.metaspace\.example\/api\/plans/),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(2)
     })
 
     it('should return count of active plans', async() => {
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          count: 2,
+          meta: { total: 2 },
+        }),
+      })
+
       const result = await doQuery(queryPlansCount, { filter: { isActive: true } })
 
-      expect(result).toEqual(2) // Two active plans
-    })
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/.*isActive=true.*/),
+        expect.any(Object)
+      )
 
-    it('should return count of plans filtered by name', async() => {
-      const result = await doQuery(queryPlansCount, { filter: { name: 'lab' } })
-
-      expect(result).toEqual(1) // Two plans named 'lab' and active
-    })
-
-    it('should return count of plans filtered by isDefault', async() => {
-      const result = await doQuery(queryPlansCount, { filter: { isDefault: true } })
-
-      expect(result).toEqual(1) // One default plan
-    })
-  })
-
-  describe('Query.allPlanRules', () => {
-    const queryAllPlanRules = `
-      query ($planId: Int, $filter: PlanRuleFilter, $offset: Int, $limit: Int) {
-        allPlanRules(planId: $planId, filter: $filter, offset: $offset, limit: $limit) { 
-          planId 
-          actionType 
-          type       # Include type here
-          period 
-          periodType 
-          limit 
-          createdAt 
-        }
-      }`
-
-    it('should return all plan rules', async() => {
-      const result = await doQuery(queryAllPlanRules)
-
-      const expected = TIER_RULES.map((rule: any, index: number) => ({
-        ...rule,
-        planId: createdPlanRules[index].planId,
-        createdAt: moment(rule.createdAt).valueOf().toString(),
-      }))
-
-      expect(result.length).toEqual(TIER_RULES.length)
-      expect(result).toEqual(expected)
-    })
-
-    it('should filter plan rules by actionType', async() => {
-      const result = await doQuery(queryAllPlanRules, { filter: { actionType: 'download' } })
-
-      const expected = TIER_RULES.filter((rule: any) => rule.actionType === 'download').map((rule: any, index: number) => ({
-        ...rule,
-        planId: createdPlanRules[index].planId,
-        createdAt: moment(rule.createdAt).valueOf().toString(),
-      }))
-
-      expect(result.length).toEqual(2)
-      expect(result).toEqual(expected)
-    })
-
-    it('should paginate plan rules', async() => {
-      const result = await doQuery(queryAllPlanRules, { offset: 1, limit: 1 })
-
-      const expected = {
-        ...TIER_RULES[1],
-        planId: createdPlanRules[1].planId,
-        createdAt: moment(TIER_RULES[1].createdAt).valueOf().toString(),
-      }
-
-      expect(result.length).toEqual(1)
-      expect(result[0]).toEqual(expected)
-    })
-
-    it('should filter plan rules by planId', async() => {
-      const result = await doQuery(queryAllPlanRules, { planId: createdPlans[0].id })
-
-      const expected = TIER_RULES.slice(0, 2).map((rule: any, index: number) => ({
-        ...rule,
-        planId: createdPlanRules[index].planId,
-        createdAt: moment(rule.createdAt).valueOf().toString(),
-      }))
-
-      expect(result.length).toEqual(2)
-      expect(result).toEqual(expected)
-    })
-  })
-
-  describe('Query.planRulesCount', () => {
-    const queryPlanRulesCount = `query ($planId: Int, $filter: PlanRuleFilter) {
-      planRulesCount(planId: $planId, filter: $filter)
-    }`
-
-    it('should return total count of all plan rules', async() => {
-      const result = await doQuery(queryPlanRulesCount)
-
-      expect(result).toEqual(3) // Total number of plan rules
-    })
-
-    it('should return count of plan rules filtered by actionType', async() => {
-      const result = await doQuery(queryPlanRulesCount, { filter: { actionType: 'download' } })
-
-      expect(result).toEqual(2) // Only two plan rules with actionType 'download'
-    })
-
-    it('should return count of plan rules filtered by planId', async() => {
-      const result = await doQuery(queryPlanRulesCount, { planId: createdPlans[0].id })
-
-      expect(result).toEqual(2) // Two plan rules belong to the first plan
-    })
-
-    it('should return count of plan rules filtered by type', async() => {
-      const result = await doQuery(queryPlanRulesCount, { filter: { type: 'dataset' } })
-
-      expect(result).toEqual(3) // Only one rule has type 'dataset'
+      expect(result).toEqual(2)
     })
   })
 
@@ -237,27 +422,383 @@ describe('modules/plan/controller (queries)', () => {
       }
     }`
 
-    it('should return a specific plan rule by id', async() => {
-      const targetPlanRule = createdPlanRules[0]
-      const result = await doQuery(queryPlanRule, { id: targetPlanRule.id })
+    it('should return a plan rule by id', async() => {
+      const ruleId = 1
+      const expectedRule = TIER_RULES.find(rule => rule.id === ruleId)
 
-      const expected = {
-        id: targetPlanRule.id,
-        planId: targetPlanRule.planId,
-        actionType: TIER_RULES[0].actionType,
-        type: TIER_RULES[0].type,
-        period: TIER_RULES[0].period,
-        periodType: TIER_RULES[0].periodType,
-        limit: TIER_RULES[0].limit,
-        createdAt: moment(TIER_RULES[0].createdAt).valueOf().toString(),
-      }
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          ...expectedRule,
+          createdAt: moment(expectedRule!.createdAt).valueOf().toString(),
+        }),
+      })
+
+      const result = await doQuery(queryPlanRule, { id: ruleId })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test-api.metaspace.example/api/plan-rules/1',
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+          }),
+        })
+      )
+
+      expect(result).toEqual({
+        ...expectedRule,
+        createdAt: moment(expectedRule!.createdAt).valueOf().toString(),
+      })
+    })
+  })
+
+  describe('Query.allPlanRules', () => {
+    const queryAllPlanRules = `
+      query ($planId: String, $filter: PlanRuleFilter, $offset: Int, $limit: Int) {
+        allPlanRules(planId: $planId, filter: $filter, offset: $offset, limit: $limit) { 
+          id
+          planId 
+          actionType 
+          type
+          period 
+          periodType 
+          limit 
+          createdAt 
+        }
+      }`
+
+    it('should return all plan rules', async() => {
+      // Mock the fetch response with proper data structure
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: TIER_RULES.map(rule => ({
+            ...rule,
+            createdAt: moment(rule.createdAt).valueOf().toString(),
+          })),
+          meta: { total: TIER_RULES.length },
+        }),
+      })
+
+      const result = await doQuery(queryAllPlanRules)
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/^https:\/\/test-api\.metaspace\.example\/api\/plan-rules/),
+        expect.any(Object)
+      )
+
+      const expected = TIER_RULES.map(rule => ({
+        ...rule,
+        createdAt: moment(rule.createdAt).valueOf().toString(),
+      }))
 
       expect(result).toEqual(expected)
     })
 
-    it('should return null for non-existent plan rule id', async() => {
-      const result = await doQuery(queryPlanRule, { id: 99999 })
-      expect(result).toBeNull()
+    it('should filter plan rules by actionType', async() => {
+      const filteredRules = TIER_RULES.filter(rule => rule.actionType === 'download')
+
+      // Mock the fetch response with proper data structure
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: filteredRules.map(rule => ({
+            ...rule,
+            createdAt: moment(rule.createdAt).valueOf().toString(),
+          })),
+          meta: { total: filteredRules.length },
+        }),
+      })
+
+      const result = await doQuery(queryAllPlanRules, { filter: { actionType: 'download' } })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/.*actionType=download.*/),
+        expect.any(Object)
+      )
+
+      const expected = filteredRules.map(rule => ({
+        ...rule,
+        createdAt: moment(rule.createdAt).valueOf().toString(),
+      }))
+
+      expect(result).toEqual(expected)
+    })
+
+    it('should filter plan rules by planId', async() => {
+      const planId = '550e8400-e29b-41d4-a716-446655440001'
+      const filteredRules = TIER_RULES.filter(rule => rule.planId === planId)
+
+      // Mock the fetch response with proper data structure
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: filteredRules.map(rule => ({
+            ...rule,
+            createdAt: moment(rule.createdAt).valueOf().toString(),
+          })),
+          meta: { total: filteredRules.length },
+        }),
+      })
+
+      const result = await doQuery(queryAllPlanRules, { planId })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/.*planId=550e8400-e29b-41d4-a716-446655440001.*/),
+        expect.any(Object)
+      )
+
+      const expected = filteredRules.map(rule => ({
+        ...rule,
+        createdAt: moment(rule.createdAt).valueOf().toString(),
+      }))
+
+      expect(result).toEqual(expected)
+    })
+  })
+
+  describe('Query.planRulesCount', () => {
+    const queryPlanRulesCount = `query ($planId: String, $filter: PlanRuleFilter) {
+      planRulesCount(planId: $planId, filter: $filter)
+    }`
+
+    it('should return total count of all plan rules', async() => {
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          meta: { total: 3 },
+        }),
+      })
+
+      const result = await doQuery(queryPlanRulesCount)
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/^https:\/\/test-api\.metaspace\.example\/api\/plan-rules/),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(3)
+    })
+
+    it('should return count of plan rules filtered by actionType', async() => {
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          meta: { total: 2 },
+        }),
+      })
+
+      const result = await doQuery(queryPlanRulesCount, { filter: { actionType: 'download' } })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/.*actionType=download.*/),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(2)
+    })
+  })
+
+  describe('Query.allApiUsages', () => {
+    const queryAllApiUsages = `
+      query ($filter: ApiUsageFilter, $offset: Int, $limit: Int) {
+        allApiUsages(filter: $filter, offset: $offset, limit: $limit) {
+          id
+          userId
+          datasetId
+          actionType
+          type
+          source
+          user {
+            id
+            name
+            email
+            role
+          }
+        }
+      }`
+
+    it('should return all API usages for admin', async() => {
+      // Strip actionDt from API_USAGES for the expected result
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const expectedApiUsages = API_USAGES.map(({ actionDt, ...rest }) => ({
+        ...rest,
+        user: null, // The controller adds user property but it's null in this test
+      }))
+
+      // Mock the fetch response with the expected data format from the API
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: API_USAGES.map(({ actionDt, ...rest }) => rest), // eslint-disable-line @typescript-eslint/no-unused-vars
+        }),
+      })
+
+      const result = await doQuery(queryAllApiUsages, {}, { context: adminContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/^https:\/\/test-api\.metaspace\.example\/api\/api-usages/),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(expectedApiUsages)
+    })
+
+    it('should filter API usages by userId', async() => {
+      const userId = '550e8400-e29b-41d4-a716-446655440001'
+      const filteredUsages = API_USAGES
+        .filter(usage => usage.userId === userId) // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        .map(({ actionDt, ...rest }) => ({
+          ...rest,
+          user: null, // The controller adds user property but it's null in this test
+        })) // Strip actionDt for comparison
+
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: filteredUsages.map(({ user, ...rest }) => rest), // eslint-disable-line @typescript-eslint/no-unused-vars
+        }),
+      })
+
+      const result = await doQuery(queryAllApiUsages, { filter: { userId } }, { context: adminContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/.*userId=550e8400-e29b-41d4-a716-446655440001.*/),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(filteredUsages)
+    })
+
+    it('should throw an error for non-admin users', async() => {
+      await expect(doQuery(queryAllApiUsages)).rejects.toThrow('Access denied')
+    })
+  })
+
+  describe('Query.apiUsagesCount', () => {
+    const queryApiUsagesCount = `query ($filter: ApiUsageFilter) {
+      apiUsagesCount(filter: $filter)
+    }`
+
+    it('should return total count of API usages for admin', async() => {
+      // Mock the fetch response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          meta: { total: 3 },
+        }),
+      })
+
+      const result = await doQuery(queryApiUsagesCount, {}, { context: adminContext })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/^https:\/\/test-api\.metaspace\.example\/api\/api-usages/),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual(3)
+    })
+
+    it('should throw an error for non-admin users', async() => {
+      await expect(doQuery(queryApiUsagesCount)).rejects.toThrow('Access denied')
+    })
+  })
+
+  describe('Query.remainingApiUsages', () => {
+    const queryRemainingApiUsages = `query ($groupId: String, $types: [String!]) {
+      remainingApiUsages(groupId: $groupId, types: $types) {
+        actionType
+        remaining
+        limit
+      }
+    }`
+
+    it('should return remaining API usages for user without group', async() => {
+      const types = ['create']
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          remainingUsages: [{ actionType: 'create', remaining: 3, limit: 5 }],
+        }),
+      })
+
+      const result = await doQuery(queryRemainingApiUsages, { types })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/api-usages/remaining-usages'),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual([{ actionType: 'create', remaining: 3, limit: 5 }])
+    })
+
+    it('should handle errors gracefully', async() => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Internal Server Error',
+      })
+
+      const result = await doQuery(queryRemainingApiUsages, { types: ['create'] })
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('Query.plan with additional parameters', () => {
+    const queryPlanWithParams = `query ($id: String!, $includeVat: Boolean, $customerCountry: String) {
+      plan(id: $id, includeVat: $includeVat, customerCountry: $customerCountry) {
+        id
+        tier
+        name
+        pricingOptions {
+          id
+          priceCents
+        }
+      }
+    }`
+
+    it('should handle plan query with VAT and country parameters', async() => {
+      const planId = '550e8400-e29b-41d4-a716-446655440001'
+      const expectedPlan = TIERS.find(plan => plan.id === planId)
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          ...expectedPlan,
+          createdAt: moment(expectedPlan!.createdAt).valueOf().toString(),
+        }),
+      })
+
+      const result = await doQuery(queryPlanWithParams, {
+        id: planId,
+        includeVat: true,
+        customerCountry: 'US',
+      })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('includeVat=true'),
+        expect.any(Object)
+      )
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('customerCountry=US'),
+        expect.any(Object)
+      )
+
+      expect(result).toEqual({
+        id: expectedPlan!.id,
+        tier: expectedPlan!.tier,
+        name: expectedPlan!.name,
+        pricingOptions: expectedPlan!.pricingOptions.map(option => ({
+          id: option.id,
+          priceCents: option.priceCents,
+        })),
+      })
     })
   })
 })

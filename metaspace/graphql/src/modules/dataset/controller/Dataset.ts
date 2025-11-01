@@ -489,6 +489,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       visibility: ds._source.ds_is_public ? 'public' : 'private',
       actionDt: moment.utc(moment.utc().toDate()),
       canEdit,
+      groupId: ds._source.ds_group_id,
+      groupName: ds._source.ds_group_name,
       source: (ctx as any).getSource(),
       deviceInfo: getDeviceInfo(ctx?.req?.headers?.['user-agent']),
       ipHash: hashIp(ip),

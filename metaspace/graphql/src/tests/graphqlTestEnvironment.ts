@@ -11,14 +11,13 @@ import {
 } from 'graphql'
 
 import { createConnection } from '../utils/db'
-import { Connection, EntityManager, getConnection } from 'typeorm'
+import { Connection, EntityManager } from 'typeorm'
 import { User } from '../modules/user/model'
-import { Plan } from '../modules/plan/model'
 import { initOperation } from '../modules/auth/operation'
 import { getContextForTest } from '../getContext'
 import { makeNewExecutableSchema } from '../../executableSchema'
 import { Context } from '../context'
-import { createTestPlan, createTestUser } from './testDataCreation'
+import { createTestUser } from './testDataCreation'
 
 const schema = makeNewExecutableSchema()
 let outsideOfTransactionConn: Connection
@@ -56,7 +55,6 @@ export interface TestEnvironmentOptions {
 }
 
 export let testEntityManager: EntityManager
-export let testPlan: Plan
 export let testUser: User
 export let adminUser: User
 export let userContext: Context
@@ -75,23 +73,16 @@ export const onBeforeEach = async() => {
   testEntityManager = await createTransactionEntityManager();
 
   // Prevent use-after-free
-  (testPlan as any) = undefined;
   (testUser as any) = undefined;
   (userContext as any) = undefined;
   (adminContext as any) = undefined
 
   anonContext = getContextForTest({ role: 'anonymous' }, testEntityManager)
-  const connection = getConnection()
-  await connection.query('ALTER SEQUENCE plan_id_seq RESTART WITH 1')
-  await connection.query('ALTER SEQUENCE plan_rule_id_seq RESTART WITH 1')
 
   await initOperation(testEntityManager)
 }
 
-export const setupTestUsers = async(groupIds?: string[], skipPlan?: boolean) => {
-  if (!skipPlan) {
-    testPlan = await createTestPlan()
-  }
+export const setupTestUsers = async(groupIds?: string[]) => {
   testUser = await createTestUser()
   adminUser = await createTestUser({ role: 'admin' })
   userContext = getContextForTest({ ...testUser, groupIds } as any, testEntityManager)
@@ -101,7 +92,6 @@ export const setupTestUsers = async(groupIds?: string[], skipPlan?: boolean) => 
 export const onAfterEach = async() => {
   await (testEntityManager as TransactionEntityManager).rollbackTransaction();
   // Prevent use-after-free
-  (testPlan as any) = undefined;
   (testEntityManager as any) = undefined;
   (testUser as any) = undefined;
   (userContext as any) = undefined;

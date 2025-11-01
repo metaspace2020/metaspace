@@ -2,6 +2,7 @@
   "graphqlUrl": null,
   "wsGraphqlUrl": null,
   "companionUrl": null,
+  "stripe_pub": "{{ stripe_pub_key }}",
 
   "google_client_id": "{{ sm_webapp_google_client_id }}",
   "recaptcha_site_key": "{{ sm_webapp_google_recaptcha_site_key }}",
@@ -10,6 +11,12 @@
     "dsn": "{{ sentry_dsn }}",
     "environment": "{{ stage | replace('/', '_') }}",
     "release": "{{ metaspace_repo_revision }}"
+  },
+
+  "urls": {
+    "terms": "{{ terms_url }}",
+    "privacy": "{{ privacy_url }}",
+    "dpa": "{{ dpa_url }}"
   },
 
   "metadataTypes": {{ sm_webapp_metadata_types | to_json }},

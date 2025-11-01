@@ -134,4 +134,8 @@ export default {
       return null
     }
   },
+
+  themeVariant(state) {
+    return state.theme.variant
+  },
 }

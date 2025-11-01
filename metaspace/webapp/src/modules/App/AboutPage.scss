@@ -3,6 +3,26 @@
 .sm-about-page.sm-main-content {
   padding-top: 0 !important;
 
+
+  .cite-meta-wrapper {
+    margin-top: 0 !important;
+    h3 {
+      font-size: 1.5rem !important;
+      font-weight: 500 !important;
+    }
+  }
+
+
+
+  .star-icon-container {
+    height: 36px;
+    width: 36px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
   .svg-container {
     width: 72px;
     height: 48px;
@@ -12,6 +32,7 @@
     overflow: hidden;
     margin-right: 24px;
   }
+  
 
   .svg-container svg {
     width: 100%;
@@ -53,6 +74,33 @@
     }
   }
 
+  .sm-about-details  {
+    text-align: justify;
+    h3 {
+      @apply text-lg leading-9 font-medium my-0;
+    }
+    
+    .column-layout {
+      @apply flex flex-wrap justify-center -mx-3;
+    }
+    
+    .column-layout > * {
+      @apply mx-3;
+      width: calc(33.333% - theme('spacing.6'));
+    }
+    
+    .column-layout li + li {
+      margin-top: 0;
+    }
+    
+    .tours button {
+      @apply mt-3;
+    }
+    
+    .collaboration li:first-child {
+      @apply font-medium;
+    }
+  }
   .sm-about-details h3:not(:first-of-type) {
     @apply mt-12;
   }
@@ -79,7 +127,7 @@
   /* sm */
   @media screen and (max-width: 640px) {
     .sm-about-funding li{
-      @apply h-64;
+      @apply h-64 flex flex-wrap;
 
       span {
         max-width: 24rem;

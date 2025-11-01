@@ -1,3 +1,5 @@
+@import "../../assets/scss/_variables.scss";
+
 .sm-header {
   .fixed {
     // z-index should be higher than v-loading's .el-loading-mask (z-index: 2000) so that loading spinners
@@ -48,7 +50,7 @@
         border-radius: 0;
 
         &:hover{
-          @apply bg-blue-700;
+          background-color: var(--primary-color-dark, #337ecc);
         }
       }
     }
@@ -66,4 +68,9 @@
       display: none;
     }
   }
+}
+
+// Gradient class for Split page
+.bg-gradient-split {
+  background: linear-gradient(90deg, #409eff 0%, $pro-color 100%) !important;
 }

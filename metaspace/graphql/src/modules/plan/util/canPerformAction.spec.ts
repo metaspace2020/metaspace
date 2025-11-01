@@ -5,21 +5,27 @@ import {
   onBeforeAll,
   onBeforeEach,
   setupTestUsers,
-  testPlan,
   userContext,
 } from '../../../tests/graphqlTestEnvironment'
 
 import canPerformAction from './canPerformAction'
-import { createTestApiUsage, createTestPlanRule } from '../../../tests/testDataCreation'
-import * as moment from 'moment'
-import { ApiUsage } from '../model'
+import config from '../../../utils/config'
+
+// Import fetch from node-fetch (which is already mocked globally)
+import fetch from 'node-fetch'
 
 describe('Plan Controller Queries', () => {
   let originalDateNow: any
+  let originalManagerApiUrl: string | undefined
+  const mockFetch = fetch as jest.Mock
 
   beforeAll(async() => {
     await onBeforeAll()
     originalDateNow = Date.now
+    originalManagerApiUrl = config.manager_api_url
+
+    // Mock the config API URL
+    config.manager_api_url = 'https://test-api.metaspace.example'
 
     // Mock Date.now to return a specific timestamp
     Date.now = jest.fn(() => new Date('2024-10-30T10:00:00Z').getTime())
@@ -28,45 +34,24 @@ describe('Plan Controller Queries', () => {
   afterAll(async() => {
     await onAfterAll()
     Date.now = originalDateNow
+    // Restore original config value if it was defined
+    if (originalManagerApiUrl !== undefined) {
+      config.manager_api_url = originalManagerApiUrl
+    } else {
+      // If it was undefined, we need to use delete to remove the property
+      delete (config as any).manager_api_url
+    }
+
+    // No need to restore the original mock implementation
+    // The global jest.resetAllMocks() in the test framework will handle this
   })
 
   beforeEach(async() => {
     jest.clearAllMocks()
+    mockFetch.mockClear()
 
     await onBeforeEach()
     await setupTestUsers()
-
-    const actionTypes = ['download', 'process', 'delete'] as const
-    const periods = [
-      { periodType: 'minute', limit: 2 },
-      { periodType: 'day', limit: 4 },
-      { periodType: 'month', limit: 6 },
-      { periodType: 'year', limit: 10 },
-    ] as const
-    const visibilities = ['private', 'public'] as const
-    const sources = ['api', 'web'] as const
-
-    // Create rules for all combinations of actionType, period, visibility, and source
-    await Promise.all(
-      actionTypes.flatMap((actionType) =>
-        periods.flatMap(({ periodType, limit }) =>
-          visibilities.flatMap((visibility) =>
-            sources.map((source: any) =>
-              createTestPlanRule({
-                planId: testPlan.id,
-                actionType,
-                type: 'dataset',
-                period: 1,
-                periodType,
-                limit,
-                visibility,
-                source,
-              })
-            )
-          )
-        )
-      )
-    )
   })
 
   afterEach(onAfterEach)
@@ -104,43 +89,51 @@ describe('Plan Controller Queries', () => {
       ${isAdmin ? 'for admin' : 'for user'}`, async() => {
         const context = isAdmin ? adminContext : userContext
 
-        // Set the action date based on the limit type
-        let usageDate: moment.Moment
-        switch (limitType) {
-          case 'minute':
-            usageDate = moment.utc()
-            break
-          case 'day':
-            usageDate = moment.utc().startOf('day')
-            break
-          case 'month':
-            usageDate = moment.utc().subtract(2, 'days')
-            break
-          case 'year':
-            usageDate = moment.utc().startOf('year')
-            break
-          default:
-            usageDate = moment.utc()
+        // Setup the mock response for fetch, but only if not admin
+        if (!isAdmin) {
+          mockFetch.mockImplementationOnce(() =>
+            Promise.resolve({
+              ok: true,
+              status: 200,
+              json: () => Promise.resolve({ allowed: expected }),
+              text: () => Promise.resolve(''),
+              headers: new Map(),
+            })
+          )
         }
 
-        // Create usage entries to simulate reaching limits
-        for (let i = 0; i < usageCount; i++) {
-          await createTestApiUsage({
-            actionType,
-            type: 'dataset',
-            userId: context.user.id,
-            visibility,
-            source,
-            actionDt: usageDate,
-          } as Partial<ApiUsage>)
-        }
-
-        expect(await canPerformAction(context, {
+        const result = await canPerformAction(context, {
           actionType,
           type: 'dataset',
           visibility,
           source,
-        } as Partial<ApiUsage>)).toBe(expected)
+        } as Partial<any>)
+
+        expect(result.allowed).toBe(expected)
+
+        // For admin users, fetch is not called because it returns early
+        if (!isAdmin) {
+          // Verify that fetch was called with the correct parameters
+          expect(mockFetch).toHaveBeenCalledWith(
+            expect.stringContaining('/api/api-usages/is-allowed'),
+            expect.objectContaining({
+              method: 'POST',
+              headers: expect.objectContaining({
+                'Content-Type': 'application/json',
+              }),
+              body: expect.any(String),
+            })
+          )
+
+          // Verify the request body
+          const requestBody = JSON.parse(mockFetch.mock.calls[0][1]?.body as string)
+          expect(requestBody).toMatchObject({
+            actionType,
+            type: 'dataset',
+            visibility,
+            source,
+          })
+        }
       })
     })
   })
@@ -150,27 +143,296 @@ describe('Plan Controller Queries', () => {
     const actionType = 'download'
     const visibility = 'public'
     const source = 'api'
-    const n = 2
 
-    // Simulate n+1 downloads in the same minute
-    for (let i = 0; i < n; i++) {
-      await createTestApiUsage({
-        actionType,
-        type: 'dataset',
-        userId: context.user.id,
-        visibility,
-        source,
+    // Mock the first fetch call to return not allowed
+    mockFetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ allowed: false }),
+        text: () => Promise.resolve(''),
+        headers: new Map(),
       })
-    }
+    )
 
-    // Verify the action is blocked after n+1 downloads in a minute
+    // Verify the action is blocked initially
     const blocked = await canPerformAction(context, { actionType, type: 'dataset', visibility, source })
-    expect(blocked).toBe(false)
+    expect(blocked.allowed).toBe(false)
 
     // Advance time by 10 minutes
     Date.now = jest.fn(() => new Date('2024-10-30T10:10:00Z').getTime())
 
+    // Mock the second fetch call to return allowed
+    mockFetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ allowed: true }),
+        text: () => Promise.resolve(''),
+        headers: new Map(),
+      })
+    )
+
     const allowed = await canPerformAction(context, { actionType, type: 'dataset', visibility, source })
-    expect(allowed).toBe(true)
+    expect(allowed.allowed).toBe(true)
+  })
+
+  it('should handle connection errors gracefully', async() => {
+    const context = userContext
+    const error: any = new Error('Failed to fetch')
+    error.code = 'ECONNREFUSED'
+
+    mockFetch.mockRejectedValueOnce(error)
+
+    const result = await canPerformAction(context, { actionType: 'download', type: 'dataset' })
+    expect(result.allowed).toBe(true) // Should allow when service is down
+  })
+
+  it('should handle API response errors', async() => {
+    const context = userContext
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: () => Promise.resolve({ message: 'Rate limit exceeded' }),
+    })
+
+    const result = await canPerformAction(context, { actionType: 'download', type: 'dataset' })
+    expect(result.allowed).toBe(false)
+    expect(result.message).toBe('Rate limit exceeded')
+  })
+
+  it('should handle missing API URL', async() => {
+    const context = userContext
+    const originalApiUrl = config.manager_api_url
+    delete (config as any).manager_api_url
+
+    const result = await canPerformAction(context, { actionType: 'download', type: 'dataset' })
+    expect(result.allowed).toBe(true) // Should allow when API URL not configured
+
+    config.manager_api_url = originalApiUrl
+  })
+})
+
+describe('Plan Utility Functions - performAction', () => {
+  let originalManagerApiUrl: string | undefined
+  const mockFetch = fetch as jest.Mock
+
+  beforeAll(async() => {
+    await onBeforeAll()
+    originalManagerApiUrl = config.manager_api_url
+    config.manager_api_url = 'https://test-api.metaspace.example'
+  })
+
+  afterAll(async() => {
+    await onAfterAll()
+    if (originalManagerApiUrl !== undefined) {
+      config.manager_api_url = originalManagerApiUrl
+    } else {
+      delete (config as any).manager_api_url
+    }
+  })
+
+  beforeEach(async() => {
+    jest.clearAllMocks()
+    mockFetch.mockClear()
+    await onBeforeEach()
+    await setupTestUsers()
+  })
+
+  afterEach(onAfterEach)
+
+  it('should perform action successfully', async() => {
+    const { performAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset', datasetId: 'test-123' }
+    const expectedResponse = { success: true, usageId: 'usage-123' }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(expectedResponse),
+    })
+
+    const result = await performAction(context, action)
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://test-api.metaspace.example/api/api-usages/',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify(action),
+      })
+    )
+
+    expect(result).toEqual(expectedResponse)
+  })
+
+  it('should handle missing API URL', async() => {
+    const { performAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    const originalApiUrl = config.manager_api_url
+    delete (config as any).manager_api_url
+
+    const result = await performAction(context, action)
+
+    expect(result).toEqual({})
+
+    config.manager_api_url = originalApiUrl
+  })
+
+  it('should handle API errors', async() => {
+    const { performAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      statusText: 'Bad Request',
+    })
+
+    await expect(performAction(context, action)).rejects.toThrow('Failed to perform action: Bad Request')
+  })
+
+  it('should handle connection errors gracefully', async() => {
+    const { performAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    const error: any = new Error('Failed to fetch')
+    error.code = 'ECONNREFUSED'
+    mockFetch.mockRejectedValueOnce(error)
+
+    const result = await performAction(context, action)
+
+    expect(result).toEqual({})
+  })
+})
+
+describe('Plan Utility Functions - assertCanPerformAction', () => {
+  let originalManagerApiUrl: string | undefined
+  const mockFetch = fetch as jest.Mock
+
+  beforeAll(async() => {
+    await onBeforeAll()
+    originalManagerApiUrl = config.manager_api_url
+    config.manager_api_url = 'https://test-api.metaspace.example'
+  })
+
+  afterAll(async() => {
+    await onAfterAll()
+    if (originalManagerApiUrl !== undefined) {
+      config.manager_api_url = originalManagerApiUrl
+    } else {
+      delete (config as any).manager_api_url
+    }
+  })
+
+  beforeEach(async() => {
+    jest.clearAllMocks()
+    mockFetch.mockClear()
+    await onBeforeEach()
+    await setupTestUsers()
+  })
+
+  afterEach(onAfterEach)
+
+  it('should not throw when action is allowed', async() => {
+    const { assertCanPerformAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ allowed: true }),
+    })
+
+    await expect(assertCanPerformAction(context, action)).resolves.not.toThrow()
+  })
+
+  it('should throw UserError when action is not allowed', async() => {
+    const { assertCanPerformAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ allowed: false, message: 'Rate limit exceeded' }),
+    })
+
+    await expect(assertCanPerformAction(context, action)).rejects.toThrow('Rate limit exceeded')
+  })
+
+  it('should throw default message when no message provided', async() => {
+    const { assertCanPerformAction } = await import('./canPerformAction')
+    const context = userContext
+    const action = { actionType: 'download', type: 'dataset' }
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ allowed: false }),
+    })
+
+    await expect(assertCanPerformAction(context, action)).rejects.toThrow('Limit reached')
+  })
+})
+
+describe('Plan Utility Functions - getDeviceInfo', () => {
+  it('should parse user agent successfully', async() => {
+    const { getDeviceInfo } = await import('./canPerformAction')
+    const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+    const email = 'test@example.com'
+
+    const result = getDeviceInfo(userAgent, email)
+    const parsed = JSON.parse(result)
+
+    expect(parsed).toHaveProperty('device')
+    expect(parsed).toHaveProperty('os')
+    expect(parsed).toHaveProperty('browser')
+    expect(parsed.email).toBe(email)
+  })
+
+  it('should handle undefined user agent', async() => {
+    const { getDeviceInfo } = await import('./canPerformAction')
+
+    const result = getDeviceInfo(undefined)
+    const parsed = JSON.parse(result)
+
+    expect(parsed).toHaveProperty('device')
+    expect(parsed).toHaveProperty('os')
+    expect(parsed).toHaveProperty('browser')
+    expect(parsed.email).toBeNull()
+  })
+})
+
+describe('Plan Utility Functions - hashIp', () => {
+  it('should hash IP address with salt', async() => {
+    const { hashIp } = await import('./canPerformAction')
+    const ip = '192.168.1.1'
+
+    const result = hashIp(ip)
+
+    expect(result).toBeDefined()
+    expect(typeof result).toBe('string')
+    expect(result).toHaveLength(64) // SHA256 hex string length
+  })
+
+  it('should return undefined for undefined IP', async() => {
+    const { hashIp } = await import('./canPerformAction')
+
+    const result = hashIp(undefined)
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should produce different hashes for different IPs', async() => {
+    const { hashIp } = await import('./canPerformAction')
+
+    const hash1 = hashIp('192.168.1.1')
+    const hash2 = hashIp('192.168.1.2')
+
+    expect(hash1).not.toBe(hash2)
   })
 })

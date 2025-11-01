@@ -7,7 +7,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #0F87EF;
+    background: var(--primary-color, #0F87EF);
   }
 
   .faq-collapse {
@@ -60,10 +60,33 @@
     }
   }
 
-  // Style links within FAQ answers
+  // Style links within FAQ answers to use dynamic theme colors
   .el-collapse-item__content {
     a {
-      @apply text-blue-600 hover:text-blue-700 underline;
+      color: var(--primary-color, #0F87EF) !important;
+      text-decoration: underline;
+      
+      &:hover {
+        color: var(--primary-color-dark, #0D7BD6) !important;
+      }
+    }
+  }
+
+  // Style other links in the header section
+  a {
+    color: var(--primary-color, #0F87EF) !important;
+    
+    &:hover {
+      color: var(--primary-color-dark, #0D7BD6) !important;
+    }
+  }
+
+  // Override the white text color for links in header
+  .header a {
+    color: white !important;
+    
+    &:hover {
+      color: rgba(255, 255, 255, 0.8) !important;
     }
   }
 }

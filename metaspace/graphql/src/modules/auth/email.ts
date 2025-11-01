@@ -2,12 +2,71 @@ import config from '../../utils/config'
 import logger from '../../utils/logger'
 import sendEmail, { sendRecipientsEmail } from '../../utils/sendEmail'
 
+export const sendWelcomeEmail = (email: string, name: string) => {
+  const subject = 'Welcome to METASPACE – Here’s What You Need to Know!'
+  const text =
+`<html>
+<body>
+<p>Dear ${name},</p>
+
+<p>Welcome to METASPACE! We're thrilled to have you join our community. Here's 
+everything you need to know to get started and make the most of your experience:</p>
+
+<h3>1. About METASPACE!</h3>
+
+<p>METASPACE is the cloud computing engine for annotating metabolites, lipids, and glycans in 
+imaging mass spectrometry data, and hosts a knowledgebase of over 13.000 public annotated 
+datasets from over 200 labs. METASPACE 
+is proudly maintained by the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>.</p>
+
+<h3>2. Explore How-to Video Guides</h3>
+
+<p>Along with the comprehensive <a href="https://metaspace2020.eu/help">help page</a> on 
+METASPACE that covers everything you need to get started, we've also 
+created a series of helpful how-to video guides. You can explore 
+the playlist 
+<a href="https://www.youtube.com/@METASPACE2020/videos">
+here</a>. While the collection is new, we'll be adding fresh guides regularly, so
+ be sure to check back for the latest additions!</p>
+
+<h3>3. Stay Connected</h3>
+
+<p>As METASPACE continues to grow, we've expanded our presence across various social
+ media platforms. Stay up to date and engage with us through</p>
+
+<p>LinkedIn: <a href="https://www.linkedin.com/company/metaspace-imaging-ms">
+https://www.linkedin.com/company/metaspace-imaging-ms</a><br>
+X: <a href="https://twitter.com/metaspace2020">@metaspace2020</a><br>
+BlueSky: <a href="https://bsky.app/profile/metaspace2020.bsky.social">@metaspace2020</a><br>
+YouTube: <a href="https://www.youtube.com/@METASPACE2020">https://www.youtube.com/@METASPACE2020</a><br>
+Community Discussion: Join the conversation and ask questions on our GitHub
+ page <a href="https://github.com/metaspace2020/metaspace/discussions">here</a>.</p>
+
+<h3>4. Stay Updated with Our Newsletter</h3>
+
+<p>We know you don't want your inbox flooded with unnecessary emails. That's why we 
+promise not to spam you! If you want to receive regular updates about METASPACE, please 
+sign up for our newsletter <a href="https://metaspace2020.org/">here</a>.</p>
+
+<p>If you prefer to receive only essential updates, rest assured that you will only hear 
+from us in the event of critical changes or major announcements—no spam, just important information!</p>
+
+<p>We truly appreciate your continued support and look forward to staying connected!</p>
+
+<p>Best regards,<br>
+METASPACE Team</p>
+</body>
+</html>`
+  sendEmail(email, subject, text)
+  logger.info(`Sent welcome email to ${email}`)
+}
+
 export const sendVerificationEmail = (email: string, link: string) => {
   const subject = 'METASPACE email verification'
   const text =
 `Dear METASPACE user,
 
-Please verify this email by following the link ${link}
+Please verify this email by following the link <a href="${link}">${link}</a>
 
 Best wishes,
 METASPACE Team`
@@ -20,7 +79,7 @@ export const sendLoginEmail = (email: string, link: string) => {
   const text =
 `Dear METASPACE user,
 
-You are already signed up with our service. Please log in using this link ${link}.
+You are already signed up with our service. Please log in using this link <a href="${link}">${link}</a>.
 
 Best wishes,
 METASPACE Team`
@@ -33,7 +92,7 @@ export const sendCreateAccountEmail = (email: string, link: string) => {
   const text =
       `Dear METASPACE user,
 
-You do not have an account with this email address. Please create an account here: ${link}.
+You do not have an account with this email address. Please create an account here: <a href="${link}">${link}</a>.
 
 Best wishes,
 METASPACE Team`
@@ -46,7 +105,7 @@ export const sendResetPasswordEmail = (email: string, link: string) => {
   const text =
 `Dear METASPACE user,
 
-You requested password reset. To do so, please follow the link ${link}
+You requested password reset. To do so, please follow the link <a href="${link}">${link}</a>
 
 Best wishes,
 METASPACE Team`
@@ -59,7 +118,8 @@ export const sendInvitationEmail = (email: string, invitedBy: string, link: stri
   const text =
       `Dear future METASPACE user,
 
-You have been invited to METASPACE by ${invitedBy}. Please sign up using this email by following the link ${link}.
+You have been invited to METASPACE by ${invitedBy}. Please sign up 
+using this email by following the link <a href="${link}">${link}</a>.
 
 Best wishes,
 METASPACE Team`
@@ -76,9 +136,9 @@ export const sendContactEmail = (email: string, name: string, category: string, 
     text =
 `The user ${name} with email ${email} has sent a scientific support message with message ${message}.`
     recipients = [config.contact.sci_email]
-  } else if (category === 'software' || category === 'bug' || category === 'feature') {
+  } else if (category === 'software' || category === 'bug' || category === 'feature' || category === 'pro') {
     text =
-`The user ${name} with email ${email} has sent a software support message with message ${message}.`
+`The user ${name} with email ${email} has sent a ${category} support message with message ${message}.`
     recipients = [config.contact.tech_email]
   } else {
     text =

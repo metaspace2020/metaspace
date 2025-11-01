@@ -91,6 +91,9 @@
             <molecular-databases :group-id="groupId" :can-delete="canEdit" />
           </div>
         </el-tab-pane>
+        <el-tab-pane v-if="canEdit && groupId != null" name="subscription" label="Subscription" lazy>
+          <group-usage :group-id="groupId" />
+        </el-tab-pane>
         <el-tab-pane v-if="canEdit && groupId != null" name="settings" label="Settings" lazy>
           <group-settings :group-id="groupId" />
         </el-tab-pane>
@@ -118,6 +121,7 @@ import gql from 'graphql-tag'
 import TransferDatasetsDialog from './TransferDatasetsDialog.vue'
 import GroupMembersList from './GroupMembersList.vue'
 import GroupSettings from './GroupSettings.vue'
+import GroupUsage from './GroupUsage'
 import { encodeParams } from '../Filters'
 import { useConfirmAsync } from '../../components/ConfirmAsync'
 import NotificationIcon from '../../components/NotificationIcon.vue'
@@ -132,6 +136,7 @@ import PopupAnchor from '../NewFeaturePopup/PopupAnchor.vue'
 import { RequestedAccessDialog } from './RequestedAccessDialog'
 import { ElTabs, ElButton, ElTabPane, ElLoading, ElAlert } from '../../lib/element-plus'
 import { useStore } from 'vuex'
+import { getActiveGroupSubscriptionSimpleQuery } from '../../api/subscription'
 
 interface ViewGroupProfileData {
   allDatasets: DatasetDetailItem[]
@@ -149,6 +154,7 @@ export default defineComponent({
     MolecularDatabases,
     PopupAnchor,
     RequestedAccessDialog,
+    GroupUsage,
     ElTabs,
     ElButton,
     ElAlert,
@@ -257,6 +263,23 @@ export default defineComponent({
         loaded.value = true
       }, 300)
     })
+
+    const { onResult: onActiveGroupSubscriptionResult } = useQuery<any>(
+      getActiveGroupSubscriptionSimpleQuery,
+      { groupId: groupId.value },
+      { fetchPolicy: 'network-only' }
+    )
+
+    onActiveGroupSubscriptionResult(({ data }: any) => {
+      if (data && data.activeGroupSubscription) {
+        store.commit('setThemeVariant', 'pro')
+      }
+    })
+
+    // onBeforeUnmount(() => {
+    //   store.commit('setThemeVariant', 'default')
+    // })
+
     const data = computed(() => dataResult.value as ViewGroupProfileData | null)
     const currentUserId = computed(() => currentUser.value?.id)
     const roleInGroup = computed(() => group.value?.currentUserRole)
@@ -269,7 +292,11 @@ export default defineComponent({
     const countDatabases = computed(() => group.value?.numDatabases || 0)
     const isGroupMember = computed(() => roleInGroup.value === 'MEMBER' || roleInGroup.value === 'GROUP_ADMIN')
     const tab = computed(() => {
-      if (['description', 'datasets', 'members', 'databases', 'settings'].includes(route.query.tab as string)) {
+      if (
+        ['description', 'datasets', 'members', 'databases', 'settings', 'subscription'].includes(
+          route.query.tab as string
+        )
+      ) {
         return route.query.tab
       } else {
         return 'datasets'
@@ -315,6 +342,7 @@ export default defineComponent({
     )
 
     onMounted(() => {
+      store.commit('setThemeVariant', 'default')
       subscribeToMore({
         document: datasetDeletedQuery,
         updateQuery: () => {

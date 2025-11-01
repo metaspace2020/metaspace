@@ -94,6 +94,7 @@ import { ViewGroupFragment } from '../../api/group'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import { get } from 'lodash-es'
 import { ElMessageBox } from '../../lib/element-plus'
+// import { onBeforeUnmount } from 'vue'
 
 const createInputPath = (url, uuid) => {
   const parsedUrl = new URL(url)
@@ -147,6 +148,10 @@ export default defineComponent({
       group: null,
       inputPath: null,
     })
+
+    // onBeforeUnmount(() => {
+    //   store.commit('setThemeVariant', 'default')
+    // })
 
     const { result: currentUserResult, onResult } = useQuery(currentUserIdQuery, null, {
       fetchPolicy: 'network-only',
@@ -390,6 +395,16 @@ export default defineComponent({
               'An unrecognized metabolite database was selected. This field has been cleared, ' +
               'please select the databases again and resubmit the form.',
             type: 'error',
+          })
+        } else if (err?.message?.includes('limit')) {
+          ElMessage({
+            message:
+              'You have reached the limit of private datasets you can submit. ' +
+              'Please <a href="/plans">upgrade your plan</a>.',
+            dangerouslyUseHTMLString: true,
+            type: 'info',
+            duration: 0,
+            showClose: true,
           })
         } else {
           ElMessage({

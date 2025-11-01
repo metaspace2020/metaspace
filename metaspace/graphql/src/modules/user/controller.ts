@@ -20,7 +20,6 @@ import { resolveGroupScopeRole } from '../group/util/resolveGroupScopeRole'
 import canSeeUserEmail from './util/canSeeUserEmail'
 import { ProjectSourceRepository } from '../project/ProjectSourceRepository'
 import { getUserSourceById, resolveUserScopeRole } from './util/getUserSourceById'
-import { Plan } from '../plan/model'
 import * as moment from 'moment'
 import { getDeviceInfo, hashIp, performAction } from '../plan/util/canPerformAction'
 import { sendContactEmail } from '../auth/email'
@@ -107,12 +106,6 @@ export const Resolvers = {
       return null
     },
 
-    async plan(user: UserSource, args: any, ctx: Context): Promise<Plan|undefined> {
-      return await ctx.entityManager.createQueryBuilder(Plan, 'plan')
-        .where('plan.id = :id', { id: user.planId })
-        .getOne()
-    },
-
     async apiKey({ scopeRole, id: userId }: UserSource, args: any, ctx: Context): Promise<string|null> {
       const allowedAuthMethods: AuthMethod[] = [AuthMethodOptions.JWT, AuthMethodOptions.SESSION]
       if ((scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin)
@@ -159,9 +152,6 @@ export const Resolvers = {
       if (filter?.role) {
         qb.andWhere('user.role = :role', { role: filter.role })
       }
-      if (filter?.planId) {
-        qb.andWhere('user.planId = :planId', { planId: filter.planId })
-      }
       if (filter?.userId) {
         qb.andWhere('user.id = :userId', { userId: filter.userId })
       }
@@ -193,9 +183,6 @@ export const Resolvers = {
         if (filter.role) {
           qb.andWhere('user.role = :role', { role: filter.role })
         }
-        if (filter.planId) {
-          qb.andWhere('user.planId = :planId', { planId: filter.planId })
-        }
         if (filter.userId) {
           qb.andWhere('user.id = :userId', { userId: filter.userId })
         }
@@ -217,9 +204,6 @@ export const Resolvers = {
             break
           case 'ORDER_BY_UPDATED_AT':
             qb.orderBy('user.updatedAt', direction)
-            break
-          case 'ORDER_BY_PLAN_ID':
-            qb.orderBy('user.planId', direction)
             break
           default:
             qb.orderBy('user.name', direction)
@@ -247,10 +231,6 @@ export const Resolvers = {
 
       if (update.role && !isAdmin) {
         throw new UserError('Only admin can update role')
-      }
-
-      if (update.planId && !isAdmin) {
-        throw new UserError('Only admin can update plan')
       }
 
       let userObj = await entityManager.getRepository(UserModel).findOneOrFail({

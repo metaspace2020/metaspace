@@ -304,4 +304,58 @@ export default {
       query: state.route.query,
     })
   },
+
+  setThemeVariant(state, variant) {
+    state.theme.variant = variant
+    // Update CSS custom properties for dynamic theming
+    if (typeof document !== 'undefined') {
+      // Define theme colors in ONE place
+      const themeColors = {
+        default: {
+          primary: '#409eff',
+          primaryAlpha: 'rgba(64, 158, 255, 0.87)',
+          primaryDark: '#337ecc',
+          bgLight: '#ecf5ff',
+          borderLight: 'rgba(64, 158, 255, 0.2)',
+          // Element Plus shades
+          light3: '#79bbff',
+          light5: '#a0cfff',
+          light7: '#c6e2ff',
+          light8: '#d9ecff',
+          light9: '#ecf5ff',
+        },
+        pro: {
+          primary: '#FFAB3F', // ⭐ CHANGE THIS COLOR HERE - single source of truth!
+          primaryAlpha: 'rgba(255, 171, 63, 0.87)',
+          primaryDark: '#E89A33',
+          bgLight: '#FFF5E6',
+          borderLight: 'rgba(255, 171, 63, 0.2)',
+          // Element Plus shades
+          light3: '#FFBF66',
+          light5: '#FFD08C',
+          light7: '#FFE1B3',
+          light8: '#FFECC6',
+          light9: '#FFF5E6',
+        },
+      }
+
+      const colors = variant === 'pro' ? themeColors.pro : themeColors.default
+
+      // Apply all colors from the single source
+      document.documentElement.style.setProperty('--color-primary', colors.primary)
+      document.documentElement.style.setProperty('--primary-color', colors.primary)
+      document.documentElement.style.setProperty('--primary-color-alpha', colors.primaryAlpha)
+      document.documentElement.style.setProperty('--primary-color-dark', colors.primaryDark)
+      document.documentElement.style.setProperty('--primary-bg-light', colors.bgLight)
+      document.documentElement.style.setProperty('--primary-border-light', colors.borderLight)
+      // Element Plus colors
+      document.documentElement.style.setProperty('--el-color-primary', colors.primary)
+      document.documentElement.style.setProperty('--el-color-primary-light-3', colors.light3)
+      document.documentElement.style.setProperty('--el-color-primary-light-5', colors.light5)
+      document.documentElement.style.setProperty('--el-color-primary-light-7', colors.light7)
+      document.documentElement.style.setProperty('--el-color-primary-light-8', colors.light8)
+      document.documentElement.style.setProperty('--el-color-primary-light-9', colors.light9)
+      document.documentElement.style.setProperty('--el-color-primary-dark-2', colors.primaryDark)
+    }
+  },
 }

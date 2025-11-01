@@ -47,6 +47,11 @@ import {
   ElOptionGroup,
   ElBadge,
   ElCollapseTransition,
+  ElCard,
+  ElTag,
+  ElEmpty,
+  ElSkeleton,
+  ElSkeletonItem,
 } from 'element-plus'
 
 // Importing Element Plus styles
@@ -99,6 +104,11 @@ const components = {
   ElOptionGroup,
   ElBadge,
   ElCollapseTransition,
+  ElCard,
+  ElTag,
+  ElEmpty,
+  ElSkeleton,
+  ElSkeletonItem,
   // Additional components as needed
 }
 
@@ -150,6 +160,11 @@ export {
   ElOptionGroup,
   ElBadge,
   ElCollapseTransition,
+  ElCard,
+  ElTag,
+  ElEmpty,
+  ElSkeleton,
+  ElSkeletonItem,
   // Additional components as needed
 }
 

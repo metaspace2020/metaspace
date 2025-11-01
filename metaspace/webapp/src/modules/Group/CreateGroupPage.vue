@@ -26,19 +26,31 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import { useRouter } from 'vue-router'
 import EditGroupForm from './EditGroupForm.vue'
 import { createGroupMutation, UserGroupRole } from '../../api/group'
-import { currentUserRoleQuery, UserRole } from '../../api/user'
+import { currentUserEmailRoleQuery, UserRole } from '../../api/user'
 import reportError from '../../lib/reportError'
 import { ElMessage } from '../../lib/element-plus'
 
 interface CurrentUserQuery {
   id: string
   role: UserRole
+  email: string
+}
+
+interface CurrentUserResult {
+  currentUser: CurrentUserQuery | null
 }
 export default defineComponent({
   components: {
     EditGroupForm,
   },
-  setup() {
+  props: {
+    isModal: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  emits: ['groupCreated'],
+  setup(props, { emit }) {
     const router = useRouter()
     const formRef = ref(null)
     const isSaving = ref(false)
@@ -55,9 +67,14 @@ export default defineComponent({
       INVITED: 'Invited',
     }
 
-    const { result: currentUserResult } = useQuery(currentUserRoleQuery)
-    const currentUser = computed((): CurrentUserQuery | null => currentUserResult.value?.currentUser)
-    const createGroup = useMutation(createGroupMutation)
+    const { result: currentUserResult, onResult: onCurrentUserResult } =
+      useQuery<CurrentUserResult>(currentUserEmailRoleQuery)
+    const currentUser = computed((): CurrentUserQuery | null => currentUserResult.value?.currentUser || null)
+    const { mutate: createGroupMutate } = useMutation(createGroupMutation)
+
+    onCurrentUserResult(() => {
+      model.groupAdminEmail = currentUser.value?.email
+    })
 
     const canCreate = computed(() => {
       return currentUser.value && currentUser.value.id // && currentUser.value.role === 'admin'
@@ -73,12 +90,22 @@ export default defineComponent({
         await (formRef.value as any).validate()
 
         try {
-          await createGroup.mutate({ groupDetails: model })
-          ElMessage({ message: `${model.name} was created`, type: 'success', offset: 80 })
-          await router.push({
-            path: '/groups',
-          })
-        } catch (err) {
+          const result = await createGroupMutate({ groupDetails: model })
+
+          if (props.isModal) {
+            // Emit the created group data when used as modal
+            emit('groupCreated', (result as any)?.createGroup)
+          } else {
+            // Show success message and navigate when used as standalone page
+            ElMessage({ message: `${model.name} was created`, type: 'success', offset: 80 })
+            await router.push({
+              path: '/groups',
+            })
+          }
+        } catch (err: any) {
+          if (err?.graphQLErrors?.[0]?.message) {
+            ElMessage({ message: err.graphQLErrors[0].message, type: 'error', offset: 80 })
+          }
           reportError(err)
         }
       } catch {
@@ -106,7 +133,8 @@ export default defineComponent({
 .page {
   display: flex;
   justify-content: center;
-  min-height: 80vh; // Ensure there's space for the loading spinner before is visible
+  height: 100%;
+  // min-height: 80vh; // Ensure there's space for the loading spinner before is visible
 }
 
 .page-content {

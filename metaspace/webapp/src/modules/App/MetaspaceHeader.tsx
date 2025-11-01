@@ -1,7 +1,7 @@
 import { computed, defineAsyncComponent, defineComponent, onBeforeUnmount, onMounted, reactive, Transition } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 
 import NotificationIcon from '../../components/NotificationIcon.vue'
@@ -45,6 +45,7 @@ export default defineComponent({
     })
 
     const store = useStore()
+    const route = useRoute()
 
     const { result: systemHealth, subscribeToMore } = useQuery(getSystemHealthQuery, null, {
       fetchPolicy: 'cache-first',
@@ -96,6 +97,22 @@ export default defineComponent({
       return null
     })
 
+    const themeVariant = computed(() => store.getters.themeVariant)
+    const isOnSplitPage = computed(() => route.path === '/split')
+
+    const isPrimaryColor = computed(() => {
+      if (isOnSplitPage.value) {
+        return 'bg-gradient-split'
+      }
+      return themeVariant.value === 'default' ? 'bg-primary' : 'bg-pro'
+    })
+    const isPrimaryColorAlpha = computed(() => {
+      if (isOnSplitPage.value) {
+        return 'bg-gradient-split'
+      }
+      return themeVariant.value === 'default' ? 'bg-primary-alpha' : 'bg-pro-alpha'
+    })
+
     const scrollListener = () => {
       if ((window.scrollY > 0 && state.scrolled === true) || (window.scrollY === 0 && !state.scrolled)) {
         return
@@ -145,6 +162,7 @@ export default defineComponent({
 
     const logout = async () => {
       await signOut()
+      store.commit('setThemeVariant', 'default')
       await refreshLoginStatus()
     }
 
@@ -223,11 +241,18 @@ export default defineComponent({
               non-responsive-menu
               transition-colors duration-300 ease-in-out h-16
               flex items-center justify-between
-              ${state.scrolled === false ? 'bg-primary' : 'bg-primary-alpha'}`}
+              ${state.scrolled === false ? isPrimaryColor.value : isPrimaryColorAlpha.value}`}
             >
               <div class="header-items">
                 <RouterLink to="/" class="flex pl-3 pr-4">
-                  <img src={MetaspaceLogo} alt="Metaspace" title="Metaspace" />
+                  <div class="relative">
+                    <img src={MetaspaceLogo} alt="Metaspace" title="Metaspace" />
+                    {themeVariant.value === 'pro' && (
+                      <div class="absolute top-[18px] left-[22px]">
+                        <span class="text-xs text-pro font-bold">Pro</span>
+                      </div>
+                    )}
+                  </div>
                 </RouterLink>
                 {renderLeftTabs()}
               </div>
@@ -295,19 +320,26 @@ export default defineComponent({
             </div>
 
             <div
-              class="responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-start justify-center
-              bg-primary flex-wrap h-full"
+              class={`responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-start justify-center
+              ${isPrimaryColor.value} flex-wrap h-full`}
             >
               <div class="header-items flex-row w-full justify-between" style="height: 64px">
                 <RouterLink to="/" class="flex pl-3 pr-4">
-                  <img
-                    src={MetaspaceLogo}
-                    alt="Metaspace"
-                    title="Metaspace"
-                    onClick={() => {
-                      showResponsiveMenu(false)
-                    }}
-                  />
+                  <div class="relative">
+                    <img
+                      src={MetaspaceLogo}
+                      alt="Metaspace"
+                      title="Metaspace"
+                      onClick={() => {
+                        showResponsiveMenu(false)
+                      }}
+                    />
+                    {themeVariant.value === 'pro' && (
+                      <div class="absolute top-[18px] left-[22px]">
+                        <span class="text-xs text-pro font-bold">Pro</span>
+                      </div>
+                    )}
+                  </div>
                 </RouterLink>
                 <button
                   class=" button-reset flex h-12 w-12 mr-3"

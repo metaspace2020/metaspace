@@ -47,6 +47,12 @@ const asyncPagesFreelyTyped = {
     import(
       /* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/SpottingProject/DashboardPage'
     ),
+  PlansPage: () =>
+    import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Plans/PlansPage'),
+  PaymentPage: () =>
+    import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Plans/PaymentPage'),
+  SuccessPage: () =>
+    import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Plans/SuccessPage'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () =>
@@ -81,6 +87,7 @@ const asyncPagesFreelyTyped = {
   DesignForms: () => import(/* webpackChunkName: "DesignBundle" */ '../design/FormsPage.vue'),
   ContactPage: () => import(/* webpackPrefetch: true, webpackChunkName: "ContactPage" */ '../modules/Contact/Contact'),
   FAQPage: () => import(/* webpackPrefetch: true, webpackChunkName: "FAQPage" */ '../modules/Faq/Faq'),
+  SplitPage: () => import(/* webpackPrefetch: true, webpackChunkName: "SplitPage" */ '../modules/Faq/Split'),
 }
 
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, Component>
@@ -105,6 +112,7 @@ export const routes: any = [
   { path: '/annotations', name: 'annotations', component: asyncPages.AnnotationsPage },
   { path: '/contact', name: 'contact', component: asyncPages.ContactPage, meta: { footer: true } },
   { path: '/faq', name: 'faq', component: asyncPages.FAQPage, meta: { footer: true } },
+  { path: '/split', name: 'split', component: asyncPages.SplitPage, meta: { footer: true } },
   {
     path: '/datasets',
     name: 'dataset-list',
@@ -164,6 +172,10 @@ export const routes: any = [
   { path: '/design/forms', component: asyncPages.DesignForms, meta: { footer: true, flex: true } },
 
   { path: '/detectability', name: 'detectability', component: asyncPages.SpottingProjectPage },
+
+  { path: '/plans', name: 'plans', component: asyncPages.PlansPage },
+  { path: '/payment', name: 'payment', component: asyncPages.PaymentPage },
+  { path: '/success', name: 'success', component: asyncPages.SuccessPage },
 
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound, meta: { footer: true, flex: true } },
 ]
