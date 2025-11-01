@@ -83,8 +83,8 @@ def test_index_ds_works(sm_config, test_db, es, sm_index, ds_config, metadata, a
         rows=[(ds_id, moldb.id, last_finished, last_finished)],
     )
     (user_id,) = db.insert_return(
-        "INSERT INTO graphql.user (email, name, role, plan_id, created_at, updated_at) "
-        "VALUES ('email', 'user_name', 'user', 1, '2024-12-08 17:04:50.088000',"
+        "INSERT INTO graphql.user (email, name, role, created_at, updated_at) "
+        "VALUES ('email', 'user_name', 'user', '2024-12-08 17:04:50.088000',"
         " '2024-12-08 17:04:50.088000') RETURNING id",
         [[]],
     )
