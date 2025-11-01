@@ -17,7 +17,7 @@ import {
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import { userProfileQuery } from '../../api/user'
 import { useStore } from 'vuex'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { getPlanQuery, Plan } from '../../api/plan'
 import './PaymentPage.scss'
 import { Fragment } from 'vue'
@@ -63,7 +63,6 @@ export default defineComponent({
   setup() {
     const store = useStore()
     const route = useRoute()
-    const router = useRouter()
     const cardNumberRef = ref<HTMLElement | null>(null)
     const cardExpiryRef = ref<HTMLElement | null>(null)
     const cardCvcRef = ref<HTMLElement | null>(null)
@@ -894,29 +893,19 @@ export default defineComponent({
           // Add a small delay to ensure notification is shown and component state is stable
           setTimeout(() => {
             try {
-              router.push({
-                name: 'success',
-                query: {
-                  subscriptionId: data.createSubscription.id,
-                  groupId: state.form.groupId,
-                },
+              // Use window.location.href for more reliable navigation to avoid async component loading issues
+              const successUrl = `/success?subscriptionId=${data.createSubscription.id}&groupId=${state.form.groupId}`
+              window.location.href = successUrl
+            } catch (navigationError) {
+              console.error('Navigation failed:', navigationError)
+              // Final fallback - show success message with manual instructions
+              ElNotification({
+                title: 'Payment Complete',
+                message:
+                  'Your payment was successful! Please navigate to your group page to view your new subscription.',
+                type: 'success',
+                duration: 0, // Don't auto-dismiss
               })
-            } catch (routerError) {
-              console.warn('Router navigation failed, falling back to window navigation:', routerError)
-              // Try direct URL navigation as fallback
-              try {
-                window.location.href = `/success?subscriptionId=${data.createSubscription.id}`
-              } catch (windowError) {
-                console.error('Window navigation also failed:', windowError)
-                // Final fallback - show success message with manual instructions
-                ElNotification({
-                  title: 'Payment Complete',
-                  message:
-                    'Your payment was successful! Please navigate to your account to view your new subscription.',
-                  type: 'success',
-                  duration: 0, // Don't auto-dismiss
-                })
-              }
             }
           }, 100)
         } else {
