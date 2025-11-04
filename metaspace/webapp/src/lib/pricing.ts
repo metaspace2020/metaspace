@@ -86,7 +86,7 @@ export const getBillingInterval = (pricingOption: any): string => {
  * Get period display name
  */
 export const getPeriodDisplayName = (period: PricingOption): string => {
-  return period.displayName === '1 year' ? 'year' : period.displayName
+  return period.displayName === '1 year' || period.displayName === 'Yearly' ? 'year' : period.displayName
 }
 
 /**

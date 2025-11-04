@@ -48,7 +48,7 @@ export default defineComponent({
 
                 <ul class="text-lg leading-relaxed mb-6 list-disc pl-6">
                   <li>
-                    <strong>METASPACE Academic:</strong> supporting open science, funded by grants,
+                    <strong>METASPACE Academic:</strong> supporting open science, funded by grants.
                   </li>
                   <li>
                     <strong>METASPACE Pro:</strong> supporting users who need private submissions, funded by user

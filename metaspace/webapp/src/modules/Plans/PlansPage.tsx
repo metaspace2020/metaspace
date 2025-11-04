@@ -281,8 +281,8 @@ export default defineComponent({
           {/* Temporary Limits Banner */}
           <div class="limits-banner">
             <div class="limits-banner-content">
-              <b>NOTICE:</b> Medium Plan limits will remain in effect by default until <b>February 3, 2026</b>, after
-              which the Free Plan limits shall apply automatically.
+              <b>NOTICE:</b> All METASPACE users are granted the Medium Plan until <b>February 3, 2026</b>, after which
+              METASPACE Pro will require a subscription (METASPACE Academic can still be used for free).
             </div>
           </div>
           <div class="plans-container">

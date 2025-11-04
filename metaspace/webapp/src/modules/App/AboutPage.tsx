@@ -194,10 +194,10 @@ const AboutPage = defineComponent({
             <section id="platforms" class="sm-about-details max-w-3xl mt-0">
               <h2>METASPACE platforms</h2>
               <p>
-                As of November 3rd 2025, the METASPACE platform splitted into two different platforms,
-                <b>METASPACE Academic and METASPACE Pro</b>. METASPACE Academic supports public dataset submissions
-                only, while METASPACE Pro handles private dataset submissions only. Both platforms host the same engine
-                for metabolite annotation of imaging mass spectrometry data.
+                As of November 3rd 2025, the METASPACE platform splitted into two different platforms,{' '}
+                <b>METASPACE Academic and METASPACE Pro</b>. METASPACE Academic supports public dataset submissions,
+                while METASPACE Pro handles private dataset submissions. Both platforms host the same engine for
+                metabolite annotation of imaging mass spectrometry data.
               </p>
               <p>
                 METASPACE Academic is ideal for open-science projects where the data can be shared publicly with the
@@ -206,7 +206,7 @@ const AboutPage = defineComponent({
               </p>
               <p>
                 The METASPACE Academic platform is developed by software engineers, data scientists and mass
-                spectrometrists from the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>. While METASPACE
+                spectrometrists from the <a href="https://ateam.ucsd.edu/">Alexandrov team at UCSD</a>, while METASPACE
                 Pro is offered as a subscription-based service from Metacloud Inc.
               </p>
               <p>
