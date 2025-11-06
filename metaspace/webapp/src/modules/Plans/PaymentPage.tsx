@@ -35,6 +35,7 @@ import {
   countryRequiresState,
   US_STATES,
 } from '../../lib/countries'
+import { trackPaymentPageView } from '../../lib/gtag'
 
 interface CurrentUser {
   id: string
@@ -146,9 +147,13 @@ export default defineComponent({
     })
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-    // Set pro theme on mount
     onMounted(() => {
       store.commit('setThemeVariant', 'pro')
+
+      if (currentUser.value?.id) {
+        const planId = route?.query?.planId as string
+        trackPaymentPageView(currentUser?.value?.id, planId)
+      }
     })
 
     // Reset to default theme on unmount

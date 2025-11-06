@@ -8,6 +8,7 @@ import { formatPrice } from '../../lib/pricing'
 import SuccessCheckIcon from '../../assets/success-check.svg'
 import './SuccessPage.scss'
 import { useStore } from 'vuex'
+import { trackSuccessPageView, trackPurchaseComplete } from '../../lib/gtag'
 
 export default defineComponent({
   name: 'SuccessPage',
@@ -52,6 +53,25 @@ export default defineComponent({
         query: { tab: 'subscription' },
       })
     }
+
+    // Track success page view on mount
+    onMounted(() => {
+      if (currentUser.value?.id) {
+        // Track success page view
+        trackSuccessPageView(currentUser.value?.id, fromPayment.value)
+
+        // Track purchase completion if coming from payment
+        if (fromPayment.value && subscription.value && latestTransaction.value) {
+          trackPurchaseComplete({
+            transactionId: latestTransaction?.value?.id,
+            value: latestTransaction?.value?.amount || 0,
+            planId: subscription?.value?.plan?.id || 'unknown',
+            planName: subscription?.value?.plan?.name || 'unknown',
+            subscriptionId: subscription?.value?.id,
+          })
+        }
+      }
+    })
 
     const printInvoice = () => {
       if (latestTransaction.value?.metadata?.stripeInvoiceUrl) {
