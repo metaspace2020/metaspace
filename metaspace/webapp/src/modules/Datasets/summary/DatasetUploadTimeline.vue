@@ -5,37 +5,63 @@
 </template>
 
 <script>
-import { defineComponent, ref, watch, computed, onMounted } from 'vue'
+import { defineComponent, ref, watch, onMounted, inject } from 'vue'
 import { useStore } from 'vuex'
 import * as d3 from 'd3'
 import gql from 'graphql-tag'
 import { configureSvg, addAxes, addMainTitle, setTickSize } from './utils'
-import { useQuery } from '@vue/apollo-composable'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 
 export default defineComponent({
   name: 'UploadTimelinePlot',
   setup() {
     const store = useStore()
     const uploadByDatePlot = ref(null)
+    const apolloClient = inject(DefaultApolloClient)
+    const QUERY_LIMIT = 50000
+    const uploadDates = ref([])
+    const loading = ref(false)
 
     // TODO: when number of datasets becomes too large, perform aggregation on the server side
     const query = gql`
-      query GetUploadTimes($filter: DatasetFilter, $query: String) {
-        allDatasets(filter: $filter, simpleQuery: $query, limit: 50000) {
+      query GetUploadTimes($filter: DatasetFilter, $query: String, $offset: Int) {
+        allDatasets(filter: $filter, simpleQuery: $query, offset: $offset, limit: ${QUERY_LIMIT}) {
           uploadDateTime
         }
       }
     `
+    const countQuery = gql`
+      query GetUploadTimesCount($filter: DatasetFilter, $query: String) {
+        countDatasets(filter: $filter, simpleQuery: $query)
+      }
+    `
 
-    const {
-      result: uploadDatesResult,
-      loading,
-      refetch,
-    } = useQuery(query, () => ({
+    const { refetch, onResult: onCountResult } = useQuery(countQuery, () => ({
       filter: { ...store.getters.gqlDatasetFilter, status: 'FINISHED' },
       query: store.getters.ftsQuery,
     }))
-    const uploadDates = computed(() => uploadDatesResult.value?.allDatasets?.map((d) => d.uploadDateTime) || [])
+
+    onCountResult(async (result) => {
+      const count = result.data.countDatasets
+
+      loading.value = true
+
+      let auxUploadDates = []
+      for (let i = 0; i < count / QUERY_LIMIT; i += 1) {
+        const resp = await apolloClient.query({
+          query,
+          variables: {
+            filter: { ...store.getters.gqlDatasetFilter, status: 'FINISHED' },
+            query: store.getters.ftsQuery,
+            offset: i * QUERY_LIMIT,
+          },
+          fetchPolicy: 'cache-first',
+        })
+        auxUploadDates = auxUploadDates.concat(resp.data.allDatasets)
+      }
+      uploadDates.value = auxUploadDates.map((d) => d.uploadDateTime) || []
+      loading.value = false
+    })
 
     const geometry = { margin: { top: 30, bottom: 100, left: 70, right: 40 }, width: 600, height: 350 }
 
