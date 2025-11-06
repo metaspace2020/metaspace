@@ -21,7 +21,7 @@ export default defineComponent({
     // TODO: when number of datasets becomes too large, perform aggregation on the server side
     const query = gql`
       query GetUploadTimes($filter: DatasetFilter, $query: String) {
-        allDatasets(filter: $filter, simpleQuery: $query, limit: 50000) {
+        allDatasets(filter: $filter, simpleQuery: $query, limit: 100000) {
           uploadDateTime
         }
       }
