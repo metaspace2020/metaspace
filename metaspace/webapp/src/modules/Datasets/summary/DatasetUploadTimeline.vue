@@ -18,7 +18,7 @@ export default defineComponent({
     const store = useStore()
     const uploadByDatePlot = ref(null)
     const apolloClient = inject(DefaultApolloClient)
-    const QUERY_LIMIT = 1
+    const QUERY_LIMIT = 50000
     const uploadDates = ref([])
     const loading = ref(false)
 
