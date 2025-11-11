@@ -16,14 +16,15 @@ export default async function(ctx: Context, projectId: string, datasetIds: strin
         relations: ['datasetProjects'],
       })
 
-    const promises = datasets.map(async(dataset: any) => {
+    // Process datasets sequentially to avoid overwhelming Elasticsearch with concurrent updates
+    for (const dataset of datasets) {
       const existingDatasetProject = dataset.datasetProjects.find((dp: any) => dp.projectId === projectId)
       const datasetId = dataset.id
       if (approved == null) {
         if (existingDatasetProject != null) {
           await datasetProjectRepository.delete({ projectId, datasetId })
         } else {
-          return // No change needed
+          continue // No change needed
         }
       } else {
         if (existingDatasetProject != null && approved !== existingDatasetProject.approved) {
@@ -31,7 +32,7 @@ export default async function(ctx: Context, projectId: string, datasetIds: strin
         } else if (existingDatasetProject == null) {
           await datasetProjectRepository.insert({ projectId, datasetId, approved })
         } else if (existingDatasetProject != null) {
-          return // No change needed
+          continue // No change needed
         }
       }
 
@@ -43,9 +44,7 @@ export default async function(ctx: Context, projectId: string, datasetIds: strin
       }
 
       await smApiUpdateDataset(datasetId, { projectIds }, { asyncEsUpdate })
-    })
-
-    await Promise.all(promises)
+    }
   }
 
   // remove relationships
@@ -57,7 +56,8 @@ export default async function(ctx: Context, projectId: string, datasetIds: strin
         relations: ['datasetProjects'],
       })
 
-    const promises = datasets.map(async(dataset : any) => {
+    // Process dataset removals sequentially to avoid overwhelming Elasticsearch
+    for (const dataset of datasets) {
       const existingDatasetProject = dataset.datasetProjects.find((dp : any) => dp.projectId === projectId)
       const datasetId = dataset.id
 
@@ -69,8 +69,6 @@ export default async function(ctx: Context, projectId: string, datasetIds: strin
 
         await smApiUpdateDataset(datasetId, { projectIds }, { asyncEsUpdate })
       }
-    })
-
-    await Promise.all(promises)
+    }
   }
 }
