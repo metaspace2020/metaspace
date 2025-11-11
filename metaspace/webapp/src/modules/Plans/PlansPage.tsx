@@ -20,6 +20,8 @@ import {
   getAvailablePeriods,
 } from '../../lib/pricing'
 import { getActiveUserSubscriptionQuery } from '../../api/subscription'
+import { currentUserIdQuery } from '../../api/user'
+import { trackPlansPageView, trackBeginCheckout } from '../../lib/gtag'
 import './PlansPage.scss'
 
 // Define comparison features based on the sketch
@@ -211,9 +213,11 @@ export default defineComponent({
       radioValue: '1 year', // Separate state for radio group, using display name
     })
 
-    // Set pro theme on mount
     onMounted(() => {
       store.commit('setThemeVariant', 'pro')
+      if (currentUserId.value) {
+        trackPlansPageView(currentUserId.value)
+      }
     })
 
     // Reset to default theme on unmount
@@ -236,6 +240,11 @@ export default defineComponent({
       }
     )
     const activeSubscription = computed(() => subscriptionsResult.value?.activeUserSubscription)
+
+    const { result: currentUserResult } = useQuery<any>(currentUserIdQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
+    const currentUserId = computed(() => currentUserResult.value?.currentUser?.id)
 
     const isLoading = computed(() => plansLoading.value || subscriptionLoading.value)
 
@@ -268,6 +277,19 @@ export default defineComponent({
     )
 
     const handleSubscribe = (planId: string) => {
+      if (currentUserId?.value) {
+        const selectedPlan = plans?.value?.find((plan) => plan?.id === planId)
+        const priceValue =
+          selectedPlan && state?.selectedPeriod ? getPriceForPeriod(selectedPlan, state?.selectedPeriod) : 0
+
+        trackBeginCheckout({
+          planId,
+          planName: selectedPlan?.name || 'unknown',
+          price: priceValue,
+          billingPeriod: state.selectedPeriod?.displayName || 'unknown',
+        })
+      }
+
       router.push(`/payment?planId=${planId}`)
     }
 

@@ -124,11 +124,12 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (projectDetails.name || projectDetails.isPublic) {
       const affectedDatasets = await ctx.entityManager.find(DatasetProjectModel as any,
         { where: { projectId }, relations: ['dataset', 'dataset.datasetProjects'] })
-      await Promise.all(affectedDatasets.map(async dp => {
+      // Process dataset updates sequentially to avoid overwhelming Elasticsearch
+      for (const dp of affectedDatasets) {
         await smApiUpdateDataset((dp as any).datasetId, {
           projectIds: (dp as any).dataset.datasetProjects.map((p: any) => p.projectId),
         }, { asyncEsUpdate: true })
-      }))
+      }
     }
 
     // @ts-ignore
