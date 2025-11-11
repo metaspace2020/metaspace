@@ -116,8 +116,9 @@ class Pipeline:  # pylint: disable=too-many-instance-attributes
             )
 
         if n_pixels > pixel_limit:
+            # pylint: disable=line-too-long
             raise LimitError(
-                f'Pixel limit ({pixel_limit}) exceeded. Contact contact@metaspace2020.org.'
+                f'The bounding box area exceeds the maximum allowed pixel count of ({pixel_limit}). Contact contact@metaspace2020.org.'
             )
 
         self.segment_centroids(use_cache=use_cache)
