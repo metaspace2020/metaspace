@@ -36,7 +36,7 @@ import {
   US_STATES,
 } from '../../lib/countries'
 import { trackPaymentPageView } from '../../lib/gtag'
-import { calculateFallbackVat, type FallbackVatCalculation } from '../../lib/fallbackTax'
+import { calculateFallbackVat } from '../../lib/fallbackTax'
 
 interface CurrentUser {
   id: string
@@ -338,7 +338,7 @@ export default defineComponent({
     })
 
     // Get fallback VAT calculation if backend calculation is not available or disabled
-    const getFallbackVatCalculation = (pricingOption: any): FallbackVatCalculation | null => {
+    const getFallbackVatCalculation = (pricingOption: any): any | null => {
       if (!pricingOption || !state.form.selectedCountry) return null
 
       // Check if backend VAT calculation exists and is actually collecting tax
