@@ -73,7 +73,7 @@ $banner-blue: #0F87EF;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   gap: 16px;
   
   .toggle-header {
@@ -450,7 +450,17 @@ $banner-blue: #0F87EF;
     max-width: 320px;
   }
   
-
+  .tax-notice {
+    margin: 0 20px 32px;
+    
+    .tax-notice-content {
+      padding: 10px 16px;
+      
+      .tax-notice-text {
+        font-size: 13px;
+      }
+    }
+  }
   
   .comparison-section {
     .comparison-table {
@@ -470,5 +480,36 @@ $banner-blue: #0F87EF;
     background-color: rgba(0, 0, 0, 0.01);
     color: rgba(0, 0, 0, 0.5);
   }
+}
 
+.tax-notice {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+  width: 100%;
+  
+  .tax-notice-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 20px;
+    max-width: 600px;
+    
+    .tax-notice-icon {
+      font-size: 16px;
+      color: #6c757d;
+      flex-shrink: 0;
+    }
+    
+    .tax-notice-text {
+      color: #495057;
+      font-size: 14px;
+      line-height: 1.4;
+      text-align: center;
+      font-weight: 500;
+    }
+  }
 }

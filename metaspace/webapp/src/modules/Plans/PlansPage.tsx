@@ -375,7 +375,9 @@ export default defineComponent({
                         <div class="plan-price">
                           <span class="price-currency">$</span>
                           <span class="price-amount">{formatPrice(totalPrice)}</span>
-                          <span class="price-period">/{getPeriodDisplayName(state.selectedPeriod).toLowerCase()}</span>
+                          <span class="price-period">
+                            /{getPeriodDisplayName(state.selectedPeriod).toLowerCase()} *
+                          </span>
                         </div>
 
                         <div class="billing-info">Billed every {getPeriodDisplayName(state.selectedPeriod)}</div>
@@ -418,6 +420,12 @@ export default defineComponent({
                       </div>
                     )
                   })}
+            </div>
+
+            {/* Tax Notice */}
+            <div class="text-xs">
+              * Prices shown exclude taxes. VAT and applicable taxes will be calculated during checkout based on your
+              location.
             </div>
 
             {/* Comparison Table */}
