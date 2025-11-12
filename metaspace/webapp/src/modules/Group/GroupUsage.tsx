@@ -9,7 +9,7 @@ import { Subscription, updateSubscriptionMutation } from '../../api/subscription
 import { PlanRule } from '../../api/plan'
 import RouterLink from '../../components/RouterLink'
 import './GroupUsage.scss'
-import { ElMessage, ElSwitch } from '../../lib/element-plus'
+import { ElMessage, ElSwitch, ElPagination } from '../../lib/element-plus'
 import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user'
 
 export default defineComponent({
@@ -37,6 +37,10 @@ export default defineComponent({
     const isAutoRenew = ref<boolean>(false)
     const updatingAutoRenew = ref<boolean>(false)
 
+    // API Usage pagination state
+    const apiUsagePage = ref(1)
+    const apiUsagePageSize = ref(10)
+
     watch(
       () => activeGroupSubscription.value,
       (sub) => {
@@ -62,17 +66,23 @@ export default defineComponent({
       }
     }
 
+    const apiUsageQueryVars = computed(() => ({
+      filter: { groupId: props.groupId, actionType: 'create,update,reprocess', visibility: 'private' },
+      orderBy: 'ORDER_BY_DATE',
+      sortingOrder: 'DESCENDING',
+      offset: (apiUsagePage.value - 1) * apiUsagePageSize.value,
+      limit: apiUsagePageSize.value,
+    }))
+
     const { result: allApiUsagesResult, loading: apiUsagesLoading } = useQuery<any>(
       getApiUsagesQuery,
-      {
-        filter: { groupId: props.groupId, actionType: 'create,update,reprocess', visibility: 'private' },
-        orderBy: 'ORDER_BY_DATE',
-        sortingOrder: 'DESCENDING',
-        limit: 50,
-      },
+      apiUsageQueryVars,
       { fetchPolicy: 'network-only' }
     )
     const allApiUsages = computed(() => (allApiUsagesResult.value != null ? allApiUsagesResult.value.allApiUsages : []))
+    const apiUsagesCount = computed(() =>
+      allApiUsagesResult.value != null ? allApiUsagesResult.value.apiUsagesCount : 0
+    )
 
     const handleCancelSubscription = async () => {
       const subscription = activeGroupSubscription.value as Subscription | null
@@ -216,6 +226,21 @@ export default defineComponent({
                 <p>No API usage history with source available</p>
               </div>
             )}
+
+            {/* API Usage Pagination */}
+            {apiUsagesCount.value > apiUsagePageSize.value || apiUsagePage.value !== 1 ? (
+              <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <ElPagination
+                  total={apiUsagesCount.value}
+                  pageSize={apiUsagePageSize.value}
+                  currentPage={apiUsagePage.value}
+                  onCurrentChange={(val: number) => {
+                    apiUsagePage.value = val
+                  }}
+                  layout="prev,pager,next"
+                />
+              </div>
+            ) : null}
           </div>
         </>
       )
@@ -264,7 +289,7 @@ export default defineComponent({
                     </el-button>
                   </div>
                 ),
-                default: () => <>{renderRemainingQuota(true)}</>,
+                default: () => <>{renderRemainingQuota()}</>,
               }}
             </el-card>
           </div>
