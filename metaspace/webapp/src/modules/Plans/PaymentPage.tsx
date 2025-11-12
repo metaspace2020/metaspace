@@ -36,6 +36,7 @@ import {
   US_STATES,
 } from '../../lib/countries'
 import { trackPaymentPageView } from '../../lib/gtag'
+import { calculateFallbackVat } from '../../lib/fallbackTax'
 
 interface CurrentUser {
   id: string
@@ -336,12 +337,34 @@ export default defineComponent({
       return periods
     })
 
+    // Get fallback VAT calculation if backend calculation is not available or disabled
+    const getFallbackVatCalculation = (pricingOption: any): any | null => {
+      if (!pricingOption || !state.form.selectedCountry) return null
+
+      // Check if backend VAT calculation exists and is actually collecting tax
+      const hasValidBackendVat =
+        pricingOption.vatCalculation &&
+        pricingOption.vatCalculation.vatAmount > 0 &&
+        pricingOption.vatCalculation.taxRate > 0
+
+      // Only calculate fallback if backend VAT calculation is not available or not collecting tax
+      if (hasValidBackendVat) return null
+
+      return calculateFallbackVat(state.form.selectedCountry, pricingOption.priceCents)
+    }
+
     const getTotalPrice = (pricingOption: any) => {
       if (!pricingOption) return 0
 
       // If VAT calculation is available, use the inclusive VAT price
       if (pricingOption.vatCalculation) {
         return pricingOption.vatCalculation.priceInclusiveVAT
+      }
+
+      // Try fallback VAT calculation
+      const fallbackVat = getFallbackVatCalculation(pricingOption)
+      if (fallbackVat) {
+        return fallbackVat.priceInclusiveVAT
       }
 
       // Fallback to original price
@@ -356,13 +379,32 @@ export default defineComponent({
         return pricingOption.vatCalculation.priceExclusiveVAT
       }
 
+      // Try fallback VAT calculation
+      const fallbackVat = getFallbackVatCalculation(pricingOption)
+      if (fallbackVat) {
+        return fallbackVat.priceExclusiveVAT
+      }
+
       // Fallback to original price
       return pricingOption.priceCents
     }
 
     const getVatAmount = (pricingOption: any) => {
-      if (!pricingOption?.vatCalculation) return 0
-      return pricingOption.vatCalculation.vatAmount
+      if (pricingOption?.vatCalculation) {
+        return pricingOption.vatCalculation.vatAmount
+      }
+
+      // Try fallback VAT calculation
+      const fallbackVat = getFallbackVatCalculation(pricingOption)
+      if (fallbackVat) {
+        return fallbackVat.vatAmount
+      }
+
+      return 0
+    }
+
+    const hasAnyVatCalculation = (pricingOption: any) => {
+      return !!(pricingOption?.vatCalculation || getFallbackVatCalculation(pricingOption))
     }
 
     const getTotalDiscountAmount = () => {
@@ -378,8 +420,8 @@ export default defineComponent({
       const basePrice = getTotalPrice(state.selectedPeriod)
 
       if (state.coupon.applied && state.coupon.validationResult?.isValid) {
-        // If we have VAT calculation: Base - Discount + VAT (on original base)
-        if (state.selectedPeriod?.vatCalculation) {
+        // If we have any VAT calculation (backend or fallback): Base - Discount + VAT (on original base)
+        if (hasAnyVatCalculation(state.selectedPeriod)) {
           const originalBasePrice = getBasePrice(state.selectedPeriod)
           const discountAmount = state.coupon.validationResult.discountAmountCents || 0
           const originalVatAmount = getVatAmount(state.selectedPeriod)
@@ -484,6 +526,14 @@ export default defineComponent({
           state.form.selectedState = ''
           // Re-validate state field (will be valid for non-US countries)
           validateState('')
+
+          // Force reactivity update for fallback VAT calculation
+          // This ensures the VAT display updates when country changes
+          if (state.selectedPeriod) {
+            const currentPeriod = state.selectedPeriod
+            state.selectedPeriod = null
+            state.selectedPeriod = currentPeriod
+          }
         }
       }
     )
@@ -1290,6 +1340,18 @@ export default defineComponent({
                 </div>
               </div>
 
+              {/* Alternative Payment Methods */}
+              <div class="form-section alternative-payment-info">
+                <h3>Alternative Payment Method</h3>
+                <p class="text-sm">
+                  For bank transfer payments, please contact our billing team at{' '}
+                  <a href="mailto:contact@metaspacepro.com" class="contact-email">
+                    contact@metaspacepro.com
+                  </a>{' '}
+                  to request an invoice and wire transfer instructions.
+                </p>
+              </div>
+
               {/* Terms and Privacy Section */}
               <div class="form-section terms-section">
                 <div class="terms-checkboxes">
@@ -1366,9 +1428,9 @@ export default defineComponent({
                   </div>
 
                   {/* VAT/Tax breakdown */}
-                  {state.selectedPeriod?.vatCalculation && getVatAmount(state.selectedPeriod) > 0 && (
+                  {hasAnyVatCalculation(state.selectedPeriod) && getVatAmount(state.selectedPeriod) > 0 && (
                     <div class="summary-item vat-item">
-                      <span class="item-name">VAT</span>
+                      <span class="item-name">Indicative tax (VAT)</span>
                       <span class="item-price">
                         <span class="currency">$</span>
                         <span class="amount">{formatPrice(getVatAmount(state.selectedPeriod))}</span>
@@ -1451,8 +1513,10 @@ export default defineComponent({
                     </span>
                   </div>
                   <p class="vat-notice">
-                    {state.selectedPeriod?.vatCalculation && getVatAmount(state.selectedPeriod) > 0
-                      ? '*VAT included'
+                    {hasAnyVatCalculation(state.selectedPeriod) && getVatAmount(state.selectedPeriod) > 0
+                      ? getFallbackVatCalculation(state.selectedPeriod)
+                        ? '*VAT included (estimated - tax collection currently disabled)'
+                        : '*VAT included'
                       : '*VAT included where applicable'}
                   </p>
                 </Fragment>
