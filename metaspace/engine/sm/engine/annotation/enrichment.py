@@ -45,12 +45,12 @@ def add_enrichment(
         if annotation_id:
             data.append(
                 (
-                    row['scenario'],
+                    int(row['scenario']),
                     row['formula_adduct'],
-                    row['fdr'],
+                    float(row['fdr']),
                     ds_id,
                     annotation_id,
-                    row['enrichment_db_molecule_mapping_id'],
+                    int(row['enrichment_db_molecule_mapping_id']),
                 )
             )
 

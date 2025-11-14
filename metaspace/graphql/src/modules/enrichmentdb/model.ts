@@ -56,8 +56,8 @@ export class EnrichmentTerm {
 @Entity({ schema: 'public' })
 @Index(['molecularDbId', 'formula'])
 export class EnrichmentDBMoleculeMapping {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('increment', { type: 'bigint' })
+  id: string;
 
   /** molecular db `name` for molecule to map with reference enrichment db */
   @Column({ type: 'text' })
@@ -104,8 +104,8 @@ export class EnrichmentBootstrap {
   @Column({ type: 'numeric', precision: 2, scale: 2 })
   fdr: string;
 
-  @Column({ type: 'int' })
-  enrichmentDbMoleculeMappingId: number;
+  @Column({ type: 'bigint' })
+  enrichmentDbMoleculeMappingId: string;
 
   // This table is a child table of public.dataset, not graphql.dataset, so avoid making an FK
   @ManyToOne(() => Dataset, { createForeignKeyConstraints: false })
