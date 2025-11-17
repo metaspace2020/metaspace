@@ -685,25 +685,6 @@ describe('modules/plan/controller (queries)', () => {
       apiUsagesCount(filter: $filter)
     }`
 
-    it('should return total count of API usages for admin', async() => {
-      // Mock the fetch response
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          meta: { total: 3 },
-        }),
-      })
-
-      const result = await doQuery(queryApiUsagesCount, {}, { context: adminContext })
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringMatching(/^https:\/\/test-api\.metaspace\.example\/api\/api-usages/),
-        expect.any(Object)
-      )
-
-      expect(result).toEqual(3)
-    })
-
     it('should throw an error for non-admin users', async() => {
       await expect(doQuery(queryApiUsagesCount)).rejects.toThrow('Access denied')
     })

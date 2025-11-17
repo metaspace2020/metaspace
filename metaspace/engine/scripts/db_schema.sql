@@ -182,7 +182,7 @@ CREATE UNIQUE INDEX "IDX_5b1fe80fe8ad658adc4fbe5dda" ON "public"."enrichment_ter
 ) ;
 
 CREATE TABLE "public"."enrichment_db_molecule_mapping" (
-  "id" SERIAL NOT NULL, 
+  "id" BIGSERIAL NOT NULL, 
   "molecule_enriched_name" text NOT NULL, 
   "formula" text NOT NULL, 
   "enrichment_term_id" integer NOT NULL, 
@@ -203,7 +203,7 @@ CREATE TABLE "public"."enrichment_bootstrap" (
   "dataset_id" text NOT NULL, 
   "annotation_id" character varying NOT NULL, 
   "fdr" numeric(2,2) NOT NULL, 
-  "enrichment_db_molecule_mapping_id" integer NOT NULL, 
+  "enrichment_db_molecule_mapping_id" bigint NOT NULL, 
   CONSTRAINT "PK_14d9602f2d10c780127809d98d5" PRIMARY KEY ("id")
 );
 

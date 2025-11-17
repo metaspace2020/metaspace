@@ -31,6 +31,7 @@ import { DatasetEnrichment as DatasetEnrichmentModel } from '../../enrichmentdb/
 import { getS3Client } from '../../../utils/awsClient'
 import config from '../../../utils/config'
 import { assertCanPerformAction, getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
+import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -284,6 +285,8 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     ipHash: hashIp(ctx.req?.ip),
   }
 
+  console.log('action', input)
+
   logger.info(`Creating dataset '${datasetId}' by '${ctx.user.id}' user ...`)
   let dataset
   if (datasetIdWasSpecified) {
@@ -330,6 +333,14 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
 
   if (input?.ppm && input.ppm > 15) {
     input.ppm = 15
+  }
+
+  if (input.neutralLosses) {
+    input.neutralLosses = cleanEmptyStrings(input.neutralLosses as string[])
+  }
+
+  if (input.chemMods) {
+    input.chemMods = cleanEmptyStrings(input.chemMods as string[])
   }
 
   await smApiDatasetRequest(url, {

@@ -274,7 +274,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
   async apiUsagesCount(_: any, args: AllApiUsagesArgs, ctx: Context): Promise<number> {
     const { filter } = args || {}
-
     if (filter?.groupId) {
       await assertCanEditGroup(ctx.entityManager, ctx.user, filter?.groupId)
     }
@@ -285,8 +284,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
     try {
       const queryString = buildQueryString(args)
-      const result = await makeApiRequest(ctx, `/api/api-usages${queryString}`)
-      return result.meta?.total || 0
+      const result = await makeApiRequest(ctx, `/api/api-usages/stats/count${queryString}`)
+      return result.count || 0
     } catch (error) {
       logger.error('Error fetching API usages count:', error)
       return 0

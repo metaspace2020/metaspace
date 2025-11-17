@@ -37,3 +37,14 @@ export const escapeUnenclosedSpecialChars = (query: string) => {
 
   return result
 }
+
+export const cleanEmptyStrings = (values: string[] | undefined | null): string[] => {
+  if (!values) return []
+
+  const INVALID = new Set(['none', 'undefined', 'null', ''])
+
+  return values
+    .map(v => v.trim())
+    .map(v => v.replace(/\s+/g, ''))
+    .filter(v => !INVALID.has(v.toLowerCase()))
+}
