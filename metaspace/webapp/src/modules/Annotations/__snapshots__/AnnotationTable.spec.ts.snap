@@ -168,7 +168,7 @@ exports[`AnnotationTable > should match snapshot 1`] = `
                     </td>
                     <td class=\\"el-table_1_column_6 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
-                        <!---->1
+                        <!---->2
                       </div>
                     </td>
                     <td class=\\"el-table_1_column_7 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
@@ -504,7 +504,7 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
                     </td>
                     <td class=\\"el-table_2_column_15 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">
                       <div class=\\"cell\\">
-                        <!---->1
+                        <!---->2
                       </div>
                     </td>
                     <td class=\\"el-table_2_column_16 el-table__cell\\" rowspan=\\"1\\" colspan=\\"1\\">

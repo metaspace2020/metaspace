@@ -236,7 +236,7 @@
         sortable="custom"
       >
         <template v-slot="{ row }">
-          {{ row.possibleCompounds.length }}
+          {{ row.isomers.length }}
         </template>
       </el-table-column>
 
