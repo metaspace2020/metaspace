@@ -262,7 +262,7 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
           type: 'number',
           script: {
             lang: 'painless',
-            inline: 'params._source.comp_names.size()',
+            inline: 'params._source.isomer_ions.size()',
           },
           order: order,
         },
@@ -528,7 +528,6 @@ export const esSearchResults = async(args: any, docType: DocType,
     size: args.limit,
   }
   const resp = await es.search(request)
-
   return resp.hits.hits
 }
 
