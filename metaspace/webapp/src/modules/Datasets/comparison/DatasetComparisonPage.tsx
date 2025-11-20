@@ -157,6 +157,7 @@ export default defineComponent({
       id: snapshotId,
       datasetId: sourceDsId,
     })
+    const filter = computed(() => store.getters.filter)
 
     const gridSettings = computed(() =>
       settingsResult.value != null ? settingsResult.value.imageViewerSnapshot : null
@@ -343,7 +344,15 @@ export default defineComponent({
           }
         }
 
-        state.databaseOptions = { database: uniqBy(databases, 'id') }
+        const databaseOptions = uniqBy(databases, 'id')
+        const currentDatabaseId = store.getters?.gqlAnnotationFilter?.databaseId
+        if (databaseOptions && databaseOptions.findIndex((db: any) => db.id === currentDatabaseId) === -1) {
+          // set first databse if default not selected
+          const newFilter = Object.assign({}, filter.value, { database: databaseOptions?.[0]?.id })
+          store.commit('updateFilter', newFilter)
+        }
+
+        state.databaseOptions = { database: databaseOptions }
       }
       state.normalizationData = normalizationData
     })
