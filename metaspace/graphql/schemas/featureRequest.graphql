@@ -1,0 +1,93 @@
+type FeatureRequest {
+  id: ID!
+  title: String!
+  description: String!
+  status: FeatureRequestStatus!
+  userId: ID!
+  adminNotes: String
+  approvedBy: ID
+  approvedAt: String
+  rejectedBy: ID
+  rejectedAt: String
+  createdAt: String!
+  updatedAt: String!
+  deletedAt: String
+}
+
+enum FeatureRequestStatus {
+  proposed
+  under_review
+  approved
+  in_backlog
+  in_development
+  implemented
+  rejected
+}
+
+input FeatureRequestFilter {
+  userId: String
+  status: FeatureRequestStatus
+  startDate: String
+  endDate: String
+}
+
+enum FeatureRequestOrderBy {
+  ORDER_BY_DATE
+  ORDER_BY_USER
+  ORDER_BY_STATUS
+  ORDER_BY_TITLE
+}
+
+input CreateFeatureRequestInput {
+  title: String!
+  description: String!
+}
+
+input UpdateFeatureRequestStatusInput {
+  status: FeatureRequestStatus!
+  adminNotes: String
+}
+
+input ApproveFeatureRequestInput {
+  adminNotes: String
+}
+
+input RejectFeatureRequestInput {
+  adminNotes: String!
+}
+
+type FeatureRequestsByStatus {
+  approved: [FeatureRequest!]
+  in_backlog: [FeatureRequest!]
+  in_development: [FeatureRequest!]
+  implemented: [FeatureRequest!]
+}
+
+type Query {
+  # User queries
+  myFeatureRequests: [FeatureRequest!]
+  publicFeatureRequests: FeatureRequestsByStatus
+  
+  # Admin queries
+  featureRequest(id: ID!): FeatureRequest
+  allFeatureRequests(
+    orderBy: FeatureRequestOrderBy = ORDER_BY_DATE,
+    sortingOrder: SortingOrder = DESCENDING,
+    filter: FeatureRequestFilter = {},
+    offset: Int = 0,
+    limit: Int = 20
+  ): [FeatureRequest!]
+  featureRequestsCount(filter: FeatureRequestFilter = {}): Int!
+}
+
+type Mutation {
+  # User mutations
+  createFeatureRequest(input: CreateFeatureRequestInput!): FeatureRequest
+  
+  # Admin mutations
+  approveFeatureRequest(id: ID!, input: ApproveFeatureRequestInput): FeatureRequest
+  rejectFeatureRequest(id: ID!, input: RejectFeatureRequestInput!): FeatureRequest
+  updateFeatureRequestStatus(id: ID!, input: UpdateFeatureRequestStatusInput!): FeatureRequest
+  deleteFeatureRequest(id: ID!): Boolean
+}
+
