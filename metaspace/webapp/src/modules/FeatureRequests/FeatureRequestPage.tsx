@@ -32,7 +32,7 @@ import {
   FeatureRequestStatus,
 } from '../../api/featureRequest'
 import { Fragment } from 'vue'
-import { Loading, Plus, InfoFilled } from '@element-plus/icons-vue'
+import { Plus, InfoFilled } from '@element-plus/icons-vue'
 import ArrowUpIcon from '../../assets/inline/refactoring-ui/icon-arrow-thick-up.svg'
 
 interface DialogState {
@@ -67,13 +67,13 @@ export default defineComponent({
     const isAdmin = computed(() => currentUser.value?.role === 'admin')
 
     // Query my feature requests
-    const {
-      result: myRequestsResult,
-      loading: myRequestsLoading,
-      refetch: refetchMyRequests,
-    } = useQuery<{ myFeatureRequests: FeatureRequest[] }>(myFeatureRequestsQuery, null, {
-      fetchPolicy: 'network-only',
-    })
+    const { result: myRequestsResult, refetch: refetchMyRequests } = useQuery<{ myFeatureRequests: FeatureRequest[] }>(
+      myFeatureRequestsQuery,
+      null,
+      {
+        fetchPolicy: 'network-only',
+      }
+    )
     const allMyRequests = computed(() => myRequestsResult.value?.myFeatureRequests || [])
     const myRequestsCount = computed(() => allMyRequests.value.length)
     const myRequests = computed(() => {
@@ -83,11 +83,9 @@ export default defineComponent({
     })
 
     // Query public feature requests
-    const {
-      result: publicRequestsResult,
-      loading: publicRequestsLoading,
-      refetch: refetchPublicRequests,
-    } = useQuery<{ publicFeatureRequests: FeatureRequest[] }>(publicFeatureRequestsQuery, null, {
+    const { result: publicRequestsResult, refetch: refetchPublicRequests } = useQuery<{
+      publicFeatureRequests: FeatureRequest[]
+    }>(publicFeatureRequestsQuery, null, {
       fetchPolicy: 'network-only',
     })
     const allPublicRequests = computed(() => publicRequestsResult.value?.publicFeatureRequests || [])
@@ -585,63 +583,60 @@ export default defineComponent({
         )
       }
 
-      const loading = myRequestsLoading.value || publicRequestsLoading.value || currentUserLoading.value
-
       return (
         <div class="feature-request-page">
-          
-            <div class="page-content">
-              {/* Public Approved Feature Requests Section */}
-              <div class="section">
-                <h2 class="section-title">Community Requests</h2>
-                <p class="section-description">Vote for the features you'd like to see implemented</p>
-                {renderTable(publicRequests.value, 'Community Requests', false, true)}
+          <div class="page-content">
+            {/* Public Approved Feature Requests Section */}
+            <div class="section">
+              <h2 class="section-title">Community Requests</h2>
+              <p class="section-description">Vote for the features you'd like to see implemented</p>
+              {renderTable(publicRequests.value, 'Community Requests', false, true)}
 
-                {/* Public Requests Pagination */}
-                {publicRequestsCount.value > publicRequestsPageSize.value || publicRequestsPage.value !== 1 ? (
-                  <div class="pagination-container">
-                    <ElPagination
-                      total={publicRequestsCount.value}
-                      pageSize={publicRequestsPageSize.value}
-                      currentPage={publicRequestsPage.value}
-                      onCurrentChange={(val: number) => {
-                        publicRequestsPage.value = val
-                      }}
-                      layout="prev,pager,next"
-                    />
-                  </div>
-                ) : null}
-              </div>
-
-              {/* My Feature Requests Section */}
-              <div class="section">
-                <div class="section-header">
-                  <h2 class="section-title">{currentUser.value?.role === 'admin' ? 'All Requests' : 'My Requests'}</h2>
-                  <ElButton type="primary" onClick={openCreateDialog} class="section-add-btn">
-                    <ElIcon class="mr-2">
-                      <Plus />
-                    </ElIcon>
-                    Request New Feature
-                  </ElButton>
+              {/* Public Requests Pagination */}
+              {publicRequestsCount.value > publicRequestsPageSize.value || publicRequestsPage.value !== 1 ? (
+                <div class="pagination-container">
+                  <ElPagination
+                    total={publicRequestsCount.value}
+                    pageSize={publicRequestsPageSize.value}
+                    currentPage={publicRequestsPage.value}
+                    onCurrentChange={(val: number) => {
+                      publicRequestsPage.value = val
+                    }}
+                    layout="prev,pager,next"
+                  />
                 </div>
-                {renderTable(myRequests.value, 'My Requests', true, false)}
-
-                {/* My Requests Pagination */}
-                {myRequestsCount.value > myRequestsPageSize.value || myRequestsPage.value !== 1 ? (
-                  <div class="pagination-container">
-                    <ElPagination
-                      total={myRequestsCount.value}
-                      pageSize={myRequestsPageSize.value}
-                      currentPage={myRequestsPage.value}
-                      onCurrentChange={(val: number) => {
-                        myRequestsPage.value = val
-                      }}
-                      layout="prev,pager,next"
-                    />
-                  </div>
-                ) : null}
-              </div>
+              ) : null}
             </div>
+
+            {/* My Feature Requests Section */}
+            <div class="section">
+              <div class="section-header">
+                <h2 class="section-title">{currentUser.value?.role === 'admin' ? 'All Requests' : 'My Requests'}</h2>
+                <ElButton type="primary" onClick={openCreateDialog} class="section-add-btn">
+                  <ElIcon class="mr-2">
+                    <Plus />
+                  </ElIcon>
+                  Request New Feature
+                </ElButton>
+              </div>
+              {renderTable(myRequests.value, 'My Requests', true, false)}
+
+              {/* My Requests Pagination */}
+              {myRequestsCount.value > myRequestsPageSize.value || myRequestsPage.value !== 1 ? (
+                <div class="pagination-container">
+                  <ElPagination
+                    total={myRequestsCount.value}
+                    pageSize={myRequestsPageSize.value}
+                    currentPage={myRequestsPage.value}
+                    onCurrentChange={(val: number) => {
+                      myRequestsPage.value = val
+                    }}
+                    layout="prev,pager,next"
+                  />
+                </div>
+              ) : null}
+            </div>
+          </div>
 
           {/* Create/Edit/Detail Dialog */}
           <ElDialog
