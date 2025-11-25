@@ -208,7 +208,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     try {
       return await makeApiRequest(ctx, `/api/subscriptions/user/${ctx.user.id}/active`)
     } catch (error) {
-      logger.error(`Error fetching active subscription for user ${ctx.user.id}:`, error)
+      // logger.error(`Error fetching active subscription for user ${ctx.user.id}:`, error)
       return null
     }
   },

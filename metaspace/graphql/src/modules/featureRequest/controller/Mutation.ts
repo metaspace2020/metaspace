@@ -139,7 +139,22 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     }
   },
 
-  updateFeatureRequestStatus: async(_, args, ctx: Context) => {
+  toggleVoteFeatureRequest: async(_, args, ctx: Context) => {
+    if (!ctx.user.id) {
+      throw new UserError('Authentication required')
+    }
+
+    try {
+      const { id } = args
+      const result = await makeApiRequest(ctx, `/api/feature-requests/${id}/vote`, 'POST')
+      return result.data || result
+    } catch (error) {
+      logger.error('Error toggling vote on feature request:', error)
+      throw new UserError('Failed to toggle vote on feature request')
+    }
+  },
+
+  updateFeatureRequestVisibility: async(_, args, ctx: Context) => {
     if (ctx.user.role !== 'admin') {
       throw new UserError('Access denied: Admin role required')
     }
@@ -147,27 +162,49 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     try {
       const { id, input } = args
 
-      // Validate that status is provided
-      if (!input.status) {
-        throw new UserError('Status is required')
+      if (typeof input.isVisible !== 'boolean') {
+        throw new UserError('isVisible must be a boolean value')
       }
 
-      const apiInput: any = {
-        status: input.status,
+      const apiInput = {
+        isVisible: input.isVisible,
       }
 
-      if (input.adminNotes) {
-        apiInput.adminNotes = input.adminNotes
-      }
-
-      const result = await makeApiRequest(ctx, `/api/feature-requests/${id}/status`, 'PUT', apiInput)
+      const result = await makeApiRequest(ctx, `/api/feature-requests/${id}/visibility`, 'PUT', apiInput)
       return result.data || result
     } catch (error) {
       if (error instanceof UserError) {
         throw error
       }
-      logger.error('Error updating feature request status:', error)
-      throw new UserError('Failed to update feature request status')
+      logger.error('Error updating feature request visibility:', error)
+      throw new UserError('Failed to update feature request visibility')
+    }
+  },
+
+  updateFeatureRequestDisplayOrder: async(_, args, ctx: Context) => {
+    if (ctx.user.role !== 'admin') {
+      throw new UserError('Access denied: Admin role required')
+    }
+
+    try {
+      const { id, input } = args
+
+      if (typeof input.displayOrder !== 'number' || input.displayOrder < 0) {
+        throw new UserError('displayOrder must be a non-negative number')
+      }
+
+      const apiInput = {
+        displayOrder: input.displayOrder,
+      }
+
+      const result = await makeApiRequest(ctx, `/api/feature-requests/${id}/display-order`, 'PUT', apiInput)
+      return result.data || result
+    } catch (error) {
+      if (error instanceof UserError) {
+        throw error
+      }
+      logger.error('Error updating feature request display order:', error)
+      throw new UserError('Failed to update feature request display order')
     }
   },
 

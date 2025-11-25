@@ -8,7 +8,6 @@ import {
   testUser,
   adminUser,
   adminContext,
-  userContext,
   anonContext,
 } from '../../../tests/graphqlTestEnvironment'
 import * as moment from 'moment'
@@ -28,13 +27,17 @@ describe('modules/featureRequest/controller (queries)', () => {
       id: '550e8400-e29b-41d4-a716-446655440001',
       title: 'Add dark mode support',
       description: 'It would be great to have a dark mode option for the application.',
-      status: 'proposed',
+      status: 'under_review',
       userId: '', // Will be set to testUser.id after setup
       adminNotes: null,
       approvedBy: null,
       approvedAt: null,
       rejectedBy: null,
       rejectedAt: null,
+      displayOrder: 0,
+      isVisible: true,
+      likes: 0,
+      hasVoted: false,
       createdAt: currentTime,
       updatedAt: currentTime,
       deletedAt: null,
@@ -50,6 +53,10 @@ describe('modules/featureRequest/controller (queries)', () => {
       approvedAt: currentTime,
       rejectedBy: null,
       rejectedAt: null,
+      displayOrder: 1,
+      isVisible: true,
+      likes: 5,
+      hasVoted: false,
       createdAt: currentTime,
       updatedAt: currentTime,
       deletedAt: null,
@@ -58,13 +65,17 @@ describe('modules/featureRequest/controller (queries)', () => {
       id: '550e8400-e29b-41d4-a716-446655440003',
       title: 'Add mobile app',
       description: 'Create a mobile version of the application.',
-      status: 'in_development',
+      status: 'rejected',
       userId: '', // Will be set to adminUser.id after setup
-      adminNotes: 'Development started in Sprint 23',
-      approvedBy: '', // Will be set to adminUser.id after setup
-      approvedAt: currentTime,
-      rejectedBy: null,
-      rejectedAt: null,
+      adminNotes: 'Out of scope for now',
+      approvedBy: null,
+      approvedAt: null,
+      rejectedBy: '', // Will be set to adminUser.id after setup
+      rejectedAt: currentTime,
+      displayOrder: 2,
+      isVisible: false,
+      likes: 2,
+      hasVoted: false,
       createdAt: currentTime,
       updatedAt: currentTime,
       deletedAt: null,
@@ -95,7 +106,7 @@ describe('modules/featureRequest/controller (queries)', () => {
     FEATURE_REQUESTS[1].userId = testUser.id
     FEATURE_REQUESTS[1].approvedBy = adminUser.id
     FEATURE_REQUESTS[2].userId = adminUser.id
-    FEATURE_REQUESTS[2].approvedBy = adminUser.id
+    FEATURE_REQUESTS[2].rejectedBy = adminUser.id
 
     mockFetch.mockClear()
   })
@@ -147,42 +158,24 @@ describe('modules/featureRequest/controller (queries)', () => {
   describe('Query.publicFeatureRequests', () => {
     const queryPublicFeatureRequests = `query {
       publicFeatureRequests {
-        approved {
-          id
-          title
-          status
-        }
-        in_backlog {
-          id
-          title
-          status
-        }
-        in_development {
-          id
-          title
-          status
-        }
-        implemented {
-          id
-          title
-          status
-        }
+        id
+        title
+        description
+        status
+        likes
+        hasVoted
+        createdAt
       }
     }`
 
-    it('should return feature requests grouped by status', async() => {
-      const groupedRequests = {
-        approved: [FEATURE_REQUESTS[1]],
-        in_backlog: [],
-        in_development: [FEATURE_REQUESTS[2]],
-        implemented: [],
-      }
+    it('should return public feature requests', async() => {
+      const publicRequests = [FEATURE_REQUESTS[1]] // Only approved and visible
 
       // Mock the fetch response
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({
-          data: groupedRequests,
+          data: publicRequests,
         }),
       })
 
@@ -193,8 +186,8 @@ describe('modules/featureRequest/controller (queries)', () => {
         expect.any(Object)
       )
 
-      expect(result.approved).toHaveLength(1)
-      expect(result.in_development).toHaveLength(1)
+      expect(result).toHaveLength(1)
+      expect(result[0].title).toBe(FEATURE_REQUESTS[1].title)
     })
   })
 
@@ -240,7 +233,7 @@ describe('modules/featureRequest/controller (queries)', () => {
           queryFeatureRequest,
           { id: FEATURE_REQUESTS[0].id }
         )
-      ).rejects.toThrow('Access denied')
+      ).rejects.toThrow('Access denied: Admin role required')
     })
   })
 
@@ -281,7 +274,7 @@ describe('modules/featureRequest/controller (queries)', () => {
     it('should deny access to non-admin users', async() => {
       await expect(
         doQuery(queryAllFeatureRequests)
-      ).rejects.toThrow('Access denied')
+      ).rejects.toThrow('Access denied: Admin role required')
     })
   })
 
@@ -310,7 +303,7 @@ describe('modules/featureRequest/controller (queries)', () => {
     it('should deny access to non-admin users', async() => {
       await expect(
         doQuery(queryFeatureRequestsCount)
-      ).rejects.toThrow('Access denied')
+      ).rejects.toThrow('Access denied: Admin role required')
     })
   })
 })

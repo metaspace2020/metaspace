@@ -79,15 +79,6 @@ describe('modules/featureRequest/controller (mutations)', () => {
     }
   }`
 
-  const updateStatusMutation = `mutation($id: ID!, $input: UpdateFeatureRequestStatusInput!) {
-    updateFeatureRequestStatus(id: $id, input: $input) {
-      id
-      status
-      adminNotes
-      updatedAt
-    }
-  }`
-
   const deleteFeatureRequestMutation = `mutation($id: ID!) {
     deleteFeatureRequest(id: $id)
   }`
@@ -104,8 +95,12 @@ describe('modules/featureRequest/controller (mutations)', () => {
           id: '550e8400-e29b-41d4-a716-446655440001',
           title: input.title,
           description: input.description,
-          status: 'proposed',
+          status: 'under_review',
           userId: testUser.id,
+          displayOrder: 0,
+          isVisible: true,
+          likes: 0,
+          hasVoted: false,
           createdAt: currentTime,
           updatedAt: currentTime,
         },
@@ -132,7 +127,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
 
       expect(result.title).toBe(input.title)
       expect(result.description).toBe(input.description)
-      expect(result.status).toBe('proposed')
+      expect(result.status).toBe('under_review')
     })
 
     it('should require authentication', async() => {
@@ -273,7 +268,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
           approveFeatureRequestMutation,
           { id: featureRequestId, input }
         )
-      ).rejects.toThrow('Access denied')
+      ).rejects.toThrow('Access denied: Admin role required')
     })
 
     it('should handle approve without adminNotes', async() => {
@@ -405,7 +400,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
           rejectFeatureRequestMutation,
           { id: featureRequestId, input }
         )
-      ).rejects.toThrow('Access denied')
+      ).rejects.toThrow('Access denied: Admin role required')
     })
 
     it('should handle whitespace-only adminNotes', async() => {
@@ -415,116 +410,6 @@ describe('modules/featureRequest/controller (mutations)', () => {
       await expect(
         doQuery(
           rejectFeatureRequestMutation,
-          { id: featureRequestId, input },
-          { context: adminContext }
-        )
-      ).rejects.toThrow()
-    })
-  })
-
-  describe('Mutation.updateFeatureRequestStatus', () => {
-    it('should update feature request status', async() => {
-      const featureRequestId = '550e8400-e29b-41d4-a716-446655440002'
-      const input = {
-        status: 'in_development',
-        adminNotes: 'Development started in Sprint 23',
-      }
-
-      const expectedResponse = {
-        data: {
-          id: featureRequestId,
-          status: input.status,
-          adminNotes: input.adminNotes,
-          updatedAt: currentTime,
-        },
-      }
-
-      // Mock the fetch response
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(expectedResponse),
-      })
-
-      const result = await doQuery(
-        updateStatusMutation,
-        { id: featureRequestId, input },
-        { context: adminContext }
-      )
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        `https://test-api.metaspace.example/api/feature-requests/${featureRequestId}/status`,
-        expect.objectContaining({
-          method: 'PUT',
-          body: JSON.stringify(input),
-        })
-      )
-
-      expect(result.status).toBe(input.status)
-      expect(result.adminNotes).toBe(input.adminNotes)
-    })
-
-    it('should deny access to non-admin users', async() => {
-      const featureRequestId = '550e8400-e29b-41d4-a716-446655440002'
-      const input = {
-        status: 'in_development',
-      }
-
-      await expect(
-        doQuery(
-          updateStatusMutation,
-          { id: featureRequestId, input }
-        )
-      ).rejects.toThrow('Access denied')
-    })
-
-    it('should handle updateStatus without adminNotes', async() => {
-      const featureRequestId = '550e8400-e29b-41d4-a716-446655440002'
-      const input = { status: 'in_backlog' }
-
-      const expectedResponse = {
-        data: {
-          id: featureRequestId,
-          status: input.status,
-          updatedAt: currentTime,
-        },
-      }
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve(expectedResponse),
-      })
-
-      const result = await doQuery(
-        updateStatusMutation,
-        { id: featureRequestId, input },
-        { context: adminContext }
-      )
-
-      expect(result.status).toBe(input.status)
-    })
-
-    it('should handle API error', async() => {
-      const featureRequestId = '550e8400-e29b-41d4-a716-446655440001'
-      const input = { status: 'in_backlog' }
-
-      mockFetch.mockRejectedValueOnce(new Error('API error'))
-
-      await expect(
-        doQuery(
-          updateStatusMutation,
-          { id: featureRequestId, input },
-          { context: adminContext }
-        )
-      ).rejects.toThrow('Failed to update feature request status')
-    })
-
-    it('should handle missing status', async() => {
-      const featureRequestId = '550e8400-e29b-41d4-a716-446655440001'
-      const input = { status: null } as any
-
-      await expect(
-        doQuery(
-          updateStatusMutation,
           { id: featureRequestId, input },
           { context: adminContext }
         )
@@ -567,7 +452,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
           deleteFeatureRequestMutation,
           { id: featureRequestId }
         )
-      ).rejects.toThrow('Access denied')
+      ).rejects.toThrow('Access denied: Admin role required')
     })
 
     it('should handle API errors', async() => {

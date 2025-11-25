@@ -1,5 +1,4 @@
-import { defineComponent, computed, reactive, ref, inject, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { defineComponent, computed, reactive, ref, inject } from 'vue'
 import { currentUserRoleQuery } from '../../api/user'
 import { useQuery, DefaultApolloClient } from '@vue/apollo-composable'
 import './FeatureRequestPage.scss'
@@ -11,12 +10,14 @@ import {
   ElDialog,
   ElInput,
   ElNotification,
-  ElSelect,
-  ElOption,
   ElIcon,
-  ElDropdown,
-  ElDropdownMenu,
-  ElDropdownItem,
+  ElInputNumber,
+  ElSwitch,
+  ElSkeleton,
+  ElRadioGroup,
+  ElRadio,
+  ElAlert,
+  ElPagination,
 } from '../../lib/element-plus'
 import {
   myFeatureRequestsQuery,
@@ -24,16 +25,19 @@ import {
   createFeatureRequestMutation,
   approveFeatureRequestMutation,
   rejectFeatureRequestMutation,
-  updateFeatureRequestStatusMutation,
+  toggleVoteFeatureRequestMutation,
+  updateFeatureRequestVisibilityMutation,
+  updateFeatureRequestDisplayOrderMutation,
   FeatureRequest,
   FeatureRequestStatus,
 } from '../../api/featureRequest'
 import { Fragment } from 'vue'
-import { Loading, Plus } from '@element-plus/icons-vue'
+import { Loading, Plus, InfoFilled } from '@element-plus/icons-vue'
+import ArrowUpIcon from '../../assets/inline/refactoring-ui/icon-arrow-thick-up.svg'
 
 interface DialogState {
   visible: boolean
-  mode: 'create' | 'detail' | 'approve' | 'reject' | 'updateStatus'
+  mode: 'create' | 'detail' | 'approve' | 'reject'
   title: string
   description: string
   selectedRequest: FeatureRequest | null
@@ -44,24 +48,17 @@ interface DialogState {
     adminNotes: string
   }
   adminNotes: string
-  newStatus: FeatureRequestStatus | null
+  isProUser: string // 'yes' | 'no' | ''
+}
+
+interface LoadingState {
+  [key: string]: boolean // key is request.id + action type
 }
 
 export default defineComponent({
   name: 'FeatureRequestPage',
   setup() {
-    const route = useRoute()
-    const router = useRouter()
-    
-    // Initialize activeTab from query parameter or default to 'table'
-    const initialView = route.query.view === 'board' ? 'board' : 'table'
-    const activeTab = ref<'table' | 'board'>(initialView)
     const apolloClient = inject(DefaultApolloClient)
-    
-    // Watch for tab changes and update query parameter
-    watch(activeTab, (newTab) => {
-      router.replace({ query: { ...route.query, view: newTab } })
-    })
 
     const { result: currentUserResult, loading: currentUserLoading } = useQuery<any>(currentUserRoleQuery, null, {
       fetchPolicy: 'network-only',
@@ -77,17 +74,29 @@ export default defineComponent({
     } = useQuery<{ myFeatureRequests: FeatureRequest[] }>(myFeatureRequestsQuery, null, {
       fetchPolicy: 'network-only',
     })
-    const myRequests = computed(() => myRequestsResult.value?.myFeatureRequests || [])
+    const allMyRequests = computed(() => myRequestsResult.value?.myFeatureRequests || [])
+    const myRequestsCount = computed(() => allMyRequests.value.length)
+    const myRequests = computed(() => {
+      const start = (myRequestsPage.value - 1) * myRequestsPageSize.value
+      const end = start + myRequestsPageSize.value
+      return allMyRequests.value.slice(start, end)
+    })
 
     // Query public feature requests
     const {
       result: publicRequestsResult,
       loading: publicRequestsLoading,
       refetch: refetchPublicRequests,
-    } = useQuery<any>(publicFeatureRequestsQuery, null, {
+    } = useQuery<{ publicFeatureRequests: FeatureRequest[] }>(publicFeatureRequestsQuery, null, {
       fetchPolicy: 'network-only',
     })
-    const publicRequests = computed(() => publicRequestsResult.value?.publicFeatureRequests || null)
+    const allPublicRequests = computed(() => publicRequestsResult.value?.publicFeatureRequests || [])
+    const publicRequestsCount = computed(() => allPublicRequests.value.length)
+    const publicRequests = computed(() => {
+      const start = (publicRequestsPage.value - 1) * publicRequestsPageSize.value
+      const end = start + publicRequestsPageSize.value
+      return allPublicRequests.value.slice(start, end)
+    })
 
     // Dialog state
     const dialogState = reactive<DialogState>({
@@ -103,8 +112,22 @@ export default defineComponent({
         adminNotes: '',
       },
       adminNotes: '',
-      newStatus: null,
+      isProUser: '',
     })
+
+    // Loading state for individual actions
+    const loadingStates = reactive<LoadingState>({})
+
+    // Skeleton loading state
+    const skeletonLoading = ref(false)
+
+    // Pagination state for My Requests
+    const myRequestsPage = ref(1)
+    const myRequestsPageSize = ref(10)
+
+    // Pagination state for Public Requests
+    const publicRequestsPage = ref(1)
+    const publicRequestsPageSize = ref(10)
 
     const openCreateDialog = () => {
       dialogState.mode = 'create'
@@ -113,7 +136,7 @@ export default defineComponent({
       dialogState.selectedRequest = null
       dialogState.errors = { title: '', description: '', adminNotes: '' }
       dialogState.adminNotes = ''
-      dialogState.newStatus = null
+      dialogState.isProUser = ''
       dialogState.visible = true
     }
 
@@ -124,7 +147,6 @@ export default defineComponent({
       dialogState.selectedRequest = request
       dialogState.errors = { title: '', description: '', adminNotes: '' }
       dialogState.adminNotes = request.adminNotes || ''
-      dialogState.newStatus = null
       dialogState.visible = true
     }
 
@@ -135,7 +157,6 @@ export default defineComponent({
       dialogState.selectedRequest = request
       dialogState.errors = { title: '', description: '', adminNotes: '' }
       dialogState.adminNotes = ''
-      dialogState.newStatus = null
       dialogState.visible = true
     }
 
@@ -146,18 +167,6 @@ export default defineComponent({
       dialogState.selectedRequest = request
       dialogState.errors = { title: '', description: '', adminNotes: '' }
       dialogState.adminNotes = ''
-      dialogState.newStatus = null
-      dialogState.visible = true
-    }
-
-    const openUpdateStatusDialog = (request: FeatureRequest) => {
-      dialogState.mode = 'updateStatus'
-      dialogState.title = request.title
-      dialogState.description = request.description
-      dialogState.selectedRequest = request
-      dialogState.errors = { title: '', description: '', adminNotes: '' }
-      dialogState.adminNotes = request.adminNotes || ''
-      dialogState.newStatus = request.status
       dialogState.visible = true
     }
 
@@ -168,7 +177,7 @@ export default defineComponent({
       dialogState.selectedRequest = null
       dialogState.errors = { title: '', description: '', adminNotes: '' }
       dialogState.adminNotes = ''
-      dialogState.newStatus = null
+      dialogState.isProUser = ''
     }
 
     const validateForm = (): boolean => {
@@ -198,14 +207,6 @@ export default defineComponent({
       if (dialogState.mode === 'reject') {
         if (!dialogState.adminNotes.trim()) {
           dialogState.errors.adminNotes = 'Admin notes are required when rejecting a request'
-          isValid = false
-        }
-      }
-
-      // Validate status for updateStatus mode
-      if (dialogState.mode === 'updateStatus') {
-        if (!dialogState.newStatus) {
-          dialogState.errors.adminNotes = 'Please select a status'
           isValid = false
         }
       }
@@ -250,7 +251,7 @@ export default defineComponent({
           })
 
           closeDialog()
-          refetchMyRequests()
+          await refetchMyRequests()
         } else if (dialogState.mode === 'approve' && dialogState.selectedRequest) {
           await apolloClient.mutate({
             mutation: approveFeatureRequestMutation,
@@ -270,8 +271,7 @@ export default defineComponent({
           })
 
           closeDialog()
-          refetchMyRequests()
-          refetchPublicRequests()
+          await Promise.all([refetchMyRequests(), refetchPublicRequests()])
         } else if (dialogState.mode === 'reject' && dialogState.selectedRequest) {
           await apolloClient.mutate({
             mutation: rejectFeatureRequestMutation,
@@ -291,30 +291,7 @@ export default defineComponent({
           })
 
           closeDialog()
-          refetchMyRequests()
-          refetchPublicRequests()
-        } else if (dialogState.mode === 'updateStatus' && dialogState.selectedRequest && dialogState.newStatus) {
-          await apolloClient.mutate({
-            mutation: updateFeatureRequestStatusMutation,
-            variables: {
-              id: dialogState.selectedRequest.id,
-              input: {
-                status: dialogState.newStatus,
-                adminNotes: dialogState.adminNotes.trim() || undefined,
-              },
-            },
-          })
-
-          ElNotification({
-            title: 'Success',
-            message: 'Feature request status updated successfully',
-            type: 'success',
-            duration: 3000,
-          })
-
-          closeDialog()
-          refetchMyRequests()
-          refetchPublicRequests()
+          await Promise.all([refetchMyRequests(), refetchPublicRequests()])
         }
       } catch (error: any) {
         const errorMessage =
@@ -332,12 +309,8 @@ export default defineComponent({
 
     const getStatusText = (status: FeatureRequestStatus): string => {
       const statusMap: Record<FeatureRequestStatus, string> = {
-        [FeatureRequestStatus.PROPOSED]: 'Proposed',
         [FeatureRequestStatus.UNDER_REVIEW]: 'Under Review',
         [FeatureRequestStatus.APPROVED]: 'Approved',
-        [FeatureRequestStatus.IN_BACKLOG]: 'In Backlog',
-        [FeatureRequestStatus.IN_DEVELOPMENT]: 'In Development',
-        [FeatureRequestStatus.IMPLEMENTED]: 'Implemented',
         [FeatureRequestStatus.REJECTED]: 'Rejected',
       }
       return statusMap[status] || status
@@ -345,15 +318,122 @@ export default defineComponent({
 
     const getStatusType = (status: FeatureRequestStatus): string => {
       const statusTypeMap: Record<FeatureRequestStatus, string> = {
-        [FeatureRequestStatus.PROPOSED]: 'info',
         [FeatureRequestStatus.UNDER_REVIEW]: 'warning',
         [FeatureRequestStatus.APPROVED]: 'success',
-        [FeatureRequestStatus.IN_BACKLOG]: '',
-        [FeatureRequestStatus.IN_DEVELOPMENT]: 'primary',
-        [FeatureRequestStatus.IMPLEMENTED]: 'success',
         [FeatureRequestStatus.REJECTED]: 'danger',
       }
       return statusTypeMap[status] || ''
+    }
+
+    const handleVote = async (request: FeatureRequest) => {
+      if (!apolloClient) {
+        ElNotification({
+          title: 'Error',
+          message: 'Application client not available',
+          type: 'error',
+          duration: 5000,
+        })
+        return
+      }
+
+      const loadingKey = `vote-${request.id}`
+      if (loadingStates[loadingKey]) return
+
+      loadingStates[loadingKey] = true
+      skeletonLoading.value = true
+
+      try {
+        await apolloClient.mutate({
+          mutation: toggleVoteFeatureRequestMutation,
+          variables: {
+            id: request.id,
+          },
+        })
+
+        // Silently refetch without notification
+        await Promise.all([refetchMyRequests(), refetchPublicRequests()])
+      } catch (error: any) {
+        const errorMessage = error.message || 'Failed to toggle vote'
+        ElNotification({
+          title: 'Error',
+          message: errorMessage,
+          type: 'error',
+          duration: 5000,
+        })
+      } finally {
+        loadingStates[loadingKey] = false
+        skeletonLoading.value = false
+      }
+    }
+
+    const handleVisibilityToggle = async (request: FeatureRequest) => {
+      if (!apolloClient) return
+
+      const loadingKey = `visibility-${request.id}`
+      if (loadingStates[loadingKey]) return
+
+      loadingStates[loadingKey] = true
+      skeletonLoading.value = true
+
+      try {
+        await apolloClient.mutate({
+          mutation: updateFeatureRequestVisibilityMutation,
+          variables: {
+            id: request.id,
+            input: {
+              isVisible: !request.isVisible,
+            },
+          },
+        })
+
+        // Silently refetch
+        await Promise.all([refetchMyRequests(), refetchPublicRequests()])
+      } catch (error: any) {
+        ElNotification({
+          title: 'Error',
+          message: error.message || 'Failed to update visibility',
+          type: 'error',
+          duration: 5000,
+        })
+      } finally {
+        loadingStates[loadingKey] = false
+        skeletonLoading.value = false
+      }
+    }
+
+    const handleDisplayOrderChange = async (request: FeatureRequest, newOrder: number) => {
+      if (!apolloClient || newOrder < 0) return
+
+      const loadingKey = `order-${request.id}`
+      if (loadingStates[loadingKey]) return
+
+      loadingStates[loadingKey] = true
+      skeletonLoading.value = true
+
+      try {
+        await apolloClient.mutate({
+          mutation: updateFeatureRequestDisplayOrderMutation,
+          variables: {
+            id: request.id,
+            input: {
+              displayOrder: newOrder,
+            },
+          },
+        })
+
+        // Silently refetch
+        await Promise.all([refetchMyRequests(), refetchPublicRequests()])
+      } catch (error: any) {
+        ElNotification({
+          title: 'Error',
+          message: error.message || 'Failed to update display order',
+          type: 'error',
+          duration: 5000,
+        })
+      } finally {
+        loadingStates[loadingKey] = false
+        skeletonLoading.value = false
+      }
     }
 
     const formatDate = (dateString: string): string => {
@@ -366,29 +446,34 @@ export default defineComponent({
       })
     }
 
-    const renderTable = (requests: FeatureRequest[], title: string, showStatus: boolean = true) => {
+    const renderTable = (
+      requests: FeatureRequest[],
+      title: string,
+      showStatus: boolean = true,
+      showVoting: boolean = false
+    ) => {
       if (!requests || requests.length === 0) {
         return (
           <div class="section-empty">
-            <p>No feature requests in this category</p>
+            <p>Request a new feature to get started.</p>
           </div>
         )
       }
 
-      return (
+      const tableContent = (
         <ElTable data={requests} stripe border class="feature-requests-table">
-          <ElTableColumn prop="title" label="Name" minWidth="50">
+          <ElTableColumn prop="title" label="Title" minWidth="180">
             {{
               default: ({ row }: { row: FeatureRequest }) => <span class="request-title">{row.title}</span>,
             }}
           </ElTableColumn>
-          <ElTableColumn prop="userId" label="Reporter" width="100">
+          <ElTableColumn prop="description" label="Description" minWidth="200">
             {{
-              default: () => <span class="request-reporter">User</span>,
+              default: ({ row }: { row: FeatureRequest }) => <span class="request-description">{row.description}</span>,
             }}
           </ElTableColumn>
           {showStatus && (
-            <ElTableColumn prop="status" label="Status" width="140">
+            <ElTableColumn prop="status" label="Status" width="120">
               {{
                 default: ({ row }: { row: FeatureRequest }) => (
                   <ElTag type={getStatusType(row.status) as any}>{getStatusText(row.status)}</ElTag>
@@ -396,166 +481,96 @@ export default defineComponent({
               }}
             </ElTableColumn>
           )}
-          <ElTableColumn prop="createdAt" label="Date" width="120">
+          {showVoting && (
+            <ElTableColumn prop="likes" label="Votes" width="100" align="center">
+              {{
+                default: ({ row }: { row: FeatureRequest }) => {
+                  const loadingKey = `vote-${row.id}`
+                  return (
+                    <div class="votes-cell">
+                      <ElButton
+                        link
+                        type={row.hasVoted ? 'primary' : 'default'}
+                        onClick={() => handleVote(row)}
+                        loading={loadingStates[loadingKey]}
+                        class="vote-button"
+                      >
+                        <ArrowUpIcon width="20" height="20" fill={row.hasVoted ? '#FFB65D' : 'lightgray'} />
+                        <span class="vote-count">{row.likes}</span>
+                      </ElButton>
+                    </div>
+                  )
+                },
+              }}
+            </ElTableColumn>
+          )}
+          {isAdmin.value && (
+            <ElTableColumn prop="createdAt" label="Date" width="120">
+              {{
+                default: ({ row }: { row: FeatureRequest }) => <span>{formatDate(row.createdAt)}</span>,
+              }}
+            </ElTableColumn>
+          )}
+          <ElTableColumn label="Actions" width={isAdmin.value ? '360' : '100'} fixed="right">
             {{
-              default: ({ row }: { row: FeatureRequest }) => <span>{formatDate(row.createdAt)}</span>,
-            }}
-          </ElTableColumn>
-          <ElTableColumn prop="description" label="Description" maxWidth="250">
-            {{
-              default: ({ row }: { row: FeatureRequest }) => <span class="request-description">{row.description}</span>,
-            }}
-          </ElTableColumn>
-          <ElTableColumn label="Operations" width="260" fixed="right">
-            {{
-              default: ({ row }: { row: FeatureRequest }) => (
-                <div class="operations">
-                  <ElButton link size="small" onClick={() => openDetailDialog(row)}>
-                    Detail
-                  </ElButton>
-                  {isAdmin.value && (
-                    <Fragment>
-                      {row.status === FeatureRequestStatus.PROPOSED && (
-                        <Fragment>
-                          <ElButton link size="small" class="approve-btn" onClick={() => openApproveDialog(row)}>
-                            Approve
-                          </ElButton>
-                          <ElButton link size="small" class="reject-btn" onClick={() => openRejectDialog(row)}>
-                            Reject
-                          </ElButton>
-                        </Fragment>
-                      )}
-                      {(row.status === FeatureRequestStatus.APPROVED ||
-                        row.status === FeatureRequestStatus.IN_BACKLOG ||
-                        row.status === FeatureRequestStatus.IN_DEVELOPMENT) && (
-                        <ElButton link size="small" onClick={() => openUpdateStatusDialog(row)}>
-                          Edit
-                        </ElButton>
-                      )}
-                    </Fragment>
-                  )}
-                </div>
-              ),
+              default: ({ row }: { row: FeatureRequest }) => {
+                const visibilityLoadingKey = `visibility-${row.id}`
+                const orderLoadingKey = `order-${row.id}`
+
+                return (
+                  <div class="operations">
+                    <ElButton link size="small" onClick={() => openDetailDialog(row)}>
+                      Details
+                    </ElButton>
+                    {isAdmin.value && (
+                      <Fragment>
+                        {row.status === FeatureRequestStatus.UNDER_REVIEW && (
+                          <Fragment>
+                            <ElButton link size="small" class="approve-btn" onClick={() => openApproveDialog(row)}>
+                              Approve
+                            </ElButton>
+                            <ElButton link size="small" class="reject-btn" onClick={() => openRejectDialog(row)}>
+                              Reject
+                            </ElButton>
+                          </Fragment>
+                        )}
+                        {row.status === FeatureRequestStatus.APPROVED && (
+                          <Fragment>
+                            <ElSwitch
+                              modelValue={row.isVisible}
+                              onChange={() => handleVisibilityToggle(row)}
+                              activeText="Visible"
+                              inactiveText="Hidden"
+                              size="small"
+                              loading={loadingStates[visibilityLoadingKey]}
+                              class="visibility-switch"
+                            />
+                            <ElInputNumber
+                              modelValue={row.displayOrder}
+                              onChange={(val: number | null) => val !== null && handleDisplayOrderChange(row, val)}
+                              min={0}
+                              step={1}
+                              size="small"
+                              controls-position="right"
+                              class="order-input"
+                              disabled={loadingStates[orderLoadingKey]}
+                            />
+                          </Fragment>
+                        )}
+                      </Fragment>
+                    )}
+                  </div>
+                )
+              },
             }}
           </ElTableColumn>
         </ElTable>
       )
-    }
-
-    const renderFeatureCard = (request: FeatureRequest) => {
-      const dropdownItems = []
-
-      // Always show Detail
-      dropdownItems.push(<ElDropdownItem onClick={() => openDetailDialog(request)}>View Details</ElDropdownItem>)
-
-      // Admin actions
-      if (isAdmin.value) {
-        if (request.status === FeatureRequestStatus.PROPOSED) {
-          dropdownItems.push(
-            <ElDropdownItem onClick={() => openApproveDialog(request)}>Approve</ElDropdownItem>,
-            <ElDropdownItem onClick={() => openRejectDialog(request)}>Reject</ElDropdownItem>
-          )
-        } else if (
-          request.status === FeatureRequestStatus.APPROVED ||
-          request.status === FeatureRequestStatus.IN_BACKLOG ||
-          request.status === FeatureRequestStatus.IN_DEVELOPMENT
-        ) {
-          dropdownItems.push(
-            <ElDropdownItem onClick={() => openUpdateStatusDialog(request)}>Update Status</ElDropdownItem>
-          )
-        }
-      }
 
       return (
-        <div class="feature-card">
-          <div class="card-header">
-            <h3 class="card-title">{request.title}</h3>
-            <ElDropdown trigger="click" placement="bottom-end">
-              {{
-                default: () => (
-                  <button class="card-menu-btn">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <circle cx="8" cy="2" r="1.5" />
-                      <circle cx="8" cy="8" r="1.5" />
-                      <circle cx="8" cy="14" r="1.5" />
-                    </svg>
-                  </button>
-                ),
-                dropdown: () => <ElDropdownMenu>{dropdownItems}</ElDropdownMenu>,
-              }}
-            </ElDropdown>
-          </div>
-          <p class="card-description">{request.description}</p>
-          <div class="card-footer">
-            <ElTag type={getStatusType(request.status) as any} size="small">
-              {getStatusText(request.status)}
-            </ElTag>
-            <div class="card-meta">
-              <div class="card-avatar" title="User">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 8a3 3 0 100-6 3 3 0 000 6zM8 10c-4 0-6 2-6 4v1h12v-1c0-2-2-4-6-4z" />
-                </svg>
-              </div>
-              <span class="card-date">{formatDate(request.createdAt)}</span>
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    const renderBoardColumn = (title: string, requests: FeatureRequest[], showAddButton: boolean = false) => {
-      return (
-        <div class="board-column">
-          <div class="column-header">
-            <h3 class="column-title">{title}</h3>
-            <span class="column-count">{requests.length}</span>
-          </div>
-          <div class="column-content">
-            {requests.length === 0 ? (
-          <div class="column-empty">
-            {showAddButton ? (
-              <ElButton type="primary" onClick={openCreateDialog} class="add-card-btn">
-                <ElIcon class="mr-2">
-                  <Plus />
-                </ElIcon>
-                Request new feature
-              </ElButton>
-            ) : (
-              <p>No items</p>
-            )}
-          </div>
-            ) : (
-              <Fragment>
-                {requests.map((request) => renderFeatureCard(request))}
-                {showAddButton && (
-                  <ElButton type="primary" onClick={openCreateDialog} class="add-card-btn-small">
-                    <ElIcon class="mr-2">
-                      <Plus />
-                    </ElIcon>
-                    Request new feature
-                  </ElButton>
-                )}
-              </Fragment>
-            )}
-          </div>
-        </div>
-      )
-    }
-
-    const renderBoardView = () => {
-      // Group requests by column
-      const myRequestsData = myRequests.value || []
-      const backlogData = publicRequests.value?.in_backlog || []
-      const developmentData = publicRequests.value?.in_development || []
-      const implementedData = publicRequests.value?.implemented || []
-
-      return (
-        <div class="board-view">
-          {renderBoardColumn(isAdmin.value ? 'All Requests' : 'My Requests', myRequestsData, true)}
-          {renderBoardColumn('Backlog', backlogData)}
-          {renderBoardColumn('Development', developmentData)}
-          {renderBoardColumn('Implemented', implementedData)}
-        </div>
+        <ElSkeleton loading={skeletonLoading.value} rows={5} animated>
+          {tableContent}
+        </ElSkeleton>
       )
     }
 
@@ -563,11 +578,6 @@ export default defineComponent({
       if (!currentUserLoading.value && !currentUser.value) {
         return (
           <div class="feature-request-page">
-            <div class="page-header">
-              <div class="header-content">
-                <h1 class="page-title">Feature Requests</h1>
-              </div>
-            </div>
             <div class="page-content">
               <div class="login-prompt">You must be logged in to view this page</div>
             </div>
@@ -579,74 +589,59 @@ export default defineComponent({
 
       return (
         <div class="feature-request-page">
-          <div class="page-header">
-            <div class="header-content">
-              <div class="view-tabs">
-                <button
-                  class={`tab-button ${activeTab.value === 'table' ? 'active' : ''}`}
-                  onClick={() => (activeTab.value = 'table')}
-                >
-                  Table
-                </button>
-                <button
-                  class={`tab-button ${activeTab.value === 'board' ? 'active' : ''}`}
-                  onClick={() => (activeTab.value = 'board')}
-                >
-                  Board
-                </button>
+          
+            <div class="page-content">
+              {/* Public Approved Feature Requests Section */}
+              <div class="section">
+                <h2 class="section-title">Community Requests</h2>
+                <p class="section-description">Vote for the features you'd like to see implemented</p>
+                {renderTable(publicRequests.value, 'Community Requests', false, true)}
+
+                {/* Public Requests Pagination */}
+                {publicRequestsCount.value > publicRequestsPageSize.value || publicRequestsPage.value !== 1 ? (
+                  <div class="pagination-container">
+                    <ElPagination
+                      total={publicRequestsCount.value}
+                      pageSize={publicRequestsPageSize.value}
+                      currentPage={publicRequestsPage.value}
+                      onCurrentChange={(val: number) => {
+                        publicRequestsPage.value = val
+                      }}
+                      layout="prev,pager,next"
+                    />
+                  </div>
+                ) : null}
+              </div>
+
+              {/* My Feature Requests Section */}
+              <div class="section">
+                <div class="section-header">
+                  <h2 class="section-title">{currentUser.value?.role === 'admin' ? 'All Requests' : 'My Requests'}</h2>
+                  <ElButton type="primary" onClick={openCreateDialog} class="section-add-btn">
+                    <ElIcon class="mr-2">
+                      <Plus />
+                    </ElIcon>
+                    Request New Feature
+                  </ElButton>
+                </div>
+                {renderTable(myRequests.value, 'My Requests', true, false)}
+
+                {/* My Requests Pagination */}
+                {myRequestsCount.value > myRequestsPageSize.value || myRequestsPage.value !== 1 ? (
+                  <div class="pagination-container">
+                    <ElPagination
+                      total={myRequestsCount.value}
+                      pageSize={myRequestsPageSize.value}
+                      currentPage={myRequestsPage.value}
+                      onCurrentChange={(val: number) => {
+                        myRequestsPage.value = val
+                      }}
+                      layout="prev,pager,next"
+                    />
+                  </div>
+                ) : null}
               </div>
             </div>
-          </div>
-
-          {loading ? (
-            <div class="loading-container">
-              <ElIcon class="is-loading">
-                <Loading />
-              </ElIcon>
-            </div>
-          ) : (
-            <div class="page-content">
-              {activeTab.value === 'table' && (
-                <Fragment>
-                  {/* My Feature Requests Section */}
-                  <div class="section">
-                    <div class="section-header">
-                      <h2 class="section-title">
-                        {currentUser.value?.role === 'admin' ? 'All feature requests' : 'My feature requests'}
-                      </h2>
-                      <ElButton type="primary" onClick={openCreateDialog} class="section-add-btn">
-                        <ElIcon class="mr-2">
-                          <Plus />
-                        </ElIcon>
-                        Request new feature
-                      </ElButton>
-                    </div>
-                    {renderTable(myRequests.value, 'My feature requests', true)}
-                  </div>
-
-                  {/* Backlog Section */}
-                  <div class="section">
-                    <h2 class="section-title">Backlog</h2>
-                    {renderTable(publicRequests.value?.in_backlog || [], 'Backlog', false)}
-                  </div>
-
-                  {/* Development Section */}
-                  <div class="section">
-                    <h2 class="section-title">Development</h2>
-                    {renderTable(publicRequests.value?.in_development || [], 'Development', false)}
-                  </div>
-
-                  {/* Implemented Section */}
-                  <div class="section">
-                    <h2 class="section-title">Implemented</h2>
-                    {renderTable(publicRequests.value?.implemented || [], 'Implemented', false)}
-                  </div>
-                </Fragment>
-              )}
-
-              {activeTab.value === 'board' && renderBoardView()}
-            </div>
-          )}
 
           {/* Create/Edit/Detail Dialog */}
           <ElDialog
@@ -659,8 +654,6 @@ export default defineComponent({
                 ? 'Approve Feature Request'
                 : dialogState.mode === 'reject'
                 ? 'Reject Feature Request'
-                : dialogState.mode === 'updateStatus'
-                ? 'Update Feature Request Status'
                 : 'Feature Request Details'
             }
             width="600px"
@@ -753,6 +746,46 @@ export default defineComponent({
                 </div>
               )}
 
+              {/* Pro User Question - only for create mode */}
+              {dialogState.mode === 'create' && (
+                <div class="form-group">
+                  <label class="form-label">Are you a METASPACE Pro user?</label>
+                  <div class="flex items-center gap-2">
+                    <div class="flex flex-row w-[200px]">
+                      <ElRadioGroup
+                        modelValue={dialogState.isProUser}
+                        onUpdate:modelValue={(val: string) => {
+                          dialogState.isProUser = val
+                        }}
+                        disabled={dialogState.loading}
+                      >
+                        <ElRadio label="yes">Yes</ElRadio>
+                        <ElRadio label="no">No</ElRadio>
+                      </ElRadioGroup>
+                    </div>
+                    <ElAlert
+                      type="info"
+                      closable={false}
+                      class={`${dialogState.isProUser === 'no' ? 'visible' : 'invisible'}`}
+                    >
+                      {{
+                        default: () => (
+                          <span class="flex items-center gap-2 text-md">
+                            <ElIcon size="16" color="mr-2">
+                              <InfoFilled />
+                            </ElIcon>
+                            Pro users receive prioritized feature requests.{' '}
+                            <a href="/plans" target="_blank" rel="noopener">
+                              View Pro plans
+                            </a>
+                          </span>
+                        ),
+                      }}
+                    </ElAlert>
+                  </div>
+                </div>
+              )}
+
               {/* Description display - for all other modes */}
               {dialogState.mode !== 'create' && (
                 <div class="form-group">
@@ -773,34 +806,8 @@ export default defineComponent({
                 </div>
               )}
 
-              {/* Status selector - for updateStatus mode */}
-              {dialogState.mode === 'updateStatus' && (
-                <div class="form-group">
-                  <label class="form-label">
-                    Status<span class="required">*</span>
-                  </label>
-                  <ElSelect
-                    modelValue={dialogState.newStatus}
-                    onUpdate:modelValue={(val: FeatureRequestStatus) => {
-                      dialogState.newStatus = val
-                      if (dialogState.errors.adminNotes) dialogState.errors.adminNotes = ''
-                    }}
-                    placeholder="Select status"
-                    class="w-full"
-                    disabled={dialogState.loading}
-                  >
-                    <ElOption label="Approved" value={FeatureRequestStatus.APPROVED} />
-                    <ElOption label="In Backlog" value={FeatureRequestStatus.IN_BACKLOG} />
-                    <ElOption label="In Development" value={FeatureRequestStatus.IN_DEVELOPMENT} />
-                    <ElOption label="Implemented" value={FeatureRequestStatus.IMPLEMENTED} />
-                  </ElSelect>
-                </div>
-              )}
-
-              {/* Admin notes field - for approve, reject, and updateStatus modes */}
-              {(dialogState.mode === 'approve' ||
-                dialogState.mode === 'reject' ||
-                dialogState.mode === 'updateStatus') && (
+              {/* Admin notes field - for approve and reject modes */}
+              {(dialogState.mode === 'approve' || dialogState.mode === 'reject') && (
                 <div class="form-group">
                   <label class="form-label">
                     Admin Notes{dialogState.mode === 'reject' && <span class="required">*</span>}
@@ -823,16 +830,26 @@ export default defineComponent({
                 </div>
               )}
 
-              {/* Admin notes display - for detail mode */}
-              {dialogState.mode === 'detail' && dialogState.selectedRequest?.adminNotes && (
+              {/* Votes display - for detail mode */}
+              {dialogState.mode === 'detail' && dialogState.selectedRequest && (
                 <div class="form-group">
-                  <label class="form-label">Admin Notes</label>
-                  <div class="detail-text admin-notes">{dialogState.selectedRequest.adminNotes}</div>
+                  <label class="form-label">Votes</label>
+                  <div class="detail-text">{dialogState.selectedRequest.likes} votes</div>
                 </div>
               )}
 
-              {/* Created date - for detail mode */}
-              {dialogState.mode === 'detail' && dialogState.selectedRequest && (
+              {/* Admin notes display - for detail mode (admin or own request) */}
+              {dialogState.mode === 'detail' &&
+                dialogState.selectedRequest?.adminNotes &&
+                (isAdmin.value || dialogState.selectedRequest.userId === currentUser.value?.id) && (
+                  <div class="form-group">
+                    <label class="form-label">Admin Notes</label>
+                    <div class="detail-text admin-notes">{dialogState.selectedRequest.adminNotes}</div>
+                  </div>
+                )}
+
+              {/* Created date - for detail mode (admin only) */}
+              {dialogState.mode === 'detail' && dialogState.selectedRequest && isAdmin.value && (
                 <div class="form-group">
                   <label class="form-label">Created At</label>
                   <div class="detail-text">{formatDate(dialogState.selectedRequest.createdAt)}</div>

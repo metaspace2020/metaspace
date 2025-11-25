@@ -9,18 +9,18 @@ type FeatureRequest {
   approvedAt: String
   rejectedBy: ID
   rejectedAt: String
+  displayOrder: Int!
+  isVisible: Boolean!
+  likes: Int!
+  hasVoted: Boolean!
   createdAt: String!
   updatedAt: String!
   deletedAt: String
 }
 
 enum FeatureRequestStatus {
-  proposed
   under_review
   approved
-  in_backlog
-  in_development
-  implemented
   rejected
 }
 
@@ -43,11 +43,6 @@ input CreateFeatureRequestInput {
   description: String!
 }
 
-input UpdateFeatureRequestStatusInput {
-  status: FeatureRequestStatus!
-  adminNotes: String
-}
-
 input ApproveFeatureRequestInput {
   adminNotes: String
 }
@@ -56,17 +51,18 @@ input RejectFeatureRequestInput {
   adminNotes: String!
 }
 
-type FeatureRequestsByStatus {
-  approved: [FeatureRequest!]
-  in_backlog: [FeatureRequest!]
-  in_development: [FeatureRequest!]
-  implemented: [FeatureRequest!]
+input UpdateVisibilityInput {
+  isVisible: Boolean!
+}
+
+input UpdateDisplayOrderInput {
+  displayOrder: Int!
 }
 
 type Query {
   # User queries
   myFeatureRequests: [FeatureRequest!]
-  publicFeatureRequests: FeatureRequestsByStatus
+  publicFeatureRequests: [FeatureRequest!]
   
   # Admin queries
   featureRequest(id: ID!): FeatureRequest
@@ -83,11 +79,13 @@ type Query {
 type Mutation {
   # User mutations
   createFeatureRequest(input: CreateFeatureRequestInput!): FeatureRequest
+  toggleVoteFeatureRequest(id: ID!): FeatureRequest
   
   # Admin mutations
   approveFeatureRequest(id: ID!, input: ApproveFeatureRequestInput): FeatureRequest
   rejectFeatureRequest(id: ID!, input: RejectFeatureRequestInput!): FeatureRequest
-  updateFeatureRequestStatus(id: ID!, input: UpdateFeatureRequestStatusInput!): FeatureRequest
+  updateFeatureRequestVisibility(id: ID!, input: UpdateVisibilityInput!): FeatureRequest
+  updateFeatureRequestDisplayOrder(id: ID!, input: UpdateDisplayOrderInput!): FeatureRequest
   deleteFeatureRequest(id: ID!): Boolean
 }
 

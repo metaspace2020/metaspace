@@ -11,36 +11,24 @@ export interface FeatureRequest {
   approvedAt?: string
   rejectedBy?: string
   rejectedAt?: string
+  displayOrder: number
+  isVisible: boolean
+  likes: number
+  hasVoted: boolean
   createdAt: string
   updatedAt: string
   deletedAt?: string
 }
 
 export enum FeatureRequestStatus {
-  PROPOSED = 'proposed',
   UNDER_REVIEW = 'under_review',
   APPROVED = 'approved',
-  IN_BACKLOG = 'in_backlog',
-  IN_DEVELOPMENT = 'in_development',
-  IMPLEMENTED = 'implemented',
   REJECTED = 'rejected',
-}
-
-export interface FeatureRequestsByStatus {
-  approved: FeatureRequest[]
-  in_backlog: FeatureRequest[]
-  in_development: FeatureRequest[]
-  implemented: FeatureRequest[]
 }
 
 export interface CreateFeatureRequestInput {
   title: string
   description: string
-}
-
-export interface UpdateFeatureRequestStatusInput {
-  status: FeatureRequestStatus
-  adminNotes?: string
 }
 
 export interface ApproveFeatureRequestInput {
@@ -49,6 +37,14 @@ export interface ApproveFeatureRequestInput {
 
 export interface RejectFeatureRequestInput {
   adminNotes: string
+}
+
+export interface UpdateVisibilityInput {
+  isVisible: boolean
+}
+
+export interface UpdateDisplayOrderInput {
+  displayOrder: number
 }
 
 // Queries
@@ -65,6 +61,9 @@ export const myFeatureRequestsQuery = gql`
       approvedAt
       rejectedBy
       rejectedAt
+      displayOrder
+      isVisible
+      likes
       createdAt
       updatedAt
       deletedAt
@@ -75,62 +74,22 @@ export const myFeatureRequestsQuery = gql`
 export const publicFeatureRequestsQuery = gql`
   query PublicFeatureRequests {
     publicFeatureRequests {
-      approved {
-        id
-        title
-        description
-        status
-        userId
-        adminNotes
-        approvedBy
-        approvedAt
-        rejectedBy
-        rejectedAt
-        createdAt
-        updatedAt
-      }
-      in_backlog {
-        id
-        title
-        description
-        status
-        userId
-        adminNotes
-        approvedBy
-        approvedAt
-        rejectedBy
-        rejectedAt
-        createdAt
-        updatedAt
-      }
-      in_development {
-        id
-        title
-        description
-        status
-        userId
-        adminNotes
-        approvedBy
-        approvedAt
-        rejectedBy
-        rejectedAt
-        createdAt
-        updatedAt
-      }
-      implemented {
-        id
-        title
-        description
-        status
-        userId
-        adminNotes
-        approvedBy
-        approvedAt
-        rejectedBy
-        rejectedAt
-        createdAt
-        updatedAt
-      }
+      id
+      title
+      description
+      status
+      userId
+      adminNotes
+      approvedBy
+      approvedAt
+      rejectedBy
+      rejectedAt
+      displayOrder
+      isVisible
+      likes
+      createdAt
+      updatedAt
+      hasVoted
     }
   }
 `
@@ -148,6 +107,9 @@ export const featureRequestQuery = gql`
       approvedAt
       rejectedBy
       rejectedAt
+      displayOrder
+      isVisible
+      likes
       createdAt
       updatedAt
       deletedAt
@@ -164,6 +126,9 @@ export const createFeatureRequestMutation = gql`
       description
       status
       userId
+      displayOrder
+      isVisible
+      likes
       createdAt
       updatedAt
     }
@@ -180,6 +145,9 @@ export const approveFeatureRequestMutation = gql`
       adminNotes
       approvedBy
       approvedAt
+      displayOrder
+      isVisible
+      likes
       updatedAt
     }
   }
@@ -195,19 +163,38 @@ export const rejectFeatureRequestMutation = gql`
       adminNotes
       rejectedBy
       rejectedAt
+      displayOrder
+      isVisible
+      likes
       updatedAt
     }
   }
 `
 
-export const updateFeatureRequestStatusMutation = gql`
-  mutation UpdateFeatureRequestStatus($id: ID!, $input: UpdateFeatureRequestStatusInput!) {
-    updateFeatureRequestStatus(id: $id, input: $input) {
+export const toggleVoteFeatureRequestMutation = gql`
+  mutation ToggleVoteFeatureRequest($id: ID!) {
+    toggleVoteFeatureRequest(id: $id) {
       id
-      title
-      description
-      status
-      adminNotes
+      likes
+    }
+  }
+`
+
+export const updateFeatureRequestVisibilityMutation = gql`
+  mutation UpdateFeatureRequestVisibility($id: ID!, $input: UpdateVisibilityInput!) {
+    updateFeatureRequestVisibility(id: $id, input: $input) {
+      id
+      isVisible
+      updatedAt
+    }
+  }
+`
+
+export const updateFeatureRequestDisplayOrderMutation = gql`
+  mutation UpdateFeatureRequestDisplayOrder($id: ID!, $input: UpdateDisplayOrderInput!) {
+    updateFeatureRequestDisplayOrder(id: $id, input: $input) {
+      id
+      displayOrder
       updatedAt
     }
   }

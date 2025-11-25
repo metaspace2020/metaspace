@@ -144,27 +144,17 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     }
   },
 
-  async publicFeatureRequests(_: any, args: any, ctx: Context): Promise<any> {
+  async publicFeatureRequests(_: any, args: any, ctx: Context): Promise<any[]> {
     if (!ctx.user.id) {
       throw new UserError('Authentication required')
     }
 
     try {
       const response = await makeApiRequest(ctx, '/api/feature-requests/public')
-      return response.data || {
-        approved: [],
-        in_backlog: [],
-        in_development: [],
-        implemented: [],
-      }
+      return response.data || response || []
     } catch (error) {
       logger.error('Error fetching public feature requests:', error)
-      return {
-        approved: [],
-        in_backlog: [],
-        in_development: [],
-        implemented: [],
-      }
+      return []
     }
   },
 

@@ -4,7 +4,6 @@
 
   .login-prompt {
     @apply text-center py-16 px-8 text-lg text-gray-600 bg-white rounded-xl;
-    box-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.08);
   }
 
   .page-header {
@@ -64,6 +63,10 @@
         letter-spacing: -0.02em;
       }
 
+      .section-description {
+        @apply text-gray-600 text-sm mb-6 -mt-4;
+      }
+
       .section-empty {
         @apply text-center py-16 px-8 text-gray-500 text-lg bg-gray-50 rounded-lg;
 
@@ -74,6 +77,14 @@
 
       .feature-requests-table {
         @apply w-full;
+
+        :deep(.el-skeleton) {
+          @apply w-full;
+
+          .el-skeleton__item {
+            @apply my-3;
+          }
+        }
 
         .request-title {
           @apply font-semibold text-gray-900 block overflow-hidden text-ellipsis whitespace-nowrap;
@@ -122,6 +133,70 @@
               }
             }
           }
+
+          .visibility-switch {
+            :deep(.el-switch__label) {
+              @apply text-xs font-medium;
+            }
+          }
+
+          .order-input {
+            @apply w-24;
+
+            :deep(.el-input__inner) {
+              @apply text-xs;
+            }
+          }
+        }
+
+        .votes-cell {
+          @apply flex items-center justify-center;
+
+          .vote-button {
+            @apply flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all duration-200;
+
+            .vote-icon {
+              @apply w-5 h-5 transition-all duration-200;
+              
+              :deep(.primary) {
+                @apply fill-white transition-colors duration-200;
+              }
+
+              :deep(.secondary) {
+                @apply transition-colors duration-200;
+              }
+
+              &.voted {
+                :deep(.secondary) {
+                  @apply fill-blue-600;
+                }
+              }
+
+              &:not(.voted) {
+                :deep(.secondary) {
+                  @apply fill-gray-500;
+                }
+              }
+            }
+
+            .vote-count {
+              @apply font-semibold text-sm;
+            }
+
+            &:hover {
+              @apply transform scale-105;
+
+              .vote-icon:not(.voted) {
+                :deep(.secondary) {
+                  @apply fill-gray-700;
+                }
+              }
+            }
+          }
+        }
+
+        .pagination-container {
+          @apply text-center mt-6;
         }
       }
 
@@ -291,7 +366,7 @@
 
   .feature-request-dialog {
     .dialog-content {
-      @apply py-5;
+      @apply py-1;
 
       .form-group {
         @apply mb-7;
@@ -334,6 +409,18 @@
           @apply text-red-500 text-sm mt-2 leading-normal font-medium;
         }
 
+        .pro-user-alert {
+          @apply mt-3;
+
+          :deep(.el-alert__content) {
+            @apply flex items-center gap-1;
+          }
+
+          :deep(.el-button) {
+            @apply p-0 font-semibold;
+            vertical-align: baseline;
+          }
+        }
       }
     }
 
