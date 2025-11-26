@@ -285,8 +285,6 @@ const createDataset = async(args: CreateDatasetArgs, ctx: Context) => {
     ipHash: hashIp(ctx.req?.ip),
   }
 
-  console.log('action', input)
-
   logger.info(`Creating dataset '${datasetId}' by '${ctx.user.id}' user ...`)
   let dataset
   if (datasetIdWasSpecified) {

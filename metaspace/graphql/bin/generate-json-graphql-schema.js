@@ -22,6 +22,7 @@ const schemaFiles = [
   '../schemas/enrichmentdb.graphql',
   '../schemas/plan.graphql',
   '../schemas/subscription.graphql',
+  '../schemas/featureRequest.graphql',
 ]
 
 const run = async(outputFile) => {

@@ -47,12 +47,6 @@ const asyncPagesFreelyTyped = {
     import(
       /* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/SpottingProject/DashboardPage'
     ),
-  PlansPage: () =>
-    import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Plans/PlansPage'),
-  PaymentPage: () =>
-    import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Plans/PaymentPage'),
-  SuccessPage: () =>
-    import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Plans/SuccessPage'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () =>
@@ -88,6 +82,19 @@ const asyncPagesFreelyTyped = {
   ContactPage: () => import(/* webpackPrefetch: true, webpackChunkName: "ContactPage" */ '../modules/Contact/Contact'),
   FAQPage: () => import(/* webpackPrefetch: true, webpackChunkName: "FAQPage" */ '../modules/Faq/Faq'),
   SplitPage: () => import(/* webpackPrefetch: true, webpackChunkName: "SplitPage" */ '../modules/Faq/Split'),
+
+  // Pages that connect with pro
+
+  PlansPage: () =>
+    import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Plans/PlansPage'),
+  PaymentPage: () =>
+    import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Plans/PaymentPage'),
+  SuccessPage: () =>
+    import(/* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/Plans/SuccessPage'),
+  FeatureRequestPage: () =>
+    import(
+      /* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/FeatureRequests/FeatureRequestPage'
+    ),
 }
 
 const asyncPages = asyncPagesFreelyTyped as Record<keyof typeof asyncPagesFreelyTyped, Component>
@@ -176,6 +183,7 @@ export const routes: any = [
   { path: '/plans', name: 'plans', component: asyncPages.PlansPage },
   { path: '/payment', name: 'payment', component: asyncPages.PaymentPage },
   { path: '/success', name: 'success', component: asyncPages.SuccessPage },
+  { path: '/feature-requests', name: 'feature-requests', component: asyncPages.FeatureRequestPage },
 
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound, meta: { footer: true, flex: true } },
 ]

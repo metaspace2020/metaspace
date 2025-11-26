@@ -1,0 +1,93 @@
+type FeatureRequest {
+  id: ID!
+  title: String!
+  description: String!
+  status: FeatureRequestStatus!
+  userId: ID!
+  adminNotes: String
+  approvedBy: ID
+  approvedAt: String
+  rejectedBy: ID
+  rejectedAt: String
+  displayOrder: Int!
+  isVisible: Boolean!
+  likes: Int!
+  hasVoted: Boolean!
+  isPro: Boolean!
+  createdAt: String!
+  updatedAt: String!
+  deletedAt: String
+}
+
+enum FeatureRequestStatus {
+  under_review
+  approved
+  rejected
+}
+
+input FeatureRequestFilter {
+  userId: String
+  status: FeatureRequestStatus
+  startDate: String
+  endDate: String
+}
+
+enum FeatureRequestOrderBy {
+  ORDER_BY_DATE
+  ORDER_BY_USER
+  ORDER_BY_STATUS
+  ORDER_BY_TITLE
+}
+
+input CreateFeatureRequestInput {
+  title: String!
+  description: String!
+  isPro: Boolean!
+}
+
+input ApproveFeatureRequestInput {
+  adminNotes: String
+}
+
+input RejectFeatureRequestInput {
+  adminNotes: String!
+}
+
+input UpdateVisibilityInput {
+  isVisible: Boolean!
+}
+
+input UpdateDisplayOrderInput {
+  displayOrder: Int!
+}
+
+type Query {
+  # User queries
+  myFeatureRequests: [FeatureRequest!]
+  publicFeatureRequests: [FeatureRequest!]
+  
+  # Admin queries
+  featureRequest(id: ID!): FeatureRequest
+  allFeatureRequests(
+    orderBy: FeatureRequestOrderBy = ORDER_BY_DATE,
+    sortingOrder: SortingOrder = DESCENDING,
+    filter: FeatureRequestFilter = {},
+    offset: Int = 0,
+    limit: Int = 20
+  ): [FeatureRequest!]
+  featureRequestsCount(filter: FeatureRequestFilter = {}): Int!
+}
+
+type Mutation {
+  # User mutations
+  createFeatureRequest(input: CreateFeatureRequestInput!): FeatureRequest
+  toggleVoteFeatureRequest(id: ID!): FeatureRequest
+  
+  # Admin mutations
+  approveFeatureRequest(id: ID!, input: ApproveFeatureRequestInput): FeatureRequest
+  rejectFeatureRequest(id: ID!, input: RejectFeatureRequestInput!): FeatureRequest
+  updateFeatureRequestVisibility(id: ID!, input: UpdateVisibilityInput!): FeatureRequest
+  updateFeatureRequestDisplayOrder(id: ID!, input: UpdateDisplayOrderInput!): FeatureRequest
+  deleteFeatureRequest(id: ID!): Boolean
+}
+
