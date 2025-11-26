@@ -88,6 +88,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
       const input = {
         title: 'Add dark mode support',
         description: 'It would be great to have a dark mode option for the application.',
+        isPro: false,
       }
 
       const expectedResponse = {
@@ -121,7 +122,11 @@ describe('modules/featureRequest/controller (mutations)', () => {
         'https://test-api.metaspace.example/api/feature-requests',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify(input),
+          body: JSON.stringify({
+            title: input.title,
+            description: input.description,
+            isPro: input.isPro,
+          }),
         })
       )
 
@@ -134,6 +139,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
       const input = {
         title: 'Test Feature',
         description: 'Test description',
+        isPro: false,
       }
 
       await expect(
@@ -145,6 +151,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
       const input = {
         title: '',
         description: 'Test description',
+        isPro: false,
       }
 
       await expect(
@@ -156,6 +163,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
       const input = {
         title: 'Test Feature',
         description: '',
+        isPro: false,
       }
 
       await expect(
@@ -167,6 +175,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
       const input = {
         title: '   ',
         description: 'Test description',
+        isPro: false,
       }
 
       await expect(
@@ -178,6 +187,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
       const input = {
         title: 'Test Feature',
         description: '   ',
+        isPro: false,
       }
 
       await expect(
@@ -189,6 +199,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
       const input = {
         title: 'Test Feature',
         description: 'Test description',
+        isPro: false,
       }
 
       mockFetch.mockResolvedValueOnce({
@@ -207,6 +218,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
       const input = {
         title: 'Test Feature',
         description: 'Test description',
+        isPro: false,
       }
 
       mockFetch.mockRejectedValueOnce(new Error('Network error'))
@@ -278,6 +290,8 @@ describe('modules/featureRequest/controller (mutations)', () => {
         data: {
           id: featureRequestId,
           status: 'approved',
+          approvedBy: adminUser.id,
+          approvedAt: currentTime,
         },
       }
 
@@ -288,11 +302,12 @@ describe('modules/featureRequest/controller (mutations)', () => {
 
       const result = await doQuery(
         approveFeatureRequestMutation,
-        { id: featureRequestId },
+        { id: featureRequestId, input: null },
         { context: adminContext }
       )
 
       expect(result.id).toBe(featureRequestId)
+      expect(result.status).toBe('approved')
     })
 
     it('should handle response without data field', async() => {
@@ -302,6 +317,9 @@ describe('modules/featureRequest/controller (mutations)', () => {
       const expectedResponse = {
         id: featureRequestId,
         status: 'approved',
+        approvedBy: adminUser.id,
+        approvedAt: currentTime,
+        adminNotes: input.adminNotes,
       }
 
       mockFetch.mockResolvedValueOnce({
@@ -316,6 +334,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
       )
 
       expect(result.id).toBe(featureRequestId)
+      expect(result.status).toBe('approved')
     })
 
     it('should handle API error', async() => {
@@ -326,7 +345,7 @@ describe('modules/featureRequest/controller (mutations)', () => {
       await expect(
         doQuery(
           approveFeatureRequestMutation,
-          { id: featureRequestId },
+          { id: featureRequestId, input: null },
           { context: adminContext }
         )
       ).rejects.toThrow('Failed to approve feature request')
