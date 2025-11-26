@@ -113,6 +113,7 @@ export const featureRequestQuery = gql`
       displayOrder
       isVisible
       likes
+      isPro
       createdAt
       updatedAt
       deletedAt
@@ -132,6 +133,7 @@ export const createFeatureRequestMutation = gql`
       displayOrder
       isVisible
       likes
+      isPro
       createdAt
       updatedAt
     }
@@ -151,6 +153,7 @@ export const approveFeatureRequestMutation = gql`
       displayOrder
       isVisible
       likes
+      isPro
       updatedAt
     }
   }
@@ -169,6 +172,7 @@ export const rejectFeatureRequestMutation = gql`
       displayOrder
       isVisible
       likes
+      isPro
       updatedAt
     }
   }
