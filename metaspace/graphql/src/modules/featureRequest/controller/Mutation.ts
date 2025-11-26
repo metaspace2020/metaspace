@@ -76,6 +76,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       const apiInput = {
         title: input.title.trim(),
         description: input.description.trim(),
+        isPro: input.isPro,
       }
 
       const result = await makeApiRequest(ctx, '/api/feature-requests', 'POST', apiInput)

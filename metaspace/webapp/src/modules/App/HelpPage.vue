@@ -5,8 +5,8 @@
     <p>
       You can submit questions or feedback through our
       <a href="https://github.com/metaspace2020/metaspace/discussions/categories/q-a" target="_blank"
-        >GitHub Discussion page</a
-      >. To propose new features, please use our <a href="/feature-requests">Feature Requests page</a>. For private
+        >GitHub discussion page</a
+      >. To propose new features, please use our <a href="/feature-requests">Feature request page</a>. For private
       inquiries, please <a href="/contact">contact us</a> directly.
     </p>
     <h2>Interactive tours</h2>

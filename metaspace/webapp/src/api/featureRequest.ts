@@ -15,6 +15,7 @@ export interface FeatureRequest {
   isVisible: boolean
   likes: number
   hasVoted: boolean
+  isPro: boolean
   createdAt: string
   updatedAt: string
   deletedAt?: string
@@ -64,6 +65,7 @@ export const myFeatureRequestsQuery = gql`
       displayOrder
       isVisible
       likes
+      isPro
       createdAt
       updatedAt
       deletedAt
@@ -87,6 +89,7 @@ export const publicFeatureRequestsQuery = gql`
       displayOrder
       isVisible
       likes
+      isPro
       createdAt
       updatedAt
       hasVoted

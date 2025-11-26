@@ -13,6 +13,7 @@ type FeatureRequest {
   isVisible: Boolean!
   likes: Int!
   hasVoted: Boolean!
+  isPro: Boolean!
   createdAt: String!
   updatedAt: String!
   deletedAt: String
@@ -41,6 +42,7 @@ enum FeatureRequestOrderBy {
 input CreateFeatureRequestInput {
   title: String!
   description: String!
+  isPro: Boolean!
 }
 
 input ApproveFeatureRequestInput {

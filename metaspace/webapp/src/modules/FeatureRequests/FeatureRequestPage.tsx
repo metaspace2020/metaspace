@@ -237,6 +237,7 @@ export default defineComponent({
               input: {
                 title: dialogState.title.trim(),
                 description: dialogState.description.trim(),
+                isPro: dialogState.isProUser === 'yes',
               },
             },
           })
@@ -460,7 +461,7 @@ export default defineComponent({
 
       const tableContent = (
         <ElTable data={requests} stripe border class="feature-requests-table">
-          <ElTableColumn prop="title" label="Title" minWidth="180">
+          <ElTableColumn prop="title" label="Feature" minWidth="180">
             {{
               default: ({ row }: { row: FeatureRequest }) => <span class="request-title">{row.title}</span>,
             }}
@@ -588,7 +589,7 @@ export default defineComponent({
           <div class="page-content">
             {/* Public Approved Feature Requests Section */}
             <div class="section">
-              <h2 class="section-title">Community Requests</h2>
+              <h2 class="section-title">Community feature requests</h2>
               <p class="section-description">Vote for the features you'd like to see implemented</p>
               {renderTable(publicRequests.value, 'Community Requests', false, true)}
 
@@ -616,7 +617,7 @@ export default defineComponent({
                   <ElIcon class="mr-2">
                     <Plus />
                   </ElIcon>
-                  Request New Feature
+                  Request new feature
                 </ElButton>
               </div>
               {renderTable(myRequests.value, 'My Requests', true, false)}
@@ -758,20 +759,16 @@ export default defineComponent({
                         <ElRadio label="no">No</ElRadio>
                       </ElRadioGroup>
                     </div>
-                    <ElAlert
-                      type="info"
-                      closable={false}
-                      class={`${dialogState.isProUser === 'no' ? 'visible' : 'invisible'}`}
-                    >
+                    <ElAlert type="info" closable={false}>
                       {{
                         default: () => (
-                          <span class="flex items-center gap-2 text-md">
-                            <ElIcon size="16" color="mr-2">
+                          <span class="flex items-center text-md">
+                            <ElIcon size="16" class="mr-2">
                               <InfoFilled />
                             </ElIcon>
-                            Pro users receive prioritized feature requests.{' '}
-                            <a href="/plans" target="_blank" rel="noopener">
-                              View Pro plans
+                            Feature requests from Pro users are prioritized.{' '}
+                            <a href="/plans" target="_blank" rel="noopener" class="ml-1">
+                              View pro plans
                             </a>
                           </span>
                         ),
@@ -830,6 +827,14 @@ export default defineComponent({
                 <div class="form-group">
                   <label class="form-label">Votes</label>
                   <div class="detail-text">{dialogState.selectedRequest.likes} votes</div>
+                </div>
+              )}
+
+              {/* Pro user display - for detail mode */}
+              {dialogState.mode === 'detail' && dialogState.selectedRequest && isAdmin.value && (
+                <div class="form-group">
+                  <label class="form-label">Pro User</label>
+                  <div class="detail-text">{dialogState.selectedRequest.isPro ? 'Yes' : 'No'}</div>
                 </div>
               )}
 
