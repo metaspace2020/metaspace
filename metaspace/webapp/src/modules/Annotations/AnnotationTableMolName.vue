@@ -30,7 +30,8 @@
 </template>
 
 <script>
-import { defineComponent, computed, inject, defineAsyncComponent } from 'vue'
+import { defineComponent, computed, defineAsyncComponent } from 'vue'
+import { useStore } from 'vuex'
 import CandidateMoleculesPopover from './annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../components/MolecularFormula'
 import { useChannelSwatches } from '../ImageViewer/ionImageState'
@@ -55,7 +56,7 @@ export default defineComponent({
   },
   props: ['annotation', 'highlightByIon'],
   setup(props) {
-    const store = inject('store') // Inject the store
+    const store = useStore()
     const compoundNameFilter = useFilter(store, 'compoundName')
     const hasCompoundNameFilter = computed(() => compoundNameFilter.value != null)
     const handleFilter = () => {

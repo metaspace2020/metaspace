@@ -18,12 +18,12 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "noEmit": true,
-    "jsx": "preserve"
-  },
-  "paths": {
-    "@/*": [
-      "src/*"
-    ]
+    "jsx": "preserve",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    }
   },
   "types": [
     "webpack-env",
