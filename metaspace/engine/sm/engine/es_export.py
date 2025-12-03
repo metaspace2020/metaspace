@@ -406,6 +406,8 @@ class ESExporter:
             doc['theo_ints'] = metrics.pop('theo_ints')
             doc['mz_mean'] = metrics.pop('mz_mean')
             doc['mz_stddev'] = metrics.pop('mz_stddev')
+            doc['mz_err_abs'] = metrics.pop('mz_err_abs', None)
+            doc['mz_err_rel'] = metrics.pop('mz_err_rel', None)
 
     @staticmethod
     def _add_ds_fields_to_ann(ann_doc, ds_doc):

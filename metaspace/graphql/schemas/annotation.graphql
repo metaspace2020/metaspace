@@ -27,6 +27,8 @@ type Annotation {
   theoreticalPeakIntensity: [Float!]
   observedPeakMz: [Float!]
   observedPeakMzStddev: [Float!]
+  mzErrAbs: Float
+  mzErrRel: Float
 
   isotopeImages: [MzImage!]!
   isomers: [IsomerAnnotation!]!
@@ -118,6 +120,7 @@ enum AnnotationOrderBy {
   ORDER_BY_TOTAL_INT
   ORDER_BY_ISOMERS
   ORDER_BY_ISOBARS
+  ORDER_BY_MASS_ERROR
 }
 
 # [min, max) interval
