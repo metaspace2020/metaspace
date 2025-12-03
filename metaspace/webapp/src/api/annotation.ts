@@ -16,6 +16,7 @@ export const annotationDetailItemFragment = gql`
     rhoChaos
     fdrLevel
     mz
+    metricsJson
     colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     offSample
     offSampleProb

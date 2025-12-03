@@ -294,6 +294,18 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('mzErrAbs')"
+        key="mzErrAbs"
+        label="Mass Error (ppm)"
+        sortable="custom"
+        :min-width="120"
+      >
+        <template v-slot="{ row }">
+          <span>{{ formatMassError(row) }}</span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
         v-if="showColocCol"
         key="colocalizationCoeff"
         prop="colocalizationCoeff"
@@ -628,6 +640,12 @@ export default defineComponent({
         },
         {
           id: 18,
+          label: 'Mass Error',
+          src: 'mzErrAbs',
+          selected: false,
+        },
+        {
+          id: 19,
           label: 'Co-localization coefficient',
           src: 'colocalizationCoeff',
           selected: false,
@@ -658,6 +676,23 @@ export default defineComponent({
           }
         }
         return '> 50%'
+      }
+    }
+
+    const formatMassError = (row) => {
+      try {
+        const metrics = JSON.parse(row.metricsJson || '{}')
+        const mzErrAbs = metrics.mz_err_abs
+
+        if (mzErrAbs == null || mzErrAbs === undefined) {
+          return '-'
+        }
+
+        // Convert to ppm: (mz_err_abs / mz) * 1e6
+        const ppm = (mzErrAbs / row.mz) * 1e6
+        return ppm.toFixed(2)
+      } catch (e) {
+        return '-'
       }
     }
 
@@ -1553,6 +1588,7 @@ export default defineComponent({
       isLoading,
       showCustomCols,
       formatMSM,
+      formatMassError,
       tableSort,
       getRowClass,
       onKeyDown,
