@@ -57,7 +57,7 @@
     "dom-to-image-google-font-issue": "^2.6.2",
     "dompurify": "^3.2.4",
     "echarts": "^5.4.3",
-    "element-plus": "^2.4.1",
+    "element-plus": "^2.11.1",
     "file-saver": "^2.0.5",
     "focus-visible": "^5.2.0",
     "graphql": "^16.8.1",
