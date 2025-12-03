@@ -296,6 +296,7 @@
       <el-table-column
         v-if="!hidden('mzErrAbs')"
         key="mzErrAbs"
+        prop="mzErrAbs"
         label="Mass Error (ppm)"
         sortable="custom"
         :min-width="120"
@@ -483,7 +484,6 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_ISOMERS: 'isomers',
   ORDER_BY_ISOBARS: 'isobars',
   ORDER_BY_MASS_ERROR: 'mzErrAbs',
-
 }
 const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
 
