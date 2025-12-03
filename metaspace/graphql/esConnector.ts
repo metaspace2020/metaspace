@@ -290,7 +290,14 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
             lang: 'painless',
             // Calculate ppm: (mz_err_abs / mz) * 1000000
             // Handle null/missing values
-            inline: 'if (params._source.metrics == null || params._source.metrics.mz_err_abs == null || params._source.mz == null || params._source.mz == 0) { return Double.MAX_VALUE; } else { return (params._source.metrics.mz_err_abs / params._source.mz) * 1000000; }',
+            inline:
+              'if (params._source.metrics == null || ' +
+              'params._source.metrics.mz_err_abs == null || ' +
+              'params._source.mz == null || params._source.mz == 0) { ' +
+              'return Double.MAX_VALUE; ' +
+              '} else { ' +
+              'return (params._source.metrics.mz_err_abs / params._source.mz) * 1000000; ' +
+              '}',
           },
           order: order,
         },
