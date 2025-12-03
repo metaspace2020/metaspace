@@ -110,7 +110,7 @@ jobs:
 
   test-webapp:
     docker:
-      - image: metaspace2020/sm-webapp:0.12
+      - image: metaspace2020/sm-webapp:0.13
 
     working_directory: ~/metaspace/metaspace/webapp
     steps:
