@@ -187,6 +187,7 @@ export const tableExportQuery = gql`
       rhoSpatial
       rhoSpectral
       rhoChaos
+      metricsJson
       offSample
       offSampleProb
       isomers {
