@@ -37,8 +37,6 @@ export const unpackAnnotation = (hit: ESAnnotation | ESAnnotationWithColoc) => {
     theoreticalPeakIntensity: _source.theo_ints,
     observedPeakMz: _source.mz_mean,
     observedPeakMzStddev: _source.mz_stddev,
-    mzErrAbs: _source.mz_err_abs,
-    mzErrRel: _source.mz_err_rel,
 
     offSample: _source.off_sample_label == null ? null : _source.off_sample_label === 'off',
     offSampleProb: _source.off_sample_prob == null ? null : _source.off_sample_prob,

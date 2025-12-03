@@ -682,15 +682,20 @@ export default defineComponent({
     }
 
     const formatMassError = (row) => {
-      const mzErrAbs = row.mzErrAbs
+      try {
+        const metrics = JSON.parse(row.metricsJson || '{}')
+        const mzErrAbs = metrics.mz_err_abs
 
-      if (mzErrAbs == null || mzErrAbs === undefined) {
+        if (mzErrAbs == null || mzErrAbs === undefined) {
+          return '-'
+        }
+
+        // Convert to ppm: (mz_err_abs / mz) * 1e6
+        const ppm = (mzErrAbs / row.mz) * 1e6
+        return ppm.toFixed(2)
+      } catch (e) {
         return '-'
       }
-
-      // Convert to ppm: (mz_err_abs / mz) * 1e6
-      const ppm = (mzErrAbs / row.mz) * 1e6
-      return ppm.toFixed(2)
     }
 
     const tableLoading = computed(() => state.loading)
@@ -1386,8 +1391,17 @@ export default defineComponent({
             offSample = false,
             offSampleProb = '',
             colocalizationCoeff = null,
-            mzErrAbs = null,
+            metricsJson = '{}',
           } = plainRow
+
+          // Parse mz_err_abs from metricsJson
+          let mzErrAbs = null
+          try {
+            const metrics = JSON.parse(metricsJson)
+            mzErrAbs = metrics.mz_err_abs ?? null
+          } catch (e) {
+            mzErrAbs = null
+          }
 
           const cells = [
             dataset.group?.name || '',

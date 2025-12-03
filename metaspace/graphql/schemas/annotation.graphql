@@ -27,8 +27,6 @@ type Annotation {
   theoreticalPeakIntensity: [Float!]
   observedPeakMz: [Float!]
   observedPeakMzStddev: [Float!]
-  mzErrAbs: Float
-  mzErrRel: Float
 
   isotopeImages: [MzImage!]!
   isomers: [IsomerAnnotation!]!

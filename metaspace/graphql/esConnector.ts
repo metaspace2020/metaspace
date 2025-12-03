@@ -93,8 +93,6 @@ export interface ESAnnotationSource extends ESDatasetSource {
   theo_ints?: number[];
   mz_mean?: number[];
   mz_stddev?: number[];
-  mz_err_abs?: number;
-  mz_err_rel?: number;
 
   fdr: number;
   msm: number;
