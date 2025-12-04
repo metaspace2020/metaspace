@@ -255,6 +255,19 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
         },
       },
     ]
+  } else if (orderBy === 'ORDER_BY_ISOMER_MOLS') {
+    return [
+      {
+        _script: {
+          type: 'number',
+          script: {
+            lang: 'painless',
+            inline: 'params._source.comp_ids.size()',
+          },
+          order: order,
+        },
+      },
+    ]
   } else if (orderBy === 'ORDER_BY_ISOMERS') {
     return [
       {

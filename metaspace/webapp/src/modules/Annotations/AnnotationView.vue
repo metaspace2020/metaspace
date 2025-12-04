@@ -95,7 +95,8 @@
       <el-collapse-item name="compounds">
         <template v-slot:title>
           <div class="w-full" style="display: flex; align-items: center">
-            <div class="mr-2">Molecules ({{ annotation.countPossibleCompounds }})</div>
+            <!-- <div class="mr-2">Molecules ({{ annotation.countPossibleCompounds }})</div> -->
+            <div class="mr-2">Molecules</div>
             <ambiguity-alert :isomers="annotation.isomers" :isobars="annotation.isobars" />
           </div>
         </template>

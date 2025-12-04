@@ -89,7 +89,7 @@ export const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GE
 
     return await response.json()
   } catch (error) {
-    logger.error(`Error making API request to ${endpoint}:`, error)
+    logger.warn(`Error making API request to ${endpoint}:`, error)
     throw error
   }
 }

@@ -2,11 +2,11 @@
 
 exports[`AnnotationTable > should be able to export a CSV 1`] = `
 "# URL: http://localhost:3000/annotations?viewId=xxxx&ds=2019-02-12_15h55m06s
-\\"group\\",\\"datasetName\\",\\"datasetId\\",\\"formula\\",\\"adduct\\",\\"chemMod\\",\\"neutralLoss\\",\\"ion\\",\\"mz\\",\\"msm\\",\\"fdr\\",\\"rhoSpatial\\",\\"rhoSpectral\\",\\"rhoChaos\\",\\"moleculeNames\\",\\"moleculeIds\\",\\"minIntensity\\",\\"maxIntensity\\",\\"totalIntensity\\",\\"isomers\\",\\"isobars\\",\\"offSample\\",\\"rawOffSampleProb\\",\\"isobarIons\\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\"
+\\"group\\",\\"datasetName\\",\\"datasetId\\",\\"formula\\",\\"adduct\\",\\"chemMod\\",\\"neutralLoss\\",\\"ion\\",\\"mz\\",\\"msm\\",\\"fdr\\",\\"rhoSpatial\\",\\"rhoSpectral\\",\\"rhoChaos\\",\\"moleculeNames\\",\\"moleculeIds\\",\\"minIntensity\\",\\"maxIntensity\\",\\"totalIntensity\\",\\"isomeric_mols_count\\",\\"isomeric_ions_count\\",\\"isobaric_ions_count\\",\\"offSample\\",\\"rawOffSampleProb\\",\\"isobarIons\\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\"
 "
 `;
 
@@ -27,6 +27,7 @@ exports[`AnnotationTable > should match snapshot 1`] = `
         <div></div>
         <!--v-if-->
         <!--v-if-->
+        <!--v-if-->
         <div></div>
         <div></div>
         <div></div>
@@ -42,8 +43,8 @@ exports[`AnnotationTable > should match snapshot 1`] = `
             <col name=\\"el-table_1_column_3\\" width=\\"120\\">
             <col name=\\"el-table_1_column_4\\" width=\\"65\\">
             <col name=\\"el-table_1_column_5\\" width=\\"70\\">
-            <col name=\\"el-table_1_column_6\\" width=\\"90\\">
-            <col name=\\"el-table_1_column_7\\" width=\\"80\\">
+            <col name=\\"el-table_1_column_6\\" width=\\"120\\">
+            <col name=\\"el-table_1_column_7\\" width=\\"120\\">
             <col name=\\"el-table_1_column_8\\" width=\\"120\\">
             <col name=\\"el-table_1_column_9\\" width=\\"60\\">
           </colgroup>
@@ -75,12 +76,12 @@ exports[`AnnotationTable > should match snapshot 1`] = `
                 </div>
               </th>
               <th class=\\"el-table_1_column_6 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
-                <div class=\\"cell\\">Isomers<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                <div class=\\"cell\\">Isomeric ions<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
               </th>
               <th class=\\"el-table_1_column_7 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
-                <div class=\\"cell\\">Isobars<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                <div class=\\"cell\\">Isobaric ions<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
               </th>
@@ -109,8 +110,8 @@ exports[`AnnotationTable > should match snapshot 1`] = `
                   <col name=\\"el-table_1_column_3\\" width=\\"120\\">
                   <col name=\\"el-table_1_column_4\\" width=\\"65\\">
                   <col name=\\"el-table_1_column_5\\" width=\\"70\\">
-                  <col name=\\"el-table_1_column_6\\" width=\\"90\\">
-                  <col name=\\"el-table_1_column_7\\" width=\\"80\\">
+                  <col name=\\"el-table_1_column_6\\" width=\\"120\\">
+                  <col name=\\"el-table_1_column_7\\" width=\\"120\\">
                   <col name=\\"el-table_1_column_8\\" width=\\"120\\">
                   <col name=\\"el-table_1_column_9\\" width=\\"60\\">
                 </colgroup>
@@ -305,14 +306,19 @@ exports[`AnnotationTable > should match snapshot 1`] = `
               </svg></div><span>Molecules</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
-            <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+            <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
-              </svg></div><span>Isomers</span>
+              </svg></div><span>Isomeric molecules</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
             <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
-              </svg></div><span>Isobars</span>
+              </svg></div><span>Isomeric ions</span>
+          </div>
+          <div class=\\"cursor-pointer select-none\\">
+            <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+              </svg></div><span>Isobaric ions</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
             <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
@@ -363,6 +369,7 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
         <div></div>
         <!--v-if-->
         <!--v-if-->
+        <!--v-if-->
         <div></div>
         <div></div>
         <div></div>
@@ -378,8 +385,8 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
             <col name=\\"el-table_2_column_12\\" width=\\"120\\">
             <col name=\\"el-table_2_column_13\\" width=\\"65\\">
             <col name=\\"el-table_2_column_14\\" width=\\"70\\">
-            <col name=\\"el-table_2_column_15\\" width=\\"90\\">
-            <col name=\\"el-table_2_column_16\\" width=\\"80\\">
+            <col name=\\"el-table_2_column_15\\" width=\\"120\\">
+            <col name=\\"el-table_2_column_16\\" width=\\"120\\">
             <col name=\\"el-table_2_column_17\\" width=\\"120\\">
             <col name=\\"el-table_2_column_18\\" width=\\"60\\">
           </colgroup>
@@ -411,12 +418,12 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
                 </div>
               </th>
               <th class=\\"el-table_2_column_15 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
-                <div class=\\"cell\\">Isomers<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                <div class=\\"cell\\">Isomeric ions<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
               </th>
               <th class=\\"el-table_2_column_16 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
-                <div class=\\"cell\\">Isobars<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                <div class=\\"cell\\">Isobaric ions<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
               </th>
@@ -445,8 +452,8 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
                   <col name=\\"el-table_2_column_12\\" width=\\"120\\">
                   <col name=\\"el-table_2_column_13\\" width=\\"65\\">
                   <col name=\\"el-table_2_column_14\\" width=\\"70\\">
-                  <col name=\\"el-table_2_column_15\\" width=\\"90\\">
-                  <col name=\\"el-table_2_column_16\\" width=\\"80\\">
+                  <col name=\\"el-table_2_column_15\\" width=\\"120\\">
+                  <col name=\\"el-table_2_column_16\\" width=\\"120\\">
                   <col name=\\"el-table_2_column_17\\" width=\\"120\\">
                   <col name=\\"el-table_2_column_18\\" width=\\"60\\">
                 </colgroup>
@@ -626,14 +633,19 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
               </svg></div><span>Molecules</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
-            <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+            <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
-              </svg></div><span>Isomers</span>
+              </svg></div><span>Isomeric molecules</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
             <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
-              </svg></div><span>Isobars</span>
+              </svg></div><span>Isomeric ions</span>
+          </div>
+          <div class=\\"cursor-pointer select-none\\">
+            <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+              </svg></div><span>Isobaric ions</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
             <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">

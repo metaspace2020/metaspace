@@ -131,6 +131,10 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
       }))
   },
 
+  isomerMolsCount(hit) {
+    return hit._source.comps_count_with_isomers || 0
+  },
+
   metricsJson(hit) {
     if (hit._source.metrics != null) {
       return JSON.stringify(hit._source.metrics)
