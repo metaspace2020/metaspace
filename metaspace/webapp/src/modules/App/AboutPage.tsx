@@ -288,7 +288,7 @@ const AboutPage = defineComponent({
                   community discussions
                 </a>{' '}
                 , where you can ask questions,{' '}
-                <a href="https://github.com/metaspace2020/metaspace/discussions/categories/ideas" target="_blank">
+                <a href="/feature-requests" target="_blank">
                   suggest features
                 </a>
                 , share ideas, and get help from the METASPACE team and other users.

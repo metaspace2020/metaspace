@@ -236,7 +236,7 @@ export const Resolvers = {
             const res = await
             fetch('https://serpapi.com/search?' + new URLSearchParams({
               engine: 'google_scholar',
-              q: '"METASPACE" AND ("imaging mass spectrometry" OR "mass spectrometry imaging") AND "Review article"',
+              q: '("metaspace2020.org" OR "metaspace2020.eu")  AND "Review article"',
               api_key: config.google.serpapi_key,
             }).toString(), {
               method: 'GET',
@@ -289,7 +289,7 @@ export const Resolvers = {
             const res = await
             fetch('https://serpapi.com/search?' + new URLSearchParams({
               engine: 'google_scholar',
-              q: '"METASPACE" AND ("imaging mass spectrometry" OR "mass spectrometry imaging")',
+              q: '"metaspace2020.org" OR "metaspace2020.eu"',
               api_key: config.google.serpapi_key,
             }).toString(), {
               method: 'GET',
@@ -302,8 +302,13 @@ export const Resolvers = {
             const dataJson = JSON.parse(data)
             const nOfPublications = dataJson.search_information?.total_results
 
-            redisClient.set(countKey, nOfPublications, 'EX', DAYS * HOURS * MINUTES * SECONDS)
-            return parseInt(nOfPublications, 10)
+            if (nOfPublications != null && !isNaN(Number(nOfPublications))) {
+              const count = String(nOfPublications)
+              redisClient.set(countKey, count, 'EX', DAYS * HOURS * MINUTES * SECONDS)
+              return parseInt(count, 10)
+            } else {
+              return null
+            }
           }
         } catch (e) {
           console.error(e)
