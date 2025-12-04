@@ -2,11 +2,11 @@
 
 exports[`AnnotationTable > should be able to export a CSV 1`] = `
 "# URL: http://localhost:3000/annotations?viewId=xxxx&ds=2019-02-12_15h55m06s
-\\"group\\",\\"datasetName\\",\\"datasetId\\",\\"formula\\",\\"adduct\\",\\"chemMod\\",\\"neutralLoss\\",\\"ion\\",\\"mz\\",\\"msm\\",\\"fdr\\",\\"rhoSpatial\\",\\"rhoSpectral\\",\\"rhoChaos\\",\\"moleculeNames\\",\\"moleculeIds\\",\\"minIntensity\\",\\"maxIntensity\\",\\"totalIntensity\\",\\"isomers\\",\\"isobars\\",\\"offSample\\",\\"rawOffSampleProb\\",\\"isobarIons\\",\\"mzErrAbs\\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\",\\"0.0012345\\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\",\\"0.0012345\\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\",\\"0.0012345\\"
-\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"false\\",\\"0.03\\",\\", \\",\\"0.0012345\\"
+\\"group\\",\\"datasetName\\",\\"datasetId\\",\\"formula\\",\\"adduct\\",\\"chemMod\\",\\"neutralLoss\\",\\"ion\\",\\"mz\\",\\"msm\\",\\"fdr\\",\\"rhoSpatial\\",\\"rhoSpectral\\",\\"rhoChaos\\",\\"moleculeNames\\",\\"moleculeIds\\",\\"minIntensity\\",\\"maxIntensity\\",\\"totalIntensity\\",\\"isomers\\",\\"isobars\\",\\"mzErrAbs\\",\\"offSample\\",\\"rawOffSampleProb\\",\\"isobarIons\\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"0.0012345\\",\\"false\\",\\"0.03\\",\\", \\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"0.0012345\\",\\"false\\",\\"0.03\\",\\", \\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"0.0012345\\",\\"false\\",\\"0.03\\",\\", \\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"\\",\\"\\",\\"C19H18N2O7S2-H+\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0\\",\\"0\\",\\"0\\",\\"1\\",\\"2\\",\\"0.0012345\\",\\"false\\",\\"0.03\\",\\", \\"
 "
 `;
 
@@ -32,6 +32,7 @@ exports[`AnnotationTable > should match snapshot 1`] = `
         <div></div>
         <!--v-if-->
         <div></div>
+        <!--v-if-->
         <!--v-if-->
       </div>
       <div class=\\"el-table__header-wrapper\\">
@@ -330,6 +331,11 @@ exports[`AnnotationTable > should match snapshot 1`] = `
               </svg></div><span>FDR</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
+            <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+              </svg></div><span>Mass Error</span>
+          </div>
+          <div class=\\"cursor-pointer select-none\\">
             <!--v-if-->
           </div>
         </div>
@@ -368,6 +374,7 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
         <div></div>
         <!--v-if-->
         <div></div>
+        <!--v-if-->
         <!--v-if-->
       </div>
       <div class=\\"el-table__header-wrapper\\">
@@ -649,6 +656,11 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
             <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
               </svg></div><span>FDR</span>
+          </div>
+          <div class=\\"cursor-pointer select-none\\">
+            <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
+                <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
+              </svg></div><span>Mass Error</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
             <!--v-if-->
