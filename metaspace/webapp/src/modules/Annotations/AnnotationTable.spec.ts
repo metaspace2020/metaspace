@@ -44,6 +44,7 @@ const mockAnnotation = {
   rhoChaos: 0.998756,
   fdrLevel: 0.1,
   mz: 449.0482267014823,
+  metricsJson: '{"mz_err_abs": 0.0012345}',
   dataset: {
     id: '2019-02-12_15h55m06s',
     name: 'Untreated_3_434',
