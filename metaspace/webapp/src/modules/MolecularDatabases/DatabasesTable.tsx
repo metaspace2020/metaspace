@@ -137,7 +137,7 @@ const DatabasesTable = defineComponent({
           <CheckColumn prop="archived" label="Archived" />
         </ElTable>
         {state.showUploadDialog && (
-          <UploadDialog groupId={props.groupId} onClose={onDialogClose} onDone={onUploadComplete} />
+          <UploadDialog groupId={props.groupId} onClose={onDialogClose} onDone={onUploadComplete} isPublic={false} />
         )}
       </div>
     )

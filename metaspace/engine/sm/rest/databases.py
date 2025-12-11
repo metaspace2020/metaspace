@@ -31,6 +31,7 @@ def create():
         group_id - UUID of group database belongs to
         user_id - UUID of user database create to
         is_public - database search results visible to everybody
+        is_visible - database visible to use and to download for everybody
         file_path - S3 path to database import file (s3://bucket/path)
         description - database description
         full_name - full database name

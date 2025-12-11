@@ -5,7 +5,13 @@ import logger from '../../utils/logger'
 import { Context } from '../../context'
 import { FieldResolversFor } from '../../bindingTypes'
 import { MolecularDB as MolecularDbModel } from './model'
-import { MolecularDB, Mutation, Query } from '../../binding'
+import {
+  MolecularDB,
+  Mutation,
+  Query,
+  PublicMolecularDBsInput,
+  PublicMolecularDBsResult,
+} from '../../binding'
 import { smApiCreateDatabase, smApiUpdateDatabase, smApiDeleteDatabase } from '../../utils/smApi/databases'
 import { assertImportFileIsValid } from './util/assertImportFileIsValid'
 import { MolecularDbRepository } from './MolecularDbRepository'
@@ -67,6 +73,13 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     return await allMolecularDBs(ctx, onlyUsable, undefined)
   },
 
+  async allPublicMolecularDBs(source, { input }: { input: PublicMolecularDBsInput }
+    , ctx): Promise<{ databases: MolecularDbModel[], totalCount: number }> {
+    const repository = ctx.entityManager.getCustomRepository(MolecularDbRepository)
+    const { databases, totalCount } = await repository.findPublicDatabasesWithPagination(input)
+    return { databases, totalCount }
+  },
+
   async allMolecularDBs(source, { filter }, ctx): Promise<MolecularDbModel[]> {
     return await allMolecularDBs(ctx, filter?.usable, filter?.global)
   },
@@ -123,8 +136,21 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   },
 }
 
+const PublicMolecularDBsResultResolvers: FieldResolversFor<
+  PublicMolecularDBsResult,
+  { databases: MolecularDbModel[], totalCount: number }
+> = {
+  databases(source) {
+    return source.databases
+  },
+  totalCount(source) {
+    return source.totalCount
+  },
+}
+
 export const Resolvers = {
   Query: QueryResolvers,
   Mutation: MutationResolvers,
   MolecularDB: MolecularDbResolvers,
+  PublicMolecularDBsResult: PublicMolecularDBsResultResolvers,
 } as IResolvers<any, Context>

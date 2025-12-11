@@ -115,7 +115,7 @@ const Details = defineComponent({
             >
               <PrimaryLabelText>Custom database is public</PrimaryLabelText>
               <SecondaryLabelText>
-                Custom database will be available as annotation option to everyone
+                Custom databases will be available for download and for use in annotations by all users
               </SecondaryLabelText>
             </RadioButton>
           </div>

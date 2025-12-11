@@ -47,6 +47,10 @@ const asyncPagesFreelyTyped = {
     import(
       /* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/SpottingProject/DashboardPage'
     ),
+  MolecularDatabasesPage: () =>
+    import(
+      /* webpackPrefetch: true, webpackChunkName: "MolecularDatabasesPage" */ '../modules/MolecularDatabases/list/DatabaseList'
+    ),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () =>
@@ -179,6 +183,8 @@ export const routes: any = [
   { path: '/design/forms', component: asyncPages.DesignForms, meta: { footer: true, flex: true } },
 
   { path: '/detectability', name: 'detectability', component: asyncPages.SpottingProjectPage },
+
+  { path: '/databases', name: 'molecular-databases', component: asyncPages.MolecularDatabasesPage },
 
   { path: '/plans', name: 'plans', component: asyncPages.PlansPage },
   { path: '/payment', name: 'payment', component: asyncPages.PaymentPage },

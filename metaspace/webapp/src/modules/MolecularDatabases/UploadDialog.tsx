@@ -1,20 +1,21 @@
 import './UploadDialog.css'
 
-import { defineComponent, reactive, onMounted, ref, inject } from 'vue'
+import { defineComponent, reactive, onMounted, ref, inject, computed } from 'vue'
 import { UppyOptions, UploadResult } from '@uppy/core'
 
 import { SmForm, PrimaryLabelText } from '../../components/Form'
 import UppyUploader from '../../components/UppyUploader/UppyUploader.vue'
 import FadeTransition from '../../components/FadeTransition'
 
-import { ElDialog, ElInput, ElButton, ElIcon } from '../../lib/element-plus'
+import { ElDialog, ElInput, ElButton, ElIcon, ElSelect, ElOption } from '../../lib/element-plus'
 
 import { createDatabaseQuery, MolecularDBDetails } from '../../api/moldb'
 import safeJsonParse from '../../lib/safeJsonParse'
 import reportError from '../../lib/reportError'
 import { convertUploadUrlToS3Path } from '../../lib/util'
-import { DefaultApolloClient } from '@vue/apollo-composable'
+import { DefaultApolloClient, useQuery } from '@vue/apollo-composable'
 import { Warning } from '@element-plus/icons-vue'
+import { userProfileQuery, UserProfileQuery } from '../../api/user'
 
 const uppyOptions: UppyOptions = {
   debug: true,
@@ -65,7 +66,8 @@ const formatErrorMsg = (e: any): ErrorMessage => {
 interface Props {
   name: string
   details?: MolecularDBDetails
-  groupId: string
+  groupId: string | null
+  isPublic: Boolean
 }
 
 type ErrorMessage = {
@@ -78,6 +80,7 @@ interface State {
     name: string
     version: string
     filePath: string
+    groupId: string
   }
   loading: boolean
   error: ErrorMessage | null
@@ -89,6 +92,9 @@ const UploadDialog = defineComponent({
     name: String,
     details: Object,
     groupId: String,
+    onClose: Function,
+    onDone: Function,
+    isPublic: Boolean,
   },
   setup(props: Props | any, { emit }) {
     const apolloClient = inject(DefaultApolloClient)
@@ -97,9 +103,26 @@ const UploadDialog = defineComponent({
         name: props.name,
         version: '',
         filePath: '',
+        groupId: props.groupId || '',
       },
       loading: false,
       error: null,
+    })
+
+    // Fetch user profile to get groups when groupId is null
+    const { result: currentUserResult } = useQuery<{ currentUser: UserProfileQuery }>(userProfileQuery, null, () => ({
+      fetchPolicy: 'network-only',
+      enabled: !props.groupId, // Only run query if groupId is not provided
+    }))
+
+    const currentUser = computed(() => currentUserResult.value?.currentUser)
+    const groups = computed(() => {
+      if (!currentUser.value) return []
+      return (
+        currentUser.value.groups?.map((group: any) => ({
+          ...group.group,
+        })) || []
+      )
     })
 
     const isNewVersion = !!props.name
@@ -130,14 +153,16 @@ const UploadDialog = defineComponent({
       state.error = null
       state.loading = true
       try {
+        const groupId = props.groupId || state.model.groupId
         await apolloClient.mutate({
           mutation: createDatabaseQuery,
           variables: {
             input: {
-              isPublic: false,
+              isPublic: props.isPublic,
+              isVisible: props.isPublic,
               ...props?.details,
               ...state.model,
-              groupId: props.groupId,
+              groupId: groupId,
             },
           },
         })
@@ -170,7 +195,7 @@ const UploadDialog = defineComponent({
           <ElButton
             type="primary"
             onClick={createDatabase}
-            disabled={!state.model.filePath || !state.model.name}
+            disabled={!state.model.filePath || !state.model.name || (!props.groupId && !state.model.groupId)}
             loading={state.loading}
           >
             Continue
@@ -210,24 +235,56 @@ const UploadDialog = defineComponent({
             </div>
           )}
         </FadeTransition>
-        <SmForm class="flex leading-6">
-          <div class="flex-grow">
-            <label for="database-name">
-              <PrimaryLabelText>Name</PrimaryLabelText>
-            </label>
-            <ElInput
-              ref="nameInput"
-              id="database-name"
-              v-model={state.model.name}
-              disabled={isNewVersion || state.loading}
-            />
+        <SmForm class="flex flex-col leading-6">
+          <div class="flex">
+            <div class="flex-grow">
+              <label for="database-name">
+                <PrimaryLabelText>Name</PrimaryLabelText>
+              </label>
+              <ElInput
+                ref="nameInput"
+                id="database-name"
+                v-model={state.model.name}
+                disabled={isNewVersion || state.loading}
+              />
+            </div>
+            <div class="w-1/4 ml-3">
+              <label for="database-version">
+                <PrimaryLabelText>Version</PrimaryLabelText>
+              </label>
+              <ElInput
+                ref="versionInput"
+                id="database-version"
+                v-model={state.model.version}
+                disabled={state.loading}
+              />
+            </div>
           </div>
-          <div class="w-1/4 ml-3">
-            <label for="database-version">
-              <PrimaryLabelText>Version</PrimaryLabelText>
-            </label>
-            <ElInput ref="versionInput" id="database-version" v-model={state.model.version} disabled={state.loading} />
-          </div>
+          {!props.groupId && (
+            <div class="mt-3">
+              <label for="database-group">
+                <PrimaryLabelText>Group</PrimaryLabelText>
+              </label>
+              <p class="text-sm text-gray-600 mb-2">
+                Select a group to associate with this database. If you don't have a group, please{' '}
+                <a href="/group/create" class="text-blue-500 cursor-pointer underline">
+                  create one
+                </a>{' '}
+                first from your account settings.
+              </p>
+              <ElSelect
+                id="database-group"
+                v-model={state.model.groupId}
+                placeholder="Select a group"
+                disabled={state.loading}
+                class="w-full"
+              >
+                {groups.value.map((group: any) => (
+                  <ElOption key={group.id} label={group.name} value={group.id} />
+                ))}
+              </ElSelect>
+            </div>
+          )}
         </SmForm>
         <p class="m-0 mt-3">
           Databases should be provided in{' '}
@@ -255,8 +312,10 @@ const UploadDialog = defineComponent({
           disabled={state.loading}
           options={uppyOptions}
           s3Options={s3Options}
-          onFile-removed={handleRemoveFile} /* ugly alert */
-          onComplete={handleUploadComplete}
+          {...{
+            'onFile-removed': handleRemoveFile,
+            onComplete: handleUploadComplete,
+          }}
         />
       </ElDialog>
     )
