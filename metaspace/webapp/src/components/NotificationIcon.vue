@@ -19,7 +19,7 @@ export default defineComponent({
 </script>
 <style scoped>
 .notification:before {
-  @apply w-2 h-2 bg-danger rounded-full ml-1;
+  @apply w-2 h-2 bg-danger rounded-full ml-1 -mt-4;
   content: '';
   display: inline-block;
   vertical-align: middle;

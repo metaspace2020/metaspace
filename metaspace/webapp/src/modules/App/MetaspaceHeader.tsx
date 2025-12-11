@@ -1,7 +1,7 @@
 import { computed, defineAsyncComponent, defineComponent, onBeforeUnmount, onMounted, reactive, Transition } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 
 import NotificationIcon from '../../components/NotificationIcon.vue'
@@ -13,7 +13,8 @@ import { userProfileQuery } from '../../api/user'
 import { signOut } from '../../api/auth'
 import { refreshLoginStatus } from '../../api/graphqlClient'
 
-import { ElAlert, ElRow } from '../../lib/element-plus'
+import { ElAlert, ElDropdownMenu, ElDropdownItem, ElRow, ElButton, ElIcon, ElDropdown, ElDivider } from '../../lib/element-plus'
+import { ArrowDown } from '@element-plus/icons-vue'
 
 import './MetaspaceHeader.scss'
 
@@ -31,6 +32,8 @@ interface MetaspaceHeaderState {
   openSubmenu: string | null
   scrolled: boolean
   responsiveMenuOpen: boolean
+  hoveredTab: string | null
+  mobileExpandedMenus: Set<string>
 }
 
 export default defineComponent({
@@ -42,10 +45,13 @@ export default defineComponent({
       openSubmenu: null,
       scrolled: false,
       responsiveMenuOpen: false,
+      hoveredTab: null,
+      mobileExpandedMenus: new Set<string>(),
     })
 
     const store = useStore()
     const route = useRoute()
+    const router = useRouter()
 
     const { result: systemHealth, subscribeToMore } = useQuery(getSystemHealthQuery, null, {
       fetchPolicy: 'cache-first',
@@ -120,27 +126,19 @@ export default defineComponent({
       state.scrolled = window.scrollY > 0
     }
 
-    const href = (path: string) => {
+    const navigateTo = (path: string, query: any = {}) => {
       const lastParams = store.state.lastUsedFilters[path]
       let f = lastParams ? lastParams.filter : {}
       f = Object.assign({}, f, store.getters.filter)
-      return {
-        path,
-        query: encodeParams(f, path, store.state.filterLists),
-      }
+      const mergedQuery = Object.assign({}, f, query)
+      
+      router.push({
+        name: path,
+        query:  encodeParams(mergedQuery, path, store.state.filterLists)
+      })
     }
 
-    const uploadHref = () => {
-      return href('/upload')
-    }
 
-    const datasetsHref = () => {
-      return href('/datasets')
-    }
-
-    const annotationsHref = () => {
-      return href('/annotations')
-    }
 
     const showCreateAccount = () => {
       store.commit('account/showDialog', 'createAccount')
@@ -168,6 +166,22 @@ export default defineComponent({
 
     const showResponsiveMenu = (value: boolean = false) => {
       state.responsiveMenuOpen = value
+      // Reset mobile expanded menus when closing responsive menu
+      if (!value) {
+        state.mobileExpandedMenus.clear()
+      }
+    }
+
+    const toggleMobileMenu = (menuId: string) => {
+      if (state.mobileExpandedMenus.has(menuId)) {
+        state.mobileExpandedMenus.delete(menuId)
+      } else {
+        state.mobileExpandedMenus.add(menuId)
+      }
+    }
+
+    const isMobileMenuExpanded = (menuId: string) => {
+      return state.mobileExpandedMenus.has(menuId)
     }
 
     onMounted(() => {
@@ -182,37 +196,226 @@ export default defineComponent({
       window.removeEventListener('scroll', scrollListener)
     })
 
+    const handleCommand = (command: string) => {
+      switch (command) {
+        case 'datasets':
+          navigateTo('datasets')
+          break
+        case 'annotations':
+          navigateTo('annotations')
+          break
+        case 'databases':
+          navigateTo('databases')
+          break
+        case 'projects':
+          navigateTo('projects')
+          break
+        case 'contact':
+          navigateTo('contact')
+          break
+        case 'faq':
+          navigateTo('faq')
+          break
+        case 'feature-requests':
+          navigateTo('feature-requests')
+          break
+        case 'learn':
+          navigateTo('learn')
+          break
+        case 'detectability':
+          navigateTo('detectability')
+          break
+        case 'converter':
+          window.open('https://github.com/metaspace2020/metaspace-converter', '_blank')
+          break
+        case 'python-client':
+          window.open('https://metaspace2020.readthedocs.io/en/latest/', '_blank')
+          break
+        case 'profile':
+          navigateTo('profile')
+          break
+        case 'my-groups':
+          navigateTo('group-list', { f: 'my-groups' })
+          break
+        case 'my-projects':
+          navigateTo('project-list', { f: 'my-projects' })
+          break
+        case 'sign-out':
+          logout()
+          break
+        case 'plans':
+          navigateTo('plans')
+          break
+        case 'split':
+          navigateTo('split')
+          break
+        case 'upload':
+          navigateTo('upload')
+          break
+      }
+    }
+
+    const handleHover = (isHovered: boolean, label: string) => {
+      state.hoveredTab = isHovered ? label : null
+    }
+
+    const renderMobileDropdown = (label: string, menuId: string, items: any[], notificationMessage: string = '', customColor: string = '') => {
+      const isExpanded = isMobileMenuExpanded(menuId)
+      
+      return (
+        <div class="mobile-dropdown-container w-full">
+          <HeaderButton
+            class={`w-full text-center header-link mobile-dropdown-trigger ${customColor ? 'bg-amber-500' : ''}`}
+            onClick={(e: Event) => {
+              e.stopPropagation()
+              toggleMobileMenu(menuId)
+            }}
+          >
+            <div class="flex items-center justify-between w-full">
+              <span class="flex items-center">
+                {label}
+                {notificationMessage && (
+                  <NotificationIcon tooltip={notificationMessage} tooltipPlacement="bottom" />
+                )}
+              </span>
+              <ElIcon
+                class={`ml-2 transition-transform duration-300 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}
+              >
+                <ArrowDown />
+              </ElIcon>
+            </div>
+          </HeaderButton>
+          
+          <Transition
+            name="mobile-dropdown"
+            enterActiveClass="transition-all duration-300 ease-out"
+            enterFromClass="opacity-0 max-h-0"
+            enterToClass="opacity-100 max-h-96"
+            leaveActiveClass="transition-all duration-300 ease-in"
+            leaveFromClass="opacity-100 max-h-96"
+            leaveToClass="opacity-0 max-h-0"
+          >
+            {isExpanded && (
+              <div class="mobile-dropdown-items overflow-hidden">
+                {items.map((item, index) => (
+                  <HeaderButton
+                    key={index}
+                    class={`w-full text-center mobile-dropdown-item ${customColor ? 'pro-dropdown-item' : ''}`}
+                    onClick={() => {
+                      handleCommand(item.command)
+                      showResponsiveMenu(false)
+                    }}
+                  >
+                    {item.label}
+                  </HeaderButton>
+                ))}
+              </div>
+            )}
+          </Transition>
+        </div>
+      )
+    }
+
+    const renderTab = (label: string, href: any, items: any[], notificationMessage: string = '', customColor: string = '', hideIcon: boolean = false) => {
+      return (
+        <ElDropdown
+          type="primary"
+          onCommand={handleCommand}
+          role="menu"
+          v-slots={{
+            default: () => (
+              <div
+                class="h-auto flex flex-row items-center justify-center w-full"
+                onMouseenter={() => handleHover(true, label)}
+                onMouseleave={() => handleHover(false, label)}
+              >
+                <div class="text-white font-medium cursor-pointer items-center justify-center">
+                  <ElButton
+                    type="primary"
+                    color={customColor}
+                    class={`mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0 ${customColor ? '' : 'bg-transparent'}`}
+                    onClick={() => handleCommand(href)}
+                  >
+                    {label}
+                    {notificationMessage && (
+                          <NotificationIcon tooltip={notificationMessage} tooltipPlacement="bottom" />
+                        )}
+                    {!hideIcon && (
+                      <ElIcon
+                      class="ml-1 mt-0.5 transition-transform duration-300"
+                      style={{ transform: state.hoveredTab === label ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                      >
+                        <ArrowDown />
+                      </ElIcon>
+                    )}
+                  </ElButton>
+                </div>
+              </div>
+            ),
+            dropdown: () => (
+              <ElDropdownMenu>
+                {items.map((item, index) => (
+                  <ElDropdownItem  class={customColor ?  'hover:!text-amber-500 hover:!bg-amber-500/10' : ''} command={item.command} key={index}>
+                    {item.label}
+                  </ElDropdownItem>
+                ))}
+              </ElDropdownMenu>
+            ),
+          }}
+        />
+      )
+    }
+
     const renderLeftTabs = () => {
       return (
         <>
-          <HeaderLink id="upload-link" class="header-link" to={uploadHref()}>
-            Upload
-          </HeaderLink>
-          <HeaderLink id="annotations-link" class="header-link" to={annotationsHref()}>
-            Annotations
-          </HeaderLink>
-          <HeaderLink id="datasets-link" class="header-link" to={datasetsHref()}>
-            Datasets
-          </HeaderLink>
-          <HeaderLink class="header-link" to="/projects">
-            Projects
-          </HeaderLink>
-          <HeaderLink class="header-link" to="/groups">
-            Groups
-          </HeaderLink>
+          {renderTab('Datasets', 'datasets', [
+            { command: 'datasets', label: 'Datasets' },
+            { command: 'annotations', label: 'Annotations' },
+            { command: 'upload', label: 'Upload' },
+            { command: 'databases', label: 'Databases' },
+            { command: 'projects', label: 'Projects' },
+          ])}
+
+          {renderTab('Tools', 'detectability',  [
+            { command: 'detectability', label: 'Detectability' },
+            { command: 'converter', label: 'METASPACE converter' },
+            { command: 'python-client', label: 'Python client' },
+          ])}
+
+          {renderTab('Support', 'contact',[
+            { command: 'contact', label: 'Contact' },
+            { command: 'faq', label: 'FAQ' },
+            { command: 'feature-requests', label: 'Feature requests' },
+            { command: 'learn', label: 'Learn' },
+          ])}
         </>
       )
     }
 
-    const renderRightTabs = () => {
+    const renderMobileLeftTabs = () => {
       return (
         <>
-          <HeaderLink class="header-link" to="/detectability">
-            Detectability
-          </HeaderLink>
-          <HeaderLink class="header-link" to="/help">
-            Help
-          </HeaderLink>
+          {renderMobileDropdown('Datasets', 'datasets-mobile', [
+            { command: 'datasets', label: 'Datasets' },
+            { command: 'annotations', label: 'Annotations' },
+            { command: 'upload', label: 'Upload' },
+            { command: 'databases', label: 'Databases' },
+            { command: 'projects', label: 'Projects' },
+          ])}
+
+          {renderMobileDropdown('Tools', 'tools-mobile', [
+            { command: 'detectability', label: 'Detectability' },
+            { command: 'converter', label: 'METASPACE converter' },
+            { command: 'python-client', label: 'Python client' },
+          ])}
+
+          {renderMobileDropdown('Support', 'support-mobile', [
+            { command: 'contact', label: 'Contact' },
+            { command: 'faq', label: 'FAQ' },
+            { command: 'feature-requests', label: 'Feature requests' },
+            { command: 'learn', label: 'Learn' },
+          ])}
         </>
       )
     }
@@ -258,70 +461,31 @@ export default defineComponent({
               </div>
 
               <div class="header-items">
-                {renderRightTabs()}
                 {!loadingUser.value && !currentUser.value && (
                   <div class="header-items mr-1 lg:mr-2">{renderNotLoggedIn()}</div>
                 )}
-                {!loadingUser.value && currentUser.value && (
-                  <div class="header-items mr-1 lg:mr-2">
-                    <div
-                      class="relative flex py-2"
-                      onMouseenter={() => handleSubmenuEnter('user')}
-                      onMouseleave={() => handleSubmenuLeave('user')}
-                      onClick={() => handleSubmenuLeave('user')}
-                    >
-                      <HeaderLink id="user-menu" to="/user/me" isActive={isMenuOpen}>
-                        {currentUser.value?.name}
-                        {pendingRequestMessage.value && (
-                          <NotificationIcon tooltip={pendingRequestMessage.value} tooltipPlacement="bottom" />
-                        )}
-                      </HeaderLink>
-                      <transition
-                        enterFromClass="transform opacity-0 scale-95"
-                        enterToClass="transform opacity-100 scale-100"
-                        leaveFromClass="transform opacity-100 scale-100"
-                        leaveToClass="transform opacity-0 scale-95"
-                        enterActiveClass="transition ease-out duration-100"
-                        leaveActiveClass="transition ease-in duration-75"
-                      >
-                        {isMenuOpen && (
-                          <div
-                            class="bg-white origin-top-right absolute right-0 top-1/2 mt-6 w-40
-                            rounded-md shadow-lg z-10"
-                          >
-                            <div
-                              class="py-1 rounded-md bg-white shadow-xs text-sm"
-                              role="menu"
-                              aria-orientation="vertical"
-                              aria-labelledby="user-menu"
-                            >
-                              <RouterLink
-                                to="/user/me"
-                                class="no-underline block px-4 py-2 text-gray-700 hover:bg-gray-100 font-medium"
-                              >
-                                My account
-                              </RouterLink>
-                            </div>
-                            <button
-                              class="button-reset w-full text-left block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                              onClick={() => {
-                                logout()
-                              }}
-                            >
-                              Sign out
-                            </button>
-                          </div>
-                        )}
-                      </transition>
-                    </div>
-                  </div>
+                {!loadingUser.value && currentUser.value && 
+                  renderTab(currentUser.value?.name, 'profile', [
+                    { command: 'profile', label: 'My account' },
+                    { command: 'my-groups', label: 'My groups' },
+                    { command: 'my-projects', label: 'My projects' },
+                    { command: 'sign-out', label: 'Sign out' },
+                  ], pendingRequestMessage.value
                 )}
+
+                <ElDivider direction="vertical" size="large"/>
+
+                {renderTab('METASPACE PRO', 'plans', [
+                    { command: 'plans', label: 'Plans' },
+                    { command: 'split', label: 'Pro x Academic' }
+                  ], null, '#FFAB3F', true)}
+
               </div>
             </div>
 
             <div
               class={`responsive-menu transition-colors duration-300 ease-in-out h-16 flex items-start justify-center
-              ${isPrimaryColor.value} flex-wrap h-full`}
+              ${state.scrolled === false ? isPrimaryColor.value : isPrimaryColorAlpha.value} flex-wrap h-full`}
             >
               <div class="header-items flex-row w-full justify-between" style="height: 64px">
                 <RouterLink to="/" class="flex pl-3 pr-4">
@@ -354,28 +518,40 @@ export default defineComponent({
               {state.responsiveMenuOpen && (
                 <div
                   class="header-items flex-col z-50"
-                  onClick={() => {
-                    showResponsiveMenu(false)
+                  onClick={(e) => {
+                    // Only close if clicking on the background, not on dropdown items
+                    if (e.target === e.currentTarget) {
+                      showResponsiveMenu(false)
+                    }
                   }}
                 >
-                  {renderLeftTabs()}
-                  {renderRightTabs()}
-                  {renderNotLoggedIn(!loadingUser.value && !currentUser.value)}
-                  {currentUser.value && (
-                    <HeaderLink to="/user/me" class="w-full text-center header-link">
-                      My account
-                    </HeaderLink>
+                  {renderMobileLeftTabs()}
+                  
+                  {renderMobileDropdown('METASPACE PRO', 'pro-mobile', [
+                    { command: 'plans', label: 'Plans' },
+                    { command: 'split', label: 'Pro x Academic' }
+                  ], '', '#FFAB3F')}
+
+                  {!loadingUser.value && !currentUser.value && (
+                    <div class="w-full">
+                      {renderNotLoggedIn()}
+                    </div>
                   )}
+                  
                   {currentUser.value && (
-                    <HeaderButton
-                      class="w-full text-center header-link"
-                      onClick={() => {
-                        logout()
-                      }}
-                    >
-                      Sign out
-                    </HeaderButton>
+                    renderMobileDropdown(
+                      currentUser.value?.name, 
+                      'user-mobile', 
+                      [
+                        { command: 'profile', label: 'My account' },
+                        { command: 'my-groups', label: 'My groups' },
+                        { command: 'my-projects', label: 'My projects' },
+                        { command: 'sign-out', label: 'Sign out' },
+                      ], 
+                      pendingRequestMessage.value
+                    )
                   )}
+
                 </div>
               )}
             </div>
