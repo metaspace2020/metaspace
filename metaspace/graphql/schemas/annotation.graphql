@@ -31,6 +31,7 @@ type Annotation {
   isotopeImages: [MzImage!]!
   isomers: [IsomerAnnotation!]!
   isobars: [IsobarAnnotation!]!
+  isomerMolsCount: Int!
 
   peakChartData: String  # JSON
 
@@ -119,6 +120,7 @@ enum AnnotationOrderBy {
   ORDER_BY_ISOMERS
   ORDER_BY_ISOBARS
   ORDER_BY_MASS_ERROR
+  ORDER_BY_ISOMER_MOLS
 }
 
 # [min, max) interval

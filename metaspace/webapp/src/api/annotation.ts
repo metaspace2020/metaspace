@@ -74,6 +74,7 @@ export const annotationDetailItemFragment = gql`
       peakNs
       shouldWarn
     }
+    isomerMolsCount
     countPossibleCompounds(includeIsomers: $countIsomerCompounds)
     possibleCompounds {
       name

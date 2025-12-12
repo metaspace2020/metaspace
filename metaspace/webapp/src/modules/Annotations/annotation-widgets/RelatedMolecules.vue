@@ -9,9 +9,9 @@
             class="ion-link"
           >
             <div>
-              <span v-if="other.isIsomer">Isomer:</span>
+              <span v-if="other.isIsomer">Isomeric ion:</span>
               <span v-else-if="other.isIsobar">
-                Isobar
+                Isobaric ion:
                 <el-popover trigger="hover">
                   <template #reference>
                     <span>{{ renderMassShift(annotation.mz, other.mz) }}</span>
@@ -23,6 +23,7 @@
                   <p>Check the <b>Diagnostics</b> panel for more detail about the overlapping peaks.</p> </el-popover
                 >:
               </span>
+              <span v-else>Isomeric molecules: </span>
               <molecular-formula class="ion-formula" :ion="other.ion" />
             </div>
 
@@ -31,7 +32,7 @@
           </component>
 
           <el-popover v-if="other.isIsomer" trigger="hover" placement="top">
-            <div style="max-width: 500px">
+            <div style="max-width: 500px" class="break-normal break-keep">
               <p>
                 The False Discovery Rate (FDR) for each annotation is calculated among all ions that share the same
                 adduct.
@@ -49,7 +50,7 @@
           </el-popover>
 
           <el-popover v-else-if="other.isIsobar" trigger="hover" placement="top">
-            <div style="max-width: 400px; width: 400px">
+            <div style="max-width: 400px; width: 400px" class="break-normal break-keep">
               <p>
                 When two isobaric ions are annotated with significantly different MSM scores (>0.5), it is generally
                 reasonable to assume that the lower-scoring ion is a false discovery.
@@ -57,6 +58,23 @@
               <p>
                 To help manually review cases when the MSM scores are not significantly different, the
                 <b>Diagnostics</b> panel allows side-by-side comparison of isotopic ion images and spectra.
+              </p>
+            </div>
+            <template #reference>
+              <el-icon class="el-icon-question help-icon"><QuestionFilled /></el-icon>
+            </template>
+          </el-popover>
+
+          <el-popover v-else trigger="hover" placement="top">
+            <div style="max-width: 400px; width: 400px" class="break-normal break-keep">
+              <p>
+                Isomeric molecules are neutral compounds that share the same chemical formula (excluding the adduct) but
+                differ in structure.
+              </p>
+              <p>
+                The molecules listed here are determined by the annotation database selected, based solely on the
+                neutral formula. The FDR should not be used to decide which isomeric molecule is more likely to be
+                correct.
               </p>
             </div>
             <template #reference>

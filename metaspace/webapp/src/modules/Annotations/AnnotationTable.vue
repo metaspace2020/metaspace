@@ -228,11 +228,24 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('isomerMolsCount')"
+        key="isomerMolsCount"
+        prop="isomerMolsCount"
+        label="Isomeric molecules"
+        :min-width="160"
+        sortable="custom"
+      >
+        <template v-slot="{ row }">
+          {{ row.isomerMolsCount }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
         v-if="!hidden('isomers')"
         key="isomers"
         prop="isomers"
-        label="Isomers"
-        :min-width="90"
+        label="Isomeric ions"
+        :min-width="120"
         sortable="custom"
       >
         <template v-slot="{ row }">
@@ -244,8 +257,8 @@
         v-if="!hidden('isobars')"
         key="isobars"
         prop="isobars"
-        label="Isobars"
-        :min-width="80"
+        label="Isobaric ions"
+        :min-width="120"
         sortable="custom"
       >
         <template v-slot="{ row }">
@@ -484,6 +497,7 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_ISOMERS: 'isomers',
   ORDER_BY_ISOBARS: 'isobars',
   ORDER_BY_MASS_ERROR: 'mzErrAbs',
+  ORDER_BY_ISOMER_MOLS: 'isomerMolsCount',
 }
 const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
 
@@ -607,15 +621,21 @@ export default defineComponent({
           selected: false,
         },
         {
+          id: 19,
+          label: 'Isomeric molecules',
+          src: 'isomerMolsCount',
+          selected: false,
+        },
+        {
           id: 13,
-          label: 'Isomers',
+          label: 'Isomeric ions',
           src: 'isomers',
           selected: true,
           default: true,
         },
         {
           id: 14,
-          label: 'Isobars',
+          label: 'Isobaric ions',
           src: 'isobars',
           selected: true,
           default: true,
@@ -1351,6 +1371,9 @@ export default defineComponent({
         'isomers',
         'isobars',
         'mzErrAbs',
+        'isomeric_mols_count',
+        'isomeric_ions_count',
+        'isobaric_ions_count',
       ]
       if (includeColoc) {
         columns.push('colocalizationCoeff')
@@ -1387,6 +1410,7 @@ export default defineComponent({
             rhoChaos = '',
             possibleCompounds = [],
             isotopeImages = [],
+            isomers = [],
             isobars = [],
             offSample = false,
             offSampleProb = '',
@@ -1424,6 +1448,7 @@ export default defineComponent({
             isotopeImages[0]?.maxIntensity ?? '',
             isotopeImages[0]?.totalIntensity ?? '',
             possibleCompounds.length,
+            isomers.length,
             isobars.length,
             mzErrAbs ?? '',
           ]
@@ -1511,6 +1536,7 @@ export default defineComponent({
     }
 
     const handleColumnClick = (index) => {
+      console.log('handleColumnClick', index)
       state.columns[index].selected = !state.columns[index].selected
       const defaultCols = state.columns.filter((column) => column.default).map((column) => column.id)
       const selectedCols = state.columns.filter((column) => column.selected).map((column) => column.id)

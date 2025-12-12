@@ -87,12 +87,12 @@ const PublicationsPage = defineComponent({
             <a
               class="publication-link flex items-center"
               href={
-                'https://scholar.google.com/scholar?q=%22METASPACE%22+AND+%28%22imaging+' +
-                'mass+spectrometry%22+OR+%22mass+spectrometry+imaging%22%29'
+                'https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=%22metaspace2020.org' +
+                '%22+OR+%22metaspace2020.eu%22&btnG='
               }
               target="_blank"
             >
-              Research articles using METASPACE ({(publicationCount.value || 332).toLocaleString()})
+              Research articles using METASPACE ({(publicationCount.value || 375).toLocaleString()})
               <StatefulIcon class="h-4 w-4 pointer-events-none">
                 <ExternalWindowSvg />
               </StatefulIcon>
@@ -100,12 +100,12 @@ const PublicationsPage = defineComponent({
             <a
               class="publication-link flex items-center mt-1"
               href={
-                'https://scholar.google.com/scholar?q=%22METASPACE%22+AND+%28%22imaging+' +
-                'mass+spectrometry%22+OR+%22mass+spectrometry+imaging%22%29++AND+%22Review+article%22&btnG='
+                'https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=%28%22metaspace2020.org' +
+                '%22+OR+%22metaspace2020.eu%22%29++AND+%22Review+article%22&btnG='
               }
               target="_blank"
             >
-              Reviews ({(reviewCount.value || 34).toLocaleString()})
+              Reviews ({(reviewCount.value || 10).toLocaleString()})
               <StatefulIcon class="h-4 w-4 pointer-events-none">
                 <ExternalWindowSvg />
               </StatefulIcon>
