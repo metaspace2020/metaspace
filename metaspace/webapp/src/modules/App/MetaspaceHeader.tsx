@@ -13,7 +13,16 @@ import { userProfileQuery } from '../../api/user'
 import { signOut } from '../../api/auth'
 import { refreshLoginStatus } from '../../api/graphqlClient'
 
-import { ElAlert, ElDropdownMenu, ElDropdownItem, ElRow, ElButton, ElIcon, ElDropdown, ElDivider } from '../../lib/element-plus'
+import {
+  ElAlert,
+  ElDropdownMenu,
+  ElDropdownItem,
+  ElRow,
+  ElButton,
+  ElIcon,
+  ElDropdown,
+  ElDivider,
+} from '../../lib/element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 
 import './MetaspaceHeader.scss'
@@ -131,14 +140,12 @@ export default defineComponent({
       let f = lastParams ? lastParams.filter : {}
       f = Object.assign({}, f, store.getters.filter)
       const mergedQuery = Object.assign({}, f, query)
-      
+
       router.push({
         name: path,
-        query:  encodeParams(mergedQuery, path, store.state.filterLists)
+        query: encodeParams(mergedQuery, path, store.state.filterLists),
       })
     }
-
-
 
     const showCreateAccount = () => {
       store.commit('account/showDialog', 'createAccount')
@@ -146,16 +153,6 @@ export default defineComponent({
 
     const showSignIn = () => {
       store.commit('account/showDialog', 'signIn')
-    }
-
-    const handleSubmenuEnter = (submenu: string) => {
-      state.openSubmenu = submenu
-    }
-
-    const handleSubmenuLeave = (submenu: string) => {
-      if (state.openSubmenu === submenu) {
-        state.openSubmenu = null
-      }
     }
 
     const logout = async () => {
@@ -259,9 +256,15 @@ export default defineComponent({
       state.hoveredTab = isHovered ? label : null
     }
 
-    const renderMobileDropdown = (label: string, menuId: string, items: any[], notificationMessage: string = '', customColor: string = '') => {
+    const renderMobileDropdown = (
+      label: string,
+      menuId: string,
+      items: any[],
+      notificationMessage: string = '',
+      customColor: string = ''
+    ) => {
       const isExpanded = isMobileMenuExpanded(menuId)
-      
+
       return (
         <div class="mobile-dropdown-container w-full">
           <HeaderButton
@@ -274,18 +277,14 @@ export default defineComponent({
             <div class="flex items-center justify-between w-full">
               <span class="flex items-center">
                 {label}
-                {notificationMessage && (
-                  <NotificationIcon tooltip={notificationMessage} tooltipPlacement="bottom" />
-                )}
+                {notificationMessage && <NotificationIcon tooltip={notificationMessage} tooltipPlacement="bottom" />}
               </span>
-              <ElIcon
-                class={`ml-2 transition-transform duration-300 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}
-              >
+              <ElIcon class={`ml-2 transition-transform duration-300 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                 <ArrowDown />
               </ElIcon>
             </div>
           </HeaderButton>
-          
+
           <Transition
             name="mobile-dropdown"
             enterActiveClass="transition-all duration-300 ease-out"
@@ -316,7 +315,14 @@ export default defineComponent({
       )
     }
 
-    const renderTab = (label: string, href: any, items: any[], notificationMessage: string = '', customColor: string = '', hideIcon: boolean = false) => {
+    const renderTab = (
+      label: string,
+      href: any,
+      items: any[],
+      notificationMessage: string = '',
+      customColor: string = '',
+      hideIcon: boolean = false
+    ) => {
       return (
         <ElDropdown
           type="primary"
@@ -333,17 +339,21 @@ export default defineComponent({
                   <ElButton
                     type="primary"
                     color={customColor}
-                    class={`mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0 ${customColor ? '' : 'bg-transparent'}`}
+                    class={`mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0 ${
+                      customColor ? '' : 'bg-transparent'
+                    }`}
                     onClick={() => handleCommand(href)}
                   >
-                    {label}
+                    <span class="font-bold" style={{ fontSize: '15px' }}>
+                      {label}
+                    </span>
                     {notificationMessage && (
-                          <NotificationIcon tooltip={notificationMessage} tooltipPlacement="bottom" />
-                        )}
+                      <NotificationIcon tooltip={notificationMessage} tooltipPlacement="bottom" />
+                    )}
                     {!hideIcon && (
                       <ElIcon
-                      class="ml-1 mt-0.5 transition-transform duration-300"
-                      style={{ transform: state.hoveredTab === label ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                        class="ml-1 mt-0.5 transition-transform duration-300"
+                        style={{ transform: state.hoveredTab === label ? 'rotate(180deg)' : 'rotate(0deg)' }}
                       >
                         <ArrowDown />
                       </ElIcon>
@@ -355,7 +365,11 @@ export default defineComponent({
             dropdown: () => (
               <ElDropdownMenu>
                 {items.map((item, index) => (
-                  <ElDropdownItem  class={customColor ?  'hover:!text-amber-500 hover:!bg-amber-500/10' : ''} command={item.command} key={index}>
+                  <ElDropdownItem
+                    class={customColor ? 'hover:!text-amber-500 hover:!bg-amber-500/10' : ''}
+                    command={item.command}
+                    key={index}
+                  >
                     {item.label}
                   </ElDropdownItem>
                 ))}
@@ -377,13 +391,13 @@ export default defineComponent({
             { command: 'projects', label: 'Projects' },
           ])}
 
-          {renderTab('Tools', 'detectability',  [
+          {renderTab('Tools', 'detectability', [
             { command: 'detectability', label: 'Detectability' },
             { command: 'converter', label: 'METASPACE converter' },
             { command: 'python-client', label: 'Python client' },
           ])}
 
-          {renderTab('Support', 'contact',[
+          {renderTab('Support', 'contact', [
             { command: 'contact', label: 'Contact' },
             { command: 'faq', label: 'FAQ' },
             { command: 'feature-requests', label: 'Feature requests' },
@@ -435,7 +449,6 @@ export default defineComponent({
     }
 
     return () => {
-      const isMenuOpen = state.openSubmenu === 'user'
       return (
         <div class={`sm-header ${healthMessage.value ? 'h-24' : 'h-16'}`}>
           <div class="fixed top-0 left-0 right-0">
@@ -464,22 +477,33 @@ export default defineComponent({
                 {!loadingUser.value && !currentUser.value && (
                   <div class="header-items mr-1 lg:mr-2">{renderNotLoggedIn()}</div>
                 )}
-                {!loadingUser.value && currentUser.value && 
-                  renderTab(currentUser.value?.name, 'profile', [
-                    { command: 'profile', label: 'My account' },
-                    { command: 'my-groups', label: 'My groups' },
-                    { command: 'my-projects', label: 'My projects' },
-                    { command: 'sign-out', label: 'Sign out' },
-                  ], pendingRequestMessage.value
-                )}
+                {!loadingUser.value &&
+                  currentUser.value &&
+                  renderTab(
+                    currentUser.value?.name,
+                    'profile',
+                    [
+                      { command: 'profile', label: 'My account' },
+                      { command: 'my-groups', label: 'My groups' },
+                      { command: 'my-projects', label: 'My projects' },
+                      { command: 'sign-out', label: 'Sign out' },
+                    ],
+                    pendingRequestMessage.value
+                  )}
 
-                <ElDivider direction="vertical" size="large"/>
+                <ElDivider direction="vertical" size="large" />
 
-                {renderTab('METASPACE PRO', 'plans', [
+                {renderTab(
+                  'METASPACE PRO',
+                  'plans',
+                  [
                     { command: 'plans', label: 'Plans' },
-                    { command: 'split', label: 'Pro x Academic' }
-                  ], null, '#FFAB3F', true)}
-
+                    { command: 'split', label: 'Pro x Academic' },
+                  ],
+                  null,
+                  '#FFAB3F',
+                  true
+                )}
               </div>
             </div>
 
@@ -526,32 +550,32 @@ export default defineComponent({
                   }}
                 >
                   {renderMobileLeftTabs()}
-                  
-                  {renderMobileDropdown('METASPACE PRO', 'pro-mobile', [
-                    { command: 'plans', label: 'Plans' },
-                    { command: 'split', label: 'Pro x Academic' }
-                  ], '', '#FFAB3F')}
 
-                  {!loadingUser.value && !currentUser.value && (
-                    <div class="w-full">
-                      {renderNotLoggedIn()}
-                    </div>
+                  {renderMobileDropdown(
+                    'METASPACE PRO',
+                    'pro-mobile',
+                    [
+                      { command: 'plans', label: 'Plans' },
+                      { command: 'split', label: 'Pro x Academic' },
+                    ],
+                    '',
+                    '#FFAB3F'
                   )}
-                  
-                  {currentUser.value && (
+
+                  {!loadingUser.value && !currentUser.value && <div class="w-full">{renderNotLoggedIn()}</div>}
+
+                  {currentUser.value &&
                     renderMobileDropdown(
-                      currentUser.value?.name, 
-                      'user-mobile', 
+                      currentUser.value?.name,
+                      'user-mobile',
                       [
                         { command: 'profile', label: 'My account' },
                         { command: 'my-groups', label: 'My groups' },
                         { command: 'my-projects', label: 'My projects' },
                         { command: 'sign-out', label: 'Sign out' },
-                      ], 
+                      ],
                       pendingRequestMessage.value
-                    )
-                  )}
-
+                    )}
                 </div>
               )}
             </div>
