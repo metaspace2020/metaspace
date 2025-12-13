@@ -29,7 +29,9 @@ def main():
     args = parser.parse_args()
 
     with GlobalInit(args.config_path):
-        molecular_db.create(args.name, args.version, args.csv_file, bypass_row_limit=args.bypass_row_limit)
+        molecular_db.create(
+            args.name, args.version, args.csv_file, bypass_row_limit=args.bypass_row_limit
+        )
 
 
 if __name__ == "__main__":
