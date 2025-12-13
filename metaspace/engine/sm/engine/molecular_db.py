@@ -95,7 +95,7 @@ def _validate_moldb_df(df):
     return errors
 
 
-def read_moldb_file(file_path):
+def read_moldb_file(file_path, bypass_row_limit=False):
     try:
         if re.findall(r'^s3a?://', file_path):
             bucket_name, key = split_s3_path(file_path)
@@ -110,7 +110,7 @@ def read_moldb_file(file_path):
     if moldb_df.empty:
         raise MalformedCSV('No data rows found')
 
-    if len(moldb_df) > 100000:
+    if not bypass_row_limit and len(moldb_df) > 100000:
         raise MaxRowsExceeded('CSV file exceeds the maximum allowed')
 
     required_columns = {'id', 'name', 'formula'}
@@ -155,6 +155,7 @@ def create(
     full_name: str = None,
     link: str = None,
     citation: str = None,
+    bypass_row_limit: bool = False,
 ) -> MolecularDB:
     with transaction_context():
         moldb_insert = (
@@ -184,7 +185,7 @@ def create(
             ],
         )
         moldb = find_by_id(moldb_id)
-        moldb_df = read_moldb_file(file_path)
+        moldb_df = read_moldb_file(file_path, bypass_row_limit)
         _import_molecules(moldb, moldb_df, targeted_threshold=1000)
         return moldb
 

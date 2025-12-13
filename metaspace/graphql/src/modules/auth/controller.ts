@@ -388,7 +388,6 @@ export const configureCaptcha = (router: IRouter<any>): void => {
   router.post('/verify_captcha', async(req, res, next) => {
     try {
       const { recaptchaToken } = VerifyCaptchaBody.mask(req.body)
-
       await verifyCaptcha(recaptchaToken)
 
       res.status(200).json({ success: true, message: 'Captcha validated successfully.' })
@@ -417,7 +416,7 @@ const configureCreateAccount = (router: IRouter<any>) => {
     try {
       const { name, email, password, recaptchaToken } = CreateAccountBody.mask(req.body)
 
-      if (process.env.NODE_ENV !== 'test') {
+      if (process.env.NODE_ENV === 'production') {
         await verifyCaptcha(recaptchaToken)
       }
 

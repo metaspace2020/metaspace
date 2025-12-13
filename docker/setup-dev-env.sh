@@ -21,6 +21,10 @@ docker-compose run --rm api /sm-engine/create-es-index.sh
 echo "Initializing postgres schema (\"already exists\" errors can be safely ignored)"
 docker-compose exec postgres sh /docker-entrypoint-initdb.d/create-sm.sh
 
+# Wait for migration
+echo "Running Graphql migrations"
+docker-compose exec graphql sh -c "cd /opt/dev/metaspace/metaspace/graphql && yarn exec typeorm migration:run"
+
 # set up molecular DB
 echo "Installing molecular databases"
 docker-compose run --rm api /sm-engine/install-dbs.sh
