@@ -307,9 +307,9 @@
       </el-table-column>
 
       <el-table-column
-        v-if="!hidden('mzErrAbs')"
-        key="mzErrAbs"
-        prop="mzErrAbs"
+        v-if="!hidden('massErrorPpm')"
+        key="massErrorPpm"
+        prop="massErrorPpm"
         label="Mass Error (ppm)"
         sortable="custom"
         :min-width="120"
@@ -496,7 +496,7 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_TOTAL_INT: 'isotopeImages[0].totalIntensity',
   ORDER_BY_ISOMERS: 'isomers',
   ORDER_BY_ISOBARS: 'isobars',
-  ORDER_BY_MASS_ERROR: 'mzErrAbs',
+  ORDER_BY_MASS_ERROR: 'massErrorPpm',
   ORDER_BY_ISOMER_MOLS: 'isomerMolsCount',
 }
 const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
@@ -663,7 +663,7 @@ export default defineComponent({
         {
           id: 18,
           label: 'Mass Error',
-          src: 'mzErrAbs',
+          src: 'massErrorPpm',
           selected: false,
         },
         {
@@ -702,20 +702,7 @@ export default defineComponent({
     }
 
     const formatMassError = (row) => {
-      try {
-        const metrics = JSON.parse(row.metricsJson || '{}')
-        const mzErrAbs = metrics.mz_err_abs
-
-        if (mzErrAbs == null || mzErrAbs === undefined) {
-          return '-'
-        }
-
-        // Convert to ppm: (mz_err_abs / mz) * 1e6
-        const ppm = (mzErrAbs / row.mz) * 1e6
-        return ppm.toFixed(2)
-      } catch (e) {
-        return '-'
-      }
+      return row.massErrorPpm?.toFixed(2) ?? '-'
     }
 
     const tableLoading = computed(() => state.loading)
@@ -1370,7 +1357,7 @@ export default defineComponent({
         'totalIntensity',
         'isomers',
         'isobars',
-        'mzErrAbs',
+        'massErrorPpm',
         'isomeric_mols_count',
         'isomeric_ions_count',
         'isobaric_ions_count',
@@ -1415,17 +1402,8 @@ export default defineComponent({
             offSample = false,
             offSampleProb = '',
             colocalizationCoeff = null,
-            metricsJson = '{}',
+            massErrorPpm = null,
           } = plainRow
-
-          // Parse mz_err_abs from metricsJson
-          let mzErrAbs = null
-          try {
-            const metrics = JSON.parse(metricsJson)
-            mzErrAbs = metrics.mz_err_abs ?? null
-          } catch (e) {
-            mzErrAbs = null
-          }
 
           const cells = [
             dataset.group?.name || '',
@@ -1450,7 +1428,7 @@ export default defineComponent({
             possibleCompounds.length,
             isomers.length,
             isobars.length,
-            mzErrAbs ?? '',
+            massErrorPpm ?? '',
           ]
 
           if (includeColoc) {

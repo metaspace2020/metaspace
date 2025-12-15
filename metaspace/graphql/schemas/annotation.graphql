@@ -34,6 +34,7 @@ type Annotation {
   isomerMolsCount: Int!
 
   peakChartData: String  # JSON
+  massErrorPpm: Float
 
   # Unfortunately Apollo's client-side cache makes it necessary to parameterize colocalizationCoeff so that its values
   # are consistent between requests. Without this, having multiple queries with different 'colocalizedWith' filters
