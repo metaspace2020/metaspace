@@ -307,6 +307,19 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('massErrorPpm')"
+        key="massErrorPpm"
+        prop="massErrorPpm"
+        label="Mass Error (ppm)"
+        sortable="custom"
+        :min-width="120"
+      >
+        <template v-slot="{ row }">
+          <span>{{ formatMassError(row) }}</span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
         v-if="showColocCol"
         key="colocalizationCoeff"
         prop="colocalizationCoeff"
@@ -483,6 +496,7 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_TOTAL_INT: 'isotopeImages[0].totalIntensity',
   ORDER_BY_ISOMERS: 'isomers',
   ORDER_BY_ISOBARS: 'isobars',
+  ORDER_BY_MASS_ERROR: 'massErrorPpm',
   ORDER_BY_ISOMER_MOLS: 'isomerMolsCount',
 }
 const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
@@ -648,6 +662,12 @@ export default defineComponent({
         },
         {
           id: 18,
+          label: 'Mass Error',
+          src: 'massErrorPpm',
+          selected: false,
+        },
+        {
+          id: 19,
           label: 'Co-localization coefficient',
           src: 'colocalizationCoeff',
           selected: false,
@@ -679,6 +699,10 @@ export default defineComponent({
         }
         return '> 50%'
       }
+    }
+
+    const formatMassError = (row) => {
+      return row.massErrorPpm?.toFixed(2) ?? '-'
     }
 
     const tableLoading = computed(() => state.loading)
@@ -1331,6 +1355,9 @@ export default defineComponent({
         'minIntensity',
         'maxIntensity',
         'totalIntensity',
+        'isomers',
+        'isobars',
+        'massErrorPpm',
         'isomeric_mols_count',
         'isomeric_ions_count',
         'isobaric_ions_count',
@@ -1375,6 +1402,7 @@ export default defineComponent({
             offSample = false,
             offSampleProb = '',
             colocalizationCoeff = null,
+            massErrorPpm = null,
           } = plainRow
 
           const cells = [
@@ -1400,6 +1428,7 @@ export default defineComponent({
             possibleCompounds.length,
             isomers.length,
             isobars.length,
+            massErrorPpm ?? '',
           ]
 
           if (includeColoc) {
@@ -1577,6 +1606,7 @@ export default defineComponent({
       isLoading,
       showCustomCols,
       formatMSM,
+      formatMassError,
       tableSort,
       getRowClass,
       onKeyDown,

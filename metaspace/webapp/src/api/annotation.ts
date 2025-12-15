@@ -16,6 +16,8 @@ export const annotationDetailItemFragment = gql`
     rhoChaos
     fdrLevel
     mz
+    metricsJson
+    massErrorPpm
     colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     offSample
     offSampleProb
@@ -187,6 +189,8 @@ export const tableExportQuery = gql`
       rhoSpatial
       rhoSpectral
       rhoChaos
+      metricsJson
+      massErrorPpm
       offSample
       offSampleProb
       isomers {

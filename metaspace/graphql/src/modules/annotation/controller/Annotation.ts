@@ -148,6 +148,22 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     }
   },
 
+  massErrorPpm(hit) {
+    try {
+      const metrics = JSON.parse(JSON.stringify(hit._source.metrics))
+      const mzErrAbs = metrics?.mz_err_abs
+
+      if (mzErrAbs == null || mzErrAbs === undefined) {
+        return null
+      }
+      // Convert to ppm: (mz_err_abs / mz) * 1e6
+      const ppm = (mzErrAbs / hit._source.mz) * 1e6
+      return ppm
+    } catch (e) {
+      return null
+    }
+  },
+
   async colocalizationCoeff(hit, args: {colocalizationCoeffFilter: ColocalizationCoeffFilter | null}, ctx) {
     // Actual implementation is in src/modules/annotation/queryFilters.ts
     if ('getColocalizationCoeff' in hit && args.colocalizationCoeffFilter != null) {
