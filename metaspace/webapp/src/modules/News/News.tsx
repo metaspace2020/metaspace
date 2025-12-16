@@ -1,6 +1,5 @@
-import { computed, defineComponent, reactive, ref, watch } from 'vue'
-import { useQuery, useMutation } from '@vue/apollo-composable'
-import { useApolloClient } from '@vue/apollo-composable'
+import { computed, defineComponent, reactive, ref, watch, inject } from 'vue'
+import { useQuery, useMutation, DefaultApolloClient } from '@vue/apollo-composable'
 import './News.scss'
 import {
   allNewsQuery,
@@ -10,6 +9,7 @@ import {
   createNewsMutation,
   deleteNewsMutation,
   recordNewsEventMutation,
+  unreadNewsCountQuery,
   CreateNewsInput,
   NewsType,
   NewsVisibility,
@@ -133,8 +133,7 @@ export default defineComponent({
     })
 
     // Apollo client for user search
-    const { resolveClient } = useApolloClient()
-    const apolloClient = resolveClient()
+    const apolloClient = inject(DefaultApolloClient)
 
     // Query input
     const queryInput = computed<AllNewsInput>(() => ({
@@ -196,6 +195,25 @@ export default defineComponent({
           })
           // Refetch to update read status
           refetch()
+
+          // Also update the unread news count cache to update header notification
+          try {
+            const currentData = apolloClient.readQuery({ query: unreadNewsCountQuery })
+            if (currentData && currentData.unreadNewsCount > 0) {
+              apolloClient.writeQuery({
+                query: unreadNewsCountQuery,
+                data: {
+                  unreadNewsCount: Math.max(0, currentData.unreadNewsCount - 1),
+                },
+              })
+            }
+          } catch (error) {
+            console.warn('Could not update unread news count cache:', error)
+            // Fallback to refetch
+            apolloClient.refetchQueries({
+              include: [unreadNewsCountQuery],
+            })
+          }
         } catch (error) {
           console.error('Error recording news view:', error)
         }

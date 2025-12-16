@@ -48,7 +48,7 @@ export default defineComponent({
     const router = useRouter()
     const mdRef = ref(null)
 
-    const lastRoute = ref('help')
+    const lastRoute = ref('learn')
     const stepNum = ref(0)
     const container = ref(null)
     const routeTransition = ref(false)
@@ -92,7 +92,7 @@ export default defineComponent({
     const close = () => {
       popperInstance.value?.destroy()
       stepNum.value = 0
-      lastRoute.value = 'help'
+      lastRoute.value = 'learn'
       routeTransition.value = false
       store.commit('endTour')
     }

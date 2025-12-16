@@ -40,7 +40,8 @@ interface MetaspaceHeaderState {
 export default defineComponent({
   name: 'metaspace-header',
   components: { MenuOpen, MenuClose, HeaderLink, HeaderButton, Transition },
-  setup: function () {
+  expose: ['refetchUnreadNewsCount'],
+  setup: function (props, { expose }) {
     const state = reactive<MetaspaceHeaderState>({
       loginEmail: '',
       openSubmenu: null,
@@ -65,7 +66,7 @@ export default defineComponent({
     )
 
     // Query for unread news count
-    const { result: unreadNewsResult } = useQuery(unreadNewsCountQuery, null, {
+    const { result: unreadNewsResult, refetch: refetchUnreadNewsCount } = useQuery(unreadNewsCountQuery, null, {
       fetchPolicy: 'cache-and-network',
       errorPolicy: 'ignore',
     })
@@ -192,6 +193,11 @@ export default defineComponent({
       window.removeEventListener('scroll', scrollListener)
     })
 
+    // Expose refetch function for external components
+    expose({
+      refetchUnreadNewsCount,
+    })
+
     const handleCommand = (command: string) => {
       switch (command) {
         case 'datasets':
@@ -216,7 +222,7 @@ export default defineComponent({
           navigateTo('feature-requests')
           break
         case 'learn':
-          navigateTo('help')
+          navigateTo('learn')
           break
         case 'detectability':
           navigateTo('detectability')

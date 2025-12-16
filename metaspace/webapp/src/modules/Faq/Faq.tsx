@@ -546,8 +546,8 @@ export default defineComponent({
                             Multiple molecular databases are supported for annotation, such as HMDB and LipidMaps, to
                             ensure comprehensive small molecule and lipid identification. There are more core annotation
                             databases available as core databases, check out our{' '}
-                            <a href="/help" target="_blank" rel="noopener noreferrer">
-                              help
+                            <a href="/learn" target="_blank" rel="noopener noreferrer">
+                              learn
                             </a>{' '}
                             page for more information.
                           </p>
@@ -662,8 +662,8 @@ export default defineComponent({
                             provides the latest step-by-step guide. You can also explore interactive tours that walk you
                             through the basic features, including detailed instructions for using them in both METASPACE
                             Academic and METASPACE Pro. For additional details, visit our{' '}
-                            <a href="/help" target="_blank" rel="noopener noreferrer">
-                              Help page
+                            <a href="/learn" target="_blank" rel="noopener noreferrer">
+                              Learn page
                             </a>
                             .
                           </p>

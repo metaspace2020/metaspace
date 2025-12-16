@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen m-0 relative" :class="{ 'flex flex-col': route.meta.flex }">
-    <metaspace-header :class="route.meta.headerClass" />
+    <metaspace-header ref="headerRef" :class="route.meta.headerClass" />
 
     <!--
       :key="$route.path" is used to force the content to be remounted if a non-querystring param in the URL changes.
@@ -23,7 +23,7 @@
     <news-dialog
       v-model="newsDialog.showDialog.value"
       :news="newsDialog.currentNews.value"
-      @news-read="newsDialog.handleNewsRead"
+      @news-read="handleNewsRead"
     />
   </div>
 </template>
@@ -33,7 +33,7 @@ import { useCookies } from 'vue3-cookies'
 import config from '../../lib/config'
 import { useStore } from 'vuex'
 import { useRoute } from 'vue-router'
-import { watch } from 'vue'
+import { watch, ref } from 'vue'
 import CookieBanner from './CookieBanner'
 import NewFeaturePopups from './NewFeaturePopups.vue'
 
@@ -125,10 +125,26 @@ export default {
     // Initialize news dialog system
     const newsDialog = useNewsDialog()
 
+    // Reference to header component
+    const headerRef = ref(null)
+
+    // Handle news read event - update both dialog and header
+    const handleNewsRead = (newsId) => {
+      // Call the original news dialog handler
+      newsDialog.handleNewsRead(newsId)
+
+      // Also refetch the header's unread count
+      if (headerRef.value && headerRef.value.refetchUnreadNewsCount) {
+        headerRef.value.refetchUnreadNewsCount()
+      }
+    }
+
     return {
       store,
       route,
       newsDialog,
+      headerRef,
+      handleNewsRead,
     }
   },
 }

@@ -1,6 +1,6 @@
 <template>
   <content-page>
-    <h1>Help</h1>
+    <h1>Learn</h1>
     <h2>Questions or Feedback</h2>
     <p>
       You can submit questions or feedback through our

@@ -18,7 +18,7 @@
     </ul>
     <p>
       If you have any further questions, please check out our main
-      <a href="/help" target="_blank" class="external" title="The page will open in a new window">help</a>
+      <a href="/learn" target="_blank" class="external" title="The page will open in a new window">learn</a>
       page or email us at <a href="mailto:contact@metaspace2020.org">contact@metaspace2020.org</a>.
     </p>
     <p>Have fun using METASPACE!</p>

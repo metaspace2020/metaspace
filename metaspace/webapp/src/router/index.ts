@@ -150,7 +150,10 @@ export const routes: any = [
   { path: '/dataset/:dataset_id/browser', name: 'dataset-browser', component: asyncPages.DatasetBrowserPage },
   { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetEnrichmentPage },
   { path: '/upload', name: 'upload', component: asyncPages.UploadPage },
-  { path: '/help', name: 'help', component: asyncPages.HelpPage, meta: { footer: true } },
+
+  { path: '/learn', name: 'learn', component: asyncPages.HelpPage, meta: { footer: true } },
+  { path: '/help', redirect: { name: 'learn' } },
+
   { path: '/user/me', name: 'profile', component: asyncPages.EditUserPage },
 
   { path: '/admin/health', name: 'admin', component: asyncPages.SystemHealthPage },

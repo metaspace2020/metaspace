@@ -158,7 +158,7 @@ const AboutPage = defineComponent({
                       <span
                         class="about-link mr-1"
                         onClick={() => {
-                          router.push('/help')
+                          router.push('/learn')
                         }}
                       >
                         interactive tutorials
@@ -272,7 +272,7 @@ const AboutPage = defineComponent({
                 </span>
                 <span class="mb-1">
                   2.{' '}
-                  <a href="/help" target="_blank">
+                  <a href="/learn" target="_blank">
                     Take our interactive introductory tours
                   </a>{' '}
                   to get familiar with browsing datasets and annotations.
@@ -358,8 +358,8 @@ const AboutPage = defineComponent({
                 for more information
                 <p></p>
                 If you still have questions or would like to share feedback, please start by visiting our{' '}
-                <a href="/help" target="_blank">
-                  Help section
+                <a href="/learn" target="_blank">
+                  Learn section
                 </a>{' '}
                 and{' '}
                 <a href="https://github.com/metaspace2020/metaspace/discussions" target="_blank">

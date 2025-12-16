@@ -1,6 +1,6 @@
 <template>
-  <a href="/help#databases" target="_blank" rel="noopener" class="flex items-start">
-    See the Help page for details
+  <a href="/learn#databases" target="_blank" rel="noopener" class="flex items-start">
+    See the Learn page for details
     <stateful-icon class="w-4 h-4 ml-1" active>
       <external-window-svg />
     </stateful-icon>

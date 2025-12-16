@@ -1,7 +1,7 @@
-import { computed, defineComponent, watch } from 'vue'
+import { computed, defineComponent, watch, inject } from 'vue'
 import { ElDialog, ElButton, ElIcon } from '../../lib/element-plus'
-import { useMutation } from '@vue/apollo-composable'
-import { recordNewsEventMutation } from '../../api/news'
+import { useMutation, DefaultApolloClient } from '@vue/apollo-composable'
+import { recordNewsEventMutation, unreadNewsCountQuery } from '../../api/news'
 import { Document, SetUp, User } from '@element-plus/icons-vue'
 import RichText from '../../components/RichText/RichText'
 import './NewsDialog.scss'
@@ -31,6 +31,7 @@ export const NewsDialog = defineComponent({
     })
 
     const { mutate: recordNewsEvent } = useMutation(recordNewsEventMutation)
+    const apolloClient = inject(DefaultApolloClient)
 
     const getNewsIcon = (type: any) => {
       switch (type) {
@@ -103,6 +104,25 @@ export const NewsDialog = defineComponent({
           }
 
           emit('newsRead', props.news.id)
+
+          // Also update the unread news count cache to update header notification
+          try {
+            const currentData = apolloClient.readQuery({ query: unreadNewsCountQuery })
+            if (currentData && currentData.unreadNewsCount > 0) {
+              apolloClient.writeQuery({
+                query: unreadNewsCountQuery,
+                data: {
+                  unreadNewsCount: Math.max(0, currentData.unreadNewsCount - 1),
+                },
+              })
+            }
+          } catch (error) {
+            console.warn('Could not update unread news count cache:', error)
+            // Fallback to refetch
+            apolloClient.refetchQueries({
+              include: [unreadNewsCountQuery],
+            })
+          }
         } catch (error) {
           console.error('Error marking news as read:', error)
         }
@@ -123,6 +143,25 @@ export const NewsDialog = defineComponent({
                 eventType: 'viewed',
               },
             })
+
+            // Also update the unread news count cache to update header notification
+            try {
+              const currentData = apolloClient.readQuery({ query: unreadNewsCountQuery })
+              if (currentData && currentData.unreadNewsCount > 0) {
+                apolloClient.writeQuery({
+                  query: unreadNewsCountQuery,
+                  data: {
+                    unreadNewsCount: Math.max(0, currentData.unreadNewsCount - 1),
+                  },
+                })
+              }
+            } catch (error) {
+              console.warn('Could not update unread news count cache:', error)
+              // Fallback to refetch
+              apolloClient.refetchQueries({
+                include: [unreadNewsCountQuery],
+              })
+            }
           } catch (error) {
             console.error('Error recording news view:', error)
           }
