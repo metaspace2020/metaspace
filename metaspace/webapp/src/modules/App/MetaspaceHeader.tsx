@@ -138,11 +138,11 @@ export default defineComponent({
       const lastParams = store.state.lastUsedFilters[path]
       let f = lastParams ? lastParams.filter : {}
       f = Object.assign({}, f, store.getters.filter)
-      const mergedQuery = Object.assign({}, f, query)
+      const mergedQuery = Object.assign({}, f)
 
       router.push({
         name: path,
-        query: encodeParams(mergedQuery, path, store.state.filterLists),
+        query: Object.assign({}, encodeParams(mergedQuery, path, store.state.filterLists), query),
       })
     }
 
@@ -201,10 +201,10 @@ export default defineComponent({
           navigateTo('annotations')
           break
         case 'databases':
-          navigateTo('databases')
+          navigateTo('molecular-databases')
           break
         case 'projects':
-          navigateTo('projects')
+          navigateTo('project-list', { f: '' })
           break
         case 'contact':
           navigateTo('contact')
@@ -216,7 +216,7 @@ export default defineComponent({
           navigateTo('feature-requests')
           break
         case 'learn':
-          navigateTo('learn')
+          navigateTo('help')
           break
         case 'detectability':
           navigateTo('detectability')
