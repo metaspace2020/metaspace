@@ -1,0 +1,110 @@
+type News {
+  id: ID!
+  title: String!
+  content: String!
+  type: NewsType!
+  visibility: NewsVisibility!
+  showOnHomePage: Boolean!
+  isVisible: Boolean!
+  createdBy: ID
+  createdAt: String!
+  updatedAt: String!
+  deletedAt: String
+  hasViewed: Boolean!
+  hasClicked: Boolean!
+  viewCount: Int!
+  clickCount: Int!
+}
+
+enum NewsType {
+  news
+  message
+  system_notification
+}
+
+enum NewsVisibility {
+  public
+  logged_users
+  specific_users
+}
+
+enum NewsEventType {
+  viewed
+  clicked
+  link_clicked
+}
+
+enum NewsOrderBy {
+  ORDER_BY_TITLE
+  ORDER_BY_CREATED_AT
+  ORDER_BY_UPDATED_AT
+}
+
+input NewsFilter {
+  type: NewsType
+  visibility: NewsVisibility
+  showOnHomePage: Boolean
+  isVisible: Boolean
+  createdBy: ID
+  startDate: String
+  endDate: String
+  hasViewed: Boolean
+  hasClicked: Boolean
+}
+
+input CreateNewsInput {
+  title: String!
+  content: String!
+  type: NewsType!
+  visibility: NewsVisibility!
+  showOnHomePage: Boolean
+  targetUserIds: [ID!]
+}
+
+input UpdateNewsInput {
+  title: String
+  content: String
+  type: NewsType
+  visibility: NewsVisibility
+  showOnHomePage: Boolean
+  isVisible: Boolean
+  targetUserIds: [ID!]
+}
+
+input RecordNewsEventInput {
+  newsId: ID!
+  eventType: NewsEventType!
+  linkUrl: String
+}
+
+type NewsWithPagination {
+  news: [News!]!
+  total: Int!
+  offset: Int!
+  limit: Int!
+}
+
+type Query {
+  news(id: ID!): News
+  allNews(
+    orderBy: NewsOrderBy = ORDER_BY_CREATED_AT,
+    sortingOrder: SortingOrder = DESCENDING,
+    filter: NewsFilter = {},
+    offset: Int = 0,
+    limit: Int = 20
+  ): NewsWithPagination!
+  latestUnreadNews(limit: Int = 5): [News!]!
+  latestUnreadNewsForDialog(lastDismissedTimestamp: String): News
+  unreadNewsCount: Int!
+  newsForHomePage(limit: Int = 5): [News!]!
+  newsCount(filter: NewsFilter = {}): Int!
+}
+
+type Mutation {
+  recordNewsEvent(input: RecordNewsEventInput!): Boolean!
+  createNews(input: CreateNewsInput!): News!
+  updateNews(id: ID!, input: UpdateNewsInput!): News!
+  deleteNews(id: ID!): Boolean!
+}
+
+

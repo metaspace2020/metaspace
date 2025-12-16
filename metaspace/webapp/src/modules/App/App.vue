@@ -19,6 +19,12 @@
     <tour-step ref="tour" :tour="store.state.currentTour" />
 
     <cookie-banner />
+
+    <news-dialog
+      v-model="newsDialog.showDialog.value"
+      :news="newsDialog.currentNews.value"
+      @news-read="newsDialog.handleNewsRead"
+    />
   </div>
 </template>
 
@@ -38,6 +44,8 @@ import { DialogController } from '../Account'
 import { useSeoMeta } from '../../lib/useSeo'
 import { useQuery } from '@vue/apollo-composable'
 import { getActiveUserSubscriptionQuery } from '../../api/subscription'
+import { NewsDialog } from '../News/NewsDialog'
+import { useNewsDialog } from '../News/useNewsDialog'
 
 /** @type {ComponentOptions<Vue> & Vue} */
 export default {
@@ -49,6 +57,7 @@ export default {
     CookieBanner,
     TourStep,
     NewFeaturePopups,
+    NewsDialog,
   },
   data() {
     return {
@@ -113,9 +122,13 @@ export default {
       }
     })
 
+    // Initialize news dialog system
+    const newsDialog = useNewsDialog()
+
     return {
       store,
       route,
+      newsDialog,
     }
   },
 }

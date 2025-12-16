@@ -80,10 +80,13 @@
     
     .feature-item {
       @apply flex items-start w-full max-w-md;
+      height: 120px;
     }
 
     .feature-item-icon-wrapper {
       @apply bg-[#0F87EF] rounded-full p-6 h-[40px] w-[40px] flex items-center justify-center;
+      max-height: 84px;
+      max-width: 84px;
     }
     .feature-item-icon {
       @apply text-white text-4xl;

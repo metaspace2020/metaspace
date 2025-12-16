@@ -20,7 +20,9 @@ interface Props {
   contentClassName: string
   readonly: boolean
   autoFocus: boolean
+  alwaysEditing: boolean
   hideStateStatus: boolean
+  maxCharacters?: number
   update: (content: string) => Promise<void> | void
 }
 
@@ -71,6 +73,33 @@ const Underline = TextStyle.extend({
   },
 } as any)
 
+// Utility function to extract plain text from Tiptap JSON
+const extractPlainText = (content: any): string => {
+  if (typeof content === 'string') {
+    try {
+      content = JSON.parse(content)
+    } catch {
+      return content
+    }
+  }
+
+  if (!content || typeof content !== 'object') {
+    return ''
+  }
+
+  const extractTextFromNode = (node: any): string => {
+    if (node.text) {
+      return node.text
+    }
+    if (node.content && Array.isArray(node.content)) {
+      return node.content.map(extractTextFromNode).join('')
+    }
+    return ''
+  }
+
+  return extractTextFromNode(content)
+}
+
 const RichText = defineComponent({
   props: {
     content: String,
@@ -78,6 +107,8 @@ const RichText = defineComponent({
     contentClassName: String,
     readonly: Boolean,
     hideStateStatus: Boolean,
+    alwaysEditing: Boolean,
+    maxCharacters: Number,
     update: Function,
     autoFocus: {
       type: Boolean,
@@ -93,7 +124,9 @@ const RichText = defineComponent({
           Subscript,
           Superscript,
           new OnEscape(() => {
-            state.editing = false
+            if (!props.alwaysEditing) {
+              state.editing = false
+            }
             state.editor.commands.blur()
           }),
           Placeholder.configure({
@@ -105,8 +138,18 @@ const RichText = defineComponent({
         editable: !props.readonly,
         content: safeJsonParse(props.content),
         onUpdate: async ({ editor }) => {
-          const content = JSON.stringify(editor.getJSON())
-          // const content = editor.getText()
+          const editorJSON = editor.getJSON()
+          const content = JSON.stringify(editorJSON)
+
+          // Check character limit if specified
+          if (props.maxCharacters) {
+            const plainText = extractPlainText(editorJSON)
+            if (plainText.length > props.maxCharacters) {
+              // Prevent the update by reverting to previous content
+              editor.commands.setContent(safeJsonParse(props.content))
+              return
+            }
+          }
 
           state.saveState = saveStates.SAVING
           try {
@@ -119,7 +162,7 @@ const RichText = defineComponent({
           }
         },
       }),
-      editing: props.autoFocus,
+      editing: props.autoFocus || props.alwaysEditing,
       saveState: saveStates.UNSAVED,
     })
 
@@ -137,7 +180,9 @@ const RichText = defineComponent({
       })
 
       const onOutclick = () => {
-        state.editing = false
+        if (!props.alwaysEditing) {
+          state.editing = false
+        }
         state.saveState = saveStates.UNSAVED
       }
 

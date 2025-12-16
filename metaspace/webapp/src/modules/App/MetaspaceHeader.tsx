@@ -3,6 +3,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
+import { unreadNewsCountQuery } from '../../api/news'
 
 import NotificationIcon from '../../components/NotificationIcon.vue'
 import { HeaderButton, HeaderLink } from './HeaderLink'
@@ -13,16 +14,7 @@ import { userProfileQuery } from '../../api/user'
 import { signOut } from '../../api/auth'
 import { refreshLoginStatus } from '../../api/graphqlClient'
 
-import {
-  ElAlert,
-  ElDropdownMenu,
-  ElDropdownItem,
-  ElRow,
-  ElButton,
-  ElIcon,
-  ElDropdown,
-  ElDivider,
-} from '../../lib/element-plus'
+import { ElAlert, ElDropdownMenu, ElDropdownItem, ElRow, ElButton, ElIcon, ElDropdown } from '../../lib/element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 
 import './MetaspaceHeader.scss'
@@ -71,6 +63,13 @@ export default defineComponent({
     const currentUser: any = computed(() =>
       currentUserResult.value != null ? currentUserResult.value.currentUser : null
     )
+
+    // Query for unread news count
+    const { result: unreadNewsResult } = useQuery(unreadNewsCountQuery, null, {
+      fetchPolicy: 'cache-and-network',
+      errorPolicy: 'ignore',
+    })
+    const unreadNewsCount = computed(() => unreadNewsResult.value?.unreadNewsCount || 0)
 
     const pendingRequestMessage: any = computed(() => {
       if (currentUser.value != null) {
@@ -249,6 +248,9 @@ export default defineComponent({
         case 'upload':
           navigateTo('upload')
           break
+        case 'news':
+          navigateTo('news')
+          break
       }
     }
 
@@ -265,6 +267,31 @@ export default defineComponent({
     ) => {
       const isExpanded = isMobileMenuExpanded(menuId)
 
+      // If no items, render as a simple navigation button with same styling
+      if (items.length === 0) {
+        return (
+          <div class="mobile-dropdown-container w-full">
+            <HeaderButton
+              class={`w-full text-center header-link mobile-dropdown-trigger ${customColor ? 'bg-amber-500' : ''}`}
+              onClick={(e: Event) => {
+                e.stopPropagation()
+                handleCommand(menuId.replace('-mobile', ''))
+                showResponsiveMenu(false)
+              }}
+            >
+              <div class="flex items-center justify-between w-full">
+                <span class="flex items-center">
+                  {label}
+                  {notificationMessage && <NotificationIcon tooltip={notificationMessage} tooltipPlacement="bottom" />}
+                </span>
+                {/* No arrow for items without dropdown */}
+              </div>
+            </HeaderButton>
+          </div>
+        )
+      }
+
+      // Regular dropdown behavior for items with children
       return (
         <div class="mobile-dropdown-container w-full">
           <HeaderButton
@@ -323,6 +350,34 @@ export default defineComponent({
       customColor: string = '',
       hideIcon: boolean = false
     ) => {
+      // If no items, render a simple button without dropdown
+      if (items.length === 0) {
+        return (
+          <div
+            class="h-auto flex flex-row items-center justify-center w-full"
+            onMouseenter={() => handleHover(true, label)}
+            onMouseleave={() => handleHover(false, label)}
+          >
+            <div class="text-white font-medium cursor-pointer items-center justify-center">
+              <ElButton
+                type="primary"
+                color={customColor}
+                class={`!text-white font-medium cursor-pointer items-center justify-center  border-0 ${
+                  customColor ? '' : 'bg-transparent'
+                }`}
+                onClick={() => handleCommand(href)}
+              >
+                <span class="font-bold" style={{ fontSize: '15px' }}>
+                  {label}
+                </span>
+                {notificationMessage && <NotificationIcon tooltip={notificationMessage} tooltipPlacement="bottom" />}
+              </ElButton>
+            </div>
+          </div>
+        )
+      }
+
+      // If has items, render dropdown
       return (
         <ElDropdown
           type="primary"
@@ -339,7 +394,7 @@ export default defineComponent({
                   <ElButton
                     type="primary"
                     color={customColor}
-                    class={`mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0 ${
+                    class={`!text-white font-medium cursor-pointer items-center justify-center  border-0 ${
                       customColor ? '' : 'bg-transparent'
                     }`}
                     onClick={() => handleCommand(href)}
@@ -383,15 +438,15 @@ export default defineComponent({
     const renderLeftTabs = () => {
       return (
         <>
+          {renderTab('Upload', 'upload', [], null, null, true)}
           {renderTab('Datasets', 'datasets', [
             { command: 'datasets', label: 'Datasets' },
             { command: 'annotations', label: 'Annotations' },
-            { command: 'upload', label: 'Upload' },
             { command: 'databases', label: 'Databases' },
             { command: 'projects', label: 'Projects' },
           ])}
 
-          {renderTab('Tools', 'detectability', [
+          {renderTab('Add-ons', 'detectability', [
             { command: 'detectability', label: 'Detectability' },
             { command: 'converter', label: 'METASPACE converter' },
             { command: 'python-client', label: 'Python client' },
@@ -403,6 +458,15 @@ export default defineComponent({
             { command: 'feature-requests', label: 'Feature requests' },
             { command: 'learn', label: 'Learn' },
           ])}
+
+          {renderTab(
+            'News',
+            'news',
+            [],
+            unreadNewsCount.value > 0 ? `${unreadNewsCount.value} unread news` : '',
+            null,
+            true
+          )}
         </>
       )
     }
@@ -410,6 +474,7 @@ export default defineComponent({
     const renderMobileLeftTabs = () => {
       return (
         <>
+          {renderMobileDropdown('Upload', 'upload-mobile', [], null, null)}
           {renderMobileDropdown('Datasets', 'datasets-mobile', [
             { command: 'datasets', label: 'Datasets' },
             { command: 'annotations', label: 'Annotations' },
@@ -430,6 +495,13 @@ export default defineComponent({
             { command: 'feature-requests', label: 'Feature requests' },
             { command: 'learn', label: 'Learn' },
           ])}
+
+          {renderMobileDropdown(
+            'News',
+            'news-mobile',
+            [],
+            unreadNewsCount.value > 0 ? `${unreadNewsCount.value} unread news` : ''
+          )}
         </>
       )
     }
@@ -460,7 +532,7 @@ export default defineComponent({
               ${state.scrolled === false ? isPrimaryColor.value : isPrimaryColorAlpha.value}`}
             >
               <div class="header-items">
-                <RouterLink to="/" class="flex pl-3 pr-4">
+                <RouterLink to="/" class="flex mt-[4px] mr-[15px]">
                   <div class="relative">
                     <img src={MetaspaceLogo} alt="Metaspace" title="Metaspace" />
                     {themeVariant.value === 'pro' && (
@@ -491,10 +563,10 @@ export default defineComponent({
                     pendingRequestMessage.value
                   )}
 
-                <ElDivider direction="vertical" size="large" />
+                {!loadingUser.value && currentUser.value && <div class="w-[15px]"></div>}
 
                 {renderTab(
-                  'METASPACE PRO',
+                  'METASPACE Pro',
                   'plans',
                   [
                     { command: 'plans', label: 'Plans' },

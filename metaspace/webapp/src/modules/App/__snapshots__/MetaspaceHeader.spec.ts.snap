@@ -9,14 +9,20 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
               flex items-center justify-between
               bg-primary\\">
       <div class=\\"header-items\\">
-        <div class=\\"flex pl-3 pr-4\\">
+        <div class=\\"flex mt-[4px] mr-[15px]\\">
           <div class=\\"relative\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\">
             <!---->
           </div>
         </div>
+        <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
+          <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
+              <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">Upload</span>
+              <!----></span>
+            </button></div>
+        </div>
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
           <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
-            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
+            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
                 <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">Datasets</span>
                 <div class=\\"mock-el-icon ml-1 mt-0.5 transition-transform duration-300\\" style=\\"transform: rotate(0deg);\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                     <path fill=\\"currentColor\\" d=\\"M831.872 340.864 512 652.672 192.128 340.864a30.592 30.592 0 0 0-42.752 0 29.12 29.12 0 0 0 0 41.6L489.664 714.24a32 32 0 0 0 44.672 0l340.288-331.712a29.12 29.12 0 0 0 0-41.728 30.592 30.592 0 0 0-42.752 0z\\"></path>
@@ -26,15 +32,14 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
           <div class=\\"mock-el-dropdown-menu\\">
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Datasets</div>
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Annotations</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Upload</div>
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Databases</div>
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Projects</div>
           </div>
         </div>
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
           <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
-            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
-                <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">Tools</span>
+            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
+                <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">Add-ons</span>
                 <div class=\\"mock-el-icon ml-1 mt-0.5 transition-transform duration-300\\" style=\\"transform: rotate(0deg);\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                     <path fill=\\"currentColor\\" d=\\"M831.872 340.864 512 652.672 192.128 340.864a30.592 30.592 0 0 0-42.752 0 29.12 29.12 0 0 0 0 41.6L489.664 714.24a32 32 0 0 0 44.672 0l340.288-331.712a29.12 29.12 0 0 0 0-41.728 30.592 30.592 0 0 0-42.752 0z\\"></path>
                   </svg></div></span>
@@ -48,7 +53,7 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
         </div>
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
           <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
-            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
+            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
                 <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">Support</span>
                 <div class=\\"mock-el-icon ml-1 mt-0.5 transition-transform duration-300\\" style=\\"transform: rotate(0deg);\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                     <path fill=\\"currentColor\\" d=\\"M831.872 340.864 512 652.672 192.128 340.864a30.592 30.592 0 0 0-42.752 0 29.12 29.12 0 0 0 0 41.6L489.664 714.24a32 32 0 0 0 44.672 0l340.288-331.712a29.12 29.12 0 0 0 0-41.728 30.592 30.592 0 0 0-42.752 0z\\"></path>
@@ -62,12 +67,17 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Learn</div>
           </div>
         </div>
+        <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
+          <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
+              <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">News</span></span>
+            </button></div>
+        </div>
       </div>
       <div class=\\"header-items\\">
         <!---->
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
           <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
-            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
+            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
                 <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">Test UserX</span>
                 <div data-v-6bf8fbbe=\\"\\" class=\\"mock-el-tooltip\\" content=\\"undefined has a pending membership request.\\" placement=\\"bottom\\"><span data-v-6bf8fbbe=\\"\\" class=\\"notification\\"></span></div>
                 <div class=\\"mock-el-icon ml-1 mt-0.5 transition-transform duration-300\\" style=\\"transform: rotate(0deg);\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
@@ -82,13 +92,11 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Sign out</div>
           </div>
         </div>
-        <div class=\\"el-divider el-divider--vertical\\" style=\\"--el-border-style: solid;\\" role=\\"separator\\" size=\\"large\\">
-          <!--v-if-->
-        </div>
+        <div class=\\"w-[15px]\\"></div>
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
           <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
-            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0\\" style=\\"--el-button-bg-color: #FFAB3F; --el-button-text-color: var(--el-color-black); --el-button-border-color: #FFAB3F; --el-button-hover-bg-color: rgb(255, 196, 121); --el-button-hover-text-color: var(--el-color-black); --el-button-hover-border-color: rgb(255, 196, 121); --el-button-active-bg-color: rgb(208, 141, 54); --el-button-active-border-color: rgb(208, 141, 54);\\">
-                <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">METASPACE PRO</span>
+            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0\\" style=\\"--el-button-bg-color: #FFAB3F; --el-button-text-color: var(--el-color-black); --el-button-border-color: #FFAB3F; --el-button-hover-bg-color: rgb(255, 196, 121); --el-button-hover-text-color: var(--el-color-black); --el-button-hover-border-color: rgb(255, 196, 121); --el-button-active-bg-color: rgb(208, 141, 54); --el-button-active-border-color: rgb(208, 141, 54);\\">
+                <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">METASPACE Pro</span>
                 <!---->
                 <!----></span>
               </button></div>
@@ -127,14 +135,20 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
               flex items-center justify-between
               bg-primary\\">
       <div class=\\"header-items\\">
-        <div class=\\"flex pl-3 pr-4\\">
+        <div class=\\"flex mt-[4px] mr-[15px]\\">
           <div class=\\"relative\\"><img src=\\"/src/assets/images/logo.png\\" alt=\\"Metaspace\\" title=\\"Metaspace\\">
             <!---->
           </div>
         </div>
+        <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
+          <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
+              <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">Upload</span>
+              <!----></span>
+            </button></div>
+        </div>
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
           <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
-            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
+            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
                 <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">Datasets</span>
                 <div class=\\"mock-el-icon ml-1 mt-0.5 transition-transform duration-300\\" style=\\"transform: rotate(0deg);\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                     <path fill=\\"currentColor\\" d=\\"M831.872 340.864 512 652.672 192.128 340.864a30.592 30.592 0 0 0-42.752 0 29.12 29.12 0 0 0 0 41.6L489.664 714.24a32 32 0 0 0 44.672 0l340.288-331.712a29.12 29.12 0 0 0 0-41.728 30.592 30.592 0 0 0-42.752 0z\\"></path>
@@ -144,15 +158,14 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
           <div class=\\"mock-el-dropdown-menu\\">
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Datasets</div>
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Annotations</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Upload</div>
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Databases</div>
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Projects</div>
           </div>
         </div>
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
           <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
-            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
-                <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">Tools</span>
+            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
+                <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">Add-ons</span>
                 <div class=\\"mock-el-icon ml-1 mt-0.5 transition-transform duration-300\\" style=\\"transform: rotate(0deg);\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                     <path fill=\\"currentColor\\" d=\\"M831.872 340.864 512 652.672 192.128 340.864a30.592 30.592 0 0 0-42.752 0 29.12 29.12 0 0 0 0 41.6L489.664 714.24a32 32 0 0 0 44.672 0l340.288-331.712a29.12 29.12 0 0 0 0-41.728 30.592 30.592 0 0 0-42.752 0z\\"></path>
                   </svg></div></span>
@@ -166,7 +179,7 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
         </div>
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
           <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
-            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
+            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
                 <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">Support</span>
                 <div class=\\"mock-el-icon ml-1 mt-0.5 transition-transform duration-300\\" style=\\"transform: rotate(0deg);\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                     <path fill=\\"currentColor\\" d=\\"M831.872 340.864 512 652.672 192.128 340.864a30.592 30.592 0 0 0-42.752 0 29.12 29.12 0 0 0 0 41.6L489.664 714.24a32 32 0 0 0 44.672 0l340.288-331.712a29.12 29.12 0 0 0 0-41.728 30.592 30.592 0 0 0-42.752 0z\\"></path>
@@ -179,6 +192,11 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Feature requests</div>
             <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Learn</div>
           </div>
+        </div>
+        <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
+          <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0 bg-transparent\\">
+              <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">News</span></span>
+            </button></div>
         </div>
       </div>
       <div class=\\"header-items\\">
@@ -194,13 +212,11 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
   transition-colors duration-150 ease-in-out
   border border-solid border-transparent header-link\\">Sign in</button></div>
         <!---->
-        <div class=\\"el-divider el-divider--vertical\\" style=\\"--el-border-style: solid;\\" role=\\"separator\\" size=\\"large\\">
-          <!--v-if-->
-        </div>
+        <!---->
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
           <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
-            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary mr-2 !text-white font-medium cursor-pointer items-center justify-center  border-0\\" style=\\"--el-button-bg-color: #FFAB3F; --el-button-text-color: var(--el-color-black); --el-button-border-color: #FFAB3F; --el-button-hover-bg-color: rgb(255, 196, 121); --el-button-hover-text-color: var(--el-color-black); --el-button-hover-border-color: rgb(255, 196, 121); --el-button-active-bg-color: rgb(208, 141, 54); --el-button-active-border-color: rgb(208, 141, 54);\\">
-                <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">METASPACE PRO</span>
+            <div class=\\"text-white font-medium cursor-pointer items-center justify-center\\"><button ariadisabled=\\"false\\" type=\\"button\\" class=\\"el-button el-button--primary !text-white font-medium cursor-pointer items-center justify-center  border-0\\" style=\\"--el-button-bg-color: #FFAB3F; --el-button-text-color: var(--el-color-black); --el-button-border-color: #FFAB3F; --el-button-hover-bg-color: rgb(255, 196, 121); --el-button-hover-text-color: var(--el-color-black); --el-button-hover-border-color: rgb(255, 196, 121); --el-button-active-bg-color: rgb(208, 141, 54); --el-button-active-border-color: rgb(208, 141, 54);\\">
+                <!--v-if--><span class=\\"\\"><span class=\\"font-bold\\" style=\\"font-size: 15px;\\">METASPACE Pro</span>
                 <!---->
                 <!----></span>
               </button></div>

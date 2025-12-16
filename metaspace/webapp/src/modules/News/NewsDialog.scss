@@ -1,0 +1,304 @@
+.news-dialog {
+  border: none !important;
+  border-radius: 20px !important;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 20px 50px rgba(0, 0, 0, 0.15) !important;
+  backdrop-filter: blur(5px);
+
+  // Force remove all Element UI dialog borders
+  :deep(.el-dialog) {
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 20px 50px rgba(0, 0, 0, 0.15) !important;
+  }
+
+    .el-dialog__header {
+        display: none !important; // Completely hide the header
+    }
+
+    .el-dialog__body {
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden;
+    }
+
+  .el-dialog__footer {
+    padding: 16px 24px !important;
+    background: white !important;
+    border-top: 1px solid #e5e7eb !important;
+    border-radius: 0 0 20px 20px !important;
+    margin: 0 !important;
+  }
+
+
+
+  .news-dialog-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 70vh; // Use viewport height for better responsiveness
+    margin: 0;
+    padding: 0;
+  }
+
+  .news-header {
+    padding: 24px 24px 20px 24px;
+    color: white;
+    position: relative;
+    flex-shrink: 0;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+    }
+    
+    .header-content {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .news-icon {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .news-title {
+      color: white;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      margin: 0;
+      padding: 0;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      line-height: 1.3;
+    }
+    
+    .news-date {
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
+    }
+  }
+
+  .news-content {
+    background: #ffffff;
+    padding: 20px 24px;
+    position: relative;
+    flex: 1; // Take remaining space
+    overflow-y: auto; // Only content scrolls
+    min-height: 0; // Allow flex item to shrink below content size
+  }
+
+  .prose {
+    color: #475569;
+    line-height: 1.7;
+    font-size: 15px;
+    font-weight: 400;
+
+    p {
+      margin-bottom: 1rem;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      color: #1e293b;
+      
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.25rem; }
+    h3 { font-size: 1.125rem; }
+
+    ul, ol {
+      margin-bottom: 1rem;
+      padding-left: 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.375rem;
+    }
+
+    a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 2px;
+      }
+    }
+
+    strong {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    em {
+      font-style: italic;
+      color: #64748b;
+    }
+
+    blockquote {
+      border-left: 4px solid #e2e8f0;
+      padding-left: 1.25rem;
+      margin: 1.5rem 0;
+      font-style: italic;
+      color: #64748b;
+      background: rgba(248, 250, 252, 0.5);
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+    }
+
+    code {
+      background: #e2e8f0;
+      color: #e11d48;
+      padding: 0.25rem 0.375rem;
+      border-radius: 6px;
+      font-size: 0.875em;
+      font-weight: 500;
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    }
+
+    pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 1.25rem;
+      border-radius: 12px;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      
+      code {
+        background: transparent;
+        color: inherit;
+        padding: 0;
+        border-radius: 0;
+      }
+    }
+  }
+
+  // Custom scrollbar for content area
+  .news-dialog-content::-webkit-scrollbar,
+  .news-content::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .news-dialog-content::-webkit-scrollbar-track,
+  .news-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .news-dialog-content::-webkit-scrollbar-thumb,
+  .news-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  // Animation improvements - Fix close animation
+  :deep(.el-dialog) {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transform-origin: center center !important;
+  }
+
+  // Ensure entire dialog animates together
+  &.el-dialog__wrapper {
+    .el-dialog {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+  }
+
+  // Prevent individual element animations during dialog close
+  .news-dialog-content,
+  .el-dialog__footer,
+  .el-dialog__body {
+    transition: none !important;
+  }
+
+  // Override Element UI's default animation completely
+  :deep(.el-overlay-dialog) {
+    .el-dialog {
+      transition: all 0.25s ease-out !important;
+      animation: none !important;
+    }
+  }
+
+  // Custom animation classes to override Element UI
+  &.el-dialog__wrapper {
+    transition: opacity 0.25s ease-out !important;
+    
+    .el-dialog {
+      transition: all 0.25s ease-out !important;
+      animation: none !important;
+    }
+  }
+
+  // Force consistent animation timing
+  :deep(.el-dialog),
+  :deep(.el-overlay),
+  :deep(.el-overlay-dialog) {
+    transition-duration: 0.25s !important;
+    animation-duration: 0.25s !important;
+  }
+
+  // Backdrop blur effect
+  :deep(.el-overlay) {
+    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  // Dialog footer styling
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  // Close button styling
+  .news-close-button {
+    background: var(--el-color-primary, #1187EE) !important;
+    border-color: var(--el-color-primary, #1187EE) !important;
+    color: white !important;
+    padding: 10px 24px !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+    
+    &:hover {
+      background: var(--el-color-primary-dark, #0f75d1) !important;
+      border-color: var(--el-color-primary-dark, #0f75d1) !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 12px rgba(17, 135, 238, 0.3) !important;
+    }
+    
+    &:active {
+      transform: translateY(0) !important;
+    }
+  }
+}

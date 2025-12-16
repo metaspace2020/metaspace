@@ -6,7 +6,15 @@ export default defineComponent({
   name: 'ElapsedTime',
   props: ['date'],
   setup(props) {
-    const parsedDate = computed(() => moment(props.date))
+    const parsedDate = computed(() => {
+      // Check if it's a Unix timestamp string (all digits)
+      if (typeof props.date === 'string' && /^\d+$/.test(props.date)) {
+        // Parse as Unix timestamp in milliseconds
+        return moment(parseInt(props.date, 10))
+      }
+      // Otherwise parse normally
+      return moment(props.date)
+    })
     const valid = computed(() => parsedDate.value.isValid())
 
     const title = computed(() => {

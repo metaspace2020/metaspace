@@ -121,7 +121,7 @@ const AboutPage = defineComponent({
                   </div>
                   <div class="ml-4">
                     <span class="text-xl font-medium">Explore the knowledgebase</span>
-                    <div class="text-[15px]">
+                    <div class="h-[120px]text-[15px]">
                       <span
                         class="about-link mr-1"
                         onClick={() => {
