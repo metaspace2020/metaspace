@@ -1,14 +1,14 @@
 import { computed, defineComponent, watch } from 'vue'
 import { ElDialog, ElButton, ElIcon } from '../../lib/element-plus'
 import { useMutation } from '@vue/apollo-composable'
-import { recordNewsEventMutation, type News, type NewsType } from '../../api/news'
+import { recordNewsEventMutation } from '../../api/news'
 import { Document, SetUp, User } from '@element-plus/icons-vue'
 import RichText from '../../components/RichText/RichText'
 import './NewsDialog.scss'
 
 interface NewsDialogProps {
   modelValue: boolean
-  news: News | null
+  news: any | null
 }
 
 export const NewsDialog = defineComponent({
@@ -19,7 +19,7 @@ export const NewsDialog = defineComponent({
       required: true,
     },
     news: {
-      type: Object as () => News | null,
+      type: Object as () => any | null,
       default: null,
     },
   },
@@ -32,7 +32,7 @@ export const NewsDialog = defineComponent({
 
     const { mutate: recordNewsEvent } = useMutation(recordNewsEventMutation)
 
-    const getNewsIcon = (type: NewsType) => {
+    const getNewsIcon = (type: any) => {
       switch (type) {
         case 'message':
           return Document

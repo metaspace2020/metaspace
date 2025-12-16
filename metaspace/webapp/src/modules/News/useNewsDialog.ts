@@ -1,10 +1,10 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import { latestUnreadNewsForDialogQuery, unreadNewsCountQuery, type News } from '../../api/news'
+import { latestUnreadNewsForDialogQuery, unreadNewsCountQuery } from '../../api/news'
 
 export function useNewsDialog() {
   const showDialog = ref(false)
-  const currentNews = ref<News | null>(null)
+  const currentNews = ref<any | null>(null)
 
   // Query for latest unread news
   const { result: newsResult, refetch: refetchNews } = useQuery(
