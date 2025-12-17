@@ -395,7 +395,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     try {
       const filter: NewsFilterInput = {
         hasViewed: false,
-        showOnHomePage: true,
       }
 
       const queryBuilder = buildNewsQuery(ctx, filter, false)
