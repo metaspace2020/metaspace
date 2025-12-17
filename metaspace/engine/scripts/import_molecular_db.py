@@ -22,11 +22,16 @@ def main():
     parser.add_argument(
         '--config', dest='config_path', default='conf/config.json', help='SM config path'
     )
+    parser.add_argument(
+        '--bypass-row-limit', action='store_true', help='Bypass mol db max row limit'
+    )
     parser.set_defaults(sep='\t', confirmed=False)
     args = parser.parse_args()
 
     with GlobalInit(args.config_path):
-        molecular_db.create(args.name, args.version, args.csv_file)
+        molecular_db.create(
+            args.name, args.version, args.csv_file, bypass_row_limit=args.bypass_row_limit
+        )
 
 
 if __name__ == "__main__":

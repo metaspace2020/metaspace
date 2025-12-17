@@ -22,12 +22,14 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         git \
         nano \
         netcat \
+        netcat-openbsd \
         sudo \
         && \
 # ----- Spark -----
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
-        openjdk-8-jre-headless ca-certificates-java wget && \
-    wget -qO - https://archive.apache.org/dist/spark/spark-$SPARK_VER/$SPARK_DIR.tgz | tar xz && \
+    ca-certificates-java wget && \
+    #     openjdk-8-jre-headless ca-certificates-java wget && \
+    # wget -qO - https://archive.apache.org/dist/spark/spark-$SPARK_VER/$SPARK_DIR.tgz | tar xz && \
 # ----- Python -----
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         software-properties-common && \
@@ -40,7 +42,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         libsm6 libxrender1 libxext6 \
         git curl postgresql-client libpq-dev \
         && \
-    wget -O /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
+    wget -O /tmp/get-pip.py https://bootstrap.pypa.io/pip/3.8/get-pip.py && \
     python3.8 /tmp/get-pip.py && \
     ln -s /usr/bin/python3.8 /usr/local/bin/python3 && \
     ln -s /usr/bin/python3.8 /usr/local/bin/python && \
