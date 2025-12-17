@@ -71,7 +71,7 @@ exports[`MolecularDatabases > details view > should match snapshot (archived) 1`
                   <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
                     <!---->
                   </transition>
-                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-public\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is public</span><span class=\\"block text-sm text-gray-800\\">Custom database will be available as annotation option to everyone</span></label>
+                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-public\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is public</span><span class=\\"block text-sm text-gray-800\\">Custom databases will be available for download and for use in annotations by all users</span></label>
               </div>
             </div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
             <div class=\\"el-input\\">
@@ -187,7 +187,7 @@ exports[`MolecularDatabases > details view > should match snapshot (manager) 1`]
                   <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
                     <!---->
                   </transition>
-                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-public\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is public</span><span class=\\"block text-sm text-gray-800\\">Custom database will be available as annotation option to everyone</span></label>
+                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-public\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is public</span><span class=\\"block text-sm text-gray-800\\">Custom databases will be available for download and for use in annotations by all users</span></label>
               </div>
             </div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
             <div class=\\"el-input\\">
@@ -308,7 +308,7 @@ exports[`MolecularDatabases > details view > should match snapshot 1`] = `
                   <transition mode=\\"out-in\\" enterclass=\\"opacity-0\\" leavetoclass=\\"opacity-0\\" enteractiveclass=\\"duration-150 transition-opacity ease-in-out\\" leaveactiveclass=\\"duration-150 transition-opacity ease-in-out\\">
                     <!---->
                   </transition>
-                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-public\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is public</span><span class=\\"block text-sm text-gray-800\\">Custom database will be available as annotation option to everyone</span></label>
+                </div><label class=\\"cursor-pointer p-3 rounded transition-colors ease-in-out duration-300 box-border border border-solid border-transparent hover:text-body focus-within:border-primary text-gray-700\\"><input class=\\"sr-only\\" type=\\"radio\\" id=\\"database-public\\" name=\\"isVisible\\"><span class=\\"text-base font-medium\\">Custom database is public</span><span class=\\"block text-sm text-gray-800\\">Custom databases will be available for download and for use in annotations by all users</span></label>
               </div>
             </div><label for=\\"database-link\\"><span class=\\"text-base font-medium\\">Link</span></label>
             <div class=\\"el-input\\">

@@ -52,11 +52,32 @@ input UpdateMolecularDBInput {
 input MolecularDBFilter {
   usable: Boolean
   global: Boolean  # Metaspace managed public databases
+  query: String    # Search query for name, version, group, user
+}
+
+input PublicMolecularDBsInput {
+  orderBy: MolecularDBOrderBy
+  sortingOrder: SortingOrder
+  filter: MolecularDBFilter
+  offset: Int
+  limit: Int
+}
+
+type PublicMolecularDBsResult {
+  databases: [MolecularDB!]!
+  totalCount: Int!
+}
+
+enum MolecularDBOrderBy {
+  ORDER_BY_NAME
+  ORDER_BY_VERSION
+  ORDER_BY_CREATED_DT
 }
 
 type Query {
   molecularDatabases(onlyUsable: Boolean=False): [MolecularDB!] @deprecated(reason: "Use allMolecularDBs instead")
   allMolecularDBs(filter: MolecularDBFilter): [MolecularDB!]
+  allPublicMolecularDBs(input: PublicMolecularDBsInput!): PublicMolecularDBsResult!
   molecularDB(databaseId: Int!): MolecularDB
 }
 

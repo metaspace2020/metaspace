@@ -1,0 +1,132 @@
+.news-page {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .news-tabs {
+    .el-tabs__header {
+      margin: 0;
+    }
+
+    .el-tabs__nav-wrap::after {
+      display: none;
+    }
+
+    .el-tabs__item {
+      font-size: 14px;
+      font-weight: 500;
+      padding: 0 20px;
+      height: 56px;
+      line-height: 56px;
+    }
+
+    .el-tabs__active-bar {
+      height: 2px;
+    }
+  }
+
+  .el-dialog__header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .el-dialog__body {
+    padding: 24px;
+  }
+
+  .el-dialog__footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .prose {
+    max-width: 100%;
+    line-height: 1.6;
+    
+    p {
+      margin-bottom: 1em;
+    }
+    
+    ul, ol {
+      margin-bottom: 1em;
+      padding-left: 1.5em;
+    }
+    
+    li {
+      margin-bottom: 0.5em;
+    }
+    
+    strong, b {
+      font-weight: 600;
+    }
+    
+    em, i {
+      font-style: italic;
+    }
+
+    u {
+      text-decoration: underline;
+    }
+
+    h2 {
+      font-size: 1.25em;
+      font-weight: 600;
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+    }
+
+    sub {
+      font-size: 0.75em;
+      vertical-align: sub;
+    }
+
+    sup {
+      font-size: 0.75em;
+      vertical-align: super;
+    }
+  }
+
+  // Override Element Plus radio group styling for better spacing
+  .el-radio-group {
+    display: flex;
+    gap: 12px;
+
+    .el-radio {
+      margin-right: 0;
+    }
+  }
+
+  // Style RichText editor in create dialog
+  .el-dialog__body {
+    .sm-RichText {
+      .ProseMirror {
+        min-height: 160px;
+        padding: 12px;
+        border: 1px solid #dcdfe6;
+        border-radius: 4px;
+        outline: none;
+        transition: border-color 0.2s;
+
+        &:hover {
+          border-color: #c0c4cc;
+        }
+
+        &:focus {
+          border-color: #409eff;
+        }
+
+        p {
+          margin-bottom: 0.5em;
+        }
+      }
+
+      // Menu styling
+      header {
+        margin-bottom: 8px;
+      }
+    }
+  }
+}

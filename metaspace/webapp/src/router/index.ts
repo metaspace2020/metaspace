@@ -47,6 +47,11 @@ const asyncPagesFreelyTyped = {
     import(
       /* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/SpottingProject/DashboardPage'
     ),
+  MolecularDatabasesPage: () =>
+    import(
+      /* webpackPrefetch: true, webpackChunkName: "MolecularDatabasesPage" */ '../modules/MolecularDatabases/list/DatabaseList'
+    ),
+  NewsPage: () => import(/* webpackPrefetch: true, webpackChunkName: "NewsPage" */ '../modules/News/News'),
 
   // These pages are relatively small as they don't have any big 3rd party dependencies, so pack them together
   DatasetTable: () =>
@@ -145,7 +150,10 @@ export const routes: any = [
   { path: '/dataset/:dataset_id/browser', name: 'dataset-browser', component: asyncPages.DatasetBrowserPage },
   { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetEnrichmentPage },
   { path: '/upload', name: 'upload', component: asyncPages.UploadPage },
-  { path: '/help', name: 'help', component: asyncPages.HelpPage, meta: { footer: true } },
+
+  { path: '/learn', name: 'learn', component: asyncPages.HelpPage, meta: { footer: true } },
+  { path: '/help', redirect: { name: 'learn' } },
+
   { path: '/user/me', name: 'profile', component: asyncPages.EditUserPage },
 
   { path: '/admin/health', name: 'admin', component: asyncPages.SystemHealthPage },
@@ -179,6 +187,10 @@ export const routes: any = [
   { path: '/design/forms', component: asyncPages.DesignForms, meta: { footer: true, flex: true } },
 
   { path: '/detectability', name: 'detectability', component: asyncPages.SpottingProjectPage },
+
+  { path: '/databases', name: 'molecular-databases', component: asyncPages.MolecularDatabasesPage },
+
+  { path: '/news', name: 'news', component: asyncPages.NewsPage },
 
   { path: '/plans', name: 'plans', component: asyncPages.PlansPage },
   { path: '/payment', name: 'payment', component: asyncPages.PaymentPage },

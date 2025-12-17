@@ -11,6 +11,7 @@
     display: flex;
     align-items: center;
     height: 100%;
+    @apply md:px-[16px];
   }
 
   .limit-width {
@@ -44,7 +45,7 @@
       width: 100%;
 
       .header-link{
-        background-color: theme('colors.primary');
+        background-color: var(--primary-color, #409eff);
         width: 100%;
         text-align: center;
         border-radius: 0;
@@ -53,6 +54,70 @@
           background-color: var(--primary-color-dark, #337ecc);
         }
       }
+    }
+
+    // Mobile dropdown styles
+    .mobile-dropdown-container {
+      .mobile-dropdown-trigger {
+        position: relative;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        
+        &:hover {
+          background-color: var(--primary-color-dark, #337ecc) !important;
+        }
+
+        // Special styling for METASPACE PRO button
+        &.bg-amber-500 {
+          background-color: #FFAB3F !important;
+          color: white !important;
+          font-weight: 600;
+          
+        
+        }
+      }
+
+      .mobile-dropdown-items {
+        background-color: rgba(0, 0, 0, 0.1);
+        border-left: 3px solid rgba(255, 255, 255, 0.2);
+        
+        .mobile-dropdown-item {
+          background-color: transparent;
+          padding-left: 2rem;
+          font-size: 0.9rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+          }
+          
+          &:last-child {
+            border-bottom: none;
+          }
+
+          // Special styling for PRO dropdown items
+          &.pro-dropdown-item:hover {
+            background-color: rgba(255, 171, 63, 0.2) !important;
+          }
+        }
+      }
+    }
+
+    // Transition classes for mobile dropdown
+    .mobile-dropdown-enter-active,
+    .mobile-dropdown-leave-active {
+      transition: all 0.3s ease;
+    }
+
+    .mobile-dropdown-enter-from,
+    .mobile-dropdown-leave-to {
+      opacity: 0;
+      max-height: 0;
+    }
+
+    .mobile-dropdown-enter-to,
+    .mobile-dropdown-leave-from {
+      opacity: 1;
+      max-height: 24rem; /* max-h-96 */
     }
   }
 

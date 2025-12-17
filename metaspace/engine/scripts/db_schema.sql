@@ -396,6 +396,40 @@ CREATE TABLE "graphql"."image_viewer_snapshot" (
   "dataset_id")
 );
 
+CREATE TABLE "public"."news" (
+  "id" uuid NOT NULL DEFAULT uuid_generate_v1mc(), 
+  "title" text NOT NULL, 
+  "content" text NOT NULL, 
+  "type" text NOT NULL DEFAULT 'news', 
+  "visibility" text NOT NULL DEFAULT 'logged_users', 
+  "show_on_home_page" boolean NOT NULL DEFAULT false, 
+  "is_visible" boolean NOT NULL DEFAULT true, 
+  "created_by" uuid, 
+  "created_at" TIMESTAMP NOT NULL, 
+  "updated_at" TIMESTAMP NOT NULL, 
+  "deleted_at" TIMESTAMP, 
+  CONSTRAINT "PK_6952fa54e94d8c173b9c562f067" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."news_event" (
+  "id" SERIAL NOT NULL, 
+  "news_id" uuid NOT NULL, 
+  "user_id" uuid, 
+  "hashed_ip" text, 
+  "event_type" text NOT NULL, 
+  "link_url" text, 
+  "created_at" TIMESTAMP NOT NULL, 
+  CONSTRAINT "PK_11e0b9ada7795fb6fa5fc201814" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."news_target_user" (
+  "id" SERIAL NOT NULL, 
+  "news_id" uuid NOT NULL, 
+  "user_id" uuid NOT NULL, 
+  "created_at" TIMESTAMP NOT NULL, 
+  CONSTRAINT "PK_276979948bdb61c4a6c94603d5d" PRIMARY KEY ("id")
+);
+
 ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_a18f5f7d6cc662006d9c849ea1f" FOREIGN KEY (
   "group_id") REFERENCES "graphql"."group"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -518,6 +552,26 @@ ALTER TABLE "graphql"."dataset_project" ADD CONSTRAINT "FK_e192464449c2ac136fd4f
 
 ALTER TABLE "graphql"."user" ADD CONSTRAINT "FK_1b5eb1327a74d679537bdc1fa5b" FOREIGN KEY (
   "credentials_id") REFERENCES "graphql"."credentials"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."news" ADD CONSTRAINT "FK_6a4b4430b4ebb38032968eed9b2" FOREIGN KEY (
+  "created_by") REFERENCES "graphql"."user"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."news_event" ADD CONSTRAINT "FK_1576b13491bd04f91e717d0eda7" FOREIGN KEY (
+  "news_id") REFERENCES "public"."news"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."news_event" ADD CONSTRAINT "FK_fec9b3f043b383b69710ad93fa1" FOREIGN KEY (
+  "user_id") REFERENCES "graphql"."user"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."news_target_user" ADD CONSTRAINT "FK_b3fb1a4dcd5c9a5f4a4767bc117" FOREIGN KEY (
+  "news_id") REFERENCES "public"."news"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."news_target_user" ADD CONSTRAINT "FK_393f1430bdaec648fd8238ccf6b" FOREIGN KEY (
+  "user_id") REFERENCES "graphql"."user"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 

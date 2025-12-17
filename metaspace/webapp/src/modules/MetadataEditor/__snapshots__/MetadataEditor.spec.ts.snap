@@ -849,7 +849,7 @@ exports[`MetadataEditor > should match snapshot 1`] = `
             <div class=\\"el-col el-col-18\\">
               <div class=\\"el-row\\" style=\\"margin-left: -4px; margin-right: -4px;\\">
                 <div class=\\"el-col el-col-8 is-guttered\\" style=\\"padding-right: 4px; padding-left: 4px;\\"><span class=\\"block\\"><div class=\\"el-form-item el-form-item--default asterisk-left md-form-field\\" role=\\"group\\" aria-labelledby=\\"el-id-replaced\\" multiple-limit=\\"4\\"><div id=\\"el-id-replaced\\" class=\\"el-form-item__label\\"><span class=\\"field-label flex items-center\\"><span>Metabolite database</span><span style=\\"color: red;\\">*</span>
-                  <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\"><a href=\\"/help#databases\\" target=\\"_blank\\" rel=\\"noopener\\" class=\\"flex items-start\\"> See the Help page for details <i data-v-1083ec30=\\"\\" class=\\"flex active w-4 h-4 ml-1\\"><svg></svg></i></a></div></span>
+                  <div class=\\"mock-el-popover\\" trigger=\\"hover\\" placement=\\"right\\"><a href=\\"/learn#databases\\" target=\\"_blank\\" rel=\\"noopener\\" class=\\"flex items-start\\"> See the Learn page for details <i data-v-1083ec30=\\"\\" class=\\"flex active w-4 h-4 ml-1\\"><svg></svg></i></a></div></span>
                 </div>
                 <div class=\\"el-form-item__content\\">
                   <div class=\\"mock-el-select\\" model-value=\\"\\" required=\\"true\\" multiple=\\"\\" multiple-limit=\\"4\\">

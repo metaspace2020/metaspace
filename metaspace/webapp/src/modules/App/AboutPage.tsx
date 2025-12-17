@@ -1,5 +1,4 @@
 import { computed, defineComponent, onMounted } from 'vue'
-import PrimaryIcon from '../../components/PrimaryIcon.vue'
 import { CiteMetaspace } from './CiteMetaspace'
 import { useQuery } from '@vue/apollo-composable'
 import { countDatasetsQuery } from '../../api/dataset'
@@ -11,10 +10,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import METALogo from '../../assets/METASPACE_logomark.png'
 import Metaspace from '../../assets/inline/METASPACE.svg'
-import MonitorSvg from '../../assets/inline/refactoring-ui/icon-monitor.svg'
-import BookSvg from '../../assets/inline/refactoring-ui/icon-book-open.svg'
-import UnlockSvg from '../../assets/inline/refactoring-ui/icon-lock-open.svg'
-import StarSvg from '../../assets/inline/star-icon-land.svg'
+import MolSvg from '../../assets/mol_icon.svg'
+import { Collection, MagicStick, Star } from '@element-plus/icons-vue'
+import { ElIcon } from '@/lib/element-plus'
 
 const NHLBILogo = defineAsyncComponent(() => import('../../assets/NHLBI.svg'))
 const EUFlag = defineAsyncComponent(() => import('../../assets/Flag_of_Europe.svg'))
@@ -88,73 +86,110 @@ const AboutPage = defineComponent({
               </div>
             </div>
           </div>
-          <div id="about" class="sm-about py-6 px-18 mx-auto box-border max-w-4xl">
-            <section class="sm-about-features">
+          <div id="about" class="sm-about py-6 mx-auto box-border max-w-5xl">
+            <section class="sm-about-features py-4">
               <h2 class="sr-only">Features</h2>
-              <div>
-                <PrimaryIcon class="mb-2" small>
-                  <MonitorSvg />
-                </PrimaryIcon>
-                <h3>Metabolite annotation</h3>
-                <p>
-                  <span
-                    class="about-link mr-1"
-                    onClick={() => {
-                      router.push('/upload')
-                    }}
-                  >
-                    Submit
-                  </span>
-                  your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation
-                  engine.
-                </p>
-              </div>
-              <div>
-                <PrimaryIcon class="mb-2" small>
-                  <BookSvg />
-                </PrimaryIcon>
-                <h3>Explore the knowledgebase</h3>
-                <p>
-                  <span
-                    class="about-link mr-1"
-                    onClick={() => {
-                      router.push('/annotations')
-                    }}
-                  >
-                    Browse
-                  </span>
-                  annotations from all datasets using our interactive interface. Search and compare your annotations
-                  with those from the community.
-                </p>
-              </div>
-              <div>
-                <PrimaryIcon class="mb-2" small>
-                  <UnlockSvg />
-                </PrimaryIcon>
-                <h3>Open access</h3>
-                <p>
-                  The <a href="http://imzml.org/">imzML input format</a> is an open standard supported by all major mass
-                  spectrometer vendors, and all code is{' '}
-                  <a href="https://github.com/metaspace2020/metaspace">open-source</a>.
-                </p>
-              </div>
-              <div>
-                <div class="star-icon-container bg-pro-op mb-2">
-                  <StarSvg class="star-icon svg-pro" />
+              <div class="features-grid">
+                <div class="feature-item">
+                  <div class="feature-item-icon-wrapper">
+                    <div class="feature-item-icon">
+                      <MolSvg />
+                    </div>
+                  </div>
+                  <div class="ml-4">
+                    <span class="text-xl font-medium">Metabolite annotation</span>
+                    <div class="text-[15px] font-normal">
+                      <span
+                        class="about-link mr-1"
+                        onClick={() => {
+                          router.push('/upload')
+                        }}
+                      >
+                        Submit
+                      </span>
+                      your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation
+                      engine.
+                    </div>
+                  </div>
                 </div>
-                <h3 class="text-pro">Go Pro</h3>
-                <p>
-                  Unlock private uploads and dedicated support by upgrading to
-                  <span
-                    class="about-link ml-1 text-pro"
-                    onClick={() => {
-                      router.push('/plans')
-                    }}
-                  >
-                    METASPACE Pro
-                  </span>
-                  .
-                </p>
+
+                <div class="feature-item">
+                  <div class="feature-item-icon-wrapper">
+                    <ElIcon class="feature-item-icon">
+                      <Collection />
+                    </ElIcon>
+                  </div>
+                  <div class="ml-4">
+                    <span class="text-xl font-medium">Explore the knowledgebase</span>
+                    <div class="h-[120px]text-[15px]">
+                      <span
+                        class="about-link mr-1"
+                        onClick={() => {
+                          router.push('/annotations')
+                        }}
+                      >
+                        Browse
+                      </span>
+                      annotations from all datasets using our interactive interface. Search and compare your annotations
+                      with those from the community.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="feature-item">
+                  <div class="feature-item-icon-wrapper">
+                    <ElIcon class="feature-item-icon">
+                      <MagicStick />
+                    </ElIcon>
+                  </div>
+                  <div class="ml-4">
+                    <span class="text-xl font-medium">Get going fast</span>
+                    <div class="text-[15px] ">
+                      Head to the{' '}
+                      <span
+                        class="about-link mr-1"
+                        onClick={() => {
+                          router.push('/upload')
+                        }}
+                      >
+                        upload
+                      </span>
+                      page to submit a dataset, or try our{' '}
+                      <span
+                        class="about-link mr-1"
+                        onClick={() => {
+                          router.push('/learn')
+                        }}
+                      >
+                        interactive tutorials
+                      </span>
+                      if it is your first visit and you would like to get up to speed.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="feature-item">
+                  <div class="feature-item-icon-wrapper !bg-pro">
+                    <ElIcon class="feature-item-icon">
+                      <Star />
+                    </ElIcon>
+                  </div>
+                  <div class="ml-4">
+                    <span class="text-xl font-medium">Go Pro</span>
+                    <div class="text-[15px]">
+                      Unlock private uploads and dedicated support by upgrading to
+                      <span
+                        class="about-link ml-1 text-pro"
+                        onClick={() => {
+                          router.push('/plans')
+                        }}
+                      >
+                        METASPACE Pro
+                      </span>
+                      .
+                    </div>
+                  </div>
+                </div>
               </div>
             </section>
           </div>
@@ -237,7 +272,7 @@ const AboutPage = defineComponent({
                 </span>
                 <span class="mb-1">
                   2.{' '}
-                  <a href="/help" target="_blank">
+                  <a href="/learn" target="_blank">
                     Take our interactive introductory tours
                   </a>{' '}
                   to get familiar with browsing datasets and annotations.
@@ -323,8 +358,8 @@ const AboutPage = defineComponent({
                 for more information
                 <p></p>
                 If you still have questions or would like to share feedback, please start by visiting our{' '}
-                <a href="/help" target="_blank">
-                  Help section
+                <a href="/learn" target="_blank">
+                  Learn section
                 </a>{' '}
                 and{' '}
                 <a href="https://github.com/metaspace2020/metaspace/discussions" target="_blank">

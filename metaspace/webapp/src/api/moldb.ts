@@ -110,3 +110,50 @@ export const getDatabaseOptionsQuery = gql`
     }
   }
 `
+
+export const publicMolecularDBsQuery = gql`
+  query PublicMolecularDBs($input: PublicMolecularDBsInput!) {
+    allPublicMolecularDBs(input: $input) {
+      databases {
+        id
+        name
+        version
+        createdDT
+        downloadLink
+        group {
+          id
+          shortName
+        }
+        user {
+          id
+          name
+          email
+        }
+      }
+      totalCount
+    }
+  }
+`
+
+export interface PublicMolecularDBsInput {
+  orderBy?: 'ORDER_BY_NAME' | 'ORDER_BY_VERSION' | 'ORDER_BY_CREATED_DT'
+  sortingOrder?: 'ASCENDING' | 'DESCENDING'
+  filter?: {
+    query?: string
+  }
+  offset?: number
+  limit?: number
+}
+
+export interface PublicMolecularDBsResult {
+  databases: MolecularDB[]
+  totalCount: number
+}
+
+export interface PublicMolecularDBsQuery {
+  allPublicMolecularDBs: PublicMolecularDBsResult
+}
+
+export interface AllPublicMolecularDBsQuery {
+  allPublicMolecularDBs: MolecularDB[]
+}

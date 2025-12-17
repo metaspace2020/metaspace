@@ -99,4 +99,52 @@ export class MolecularDbRepository {
   async countDatabases(user: ContextUser, usable?: boolean, groupId?: string|null): Promise<number> {
     return (await this.queryWhereFiltered(user, usable, groupId)).getCount()
   }
+
+  async findPublicDatabasesWithPagination(input: any): Promise<{ databases: MolecularDB[], totalCount: number }> {
+    const qb = this.manager.createQueryBuilder(MolecularDB, 'moldb')
+      .leftJoinAndSelect('moldb.group', 'moldb_group')
+      .leftJoinAndSelect('moldb.user', 'moldb_user')
+      .where('moldb.is_public = true')
+      .andWhere('moldb.is_visible = true')
+      .andWhere('moldb.archived = false')
+
+    // Apply search filter if provided
+    if (input.filter?.query) {
+      const searchQuery = `%${input.filter.query.toLowerCase()}%`
+      qb.andWhere(
+        `(LOWER(moldb.name) LIKE :searchQuery 
+         OR LOWER(moldb.version) LIKE :searchQuery 
+         OR LOWER(moldb_group.short_name) LIKE :searchQuery 
+         OR LOWER(moldb_user.name) LIKE :searchQuery)`,
+        { searchQuery }
+      )
+    }
+
+    // Apply ordering
+    if (input.orderBy === 'ORDER_BY_NAME') {
+      qb.orderBy('moldb.name', input.sortingOrder === 'DESCENDING' ? 'DESC' : 'ASC')
+    } else if (input.orderBy === 'ORDER_BY_VERSION') {
+      qb.orderBy('moldb.version', input.sortingOrder === 'DESCENDING' ? 'DESC' : 'ASC')
+    } else if (input.orderBy === 'ORDER_BY_CREATED_DT') {
+      qb.orderBy('moldb.createdDT', input.sortingOrder === 'DESCENDING' ? 'DESC' : 'ASC')
+    } else {
+      // Default ordering
+      qb.orderBy('moldb.createdDT', 'DESC')
+    }
+
+    // Get total count before applying pagination
+    const totalCount = await qb.getCount()
+
+    // Apply pagination
+    if (input.offset !== undefined) {
+      qb.offset(input.offset)
+    }
+    if (input.limit !== undefined) {
+      qb.limit(input.limit)
+    }
+
+    const databases = await qb.getMany()
+
+    return { databases, totalCount }
+  }
 }
