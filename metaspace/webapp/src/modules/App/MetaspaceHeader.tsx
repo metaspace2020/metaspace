@@ -14,7 +14,7 @@ import { userProfileQuery } from '../../api/user'
 import { signOut } from '../../api/auth'
 import { refreshLoginStatus } from '../../api/graphqlClient'
 
-import { ElAlert, ElDropdownMenu, ElDropdownItem, ElRow, ElButton, ElIcon, ElDropdown } from '../../lib/element-plus'
+import { ElAlert, ElDropdownMenu, ElRow, ElButton, ElIcon, ElDropdown } from '../../lib/element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 
 import './MetaspaceHeader.scss'
@@ -198,70 +198,118 @@ export default defineComponent({
       refetchUnreadNewsCount,
     })
 
-    const handleCommand = (command: string) => {
-      switch (command) {
-        case 'datasets':
-          navigateTo('datasets')
+    // Unified command configuration
+    const commandConfig: Record<
+      string,
+      {
+        type: 'route' | 'external' | 'action'
+        route?: string
+        query?: any
+        url?: string
+        action?: () => void
+      }
+    > = {
+      datasets: { type: 'route', route: 'datasets' },
+      annotations: { type: 'route', route: 'annotations' },
+      databases: { type: 'route', route: 'molecular-databases' },
+      projects: { type: 'route', route: 'project-list', query: { f: '' } },
+      contact: { type: 'route', route: 'contact' },
+      faq: { type: 'route', route: 'faq' },
+      'feature-requests': { type: 'route', route: 'feature-requests' },
+      learn: { type: 'route', route: 'learn' },
+      detectability: { type: 'route', route: 'detectability' },
+      profile: { type: 'route', route: 'profile' },
+      'my-groups': { type: 'route', route: 'group-list', query: { f: 'my-groups' } },
+      'my-projects': { type: 'route', route: 'project-list', query: { f: 'my-projects' } },
+      plans: { type: 'route', route: 'plans' },
+      split: { type: 'route', route: 'split' },
+      upload: { type: 'route', route: 'upload' },
+      news: { type: 'route', route: 'news' },
+      converter: { type: 'external', url: 'https://github.com/metaspace2020/metaspace-converter' },
+      'python-client': { type: 'external', url: 'https://metaspace2020.readthedocs.io/en/latest/' },
+      'sign-out': { type: 'action', action: logout },
+    }
+
+    // Unified command handler that supports both normal clicks and Ctrl+click for new tabs
+    const handleCommand = (command: string, event?: MouseEvent) => {
+      const config = commandConfig[command]
+      if (!config) return
+
+      // Check if Ctrl key (or Cmd key on Mac) is pressed for new tab behavior
+      const openInNewTab = event && (event.ctrlKey || event.metaKey)
+
+      if (openInNewTab) {
+        event.preventDefault()
+
+        // For external links, open directly
+        if (config.type === 'external') {
+          window.open(config.url!, '_blank')
+          return
+        }
+
+        // For routes, generate URL and open in new tab
+        if (config.type === 'route') {
+          const url = getUrlForCommand(command)
+          if (url !== '#') {
+            window.open(url, '_blank')
+          }
+        }
+
+        // Actions (like sign-out) don't make sense in new tabs, so ignore Ctrl+click
+        return
+      }
+
+      // Normal click behavior
+      switch (config.type) {
+        case 'route':
+          navigateTo(config.route!, config.query)
           break
-        case 'annotations':
-          navigateTo('annotations')
+        case 'external':
+          window.open(config.url!, '_blank')
           break
-        case 'databases':
-          navigateTo('molecular-databases')
-          break
-        case 'projects':
-          navigateTo('project-list', { f: '' })
-          break
-        case 'contact':
-          navigateTo('contact')
-          break
-        case 'faq':
-          navigateTo('faq')
-          break
-        case 'feature-requests':
-          navigateTo('feature-requests')
-          break
-        case 'learn':
-          navigateTo('learn')
-          break
-        case 'detectability':
-          navigateTo('detectability')
-          break
-        case 'converter':
-          window.open('https://github.com/metaspace2020/metaspace-converter', '_blank')
-          break
-        case 'python-client':
-          window.open('https://metaspace2020.readthedocs.io/en/latest/', '_blank')
-          break
-        case 'profile':
-          navigateTo('profile')
-          break
-        case 'my-groups':
-          navigateTo('group-list', { f: 'my-groups' })
-          break
-        case 'my-projects':
-          navigateTo('project-list', { f: 'my-projects' })
-          break
-        case 'sign-out':
-          logout()
-          break
-        case 'plans':
-          navigateTo('plans')
-          break
-        case 'split':
-          navigateTo('split')
-          break
-        case 'upload':
-          navigateTo('upload')
-          break
-        case 'news':
-          navigateTo('news')
+        case 'action':
+          config.action!()
           break
       }
     }
 
     const handleHover = (isHovered: boolean, label: string) => {
       state.hoveredTab = isHovered ? label : null
+    }
+
+    // Helper function to generate URLs for navigation
+    const getUrlForCommand = (command: string, query: any = {}) => {
+      const config = commandConfig[command]
+      if (!config) {
+        return '#'
+      }
+
+      // For external links, return the URL directly
+      if (config.type === 'external') {
+        return config.url!
+      }
+
+      // For actions (like sign-out), return placeholder
+      if (config.type === 'action') {
+        return '#'
+      }
+
+      // Generate internal route URL
+      if (config.type === 'route') {
+        const lastParams = store.state.lastUsedFilters[config.route!]
+        let f = lastParams ? lastParams.filter : {}
+        f = Object.assign({}, f, store.getters.filter)
+        const mergedQuery = Object.assign({}, f, config.query, query)
+
+        const resolved = router.resolve({
+          name: config.route!,
+          query: Object.assign({}, encodeParams(mergedQuery, config.route!, store.state.filterLists)),
+        })
+
+        return resolved.href
+      }
+
+      return '#'
     }
 
     const renderMobileDropdown = (
@@ -279,10 +327,13 @@ export default defineComponent({
           <div class="mobile-dropdown-container w-full">
             <HeaderButton
               class={`w-full text-center header-link mobile-dropdown-trigger ${customColor ? 'bg-amber-500' : ''}`}
-              onClick={(e: Event) => {
+              onClick={(e: MouseEvent) => {
                 e.stopPropagation()
-                handleCommand(menuId.replace('-mobile', ''))
-                showResponsiveMenu(false)
+                const command = menuId.replace('-mobile', '')
+                handleCommand(command, e)
+                if (!(e.ctrlKey || e.metaKey)) {
+                  showResponsiveMenu(false)
+                }
               }}
             >
               <div class="flex items-center justify-between w-full">
@@ -333,9 +384,11 @@ export default defineComponent({
                   <HeaderButton
                     key={index}
                     class={`w-full text-center mobile-dropdown-item ${customColor ? 'pro-dropdown-item' : ''}`}
-                    onClick={() => {
-                      handleCommand(item.command)
-                      showResponsiveMenu(false)
+                    onClick={(e) => {
+                      handleCommand(item.command, e)
+                      if (!(e.ctrlKey || e.metaKey)) {
+                        showResponsiveMenu(false)
+                      }
                     }}
                   >
                     {item.label}
@@ -371,7 +424,7 @@ export default defineComponent({
                 class={`!text-white font-medium cursor-pointer items-center justify-center  border-0 ${
                   customColor ? '' : 'bg-transparent'
                 }`}
-                onClick={() => handleCommand(href)}
+                onClick={(e) => handleCommand(href, e)}
               >
                 <span class="font-bold" style={{ fontSize: '15px' }}>
                   {label}
@@ -387,7 +440,6 @@ export default defineComponent({
       return (
         <ElDropdown
           type="primary"
-          onCommand={handleCommand}
           role="menu"
           v-slots={{
             default: () => (
@@ -403,7 +455,7 @@ export default defineComponent({
                     class={`!text-white font-medium cursor-pointer items-center justify-center  border-0 ${
                       customColor ? '' : 'bg-transparent'
                     }`}
-                    onClick={() => handleCommand(href)}
+                    onClick={(e) => handleCommand(href, e)}
                   >
                     <span class="font-bold" style={{ fontSize: '15px' }}>
                       {label}
@@ -426,13 +478,16 @@ export default defineComponent({
             dropdown: () => (
               <ElDropdownMenu>
                 {items.map((item, index) => (
-                  <ElDropdownItem
-                    class={customColor ? 'hover:!text-amber-500 hover:!bg-amber-500/10' : ''}
-                    command={item.command}
+                  <div
                     key={index}
+                    class={`el-dropdown-menu__item ${
+                      customColor ? 'hover:!text-amber-500 hover:!bg-amber-500/10' : ''
+                    }`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={(e) => handleCommand(item.command, e)}
                   >
                     {item.label}
-                  </ElDropdownItem>
+                  </div>
                 ))}
               </ElDropdownMenu>
             ),

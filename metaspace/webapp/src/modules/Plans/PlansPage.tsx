@@ -52,8 +52,8 @@ const getDiscountInfo = (planName: string, selectedPeriod: PricingOption | null)
 
   // Only show discount for subscriptions before end of 2025
   const currentDate = new Date()
-  const endOf2025 = new Date('2025-12-31')
-  if (currentDate > endOf2025) return null
+  const endDate = new Date('2026-02-16')
+  if (currentDate > endDate) return null
 
   let discount = 0
   let planCode = ''
@@ -88,7 +88,7 @@ const getDiscountInfo = (planName: string, selectedPeriod: PricingOption | null)
 
   return {
     discount,
-    couponCode: `EARLYBIRD${planCode}${parseFloat(Math.floor(periodMonths / 12).toString()).toFixed(0)}`,
+    couponCode: `NEWYEAR${planCode}${parseFloat(Math.floor(periodMonths / 12).toString()).toFixed(0)}`,
     period: periodText,
   }
 }
@@ -392,7 +392,7 @@ export default defineComponent({
                           return (
                             <div class="discount-notice">
                               <div class="discount-badge">
-                                <span class="discount-text">Early Bird Special!</span>
+                                <span class="discount-text">Beginning of the Year Special!</span>
                               </div>
                               <div class="discount-details">
                                 Apply coupon <strong>{discountInfo.couponCode}</strong> at checkout to get{' '}

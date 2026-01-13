@@ -30,10 +30,10 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
               </button></div>
           </div>
           <div class=\\"mock-el-dropdown-menu\\">
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Datasets</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Annotations</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Databases</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Projects</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Datasets</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Annotations</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Databases</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Projects</div>
           </div>
         </div>
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
@@ -46,9 +46,9 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
               </button></div>
           </div>
           <div class=\\"mock-el-dropdown-menu\\">
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Detectability</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">METASPACE converter</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Python client</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Detectability</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">METASPACE converter</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Python client</div>
           </div>
         </div>
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
@@ -61,10 +61,10 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
               </button></div>
           </div>
           <div class=\\"mock-el-dropdown-menu\\">
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Contact</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">FAQ</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Feature requests</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Learn</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Contact</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">FAQ</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Feature requests</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Learn</div>
           </div>
         </div>
         <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
@@ -86,10 +86,10 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
               </button></div>
           </div>
           <div class=\\"mock-el-dropdown-menu\\">
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">My account</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">My groups</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">My projects</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Sign out</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">My account</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">My groups</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">My projects</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Sign out</div>
           </div>
         </div>
         <div class=\\"w-[15px]\\"></div>
@@ -102,8 +102,8 @@ exports[`MetaspaceHeader > should match snapshot (logged in) 1`] = `
               </button></div>
           </div>
           <div class=\\"mock-el-dropdown-menu\\">
-            <div class=\\"mock-el-dropdown-item hover:!text-amber-500 hover:!bg-amber-500/10\\" attrs=\\"[object Object]\\">Plans</div>
-            <div class=\\"mock-el-dropdown-item hover:!text-amber-500 hover:!bg-amber-500/10\\" attrs=\\"[object Object]\\">Pro x Academic</div>
+            <div class=\\"el-dropdown-menu__item hover:!text-amber-500 hover:!bg-amber-500/10\\" style=\\"cursor: pointer;\\">Plans</div>
+            <div class=\\"el-dropdown-menu__item hover:!text-amber-500 hover:!bg-amber-500/10\\" style=\\"cursor: pointer;\\">Pro x Academic</div>
           </div>
         </div>
       </div>
@@ -156,10 +156,10 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
               </button></div>
           </div>
           <div class=\\"mock-el-dropdown-menu\\">
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Datasets</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Annotations</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Databases</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Projects</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Datasets</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Annotations</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Databases</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Projects</div>
           </div>
         </div>
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
@@ -172,9 +172,9 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
               </button></div>
           </div>
           <div class=\\"mock-el-dropdown-menu\\">
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Detectability</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">METASPACE converter</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Python client</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Detectability</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">METASPACE converter</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Python client</div>
           </div>
         </div>
         <div class=\\"mock-el-dropdown\\" type=\\"primary\\" role=\\"menu\\">
@@ -187,10 +187,10 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
               </button></div>
           </div>
           <div class=\\"mock-el-dropdown-menu\\">
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Contact</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">FAQ</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Feature requests</div>
-            <div class=\\"mock-el-dropdown-item\\" attrs=\\"[object Object]\\">Learn</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Contact</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">FAQ</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Feature requests</div>
+            <div class=\\"el-dropdown-menu__item \\" style=\\"cursor: pointer;\\">Learn</div>
           </div>
         </div>
         <div class=\\"h-auto flex flex-row items-center justify-center w-full\\">
@@ -222,8 +222,8 @@ exports[`MetaspaceHeader > should match snapshot (logged out) 1`] = `
               </button></div>
           </div>
           <div class=\\"mock-el-dropdown-menu\\">
-            <div class=\\"mock-el-dropdown-item hover:!text-amber-500 hover:!bg-amber-500/10\\" attrs=\\"[object Object]\\">Plans</div>
-            <div class=\\"mock-el-dropdown-item hover:!text-amber-500 hover:!bg-amber-500/10\\" attrs=\\"[object Object]\\">Pro x Academic</div>
+            <div class=\\"el-dropdown-menu__item hover:!text-amber-500 hover:!bg-amber-500/10\\" style=\\"cursor: pointer;\\">Plans</div>
+            <div class=\\"el-dropdown-menu__item hover:!text-amber-500 hover:!bg-amber-500/10\\" style=\\"cursor: pointer;\\">Pro x Academic</div>
           </div>
         </div>
       </div>
