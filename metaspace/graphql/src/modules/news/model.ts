@@ -4,7 +4,8 @@ import { MomentValueTransformer } from '../../utils/MomentValueTransformer'
 import { User } from '../user/model'
 
 export type NewsType = 'news' | 'message' | 'system_notification'
-export type NewsVisibility = 'public' | 'logged_users' | 'specific_users'
+export type NewsVisibility = 'public' | 'logged_users' | 'specific_users' | 'pro_users'
+ | 'non_pro_users' | 'visibility_except'
 export type NewsEventType = 'viewed' | 'clicked' | 'link_clicked'
 
 @Entity({ schema: 'public' })
@@ -29,6 +30,22 @@ export class News {
 
   @Column({ name: 'is_visible', type: 'boolean', default: true })
   isVisible: boolean;
+
+  @Column({
+    name: 'show_from',
+    type: 'timestamp without time zone',
+    nullable: true,
+    transformer: new MomentValueTransformer(),
+  })
+  showFrom: Moment | null;
+
+  @Column({
+    name: 'show_until',
+    type: 'timestamp without time zone',
+    nullable: true,
+    transformer: new MomentValueTransformer(),
+  })
+  showUntil: Moment | null;
 
   @Column({ name: 'created_by', type: 'uuid', nullable: true })
   createdBy: string | null;
@@ -123,8 +140,36 @@ export class NewsTargetUser {
   user?: User;
 }
 
+@Entity({ schema: 'public' })
+export class NewsBlacklistUser {
+  @PrimaryColumn({ type: 'int', generated: true })
+  id: number;
+
+  @Column({ name: 'news_id', type: 'uuid' })
+  newsId: string;
+
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId: string;
+
+  @Column({
+    name: 'created_at',
+    type: 'timestamp without time zone',
+    transformer: new MomentValueTransformer(),
+  })
+  createdAt: Moment;
+
+  @ManyToOne(() => News)
+  @JoinColumn({ name: 'news_id' })
+  news?: News;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user?: User;
+}
+
 export const NEWS_ENTITIES = [
   News,
   NewsEvent,
   NewsTargetUser,
+  NewsBlacklistUser,
 ]

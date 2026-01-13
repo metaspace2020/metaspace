@@ -3,9 +3,96 @@ import { UserError } from 'graphql-errors'
 import logger from '../../../utils/logger'
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Mutation } from '../../../binding'
-import { News, NewsEvent, NewsTargetUser } from '../model'
+import { News, NewsEvent, NewsTargetUser, NewsBlacklistUser } from '../model'
+import { UserGroup } from '../../group/model'
+import { In } from 'typeorm'
 import { utc } from 'moment'
 import * as crypto from 'crypto'
+import config from '../../../utils/config'
+import fetch, { RequestInit } from 'node-fetch'
+
+// Helper function to make API requests to external manager API
+const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', body?: any) => {
+  try {
+    const apiUrl = config.manager_api_url
+    const token = ctx.req?.headers?.authorization || ''
+
+    if (!apiUrl) {
+      logger.error('Manager API URL is not configured')
+      throw new Error('Manager API URL is not configured')
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (token) {
+      headers.Authorization = token
+    }
+
+    const options: RequestInit = {
+      method,
+      headers,
+    }
+
+    if (body && (method === 'POST' || method === 'PUT')) {
+      options.body = JSON.stringify(body)
+    }
+
+    const response = await fetch(`${apiUrl}${endpoint}`, options)
+    if (!response.ok) {
+      const errorText = response.text ? await response.text() : 'Internal server error'
+      logger.error(`API request failed with status ${response.status}: ${errorText}`)
+      throw new Error(errorText)
+    }
+
+    if (method === 'DELETE') {
+      return { success: true }
+    }
+
+    const responseData = await response.json()
+    return responseData
+  } catch (error) {
+    logger.error(`Error making API request to ${endpoint}:`, error)
+    throw error
+  }
+}
+
+// Helper function to get pro users from API_external
+const getProUsers = async(ctx: Context): Promise<string[]> => {
+  try {
+    // Get all active pro groups
+    const proGroupsResponse = await makeApiRequest(ctx, '/api/pro-groups?isActive=true')
+
+    if (!proGroupsResponse || !proGroupsResponse.data) {
+      return []
+    }
+
+    // Extract group IDs from the API response
+    const proGroupIds = proGroupsResponse.data.map((group: any) => group.id).filter(Boolean)
+
+    if (proGroupIds.length === 0) {
+      return []
+    }
+
+    // Query the user_group table to find users in these pro groups
+    const userGroups = await ctx.entityManager
+      .getRepository(UserGroup)
+      .find({
+        where: proGroupIds.length === 1
+          ? { groupId: proGroupIds[0] }
+          : { groupId: In(proGroupIds) },
+        select: ['userId'],
+      })
+
+    // Extract unique user IDs
+    const proUserIds = [...new Set(userGroups.map(ug => ug.userId))]
+    return proUserIds
+  } catch (error) {
+    logger.warn('Error fetching pro users:', error)
+    return []
+  }
+}
 
 const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async recordNewsEvent(_: any, { input }: any, ctx: Context): Promise<boolean> {
@@ -60,7 +147,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Access denied: Admin role required')
     }
 
-    const { title, content, type, visibility, showOnHomePage, targetUserIds } = input
+    const {
+      title, content, type, visibility, showOnHomePage, showFrom, showUntil, targetUserIds, blacklistUserIds,
+    } = input
     const { entityManager, user } = ctx
 
     // Validate input
@@ -118,6 +207,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Target users are required when visibility is set to specific_users')
     }
 
+    // If visibility is visibility_except, blacklistUserIds must be provided
+    if (visibility === 'visibility_except' && (!blacklistUserIds || blacklistUserIds.length === 0)) {
+      throw new UserError('Blacklist users are required when visibility is set to visibility_except')
+    }
+
+    // Validate date range if both dates are provided
+    if (showFrom && showUntil) {
+      const fromDate = utc(showFrom)
+      const untilDate = utc(showUntil)
+      if (fromDate.isSameOrAfter(untilDate)) {
+        throw new UserError('Show from date must be before show until date')
+      }
+    }
+
     try {
       const now = utc()
 
@@ -129,6 +232,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         visibility,
         showOnHomePage: showOnHomePage || false,
         isVisible: true,
+        showFrom: showFrom ? utc(showFrom) : null,
+        showUntil: showUntil ? utc(showUntil) : null,
         createdBy: user.id,
         createdAt: now,
         updatedAt: now,
@@ -148,6 +253,35 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         )
 
         await entityManager.getRepository(NewsTargetUser).save(targetUsers)
+      }
+
+      // Handle pro_users visibility - get pro users and add them as target users
+      if (visibility === 'pro_users') {
+        const proUserIds = await getProUsers(ctx)
+        if (proUserIds.length > 0) {
+          const targetUsers = proUserIds.map((userId: string) =>
+            entityManager.getRepository(NewsTargetUser).create({
+              newsId: news.id,
+              userId,
+              createdAt: now,
+            })
+          )
+
+          await entityManager.getRepository(NewsTargetUser).save(targetUsers)
+        }
+      }
+
+      // If blacklist users are specified, create blacklist user records
+      if (blacklistUserIds && blacklistUserIds.length > 0) {
+        const blacklistUsers = blacklistUserIds.map((userId: string) =>
+          entityManager.getRepository(NewsBlacklistUser).create({
+            newsId: news.id,
+            userId,
+            createdAt: now,
+          })
+        )
+
+        await entityManager.getRepository(NewsBlacklistUser).save(blacklistUsers)
       }
 
       logger.info(`News created with ID ${news.id} by admin ${user.id}`)
@@ -230,6 +364,27 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Target users are required when visibility is set to specific_users')
     }
 
+    // If visibility is being changed to visibility_except, blacklistUserIds must be provided
+    if (input.visibility === 'visibility_except'
+        && (!input.blacklistUserIds || input.blacklistUserIds.length === 0)) {
+      throw new UserError('Blacklist users are required when visibility is set to visibility_except')
+    }
+
+    // Validate date range if both dates are provided
+    const showFromDate = input.showFrom !== undefined
+      ? (input.showFrom
+          ? utc(input.showFrom)
+          : null)
+      : news.showFrom
+    const showUntilDate = input.showUntil !== undefined
+      ? (input.showUntil
+          ? utc(input.showUntil)
+          : null)
+      : news.showUntil
+    if (showFromDate && showUntilDate && showFromDate.isSameOrAfter(showUntilDate)) {
+      throw new UserError('Show from date must be before show until date')
+    }
+
     try {
       // Update news fields
       if (input.title !== undefined) news.title = input.title.trim()
@@ -238,18 +393,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       if (input.visibility !== undefined) news.visibility = input.visibility
       if (input.showOnHomePage !== undefined) news.showOnHomePage = input.showOnHomePage
       if (input.isVisible !== undefined) news.isVisible = input.isVisible
+      if (input.showFrom !== undefined) news.showFrom = input.showFrom ? utc(input.showFrom) : null
+      if (input.showUntil !== undefined) news.showUntil = input.showUntil ? utc(input.showUntil) : null
 
       news.updatedAt = utc()
 
       await entityManager.getRepository(News).save(news)
 
       // Handle target users update
-      if (input.targetUserIds !== undefined) {
+      if (input.targetUserIds !== undefined || news.visibility === 'pro_users') {
         // Remove existing target users
         await entityManager.getRepository(NewsTargetUser).delete({ newsId: id })
 
-        // Add new target users if visibility is specific_users
-        if (news.visibility === 'specific_users' && input.targetUserIds.length > 0) {
+        // Add new target users based on visibility type
+        if (news.visibility === 'specific_users' && input.targetUserIds && input.targetUserIds.length > 0) {
           const targetUsers = input.targetUserIds.map((userId: string) =>
             entityManager.getRepository(NewsTargetUser).create({
               newsId: id,
@@ -259,6 +416,39 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
           )
 
           await entityManager.getRepository(NewsTargetUser).save(targetUsers)
+        } else if (news.visibility === 'pro_users') {
+          // Handle pro_users visibility - get pro users and add them as target users
+          const proUserIds = await getProUsers(ctx)
+          if (proUserIds.length > 0) {
+            const targetUsers = proUserIds.map((userId: string) =>
+              entityManager.getRepository(NewsTargetUser).create({
+                newsId: id,
+                userId,
+                createdAt: utc(),
+              })
+            )
+
+            await entityManager.getRepository(NewsTargetUser).save(targetUsers)
+          }
+        }
+      }
+
+      // Handle blacklist users update
+      if (input.blacklistUserIds !== undefined) {
+        // Remove existing blacklist users
+        await entityManager.getRepository(NewsBlacklistUser).delete({ newsId: id })
+
+        // Add new blacklist users if provided
+        if (input.blacklistUserIds.length > 0) {
+          const blacklistUsers = input.blacklistUserIds.map((userId: string) =>
+            entityManager.getRepository(NewsBlacklistUser).create({
+              newsId: id,
+              userId,
+              createdAt: utc(),
+            })
+          )
+
+          await entityManager.getRepository(NewsBlacklistUser).save(blacklistUsers)
         }
       }
 

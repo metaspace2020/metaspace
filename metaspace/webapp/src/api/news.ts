@@ -1,7 +1,13 @@
 import gql from 'graphql-tag'
 
 export type NewsType = 'news' | 'message' | 'system_notification'
-export type NewsVisibility = 'public' | 'logged_users' | 'specific_users'
+export type NewsVisibility =
+  | 'public'
+  | 'logged_users'
+  | 'specific_users'
+  | 'pro_users'
+  | 'non_pro_users'
+  | 'visibility_except'
 export type NewsEventType = 'viewed' | 'clicked' | 'link_clicked'
 export type NewsOrderBy = 'ORDER_BY_CREATED_AT' | 'ORDER_BY_UPDATED_AT' | 'ORDER_BY_TITLE'
 
@@ -13,6 +19,8 @@ export interface News {
   visibility: NewsVisibility
   showOnHomePage: boolean
   isVisible: boolean
+  showFrom: string | null
+  showUntil: string | null
   createdAt: string
   updatedAt: string
   createdBy: string | null
@@ -57,7 +65,10 @@ export interface CreateNewsInput {
   type: NewsType
   visibility: NewsVisibility
   showOnHomePage?: boolean
+  showFrom?: string
+  showUntil?: string
   targetUserIds?: string[]
+  blacklistUserIds?: string[]
 }
 
 export interface UpdateNewsInput {
@@ -67,7 +78,10 @@ export interface UpdateNewsInput {
   visibility?: NewsVisibility
   showOnHomePage?: boolean
   isVisible?: boolean
+  showFrom?: string
+  showUntil?: string
   targetUserIds?: string[]
+  blacklistUserIds?: string[]
 }
 
 export interface RecordNewsEventInput {
@@ -85,6 +99,8 @@ const newsFragment = gql`
     visibility
     showOnHomePage
     isVisible
+    showFrom
+    showUntil
     createdAt
     updatedAt
     createdBy
