@@ -43,6 +43,7 @@ const comparisonFeatures: ComparisonFeature[] = [
   { name: 'Projects', key: 'projects', type: 'text' },
 ]
 
+const endDate = new Date('2026-02-17')
 // Helper function to get discount information for early bird promotion
 const getDiscountInfo = (planName: string, selectedPeriod: PricingOption | null) => {
   if (!selectedPeriod) return null
@@ -52,7 +53,6 @@ const getDiscountInfo = (planName: string, selectedPeriod: PricingOption | null)
 
   // Only show discount for subscriptions before end of 2025
   const currentDate = new Date()
-  const endDate = new Date('2026-02-16')
   if (currentDate > endDate) return null
 
   let discount = 0
@@ -398,7 +398,14 @@ export default defineComponent({
                                 Apply coupon <strong>{discountInfo.couponCode}</strong> at checkout to get{' '}
                                 <strong>{discountInfo.discount}% discount</strong> for {discountInfo.period}
                               </div>
-                              <div class="discount-expiry">Valid until December 31st, 2025</div>
+                              <div class="discount-expiry">
+                                Valid until{' '}
+                                {endDate.toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                })}
+                              </div>
                             </div>
                           )
                         })()}
