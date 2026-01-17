@@ -16,6 +16,7 @@ import { Search, QuestionFilled } from '@element-plus/icons-vue'
 import ElapsedTime from '../../../components/ElapsedTime'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import UploadDialog from '../UploadDialog'
+import DatabaseHelp from '../../App/DatabaseHelp.vue'
 
 interface DownloadJson {
   filename: string
@@ -100,9 +101,11 @@ export default defineComponent({
         <div class="database-list min-h-screen p-6">
           <div class="max-w-4xl mx-auto">
             <div class="mb-8">
+              <h1 class="text-3xl font-bold text-gray-900">Databases</h1>
+
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3">
-                  <h1 class="text-3xl font-bold text-gray-900">Databases</h1>
+                  <h2 class="text-xl font-bold text-gray-900">User submissions</h2>
                   <ElTooltip
                     content={
                       'All the public available metabolite databases can be found here ' +
@@ -204,6 +207,30 @@ export default defineComponent({
                 />
               </div>
             )}
+
+            <div class="flex items-center justify-between mt-8 flex-col">
+              <div class="flex items-center gap-3 w-full">
+                <h2 class="text-xl font-bold text-gray-900">METASPACE curated</h2>
+                <ElTooltip
+                  content={
+                    'Database selection determines which metabolites can be annotated. Many ' +
+                    'databases are for specific types of sample,' +
+                    ' please see their respective webpages for details. We show either the ' +
+                    'version number or a time-stamped date of' +
+                    'export. Up to 4 databases may be selected. HMDB-v4 is our suggested choice for mammalian datasets.'
+                  }
+                  placement="right"
+                  popperClass="max-w-md"
+                >
+                  <ElIcon class="cursor-help">
+                    <QuestionFilled />
+                  </ElIcon>
+                </ElTooltip>
+              </div>
+              <div class="mr-8">
+                <DatabaseHelp hideDescription={true} />
+              </div>
+            </div>
 
             {state.showUploadDialog && (
               <UploadDialog onClose={onUploadDialogClose} onDone={onUploadDialogDone} isPublic={true} />

@@ -1,12 +1,12 @@
 <template>
   <div class="v-rhythm-6">
-    <p>
+    <p v-if="!hideDescription">
       Database selection determines which metabolites can be annotated. Many databases are for specific types of sample,
       please see their respective webpages for details. We show either the version number or a time-stamped date of
       export. Up to {{ maxMolDBs }} databases may be selected. <b>HMDB-v4</b> is our suggested choice for mammalian
       datasets.
     </p>
-    <ul class="v-rhythm-3 max-w-measure-4">
+    <ul class="v-rhythm-3" :class="!hideDescription ? 'max-w-measure-4' : ' text-justify'">
       <li>
         <b><a href="https://www.protim.eu/en">Brassica Napus Database (BraChemDB)</a>:</b>
         The BraChemDB Database contains small molecule metabolites experimentally detected in the rapeseed Brassica
@@ -242,6 +242,12 @@ import { limits } from '../../lib/config'
 
 export default {
   name: 'DatabaseDescriptions',
+  props: {
+    hideDescription: {
+      type: Boolean,
+      default: false,
+    },
+  },
   data() {
     return {
       maxMolDBs: limits.maxMolDBs,
