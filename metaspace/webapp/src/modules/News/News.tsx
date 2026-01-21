@@ -647,7 +647,7 @@ export default defineComponent({
                 {/* Visibility */}
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-3">Visibility</label>
-                  <ElRadioGroup v-model={state.createForm.visibility} class="flex flex-col gap-2">
+                  <ElRadioGroup v-model={state.createForm.visibility} class="flex gap-2">
                     <ElRadio label="public">Public</ElRadio>
                     <ElRadio label="logged_users">Logged Users Only</ElRadio>
                     <ElRadio label="pro_users">Pro Users Only</ElRadio>
@@ -727,9 +727,31 @@ export default defineComponent({
                     type="datetime"
                     placeholder="Select start date and time"
                     format="YYYY-MM-DD HH:mm:ss"
-                    valueFormat="YYYY-MM-DD HH:mm:ss"
+                    valueFormat="YYYY-MM-DDTHH:mm:ss.sssZ"
                     class="w-full"
                     clearable
+                    shortcuts={[
+                      {
+                        text: 'Now',
+                        value: () => new Date(),
+                      },
+                      {
+                        text: 'In 1 hour',
+                        value: () => {
+                          const inOneHour = new Date()
+                          inOneHour.setHours(inOneHour.getHours() + 1)
+                          return inOneHour
+                        },
+                      },
+                      {
+                        text: 'Tomorrow',
+                        value: () => {
+                          const tomorrow = new Date()
+                          tomorrow.setDate(tomorrow.getDate() + 1)
+                          return tomorrow
+                        },
+                      },
+                    ]}
                   />
                   <div class="text-xs text-gray-500 mt-1">If set, news will only be visible from this date onwards</div>
                 </div>
@@ -742,9 +764,31 @@ export default defineComponent({
                     type="datetime"
                     placeholder="Select end date and time"
                     format="YYYY-MM-DD HH:mm:ss"
-                    valueFormat="YYYY-MM-DD HH:mm:ss"
+                    valueFormat="YYYY-MM-DDTHH:mm:ss.sssZ"
                     class="w-full"
                     clearable
+                    shortcuts={[
+                      {
+                        text: 'Now',
+                        value: () => new Date(),
+                      },
+                      {
+                        text: 'In 1 hour',
+                        value: () => {
+                          const inOneHour = new Date()
+                          inOneHour.setHours(inOneHour.getHours() + 1)
+                          return inOneHour
+                        },
+                      },
+                      {
+                        text: 'Tomorrow',
+                        value: () => {
+                          const tomorrow = new Date()
+                          tomorrow.setDate(tomorrow.getDate() + 1)
+                          return tomorrow
+                        },
+                      },
+                    ]}
                   />
                   <div class="text-xs text-gray-500 mt-1">If set, news will only be visible until this date</div>
                 </div>
