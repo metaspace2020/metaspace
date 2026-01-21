@@ -13,10 +13,16 @@ import {
 import * as moment from 'moment'
 import fetch from 'node-fetch'
 import config from '../../../utils/config'
+import { UserGroup as UserGroupModel } from '../../group/model'
 
 // Mock node-fetch
 jest.mock('node-fetch')
 const mockFetch = fetch as jest.Mock
+
+// Mock TypeORM repository
+const mockUserGroupRepository = {
+  find: jest.fn(),
+}
 
 describe('modules/subscription/controller (queries)', () => {
   const currentTime: any = moment.utc(moment.utc().toDate())
@@ -153,11 +159,33 @@ describe('modules/subscription/controller (queries)', () => {
     TRANSACTIONS[0].userId = testUser.id
     TRANSACTIONS[1].userId = adminUser.id
 
+    // Mock user groups for the test user
+    mockUserGroupRepository.find.mockResolvedValue([
+      { userId: testUser.id, groupId: 'test-group-1' },
+      { userId: testUser.id, groupId: 'test-group-2' },
+    ])
+
+    // Mock the entity manager's getRepository method
+    jest.spyOn(userContext.entityManager, 'getRepository').mockImplementation((entityClass) => {
+      if (entityClass === UserGroupModel) {
+        return mockUserGroupRepository as any
+      }
+      return userContext.entityManager.getRepository(entityClass)
+    })
+
+    jest.spyOn(adminContext.entityManager, 'getRepository').mockImplementation((entityClass) => {
+      if (entityClass === UserGroupModel) {
+        return mockUserGroupRepository as any
+      }
+      return adminContext.entityManager.getRepository(entityClass)
+    })
+
     mockFetch.mockClear()
   })
 
   afterEach(async() => {
     await onAfterEach()
+    jest.restoreAllMocks()
   })
 
   describe('Query.subscription', () => {
@@ -492,7 +520,7 @@ describe('modules/subscription/controller (queries)', () => {
       const userId = testUser.id
       const activeSubscription = SUBSCRIPTIONS.find(sub => sub.userId === userId && sub.isActive)
 
-      // Mock the fetch response
+      // Mock the fetch response for the first group (test-group-1)
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({
@@ -509,7 +537,7 @@ describe('modules/subscription/controller (queries)', () => {
       const result = await doQuery(queryActiveUserSubscription, null, { context: userContext })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        `https://test-api.metaspace.example/api/subscriptions/user/${userId}/active`,
+        `https://test-api.metaspace.example/api/subscriptions/group/test-group-1/active`,
         expect.any(Object)
       )
 
@@ -525,7 +553,11 @@ describe('modules/subscription/controller (queries)', () => {
     })
 
     it('should handle errors when fetching active user subscription', async() => {
-      // Mock the fetch response to simulate an error
+      // Mock the fetch response to simulate an error for both groups
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Not Found',
+      })
       mockFetch.mockResolvedValueOnce({
         ok: false,
         statusText: 'Not Found',
@@ -534,6 +566,16 @@ describe('modules/subscription/controller (queries)', () => {
       const result = await doQuery(queryActiveUserSubscription, null, { context: userContext })
 
       expect(result).toBeNull()
+    })
+
+    it('should return null when user has no groups', async() => {
+      // Mock empty groups for the user
+      mockUserGroupRepository.find.mockResolvedValueOnce([])
+
+      const result = await doQuery(queryActiveUserSubscription, null, { context: userContext })
+
+      expect(result).toBeNull()
+      expect(mockFetch).not.toHaveBeenCalled()
     })
   })
 
