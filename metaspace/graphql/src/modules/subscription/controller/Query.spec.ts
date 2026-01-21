@@ -537,7 +537,7 @@ describe('modules/subscription/controller (queries)', () => {
       const result = await doQuery(queryActiveUserSubscription, null, { context: userContext })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        `https://test-api.metaspace.example/api/subscriptions/group/test-group-1/active`,
+        'https://test-api.metaspace.example/api/subscriptions/group/test-group-1/active',
         expect.any(Object)
       )
 
