@@ -404,6 +404,8 @@ CREATE TABLE "public"."news" (
   "visibility" text NOT NULL DEFAULT 'logged_users', 
   "show_on_home_page" boolean NOT NULL DEFAULT false, 
   "is_visible" boolean NOT NULL DEFAULT true, 
+  "show_from" TIMESTAMP, 
+  "show_until" TIMESTAMP, 
   "created_by" uuid, 
   "created_at" TIMESTAMP NOT NULL, 
   "updated_at" TIMESTAMP NOT NULL, 
@@ -428,6 +430,14 @@ CREATE TABLE "public"."news_target_user" (
   "user_id" uuid NOT NULL, 
   "created_at" TIMESTAMP NOT NULL, 
   CONSTRAINT "PK_276979948bdb61c4a6c94603d5d" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "public"."news_blacklist_user" (
+  "id" SERIAL NOT NULL, 
+  "news_id" uuid NOT NULL, 
+  "user_id" uuid NOT NULL, 
+  "created_at" TIMESTAMP NOT NULL, 
+  CONSTRAINT "PK_2a9d84204903e88b66919c1ac1e" PRIMARY KEY ("id")
 );
 
 ALTER TABLE "public"."molecular_db" ADD CONSTRAINT "FK_a18f5f7d6cc662006d9c849ea1f" FOREIGN KEY (
@@ -571,6 +581,14 @@ ALTER TABLE "public"."news_target_user" ADD CONSTRAINT "FK_b3fb1a4dcd5c9a5f4a476
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE "public"."news_target_user" ADD CONSTRAINT "FK_393f1430bdaec648fd8238ccf6b" FOREIGN KEY (
+  "user_id") REFERENCES "graphql"."user"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."news_blacklist_user" ADD CONSTRAINT "FK_cc07c5228b1857cebf6af609546" FOREIGN KEY (
+  "news_id") REFERENCES "public"."news"("id"
+) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."news_blacklist_user" ADD CONSTRAINT "FK_bb9e11816860543b441841ef68c" FOREIGN KEY (
   "user_id") REFERENCES "graphql"."user"("id"
 ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
