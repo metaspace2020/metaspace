@@ -63,7 +63,7 @@
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
     "js-cookie": "^3.0.5",
-    "lodash-es": "^4.17.21",
+    "lodash-es": "^4.17.23",
     "marked": "9.1.6",
     "mathjs": "11.12.0",
     "moment": "^2.29.4",
