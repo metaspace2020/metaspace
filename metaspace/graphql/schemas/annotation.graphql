@@ -20,6 +20,7 @@ type Annotation {
   rhoSpatial: Float
   rhoSpectral: Float
   rhoChaos: Float
+  massError: Float
 
   metricsJson: String!
 
@@ -120,6 +121,7 @@ enum AnnotationOrderBy {
   ORDER_BY_ISOMERS
   ORDER_BY_ISOBARS
   ORDER_BY_ISOMER_MOLS
+  ORDER_BY_MASS_ERROR
 }
 
 # [min, max) interval

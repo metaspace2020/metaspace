@@ -130,6 +130,19 @@
       </el-table-column>
 
       <el-table-column
+        v-if="!hidden('massError')"
+        key="massError"
+        prop="massError"
+        label="Mass Error (ppm)"
+        sortable="custom"
+        :min-width="140"
+      >
+        <template v-slot="{ row }">
+          <span> {{ formatMassError(row) }} </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column
         v-if="!hidden('OffSampleProb')"
         key="offSampleProb"
         prop="offSampleProb"
@@ -484,6 +497,7 @@ const SORT_ORDER_TO_COLUMN = {
   ORDER_BY_ISOMERS: 'isomers',
   ORDER_BY_ISOBARS: 'isobars',
   ORDER_BY_ISOMER_MOLS: 'isomerMolsCount',
+  ORDER_BY_MASS_ERROR: 'massError',
 }
 const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN)
 
@@ -562,6 +576,12 @@ export default defineComponent({
           src: 'mz',
           selected: true,
           default: true,
+        },
+        {
+          id: 20,
+          label: 'Mass Error',
+          src: 'massError',
+          selected: false,
         },
         {
           id: 6,
@@ -1186,6 +1206,7 @@ export default defineComponent({
 
     const formatDatasetName = (row) => row.dataset.name
     const formatMZ = (row) => row.mz.toFixed(4)
+    const formatMassError = (row) => row.massError?.toFixed(2) || '-'
 
     const filterDataset = (row) => {
       updateFilter({ datasetIds: [row.dataset.id] })
@@ -1321,6 +1342,7 @@ export default defineComponent({
         ...(includeNeutralLosses ? ['neutralLoss'] : []),
         'ion',
         'mz',
+        'massError',
         'msm',
         'fdr',
         'rhoSpatial',
@@ -1363,6 +1385,7 @@ export default defineComponent({
             neutralLoss = '',
             ion = '',
             mz = '',
+            massError = '',
             msmScore = '',
             fdrLevel = '',
             rhoSpatial = '',
@@ -1387,6 +1410,7 @@ export default defineComponent({
             ...(includeNeutralLosses ? [neutralLoss] : []),
             ion,
             mz,
+            massError,
             msmScore,
             fdrLevel,
             rhoSpatial,
@@ -1485,7 +1509,6 @@ export default defineComponent({
     }
 
     const handleColumnClick = (index) => {
-      console.log('handleColumnClick', index)
       state.columns[index].selected = !state.columns[index].selected
       const defaultCols = state.columns.filter((column) => column.default).map((column) => column.id)
       const selectedCols = state.columns.filter((column) => column.selected).map((column) => column.id)
@@ -1595,6 +1618,7 @@ export default defineComponent({
       filterDataset,
       formatMZ,
       filterMZ,
+      formatMassError,
       formatFDR,
       showColocCol,
       paginationLayout,

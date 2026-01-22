@@ -74,6 +74,11 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
     }
   },
 
+  massError(hit) {
+    const mzErrAbs = hit._source.metrics?.mz_err_abs
+    return mzErrAbs != null && hit._source.mz != null ? (mzErrAbs / hit._source.mz) * 1e6 : null
+  },
+
   async peakChartData(hit) {
     const { ion, ds_meta, ds_config, mz, centroid_mzs, total_iso_ints } = hit._source
     const msInfo = ds_meta.MS_Analysis
