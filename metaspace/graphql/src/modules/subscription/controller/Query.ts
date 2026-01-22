@@ -7,6 +7,7 @@ import { FieldResolversFor } from '../../../bindingTypes'
 import { Query } from '../../../binding'
 import { UserError } from 'graphql-errors'
 import { assertCanAddDataset } from '../../../modules/group/controller'
+import { UserGroup as UserGroupModel } from '../../group/model'
 
 interface AllSubscriptionsArgs {
   filter?: {
@@ -59,7 +60,6 @@ export const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GE
   try {
     const apiUrl = config.manager_api_url
     const token = ctx.req?.headers?.authorization || ''
-
     if (!apiUrl) {
       logger.error('Manager API URL is not configured')
       throw new Error('Manager API URL is not configured')
@@ -81,7 +81,6 @@ export const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GE
     if (body && (method === 'POST' || method === 'PUT')) {
       options.body = JSON.stringify(body)
     }
-
     const response = await fetch(`${apiUrl}${endpoint}`, options)
     if (!response.ok) {
       throw new Error(`API request failed: ${response.statusText}`)
@@ -205,12 +204,24 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       throw new UserError('Access denied')
     }
 
-    try {
-      return await makeApiRequest(ctx, `/api/subscriptions/user/${ctx.user.id}/active`)
-    } catch (error) {
-      // logger.error(`Error fetching active subscription for user ${ctx.user.id}:`, error)
+    const groups = await ctx.entityManager.getRepository(UserGroupModel).find({ userId: ctx.user.id })
+    if (groups.length === 0) {
       return null
     }
+
+    for (let i = 0; i < groups.length; i++) {
+      const group = groups[i]
+      try {
+        const subscription = await makeApiRequest(ctx, `/api/subscriptions/group/${group.groupId}/active`)
+        if (subscription) {
+          return subscription.data || subscription || null
+        }
+      } catch (error) {
+        logger.error(`Error fetching active subscription for group ${group.groupId}:`, error)
+        continue
+      }
+    }
+    return null
   },
 
   async activeGroupSubscription(_: any, { groupId }: { groupId: string }, ctx: Context): Promise<any> {

@@ -3,7 +3,86 @@ import logger from '../../../utils/logger'
 import { FieldResolversFor } from '../../../bindingTypes'
 import { Query } from '../../../binding'
 import { News, NewsEvent } from '../model'
+import { UserGroup } from '../../group/model'
+import { In } from 'typeorm'
 import * as crypto from 'crypto'
+import config from '../../../utils/config'
+import fetch, { RequestInit } from 'node-fetch'
+
+// Helper function to make API requests
+export const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', body?: any) => {
+  try {
+    const apiUrl = config.manager_api_url
+    const token = ctx.req?.headers?.authorization || ''
+
+    if (!apiUrl) {
+      logger.error('Manager API URL is not configured')
+      throw new Error('Manager API URL is not configured')
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (token) {
+      headers.Authorization = token
+    }
+
+    const options: RequestInit = {
+      method,
+      headers,
+    }
+
+    if (body && (method === 'POST' || method === 'PUT')) {
+      options.body = JSON.stringify(body)
+    }
+
+    const response = await fetch(`${apiUrl}${endpoint}`, options)
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.statusText}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    logger.warn(`Error making API request to ${endpoint}:`, error)
+    throw error
+  }
+}
+
+// Helper function to get pro users from API_external
+const getProUsers = async(ctx: Context): Promise<string[]> => {
+  try {
+    // Get all active pro groups
+    const proGroupsResponse = await makeApiRequest(ctx, '/api/pro-groups?isActive=true')
+    if (!proGroupsResponse || !proGroupsResponse.data) {
+      return []
+    }
+
+    // Extract group IDs from the API response
+    const proGroupIds = proGroupsResponse.data.map((group: any) => group.id).filter(Boolean)
+
+    if (proGroupIds.length === 0) {
+      return []
+    }
+
+    // Query the user_group table to find users in these pro groups
+    const userGroups = await ctx.entityManager
+      .getRepository(UserGroup)
+      .find({
+        where: proGroupIds.length === 1
+          ? { groupId: proGroupIds[0] }
+          : { groupId: In(proGroupIds) },
+        select: ['userId'],
+      })
+
+    // Extract unique user IDs
+    const proUserIds = [...new Set(userGroups.map(ug => ug.userId))]
+    return proUserIds
+  } catch (error) {
+    logger.warn('Error fetching pro users:', error)
+    return []
+  }
+}
 
 interface NewsFilterInput {
   type?: string;
@@ -17,7 +96,7 @@ interface NewsFilterInput {
   hasClicked?: boolean;
 }
 
-const buildNewsQuery = (
+const buildNewsQuery = async(
   context: Context,
   filter: NewsFilterInput = {},
   includeDeleted = false
@@ -32,6 +111,11 @@ const buildNewsQuery = (
     queryBuilder.andWhere('news.deleted_at IS NULL')
   }
 
+  // Add date filtering - only show news that are within their display date range
+  const now = new Date()
+  queryBuilder.andWhere('(news.show_from IS NULL OR news.show_from <= :now)', { now })
+  queryBuilder.andWhere('(news.show_until IS NULL OR news.show_until >= :now)', { now })
+
   const isAdmin = user.role === 'admin'
 
   // Visibility filtering based on user permissions
@@ -40,12 +124,43 @@ const buildNewsQuery = (
       // Anonymous users can only see public news
       queryBuilder.andWhere('news.visibility = :visibility', { visibility: 'public' })
     } else {
-      // Logged-in users can see public and logged_users news
-      queryBuilder.andWhere('(news.visibility IN (:...visibilities) OR news.id IN '
-        + '(SELECT news_id FROM public.news_target_user WHERE user_id = :userId))', {
-        visibilities: ['public', 'logged_users'],
-        userId: user.id,
-      })
+      // Get pro users to handle pro/non-pro visibility
+      const proUserIds = await getProUsers(context)
+      const isProUser = proUserIds.includes(user.id)
+
+      // Build visibility conditions
+      const visibilityConditions = []
+      const parameters: any = { userId: user.id }
+
+      // Public news - always visible
+      visibilityConditions.push('news.visibility = :publicVisibility')
+      parameters.publicVisibility = 'public'
+
+      // Logged users news - visible to all logged users
+      visibilityConditions.push('news.visibility = :loggedUsersVisibility')
+      parameters.loggedUsersVisibility = 'logged_users'
+
+      // Pro users news - only visible to pro users
+      if (isProUser) {
+        visibilityConditions.push('news.visibility = :proUsersVisibility')
+        parameters.proUsersVisibility = 'pro_users'
+      }
+
+      // Non-pro users news - only visible to non-pro users
+      if (!isProUser) {
+        visibilityConditions.push('news.visibility = :nonProUsersVisibility')
+        parameters.nonProUsersVisibility = 'non_pro_users'
+      }
+
+      // Specific users news - check target user table
+      visibilityConditions.push('news.id IN (SELECT news_id FROM public.news_target_user WHERE user_id = :userId)')
+
+      // Visibility except (blacklist) - visible to all logged users except blacklisted ones
+      visibilityConditions.push(`(news.visibility = :visibilityExcept AND news.id NOT IN 
+        (SELECT news_id FROM public.news_blacklist_user WHERE user_id = :userId))`)
+      parameters.visibilityExcept = 'visibility_except'
+
+      queryBuilder.andWhere(`(${visibilityConditions.join(' OR ')})`, parameters)
     }
 
     // Non-admin users can only see visible news
@@ -246,7 +361,7 @@ const getHashedIp = (ctx: Context): string => {
 const QueryResolvers: FieldResolversFor<Query, void> = {
   async news(_: any, { id }: any, ctx: Context): Promise<any> {
     try {
-      const queryBuilder = buildNewsQuery(ctx, {}, false)
+      const queryBuilder = await buildNewsQuery(ctx, {}, false)
       queryBuilder.andWhere('news.id = :id', { id })
 
       const news = await queryBuilder.getOne()
@@ -267,7 +382,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     try {
       const { orderBy = 'ORDER_BY_CREATED_AT', sortingOrder = 'DESCENDING', filter = {}, offset = 0, limit = 20 } = args
 
-      const queryBuilder = buildNewsQuery(ctx, filter, false)
+      const queryBuilder = await buildNewsQuery(ctx, filter, false)
 
       // Apply sorting
       const orderDirection = sortingOrder === 'DESCENDING' ? 'DESC' : 'ASC'
@@ -316,7 +431,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         hasViewed: false,
       }
 
-      const queryBuilder = buildNewsQuery(ctx, filter, false)
+      const queryBuilder = await buildNewsQuery(ctx, filter, false)
       queryBuilder.orderBy('news.created_at', 'DESC').take(limit)
 
       const newsList = await queryBuilder.getMany()
@@ -335,7 +450,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         showOnHomePage: true,
       }
 
-      const queryBuilder = buildNewsQuery(ctx, filter, false)
+      const queryBuilder = await buildNewsQuery(ctx, filter, false)
       queryBuilder.orderBy('news.created_at', 'DESC').take(limit)
 
       const newsList = await queryBuilder.getMany()
@@ -350,7 +465,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
   async newsCount(_: any, { filter = {} }: any, ctx: Context): Promise<number> {
     try {
-      const queryBuilder = buildNewsQuery(ctx, filter, false)
+      const queryBuilder = await buildNewsQuery(ctx, filter, false)
       return await queryBuilder.getCount()
     } catch (error) {
       logger.error('Error fetching news count:', error)
@@ -367,7 +482,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         showOnHomePage: true,
       }
 
-      const queryBuilder = buildNewsQuery(ctx, filter, false)
+      const queryBuilder = await buildNewsQuery(ctx, filter, false)
 
       // If lastDismissedTimestamp is provided, only show news created after that timestamp
       if (lastDismissedTimestamp) {
@@ -397,7 +512,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
         hasViewed: false,
       }
 
-      const queryBuilder = buildNewsQuery(ctx, filter, false)
+      const queryBuilder = await buildNewsQuery(ctx, filter, false)
       return await queryBuilder.getCount()
     } catch (error) {
       logger.error('Error fetching unread news count:', error)

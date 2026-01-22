@@ -6,6 +6,8 @@ type News {
   visibility: NewsVisibility!
   showOnHomePage: Boolean!
   isVisible: Boolean!
+  showFrom: String
+  showUntil: String
   createdBy: ID
   createdAt: String!
   updatedAt: String!
@@ -26,6 +28,9 @@ enum NewsVisibility {
   public
   logged_users
   specific_users
+  pro_users
+  non_pro_users
+  visibility_except
 }
 
 enum NewsEventType {
@@ -58,7 +63,10 @@ input CreateNewsInput {
   type: NewsType!
   visibility: NewsVisibility!
   showOnHomePage: Boolean
+  showFrom: String
+  showUntil: String
   targetUserIds: [ID!]
+  blacklistUserIds: [ID!]
 }
 
 input UpdateNewsInput {
@@ -68,7 +76,10 @@ input UpdateNewsInput {
   visibility: NewsVisibility
   showOnHomePage: Boolean
   isVisible: Boolean
+  showFrom: String
+  showUntil: String
   targetUserIds: [ID!]
+  blacklistUserIds: [ID!]
 }
 
 input RecordNewsEventInput {

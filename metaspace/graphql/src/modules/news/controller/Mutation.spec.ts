@@ -11,23 +11,39 @@ import {
   adminContext,
   anonContext,
 } from '../../../tests/graphqlTestEnvironment'
-import { News, NewsEvent, NewsTargetUser } from '../model'
+import { News, NewsEvent, NewsTargetUser, NewsBlacklistUser } from '../model'
 import { utc } from 'moment'
+import fetch from 'node-fetch'
+import config from '../../../utils/config'
+
+// Mock node-fetch
+jest.mock('node-fetch')
+const mockFetch = fetch as jest.Mock
 
 describe('modules/news/controller (mutations)', () => {
   let testNews1: News
+  let originalManagerApiUrl: string | undefined
 
   beforeAll(async() => {
     await onBeforeAll()
+    originalManagerApiUrl = config.manager_api_url
+    config.manager_api_url = 'https://test-api.metaspace.example'
   })
 
   afterAll(async() => {
     await onAfterAll()
+    if (originalManagerApiUrl !== undefined) {
+      config.manager_api_url = originalManagerApiUrl
+    } else {
+      delete (config as any).manager_api_url
+    }
   })
 
   beforeEach(async() => {
     await onBeforeEach()
     await setupTestUsers()
+
+    mockFetch.mockClear()
 
     const now = utc()
 
@@ -152,6 +168,8 @@ describe('modules/news/controller (mutations)', () => {
         visibility
         showOnHomePage
         isVisible
+        showFrom
+        showUntil
         createdBy
       }
     }`
@@ -598,6 +616,344 @@ describe('modules/news/controller (mutations)', () => {
         .find({ where: { newsId: created.id } })
 
       expect(targetUsers).toHaveLength(0)
+    })
+  })
+
+  describe('New Visibility Options', () => {
+    const createNewsMutation = `mutation($input: CreateNewsInput!) {
+      createNews(input: $input) {
+        id
+        title
+        content
+        type
+        visibility
+        showOnHomePage
+        isVisible
+        showFrom
+        showUntil
+        createdBy
+      }
+    }`
+
+    // Mock the API request for pro groups
+    const mockApiRequest = jest.fn()
+
+    beforeEach(() => {
+      // Mock the makeApiRequest function
+      jest.doMock('node-fetch', () => jest.fn())
+      mockApiRequest.mockClear()
+    })
+
+    it('should create news for pro users visibility', async() => {
+      // Mock the pro-groups API response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: [
+            { id: '550e8400-e29b-41d4-a716-446655440001', name: 'Pro Group 1' },
+            { id: '550e8400-e29b-41d4-a716-446655440002', name: 'Pro Group 2' },
+          ],
+        }),
+      })
+
+      const input = {
+        title: 'Pro Users News',
+        content: '<p>This is for pro users only</p>',
+        type: 'news',
+        visibility: 'pro_users',
+        showOnHomePage: false,
+      }
+
+      const result = await doQuery(createNewsMutation, { input }, { context: adminContext })
+
+      expect(result).toBeTruthy()
+      expect(result.visibility).toBe('pro_users')
+    })
+
+    it('should create news for non-pro users visibility', async() => {
+      // Mock the pro-groups API response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: [
+            { id: '550e8400-e29b-41d4-a716-446655440001', name: 'Pro Group 1' },
+            { id: '550e8400-e29b-41d4-a716-446655440002', name: 'Pro Group 2' },
+          ],
+        }),
+      })
+
+      const input = {
+        title: 'Non-Pro Users News',
+        content: '<p>This is for non-pro users only</p>',
+        type: 'news',
+        visibility: 'non_pro_users',
+        showOnHomePage: false,
+      }
+
+      const result = await doQuery(createNewsMutation, { input }, { context: adminContext })
+
+      expect(result).toBeTruthy()
+      expect(result.visibility).toBe('non_pro_users')
+    })
+
+    it('should create news with visibility except (blacklist)', async() => {
+      const input = {
+        title: 'Visibility Except News',
+        content: '<p>This is for all users except blacklisted ones</p>',
+        type: 'news',
+        visibility: 'visibility_except',
+        blacklistUserIds: [testUser.id],
+      }
+
+      const result = await doQuery(createNewsMutation, { input }, { context: adminContext })
+
+      expect(result).toBeTruthy()
+      expect(result.visibility).toBe('visibility_except')
+
+      // Verify blacklist user was created
+      const blacklistUser = await testEntityManager
+        .getRepository(NewsBlacklistUser)
+        .findOne({ where: { newsId: result.id, userId: testUser.id } })
+
+      expect(blacklistUser).toBeTruthy()
+    })
+
+    it('should fail when visibility_except is selected without blacklist users', async() => {
+      const input = {
+        title: 'Invalid Visibility Except News',
+        content: '<p>This should fail</p>',
+        type: 'news',
+        visibility: 'visibility_except',
+        blacklistUserIds: [],
+      }
+
+      await expect(
+        doQuery(createNewsMutation, { input }, { context: adminContext })
+      ).rejects.toThrow('Blacklist users are required when visibility is set to visibility_except')
+    })
+  })
+
+  describe('Date-based Visibility', () => {
+    const createNewsMutation = `mutation($input: CreateNewsInput!) {
+      createNews(input: $input) {
+        id
+        title
+        content
+        type
+        visibility
+        showOnHomePage
+        isVisible
+        showFrom
+        showUntil
+        createdBy
+      }
+    }`
+
+    it('should create news with show from date', async() => {
+      const futureDate = utc().add(1, 'day').toISOString()
+      const input = {
+        title: 'Future News',
+        content: '<p>This news will appear tomorrow</p>',
+        type: 'news',
+        visibility: 'public',
+        showFrom: futureDate,
+      }
+
+      const result = await doQuery(createNewsMutation, { input }, { context: adminContext })
+
+      expect(result).toBeTruthy()
+      expect(result.showFrom).toBe(futureDate)
+      expect(result.showUntil).toBeNull()
+    })
+
+    it('should create news with show until date', async() => {
+      const futureDate = utc().add(7, 'days').toISOString()
+      const input = {
+        title: 'Expiring News',
+        content: '<p>This news will expire in a week</p>',
+        type: 'news',
+        visibility: 'public',
+        showUntil: futureDate,
+      }
+
+      const result = await doQuery(createNewsMutation, { input }, { context: adminContext })
+
+      expect(result).toBeTruthy()
+      expect(result.showFrom).toBeNull()
+      expect(result.showUntil).toBe(futureDate)
+    })
+
+    it('should create news with both show from and show until dates', async() => {
+      const fromDate = utc().add(1, 'day').toISOString()
+      const untilDate = utc().add(7, 'days').toISOString()
+      const input = {
+        title: 'Time Window News',
+        content: '<p>This news has a specific time window</p>',
+        type: 'news',
+        visibility: 'public',
+        showFrom: fromDate,
+        showUntil: untilDate,
+      }
+
+      const result = await doQuery(createNewsMutation, { input }, { context: adminContext })
+
+      expect(result).toBeTruthy()
+      expect(result.showFrom).toBe(fromDate)
+      expect(result.showUntil).toBe(untilDate)
+    })
+
+    it('should fail when show from date is after show until date', async() => {
+      const fromDate = utc().add(7, 'days').toISOString()
+      const untilDate = utc().add(1, 'day').toISOString()
+      const input = {
+        title: 'Invalid Date Range News',
+        content: '<p>This should fail</p>',
+        type: 'news',
+        visibility: 'public',
+        showFrom: fromDate,
+        showUntil: untilDate,
+      }
+
+      await expect(
+        doQuery(createNewsMutation, { input }, { context: adminContext })
+      ).rejects.toThrow('Show from date must be before show until date')
+    })
+
+    it('should reject same dates for from and until', async() => {
+      const sameDate = utc().add(1, 'day').toISOString()
+      const input = {
+        title: 'Same Date News',
+        content: '<p>This has the same from and until date</p>',
+        type: 'news',
+        visibility: 'public',
+        showFrom: sameDate,
+        showUntil: sameDate,
+      }
+
+      await expect(
+        doQuery(createNewsMutation, { input }, { context: adminContext })
+      ).rejects.toThrow('Show from date must be before show until date')
+    })
+  })
+
+  describe('Update News with New Features', () => {
+    const createNewsMutation = `mutation($input: CreateNewsInput!) {
+      createNews(input: $input) {
+        id
+        title
+        content
+        type
+        visibility
+        showOnHomePage
+        isVisible
+        showFrom
+        showUntil
+        createdBy
+      }
+    }`
+
+    const updateNewsMutation = `mutation($id: ID!, $input: UpdateNewsInput!) {
+      updateNews(id: $id, input: $input) {
+        id
+        title
+        content
+        visibility
+        showFrom
+        showUntil
+      }
+    }`
+
+    it('should update news to add blacklist users', async() => {
+      // First create a news item
+      const createInput = {
+        title: 'Test News for Update',
+        content: '<p>Original content</p>',
+        type: 'news',
+        visibility: 'logged_users',
+      }
+
+      const created = await doQuery(createNewsMutation, { input: createInput }, { context: adminContext })
+
+      // Then update it to use blacklist
+      const updateInput = {
+        visibility: 'visibility_except',
+        blacklistUserIds: [testUser.id],
+      }
+
+      const updated = await doQuery(
+        updateNewsMutation,
+        { id: created.id, input: updateInput },
+        { context: adminContext }
+      )
+
+      expect(updated.visibility).toBe('visibility_except')
+
+      // Verify blacklist user was created
+      const blacklistUser = await testEntityManager
+        .getRepository(NewsBlacklistUser)
+        .findOne({ where: { newsId: created.id, userId: testUser.id } })
+
+      expect(blacklistUser).toBeTruthy()
+    })
+
+    it('should update news to add date constraints', async() => {
+      // First create a news item
+      const createInput = {
+        title: 'Test News for Date Update',
+        content: '<p>Original content</p>',
+        type: 'news',
+        visibility: 'public',
+      }
+
+      const created = await doQuery(createNewsMutation, { input: createInput }, { context: adminContext })
+
+      // Then update it to add dates
+      const fromDate = utc().add(1, 'hour').toISOString()
+      const untilDate = utc().add(1, 'week').toISOString()
+      const updateInput = {
+        showFrom: fromDate,
+        showUntil: untilDate,
+      }
+
+      const updated = await doQuery(
+        updateNewsMutation,
+        { id: created.id, input: updateInput },
+        { context: adminContext }
+      )
+
+      expect(updated.showFrom).toBe(fromDate)
+      expect(updated.showUntil).toBe(untilDate)
+    })
+
+    it('should update news to remove date constraints', async() => {
+      // First create a news item with dates
+      const fromDate = utc().add(1, 'hour').toISOString()
+      const untilDate = utc().add(1, 'week').toISOString()
+      const createInput = {
+        title: 'Test News with Dates',
+        content: '<p>Content with dates</p>',
+        type: 'news',
+        visibility: 'public',
+        showFrom: fromDate,
+        showUntil: untilDate,
+      }
+
+      const created = await doQuery(createNewsMutation, { input: createInput }, { context: adminContext })
+
+      // Then update it to remove dates
+      const updateInput = {
+        showFrom: null,
+        showUntil: null,
+      }
+
+      const updated = await doQuery(
+        updateNewsMutation,
+        { id: created.id, input: updateInput },
+        { context: adminContext }
+      )
+
+      expect(updated.showFrom).toBeNull()
+      expect(updated.showUntil).toBeNull()
     })
   })
 })

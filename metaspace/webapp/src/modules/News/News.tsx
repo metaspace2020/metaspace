@@ -30,6 +30,7 @@ import {
   ElTabPane,
   ElAutocomplete,
   ElTag,
+  ElDatePicker,
 } from '../../lib/element-plus'
 import gql from 'graphql-tag'
 import { Search, Delete, View, Plus, Document, SetUp, User } from '@element-plus/icons-vue'
@@ -100,10 +101,15 @@ export default defineComponent({
         type: 'news' as NewsType,
         visibility: 'logged_users' as NewsVisibility,
         showOnHomePage: false,
+        showFrom: null as string | null,
+        showUntil: null as string | null,
         targetUserIds: [] as string[],
+        blacklistUserIds: [] as string[],
       },
       selectedUsers: [] as User[],
+      selectedBlacklistUsers: [] as User[],
       userSearchText: '',
+      blacklistUserSearchText: '',
       isCreating: false,
     })
 
@@ -277,6 +283,22 @@ export default defineComponent({
         return
       }
 
+      // Validate blacklist users selection for visibility_except
+      if (state.createForm.visibility === 'visibility_except' && state.selectedBlacklistUsers.length === 0) {
+        ElMessage.warning('Please select at least one user to blacklist for visibility except option')
+        return
+      }
+
+      // Validate date range if both dates are provided
+      if (state.createForm.showFrom && state.createForm.showUntil) {
+        const fromDate = new Date(state.createForm.showFrom)
+        const untilDate = new Date(state.createForm.showUntil)
+        if (fromDate >= untilDate) {
+          ElMessage.warning('Show from date must be before show until date')
+          return
+        }
+      }
+
       state.isCreating = true
       try {
         const input: CreateNewsInput = {
@@ -285,8 +307,14 @@ export default defineComponent({
           type: state.createForm.type,
           visibility: state.createForm.visibility,
           showOnHomePage: state.createForm.showOnHomePage,
+          showFrom: state.createForm.showFrom || undefined,
+          showUntil: state.createForm.showUntil || undefined,
           targetUserIds:
             state.createForm.visibility === 'specific_users' ? state.selectedUsers.map((u) => u.id) : undefined,
+          blacklistUserIds:
+            state.createForm.visibility === 'visibility_except'
+              ? state.selectedBlacklistUsers.map((u) => u.id)
+              : undefined,
         }
 
         await createNews({ input })
@@ -309,10 +337,15 @@ export default defineComponent({
         type: 'news',
         visibility: 'logged_users',
         showOnHomePage: false,
+        showFrom: null,
+        showUntil: null,
         targetUserIds: [],
+        blacklistUserIds: [],
       }
       state.selectedUsers = []
+      state.selectedBlacklistUsers = []
       state.userSearchText = ''
+      state.blacklistUserSearchText = ''
     }
 
     const handleCloseCreateDialog = () => {
@@ -364,6 +397,41 @@ export default defineComponent({
 
     const handleRemoveUser = (userId: string) => {
       state.selectedUsers = state.selectedUsers.filter((user) => user.id !== userId)
+    }
+
+    // Blacklist user search functionality
+    const handleSearchBlacklistUsers = async (queryString: string, callback: (suggestions: any[]) => void) => {
+      if (!queryString) {
+        callback([])
+        return
+      }
+
+      try {
+        const result = await apolloClient.query({
+          query: allUsersQuery,
+          variables: { query: queryString },
+        })
+        const users: User[] = result.data.allUsers || []
+        const suggestions = users
+          .filter((user) => !state.selectedBlacklistUsers.some((selected) => selected.id === user.id))
+          .map((user) => ({
+            value: `${user.name} (${user.email})`,
+            user: user,
+          }))
+        callback(suggestions)
+      } catch (error) {
+        console.error('Error searching blacklist users:', error)
+        callback([])
+      }
+    }
+
+    const handleSelectBlacklistUser = (item: { user: User }) => {
+      state.selectedBlacklistUsers.push(item.user)
+      state.blacklistUserSearchText = ''
+    }
+
+    const handleRemoveBlacklistUser = (userId: string) => {
+      state.selectedBlacklistUsers = state.selectedBlacklistUsers.filter((user) => user.id !== userId)
     }
 
     return () => {
@@ -579,10 +647,13 @@ export default defineComponent({
                 {/* Visibility */}
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-3">Visibility</label>
-                  <ElRadioGroup v-model={state.createForm.visibility}>
+                  <ElRadioGroup v-model={state.createForm.visibility} class="flex gap-2">
                     <ElRadio label="public">Public</ElRadio>
                     <ElRadio label="logged_users">Logged Users Only</ElRadio>
+                    <ElRadio label="pro_users">Pro Users Only</ElRadio>
+                    <ElRadio label="non_pro_users">Non-Pro Users Only</ElRadio>
                     <ElRadio label="specific_users">Specific Users</ElRadio>
+                    <ElRadio label="visibility_except">All Users Except Selected</ElRadio>
                   </ElRadioGroup>
                 </div>
 
@@ -613,6 +684,114 @@ export default defineComponent({
                     />
                   </div>
                 )}
+
+                {/* Blacklist User Selection - Only show when Visibility Except is selected */}
+                {state.createForm.visibility === 'visibility_except' && (
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Users to Exclude</label>
+
+                    {/* Selected Blacklist Users Tags */}
+                    {state.selectedBlacklistUsers.length > 0 && (
+                      <div class="mb-3 flex flex-wrap gap-2">
+                        {state.selectedBlacklistUsers.map((user) => (
+                          <ElTag
+                            key={user.id}
+                            closable
+                            onClose={() => handleRemoveBlacklistUser(user.id)}
+                            class="mb-1"
+                            type="danger"
+                          >
+                            {user.name} ({user.email})
+                          </ElTag>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Blacklist User Search Input */}
+                    <ElAutocomplete
+                      v-model={state.blacklistUserSearchText}
+                      fetchSuggestions={handleSearchBlacklistUsers}
+                      placeholder="Search for users to exclude by name or email..."
+                      onSelect={handleSelectBlacklistUser}
+                      class="w-full"
+                      clearable
+                    />
+                  </div>
+                )}
+
+                {/* Show From Date */}
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Show From (Optional)</label>
+                  <ElDatePicker
+                    v-model={state.createForm.showFrom}
+                    type="datetime"
+                    placeholder="Select start date and time"
+                    format="YYYY-MM-DD HH:mm:ss"
+                    valueFormat="YYYY-MM-DDTHH:mm:ss.sssZ"
+                    class="w-full"
+                    clearable
+                    shortcuts={[
+                      {
+                        text: 'Now',
+                        value: () => new Date(),
+                      },
+                      {
+                        text: 'In 1 hour',
+                        value: () => {
+                          const inOneHour = new Date()
+                          inOneHour.setHours(inOneHour.getHours() + 1)
+                          return inOneHour
+                        },
+                      },
+                      {
+                        text: 'Tomorrow',
+                        value: () => {
+                          const tomorrow = new Date()
+                          tomorrow.setDate(tomorrow.getDate() + 1)
+                          return tomorrow
+                        },
+                      },
+                    ]}
+                  />
+                  <div class="text-xs text-gray-500 mt-1">If set, news will only be visible from this date onwards</div>
+                </div>
+
+                {/* Show Until Date */}
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Show Until (Optional)</label>
+                  <ElDatePicker
+                    v-model={state.createForm.showUntil}
+                    type="datetime"
+                    placeholder="Select end date and time"
+                    format="YYYY-MM-DD HH:mm:ss"
+                    valueFormat="YYYY-MM-DDTHH:mm:ss.sssZ"
+                    class="w-full"
+                    clearable
+                    shortcuts={[
+                      {
+                        text: 'Now',
+                        value: () => new Date(),
+                      },
+                      {
+                        text: 'In 1 hour',
+                        value: () => {
+                          const inOneHour = new Date()
+                          inOneHour.setHours(inOneHour.getHours() + 1)
+                          return inOneHour
+                        },
+                      },
+                      {
+                        text: 'Tomorrow',
+                        value: () => {
+                          const tomorrow = new Date()
+                          tomorrow.setDate(tomorrow.getDate() + 1)
+                          return tomorrow
+                        },
+                      },
+                    ]}
+                  />
+                  <div class="text-xs text-gray-500 mt-1">If set, news will only be visible until this date</div>
+                </div>
 
                 {/* Display on home page */}
                 <div>
