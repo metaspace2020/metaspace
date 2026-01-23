@@ -465,12 +465,15 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     const higherLimitUserIds: string[] = []
     const HIGHER_LIMIT = 6
     const rateLimitCount = isPublishedOrUnderReview ? 10 : 2
+    const limitCount = higherLimitUserIds.length > 0 && higherLimitUserIds.includes(ctx.user?.id as string)
+      ? HIGHER_LIMIT
+      : rateLimitCount
     const rateLimited = redisClient
       ? await isRateLimited(redisClient, ip,
-          higherLimitUserIds.length > 0 && higherLimitUserIds.includes(ctx.user?.id as string)
-            ? HIGHER_LIMIT
-            : rateLimitCount)
+          limitCount)
       : false
+    const blockApiDownload = (ctx as any).getSource() !== 'web' && process.env.NODE_ENV !== 'test'
+    && ctx.user?.role !== 'admin' && !higherLimitUserIds.includes(ctx.user?.id as string)
 
     if (!ctx.user?.id && !isPublishedOrUnderReview) {
       return JSON.stringify({
@@ -497,7 +500,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     }
 
     // check if reached download
-    if ((ctx as any).getSource() !== 'web' && process.env.NODE_ENV !== 'test' && ctx.user?.role !== 'admin') {
+    if (blockApiDownload) {
       return JSON.stringify({
         message: 'Download disabled on API. Please use the web interface.',
         files: [{
@@ -509,7 +512,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       await performAction(ctx, { ...action, actionType: 'download_attempt' })
 
       return JSON.stringify({
-        message: `Download limit reached (2 downloads per day )${rateLimited ? '.' : ''}. Contact us at `
+        message: `Download limit reached (${limitCount} downloads per day )${rateLimited ? '.' : ''}. Contact us at `
             + 'contact@metaspace2020.org to request an increase.',
         files: [{
           filename: 'Download_Limit_Reached.txt',
