@@ -74,6 +74,7 @@ export const annotationDetailItemFragment = gql`
       shouldWarn
     }
     isomerMolsCount
+    massError
     countPossibleCompounds(includeIsomers: $countIsomerCompounds)
     possibleCompounds {
       name
@@ -182,6 +183,7 @@ export const tableExportQuery = gql`
       neutralLoss
       ion
       mz
+      massError
       msmScore
       fdrLevel
       rhoSpatial

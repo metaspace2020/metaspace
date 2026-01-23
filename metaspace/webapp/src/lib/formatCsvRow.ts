@@ -14,7 +14,9 @@ export default (values: string[]): string => {
 
 export const csvExportHeader = () => {
   const dateStr = moment().format('YYYY-MM-DD HH:mm:ss')
-  return `# Generated at ${dateStr}. For help see https://bit.ly/3Bzs6Z4\n` + `# URL: ${window.location.href}\n`
+  const url = new URL(window.location.href)
+  url.searchParams.delete('cols')
+  return `# Generated at ${dateStr}. For help see https://bit.ly/3Bzs6Z4\n` + `# URL: ${url.toString()}\n`
 }
 
 export const csvExportIntensityHeader = (isNormalized: boolean = false) => {
