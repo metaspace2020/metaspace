@@ -86,7 +86,7 @@ const COMPARISON_TABLE_COLUMNS = {
     selected: false,
   },
   maxIntensity: {
-    label: 'Max Intensity',
+    label: 'Max intensity',
     src: 'maxIntensity',
     selected: false,
   },

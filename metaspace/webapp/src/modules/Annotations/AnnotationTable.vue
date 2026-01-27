@@ -133,7 +133,7 @@
         v-if="!hidden('massError')"
         key="massError"
         prop="massError"
-        label="Mass Error (ppm)"
+        label="Mass error (ppm)"
         sortable="custom"
         :min-width="140"
       >
@@ -283,7 +283,7 @@
         v-if="!hidden('maxIntensity')"
         key="maxIntensity"
         prop="isotopeImages[0].maxIntensity"
-        label="Max Intensity"
+        label="Max intensity"
         :min-width="120"
         sortable="custom"
       >
@@ -296,7 +296,7 @@
         v-if="!hidden('totalIntensity')"
         key="totalIntensity"
         prop="isotopeImages[0].totalIntensity"
-        label="Total Intensity"
+        label="Total intensity"
         :min-width="120"
         sortable="custom"
       >
@@ -648,14 +648,14 @@ export default defineComponent({
         },
         {
           id: 15,
-          label: 'Max Intensity',
+          label: 'Max intensity',
           src: 'maxIntensity',
           selected: true,
           default: true,
         },
         {
           id: 16,
-          label: 'Total Intensity',
+          label: 'Total intensity',
           src: 'totalIntensity',
           selected: false,
         },
