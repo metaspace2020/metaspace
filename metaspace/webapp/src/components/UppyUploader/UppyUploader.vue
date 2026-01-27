@@ -107,6 +107,11 @@ const UppyUploader = defineComponent({
       )
     }
 
+    // Clean up Uppy instance when component is unmounted
+    onUnmounted(() => {
+      uppy.close()
+    })
+
     function getFileStatus(file?: UppyFile): FileStatusName {
       if (props.disabled) {
         return 'DISABLED'

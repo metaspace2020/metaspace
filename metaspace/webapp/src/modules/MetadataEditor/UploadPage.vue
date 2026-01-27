@@ -366,6 +366,16 @@ export default defineComponent({
 
         state.inputPath = null
         state.validationErrors = []
+        // Reset upload state to allow new uploads
+        state.uploads = {
+          imzml: false,
+          ibd: false,
+        }
+        state.fileSize = {
+          imzml: false,
+          ibd: false,
+        }
+        state.status = 'INIT'
         await fetchStorageKey()
         editor.value.resetAfterSubmit()
         ElMessage({

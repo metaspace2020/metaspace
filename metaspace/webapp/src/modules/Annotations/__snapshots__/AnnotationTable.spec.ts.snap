@@ -87,7 +87,7 @@ exports[`AnnotationTable > should match snapshot 1`] = `
                 </div>
               </th>
               <th class=\\"el-table_1_column_8 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
-                <div class=\\"cell\\">Max Intensity<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                <div class=\\"cell\\">Max intensity<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
               </th>
@@ -329,12 +329,12 @@ exports[`AnnotationTable > should match snapshot 1`] = `
           <div class=\\"cursor-pointer select-none\\">
             <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
-              </svg></div><span>Max Intensity</span>
+              </svg></div><span>Max intensity</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
             <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
-              </svg></div><span>Total Intensity</span>
+              </svg></div><span>Total intensity</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
             <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
@@ -435,7 +435,7 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
                 </div>
               </th>
               <th class=\\"el-table_2_column_17 is-leaf is-sortable el-table__cell\\" colspan=\\"1\\" rowspan=\\"1\\">
-                <div class=\\"cell\\">Max Intensity<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
+                <div class=\\"cell\\">Max intensity<span class=\\"caret-wrapper\\"><i class=\\"sort-caret ascending\\"></i><i class=\\"sort-caret descending\\"></i></span>
                   <!---->
                 </div>
               </th>
@@ -662,12 +662,12 @@ exports[`AnnotationTable > should match snapshot when loading snapshot 1`] = `
           <div class=\\"cursor-pointer select-none\\">
             <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
-              </svg></div><span>Max Intensity</span>
+              </svg></div><span>Max intensity</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
             <div class=\\"mock-el-icon el-icon-check invisible\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">
                 <path fill=\\"currentColor\\" d=\\"M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z\\"></path>
-              </svg></div><span>Total Intensity</span>
+              </svg></div><span>Total intensity</span>
           </div>
           <div class=\\"cursor-pointer select-none\\">
             <div class=\\"mock-el-icon el-icon-check\\"><svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 1024 1024\\">

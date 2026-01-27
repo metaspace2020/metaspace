@@ -309,7 +309,7 @@ const esSort = (orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
               + 'params._source.mz == null || params._source.mz == 0) { '
               + 'return Double.MAX_VALUE; '
               + '} else { '
-              + 'return (params._source.metrics.mz_err_abs / params._source.mz) * 1000000; '
+              + 'return Math.abs(params._source.metrics.mz_err_abs / params._source.mz) * 1000000; '
               + '}',
           },
           order: order,

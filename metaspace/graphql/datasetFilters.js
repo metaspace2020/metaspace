@@ -47,7 +47,14 @@ class SubstringMatchFilter extends AbstractDatasetFilter {
   }
 
   esFilter(value) {
-    return { wildcard: { [this.esField]: `*${this.preprocess(value)}*` } }
+    return {
+       wildcard: { 
+        [this.esField]: {
+          value: `*${this.preprocess(value)}*`,
+          case_insensitive: true,
+        },
+      },
+    }
   }
 
   pgFilter(q, value) {

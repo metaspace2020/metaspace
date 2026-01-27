@@ -810,10 +810,10 @@ export default defineComponent({
               size="small"
             >
               <ElRadio class="w-full" label={PEAK_FILTER.ALL}>
-                All Peaks
+                All peaks
               </ElRadio>
               <ElRadio class="w-full mt-1 " label={PEAK_FILTER.OFF}>
-                Unannotated Peaks
+                Unannotated peaks
               </ElRadio>
               <div class="flex">
                 <ElRadio class="mr-1" label={PEAK_FILTER.FDR}>

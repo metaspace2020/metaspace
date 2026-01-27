@@ -133,7 +133,7 @@
         v-if="!hidden('massError')"
         key="massError"
         prop="massError"
-        label="Mass Error (ppm)"
+        label="Mass error (ppm)"
         sortable="custom"
         :min-width="140"
       >
@@ -283,7 +283,7 @@
         v-if="!hidden('maxIntensity')"
         key="maxIntensity"
         prop="isotopeImages[0].maxIntensity"
-        label="Max Intensity"
+        label="Max intensity"
         :min-width="120"
         sortable="custom"
       >
@@ -296,7 +296,7 @@
         v-if="!hidden('totalIntensity')"
         key="totalIntensity"
         prop="isotopeImages[0].totalIntensity"
-        label="Total Intensity"
+        label="Total intensity"
         :min-width="120"
         sortable="custom"
       >
@@ -648,14 +648,14 @@ export default defineComponent({
         },
         {
           id: 15,
-          label: 'Max Intensity',
+          label: 'Max intensity',
           src: 'maxIntensity',
           selected: true,
           default: true,
         },
         {
           id: 16,
-          label: 'Total Intensity',
+          label: 'Total intensity',
           src: 'totalIntensity',
           selected: false,
         },
@@ -1206,7 +1206,12 @@ export default defineComponent({
 
     const formatDatasetName = (row) => row.dataset.name
     const formatMZ = (row) => row.mz.toFixed(4)
-    const formatMassError = (row) => row.massError?.toFixed(2) || '-'
+    const formatMassError = (row) => {
+      if (row.massError == null) return '-'
+      const formatted = row.massError.toFixed(2)
+      // Remove negative sign if the rounded value is 0.00
+      return formatted === '-0.00' ? '0.00' : formatted
+    }
 
     const filterDataset = (row) => {
       updateFilter({ datasetIds: [row.dataset.id] })
