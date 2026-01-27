@@ -1206,7 +1206,12 @@ export default defineComponent({
 
     const formatDatasetName = (row) => row.dataset.name
     const formatMZ = (row) => row.mz.toFixed(4)
-    const formatMassError = (row) => row.massError?.toFixed(2) || '-'
+    const formatMassError = (row) => {
+      if (row.massError == null) return '-'
+      const formatted = row.massError.toFixed(2)
+      // Remove negative sign if the rounded value is 0.00
+      return formatted === '-0.00' ? '0.00' : formatted
+    }
 
     const filterDataset = (row) => {
       updateFilter({ datasetIds: [row.dataset.id] })
