@@ -4,8 +4,11 @@ import { PricingOption } from '../api/plan'
  * Format price from cents to dollars with 2 decimal places
  */
 export const formatPrice = (priceCents: number | undefined): string => {
-  if (priceCents === undefined) return '0.00'
-  return (priceCents / 100).toFixed(0)
+  if (priceCents === undefined) return '-'
+  const dollars = priceCents / 100
+  const formatted = dollars.toFixed(2)
+  // If decimal part is exactly "00", show without decimals
+  return formatted.endsWith('.00') ? dollars.toFixed(0) : formatted
 }
 
 /**
