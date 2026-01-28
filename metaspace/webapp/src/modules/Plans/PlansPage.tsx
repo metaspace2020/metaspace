@@ -43,7 +43,7 @@ const comparisonFeatures: ComparisonFeature[] = [
   { name: 'Projects', key: 'projects', type: 'text' },
 ]
 
-const endDate = new Date('2026-02-17')
+const endDate = new Date('2026-02-18')
 // Helper function to get discount information for early bird promotion
 const getDiscountInfo = (planName: string, selectedPeriod: PricingOption | null) => {
   if (!selectedPeriod) return null
@@ -303,8 +303,8 @@ export default defineComponent({
           {/* Temporary Limits Banner */}
           <div class="limits-banner">
             <div class="limits-banner-content">
-              <b>NOTICE:</b> All METASPACE users are granted the Medium Plan until <b>February 3, 2026</b>, after which
-              METASPACE Pro will require a subscription (METASPACE Academic can still be used for free).
+              <b>NOTICE:</b> All METASPACE users are granted the Medium Plan until <b>February 17th, 2026</b>, after
+              which METASPACE Pro will require a subscription (METASPACE Academic can still be used for free).
             </div>
           </div>
           <div class="plans-container">
