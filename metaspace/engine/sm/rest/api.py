@@ -4,7 +4,7 @@ import logging
 import bottle
 
 from sm.engine.util import GlobalInit
-from sm.rest import isotopic_pattern, datasets, databases, imzml_browser, enrichment
+from sm.rest import isotopic_pattern, datasets, databases, imzml_browser, enrichment, diff_roi
 from sm.rest.utils import make_response, OK, INTERNAL_ERROR
 
 logger = logging.getLogger('api')
@@ -14,6 +14,7 @@ app.mount('/v1/datasets/', datasets.app)
 app.mount('/v1/databases/', databases.app)
 app.mount('/v1/enrichment/', enrichment.app)
 app.mount('/v1/browser/', imzml_browser.app)
+app.mount('/v1/diffroi/',diff_roi.app)
 
 
 @app.get('/')
