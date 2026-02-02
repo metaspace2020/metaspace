@@ -22,10 +22,10 @@ def compare_rois():
         comp_roi_result = run_diff_roi(ds_id= ds_id,
                                        TIC_normalize=params.get('TIC_normalize', True),
                                        log_transform_tic=params.get('log_transform_tic', True),
-                                       chunk_size=params.get('chunk_size', 1000),
+                                       chunk_size=params.get('chunk_size', 100),
                                        n_pixel_samples=params.get('n_pixel_samples', 10000))
         logger.info(f'Completed diff ROI in {round(time.time() - start, 2)} sec')
-        headers = {'Content-Type': 'application/json'}
+        # headers = {'Content-Type': 'application/json'}
         body = {'diff_roi_result': comp_roi_result.to_dict(orient='records')}
         return make_response(OK,
                              data=json.dumps(body)
