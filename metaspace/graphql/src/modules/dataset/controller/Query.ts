@@ -335,6 +335,24 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     return null
   },
 
+  async compareROIs(source, { datasetId, ticNormalize = true, logTransformTic = true,
+    chunkSize = 1000, nPixelSamples = 10000 }) {
+      try {
+        const content = await smApiDatasetRequest('/v1/browser/compareROIs', {
+          ds_id: datasetId,
+          TIC_normalize : ticNormalize,
+          log_transform_tic : logTransformTic,
+          chunk_size : chunkSize,
+          n_pixel_samples : nPixelSamples,
+        })
+        const data = JSON.parse(content.data)
+
+        return data.diff_roi_result
+      } catch (e) {
+        return e
+      }
+    },
+
 }
 
 export default QueryResolvers
