@@ -348,7 +348,7 @@ def run_diff_roi(
     # Build flat results table
     annot_cols = pd.DataFrame({
         'formula': diff_data['formulas'],
-        'modifier': diff_data['modifiers'],
+        'adduct': diff_data['modifiers'],
     })
     dfs = []
     for roi_name, metrics in results.items():
