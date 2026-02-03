@@ -349,6 +349,21 @@ CREATE TABLE "public"."scoring_model" (
   CONSTRAINT "PK_f4aafae7cbb3f34533cb9f932a6" PRIMARY KEY ("id")
 );
 
+CREATE TABLE "public"."diff_roi" (
+  "id" SERIAL NOT NULL, 
+  "annotation_id" integer NOT NULL, 
+  "roi_name" text NOT NULL, 
+  "lfc" real NOT NULL, 
+  "auc" real NOT NULL, 
+  CONSTRAINT "diff_roi_annotation_uindex" UNIQUE ("annotation_id", 
+  "roi_name"), 
+  CONSTRAINT "PK_1e8cd6ce84c7af082c10a179d6e" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "roi_annot_id_index" ON "public"."diff_roi" (
+  "annotation_id"
+) ;
+
 CREATE TABLE "graphql"."dataset" (
   "id" text NOT NULL, 
   "user_id" uuid NOT NULL, 
@@ -542,6 +557,10 @@ ALTER TABLE "public"."perf_profile" ADD CONSTRAINT "FK_cea05d4819bacc949a4236b4a
 
 ALTER TABLE "public"."perf_profile_entry" ADD CONSTRAINT "FK_67cf1a415a181173f111690c70a" FOREIGN KEY (
   "profile_id") REFERENCES "public"."perf_profile"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."diff_roi" ADD CONSTRAINT "FK_00cab624e3493055836af1f50be" FOREIGN KEY (
+  "annotation_id") REFERENCES "public"."annotation"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "graphql"."dataset" ADD CONSTRAINT "FK_d890658f7d5c8961e0a0cbdbe41" FOREIGN KEY (

@@ -355,6 +355,30 @@ export class ScoringModel {
   params: any;
 }
 
+@Entity({ schema: 'public' })
+@Unique('diff_roi_annotation_uindex', ['annotationId', 'roiName'])
+export class DiffRoi {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Index('roi_annot_id_index')
+  @Column()
+  annotationId: number;
+
+  @Column({ type: 'text' })
+  roiName: string;
+
+  @Column({ type: 'real' })
+  lfc: number;
+
+  @Column({ type: 'real' })
+  auc: number;
+
+  @ManyToOne(() => Annotation, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'annotation_id' })
+  annotation: Annotation;
+}
+
 export const ENGINE_ENTITIES = [
   EngineDataset,
   OpticalImage,
@@ -364,4 +388,5 @@ export const ENGINE_ENTITIES = [
   PerfProfile,
   PerfProfileEntry,
   ScoringModel,
+  DiffRoi,
 ]
