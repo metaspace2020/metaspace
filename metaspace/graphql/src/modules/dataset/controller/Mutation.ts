@@ -603,6 +603,28 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     return await esDatasetByID(datasetId, ctx.user)
   },
+
+  compareROIs: async(source, { datasetId, ticNormalize = true, logTransformTic = true,
+    chunkSize = 1000, nPixelSamples = 10000 }, ctx: Context) => {
+    try {
+      if (ctx.user.id == null) {
+        throw new UserError('Not authenticated')
+      }
+      await esDatasetByID(datasetId, ctx.user) // check if user has access
+
+      await smApiDatasetRequest('/v1/diffroi/compareROIs', {
+        ds_id: datasetId,
+        TIC_normalize: ticNormalize,
+        log_transform_tic: logTransformTic,
+        chunk_size: chunkSize,
+        n_pixel_samples: nPixelSamples,
+      })
+
+      return true
+    } catch (e) {
+      return e
+    }
+  },
 }
 
 export default MutationResolvers

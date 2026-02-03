@@ -416,9 +416,6 @@ type Query {
   browserImage(datasetId: String!, mzLow: Float!, mzHigh: Float!): SpectrumImage
 
   pixelSpectrum(datasetId: String!, x: Int!, y: Int!): PixelSpectrum
-
-  compareROIs(datasetId: String!, ticNormalize: Boolean = true, logTransformTic: Boolean = true,
-              chunkSize: Int = 1000, nPixelSamples: Int = 10000): [DiffRoiResult]
 }
 
 type Mutation {
@@ -473,6 +470,12 @@ type Mutation {
   removeDatasetExternalLink(datasetId: String!,
                             provider: String!,
                             link: String): Dataset!
+
+  compareROIs(datasetId: String!,
+              ticNormalize: Boolean = true,
+              logTransformTic: Boolean = true,
+              chunkSize: Int = 1000,
+              nPixelSamples: Int = 10000): Boolean!
 }
 
 type Subscription {
