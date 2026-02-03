@@ -13,9 +13,13 @@ from sm.engine.storage import get_s3_client
 class DiffROIData:
     """Class for differential ROI analysis results storage and retrieval."""
 
-    def __init__(self, ds_id: str, hotspot_percentile: int = 99,
-                 tic_normalize: bool = True,
-                 log_transform_tic: bool = True):
+    def __init__(
+        self,
+        ds_id: str,
+        hotspot_percentile: int = 99,
+        tic_normalize: bool = True,
+        log_transform_tic: bool = True,
+    ):
         self.ds_id = ds_id
         self._db = DB()
         self._sm_config = SMConfig.get_conf()
@@ -28,8 +32,7 @@ class DiffROIData:
     def get_dataset_roi(self):
         with ConnectionPool(self._sm_config['db']):
             result = self._db.select_one(
-                'SELECT roi FROM dataset WHERE id = %s',
-                params=(self.ds_id,)
+                'SELECT roi FROM dataset WHERE id = %s', params=(self.ds_id,)
             )
         if result and result[0]:
             return result[0]
@@ -38,9 +41,8 @@ class DiffROIData:
     def get_ppm(self):
         with ConnectionPool(self._sm_config['db']):
             ppm = self._db.select_one(
-                "SELECT config->'image_generation'->>'ppm' "
-                "FROM dataset WHERE id = %s",
-                params=(self.ds_id,)
+                "SELECT config->'image_generation'->>'ppm' " "FROM dataset WHERE id = %s",
+                params=(self.ds_id,),
             )
         return int(ppm[0])
 
@@ -54,13 +56,9 @@ class DiffROIData:
             WHERE j.ds_id = %s
         '''
         with ConnectionPool(self._sm_config['db']):
-            annot_res = self._db.select(
-                query, params=(self.ds_id,)
-            )
+            annot_res = self._db.select(query, params=(self.ds_id,))
         annot_df = pd.DataFrame(
-            annot_res,
-            columns=['annotation_id', 'formula', 'adduct',
-                     'job_id', 'moldb_id']
+            annot_res, columns=['annotation_id', 'formula', 'adduct', 'job_id', 'moldb_id']
         )
         return annot_df
 
@@ -71,9 +69,7 @@ class DiffROIData:
             WHERE ds_id = %s AND type = 'FDR_RESULTS'
         '''
         with ConnectionPool(self._sm_config['db']):
-            result = self._db.select(
-                query, params=(self.ds_id,)
-            )
+            result = self._db.select(query, params=(self.ds_id,))
 
         per_db_metrics = []
         for db_res in result:
@@ -82,82 +78,54 @@ class DiffROIData:
             metrics_df_img_id = db_res[0][2]['image_id']
 
             decoy_map = self._image_storage.get_image(
-                self._image_storage.DIAG,
-                self.ds_id, decoy_map_img_id
+                self._image_storage.DIAG, self.ds_id, decoy_map_img_id
             )
             sf_map = self._image_storage.get_image(
-                self._image_storage.DIAG,
-                self.ds_id, formula_map_img_id
+                self._image_storage.DIAG, self.ds_id, formula_map_img_id
             )
             metrics_df_bytes = self._image_storage.get_image(
-                self._image_storage.DIAG,
-                self.ds_id, metrics_df_img_id
+                self._image_storage.DIAG, self.ds_id, metrics_df_img_id
             )
 
             decoy_map = pd.read_parquet(BytesIO(decoy_map))
             sf_map = pd.read_parquet(BytesIO(sf_map))
-            metrics_df = pd.read_parquet(
-                BytesIO(metrics_df_bytes)
-            )
+            metrics_df = pd.read_parquet(BytesIO(metrics_df_bytes))
 
-            sf_map = sf_map[
-                sf_map['modifier'].isin(decoy_map.tm)
-            ]
-            metrics_df = metrics_df[
-                metrics_df.index.isin(sf_map['formula_i'])
-            ]
+            sf_map = sf_map[sf_map['modifier'].isin(decoy_map.tm)]
+            metrics_df = metrics_df[metrics_df.index.isin(sf_map['formula_i'])]
 
-            merged_df = metrics_df.merge(
-                sf_map, how='left',
-                left_index=True, right_on='formula_i'
-            )
+            merged_df = metrics_df.merge(sf_map, how='left', left_index=True, right_on='formula_i')
             per_db_metrics.append(merged_df)
 
-        all_metrics_df = pd.concat(
-            per_db_metrics, ignore_index=True
-        )
-        all_metrics_df = all_metrics_df.drop_duplicates(
-            subset=['formula', 'modifier']
-        )
+        all_metrics_df = pd.concat(per_db_metrics, ignore_index=True)
+        all_metrics_df = all_metrics_df.drop_duplicates(subset=['formula', 'modifier'])
 
-        monoiso_theo_mz = [
-            i[0] for i in all_metrics_df.theo_mz
-        ]
+        monoiso_theo_mz = [i[0] for i in all_metrics_df.theo_mz]
         all_metrics_df['monoiso_theo_mz'] = monoiso_theo_mz
         return all_metrics_df
 
     def get_imzml_browser_dataset(self):
         with ConnectionPool(self._sm_config['db']):
             res = self._db.select_one(
-                'SELECT input_path FROM dataset '
-                'WHERE id = %s',
-                params=(self.ds_id,)
+                'SELECT input_path FROM dataset ' 'WHERE id = %s', params=(self.ds_id,)
             )
 
         uuid = res[0].split('/')[-1]
-        browser_bucket = (
-            self._sm_config['imzml_browser_storage']['bucket']
-        )
+        browser_bucket = self._sm_config['imzml_browser_storage']['bucket']
 
         keys_path = {
             'mzs': f'{uuid}/mzs.npy',
             'ints': f'{uuid}/ints.npy',
-            'sp_idxs': f'{uuid}/sp_idxs.npy'
+            'sp_idxs': f'{uuid}/sp_idxs.npy',
         }
 
         result = {}
         for key_name, mz_index_key in keys_path.items():
-            s3_object = self.s3_client.get_object(
-                Bucket=browser_bucket, Key=mz_index_key
-            )
+            s3_object = self.s3_client.get_object(Bucket=browser_bucket, Key=mz_index_key)
             bytestream = s3_object['Body'].read()
-            result[key_name] = np.frombuffer(
-                bytestream, dtype='f'
-            )
+            result[key_name] = np.frombuffer(bytestream, dtype='f')
 
-        peak_array = np.stack(
-            [result['mzs'], result['ints'], result['sp_idxs']]
-        ).T
+        peak_array = np.stack([result['mzs'], result['ints'], result['sp_idxs']]).T
         return peak_array
 
     def get_tic_image(self):
@@ -167,13 +135,10 @@ class DiffROIData:
             WHERE ds_id = %s AND type = 'TIC'
         '''
         with ConnectionPool(self._sm_config['db']):
-            result = self._db.select(
-                query, params=(self.ds_id,)
-            )
+            result = self._db.select(query, params=(self.ds_id,))
         tic_image_id = result[0][0][0]['image_id']
         img_bytes = self._image_storage.get_image(
-            self._image_storage.DIAG,
-            self.ds_id, tic_image_id
+            self._image_storage.DIAG, self.ds_id, tic_image_id
         )
         img_bytes = BytesIO(img_bytes)
         img_bytes.seek(0)
@@ -206,18 +171,14 @@ class DiffROIData:
                 mask = Image.new('L', (width, height), 0)
                 draw = ImageDraw.Draw(mask)
                 coords = feature['geometry']['coordinates']
-                draw.polygon(
-                    [tuple(pt) for pt in coords], fill=1
-                )
+                draw.polygon([tuple(pt) for pt in coords], fill=1)
                 roi_masks[roi_name] = np.array(mask)
 
             return roi_masks
 
         annots_df = self.get_annots_with_metrics()
         if annots_df.empty:
-            raise ValueError(
-                f"No annotations found for dataset {self.ds_id}"
-            )
+            raise ValueError(f"No annotations found for dataset {self.ds_id}")
 
         peak_arr = self.get_imzml_browser_dataset()
         ppm = self.get_ppm()
@@ -226,22 +187,16 @@ class DiffROIData:
         height, width = tic_image.shape
         n_pixels = height * width
 
-        lefts, rights, ints, sp_idxs = precompute_mz_bounds(
-            annots_df, peak_arr, ppm
-        )
+        lefts, rights, ints, sp_idxs = precompute_mz_bounds(annots_df, peak_arr, ppm)
 
         tic_flat = tic_image.ravel()
         tic_nonzero = tic_flat > 0
 
         roi_geojson = self.get_dataset_roi()
         if roi_geojson is None:
-            raise ValueError(
-                f"No ROI found for dataset {self.ds_id}"
-            )
+            raise ValueError(f"No ROI found for dataset {self.ds_id}")
 
-        roi_masks = create_roi_masks(
-            roi_geojson, width, height
-        )
+        roi_masks = create_roi_masks(roi_geojson, width, height)
 
         return {
             'lefts': lefts,
@@ -266,17 +221,18 @@ class DiffROIData:
         annot_map = self.get_annots_ids()
 
         merged = diff_roi_df.merge(
-            annot_map[['annotation_id', 'formula', 'adduct']],
-            on=['formula', 'adduct'], how='left'
+            annot_map[['annotation_id', 'formula', 'adduct']], on=['formula', 'adduct'], how='left'
         )
         merged = merged.dropna(subset=['annotation_id'])
 
-        rows = list(zip(
-            merged['annotation_id'].astype(int),
-            merged['roi_name'],
-            merged['log2fc'],
-            merged['auc']
-        ))
+        rows = list(
+            zip(
+                merged['annotation_id'].astype(int),
+                merged['roi_name'],
+                merged['log2fc'],
+                merged['auc'],
+            )
+        )
 
         with ConnectionPool(self._sm_config['db']):
             if rows:
@@ -287,23 +243,24 @@ class DiffROIData:
                     'ON CONFLICT (annotation_id, roi_name) '
                     'DO UPDATE SET lfc = EXCLUDED.lfc, '
                     'auc = EXCLUDED.auc',
-                    rows=rows
+                    rows=rows,
                 )
 
 
 class DiffROIAnalysis:
     """Class for running differential ROI analysis."""
 
-    def __init__(self, ds_id, hotspot_percentile: int = 99,
-                 tic_normalize: bool = True,
-                 log_transform_tic: bool = True,
-                 chunk_size=100,
-                 n_pixel_samples=10000):
+    def __init__(
+        self,
+        ds_id,
+        hotspot_percentile: int = 99,
+        tic_normalize: bool = True,
+        log_transform_tic: bool = True,
+        chunk_size=100,
+        n_pixel_samples=10000,
+    ):
         self.ds_id = ds_id
-        self.data = DiffROIData(
-            self.ds_id, hotspot_percentile,
-            tic_normalize, log_transform_tic
-        )
+        self.data = DiffROIData(self.ds_id, hotspot_percentile, tic_normalize, log_transform_tic)
         self.chunk_size = chunk_size
         self.n_pixel_samples = n_pixel_samples
 
@@ -313,13 +270,8 @@ class DiffROIAnalysis:
         n_ann = diff_data['n_ann']
 
         def _precompute_roi_info(roi_masks):
-            roi_masks_flat = {
-                name: mask.ravel().astype(bool)
-                for name, mask in roi_masks.items()
-            }
-            valid_mask = np.zeros_like(
-                list(roi_masks_flat.values())[0], dtype=bool
-            )
+            roi_masks_flat = {name: mask.ravel().astype(bool) for name, mask in roi_masks.items()}
+            valid_mask = np.zeros_like(list(roi_masks_flat.values())[0], dtype=bool)
             for mask in roi_masks_flat.values():
                 valid_mask |= mask
 
@@ -328,9 +280,7 @@ class DiffROIAnalysis:
                 out_mask = valid_mask & ~in_mask
                 roi_info[roi_name] = {
                     'in_mask_f': in_mask.astype(np.float32),
-                    'out_mask_f': out_mask.astype(
-                        np.float32
-                    ),
+                    'out_mask_f': out_mask.astype(np.float32),
                     'n_in': in_mask.sum(),
                     'n_out': out_mask.sum(),
                     'in_idx': np.where(in_mask)[0],
@@ -340,149 +290,114 @@ class DiffROIAnalysis:
             return roi_info
 
         def build_ion_images_chunk(  # pylint: disable=too-many-arguments
-                lefts, rights, ints, sp_idxs, n_pixels,
-                chunk_start, chunk_end,
-                tic_flat=None, tic_nonzero=None,
-                hotspot_percentile=99,
-                tic_normalize=True, log_transform_tic=True):
+            lefts,
+            rights,
+            ints,
+            sp_idxs,
+            n_pixels,
+            chunk_start,
+            chunk_end,
+            tic_flat=None,
+            tic_nonzero=None,
+            hotspot_percentile=99,
+            tic_normalize=True,
+            log_transform_tic=True,
+        ):
             """Build and post-process a chunk of ion images.
             Allocates only (chunk_size, n_pixels).
             """
             size = chunk_end - chunk_start
-            chunk = np.zeros(
-                (size, n_pixels), dtype=np.float32
-            )
+            chunk = np.zeros((size, n_pixels), dtype=np.float32)
 
             for i in range(size):
                 low = lefts[chunk_start + i]
                 high = rights[chunk_start + i]
                 if low < high:
                     chunk[i] = np.bincount(
-                        sp_idxs[low:high],
-                        weights=ints[low:high],
-                        minlength=n_pixels
+                        sp_idxs[low:high], weights=ints[low:high], minlength=n_pixels
                     )
 
             # Hotspot clipping
             k = int(n_pixels * hotspot_percentile / 100)
             partitioned = np.partition(chunk, k, axis=1)
-            thresholds = partitioned[:, k:k + 1]
+            thresholds = partitioned[:, k : k + 1]
             del partitioned
-            thresholds = np.where(
-                thresholds > 0, thresholds,
-                chunk.max(axis=1)[:, np.newaxis]
-            )
+            thresholds = np.where(thresholds > 0, thresholds, chunk.max(axis=1)[:, np.newaxis])
             np.minimum(chunk, thresholds, out=chunk)
 
             # TIC normalization
-            if (tic_normalize
-                    and tic_flat is not None
-                    and tic_nonzero is not None):
-                chunk[:, tic_nonzero] /= (
-                    tic_flat[tic_nonzero]
-                )
+            if tic_normalize and tic_flat is not None and tic_nonzero is not None:
+                chunk[:, tic_nonzero] /= tic_flat[tic_nonzero]
                 chunk[:, ~tic_nonzero] = 0  # pylint: disable=invalid-unary-operand-type
                 if log_transform_tic:
                     np.log(chunk + 1e-6, out=chunk)
 
             return chunk
 
-        def _compute_chunk_metrics(
-                chunk_data, roi_info, results,
-                chunk_start, chunk_end):
+        def _compute_chunk_metrics(chunk_data, roi_info, results, chunk_start, chunk_end):
             """Compute log2FC and AUC for a chunk."""
             ln_to_log2 = 1 / np.log(2)
 
             for roi_id, info in roi_info.items():
-                mean_in = (
-                    (chunk_data @ info['in_mask_f'])
-                    / info['n_in']
-                )
-                mean_out = (
-                    (chunk_data @ info['out_mask_f'])
-                    / info['n_out']
-                )
+                mean_in = (chunk_data @ info['in_mask_f']) / info['n_in']
+                mean_out = (chunk_data @ info['out_mask_f']) / info['n_out']
                 log2fc = (mean_in - mean_out) * ln_to_log2
 
                 in_samples = info['in_samples']
                 out_samples = info['out_samples']
-                auc = (
-                    chunk_data[:, in_samples]
-                    > chunk_data[:, out_samples]
-                ).mean(axis=1)
+                auc = (chunk_data[:, in_samples] > chunk_data[:, out_samples]).mean(axis=1)
 
-                results[roi_id]['log2fc'][
-                    chunk_start:chunk_end
-                ] = log2fc.astype(np.float32)
-                results[roi_id]['auc'][
-                    chunk_start:chunk_end
-                ] = auc.astype(np.float32)
+                results[roi_id]['log2fc'][chunk_start:chunk_end] = log2fc.astype(np.float32)
+                results[roi_id]['auc'][chunk_start:chunk_end] = auc.astype(np.float32)
 
         # Precompute ROI info
-        roi_info = _precompute_roi_info(
-            diff_data['roi_masks']
-        )
+        roi_info = _precompute_roi_info(diff_data['roi_masks'])
         for info in roi_info.values():
-            effective_samples = min(
-                self.n_pixel_samples,
-                info['n_in'] * info['n_out']
-            )
+            effective_samples = min(self.n_pixel_samples, info['n_in'] * info['n_out'])
             info['in_samples'] = np.random.choice(
-                info['in_idx'],
-                size=effective_samples, replace=True
+                info['in_idx'], size=effective_samples, replace=True
             )
             info['out_samples'] = np.random.choice(
-                info['out_idx'],
-                size=effective_samples, replace=True
+                info['out_idx'], size=effective_samples, replace=True
             )
 
         # Preallocate results
         results = {
             roi_id: {
-                'log2fc': np.empty(
-                    n_ann, dtype=np.float32
-                ),
-                'auc': np.empty(
-                    n_ann, dtype=np.float32
-                ),
+                'log2fc': np.empty(n_ann, dtype=np.float32),
+                'auc': np.empty(n_ann, dtype=np.float32),
             }
             for roi_id in roi_info
         }
 
         # Build + compute in chunks
         for chunk_start in range(0, n_ann, self.chunk_size):
-            chunk_end = min(
-                chunk_start + self.chunk_size, n_ann
-            )
+            chunk_end = min(chunk_start + self.chunk_size, n_ann)
 
             chunk_data = build_ion_images_chunk(
-                diff_data['lefts'], diff_data['rights'],
-                diff_data['ints'], diff_data['sp_idxs'],
+                diff_data['lefts'],
+                diff_data['rights'],
+                diff_data['ints'],
+                diff_data['sp_idxs'],
                 diff_data['n_pixels'],
-                chunk_start, chunk_end,
+                chunk_start,
+                chunk_end,
                 tic_flat=diff_data['tic_flat'],
                 tic_nonzero=diff_data['tic_nonzero'],
-                hotspot_percentile=(
-                    diff_data['hotspot_percentile']
-                ),
-                tic_normalize=(
-                    diff_data['tic_normalize']
-                ),
-                log_transform_tic=(
-                    diff_data['log_transform_tic']
-                ),
+                hotspot_percentile=(diff_data['hotspot_percentile']),
+                tic_normalize=(diff_data['tic_normalize']),
+                log_transform_tic=(diff_data['log_transform_tic']),
             )
 
-            _compute_chunk_metrics(
-                chunk_data, roi_info, results,
-                chunk_start, chunk_end
-            )
+            _compute_chunk_metrics(chunk_data, roi_info, results, chunk_start, chunk_end)
 
         # Build flat results table
-        annot_cols = pd.DataFrame({
-            'formula': diff_data['formulas'],
-            'adduct': diff_data['modifiers'],
-        })
+        annot_cols = pd.DataFrame(
+            {
+                'formula': diff_data['formulas'],
+                'adduct': diff_data['modifiers'],
+            }
+        )
         dfs = []
         for roi_name, metrics in results.items():
             roi_df = annot_cols.copy()

@@ -14,7 +14,7 @@ app.mount('/v1/datasets/', datasets.app)
 app.mount('/v1/databases/', databases.app)
 app.mount('/v1/enrichment/', enrichment.app)
 app.mount('/v1/browser/', imzml_browser.app)
-app.mount('/v1/diffroi/',diff_roi.app)
+app.mount('/v1/diffroi/', diff_roi.app)
 
 
 @app.get('/')
