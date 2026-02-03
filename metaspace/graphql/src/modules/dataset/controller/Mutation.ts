@@ -604,8 +604,14 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return await esDatasetByID(datasetId, ctx.user)
   },
 
-  compareROIs: async(source, { datasetId, ticNormalize = true, logTransformTic = true,
-    chunkSize = 1000, nPixelSamples = 10000 }, ctx: Context) => {
+  compareROIs: async(
+    source,
+    {
+      datasetId, ticNormalize = true, logTransformTic = true,
+      chunkSize = 1000, nPixelSamples = 10000,
+    },
+    ctx: Context
+  ) => {
     try {
       if (ctx.user.id == null) {
         throw new UserError('Not authenticated')
