@@ -1,16 +1,14 @@
-import io
 import logging
 import time
-import base64
-import json
 
-import bottle
+import bottle  # pylint: disable=import-error
 
 from sm.rest.utils import body_to_json, make_response, OK, INTERNAL_ERROR
 from sm.rest.diff_roi_manager import DiffROIAnalysis
 
 logger = logging.getLogger('api')
 app = bottle.Bottle()
+
 
 @app.post('/compareROIs')
 def compare_rois():
@@ -21,7 +19,7 @@ def compare_rois():
         start = time.time()
         analysis = DiffROIAnalysis(
             ds_id=ds_id,
-            TIC_normalize=params.get('TIC_normalize', True),
+            tic_normalize=params.get('TIC_normalize', True),
             log_transform_tic=params.get('log_transform_tic', True),
             chunk_size=params.get('chunk_size', 100),
             n_pixel_samples=params.get('n_pixel_samples', 10000),
@@ -31,7 +29,6 @@ def compare_rois():
 
         analysis.data.save_diff_roi_results(comp_roi_result)
         logger.info(f'Saved diff ROI results for dataset {ds_id}')
-        # body = {'diff_roi_result': comp_roi_result.to_dict(orient='records')}
         return make_response(OK)
     except Exception as e:
         logger.exception(f'{bottle.request} - {e}')
