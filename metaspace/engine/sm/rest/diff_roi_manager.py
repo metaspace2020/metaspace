@@ -38,6 +38,33 @@ def get_ppm(ds_id: str) -> int:
     ppm = int(ppm[0])
     return ppm
 
+def get_annots_ids(ds_id: str):
+
+    """Retrieve isotopic images within the ROI for a given dataset.
+
+    Args:
+        ds_id (str): Dataset ID.
+    Returns:
+        list: List of annotations
+    """
+
+    query = '''
+                SELECT
+                    a.id,
+                    a.formula,
+                    a.adduct,
+                    a.job_id,
+                    j.moldb_id
+                FROM annotation a
+                JOIN job j ON a.job_id = j.id
+                WHERE j.ds_id = %s
+            '''
+    with ConnectionPool(config['db']):
+        annot_res = DB().select(query, params=(ds_id,))
+
+    annot_df = pd.DataFrame(annot_res, columns=['annotation_id', 'formula', 'adduct', 'job_id', 'moldb_id'])
+    return annot_df
+
 def get_annots_with_metrics(ds_id: str):
     query = '''
                 SELECT images
@@ -359,3 +386,27 @@ def run_diff_roi(
         dfs.append(roi_df)
 
     return pd.concat(dfs, ignore_index=True)
+
+def save_diff_roi_results(ds_id: str, diff_roi_df: pd.DataFrame):
+    """Insert diff ROI results into the diff_roi table."""
+
+    annot_map = get_annots_ids(ds_id)
+
+    merged = diff_roi_df.merge(annot_map[['annotation_id', 'formula', 'adduct']],
+                               on=['formula', 'adduct'], how='left')
+    merged = merged.dropna(subset=['annotation_id'])
+
+    rows = list(zip(merged['annotation_id'].astype(int), merged['roi_name'],
+                     merged['log2fc'], merged['auc']))
+
+    with ConnectionPool(config['db']):
+        db = DB()
+
+        if rows:
+            db.insert(
+                'INSERT INTO diff_roi (annotation_id, roi_name, lfc, auc) '
+                'VALUES (%s, %s, %s, %s) '
+                'ON CONFLICT (annotation_id, roi_name) '
+                'DO UPDATE SET lfc = EXCLUDED.lfc, auc = EXCLUDED.auc',
+                rows=rows
+            )
