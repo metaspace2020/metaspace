@@ -8,6 +8,9 @@ import { thumbnailOpticalImageUrl, rawOpticalImage } from './Dataset'
 import { applyQueryFilters } from '../../annotation/queryFilters'
 import {
   OpticalImage,
+  DiffRoi,
+  Roi,
+  EngineDataset,
 } from '../../engine/model'
 import {
   EnrichmentBootstrap,
@@ -309,6 +312,165 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     } catch (e) {
       return null
     }
+  },
+  async diffRoiResults(source: any, { datasetId, filter = {}, annotationFilter }: any, ctx: Context) {
+    if (await esDatasetByID(datasetId, ctx.user)) {
+      let qb = ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
+        .leftJoinAndSelect('diffRoi.roi', 'roi')
+        .leftJoinAndSelect('diffRoi.annotation', 'annotation')
+        .leftJoin('annotation.job', 'job')
+        .where('roi.datasetId = :datasetId', { datasetId })
+
+      // Apply DiffRoi-specific filters at database level
+      if (filter.minAuc !== undefined) {
+        qb = qb.andWhere('diffRoi.auc >= :minAuc', { minAuc: filter.minAuc })
+      }
+      if (filter.maxAuc !== undefined) {
+        qb = qb.andWhere('diffRoi.auc <= :maxAuc', { maxAuc: filter.maxAuc })
+      }
+      if (filter.minLfc !== undefined) {
+        qb = qb.andWhere('diffRoi.lfc >= :minLfc', { minLfc: filter.minLfc })
+      }
+      if (filter.maxLfc !== undefined) {
+        qb = qb.andWhere('diffRoi.lfc <= :maxLfc', { maxLfc: filter.maxLfc })
+      }
+      if (filter.roiId) {
+        qb = qb.andWhere('roi.id = :roiId', { roiId: filter.roiId })
+      }
+      if (filter.roiName) {
+        qb = qb.andWhere('roi.name ILIKE :roiName', { roiName: `%${filter.roiName}%` })
+      }
+
+      const diffRois = await qb.getMany()
+
+      // Apply annotation filters to the results after fetching
+      let filteredResults = diffRois.map((diffRoi: any) => ({
+        roi: {
+          id: diffRoi.roi.id,
+          datasetId: diffRoi.roi.datasetId,
+          userId: diffRoi.roi.userId,
+          name: diffRoi.roi.name,
+          isDefault: diffRoi.roi.isDefault,
+          geojson: JSON.stringify(diffRoi.roi.geojson),
+        },
+        lfc: diffRoi.lfc,
+        auc: diffRoi.auc,
+        annotation: diffRoi.annotation,
+      }))
+
+      // Filter results based on annotation filters
+      if (annotationFilter && Object.keys(annotationFilter).length > 0) {
+        filteredResults = filteredResults.filter((result: any) => {
+          const annotation = result.annotation
+
+          // Apply annotation-specific filters
+          if (annotationFilter.fdrLevel !== undefined && annotation.fdr > annotationFilter.fdrLevel) {
+            return false
+          }
+          if (annotationFilter.msmScoreFilter !== undefined && annotation.msm < annotationFilter.msmScoreFilter) {
+            return false
+          }
+          if (annotationFilter.formula && !annotation.formula.includes(annotationFilter.formula)) {
+            return false
+          }
+          if (annotationFilter.adduct && annotation.adduct !== annotationFilter.adduct) {
+            return false
+          }
+          if (annotationFilter.neutralLoss && annotation.neutralLoss !== annotationFilter.neutralLoss) {
+            return false
+          }
+          if (annotationFilter.chemMod && annotation.chemMod !== annotationFilter.chemMod) {
+            return false
+          }
+          if (annotationFilter.offSample !== undefined) {
+            const offSampleLabel = annotation.offSample?.label
+            if (annotationFilter.offSample && offSampleLabel !== 'off') {
+              return false
+            }
+            if (!annotationFilter.offSample && offSampleLabel !== 'on') {
+              return false
+            }
+          }
+
+          return true
+        })
+      }
+
+      return filteredResults
+    }
+    return []
+  },
+
+  async rois(source: any, { datasetId, userId }: any, ctx: Context) {
+    try {
+      if (await esDatasetByID(datasetId, ctx.user)) {
+        let qb = ctx.entityManager.createQueryBuilder(Roi, 'roi')
+          .where('roi.datasetId = :datasetId', { datasetId })
+
+        if (userId) {
+          qb = qb.andWhere('roi.userId = :userId', { userId })
+        }
+
+        qb = qb.orderBy('roi.isDefault', 'DESC')
+          .addOrderBy('roi.name', 'ASC')
+
+        const rois = await qb.getMany()
+
+        // If no ROIs found in the new table, check the old dataset.roi column for backward compatibility
+        if (rois.length === 0) {
+          const legacyRoi = await ctx.entityManager.createQueryBuilder(EngineDataset, 'dataset')
+            .select('dataset.roi')
+            .where('dataset.id = :datasetId', { datasetId })
+            .getRawOne()
+
+          if (legacyRoi?.dataset_roi) {
+            // Convert legacy ROI format to new format
+            const legacyRoiData = legacyRoi.dataset_roi
+            if (legacyRoiData?.features) {
+              return legacyRoiData.features.map((feature: any, index: number) => ({
+                id: `legacy_${index}`, // Temporary ID for legacy ROIs
+                datasetId,
+                userId: null, // Legacy ROIs don't have user association
+                name: feature.properties?.name || `Legacy ROI ${index + 1}`,
+                isDefault: false,
+                geojson: JSON.stringify(feature),
+              }))
+            }
+          }
+        }
+
+        return rois.map((roi: any) => ({
+          id: roi.id,
+          datasetId: roi.datasetId,
+          userId: roi.userId,
+          name: roi.name,
+          isDefault: roi.isDefault,
+          geojson: JSON.stringify(roi.geojson),
+        }))
+      }
+      return []
+    } catch (error) {
+      console.error('Error in rois resolver:', error)
+      throw error
+    }
+  },
+
+  async roi(source: any, { id }: any, ctx: Context) {
+    const roi = await ctx.entityManager.findOne(Roi, { where: { id } })
+    if (roi) {
+      // Check if user has access to the dataset
+      if (await esDatasetByID(roi.datasetId, ctx.user)) {
+        return {
+          id: roi.id,
+          datasetId: roi.datasetId,
+          userId: roi.userId,
+          name: roi.name,
+          isDefault: roi.isDefault,
+          geojson: JSON.stringify(roi.geojson),
+        }
+      }
+    }
+    return null
   },
   async currentUserLastSubmittedDataset(source, args, ctx): Promise<DatasetSource | null> {
     try {

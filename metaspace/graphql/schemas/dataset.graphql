@@ -378,13 +378,34 @@ type SpectrumImage {
   maxIntensity: Float!
 }
 
+type Roi {
+  id: ID!
+  datasetId: String!
+  userId: String  # Nullable for legacy ROIs
+  name: String!
+  isDefault: Boolean!
+  geojson: String!  # JSON string representation of GeoJSON
+}
+
 type DiffRoiResult {
-  formula: String!
-  adduct: String!
-  roiName: String!
+  roi: Roi!
   lfc: Float!
   auc: Float!
+  annotation: Annotation!
 }
+
+input DiffRoiFilter {
+  minAuc: Float
+  roiId: ID
+  roiName: String
+}
+
+input RoiInput {
+  name: String!
+  isDefault: Boolean! = false
+  geojson: String!
+}
+
 
 type Query {
   dataset(id: String!): Dataset
@@ -416,6 +437,11 @@ type Query {
   browserImage(datasetId: String!, mzLow: Float!, mzHigh: Float!): SpectrumImage
 
   pixelSpectrum(datasetId: String!, x: Int!, y: Int!): PixelSpectrum
+
+  diffRoiResults(datasetId: String!, filter: DiffRoiFilter = {}, annotationFilter: AnnotationFilter = {}): [DiffRoiResult!]!
+  
+  rois(datasetId: String!, userId: String, isDefault: Boolean): [Roi!]!
+  roi(id: ID!): Roi
 }
 
 type Mutation {
@@ -476,6 +502,10 @@ type Mutation {
               logTransformTic: Boolean = true,
               chunkSize: Int = 1000,
               nPixelSamples: Int = 10000): Boolean!
+              
+  createRoi(datasetId: String!, input: RoiInput!): Roi!
+  updateRoi(id: ID!, input: RoiInput!): Roi!
+  deleteRoi(id: ID!): Boolean!
 }
 
 type Subscription {

@@ -349,19 +349,59 @@ CREATE TABLE "public"."scoring_model" (
   CONSTRAINT "PK_f4aafae7cbb3f34533cb9f932a6" PRIMARY KEY ("id")
 );
 
+CREATE TABLE "public"."roi" (
+  "id" BIGSERIAL NOT NULL, 
+  "dataset_id" text NOT NULL, 
+  "user_id" uuid NOT NULL, 
+  "name" text NOT NULL, 
+  "is_default" boolean NOT NULL DEFAULT false, 
+  "geojson" jsonb NOT NULL, 
+  CONSTRAINT "PK_4222bb4a9687c7f2ad8423fc8bb" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "roi_dataset_id_index" ON "public"."roi" (
+  "dataset_id"
+) ;
+
+CREATE INDEX "roi_user_id_index" ON "public"."roi" (
+  "user_id"
+) ;
+
+CREATE INDEX "IDX_14a8959b742c01c355ce262401" ON "public"."roi" (
+  "dataset_id", 
+  "is_default"
+) ;
+
+CREATE INDEX "IDX_68371ea9ce42f098c96cd812c6" ON "public"."roi" (
+  "dataset_id", 
+  "user_id"
+) ;
+
 CREATE TABLE "public"."diff_roi" (
-  "id" SERIAL NOT NULL, 
+  "id" BIGSERIAL NOT NULL, 
   "annotation_id" integer NOT NULL, 
-  "roi_name" text NOT NULL, 
+  "roi_id" bigint NOT NULL, 
   "lfc" real NOT NULL, 
   "auc" real NOT NULL, 
-  CONSTRAINT "diff_roi_annotation_uindex" UNIQUE ("annotation_id", 
-  "roi_name"), 
+  CONSTRAINT "diff_roi_annotation_roi_uindex" UNIQUE ("annotation_id", 
+  "roi_id"), 
   CONSTRAINT "PK_1e8cd6ce84c7af082c10a179d6e" PRIMARY KEY ("id")
 );
 
-CREATE INDEX "roi_annot_id_index" ON "public"."diff_roi" (
+CREATE INDEX "diff_roi_annot_id_index" ON "public"."diff_roi" (
   "annotation_id"
+) ;
+
+CREATE INDEX "diff_roi_roi_id_index" ON "public"."diff_roi" (
+  "roi_id"
+) ;
+
+CREATE INDEX "diff_roi_lfc_index" ON "public"."diff_roi" (
+  "lfc"
+) ;
+
+CREATE INDEX "diff_roi_auc_index" ON "public"."diff_roi" (
+  "auc"
 ) ;
 
 CREATE TABLE "graphql"."dataset" (
@@ -561,6 +601,10 @@ ALTER TABLE "public"."perf_profile_entry" ADD CONSTRAINT "FK_67cf1a415a181173f11
 
 ALTER TABLE "public"."diff_roi" ADD CONSTRAINT "FK_00cab624e3493055836af1f50be" FOREIGN KEY (
   "annotation_id") REFERENCES "public"."annotation"("id"
+) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "public"."diff_roi" ADD CONSTRAINT "FK_483b703f6f7daa54977c79a9d2b" FOREIGN KEY (
+  "roi_id") REFERENCES "public"."roi"("id"
 ) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 ALTER TABLE "graphql"."dataset" ADD CONSTRAINT "FK_d890658f7d5c8961e0a0cbdbe41" FOREIGN KEY (

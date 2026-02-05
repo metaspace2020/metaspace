@@ -6,15 +6,22 @@ import * as FileSaver from 'file-saver'
 import ChannelSelector from '../modules/ImageViewer/ChannelSelector.vue'
 import './RoiSettings.scss'
 import { annotationListQuery } from '../api/annotation'
-import { addRoiMutation } from '../api/dataset'
+import {
+  getRoisQuery,
+  createRoiMutation,
+  updateRoiMutation,
+  deleteRoiMutation,
+  compareROIsMutation,
+} from '../api/dataset'
 import config from '../lib/config'
 import { loadPngFromUrl, processIonImage } from '../lib/ionImageRendering'
 import isInsidePolygon from '../lib/isInsidePolygon'
 import StatefulIcon from '../components/StatefulIcon.vue'
 import reportError from '../lib/reportError'
 import { defineAsyncComponent } from 'vue'
-import { Loading } from '@element-plus/icons-vue'
+import { Loading, DataLine } from '@element-plus/icons-vue'
 import { formatCsvTextArray } from '../lib/formatCsvRow'
+import { useRouter } from 'vue-router'
 
 const VisibleIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-view-visible.svg'))
 
@@ -32,9 +39,12 @@ interface RoiSettingsState {
   updatingPopper: boolean
   isUpdatingRoi: boolean
   isDownloading: boolean
+  isLoadingDA: boolean
   offset: number
   rows: any[]
   cols: any[]
+  rois: any[]
+  isLoadingRois: boolean
 }
 
 const channels: any = {
@@ -58,8 +68,11 @@ export default defineComponent({
   },
   setup(props: RoiSettingsProps | any) {
     const store = useStore()
-    const { mutate } = useMutation(addRoiMutation)
-    const updateRois = mutate as unknown as (variables: any) => void
+    const router = useRouter()
+    const { mutate: createRoi } = useMutation(createRoiMutation)
+    const { mutate: updateRoi } = useMutation(updateRoiMutation)
+    const { mutate: deleteRoi } = useMutation(deleteRoiMutation)
+    const { mutate: compareROIs } = useMutation(compareROIsMutation)
 
     const popover = ref<any>(null)
     const state = reactive<RoiSettingsState>({
@@ -69,6 +82,9 @@ export default defineComponent({
       updatingPopper: false,
       isUpdatingRoi: false,
       isDownloading: false,
+      isLoadingDA: false,
+      rois: [],
+      isLoadingRois: false,
     })
 
     const queryVariables = () => {
@@ -98,6 +114,21 @@ export default defineComponent({
 
     const { onResult: onAnnotationsResult } = useQuery<any>(annotationListQuery, queryVars, queryOptions as any)
 
+    // ROI loading
+    const roiQueryVars = computed(() => ({
+      datasetId: props.annotation?.dataset?.id,
+      userId: null, // Load all ROIs for the dataset
+    }))
+    const roiQueryOptions = reactive({
+      enabled: computed(() => !!props.annotation?.dataset?.id),
+      fetchPolicy: 'cache-and-network' as const,
+    })
+    const { onResult: onRoisResult, refetch: refetchRois } = useQuery<any>(
+      getRoisQuery,
+      roiQueryVars,
+      roiQueryOptions as any
+    )
+
     onAnnotationsResult(async (result) => {
       if (result && result.data) {
         for (let i = 0; i < result.data.allAnnotations.length; i++) {
@@ -120,6 +151,57 @@ export default defineComponent({
           state.rows = []
           state.cols = []
         }
+      }
+    })
+
+    onRoisResult((result) => {
+      if (result && result.data && result.data.rois) {
+        state.rois = result.data.rois.map((roi: any, index: number) => {
+          const geojson = JSON.parse(roi.geojson)
+          const channelIndex = index % Object.keys(channels).length
+          const channel: any = Object.values(channels)[channelIndex]
+
+          // All ROIs now follow the unified format: coordinates as {x, y} objects in properties
+          let coordinates = []
+
+          if (geojson.properties?.coordinates) {
+            coordinates = geojson.properties.coordinates.map((coord: any) => ({
+              x: coord.x,
+              y: coord.y,
+            }))
+          } else {
+            console.warn('ROI missing coordinates in properties:', geojson)
+          }
+
+          // Get properties from GeoJSON (works for both legacy and new ROIs)
+          const isLegacy = roi.id?.startsWith('legacy_')
+          const props = geojson.properties || {}
+
+          const roiData = {
+            id: roi.id,
+            name: roi.name,
+            isDefault: roi.isDefault,
+            isLegacy,
+            coordinates,
+            channel: props.channel || Object.keys(channels)[channelIndex],
+            rgb: props.rgb || channel,
+            color: props.color || channel.replace('rgb', 'rgba').replace(')', ', 0.4)'),
+            strokeColor: props.strokeColor || channel.replace('rgb', 'rgba').replace(')', ', 0)'),
+            visible: props.visible !== undefined ? props.visible : true,
+            allVisible: props.allVisible !== undefined ? props.allVisible : true,
+            edit: false,
+            isDrawing: false,
+          }
+
+          return roiData
+        })
+
+        // Sync with Vuex store so ion image viewer can access ROI data
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+
+        // Set ROI visibility based on the loaded ROIs
+        const hasVisibleRois = state.rois.some((roi: any) => roi.visible || roi.allVisible)
+        store.commit('toggleRoiVisibility', hasVisibleRois)
       }
     })
 
@@ -214,41 +296,36 @@ export default defineComponent({
     }
 
     const getRoi = () => {
-      if (
-        props.annotation &&
-        props.annotation.dataset?.id &&
-        store.state.roiInfo &&
-        Object.keys(store.state.roiInfo).includes(props.annotation.dataset.id)
-      ) {
-        return store.state.roiInfo[props.annotation.dataset.id] || []
-      }
-      return []
+      return state.rois || []
     }
 
     const isRoiVisible = () => {
-      return store.state.roiInfo.visible
+      return store.state.roiInfo?.visible || false
     }
 
     const addRoi = (e: any) => {
       e.stopPropagation()
       e.preventDefault()
-      const roiInfo = getRoi()
-      const index = roiInfo.length % Object.keys(channels).length
+      const index = state.rois.length % Object.keys(channels).length
       const channel: any = Object.values(channels)[index]
 
-      roiInfo.push({
+      const newRoi = {
+        id: null, // Will be set when saved
         coordinates: [],
         channel: Object.keys(channels)[index],
         rgb: channel,
         color: channel.replace('rgb', 'rgba').replace(')', ', 0.4)'),
         strokeColor: channel.replace('rgb', 'rgba').replace(')', ', 0)'),
-        name: `ROI ${index + 1}`,
+        name: `ROI ${state.rois.length + 1}`,
         visible: true,
         allVisible: true,
         edit: false,
         isDrawing: true,
-      })
-      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
+        isDefault: false,
+      }
+
+      state.rois.push(newRoi)
+      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
     }
 
     const toggleAllHidden = (e: any = undefined, visible: boolean | any = undefined) => {
@@ -256,24 +333,20 @@ export default defineComponent({
         e.stopPropagation()
         e.preventDefault()
       }
-      const isVisible = visible !== undefined ? visible : !store.state.roiInfo.visible
+      const isVisible = visible !== undefined ? visible : !store.state.roiInfo?.visible
       store.commit('toggleRoiVisibility', isVisible)
 
-      // iterates through all datasets to ensure all are toggled and ion image is updated
-      Object.keys(store.state.roiInfo).forEach((key: string) => {
-        if (key !== 'visible') {
-          const roiInfo = store.state.roiInfo[key]
-          const index = roiInfo.length - 1
-          if (index < 0) {
-            return
-          }
-          roiInfo[index] = { ...roiInfo[index], allVisible: isVisible }
-          store.commit('setRoiInfo', { key, roi: roiInfo })
-        }
-      })
+      // Update all ROIs visibility - create new array to ensure reactivity
+      state.rois = state.rois.map((roi) => ({
+        ...roi,
+        allVisible: isVisible,
+        visible: isVisible,
+      }))
+
+      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
     }
 
-    const handleSave = () => {
+    const handleSave = async (navigate: boolean = false) => {
       if (!props.annotation?.dataset?.canEdit) {
         return
       }
@@ -281,36 +354,66 @@ export default defineComponent({
       state.isUpdatingRoi = true
 
       try {
-        Object.keys(store.state.roiInfo).forEach((key: string) => {
-          const roiInfo = store.state.roiInfo[key]
-          const geoJson: any = {
-            type: 'FeatureCollection',
-            features: [],
-          }
+        const roiInfo = getRoi()
 
-          if (Array.isArray(roiInfo) && key === props.annotation?.dataset?.id) {
-            roiInfo.forEach((roi: any) => {
-              if (roi && !roi.isDrawing) {
-                geoJson.features.push({
-                  type: 'Feature',
-                  properties: {
-                    ...roi,
-                    stroke: roi.rgb,
-                    'stroke-width': 1,
-                    'stroke-opacity': 0,
-                    fill: roi.rgb,
-                    'fill-opacity': 0.4,
-                  },
-                  geometry: {
-                    type: 'Polygon',
-                    coordinates: roi.coordinates.map((coord: any) => [coord.x, coord.y]),
-                  },
-                })
+        for (const roi of roiInfo) {
+          if (roi && !roi.isDrawing && roi.coordinates.length > 0) {
+            // Follow legacy format: store coordinates as {x, y} objects in properties
+            const geoJson = {
+              type: 'Feature',
+              properties: {
+                name: roi.name,
+                coordinates: roi.coordinates.map((coord: any) => ({
+                  x: coord.x || coord[0],
+                  y: coord.y || coord[1],
+                })),
+                channel: roi.channel,
+                rgb: roi.rgb,
+                color: roi.color,
+                strokeColor: roi.strokeColor,
+                visible: roi.visible,
+                allVisible: roi.allVisible,
+                stroke: roi.rgb,
+                'stroke-width': 1,
+                'stroke-opacity': 0,
+                fill: roi.rgb,
+                'fill-opacity': 0.4,
+              },
+              geometry: {
+                type: 'Polygon',
+                coordinates: [roi.coordinates.map((coord: any) => [coord.x || coord[0], coord.y || coord[1]])],
+              },
+            }
+
+            const roiInput = {
+              name: roi.name,
+              isDefault: roi.isDefault || false,
+              geojson: JSON.stringify(geoJson),
+            }
+
+            if (roi.id && !roi.isLegacy) {
+              // Update existing ROI (not legacy)
+              await updateRoi({ id: roi.id, input: roiInput })
+            } else {
+              const result = await createRoi({
+                datasetId: props.annotation?.dataset?.id,
+                input: roiInput,
+              })
+              if ((result as any)?.data?.createRoi) {
+                roi.id = (result as any).data.createRoi.id
+                roi.isLegacy = false // Mark as migrated
               }
-            })
-            updateRois({ datasetId: props.annotation?.dataset?.id, geoJson })
+            }
           }
-        })
+        }
+
+        // Refresh ROI list
+        await refetchRois()
+
+        if (navigate) {
+          await compareROIs({ datasetId: props.annotation?.dataset?.id })
+          router.push(`/dataset/${props.annotation?.dataset?.id}/diff-analysis`)
+        }
       } catch (e) {
         ElNotification.error(`There was a problem saving the ROI settings.`)
         reportError(new Error(`Error saving ROI: ${JSON.stringify(e)}`), null)
@@ -326,41 +429,90 @@ export default defineComponent({
       state.isDownloading = true
     }
 
+    const handleDiffAnalysis = async () => {
+      state.isLoadingDA = true
+
+      try {
+        const roiInfo = getRoi()
+        const hasLegacyRois = roiInfo.some((roi: any) => roi.isLegacy)
+
+        if (hasLegacyRois) {
+          // Automatically save/migrate legacy ROIs before running diff analysis
+          await handleSave(false) // Save without navigating first
+        }
+
+        // Now run the differential analysis
+        await compareROIs({ datasetId: props.annotation?.dataset?.id })
+        router.push(`/dataset/${props.annotation?.dataset?.id}/diff-analysis`)
+      } catch (e) {
+        ElNotification.error('Failed to run differential analysis')
+        reportError(new Error(`Error running differential analysis: ${JSON.stringify(e)}`), null)
+      } finally {
+        state.isLoadingDA = false
+      }
+    }
+
     const handleNameEdit = (value: any, index: number) => {
       const roiInfo = getRoi()
-      roiInfo[index] = { ...roiInfo[index], name: value }
-      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
+      if (roiInfo[index]) {
+        roiInfo[index].name = value
+        // Create a new array to trigger reactivity
+        state.rois = [...roiInfo]
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+      }
     }
 
     const toggleEdit = (index: number) => {
       const roiInfo = getRoi()
-      roiInfo[index] = { ...roiInfo[index], edit: !roiInfo[index].edit }
-      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
+      if (roiInfo[index]) {
+        roiInfo[index].edit = !roiInfo[index].edit
+        // Create a new array to trigger reactivity
+        state.rois = [...roiInfo]
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+      }
     }
 
     const toggleHidden = (index: number) => {
       const roiInfo = getRoi()
-      roiInfo[index] = { ...roiInfo[index], visible: !roiInfo[index].visible }
-      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
+      if (roiInfo[index]) {
+        roiInfo[index].visible = !roiInfo[index].visible
+        // Create a new array to trigger reactivity
+        state.rois = [...roiInfo]
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+      }
     }
 
-    const removeRoi = (index: number) => {
-      const roiInfo = getRoi()
-      roiInfo.splice(index, 1)
-      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
+    const removeRoi = async (index: number) => {
+      if (state.rois[index]) {
+        const roi = state.rois[index]
+
+        // If ROI has an ID (saved to database), delete it from the server
+        if (roi.id) {
+          try {
+            await deleteRoi({ id: roi.id })
+          } catch (e) {
+            ElNotification.error('Failed to delete ROI from server')
+            return
+          }
+        }
+
+        // Remove from local state
+        state.rois.splice(index, 1)
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+      }
     }
 
     const changeRoi = (channel: any, index: number) => {
       const roiInfo = getRoi()
-      roiInfo[index] = {
-        ...roiInfo[index],
-        channel,
-        rgb: channels[channel],
-        strokeColor: channels[channel].replace('rgb', 'rgba').replace(')', ', 0)'),
-        color: channels[channel].replace('rgb', 'rgba').replace(')', ', 0.4)'),
+      if (roiInfo[index]) {
+        roiInfo[index].channel = channel
+        roiInfo[index].rgb = channels[channel]
+        roiInfo[index].strokeColor = channels[channel].replace('rgb', 'rgba').replace(')', ', 0)')
+        roiInfo[index].color = channels[channel].replace('rgb', 'rgba').replace(')', ', 0.4)')
+        // Create a new array to trigger reactivity
+        state.rois = [...roiInfo]
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
       }
-
-      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: roiInfo })
     }
 
     const renderRoiIcon = () => {
@@ -403,41 +555,35 @@ export default defineComponent({
     }
 
     const renderRoiSettings = () => {
-      const roiInfo = getRoi()
+      const roiInfo = state.rois || []
+      const hasLegacyRois = roiInfo.some((roi: any) => roi.isLegacy)
 
       return (
         <div class="roi-content">
-          <div class="roi-options">
-            {roiInfo.length > 0 && !state.isDownloading && (
-              <ElButton class="button-reset roi-download-icon" icon="Download" onClick={triggerDownload} />
-            )}
-            {roiInfo.length > 0 && state.isDownloading && (
-              <div class="button-reset roi-download-icon">
-                <ElIcon class="is-loading">
-                  <Loading />
-                </ElIcon>
+          {hasLegacyRois && (
+            <div class="roi-legacy-info mb-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600">
+              <div class="flex items-center">
+                <span class="mr-1">ℹ️</span>
+                <span>Legacy ROI format detected - will be updated automatically when saved</span>
               </div>
-            )}
+            </div>
+          )}
+          <div class="roi-options">
             <ElTooltip
               popperClass="roi-save-tooltip"
               content={
-                'Click to save the ROIs. This requires being the owner or having the ' + 'edit access to this dataset.'
+                'Click to perform differential analysis among the ROIs. This requires being a METASPACE Pro user.'
               }
               placement="top"
             >
-              {!state.isUpdatingRoi && (
-                <ElButton
-                  class={`button-reset roi-save-icon-wrapper ${
-                    props.annotation?.dataset?.canEdit ? '' : 'save-disabled'
-                  }`}
-                  onClick={handleSave}
-                >
-                  <StatefulIcon class="roi-save-icon-wrapper" active={props.annotation?.dataset?.canEdit}>
-                    <SaveIcon class="roi-save-icon fill-current" />
-                  </StatefulIcon>
+              {!state.isLoadingDA && (
+                <ElButton class="button-reset roi-download-icon" onClick={handleDiffAnalysis}>
+                  <ElIcon size={20}>
+                    <DataLine />
+                  </ElIcon>
                 </ElButton>
               )}
-              {state.isUpdatingRoi && (
+              {state.isLoadingDA && (
                 <div class="button-reset roi-download-icon">
                   <ElIcon class="is-loading">
                     <Loading />
@@ -445,10 +591,51 @@ export default defineComponent({
                 </div>
               )}
             </ElTooltip>
+
+            <div class="flex flex-row flex-wrap justify-end items-center">
+              {roiInfo.length > 0 && !state.isDownloading && (
+                <ElButton class="button-reset roi-download-icon" icon="Download" onClick={triggerDownload} />
+              )}
+              {roiInfo.length > 0 && state.isDownloading && (
+                <div class="button-reset roi-download-icon">
+                  <ElIcon class="is-loading">
+                    <Loading />
+                  </ElIcon>
+                </div>
+              )}
+              <ElTooltip
+                popperClass="roi-save-tooltip"
+                content={
+                  'Click to save the ROIs. This requires being the owner or having the ' +
+                  'edit access to this dataset.'
+                }
+                placement="top"
+              >
+                {!state.isUpdatingRoi && (
+                  <ElButton
+                    class={`button-reset roi-save-icon-wrapper ${
+                      props.annotation?.dataset?.canEdit ? '' : 'save-disabled'
+                    }`}
+                    onClick={() => handleSave(false)}
+                  >
+                    <StatefulIcon class="roi-save-icon-wrapper" active={props.annotation?.dataset?.canEdit}>
+                      <SaveIcon class="roi-save-icon fill-current" />
+                    </StatefulIcon>
+                  </ElButton>
+                )}
+                {state.isUpdatingRoi && (
+                  <div class="button-reset roi-download-icon">
+                    <ElIcon class="is-loading">
+                      <Loading />
+                    </ElIcon>
+                  </div>
+                )}
+              </ElTooltip>
+            </div>
           </div>
           {roiInfo.map((roi: any, roiIndex: number) => {
             return (
-              <div class="roi-item relative">
+              <div key={`roi-${roiIndex}-${roi.id || 'new'}-${roi.visible}-${roi.channel}`} class="roi-item relative">
                 <div class="flex w-full justify-between items-center w-28">
                   {!roi.edit && (
                     <span class="roi-label" style={{ color: roi.channel }}>

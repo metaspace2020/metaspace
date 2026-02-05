@@ -18,7 +18,7 @@ import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
-import { EngineDataset, ScoringModel } from '../../engine/model'
+import { EngineDataset, ScoringModel, Roi } from '../../engine/model'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId'
@@ -32,6 +32,7 @@ import { getS3Client } from '../../../utils/awsClient'
 import config from '../../../utils/config'
 import { assertCanPerformAction, getDeviceInfo, hashIp, performAction } from '../../plan/util/canPerformAction'
 import { cleanEmptyStrings } from '../../../utils/regexSanitizer'
+import canEditEsDataset from '../operation/canEditEsDataset'
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -630,6 +631,125 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     } catch (e) {
       return e
     }
+  },
+
+  createRoi: async(
+    source: any,
+    { datasetId, input }: any,
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    // Check if user has access to the dataset
+    const dataset = await esDatasetByID(datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    try {
+      const geojson = JSON.parse(input.geojson)
+      const canEdit = await canEditEsDataset(dataset, ctx)
+      const roi = ctx.entityManager.create(Roi, {
+        datasetId,
+        userId: ctx.user.id,
+        name: input.name,
+        isDefault: canEdit,
+        geojson,
+      })
+
+      const savedRoi = await ctx.entityManager.save(roi)
+
+      return {
+        id: savedRoi.id,
+        datasetId: savedRoi.datasetId,
+        userId: savedRoi.userId,
+        name: savedRoi.name,
+        isDefault: savedRoi.isDefault,
+        geojson: JSON.stringify(savedRoi.geojson),
+      }
+    } catch (e) {
+      throw new UserError('Invalid GeoJSON or other error creating ROI')
+    }
+  },
+
+  updateRoi: async(
+    source: any,
+    { id, input }: any,
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const roi = await ctx.entityManager.findOne(Roi, { where: { id } })
+    if (!roi) {
+      throw new UserError('ROI not found')
+    }
+
+    // Check if user has access to the dataset
+    const dataset = await esDatasetByID(roi.datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    // Check if user owns this ROI or is admin
+    if (roi.userId !== ctx.user.id && !ctx.user.role?.includes('admin')) {
+      throw new UserError('You can only edit ROIs you created')
+    }
+
+    try {
+      const geojson = JSON.parse(input.geojson)
+
+      await ctx.entityManager.update(Roi, id, {
+        name: input.name,
+        isDefault: input.isDefault,
+        geojson,
+      })
+
+      const updatedRoi = await ctx.entityManager.findOne(Roi, { where: { id } })
+
+      return {
+        id: updatedRoi!.id,
+        datasetId: updatedRoi!.datasetId,
+        userId: updatedRoi!.userId,
+        name: updatedRoi!.name,
+        isDefault: updatedRoi!.isDefault,
+        geojson: JSON.stringify(updatedRoi!.geojson),
+      }
+    } catch (e) {
+      throw new UserError('Invalid GeoJSON or other error updating ROI')
+    }
+  },
+
+  deleteRoi: async(
+    source: any,
+    { id }: any,
+    ctx: Context
+  ) => {
+    if (ctx.user.id == null) {
+      throw new UserError('Not authenticated')
+    }
+
+    const roi = await ctx.entityManager.findOne(Roi, { where: { id } })
+    if (!roi) {
+      throw new UserError('ROI not found')
+    }
+
+    // Check if user has access to the dataset
+    const dataset = await esDatasetByID(roi.datasetId, ctx.user)
+    if (!dataset) {
+      throw new UserError('Dataset not found or access denied')
+    }
+
+    // Check if user owns this ROI or is admin
+    if (roi.userId !== ctx.user.id && !ctx.user.role?.includes('admin')) {
+      throw new UserError('You can only delete ROIs you created')
+    }
+
+    await ctx.entityManager.delete(Roi, id)
+    return true
   },
 }
 

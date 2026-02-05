@@ -1,13 +1,16 @@
 from io import BytesIO
+import logging
+import json
 
 import numpy as np
 from PIL import Image, ImageDraw
 import pandas as pd  # pylint: disable=import-error
 
-from sm.engine.db import ConnectionPool, DB
 from sm.engine.image_storage import ImageStorage
 from sm.engine.config import SMConfig
 from sm.engine.storage import get_s3_client
+
+logger = logging.getLogger(__name__)
 
 
 class DiffROIData:
@@ -16,12 +19,13 @@ class DiffROIData:
     def __init__(
         self,
         ds_id: str,
+        db,
         hotspot_percentile: int = 99,
         tic_normalize: bool = True,
         log_transform_tic: bool = True,
     ):
         self.ds_id = ds_id
-        self._db = DB()
+        self._db = db
         self._sm_config = SMConfig.get_conf()
         self.s3_client = get_s3_client(sm_config=self._sm_config)
         self._image_storage = ImageStorage(self._sm_config)
@@ -30,20 +34,39 @@ class DiffROIData:
         self.log_transform_tic = log_transform_tic
 
     def get_dataset_roi(self):
-        with ConnectionPool(self._sm_config['db']):
-            result = self._db.select_one(
-                'SELECT roi FROM dataset WHERE id = %s', params=(self.ds_id,)
-            )
-        if result and result[0]:
-            return result[0]
-        return None
+        """Get all ROI GeoJSON data for this dataset from the roi table."""
+        query = '''
+            SELECT id, name, geojson
+            FROM roi
+            WHERE dataset_id = %s
+        '''
+        roi_results = self._db.select(query, params=(self.ds_id,))
+
+        if not roi_results:
+            return None
+
+        # Convert to the expected GeoJSON FeatureCollection format
+        features = []
+        for roi_id, roi_name, geojson_data in roi_results:
+            # If geojson_data is already a dict, use it directly
+            # If it's a string, parse it
+            if isinstance(geojson_data, str):
+                geojson_data = json.loads(geojson_data)
+
+            # Each ROI row contains a single feature, add id and name to properties
+            if 'properties' not in geojson_data:
+                geojson_data['properties'] = {}
+            geojson_data['properties']['id'] = roi_id
+            geojson_data['properties']['name'] = roi_name
+            features.append(geojson_data)
+
+        return {'type': 'FeatureCollection', 'features': features}
 
     def get_ppm(self):
-        with ConnectionPool(self._sm_config['db']):
-            ppm = self._db.select_one(
-                "SELECT config->'image_generation'->>'ppm' " "FROM dataset WHERE id = %s",
-                params=(self.ds_id,),
-            )
+        ppm = self._db.select_one(
+            "SELECT config->'image_generation'->>'ppm' " "FROM dataset WHERE id = %s",
+            params=(self.ds_id,),
+        )
         return int(ppm[0])
 
     def get_annots_ids(self):
@@ -55,8 +78,7 @@ class DiffROIData:
             JOIN job j ON a.job_id = j.id
             WHERE j.ds_id = %s
         '''
-        with ConnectionPool(self._sm_config['db']):
-            annot_res = self._db.select(query, params=(self.ds_id,))
+        annot_res = self._db.select(query, params=(self.ds_id,))
         annot_df = pd.DataFrame(
             annot_res, columns=['annotation_id', 'formula', 'adduct', 'job_id', 'moldb_id']
         )
@@ -68,8 +90,7 @@ class DiffROIData:
             FROM dataset_diagnostic
             WHERE ds_id = %s AND type = 'FDR_RESULTS'
         '''
-        with ConnectionPool(self._sm_config['db']):
-            result = self._db.select(query, params=(self.ds_id,))
+        result = self._db.select(query, params=(self.ds_id,))
 
         per_db_metrics = []
         for db_res in result:
@@ -105,10 +126,9 @@ class DiffROIData:
         return all_metrics_df
 
     def get_imzml_browser_dataset(self):
-        with ConnectionPool(self._sm_config['db']):
-            res = self._db.select_one(
-                'SELECT input_path FROM dataset ' 'WHERE id = %s', params=(self.ds_id,)
-            )
+        res = self._db.select_one(
+            'SELECT input_path FROM dataset ' 'WHERE id = %s', params=(self.ds_id,)
+        )
 
         uuid = res[0].split('/')[-1]
         browser_bucket = self._sm_config['imzml_browser_storage']['bucket']
@@ -134,8 +154,7 @@ class DiffROIData:
             FROM dataset_diagnostic
             WHERE ds_id = %s AND type = 'TIC'
         '''
-        with ConnectionPool(self._sm_config['db']):
-            result = self._db.select(query, params=(self.ds_id,))
+        result = self._db.select(query, params=(self.ds_id,))
         tic_image_id = result[0][0][0]['image_id']
         img_bytes = self._image_storage.get_image(
             self._image_storage.DIAG, self.ds_id, tic_image_id
@@ -167,12 +186,13 @@ class DiffROIData:
             roi_masks = {}
 
             for feature in geojson['features']:
-                roi_name = feature['properties']['name']
+                roi_id = feature['properties']['id']
+
                 mask = Image.new('L', (width, height), 0)
                 draw = ImageDraw.Draw(mask)
-                coords = feature['geometry']['coordinates']
-                draw.polygon([tuple(pt) for pt in coords], fill=1)
-                roi_masks[roi_name] = np.array(mask)
+                coords = feature['properties']['coordinates']
+                draw.polygon([(coord['x'], coord['y']) for coord in coords], fill=1)
+                roi_masks[roi_id] = np.array(mask)
 
             return roi_masks
 
@@ -225,32 +245,36 @@ class DiffROIData:
         )
         merged = merged.dropna(subset=['annotation_id'])
 
+        # All ROIs now have roi_id (either real IDs or legacy_X IDs)
         rows = list(
             zip(
                 merged['annotation_id'].astype(int),
-                merged['roi_name'],
+                merged['roi_id'].astype(int),
                 merged['log2fc'],
                 merged['auc'],
             )
         )
 
-        with ConnectionPool(self._sm_config['db']):
-            if rows:
-                self._db.insert(
-                    'INSERT INTO diff_roi '
-                    '(annotation_id, roi_name, lfc, auc) '
-                    'VALUES (%s, %s, %s, %s) '
-                    'ON CONFLICT (annotation_id, roi_name) '
-                    'DO UPDATE SET lfc = EXCLUDED.lfc, '
-                    'auc = EXCLUDED.auc',
-                    rows=rows,
-                )
+        if rows:
+            self._db.insert(
+                'INSERT INTO diff_roi '
+                '(annotation_id, roi_id, lfc, auc) '
+                'VALUES (%s, %s, %s, %s) '
+                'ON CONFLICT (annotation_id, roi_id) '
+                'DO UPDATE SET lfc = EXCLUDED.lfc, '
+                'auc = EXCLUDED.auc',
+                rows=rows,
+            )
 
 
-class DiffROIAnalysis:
-    """Class for running differential ROI analysis."""
+class DiffROIManager:
+    """Class for managing differential ROI analysis operations."""
 
-    def __init__(
+    def __init__(self, db):
+        self._db = db
+        self._sm_config = SMConfig.get_conf()
+
+    def run_diff_roi(
         self,
         ds_id,
         hotspot_percentile: int = 99,
@@ -259,26 +283,25 @@ class DiffROIAnalysis:
         chunk_size=100,
         n_pixel_samples=10000,
     ):
-        self.ds_id = ds_id
-        self.data = DiffROIData(self.ds_id, hotspot_percentile, tic_normalize, log_transform_tic)
-        self.chunk_size = chunk_size
-        self.n_pixel_samples = n_pixel_samples
-
-    def run_diff_roi(self):
+        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
         """Run differential ROI analysis."""
-        diff_data = self.data.prepare_data_for_diff_analysis()
+        data = DiffROIData(ds_id, self._db, hotspot_percentile, tic_normalize, log_transform_tic)
+        diff_data = data.prepare_data_for_diff_analysis()
         n_ann = diff_data['n_ann']
 
         def _precompute_roi_info(roi_masks):
-            roi_masks_flat = {name: mask.ravel().astype(bool) for name, mask in roi_masks.items()}
+            roi_masks_flat = {
+                roi_id: mask.ravel().astype(bool) for roi_id, mask in roi_masks.items()
+            }
             valid_mask = np.zeros_like(list(roi_masks_flat.values())[0], dtype=bool)
             for mask in roi_masks_flat.values():
                 valid_mask |= mask
 
             roi_info = {}
-            for roi_name, in_mask in roi_masks_flat.items():
+            for roi_id, in_mask in roi_masks_flat.items():
                 out_mask = valid_mask & ~in_mask
-                roi_info[roi_name] = {
+                roi_info[roi_id] = {
                     'in_mask_f': in_mask.astype(np.float32),
                     'out_mask_f': out_mask.astype(np.float32),
                     'n_in': in_mask.sum(),
@@ -353,7 +376,7 @@ class DiffROIAnalysis:
         # Precompute ROI info
         roi_info = _precompute_roi_info(diff_data['roi_masks'])
         for info in roi_info.values():
-            effective_samples = min(self.n_pixel_samples, info['n_in'] * info['n_out'])
+            effective_samples = min(n_pixel_samples, info['n_in'] * info['n_out'])
             info['in_samples'] = np.random.choice(
                 info['in_idx'], size=effective_samples, replace=True
             )
@@ -371,8 +394,8 @@ class DiffROIAnalysis:
         }
 
         # Build + compute in chunks
-        for chunk_start in range(0, n_ann, self.chunk_size):
-            chunk_end = min(chunk_start + self.chunk_size, n_ann)
+        for chunk_start in range(0, n_ann, chunk_size):
+            chunk_end = min(chunk_start + chunk_size, n_ann)
 
             chunk_data = build_ion_images_chunk(
                 diff_data['lefts'],
@@ -399,11 +422,16 @@ class DiffROIAnalysis:
             }
         )
         dfs = []
-        for roi_name, metrics in results.items():
+        for roi_id, metrics in results.items():
             roi_df = annot_cols.copy()
-            roi_df['roi_name'] = roi_name
+            roi_df['roi_id'] = roi_id
             roi_df['log2fc'] = metrics['log2fc']
             roi_df['auc'] = metrics['auc']
             dfs.append(roi_df)
 
         return pd.concat(dfs, ignore_index=True)
+
+    def save_diff_roi_results(self, ds_id, diff_roi_df):
+        """Save differential ROI results to the database."""
+        data = DiffROIData(ds_id, self._db)
+        data.save_diff_roi_results(diff_roi_df)

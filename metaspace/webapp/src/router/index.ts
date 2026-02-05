@@ -43,6 +43,10 @@ const asyncPagesFreelyTyped = {
     import(
       /* webpackPrefetch: true, webpackChunkName: "DatasetEnrichmentPage" */ '../modules/Datasets/enrichment/DatasetEnrichmentPage'
     ),
+  DatasetDifferentialAnalysisPage: () =>
+    import(
+      /* webpackPrefetch: true, webpackChunkName: "DatasetDifferentialAnalysisPage" */ '../modules/Datasets/diffAnalysis/DatasetDiffAnalysisPage'
+    ),
   SpottingProjectPage: () =>
     import(
       /* webpackPrefetch: true, webpackChunkName: "SpottingProjectPage" */ '../modules/SpottingProject/DashboardPage'
@@ -149,6 +153,11 @@ export const routes: any = [
   { path: '/dataset/:dataset_id/annotations', name: 'dataset-annotations', component: asyncPages.AnnotationsPage },
   { path: '/dataset/:dataset_id/browser', name: 'dataset-browser', component: asyncPages.DatasetBrowserPage },
   { path: '/dataset/:dataset_id/enrichment', name: 'dataset-enrichment', component: asyncPages.DatasetEnrichmentPage },
+  {
+    path: '/dataset/:dataset_id/diff-analysis',
+    name: 'dataset-diff-analysis',
+    component: asyncPages.DatasetDifferentialAnalysisPage,
+  },
   { path: '/upload', name: 'upload', component: asyncPages.UploadPage },
 
   { path: '/learn', name: 'learn', component: asyncPages.HelpPage, meta: { footer: true } },
