@@ -63,6 +63,8 @@ const orderedFilterKeys = [
   'molClass',
   'opticalImage',
   'pValue',
+  'roiId',
+  'minAuc',
 ]
 
 const dsAnnotationHiddenFilters = [] // ['datasetIds']

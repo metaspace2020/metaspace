@@ -414,12 +414,13 @@ export const diffRoiResultsQuery = gql`
       auc
       annotation {
         id
-        formula
+        ion
+        sumFormula
         adduct
         neutralLoss
         chemMod
-        fdr
-        msm
+        fdrLevel
+        msmScore
         mz
         possibleCompounds {
           name

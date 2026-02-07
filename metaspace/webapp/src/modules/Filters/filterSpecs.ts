@@ -5,6 +5,7 @@ import OffSampleHelp from './filter-components/OffSampleHelp.vue'
 import MzFilter from './filter-components/MzFilter.vue'
 import MSMFilter from './filter-components/MSMFilter.vue'
 import SearchBox from './filter-components/SearchBox.vue'
+import NumberFilter from './filter-components/NumberFilter.vue'
 import { metadataTypes, defaultMetadataType } from '../../lib/metadataRegistry'
 import { Component } from 'vue'
 import SimpleFilterBox from './filter-components/SimpleFilterBox.vue'
@@ -25,7 +26,14 @@ function formatPValue(pValue: number) {
   return pValue ? pValue.toFixed(2) : ''
 }
 
-export type Level = 'annotation' | 'dataset' | 'upload' | 'projects' | 'dataset-annotation' | 'enrichment'
+export type Level =
+  | 'annotation'
+  | 'dataset'
+  | 'upload'
+  | 'projects'
+  | 'dataset-annotation'
+  | 'enrichment'
+  | 'dataset-diff-analysis'
 
 export type FilterKey =
   | 'annotationIds'
@@ -61,6 +69,8 @@ export type FilterKey =
   | 'opticalImage'
   | 'pValue'
   | 'ontology'
+  | 'minAuc'
+  | 'roiId'
 
 export type MetadataLists = Record<string, any[]>
 
@@ -123,6 +133,12 @@ export interface FilterSpecification {
   /** List of other filters whose addition should cause this filter to be removed */
   conflictsWithFilters?: FilterKey[]
   convertValueForComponent?: (value: any) => any
+  /** Minimum value for number inputs */
+  min?: number
+  /** Maximum value for number inputs */
+  max?: number
+  /** Step value for number inputs */
+  step?: number
 }
 
 /** Attrs to pass to the component that will render the filter */
@@ -136,6 +152,9 @@ export const FILTER_COMPONENT_PROPS: (keyof FilterSpecification)[] = [
   'optionFormatter',
   'valueGetter',
   'debounce',
+  'min',
+  'max',
+  'step',
 ]
 
 // @ts-ignore
@@ -144,8 +163,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: DatabaseFilter,
     name: 'Database',
     description: 'Select database',
-    levels: ['annotation', 'dataset-annotation', 'enrichment'],
-    defaultInLevels: ['annotation', 'enrichment'],
+    levels: ['annotation', 'dataset-annotation', 'enrichment', 'dataset-diff-analysis'],
+    defaultInLevels: ['annotation', 'enrichment', 'dataset-diff-analysis'],
     initialValue: (lists) => lists.molecularDatabases?.filter((d) => d.default)[0]?.id,
     encoding: 'number',
     convertValueForComponent: (v) => v?.toString(),
@@ -179,7 +198,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: MSMFilter,
     name: 'Min. MSM',
     description: 'Set minimum MSM score',
-    levels: ['annotation', 'dataset-annotation'],
+    levels: ['annotation', 'dataset-annotation', 'dataset-diff-analysis'],
     initialValue: 0.0,
     encoding: 'number',
   },
@@ -188,7 +207,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: InputFilter,
     name: 'Molecule',
     description: 'Search molecule',
-    levels: ['dataset', 'annotation', 'dataset-annotation'],
+    levels: ['dataset', 'annotation', 'dataset-annotation', 'dataset-diff-analysis'],
     initialValue: undefined,
     debounce: true,
   },
@@ -196,7 +215,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   chemMod: {
     type: InputFilter,
     name: 'Chemical modification',
-    levels: ['annotation', 'dataset-annotation'],
+    levels: ['annotation', 'dataset-annotation', 'dataset-diff-analysis'],
     initialValue: undefined,
     multiFilterParent: 'adduct',
   },
@@ -204,7 +223,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   neutralLoss: {
     type: InputFilter,
     name: 'Neutral loss',
-    levels: ['annotation', 'dataset-annotation'],
+    levels: ['annotation', 'dataset-annotation', 'dataset-diff-analysis'],
     initialValue: undefined,
     multiFilterParent: 'adduct',
   },
@@ -213,7 +232,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: AdductFilter,
     name: 'Adduct',
     description: 'Select adduct',
-    levels: ['annotation', 'dataset-annotation'],
+    levels: ['annotation', 'dataset-annotation', 'dataset-diff-analysis'],
     initialValue: undefined,
     options: (lists) => lists.adducts.filter((a) => config.features.all_adducts || !a.hidden),
     isMultiFilter: true,
@@ -254,7 +273,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: MzFilter,
     name: 'm/z',
     description: 'Search by m/z',
-    levels: ['annotation', 'dataset-annotation'],
+    levels: ['annotation', 'dataset-annotation', 'dataset-diff-analysis'],
     initialValue: 0,
   },
 
@@ -262,8 +281,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SingleSelectFilter,
     name: 'FDR',
     description: 'Select FDR level',
-    levels: ['annotation', 'dataset-annotation', 'enrichment'],
-    defaultInLevels: ['annotation', 'dataset-annotation', 'enrichment'],
+    levels: ['annotation', 'dataset-annotation', 'enrichment', 'dataset-diff-analysis'],
+    defaultInLevels: ['annotation', 'dataset-annotation', 'enrichment', 'dataset-diff-analysis'],
     initialValue: 0.1,
 
     options: [0.05, 0.1, 0.2, 0.5],
@@ -407,8 +426,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SearchBox,
     name: 'Simple query',
     description: 'Search anything',
-    levels: ['annotation', 'dataset', 'projects', 'dataset-annotation'],
-    defaultInLevels: ['annotation', 'dataset', 'projects', 'dataset-annotation'],
+    levels: ['annotation', 'dataset', 'projects', 'dataset-annotation', 'dataset-diff-analysis'],
+    defaultInLevels: ['annotation', 'dataset', 'projects', 'dataset-annotation', 'dataset-diff-analysis'],
     initialValue: '',
     removable: false,
     sortOrder: 2,
@@ -462,7 +481,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     name: '',
     description: 'Show/hide off-sample annotations',
     helpComponent: OffSampleHelp,
-    levels: ['annotation', 'dataset-annotation', 'enrichment'],
+    levels: ['annotation', 'dataset-annotation', 'enrichment', 'dataset-diff-analysis'],
     defaultInLevels: [],
     initialValue: false,
     options: [true, false],
@@ -481,6 +500,35 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     options: [true, false],
     encoding: 'bool',
     optionFormatter: (option) => `${option ? 'With' : 'Without'} optical images only`,
+  },
+
+  minAuc: {
+    type: NumberFilter,
+    name: 'Min AUC',
+    description: 'Set minimum AUC threshold',
+    levels: ['dataset-diff-analysis'],
+    defaultInLevels: ['dataset-diff-analysis'],
+    initialValue: undefined,
+    encoding: 'number',
+    min: 0,
+    max: 1,
+    step: 0.05,
+  },
+
+  roiId: {
+    type: SingleSelectFilter,
+    name: 'ROI',
+    description: 'Select ROI',
+    levels: ['dataset-diff-analysis'],
+    defaultInLevels: ['dataset-diff-analysis'],
+    initialValue: undefined,
+    encoding: 'number',
+    filterable: true,
+    options: 'rois',
+    valueGetter: (option) => option.id,
+    optionFormatter: (option) => {
+      return option && option.name ? option.name : option
+    },
   },
 }
 

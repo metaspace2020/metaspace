@@ -24,7 +24,7 @@ import { uniq } from 'lodash'
 import { UserError } from 'graphql-errors'
 import { ColocAnnotation, Ion } from '../../annotation/model'
 import * as _ from 'lodash'
-// import { unpackAnnotation } from '../../annotation/controller/Query'
+import { unpackAnnotation } from '../../annotation/controller/Query'
 
 const resolveDatasetScopeRole = async(ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER
@@ -317,8 +317,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     if (await esDatasetByID(datasetId, ctx.user)) {
       let qb = ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
         .leftJoinAndSelect('diffRoi.roi', 'roi')
-        .leftJoinAndSelect('diffRoi.annotation', 'annotation')
-        .leftJoin('annotation.job', 'job')
         .where('roi.datasetId = :datasetId', { datasetId })
 
       // Apply DiffRoi-specific filters at database level
@@ -343,59 +341,39 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
 
       const diffRois = await qb.getMany()
 
-      // Apply annotation filters to the results after fetching
-      let filteredResults = diffRois.map((diffRoi: any) => ({
-        roi: {
-          id: diffRoi.roi.id,
-          datasetId: diffRoi.roi.datasetId,
-          userId: diffRoi.roi.userId,
-          name: diffRoi.roi.name,
-          isDefault: diffRoi.roi.isDefault,
-          geojson: JSON.stringify(diffRoi.roi.geojson),
-        },
-        lfc: diffRoi.lfc,
-        auc: diffRoi.auc,
-        annotation: diffRoi.annotation,
-      }))
+      // Get unique annotation IDs and build ES filter
+      const ionIds = uniq(diffRois.map((diffRoi: any) => `${datasetId}_${diffRoi.annotationId}`)).join('|')
 
-      // Filter results based on annotation filters
-      if (annotationFilter && Object.keys(annotationFilter).length > 0) {
-        filteredResults = filteredResults.filter((result: any) => {
-          const annotation = result.annotation
+      // Build Elasticsearch filter combining annotationId and annotation filters
+      const esFilter = { annotationId: ionIds, ...annotationFilter }
 
-          // Apply annotation-specific filters
-          if (annotationFilter.fdrLevel !== undefined && annotation.fdr > annotationFilter.fdrLevel) {
-            return false
-          }
-          if (annotationFilter.msmScoreFilter !== undefined && annotation.msm < annotationFilter.msmScoreFilter) {
-            return false
-          }
-          if (annotationFilter.formula && !annotation.formula.includes(annotationFilter.formula)) {
-            return false
-          }
-          if (annotationFilter.adduct && annotation.adduct !== annotationFilter.adduct) {
-            return false
-          }
-          if (annotationFilter.neutralLoss && annotation.neutralLoss !== annotationFilter.neutralLoss) {
-            return false
-          }
-          if (annotationFilter.chemMod && annotation.chemMod !== annotationFilter.chemMod) {
-            return false
-          }
-          if (annotationFilter.offSample !== undefined) {
-            const offSampleLabel = annotation.offSample?.label
-            if (annotationFilter.offSample && offSampleLabel !== 'off') {
-              return false
-            }
-            if (!annotationFilter.offSample && offSampleLabel !== 'on') {
-              return false
-            }
-          }
+      const annotations = await esSearchResults({ filter: esFilter }, 'annotation', ctx.user)
 
-          return true
-        })
-      }
+      // Create a map for quick annotation lookup
+      const annotationMap = new Map()
+      annotations.forEach((ann: any) => {
+        annotationMap.set(ann._id, unpackAnnotation(ann))
+      })
 
+      // Map diffRois to results with annotations
+      const filteredResults = diffRois.map((diffRoi: any) => {
+        const annotationId = `${datasetId}_${diffRoi.annotationId}`
+        const annotation = annotationMap.get(annotationId)
+
+        return {
+          roi: {
+            id: diffRoi.roi.id,
+            datasetId: diffRoi.roi.datasetId,
+            userId: diffRoi.roi.userId,
+            name: diffRoi.roi.name,
+            isDefault: diffRoi.roi.isDefault,
+            geojson: JSON.stringify(diffRoi.roi.geojson),
+          },
+          lfc: diffRoi.lfc,
+          auc: diffRoi.auc,
+          annotation,
+        }
+      }).filter((result: any) => result.annotation) // Filter out results without annotations
       return filteredResults
     }
     return []

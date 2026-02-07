@@ -22,6 +22,7 @@ import { defineAsyncComponent } from 'vue'
 import { Loading, DataLine } from '@element-plus/icons-vue'
 import { formatCsvTextArray } from '../lib/formatCsvRow'
 import { useRouter } from 'vue-router'
+import { UserProfileQuery, userProfileQuery } from '@/api/user'
 
 const VisibleIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-view-visible.svg'))
 
@@ -45,6 +46,7 @@ interface RoiSettingsState {
   cols: any[]
   rois: any[]
   isLoadingRois: boolean
+  originalRoiIds: Set<string>
 }
 
 const channels: any = {
@@ -85,6 +87,7 @@ export default defineComponent({
       isLoadingDA: false,
       rois: [],
       isLoadingRois: false,
+      originalRoiIds: new Set(),
     })
 
     const queryVariables = () => {
@@ -101,6 +104,11 @@ export default defineComponent({
         countIsomerCompounds: config.features.isomers,
       }
     }
+
+    const { result: currentUserResult } = useQuery<UserProfileQuery | any>(userProfileQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
+    const currentUser = computed(() => (currentUserResult.value != null ? currentUserResult.value.currentUser : null))
 
     const isNormalized = computed(() => store.getters.settings?.annotationView?.normalization)
 
@@ -156,6 +164,8 @@ export default defineComponent({
 
     onRoisResult((result) => {
       if (result && result.data && result.data.rois) {
+        // Track original ROI IDs from server
+        state.originalRoiIds = new Set(result.data.rois.map((roi: any) => roi.id).filter((id: string) => id))
         state.rois = result.data.rois.map((roi: any, index: number) => {
           const geojson = JSON.parse(roi.geojson)
           const channelIndex = index % Object.keys(channels).length
@@ -199,8 +209,10 @@ export default defineComponent({
         // Sync with Vuex store so ion image viewer can access ROI data
         store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
 
-        // Set ROI visibility based on the loaded ROIs
-        const hasVisibleRois = state.rois.some((roi: any) => roi.visible || roi.allVisible)
+        // Set ROI visibility based on the loaded ROIs (excluding removed ones)
+        const hasVisibleRois = state.rois
+          .filter((roi: any) => !roi.removed)
+          .some((roi: any) => roi.visible || roi.allVisible)
         store.commit('toggleRoiVisibility', hasVisibleRois)
       }
     })
@@ -269,23 +281,25 @@ export default defineComponent({
       const cols: any[] = ['mol_formula', 'adduct', 'mz', 'moleculeNames', 'moleculeIds']
       const rows: any = state.rows
 
-      roiInfo.forEach((roi: any) => {
-        const roiCoordinates = roi.coordinates.map((coordinate: any) => {
-          return [coordinate.x, coordinate.y]
-        })
+      roiInfo
+        .filter((roi: any) => !roi.removed)
+        .forEach((roi: any) => {
+          const roiCoordinates = roi.coordinates.map((coordinate: any) => {
+            return [coordinate.x, coordinate.y]
+          })
 
-        for (let x = 0; x < width; x++) {
-          for (let y = 0; y < height; y++) {
-            if (isInsidePolygon([x, y], roiCoordinates)) {
-              if (state.offset === 0 && state.rows.length === 0) {
-                cols.push(`${roi.name}_x${x}_y${y}`)
+          for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+              if (isInsidePolygon([x, y], roiCoordinates)) {
+                if (state.offset === 0 && state.rows.length === 0) {
+                  cols.push(`${roi.name}_x${x}_y${y}`)
+                }
+                const idx = y * width + x
+                row.push(intensityValues[idx])
               }
-              const idx = y * width + x
-              row.push(intensityValues[idx])
             }
           }
-        }
-      })
+        })
 
       if (state.offset === 0 && state.rows.length === 0) {
         rows.push(cols)
@@ -339,8 +353,8 @@ export default defineComponent({
       // Update all ROIs visibility - create new array to ensure reactivity
       state.rois = state.rois.map((roi) => ({
         ...roi,
-        allVisible: isVisible,
-        visible: isVisible,
+        allVisible: roi.removed ? roi.allVisible : isVisible,
+        visible: roi.removed ? roi.visible : isVisible,
       }))
 
       store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
@@ -356,8 +370,35 @@ export default defineComponent({
       try {
         const roiInfo = getRoi()
 
+        // Delete ROIs that were marked as removed and exist on server
+        const removedRois = roiInfo.filter((roi) => roi.removed && roi.id && state.originalRoiIds.has(roi.id))
+        for (const removedRoi of removedRois) {
+          try {
+            await deleteRoi({ id: removedRoi.id })
+          } catch (e) {
+            // pass
+          }
+        }
+
+        // Also delete ROIs that were removed locally but exist on server (legacy logic)
+        const currentRoiIds = new Set(
+          roiInfo
+            .filter((roi) => !roi.removed)
+            .map((roi) => roi.id)
+            .filter((id) => id)
+        )
+        for (const originalRoiId of state.originalRoiIds) {
+          if (!currentRoiIds.has(originalRoiId)) {
+            try {
+              await deleteRoi({ id: originalRoiId })
+            } catch (e) {
+              // pass
+            }
+          }
+        }
+
         for (const roi of roiInfo) {
-          if (roi && !roi.isDrawing && roi.coordinates.length > 0) {
+          if (roi && !roi.isDrawing && !roi.removed && roi.coordinates.length > 0) {
             // Follow legacy format: store coordinates as {x, y} objects in properties
             const geoJson = {
               type: 'Feature',
@@ -433,7 +474,7 @@ export default defineComponent({
       state.isLoadingDA = true
 
       try {
-        const roiInfo = getRoi()
+        const roiInfo = getRoi().filter((roi: any) => !roi.removed)
         const hasLegacyRois = roiInfo.some((roi: any) => roi.isLegacy)
 
         if (hasLegacyRois) {
@@ -482,22 +523,13 @@ export default defineComponent({
       }
     }
 
-    const removeRoi = async (index: number) => {
-      if (state.rois[index]) {
-        const roi = state.rois[index]
-
-        // If ROI has an ID (saved to database), delete it from the server
-        if (roi.id) {
-          try {
-            await deleteRoi({ id: roi.id })
-          } catch (e) {
-            ElNotification.error('Failed to delete ROI from server')
-            return
-          }
-        }
-
-        // Remove from local state
-        state.rois.splice(index, 1)
+    const removeRoi = (index: number) => {
+      const roiInfo = getRoi()
+      if (roiInfo[index]) {
+        roiInfo[index].removed = true
+        roiInfo[index].visible = false
+        // Create a new array to trigger reactivity
+        state.rois = [...roiInfo]
         store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
       }
     }
@@ -555,7 +587,7 @@ export default defineComponent({
     }
 
     const renderRoiSettings = () => {
-      const roiInfo = state.rois || []
+      const roiInfo = (state.rois || []).filter((roi: any) => !roi.removed)
       const hasLegacyRois = roiInfo.some((roi: any) => roi.isLegacy)
 
       return (
@@ -564,7 +596,7 @@ export default defineComponent({
             <div class="roi-legacy-info mb-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600">
               <div class="flex items-center">
                 <span class="mr-1">ℹ️</span>
-                <span>Legacy ROI format detected - will be updated automatically when saved</span>
+                <span>Legacy ROI format detected</span>
               </div>
             </div>
           )}
@@ -577,7 +609,11 @@ export default defineComponent({
               placement="top"
             >
               {!state.isLoadingDA && (
-                <ElButton class="button-reset roi-download-icon" onClick={handleDiffAnalysis}>
+                <ElButton
+                  class="button-reset roi-download-icon"
+                  onClick={handleDiffAnalysis}
+                  disabled={!currentUser.value?.id}
+                >
                   <ElIcon size={20}>
                     <DataLine />
                   </ElIcon>

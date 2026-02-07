@@ -1,2 +1,122 @@
 .dataset-diff-page {
+  padding: 20px;
+  min-height: 100vh;
+
+  .dataset-diff-content {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    h2 {
+      margin-bottom: 16px;
+      color: #333;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    p {
+      margin-bottom: 12px;
+      color: #666;
+      font-size: 14px;
+    }
+  }
+
+ 
+  .coloc-filter-wrapper{
+    @apply absolute mt-2 mr-2;
+    left: 176px;
+    top: -8px;
+  }
+
+  .av-icon-button {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .av-icon-button img {
+    max-height: 20px;
+  }
+
+  .av-icon-link {
+    cursor: pointer;
+  }
+
+  .dataset-comparison-wrapper{
+    min-height: 100px;
+  }
+
+  .ds-comparison-info{
+    @apply flex items-center justify-center p-2 w-full;
+    min-height: 50px;
+  }
+
+  .dataset-comparison-item-header{
+    background: #F1F5F8;
+    width: calc(100% - 16px);
+    span{
+      @apply mr-1;
+    }
+
+    .av-icon-button {
+      svg {
+        display: block;
+      }
+    }
+
+    .setting-icon{
+      height: 20px;
+      width: 20px;
+      color: black;
+    }
+  }
+
+  .ds-intensities-wrapper{
+    @apply flex justify-between items-start h-6 leading-6 tracking-wide relative z-10;
+  }
+  .ds-wrapper{
+    @apply flex justify-center items-center;
+    width: 100%;
+    height: 310px;
+  }
+  .ds-viewer-controls-wrapper{
+    @apply absolute top-0 right-0 py-3 mr-2 h-full box-border flex flex-col justify-between items-end w-0;
+  }
+
+
+  .ds-collapse{
+    margin: 0 8px;
+    min-height: 50px;
+    width: calc(100% - 16px);
+    .el-collapse-item__header{
+      background-color: #F1F5F8;
+    }
+  }
+
+  #annot-content {
+    width: 100%;
+
+    .el-collapse-item__header {
+      text-align: left;
+
+      .el-collapse-item__arrow {
+        // WORKAROUND: A new version of ElementUI changed the position of the arrow in a way that doesn't look good
+        // with our existing components: https://github.com/ElemeFE/element/issues/14142
+        order: -1;
+      }
+    }
+  }
+
+  #annot-img-collapse .el-collapse-item__header>span {
+    display: inline-flex;
+    align-items: center;
+  }
+
+
+
 }
