@@ -374,6 +374,23 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           annotation,
         }
       }).filter((result: any) => result.annotation) // Filter out results without annotations
+
+      if (filter.topNAnnotations !== undefined) {
+        const topResults: any[] = []
+        const sortedResults = filteredResults.sort((a: any, b: any) => b.auc - a.auc)
+        const roiHashCount: any = {}
+        sortedResults.forEach((result: any) => {
+          if (!roiHashCount[result.roi.id]) {
+            roiHashCount[result.roi.id] = 0
+          }
+          roiHashCount[result.roi.id]++
+          if (roiHashCount[result.roi.id] <= filter.topNAnnotations) {
+            topResults.push(result)
+          }
+        })
+        return topResults
+      }
+
       return filteredResults
     }
     return []

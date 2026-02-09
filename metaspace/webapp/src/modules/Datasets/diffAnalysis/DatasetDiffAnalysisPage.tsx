@@ -1,4 +1,4 @@
-import { computed, defineComponent, reactive } from 'vue'
+import { computed, defineComponent, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { useQuery } from '@vue/apollo-composable'
@@ -10,13 +10,14 @@ import {
   datasetListItemsWithDiagnosticsQuery,
   DatasetListItemWithDiagnostics,
 } from '../../../api/dataset'
-import { uniqBy } from 'lodash-es'
+import { cloneDeep, uniqBy } from 'lodash-es'
 
 import { ElCollapse, ElCollapseItem, ElIcon } from '../../../lib/element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { diffRoiResultsQuery } from '../../../api/dataset'
 import { DatasetDiffTable } from './DatasetDiffTable'
 import { DatasetDiffVolcanoPlot } from './DatasetDiffVolcanoPlot'
+import { DatasetDiffHeatmap } from './DatasetDiffHeatmap'
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
 import './DatasetDiffAnalysisPage.scss'
@@ -27,6 +28,9 @@ interface DatasetDiffAnalysisPageState {
   databaseOptions: any
   selectedAnnotation: any
   currentAnnotationIdx: number
+  activeCollapseItem: 'volcano-plot' | 'heatmap' | null
+  topNAnnotations: number | undefined
+  savedRoiId: number | undefined
 }
 
 export default defineComponent({
@@ -49,6 +53,9 @@ export default defineComponent({
       databaseOptions: undefined,
       selectedAnnotation: null,
       currentAnnotationIdx: -1,
+      activeCollapseItem: undefined,
+      topNAnnotations: undefined,
+      savedRoiId: undefined,
     })
 
     const datasetId = computed(() => route.params.dataset_id)
@@ -69,6 +76,12 @@ export default defineComponent({
     const { onResult: handleRoisLoad } = useQuery<any>(getRoisQuery, {
       datasetId: datasetId.value,
       userId: null, // Get all ROIs for the dataset
+    })
+
+    onMounted(() => {
+      setTimeout(() => {
+        handleCollapseChange(['volcano-plot'])
+      }, 1000)
     })
 
     handleDatasetLoad(async () => {
@@ -120,7 +133,7 @@ export default defineComponent({
 
     const { result: diffRoiResult } = useQuery<any>(diffRoiResultsQuery, {
       datasetId: datasetId.value,
-      filter: computed(() => store.getters.gqlRoiFilter),
+      filter: computed(() => ({ ...store.getters.gqlRoiFilter, topNAnnotations: state.topNAnnotations })),
       annotationFilter: computed(() => store.getters.gqlAnnotationFilter),
     })
     const diffData = computed(() => diffRoiResult.value?.diffRoiResults)
@@ -136,6 +149,39 @@ export default defineComponent({
       if (idx !== -1) {
         state.currentAnnotationIdx = idx
         state.selectedAnnotation = row
+      }
+    }
+
+    const handleCollapseChange = (activeNames: string[]) => {
+      const newActiveItem = activeNames.includes('volcano-plot')
+        ? 'volcano-plot'
+        : activeNames.includes('heatmap')
+        ? 'heatmap'
+        : null
+
+      if (newActiveItem !== state.activeCollapseItem) {
+        state.activeCollapseItem = newActiveItem
+
+        // Update ROI filter based on active collapse item
+        const currentFilter = store.getters.filter
+        const newFilter = { ...currentFilter }
+
+        if (newActiveItem === 'volcano-plot') {
+          // Set first ROI as default for volcano plot
+          const rois = store.state.filterLists?.rois
+          if (rois && rois.length > 0) {
+            const roiId = currentFilter.roiId || state.savedRoiId || rois[0].id
+            newFilter.roiId = [roiId]
+          }
+          state.topNAnnotations = undefined
+        } else if (newActiveItem === 'heatmap') {
+          // Set 'any' (no ROI filter) as default for heatmap
+          state.savedRoiId = currentFilter.roiId
+          newFilter.roiId = undefined
+          state.topNAnnotations = 5
+        }
+
+        store.commit('updateFilter', cloneDeep(newFilter))
       }
     }
 
@@ -192,8 +238,10 @@ export default defineComponent({
     }
 
     const renderVolcanoPlot = () => {
+      const activeNames = state.activeCollapseItem === 'volcano-plot' ? ['volcano-plot'] : []
+
       return (
-        <ElCollapse modelValue={['volcano-plot']} class="volcano-plot-collapse">
+        <ElCollapse modelValue={activeNames} class="volcano-plot-collapse" onChange={handleCollapseChange}>
           <ElCollapseItem
             id="volcano-plot-collapse"
             name="volcano-plot"
@@ -216,6 +264,34 @@ export default defineComponent({
       )
     }
 
+    const renderHeatmap = () => {
+      const activeNames = state.activeCollapseItem === 'heatmap' ? ['heatmap'] : []
+
+      return (
+        <ElCollapse modelValue={activeNames} class="heatmap-collapse" onChange={handleCollapseChange}>
+          <ElCollapseItem
+            id="heatmap-collapse"
+            name="heatmap"
+            title="Heatmap"
+            class="ds-collapse el-collapse-item--no-padding relative"
+          >
+            <DatasetDiffHeatmap
+              data={diffData.value || []}
+              isLoading={!diffData.value}
+              selectedAnnotation={state.selectedAnnotation}
+              isVisible={state.activeCollapseItem === 'heatmap'}
+              onAnnotationSelected={(annotation: any) => {
+                const rowIndex = diffData.value?.findIndex((item: any) => item.annotation.id === annotation.id) ?? -1
+                if (rowIndex !== -1) {
+                  handleRowChange(rowIndex, diffData.value[rowIndex])
+                }
+              }}
+            />
+          </ElCollapseItem>
+        </ElCollapse>
+      )
+    }
+
     const renderAnnotationInfoWrapper = () => {
       if (!state.selectedAnnotation) {
         return <div class="diff-info-wrapper w-full md:w-6/12" />
@@ -224,6 +300,7 @@ export default defineComponent({
         <div class="diff-info-wrapper w-full md:w-6/12">
           {renderInfo()}
           {renderVolcanoPlot()}
+          {renderHeatmap()}
         </div>
       )
     }
