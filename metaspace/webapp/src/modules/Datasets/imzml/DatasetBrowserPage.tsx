@@ -17,6 +17,7 @@ import {
   GetDatasetByIdQuery,
   getDatasetByIdWithPathQuery,
   getSpectrum,
+  getInitialPeak,
 } from '../../../api/dataset'
 import { annotationListQuery } from '../../../api/annotation'
 import config from '../../../lib/config'
@@ -275,6 +276,12 @@ export default defineComponent({
       spectrumQueryOptions as any
     )
     const pixelSpectrum = computed(() => spectrumResult.value?.pixelSpectrum)
+
+    const { onResult: onInitialPeakResult } = useQuery<any>(
+      getInitialPeak,
+      () => ({ datasetId: datasetId.value }),
+      { fetchPolicy: 'no-cache' as const }
+    )
 
     const buildChartData = (ints: any, mzs: any) => {
       let maxX: number = 0
@@ -653,22 +660,45 @@ export default defineComponent({
       }
     }
 
-    onAnnotationsResult(async (result) => {
-      if (dataset.value && result) {
-        const mz = result.data?.allAnnotations[0]?.mz
+    onInitialPeakResult(async (result) => {
+      if (result?.data?.initialPeak && dataset.value) {
+        const { mz, x, y } = result.data.initialPeak
         const config = safeJsonParse(dataset.value?.configJson)
         const ppm = get(config, 'image_generation.ppm') || 3
 
+        state.mzmScoreFilter = mz
+        state.mzmShiftFilter = ppm
+        state.mzmScaleFilter = 'ppm'
+        state.showFullTIC = false
+        state.normalizationData['showFullTIC'] = false
+        state.x = x
+        state.y = y
+
+        await requestIonImage(mz)
+        buildMetadata(dataset.value)
+        await requestSpectrum(x, y)
+      }
+    })
+
+    onAnnotationsResult(async (result) => {
+      if (dataset.value && result) {
+        // Fallback: if initial peak hasn't loaded yet, use first annotation
         if (!state.mzmScoreFilter) {
+          const mz = result.data?.allAnnotations[0]?.mz
+          const config = safeJsonParse(dataset.value?.configJson)
+          const ppm = get(config, 'image_generation.ppm') || 3
+
           state.mzmScoreFilter = mz
           state.mzmShiftFilter = ppm
           state.mzmScaleFilter = 'ppm'
+
+          await requestIonImage()
         }
 
-        await requestIonImage()
         buildMetadata(dataset.value)
-        if (state.x !== undefined && state.y !== undefined) {
-          await requestSpectrum(state.x, state.y)
+
+        if (spectrumResult.value) {
+          buildChartData(pixelSpectrum.value?.ints, pixelSpectrum.value?.mzs)
         } else {
           state.chartLoading = false
         }
