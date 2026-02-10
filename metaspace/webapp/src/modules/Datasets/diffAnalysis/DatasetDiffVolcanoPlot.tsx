@@ -63,7 +63,7 @@ export const DatasetDiffVolcanoPlot = defineComponent({
     const volcanoChart = ref(null)
 
     const state = reactive<DatasetDiffVolcanoPlotState>({
-      size: 600,
+      size: 500,
       chartOptions: {
         grid: {
           top: 70,

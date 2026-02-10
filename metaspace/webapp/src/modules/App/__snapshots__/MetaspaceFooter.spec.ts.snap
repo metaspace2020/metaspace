@@ -10,7 +10,7 @@ exports[`MetaspaceFooter > should match snapshot 1`] = `
     <div data-v-d74f8df0=\\"\\">FAQ</div>
     <div data-v-d74f8df0=\\"\\">Contact</div>
     </p>
-    <p data-v-d74f8df0=\\"\\" class=\\"m-0 mt-8\\"> © 2014–2025 <a data-v-d74f8df0=\\"\\" target=\\"_blank\\" href=\\"https://ateam.ucsd.edu/\\"><span data-v-d74f8df0=\\"\\">Alexandrov Team</span></a></p>
+    <p data-v-d74f8df0=\\"\\" class=\\"m-0 mt-8\\"> © 2014–2025 <a data-v-d74f8df0=\\"\\" target=\\"_blank\\" href=\\"https://ateam.bio/\\"><span data-v-d74f8df0=\\"\\">Alexandrov Team</span></a></p>
   </div>
 </footer>"
 `;

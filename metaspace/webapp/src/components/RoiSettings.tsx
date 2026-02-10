@@ -112,6 +112,10 @@ export default defineComponent({
 
     const isNormalized = computed(() => store.getters.settings?.annotationView?.normalization)
 
+    const isRoiVisible = computed(() => {
+      return store.state.roiInfo?.visible || false
+    })
+
     const queryOptions = reactive({ enabled: false, fetchPolicy: 'no-cache' as const })
     const queryVars = computed(() => ({
       ...queryVariables(),
@@ -125,10 +129,10 @@ export default defineComponent({
     // ROI loading
     const roiQueryVars = computed(() => ({
       datasetId: props.annotation?.dataset?.id,
-      userId: null, // Load all ROIs for the dataset
+      userId: currentUser.value?.id,
     }))
     const roiQueryOptions = reactive({
-      enabled: computed(() => !!props.annotation?.dataset?.id),
+      enabled: computed(() => !!props.annotation?.dataset?.id && isRoiVisible.value),
       fetchPolicy: 'cache-and-network' as const,
     })
     const { onResult: onRoisResult, refetch: refetchRois } = useQuery<any>(
@@ -207,13 +211,21 @@ export default defineComponent({
         })
 
         // Sync with Vuex store so ion image viewer can access ROI data
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+        // But respect the current visibility state - if ROI settings are hidden, hide all ROIs
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
 
-        // Set ROI visibility based on the loaded ROIs (excluding removed ones)
-        const hasVisibleRois = state.rois
-          .filter((roi: any) => !roi.removed)
-          .some((roi: any) => roi.visible || roi.allVisible)
-        store.commit('toggleRoiVisibility', hasVisibleRois)
+        // Only set ROI visibility if it's currently false and we have ROIs
+        // This preserves user's visibility preference when navigating between datasets
+        if (!isRoiVisible.value && state.rois.length > 0) {
+          const hasVisibleRois = state.rois
+            .filter((roi: any) => !roi.removed)
+            .some((roi: any) => roi.visible || roi.allVisible)
+          if (hasVisibleRois) {
+            store.commit('toggleRoiVisibility', true)
+            // Update the store with visible ROIs since we're now making them visible
+            store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+          }
+        }
       }
     })
 
@@ -244,6 +256,46 @@ export default defineComponent({
           resizeHandler()
         }, 0)
       }
+    )
+
+    // Watch for dataset changes to clear ROI data for the previous dataset
+    watch(
+      () => props.annotation?.dataset?.id,
+      (newDatasetId, oldDatasetId) => {
+        if (oldDatasetId && newDatasetId !== oldDatasetId) {
+          // Clear ROI data for the previous dataset but preserve visibility state
+          state.rois = []
+          state.originalRoiIds = new Set()
+        }
+
+        // When switching to a new dataset, ensure ROI data in store reflects current visibility state
+        if (newDatasetId && !isRoiVisible.value) {
+          // If ROI settings are hidden, ensure no ROI data is in the store for this dataset
+          store.commit('setRoiInfo', { key: newDatasetId, roi: [] })
+        }
+      }
+    )
+
+    // Watch for ROI visibility changes to update store data accordingly
+    watch(
+      () => isRoiVisible.value,
+      (isVisible) => {
+        if (props.annotation?.dataset?.id) {
+          if (!isVisible) {
+            // When ROI settings are hidden, clear ROI data from store to hide them from ion image
+            store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: [] })
+          } else if (state.rois.length > 0) {
+            // When ROI settings are shown and we have ROI data, restore it to the store
+            store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+          } else {
+            // If ROI settings are shown but we don't have ROI data yet, try to refetch
+            if (roiQueryOptions.enabled) {
+              refetchRois()
+            }
+          }
+        }
+      },
+      { immediate: true }
     )
 
     const ionImage = (
@@ -313,8 +365,15 @@ export default defineComponent({
       return state.rois || []
     }
 
-    const isRoiVisible = () => {
-      return store.state.roiInfo?.visible || false
+    const getRoisForStore = (rois: any[]) => {
+      // If ROI settings are not visible, hide all ROIs on the ion image
+      return isRoiVisible.value
+        ? rois
+        : rois.map((roi) => ({
+            ...roi,
+            visible: false,
+            allVisible: false,
+          }))
     }
 
     const addRoi = (e: any) => {
@@ -339,7 +398,8 @@ export default defineComponent({
       }
 
       state.rois.push(newRoi)
-      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+      // Respect current visibility state when adding new ROI
+      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
     }
 
     const toggleAllHidden = (e: any = undefined, visible: boolean | any = undefined) => {
@@ -357,7 +417,8 @@ export default defineComponent({
         visible: roi.removed ? roi.visible : isVisible,
       }))
 
-      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+      // When hiding ROI settings, ensure ROIs are not displayed on the ion image
+      store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
     }
 
     const handleSave = async (navigate: boolean = false) => {
@@ -499,7 +560,8 @@ export default defineComponent({
         roiInfo[index].name = value
         // Create a new array to trigger reactivity
         state.rois = [...roiInfo]
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+        // Respect current visibility state
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
       }
     }
 
@@ -509,7 +571,8 @@ export default defineComponent({
         roiInfo[index].edit = !roiInfo[index].edit
         // Create a new array to trigger reactivity
         state.rois = [...roiInfo]
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+        // Respect current visibility state
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
       }
     }
 
@@ -519,7 +582,8 @@ export default defineComponent({
         roiInfo[index].visible = !roiInfo[index].visible
         // Create a new array to trigger reactivity
         state.rois = [...roiInfo]
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+        // Respect current visibility state
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
       }
     }
 
@@ -530,7 +594,8 @@ export default defineComponent({
         roiInfo[index].visible = false
         // Create a new array to trigger reactivity
         state.rois = [...roiInfo]
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+        // Respect current visibility state
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
       }
     }
 
@@ -543,12 +608,13 @@ export default defineComponent({
         roiInfo[index].color = channels[channel].replace('rgb', 'rgba').replace(')', ', 0.4)')
         // Create a new array to trigger reactivity
         state.rois = [...roiInfo]
-        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: state.rois })
+        // Respect current visibility state
+        store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
       }
     }
 
     const renderRoiIcon = () => {
-      const isVisible = isRoiVisible()
+      const isVisible = isRoiVisible.value
 
       return (
         <div>
@@ -569,7 +635,7 @@ export default defineComponent({
     }
 
     const renderMainPopoverReference = () => {
-      const isVisible = isRoiVisible()
+      const isVisible = isRoiVisible.value
 
       return (
         <div>
@@ -719,7 +785,7 @@ export default defineComponent({
     }
 
     return () => {
-      const isVisible = isRoiVisible()
+      const isVisible = isRoiVisible.value
 
       return (
         <ElPopover

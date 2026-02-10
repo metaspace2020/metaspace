@@ -18,7 +18,7 @@ import { metadataSchemas } from '../../../../metadataSchemas/metadataRegistry'
 import { getDatasetForEditing } from '../operation/getDatasetForEditing'
 import { deleteDataset } from '../operation/deleteDataset'
 import { checkNoPublishedProjectRemoved, checkProjectsPublicationStatus } from '../operation/publicationChecks'
-import { EngineDataset, ScoringModel, Roi } from '../../engine/model'
+import { EngineDataset, ScoringModel, Roi, DiffRoi } from '../../engine/model'
 import { addExternalLink, removeExternalLink } from '../../project/ExternalLink'
 import { esDatasetByID } from '../../../../esConnector'
 import { mapDatabaseToDatabaseId } from '../../moldb/util/mapDatabaseToDatabaseId'
@@ -618,6 +618,36 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
         throw new UserError('Not authenticated')
       }
       await esDatasetByID(datasetId, ctx.user) // check if user has access
+
+      // Check if there are existing diff analysis results and if ROIs match
+      const existingRoiIds = await ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
+        .select('DISTINCT diffRoi.roiId', 'roiId')
+        .leftJoin('diffRoi.roi', 'roi')
+        .where('roi.datasetId = :datasetId', { datasetId })
+        .getRawMany()
+
+      if (existingRoiIds.length > 0) {
+        const previousRoiIds = new Set(existingRoiIds.map(result => result.roiId))
+        const currentDefaultRois = await ctx.entityManager.find(Roi, {
+          where: { datasetId, isDefault: true },
+          select: ['id'],
+        })
+        const currentRoiIds = new Set(currentDefaultRois.map(roi => roi.id))
+
+        // Only skip recalculation if ROI sets match exactly
+        const roiSetsMatch = previousRoiIds.size === currentRoiIds.size
+          && [...previousRoiIds].every(id => currentRoiIds.has(id))
+
+        if (roiSetsMatch) {
+          logger.info(`ROIs for dataset '${datasetId}' haven't changed (${currentRoiIds.size} ROIs), `
+            + 'skipping diff analysis recalculation')
+          return true
+        }
+
+        logger.info(`ROIs for dataset '${datasetId}' have changed, proceeding with diff analysis recalculation`)
+      } else {
+        logger.info(`No existing diff analysis found for dataset '${datasetId}', proceeding with calculation`)
+      }
 
       await smApiDatasetRequest('/v1/diffroi/compareROIs', {
         ds_id: datasetId,

@@ -13,7 +13,7 @@
       </p>
       <p class="m-0 mt-8">
         &copy; 2014&ndash;2025
-        <a target="_blank" href="https://ateam.ucsd.edu/">
+        <a target="_blank" href="https://ateam.bio/">
           <span v-if="themeVariant === 'pro'">Metacloud Inc.</span>
           <span v-else>Alexandrov Team</span>
         </a>

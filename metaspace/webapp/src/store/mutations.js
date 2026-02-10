@@ -213,6 +213,12 @@ export default {
   },
 
   resetRoiInfo(state) {
+    // Preserve the visibility state when resetting ROI info
+    const currentVisibility = state.roiInfo?.visible || false
+    state.roiInfo = { visible: currentVisibility }
+  },
+
+  clearRoiData(state) {
     state.roiInfo = { visible: false }
   },
 
