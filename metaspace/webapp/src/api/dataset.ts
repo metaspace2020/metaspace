@@ -428,6 +428,21 @@ export const diffRoiResultsQuery = gql`
             databaseId
           }
         }
+        isomers {
+          ion
+        }
+        isobars {
+          ion
+        }
+        isotopeImages {
+          url
+          minIntensity
+          maxIntensity
+        }
+        dataset {
+          id
+          acquisitionGeometry
+        }
       }
     }
   }

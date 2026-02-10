@@ -2,6 +2,10 @@
   padding: 20px;
   min-height: 100vh;
 
+
+  .simple-ion-image-container{
+    align-items: normal !important;
+  }
   .dataset-diff-content {
     margin-top: 20px;
     padding: 20px;
@@ -117,6 +121,32 @@
     align-items: center;
   }
 
+  .diff-main-header {
+    .av-header-items {
+      display: flex;
+      justify-content: center;
+      text-align: center !important;
+      cursor: default !important;
+      font-size: 24px;
+      align-items: baseline;
+
+      > * + * {
+        margin-left: 16px;
+      }
+
+      .av-icon {
+        @apply self-center mb-2 h-6;
+
+        svg {
+          display: block;
+        }
+      }
+
+      .sf-big sub {
+        @apply text-base;
+      }
+    }
+  }
 
 
 }

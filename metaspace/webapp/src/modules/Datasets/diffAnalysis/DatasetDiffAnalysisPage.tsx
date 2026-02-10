@@ -10,6 +10,8 @@ import {
   datasetListItemsWithDiagnosticsQuery,
   DatasetListItemWithDiagnostics,
 } from '../../../api/dataset'
+import { readNpy } from '../../../lib/npyHandler'
+import safeJsonParse from '../../../lib/safeJsonParse'
 import { cloneDeep, uniqBy } from 'lodash-es'
 
 import { ElCollapse, ElCollapseItem, ElIcon } from '../../../lib/element-plus'
@@ -23,6 +25,7 @@ import MolecularFormula from '../../../components/MolecularFormula'
 import './DatasetDiffAnalysisPage.scss'
 import CopyButton from '../../../components/CopyButton.vue'
 import { parseFormulaAndCharge } from '../../../lib/formulaParser'
+import SimpleIonImageViewer from '../imzml/SimpleIonImageViewer'
 
 interface DatasetDiffAnalysisPageState {
   databaseOptions: any
@@ -31,6 +34,9 @@ interface DatasetDiffAnalysisPageState {
   activeCollapseItem: 'volcano-plot' | 'heatmap' | null
   topNAnnotations: number | undefined
   savedRoiId: number | undefined
+  isNormalized: boolean
+  normalizationData: any
+  lockedIntensities: [number | undefined, number | undefined]
 }
 
 export default defineComponent({
@@ -56,6 +62,9 @@ export default defineComponent({
       activeCollapseItem: undefined,
       topNAnnotations: undefined,
       savedRoiId: undefined,
+      isNormalized: false,
+      normalizationData: {},
+      lockedIntensities: [undefined, undefined],
     })
 
     const datasetId = computed(() => route.params.dataset_id)
@@ -98,10 +107,45 @@ export default defineComponent({
     handleDatasetsLoad(async (result) => {
       if (result && result.data && result.data.allDatasets) {
         let databases: any[] = []
+        const normalizationData: any = {}
 
         for (let i = 0; i < result.data.allDatasets.length; i++) {
           const dataset: any = result.data.allDatasets[i]
           databases = databases.concat(dataset.databases)
+
+          // Load TIC data for normalization
+          try {
+            const tics = dataset.diagnostics.filter((diagnostic: any) => diagnostic.type === 'TIC')
+            if (tics.length > 0) {
+              const tic = tics[0].images.filter((image: any) => image.key === 'TIC' && image.format === 'NPY')
+              if (tic.length > 0) {
+                const { data, shape } = await readNpy(tic[0].url)
+                const metadata = safeJsonParse(tics[0].data)
+                metadata.maxTic = metadata.max_tic
+                metadata.minTic = metadata.min_tic
+                delete metadata.max_tic
+                delete metadata.min_tic
+
+                normalizationData[dataset.id] = {
+                  data,
+                  shape,
+                  metadata: metadata,
+                  type: 'TIC',
+                  showFullTIC: false,
+                  error: false,
+                }
+              }
+            }
+          } catch (e) {
+            normalizationData[dataset.id] = {
+              data: null,
+              shape: null,
+              metadata: null,
+              showFullTIC: null,
+              type: 'TIC',
+              error: true,
+            }
+          }
         }
 
         const databaseOptions = uniqBy(databases, 'id')
@@ -113,6 +157,7 @@ export default defineComponent({
         }
 
         state.databaseOptions = databaseOptions
+        state.normalizationData = normalizationData
       }
     })
 
@@ -128,6 +173,55 @@ export default defineComponent({
           ...currentFilterLists,
           rois: rois,
         })
+
+        // Initialize ROI filter if not set
+        const currentFilter = store.getters.filter
+        if (!currentFilter.roiId && rois.length > 0) {
+          const newFilter = { ...currentFilter, roiId: [rois[0].id] }
+          store.commit('updateFilter', cloneDeep(newFilter))
+        }
+
+        // Store ROI display data for image viewer
+        if (datasetId.value) {
+          const roiDisplayData = result.data.rois.map((roi: any) => {
+            const geojson = roi.geojson ? JSON.parse(roi.geojson) : null
+
+            // Convert GeoJSON coordinates to the format expected by the renderer
+            let coordinates: any[] = []
+            if (
+              geojson &&
+              geojson.geometry &&
+              geojson.geometry.coordinates &&
+              geojson.geometry.coordinates.length > 0
+            ) {
+              // Handle different GeoJSON geometry types
+              if (geojson.geometry.type === 'Polygon' && geojson.geometry.coordinates[0]) {
+                coordinates = geojson.geometry.coordinates[0].map((coord: number[]) => ({
+                  x: coord[0],
+                  y: coord[1],
+                  isEndPoint: false,
+                }))
+                // Mark the last point as end point to close the polygon
+                if (coordinates.length > 0) {
+                  coordinates[coordinates.length - 1].isEndPoint = true
+                }
+              }
+            }
+
+            return {
+              id: parseInt(roi.id),
+              name: roi.name,
+              coordinates: coordinates,
+              visible: true,
+              strokeColor: geojson?.properties?.stroke,
+              color: geojson?.properties?.color,
+              rgb: geojson?.properties?.rgb,
+              isDrawing: false,
+              allVisible: true,
+            }
+          })
+          store.commit('setRoiInfo', { key: datasetId.value, roi: roiDisplayData })
+        }
       }
     })
 
@@ -152,12 +246,33 @@ export default defineComponent({
       }
     }
 
+    const handleNormalizationChange = (isNormalized: boolean) => {
+      state.isNormalized = isNormalized
+    }
+
+    const handleIntensityLockChange = (lockedIntensities: [number | undefined, number | undefined]) => {
+      state.lockedIntensities = lockedIntensities
+    }
+
+    const roiInfo = computed(() => {
+      if (datasetId.value && store.state.roiInfo && store.state.roiInfo[datasetId.value as string]) {
+        const rois = store.state.roiInfo[datasetId.value as string] || []
+        return rois
+      }
+      return []
+    })
+
     const handleCollapseChange = (activeNames: string[]) => {
-      const newActiveItem = activeNames.includes('volcano-plot')
-        ? 'volcano-plot'
-        : activeNames.includes('heatmap')
-        ? 'heatmap'
-        : null
+      // Determine which visualization is active (volcano-plot or heatmap)
+      let newActiveItem: 'volcano-plot' | 'heatmap' | null = null
+      if (activeNames.includes('volcano-plot') && !activeNames.includes('heatmap')) {
+        newActiveItem = 'volcano-plot'
+      } else if (activeNames.includes('heatmap') && !activeNames.includes('volcano-plot')) {
+        newActiveItem = 'heatmap'
+      } else if (activeNames.includes('volcano-plot') && activeNames.includes('heatmap')) {
+        // If both are active, prioritize the one that wasn't previously active
+        newActiveItem = state.activeCollapseItem === 'volcano-plot' ? 'heatmap' : 'volcano-plot'
+      }
 
       if (newActiveItem !== state.activeCollapseItem) {
         state.activeCollapseItem = newActiveItem
@@ -201,6 +316,10 @@ export default defineComponent({
     }
 
     const renderInfo = () => {
+      if (!state.selectedAnnotation) {
+        return null
+      }
+
       const selectedAnnotation = state.selectedAnnotation.annotation
 
       // @ts-ignore TS2604
@@ -216,79 +335,99 @@ export default defineComponent({
       )
 
       return (
-        <div class="flex items-center justify-center p-2 w-full min-h-[50px]">
-          {selectedAnnotation !== null && candidateMolecules()}
-          {selectedAnnotation !== null && (
-            <CopyButton class="ml-1" text={parseFormulaAndCharge(selectedAnnotation?.ion)}>
-              Copy ion to clipboard
-            </CopyButton>
+        <div class="diff-main-header flex items-center justify-center p-4 w-full border-b border-gray-200 bg-white">
+          <div class="av-header-items">
+            <div class="flex">
+              {candidateMolecules()}
+              <CopyButton class="ml-1" text={parseFormulaAndCharge(selectedAnnotation?.ion)}>
+                Copy ion to clipboard
+              </CopyButton>
+            </div>
+            <span class="text-2xl flex items-baseline">
+              {selectedAnnotation.mz.toFixed(4)}
+              <span class="ml-1 text-gray-700 text-sm">m/z</span>
+              <CopyButton class="self-start" text={selectedAnnotation.mz.toFixed(4)}>
+                Copy m/z to clipboard
+              </CopyButton>
+            </span>
+          </div>
+        </div>
+      )
+    }
+
+    const renderImageViewer = () => {
+      if (!state.selectedAnnotation) {
+        return null
+      }
+
+      const selectedAnnotation = state.selectedAnnotation.annotation
+      const ionImageUrl = selectedAnnotation?.isotopeImages?.[0]?.url
+
+      return (
+        <div class="image-viewer-wrapper w-full">
+          {selectedAnnotation && ionImageUrl && (
+            <SimpleIonImageViewer
+              annotation={selectedAnnotation}
+              ionImageUrl={ionImageUrl}
+              pixelSizeX={selectedAnnotation.dataset?.acquisitionGeometry?.pixelSizeX || 1}
+              pixelSizeY={selectedAnnotation.dataset?.acquisitionGeometry?.pixelSizeY || 1}
+              isNormalized={state.isNormalized}
+              normalizationData={state.normalizationData[selectedAnnotation.dataset?.id]} // @ts-ignore
+              onNormalization={handleNormalizationChange}
+              onIntensityLockChange={handleIntensityLockChange}
+              lockedIntensities={state.lockedIntensities}
+              roiInfo={roiInfo.value}
+              maxHeight={400}
+              renderAsCollapsible={true}
+            />
           )}
-          <span class="text-2xl flex items-baseline ml-4">
-            {selectedAnnotation && selectedAnnotation.mz ? selectedAnnotation.mz.toFixed(4) : '-'}
-            <span class="ml-1 text-gray-700 text-sm">m/z</span>
-            <CopyButton
-              class="self-start"
-              text={selectedAnnotation && selectedAnnotation.mz ? selectedAnnotation.mz.toFixed(4) : '-'}
-            >
-              Copy m/z to clipboard
-            </CopyButton>
-          </span>
+          {(!selectedAnnotation || !ionImageUrl) && (
+            <div class="flex items-center justify-center h-48 text-gray-500">
+              No ion image available for this annotation
+            </div>
+          )}
         </div>
       )
     }
 
     const renderVolcanoPlot = () => {
-      const activeNames = state.activeCollapseItem === 'volcano-plot' ? ['volcano-plot'] : []
-
       return (
-        <ElCollapse modelValue={activeNames} class="volcano-plot-collapse" onChange={handleCollapseChange}>
-          <ElCollapseItem
-            id="volcano-plot-collapse"
-            name="volcano-plot"
-            title="Volcano plot"
-            class="ds-collapse el-collapse-item--no-padding relative"
-          >
-            <DatasetDiffVolcanoPlot
-              data={diffData.value || []}
-              isLoading={!diffData.value}
-              selectedAnnotation={state.selectedAnnotation}
-              onAnnotationSelected={(annotation: any) => {
-                const rowIndex = diffData.value?.findIndex((item: any) => item.annotation.id === annotation.id) ?? -1
-                if (rowIndex !== -1) {
-                  handleRowChange(rowIndex, diffData.value[rowIndex])
-                }
-              }}
-            />
-          </ElCollapseItem>
-        </ElCollapse>
+        <ElCollapseItem
+          name="volcano-plot"
+          title="Volcano Plot"
+          class="ds-collapse el-collapse-item--no-padding relative"
+        >
+          <DatasetDiffVolcanoPlot
+            data={diffData.value || []}
+            isLoading={!diffData.value}
+            selectedAnnotation={state.selectedAnnotation}
+            onAnnotationSelected={(annotation: any) => {
+              const rowIndex = diffData.value?.findIndex((item: any) => item.annotation.id === annotation.id) ?? -1
+              if (rowIndex !== -1) {
+                handleRowChange(rowIndex, diffData.value[rowIndex])
+              }
+            }}
+          />
+        </ElCollapseItem>
       )
     }
 
     const renderHeatmap = () => {
-      const activeNames = state.activeCollapseItem === 'heatmap' ? ['heatmap'] : []
-
       return (
-        <ElCollapse modelValue={activeNames} class="heatmap-collapse" onChange={handleCollapseChange}>
-          <ElCollapseItem
-            id="heatmap-collapse"
-            name="heatmap"
-            title="Heatmap"
-            class="ds-collapse el-collapse-item--no-padding relative"
-          >
-            <DatasetDiffHeatmap
-              data={diffData.value || []}
-              isLoading={!diffData.value}
-              selectedAnnotation={state.selectedAnnotation}
-              isVisible={state.activeCollapseItem === 'heatmap'}
-              onAnnotationSelected={(annotation: any) => {
-                const rowIndex = diffData.value?.findIndex((item: any) => item.annotation.id === annotation.id) ?? -1
-                if (rowIndex !== -1) {
-                  handleRowChange(rowIndex, diffData.value[rowIndex])
-                }
-              }}
-            />
-          </ElCollapseItem>
-        </ElCollapse>
+        <ElCollapseItem name="heatmap" title="Heatmap" class="ds-collapse el-collapse-item--no-padding relative">
+          <DatasetDiffHeatmap
+            data={diffData.value || []}
+            isLoading={!diffData.value}
+            selectedAnnotation={state.selectedAnnotation}
+            isVisible={state.activeCollapseItem === 'heatmap'}
+            onAnnotationSelected={(annotation: any) => {
+              const rowIndex = diffData.value?.findIndex((item: any) => item.annotation.id === annotation.id) ?? -1
+              if (rowIndex !== -1) {
+                handleRowChange(rowIndex, diffData.value[rowIndex])
+              }
+            }}
+          />
+        </ElCollapseItem>
       )
     }
 
@@ -296,11 +435,24 @@ export default defineComponent({
       if (!state.selectedAnnotation) {
         return <div class="diff-info-wrapper w-full md:w-6/12" />
       }
+
+      const activeNames = ['image-viewer'] // Always show image viewer
+      if (state.activeCollapseItem === 'volcano-plot') activeNames.push('volcano-plot')
+      if (state.activeCollapseItem === 'heatmap') activeNames.push('heatmap')
+
       return (
         <div class="diff-info-wrapper w-full md:w-6/12">
           {renderInfo()}
-          {renderVolcanoPlot()}
-          {renderHeatmap()}
+          <ElCollapse
+            modelValue={[...activeNames]}
+            class="annotation-info-collapse"
+            id="annot-content"
+            onChange={handleCollapseChange}
+          >
+            {renderImageViewer()}
+            {renderVolcanoPlot()}
+            {renderHeatmap()}
+          </ElCollapse>
         </div>
       )
     }

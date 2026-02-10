@@ -17,6 +17,7 @@
         :max-zoom="imageFit.imageZoom * 20"
         :x-offset="imageLoaderSettings.imagePosition.xOffset"
         :y-offset="imageLoaderSettings.imagePosition.yOffset"
+        :roi-info="roiInfo"
         scroll-block
         show-pixel-intensity
         v-bind="imageLoaderSettings"
@@ -125,6 +126,10 @@ export default defineComponent({
     isNormalized: Boolean,
     hideColorBar: Boolean,
     normalizationData: Object,
+    roiInfo: { type: Array, default: () => [] },
+    width: { type: Number, default: 500 },
+    height: { type: Number, default: 500 },
+    maxHeight: { type: Number, default: 1000 },
   },
   setup(props, { emit }) {
     const container = ref(null)
@@ -133,8 +138,8 @@ export default defineComponent({
     const ionImageUrl = ref(null)
     const ionImagePng = ref(null)
     const ionImageIsLoading = ref(false)
-    const imageViewerWidth = ref(500)
-    const imageViewerHeight = ref(500)
+    const imageViewerWidth = ref(props.width)
+    const imageViewerHeight = ref(props.height)
 
     const updateIonImage = async () => {
       const isotopeImage = get(props.annotation, 'isotopeImages[0]')
@@ -161,7 +166,7 @@ export default defineComponent({
     const onResize = () => {
       if (imageViewerContainer.value != null) {
         imageViewerWidth.value = imageViewerContainer.value.clientWidth
-        imageViewerHeight.value = Math.min(Math.max(window.innerHeight - 520, 500), 1000)
+        imageViewerHeight.value = Math.min(Math.max(window.innerHeight - 520, 500), props.maxHeight)
       }
     }
 
@@ -170,9 +175,12 @@ export default defineComponent({
       onResize()
     })
 
-    watch(props.annotation, async () => {
-      updateIonImage()
-    })
+    watch(
+      () => props.annotation,
+      async () => {
+        updateIonImage()
+      }
+    )
 
     const ionImage = computed((): IonImage | null | any => {
       if (ionImagePng.value != null) {
