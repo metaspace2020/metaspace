@@ -8,6 +8,7 @@ import {
   ElInput,
   ElRadioButton,
   ElIcon,
+  ElCheckbox,
 } from '../../../lib/element-plus'
 import { useQuery } from '@vue/apollo-composable'
 import {
@@ -84,6 +85,8 @@ interface DatasetBrowserState {
   mz: number | undefined
   mzLow: number | undefined
   mzHigh: number | undefined
+  refMzLow: number | undefined
+  refMzHigh: number | undefined
   enableImageQuery: boolean
   noData: boolean
   globalImageSettings: GlobalImageSettings
@@ -146,6 +149,8 @@ export default defineComponent({
       mz: undefined,
       mzLow: undefined,
       mzHigh: undefined,
+      refMzLow: undefined,
+      refMzHigh: undefined,
       enableImageQuery: false,
       globalImageSettings: {
         resetViewPort: false,
@@ -268,6 +273,8 @@ export default defineComponent({
         datasetId: datasetId.value,
         mzLow: state.mzLow,
         mzHigh: state.mzHigh,
+        refMzLow: state.refMzLow,
+        refMzHigh: state.refMzHigh,
       }),
       imageQueryOptions as any
     )
@@ -783,6 +790,19 @@ export default defineComponent({
       state.globalImageSettings.isNormalized = !state.showFullTIC && isNormalized
     }
 
+    const isRefPeakActive = computed(() => state.refMzLow != null && state.refMzHigh != null)
+
+    const toggleReferencePeak = (checked: boolean) => {
+      if (checked) {
+        state.refMzLow = state.mzLow
+        state.refMzHigh = state.mzHigh
+      } else {
+        state.refMzLow = undefined
+        state.refMzHigh = undefined
+      }
+      imageQueryOptions.enabled = true
+    }
+
     const fetchDatasets = async (query: string) => {
       state.datasetName = query
     }
@@ -1135,6 +1155,18 @@ export default defineComponent({
               </span>
             </div>
           </div>
+          {state.mz != null && !state.showFullTIC && (
+            <div class="flex items-center mt-2">
+              <ElCheckbox
+                modelValue={isRefPeakActive.value}
+                onChange={(val: boolean) => toggleReferencePeak(val)}
+              >
+                {isRefPeakActive.value
+                  ? `Normalizing to reference peak (m/z ${((state.refMzLow! + state.refMzHigh!) / 2).toFixed(4)})`
+                  : `Normalize to this peak (m/z ${state.mz!.toFixed(4)})`}
+              </ElCheckbox>
+            </div>
+          )}
         </div>
       )
     }
