@@ -16,21 +16,35 @@ logger = logging.getLogger('api')
 app = bottle.Bottle()
 
 
-def create_mz_image(mz_peaks, coordinates):
-    """Calculate the total intensity for each pixel and normalize the resulting intensity"""
+def build_raw_mz_image(mz_peaks, coordinates):
+    """Build an unnormalized intensity image from mz_peaks."""
     coordinates = coordinates - np.min(coordinates, axis=0)
     width, height = np.max(coordinates, axis=0) + 1
 
-    # calculate the total intensity of all peaks for each pixel
     mz_image = np.zeros(width * height, dtype='f')
     np.add.at(mz_image, mz_peaks[:, 2].astype(np.int64), mz_peaks[:, 1])
 
-    if mz_image.max() > 0:
-        mz_image /= mz_image.max()
+    return mz_image, width, height
+
+
+def create_mz_image(mz_peaks, coordinates, ref_image=None):
+    """Calculate the total intensity for each pixel and normalize the resulting intensity.
+
+    If ref_image is provided (a flat array of per-pixel reference intensities),
+    each pixel is divided by the corresponding reference value before scaling to 0-1.
+    """
+    raw_image, width, height = build_raw_mz_image(mz_peaks, coordinates)
+
+    if ref_image is not None:
+        safe_ref = np.where(ref_image > 0, ref_image, 1.0)
+        raw_image /= safe_ref
+
+    if raw_image.max() > 0:
+        raw_image /= raw_image.max()
 
     alpha = np.ones(shape=(height, width))
 
-    return mz_image.reshape(height, width), alpha, np.max(mz_peaks[:, 1])
+    return raw_image.reshape(height, width), alpha, np.max(mz_peaks[:, 1])
 
 
 def create_rgba_image(mz_image, alpha):
@@ -90,7 +104,13 @@ def get_intensity_by_mz_ppm():
         ds = DatasetBrowser(params['ds_id'], params['mz_low'], params['mz_high'])
 
         start = time.time()
-        mz_image, alpha, max_int = create_mz_image(ds.mz_peaks, ds.coordinates)
+
+        ref_image = None
+        if 'ref_mz_low' in params and 'ref_mz_high' in params:
+            ref_ds = DatasetBrowser(params['ds_id'], params['ref_mz_low'], params['ref_mz_high'])
+            ref_image, _, _ = build_raw_mz_image(ref_ds.mz_peaks, ref_ds.coordinates)
+
+        mz_image, alpha, max_int = create_mz_image(ds.mz_peaks, ds.coordinates, ref_image)
         rgba_image = create_rgba_image(mz_image, alpha)
         body = create_png_image(rgba_image)
         logger.info(f'Creating an image in {round(time.time() - start, 2)} sec')
