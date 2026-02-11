@@ -422,10 +422,6 @@ export default defineComponent({
     }
 
     const handleSave = async (navigate: boolean = false) => {
-      if (!props.annotation?.dataset?.canEdit) {
-        return
-      }
-
       state.isUpdatingRoi = true
 
       try {
@@ -538,7 +534,10 @@ export default defineComponent({
         const roiInfo = getRoi().filter((roi: any) => !roi.removed)
         const hasLegacyRois = roiInfo.some((roi: any) => roi.isLegacy)
 
-        if (hasLegacyRois) {
+        if (!props.annotation?.dataset?.canEdit) {
+          // if user cannot edit, save the ROIs first just for him
+          await handleSave(false)
+        } else if (hasLegacyRois) {
           // Automatically save/migrate legacy ROIs before running diff analysis
           await handleSave(false) // Save without navigating first
         }
@@ -654,18 +653,9 @@ export default defineComponent({
 
     const renderRoiSettings = () => {
       const roiInfo = (state.rois || []).filter((roi: any) => !roi.removed)
-      const hasLegacyRois = roiInfo.some((roi: any) => roi.isLegacy)
 
       return (
         <div class="roi-content">
-          {hasLegacyRois && (
-            <div class="roi-legacy-info mb-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600">
-              <div class="flex items-center">
-                <span class="mr-1">ℹ️</span>
-                <span>Legacy ROI format detected</span>
-              </div>
-            </div>
-          )}
           <div class="roi-options">
             <ElTooltip
               popperClass="roi-save-tooltip"

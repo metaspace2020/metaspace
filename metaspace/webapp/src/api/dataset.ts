@@ -228,8 +228,8 @@ export const datasetListItemsQuery = gql`
 `
 
 export const getRoisQuery = gql`
-  query ($datasetId: String!, $userId: String) {
-    rois(datasetId: $datasetId, userId: $userId) {
+  query ($datasetId: String!) {
+    rois(datasetId: $datasetId) {
       id
       datasetId
       userId

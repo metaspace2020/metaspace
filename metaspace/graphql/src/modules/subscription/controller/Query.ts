@@ -217,7 +217,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
           return subscription.data || subscription || null
         }
       } catch (error) {
-        logger.error(`Error fetching active subscription for group ${group.groupId}:`, error)
+        // pass
+        // logger.error(`Error fetching active subscription for group ${group.groupId}:`, error)
         continue
       }
     }
@@ -232,7 +233,8 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       const response = await makeApiRequest(ctx, `/api/subscriptions/group/${groupId}/active`)
       return response.data || response || null
     } catch (error) {
-      logger.error(`Error fetching active subscription for group ${groupId}:`, error)
+      // pass
+      // logger.error(`Error fetching active subscription for group ${groupId}:`, error)
       return null
     }
   },

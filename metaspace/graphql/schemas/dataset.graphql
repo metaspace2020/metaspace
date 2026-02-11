@@ -441,7 +441,7 @@ type Query {
 
   diffRoiResults(datasetId: String!, filter: DiffRoiFilter = {}, annotationFilter: AnnotationFilter = {}): [DiffRoiResult!]!
   
-  rois(datasetId: String!, userId: String, isDefault: Boolean): [Roi!]!
+  rois(datasetId: String!, isDefault: Boolean): [Roi!]!
   roi(id: ID!): Roi
 }
 

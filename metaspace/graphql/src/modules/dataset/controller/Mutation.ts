@@ -620,19 +620,38 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       await esDatasetByID(datasetId, ctx.user) // check if user has access
 
       // Check if there are existing diff analysis results and if ROIs match
-      const existingRoiIds = await ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
-        .select('DISTINCT diffRoi.roiId', 'roiId')
-        .leftJoin('diffRoi.roi', 'roi')
+      const userRoisCount = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
         .where('roi.datasetId = :datasetId', { datasetId })
-        .getRawMany()
+        .andWhere('roi.userId = :userId', { userId: ctx.user.id })
+        .getCount()
+
+      let qb = ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
+        .leftJoin('diffRoi.roi', 'roi')
+        .select('DISTINCT diffRoi.roiId', 'roiId')
+        .where('roi.datasetId = :datasetId', { datasetId })
+
+      if (userRoisCount > 0) {
+        qb = qb.andWhere('roi.userId = :userId', { userId: ctx.user.id })
+      } else {
+        qb = qb.andWhere('roi.isDefault = true')
+      }
+
+      const existingRoiIds = await qb.getRawMany()
 
       if (existingRoiIds.length > 0) {
         const previousRoiIds = new Set(existingRoiIds.map(result => result.roiId))
-        const currentDefaultRois = await ctx.entityManager.find(Roi, {
-          where: { datasetId, isDefault: true },
-          select: ['id'],
-        })
-        const currentRoiIds = new Set(currentDefaultRois.map(roi => roi.id))
+        let qbCurrent = ctx.entityManager.createQueryBuilder(Roi, 'roi')
+          .select('id', 'id')
+          .where('roi.datasetId = :datasetId', { datasetId })
+
+        if (userRoisCount > 0) {
+          qbCurrent = qbCurrent.andWhere('roi.userId = :userId', { userId: ctx.user.id })
+        } else {
+          qbCurrent = qbCurrent.andWhere('roi.isDefault = true')
+        }
+
+        const currentDefaultRois = await qbCurrent.getRawMany()
+        const currentRoiIds = new Set(currentDefaultRois.map((roi: any) => roi.id))
 
         // Only skip recalculation if ROI sets match exactly
         const roiSetsMatch = previousRoiIds.size === currentRoiIds.size
@@ -731,10 +750,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     try {
       const geojson = JSON.parse(input.geojson)
+      const canEdit = await canEditEsDataset(dataset, ctx)
 
       await ctx.entityManager.update(Roi, id, {
         name: input.name,
-        isDefault: input.isDefault,
+        isDefault: canEdit,
         geojson,
       })
 

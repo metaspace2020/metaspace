@@ -26,6 +26,7 @@ import './DatasetDiffAnalysisPage.scss'
 import CopyButton from '../../../components/CopyButton.vue'
 import { parseFormulaAndCharge } from '../../../lib/formulaParser'
 import SimpleIonImageViewer from '../imzml/SimpleIonImageViewer'
+import { userProfileQuery, UserProfileQuery } from '../../../api/user'
 
 interface DatasetDiffAnalysisPageState {
   databaseOptions: any
@@ -70,6 +71,11 @@ export default defineComponent({
     const datasetId = computed(() => route.params.dataset_id)
     const currentLevel = computed(() => 'dataset-diff-analysis')
 
+    const { result: currentUserResult } = useQuery<UserProfileQuery | any>(userProfileQuery, null, {
+      fetchPolicy: 'cache-first',
+    })
+    const currentUser = computed(() => (currentUserResult.value != null ? currentUserResult.value.currentUser : null))
+
     const { onResult: handleDatasetLoad } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, {
       id: datasetId.value,
     })
@@ -84,7 +90,7 @@ export default defineComponent({
 
     const { onResult: handleRoisLoad } = useQuery<any>(getRoisQuery, {
       datasetId: datasetId.value,
-      userId: null, // Get all ROIs for the dataset
+      userId: currentUser.value?.id,
     })
 
     onMounted(() => {
@@ -458,6 +464,16 @@ export default defineComponent({
     }
 
     return () => {
+      if (!currentUser.value?.id) {
+        return (
+          <div class="dataset-diff-page">
+            <div class="flex w-full flex-wrap flex-row items-center justify-center">
+              <div class="flex items-center justify-center h-48 text-gray-500">Please login to view this page</div>
+            </div>
+          </div>
+        )
+      }
+
       return (
         <div class="dataset-diff-page">
           <div class={`${state.databaseOptions ? 'visible' : 'invisible'} min-h-[50px] mb-4`}>

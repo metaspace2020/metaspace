@@ -71,13 +71,12 @@ export const DatasetDiffHeatmap = defineComponent({
       size: 600,
       chartOptions: {
         title: {
-          text: 'Differential Analysis Between ROIs',
           subtext: ' ',
           left: 'center',
           top: 10,
         },
         grid: {
-          top: 90,
+          top: 60,
           left: 200,
           right: 80,
           bottom: 90,

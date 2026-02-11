@@ -315,9 +315,21 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
   },
   async diffRoiResults(source: any, { datasetId, filter = {}, annotationFilter }: any, ctx: Context) {
     if (await esDatasetByID(datasetId, ctx.user)) {
+      const userId = ctx.user?.id
+      const userRoisCount = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+        .where('roi.datasetId = :datasetId', { datasetId })
+        .andWhere('roi.userId = :userId', { userId })
+        .getCount()
+
       let qb = ctx.entityManager.createQueryBuilder(DiffRoi, 'diffRoi')
         .leftJoinAndSelect('diffRoi.roi', 'roi')
         .where('roi.datasetId = :datasetId', { datasetId })
+
+      if (userRoisCount > 0) {
+        qb = qb.andWhere('roi.userId = :userId', { userId })
+      } else {
+        qb = qb.andWhere('roi.isDefault = true')
+      }
 
       // Apply DiffRoi-specific filters at database level
       if (filter.minAuc !== undefined) {
@@ -396,14 +408,23 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     return []
   },
 
-  async rois(source: any, { datasetId, userId }: any, ctx: Context) {
+  async rois(source: any, { datasetId }: any, ctx: Context) {
     try {
       if (await esDatasetByID(datasetId, ctx.user)) {
+        const userId = ctx.user?.id
+
+        const userRoisCount = await ctx.entityManager.createQueryBuilder(Roi, 'roi')
+          .where('roi.datasetId = :datasetId', { datasetId })
+          .andWhere('roi.userId = :userId', { userId })
+          .getCount()
+
         let qb = ctx.entityManager.createQueryBuilder(Roi, 'roi')
           .where('roi.datasetId = :datasetId', { datasetId })
 
-        if (userId) {
+        if (userRoisCount > 0) {
           qb = qb.andWhere('roi.userId = :userId', { userId })
+        } else {
+          qb = qb.andWhere('roi.isDefault = true')
         }
 
         qb = qb.orderBy('roi.isDefault', 'DESC')
