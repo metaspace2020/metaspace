@@ -277,11 +277,9 @@ export default defineComponent({
     )
     const pixelSpectrum = computed(() => spectrumResult.value?.pixelSpectrum)
 
-    const { onResult: onInitialPeakResult } = useQuery<any>(
-      getInitialPeak,
-      () => ({ datasetId: datasetId.value }),
-      { fetchPolicy: 'no-cache' as const }
-    )
+    const { onResult: onInitialPeakResult } = useQuery<any>(getInitialPeak, () => ({ datasetId: datasetId.value }), {
+      fetchPolicy: 'no-cache' as const,
+    })
 
     const buildChartData = (ints: any, mzs: any) => {
       let maxX: number = 0
