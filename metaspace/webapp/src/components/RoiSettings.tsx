@@ -688,7 +688,7 @@ export default defineComponent({
                 <ElButton
                   class="button-reset roi-diff-icon"
                   onClick={handleDiffAnalysis}
-                  disabled={!currentUser.value?.id || !isPro || isAdmin}
+                  disabled={!isAdmin && (!currentUser.value?.id || !isPro)}
                 >
                   <ElIcon size={25}>
                     <DataLine />
