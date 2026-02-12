@@ -22,11 +22,12 @@ import { DatasetDiffVolcanoPlot } from './DatasetDiffVolcanoPlot'
 import { DatasetDiffHeatmap } from './DatasetDiffHeatmap'
 import CandidateMoleculesPopover from '../../Annotations/annotation-widgets/CandidateMoleculesPopover.vue'
 import MolecularFormula from '../../../components/MolecularFormula'
-import './DatasetDiffAnalysisPage.scss'
 import CopyButton from '../../../components/CopyButton.vue'
 import { parseFormulaAndCharge } from '../../../lib/formulaParser'
 import SimpleIonImageViewer from '../imzml/SimpleIonImageViewer'
 import { userProfileQuery, UserProfileQuery } from '../../../api/user'
+import { getActiveUserSubscriptionQuery } from '@/api/subscription'
+import './DatasetDiffAnalysisPage.scss'
 
 interface DatasetDiffAnalysisPageState {
   databaseOptions: any
@@ -71,10 +72,19 @@ export default defineComponent({
     const datasetId = computed(() => route.params.dataset_id)
     const currentLevel = computed(() => 'dataset-diff-analysis')
 
-    const { result: currentUserResult } = useQuery<UserProfileQuery | any>(userProfileQuery, null, {
-      fetchPolicy: 'cache-first',
-    })
+    const { result: currentUserResult, loading: currentUserLoading } = useQuery<UserProfileQuery | any>(
+      userProfileQuery,
+      null,
+      {
+        fetchPolicy: 'cache-first',
+      }
+    )
+
     const currentUser = computed(() => (currentUserResult.value != null ? currentUserResult.value.currentUser : null))
+    const { result: subscriptionResult } = useQuery<any>(getActiveUserSubscriptionQuery, null, {
+      fetchPolicy: 'network-only',
+    })
+    const activeSubscription = computed(() => subscriptionResult.value?.activeUserSubscription)
 
     const { onResult: handleDatasetLoad } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, {
       id: datasetId.value,
@@ -546,11 +556,25 @@ export default defineComponent({
     }
 
     return () => {
-      if (!currentUser.value?.id) {
+      const isPro = activeSubscription.value?.isActive
+      const isAdmin = currentUser.value?.role?.includes('admin')
+
+      if (!isAdmin && (!currentUser.value?.id || !isPro)) {
         return (
           <div class="dataset-diff-page">
             <div class="flex w-full flex-wrap flex-row items-center justify-center">
-              <div class="flex items-center justify-center h-48 text-gray-500">Please login to view this page</div>
+              {currentUserLoading.value && (
+                <div class="flex items-center justify-center h-48 text-gray-500">
+                  <ElIcon class="is-loading">
+                    <Loading />
+                  </ElIcon>
+                </div>
+              )}
+              {!currentUserLoading.value && (
+                <div class="flex items-center justify-center h-48 text-gray-500">
+                  Please upgrade to METASPACE Pro to view this page
+                </div>
+              )}
             </div>
           </div>
         )

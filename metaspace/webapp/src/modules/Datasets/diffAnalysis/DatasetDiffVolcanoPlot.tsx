@@ -140,7 +140,7 @@ export const DatasetDiffVolcanoPlot = defineComponent({
           name: 'AUC',
           nameLocation: 'middle',
           nameGap: 60,
-          min: 0,
+          min: -1,
           max: 1,
           splitLine: {
             lineStyle: { type: 'dashed', color: '#e0e0e0' },
@@ -238,15 +238,15 @@ export const DatasetDiffVolcanoPlot = defineComponent({
         icon: 'empty' + roiShapes[index % roiShapes.length],
       }))
 
-      // Update series and add reference line
+      // Update series and add reference lines
       options.series = [
         ...series,
         {
           type: 'line',
-          name: 'AUC = 0.5 Reference',
+          name: 'AUC = 0',
           data: [
-            [options.xAxis.min, 0.5],
-            [options.xAxis.max, 0.5],
+            [options.xAxis.min, 0],
+            [options.xAxis.max, 0],
           ],
           lineStyle: {
             type: 'dashed',
@@ -279,7 +279,7 @@ export const DatasetDiffVolcanoPlot = defineComponent({
             const minAuc = Math.min(...aucValues)
             const maxAuc = Math.max(...aucValues)
             const padding = (maxAuc - minAuc) * 0.1
-            options.yAxis.min = Math.max(0, minAuc - padding)
+            options.yAxis.min = Math.max(-1, minAuc - padding)
             options.yAxis.max = Math.min(1, maxAuc + padding)
           }
         }
@@ -342,6 +342,7 @@ export const DatasetDiffVolcanoPlot = defineComponent({
               </div>
             </div>
           )}
+          {/* @ts-ignore */}
           <ECharts
             ref={volcanoChart}
             autoresize={true}

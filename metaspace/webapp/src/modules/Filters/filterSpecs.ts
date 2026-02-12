@@ -510,7 +510,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     defaultInLevels: ['dataset-diff-analysis'],
     initialValue: undefined,
     encoding: 'number',
-    min: 0,
+    min: -1,
     max: 1,
     step: 0.05,
   },

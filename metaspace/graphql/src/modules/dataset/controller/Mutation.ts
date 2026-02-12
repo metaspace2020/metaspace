@@ -743,17 +743,20 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Dataset not found or access denied')
     }
 
+    const canEdit = await canEditEsDataset(dataset, ctx)
+
+    const canEdiRoi = canEdit || ctx.user.role?.includes('admin') || roi.userId === ctx.user.id
     // Check if user owns this ROI or is admin
-    if (roi.userId !== ctx.user.id && !ctx.user.role?.includes('admin')) {
+    if (!canEdiRoi) {
       throw new UserError('You can only edit ROIs you created')
     }
 
     try {
       const geojson = JSON.parse(input.geojson)
-      const canEdit = await canEditEsDataset(dataset, ctx)
 
       await ctx.entityManager.update(Roi, id, {
         name: input.name,
+        userId: ctx.user.id,
         isDefault: canEdit,
         geojson,
       })

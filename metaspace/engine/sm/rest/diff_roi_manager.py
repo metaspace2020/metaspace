@@ -121,7 +121,7 @@ class DiffROIData:
         if not per_db_metrics:
             # No FDR_RESULTS found for this dataset
             return pd.DataFrame()
-        
+
         all_metrics_df = pd.concat(per_db_metrics, ignore_index=True)
         all_metrics_df = all_metrics_df.drop_duplicates(subset=['formula', 'modifier'])
 

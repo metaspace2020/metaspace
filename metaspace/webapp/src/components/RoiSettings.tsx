@@ -91,6 +91,8 @@ export default defineComponent({
       originalRoiIds: new Set(),
     })
 
+    const canEdit = computed(() => props.annotation?.dataset?.canEdit)
+
     const queryVariables = () => {
       const filter = store.getters.gqlAnnotationFilter
       const dFilter = store.getters.gqlDatasetFilter
@@ -212,6 +214,8 @@ export default defineComponent({
             allVisible: props.allVisible !== undefined ? props.allVisible : true,
             edit: false,
             isDrawing: false,
+            userId: roi.userId,
+            canUpdate: roi.userId === currentUser.value?.id || canEdit.value,
           }
 
           return roiData
@@ -417,6 +421,7 @@ export default defineComponent({
         edit: false,
         isDrawing: true,
         isDefault: false,
+        canUpdate: true,
       }
 
       state.rois.push(newRoi)
@@ -448,7 +453,6 @@ export default defineComponent({
 
       try {
         const roiInfo = getRoi()
-
         // Delete ROIs that were marked as removed and exist on server
         const removedRois = roiInfo.filter((roi) => roi.removed && roi.id && state.originalRoiIds.has(roi.id))
         for (const removedRoi of removedRois) {
@@ -475,7 +479,6 @@ export default defineComponent({
             }
           }
         }
-
         for (const roi of roiInfo) {
           if (roi && !roi.isDrawing && !roi.removed && roi.coordinates.length > 0) {
             // Follow legacy format: store coordinates as {x, y} objects in properties
@@ -511,7 +514,7 @@ export default defineComponent({
               geojson: JSON.stringify(geoJson),
             }
 
-            if (roi.id && !roi.isLegacy) {
+            if (roi.id && !roi.isLegacy && roi.canUpdate) {
               // Update existing ROI (not legacy)
               await updateRoi({ id: roi.id, input: roiInput })
             } else {
@@ -669,6 +672,7 @@ export default defineComponent({
     const renderRoiSettings = () => {
       const roiInfo = (state.rois || []).filter((roi: any) => !roi.removed)
       const isPro = activeSubscription.value?.isActive
+      const isAdmin = currentUser.value?.role?.includes('admin')
 
       return (
         <div class="roi-content">
@@ -684,7 +688,7 @@ export default defineComponent({
                 <ElButton
                   class="button-reset roi-diff-icon"
                   onClick={handleDiffAnalysis}
-                  disabled={!currentUser.value?.id || !isPro}
+                  disabled={!currentUser.value?.id || !isPro || isAdmin}
                 >
                   <ElIcon size={25}>
                     <DataLine />
@@ -724,6 +728,7 @@ export default defineComponent({
                     class={`button-reset roi-save-icon-wrapper ${
                       props.annotation?.dataset?.canEdit ? '' : 'save-disabled'
                     }`}
+                    disabled={!props.annotation?.dataset?.canEdit}
                     onClick={() => handleSave(false)}
                   >
                     <StatefulIcon class="roi-save-icon-wrapper" active={props.annotation?.dataset?.canEdit}>
