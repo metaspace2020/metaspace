@@ -206,6 +206,10 @@ export default defineComponent({
     const datasetOptions = computed(() => datasetsResult.value?.allDatasets || [])
 
     onDatasetsResult(async (result) => {
+      if (!result?.data?.dataset) {
+        return
+      }
+
       try {
         const dataset = result!.data.dataset
 
@@ -277,9 +281,12 @@ export default defineComponent({
     )
     const pixelSpectrum = computed(() => spectrumResult.value?.pixelSpectrum)
 
-    const { onResult: onInitialPeakResult } = useQuery<any>(getInitialPeak, () => ({ datasetId: datasetId.value }), {
-      fetchPolicy: 'no-cache' as const,
-    })
+    const peakQueryOptions = reactive({ enabled: false, fetchPolicy: 'cache-first' as const })
+    const { onResult: onInitialPeakResult } = useQuery<any>(
+      getInitialPeak,
+      () => ({ datasetId: datasetId.value }),
+      peakQueryOptions
+    )
 
     const buildChartData = (ints: any, mzs: any) => {
       let maxX: number = 0
@@ -573,6 +580,7 @@ export default defineComponent({
       } else {
         state.noData = true
         state.annotation = undefined
+        peakQueryOptions.enabled = true
       }
     })
 
@@ -680,6 +688,10 @@ export default defineComponent({
 
     onAnnotationsResult(async (result) => {
       if (dataset.value && result) {
+        if (result.data?.allAnnotations?.length === 0) {
+          peakQueryOptions.enabled = true
+          return
+        }
         // Fallback: if initial peak hasn't loaded yet, use first annotation
         if (!state.mzmScoreFilter) {
           const mz = result.data?.allAnnotations[0]?.mz
@@ -689,7 +701,6 @@ export default defineComponent({
           state.mzmScoreFilter = mz
           state.mzmShiftFilter = ppm
           state.mzmScaleFilter = 'ppm'
-
           await requestIonImage()
         }
 

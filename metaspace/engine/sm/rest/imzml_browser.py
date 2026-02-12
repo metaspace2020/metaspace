@@ -139,8 +139,8 @@ def find_initial_peak(ds_id, ppm=3):
     mz = float(mz_index[0])
     mz_low = mz * (1 - ppm * 1e-6)
     mz_high = mz * (1 + ppm * 1e-6)
-
-    ds = DatasetBrowser(ds_id, mz_low, mz_high)
+  
+    ds = DatasetBrowser(ds_id, mz_low, mz_high, ds_files)
 
     # mz_peaks columns: [mz, intensity, sp_idx]
     non_zero = ds.mz_peaks[ds.mz_peaks[:, 1] > 0]
