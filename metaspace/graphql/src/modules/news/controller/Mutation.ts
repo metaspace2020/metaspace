@@ -89,7 +89,7 @@ const getProUsers = async(ctx: Context): Promise<string[]> => {
     const proUserIds = [...new Set(userGroups.map(ug => ug.userId))]
     return proUserIds
   } catch (error) {
-    logger.warn('Error fetching pro users:', error)
+    // logger.warn('Error fetching pro users:', error)
     return []
   }
 }

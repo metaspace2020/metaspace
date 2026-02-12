@@ -37,6 +37,7 @@ interface DatasetDiffHeatmapState {
 }
 
 interface HeatmapDataPoint {
+  id: number
   roi: string
   annotation: any
   lfc: number
@@ -67,6 +68,72 @@ export const DatasetDiffHeatmap = defineComponent({
   setup(props: DatasetDiffHeatmapProps, { emit }) {
     const heatmapChart = ref(null)
 
+    // Process data to get top 5 annotations per ROI
+    const processHeatmapData = (rawData: any[]) => {
+      if (!rawData || rawData.length === 0) {
+        return { rois: [], annotations: [], heatmapData: [] }
+      }
+
+      // Group data by ROI
+      const roiGroups: { [key: string]: HeatmapDataPoint[] } = {}
+
+      rawData.forEach((item) => {
+        const roiName = item.roi?.name || 'Unknown ROI'
+        if (!roiGroups[roiName]) {
+          roiGroups[roiName] = []
+        }
+        roiGroups[roiName].push({
+          id: parseInt(item.roi?.id, 10),
+          roi: roiName,
+          annotation: item.annotation,
+          lfc: item.lfc,
+          auc: item.auc,
+        })
+      })
+
+      // Get top 5 annotations per ROI (by absolute LFC value)
+      const topAnnotationsPerRoi: { [key: string]: HeatmapDataPoint[] } = {}
+      Object.keys(roiGroups).forEach((roiName) => {
+        const sortedAnnotations = roiGroups[roiName]
+          .filter((item) => item.auc !== null && item.auc !== undefined)
+          .sort((a, b) => Math.abs(b.auc) - Math.abs(a.auc))
+        topAnnotationsPerRoi[roiName] = sortedAnnotations
+      })
+
+      // Collect all unique annotations from top 5s
+      const allTopAnnotations: any[] = []
+      const annotationIds = new Set()
+
+      Object.values(topAnnotationsPerRoi).forEach((annotations) => {
+        annotations.forEach((item) => {
+          if (!annotationIds.has(item.annotation.id)) {
+            annotationIds.add(item.annotation.id)
+            allTopAnnotations.push(item.annotation)
+          }
+        })
+      })
+
+      const rois = Object.keys(roiGroups)
+      const annotations = allTopAnnotations
+
+      // Create heatmap data matrix
+      const heatmapData: [number, number, number | null, number | null, number | null][] = []
+
+      annotations.forEach((annotation, annotationIndex) => {
+        rois.forEach((roiName, roiIndex) => {
+          const roiData = topAnnotationsPerRoi[roiName] || []
+          const matchingItem = roiData.find((item) => item.annotation.id === annotation.id)
+          const lfc = matchingItem ? matchingItem.lfc : null
+          const auc = matchingItem ? matchingItem.auc : null
+          heatmapData.push([roiIndex, annotationIndex, matchingItem?.id, auc, lfc])
+        })
+      })
+
+      return { rois, annotations, heatmapData }
+    }
+
+    const processedData = computed(() => processHeatmapData(props.data))
+
     const state = reactive<DatasetDiffHeatmapState>({
       size: 600,
       chartOptions: {
@@ -92,28 +159,19 @@ export const DatasetDiffHeatmap = defineComponent({
         tooltip: {
           position: 'top',
           formatter: (params: any) => {
-            if (!params || !params.data || params.data.length < 3) return 'No data'
-
+            if (!params || !params.data || params.data.length < 5) return 'No data'
             const roiIndex = params.data[0]
             const annotationIndex = params.data[1]
-            const lfc = params.data[2]
-
-            const processedData = processHeatmapData(props.data)
-            const rois = processedData.rois
-            const annotations = processedData.annotations
-
-            if (lfc === null || lfc === undefined) {
-              return `
-                <strong>${annotations[annotationIndex]?.ion || 'Unknown'}</strong><br/>
-                ROI: ${rois[roiIndex] || 'Unknown'}<br/>
-                log₂FC: n/a
-              `
-            }
+            const auc = params.data[3]
+            const lfc = params.data[4]
+            const rois = processedData.value?.rois
+            const annotations = processedData.value?.annotations
 
             return `
               <strong>${annotations[annotationIndex]?.ion || 'Unknown'}</strong><br/>
               ROI: ${rois[roiIndex] || 'Unknown'}<br/>
-              log₂FC: ${lfc.toFixed(2)}<br/>
+              log₂FC: ${lfc?.toFixed(2)}<br/>
+              AUC: ${auc?.toFixed(3)}<br/>
               m/z: ${annotations[annotationIndex]?.mz?.toFixed(4) || 'N/A'}
             `
           },
@@ -166,8 +224,8 @@ export const DatasetDiffHeatmap = defineComponent({
             label: {
               show: true,
               formatter: (params: any) => {
-                const v = params.value[2]
-                return v === null || v === undefined ? '–' : v.toFixed(1)
+                const v = params.value[4]
+                return v === null || v === undefined ? '–' : v.toFixed(3)
               },
               color: '#fff',
               fontWeight: 'bold',
@@ -176,70 +234,6 @@ export const DatasetDiffHeatmap = defineComponent({
         ],
       },
     })
-
-    // Process data to get top 5 annotations per ROI
-    const processHeatmapData = (rawData: any[]) => {
-      if (!rawData || rawData.length === 0) {
-        return { rois: [], annotations: [], heatmapData: [] }
-      }
-
-      // Group data by ROI
-      const roiGroups: { [key: string]: HeatmapDataPoint[] } = {}
-
-      rawData.forEach((item) => {
-        const roiName = item.roi?.name || 'Unknown ROI'
-        if (!roiGroups[roiName]) {
-          roiGroups[roiName] = []
-        }
-        roiGroups[roiName].push({
-          roi: roiName,
-          annotation: item.annotation,
-          lfc: item.lfc,
-          auc: item.auc,
-        })
-      })
-
-      // Get top 5 annotations per ROI (by absolute LFC value)
-      const topAnnotationsPerRoi: { [key: string]: HeatmapDataPoint[] } = {}
-      Object.keys(roiGroups).forEach((roiName) => {
-        const sortedAnnotations = roiGroups[roiName]
-          .filter((item) => item.auc !== null && item.auc !== undefined)
-          .sort((a, b) => Math.abs(b.auc) - Math.abs(a.auc))
-        topAnnotationsPerRoi[roiName] = sortedAnnotations
-      })
-
-      // Collect all unique annotations from top 5s
-      const allTopAnnotations: any[] = []
-      const annotationIds = new Set()
-
-      Object.values(topAnnotationsPerRoi).forEach((annotations) => {
-        annotations.forEach((item) => {
-          if (!annotationIds.has(item.annotation.id)) {
-            annotationIds.add(item.annotation.id)
-            allTopAnnotations.push(item.annotation)
-          }
-        })
-      })
-
-      const rois = Object.keys(roiGroups)
-      const annotations = allTopAnnotations
-
-      // Create heatmap data matrix
-      const heatmapData: [number, number, number | null][] = []
-
-      annotations.forEach((annotation, annotationIndex) => {
-        rois.forEach((roiName, roiIndex) => {
-          const roiData = topAnnotationsPerRoi[roiName] || []
-          const matchingItem = roiData.find((item) => item.annotation.id === annotation.id)
-          const lfc = matchingItem ? matchingItem.lfc : null
-          heatmapData.push([roiIndex, annotationIndex, lfc])
-        })
-      })
-
-      return { rois, annotations, heatmapData }
-    }
-
-    const processedData = computed(() => processHeatmapData(props.data))
 
     // Update chart options when data changes
     watch(
@@ -270,13 +264,12 @@ export const DatasetDiffHeatmap = defineComponent({
 
     // Handle chart click events
     const handleChartClick = (params: any) => {
-      if (!params || !params.data || params.data.length < 3) return
+      if (!params || !params.data || params.data.length < 5) return
 
       const annotationIndex = params.data[1]
       const { annotations } = processedData.value
-
       if (annotations[annotationIndex]) {
-        emit('annotationSelected', annotations[annotationIndex])
+        emit('annotationSelected', annotations[annotationIndex], params.value[2])
       }
     }
 

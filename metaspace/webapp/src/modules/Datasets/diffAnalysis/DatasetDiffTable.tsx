@@ -473,12 +473,17 @@ export const DatasetDiffTable = defineComponent({
     const handleCurrentRowChange = (row: any) => {
       if (row) {
         state.selectedRow = row
-        const currentIndex = findIndex(props.data, (item: any) => {
+        const currentIndex = findIndex(state.processedData.slice(0), (item: any) => {
           return row.annotation?.id === item.annotation?.id && row.roi?.id === item.roi?.id
         })
 
         if (state.currentRowIndex === -1) {
           state.currentRowIndex = currentIndex
+        }
+        const rowPage = Math.floor(currentIndex / state.pageSize) + 1
+        if (rowPage !== state.offset) {
+          state.offset = rowPage
+          onPageChange(rowPage, false)
         }
 
         if (currentIndex !== -1) {

@@ -57,40 +57,35 @@ interface AllTransactionsArgs {
 
 // Helper function to make API requests
 export const makeApiRequest = async(ctx: Context, endpoint: string, method = 'GET', body?: any) => {
-  try {
-    const apiUrl = config.manager_api_url
-    const token = ctx.req?.headers?.authorization || ''
-    if (!apiUrl) {
-      logger.error('Manager API URL is not configured')
-      throw new Error('Manager API URL is not configured')
-    }
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
-
-    if (token) {
-      headers.Authorization = token
-    }
-
-    const options: RequestInit = {
-      method,
-      headers,
-    }
-
-    if (body && (method === 'POST' || method === 'PUT')) {
-      options.body = JSON.stringify(body)
-    }
-    const response = await fetch(`${apiUrl}${endpoint}`, options)
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`)
-    }
-
-    return await response.json()
-  } catch (error) {
-    logger.warn(`Error making API request to ${endpoint}:`, error)
-    throw error
+  const apiUrl = config.manager_api_url
+  const token = ctx.req?.headers?.authorization || ''
+  if (!apiUrl) {
+    logger.error('Manager API URL is not configured')
+    throw new Error('Manager API URL is not configured')
   }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  if (token) {
+    headers.Authorization = token
+  }
+
+  const options: RequestInit = {
+    method,
+    headers,
+  }
+
+  if (body && (method === 'POST' || method === 'PUT')) {
+    options.body = JSON.stringify(body)
+  }
+  const response = await fetch(`${apiUrl}${endpoint}`, options)
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.statusText}`)
+  }
+
+  return await response.json()
 }
 
 // Convert GraphQL params to API params
@@ -151,7 +146,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     try {
       return await makeApiRequest(ctx, `/api/subscriptions/${id}`)
     } catch (error) {
-      logger.error(`Error fetching subscription with ID ${id}:`, error)
       return null
     }
   },
@@ -194,7 +188,6 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
     try {
       return await makeApiRequest(ctx, `/api/subscriptions/user/${ctx.user.id}`)
     } catch (error) {
-      logger.error(`Error fetching subscriptions for user ${ctx.user.id}:`, error)
       return []
     }
   },

@@ -14,8 +14,8 @@ import { readNpy } from '../../../lib/npyHandler'
 import safeJsonParse from '../../../lib/safeJsonParse'
 import { cloneDeep, uniqBy } from 'lodash-es'
 
-import { ElCollapse, ElCollapseItem, ElIcon } from '../../../lib/element-plus'
-import { Loading } from '@element-plus/icons-vue'
+import { ElCollapse, ElCollapseItem, ElIcon, ElTooltip } from '../../../lib/element-plus'
+import { Loading, QuestionFilled } from '@element-plus/icons-vue'
 import { diffRoiResultsQuery } from '../../../api/dataset'
 import { DatasetDiffTable } from './DatasetDiffTable'
 import { DatasetDiffVolcanoPlot } from './DatasetDiffVolcanoPlot'
@@ -321,6 +321,30 @@ export default defineComponent({
       )
     }
 
+    const renderRoiLegend = () => {
+      if (!roiInfo.value || roiInfo.value.length === 0) {
+        return null
+      }
+
+      return (
+        <div class="roi-legend mt-3 w-full">
+          <div class="flex flex-wrap gap-2 w-full justify-center items-center">
+            {roiInfo.value.map((roi: any) => (
+              <div key={roi.id} class="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded text-xs">
+                <div
+                  class="w-3 h-3 rounded border border-gray-300"
+                  style={{
+                    backgroundColor: roi.color || roi.strokeColor || '#666666',
+                  }}
+                ></div>
+                <span class="text-gray-700">{roi.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
     const renderInfo = () => {
       if (!state.selectedAnnotation) {
         return null
@@ -341,22 +365,25 @@ export default defineComponent({
       )
 
       return (
-        <div class="diff-main-header flex items-center justify-center p-4 w-full border-b border-gray-200 bg-white">
-          <div class="av-header-items">
-            <div class="flex">
-              {candidateMolecules()}
-              <CopyButton class="ml-1" text={parseFormulaAndCharge(selectedAnnotation?.ion)}>
-                Copy ion to clipboard
-              </CopyButton>
+        <div class="diff-main-header p-4 w-full border-b border-gray-200 bg-white">
+          <div class="flex items-center justify-center">
+            <div class="av-header-items">
+              <div class="flex">
+                {candidateMolecules()}
+                <CopyButton class="ml-1" text={parseFormulaAndCharge(selectedAnnotation?.ion)}>
+                  Copy ion to clipboard
+                </CopyButton>
+              </div>
+              <span class="text-2xl flex items-baseline">
+                {selectedAnnotation.mz.toFixed(4)}
+                <span class="ml-1 text-gray-700 text-sm">m/z</span>
+                <CopyButton class="self-start" text={selectedAnnotation.mz.toFixed(4)}>
+                  Copy m/z to clipboard
+                </CopyButton>
+              </span>
             </div>
-            <span class="text-2xl flex items-baseline">
-              {selectedAnnotation.mz.toFixed(4)}
-              <span class="ml-1 text-gray-700 text-sm">m/z</span>
-              <CopyButton class="self-start" text={selectedAnnotation.mz.toFixed(4)}>
-                Copy m/z to clipboard
-              </CopyButton>
-            </span>
           </div>
+          {renderRoiLegend()}
         </div>
       )
     }
@@ -402,38 +429,93 @@ export default defineComponent({
           name="volcano-plot"
           title="Volcano Plot"
           class="ds-collapse el-collapse-item--no-padding relative"
-        >
-          <DatasetDiffVolcanoPlot
-            data={diffData.value || []}
-            isLoading={!diffData.value}
-            selectedAnnotation={state.selectedAnnotation}
-            onAnnotationSelected={(annotation: any) => {
-              const rowIndex = diffData.value?.findIndex((item: any) => item.annotation.id === annotation.id) ?? -1
-              if (rowIndex !== -1) {
-                handleRowChange(rowIndex, diffData.value[rowIndex])
-              }
-            }}
-          />
-        </ElCollapseItem>
+          v-slots={{
+            title: () => (
+              <div class="flex items-center">
+                Volcano Plot
+                <ElTooltip
+                  popperClass="max-w-md text-sm text-justify"
+                  content={
+                    'Each dot represents an ion from the table (left), based on a ' +
+                    'one-vs-all comparison for the selected ROI. The x-axis shows ' +
+                    'log2 fold change (log2FC). The y-axis shows AUC scaled from −1 ' +
+                    'to 1 (0 = random; positive = enriched in ROI; negative = depleted). ' +
+                    'Dots are colored by direction of log2FC (up/down). For best ' +
+                    'interpretation, view one ROI at a time..'
+                  }
+                  placement="top"
+                >
+                  <ElIcon class="help-icon text-lg ml-1 cursor-pointer">
+                    <QuestionFilled />
+                  </ElIcon>
+                </ElTooltip>
+              </div>
+            ),
+            default: () => (
+              <DatasetDiffVolcanoPlot
+                data={diffData.value || []}
+                isLoading={!diffData.value}
+                selectedAnnotation={state.selectedAnnotation}
+                onAnnotationSelected={(annotation: any) => {
+                  const dataIndex = diffData.value?.findIndex((item: any) => item.annotation.id === annotation.id) ?? -1
+                  if (dataIndex !== -1) {
+                    handleRowChange(dataIndex, diffData.value[dataIndex])
+                  }
+                }}
+              />
+            ),
+          }}
+        />
       )
     }
 
     const renderHeatmap = () => {
       return (
-        <ElCollapseItem name="heatmap" title="Heatmap" class="ds-collapse el-collapse-item--no-padding relative">
-          <DatasetDiffHeatmap
-            data={diffData.value || []}
-            isLoading={!diffData.value}
-            selectedAnnotation={state.selectedAnnotation}
-            isVisible={state.activeCollapseItem === 'heatmap'}
-            onAnnotationSelected={(annotation: any) => {
-              const rowIndex = diffData.value?.findIndex((item: any) => item.annotation.id === annotation.id) ?? -1
-              if (rowIndex !== -1) {
-                handleRowChange(rowIndex, diffData.value[rowIndex])
-              }
-            }}
-          />
-        </ElCollapseItem>
+        <ElCollapseItem
+          name="heatmap"
+          class="ds-collapse el-collapse-item--no-padding relative"
+          v-slots={{
+            title: () => (
+              <div class="flex items-center">
+                Heatmap
+                <ElTooltip
+                  popperClass="max-w-md text-sm text-justify"
+                  content={
+                    'Shows the top 5 ions across all ROIs, selected based ' +
+                    'on AUC. Rows represent ions (listed in the table on the left), columns ' +
+                    'represent ROIs. Both colors and cell labels correspond to log2 fold ' +
+                    'change (log2FC). Use the interactive log2FC slider to adjust the threshold; ' +
+                    'applying a minimum absolute AUC filter can further refine results. Selections ' +
+                    'and filters are reflected in the table. Unlike the volcano plot, this view ' +
+                    'highlights top ions across all ROIs simultaneously.'
+                  }
+                  placement="top"
+                >
+                  <ElIcon class="help-icon text-lg ml-1 cursor-pointer">
+                    <QuestionFilled />
+                  </ElIcon>
+                </ElTooltip>
+              </div>
+            ),
+            default: () => (
+              <DatasetDiffHeatmap
+                data={diffData.value || []}
+                isLoading={!diffData.value}
+                selectedAnnotation={state.selectedAnnotation}
+                isVisible={state.activeCollapseItem === 'heatmap'}
+                onAnnotationSelected={(annotation: any, roiId: number) => {
+                  const dataIndex =
+                    diffData.value?.findIndex(
+                      (item: any) => item.annotation.id === annotation.id && parseInt(item.roi.id, 10) === roiId
+                    ) ?? -1
+                  if (dataIndex !== -1) {
+                    handleRowChange(dataIndex, diffData.value[dataIndex])
+                  }
+                }}
+              />
+            ),
+          }}
+        />
       )
     }
 

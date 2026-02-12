@@ -359,7 +359,7 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       // Build Elasticsearch filter combining annotationId and annotation filters
       const esFilter = { annotationId: ionIds, ...annotationFilter }
 
-      const annotations = await esSearchResults({ filter: esFilter }, 'annotation', ctx.user)
+      const annotations = await esSearchResults({ filter: esFilter, limit: 10000 }, 'annotation', ctx.user)
 
       // Create a map for quick annotation lookup
       const annotationMap = new Map()

@@ -23,6 +23,7 @@ import { Loading, DataLine } from '@element-plus/icons-vue'
 import { formatCsvTextArray } from '../lib/formatCsvRow'
 import { useRouter } from 'vue-router'
 import { UserProfileQuery, userProfileQuery } from '@/api/user'
+import { getActiveUserSubscriptionQuery } from '@/api/subscription'
 
 const VisibleIcon = defineAsyncComponent(() => import('../assets/inline/refactoring-ui/icon-view-visible.svg'))
 
@@ -141,6 +142,12 @@ export default defineComponent({
       roiQueryOptions as any
     )
 
+    const { result: subscriptionResult } = useQuery<any>(getActiveUserSubscriptionQuery, null, {
+      fetchPolicy: 'network-only',
+    })
+
+    const activeSubscription = computed(() => subscriptionResult.value?.activeUserSubscription)
+
     onAnnotationsResult(async (result) => {
       if (result && result.data) {
         for (let i = 0; i < result.data.allAnnotations.length; i++) {
@@ -234,6 +241,7 @@ export default defineComponent({
     })
 
     onUnmounted(() => {
+      store.commit('toggleRoiVisibility', false)
       window.removeEventListener('resize', resizeHandler)
     })
 
@@ -365,6 +373,16 @@ export default defineComponent({
       return state.rois || []
     }
 
+    // Helper function to find ROI index by ID
+    const findRoiIndexById = (roiId: string) => {
+      return state.rois.findIndex((roi: any) => roi.id === roiId || roi.tempId === roiId)
+    }
+
+    // Helper function to get stable ROI identifier
+    const getRoiId = (roi: any) => {
+      return roi.id || roi.tempId
+    }
+
     const getRoisForStore = (rois: any[]) => {
       // If ROI settings are not visible, hide all ROIs on the ion image
       return isRoiVisible.value
@@ -382,8 +400,12 @@ export default defineComponent({
       const index = state.rois.length % Object.keys(channels).length
       const channel: any = Object.values(channels)[index]
 
+      // Generate a unique temporary ID for new ROIs
+      const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
       const newRoi = {
         id: null, // Will be set when saved
+        tempId, // Temporary ID for stable identification
         coordinates: [],
         channel: Object.keys(channels)[index],
         rgb: channel,
@@ -531,16 +553,9 @@ export default defineComponent({
       state.isLoadingDA = true
 
       try {
-        const roiInfo = getRoi().filter((roi: any) => !roi.removed)
-        const hasLegacyRois = roiInfo.some((roi: any) => roi.isLegacy)
-
-        if (!props.annotation?.dataset?.canEdit) {
-          // if user cannot edit, save the ROIs first just for him
-          await handleSave(false)
-        } else if (hasLegacyRois) {
-          // Automatically save/migrate legacy ROIs before running diff analysis
-          await handleSave(false) // Save without navigating first
-        }
+        // const roiInfo = getRoi().filter((roi: any) => !roi.removed)
+        // const hasLegacyRois = roiInfo.some((roi: any) => roi.isLegacy)
+        await handleSave(false)
 
         // Now run the differential analysis
         await compareROIs({ datasetId: props.annotation?.dataset?.id })
@@ -553,60 +568,60 @@ export default defineComponent({
       }
     }
 
-    const handleNameEdit = (value: any, index: number) => {
-      const roiInfo = getRoi()
-      if (roiInfo[index]) {
-        roiInfo[index].name = value
+    const handleNameEdit = (value: any, roiId: string) => {
+      const roiIndex = findRoiIndexById(roiId)
+      if (roiIndex !== -1) {
+        state.rois[roiIndex].name = value
         // Create a new array to trigger reactivity
-        state.rois = [...roiInfo]
+        state.rois = [...state.rois]
         // Respect current visibility state
         store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
       }
     }
 
-    const toggleEdit = (index: number) => {
-      const roiInfo = getRoi()
-      if (roiInfo[index]) {
-        roiInfo[index].edit = !roiInfo[index].edit
+    const toggleEdit = (roiId: string) => {
+      const roiIndex = findRoiIndexById(roiId)
+      if (roiIndex !== -1) {
+        state.rois[roiIndex].edit = !state.rois[roiIndex].edit
         // Create a new array to trigger reactivity
-        state.rois = [...roiInfo]
+        state.rois = [...state.rois]
         // Respect current visibility state
         store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
       }
     }
 
-    const toggleHidden = (index: number) => {
-      const roiInfo = getRoi()
-      if (roiInfo[index]) {
-        roiInfo[index].visible = !roiInfo[index].visible
+    const toggleHidden = (roiId: string) => {
+      const roiIndex = findRoiIndexById(roiId)
+      if (roiIndex !== -1) {
+        state.rois[roiIndex].visible = !state.rois[roiIndex].visible
         // Create a new array to trigger reactivity
-        state.rois = [...roiInfo]
+        state.rois = [...state.rois]
         // Respect current visibility state
         store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
       }
     }
 
-    const removeRoi = (index: number) => {
-      const roiInfo = getRoi()
-      if (roiInfo[index]) {
-        roiInfo[index].removed = true
-        roiInfo[index].visible = false
+    const removeRoi = (roiId: string) => {
+      const roiIndex = findRoiIndexById(roiId)
+      if (roiIndex !== -1) {
+        state.rois[roiIndex].removed = true
+        state.rois[roiIndex].visible = false
         // Create a new array to trigger reactivity
-        state.rois = [...roiInfo]
+        state.rois = [...state.rois]
         // Respect current visibility state
         store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
       }
     }
 
-    const changeRoi = (channel: any, index: number) => {
-      const roiInfo = getRoi()
-      if (roiInfo[index]) {
-        roiInfo[index].channel = channel
-        roiInfo[index].rgb = channels[channel]
-        roiInfo[index].strokeColor = channels[channel].replace('rgb', 'rgba').replace(')', ', 0)')
-        roiInfo[index].color = channels[channel].replace('rgb', 'rgba').replace(')', ', 0.4)')
+    const changeRoi = (channel: any, roiId: string) => {
+      const roiIndex = findRoiIndexById(roiId)
+      if (roiIndex !== -1) {
+        state.rois[roiIndex].channel = channel
+        state.rois[roiIndex].rgb = channels[channel]
+        state.rois[roiIndex].strokeColor = channels[channel].replace('rgb', 'rgba').replace(')', ', 0)')
+        state.rois[roiIndex].color = channels[channel].replace('rgb', 'rgba').replace(')', ', 0.4)')
         // Create a new array to trigger reactivity
-        state.rois = [...roiInfo]
+        state.rois = [...state.rois]
         // Respect current visibility state
         store.commit('setRoiInfo', { key: props.annotation.dataset.id, roi: getRoisForStore(state.rois) })
       }
@@ -653,6 +668,7 @@ export default defineComponent({
 
     const renderRoiSettings = () => {
       const roiInfo = (state.rois || []).filter((roi: any) => !roi.removed)
+      const isPro = activeSubscription.value?.isActive
 
       return (
         <div class="roi-content">
@@ -666,11 +682,11 @@ export default defineComponent({
             >
               {!state.isLoadingDA && (
                 <ElButton
-                  class="button-reset roi-download-icon"
+                  class="button-reset roi-diff-icon"
                   onClick={handleDiffAnalysis}
-                  disabled={!currentUser.value?.id}
+                  disabled={!currentUser.value?.id || !isPro}
                 >
-                  <ElIcon size={20}>
+                  <ElIcon size={25}>
                     <DataLine />
                   </ElIcon>
                 </ElButton>
@@ -725,9 +741,10 @@ export default defineComponent({
               </ElTooltip>
             </div>
           </div>
-          {roiInfo.map((roi: any, roiIndex: number) => {
+          {roiInfo.map((roi: any) => {
+            const roiId = getRoiId(roi)
             return (
-              <div key={`roi-${roiIndex}-${roi.id || 'new'}-${roi.visible}-${roi.channel}`} class="roi-item relative">
+              <div key={`roi-${roiId}`} class="roi-item relative">
                 <div class="flex w-full justify-between items-center w-28">
                   {!roi.edit && (
                     <span class="roi-label" style={{ color: roi.channel }}>
@@ -739,15 +756,15 @@ export default defineComponent({
                       class="roi-label"
                       size="small"
                       modelValue={roi.name}
-                      onChange={() => toggleEdit(roiIndex)}
+                      onChange={() => toggleEdit(roiId)}
                       onInput={(value: any) => {
-                        handleNameEdit(value, roiIndex)
+                        handleNameEdit(value, roiId)
                       }}
                     />
                   )}
                   <div class="flex justify-center items-center">
-                    <ElButton class="button-reset h-5" icon="Edit" onClick={() => toggleEdit(roiIndex)} />
-                    <ElButton class="button-reset h-5" onClick={() => toggleHidden(roiIndex)}>
+                    <ElButton class="button-reset h-5" icon="Edit" onClick={() => toggleEdit(roiId)} />
+                    <ElButton class="button-reset h-5" onClick={() => toggleHidden(roiId)}>
                       {roi.visible && <VisibleIcon class="fill-current w-5 h-5 text-gray-800" />}{' '}
                       {!roi.visible && <HiddenIcon class="fill-current w-5 h-5 text-gray-800" />}
                     </ElButton>
@@ -757,8 +774,8 @@ export default defineComponent({
                   <ChannelSelector
                     class="h-0 absolute bottom-0 left-0 right-0 flex justify-center items-end"
                     value={roi.channel} // @ts-ignore
-                    onRemove={() => removeRoi(roiIndex)}
-                    onInput={(value: any) => changeRoi(value, roiIndex)}
+                    onRemove={() => removeRoi(roiId)}
+                    onInput={(value: any) => changeRoi(value, roiId)}
                   />
                 </div>
               </div>

@@ -118,6 +118,10 @@ class DiffROIData:
             merged_df = metrics_df.merge(sf_map, how='left', left_index=True, right_on='formula_i')
             per_db_metrics.append(merged_df)
 
+        if not per_db_metrics:
+            # No FDR_RESULTS found for this dataset
+            return pd.DataFrame()
+        
         all_metrics_df = pd.concat(per_db_metrics, ignore_index=True)
         all_metrics_df = all_metrics_df.drop_duplicates(subset=['formula', 'modifier'])
 
