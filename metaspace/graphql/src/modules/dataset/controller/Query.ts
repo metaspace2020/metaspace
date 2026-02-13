@@ -298,6 +298,14 @@ const QueryResolvers: FieldResolversFor<Query, void> = {
       return null
     }
   },
+  async initialPeak(source, { datasetId }) {
+    try {
+      const resp = await smApiJsonGet(`/v1/browser/initial_peak/${datasetId}`)
+      return resp
+    } catch (e) {
+      return null
+    }
+  },
   async pixelSpectrum(source, { datasetId, x, y }) {
     try {
       const resp = await smApiDatasetRequest('/v1/browser/peaks_from_pixel', {

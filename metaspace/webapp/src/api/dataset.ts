@@ -597,3 +597,13 @@ export const getSpectrum = gql`
     }
   }
 `
+
+export const getInitialPeak = gql`
+  query getInitialPeakQuery($datasetId: String!) {
+    initialPeak(datasetId: $datasetId) {
+      mz
+      x
+      y
+    }
+  }
+`

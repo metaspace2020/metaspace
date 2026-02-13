@@ -131,6 +131,40 @@ def get_peaks_from_pixel():
         return make_response(INTERNAL_ERROR)
 
 
+def find_initial_peak(ds_id, ppm=3):
+    """Pick the first m/z from the index and find a pixel with non-zero intensity."""
+    ds_files = DatasetFiles(ds_id)
+    mz_index = np.frombuffer(ds_files.read_file(ds_files.mz_index_key), dtype='f')
+
+    mz = float(mz_index[0])
+    mz_low = mz * (1 - ppm * 1e-6)
+    mz_high = mz * (1 + ppm * 1e-6)
+
+    ds = DatasetBrowser(ds_id, mz_low, mz_high, ds_files)
+
+    # mz_peaks columns: [mz, intensity, sp_idx]
+    non_zero = ds.mz_peaks[ds.mz_peaks[:, 1] > 0]
+    best_idx = np.argmax(non_zero[:, 1])
+    sp_idx = int(non_zero[best_idx, 2])
+
+    coordinates = ds.coordinates - np.min(ds.coordinates, axis=0)
+    x, y = coordinates[sp_idx]
+
+    return {'mz': mz, 'x': int(x), 'y': int(y)}
+
+
+@app.get('/initial_peak/<dataset_id>')
+def get_initial_peak(dataset_id):
+    try:
+        logger.info(f'Received `initial_peak` request for {dataset_id} dataset')
+        result = find_initial_peak(dataset_id)
+        headers = {'Content-Type': 'application/json'}
+        return bottle.HTTPResponse(result, **headers)
+    except Exception as e:
+        logger.exception(f'{bottle.request} - {e}')
+        return make_response(INTERNAL_ERROR)
+
+
 @app.get('/files/<dataset_id>')
 def check_files(dataset_id):
     try:
