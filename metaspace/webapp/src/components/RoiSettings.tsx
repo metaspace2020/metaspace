@@ -718,17 +718,15 @@ export default defineComponent({
               <ElTooltip
                 popperClass="roi-save-tooltip"
                 content={
-                  'Click to save the ROIs. This requires being the owner or having the ' +
-                  'edit access to this dataset.'
+                  'Click to save the ROIs. If you can edit the dataset, they will be saved as ' +
+                  'default and visible to everyone with access. Otherwise, they will be saved only for you.'
                 }
                 placement="top"
               >
                 {!state.isUpdatingRoi && (
                   <ElButton
-                    class={`button-reset roi-save-icon-wrapper ${
-                      props.annotation?.dataset?.canEdit ? '' : 'save-disabled'
-                    }`}
-                    disabled={!props.annotation?.dataset?.canEdit}
+                    class={`button-reset roi-save-icon-wrapper ${currentUser.value?.id ? '' : 'save-disabled'}`}
+                    disabled={!currentUser.value?.id}
                     onClick={() => handleSave(false)}
                   >
                     <StatefulIcon class="roi-save-icon-wrapper" active={props.annotation?.dataset?.canEdit}>
