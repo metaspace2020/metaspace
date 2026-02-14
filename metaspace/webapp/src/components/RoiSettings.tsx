@@ -677,32 +677,36 @@ export default defineComponent({
       return (
         <div class="roi-content">
           <div class="roi-options">
-            <ElTooltip
-              popperClass="roi-save-tooltip"
-              content={
-                'Click to perform differential analysis among the ROIs. This requires being a METASPACE Pro user.'
-              }
-              placement="top"
-            >
-              {!state.isLoadingDA && (
-                <ElButton
-                  class="button-reset roi-diff-icon"
-                  onClick={handleDiffAnalysis}
-                  disabled={!isAdmin && (!currentUser.value?.id || !isPro)}
-                >
-                  <ElIcon size={25}>
-                    <DataLine />
-                  </ElIcon>
-                </ElButton>
-              )}
-              {state.isLoadingDA && (
-                <div class="button-reset roi-download-icon">
-                  <ElIcon class="is-loading">
-                    <Loading />
-                  </ElIcon>
-                </div>
-              )}
-            </ElTooltip>
+            {config.features.diff_analysis && (
+              <ElTooltip
+                popperClass="roi-save-tooltip"
+                content={
+                  'Click to perform differential analysis among the ROIs. This requires being a METASPACE Pro user.'
+                }
+                placement="top"
+              >
+                {!state.isLoadingDA && (
+                  <ElButton
+                    class="button-reset roi-diff-icon"
+                    onClick={handleDiffAnalysis}
+                    disabled={!isAdmin && (!currentUser.value?.id || !isPro)}
+                  >
+                    <ElIcon size={25}>
+                      <DataLine />
+                    </ElIcon>
+                  </ElButton>
+                )}
+                {state.isLoadingDA && (
+                  <div class="button-reset roi-download-icon">
+                    <ElIcon class="is-loading">
+                      <Loading />
+                    </ElIcon>
+                  </div>
+                )}
+              </ElTooltip>
+            )}
+
+            {!config.features.diff_analysis && <div class="roi-save-tooltip " />}
 
             <div class="flex flex-row flex-wrap justify-end items-center">
               {roiInfo.length > 0 && !state.isDownloading && (

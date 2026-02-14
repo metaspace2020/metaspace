@@ -200,13 +200,26 @@ export const DatasetDiffHeatmap = defineComponent({
           left: 'center',
           bottom: 20,
           inRange: {
-            color: ['#4575b4', '#f7f7f7', '#d73027'],
+            color: ['#4575b4', '#e0e0e0', '#d73027'],
           },
           outOfRange: {
             color: '#e0e0e0',
           },
           text: ['Up', 'Down'],
         },
+        graphic: [
+          {
+            type: 'text',
+            left: 'center',
+            bottom: 5,
+            style: {
+              text: 'log₂(Fold change)',
+              fill: '#666',
+              fontSize: 12,
+              fontWeight: 500,
+            },
+          },
+        ],
         series: [
           {
             type: 'heatmap',
@@ -240,9 +253,15 @@ export const DatasetDiffHeatmap = defineComponent({
       () => props.data,
       () => {
         const { rois, annotations, heatmapData } = processedData.value
+        const absMax = Math.max(...heatmapData.map((d) => Math.abs(d[4])))
 
         state.chartOptions = {
           ...state.chartOptions,
+          visualMap: {
+            ...state.chartOptions.visualMap,
+            max: absMax,
+            min: -absMax,
+          },
           xAxis: {
             ...state.chartOptions.xAxis,
             data: rois,

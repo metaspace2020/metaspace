@@ -137,9 +137,10 @@ export default {
 
   gqlRoiFilter(state, getters) {
     const filter = getters.filter
-
     return {
-      minAuc: filter.minAuc || undefined,
+      minAuc: filter.minAuc,
+      minLfc: filter.minLfc,
+      maxLfc: filter.maxLfc,
       roiId: filter.roiId || undefined,
     }
   },

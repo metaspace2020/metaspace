@@ -65,6 +65,8 @@ const orderedFilterKeys = [
   'pValue',
   'roiId',
   'minAuc',
+  'minLfc',
+  'maxLfc',
 ]
 
 const dsAnnotationHiddenFilters = [] // ['datasetIds']

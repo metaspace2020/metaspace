@@ -396,6 +396,8 @@ type DiffRoiResult {
 
 input DiffRoiFilter {
   minAuc: Float
+  minLfc: Float
+  maxLfc: Float
   roiId: ID
   roiName: String
   topNAnnotations: Int

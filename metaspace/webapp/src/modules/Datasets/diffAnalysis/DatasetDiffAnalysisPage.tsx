@@ -1,5 +1,5 @@
 import { computed, defineComponent, reactive, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { useQuery } from '@vue/apollo-composable'
 import { FilterPanel } from '../../Filters/index'
@@ -15,7 +15,7 @@ import safeJsonParse from '../../../lib/safeJsonParse'
 import { cloneDeep, uniqBy } from 'lodash-es'
 
 import { ElCollapse, ElCollapseItem, ElIcon, ElTooltip } from '../../../lib/element-plus'
-import { Loading, QuestionFilled } from '@element-plus/icons-vue'
+import { Loading, QuestionFilled, ArrowLeft } from '@element-plus/icons-vue'
 import { diffRoiResultsQuery } from '../../../api/dataset'
 import { DatasetDiffTable } from './DatasetDiffTable'
 import { DatasetDiffVolcanoPlot } from './DatasetDiffVolcanoPlot'
@@ -56,6 +56,7 @@ export default defineComponent({
   },
   setup() {
     const route = useRoute()
+    const router = useRouter()
     const store = useStore()
     const state = reactive<DatasetDiffAnalysisPageState>({
       databaseOptions: undefined,
@@ -86,9 +87,10 @@ export default defineComponent({
     })
     const activeSubscription = computed(() => subscriptionResult.value?.activeUserSubscription)
 
-    const { onResult: handleDatasetLoad } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, {
+    const { result: datasetResult, onResult: handleDatasetLoad } = useQuery<GetDatasetByIdQuery>(getDatasetByIdQuery, {
       id: datasetId.value,
     })
+    const currentDataset = computed(() => datasetResult.value?.dataset)
 
     const { onResult: handleDatasetsLoad } = useQuery<{
       allDatasets: DatasetListItemWithDiagnostics[]
@@ -316,6 +318,17 @@ export default defineComponent({
       }
     }
 
+    const handleBackClick = () => {
+      router.push({
+        name: 'dataset-annotations',
+        params: { dataset_id: datasetId.value },
+        query: {
+          ds: datasetId.value,
+          db_id: store.getters.gqlAnnotationFilter?.databaseId,
+        },
+      })
+    }
+
     const renderRoiTableWrapper = () => {
       return (
         <div class="diff-table-wrapper w-full md:w-6/12">
@@ -437,12 +450,12 @@ export default defineComponent({
       return (
         <ElCollapseItem
           name="volcano-plot"
-          title="Volcano Plot"
+          title="Volcano plot"
           class="ds-collapse el-collapse-item--no-padding relative"
           v-slots={{
             title: () => (
               <div class="flex items-center">
-                Volcano Plot
+                Volcano plot
                 <ElTooltip
                   popperClass="max-w-md text-sm text-justify"
                   content={
@@ -582,10 +595,19 @@ export default defineComponent({
 
       return (
         <div class="dataset-diff-page">
-          <div class={`${state.databaseOptions ? 'visible' : 'invisible'} min-h-[50px] mb-4`}>
+          <div class={`${state.databaseOptions ? 'visible' : 'invisible'} min-h-[50px]`}>
             {state.databaseOptions && (
               <FilterPanel class="w-full" level={currentLevel.value} fixedOptions={fixedOptions.value} />
             )}
+            <div
+              onClick={handleBackClick}
+              class="flex items-center text-blue-600 hover:text-blue-800 underline cursor-pointer mt-2 mb-1"
+            >
+              <ElIcon>
+                <ArrowLeft />
+              </ElIcon>
+              Back to {currentDataset.value?.name} annotations
+            </div>
           </div>
 
           <div class="flex w-full flex-wrap flex-row">

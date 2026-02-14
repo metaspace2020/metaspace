@@ -90,7 +90,7 @@ export const DatasetDiffVolcanoPlot = defineComponent({
             const roi = params.data[5]
             const annotation = params.data[6]
 
-            return `<strong>${metabolite}</strong><br/>log₂FC: ${lfc?.toFixed(3) || 'N/A'}<br/>AUC: ${
+            return `<strong>${metabolite}</strong><br/>log₂FC: ${lfc?.toFixed(3) || 'N/A'}<br/>Scaled AUC: ${
               auc?.toFixed(3) || 'N/A'
             }<br/>ROI: ${roi}<br/>m/z: ${annotation?.mz?.toFixed(4) || 'N/A'}`
           },
@@ -124,11 +124,11 @@ export const DatasetDiffVolcanoPlot = defineComponent({
           },
         ],
         xAxis: {
-          name: 'log₂(Fold Change)',
+          name: 'log₂(Fold change)',
           nameLocation: 'middle',
           nameGap: 45,
-          min: -5,
-          max: 5,
+          min: -2,
+          max: 2,
           splitLine: {
             lineStyle: { type: 'dashed', color: '#e0e0e0' },
           },
@@ -137,7 +137,7 @@ export const DatasetDiffVolcanoPlot = defineComponent({
           },
         },
         yAxis: {
-          name: 'AUC',
+          name: 'Scaled AUC',
           nameLocation: 'middle',
           nameGap: 60,
           min: -1,
@@ -173,7 +173,7 @@ export const DatasetDiffVolcanoPlot = defineComponent({
           typeof item.auc === 'number' ? item.auc : 0, // AUC
           typeof item.lfc === 'number' ? item.lfc : 0, // log2FC (for symbolSize)
           typeof item.auc === 'number' ? item.auc : 0, // AUC (for symbolSize)
-          item.annotation?.sumFormula || item.annotation?.ion || 'Unknown', // metabolite
+          item.annotation?.ion || item.annotation?.sumFormula || 'Unknown', // metabolite
           item.roi?.name || `ROI ${item.roi?.id || 'Unknown'}`, // ROI name
           item.annotation, // full annotation object
         ])
@@ -243,7 +243,7 @@ export const DatasetDiffVolcanoPlot = defineComponent({
         ...series,
         {
           type: 'line',
-          name: 'AUC = 0',
+          name: 'Scaled AUC = 0',
           data: [
             [options.xAxis.min, 0],
             [options.xAxis.max, 0],
@@ -270,9 +270,9 @@ export const DatasetDiffVolcanoPlot = defineComponent({
           if (lfcValues.length > 0) {
             const minLfc = Math.min(...lfcValues)
             const maxLfc = Math.max(...lfcValues)
-            const padding = Math.max(Math.abs(minLfc), Math.abs(maxLfc)) * 0.1
-            options.xAxis.min = Math.min(-5, minLfc - padding)
-            options.xAxis.max = Math.max(5, maxLfc + padding)
+            const padding = Math.max(Math.abs(minLfc), Math.abs(maxLfc)) * 1.2
+            options.xAxis.min = -padding
+            options.xAxis.max = padding
           }
 
           if (aucValues.length > 0) {

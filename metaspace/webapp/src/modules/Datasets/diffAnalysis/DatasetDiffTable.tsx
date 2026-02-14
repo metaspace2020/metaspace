@@ -542,7 +542,7 @@ export const DatasetDiffTable = defineComponent({
                   <QuestionFilled />
                 </ElIcon>
               ),
-              default: () => <span>Log Fold Change between ROIs</span>,
+              default: () => <span>Log fold change between ROIs</span>,
             }}
           />
         </div>
@@ -552,7 +552,7 @@ export const DatasetDiffTable = defineComponent({
     const renderAUCHeader = () => {
       return (
         <div class="auc-header">
-          AUC
+          Scaled AUC
           <ElPopover
             trigger="hover"
             placement="right"
@@ -562,7 +562,12 @@ export const DatasetDiffTable = defineComponent({
                   <QuestionFilled />
                 </ElIcon>
               ),
-              default: () => <span>Area Under the Curve</span>,
+              default: () => (
+                <div class="text-sm text-justify max-w-md">
+                  Area Under the curve (AUC) scaled from −1 to 1 (0 = random; positive = enriched in ROI; negative =
+                  depleted).
+                </div>
+              ),
             }}
           />
         </div>
@@ -737,7 +742,7 @@ export const DatasetDiffTable = defineComponent({
                 property="auc"
                 label={state.columns.auc?.label}
                 sortable="custom"
-                minWidth="80"
+                minWidth="120"
                 v-slots={{
                   header: renderAUCHeader,
                 }}
@@ -869,7 +874,7 @@ export const DatasetDiffTable = defineComponent({
                     class="export-btn"
                     width={146}
                     height={42}
-                    percentage={state.exportProgress * 100}
+                    percentage={state.exportProgress * 100} // @ts-ignore
                     onClick={abortExport}
                   >
                     Cancel

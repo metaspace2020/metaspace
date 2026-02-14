@@ -51,6 +51,8 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   opticalImage: 'opt_img',
   pValue: 'pval',
   minAuc: 'min_auc',
+  minLfc: 'min_lfc',
+  maxLfc: 'max_lfc',
   roiId: 'roi_id',
 }
 
